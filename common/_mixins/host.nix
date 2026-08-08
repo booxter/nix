@@ -426,6 +426,50 @@ in
       };
     };
 
+    remoteGui.server = {
+      x11.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = hostSpec.remoteGui.server.x11.enable or false;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host accepts remote X11 applications over SSH.";
+      };
+
+      wayland.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = hostSpec.remoteGui.server.wayland.enable or false;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host accepts remote Wayland applications through Waypipe.";
+      };
+
+      vnc = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = hostSpec.remoteGui.server.vnc.enable or false;
+          readOnly = true;
+          internal = true;
+          description = "Whether this host exports its desktop over VNC.";
+        };
+
+        sshTunnel = lib.mkOption {
+          type = lib.types.bool;
+          default = hostSpec.remoteGui.server.vnc.sshTunnel or false;
+          readOnly = true;
+          internal = true;
+          description = "Whether VNC clients must tunnel the connection through SSH.";
+        };
+
+        basePort = lib.mkOption {
+          type = lib.types.port;
+          default = hostSpec.remoteGui.server.vnc.basePort or 5900;
+          readOnly = true;
+          internal = true;
+          description = "First VNC port allocated to this host's displays.";
+        };
+      };
+    };
+
     remoteAccess = {
       appleRemoteManagement = lib.mkOption {
         type = lib.types.bool;

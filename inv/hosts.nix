@@ -119,7 +119,7 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      vnc.enable = true;
+      remoteGui.server.vnc.enable = true;
       network.primaryInterface = "en0";
     };
     mmini = {
@@ -132,7 +132,7 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      vnc.enable = true;
+      remoteGui.server.vnc.enable = true;
       upsHost = frame;
       network.primaryInterface = "en0";
     };
@@ -176,12 +176,15 @@ in
         interface = "enp191s0";
         kernelModules = [ "r8169" ];
       };
-      sshTicket.allowX11Forwarding = true;
-      vnc = {
-        enable = true;
-        # ReFrame exposes one loopback listener per inventory display.
-        sshTunnel = true;
-        basePort = 5933;
+      remoteGui.server = {
+        x11.enable = true;
+        wayland.enable = true;
+        vnc = {
+          enable = true;
+          # ReFrame exposes one loopback listener per inventory display.
+          sshTunnel = true;
+          basePort = 5933;
+        };
       };
       hardware.gpu = {
         vendor = "amd";

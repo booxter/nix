@@ -10,9 +10,10 @@ let
     name: spec: spec // { inherit name; }
   ) hostInventory.darwinHosts;
   allHostSpecs = darwinHostSpecs ++ hostInventory.nixosHostSpecs;
-  vncHosts = builtins.filter (host: host.vnc.enable or false) allHostSpecs;
-  directHosts = builtins.filter (host: !(host.vnc.sshTunnel or false)) vncHosts;
-  tunneledHosts = builtins.filter (host: host.vnc.sshTunnel or false) vncHosts;
+  vncFor = host: host.remoteGui.server.vnc or { enable = false; };
+  vncHosts = builtins.filter (host: (vncFor host).enable or false) allHostSpecs;
+  directHosts = builtins.filter (host: !((vncFor host).sshTunnel or false)) vncHosts;
+  tunneledHosts = builtins.filter (host: (vncFor host).sshTunnel or false) vncHosts;
   displaysFor =
     host:
     lib.mapAttrsToList (name: display: display // { inherit name; }) (
@@ -42,10 +43,11 @@ let
     let
       displayConfig = hostInventory.displaysByHost.${host.name};
       displays = displaysFor host;
+      vnc = vncFor host;
       displayCases = lib.concatStringsSep "\n" (
         lib.imap0 (index: display: ''
           ${lib.escapeShellArg display.name})
-            remote_port=${toString (host.vnc.basePort + index)}
+            remote_port=${toString (vnc.basePort + index)}
             ;;
         '') displays
       );

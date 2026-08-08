@@ -1,14 +1,10 @@
 {
   inputs,
   lib,
-  pkgs,
   ...
 }:
 {
-  imports = [
-    inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-    ./remote-desktop.nix
-  ];
+  imports = [ inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series ];
 
   # systemd's global bpf-restrict-fs link took roughly three minutes to detach
   # during reboot while the kernel waited for a Tasks RCU grace period. No
@@ -20,7 +16,4 @@
   ];
 
   security.pam.services.hyprlock = { };
-  services.openssh.settings.X11Forwarding = true;
-
-  environment.systemPackages = [ pkgs.waypipe ];
 }

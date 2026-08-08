@@ -35,7 +35,7 @@ let
         name
         "${name}.local"
       ];
-      allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
+      allowX11Forwarding = spec.remoteGui.server.x11.enable or false;
       principal = if enabled then "${username}@${name}" else "";
       defaultTtl = "30m";
       maxTtl = "2h";

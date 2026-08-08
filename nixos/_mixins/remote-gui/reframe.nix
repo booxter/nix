@@ -1,12 +1,11 @@
 {
   config,
-  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
-  inherit (hostSpec) vnc;
+  vnc = config.host.remoteGui.server.vnc;
   displayConfig = config.host.display;
   displays = lib.mapAttrsToList (name: display: display // { inherit name; }) displayConfig.monitors;
   inherit (displayConfig) scale;
@@ -125,120 +124,122 @@ let
   '';
 in
 {
-  assertions = [
-    {
-      assertion = displayConfig != null;
-      message = "ReFrame requires a host display setup";
-    }
-    {
-      assertion = displayConfig.drmCard != null;
-      message = "ReFrame requires a DRM card";
-    }
-    {
-      assertion = scale != null;
-      message = "ReFrame requires a display scale";
-    }
-    {
-      assertion = displayConfig.primary != null;
-      message = "ReFrame requires a primary monitor";
-    }
-    {
-      assertion = lib.all (display: display.connector != null) displays;
-      message = "ReFrame requires a connector for every monitor";
-    }
-  ];
+  config = lib.mkIf vnc.enable {
+    assertions = [
+      {
+        assertion = displayConfig != null;
+        message = "ReFrame requires a host display setup";
+      }
+      {
+        assertion = displayConfig.drmCard != null;
+        message = "ReFrame requires a DRM card";
+      }
+      {
+        assertion = scale != null;
+        message = "ReFrame requires a display scale";
+      }
+      {
+        assertion = displayConfig.primary != null;
+        message = "ReFrame requires a primary monitor";
+      }
+      {
+        assertion = lib.all (display: display.connector != null) displays;
+        message = "ReFrame requires a connector for every monitor";
+      }
+    ];
 
-  # The KVM removes the monitors' EDIDs when it selects another computer. Use
-  # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
-  # (monitor identity and timing data, not executable code). NixOS puts it in
-  # the initrd and adds drm.edid_firmware for both connectors; the kernel's
-  # `video=<connector>:e` argument then keeps those outputs enabled while
-  # disconnected. GDM and Hyprland therefore keep rendering frames that
-  # ReFrame can capture.
-  hardware.display = {
-    edid.packages = [ pkgs.edid-generator ];
-    outputs = lib.listToAttrs (
-      map (
-        display:
-        lib.nameValuePair display.connector {
-          edid = syntheticEdid.filename;
-          mode = "e";
-        }
-      ) displays
-    );
-  };
+    # The KVM removes the monitors' EDIDs when it selects another computer. Use
+    # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
+    # (monitor identity and timing data, not executable code). NixOS puts it in
+    # the initrd and adds drm.edid_firmware for both connectors; the kernel's
+    # `video=<connector>:e` argument then keeps those outputs enabled while
+    # disconnected. GDM and Hyprland therefore keep rendering frames that
+    # ReFrame can capture.
+    hardware.display = {
+      edid.packages = [ pkgs.edid-generator ];
+      outputs = lib.listToAttrs (
+        map (
+          display:
+          lib.nameValuePair display.connector {
+            edid = syntheticEdid.filename;
+            mode = "e";
+          }
+        ) displays
+      );
+    };
 
-  # Match Hyprland's inventory-derived logical layout at the GDM login screen.
-  # ReFrame maps pointer coordinates against the same calculated desktop.
-  environment.etc."xdg/monitors.xml".text = ''
-    <monitors version="2">
-      <policy>
-        <stores>
-          <store>system</store>
-        </stores>
-      </policy>
-      <configuration>
-        <layoutmode>logical</layoutmode>
-        ${lib.concatMapStrings mkGdmLogicalMonitor displays}
-      </configuration>
-    </monitors>
-  '';
+    # Match Hyprland's inventory-derived logical layout at the GDM login screen.
+    # ReFrame maps pointer coordinates against the same calculated desktop.
+    environment.etc."xdg/monitors.xml".text = ''
+      <monitors version="2">
+        <policy>
+          <stores>
+            <store>system</store>
+          </stores>
+        </policy>
+        <configuration>
+          <layoutmode>logical</layoutmode>
+          ${lib.concatMapStrings mkGdmLogicalMonitor displays}
+        </configuration>
+      </monitors>
+    '';
 
-  services.reframe.enable = true;
+    services.reframe.enable = true;
 
-  sops.secrets.reframeVncPassword = {
-    key = "reframe/vnc/password";
-  };
+    sops.secrets.reframeVncPassword = {
+      key = "reframe/vnc/password";
+    };
 
-  sops.templates = lib.mapAttrs' (
-    instance: spec:
-    lib.nameValuePair "reframe-${instance}.conf" {
-      path = reframeConfigPath instance;
-      # The streamer starts as root but its capability bounding set excludes
-      # CAP_DAC_OVERRIDE, so it cannot read a 0400 file owned by `reframe`.
-      # Let it read as owner and the unprivileged server read via its group.
-      owner = "root";
-      group = "reframe";
-      mode = "0440";
-      content = mkReframeConfig spec;
-      restartUnits = [
-        "reframe-server@${instance}.service"
-        "reframe-streamer@${instance}.service"
-      ];
-    }
-  ) reframeInstances;
-
-  # ReFrame's NixOS module normally writes its configuration to /etc, which
-  # would expose the VNC password in the Nix store. `asDropin` makes NixOS add
-  # overrides to ReFrame's packaged template units instead of replacing them,
-  # preserving their socket dependencies, privilege split, capabilities, and
-  # hardening. Define the command override on each concrete instance: systemd
-  # did not merge the generic template drop-in with NixOS' instance drop-ins.
-  # The empty ExecStart resets the vendor command before the second entry points
-  # it at the runtime-only, sops-rendered configuration.
-  systemd.services = lib.foldl' (
-    services: instance:
-    services
-    // {
-      "reframe-server@${instance}" = {
-        overrideStrategy = "asDropin";
-        wantedBy = [ "multi-user.target" ];
-        wants = [ "sops-install-secrets.service" ];
-        after = [ "sops-install-secrets.service" ];
-        serviceConfig.ExecStart = [
-          ""
-          "${reframeServer} --config=${reframeConfigPath instance} --socket=%t/reframe/${instance}.sock --session-socket=%t/reframe-session/${instance}.sock"
+    sops.templates = lib.mapAttrs' (
+      instance: spec:
+      lib.nameValuePair "reframe-${instance}.conf" {
+        path = reframeConfigPath instance;
+        # The streamer starts as root but its capability bounding set excludes
+        # CAP_DAC_OVERRIDE, so it cannot read a 0400 file owned by `reframe`.
+        # Let it read as owner and the unprivileged server read via its group.
+        owner = "root";
+        group = "reframe";
+        mode = "0440";
+        content = mkReframeConfig spec;
+        restartUnits = [
+          "reframe-server@${instance}.service"
+          "reframe-streamer@${instance}.service"
         ];
-      };
-      "reframe-streamer@${instance}" = {
-        overrideStrategy = "asDropin";
-        wants = [ "sops-install-secrets.service" ];
-        after = [ "sops-install-secrets.service" ];
-        serviceConfig.ExecStart = [
-          ""
-          "${reframeStreamer} --config=${reframeConfigPath instance} --socket=%t/reframe/${instance}.sock"
-        ];
-      };
-    }
-  ) { } (builtins.attrNames reframeInstances);
+      }
+    ) reframeInstances;
+
+    # ReFrame's NixOS module normally writes its configuration to /etc, which
+    # would expose the VNC password in the Nix store. `asDropin` makes NixOS add
+    # overrides to ReFrame's packaged template units instead of replacing them,
+    # preserving their socket dependencies, privilege split, capabilities, and
+    # hardening. Define the command override on each concrete instance: systemd
+    # did not merge the generic template drop-in with NixOS' instance drop-ins.
+    # The empty ExecStart resets the vendor command before the second entry points
+    # it at the runtime-only, sops-rendered configuration.
+    systemd.services = lib.foldl' (
+      services: instance:
+      services
+      // {
+        "reframe-server@${instance}" = {
+          overrideStrategy = "asDropin";
+          wantedBy = [ "multi-user.target" ];
+          wants = [ "sops-install-secrets.service" ];
+          after = [ "sops-install-secrets.service" ];
+          serviceConfig.ExecStart = [
+            ""
+            "${reframeServer} --config=${reframeConfigPath instance} --socket=%t/reframe/${instance}.sock --session-socket=%t/reframe-session/${instance}.sock"
+          ];
+        };
+        "reframe-streamer@${instance}" = {
+          overrideStrategy = "asDropin";
+          wants = [ "sops-install-secrets.service" ];
+          after = [ "sops-install-secrets.service" ];
+          serviceConfig.ExecStart = [
+            ""
+            "${reframeStreamer} --config=${reframeConfigPath instance} --socket=%t/reframe/${instance}.sock"
+          ];
+        };
+      }
+    ) { } (builtins.attrNames reframeInstances);
+  };
 }
