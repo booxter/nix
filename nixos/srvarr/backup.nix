@@ -1,11 +1,8 @@
 {
   config,
-  hostInventory,
   ...
 }:
 let
-  backup = hostInventory.backups;
-  backupClient = backup.clients.${config.networking.hostName};
   stateRoot = config.host.srvarrPaths.stateDir;
   mysqlDataDir = "${stateRoot}/mysql";
   pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
@@ -27,19 +24,8 @@ let
     pinepodsDatabaseDir
     "${pinepodsDatabaseDir}/**"
   ];
-  resticPasswordSecret = "backup/restic/local/password";
-  resticSshKeySecret = "backup/restic/local/ssh/privateKey";
 in
 {
-  sops.secrets = {
-    ${resticPasswordSecret} = { };
-    ${resticSshKeySecret} = {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-    };
-  };
-
   host.backups.artifacts.mariadb.romm = {
     job = "beast";
     displayName = "RomM";
@@ -88,20 +74,8 @@ in
   };
 
   host.backups.jobs.beast = {
-    title = "Restic To Beast";
     paths = backupPaths;
     exclude = backupExclude;
-    repository = {
-      type = "sftp";
-      path = backupClient.repositoryPath;
-      passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
-      dependencyUnits = [ "sops-install-secrets.service" ];
-      sftp = {
-        host = backup.server.host;
-        user = backupClient.ingestUser;
-        identityFile = config.sops.secrets.${resticSshKeySecret}.path;
-      };
-    };
   };
 
   # PinePods' downloaded podcast media lives under the separate media root and

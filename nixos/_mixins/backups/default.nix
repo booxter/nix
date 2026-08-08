@@ -7,6 +7,7 @@
 {
   imports = [
     ./artifacts.nix
+    ./client.nix
     ./jobs.nix
     ./metrics
     ./server.nix
