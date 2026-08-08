@@ -31,11 +31,6 @@ in
   };
 
   config = lib.mkIf (serverSpec != null) {
-    host.ups.scheduler = {
-      enable = true;
-      shutdownDelaySeconds = if config.host.isVM then 450 else 900;
-    };
-
     environment.etc."nut/upsclient.pass" = lib.mkIf useLiteralPassword {
       text = "upsslave123\n";
       mode = "0600";

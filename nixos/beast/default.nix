@@ -10,8 +10,6 @@
     ./lolek.nix
   ];
 
-  host.ups.scheduler.critical = true;
-
   networking.resolvconf.enable = true;
 
   environment.systemPackages = with pkgs; [

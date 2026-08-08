@@ -5,26 +5,11 @@
   ...
 }:
 let
-  cfg = config.host.ups.scheduler;
+  isServer = config.power.ups.mode == "netserver";
+  shutdownDelaySeconds = if config.host.isVM then 450 else 900;
 in
 {
-  options.host.ups.scheduler = {
-    enable = lib.mkEnableOption "UPS shutdown scheduling";
-
-    critical = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether to wait for a low-battery event before shutting down.";
-    };
-
-    shutdownDelaySeconds = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 600;
-      description = "Seconds to remain on battery before shutting down.";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf config.power.ups.enable {
     systemd.tmpfiles.rules = [
       # upssched (runs as nutmon) needs to create pipe/lock files here
       "d /run/nut 0770 nutmon nutmon -"
@@ -70,11 +55,11 @@ in
         PIPEFN /run/nut/upssched.pipe
         LOCKFN /run/nut/upssched.lock
         ${
-          if cfg.critical then
+          if isServer then
             ""
           else
             ''
-              AT ONBATT * START-TIMER onbatt ${toString cfg.shutdownDelaySeconds}
+              AT ONBATT * START-TIMER onbatt ${toString shutdownDelaySeconds}
               AT ONLINE * CANCEL-TIMER onbatt
             ''
         }

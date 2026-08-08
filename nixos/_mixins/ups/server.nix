@@ -23,8 +23,6 @@ let
 in
 {
   config = lib.mkIf (device != null) {
-    host.ups.scheduler.enable = true;
-
     environment.etc = lib.mkIf useLiteralPasswords {
       "nut/upsmon.pass" = {
         text = "upsmon123\n";
