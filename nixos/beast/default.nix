@@ -11,9 +11,7 @@
   ];
 
   environment.systemPackages = with pkgs; [
-    hdparm
     join-media-parts
     lm_sensors
-    nvme-cli
   ];
 }

@@ -1,7 +1,7 @@
 let
   beast = "beast";
   diskBayRows = 5;
-  disk =
+  sataHdd =
     bay: serial: model:
     let
       index = bay - 1;
@@ -12,14 +12,17 @@ let
       bay = toString bay;
       col = toString col;
       inherit model;
+      media = "hdd";
       row = toString row;
       inherit serial;
+      transport = "sata";
     };
-  diskNm000H = bay: serial: disk bay serial "ST24000NM000H-3KS103";
-  diskNm000C = bay: serial: disk bay serial "ST24000NM000C-3WD103";
+  diskNm000H = bay: serial: sataHdd bay serial "ST24000NM000H-3KS103";
+  diskNm000C = bay: serial: sataHdd bay serial "ST24000NM000C-3WD103";
   nvmeSystemDisk = layout: {
     device = "/dev/nvme0n1";
     inherit layout;
+    transport = "nvme";
   };
   dataVolume = {
     device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";

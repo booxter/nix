@@ -217,10 +217,19 @@ in
               ];
               description = "Partitioning and filesystem layout for the operating system.";
             };
+            transport = lib.mkOption {
+              type = nullOr (enum [
+                "nvme"
+                "sas"
+                "sata"
+              ]);
+              default = null;
+              description = "Physical transport used by the system disk.";
+            };
           };
         });
       default =
-        if config.host.isVM then
+        if config.host.isVM || !config.host.storage.useInventory then
           {
             device = "/dev/sda";
             layout = "ext4";

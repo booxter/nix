@@ -1,9 +1,16 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
+  systemDisk = config.host.storage.systemDisk;
+  diskBays = config.host.storage.diskBays;
+  localDisks =
+    lib.optional (systemDisk != null) systemDisk ++ lib.optionals (diskBays != null) diskBays.disks;
+  hasNvme = lib.any (disk: disk.transport == "nvme") localDisks;
+  hasSataHdd = lib.any (disk: disk.transport == "sata" && disk.media == "hdd") localDisks;
   inventoryMounts = builtins.concatLists (
     map (
       volume:
@@ -36,5 +43,8 @@ let
     };
 in
 {
+  environment.systemPackages =
+    lib.optional hasNvme pkgs.nvme-cli ++ lib.optional hasSataHdd pkgs.hdparm;
+
   fileSystems = builtins.listToAttrs (map fileSystem inventoryMounts);
 }

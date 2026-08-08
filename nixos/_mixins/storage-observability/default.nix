@@ -85,6 +85,21 @@ in
                   col = lib.mkOption { type = lib.types.str; };
                   serial = lib.mkOption { type = lib.types.str; };
                   model = lib.mkOption { type = lib.types.str; };
+                  media = lib.mkOption {
+                    type = lib.types.enum [
+                      "hdd"
+                      "ssd"
+                    ];
+                    description = "Storage medium installed in this bay.";
+                  };
+                  transport = lib.mkOption {
+                    type = lib.types.enum [
+                      "nvme"
+                      "sas"
+                      "sata"
+                    ];
+                    description = "Physical transport used by this disk.";
+                  };
                 };
               }
             );
