@@ -2,6 +2,7 @@
   imports = [
     ./api.nix
     ./backup.nix
+    ./download-limiter.nix
     ./exporter.nix
     ./jellarr.nix
     ./jellarr-hardware.nix

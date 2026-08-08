@@ -12,6 +12,17 @@
       group = "restic-cloud";
       stagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/jellyfin";
     };
+    downloadLimiter = {
+      enable = true;
+      publicHost = hostInventory.servicesById.jellyfin.publicHost;
+      unlimitedNetworks = [
+        "127.0.0.0/8"
+        "::1"
+        hostInventory.site.lan.cidr
+        "fe80::/10"
+        "fc00::/7"
+      ];
+    };
     exporter.enable = true;
     logging.playbackDebug = true;
     maintenance = {
