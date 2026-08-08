@@ -1,14 +1,11 @@
 {
   config,
-  hostInventory,
-  hostSpec,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
-  hostStorage = hostInventory.storage.hosts.${hostSpec.name} or { };
   diskBays = config.host.storage.diskBays;
   diskBaysEnabled = diskBays != null;
   hbaEnabled = diskBaysEnabled && diskBays.hbaBackend != null;
@@ -63,90 +60,6 @@ let
     };
 in
 {
-  options.host.storage.diskBays = lib.mkOption {
-    type = lib.types.nullOr (
-      lib.types.submodule {
-        options = {
-          hbaBackend = lib.mkOption {
-            type = lib.types.nullOr (lib.types.enum [ "storcli" ]);
-            default = null;
-            description = "HBA metrics backend for these disk bays.";
-          };
-          rows = lib.mkOption {
-            type = lib.types.ints.positive;
-            description = "Number of physical disk-bay rows.";
-          };
-          disks = lib.mkOption {
-            type = lib.types.listOf (
-              lib.types.submodule {
-                options = {
-                  bay = lib.mkOption { type = lib.types.str; };
-                  row = lib.mkOption { type = lib.types.str; };
-                  col = lib.mkOption { type = lib.types.str; };
-                  serial = lib.mkOption { type = lib.types.str; };
-                  model = lib.mkOption { type = lib.types.str; };
-                  media = lib.mkOption {
-                    type = lib.types.enum [
-                      "hdd"
-                      "ssd"
-                    ];
-                    description = "Storage medium installed in this bay.";
-                  };
-                  transport = lib.mkOption {
-                    type = lib.types.enum [
-                      "nvme"
-                      "sas"
-                      "sata"
-                    ];
-                    description = "Physical transport used by this disk.";
-                  };
-                };
-              }
-            );
-            description = "Installed disks mapped to physical chassis bays.";
-          };
-          raidSets = lib.mkOption {
-            type = lib.types.attrsOf (
-              lib.types.submodule {
-                options = {
-                  implementation = lib.mkOption {
-                    type = lib.types.enum [ "md" ];
-                    description = "Software implementation managing this RAID set.";
-                  };
-                  level = lib.mkOption {
-                    type = lib.types.enum [
-                      0
-                      1
-                      4
-                      5
-                      6
-                      10
-                    ];
-                    description = "RAID level used by this set.";
-                  };
-                  memberBays = lib.mkOption {
-                    type = lib.types.listOf lib.types.str;
-                    description = "Physical bays containing this RAID set's members.";
-                  };
-                  volume = lib.mkOption {
-                    type = lib.types.str;
-                    description = "Logical storage volume backed by this RAID set.";
-                  };
-                };
-              }
-            );
-            default = { };
-            description = "RAID sets assembled from disks in these bays.";
-          };
-        };
-      }
-    );
-    default = if config.host.storage.useInventory then hostStorage.diskBays or null else null;
-    readOnly = true;
-    internal = true;
-    description = "Physical disk-bay inventory for this host.";
-  };
-
   config = lib.mkMerge [
     (lib.mkIf exporterEnabled {
       host.observability.nodeExporter.textfile.enable = true;
