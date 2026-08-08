@@ -25,7 +25,7 @@ let
   ollamaClient = config.host.llm.clients.paperless-gpt;
   textModel = "granite4:32b-a9b-h";
   visionModel = "qwen3-vl:8b-instruct";
-  ociImages = import ../../../oci { inherit pkgs; };
+  ociImages = import ../../../../oci { inherit pkgs; };
   image = ociImages.paperless-gpt.ref;
   imageFile = ociImages.paperless-gpt.imageFile;
   configure = pkgs.callPackage ./packages/paperless-gpt-configure { };

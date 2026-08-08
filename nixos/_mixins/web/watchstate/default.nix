@@ -17,7 +17,7 @@ let
   mediaRoot = if isMediaServer then mediaExport.path else "/media";
   sourceLibraryRoot = "${mediaRoot}/${mediaExport.layout.library.root}";
   jellyfinLibraryRoot = "/media/library";
-  ociImages = import ../../../oci { inherit pkgs; };
+  ociImages = import ../../../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "${watchstateService.internalEndpointName}.${hostInventory.site.lan.domain}";

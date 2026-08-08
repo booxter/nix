@@ -8,7 +8,7 @@ let
   basePackages = pkgs.lib.filterAttrs (
     _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
   ) (import ./pkgs pkgs);
-  degoogPackages = import ./nixos/_mixins/degoog/packages pkgs;
+  degoogPackages = import ./nixos/_mixins/web/degoog/packages pkgs;
 in
 basePackages
 // {

@@ -24,23 +24,15 @@ in
       ./_mixins/avahi
       ./_mixins/backups
       ./_mixins/builder.nix
-      ./_mixins/degoog
       ./_mixins/desktop-environment.nix
-      ./_mixins/external-service.nix
       ./_mixins/hardware
-      ./_mixins/home-assistant
-      ./_mixins/internal-https-service.nix
-      ./_mixins/jellyfin
       ./_mixins/llm
       ./_mixins/lolek
       ./_mixins/netboot.nix
       ./_mixins/nix
       ./_mixins/observability
-      ./_mixins/paperless
-      ./_mixins/paperless-gpt
       ./_mixins/pki
       ./_mixins/proxmox
-      ./_mixins/public-ingress.nix
       ./_mixins/qos
       ./_mixins/remote-gui
       ./_mixins/remote-unlock.nix
@@ -49,9 +41,8 @@ in
       ./_mixins/unifi-sync
       ./_mixins/ups
       ./_mixins/user
-      ./_mixins/vikunja
       ./_mixins/vm.nix
-      ./_mixins/watchstate
+      ./_mixins/web
       ./_mixins/wireguard-endpoint
       ./_mixins/yubi.nix
     ];

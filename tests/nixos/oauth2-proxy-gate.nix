@@ -93,8 +93,9 @@ pkgs.testers.runNixOSTest {
     { lib, ... }:
     {
       imports = [
-        ../../nixos/_mixins/external-service.nix
-        ../../nixos/_mixins/sso
+        ../../nixos/_mixins/web/external-service.nix
+        ../../nixos/_mixins/sso/oauth2-proxy-gate.nix
+        ../../nixos/_mixins/sso/oidc.nix
       ];
 
       options = {
