@@ -21,6 +21,10 @@ var testConfig = Config{
 			ThermalProfile: "standard", Builder: true,
 		},
 	},
+	Network: Network{Internet: InternetLink{
+		Ingress: LinkDirection{CapacityMbit: 1000, TargetMbit: 400},
+		Egress:  LinkDirection{CapacityMbit: 40, TargetMbit: 25},
+	}},
 }
 
 func TestHostDashboardReflectsHostCapabilities(t *testing.T) {

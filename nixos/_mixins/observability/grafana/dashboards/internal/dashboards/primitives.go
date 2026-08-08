@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/units"
 )
 
+const physicalInterfaceExclusion = `lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*`
+
 type DashboardOptions struct {
 	Title   string
 	UID     string
@@ -197,16 +199,20 @@ type PrometheusTarget struct {
 }
 
 type TimeseriesOptions struct {
-	ID         uint32
-	Title      string
-	Unit       string
-	Grid       dashboard.GridPos
-	DataSource common.DataSourceRef
-	Min        *float64
-	Max        *float64
-	Mappings   []dashboard.ValueMapping
-	Thresholds *dashboard.ThresholdsConfigBuilder
-	Targets    []PrometheusTarget
+	ID             uint32
+	Title          string
+	Unit           string
+	Grid           dashboard.GridPos
+	DataSource     common.DataSourceRef
+	Min            *float64
+	Max            *float64
+	Mappings       []dashboard.ValueMapping
+	Thresholds     *dashboard.ThresholdsConfigBuilder
+	Targets        []PrometheusTarget
+	Stacking       string
+	Fill           *float64
+	SoftMax        *float64
+	ShowThresholds bool
 }
 
 func timeSeries(options TimeseriesOptions) *timeseries.PanelBuilder {
@@ -234,6 +240,21 @@ func timeSeries(options TimeseriesOptions) *timeseries.PanelBuilder {
 	}
 	if options.Thresholds != nil {
 		panel.Thresholds(options.Thresholds)
+	}
+	if options.Stacking != "" {
+		panel.Stacking(common.NewStackingConfigBuilder().
+			Mode(common.StackingModeNormal).
+			Group(options.Stacking))
+	}
+	if options.Fill != nil {
+		panel.FillOpacity(*options.Fill)
+	}
+	if options.SoftMax != nil {
+		panel.AxisSoftMax(*options.SoftMax)
+	}
+	if options.ShowThresholds {
+		panel.ThresholdsStyle(common.NewGraphThresholdsStyleConfigBuilder().
+			Mode(common.GraphThresholdsStyleModeLine))
 	}
 	for _, target := range options.Targets {
 		panel.WithTarget(prometheusQuery(target.RefID, target.Expression, target.Legend, false))

@@ -10,6 +10,12 @@ func TestDecodeConfig(t *testing.T) {
       "uid": "prometheus-uid"
     }
   },
+  "network": {
+    "internet": {
+      "ingress": {"capacityMbit": 1000, "targetMbit": 400},
+      "egress": {"capacityMbit": 40, "targetMbit": 25}
+    }
+  },
   "hosts": [
     {
       "name": "frame",
@@ -40,6 +46,12 @@ func TestDecodeConfigRejectsMissingPrometheusUID(t *testing.T) {
     "prometheus": {
       "type": "prometheus",
       "uid": ""
+    }
+  },
+  "network": {
+    "internet": {
+      "ingress": {"capacityMbit": 1000, "targetMbit": 400},
+      "egress": {"capacityMbit": 40, "targetMbit": 25}
     }
   },
   "hosts": [

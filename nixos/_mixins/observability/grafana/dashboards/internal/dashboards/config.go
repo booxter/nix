@@ -29,6 +29,21 @@ type DataSources struct {
 type Config struct {
 	DataSources DataSources `json:"dataSources"`
 	Hosts       []Host      `json:"hosts"`
+	Network     Network     `json:"network"`
+}
+
+type Network struct {
+	Internet InternetLink `json:"internet"`
+}
+
+type InternetLink struct {
+	Ingress LinkDirection `json:"ingress"`
+	Egress  LinkDirection `json:"egress"`
+}
+
+type LinkDirection struct {
+	CapacityMbit float64 `json:"capacityMbit"`
+	TargetMbit   float64 `json:"targetMbit"`
 }
 
 type HostStorage struct {
@@ -74,6 +89,17 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 	}
 	if len(config.Hosts) == 0 {
 		return Config{}, fmt.Errorf("at least one dashboard host is required")
+	}
+	for direction, link := range map[string]LinkDirection{
+		"ingress": config.Network.Internet.Ingress,
+		"egress":  config.Network.Internet.Egress,
+	} {
+		if link.TargetMbit <= 0 || link.CapacityMbit <= 0 {
+			return Config{}, fmt.Errorf("internet %s rates must be positive", direction)
+		}
+		if link.TargetMbit > link.CapacityMbit {
+			return Config{}, fmt.Errorf("internet %s target exceeds capacity", direction)
+		}
 	}
 	seenHosts := make(map[string]struct{}, len(config.Hosts))
 	for _, host := range config.Hosts {

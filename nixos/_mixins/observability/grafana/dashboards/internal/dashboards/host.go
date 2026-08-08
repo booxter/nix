@@ -48,15 +48,14 @@ func hostNetworkTargets(host Host, selector string) []PrometheusTarget {
 		}
 	}
 
-	deviceExclusion := `lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*`
 	return []PrometheusTarget{
 		{
 			RefID: "A", Legend: "receive",
-			Expression: fmt.Sprintf(`sum(rate(node_network_receive_bytes_total{%s,host_network_source="node",device!~"%s"}[$__rate_interval])) * 8`, selector, deviceExclusion),
+			Expression: fmt.Sprintf(`sum(rate(node_network_receive_bytes_total{%s,host_network_source="node",device!~"%s"}[$__rate_interval])) * 8`, selector, physicalInterfaceExclusion),
 		},
 		{
 			RefID: "B", Legend: "transmit",
-			Expression: fmt.Sprintf(`sum(rate(node_network_transmit_bytes_total{%s,host_network_source="node",device!~"%s"}[$__rate_interval])) * 8`, selector, deviceExclusion),
+			Expression: fmt.Sprintf(`sum(rate(node_network_transmit_bytes_total{%s,host_network_source="node",device!~"%s"}[$__rate_interval])) * 8`, selector, physicalInterfaceExclusion),
 		},
 	}
 }

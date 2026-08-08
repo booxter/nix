@@ -51,6 +51,10 @@
         rateMbit = 10;
       };
     };
+    network.links.internet.capacityMbit = {
+      ingress = 1000;
+      egress = 40;
+    };
     trust.ssh = {
       authorizedKeys = ssh.authorizedKeysForRealm "home";
       fleetBootHosts = true;

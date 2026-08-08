@@ -62,6 +62,15 @@ let
     };
   dashboardGenerator = pkgs.callPackage ./dashboards/package.nix { };
   grafanaSso = hostInventory.sso.applications.grafana;
+  internetTargetMbit =
+    direction:
+    lib.foldl' lib.max 0 (
+      map (target: target.rateMbit) (
+        builtins.filter (target: target.link == "internet" && target.direction == direction) (
+          builtins.attrValues realm.network.bandwidthTargets
+        )
+      )
+    );
   dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
     builtins.toJSON {
       dataSources.prometheus = {
@@ -69,6 +78,16 @@ let
         uid = grafanaPrometheusUid;
       };
       hosts = map dashboardHost realmHostSpecs;
+      network.internet = {
+        ingress = {
+          capacityMbit = realm.network.links.internet.capacityMbit.ingress;
+          targetMbit = internetTargetMbit "ingress";
+        };
+        egress = {
+          capacityMbit = realm.network.links.internet.capacityMbit.egress;
+          targetMbit = internetTargetMbit "egress";
+        };
+      };
     }
   );
   generatedDashboards = pkgs.runCommandLocal "grafana-dashboards" { } ''
