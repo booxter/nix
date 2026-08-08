@@ -7,7 +7,6 @@
 
   imports = [
     ./backup.nix
-    ./nfs.nix
     ./paths.nix
   ];
 }
