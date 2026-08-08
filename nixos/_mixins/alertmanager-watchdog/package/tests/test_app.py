@@ -48,7 +48,14 @@ def make_runtime(
 ) -> tuple[Runtime, RecordingNotifier]:
     notifier = RecordingNotifier()
     return (
-        Runtime(notifier, StaticProbe(result), repeat, StateStore(tmp_path), "https://fana/ready"),
+        Runtime(
+            notifier,
+            StaticProbe(result),
+            repeat,
+            "watchdog1",
+            StateStore(tmp_path),
+            "https://fana/ready",
+        ),
         notifier,
     )
 
@@ -124,14 +131,15 @@ def test_secret_and_message_helpers_validate_and_escape(tmp_path: Path) -> None:
 
     assert truncate("  repeated\n whitespace  ") == "repeated whitespace"
     assert truncate("abcdef", 5) == "ab..."
-    firing = format_status_message("https://fana?a=1&b=2", "<bad>", Status.DOWN)
+    firing = format_status_message("watchdog<1>", "https://fana?a=1&b=2", "<bad>", Status.DOWN)
+    assert "watchdog&lt;1&gt;" in firing
     assert "a=1&amp;b=2" in firing
     assert "&lt;bad&gt;" in firing
 
 
 def test_cli_uses_systemd_state_default() -> None:
     arguments = parse_arguments(
-        ["--url", "https://fana/ready", "--ca-file", "/ca.pem"],
+        ["--sender", "frame", "--url", "https://fana/ready", "--ca-file", "/ca.pem"],
         {"STATE_DIRECTORY": "/state"},
     )
 
@@ -140,6 +148,7 @@ def test_cli_uses_systemd_state_default() -> None:
         client_cert_file=None,
         client_key_file=None,
         repeat_after_seconds=21_600,
+        sender="frame",
         state_dir=Path("/state"),
         telegram_bot_token_file=None,
         telegram_chat_id_file=None,
@@ -154,6 +163,7 @@ def test_runtime_wires_explicit_credentials_into_native_backends(tmp_path: Path)
         client_cert_file="/client.pem",
         client_key_file="/client-key.pem",
         repeat_after_seconds=30,
+        sender="frame",
         state_dir=tmp_path,
         telegram_bot_token_file="/token",
         telegram_chat_id_file="/chat",
@@ -172,6 +182,7 @@ def test_runtime_wires_explicit_credentials_into_native_backends(tmp_path: Path)
         "https://fana/ready",
     )
     assert configured.state == StateStore(tmp_path)
+    assert configured.sender == "frame"
 
 
 def test_main_reports_configuration_errors(
@@ -179,5 +190,5 @@ def test_main_reports_configuration_errors(
 ) -> None:
     monkeypatch.delenv("CREDENTIALS_DIRECTORY", raising=False)
 
-    assert main(["--url", "https://fana/ready", "--ca-file", "/ca.pem"]) == 1
+    assert main(["--sender", "frame", "--url", "https://fana/ready", "--ca-file", "/ca.pem"]) == 1
     assert "CREDENTIALS_DIRECTORY is not set" in capsys.readouterr().err

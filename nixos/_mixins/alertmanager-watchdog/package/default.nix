@@ -33,7 +33,7 @@ python3.pkgs.buildPythonApplication {
   pythonImportsCheck = [ "fana_alertmanager_watchdog" ];
 
   meta = {
-    description = "Watch fana Alertmanager readiness and send direct Telegram notifications";
+    description = "Watch Alertmanager readiness and send direct Telegram notifications";
     license = lib.licenses.mit;
     mainProgram = "fana-alertmanager-watchdog";
     platforms = lib.platforms.linux;

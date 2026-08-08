@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fana-alertmanager-watchdog"
 version = "0.1.0"
-description = "Watch fana Alertmanager readiness and send direct Telegram notifications"
+description = "Watch Alertmanager readiness and send direct Telegram notifications"
 requires-python = ">=3.11"
 dependencies = ["atomic-file-writes", "python-telegram-bot"]
 

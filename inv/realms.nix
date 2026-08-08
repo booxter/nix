@@ -65,6 +65,7 @@
       };
       observability = {
         serverHost = "fana";
+        alertmanager.watchdogHosts = [ "frame" ];
         blackbox.sourceHosts = [
           "fana"
           "beast"

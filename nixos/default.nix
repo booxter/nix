@@ -22,6 +22,7 @@ in
     ]
     ++ [
       ./_mixins/adaptive-upload-policy
+      ./_mixins/alertmanager-watchdog
       ./_mixins/attic
       ./_mixins/auto-upgrade
       ./_mixins/avahi

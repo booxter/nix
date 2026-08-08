@@ -130,6 +130,7 @@ class Runtime:
     notifier: Notifier
     probe: ReadinessProbe
     repeat_after_seconds: int
+    sender: str
     state: StateStore
     url: str
 
@@ -172,28 +173,29 @@ def truncate(value: object, limit: int = 300) -> str:
     return normalized[: limit - 3] + "..."
 
 
-def format_status_message(url: str, detail: str, status: Status) -> str:
+def format_status_message(sender: str, url: str, detail: str, status: Status) -> str:
     title = html.escape(url, quote=False)
+    safe_sender = html.escape(sender, quote=False)
     safe_detail = html.escape(detail, quote=False)
     if status is Status.UP:
         return (
             "✅ <b>Alert resolved</b>\n"
-            "<b>Fana alertmanager readiness probe recovered</b>\n\n"
-            f"frame can reach {title} with mTLS again.\n\n"
+            "<b>Alertmanager readiness probe recovered</b>\n\n"
+            f"{safe_sender} can reach {title} with mTLS again.\n\n"
             "<b>Details</b>\n"
             f"• Target: {title}\n"
-            "• Sender: frame\n"
-            "• Source: fana/monitoring watchdog"
+            f"• Sender: {safe_sender}\n"
+            "• Source: Alertmanager watchdog"
         )
     return (
         "🚨 <b>Alert firing</b>\n"
-        "<b>Fana Alertmanager readiness probe failed</b>\n\n"
-        f"frame cannot reach {title} with mTLS.\n"
-        "Regular alert notifications from fana may be unavailable.\n\n"
+        "<b>Alertmanager readiness probe failed</b>\n\n"
+        f"{safe_sender} cannot reach {title} with mTLS.\n"
+        "Regular Alertmanager notifications may be unavailable.\n\n"
         "<b>Details</b>\n"
         f"• Target: {title}\n"
-        "• Sender: frame\n"
-        "• Source: fana/monitoring watchdog\n"
+        f"• Sender: {safe_sender}\n"
+        "• Source: Alertmanager watchdog\n"
         f"• Detail: {safe_detail}\n\n"
         '<a href="https://grafana.home.arpa/alerting/groups">Open active alerts in Grafana</a>'
     )
@@ -214,7 +216,7 @@ def run(runtime: Runtime, now: int) -> None:
     result = runtime.probe.check()
     if result.ready:
         if last_status is Status.DOWN:
-            runtime.notifier.send(format_status_message(runtime.url, "", Status.UP))
+            runtime.notifier.send(format_status_message(runtime.sender, runtime.url, "", Status.UP))
         runtime.state.record_up()
         return
 
@@ -226,7 +228,9 @@ def run(runtime: Runtime, now: int) -> None:
     )
     write_text_atomic(runtime.state.error_file, f"{result.detail}\n")
     if notify:
-        runtime.notifier.send(format_status_message(runtime.url, result.detail, Status.DOWN))
+        runtime.notifier.send(
+            format_status_message(runtime.sender, runtime.url, result.detail, Status.DOWN)
+        )
     runtime.state.record_down(now if notify else None)
 
 
@@ -236,6 +240,7 @@ class Arguments:
     client_cert_file: str | None
     client_key_file: str | None
     repeat_after_seconds: int
+    sender: str
     state_dir: Path
     telegram_bot_token_file: str | None
     telegram_chat_id_file: str | None
@@ -248,6 +253,7 @@ def parse_arguments(
     environment: Mapping[str, str] = os.environ,
 ) -> Arguments:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--sender", required=True)
     parser.add_argument("--url", required=True)
     parser.add_argument("--ca-file", required=True, type=Path)
     parser.add_argument(
@@ -267,6 +273,7 @@ def parse_arguments(
         client_cert_file=parsed.client_cert_file,
         client_key_file=parsed.client_key_file,
         repeat_after_seconds=parsed.repeat_after_seconds,
+        sender=parsed.sender,
         state_dir=parsed.state_dir,
         telegram_bot_token_file=parsed.telegram_bot_token_file,
         telegram_chat_id_file=parsed.telegram_chat_id_file,
@@ -292,6 +299,7 @@ def runtime(arguments: Arguments, environment: Mapping[str, str] = os.environ) -
             url=arguments.url,
         ),
         repeat_after_seconds=arguments.repeat_after_seconds,
+        sender=arguments.sender,
         state=StateStore(arguments.state_dir),
         url=arguments.url,
     )
