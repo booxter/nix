@@ -91,7 +91,7 @@ let
       if config.programs.sketchybarAlertmanager.enable then
         {
           url = config.programs.sketchybarAlertmanager.alertmanagerUrl;
-          caCertificate = toString internalPkiRootCaPath;
+          caCertificate = "${internalPkiRootCaPath}";
           clientCertificate = config.programs.sketchybarAlertmanager.clientCertificate;
           clientKey = config.programs.sketchybarAlertmanager.clientKey;
         }
