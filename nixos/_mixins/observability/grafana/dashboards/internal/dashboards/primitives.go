@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
@@ -58,12 +59,26 @@ func greenToRedThreshold(value float64) *dashboard.ThresholdsConfigBuilder {
 }
 
 func availabilityMapping() dashboard.ValueMapping {
+	return exactValueMapping(map[string]dashboard.ValueMappingResult{
+		"0": mappedValue("Down", "red", 0),
+		"1": mappedValue("Up", "green", 1),
+	})
+}
+
+func mappedValue(text, color string, index int32) dashboard.ValueMappingResult {
+	return dashboard.ValueMappingResult{Color: ptr(color), Text: ptr(text), Index: ptr(index)}
+}
+
+func exactValueMapping(values map[string]dashboard.ValueMappingResult) dashboard.ValueMapping {
 	valueMap := dashboard.NewValueMap()
-	valueMap.Options = map[string]dashboard.ValueMappingResult{
-		"0": {Color: ptr("red"), Text: ptr("Down"), Index: ptr(int32(0))},
-		"1": {Color: ptr("green"), Text: ptr("Up"), Index: ptr(int32(1))},
-	}
+	valueMap.Options = values
 	return dashboard.ValueMapping{ValueMap: valueMap}
+}
+
+func applicationMetric(metric, service string, matchers ...string) string {
+	labels := []string{`scrape_profile="application"`, fmt.Sprintf("service=%q", service)}
+	labels = append(labels, matchers...)
+	return fmt.Sprintf("%s{%s}", metric, strings.Join(labels, ","))
 }
 
 func prometheusQuery(refID, expression, legend string, instant bool) *prometheus.DataqueryBuilder {
@@ -119,6 +134,10 @@ type ValueStatOptions struct {
 	Unit       string
 	Grid       dashboard.GridPos
 	DataSource common.DataSourceRef
+	Min        *float64
+	Max        *float64
+	Mappings   []dashboard.ValueMapping
+	Background bool
 	Thresholds *dashboard.ThresholdsConfigBuilder
 }
 
@@ -129,8 +148,6 @@ func valueStat(options ValueStatOptions) *stat.PanelBuilder {
 		Datasource(options.DataSource).
 		GridPos(options.Grid).
 		Unit(options.Unit).
-		ColorMode(common.BigValueColorModeValue).
-		GraphMode(common.BigValueGraphModeArea).
 		TextMode(common.BigValueTextModeValueAndName).
 		Orientation(common.VizOrientationAuto).
 		ReduceOptions(common.NewReduceDataOptionsBuilder().
@@ -138,6 +155,22 @@ func valueStat(options ValueStatOptions) *stat.PanelBuilder {
 			Calcs([]string{"lastNotNull"}).
 			Fields("")).
 		WithTarget(prometheusQuery("A", options.Expression, options.Legend, true))
+	if options.Background {
+		panel.ColorMode(common.BigValueColorModeBackground).
+			GraphMode(common.BigValueGraphModeNone)
+	} else {
+		panel.ColorMode(common.BigValueColorModeValue).
+			GraphMode(common.BigValueGraphModeArea)
+	}
+	if options.Min != nil {
+		panel.Min(*options.Min)
+	}
+	if options.Max != nil {
+		panel.Max(*options.Max)
+	}
+	if options.Mappings != nil {
+		panel.Mappings(options.Mappings)
+	}
 	if options.Thresholds != nil {
 		panel.Thresholds(options.Thresholds)
 	}

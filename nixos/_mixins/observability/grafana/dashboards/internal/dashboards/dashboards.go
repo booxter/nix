@@ -47,8 +47,11 @@ func All(config Config) ([]Definition, error) {
 		build func(Config) (dashboard.Dashboard, error)
 	}{
 		{path: "Infrastructure/resolver-health.json", build: ResolverProbeOverview},
+		{path: "Infrastructure/pki.json", build: PKIOverview},
 		{path: "Infrastructure/sso.json", build: SSOOverview},
+		{path: "Services/lolek.json", build: LolekOverview},
 		{path: "Services/services.json", build: ServiceProbeOverview},
+		{path: "Services/vikunja.json", build: VikunjaOverview},
 	}
 	for _, item := range generated {
 		model, err := item.build(config)
