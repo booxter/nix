@@ -10,6 +10,7 @@ let
   user = import ./user.nix;
   fleetRepository = import ./repository.nix;
   regional = import ./regional.nix;
+  observabilityFacts = import ./observability.nix;
   serviceAccounts = import ./service-accounts.nix;
   atticFacts = import ./attic.nix { inherit lanDomain; };
   autoUpgradeFacts = import ./auto-upgrade { inherit lib; };
@@ -186,6 +187,12 @@ let
     spec:
     let
       realm = realmFor spec;
+      declaredObservability = spec.observability or { };
+      observability = {
+        capacityProfile = declaredObservability.capacityProfile or "standard";
+        thermalProfile =
+          declaredObservability.thermalProfile or (if spec.isVM or false then "none" else "standard");
+      };
       network =
         lib.optionalAttrs (spec.isVM or false) {
           primaryInterface = "ens18";
@@ -199,11 +206,20 @@ let
       ) (builtins.attrValues realm.services);
       localDnsAliases = lib.unique ((spec.localDnsAliases or [ ]) ++ serviceLocalDnsAliases);
     in
+    assert lib.assertMsg
+      (builtins.hasAttr observability.capacityProfile observabilityFacts.profiles.capacity)
+      "host ${spec.name} selects unknown observability capacity profile '${observability.capacityProfile}'";
+    assert lib.assertMsg
+      (builtins.hasAttr observability.thermalProfile observabilityFacts.profiles.thermal)
+      "host ${spec.name} selects unknown observability thermal profile '${observability.thermalProfile}'";
     builtins.seq realm (
       {
         inherit username;
       }
       // spec
+      // {
+        inherit observability;
+      }
       // lib.optionalAttrs (network != { }) { inherit network; }
       // lib.optionalAttrs (localDnsAliases != [ ]) { inherit localDnsAliases; }
     );
@@ -418,6 +434,7 @@ let
 in
 rec {
   autoUpgrade = autoUpgradeFacts;
+  observability = observabilityFacts;
   builders = builderFacts;
   dashboards = checkedDashboardFacts;
   egressVpns = egressVpnFacts;

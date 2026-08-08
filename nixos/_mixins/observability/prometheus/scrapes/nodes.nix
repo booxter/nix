@@ -8,24 +8,27 @@
 let
   hostname = config.networking.hostName;
   nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
-  isVirtualNodeName =
-    name:
-    builtins.hasAttr name hostInventory.nixosHosts && (hostInventory.nixosHosts.${name}.isVM or false);
-  hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
+  mkNodeLabels = name: hostConfig: isProxmox: {
+    availability = hostConfig.host.availability;
+    capacity_profile = hostConfig.host.observability.capacityProfile;
+    component = "node";
+    host_network_charts = lib.boolToString (!isProxmox);
+    host_network_source = if isProxmox then "classified" else "node";
+    host_class = if hostConfig.host.isVM then "virtual" else "hardware";
+    host_virtual = lib.boolToString hostConfig.host.isVM;
+    instance = name;
+    realm = hostConfig.host.realm;
+    scrape_expectation = hostConfig.host.availability;
+    scrape_profile = "node";
+    thermal_profile = hostConfig.host.observability.thermalProfile;
+  };
   mkRemoteNixosNodeTargetConfig =
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
     in
     {
-      labels = {
-        host_network_charts = lib.boolToString (!hostConfig.host.isProxmox);
-        host_network_source = if hostConfig.host.isProxmox then "classified" else "node";
-        host_class = hostClassForName name;
-        host_virtual = lib.boolToString (isVirtualNodeName name);
-        instance = name;
-        scrape_expectation = hostConfig.host.availability;
-      };
+      labels = mkNodeLabels name hostConfig hostConfig.host.isProxmox;
       targets = [ "${name}:9100" ];
     };
   nixosNodeExporterTargetNames = builtins.filter (
@@ -43,14 +46,7 @@ let
       hostConfig = outputs.darwinConfigurations.${name}.config;
     in
     {
-      labels = {
-        host_network_charts = "true";
-        host_network_source = "node";
-        host_class = "hardware";
-        host_virtual = "false";
-        instance = name;
-        scrape_expectation = hostConfig.host.availability;
-      };
+      labels = mkNodeLabels name hostConfig false;
       targets = [ "${hostConfig.networking.hostName}:9100" ];
     };
   darwinNodeExporterTargetNames = builtins.filter (
@@ -83,14 +79,7 @@ in
           targets = [
             "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
           ];
-          labels = {
-            host_network_charts = "true";
-            host_network_source = "node";
-            host_class = hostClassForName hostname;
-            host_virtual = lib.boolToString (isVirtualNodeName hostname);
-            instance = hostname;
-            scrape_expectation = config.host.availability;
-          };
+          labels = mkNodeLabels hostname config config.host.isProxmox;
         }
       ];
     }

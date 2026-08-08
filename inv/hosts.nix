@@ -34,6 +34,7 @@ let
     in
     {
       builder.pool = "personal";
+      observability.capacityProfile = "cpu-bursty";
       isVM = true;
       name = "builder${idx'}";
       platform = "x86_64-linux";
@@ -70,6 +71,7 @@ let
       userProfile = "personal";
       hmFull = false;
       stateVersion = prxStateVersion;
+      observability.capacityProfile = "hypervisor";
       network.primaryInterface = prxNetIface;
       dhcpReservation = {
         match = macAddress;
@@ -115,6 +117,7 @@ in
       realm = "home";
       userProfile = "personal";
       availability = "intermittent";
+      observability.capacityProfile = "interactive";
       hasTouchId = true;
       isDesktop = true;
       isOperatorSeat = true;
@@ -136,6 +139,10 @@ in
       realm = "home";
       userProfile = "personal";
       builder.pool = "personal";
+      observability = {
+        capacityProfile = "interactive";
+        thermalProfile = "no-cpu";
+      };
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
@@ -182,6 +189,7 @@ in
         pool = "personal";
         speedFactor = 200;
       };
+      observability.capacityProfile = "cpu-bursty";
       desktop.environment = "hyprland";
       isOperatorSeat = true;
       isSecretsOperator = true;
