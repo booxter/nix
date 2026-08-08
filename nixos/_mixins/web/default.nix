@@ -4,6 +4,7 @@
     ./degoog
     ./external-service.nix
     ./home-assistant
+    ./houndarr
     ./internal-service.nix
     ./jellyfin
     ./paperless

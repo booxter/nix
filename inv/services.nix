@@ -117,6 +117,14 @@
       id = "houndarr";
       icon = "sh:houndarr.png";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/houndarr";
+        requiresLocalServices = [
+          "lidarr"
+          "radarr"
+          "sonarr"
+        ];
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
       glanceCategory = "media-admin";

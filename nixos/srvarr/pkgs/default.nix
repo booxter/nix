@@ -22,10 +22,6 @@ in
 
   aurral = pkgs.callPackage ./aurral { };
 
-  houndarr = pkgs.callPackage ./houndarr { };
-
-  houndarr-tools = pkgs.callPackage ./houndarr-tools { };
-
   letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
 
   seerr-tools = seerrTools.package;

@@ -36,7 +36,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "houndarr_tools" ];
 
   meta = {
-    description = "Readiness and status helpers for the srvarr Houndarr service";
+    description = "Readiness and status helpers for Houndarr";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
