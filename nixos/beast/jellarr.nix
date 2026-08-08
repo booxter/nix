@@ -5,7 +5,7 @@
     useHostVideoAcceleration = true;
     config = {
       version = 1;
-      base_url = "https://jf.${hostInventory.site.public.domain}:443";
+      base_url = "https://${hostInventory.servicesById.jellyfin.publicHost}:443";
       system = {
         serverName = "main";
         libraryScanFanoutConcurrency = 4;
