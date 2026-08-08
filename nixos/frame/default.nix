@@ -18,12 +18,6 @@ in
 
   nixpkgs.config.rocmSupport = true;
 
-  services.displayManager.gdm = {
-    enable = true;
-  };
-  services.displayManager.defaultSession = "hyprland";
-  programs.hyprland.enable = true;
-
   # systemd's global bpf-restrict-fs link took roughly three minutes to detach
   # during reboot while the kernel waited for a Tasks RCU grace period. No
   # service on this host uses RestrictFileSystems=, so keep the other default

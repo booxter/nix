@@ -168,7 +168,7 @@ in
         pool = "personal";
         speedFactor = 200;
       };
-      isDesktop = true;
+      desktop.environment = "hyprland";
       isOperatorSeat = true;
       isSecretsOperator = true;
       boot.remoteUnlock = {

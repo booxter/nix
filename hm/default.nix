@@ -7,6 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
+  desktopEnvironment = osConfig.host.desktop.environment;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
@@ -39,7 +40,7 @@ in
     ./_mixins/kitty
     ./_mixins/sketchybar
   ]
-  ++ lib.optionals (isDesktop && !isDarwin) [
+  ++ lib.optionals (desktopEnvironment == "hyprland") [
     ./_mixins/hyprland
   ]
   ++ lib.optionals isDesktop [

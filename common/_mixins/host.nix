@@ -51,9 +51,17 @@ in
       description = "Whether this host is a Nix builder.";
     };
 
+    desktop.environment = lib.mkOption {
+      type = with lib.types; nullOr (enum [ "hyprland" ]);
+      default = hostSpec.desktop.environment or null;
+      readOnly = true;
+      internal = true;
+      description = "Desktop environment selected by the host inventory.";
+    };
+
     isDesktop = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.isDesktop or false;
+      default = (hostSpec.isDesktop or false) || config.host.desktop.environment != null;
       readOnly = true;
       internal = true;
       description = "Whether this host has a desktop environment.";
