@@ -8,6 +8,7 @@
   ...
 }:
 let
+  backupJob = config.host.backups.destinationJob;
   pinepodsAccount = hostInventory.serviceAccounts.pinepods;
   mediaGroup = hostInventory.storage.nfs.exports.media.sharedGroup;
   ociImages = import ../../oci { inherit pkgs; };
@@ -362,7 +363,7 @@ in
 
   };
 
-  host.backups.jobs.beast.preparations.pinepods-native-backup = {
+  host.backups.jobs.${backupJob}.preparations.pinepods-native-backup = {
     service = "pinepods-native-backup";
     title = "PinePods Native Backup";
   };

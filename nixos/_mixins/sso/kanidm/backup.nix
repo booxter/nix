@@ -1,11 +1,10 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
+  backupJob = config.host.backups.destinationJob;
   cfg = config.host.sso.provider;
   backupDir = "/var/lib/kanidm/backups";
 in
@@ -20,6 +19,6 @@ in
       "d ${backupDir} 0700 kanidm kanidm - -"
     ];
 
-    host.backups.jobs.${backupHost}.paths = [ backupDir ];
+    host.backups.jobs.${backupJob}.paths = [ backupDir ];
   };
 }

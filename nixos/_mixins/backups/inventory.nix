@@ -28,11 +28,14 @@ let
       volume.mounts.${storage.mount};
   repositoryRoot = if mount == null then null else "${mount.mountPoint}/${storage.relativePath}";
   clients = if backup == null then { } else backup.clients;
+  isClient = builtins.hasAttr hostname clients;
   localClient =
     if serverHost != null && builtins.hasAttr serverHost clients then serverHost else null;
   offsite = if backup == null then null else backup.offsite;
   cloudGroup = config.host.backups.server.cloud.group;
   storageName = name: clients.${name}.storageName or name;
+  clientRepositoryPath =
+    if !isClient || repositoryRoot == null then "" else "${repositoryRoot}/${storageName hostname}";
   offloadUser = name: if name == localClient then cloudGroup else "restic-${name}-offload";
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -51,6 +54,42 @@ let
   ) clientNames;
 in
 {
+  options.host.backups = {
+    destinationJob = lib.mkOption {
+      type = lib.types.str;
+      default = if serverHost == null then "" else serverHost;
+      readOnly = true;
+      internal = true;
+      description = "Backup job selected by the realm backup policy.";
+    };
+
+    client = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = isClient;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host participates in its realm backup policy.";
+      };
+
+      isLocal = lib.mkOption {
+        type = lib.types.bool;
+        default = isClient && hostname == localClient;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host writes directly to its repository on the backup server.";
+      };
+
+      repositoryPath = lib.mkOption {
+        type = lib.types.str;
+        default = clientRepositoryPath;
+        readOnly = true;
+        internal = true;
+        description = "Repository path assigned to this backup client.";
+      };
+    };
+  };
+
   config = lib.mkMerge [
     {
       assertions = lib.optionals (backup != null) [
@@ -83,6 +122,16 @@ in
         {
           assertion = offsite.provider == "b2";
           message = "Unsupported backup offsite provider '${offsite.provider}'";
+        }
+        {
+          assertion = config.host.backups.jobs == { } || config.host.backups.client.enable;
+          message = "Host '${hostname}' defines backup jobs but is not a backup client in realm '${realmName}'";
+        }
+        {
+          assertion = lib.all (name: name == config.host.backups.destinationJob) (
+            builtins.attrNames config.host.backups.jobs
+          );
+          message = "Host '${hostname}' defines a backup job outside its realm backup policy";
         }
       ];
     }

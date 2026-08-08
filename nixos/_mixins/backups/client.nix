@@ -1,29 +1,18 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
   hostname = config.networking.hostName;
-  backup = hostInventory.realms.${config.host.realm}.services.backups or null;
-  isClient = backup != null && builtins.hasAttr hostname backup.clients;
-  isLocalClient = isClient && hostname == backup.server.host;
-  isRemoteClient = isClient && !isLocalClient;
-  client = backup.clients.${hostname};
-  jobName = backup.server.host;
+  cfg = config.host.backups.client;
+  isRemoteClient = cfg.enable && !cfg.isLocal;
+  jobName = config.host.backups.destinationJob;
   jobTitle = "${lib.toUpper (lib.substring 0 1 jobName)}${
     lib.substring 1 (builtins.stringLength jobName) jobName
   }";
   resticPasswordSecret = "backup/restic/local/password";
   resticSshKeySecret = "backup/restic/local/ssh/privateKey";
-  storageName = client.storageName or hostname;
-  serverStorage = hostInventory.storage.hosts.${backup.server.host};
-  storage = backup.server.storage;
-  repositoryRoot = "${
-    serverStorage.volumes.${storage.volume}.mounts.${storage.mount}.mountPoint
-  }/${storage.relativePath}";
-  repositoryPath = "${repositoryRoot}/${storageName}";
   localRepoPasswordSecret = "backup/restic/${hostname}/cloud/localPassword";
 in
 {
@@ -42,24 +31,24 @@ in
         title = "Restic To ${jobTitle}";
         repository = {
           type = "sftp";
-          path = repositoryPath;
+          path = cfg.repositoryPath;
           passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
           dependencyUnits = [ "sops-install-secrets.service" ];
           sftp = {
-            host = backup.server.host;
+            host = jobName;
             user = "restic-${hostname}";
             identityFile = config.sops.secrets.${resticSshKeySecret}.path;
           };
         };
       };
     })
-    (lib.mkIf isLocalClient {
+    (lib.mkIf cfg.isLocal {
       host.backups.jobs.${jobName} = {
         title = "${jobTitle} Local Restic";
         user = config.host.backups.server.cloud.group;
         repository = {
           type = "local";
-          path = repositoryPath;
+          path = cfg.repositoryPath;
           passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
           dependencyUnits = [ "sops-install-secrets.service" ];
         };

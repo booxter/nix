@@ -3,6 +3,7 @@
   ...
 }:
 let
+  backupJob = config.host.backups.destinationJob;
   stateRoot = config.host.srvarrPaths.stateDir;
   mysqlDataDir = "${stateRoot}/mysql";
   pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
@@ -27,7 +28,7 @@ let
 in
 {
   host.backups.artifacts.mariadb.romm = {
-    job = "beast";
+    job = backupJob;
     displayName = "RomM";
     destinationDir = rommDatabaseBackupDir;
     includeInJob = false;
@@ -37,7 +38,7 @@ in
   };
 
   host.backups.artifacts.sqlite.aurral = {
-    job = "beast";
+    job = backupJob;
     displayName = "Aurral";
     databasePath = "${aurralConfigDir}/aurral.db";
     destinationDir = aurralBackupDir;
@@ -45,7 +46,7 @@ in
   };
 
   host.backups.artifacts.sqlite.seerr = {
-    job = "beast";
+    job = backupJob;
     displayName = "Seerr";
     databasePath = "${seerrConfigDir}/db/db.sqlite3";
     destinationDir = seerrBackupDir;
@@ -59,7 +60,7 @@ in
   # SQLite database plus the Fernet master key used to decrypt stored Arr API
   # keys, so stage an online-consistent database copy and its matching key.
   host.backups.artifacts.sqlite.houndarr = {
-    job = "beast";
+    job = backupJob;
     displayName = "Houndarr";
     databasePath = "${houndarrConfigDir}/houndarr.db";
     destinationDir = houndarrBackupDir;
@@ -73,7 +74,7 @@ in
     ];
   };
 
-  host.backups.jobs.beast = {
+  host.backups.jobs.${backupJob} = {
     paths = backupPaths;
     exclude = backupExclude;
   };

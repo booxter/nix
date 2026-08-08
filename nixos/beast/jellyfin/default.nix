@@ -16,8 +16,8 @@
     enable = true;
     builtInBackup = {
       enable = true;
-      backupJob = "beast";
-      group = "restic-cloud";
+      backupJob = config.host.backups.destinationJob;
+      group = config.host.backups.server.cloud.group;
       stagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/jellyfin";
     };
     downloadLimiter = {

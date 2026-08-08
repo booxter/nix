@@ -18,6 +18,8 @@ let
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
   watchstateBackupStagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/watchstate";
+  backupJob = config.host.backups.destinationJob;
+  backupGroup = config.host.backups.server.cloud.group;
   watchstateUid = 296;
   watchstateTools = pkgs.callPackage ./watchstate-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
@@ -176,7 +178,7 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${watchstateDataDir} 0700 watchstate watchstate - -"
-    "d ${watchstateBackupStagingDir} 0750 root restic-cloud - -"
+    "d ${watchstateBackupStagingDir} 0750 root ${backupGroup} - -"
   ];
 
   systemd.services.podman-watchstate = {
@@ -210,14 +212,14 @@ in
     serviceConfig = {
       Type = "oneshot";
       User = "root";
-      Group = "restic-cloud";
+      Group = backupGroup;
       UMask = "0027";
       ExecStart = backupCommand;
       TimeoutStartSec = "2h";
     };
   };
 
-  host.backups.jobs.beast.preparations.watchstate-native-backup = {
+  host.backups.jobs.${backupJob}.preparations.watchstate-native-backup = {
     service = "watchstate-native-backup";
     title = "WatchState Native Backup";
     paths = [ watchstateBackupStagingDir ];

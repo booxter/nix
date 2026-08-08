@@ -7,19 +7,19 @@
 let
   paperlessService = hostInventory.servicesById.paperless;
   isOwner = paperlessService.owner == config.networking.hostName;
-  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
+  backupJob = config.host.backups.destinationJob;
   dataDir = "/var/lib/paperless";
 in
 {
   config = lib.mkIf isOwner {
     host.backups.artifacts.postgresql.paperless = {
-      job = backupHost;
+      job = backupJob;
       displayName = "Paperless";
       destinationDir = "/var/lib/paperless-backup/latest";
       requiresMountsFor = [ dataDir ];
     };
 
-    host.backups.jobs.${backupHost}.paths = [
+    host.backups.jobs.${backupJob}.paths = [
       dataDir
       config.host.nfs.mounts.paperless
     ];
