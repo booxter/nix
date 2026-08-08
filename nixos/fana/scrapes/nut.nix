@@ -4,9 +4,14 @@
   pkgs,
 }:
 let
-  beastSpec = hostInventory.nixosHosts.beast;
-  frameSpec = hostInventory.nixosHosts.frame;
-  prx1Spec = hostInventory.nixosHosts."prx1-lab";
+  fanaRealm = hostInventory.nixosHosts.fana.realm;
+  upsServerSpecs = map (name: hostInventory.nixosHosts.${name}) (
+    builtins.attrNames (
+      lib.filterAttrs (
+        name: _: hostInventory.nixosHosts.${name}.realm == fanaRealm
+      ) hostInventory.ups.devices
+    )
+  );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [
     "battery.charge"
@@ -18,39 +23,34 @@ let
     "ups.load"
     "ups.status"
   ];
-  mkNutScrape =
-    {
-      jobName,
-      spec,
-    }:
-    {
-      job_name = jobName;
-      metrics_path = "/ups_metrics";
-      params = {
-        # Use the stable LAN DNS hostname rather than .local/mDNS.
-        server = [ spec.name ];
-        ups = [ (hostInventory.toUpsName spec.name) ];
-      };
-      static_configs = [
-        {
-          targets = [ "127.0.0.1:${toString nutExporterPort}" ];
-        }
-      ];
-      relabel_configs = [
-        {
-          source_labels = [ "__param_server" ];
-          target_label = "instance";
-        }
-        {
-          source_labels = [ "__param_server" ];
-          target_label = "ups_server";
-        }
-        {
-          source_labels = [ "__param_ups" ];
-          target_label = "ups";
-        }
-      ];
+  mkNutScrape = spec: {
+    job_name = "nut-${spec.name}";
+    metrics_path = "/ups_metrics";
+    params = {
+      # Use the stable LAN DNS hostname rather than .local/mDNS.
+      server = [ spec.name ];
+      ups = [ (hostInventory.toUpsName spec.name) ];
     };
+    static_configs = [
+      {
+        targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+      }
+    ];
+    relabel_configs = [
+      {
+        source_labels = [ "__param_server" ];
+        target_label = "instance";
+      }
+      {
+        source_labels = [ "__param_server" ];
+        target_label = "ups_server";
+      }
+      {
+        source_labels = [ "__param_ups" ];
+        target_label = "ups";
+      }
+    ];
+  };
 in
 {
   exporterService = {
@@ -70,18 +70,5 @@ in
     };
   };
 
-  scrapeConfigs = [
-    (mkNutScrape {
-      jobName = "nut-prx1";
-      spec = prx1Spec;
-    })
-    (mkNutScrape {
-      jobName = "nut-beast";
-      spec = beastSpec;
-    })
-    (mkNutScrape {
-      jobName = "nut-frame";
-      spec = frameSpec;
-    })
-  ];
+  scrapeConfigs = map mkNutScrape upsServerSpecs;
 }

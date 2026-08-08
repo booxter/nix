@@ -67,7 +67,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'network_ups_tools_ups_status{job="nut-prx1",ups="PRX1-LAB-UPS",flag="LB"}'
+      - series: 'network_ups_tools_ups_status{job="nut-prx1-lab",ups="PRX1-LAB-UPS",flag="LB"}'
         values: "0 0 0 0 0"
     alert_rule_test:
       - eval_time: 1m
@@ -75,7 +75,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'network_ups_tools_ups_status{job="nut-prx1",ups="PRX1-LAB-UPS",flag="LB"}'
+      - series: 'network_ups_tools_ups_status{job="nut-prx1-lab",ups="PRX1-LAB-UPS",flag="LB"}'
         values: "1 1 1 0 0"
     alert_rule_test:
       - eval_time: 30s
@@ -87,7 +87,7 @@ tests:
               alertname: UPSLowBattery
               category: ups
               flag: LB
-              job: nut-prx1
+              job: nut-prx1-lab
               severity: critical
               ups: PRX1-LAB-UPS
             exp_annotations:
