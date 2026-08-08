@@ -172,6 +172,7 @@ in
         "jellyfin"
         "pinepods"
         "romm"
+        "shelfmark"
         "watchstate"
       ];
       layout = mediaLayout;

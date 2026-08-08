@@ -13,6 +13,7 @@
     ./public-ingress.nix
     ./romm
     ./seerr
+    ./shelfmark
     ./vikunja
     ./watchstate
   ];

@@ -32,6 +32,8 @@ basePackages
     degoog-stackexchange-engine
     degoog-toolkit-extensions
     ;
-  ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
+  ebook-converter-cli =
+    pkgs.callPackage ./nixos/_mixins/web/shelfmark/packages/ebook-converter-cli
+      { };
   houndarr = pkgs.callPackage ./nixos/_mixins/web/houndarr/packages/houndarr { };
 }

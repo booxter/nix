@@ -33,6 +33,10 @@ in
       editorGroup = "romm-editors";
       viewerGroup = "romm-viewers";
     };
+    shelfmark = {
+      adminGroup = "media-admins";
+      userGroup = "media-users";
+    };
     vikunja.userGroup = "vikunja-users";
     watchstate = {
       adminGroup = "media-admins";

@@ -1,6 +1,5 @@
 pkgs:
 let
-  ebookConverterCli = pkgs.callPackage ./ebook-converter-cli { };
   transmissionCommon = pkgs.callPackage ./transmission-common { };
   transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
@@ -15,18 +14,11 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  ebook-converter-cli = ebookConverterCli;
-
   transmission-common = transmissionCommon;
 
   aurral = pkgs.callPackage ./aurral { };
 
   letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
-
-  ebook-converter = pkgs.callPackage ./ebook-converter {
-    atomicFileWrites = pkgs.atomic-file-writes;
-    inherit ebookConverterCli;
-  };
 
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
     atomicFileWrites = pkgs.atomic-file-writes;

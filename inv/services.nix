@@ -209,6 +209,10 @@
     {
       id = "shelfmark";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/shelfmark";
+        mediaDir = "/data/media";
+      };
       publicHost = "shelf.${publicDomain}";
       probePath = "/api/health";
       glanceCategory = "user";

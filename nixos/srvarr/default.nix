@@ -11,7 +11,6 @@
     ./arr.nix
     ./aurral.nix
     ./backup.nix
-    ./ebook-converter.nix
     ./glance.nix
     ./letterboxd-list-radarr.nix
     ./lidarr-cue-splitter.nix
@@ -20,7 +19,6 @@
     ./paths.nix
     ./qos.nix
     ./sabnzbd.nix
-    ./shelfmark.nix
     ./slskd.nix
     ./transmission.nix
     ./tuning.nix

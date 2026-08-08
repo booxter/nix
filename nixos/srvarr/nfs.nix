@@ -58,10 +58,6 @@ in
     unitConfig = requiresMediaMount;
   };
   systemd.services.lidarr.unitConfig = requiresMediaMount;
-  systemd.services.shelfmark = {
-    serviceConfig.UMask = servarrUMask;
-    unitConfig = requiresMediaMount;
-  };
   systemd.services.transmission.unitConfig = requiresMediaMount;
   systemd.services.sabnzbd.unitConfig = requiresMediaMount;
 }
