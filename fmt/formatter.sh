@@ -20,15 +20,10 @@ fmt_makefile() {
 }
 
 fmt_json() {
-  local file tmp
+  local file formatted
   for file in "$@"; do
-    tmp=$(mktemp)
-    trap 'rm -f "$tmp"' EXIT
-    jq -S --indent 2 . "$file" > "$tmp"
-    chmod --reference="$file" "$tmp" 2>/dev/null || true
-    chown --reference="$file" "$tmp" 2>/dev/null || true
-    mv "$tmp" "$file"
-    trap - EXIT
+    formatted=$(jq -S --indent 2 . "$file")
+    printf '%s\n' "$formatted" > "$file"
   done
 }
 
