@@ -82,6 +82,7 @@ in
 
   services.jellarr = {
     enable = true;
+    useHostVideoAcceleration = true;
     config = {
       version = 1;
       base_url = "https://jf.${hostInventory.site.public.domain}:443";
@@ -126,8 +127,6 @@ in
         # TODO: revisit subtitle hardcoding policy once jellarr module exposes
         # explicit subtitle-mode/burn-in options declaratively.
         enableHardwareEncoding = true;
-        hardwareAccelerationType = config.host.videoAcceleration.backend;
-        qsvDevice = config.host.videoAcceleration.device;
         hardwareDecodingCodecs = [
           "h264"
           "hevc"
