@@ -6,6 +6,8 @@
 }:
 {
   config = lib.mkIf (!config.host.isVM) {
+    environment.systemPackages = lib.mkIf config.host.storage.useInventory [ pkgs.lm_sensors ];
+
     hardware.enableRedistributableFirmware = true;
     hardware.cpu.intel.updateMicrocode = lib.mkIf (
       pkgs.stdenv.hostPlatform.isx86_64 || pkgs.stdenv.hostPlatform.isi686

@@ -12,6 +12,5 @@
 
   environment.systemPackages = with pkgs; [
     join-media-parts
-    lm_sensors
   ];
 }
