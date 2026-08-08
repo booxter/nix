@@ -64,7 +64,6 @@ let
     ++ mkDirSpecs "0755" "38" [
       mediaPaths.sabnzbd.root
       mediaPaths.sabnzbd.incomplete
-      mediaPaths.sabnzbd.legacyWatch
       mediaPaths.sabnzbd.watch
     ]
     ++ mkDirSpecs "0775" "38" (

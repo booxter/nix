@@ -56,7 +56,6 @@ let
     sabnzbd = rec {
       root = "usenet";
       incomplete = "${root}/.incomplete";
-      legacyWatch = "${root}/.watch";
       watch = "${root}/watch";
       complete = "${root}/manual";
       categories = {
