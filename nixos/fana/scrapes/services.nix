@@ -12,8 +12,9 @@ let
   jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
   jellyfinTargetHost = hostInventory.nixosHosts.${jellyfinService.owner}.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
-  homeHostConfig = outputs.nixosConfigurations.home.config;
-  homeTargetHost = hostInventory.nixosHosts.home.name;
+  homeAssistantService = hostInventory.servicesById.home;
+  homeHostConfig = outputs.nixosConfigurations.${homeAssistantService.owner}.config;
+  homeTargetHost = hostInventory.nixosHosts.${homeAssistantService.owner}.name;
   homeAssistantEndpoint = homeHostConfig.host.observability.prometheusEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.prometheusEndpoints.sabnzbd;
@@ -76,7 +77,7 @@ in
           targets = [
             "${homeTargetHost}:${toString homeAssistantEndpoint.port}"
           ];
-          labels.instance = "home";
+          labels.instance = homeAssistantService.owner;
         }
       ];
     }
