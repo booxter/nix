@@ -35,8 +35,6 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  pinepods-tools = pkgs.callPackage ./pinepods-tools { };
-
   romm-tools = pkgs.callPackage ./romm-tools { };
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {

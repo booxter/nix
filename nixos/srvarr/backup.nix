@@ -6,7 +6,6 @@ let
   backupJob = config.host.backups.destinationJob;
   stateRoot = config.host.srvarrPaths.stateDir;
   mysqlDataDir = "${stateRoot}/mysql";
-  pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
   backupPaths = [ stateRoot ];
   rommDatabaseBackupDir = "${stateRoot}/romm-mariadb-backup/latest";
   aurralConfigDir = "${stateRoot}/aurral";
@@ -20,8 +19,6 @@ let
     "${stateRoot}/*/cache/**"
     mysqlDataDir
     "${mysqlDataDir}/**"
-    pinepodsDatabaseDir
-    "${pinepodsDatabaseDir}/**"
   ];
 in
 {
@@ -58,7 +55,4 @@ in
     paths = backupPaths;
     exclude = backupExclude;
   };
-
-  # PinePods' downloaded podcast media lives under the separate media root and
-  # is intentionally outside this state-only backup.
 }

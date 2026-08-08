@@ -170,6 +170,7 @@ in
       clientServices = [
         "audiobookshelf"
         "jellyfin"
+        "pinepods"
         "watchstate"
       ];
       layout = mediaLayout;

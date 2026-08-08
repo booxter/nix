@@ -9,6 +9,7 @@
     ./jellyfin
     ./paperless
     ./paperless-gpt
+    ./pinepods
     ./public-ingress.nix
     ./vikunja
     ./watchstate

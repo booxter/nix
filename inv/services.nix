@@ -191,6 +191,11 @@
       title = "PinePods";
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/pinepods";
+        downloadsDir = "/data/media/podcasts/pinepods";
+        mediaDir = "/data/media";
+      };
       publicHost = "pod.${publicDomain}";
       probePath = "/api/health";
       glanceCategory = "user";
