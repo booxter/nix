@@ -1,6 +1,10 @@
 {
   audiobookshelf.uid = 156;
   bazarr.uid = 232;
+  paperless = {
+    uid = 315;
+    gid = 315;
+  };
   pinepods.uid = 296;
   prowlarr = {
     uid = 293;

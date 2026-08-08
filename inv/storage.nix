@@ -127,6 +127,11 @@ in
       # Preserve root_squash while presenting root-run client backup jobs as
       # the Paperless service identity.
       anonymousIdentity = "paperless";
+      layout = {
+        consume = "consume";
+        export = "export";
+        media = "media";
+      };
     };
   };
 }
