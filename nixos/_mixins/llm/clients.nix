@@ -96,7 +96,7 @@ in
           key = config.sops.secrets.${identity.keySecretName}.path;
           checkHost = endpointHost;
           sni = endpointHost;
-          CAFile = toString config.host.internalPki.rootCaCertificate;
+          CAFile = "${config.host.internalPki.rootCaCertificate}";
           verifyChain = true;
           OCSPaia = false;
         }
