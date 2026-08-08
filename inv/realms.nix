@@ -44,6 +44,12 @@
         ];
       };
       observability = {
+        serverHost = "fana";
+        blackbox.sourceHosts = [
+          "fana"
+          "beast"
+          "frame"
+        ];
         loki = {
           writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";
           mtls = true;

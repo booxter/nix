@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -7,6 +8,10 @@
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
+  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  sourceHosts = if realmObservability == null then [ ] else realmObservability.blackbox.sourceHosts;
+  isSource = builtins.elem config.networking.hostName sourceHosts;
+  isRemoteSource = isSource && config.networking.hostName != realmObservability.serverHost;
   httpService = {
     http = {
       follow_redirects = true;
@@ -46,8 +51,6 @@ in
     };
 
     remote = {
-      enable = lib.mkEnableOption "mTLS-protected remote access to the blackbox exporter";
-
       listenAddress = lib.mkOption {
         type = lib.types.str;
         default = "0.0.0.0";
@@ -105,6 +108,7 @@ in
       };
 
       host.observability.blackbox.modules = cfg.baseModules;
+      host.observability.blackbox.enable = lib.mkDefault isSource;
     }
     (lib.mkIf (observabilityCfg.enable && cfg.enable) {
       services.prometheus.exporters.blackbox = {
@@ -115,7 +119,7 @@ in
         };
       };
     })
-    (lib.mkIf cfg.remote.enable {
+    (lib.mkIf isRemoteSource {
       host.observability = {
         blackbox.enable = true;
         prometheusEndpoints.blackbox = {

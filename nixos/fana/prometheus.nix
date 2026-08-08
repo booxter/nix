@@ -77,10 +77,9 @@ let
   prometheusRetention = "${toString retentionDays}d";
 in
 {
-  assertions = nodeScrapes.assertions;
+  assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions;
 
   host.observability.blackbox = {
-    enable = true;
     modules = blackboxScrapes.modules;
     port = 9115;
   };

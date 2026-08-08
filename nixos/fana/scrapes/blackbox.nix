@@ -9,6 +9,10 @@
 }:
 let
   lan = hostInventory.site.lan;
+  realmName = config.host.realm;
+  realmObservability = hostInventory.realms.${realmName}.services.observability;
+  blackboxServerHost = realmObservability.serverHost;
+  blackboxProbeSourceNames = realmObservability.blackbox.sourceHosts;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
   nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
@@ -228,11 +232,17 @@ let
         };
       };
     };
-  remoteBlackboxProbeSourceNames = builtins.filter (
+  missingBlackboxProbeSourceNames = builtins.filter (
+    name: !builtins.hasAttr name hostInventory.nixosHosts
+  ) blackboxProbeSourceNames;
+  crossRealmBlackboxProbeSourceNames = builtins.filter (
     name:
-    name != "fana"
-    && outputs.nixosConfigurations.${name}.config.host.observability.blackbox.remote.enable
-  ) nixosConfigNames;
+    builtins.hasAttr name hostInventory.nixosHosts
+    && hostInventory.nixosHosts.${name}.realm != realmName
+  ) blackboxProbeSourceNames;
+  remoteBlackboxProbeSourceNames = builtins.filter (
+    name: name != blackboxServerHost
+  ) blackboxProbeSourceNames;
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
@@ -360,6 +370,25 @@ let
   ];
 in
 {
+  assertions = [
+    {
+      assertion = config.networking.hostName == blackboxServerHost;
+      message = "Blackbox probe collection must run on realm '${realmName}' observability server '${blackboxServerHost}'.";
+    }
+    {
+      assertion = builtins.elem blackboxServerHost blackboxProbeSourceNames;
+      message = "Realm '${realmName}' blackbox source hosts must include observability server '${blackboxServerHost}'.";
+    }
+    {
+      assertion = missingBlackboxProbeSourceNames == [ ];
+      message = "Realm '${realmName}' blackbox source hosts do not exist: ${lib.concatStringsSep ", " missingBlackboxProbeSourceNames}";
+    }
+    {
+      assertion = crossRealmBlackboxProbeSourceNames == [ ];
+      message = "Realm '${realmName}' blackbox source hosts belong to another realm: ${lib.concatStringsSep ", " crossRealmBlackboxProbeSourceNames}";
+    }
+  ];
+
   inherit usesHttpMtls;
   modules = blackboxModules;
 

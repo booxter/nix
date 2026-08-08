@@ -22,7 +22,6 @@ in
     ./remote-luks.nix
   ];
 
-  host.observability.blackbox.remote.enable = true;
   nixpkgs.config.rocmSupport = true;
 
   networking.wireless.enable = false;

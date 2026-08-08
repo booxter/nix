@@ -108,6 +108,8 @@ pkgs.testers.runNixOSTest {
         _module.args = {
           hostInventory = {
             realms.test.services.observability = {
+              serverHost = "collector";
+              blackbox.sourceHosts = [ "blackbox" ];
               loki = {
                 writeUrl = null;
                 mtls = false;
@@ -135,7 +137,6 @@ pkgs.testers.runNixOSTest {
           loki.mtls.enable = false;
           nodeExporter.mtls.enable = false;
           blackbox = {
-            remote.enable = true;
             modules.http_created = {
               http = {
                 preferred_ip_protocol = "ip4";
