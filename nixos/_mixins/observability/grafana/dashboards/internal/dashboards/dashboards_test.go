@@ -14,6 +14,7 @@ type memoryWriter struct {
 var testConfig = Config{
 	DataSources: DataSources{
 		Prometheus: DataSource{Type: "prometheus", UID: "prometheus"},
+		Loki:       DataSource{Type: "loki", UID: "loki"},
 	},
 	Hosts: []Host{
 		{

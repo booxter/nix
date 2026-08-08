@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
+	"github.com/grafana/grafana-foundation-sdk/go/loki"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
@@ -108,6 +109,16 @@ func prometheusQuery(refID, expression, legend string, instant bool) *prometheus
 	return query.Range()
 }
 
+func lokiQuery(refID, expression, legend string, datasource common.DataSourceRef) *loki.DataqueryBuilder {
+	return loki.NewDataqueryBuilder().
+		RefId(refID).
+		Expr(expression).
+		LegendFormat(legend).
+		EditorMode(loki.QueryEditorModeCode).
+		QueryType("range").
+		Datasource(datasource)
+}
+
 type AvailabilityStatOptions struct {
 	ID         uint32
 	Title      string
@@ -205,6 +216,12 @@ type PrometheusTarget struct {
 	Legend     string
 }
 
+type LokiTarget struct {
+	RefID      string
+	Expression string
+	Legend     string
+}
+
 type TimeseriesOptions struct {
 	ID             uint32
 	Title          string
@@ -216,6 +233,7 @@ type TimeseriesOptions struct {
 	Mappings       []dashboard.ValueMapping
 	Thresholds     *dashboard.ThresholdsConfigBuilder
 	Targets        []PrometheusTarget
+	LokiTargets    []LokiTarget
 	Stacking       string
 	Fill           *float64
 	SoftMax        *float64
@@ -265,6 +283,9 @@ func timeSeries(options TimeseriesOptions) *timeseries.PanelBuilder {
 	}
 	for _, target := range options.Targets {
 		panel.WithTarget(prometheusQuery(target.RefID, target.Expression, target.Legend, false))
+	}
+	for _, target := range options.LokiTargets {
+		panel.WithTarget(lokiQuery(target.RefID, target.Expression, target.Legend, options.DataSource))
 	}
 	return panel
 }

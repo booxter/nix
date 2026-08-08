@@ -24,6 +24,7 @@ func (source DataSource) reference() common.DataSourceRef {
 
 type DataSources struct {
 	Prometheus DataSource `json:"prometheus"`
+	Loki       DataSource `json:"loki"`
 }
 
 type Config struct {
@@ -86,6 +87,9 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 	}
 	if config.DataSources.Prometheus.UID == "" {
 		return Config{}, fmt.Errorf("Prometheus datasource UID is required")
+	}
+	if config.DataSources.Loki.Type == "" || config.DataSources.Loki.UID == "" {
+		return Config{}, fmt.Errorf("Loki datasource type and UID are required")
 	}
 	if len(config.Hosts) == 0 {
 		return Config{}, fmt.Errorf("at least one dashboard host is required")

@@ -8,6 +8,10 @@ func TestDecodeConfig(t *testing.T) {
     "prometheus": {
       "type": "prometheus",
       "uid": "prometheus-uid"
+    },
+    "loki": {
+      "type": "loki",
+      "uid": "loki-uid"
     }
   },
   "network": {
@@ -46,6 +50,10 @@ func TestDecodeConfigRejectsMissingPrometheusUID(t *testing.T) {
     "prometheus": {
       "type": "prometheus",
       "uid": ""
+    },
+    "loki": {
+      "type": "loki",
+      "uid": "loki-uid"
     }
   },
   "network": {

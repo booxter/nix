@@ -77,6 +77,10 @@ let
         type = "prometheus";
         uid = grafanaPrometheusUid;
       };
+      dataSources.loki = {
+        type = "loki";
+        uid = grafanaLokiUid;
+      };
       hosts = map dashboardHost realmHostSpecs;
       network.internet = {
         ingress = {
