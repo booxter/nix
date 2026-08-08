@@ -5,7 +5,6 @@
   ...
 }:
 let
-  mediaLibraries = import ../beast/jellyfin/media-libraries.nix;
   servarrAccounts = import ../srvarr/accounts.nix;
   mediaExport = hostInventory.storage.nfs.exports.media;
   projectPaths = builtins.mapAttrs (
@@ -75,7 +74,7 @@ let
       mode = "2775";
       user = "root";
       group = "media";
-    }) mediaLibraries;
+    }) config.services.jellyfin.libraries;
 in
 {
   config = lib.mkIf (mediaExport.server == config.networking.hostName) {

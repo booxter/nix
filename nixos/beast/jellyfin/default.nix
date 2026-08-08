@@ -8,6 +8,7 @@
     ./jellarr-libraries.nix
     ./jellarr-users.nix
     ./jellarr.nix
+    ./media-libraries.nix
     ./watchstate.nix
   ];
 

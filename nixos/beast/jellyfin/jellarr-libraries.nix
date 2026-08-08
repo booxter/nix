@@ -1,10 +1,10 @@
 {
+  config,
   hostInventory,
   lib,
   ...
 }:
 let
-  mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   getTypeOptions =
     {
@@ -162,9 +162,8 @@ in
     inherit (library) name collectionType;
     libraryOptions = getLibraryOptions {
       inherit (library) path;
-      isAdult = library.isAdult or false;
+      inherit (library) isAdult preferTmdb;
       isMusic = library.collectionType == "music";
-      preferTmdb = library.preferTmdb or false;
     };
-  }) mediaLibraries;
+  }) config.services.jellyfin.libraries;
 }

@@ -6,6 +6,7 @@
     ./exporter.nix
     ./hardware-acceleration.nix
     ./jellarr.nix
+    ./libraries.nix
     ./logging.nix
     ./maintenance.nix
     ./media-mount.nix
