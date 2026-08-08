@@ -11,7 +11,6 @@ git ls-files -z -- '*Cargo.toml' |
   xargs -0 -r -n 1 cargo fmt --all --manifest-path
 deadnix --fail .
 mbake format --config ./fmt/bake.toml Makefile
-git ls-files -z -- '*.sh' | xargs -0 -r shellcheck
 while IFS= read -r -d '' file; do
   tmp=$(mktemp)
   trap 'rm -f "$tmp"' EXIT
@@ -22,11 +21,20 @@ while IFS= read -r -d '' file; do
   trap - EXIT
 done < <(git ls-files -z -- '*.json')
 actionlint .github/workflows/*.yml
-git ls-files -z -- '*.yaml' '*.yml' ':(exclude)secrets/*/*.yaml' |
-  xargs -0 -r prettier --write --log-level warn
-git ls-files -z -- '*.md' | xargs -0 -r markdownlint-cli2
-git ls-files -z -- '*.py' | xargs -0 -r ruff format
-git ls-files -z -- '*.py' | xargs -0 -r ruff check
-git ls-files -z -- '*.js' | xargs -0 -r eslint \
-  --no-config-lookup \
-  --config ./fmt/eslint.config.js
+
+declare -A tracked_formatters=(
+  ["*.sh"]="shellcheck"
+  ["*.yaml *.yml :(exclude)secrets/*/*.yaml"]="prettier --write --log-level warn"
+  ["*.md"]="markdownlint-cli2"
+  ["*.py"]=$'ruff format\nruff check'
+  ["*.js"]="eslint --no-config-lookup --config ./fmt/eslint.config.js"
+)
+
+for pathspec in "${!tracked_formatters[@]}"; do
+  read -r -a pathspec_args <<< "$pathspec"
+  while IFS= read -r formatter; do
+    read -r -a formatter_args <<< "$formatter"
+    git ls-files -z -- "${pathspec_args[@]}" |
+      xargs -0 -r "${formatter_args[@]}"
+  done <<< "${tracked_formatters[$pathspec]}"
+done
