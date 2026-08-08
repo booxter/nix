@@ -4,8 +4,6 @@
 }:
 {
   imports = [
-    ./backup-client.nix
-    ./backup-server.nix
     ./jellyfin
     ./lolek.nix
   ];

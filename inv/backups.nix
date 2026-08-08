@@ -1,12 +1,14 @@
 {
   readPublicKey,
-  storage,
 }:
 {
   server = {
     host = "beast";
-    repositoryRoot = "${storage.hosts.beast.volumes.data.mounts.data.mountPoint}/backups/restic-prod/hosts";
-    localClient = "beast";
+    storage = {
+      volume = "data";
+      mount = "data";
+      relativePath = "backups/restic-prod/hosts";
+    };
   };
 
   offsite = {
@@ -14,6 +16,8 @@
     bucketName = "ihar-restic-prod";
     repositoryPrefix = "hosts";
     rateMbit = 10;
+    # Keep uploads serialized and packs small so shaped B2 requests finish
+    # without timing out mid-pack.
     b2Connections = 1;
     packSizeMib = 4;
   };

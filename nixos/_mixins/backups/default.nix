@@ -8,6 +8,7 @@
   imports = [
     ./artifacts.nix
     ./client.nix
+    ./inventory.nix
     ./jobs.nix
     ./metrics
     ./server.nix

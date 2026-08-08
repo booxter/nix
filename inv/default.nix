@@ -31,22 +31,7 @@ let
     ssh = sshFacts;
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
-  rawBackupFacts = import ./backups.nix {
-    inherit readPublicKey;
-    storage = storageFacts;
-  };
-  backupClients = lib.mapAttrs (
-    name: client:
-    client
-    // rec {
-      storageName = client.storageName or name;
-      repositoryPath = "${rawBackupFacts.server.repositoryRoot}/${storageName}";
-      ingestUser = "restic-${name}";
-    }
-  ) rawBackupFacts.clients;
-  backupFacts = rawBackupFacts // {
-    clients = backupClients;
-  };
+  backupFacts = import ./backups.nix { inherit readPublicKey; };
   serviceFacts = import ./services.nix {
     inherit publicDomain;
     llmProviderHost = realms.home.services.llm.providerHost;
