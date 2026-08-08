@@ -3,6 +3,8 @@
   ...
 }:
 {
+  imports = [ ./attic ];
+
   nix.gc.interval = [
     {
       Hour = 3;

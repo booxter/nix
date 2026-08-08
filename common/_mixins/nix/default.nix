@@ -25,6 +25,11 @@ let
     || config.host.isOperatorSeat;
 in
 {
+  imports = [
+    ./attic
+    ./builders
+  ];
+
   options.host.nixCache = {
     enable = lib.mkEnableOption "realm-provided Nix binary caches";
 

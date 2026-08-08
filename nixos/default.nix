@@ -18,10 +18,8 @@ in
       inputs.home-manager.nixosModules.home-manager
     ]
     ++ [
-      ./_mixins/attic
       ./_mixins/auto-upgrade
       ./_mixins/backups
-      ./_mixins/builder.nix
       ./_mixins/desktop-environment.nix
       ./_mixins/hardware
       ./_mixins/llm

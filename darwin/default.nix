@@ -20,7 +20,6 @@ in
     inputs.home-manager.darwinModules.home-manager
   ]
   ++ [
-    ./_mixins/attic
     ./_mixins/browser
     ./_mixins/defaults
     ./_mixins/etc
