@@ -19,7 +19,8 @@ var testConfig = Config{
 	Hosts: []Host{
 		{
 			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
-			ThermalProfile: "standard", Builder: true, Services: []string{"home"},
+			ThermalProfile: "standard", Builder: true,
+			Services: []string{"home", "jellyfin", "lidarr", "sabnzbd", "transmission"},
 		},
 	},
 	Network: Network{Internet: InternetLink{
