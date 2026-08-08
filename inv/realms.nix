@@ -95,11 +95,6 @@
         oidcManagerHost = "prx1-lab";
         monitoringNode = "prx1-lab";
       };
-      remoteAccess = {
-        appleRemoteManagement = true;
-        vncClient = true;
-        x11 = true;
-      };
       sso.providerHost = "pki";
       unifi = {
         baseUrl = "https://unifi";

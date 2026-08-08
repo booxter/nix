@@ -119,7 +119,14 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      remoteGui.server.vnc.enable = true;
+      remoteGui = {
+        server.vnc.enable = true;
+        client = {
+          x11.enable = true;
+          wayland.enable = true;
+          vnc.enable = true;
+        };
+      };
       network.primaryInterface = "en0";
     };
     mmini = {
@@ -132,7 +139,13 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      remoteGui.server.vnc.enable = true;
+      remoteGui = {
+        server.vnc.enable = true;
+        client = {
+          x11.enable = true;
+          vnc.enable = true;
+        };
+      };
       upsHost = frame;
       network.primaryInterface = "en0";
     };

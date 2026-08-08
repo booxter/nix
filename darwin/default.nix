@@ -59,8 +59,6 @@ in
     users.${username} = ../hm;
   };
 
-  host.remoteGui.x11.enable = lib.mkDefault (config.host.remoteAccess.x11 && config.host.isDesktop);
-
   system.primaryUser = username;
 
   users.users.${username} = {

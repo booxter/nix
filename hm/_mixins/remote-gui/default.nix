@@ -14,8 +14,8 @@ in
   options.programs.remoteGui = {
     x11.enable = lib.mkOption {
       type = lib.types.bool;
-      default = isDesktop && !isDarwin;
-      defaultText = lib.literalExpression "isDesktop && !isDarwin";
+      default = osConfig.host.remoteGui.server.x11.enable;
+      defaultText = lib.literalExpression "osConfig.host.remoteGui.server.x11.enable";
       description = "Whether to install the X11 remote nixpkgs runner.";
     };
 

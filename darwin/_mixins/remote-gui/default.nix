@@ -5,25 +5,20 @@
   ...
 }:
 let
-  cfg = config.host.remoteGui;
+  cfg = config.host.remoteGui.client;
   username = config.host.username;
 in
 {
-  options.host.remoteGui = {
-    x11.enable = lib.mkEnableOption "X11-forwarded remote Linux applications";
-    wayland.enable = lib.mkEnableOption "Cocoa-Way remote Linux applications";
-  };
-
   config = lib.mkMerge [
     {
       assertions = [
         {
           assertion = !cfg.x11.enable || config.host.isDesktop;
-          message = "host.remoteGui.x11 requires a desktop host";
+          message = "host.remoteGui.client.x11 requires a desktop host";
         }
         {
           assertion = !cfg.wayland.enable || config.host.isDesktop;
-          message = "host.remoteGui.wayland requires a desktop host";
+          message = "host.remoteGui.client.wayland requires a desktop host";
         }
       ];
     }

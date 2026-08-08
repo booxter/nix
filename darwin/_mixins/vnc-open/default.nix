@@ -168,5 +168,12 @@ let
   };
 in
 {
-  environment.systemPackages = lib.mkIf config.host.remoteAccess.vncClient [ vncOpen ];
+  assertions = [
+    {
+      assertion = !config.host.remoteGui.client.vnc.enable || config.host.isDesktop;
+      message = "host.remoteGui.client.vnc requires a desktop host";
+    }
+  ];
+
+  environment.systemPackages = lib.mkIf config.host.remoteGui.client.vnc.enable [ vncOpen ];
 }
