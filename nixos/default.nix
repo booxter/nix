@@ -20,8 +20,6 @@ in
     ]
     ++ [
       ./_mixins/adaptive-upload-policy
-      ./_mixins/alertmanager
-      ./_mixins/alertmanager-watchdog
       ./_mixins/attic
       ./_mixins/auto-upgrade
       ./_mixins/avahi
@@ -32,15 +30,12 @@ in
       ./_mixins/desktop-environment.nix
       ./_mixins/disko
       ./_mixins/external-service.nix
-      ./_mixins/grafana
       ./_mixins/hardware
       ./_mixins/home-assistant
       ./_mixins/internal-https-service.nix
       ./_mixins/jellyfin
-      ./_mixins/lan-wan-accounting
       ./_mixins/llm
       ./_mixins/lolek
-      ./_mixins/loki.nix
       ./_mixins/md-raid.nix
       ./_mixins/media-storage.nix
       ./_mixins/netboot.nix
@@ -51,7 +46,6 @@ in
       ./_mixins/paperless-gpt
       ./_mixins/pki
       ./_mixins/proxmox
-      ./_mixins/prometheus
       ./_mixins/public-ingress.nix
       ./_mixins/qos
       ./_mixins/remote-gui
@@ -61,8 +55,6 @@ in
       ./_mixins/storage-observability
       ./_mixins/storage.nix
       ./_mixins/unifi-sync
-      ./_mixins/unpoller.nix
-      ./_mixins/uptimerobot-sync
       ./_mixins/ups
       ./_mixins/user
       ./_mixins/vikunja

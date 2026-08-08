@@ -48,7 +48,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine =
     { lib, ... }:
     {
-      imports = [ ../../nixos/_mixins/observability ];
+      imports = [ ../../nixos/_mixins/observability/client.nix ];
 
       options = {
         host = {
@@ -116,6 +116,7 @@ pkgs.testers.runNixOSTest {
               };
               nodeExporter.mtls = false;
             };
+            servicesById.prometheus.owner = "collector";
             site.lan.domain = "example.invalid";
             toNixosHostCertificateDnsNames = _: [ "blackbox" ];
           };
