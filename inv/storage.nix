@@ -169,10 +169,14 @@ in
     media = (export "Media" 10 [ "srvarr" ]) // {
       clientServices = [
         "audiobookshelf"
+        "bazarr"
         "jellyfin"
+        "lidarr"
         "pinepods"
+        "radarr"
         "romm"
         "shelfmark"
+        "sonarr"
         "watchstate"
       ];
       layout = mediaLayout;

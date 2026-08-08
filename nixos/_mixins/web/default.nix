@@ -1,19 +1,24 @@
 {
   imports = [
     ./audiobookshelf
+    ./bazarr
     ./degoog
     ./external-service.nix
     ./home-assistant
     ./houndarr
     ./internal-service.nix
     ./jellyfin
+    ./lidarr
     ./paperless
     ./paperless-gpt
     ./pinepods
     ./public-ingress.nix
+    ./prowlarr
+    ./radarr
     ./romm
     ./seerr
     ./shelfmark
+    ./sonarr
     ./vikunja
     ./watchstate
   ];

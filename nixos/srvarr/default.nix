@@ -8,12 +8,9 @@
   environment.systemPackages = [ pkgs.join-media-parts ];
 
   imports = [
-    ./arr.nix
     ./aurral.nix
     ./backup.nix
     ./glance.nix
-    ./letterboxd-list-radarr.nix
-    ./lidarr-cue-splitter.nix
     ./nfs.nix
     ./oauth2-proxy.nix
     ./paths.nix

@@ -138,6 +138,10 @@
     {
       id = "radarr";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/radarr";
+        mediaDir = "/data/media";
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
@@ -145,6 +149,10 @@
     {
       id = "sonarr";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/sonarr";
+        mediaDir = "/data/media";
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
@@ -152,6 +160,10 @@
     {
       id = "lidarr";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/lidarr";
+        mediaDir = "/data/media";
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
@@ -160,6 +172,7 @@
       id = "letterboxd-list-radarr";
       title = "Letterboxd Radarr";
       owner = "srvarr";
+      instances.srvarr.requiresLocalServices = [ "radarr" ];
       probePath = "/";
     }
     {
@@ -262,6 +275,10 @@
     {
       id = "bazarr";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/bazarr";
+        mediaDir = "/data/media";
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/system/ping";
       glanceCategory = "media-admin";
@@ -269,6 +286,7 @@
     {
       id = "prowlarr";
       owner = "srvarr";
+      instances.srvarr.dataDir = "/data/.state/nixarr/prowlarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";

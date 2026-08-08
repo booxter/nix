@@ -12,7 +12,6 @@ let
   requiresMediaMount = networkOnlineUnitDeps // {
     RequiresMountsFor = mediaPath;
   };
-  servarrUMask = lib.mkForce "0002";
   isNfsMediaTmpfilesRule =
     rule:
     let
@@ -45,19 +44,6 @@ in
   '';
 
   # Make services that r/w to NFS require the media mount.
-  systemd.services.radarr = {
-    serviceConfig.UMask = servarrUMask;
-    unitConfig = requiresMediaMount;
-  };
-  systemd.services.sonarr = {
-    serviceConfig.UMask = servarrUMask;
-    unitConfig = requiresMediaMount;
-  };
-  systemd.services.bazarr = {
-    serviceConfig.UMask = servarrUMask;
-    unitConfig = requiresMediaMount;
-  };
-  systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.transmission.unitConfig = requiresMediaMount;
   systemd.services.sabnzbd.unitConfig = requiresMediaMount;
 }
