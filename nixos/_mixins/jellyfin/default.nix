@@ -8,6 +8,7 @@
     ./logging.nix
     ./maintenance.nix
     ./media-mount.nix
+    ./meilisearch.nix
     ./packages.nix
   ];
 }

@@ -26,6 +26,7 @@
       source = hostInventory.storage.nfs.exports.media.path;
       sourceMount = config.host.storage.volumes.data.mounts.data.mountPoint;
     };
+    meilisearch.enable = true;
   };
 
   users.users.jellyfin.extraGroups = [
