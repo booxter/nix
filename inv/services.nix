@@ -1,4 +1,7 @@
-{ publicDomain }:
+{
+  llmProviderHost,
+  publicDomain,
+}:
 {
   glanceCategories = [
     {
@@ -200,7 +203,7 @@
     {
       id = "ollama";
       title = "Ollama";
-      owner = "frame";
+      owner = llmProviderHost;
       probePath = "/";
       blackboxProbe = false;
     }

@@ -11,6 +11,7 @@ in
   administrator = "ihar";
 
   applications = {
+    degoog.userGroup = "degoog-users";
     "home-assistant" = {
       adminGroup = "home-admins";
       userGroup = "home-users";
@@ -28,6 +29,7 @@ in
       editorGroup = "romm-editors";
       viewerGroup = "romm-viewers";
     };
+    vikunja.userGroup = "vikunja-users";
     watchstate = {
       adminGroup = "media-admins";
     };

@@ -39,7 +39,10 @@ let
       ingestUser = "restic-${name}";
     }
   ) backupFacts.clients;
-  serviceFacts = import ./services.nix { inherit publicDomain; };
+  serviceFacts = import ./services.nix {
+    inherit publicDomain;
+    llmProviderHost = realms.home.services.llm.providerHost;
+  };
   storageFacts = import ./storage.nix;
   upsFacts = import ./ups.nix;
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
