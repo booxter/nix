@@ -2,14 +2,8 @@
   beastPkgs,
   config,
   hostInventory,
-  utils,
   ...
 }:
-let
-  dataMountPoint = config.host.storage.volumes.data.mounts.data.mountPoint;
-  dataMountUnit = "${utils.escapeSystemdPath dataMountPoint}.mount";
-  mediaExport = hostInventory.storage.nfs.exports.media;
-in
 {
   services.jellyfin = {
     enable = true;
@@ -23,6 +17,11 @@ in
         "nixos-weekly-reboot-if-needed"
       ];
     };
+    mediaMount = {
+      enable = true;
+      source = hostInventory.storage.nfs.exports.media.path;
+      sourceMount = config.host.storage.volumes.data.mounts.data.mountPoint;
+    };
   };
 
   users.users.jellyfin.extraGroups = [
@@ -31,23 +30,4 @@ in
     "video"
   ];
 
-  systemd.services.jellyfin = {
-    # If the data volume is slow during boot and /media mounts later, bring Jellyfin
-    # back with the media bind mount instead of leaving nginx with a dead
-    # upstream.
-    wantedBy = [ "media.mount" ];
-    unitConfig.RequiresMountsFor = "/media";
-  };
-
-  # Keep the existing /media path expected by Jellyfin/Jellarr.
-  fileSystems."/media" = {
-    device = mediaExport.path;
-    fsType = "none";
-    options = [
-      "bind"
-      "nofail"
-      "x-systemd.requires-mounts-for=${dataMountPoint}"
-      "x-systemd.wanted-by=${dataMountUnit}"
-    ];
-  };
 }

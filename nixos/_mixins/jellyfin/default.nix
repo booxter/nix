@@ -4,5 +4,6 @@
     ./exporter.nix
     ./logging.nix
     ./maintenance.nix
+    ./media-mount.nix
   ];
 }
