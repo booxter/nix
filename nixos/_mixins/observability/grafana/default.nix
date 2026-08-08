@@ -23,6 +23,43 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
+  realm = hostInventory.realms.${config.host.realm};
+  realmHostSpecs = lib.sort (left: right: left.name < right.name) (
+    builtins.attrValues (
+      lib.filterAttrs (_: spec: spec.realm == config.host.realm) hostInventory.hostSpecsByName
+    )
+  );
+  proxmoxNodes = lib.concatMap (cluster: cluster.nodes) (
+    builtins.attrValues (realm.services.proxmox.clusters or { })
+  );
+  realmBackups = realm.services.backups or { };
+  dashboardHost =
+    spec:
+    let
+      storage = hostInventory.storage.hosts.${spec.name} or { };
+      volumes = builtins.attrValues (storage.volumes or { });
+    in
+    {
+      inherit (spec) name;
+      platform = if lib.hasSuffix "-darwin" spec.platform then "darwin" else "linux";
+      inherit (spec.observability) capacityProfile thermalProfile;
+      virtual = spec.isVM or false;
+      builder = spec ? builder;
+      hypervisor = builtins.elem spec.name proxmoxNodes;
+      gpuVendor = spec.hardware.gpu.vendor or null;
+      services = map (service: service.id) (
+        builtins.filter (hostInventory.serviceRunsOn spec.name) hostInventory.services
+      );
+      storage = {
+        btrfs = builtins.any (volume: volume.fsType == "btrfs") volumes;
+        diskBays = storage ? diskBays;
+        nvme = (storage.systemDisk.transport or null) == "nvme";
+      };
+      backups = {
+        client = builtins.hasAttr spec.name (realmBackups.clients or { });
+        server = (realmBackups.server.host or null) == spec.name;
+      };
+    };
   dashboardGenerator = pkgs.callPackage ./dashboards/package.nix { };
   dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
     builtins.toJSON {
@@ -30,6 +67,7 @@ let
         type = "prometheus";
         uid = grafanaPrometheusUid;
       };
+      hosts = map dashboardHost realmHostSpecs;
     }
   );
   generatedDashboards = pkgs.runCommandLocal "grafana-dashboards" { } ''

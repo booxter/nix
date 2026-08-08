@@ -20,11 +20,11 @@ func ScrapeHealth(config Config) (dashboard.Dashboard, error) {
 		Refresh: "30s",
 	}).
 		WithPanel(availabilityStat(AvailabilityStatOptions{
-			ID: 1, Y: 0, Title: "Current mTLS Service Scrapes",
+			ID: 1, Grid: grid(0, 0, 24, 8), Title: "Current mTLS Service Scrapes",
 			Expression: serviceScrapes, Legend: "{{job}}", DataSource: prometheusDatasource,
 		})).
 		WithPanel(availabilityStat(AvailabilityStatOptions{
-			ID: 2, Y: 8, Title: "Current Blackbox Scrape Transport",
+			ID: 2, Grid: grid(0, 8, 24, 8), Title: "Current Blackbox Scrape Transport",
 			Expression: blackboxScrapes, Legend: "{{job}} / {{source}}", DataSource: prometheusDatasource,
 		})).
 		WithPanel(timeseries.NewPanelBuilder().

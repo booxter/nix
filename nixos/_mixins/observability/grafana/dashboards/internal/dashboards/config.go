@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana-foundation-sdk/go/common"
@@ -27,7 +28,35 @@ type DataSources struct {
 
 type Config struct {
 	DataSources DataSources `json:"dataSources"`
+	Hosts       []Host      `json:"hosts"`
 }
+
+type HostStorage struct {
+	Btrfs    bool `json:"btrfs"`
+	DiskBays bool `json:"diskBays"`
+	NVMe     bool `json:"nvme"`
+}
+
+type HostBackups struct {
+	Client bool `json:"client"`
+	Server bool `json:"server"`
+}
+
+type Host struct {
+	Name            string      `json:"name"`
+	Platform        string      `json:"platform"`
+	CapacityProfile string      `json:"capacityProfile"`
+	ThermalProfile  string      `json:"thermalProfile"`
+	GPUVendor       *string     `json:"gpuVendor"`
+	Services        []string    `json:"services"`
+	Storage         HostStorage `json:"storage"`
+	Backups         HostBackups `json:"backups"`
+	Virtual         bool        `json:"virtual"`
+	Builder         bool        `json:"builder"`
+	Hypervisor      bool        `json:"hypervisor"`
+}
+
+var hostNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
 
 func DecodeConfig(reader io.Reader) (Config, error) {
 	decoder := json.NewDecoder(reader)
@@ -42,6 +71,25 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 	}
 	if config.DataSources.Prometheus.UID == "" {
 		return Config{}, fmt.Errorf("Prometheus datasource UID is required")
+	}
+	if len(config.Hosts) == 0 {
+		return Config{}, fmt.Errorf("at least one dashboard host is required")
+	}
+	seenHosts := make(map[string]struct{}, len(config.Hosts))
+	for _, host := range config.Hosts {
+		if !hostNamePattern.MatchString(host.Name) {
+			return Config{}, fmt.Errorf("host name %q is invalid", host.Name)
+		}
+		if _, present := seenHosts[host.Name]; present {
+			return Config{}, fmt.Errorf("host name %q is duplicated", host.Name)
+		}
+		seenHosts[host.Name] = struct{}{}
+		if host.Platform != "linux" && host.Platform != "darwin" {
+			return Config{}, fmt.Errorf("host %q has invalid platform %q", host.Name, host.Platform)
+		}
+		if host.CapacityProfile == "" || host.ThermalProfile == "" {
+			return Config{}, fmt.Errorf("host %q lacks observability profiles", host.Name)
+		}
 	}
 	var trailing any
 	if err := decoder.Decode(&trailing); err != io.EOF {

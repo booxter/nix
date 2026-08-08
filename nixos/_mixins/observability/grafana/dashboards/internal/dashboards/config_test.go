@@ -9,7 +9,22 @@ func TestDecodeConfig(t *testing.T) {
       "type": "prometheus",
       "uid": "prometheus-uid"
     }
-  }
+  },
+  "hosts": [
+    {
+      "name": "frame",
+      "platform": "linux",
+      "capacityProfile": "cpu-bursty",
+      "thermalProfile": "standard",
+      "gpuVendor": null,
+      "services": [],
+      "storage": {},
+      "backups": {},
+      "virtual": false,
+      "builder": true,
+      "hypervisor": false
+    }
+  ]
 }`)
 	if err != nil {
 		t.Fatalf("DecodeConfigString() error = %v", err)
@@ -26,7 +41,22 @@ func TestDecodeConfigRejectsMissingPrometheusUID(t *testing.T) {
       "type": "prometheus",
       "uid": ""
     }
-  }
+  },
+  "hosts": [
+    {
+      "name": "frame",
+      "platform": "linux",
+      "capacityProfile": "cpu-bursty",
+      "thermalProfile": "standard",
+      "gpuVendor": null,
+      "services": [],
+      "storage": {},
+      "backups": {},
+      "virtual": false,
+      "builder": true,
+      "hypervisor": false
+    }
+  ]
 }`)
 	if err == nil {
 		t.Fatal("DecodeConfigString() accepted an empty Prometheus UID")

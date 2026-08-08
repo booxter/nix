@@ -15,6 +15,29 @@ var testConfig = Config{
 	DataSources: DataSources{
 		Prometheus: DataSource{Type: "prometheus", UID: "prometheus"},
 	},
+	Hosts: []Host{
+		{
+			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
+			ThermalProfile: "standard", Builder: true,
+		},
+	},
+}
+
+func TestHostDashboardReflectsHostCapabilities(t *testing.T) {
+	host := Host{
+		Name: "prx1-lab", Platform: "linux", CapacityProfile: "hypervisor",
+		ThermalProfile: "standard", Hypervisor: true,
+	}
+	model, err := HostDashboard(testConfig, host)
+	if err != nil {
+		t.Fatalf("HostDashboard() error = %v", err)
+	}
+	if model.Uid == nil || *model.Uid != "host-prx1-lab" {
+		t.Fatalf("HostDashboard() UID = %v", model.Uid)
+	}
+	if len(model.Panels) != 10 {
+		t.Fatalf("HostDashboard() panels = %d, want 10", len(model.Panels))
+	}
 }
 
 func (writer *memoryWriter) MkdirAll(path string, _ fs.FileMode) error {

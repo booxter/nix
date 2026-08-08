@@ -36,12 +36,23 @@ func All(config Config) ([]Definition, error) {
 		return nil, fmt.Errorf("build scrape health dashboard: %w", err)
 	}
 
-	return []Definition{
+	definitions := []Definition{
 		{
 			Path:      "Fleet/scrape-health.json",
 			Dashboard: scrapeHealth,
 		},
-	}, nil
+	}
+	for _, host := range config.Hosts {
+		hostDashboard, err := HostDashboard(config, host)
+		if err != nil {
+			return nil, fmt.Errorf("build host %s dashboard: %w", host.Name, err)
+		}
+		definitions = append(definitions, Definition{
+			Path:      filepath.Join("Hosts", host.Name+".json"),
+			Dashboard: hostDashboard,
+		})
+	}
+	return definitions, nil
 }
 
 func WriteAll(writer FileWriter, config Config, output string) error {
