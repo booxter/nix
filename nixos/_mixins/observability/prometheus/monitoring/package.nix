@@ -1,15 +1,27 @@
 {
+  formats,
   lib,
   prometheus,
   stdenvNoCC,
 }:
 let
   sharePath = "share/prometheus-monitoring";
-  ruleNames = builtins.attrNames (
+  staticRuleNames = builtins.attrNames (
     lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".rules.yml" name) (
       builtins.readDir ./rules
     )
   );
+  yaml = formats.yaml { };
+  generatedRuleDefinitions = {
+    "availability.rules.yml" = import ./rules/availability.nix { inherit lib; };
+  };
+  generatedRules = lib.mapAttrs (
+    name: definition: yaml.generate name definition
+  ) generatedRuleDefinitions;
+  ruleNames = lib.unique (staticRuleNames ++ builtins.attrNames generatedRules);
+  installGeneratedRules = lib.concatMapStringsSep "\n" (
+    name: "cp ${generatedRules.${name}} rules/${lib.escapeShellArg name}"
+  ) (builtins.attrNames generatedRules);
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "prometheus-monitoring";
@@ -18,6 +30,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   doCheck = true;
   nativeCheckInputs = [ prometheus.cli ];
+  postPatch = installGeneratedRules;
   checkPhase = ''
     runHook preCheck
 
