@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use zeroize::Zeroizing;
 
 use crate::atomic::write_owned_atomic;
-use crate::non_empty;
+use kanidm_tool_common::non_empty;
 
 #[derive(Debug, Parser)]
 #[command(version, about = "Render the Kanidm mail sender configuration")]

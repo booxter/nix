@@ -5,12 +5,8 @@ use std::process::{Command, Stdio};
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use kanidm_tool_common::{authenticated_from_config, client_error, non_empty};
 use serde::{Deserialize, Serialize};
-
-mod atomic;
-mod client;
-pub mod mail_sender;
-pub mod mail_sender_config;
 
 const PROTOCOL_VERSION: u8 = 1;
 const TTL_SECONDS: u64 = 86_400;
@@ -48,14 +44,6 @@ pub struct ClientArgs {
         value_parser = ssh_target
     )]
     pub target: String,
-}
-
-pub(crate) fn non_empty(value: &str) -> Result<String, String> {
-    if value.trim().is_empty() {
-        Err("value must be non-empty".to_owned())
-    } else {
-        Ok(value.to_owned())
-    }
 }
 
 fn ssh_target(value: &str) -> Result<String, String> {
@@ -181,7 +169,7 @@ pub async fn send_with_kanidm(
         config_path.display()
     );
 
-    let client = client::authenticated_from_config(config_path, password_path).await?;
+    let client = authenticated_from_config(config_path, password_path).await?;
     client
         .idm_person_account_credential_update_send_intent(
             &request.user_id,
@@ -189,9 +177,7 @@ pub async fn send_with_kanidm(
             request.email,
         )
         .await
-        .map_err(|error| {
-            client::client_error("Kanidm rejected the credential reset request", error)
-        })
+        .map_err(|error| client_error("Kanidm rejected the credential reset request", error))
 }
 
 #[cfg(test)]

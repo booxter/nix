@@ -10,9 +10,7 @@ let
   cfg = config.host.sso.provider;
   outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail;
   idService = hostInventory.servicesById.id;
-  package = pkgs.callPackage ./packages/kanidm-tools {
-    defaultTarget = cfg.host;
-  };
+  package = pkgs.callPackage ./packages/kanidm-tools/mail-sender { };
   user = "kanidm-mail-sender";
   group = user;
   stateDir = "/var/lib/kanidm-mail-sender";

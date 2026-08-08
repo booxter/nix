@@ -2671,12 +2671,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "kanidm-tools"
+name = "kanidm-mail-sender-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "clap",
+ "kanidm-tool-common",
  "kanidm_client",
  "nix",
  "serde",
@@ -2684,6 +2685,28 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
+ "zeroize",
+]
+
+[[package]]
+name = "kanidm-reset-credentials"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "kanidm-tool-common",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "kanidm-tool-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "kanidm_client",
+ "tempfile",
  "zeroize",
 ]
 

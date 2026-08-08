@@ -11,8 +11,7 @@ use nix::unistd::{chown, Gid, Group, Uid, User};
 use zeroize::Zeroizing;
 
 use crate::atomic::write_owned_atomic;
-use crate::client::{authenticated_at_address, client_error};
-use crate::non_empty;
+use kanidm_tool_common::{authenticated_at_address, client_error, non_empty};
 
 const ACCOUNT: &str = "mail-sender";
 const DISPLAY_NAME: &str = "Kanidm Mail Sender";

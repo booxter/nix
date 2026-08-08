@@ -7,7 +7,7 @@ use zeroize::Zeroizing;
 
 const ADMIN_ID: &str = "idm_admin";
 
-pub(crate) fn client_error(context: &str, error: ClientError) -> anyhow::Error {
+pub fn client_error(context: &str, error: ClientError) -> anyhow::Error {
     anyhow!("{context}: {error:?}")
 }
 
@@ -31,7 +31,7 @@ async fn authenticate(client: KanidmClient, password_path: &Path) -> Result<Kani
     Ok(client)
 }
 
-pub(crate) async fn authenticated_from_config(
+pub async fn authenticated_from_config(
     config_path: &Path,
     password_path: &Path,
 ) -> Result<KanidmClient> {
@@ -43,15 +43,20 @@ pub(crate) async fn authenticated_from_config(
     authenticate(client, password_path).await
 }
 
-pub(crate) async fn authenticated_at_address(
-    address: &str,
-    password_path: &Path,
-) -> Result<KanidmClient> {
+pub async fn authenticated_at_address(address: &str, password_path: &Path) -> Result<KanidmClient> {
     let client = KanidmClientBuilder::new()
         .address(address.trim_end_matches('/').to_owned())
         .build()
         .map_err(|error| client_error("failed to build Kanidm client", error))?;
     authenticate(client, password_path).await
+}
+
+pub fn non_empty(value: &str) -> Result<String, String> {
+    if value.trim().is_empty() {
+        Err("value must be non-empty".to_owned())
+    } else {
+        Ok(value.to_owned())
+    }
 }
 
 #[cfg(test)]

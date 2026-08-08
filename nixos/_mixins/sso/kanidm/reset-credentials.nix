@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.sso.provider;
-  package = pkgs.callPackage ./packages/kanidm-tools {
+  package = pkgs.callPackage ./packages/kanidm-tools/reset-credentials {
     defaultTarget = cfg.host;
   };
 in

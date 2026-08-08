@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use clap::Parser;
-use kanidm_tools::mail_sender_config::{run, ConfigWriterArgs};
+use kanidm_mail_sender_tools::mail_sender_config::{run, ConfigWriterArgs};
 
 fn main() -> ExitCode {
     match execute() {

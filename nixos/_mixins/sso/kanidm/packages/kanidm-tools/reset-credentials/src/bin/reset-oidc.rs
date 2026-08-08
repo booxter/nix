@@ -3,7 +3,7 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use clap::Parser;
-use kanidm_tools::{run_client, ClientArgs, SshTransport};
+use kanidm_reset_credentials::{run_client, ClientArgs, SshTransport};
 
 fn main() -> ExitCode {
     match run() {

@@ -3,7 +3,7 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use clap::Parser;
-use kanidm_tools::mail_sender::{run, MailSenderArgs};
+use kanidm_mail_sender_tools::mail_sender::{run, MailSenderArgs};
 
 #[tokio::main]
 async fn main() -> ExitCode {

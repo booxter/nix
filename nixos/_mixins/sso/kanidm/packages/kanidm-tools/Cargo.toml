@@ -1,12 +1,19 @@
-[package]
-name = "kanidm-tools"
+[workspace]
+members = [
+  "common",
+  "mail-sender",
+  "reset-credentials",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.93"
 license = "MIT"
 publish = false
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0.102"
 async-trait = "0.1.91"
 clap = { version = "4.6.0", features = ["derive", "env"] }
