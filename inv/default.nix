@@ -365,6 +365,34 @@ let
       builtins.length forwardedPortKeys == builtins.length (lib.unique forwardedPortKeys)
     ) "Egress VPN profiles must not allocate the same forwarded port more than once";
     normalizedServices;
+  checkedServicesById = builtins.listToAttrs (
+    map (service: {
+      name = service.id;
+      value = service;
+    }) checkedServices
+  );
+  normalizeOauth2ProxyGate =
+    name: gate:
+    let
+      unknownServiceIds = builtins.filter (
+        serviceId: !builtins.hasAttr serviceId checkedServicesById
+      ) gate.serviceIds;
+      services = map (serviceId: checkedServicesById.${serviceId}) (
+        lib.subtractLists unknownServiceIds gate.serviceIds
+      );
+      ownerHosts = lib.unique (lib.concatMap serviceHosts services);
+    in
+    assert lib.assertMsg (unknownServiceIds == [ ])
+      "OAuth2 proxy gate '${name}' references unknown services: ${lib.concatStringsSep ", " unknownServiceIds}";
+    assert lib.assertMsg (builtins.elem gate.originLandingServiceId gate.serviceIds)
+      "OAuth2 proxy gate '${name}' landing service must be protected by the gate";
+    assert lib.assertMsg (
+      builtins.length ownerHosts == 1
+    ) "OAuth2 proxy gate '${name}' services must be colocated on one host";
+    gate // { ownerHost = lib.head ownerHosts; };
+  normalizedSsoFacts = ssoFacts // {
+    oauth2ProxyGates = lib.mapAttrs normalizeOauth2ProxyGate ssoFacts.oauth2ProxyGates;
+  };
 
   serviceLocalDnsAliases =
     services: hostName:
@@ -409,7 +437,18 @@ rec {
 
   sshTicket = sshTicketFacts;
   ssh = sshFacts;
-  sso = ssoFacts;
+  sso = normalizedSsoFacts;
+  oauth2ProxyGateForService =
+    serviceId:
+    let
+      gates = builtins.filter (gate: builtins.elem serviceId gate.serviceIds) (
+        builtins.attrValues normalizedSsoFacts.oauth2ProxyGates
+      );
+    in
+    assert lib.assertMsg (
+      builtins.length gates == 1
+    ) "service '${serviceId}' must belong to exactly one inventory OAuth2 proxy gate";
+    lib.head gates;
   yubi = yubiFacts;
 
   inherit toLocalDnsName;

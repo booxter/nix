@@ -12,6 +12,7 @@ let
   hostname = config.networking.hostName;
   backupJob = config.host.backups.destinationJob;
   service = hostInventory.servicesById.bazarr;
+  ssoGate = hostInventory.oauth2ProxyGateForService service.id;
   instance = service.instances.${hostname} or { };
   account = hostInventory.serviceAccounts.bazarr;
   mediaExport = hostInventory.storage.nfs.exports.media;
@@ -107,6 +108,21 @@ in
       host.internalService.services.bazarr = {
         enable = true;
         upstream = "http://127.0.0.1:${toString cfg.listenPort}";
+      };
+
+      # Bazarr has no reverse-proxy auth mode here: its config has
+      # `auth.type: null`, but its logout endpoint only accepts native form or
+      # basic auth. Clear the oauth2-proxy cookies at nginx instead.
+      host.sso.oauth2ProxyGates.${ssoGate.id}.extraLocationsByName.bazarr."= /api/system/account" = {
+        return = "204";
+        extraConfig = ''
+          auth_request off;
+          add_header Set-Cookie "${ssoGate.cookieName}=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+          add_header Set-Cookie "${ssoGate.cookieName}_0=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+          add_header Set-Cookie "${ssoGate.cookieName}_1=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+          add_header Set-Cookie "${ssoGate.cookieName}_2=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+          add_header Set-Cookie "${ssoGate.cookieName}_csrf=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+        '';
       };
 
       host.backups.jobs.${backupJob}.paths = [ stateDir ];

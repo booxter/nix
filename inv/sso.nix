@@ -44,6 +44,12 @@ in
   };
 
   oauth2ProxyGates.srvarrAdminApps = {
+    id = "srvarr-admin-apps";
+    displayName = "srvarr admin apps";
+    originLandingServiceId = "bazarr";
+    cookieName = "_srvarr_admin_sso";
+    groupClaim = "media_groups";
+    clearAuthorizationHeader = false;
     serviceIds = [
       "houndarr"
       "radarr"

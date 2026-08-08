@@ -21,6 +21,14 @@ let
   peerPort = vpnRequirement.forwardedPort.port;
   stateDir = instance.dataDir or "/var/lib/transmission";
   vpnNamespaceAddress = vpnProfile.namespaceAddress;
+  proxyHeaders = ''
+    proxy_set_header Host ${hostname};
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
@@ -199,14 +207,17 @@ in
       recommendedProxySettings = false;
       # Transmission RPC rejects the public LAN hostname, so preserve the
       # existing whitelisted host on the upstream hop.
-      locationExtraConfig = ''
-        proxy_set_header Host ${hostname};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Server $hostname;
-      '';
+      locationExtraConfig = proxyHeaders;
+      probe = {
+        upstreamPath = "/transmission/rpc";
+        recommendedProxySettings = false;
+        extraConfig = ''
+          limit_except GET {
+            deny all;
+          }
+          ${proxyHeaders}
+        '';
+      };
     };
   };
 }

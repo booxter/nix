@@ -115,12 +115,25 @@ let
       # service listener. Public ingress proxies to the normal service listener
       # using the internal server name, so host alias splitting alone would not
       # keep auth-bypass health endpoints off the WAN path.
-      locations."/" = {
-        return = "404";
-        extraConfig = ''
-          auth_request off;
-        '';
-      };
+      locations = {
+        "/" = {
+          return = "404";
+          extraConfig = ''
+            auth_request off;
+          '';
+        };
+      }
+      // lib.optionalAttrs (service.probe.path != null) {
+        "= ${service.probe.path}" = {
+          proxyPass = "${service.upstream}${service.probe.upstreamPath}";
+          recommendedProxySettings = service.probe.recommendedProxySettings;
+          extraConfig = ''
+            auth_request off;
+            ${service.probe.extraConfig}
+          '';
+        };
+      }
+      // service.probe.locations;
     };
 in
 {
@@ -136,6 +149,10 @@ in
       attrsOf (
         submodule (
           { name, config, ... }:
+          let
+            inventoryService = hostInventory.servicesById.${name} or { };
+            inventoryProbe = inventoryService.backendProbe or null;
+          in
           {
             config.serverAliases = lib.mkBefore (localServerAliasesFor config.localAliases);
 
@@ -243,12 +260,46 @@ in
               };
 
               probe = {
-                enable = lib.mkEnableOption "probe-only internal HTTPS listener";
+                enable = lib.mkOption {
+                  type = bool;
+                  default = config.probe.path != null || config.probe.locations != { };
+                  description = "Whether to expose a probe-only internal HTTPS listener.";
+                };
 
                 port = lib.mkOption {
                   type = port;
                   default = 9443;
                   description = "HTTPS port for exact backend probe locations; no catch-all upstream is exposed on this listener.";
+                };
+
+                path = lib.mkOption {
+                  type = nullOr str;
+                  default = if inventoryProbe == null then null else inventoryProbe.path;
+                  description = "Exact path exposed on the probe-only listener.";
+                };
+
+                upstreamPath = lib.mkOption {
+                  type = nullOr str;
+                  default = config.probe.path;
+                  description = "Upstream path used for the inventory probe path.";
+                };
+
+                recommendedProxySettings = lib.mkOption {
+                  type = bool;
+                  default = true;
+                  description = "Whether the probe upstream uses recommended proxy headers.";
+                };
+
+                extraConfig = lib.mkOption {
+                  type = lines;
+                  default = "";
+                  description = "Extra nginx configuration for the inventory probe location.";
+                };
+
+                locations = lib.mkOption {
+                  type = attrsOf anything;
+                  default = { };
+                  description = "Additional exact locations exposed on the probe-only listener.";
                 };
               };
             };
@@ -273,6 +324,12 @@ in
       {
         assertion = servicesWithProbePortConflicts == { };
         message = "host.internalService.services probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames servicesWithProbePortConflicts)}";
+      }
+      {
+        assertion = lib.all (service: service.probe.path == null || lib.hasPrefix "/" service.probe.path) (
+          builtins.attrValues enabledProbeServices
+        );
+        message = "host.internalService.services probe paths must be absolute.";
       }
     ];
 

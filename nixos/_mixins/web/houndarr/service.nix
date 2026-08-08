@@ -25,6 +25,21 @@ let
   disabledInternalServices = builtins.filter (
     name: !(config.host.internalService.services.${name}.enable or false)
   ) requiredServices;
+  hostAddress = hostInventory.toNixosHostIpv4Address hostname;
+  apiVhosts = builtins.listToAttrs (
+    map (name: {
+      name = "internal-https-${name}-probe";
+      value.locations."/api/" = {
+        proxyPass = config.host.internalService.services.${name}.upstream;
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+          allow ${hostAddress};
+          deny all;
+        '';
+      };
+    }) requiredServices
+  );
   probeUrls = map (
     name:
     let
@@ -196,6 +211,10 @@ in
         enable = true;
         upstream = cfg.localUrl;
       };
+
+      # Houndarr rejects loopback instance URLs as an SSRF defense. Reuse the
+      # required Arr services' probe listeners for a host-only API lane.
+      services.nginx.virtualHosts = apiVhosts;
     })
   ];
 }

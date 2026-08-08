@@ -8,7 +8,6 @@
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
-  probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
 
   gateSubmodule =
     gateName:
@@ -222,11 +221,6 @@ let
           description = "Extra nginx locations added to one protected internal service or external hostname.";
         };
 
-        probeLocationsByName = lib.mkOption {
-          type = with lib.types; attrsOf (attrsOf anything);
-          default = { };
-          description = "Extra nginx locations added only to one protected internal service's probe-only HTTPS listener.";
-        };
       };
     };
 
@@ -447,7 +441,6 @@ in
             assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
             message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
           }
-          ++ probeHelpers.assertionsFor gateName gate
         ) enabledGates
       )
       ++ [
@@ -508,11 +501,6 @@ in
           (lib.genAttrs gate.internalServiceNames (_: {
             locationExtraConfig = authRequestLocationConfig gate;
           }))
-          # Backend probe bypasses intentionally use a separate listener instead
-          # of the normal service vhost. Public ingress forwards to the internal
-          # service name, so attaching these locations to :443 would expose them
-          # through browser-facing hostnames such as search.ihar.dev.
-          (probeHelpers.enableAttrsFor gate)
         ]) (builtins.attrValues enabledGates)
       )
     );
@@ -528,8 +516,7 @@ in
 
     services.nginx.virtualHosts = lib.mkMerge (
       lib.mapAttrsToList (
-        _: gate:
-        protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
+        _: gate: protectedInternalVhostsFor gate // protectedExternalVhostsFor gate
       ) enabledGates
     );
 
