@@ -60,6 +60,7 @@
         vncClient = true;
         x11 = true;
       };
+      sso.providerHost = "pki";
       unifi = {
         baseUrl = "https://unifi";
         site = "default";
