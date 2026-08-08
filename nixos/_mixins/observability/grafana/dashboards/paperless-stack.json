@@ -827,7 +827,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(probe_success{job=\"blackbox-arr\",service=\"paperless-gpt\"})",
+          "expr": "max(probe_success{job=\"blackbox-service\",service=\"paperless-gpt\"})",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"

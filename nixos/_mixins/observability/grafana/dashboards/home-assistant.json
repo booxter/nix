@@ -166,7 +166,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(probe_success{job=\"blackbox-arr\",service=\"home\"})",
+          "expr": "max(probe_success{job=\"blackbox-service\",service=\"home\"})",
           "range": false,
           "refId": "A"
         }

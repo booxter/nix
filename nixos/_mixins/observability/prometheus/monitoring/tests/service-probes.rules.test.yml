@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'probe_success{instance="jellyfin",job="blackbox-arr",probe_family="service",probe_protocol="http",probe_role="frontdoor",probe_title="Front door",scope="external",service="jellyfin",service_title="Jellyfin",target="https://jf.ihar.dev/web/"}'
+      - series: 'probe_success{instance="jellyfin",job="blackbox-service",probe_family="service",probe_protocol="http",probe_role="frontdoor",probe_title="Front door",scope="external",service="jellyfin",service_title="Jellyfin",target="https://jf.ihar.dev/web/"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m

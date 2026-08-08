@@ -87,7 +87,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_success{job=\"blackbox-arr\"}",
+          "expr": "probe_success{job=\"blackbox-service\"}",
           "instant": true,
           "legendFormat": "{{service_title}}",
           "range": false,
@@ -137,7 +137,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-arr\"}[5m])",
+          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-service\"}[5m])",
           "legendFormat": "{{service_title}}",
           "range": true,
           "refId": "A"
@@ -194,7 +194,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_http_status_code{job=\"blackbox-arr\"}",
+          "expr": "probe_http_status_code{job=\"blackbox-service\"}",
           "legendFormat": "{{service_title}}",
           "range": true,
           "refId": "A"

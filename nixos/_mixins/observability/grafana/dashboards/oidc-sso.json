@@ -160,7 +160,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_success{job=\"blackbox-arr\",service=~\"id|grafana\"}",
+          "expr": "probe_success{job=\"blackbox-service\",service=~\"id|grafana\"}",
           "legendFormat": "{{service_title}} / {{source}}",
           "range": true,
           "refId": "A"

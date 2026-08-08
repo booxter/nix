@@ -216,7 +216,7 @@ in
   inherit modules usesHttpMtls;
 
   scrapeConfigs = [
-    (mkScrapeConfig "blackbox-arr" serviceCatalog)
+    (mkScrapeConfig "blackbox-service" serviceCatalog)
     (mkScrapeConfig "blackbox-backend" backendCatalog)
     {
       job_name = "blackbox-public-wan";

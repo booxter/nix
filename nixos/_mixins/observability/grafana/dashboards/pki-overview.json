@@ -147,7 +147,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-service\",scope=\"external\"} - time()) / 86400",
           "instant": true,
           "legendFormat": "{{service_title}}",
           "range": false,
