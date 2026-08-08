@@ -37,6 +37,10 @@ let
     inherit publicDomain;
     llmProviderHost = realms.home.services.llm.providerHost;
   };
+  dashboardFacts = import ./dashboards.nix {
+    inherit lanDomain;
+    internalPki = realms.home.services.internalPki;
+  };
   serviceHosts = service: builtins.attrNames service.instances;
   serviceRunsOn = hostName: service: builtins.hasAttr hostName service.instances;
   serviceHost =
@@ -77,7 +81,6 @@ let
   };
   displayFacts = import ./displays.nix;
   upsFacts = import ./ups.nix;
-  glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
     builtins.filter (service: service ? publicHost) serviceFacts.definitions
   );
@@ -230,7 +233,7 @@ let
   toLocalDnsName = label: "${label}.local";
 
   normalizeService =
-    glanceCategoryIds: localDnsName:
+    localDnsName:
     {
       id,
       instances,
@@ -240,7 +243,6 @@ let
       icon ? "sh:${id}",
       blackboxProbe ? probePath != null,
       backendProbe ? null,
-      glanceCategory ? null,
       internalEndpointName ? if probePath == null then null else id,
     }:
     let
@@ -261,17 +263,14 @@ let
         instance
       ) instances;
       scope = if publicHost == null then "internal" else "external";
-      showInGlance = glanceCategory != null;
       service = {
         inherit
           blackboxProbe
-          glanceCategory
           icon
           id
           internalEndpointName
           probePath
           scope
-          showInGlance
           title
           ;
         instances = normalizedInstances;
@@ -289,16 +288,54 @@ let
           displayHost = localDnsName (serviceHost service);
           probeHost = serviceHost service;
         };
-      category = glanceCategory;
-      categoryLabel = if category == null then "<missing>" else category;
     in
     assert lib.assertMsg (normalizedInstances != { }) "Service ${id} must have at least one instance";
-    assert lib.asserts.assertMsg (
-      category == null || builtins.elem category glanceCategoryIds
-    ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
     resolvedService;
 
-  normalizedServices = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
+  normalizedServices = map (normalizeService toLocalDnsName) serviceFacts.definitions;
+  normalizedServiceIds = map (service: service.id) normalizedServices;
+  dashboardCategoryIds = map (category: category.id) dashboardFacts.categories;
+  dashboardProfileIds = map (profile: profile.id) dashboardFacts.profiles;
+  dashboardServiceIds = builtins.concatMap (category: category.serviceIds) dashboardFacts.categories;
+  dashboardEndpointServiceIds = map (profile: profile.endpointServiceId) dashboardFacts.profiles;
+  dashboardSearchServiceIds = map (profile: profile.search.serviceId) dashboardFacts.profiles;
+  dashboardProfileCategoryIds = builtins.concatMap (
+    profile: profile.categoryIds
+  ) dashboardFacts.profiles;
+  unknownDashboardServiceIds = lib.subtractLists normalizedServiceIds (
+    dashboardServiceIds ++ dashboardEndpointServiceIds ++ dashboardSearchServiceIds
+  );
+  unknownDashboardCategoryIds = lib.subtractLists dashboardCategoryIds dashboardProfileCategoryIds;
+  checkedDashboardFacts =
+    assert lib.assertMsg (
+      builtins.length dashboardCategoryIds == builtins.length (lib.unique dashboardCategoryIds)
+    ) "Dashboard category IDs must be unique";
+    assert lib.assertMsg (
+      builtins.length dashboardProfileIds == builtins.length (lib.unique dashboardProfileIds)
+    ) "Dashboard profile IDs must be unique";
+    assert lib.assertMsg (
+      builtins.length dashboardServiceIds == builtins.length (lib.unique dashboardServiceIds)
+    ) "A service must not belong to multiple dashboard categories";
+    assert lib.assertMsg (
+      unknownDashboardServiceIds == [ ]
+    ) "Dashboards reference unknown services: ${lib.concatStringsSep ", " unknownDashboardServiceIds}";
+    assert lib.assertMsg (unknownDashboardCategoryIds == [ ])
+      "Dashboard profiles reference unknown categories: ${lib.concatStringsSep ", " unknownDashboardCategoryIds}";
+    dashboardFacts
+    // {
+      categoriesById = builtins.listToAttrs (
+        map (category: {
+          name = category.id;
+          value = category;
+        }) dashboardFacts.categories
+      );
+      profilesById = builtins.listToAttrs (
+        map (profile: {
+          name = profile.id;
+          value = profile;
+        }) dashboardFacts.profiles
+      );
+    };
   forwardedPortKeys = lib.concatMap (
     service:
     builtins.concatLists (
@@ -353,9 +390,9 @@ in
 rec {
   autoUpgrade = autoUpgradeFacts;
   builders = builderFacts;
+  dashboards = checkedDashboardFacts;
   egressVpns = egressVpnFacts;
 
-  inherit (serviceFacts) glanceCategories;
   inherit
     fleetRepository
     realms

@@ -3,21 +3,6 @@
   publicDomain,
 }:
 {
-  glanceCategories = [
-    {
-      id = "user";
-      title = "User Apps";
-    }
-    {
-      id = "media-admin";
-      title = "Media Admin";
-    }
-    {
-      id = "infrastructure";
-      title = "Infrastructure";
-    }
-  ];
-
   definitions = [
     {
       id = "id";
@@ -47,7 +32,6 @@
       instances.beast = { };
       publicHost = "jf.${publicDomain}";
       probePath = "/web/";
-      glanceCategory = "user";
     }
     {
       id = "lolek";
@@ -63,14 +47,12 @@
       instances.beast = { };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/v1/api/system/healthcheck";
-      glanceCategory = "media-admin";
     }
     {
       id = "seerr";
       instances.srvarr.dataDir = "/data/.state/nixarr/seerr";
       publicHost = "js.${publicDomain}";
       probePath = "/login";
-      glanceCategory = "user";
     }
     {
       id = "romm";
@@ -82,13 +64,11 @@
       };
       publicHost = "game.${publicDomain}";
       probePath = "/api/heartbeat";
-      glanceCategory = "user";
     }
     {
       id = "grafana";
       instances.fana = { };
       probePath = "/login";
-      glanceCategory = "infrastructure";
     }
     {
       id = "prometheus";
@@ -115,7 +95,6 @@
       icon = "sh:home-assistant";
       instances.home = { };
       probePath = "/";
-      glanceCategory = "infrastructure";
     }
     {
       id = "houndarr";
@@ -130,7 +109,6 @@
       };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
-      glanceCategory = "media-admin";
     }
     {
       id = "radarr";
@@ -140,7 +118,6 @@
       };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
-      glanceCategory = "media-admin";
     }
     {
       id = "sonarr";
@@ -150,7 +127,6 @@
       };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
-      glanceCategory = "media-admin";
     }
     {
       id = "lidarr";
@@ -160,7 +136,6 @@
       };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
-      glanceCategory = "media-admin";
     }
     {
       id = "letterboxd-list-radarr";
@@ -177,7 +152,6 @@
       publicHost = "mu.${publicDomain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health/live";
-      glanceCategory = "user";
     }
     {
       id = "slskd";
@@ -200,7 +174,6 @@
       };
       publicHost = "au.${publicDomain}";
       probePath = "";
-      glanceCategory = "user";
     }
     {
       id = "pinepods";
@@ -213,7 +186,6 @@
       };
       publicHost = "pod.${publicDomain}";
       probePath = "/api/health";
-      glanceCategory = "user";
     }
     {
       id = "shelfmark";
@@ -223,14 +195,12 @@
       };
       publicHost = "shelf.${publicDomain}";
       probePath = "/api/health";
-      glanceCategory = "user";
     }
     {
       id = "vikunja";
       instances.org = { };
       publicHost = "vi.${publicDomain}";
       probePath = "";
-      glanceCategory = "user";
     }
     {
       id = "paperless";
@@ -239,7 +209,6 @@
       instances.org = { };
       publicHost = "papers.${publicDomain}";
       probePath = "/accounts/login/";
-      glanceCategory = "infrastructure";
     }
     {
       id = "paperless-gpt";
@@ -248,7 +217,6 @@
       instances.org = { };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/version";
-      glanceCategory = "infrastructure";
     }
     {
       id = "goo";
@@ -258,7 +226,6 @@
       publicHost = "goo.${publicDomain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/readyz";
-      glanceCategory = "user";
     }
     {
       id = "ollama";
@@ -275,14 +242,12 @@
       };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/system/ping";
-      glanceCategory = "media-admin";
     }
     {
       id = "prowlarr";
       instances.srvarr.dataDir = "/data/.state/nixarr/prowlarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
-      glanceCategory = "media-admin";
     }
     {
       id = "transmission";
@@ -298,7 +263,6 @@
         path = "/__probe/transmission-rpc";
         blackboxModule = "http_service_409";
       };
-      glanceCategory = "media-admin";
     }
     {
       id = "sabnzbd";
@@ -307,7 +271,6 @@
       instances.srvarr.vpnConfinement.profile = "airvpn";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";
-      glanceCategory = "media-admin";
     }
   ];
 }

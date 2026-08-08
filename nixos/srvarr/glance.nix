@@ -9,16 +9,16 @@
 let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
-  glanceServices = builtins.filter (service: service.showInGlance) hostInventory.services;
-  dashService = hostInventory.servicesById.dash;
-  degoogService = hostInventory.servicesById.goo;
+  dashboards = hostInventory.dashboards;
+  internalProfile = dashboards.profilesById.internal;
+  publicProfile = dashboards.profilesById.public;
+  dashService = hostInventory.servicesById.${publicProfile.endpointServiceId};
+  dashboardServiceIds = lib.unique (
+    builtins.concatMap (category: category.serviceIds) dashboards.categories
+  );
+  dashboardServices = map (id: hostInventory.servicesById.${id}) dashboardServiceIds;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalService.services;
-  internalPki = hostInventory.realms.${config.host.realm}.services.internalPki;
-  pkiRootCaUrl =
-    "https://${internalPki.providerHost}:"
-    + toString internalPki.server.port
-    + internalPki.server.rootsPath;
   srvarrHttpsServices = config.host.internalService.services;
   internalServicesFor =
     service:
@@ -51,30 +51,13 @@ let
         url = "https://${httpsService.serverName}/";
         probeUrl = "https://${httpsService.serverName}${service.probePath}";
       }
-  ) glanceServices;
-  infrastructureLinks = [
-    {
-      icon = "sh:proxmox";
-      title = "Proxmox VE";
-      url = "https://proxmox.${hostInventory.site.lan.domain}/";
-    }
-    {
-      icon = "sh:smallstep";
-      title = "PKI Root CA";
-      url = pkiRootCaUrl;
-    }
-  ];
-  extraSitesByCategory = {
-    infrastructure = infrastructureLinks;
-  };
-  extraSitesFor =
-    category:
-    if builtins.hasAttr category.id extraSitesByCategory then
-      builtins.getAttr category.id extraSitesByCategory
-    else
-      [ ];
-  servicesForCategory =
-    category: builtins.filter (service: service.glanceCategory == category.id) serviceCatalog;
+  ) dashboardServices;
+  serviceCatalogById = builtins.listToAttrs (
+    map (service: {
+      name = service.id;
+      value = service;
+    }) serviceCatalog
+  );
   siteFor =
     site:
     {
@@ -94,16 +77,26 @@ let
     sites = map siteFor section.sites;
   };
   serviceSectionsFor =
-    categories:
-    map (category: {
-      inherit (category) title;
-      sites = (servicesForCategory category) ++ (extraSitesFor category);
-    }) categories;
+    profile:
+    map (
+      categoryId:
+      let
+        category = dashboards.categoriesById.${categoryId};
+      in
+      {
+        inherit (category) title;
+        sites = map (id: serviceCatalogById.${id}) category.serviceIds ++ (category.links or [ ]);
+      }
+    ) profile.categoryIds;
   mkGlanceSettings =
     {
       port,
+      profile,
       sections,
     }:
+    let
+      searchService = hostInventory.servicesById.${profile.search.serviceId};
+    in
     {
       server = {
         host = "127.0.0.1";
@@ -122,7 +115,7 @@ let
                 {
                   type = "search";
                   autofocus = true;
-                  search-engine = "${degoogService.url}/search?q={QUERY}";
+                  search-engine = "${searchService.url}${profile.search.queryPath}";
                 }
               ]
               ++ map monitorWidgetFor sections;
@@ -131,12 +124,11 @@ let
         }
       ];
     };
-  allServiceSections = serviceSectionsFor hostInventory.glanceCategories;
-  externalServiceSections = serviceSectionsFor (
-    builtins.filter (category: category.id == "user") hostInventory.glanceCategories
-  );
+  allServiceSections = serviceSectionsFor internalProfile;
+  externalServiceSections = serviceSectionsFor publicProfile;
   externalSettings = mkGlanceSettings {
     port = glanceExternalPort;
+    profile = publicProfile;
     sections = externalServiceSections;
   };
   externalSettingsFile = (pkgs.formats.yaml { }).generate "glance-external.yaml" externalSettings;
@@ -146,6 +138,7 @@ in
     enable = true;
     settings = mkGlanceSettings {
       port = glanceInternalPort;
+      profile = internalProfile;
       sections = allServiceSections;
     };
   };
