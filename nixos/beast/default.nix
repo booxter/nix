@@ -1,5 +1,4 @@
 {
-  config,
   hostInventory,
   pkgs,
   ...
@@ -17,8 +16,6 @@
 
   host.storage.mdRaid.enable = true;
   host.ups.scheduler.critical = true;
-  # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
-  host.observability.lanWan.interface = config.host.network.primaryInterface;
 
   networking.resolvconf.enable = true;
 

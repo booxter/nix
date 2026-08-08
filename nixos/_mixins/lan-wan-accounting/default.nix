@@ -125,7 +125,7 @@ in
 
     interface = lib.mkOption {
       type = with lib.types; nullOr str;
-      default = null;
+      default = if config.host.isProxmox then null else config.host.network.primaryInterface;
       description = "If set, only account traffic entering or leaving through this interface.";
     };
 
