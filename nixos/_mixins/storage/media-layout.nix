@@ -29,6 +29,7 @@ let
 
   mediaDirSpecs =
     mkDirSpecs "2775" "root" [
+      mediaPaths.lidarr.cueSplitterWork
       mediaPaths.library.root
       mediaPaths.library.books
       mediaPaths.library.audiobooks

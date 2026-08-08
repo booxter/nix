@@ -341,15 +341,6 @@ in
         "d '${nginxDir}' 0750 ${user} media - -"
         "d '${integrationDir}' 0750 ${user} media - -"
         "d '${valkeyDir}' 0750 ${user} media - -"
-        "d '${rommBasePath}' 2775 ${user} media - -"
-        "d '${mediaPaths.assets}' 2775 ${user} media - -"
-        "d '${mediaPaths.cache}' 2775 ${user} media - -"
-        "d '${mediaPaths.config}' 2775 ${user} media - -"
-        "d '${mediaPaths.resources}' 2775 ${user} media - -"
-        "d '${mediaPaths.sync}' 2775 ${user} media - -"
-        "d '${mediaPaths.library}' 2775 ${user} media - -"
-        "d '${mediaPaths.roms}' 2775 ${user} media - -"
-        "d '${mediaPaths.bios}' 2775 ${user} media - -"
       ];
 
       services.mysql = {

@@ -15,7 +15,7 @@ let
   transmissionDir = "${mediaDir}/${mediaLayout.transmission.root}";
   sabnzbdCompleteDir = "${mediaDir}/${mediaLayout.sabnzbd.complete}";
   stateDir = "/var/lib/lidarr-cue-splitter";
-  workRoot = "${mediaDir}/.cue-splitter-work";
+  workRoot = "${mediaDir}/${mediaLayout.lidarr.cueSplitterWork}";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/lidarr-cue-splitter.prom";
   serviceDeps = [
@@ -45,7 +45,6 @@ in
     ];
 
     systemd.tmpfiles.rules = [
-      "d ${workRoot} 2775 lidarr ${mediaGroup} - -"
       "z ${nodeExporterTextfileDir} 0775 root ${mediaGroup} - -"
     ];
 

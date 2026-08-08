@@ -41,14 +41,6 @@ let
     username = ${builtins.getAttr (serverSecret server "username") config.sops.placeholder}
     password = ${builtins.getAttr (serverSecret server "password") config.sops.placeholder}
   '') serverNames;
-  directoryRule = mode: path: "d '${path}' ${mode} ${user} ${mediaExport.sharedGroup.name} - -";
-  directoryRules = [
-    (directoryRule "0755" mediaPaths.root)
-    (directoryRule "0755" mediaPaths.incomplete)
-    (directoryRule "0775" mediaPaths.watch)
-    (directoryRule "0775" mediaPaths.complete)
-  ]
-  ++ map (directoryRule "0775") (builtins.attrValues mediaPaths.categories);
 in
 {
   imports = [ ./exporter.nix ];
@@ -116,8 +108,6 @@ in
     host.nfs.mounts = lib.mkIf (!isMediaServer) {
       media = mediaDir;
     };
-
-    systemd.tmpfiles.rules = directoryRules;
 
     systemd.services.sabnzbd = {
       unitConfig.RequiresMountsFor = mediaDir;

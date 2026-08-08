@@ -40,6 +40,7 @@ let
     clientServices = [ ];
   };
   mediaLayout = {
+    lidarr.cueSplitterWork = ".cue-splitter-work";
     library = rec {
       root = "library";
       audiobooks = "${root}/audiobooks";
