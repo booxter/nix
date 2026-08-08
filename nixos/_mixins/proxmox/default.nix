@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   hostSpec,
   inputs,
   lib,
@@ -7,6 +8,12 @@
   ...
 }:
 let
+  realmProxmox = hostInventory.realms.${config.host.realm}.services.proxmox or null;
+  clusters = if realmProxmox == null then { } else realmProxmox.clusters;
+  clusterNames = builtins.attrNames (
+    lib.filterAttrs (_: cluster: builtins.elem hostSpec.name cluster.nodes) clusters
+  );
+  clusterName = if builtins.length clusterNames == 1 then builtins.head clusterNames else null;
   isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
@@ -27,13 +34,58 @@ in
 
   options.host.isProxmox = lib.mkOption {
     type = lib.types.bool;
-    default = false;
+    default = clusterName != null;
+    readOnly = true;
     internal = true;
     description = "Whether this host is a Proxmox VE node.";
   };
 
+  options.host.proxmox.cluster = lib.mkOption {
+    type = with lib.types; nullOr str;
+    default = clusterName;
+    readOnly = true;
+    internal = true;
+    description = "Proxmox cluster containing this host.";
+  };
+
   config = lib.mkMerge (
     [
+      {
+        assertions = [
+          {
+            assertion = builtins.length clusterNames <= 1;
+            message = "host ${hostSpec.name} may belong to at most one Proxmox cluster";
+          }
+        ]
+        ++ lib.concatLists (
+          lib.mapAttrsToList (name: cluster: [
+            {
+              assertion = lib.all (node: builtins.hasAttr node hostInventory.nixosHosts) cluster.nodes;
+              message = "Proxmox cluster ${config.host.realm}.${name} contains an unknown node";
+            }
+            {
+              assertion = lib.all (
+                node:
+                !(builtins.hasAttr node hostInventory.nixosHosts)
+                || hostInventory.nixosHosts.${node}.realm == config.host.realm
+              ) cluster.nodes;
+              message = "Proxmox cluster ${config.host.realm}.${name} nodes must belong to their cluster realm";
+            }
+            {
+              assertion = builtins.elem cluster.defaultVmNode cluster.nodes;
+              message = "Proxmox cluster ${config.host.realm}.${name} defaultVmNode must be a cluster node";
+            }
+            {
+              assertion = !(cluster ? oidcManagerHost) || builtins.elem cluster.oidcManagerHost cluster.nodes;
+              message = "Proxmox cluster ${config.host.realm}.${name} oidcManagerHost must be a cluster node";
+            }
+            {
+              assertion = !(cluster ? monitoringNode) || builtins.elem cluster.monitoringNode cluster.nodes;
+              message = "Proxmox cluster ${config.host.realm}.${name} monitoringNode must be a cluster node";
+            }
+          ]) clusters
+        );
+      }
       (lib.mkIf config.host.isProxmox {
         nixpkgs.overlays = [
           inputs.proxmox-nixos.overlays.${hostSpec.platform}

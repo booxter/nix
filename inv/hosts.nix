@@ -60,7 +60,6 @@ let
       ipAddress = "192.168.15.${toString (index + 9)}";
     in
     {
-      hostKind = "proxmox";
       inherit
         ipAddress
         macAddress
@@ -160,7 +159,6 @@ in
 
   nixosHostSpecs = [
     {
-      hostKind = "nixos";
       name = frame;
       stateVersion = "25.11";
       platform = "x86_64-linux";
@@ -237,7 +235,6 @@ in
       };
     }
     {
-      hostKind = "proxmox";
       name = nvws;
       platform = "x86_64-linux";
       realm = "work";
@@ -257,7 +254,6 @@ in
       };
     }
     {
-      hostKind = "nixos";
       name = "beast";
       stateVersion = "25.11";
       platform = "x86_64-linux";

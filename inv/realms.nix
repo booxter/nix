@@ -82,7 +82,16 @@
         replyToAddress = user.emails.personal;
       };
       publicIngress.host = "beast";
-      proxmox.oidcManagerHost = "prx1-lab";
+      proxmox.clusters.lab = {
+        nodes = [
+          "prx1-lab"
+          "prx2-lab"
+          "prx3-lab"
+        ];
+        defaultVmNode = "prx1-lab";
+        oidcManagerHost = "prx1-lab";
+        monitoringNode = "prx1-lab";
+      };
       remoteAccess = {
         appleRemoteManagement = true;
         vncClient = true;
@@ -118,7 +127,13 @@
       managePasswordSecrets = false;
       sudoWheelNeedsPassword = true;
     };
-    services.ups.credentialMode = "literal";
+    services = {
+      proxmox.clusters.work = {
+        nodes = [ "nvws" ];
+        defaultVmNode = "nvws";
+      };
+      ups.credentialMode = "literal";
+    };
     trust.ssh.authorizedKeys = ssh.authorizedKeysForRealm "work";
   };
 }

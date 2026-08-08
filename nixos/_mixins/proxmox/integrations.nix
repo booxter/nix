@@ -11,7 +11,12 @@ let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
   oidcCfg = config.host.proxmox.oidc;
-  realmProxmox = hostInventory.realms.${config.host.realm}.services.proxmox or null;
+  realm = hostInventory.realms.${config.host.realm};
+  realmProxmox = realm.services.proxmox or null;
+  realmInternalPki = realm.services.internalPki or null;
+  clusterName = config.host.proxmox.cluster;
+  cluster =
+    if realmProxmox == null || clusterName == null then null else realmProxmox.clusters.${clusterName};
   oidcScopes = config.host.sso.oidc.baseScopes;
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
@@ -23,13 +28,10 @@ let
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  proxmoxLabHostSpecs = builtins.filter (
-    spec:
-    (spec.hostKind or null) == "proxmox"
-    && (hostInventory.realms.${spec.realm}.services.proxmox or null) != null
-  ) hostInventory.nixosHostSpecs;
-  proxmoxLabHosts = lib.unique (
-    lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
+  clusterHostSpecs =
+    if cluster == null then [ ] else map (name: hostInventory.nixosHosts.${name}) cluster.nodes;
+  clusterHosts = lib.unique (
+    lib.concatMap hostInventory.toNixosHostCertificateDnsNames clusterHostSpecs
   );
   proxmoxCanonicalHost = "proxmox.${hostInventory.site.lan.domain}";
   proxmoxOriginUrls = lib.unique (
@@ -37,7 +39,7 @@ let
       "https://${proxmoxCanonicalHost}"
       "https://proxmox"
     ]
-    ++ map (host: "https://${host}") proxmoxLabHosts
+    ++ map (host: "https://${host}") clusterHosts
   );
   certInstallCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' proxmoxHostTools "proxmox-install-api-certificate")
@@ -131,7 +133,7 @@ in
 
     managerHost = lib.mkOption {
       type = lib.types.str;
-      default = if realmProxmox == null then "" else realmProxmox.oidcManagerHost;
+      default = if cluster == null then "" else cluster.oidcManagerHost or "";
       description = "Proxmox node that declaratively manages the cluster-wide OIDC realm.";
     };
 
@@ -274,17 +276,23 @@ in
 
   config = lib.mkMerge [
     {
-      host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && realmProxmox != null);
+      host.proxmox.apiCertificate.enable = lib.mkDefault (
+        config.host.isProxmox && realmInternalPki != null
+      );
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.isProxmox && realmProxmox != null && hostSpec.name == oidcCfg.managerHost
+        config.host.isProxmox && oidcCfg.managerHost != "" && hostSpec.name == oidcCfg.managerHost
       );
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
         config.host.isProxmox && config.host.observability.enable
       );
       assertions = [
         {
-          assertion = (!cfg.enable && !oidcCfg.enable) || realmProxmox != null;
-          message = "realm '${config.host.realm}' does not define managed Proxmox services";
+          assertion = (!cfg.enable && !oidcCfg.enable) || cluster != null;
+          message = "host '${hostSpec.name}' does not belong to a managed Proxmox cluster";
+        }
+        {
+          assertion = !cfg.enable || realmInternalPki != null;
+          message = "host.proxmox.apiCertificate requires an internal PKI in its realm";
         }
       ];
     }
