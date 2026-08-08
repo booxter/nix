@@ -26,18 +26,16 @@ in
     ./_mixins/network
     ./_mixins/nix
     ./_mixins/observability
-    ./_mixins/pki
     ./_mixins/proxmox
     ./_mixins/remote-gui
     ./_mixins/remote-unlock.nix
-    ./_mixins/secrets
+    ./_mixins/security
     ./_mixins/sso
     ./_mixins/storage
     ./_mixins/ups
     ./_mixins/user
     ./_mixins/vm.nix
     ./_mixins/web
-    ./_mixins/yubi.nix
   ];
 
   home-manager = {

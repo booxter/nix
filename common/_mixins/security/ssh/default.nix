@@ -9,7 +9,7 @@ let
   username = config.host.username;
   realmSsh = hostInventory.realms.${config.host.realm}.trust.ssh;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
+  hostKeyPath = name: ../../../../public-keys/hosts + "/${name}.pub";
   managedKnownHosts = lib.mapAttrs (name: spec: {
     hostNames = hostInventory.toSshKnownHostNames spec;
     publicKey = readPublicKey (hostKeyPath name);

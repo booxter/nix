@@ -3,15 +3,12 @@
     ./_mixins/cli
     ./_mixins/codex
     ./_mixins/host.nix
-    ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
     ./_mixins/networking
-    ./_mixins/secrets
-    ./_mixins/ssh
+    ./_mixins/security
     ./_mixins/stylix
     ./_mixins/terminfo
-    ./_mixins/yubi
     ./_mixins/flakehub-cache
   ];
 }

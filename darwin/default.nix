@@ -26,23 +26,20 @@ in
     ./_mixins/fleet-cache-warmer
     ./_mixins/fonts
     ./_mixins/homebrew
-    ./_mixins/internal-pki
     ./_mixins/lan-wan-accounting
     ./_mixins/logs-client
     ./_mixins/networking
     ./_mixins/nix
     ./_mixins/observability
     ./_mixins/remote-gui
-    ./_mixins/secretive
+    ./_mixins/security
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sketchybar-network
-    ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/vnc
     ./_mixins/vnc-open
     ./_mixins/xquartz
-    ./_mixins/yubi.nix
   ];
 
   home-manager = {
