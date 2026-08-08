@@ -28,6 +28,7 @@ in
       ./_mixins/backups
       ./_mixins/btrfs.nix
       ./_mixins/builder.nix
+      ./_mixins/ethernet-pause.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware
       ./_mixins/internal-https-service.nix

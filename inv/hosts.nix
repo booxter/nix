@@ -268,6 +268,8 @@ in
       hmFull = false;
       network = {
         primaryInterface = "enp6s0";
+        # Links on the TL2-F7120 can drop intermittently with pause frames.
+        # Flow control is also disabled on these switch ports.
         pauseDisabledInterfaces = [
           "enp6s0"
           "enp7s0"
