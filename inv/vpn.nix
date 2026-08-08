@@ -3,6 +3,7 @@
   airvpn = {
     host = "srvarr";
     namespace = "wg";
+    endpointPort = 1637;
     bridgeAddress = "192.168.50.5";
     namespaceAddress = "192.168.50.1";
     accessibleFrom = [

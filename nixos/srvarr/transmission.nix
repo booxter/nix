@@ -5,12 +5,16 @@
   ...
 }:
 let
+  hostname = config.networking.hostName;
   mediaPaths = config.host.srvarrPaths.transmission;
-  srvarrSpec = hostInventory.nixosHosts.srvarr;
-  peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
+  service = hostInventory.servicesById.transmission;
+  instance = service.instances.${hostname};
+  vpnRequirement = instance.vpnConfinement;
+  vpnProfile = hostInventory.egressVpns.${vpnRequirement.profile};
+  peerPort = vpnRequirement.forwardedPort.port;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   tuning = config.host.srvarrTuning;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
+  vpnNamespaceAddress = vpnProfile.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
@@ -22,6 +26,7 @@ in
   imports = [
     ./transmission-prioritizer.nix
     ./transmission-torrent-cleaner.nix
+    ./update-dynamic-ip.nix
   ];
 
   sops.secrets.transmissionTrackerHosts = {
@@ -32,7 +37,7 @@ in
   };
 
   services.transmission = {
-    enable = true;
+    enable = lib.mkDefault (builtins.hasAttr hostname service.instances);
     group = "media";
     home = stateDir;
     openPeerPorts = true;
@@ -51,7 +56,7 @@ in
       pex-enabled = true;
       port-forwarding-enabled = false;
       rpc-authentication-required = false;
-      rpc-bind-address = wgNamespaceAddress;
+      rpc-bind-address = vpnNamespaceAddress;
       rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
       rpc-whitelist = "127.0.0.1,192.168.*,10.*";
       sort-mode = "progress";
@@ -103,20 +108,16 @@ in
         ) transmissionWatchDir
       );
     };
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
-  vpnNamespaces.wg.openVPNPorts = [
-    {
-      port = peerPort;
-      protocol = "both";
-    }
-  ];
-
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.services.transmission.settings.rpc-port ];
+  host.vpnConfinement.implementations.transmission = {
+    serviceEnabled = config.services.transmission.enable;
+    systemdUnits = [
+      "transmission"
+      "update-dynamic-ip"
+    ];
+    bridgeTcpPorts = [ config.services.transmission.settings.rpc-port ];
+  };
 
   # Keep the host-local helper on loopback, but target the actual namespace
   # address directly instead of the old fixed proxy address.
@@ -131,7 +132,7 @@ in
       locations."/" = {
         recommendedProxySettings = true;
         proxyWebsockets = true;
-        proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
+        proxyPass = lib.mkForce "http://${vpnNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
       };
     };
 

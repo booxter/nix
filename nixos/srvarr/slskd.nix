@@ -1,16 +1,21 @@
 {
   config,
   hostInventory,
+  lib,
   ...
 }:
 let
+  hostname = config.networking.hostName;
   mediaDir = config.host.srvarrPaths.mediaDir;
   mediaPaths = config.host.srvarrPaths.slskd;
-  srvarrSpec = hostInventory.nixosHosts.srvarr;
+  service = hostInventory.servicesById.slskd;
+  instance = service.instances.${hostname};
+  vpnRequirement = instance.vpnConfinement;
+  vpnProfile = hostInventory.egressVpns.${vpnRequirement.profile};
   apiPort = 5030;
-  peerPort = srvarrSpec.wgNamespace.forwardedPorts.slskd;
-  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
+  peerPort = vpnRequirement.forwardedPort.port;
+  vpnBridgeAddress = vpnProfile.bridgeAddress;
+  vpnNamespaceAddress = vpnProfile.namespaceAddress;
   secretPath = name: "slskd/${name}";
   slskdSecretNames = [
     (secretPath "soulseek/username")
@@ -40,14 +45,14 @@ in
       SLSKD_SLSK_PASSWORD=${config.sops.placeholder.${secretPath "soulseek/password"}}
       SLSKD_USERNAME=${config.sops.placeholder.${secretPath "web/username"}}
       SLSKD_PASSWORD=${config.sops.placeholder.${secretPath "web/password"}}
-      SLSKD_API_KEY=role=Administrator;cidr=${wgBridgeAddress}/32;${
+      SLSKD_API_KEY=role=Administrator;cidr=${vpnBridgeAddress}/32;${
         config.sops.placeholder.${secretPath "web/apiKey"}
       }
     '';
   };
 
   services.slskd = {
-    enable = true;
+    enable = lib.mkDefault (builtins.hasAttr hostname service.instances);
     domain = null;
     group = "media";
     environmentFile = config.sops.templates."slskd.env".path;
@@ -64,7 +69,7 @@ in
         listen_port = peerPort;
       };
       web = {
-        ip_address = wgNamespaceAddress;
+        ip_address = vpnNamespaceAddress;
         port = apiPort;
         https.disabled = true;
       };
@@ -74,20 +79,13 @@ in
   systemd.services.slskd = {
     unitConfig.RequiresMountsFor = mediaDir;
     serviceConfig.UMask = "0002";
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
   # The API key crosses only the private host-to-namespace veth. Restrict both
   # the namespace firewall and slskd's own key to the host bridge address.
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ apiPort ];
-
-  vpnNamespaces.wg.openVPNPorts = [
-    {
-      port = peerPort;
-      protocol = "tcp";
-    }
-  ];
+  host.vpnConfinement.implementations.slskd = {
+    serviceEnabled = config.services.slskd.enable;
+    systemdUnits = [ "slskd" ];
+    bridgeTcpPorts = [ apiPort ];
+  };
 }

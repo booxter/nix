@@ -3,7 +3,7 @@
   lib,
 }:
 buildGoModule {
-  pname = "srvarr-network-tools";
+  pname = "vpn-confinement-tools";
   version = "0.1.0";
 
   src = ./.;
@@ -22,7 +22,7 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Native network namespace tools for srvarr";
+    description = "Network namespace bridge access tools";
     license = lib.licenses.mit;
     mainProgram = "wg-bridge-access";
     platforms = lib.platforms.linux;

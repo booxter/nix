@@ -3,14 +3,14 @@
   language,
   paths,
   port,
-  wgNamespaceAddress,
+  vpnNamespaceAddress,
 }:
 {
   misc = {
     complete_dir = paths.complete;
     dirscan_dir = paths.watch;
     download_dir = paths.incomplete;
-    host = wgNamespaceAddress;
+    host = vpnNamespaceAddress;
     host_whitelist = "${builtins.concatStringsSep "," hostWhitelist},";
     local_ranges = ",";
     permissions = 775;

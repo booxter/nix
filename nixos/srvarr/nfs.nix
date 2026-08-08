@@ -12,12 +12,6 @@ let
   requiresMediaMount = networkOnlineUnitDeps // {
     RequiresMountsFor = mediaPath;
   };
-  wgUnitDepsBase = networkOnlineUnitDeps // {
-    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
-    BindsTo = [ "wg.service" ];
-    PartOf = [ "wg.service" ];
-  };
-  wgUnitDepsWithMount = wgUnitDepsBase // requiresMediaMount;
   servarrUMask = lib.mkForce "0002";
   isNfsMediaTmpfilesRule =
     rule:
@@ -77,6 +71,6 @@ in
     serviceConfig.UMask = servarrUMask;
     unitConfig = requiresMediaMount;
   };
-  systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
-  systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
+  systemd.services.transmission.unitConfig = requiresMediaMount;
+  systemd.services.sabnzbd.unitConfig = requiresMediaMount;
 }

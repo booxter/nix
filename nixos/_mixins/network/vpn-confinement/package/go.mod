@@ -1,4 +1,4 @@
-module github.com/booxter/nix-config/srvarr-network-tools
+module github.com/booxter/nix-config/vpn-confinement-tools
 
 go 1.26.4
 

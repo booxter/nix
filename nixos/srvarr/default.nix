@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   ...
 }:
@@ -9,7 +8,6 @@
   environment.systemPackages = [ pkgs.join-media-parts ];
 
   imports = [
-    inputs.vpnconfinement.nixosModules.default
     ./arr.nix
     ./audiobookshelf.nix
     ./aurral.nix
@@ -31,6 +29,5 @@
     ./slskd.nix
     ./transmission.nix
     ./tuning.nix
-    ./vpn.nix
   ];
 }

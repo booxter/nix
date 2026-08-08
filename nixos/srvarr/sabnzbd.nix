@@ -5,10 +5,14 @@
   ...
 }:
 let
+  hostname = config.networking.hostName;
   mediaPaths = config.host.srvarrPaths.sabnzbd;
+  service = hostInventory.servicesById.sabnzbd;
+  instance = service.instances.${hostname};
+  vpnProfile = hostInventory.egressVpns.${instance.vpnConfinement.profile};
   port = 6336;
   user = "sabnzbd";
-  wgNamespaceAddress = hostInventory.nixosHosts.srvarr.wgNamespace.namespaceAddress;
+  vpnNamespaceAddress = vpnProfile.namespaceAddress;
   sabnzbdServerNames = [
     "news.frugalusenet.com"
     "news.newshosting.com"
@@ -92,7 +96,7 @@ in
   };
 
   services.sabnzbd = {
-    enable = true;
+    enable = lib.mkDefault (builtins.hasAttr hostname service.instances);
     allowConfigWrite = false;
     configFile = null;
     group = "media";
@@ -103,7 +107,7 @@ in
         config.networking.hostName
       ]
       ++ hostInventory.toInternalServiceHosts "sabnzbd";
-      inherit wgNamespaceAddress;
+      inherit vpnNamespaceAddress;
       paths = mediaPaths;
       port = port;
     };
@@ -116,17 +120,17 @@ in
     serviceConfig = {
       Restart = "on-failure";
     };
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
   users.users.${user} = {
     uid = hostInventory.serviceAccounts.sabnzbd.uid;
   };
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ port ];
+  host.vpnConfinement.implementations.sabnzbd = {
+    serviceEnabled = config.services.sabnzbd.enable;
+    systemdUnits = [ "sabnzbd" ];
+    bridgeTcpPorts = [ port ];
+  };
 
   services.nginx.virtualHosts."127.0.0.1:${toString port}" = {
     listen = lib.mkForce [
@@ -138,7 +142,7 @@ in
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString port}";
+      proxyPass = lib.mkForce "http://${vpnNamespaceAddress}:${toString port}";
     };
   };
 

@@ -5,6 +5,7 @@
     ./netboot.nix
     ./qos
     ./unifi-sync
+    ./vpn-confinement
     ./wireguard-endpoint
   ];
 }

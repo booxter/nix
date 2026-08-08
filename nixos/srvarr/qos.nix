@@ -12,9 +12,10 @@ let
   nfsServerPort = nfsServerConfig.services.nfs.settings.nfsd.port;
   nfsRateMbit = 1500;
   jellyfinService = hostInventory.servicesById.jellyfin;
+  egressVpn = hostInventory.egressVpns.airvpn;
   jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
   jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
-  wgEndpointPort = 1637;
+  wgEndpointPort = egressVpn.endpointPort;
   jellyfinClientName = "jellyfin-upload-policy";
   jellyfinClient = config.host.internalPki.clients.${jellyfinClientName};
 in
@@ -89,7 +90,7 @@ in
     # the shaped tc class as the authoritative WAN egress counter instead.
     wanTransmitTcClass = config.host.qos.classIds.wan.wireguard-upload;
     wanUdpSubclass = {
-      name = "wg";
+      name = egressVpn.namespace;
       port = wgEndpointPort;
     };
   };
