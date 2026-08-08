@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.services.lolek;
-  hostVideoAcceleration = config.host.videoAcceleration;
+  hostVideoAcceleration = if config.host.gpu == null then null else config.host.gpu.videoAcceleration;
   lolekSecret = {
     owner = cfg.user;
     group = cfg.group;
@@ -59,7 +59,7 @@ in
         assertions = [
           {
             assertion = hostVideoAcceleration != null;
-            message = "services.lolek.hardwareAcceleration.useHost requires host.videoAcceleration.";
+            message = "services.lolek.hardwareAcceleration.useHost requires host.gpu.videoAcceleration.";
           }
         ];
 

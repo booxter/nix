@@ -280,9 +280,12 @@ in
           "enp7s0"
         ];
       };
-      hardware.videoAcceleration = {
-        backend = "qsv";
-        device = "/dev/dri/renderD128";
+      hardware.gpu = {
+        vendor = "intel";
+        videoAcceleration = {
+          backend = "qsv";
+          device = "/dev/dri/renderD128";
+        };
       };
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";

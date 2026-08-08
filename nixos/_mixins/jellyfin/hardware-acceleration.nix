@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.services.jellyfin;
-  acceleration = config.host.videoAcceleration;
+  acceleration = if config.host.gpu == null then null else config.host.gpu.videoAcceleration;
 in
 {
   options.services.jellyfin.useHostVideoAcceleration = lib.mkEnableOption "hardware video acceleration declared by the host";
@@ -14,7 +14,7 @@ in
     assertions = [
       {
         assertion = acceleration != null;
-        message = "services.jellyfin.useHostVideoAcceleration requires host.videoAcceleration.";
+        message = "services.jellyfin.useHostVideoAcceleration requires host.gpu.videoAcceleration.";
       }
     ];
 
