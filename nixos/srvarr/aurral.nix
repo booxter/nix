@@ -147,6 +147,41 @@ in
   host.publicIngress.exports.aurral.locationExtraConfig = ''
     proxy_set_header X-Forwarded-For $remote_addr;
   '';
+  host.publicIngress.exports.aurral.edgeAuth = {
+    clientId = "aurral";
+    displayName = "Aurral";
+    originLanding = "${aurralService.url}/";
+    cookieName = "_aurral_sso";
+    allowedGroups = [
+      "media-admins"
+      "media-users"
+    ];
+    groupClaim = "media_groups";
+    # Kanidm access tokens live for 15 minutes, so refresh one minute early.
+    # Keep the Redis ticket aligned with Kanidm's eight-hour login session.
+    sessionRefresh = {
+      intervalSeconds = 14 * 60;
+      lifetimeSeconds = 8 * 60 * 60;
+    };
+    authCookieVariableName = "aurral_auth_cookie";
+    authRequestHeaders = [
+      {
+        variableName = "aurral_user";
+        upstreamHeader = "x_auth_request_preferred_username";
+        proxyHeader = "X-Forwarded-User";
+      }
+      {
+        variableName = "aurral_email";
+        upstreamHeader = "x_auth_request_email";
+        proxyHeader = "X-Forwarded-Email";
+      }
+      {
+        variableName = "aurral_groups";
+        upstreamHeader = "x_auth_request_groups";
+        proxyHeader = "X-Forwarded-Groups";
+      }
+    ];
+  };
 
   services.nginx.proxyCachePath.aurral-images = {
     enable = true;
@@ -161,9 +196,9 @@ in
   services.nginx.virtualHosts."internal-https-aurral".locations = aurralImageLocations;
   services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
 
-  # Aurral's OAuth gate lives on beast because only the public hostname is
-  # browser-protected. The backend probe still needs a probe-only listener on
-  # the service owner, so define this exact health location locally on srvarr.
+  # Only the public hostname is browser-protected. The backend probe still
+  # needs a probe-only listener on the service owner, so define this exact
+  # health location locally on srvarr.
   services.nginx.virtualHosts."internal-https-aurral-probe".locations."= /api/health/live" = {
     proxyPass = "http://127.0.0.1:${toString aurralPort}";
     recommendedProxySettings = true;

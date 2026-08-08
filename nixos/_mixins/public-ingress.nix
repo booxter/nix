@@ -77,6 +77,33 @@ let
     _: service:
     service.backend.type == "local-http" && (service.owner != hostname || service.backend.url == null)
   ) cfg.services;
+  edgeAuthenticatedServices = lib.filterAttrs (_: service: service.edgeAuth != null) cfg.services;
+  sessionRefreshServices = lib.filterAttrs (
+    _: service: service.edgeAuth ? sessionRefresh
+  ) edgeAuthenticatedServices;
+  sessionRefreshServiceNames = builtins.attrNames sessionRefreshServices;
+  redisPorts = builtins.listToAttrs (
+    lib.imap0 (index: serviceName: {
+      name = serviceName;
+      value = 6379 + index;
+    }) sessionRefreshServiceNames
+  );
+  redisNameFor = serviceName: "oauth2-proxy-${serviceName}";
+  redisUnitFor = serviceName: "redis-${redisNameFor serviceName}.service";
+  mkEdgeAuthGate =
+    serviceName: service:
+    removeAttrs service.edgeAuth [ "sessionRefresh" ]
+    // {
+      enable = true;
+      whitelistDomains = [ service.publicHost ];
+      externalHostNames = [ service.publicHost ];
+    }
+    // lib.optionalAttrs (service.edgeAuth ? sessionRefresh) {
+      sessionRefresh = service.edgeAuth.sessionRefresh // {
+        redisConnectionUrl = "redis://127.0.0.1:${toString redisPorts.${serviceName}}/0";
+        redisServiceUnit = redisUnitFor serviceName;
+      };
+    };
 
   mkVirtualHost =
     serviceName: service:
@@ -150,6 +177,12 @@ in
               default = "";
               description = "Additional nginx configuration for the public proxy location.";
             };
+
+            edgeAuth = lib.mkOption {
+              type = with lib.types; nullOr (attrsOf anything);
+              default = null;
+              description = "OAuth2 Proxy gate requested from the public ingress host.";
+            };
           };
         }
       );
@@ -211,6 +244,25 @@ in
         };
         virtualHosts = lib.mapAttrs' mkVirtualHost cfg.services;
       };
+
+      host.sso.oauth2ProxyGates = lib.mapAttrs mkEdgeAuthGate edgeAuthenticatedServices;
+
+      services.redis.servers = lib.mapAttrs' (
+        serviceName: _:
+        lib.nameValuePair (redisNameFor serviceName) {
+          enable = true;
+          bind = "127.0.0.1";
+          port = redisPorts.${serviceName};
+          openFirewall = false;
+          save = [ ];
+          appendOnly = true;
+          appendFsync = "everysec";
+          settings = {
+            maxmemory = "64mb";
+            maxmemory-policy = "volatile-ttl";
+          };
+        }
+      ) sessionRefreshServices;
 
       # Keep public ingress config-only changes from dropping long-lived
       # proxied streams.
