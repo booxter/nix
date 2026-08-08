@@ -405,6 +405,14 @@ in
   };
 
   config = lib.mkIf (enabledGates != { }) {
+    host.observability.systemd.unitLabels = lib.mapAttrs' (
+      gateName: gate:
+      lib.nameValuePair "${gate.serviceName}.service" {
+        sso_gate = gateName;
+        sso_role = "gate";
+      }
+    ) enabledGates;
+
     host.sso.oidc.registrations = lib.mapAttrs (gateName: gate: {
       inherit (gate)
         clientId

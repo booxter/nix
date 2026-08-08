@@ -176,6 +176,9 @@ let
     }
     // lib.optionalAttrs (service ? backend_probe) {
       inherit (service) backend_probe backend_probe_title;
+    }
+    // lib.optionalAttrs (service.observability ? ssoRole) {
+      sso_role = service.observability.ssoRole;
     };
     targets = [ service.probeUrl ];
   };

@@ -8,8 +8,8 @@ import (
 )
 
 func ScrapeHealth(config Config) (dashboard.Dashboard, error) {
-	serviceScrapes := `up{job=~"smartctl|jellyfin|lolek|paperless|sabnzbd|vikunja"}`
-	blackboxScrapes := `min by(job, source) (up{job=~"blackbox-icmp|blackbox-tcp"})`
+	serviceScrapes := `up{scrape_profile="application"}`
+	blackboxScrapes := `min by(probe_family, source) (up{scrape_profile="probe"})`
 	prometheusDatasource := config.DataSources.Prometheus.reference()
 
 	return newDashboard(DashboardOptions{
@@ -21,11 +21,11 @@ func ScrapeHealth(config Config) (dashboard.Dashboard, error) {
 	}).
 		WithPanel(availabilityStat(AvailabilityStatOptions{
 			ID: 1, Grid: grid(0, 0, 24, 8), Title: "Current mTLS Service Scrapes",
-			Expression: serviceScrapes, Legend: "{{job}}", DataSource: prometheusDatasource,
+			Expression: serviceScrapes, Legend: "{{service}} / {{component}}", DataSource: prometheusDatasource,
 		})).
 		WithPanel(availabilityStat(AvailabilityStatOptions{
 			ID: 2, Grid: grid(0, 8, 24, 8), Title: "Current Blackbox Scrape Transport",
-			Expression: blackboxScrapes, Legend: "{{job}} / {{source}}", DataSource: prometheusDatasource,
+			Expression: blackboxScrapes, Legend: "{{probe_family}} / {{source}}", DataSource: prometheusDatasource,
 		})).
 		WithPanel(timeseries.NewPanelBuilder().
 			Id(3).
@@ -41,7 +41,7 @@ func ScrapeHealth(config Config) (dashboard.Dashboard, error) {
 			Tooltip(common.NewVizTooltipOptionsBuilder().
 				Mode(common.TooltipDisplayModeMulti).
 				Sort(common.SortOrderDescending)).
-			WithTarget(prometheusQuery("A", serviceScrapes, "{{job}}", false)).
-			WithTarget(prometheusQuery("B", blackboxScrapes, "{{job}} / {{source}}", false))).
+			WithTarget(prometheusQuery("A", serviceScrapes, "{{service}} / {{component}}", false)).
+			WithTarget(prometheusQuery("B", blackboxScrapes, "{{probe_family}} / {{source}}", false))).
 		Build()
 }

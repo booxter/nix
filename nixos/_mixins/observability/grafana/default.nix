@@ -61,6 +61,7 @@ let
       };
     };
   dashboardGenerator = pkgs.callPackage ./dashboards/package.nix { };
+  grafanaSso = hostInventory.sso.applications.grafana;
   dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
     builtins.toJSON {
       dataSources.prometheus = {
@@ -98,6 +99,11 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
+      host.observability.systemd.unitLabels."grafana.service" = {
+        service = grafanaService.id;
+        sso_role = "client";
+      };
+
       assertions = [
         {
           assertion = grafanaService.internalEndpointName != null;
@@ -122,12 +128,12 @@ in
         originUrls = [ "https://${grafanaHost}/login/generic_oauth" ];
         originLanding = "https://${grafanaHost}/";
         scopeMaps = {
-          "grafana-admins" = oidcScopes;
-          "grafana-viewers" = oidcScopes;
+          ${grafanaSso.adminGroup} = oidcScopes;
+          ${grafanaSso.viewerGroup} = oidcScopes;
         };
         claimMaps.grafana_role.valuesByGroup = {
-          "grafana-admins" = [ "admin" ];
-          "grafana-viewers" = [ "viewer" ];
+          ${grafanaSso.adminGroup} = [ "admin" ];
+          ${grafanaSso.viewerGroup} = [ "viewer" ];
         };
         secret = {
           sopsKey = "grafana/oidc/client_secret";

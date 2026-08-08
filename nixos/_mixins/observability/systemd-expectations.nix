@@ -62,20 +62,45 @@ let
     || lib.hasSuffix ".path" name
     || (lib.hasSuffix ".service" name && isPersistentService name);
   expectedUnits = builtins.sort builtins.lessThan (builtins.filter isExpected activatedNames);
+  unitLabels = cfg.systemd.unitLabels;
 
   escapeLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
+  formatLabels =
+    name:
+    lib.concatStringsSep "," (
+      lib.mapAttrsToList (label: value: ''${label}="${escapeLabel value}"'') (
+        { inherit name; } // (unitLabels.${name} or { })
+      )
+    );
   metricsFile = pkgs.writeText "systemd-unit-expectations.prom" (
     ''
       # HELP nixos_systemd_unit_expected_active Whether NixOS expects a persistent systemd unit to be active.
       # TYPE nixos_systemd_unit_expected_active gauge
     ''
     + lib.concatMapStrings (name: ''
-      nixos_systemd_unit_expected_active{name="${escapeLabel name}"} 1
+      nixos_systemd_unit_expected_active{${formatLabels name}} 1
     '') expectedUnits
   );
 in
 {
+  options.host.observability.systemd.unitLabels = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
+    default = { };
+    description = "Prometheus labels attached to expected systemd units.";
+  };
+
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = lib.all (labels: !(labels ? name)) (builtins.attrValues unitLabels);
+        message = "host.observability.systemd.unitLabels must not override the unit name label";
+      }
+      {
+        assertion = lib.all (name: builtins.elem name expectedUnits) (builtins.attrNames unitLabels);
+        message = "host.observability.systemd.unitLabels may only label expected active units";
+      }
+    ];
+
     host.observability.nodeExporter.textfile.enable = true;
 
     systemd.tmpfiles.rules = [

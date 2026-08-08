@@ -16,6 +16,10 @@ in
       userGroup = "media-users";
     };
     degoog.userGroup = "degoog-users";
+    grafana = {
+      adminGroup = "grafana-admins";
+      viewerGroup = "grafana-viewers";
+    };
     "home-assistant" = {
       adminGroup = "home-admins";
       userGroup = "home-users";

@@ -262,6 +262,7 @@ let
       backendProbe ? null,
       internalEndpointName ? if probePath == null then null else id,
       observability ? { },
+      ssoRole ? if builtins.hasAttr id ssoFacts.applications then "client" else null,
     }:
     let
       normalizedInstances = lib.mapAttrs (
@@ -292,7 +293,14 @@ let
           title
           ;
         instances = normalizedInstances;
-        observability.availability = observability.availability or "always";
+        observability =
+          observability
+          // {
+            availability = observability.availability or "always";
+          }
+          // lib.optionalAttrs (ssoRole != null) {
+            inherit ssoRole;
+          };
       }
       // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
       // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
@@ -315,6 +323,13 @@ let
         "intermittent"
       ])
       "Service ${id} has invalid observability availability '${resolvedService.observability.availability}'";
+    assert lib.assertMsg (
+      ssoRole == null
+      || builtins.elem ssoRole [
+        "client"
+        "provider"
+      ]
+    ) "Service ${id} has invalid SSO role '${toString ssoRole}'";
     resolvedService;
 
   normalizedServices = map (normalizeService toLocalDnsName) serviceFacts.definitions;

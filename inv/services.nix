@@ -11,6 +11,7 @@
       instances.pki = { };
       publicHost = "id.${publicDomain}";
       probePath = "/status";
+      ssoRole = "provider";
     }
     {
       id = "dash";

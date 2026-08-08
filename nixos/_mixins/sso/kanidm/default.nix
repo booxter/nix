@@ -22,6 +22,11 @@ in
   ];
 
   config = lib.mkIf cfg.enable {
+    host.observability.systemd.unitLabels."kanidm.service" = {
+      service = idService.id;
+      sso_role = "provider";
+    };
+
     sops.secrets = {
       kanidmAdminPassword = {
         key = "kanidm/admin_password";
