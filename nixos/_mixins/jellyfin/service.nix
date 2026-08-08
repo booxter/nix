@@ -10,9 +10,17 @@ let
   jellyfinService = hostInventory.servicesById.jellyfin;
   watchstateService = hostInventory.servicesById.watchstate;
   mediaExport = hostInventory.storage.nfs.exports.media;
+  isMediaServer = mediaExport.server == hostname;
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
   ownerExists = builtins.hasAttr jellyfinService.owner hostInventory.nixosHosts;
   dataMount = config.host.storage.volumes.data.mounts.data.mountPoint;
+  backupStagingDir =
+    if config.host.backups.client.isLocal then
+      "${dataMount}/backups/staging/jellyfin"
+    else
+      "/var/lib/jellyfin-backups";
+  backupGroup =
+    if config.host.backups.client.isLocal then config.host.backups.server.cloud.group else "root";
 in
 {
   options.host.jellyfin.enable = lib.mkOption {
@@ -47,10 +55,6 @@ in
           message = "The Jellyfin owner must provide hardware video acceleration.";
         }
         {
-          assertion = mediaExport.server == hostname;
-          message = "Jellyfin currently requires its media NFS export on the same host.";
-        }
-        {
           assertion = watchstateService.owner == hostname;
           message = "Jellyfin currently requires WatchState on the same host.";
         }
@@ -68,8 +72,8 @@ in
         builtInBackup = {
           enable = true;
           backupJob = config.host.backups.destinationJob;
-          group = config.host.backups.server.cloud.group;
-          stagingDir = "${dataMount}/backups/staging/jellyfin";
+          group = backupGroup;
+          stagingDir = backupStagingDir;
         };
         downloadLimiter = {
           enable = true;
@@ -92,7 +96,9 @@ in
           ];
         };
         mediaMount = {
-          enable = true;
+          enable = isMediaServer;
+        }
+        // lib.optionalAttrs isMediaServer {
           source = mediaExport.path;
           sourceMount = dataMount;
         };
@@ -100,6 +106,14 @@ in
         supplementaryGroups = [ mediaExport.sharedGroup.name ];
         useHostVideoAcceleration = true;
       };
+
+      host.nfs.mounts = lib.mkIf (!isMediaServer) {
+        media = config.services.jellyfin.mediaMount.target;
+      };
+
+      systemd.services.jellyfin.unitConfig.RequiresMountsFor = lib.mkIf (
+        !isMediaServer
+      ) config.services.jellyfin.mediaMount.target;
 
       host.publicIngress.exports.jellyfin = {
         inherit (jellyfinService) publicHost;

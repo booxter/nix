@@ -37,6 +37,7 @@ let
     # The media tree is exported to srvarr. Use srvarr's numeric service IDs
     # so ownership is meaningful on the NFS client.
     ++ mkDirSpecs "2775" "root" [ mediaPaths.pinepods.root ]
+    ++ mkDirSpecs "2775" "root" (builtins.attrValues mediaPaths.library.collections)
     ++ mkDirSpecs "2775" pinepodsUser [ mediaPaths.pinepods.downloads ]
     ++ mkDirSpecs "2775" rommUser [
       mediaPaths.romm.root
@@ -70,13 +71,7 @@ let
     ]
     ++ mkDirSpecs "0775" sabnzbdUser (
       [ mediaPaths.sabnzbd.complete ] ++ builtins.attrValues mediaPaths.sabnzbd.categories
-    )
-    ++ map (library: {
-      path = "${mediaPaths.library.root}/${library.path}";
-      mode = "2775";
-      user = "root";
-      group = mediaGroup;
-    }) config.services.jellyfin.libraries;
+    );
 in
 {
   config = lib.mkIf (mediaExport.server == config.networking.hostName) {

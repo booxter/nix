@@ -32,10 +32,11 @@ let
       requiredForBoot = false;
     };
   };
-  export = path: fsid: clients: {
+  export = path: fsid: clientHosts: {
     server = beast;
     path = "${dataVolume.mounts.data.mountPoint}/${path}";
-    inherit clients fsid;
+    inherit clientHosts fsid;
+    clientServices = [ ];
   };
   mediaLayout = {
     library = rec {
@@ -43,6 +44,18 @@ let
       audiobooks = "${root}/audiobooks";
       books = "${root}/books";
       flows = "${root}/flows";
+      collections = {
+        anime = "${root}/anime";
+        attic = "${root}/attic";
+        docu = "${root}/docu";
+        family = "${root}/family";
+        fruit = "${root}/xxx";
+        fruitsies = "${root}/fruitsies";
+        movies = "${root}/movies";
+        music = "${root}/music";
+        shows = "${root}/shows";
+        standup = "${root}/standup";
+      };
     };
     pinepods = rec {
       root = "podcasts";
@@ -153,6 +166,10 @@ in
 
   nfs.exports = {
     media = (export "Media" 10 [ "srvarr" ]) // {
+      clientServices = [
+        "jellyfin"
+        "watchstate"
+      ];
       layout = mediaLayout;
       sharedGroup = {
         name = "media";

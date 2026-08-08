@@ -36,7 +36,33 @@ let
     inherit publicDomain;
     llmProviderHost = realms.home.services.llm.providerHost;
   };
+  serviceOwnersById = builtins.listToAttrs (
+    map (service: {
+      name = service.id;
+      value = service.owner;
+    }) serviceFacts.definitions
+  );
   storageFacts = import ./storage.nix;
+  normalizeNfsExport =
+    name: export:
+    let
+      clientServices = export.clientServices or [ ];
+      unknownClientServices = builtins.filter (
+        service: !builtins.hasAttr service serviceOwnersById
+      ) clientServices;
+      serviceClients = map (service: serviceOwnersById.${service}) clientServices;
+    in
+    assert lib.assertMsg (unknownClientServices == [ ])
+      "NFS export '${name}' references unknown services: ${lib.concatStringsSep ", " unknownClientServices}";
+    export
+    // {
+      clients = builtins.filter (client: client != export.server) (
+        lib.unique ((export.clientHosts or [ ]) ++ serviceClients)
+      );
+    };
+  normalizedStorageFacts = storageFacts // {
+    nfs.exports = lib.mapAttrs normalizeNfsExport storageFacts.nfs.exports;
+  };
   displayFacts = import ./displays.nix;
   upsFacts = import ./ups.nix;
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
@@ -274,7 +300,7 @@ rec {
     serviceAccounts
     user
     ;
-  storage = storageFacts;
+  storage = normalizedStorageFacts;
   displays = displayFacts;
   inherit displaysByHost;
   ups = upsFacts;
