@@ -320,7 +320,7 @@ in
   modules = blackboxModules;
 
   scrapeConfigs = [
-    (mkServiceHttpScrapeConfig "blackbox-arr" serviceCatalog)
+    (mkServiceHttpScrapeConfig "blackbox-services" serviceCatalog)
     (mkServiceHttpScrapeConfig "blackbox-backend" backendProbeCatalog)
     {
       job_name = "blackbox-public-wan";
