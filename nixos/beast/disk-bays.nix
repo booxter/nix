@@ -94,6 +94,11 @@ let
   ];
 in
 {
+  host.hardware.storage.diskBays = {
+    rows = 5;
+    columns = 3;
+  };
+
   environment.etc."beast-hba-bay-map.json".text = builtins.toJSON diskBayMappings;
 
   systemd.services.beast-disk-bay-export = {
