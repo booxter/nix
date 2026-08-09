@@ -7,12 +7,8 @@
 }:
 let
   inherit (hostSpec) vnc;
-  displayMode = {
-    width = 3840;
-    height = 2160;
-    refreshRate = 60;
-  };
-  displayScale = 1.5;
+  displayMode = config.hardware.displayMode;
+  displayScale = config.hardware.scale;
   logicalDisplayWidth = builtins.floor (displayMode.width / displayScale);
   logicalDisplayHeight = builtins.floor (displayMode.height / displayScale);
   displays = map (display: {
@@ -152,6 +148,14 @@ in
     {
       assertion = config.hardware.drmCard != null;
       message = "Frame remote desktop requires hardware.drmCard";
+    }
+    {
+      assertion = displayMode != null;
+      message = "Frame remote desktop requires hardware.displayMode";
+    }
+    {
+      assertion = displayScale != null;
+      message = "Frame remote desktop requires hardware.scale";
     }
     {
       assertion = displays != [ ];

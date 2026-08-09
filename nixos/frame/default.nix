@@ -29,6 +29,12 @@ in
   host.observability.blackbox.remote.enable = true;
   hardware = {
     drmCard = "card1";
+    displayMode = {
+      width = 3840;
+      height = 2160;
+      refreshRate = 60;
+    };
+    scale = 1.5;
     displays = [
       {
         position = "left";
