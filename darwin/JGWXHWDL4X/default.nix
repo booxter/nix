@@ -20,7 +20,10 @@ in
 
   # Keep nixpkgs-review's worktrees in a dedicated real directory under
   # /nix/var on this managed workstation.
-  home-manager.users.${username}.home.sessionVariables.NIXPKGS_REVIEW_CACHE_DIR = reviewCacheDir;
+  home-manager.users.${username}.home = {
+    stateVersion = "25.11";
+    sessionVariables.NIXPKGS_REVIEW_CACHE_DIR = reviewCacheDir;
+  };
 
   system.activationScripts.preActivation.text = lib.mkAfter ''
     if [ -L ${lib.escapeShellArg reviewCacheDir} ]; then

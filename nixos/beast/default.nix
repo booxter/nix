@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   inputs,
   pkgs,
@@ -6,6 +7,7 @@
 }:
 {
   system.stateVersion = "25.11";
+  home-manager.users.${config.host.username}.home.stateVersion = "25.11";
 
   _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
 

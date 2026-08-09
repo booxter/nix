@@ -105,7 +105,6 @@ in
 
   darwinHosts = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
@@ -118,7 +117,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
@@ -130,7 +128,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "work";
       userProfile = "nvidia";

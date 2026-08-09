@@ -10,7 +10,6 @@ let
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
-  stateVersion = if isDarwin then hostSpec.hmStateVersion else osConfig.system.stateVersion;
   username = osConfig.host.username;
 in
 {
@@ -61,7 +60,6 @@ in
   ];
 
   home = {
-    inherit stateVersion;
     inherit username;
     homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
   };

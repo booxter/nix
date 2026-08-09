@@ -19,6 +19,7 @@ in
   ];
 
   home-manager.users.${username} = {
+    home.stateVersion = "25.11";
     home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
   };
 

@@ -4,6 +4,7 @@ let
 in
 {
   system.stateVersion = "25.11";
+  home-manager.users.${config.host.username}.home.stateVersion = "25.11";
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.
