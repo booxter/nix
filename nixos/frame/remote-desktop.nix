@@ -9,6 +9,7 @@ let
   inherit (hostSpec) vnc;
   displayMode = config.hardware.displayMode;
   displayScale = config.hardware.scale;
+  displayResolution = "${toString displayMode.width}x${toString displayMode.height}";
   logicalDisplayWidth = builtins.floor (displayMode.width / displayScale);
   logicalDisplayHeight = builtins.floor (displayMode.height / displayScale);
   displays = map (display: {
@@ -57,11 +58,11 @@ let
   # identifiers to match its layout to the synthetic outputs.
   # https://github.com/akatrevorjay/edid-generator/blob/476a016d8b488df749bf6d6efbf7b9fbfb2e3cb8/3840x2160.S
   syntheticEdid = {
-    filename = "3840x2160.bin";
+    filename = "${displayResolution}.bin";
     vendor = "LNX";
-    product = "3840x2160";
+    product = displayResolution;
     serial = "Linux #0";
-    refreshRate = 60;
+    refreshRate = displayMode.refreshRate;
   };
 
   reframeConfigPath = instance: "/run/secrets-rendered/reframe-${instance}.conf";
