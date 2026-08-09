@@ -13,7 +13,6 @@ in
 
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-    ./alertmanager-watchdog.nix
     ./ollama.nix
     ./ups.nix
   ];
@@ -61,7 +60,10 @@ in
       };
     };
     network.primaryInterface = "enp191s0";
-    observability.blackbox.remote.enable = true;
+    observability = {
+      alertmanagerWatchdog.enable = true;
+      blackbox.remote.enable = true;
+    };
     remote-control.server = {
       vnc = {
         enable = true;
