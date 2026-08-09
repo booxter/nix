@@ -151,9 +151,6 @@ in
 
   home.sessionVariables = {
     BROWSER = if isDarwin then "open" else "xdg-open";
-  }
-  // lib.optionalAttrs useSignedDarwinFirefox {
-    MOZ_LEGACY_PROFILES = legacyProfiles;
   };
 
   home.activation.firefoxLaunchdEnvironment = lib.mkIf useSignedDarwinFirefox (
