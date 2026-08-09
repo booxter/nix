@@ -69,7 +69,6 @@ in
     ];
 
     host.backups.server = {
-      enable = true;
       inherit clients localClient;
       inherit (provider) repositoryRoot;
       cloud.bucketName = builtins.head bucketNames;

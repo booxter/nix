@@ -17,10 +17,14 @@ let
     _: client: lib.hasPrefix "b2:" client.cloud.repository
   ) enabledCloudClients;
   usageEnabled = b2Clients != { };
+  qosEnabled = enabledCloudClients != { } && cfg.cloud.qos.enable && cfg.cloud.qos.interface != null;
   sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
   ingestUser = name: "restic-${name}";
   repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
   offloadUser = name: if name == cfg.localClient then cfg.cloud.group else "restic-${name}-offload";
+  cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
+  applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
+  applicationKeySecret = "backup/restic/cloud/b2/applicationKey";
   offloadService = name: "restic-${name}-cloud-offload";
   aclService = name: "restic-${name}-repo-acl";
   cloudStateDir = name: "restic-cloud-${name}";
@@ -188,7 +192,10 @@ in
 
       dependencyUnits = lib.mkOption {
         type = with lib.types; listOf str;
-        default = [ ];
+        default = [
+          "network-online.target"
+          "sops-install-secrets.service"
+        ];
       };
 
       requiredUnits = lib.mkOption {
@@ -202,6 +209,28 @@ in
           OnCalendar = "*-*-* 00/4:00:00";
           RandomizedDelaySec = "10m";
           Persistent = true;
+        };
+      };
+
+      qos = {
+        enable = lib.mkEnableOption "cloud-backup upload shaping" // {
+          default = true;
+        };
+
+        interface = lib.mkOption {
+          type = with lib.types; nullOr nonEmptyStr;
+          default = config.host.network.primaryInterface;
+          description = "Network interface used for cloud-backup upload shaping.";
+        };
+
+        profile = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "wan";
+        };
+
+        rateMbit = lib.mkOption {
+          type = lib.types.addCheck lib.types.number (value: value > 0);
+          default = 10;
         };
       };
     };
@@ -230,6 +259,10 @@ in
           || cfg.clients.${cfg.localClient}.cloud.enable;
         message = "host.backups.server.localClient must have cloud offload enabled";
       }
+      {
+        assertion = enabledCloudClients == { } || !cfg.cloud.qos.enable || cfg.cloud.qos.interface != null;
+        message = "host.backups.server.cloud.qos requires host.network.primaryInterface or an explicit interface";
+      }
     ]
     ++ lib.mapAttrsToList (name: client: {
       assertion =
@@ -252,6 +285,56 @@ in
     }) cfg.clients;
 
     host.backups.server.generated.offloadUsers = offloadUsers;
+
+    host.backups.server.cloud = {
+      requiredUnits = lib.optional qosEnabled "qos-${cfg.cloud.qos.profile}.service";
+    }
+    // lib.optionalAttrs usageEnabled {
+      applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
+      applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
+    };
+
+    host.qos.interfaces = lib.optionalAttrs qosEnabled {
+      ${cfg.cloud.qos.profile} = {
+        device = cfg.cloud.qos.interface;
+        limits.cloud-backup = {
+          rateMbit = cfg.cloud.qos.rateMbit;
+          match.users = offloadUsers;
+        };
+      };
+    };
+
+    sops.secrets =
+      builtins.listToAttrs (
+        lib.concatMap (name: [
+          {
+            name = cloudSecret name "localPassword";
+            value = {
+              owner = offloadUser name;
+              group = offloadUser name;
+              mode = "0400";
+            };
+          }
+          {
+            name = cloudSecret name "password";
+            value = {
+              owner = offloadUser name;
+              group = offloadUser name;
+              mode = "0400";
+            };
+          }
+        ]) (builtins.attrNames enabledCloudClients)
+      )
+      // lib.optionalAttrs usageEnabled {
+        ${applicationKeyIdSecret} = {
+          group = cfg.cloud.group;
+          mode = "0440";
+        };
+        ${applicationKeySecret} = {
+          group = cfg.cloud.group;
+          mode = "0440";
+        };
+      };
 
     services.openssh.enable = true;
 

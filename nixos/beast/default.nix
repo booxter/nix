@@ -11,7 +11,6 @@
 
   imports = [
     ./sso.nix
-    ./backup-server.nix
     ./btrfs.nix
     ./disk-bays.nix
     ./igpu.nix
@@ -33,6 +32,8 @@
   users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.blackbox.remote.enable = true;
+  host.backups.server.enable = true;
+  host.network.primaryInterface = "enp6s0";
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
   host.ups = {
