@@ -12,8 +12,8 @@ in
           selector = ''up{scrape_profile="application",availability!="intermittent"}'';
           for = "5m";
           category = "service";
-          summary = "Application metrics scrape down: {{ $labels.service }} on {{ $labels.instance }}";
-          description = "Prometheus has been unable to scrape {{ $labels.service }} metrics on {{ $labels.instance }} for 5 minutes.";
+          summary = "Application metrics scrape down: {{ $labels.job }} on {{ $labels.instance }}";
+          description = "Prometheus has been unable to scrape the {{ $labels.job }} metrics endpoint on {{ $labels.instance }} for 5 minutes.";
         })
       ];
     })
