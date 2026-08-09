@@ -8,6 +8,7 @@ in
   ];
 
   host.isProxmox = true;
+  host.network.primaryInterface = "enp3s0f0";
 
   # Work machines do not use sops-managed login passwords.
   users.users = {

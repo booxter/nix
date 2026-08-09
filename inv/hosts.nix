@@ -9,7 +9,6 @@
 }:
 let
   prxStateVersion = "25.11";
-  prxNetIface = "enp5s0f0np0";
   nvws = "nvws";
 
   builderDhcpReservations = {
@@ -74,7 +73,6 @@ let
       userProfile = "personal";
       hmFull = false;
       stateVersion = prxStateVersion;
-      netIface = prxNetIface;
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -244,7 +242,6 @@ in
       nspawnTestBuilder = true;
       hmFull = false;
       stateVersion = "25.11";
-      netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
       dhcpReservation = {

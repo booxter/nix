@@ -32,13 +32,13 @@ in
     remoteUnlock = {
       enable = true;
       kernelModules = [ "r8169" ];
-      networkInterface = "enp191s0";
       authorizedKeys = [
         (unlockKey ../../public-keys/users/mair.pub)
         (unlockKey ../../public-keys/users/mmini.pub)
       ];
     };
   };
+  host.network.primaryInterface = "enp191s0";
   host.observability.blackbox.remote.enable = true;
   host.hardware = {
     drmCard = "card1";

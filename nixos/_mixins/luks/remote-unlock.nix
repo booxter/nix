@@ -18,7 +18,7 @@ in
 
     networkInterface = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = null;
+      default = config.host.network.primaryInterface;
       description = "Network interface configured through DHCP in the initrd.";
     };
 
