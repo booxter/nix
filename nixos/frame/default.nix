@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   lib,
   ...
@@ -9,7 +8,6 @@ let
 in
 {
   system.stateVersion = "25.11";
-  home-manager.users.${config.host.username}.home.stateVersion = "25.11";
 
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series

@@ -59,7 +59,10 @@ in
       };
       useGlobalPkgs = true;
       useUserPackages = true;
-      users.${username} = ../hm;
+      users.${username} = {
+        imports = [ ../hm ];
+        home.stateVersion = config.system.stateVersion;
+      };
     };
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;

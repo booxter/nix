@@ -21,7 +21,6 @@ in
   # Keep nixpkgs-review's worktrees in a dedicated real directory under
   # /nix/var on this managed workstation.
   home-manager.users.${username}.home = {
-    stateVersion = "25.11";
     sessionVariables.NIXPKGS_REVIEW_CACHE_DIR = reviewCacheDir;
   };
 

@@ -56,7 +56,10 @@ in
     };
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.${username} = ../hm;
+    users.${username} = {
+      imports = [ ../hm ];
+      home.stateVersion = "25.11";
+    };
   };
 
   host.remoteGui.x11.enable = lib.mkDefault (config.host.remoteAccess.x11 && config.host.isDesktop);
