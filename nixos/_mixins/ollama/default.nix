@@ -27,16 +27,17 @@ in
       ];
     }
     (lib.mkIf cfg.enable {
-      host.internalHttps.services.ollama = {
+      host.web.services.ollama = {
         enable = true;
         upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
-        mtls.enable = true;
-        serverAliases = [ ollamaService.displayHost ];
-        localAliases = [ "ollama" ];
-        locationExtraConfig = ''
-          proxy_read_timeout 600s;
-          proxy_send_timeout 600s;
-        '';
+        internal = {
+          aliases = [ ollamaService.displayHost ];
+          localAliases = [ "ollama" ];
+          locationExtraConfig = ''
+            proxy_read_timeout 600s;
+            proxy_send_timeout 600s;
+          '';
+        };
       };
 
       services.ollama = {
