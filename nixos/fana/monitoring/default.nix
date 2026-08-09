@@ -67,15 +67,17 @@ in
     environmentFile = config.sops.templates."alertmanager.env".path;
   };
 
-  host.internalHttps.services.alertmanager = {
+  host.web.services.alertmanager = {
     enable = true;
     upstream = "http://127.0.0.1:${toString alertmanagerPort}";
-    path = "= /-/ready";
-    proxyWebsockets = false;
-    mtls.enable = true;
-    locationExtraConfig = ''
-      access_log off;
-    '';
+    internal = {
+      path = "= /-/ready";
+      proxyWebsockets = false;
+      clientAuth = "mtls";
+      locationExtraConfig = ''
+        access_log off;
+      '';
+    };
   };
 
   # Expose only the read-only alerts collection used by the SketchyBar applet.

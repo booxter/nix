@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   ...
 }:
@@ -7,14 +8,15 @@ let
   rootConfig = config;
   cfg = rootConfig.host.web;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
+  internalServices = lib.filterAttrs (_: service: service.internal.enable) enabledServices;
   metricEndpointName =
     serviceName: metricName:
     if metricName == "default" then serviceName else "${serviceName}-${metricName}";
   enabledMetrics = lib.concatMapAttrs (
     serviceName: service:
     lib.mapAttrs' (
-      metricName: metric:
-      lib.nameValuePair (metricEndpointName serviceName metricName) (
+      _: metric:
+      lib.nameValuePair metric.endpointName (
         metric
         // {
           inherit serviceName;
@@ -34,6 +36,7 @@ in
         { name, config, ... }:
         let
           serviceName = name;
+          inventoryService = hostInventory.servicesById.${serviceName} or null;
         in
         {
           options = {
@@ -66,10 +69,22 @@ in
                 description = "Canonical internal HTTPS server name.";
               };
 
+              endpointName = lib.mkOption {
+                type = lib.types.str;
+                default = serviceName;
+                description = "Host-local internal HTTPS endpoint name.";
+              };
+
               aliases = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [ ];
                 description = "Additional internal HTTPS server aliases.";
+              };
+
+              publicAliases = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                description = "Additional browser-facing sibling vhosts served locally.";
               };
 
               localAliases = lib.mkOption {
@@ -101,7 +116,7 @@ in
                   "none"
                   "mtls"
                 ];
-                default = "mtls";
+                default = if config.public.enable then "mtls" else "none";
                 description = "Client authentication required by the internal HTTPS frontend.";
               };
 
@@ -147,11 +162,15 @@ in
             };
 
             public = {
-              enable = lib.mkEnableOption "public ingress for ${serviceName}";
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = inventoryService != null && inventoryService ? publicHost;
+                description = "Whether to expose ${serviceName} through public ingress.";
+              };
 
               hostName = lib.mkOption {
                 type = lib.types.nullOr lib.types.str;
-                default = null;
+                default = if inventoryService != null then inventoryService.publicHost or null else null;
                 description = "Public DNS hostname served by the ingress host.";
               };
 
@@ -159,6 +178,21 @@ in
                 type = lib.types.str;
                 default = "beast";
                 description = "NixOS host providing public ingress for this service.";
+              };
+
+              transport = lib.mkOption {
+                type = lib.types.enum [
+                  "internal-mtls"
+                  "direct"
+                ];
+                default = "internal-mtls";
+                description = "Transport used by the public ingress host to reach the service.";
+              };
+
+              directUpstream = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Ingress-local upstream URL used by direct public services.";
               };
 
               url = lib.mkOption {
@@ -174,14 +208,24 @@ in
                 default = "";
                 description = "Additional public ingress nginx location configuration.";
               };
+
+              serveOnOwner = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether the owner host also serves the public hostname as a sibling vhost.";
+              };
             };
 
             health = {
               frontend = {
-                enable = lib.mkEnableOption "frontend blackbox probe for ${serviceName}";
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+                  default = inventoryService != null && inventoryService.blackboxProbe;
+                  description = "Whether to probe the ${serviceName} frontend.";
+                };
                 path = lib.mkOption {
                   type = lib.types.str;
-                  default = "/";
+                  default = if inventoryService == null then "/" else inventoryService.probePath;
                   description = "Frontend health probe path.";
                 };
                 module = lib.mkOption {
@@ -192,10 +236,18 @@ in
               };
 
               backend = {
-                enable = lib.mkEnableOption "backend blackbox probe for ${serviceName}";
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+                  default = inventoryService != null && inventoryService ? backendProbe;
+                  description = "Whether to probe the ${serviceName} backend.";
+                };
                 path = lib.mkOption {
                   type = lib.types.str;
-                  default = "/";
+                  default =
+                    if inventoryService != null && inventoryService ? backendProbe then
+                      inventoryService.backendProbe.path
+                    else
+                      "/";
                   description = "Backend health probe path exposed on the probe-only listener.";
                 };
                 port = lib.mkOption {
@@ -205,7 +257,11 @@ in
                 };
                 module = lib.mkOption {
                   type = lib.types.str;
-                  default = "http_service";
+                  default =
+                    if inventoryService != null && inventoryService ? backendProbe then
+                      inventoryService.backendProbe.blackboxModule or "http_service"
+                    else
+                      "http_service";
                   description = "Blackbox exporter module for the backend probe.";
                 };
                 title = lib.mkOption {
@@ -243,6 +299,16 @@ in
                         type = lib.types.str;
                         default = if metricName == "default" then serviceName else "${serviceName}-${metricName}";
                         description = "Prometheus scrape job name.";
+                      };
+                      endpointName = lib.mkOption {
+                        type = lib.types.str;
+                        default = metricEndpointName serviceName metricName;
+                        description = "Host-local mTLS endpoint name.";
+                      };
+                      openFirewall = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether to open the mTLS metrics endpoint in the firewall.";
                       };
                       scrapeInterval = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
@@ -287,19 +353,24 @@ in
             presentation = {
               title = lib.mkOption {
                 type = lib.types.str;
-                default = lib.strings.toSentenceCase serviceName;
+                default =
+                  if inventoryService == null then lib.strings.toSentenceCase serviceName else inventoryService.title;
                 description = "Human-readable service title.";
               };
               icon = lib.mkOption {
                 type = lib.types.str;
-                default = "sh:${serviceName}";
+                default = if inventoryService == null then "sh:${serviceName}" else inventoryService.icon;
                 description = "Dashboard icon identifier or URL.";
               };
               dashboard = {
-                enable = lib.mkEnableOption "dashboard entry for ${serviceName}";
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+                  default = inventoryService != null && inventoryService.showInGlance;
+                  description = "Whether to show ${serviceName} on the service dashboard.";
+                };
                 category = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
-                  default = null;
+                  default = if inventoryService == null then null else inventoryService.glanceCategory;
                   description = "Dashboard category containing the service.";
                 };
               };
@@ -333,12 +404,23 @@ in
             message = "host.web.services.${serviceName}.public.hostName is required for public exposure";
           }
           {
-            assertion = !service.public.enable || service.internal.enable;
+            assertion =
+              !service.public.enable || service.public.transport != "internal-mtls" || service.internal.enable;
             message = "host.web.services.${serviceName} public exposure requires internal HTTPS";
           }
           {
-            assertion = !service.public.enable || service.internal.clientAuth == "mtls";
+            assertion =
+              !service.public.enable
+              || service.public.transport != "internal-mtls"
+              || service.internal.clientAuth == "mtls";
             message = "host.web.services.${serviceName} public ingress requires an mTLS internal endpoint";
+          }
+          {
+            assertion =
+              !service.public.enable
+              || service.public.transport != "direct"
+              || service.public.directUpstream != null;
+            message = "host.web.services.${serviceName} direct public ingress requires directUpstream";
           }
           {
             assertion =
@@ -349,36 +431,46 @@ in
       );
     }
 
-    (lib.mkIf (enabledServices != { }) {
-      host.internalHttps.services = lib.mapAttrs (_: service: {
-        enable = service.internal.enable;
-        inherit (service) upstream;
-        inherit (service.internal)
-          listenAddress
-          localAliases
-          locationExtraConfig
-          openFirewall
-          path
-          port
-          proxyWebsockets
-          recommendedProxySettings
-          secretPrefix
-          serverName
-          ;
-        serverAliases = service.internal.aliases;
-        publicAliases = lib.optional service.public.enable service.public.hostName;
-        mtls.enable = service.internal.clientAuth == "mtls";
-        probe = {
-          enable = service.health.backend.enable;
-          inherit (service.health.backend) port;
-        };
-      }) enabledServices;
+    (lib.mkIf (internalServices != { }) {
+      host.internalHttps.services = lib.mapAttrs' (
+        _: service:
+        lib.nameValuePair service.internal.endpointName {
+          enable = service.internal.enable;
+          inherit (service) upstream;
+          inherit (service.internal)
+            listenAddress
+            localAliases
+            locationExtraConfig
+            openFirewall
+            path
+            port
+            proxyWebsockets
+            recommendedProxySettings
+            secretPrefix
+            serverName
+            ;
+          serverAliases = service.internal.aliases;
+          publicAliases =
+            service.internal.publicAliases
+            ++ lib.optional (service.public.enable && service.public.serveOnOwner) service.public.hostName;
+          mtls.enable = service.internal.clientAuth == "mtls";
+          probe = {
+            enable = service.health.backend.enable;
+            inherit (service.health.backend) port;
+          };
+        }
+      ) internalServices;
     })
 
     (lib.mkIf (enabledMetrics != { }) {
       host.observability.prometheusEndpoints = lib.mapAttrs (_: metric: {
         enable = true;
-        inherit (metric) path port upstream;
+        inherit (metric)
+          openFirewall
+          path
+          port
+          upstream
+          ;
       }) enabledMetrics;
     })
 

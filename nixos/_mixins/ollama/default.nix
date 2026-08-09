@@ -32,6 +32,7 @@ in
         upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
         internal = {
           aliases = [ ollamaService.displayHost ];
+          clientAuth = "mtls";
           localAliases = [ "ollama" ];
           locationExtraConfig = ''
             proxy_read_timeout 600s;

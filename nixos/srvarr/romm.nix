@@ -613,12 +613,10 @@ in
     };
   };
 
-  host.internalHttps.services.romm = {
+  host.web.services.romm = {
     enable = true;
     upstream = "http://127.0.0.1:${toString apiPort}";
-    path = "/api";
-    publicAliases = [ rommService.publicHost ];
-    mtls.enable = true;
+    internal.path = "/api";
   };
 
   assertions = [

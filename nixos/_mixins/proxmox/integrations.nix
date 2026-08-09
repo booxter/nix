@@ -298,20 +298,37 @@ in
 
       # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
       # 8006 listener for Proxmox-native/root fallback access.
-      host.internalHttps.services.proxmox = {
+      host.web.services."proxmox-${config.networking.hostName}" = {
         enable = true;
-        serverName = cfg.serverName;
-        serverAliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;
-        localAliases = [ ];
-        port = cfg.publicPort;
-        secretPrefix = cfg.secretPrefix;
         upstream = "https://127.0.0.1:${toString cfg.port}";
-        locationExtraConfig = ''
-          proxy_ssl_name ${cfg.serverName};
-          proxy_ssl_server_name on;
-          proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
-          proxy_ssl_verify on;
-        '';
+        internal = {
+          endpointName = "proxmox";
+          serverName = cfg.serverName;
+          aliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;
+          localAliases = [ ];
+          port = cfg.publicPort;
+          secretPrefix = cfg.secretPrefix;
+          locationExtraConfig = ''
+            proxy_ssl_name ${cfg.serverName};
+            proxy_ssl_server_name on;
+            proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
+            proxy_ssl_verify on;
+          '';
+        };
+        health.frontend.enable = true;
+        presentation = {
+          title = "Proxmox ${config.networking.hostName}";
+          icon = "sh:proxmox";
+        };
+        metrics.default = {
+          enable = true;
+          endpointName = "pve";
+          jobName = "pve";
+          openFirewall = exporterCfg.openFirewall;
+          port = exporterCfg.publicPort;
+          path = "/";
+          upstream = "http://127.0.0.1:${toString exporterCfg.internalPort}";
+        };
       };
 
       sops.secrets.proxmoxApiServerCrt = {
@@ -452,13 +469,6 @@ in
         environment.REQUESTS_CA_BUNDLE = "${internalPkiRootCaPath}";
       };
 
-      host.observability.prometheusEndpoints.pve = {
-        enable = true;
-        port = exporterCfg.publicPort;
-        path = "/";
-        upstream = "http://127.0.0.1:${toString exporterCfg.internalPort}";
-        openFirewall = exporterCfg.openFirewall;
-      };
     })
   ];
 }

@@ -181,17 +181,17 @@ in
     };
   };
 
-  host.internalHttps.services = {
+  host.web.services = {
     glance = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceInternalPort}";
-      publicAliases = [ dashService.publicHost ];
+      internal.publicAliases = [ dashService.publicHost ];
     };
 
     dash = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceExternalPort}";
-      mtls.enable = true;
+      public.serveOnOwner = false;
     };
   };
 }

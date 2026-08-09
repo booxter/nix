@@ -143,19 +143,20 @@ in
     };
   };
 
-  host.internalHttps.services.home = {
+  host.web.services.home = {
     enable = true;
     upstream = "http://127.0.0.1:${toString homeAssistantPort}";
-    locationExtraConfig = ''
+    internal.locationExtraConfig = ''
       proxy_buffering off;
       proxy_read_timeout 3600s;
     '';
-  };
-
-  host.observability.prometheusEndpoints.home-assistant = {
-    enable = true;
-    port = homeAssistantMetricsPort;
-    upstream = "http://127.0.0.1:${toString homeAssistantPort}/api/prometheus";
+    metrics.default = {
+      enable = true;
+      endpointName = "home-assistant";
+      jobName = "home-assistant";
+      port = homeAssistantMetricsPort;
+      upstream = "http://127.0.0.1:${toString homeAssistantPort}/api/prometheus";
+    };
   };
 
   systemd.services.home-assistant = {

@@ -132,12 +132,9 @@ in
     };
   };
 
-  host.internalHttps.services.aurral = {
+  host.web.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
-    publicAliases = [ aurralService.publicHost ];
-    mtls.enable = true;
-    probe.enable = true;
   };
 
   services.nginx.proxyCachePath.aurral-images = {

@@ -144,7 +144,7 @@ in
     };
   };
 
-  host.internalHttps.services.sabnzbd = {
+  host.web.services.sabnzbd = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
   };

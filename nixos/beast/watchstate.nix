@@ -182,10 +182,10 @@ in
     paths = [ watchstateBackupStagingDir ];
   };
 
-  host.internalHttps.services.watchstate = {
+  host.web.services.watchstate = {
     enable = true;
     upstream = "http://127.0.0.1:${toString watchstatePort}";
-    locationExtraConfig = ''
+    internal.locationExtraConfig = ''
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;
     '';

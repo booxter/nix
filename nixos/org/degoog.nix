@@ -215,11 +215,9 @@ in
     };
   };
 
-  host.internalHttps.services.goo = {
+  host.web.services.goo = {
     enable = true;
     inherit upstream;
-    publicAliases = [ degoogService.publicHost ];
-    mtls.enable = true;
   };
 
   host.sso.oauth2ProxyGates.goo = {

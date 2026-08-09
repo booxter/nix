@@ -5,14 +5,16 @@ let
   lokiRetention = "${toString retentionHours}h";
 in
 {
-  host.internalHttps.services.loki = {
+  host.web.services.loki = {
     enable = true;
     upstream = "http://127.0.0.1:${toString lokiPort}";
-    mtls.enable = true;
-    locationExtraConfig = ''
-      client_max_body_size 0;
-      proxy_request_buffering off;
-    '';
+    internal = {
+      clientAuth = "mtls";
+      locationExtraConfig = ''
+        client_max_body_size 0;
+        proxy_request_buffering off;
+      '';
+    };
   };
 
   services.loki = {

@@ -366,22 +366,22 @@ in
     title = "PinePods Native Backup";
   };
 
-  host.internalHttps.services.pinepods = {
+  host.web.services.pinepods = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
-    publicAliases = [ pinepodsService.publicHost ];
-    mtls.enable = true;
-    recommendedProxySettings = false;
-    locationExtraConfig = ''
-      proxy_set_header Host ${pinepodsService.publicHost};
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto https;
-      proxy_set_header X-Forwarded-Host ${pinepodsService.publicHost};
-      proxy_set_header X-Forwarded-Server $hostname;
-      proxy_read_timeout 300s;
-      proxy_send_timeout 300s;
-    '';
+    internal = {
+      recommendedProxySettings = false;
+      locationExtraConfig = ''
+        proxy_set_header Host ${pinepodsService.publicHost};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host ${pinepodsService.publicHost};
+        proxy_set_header X-Forwarded-Server $hostname;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+      '';
+    };
   };
 
   assertions = [

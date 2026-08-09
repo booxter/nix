@@ -205,12 +205,10 @@ in
     };
   };
 
-  host.internalHttps.services.id = {
+  host.web.services.id = {
     enable = true;
     upstream = "https://127.0.0.1:${toString kanidmPort}";
-    publicAliases = [ idService.publicHost ];
-    mtls.enable = true;
-    locationExtraConfig = ''
+    internal.locationExtraConfig = ''
       proxy_set_header Host ${idService.publicHost};
       proxy_set_header X-Forwarded-Host ${idService.publicHost};
     '';

@@ -350,26 +350,31 @@ in
     ];
   };
 
-  host.internalHttps.services.paperless = {
+  host.web.services.paperless = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
-    publicAliases = [ paperlessService.publicHost ];
-    mtls.enable = true;
-    recommendedProxySettings = false;
-    locationExtraConfig = ''
-      client_max_body_size 512m;
-      proxy_set_header Host ${paperlessService.publicHost};
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header X-Forwarded-Host ${paperlessService.publicHost};
-      proxy_set_header X-Forwarded-Server $hostname;
-      proxy_read_timeout 300s;
-      proxy_send_timeout 300s;
-    '';
+    internal = {
+      recommendedProxySettings = false;
+      locationExtraConfig = ''
+        client_max_body_size 512m;
+        proxy_set_header Host ${paperlessService.publicHost};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host ${paperlessService.publicHost};
+        proxy_set_header X-Forwarded-Server $hostname;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+      '';
+    };
+    metrics.default = {
+      enable = true;
+      port = paperlessMetricsMtlsPort;
+      upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
+    };
   };
 
-  host.internalHttps.services.paperless-gpt = {
+  host.web.services.paperless-gpt = {
     enable = true;
     upstream = "http://127.0.0.1:${toString paperlessGptPort}";
   };
@@ -393,12 +398,6 @@ in
         auth_request off;
       '';
     };
-  };
-
-  host.observability.prometheusEndpoints.paperless = {
-    enable = true;
-    port = paperlessMetricsMtlsPort;
-    upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
   host.internalPki.clients.ollama = {

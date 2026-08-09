@@ -164,7 +164,7 @@ in
     ];
   };
 
-  host.internalHttps.services.houndarr = {
+  host.web.services.houndarr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
   };
