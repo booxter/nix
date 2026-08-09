@@ -11,6 +11,8 @@ let
   wgHome = hostInventory.site.wireguard.home;
 in
 {
+  system.stateVersion = 6;
+
   imports = [
     ./nix-cache-preference.nix
     ./opencode.nix

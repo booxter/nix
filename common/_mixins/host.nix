@@ -240,6 +240,5 @@ in
 
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
-    system.stateVersion = hostSpec.stateVersion;
   };
 }

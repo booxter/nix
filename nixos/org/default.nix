@@ -16,6 +16,8 @@ let
   vikunjaTimezone = "America/New_York";
 in
 {
+  system.stateVersion = "25.11";
+
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [

@@ -8,7 +8,6 @@
   publicServiceHosts,
 }:
 let
-  prxStateVersion = "25.11";
   nvws = "nvws";
 
   builderDhcpReservations = {
@@ -40,7 +39,6 @@ let
       userProfile = "personal";
       proxNode = "prx${idx'}-lab";
       dhcpReservation = builderDhcpReservations.${idx'};
-      stateVersion = "25.11";
       memorySize = 64;
       balloonSize = 48;
       diskSize = 150;
@@ -72,7 +70,6 @@ let
       realm = "home";
       userProfile = "personal";
       hmFull = false;
-      stateVersion = prxStateVersion;
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -108,7 +105,6 @@ in
 
   darwinHosts = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
-      stateVersion = 6;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
@@ -122,7 +118,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
-      stateVersion = 5;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
@@ -135,7 +130,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
-      stateVersion = 5;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "work";
@@ -156,7 +150,6 @@ in
     {
       hostKind = "nixos";
       name = frame;
-      stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
@@ -237,7 +230,6 @@ in
       isBuilder = true;
       nspawnTestBuilder = true;
       hmFull = false;
-      stateVersion = "25.11";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
       dhcpReservation = {
@@ -248,7 +240,6 @@ in
     {
       hostKind = "nixos";
       name = "beast";
-      stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
@@ -283,7 +274,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       isOperatorSeat = true;
-      stateVersion = "25.11";
       dhcpReservation = {
         match = "bc:24:11:ed:30:d3";
         ip = "192.168.10.138";
@@ -299,7 +289,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
@@ -317,7 +306,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       dnsAliases = [ "dash.${publicDomain}" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
@@ -343,7 +331,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -360,7 +347,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -377,7 +363,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
@@ -394,7 +379,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.
@@ -416,7 +400,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "26.05";
       proxNode = "prx2-lab";
       cores = 4;
       memorySize = 8;

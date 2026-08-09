@@ -47,6 +47,8 @@ let
   ];
 in
 {
+  system.stateVersion = "25.11";
+
   _module.args = { inherit pkiPkgs; };
 
   imports = [

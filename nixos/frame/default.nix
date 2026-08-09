@@ -9,6 +9,8 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
 in
 {
+  system.stateVersion = "25.11";
+
   _module.args.framePkgs = framePkgs;
 
   imports = [

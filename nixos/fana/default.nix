@@ -3,6 +3,8 @@
   ...
 }:
 {
+  system.stateVersion = "25.11";
+
   imports = [
     ./grafana
     ./loki.nix

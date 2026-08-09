@@ -4,6 +4,8 @@
   ...
 }:
 {
+  system.stateVersion = "25.11";
+
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
   imports = [

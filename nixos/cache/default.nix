@@ -31,6 +31,8 @@ let
   };
 in
 {
+  system.stateVersion = "25.11";
+
   # local qemu vms override filesystems
   fileSystems.${nfsPath} = cache;
   virtualisation.vmVariant.virtualisation.fileSystems.${nfsPath} = cache;

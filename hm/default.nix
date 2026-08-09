@@ -10,7 +10,7 @@ let
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
-  stateVersion = if isDarwin then hostSpec.hmStateVersion else hostSpec.stateVersion;
+  stateVersion = if isDarwin then hostSpec.hmStateVersion else osConfig.system.stateVersion;
   username = osConfig.host.username;
 in
 {

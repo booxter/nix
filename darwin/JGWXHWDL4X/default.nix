@@ -8,6 +8,8 @@ let
   reviewCacheDir = "/nix/var/nixpkgs-review";
 in
 {
+  system.stateVersion = 5;
+
   host.codex.mcp.maas.enable = true;
 
   host.fleetCacheWarmer = {

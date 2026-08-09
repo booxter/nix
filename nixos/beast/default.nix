@@ -5,6 +5,8 @@
   ...
 }:
 {
+  system.stateVersion = "25.11";
+
   _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
 
   imports = [

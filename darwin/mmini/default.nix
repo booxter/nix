@@ -1,5 +1,7 @@
 { ... }:
 {
+  system.stateVersion = 5;
+
   host.fleetCacheWarmer = {
     enable = true;
     targetRealm = "home";

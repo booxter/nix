@@ -3,6 +3,8 @@ let
   username = config.host.username;
 in
 {
+  system.stateVersion = "25.11";
+
   host.isProxmox = true;
   host.network.primaryInterface = "enp3s0f0";
   host.ups = {
