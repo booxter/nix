@@ -1,11 +1,11 @@
 {
   frame,
   mmini,
-  readPublicKey,
+  publicKeys,
 }:
 let
   yubikeyIssuer = {
-    publicKey = readPublicKey ../../public-keys/yubikey.pub;
+    publicKey = publicKeys.users.yubikey;
     keyName = "id_ed25519_sk_rk";
     useAgent = false;
   };
@@ -13,7 +13,7 @@ in
 {
   issuers = {
     mair = {
-      publicKey = readPublicKey ../../public-keys/ssh-ca/fleet-user-ca.pub;
+      publicKey = publicKeys.ssh-ca.fleet-user-ca;
       keyName = "fleet-user-ca.pub";
       useAgent = true;
     };

@@ -2,7 +2,7 @@
   lanDomain,
   nixCaches,
   publicDomain,
-  readPublicKey,
+  publicKeys,
 }:
 rec {
   public = {
@@ -68,11 +68,11 @@ rec {
       mair = {
         host = "mair";
         address = "10.83.0.10/32";
-        publicKey = readPublicKey ../../public-keys/wireguard/home-mair.pub;
+        publicKey = publicKeys.wireguard.home-mair;
       };
       unifi-travel-router = {
         address = "10.83.0.20/32";
-        publicKey = readPublicKey ../../public-keys/wireguard/home-unifi-travel-router.pub;
+        publicKey = publicKeys.wireguard.home-unifi-travel-router;
       };
     };
   };

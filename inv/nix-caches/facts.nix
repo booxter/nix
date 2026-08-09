@@ -1,6 +1,6 @@
 {
   lanDomain,
-  readPublicKey,
+  publicKeys,
 }:
 let
   urlWithPriority = url: priority: "${url}?priority=${toString priority}";
@@ -10,11 +10,11 @@ in
 {
   nixos = {
     url = "https://cache.nixos.org/";
-    key = readPublicKey ../../public-keys/nix-cache/nixos.pub;
+    key = publicKeys.nix-cache.nixos;
   };
   home = {
     url = homeUrl;
-    key = readPublicKey ../../public-keys/nix-cache/home.pub;
+    key = publicKeys.nix-cache.home;
     defaultUrl = urlWithPriority homeUrl 30;
     lanUrl = urlWithPriority homeUrl 10;
     vpnUrl = urlWithPriority homeUrl 30;

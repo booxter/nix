@@ -4,14 +4,13 @@
   inventory,
   inventoryLib,
   lib,
-  readPublicKey,
 }:
 inventoryLib.finalize {
   name = factLibraryName;
   facts = import ./facts.nix {
-    inherit readPublicKey;
     inherit (context) lanDomain publicDomain;
     nixCaches = inventory.nix-caches;
+    publicKeys = inventory.public-keys;
   };
   enrich = import ./enrich.nix {
     inherit lib;
