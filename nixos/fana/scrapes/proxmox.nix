@@ -19,9 +19,11 @@ let
     in
     {
       labels = {
+        component = "proxmox";
         instance = name;
         proxmox_node = hostConfig.networking.hostName;
         pve_target = hostConfig.host.proxmox.apiCertificate.serverName;
+        scrape_profile = "hypervisor";
       };
       targets = [ "${name}:${toString endpoint.port}" ];
     };

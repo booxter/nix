@@ -39,7 +39,11 @@ in
       static_configs = [
         {
           targets = [ "${gatewayTargetHost}:${toString wgHomeEndpoint.port}" ];
-          labels.instance = wgHome.gateway.host;
+          labels = {
+            component = "wireguard";
+            instance = wgHome.gateway.host;
+            scrape_profile = "network";
+          };
         }
       ];
       metric_relabel_configs = builtins.concatMap mkPeerMetricRelabels peers;

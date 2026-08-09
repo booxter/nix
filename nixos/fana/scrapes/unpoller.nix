@@ -11,7 +11,11 @@ in
       static_configs = [
         {
           targets = [ "127.0.0.1:${toString unpollerPort}" ];
-          labels.instance = "unifi";
+          labels = {
+            component = "unpoller";
+            instance = "unifi";
+            scrape_profile = "network";
+          };
         }
       ];
     }

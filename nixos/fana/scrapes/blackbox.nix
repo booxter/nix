@@ -19,6 +19,7 @@ let
     inherit (contribution.value.presentation) title;
     publicHost = contribution.value.public.hostName;
     probePath = contribution.value.health.frontend.path;
+    availability = contribution.value.observability.availability;
   }) fleetServices.public;
   publicWanProbeUrlFor = service: "https://${publicWanHost}${service.probePath}";
   publicDnsModuleNameFor = service: "dns_public_${service.id}";
@@ -48,6 +49,7 @@ let
           blackboxModuleFor service service.health.frontend.module;
       probeUrl = "${baseUrl}${service.health.frontend.path}";
       scope = if usePublic then "external" else "internal";
+      availability = service.observability.availability;
       url = "${baseUrl}/";
     }
   ) fleetServices.frontendProbes;
@@ -67,6 +69,7 @@ let
       backend_probe_title = service.health.backend.title;
       probeUrl = "https://${service.internal.serverName}${portSuffix}${service.health.backend.path}";
       scope = "backend";
+      availability = service.observability.availability;
       url = "${service.internal.url}/";
     }
   ) fleetServices.backendProbes;
@@ -202,6 +205,9 @@ let
       source:
       map (probe: {
         labels = {
+          component = "blackbox";
+          probe_family = "network";
+          scrape_profile = "probe";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
           inherit (source) source;
@@ -214,6 +220,9 @@ let
     resolver:
     map (service: {
       labels = {
+        component = "blackbox";
+        probe_family = "dns";
+        scrape_profile = "probe";
         scope = "external";
         service = service.id;
         service_title = service.title;
@@ -226,7 +235,11 @@ let
   ) publicDnsProbeTargets;
   mkServiceHttpStaticConfig = service: {
     labels = {
+      availability = service.availability or "always";
+      component = "blackbox";
       module = service.blackboxModule or "http_service";
+      probe_family = "service";
+      scrape_profile = "probe";
       scope = service.scope;
       service = service.id;
       service_title = service.title;
@@ -315,6 +328,10 @@ in
       params.module = [ "http_service" ];
       static_configs = map (service: {
         labels = {
+          availability = service.availability or "always";
+          component = "blackbox";
+          probe_family = "service";
+          scrape_profile = "probe";
           scope = "external";
           service = service.id;
           service_title = service.title;
@@ -351,6 +368,9 @@ in
       params.module = [ "dns_udp" ];
       static_configs = map (resolver: {
         labels = {
+          component = "blackbox";
+          probe_family = "dns";
+          scrape_profile = "probe";
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;
         };
