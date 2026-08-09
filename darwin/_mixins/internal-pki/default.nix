@@ -10,7 +10,7 @@ in
 {
   system.activationScripts.postActivation.text = lib.mkIf config.host.internalPki.enable (
     lib.mkAfter ''
-      cert_path=${lib.escapeShellArg (toString rootCertPath)}
+      cert_path=${lib.escapeShellArg "${rootCertPath}"}
       desired_sha256="$(${pkgs.openssl}/bin/openssl x509 -in "$cert_path" -noout -fingerprint -sha256 | /usr/bin/cut -d= -f2 | /usr/bin/tr -d ':')"
 
       if /usr/bin/security find-certificate -a -Z /Library/Keychains/System.keychain 2>/dev/null | /usr/bin/grep -Fq "SHA-256 hash: $desired_sha256"; then
