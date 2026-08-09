@@ -4,11 +4,12 @@
   ...
 }:
 let
+  cfg = config.host.remote-control.server.vnc;
   username = config.host.username;
   kickstart = "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart";
 in
 {
-  config = lib.mkIf config.host.remoteAccess.appleRemoteManagement {
+  config = lib.mkIf cfg.enable {
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "Configuring Apple Remote Management for ${username}."
 

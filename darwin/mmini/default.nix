@@ -8,6 +8,14 @@
     pushToAttic = true;
   };
 
+  host.remote-control = {
+    client = {
+      vnc.enable = true;
+      x11.enable = true;
+    };
+    server.vnc.enable = true;
+  };
+
   programs.yubi = {
     smartCard = {
       enable = true;

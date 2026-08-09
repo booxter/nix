@@ -1,22 +1,31 @@
 {
   config,
-  facts,
   lib,
+  outputs,
   pkgs,
   ...
 }:
 let
-  darwinHostSpecs = lib.mapAttrsToList (
-    name: spec: spec // { inherit name; }
-  ) facts.hosts.darwinHosts;
-  allHostSpecs = darwinHostSpecs ++ facts.hosts.nixosHostSpecs;
-  vncHosts = builtins.filter (host: host.vnc.enable or false) allHostSpecs;
-  directHosts = builtins.filter (host: !(host.vnc.sshTunnel or false)) vncHosts;
-  tunneledHosts = builtins.filter (host: host.vnc.sshTunnel or false) vncHosts;
+  configurations = outputs.darwinConfigurations // outputs.nixosConfigurations;
+  remoteControlHosts = lib.mapAttrsToList (
+    name: configuration:
+    let
+      host = configuration.config.host;
+    in
+    {
+      inherit name;
+      inherit (host) isLinux;
+      inherit (host.hardware) displays;
+      inherit (host.remote-control.server) vnc;
+    }
+  ) configurations;
+  vncHosts = builtins.filter (host: host.vnc.enable) remoteControlHosts;
+  directHosts = builtins.filter (host: !host.isLinux) vncHosts;
+  tunneledHosts = builtins.filter (host: host.isLinux) vncHosts;
 
   hostNames = lib.sort builtins.lessThan (map (host: host.name) vncHosts);
   displayNames = lib.unique (
-    lib.concatMap (host: map (display: display.name) host.hardware.displays) tunneledHosts
+    lib.concatMap (host: map (display: display.position) host.displays) tunneledHosts
   );
 
   directHostPatterns = lib.concatStringsSep "|" (
@@ -35,13 +44,13 @@ let
   mkTunneledHostCase =
     host:
     let
-      displays = host.hardware.displays;
+      displays = host.displays;
       defaultDisplay = lib.findFirst (
         display: display.primary or false
       ) (builtins.head displays) displays;
       displayCases = lib.concatStringsSep "\n" (
         lib.imap0 (index: display: ''
-          ${lib.escapeShellArg display.name})
+          ${lib.escapeShellArg display.position})
             remote_port=${toString (host.vnc.basePort + index)}
             ;;
         '') displays
@@ -49,7 +58,7 @@ let
     in
     ''
       ${lib.escapeShellArg host.name})
-        selected_display="''${requested_display:-${defaultDisplay.name}}"
+        selected_display="''${requested_display:-${defaultDisplay.position}}"
         case "$selected_display" in
       ${displayCases}
           *)
@@ -74,7 +83,7 @@ let
         cat <<'EOF'
       Usage: vnc-open [--${lib.concatStringsSep "|--" displayNames}] [HOST]
 
-      Open macOS Screen Sharing for a facts host with VNC enabled.
+      Open macOS Screen Sharing for a host with a VNC server enabled.
       If HOST is omitted, select one interactively.
       Display selection applies only to tunneled multi-display hosts.
 
@@ -163,5 +172,5 @@ let
   };
 in
 {
-  environment.systemPackages = lib.mkIf config.host.remoteAccess.vncClient [ vncOpen ];
+  environment.systemPackages = lib.mkIf config.host.remote-control.client.vnc.enable [ vncOpen ];
 }

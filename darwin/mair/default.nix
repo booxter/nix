@@ -20,9 +20,18 @@ in
     home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
   };
 
-  host.browser.firefox.touchIdPasskeys.enable = true;
-  host.remoteGui.wayland.enable = true;
-  host.secretive.enable = true;
+  host = {
+    browser.firefox.touchIdPasskeys.enable = true;
+    remote-control = {
+      client = {
+        vnc.enable = true;
+        wayland.enable = true;
+        x11.enable = true;
+      };
+      server.vnc.enable = true;
+    };
+    secretive.enable = true;
+  };
 
   sops.secrets."wireguard/gw/privateKey" = {
     owner = "root";

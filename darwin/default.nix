@@ -30,7 +30,6 @@ in
     ./_mixins/networking
     ./_mixins/nix
     ./_mixins/observability
-    ./_mixins/remote-gui
     ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
@@ -42,8 +41,6 @@ in
     ./_mixins/yubi.nix
     ./_mixins/attic
     ./_mixins/browser
-    ./_mixins/vnc
-    ./_mixins/vnc-open
   ];
 
   home-manager = {
@@ -61,8 +58,6 @@ in
       home.stateVersion = "25.11";
     };
   };
-
-  host.remoteGui.x11.enable = lib.mkDefault (config.host.remoteAccess.x11 && config.host.isDesktop);
 
   system.primaryUser = username;
 

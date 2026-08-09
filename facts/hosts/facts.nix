@@ -112,7 +112,6 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      vnc.enable = true;
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
@@ -127,7 +126,6 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      vnc.enable = true;
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
@@ -160,12 +158,6 @@ in
       isSecretsOperator = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
-      vnc = {
-        enable = true;
-        # ReFrame exposes one loopback listener per declared display.
-        sshTunnel = true;
-        basePort = 5933;
-      };
       hardware =
         let
           displayMode = {

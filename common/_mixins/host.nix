@@ -175,32 +175,6 @@ in
       };
     };
 
-    remoteAccess = {
-      appleRemoteManagement = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.appleRemoteManagement or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether Apple Remote Management is available in this realm.";
-      };
-
-      vncClient = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.vncClient or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether this host should provide the fleet VNC client.";
-      };
-
-      x11 = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.x11 or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether X11 forwarding is available in this realm.";
-      };
-    };
-
     username = lib.mkOption {
       type = lib.types.str;
       default = "ihrachyshka";
