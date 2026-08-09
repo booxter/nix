@@ -13,6 +13,7 @@
 
   host = {
     desktop.hyprland.enable = true;
+    isBuilder = true;
     hardware = {
       drmCard = "card1";
       displayMode = {

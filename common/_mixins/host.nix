@@ -42,13 +42,7 @@ in
       description = "Whether the facts platform uses the Linux kernel.";
     };
 
-    isBuilder = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isBuilder or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host is a Nix builder.";
-    };
+    isBuilder = lib.mkEnableOption "Nix builder participation";
 
     builder.supportsNspawnTests = lib.mkOption {
       type = lib.types.bool;

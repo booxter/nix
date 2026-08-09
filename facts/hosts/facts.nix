@@ -26,7 +26,6 @@ let
       idx' = toString idx;
     in
     {
-      isBuilder = true;
       isVM = true;
       observability.capacityProfile = "cpu-bursty";
       name = "builder${idx'}";
@@ -116,7 +115,6 @@ in
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
-      isBuilder = true;
       observability = {
         capacityProfile = "interactive";
         thermalProfile = "no-cpu";
@@ -148,7 +146,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      isBuilder = true;
       observability.capacityProfile = "cpu-bursty";
       isDesktop = true;
       isOperatorSeat = true;
@@ -217,7 +214,6 @@ in
       platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
-      isBuilder = true;
       nspawnTestBuilder = true;
       hmFull = false;
       ipAddress = "192.168.15.100";
