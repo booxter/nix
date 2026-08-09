@@ -5,7 +5,10 @@
   ...
 }:
 {
-  imports = lib.optional isLinux ./x11.nix;
+  imports = lib.optionals isLinux [
+    ./wayland.nix
+    ./x11.nix
+  ];
 
   options.remote-control.server = {
     enable = lib.mkEnableOption "remote-control server functionality";

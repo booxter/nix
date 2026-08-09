@@ -56,7 +56,10 @@ in
   ];
 
   security.pam.services.hyprlock = { };
-  remote-control.server.x11.enable = true;
+  remote-control.server = {
+    wayland.enable = true;
+    x11.enable = true;
+  };
 
   services.ollama = {
     enable = true;
@@ -76,8 +79,6 @@ in
       OLLAMA_KEEP_ALIVE = "30m";
     };
   };
-
-  environment.systemPackages = with pkgs; [ waypipe ];
 
   systemd.services.frame-amdgpu-metrics = {
     description = "Collect AMD GPU metrics for Prometheus";
