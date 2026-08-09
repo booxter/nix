@@ -1,22 +1,21 @@
 # TODO: refactor the module
 {
-  hostSpec,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
   super = "MOD1";
   cmdButton = "MOD4";
-  displays = hostSpec.hardware.displays;
-  displaysByName = lib.listToAttrs (map (display: lib.nameValuePair display.name display) displays);
+  inherit (osConfig.host.hardware) displayMode displays scale;
+  displaysByName = lib.listToAttrs (
+    map (display: lib.nameValuePair display.position display) displays
+  );
   inherit (displaysByName) left right;
   renderMonitor =
     display:
-    let
-      inherit (display) logical mode;
-    in
-    "${display.connector}, ${toString mode.width}x${toString mode.height}@${toString mode.refreshRate}, ${toString logical.x}x${toString logical.y}, ${toString display.scale}";
+    "${display.connector}, ${toString displayMode.width}x${toString displayMode.height}@${toString displayMode.refreshRate}, ${toString display.x}x0, ${toString scale}";
 in
 {
   home.packages = with pkgs; [
