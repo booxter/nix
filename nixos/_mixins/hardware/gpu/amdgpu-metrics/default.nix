@@ -1,9 +1,11 @@
 {
+  amdgpu_top,
   lib,
+  makeWrapper,
   python3,
 }:
 python3.pkgs.buildPythonApplication {
-  pname = "frame-observability";
+  pname = "amdgpu-metrics";
   version = "0.1.0";
   pyproject = true;
 
@@ -16,6 +18,8 @@ python3.pkgs.buildPythonApplication {
     pydantic
   ];
 
+  nativeBuildInputs = [ makeWrapper ];
+
   nativeCheckInputs = with python3.pkgs; [
     mypy
     pytestCheckHook
@@ -26,16 +30,20 @@ python3.pkgs.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/frame_observability
+    mypy src/amdgpu_metrics
   '';
 
-  pythonImportsCheck = [ "frame_observability" ];
+  postFixup = ''
+    wrapProgram "$out/bin/amdgpu-metrics" \
+      --set-default AMDGPU_METRICS_AMDGPU_TOP ${lib.getExe amdgpu_top}
+  '';
+
+  pythonImportsCheck = [ "amdgpu_metrics" ];
 
   meta = {
-    description = "Prometheus textfile collector for Frame Ollama state";
+    description = "Export AMD GPU state as Prometheus textfile metrics";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "frame-ollama-metrics";
+    mainProgram = "amdgpu-metrics";
     platforms = lib.platforms.linux;
   };
 }

@@ -6,7 +6,6 @@
 }:
 let
   framePkgs = import ./pkgs pkgs;
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
 in
 {
@@ -45,6 +44,7 @@ in
       gpu = {
         vendors = [ "amd" ];
         compute = "rocm";
+        collector.enable = true;
       };
     };
     # This host needs manual local or remote unlock after boot; never
@@ -79,35 +79,5 @@ in
   security.lsm = lib.mkForce [
     "landlock"
     "yama"
-  ];
-
-  systemd.services.frame-amdgpu-metrics = {
-    description = "Collect AMD GPU metrics for Prometheus";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${lib.getExe' framePkgs.frame-observability "frame-amdgpu-metrics"} --output ${nodeExporterTextfileDir}/frame-amdgpu.prom";
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectHome = true;
-      ProtectSystem = "strict";
-      ReadWritePaths = [ nodeExporterTextfileDir ];
-      RestrictAddressFamilies = [ "AF_UNIX" ];
-      RestrictRealtime = true;
-      LockPersonality = true;
-      MemoryDenyWriteExecute = true;
-    };
-  };
-
-  systemd.timers.frame-amdgpu-metrics = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2m";
-      OnUnitActiveSec = "30s";
-      AccuracySec = "5s";
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    "d ${nodeExporterTextfileDir} 0755 root root - -"
   ];
 }

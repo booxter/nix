@@ -2,6 +2,7 @@
 {
   imports = [
     ./amd.nix
+    ./collector.nix
     ./rocm.nix
   ];
 
@@ -32,5 +33,7 @@
       default = null;
       description = "GPU compute stack to enable.";
     };
+
+    collector.enable = lib.mkEnableOption "AMD GPU Prometheus textfile collector";
   };
 }

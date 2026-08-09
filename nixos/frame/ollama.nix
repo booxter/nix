@@ -73,4 +73,8 @@ in
       AccuracySec = "10s";
     };
   };
+
+  systemd.tmpfiles.rules = [
+    "d ${nodeExporterTextfileDir} 0755 root root - -"
+  ];
 }
