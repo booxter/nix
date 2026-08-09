@@ -7,6 +7,7 @@
 let
   cfg = config.host.internalHttps;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  lanDomain = config.host.network.lanDomain;
   # A local alias like `search` is served both as the single-label name and as
   # mDNS, for example `search` and `search.local`.
   localServerAliasesFor = aliases: aliases ++ builtins.map hostInventory.toLocalDnsName aliases;
@@ -144,7 +145,7 @@ in
 
               serverName = lib.mkOption {
                 type = str;
-                default = "${name}.${config.host.network.lanDomain}";
+                default = "${name}.${lanDomain}";
                 description = "DNS name presented by the internal HTTPS vhost.";
               };
 
