@@ -10,7 +10,7 @@ from sops_tools.passwords import (
     CommandPasswordStore,
     PasswordService,
 )
-from sops_tools.repository import SecretDomain, SecretRepository
+from sops_tools.repository import Realm, SecretRepository
 
 from .fakes import (
     MemoryPasswordStore,
@@ -23,7 +23,7 @@ from .fakes import (
 def service(
     tmp_path: Path,
 ) -> tuple[PasswordService, MemoryPasswordStore, MemorySopsBackend]:
-    repository = SecretRepository(tmp_path, SecretDomain("main", None))
+    repository = SecretRepository(tmp_path, Realm("home", None))
     repository.directory.mkdir(parents=True)
     secret = repository.secret("beast")
     secret.touch()

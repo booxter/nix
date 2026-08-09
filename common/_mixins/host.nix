@@ -120,14 +120,6 @@ in
       description = "Infrastructure and trust realm declared by host facts.";
     };
 
-    secretDomain = lib.mkOption {
-      type = lib.types.str;
-      default = facts.realms.${config.host.realm}.secretDomain;
-      readOnly = true;
-      internal = true;
-      description = "SOPS secret domain selected for this host.";
-    };
-
     management = {
       manageNetworkIdentity = lib.mkOption {
         type = lib.types.bool;

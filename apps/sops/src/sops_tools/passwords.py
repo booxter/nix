@@ -91,7 +91,7 @@ class PasswordService:
             raise ToolError(
                 f"Secret not found for host {host}: {secret}\n"
                 "Bootstrap it first with: nix run .#sops-bootstrap -- "
-                f"--domain {self.repository.domain.name} {host}"
+                f"--realm {self.repository.realm.name} {host}"
             )
         if length <= 0:
             raise ToolError("SOPS_PASS_GENERATE_LENGTH must be positive.")

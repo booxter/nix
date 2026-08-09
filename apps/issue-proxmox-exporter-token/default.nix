@@ -18,8 +18,8 @@ let
   hostsFile = builtins.toFile "pki-tool-hosts.json" (
     builtins.toJSON (
       lib.mapAttrs (name: system: {
+        inherit (facts.hosts.hostSpecsByName.${name}) realm;
         inherit system;
-        secretDomain = facts.hosts.secretDomainsByHost.${name};
       }) systemsByHost
     )
   );

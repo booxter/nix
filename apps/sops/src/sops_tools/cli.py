@@ -55,12 +55,12 @@ class Application:
         )
         return cls(runtime)
 
-    def secrets(self, explicit_domain: str | None) -> SecretService:
-        domain = self.runtime.resolve_domain(explicit_domain)
+    def secrets(self, explicit_realm: str | None) -> SecretService:
+        realm = self.runtime.resolve_realm(explicit_realm)
         return SecretService(
-            SecretRepository(self.runtime.repo_root, domain),
+            SecretRepository(self.runtime.repo_root, realm),
             self.backend_factory.create(
-                self.runtime.command_environment(domain),
+                self.runtime.command_environment(realm),
                 self.runtime.repo_root / ".sops.yaml",
             ),
         )
@@ -69,8 +69,8 @@ class Application:
 def _parser(description: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
-        "--domain",
-        help="secret domain (defaults to the current machine's inventory domain)",
+        "--realm",
+        help="realm (defaults to the current machine's inventory realm)",
     )
     return parser
 
@@ -92,7 +92,7 @@ def cat_main(
         args = parser.parse_args(argv)
         current = application or Application.discover()
         host = args.host or current.runtime.hostname
-        output = current.secrets(args.domain).cat(host)
+        output = current.secrets(args.realm).cat(host)
         sys.stdout.write(output)
         return 0
 
@@ -108,7 +108,7 @@ def edit_main(
         args = parser.parse_args(argv)
         current = application or Application.discover()
         host = args.host or current.runtime.hostname
-        current.secrets(args.domain).edit(host)
+        current.secrets(args.realm).edit(host)
         return 0
 
     return _run(command)
@@ -127,7 +127,7 @@ def set_main(
                 "Refusing to read secret value from terminal; pipe or redirect the "
                 "value on stdin."
             )
-        service = (application or Application.discover()).secrets(args.domain)
+        service = (application or Application.discover()).secrets(args.realm)
         service.set_text(args.host, KeyPath.parse(args.key_path), sys.stdin.read())
         print(f"Updated {args.host}:{args.key_path}.")
         return 0
@@ -146,7 +146,7 @@ def copy_main(
         parser.add_argument("destination_path", nargs="?")
         args = parser.parse_args(argv)
         destination_path = args.destination_path or args.source_path
-        service = (application or Application.discover()).secrets(args.domain)
+        service = (application or Application.discover()).secrets(args.realm)
         service.copy(
             args.source_host,
             args.destination_host,
@@ -178,7 +178,7 @@ def update_main(
         args = parser.parse_args(argv)
         current = application or Application.discover()
         host = args.host or current.runtime.hostname
-        result = current.secrets(args.domain).update(host, force=args.force)
+        result = current.secrets(args.realm).update(host, force=args.force)
         if not result.changed:
             if os.environ.get("SOPS_UPDATE_QUIET") != "1":
                 print(f"Secret already up to date: {result.secret}")
@@ -201,14 +201,14 @@ def pass_main(
         parser.add_argument("user", choices=("root", "ihrachyshka", "both"))
         args = parser.parse_args(argv)
         current = application or Application.discover()
-        domain = current.runtime.resolve_domain(args.domain)
-        environment = current.runtime.command_environment(domain)
+        realm = current.runtime.resolve_realm(args.realm)
+        environment = current.runtime.command_environment(realm)
         runner = SubprocessRunner(environment)
         backend = current.backend_factory.create(
             environment, current.runtime.repo_root / ".sops.yaml"
         )
         service = PasswordService(
-            SecretRepository(current.runtime.repo_root, domain),
+            SecretRepository(current.runtime.repo_root, realm),
             backend,
             CommandPasswordStore(runner),
             CommandPasswordHasher(runner),
@@ -247,12 +247,12 @@ def bootstrap_main(
         parser.add_argument("--user", default=os.environ.get("USER", getpass.getuser()))
         args = parser.parse_args(argv)
         current = application or Application.discover()
-        domain = current.runtime.resolve_domain(args.domain, require_identity=False)
-        environment = current.runtime.command_environment(domain)
+        realm = current.runtime.resolve_realm(args.realm, require_identity=False)
+        environment = current.runtime.command_environment(realm)
         runner = SubprocessRunner(environment)
         service = BootstrapService(
             current.runtime,
-            SecretRepository(current.runtime.repo_root, domain),
+            SecretRepository(current.runtime.repo_root, realm),
             current.backend_factory.create(
                 environment, current.runtime.repo_root / ".sops.yaml"
             ),

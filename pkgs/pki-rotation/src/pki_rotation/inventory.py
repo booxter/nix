@@ -52,7 +52,7 @@ class CertificateInventoryBuilder:
             ),
         ]
         for host, facts in sorted(self.hosts.root.items()):
-            secret_path = self.repo_root / "secrets" / facts.secret_domain / f"{host}.yaml"
+            secret_path = self.repo_root / "secrets" / facts.realm / f"{host}.yaml"
             if not secret_path.is_file():
                 continue
             specs.extend(self._host_specs(host, secret_path, self.configs.certificate_config(host)))

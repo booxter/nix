@@ -70,14 +70,14 @@ def fleet_hosts() -> FleetHosts:
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "host-runtime",
-                "secretDomain": "main",
+                "realm": "home",
                 "caUrl": None,
             },
             "pki": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
-                "secretDomain": "main",
+                "realm": "home",
                 "caUrl": "https://pki.home.arpa:8443",
             },
         }
@@ -404,10 +404,10 @@ class RecordingSecretWriter:
 @dataclass
 class RecordingSecretFactory:
     writer: RecordingSecretWriter
-    domains: list[str] = field(default_factory=list)
+    realms: list[str] = field(default_factory=list)
 
-    def create(self, runtime, domain):
-        self.domains.append(domain.name)
+    def create(self, runtime, realm):
+        self.realms.append(realm.name)
         return self.writer
 
 
@@ -426,7 +426,7 @@ def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path)
 
     store.write("host", "prometheus/client", material(), client=True)
 
-    assert factory.domains == ["main"]
+    assert factory.realms == ["home"]
     assert writer.calls == [
         ("update", "host", False),
         (

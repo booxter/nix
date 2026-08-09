@@ -1,20 +1,20 @@
-# SOPS Secret Domains
+# SOPS Realms
 
-Secrets are partitioned into cryptographically independent domains below
+Secrets are partitioned into cryptographically independent realms below
 `secrets/`:
 
-- `main` contains personal infrastructure secrets.
+- `home` contains personal infrastructure secrets.
 - `work` contains secrets for NVIDIA-managed machines.
 
-Inventory selects a host's domain. SOPS helper apps select the domain of the
-machine running them unless `--domain` is passed explicitly. An override only
+Inventory selects a host's realm. SOPS helper apps select the realm of the
+machine running them unless `--realm` is passed explicitly. An override only
 changes path selection; the caller must still possess an identity listed by the
 selected file's creation rule.
 
 ## Work identities
 
 Each work host has an unattended native age identity at
-`/var/lib/sops-nix/key.txt`. On macOS, manual work-domain operations use a
+`/var/lib/sops-nix/key.txt`. On macOS, manual work-realm operations use a
 Secure Enclave identity at:
 
 ```text
@@ -28,10 +28,10 @@ Secure Enclave handle rather than the private key.
 Bootstrap the current work Mac from a terminal with:
 
 ```sh
-nix run .#sops-bootstrap -- --domain work --local "$(hostname -s)"
+nix run .#sops-bootstrap -- --realm work --local "$(hostname -s)"
 ```
 
-Work creation rules must not contain recipients present in `main` rules. The
+Work creation rules must not contain recipients present in `home` rules. The
 SOPS configuration check enforces this invariant.
 
 ## Codex MaaS MCPs
@@ -39,7 +39,7 @@ SOPS configuration check enforces this invariant.
 JGW stores the NVIDIA MaaS GitLab, Jira, NVBugs, and Redmine endpoints at
 `codex/mcp/maas_gitlab/url`, `codex/mcp/maas_jira/url`,
 `codex/mcp/maas_nvbugs/url`, and `codex/mcp/maas_redmine/url` in its
-work-domain secret. During activation, `sops-nix` renders the endpoints into
+work-realm secret. During activation, `sops-nix` renders the endpoints into
 the protected system Codex configuration; the plaintext values are not
 evaluated into the Nix store.
 
@@ -57,7 +57,7 @@ credential is not part of SOPS or the repository.
 
 ## Recovery
 
-The work domain currently has no recovery recipient. Loss of both a host's
+The work realm currently has no recovery recipient. Loss of both a host's
 runtime identity and its Secure Enclave identity makes its secret file
 unrecoverable. Store only regenerable values until a work-only recovery
 recipient is configured.

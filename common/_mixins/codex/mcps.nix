@@ -33,7 +33,7 @@ in
 
   assertions = [
     {
-      assertion = !enabled || config.host.secretDomain == "work";
+      assertion = !enabled || config.host.realm == "work";
       message = "NVIDIA MaaS MCP servers require the isolated work SOPS domain.";
     }
   ];

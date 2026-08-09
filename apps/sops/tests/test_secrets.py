@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 from sops_tools.model import KeyPath
-from sops_tools.repository import SecretDomain, SecretRepository
+from sops_tools.repository import Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
 
 from .fakes import MemorySopsBackend, RecordingRunner
@@ -18,7 +18,7 @@ def service(
     template: object = None,
     host_template: object | None = None,
 ) -> tuple[SecretService, MemorySopsBackend]:
-    repository = SecretRepository(tmp_path, SecretDomain("main", None))
+    repository = SecretRepository(tmp_path, Realm("home", None))
     repository.directory.mkdir(parents=True)
     repository.template.write_text(
         yaml.safe_dump({} if template is None else template, sort_keys=False)

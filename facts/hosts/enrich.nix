@@ -79,6 +79,4 @@ raw
     managedDhcpReservations
     nixos
     ;
-
-  secretDomainsByHost = lib.mapAttrs (_: spec: (realmFor spec).secretDomain) hostSpecsByName;
 }

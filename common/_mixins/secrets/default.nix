@@ -10,7 +10,7 @@
     {
       sops.age.keyFile = "/var/lib/sops-nix/key.txt";
       sops.defaultSopsFile =
-        ../../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml";
+        ../../../secrets + "/${config.host.realm}/${config.networking.hostName}.yaml";
     }
     (lib.mkIf config.host.isSecretsOperator {
       programs.yubi.age.enable = config.host.hasYubiAgeIdentity;

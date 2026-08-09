@@ -73,15 +73,15 @@ def fleet_hosts() -> FleetHosts:
         {
             "prx1-lab": {
                 "system": "x86_64-linux",
-                "secretDomain": "main",
+                "realm": "home",
             },
             "prx2-lab": {
                 "system": "x86_64-linux",
-                "secretDomain": "main",
+                "realm": "home",
             },
             "work": {
                 "system": "aarch64-darwin",
-                "secretDomain": "work",
+                "realm": "work",
             },
         }
     )
@@ -340,7 +340,7 @@ def test_repository_boundaries_validate_inventory_and_nix_json(tmp_path: Path):
     inventory.write_text(json.dumps(fleet_hosts().model_dump(by_alias=True)))
 
     assert discover_repo_root(tmp_path / "nested", str(tmp_path)) == tmp_path
-    assert load_fleet_hosts(inventory).root["prx1-lab"].secret_domain == "main"
+    assert load_fleet_hosts(inventory).root["prx1-lab"].realm == "home"
 
     runner = RecordingRunner(outputs=[json.dumps(exporter_config().model_dump(by_alias=True))])
     config = NixEvaluator(runner, tmp_path).exporter_config("prx1-lab")

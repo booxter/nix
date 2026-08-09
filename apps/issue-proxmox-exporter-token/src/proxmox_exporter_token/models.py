@@ -7,7 +7,7 @@ class HostFacts(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     system: str
-    secret_domain: str = Field(alias="secretDomain")
+    realm: str
 
 
 class FleetHosts(RootModel[dict[str, HostFacts]]):

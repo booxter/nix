@@ -123,7 +123,7 @@ and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
 `sso.applications.watchstate.bootstrapOwner` in `facts/default.nix`; its
-password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
+password comes from `watchstate/system/password` in `secrets/home/beast.yaml`.
 These credentials bootstrap WatchState's internal token but are not presented
 to users: after the outer OIDC gate succeeds, WatchState trusts nginx's
 loopback connection and logs the user in automatically. Password changes
@@ -198,7 +198,7 @@ consistent archive of that output, its configuration, and its SQLite state in
 `/volume2/backups/staging/watchstate`. The seven newest archives are included
 in the local restic repository and then follow the same Backblaze B2 offload.
 
-Secrets required in `secrets/main/beast.yaml`:
+Secrets required in `secrets/home/beast.yaml`:
 
 - `jellyfin.apiKey`
 - `watchstate/system/password`

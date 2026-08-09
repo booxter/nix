@@ -2,8 +2,8 @@
 let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
-  secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
-    builtins.toJSON facts.hosts.secretDomainsByHost
+  realmsByHostFile = pkgs.writeText "realms-by-host.json" (
+    builtins.toJSON (pkgs.lib.mapAttrs (_: spec: spec.realm) facts.hosts.hostSpecsByName)
   );
   source = pkgs.lib.fileset.toSource {
     root = ../..;
@@ -66,7 +66,7 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set SOPS_SECRET_DOMAINS_FILE ${secretDomainsByHostFile}
+        --set SOPS_REALMS_FILE ${realmsByHostFile}
     done
   '';
 

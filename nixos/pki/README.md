@@ -131,7 +131,7 @@ printf '%s' 'user@example.com' \
 ## Secret Handling
 
 - Issuers update the target host secret file in
-  `secrets/<domain>/<host>.yaml`
+  `secrets/<realm>/<host>.yaml`
 - They run `sops-update` automatically before rewriting the encrypted file
 - If a host does not have its secret file yet, bootstrap it first with the
   usual `sops` helpers

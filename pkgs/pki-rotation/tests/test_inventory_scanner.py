@@ -28,14 +28,14 @@ def fleet_hosts() -> FleetHosts:
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
-                "secretDomain": "main",
+                "realm": "home",
                 "caUrl": "https://pki.home.arpa:8443",
             },
             "host": {
                 "system": "aarch64-darwin",
                 "configuration": "darwinConfigurations",
                 "runtimeHost": "host-runtime",
-                "secretDomain": "work",
+                "realm": "work",
                 "caUrl": None,
             },
         }
@@ -107,7 +107,7 @@ class StaticConfigs:
         return self.value
 
 
-def test_inventory_uses_secret_domains_and_all_managed_categories(tmp_path: Path) -> None:
+def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> None:
     secret = tmp_path / "secrets" / "work" / "host.yaml"
     secret.parent.mkdir(parents=True)
     secret.write_text("{}")

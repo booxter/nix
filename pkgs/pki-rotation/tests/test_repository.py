@@ -69,7 +69,7 @@ def test_git_failures_have_operation_context() -> None:
 
 
 def test_has_secret_changes_uses_porcelain_output(tmp_path: Path) -> None:
-    changed = GitRepository(RecordingGit([GitResult(0, " M secrets/main/pki.yaml\n", "")]))
+    changed = GitRepository(RecordingGit([GitResult(0, " M secrets/home/pki.yaml\n", "")]))
     clean = GitRepository(RecordingGit([GitResult(0, "", "")]))
 
     assert changed.has_secret_changes(tmp_path)

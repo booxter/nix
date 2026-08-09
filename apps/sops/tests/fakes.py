@@ -10,7 +10,7 @@ import yaml
 from sops_tools.errors import CommandError
 from sops_tools.model import JsonValue, KeyPath
 from sops_tools.passwords import PasswordHasher, PasswordStore
-from sops_tools.repository import SecretDomain
+from sops_tools.repository import Realm
 from sops_tools.secrets import SopsBackend
 
 
@@ -153,5 +153,5 @@ class StaticRuntimeKeyProvider:
 class StaticOperatorRecipientProvider:
     value: str = "age1operator"
 
-    def recipient(self, domain: SecretDomain) -> str:
+    def recipient(self, realm: Realm) -> str:
         return self.value

@@ -30,7 +30,7 @@ let
           inherit system;
           configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
           runtimeHost = spec.name;
-          secretDomain = facts.hosts.secretDomainsByHost.${name};
+          inherit (spec) realm;
           caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
       ) systemsByHost

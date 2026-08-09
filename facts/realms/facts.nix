@@ -15,7 +15,6 @@ in
       "community"
       "personal"
     ];
-    secretDomain = "main";
     management = {
       manageNetworkIdentity = true;
       managePasswordSecrets = true;
@@ -66,7 +65,6 @@ in
 
   work = {
     build.pools = [ "work" ];
-    secretDomain = "work";
     management = {
       manageNetworkIdentity = false;
       managePasswordSecrets = false;

@@ -93,8 +93,8 @@ class SopsPolicy:
             return recipients
         return []
 
-    def domain_recipients(self, domain: str) -> set[str]:
-        prefix = f"secrets/{domain}/"
+    def realm_recipients(self, realm: str) -> set[str]:
+        prefix = f"secrets/{realm}/"
         recipients: set[str] = set()
         for rule in self.creation_rules:
             path_regex = rule.get("path_regex")
@@ -102,7 +102,7 @@ class SopsPolicy:
                 recipients.update(self.recipients_for_rule(path_regex))
         return recipients
 
-    def ensure_host_rule(self, domain: str, host: str, recipients: list[str]) -> bool:
+    def ensure_host_rule(self, realm: str, host: str, recipients: list[str]) -> bool:
         unique_recipients = list(dict.fromkeys(recipients))
         changed = False
         keys = self.keys
@@ -111,7 +111,7 @@ class SopsPolicy:
                 keys.append(recipient)
                 changed = True
 
-        path_regex = f"secrets/{domain}/{host}\\.yaml$"
+        path_regex = f"secrets/{realm}/{host}\\.yaml$"
         for rule in self.creation_rules:
             if rule.get("path_regex") != path_regex:
                 continue
@@ -166,12 +166,10 @@ def validate_repository(root: Path) -> None:
             relative = secret.relative_to(root)
             raise ToolError(f"{relative} is missing a 'sops' block (not encrypted?).")
 
-    overlap = policy.domain_recipients("main") & policy.domain_recipients("work")
+    overlap = policy.realm_recipients("home") & policy.realm_recipients("work")
     if overlap:
         recipients = "\n".join(sorted(overlap))
-        raise ToolError(
-            f"Secret domains main and work share age recipients:\n{recipients}"
-        )
+        raise ToolError(f"Realms home and work share age recipients:\n{recipients}")
 
 
 def load_encrypted_yaml(path: Path) -> JsonValue:
