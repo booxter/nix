@@ -5,9 +5,16 @@ set -euo pipefail
 
 cd -- "$(git rev-parse --show-toplevel)"
 
-git ls-files -z -- '*Cargo.toml' |
-  xargs -0 -r -n 1 cargo fmt --all --manifest-path
-actionlint .github/workflows/*.yml
+fmt_rust() {
+  local manifest
+  for manifest in "$@"; do
+    cargo fmt --all --manifest-path "$manifest"
+  done
+}
+
+fmt_actions() {
+  actionlint "$@"
+}
 
 fmt_nix() {
   deadnix --edit "$@"
@@ -49,6 +56,8 @@ fmt_javascript() {
 }
 
 declare -A tracked_formats=(
+  ["rust"]="*Cargo.toml"
+  ["actions"]=".github/workflows/*.yml"
   ["nix"]="*.nix"
   ["makefile"]="Makefile"
   ["json"]="*.json"
