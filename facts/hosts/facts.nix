@@ -4,7 +4,6 @@
 }:
 let
   inherit (context) frame lanDomain;
-  nvws = "nvws";
 
   builderDhcpReservations = {
     "1" = {
@@ -216,7 +215,7 @@ in
     }
     {
       hostKind = "proxmox";
-      name = nvws;
+      name = "nvws";
       platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
