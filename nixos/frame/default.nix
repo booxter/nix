@@ -27,8 +27,10 @@ in
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.blackbox.remote.enable = true;
-  hardware.gpu = [ "amd" ];
-  nixpkgs.config.rocmSupport = true;
+  hardware.gpu = {
+    vendors = [ "amd" ];
+    compute = "rocm";
+  };
 
   networking.wireless.enable = false;
   networking.wireless.secretsFile = "/etc/wireless.secrets";
@@ -75,11 +77,7 @@ in
     };
   };
 
-  environment.systemPackages = with pkgs; [
-    rocmPackages.rocm-smi
-    rocmPackages.rocminfo
-    waypipe
-  ];
+  environment.systemPackages = with pkgs; [ waypipe ];
 
   systemd.services.frame-amdgpu-metrics = {
     description = "Collect AMD GPU metrics for Prometheus";
