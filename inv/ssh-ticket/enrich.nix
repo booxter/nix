@@ -1,20 +1,10 @@
 {
-  darwinHosts,
-  frame,
+  hosts,
   lib,
-  mmini,
-  nixosHostSpecs,
-  readPublicKey,
   realms,
 }:
+facts:
 let
-  secretivePublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
-  yubikeyPublicKey = readPublicKey ../public-keys/yubikey.pub;
-  yubikeyIssuer = {
-    publicKey = yubikeyPublicKey;
-    keyName = "id_ed25519_sk_rk";
-    useAgent = false;
-  };
   mkTarget =
     kind: spec:
     let
@@ -41,9 +31,11 @@ let
       trustedCaPublicKeys = if enabled then ticketPolicy.trustedCaPublicKeys else [ ];
     };
   targets =
-    map (mkTarget "nixos") nixosHostSpecs ++ lib.mapAttrsToList (_: mkTarget "darwin") darwinHosts;
+    map (mkTarget "nixos") hosts.nixosHostSpecs
+    ++ lib.mapAttrsToList (_: mkTarget "darwin") hosts.darwinHosts;
 in
-{
+facts
+// {
   inherit targets;
 
   trustedCaPublicKeysByRealm = lib.mapAttrs (
@@ -56,14 +48,4 @@ in
       value = target;
     }) targets
   );
-
-  issuers = {
-    mair = {
-      publicKey = secretivePublicKey;
-      keyName = "fleet-user-ca.pub";
-      useAgent = true;
-    };
-    ${frame} = yubikeyIssuer;
-    ${mmini} = yubikeyIssuer;
-  };
 }

@@ -1,3 +1,4 @@
+# Static SSO groups, users, and application ownership.
 {
   applications = {
     "home-assistant" = {

@@ -1,3 +1,4 @@
+# Fleet-wide observability profiles.
 {
   profiles = {
     capacity = {

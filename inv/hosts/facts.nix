@@ -1,9 +1,7 @@
 {
   frame,
-  lib,
-}:
-{
   lanDomain,
+  lib,
 }:
 let
   nvws = "nvws";

@@ -1,3 +1,4 @@
+# Per-site capacity and policy facts.
 {
   home = {
     uplink = {

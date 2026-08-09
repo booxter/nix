@@ -1,3 +1,4 @@
+# Explicit UPS server/client relationships.
 {
   servers = [
     "beast"

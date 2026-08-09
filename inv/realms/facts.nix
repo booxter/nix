@@ -17,16 +17,16 @@
     };
     trust.ssh = {
       authorizedKeys = [
-        (readPublicKey ../public-keys/users/mmini.pub)
-        (readPublicKey ../public-keys/users/mair.pub)
-        (readPublicKey ../public-keys/users/frame.pub)
-        (readPublicKey ../public-keys/yubikey.pub)
-        (readPublicKey ../public-keys/mair-secretive.pub)
+        (readPublicKey ../../public-keys/users/mmini.pub)
+        (readPublicKey ../../public-keys/users/mair.pub)
+        (readPublicKey ../../public-keys/users/frame.pub)
+        (readPublicKey ../../public-keys/yubikey.pub)
+        (readPublicKey ../../public-keys/mair-secretive.pub)
       ];
       fleetBootHosts = true;
       tickets.trustedCaPublicKeys = [
-        (readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub)
-        (readPublicKey ../public-keys/yubikey.pub)
+        (readPublicKey ../../public-keys/ssh-ca/fleet-user-ca.pub)
+        (readPublicKey ../../public-keys/yubikey.pub)
       ];
     };
     services = {
@@ -34,7 +34,7 @@
         cacheName = "local";
         endpoint = "https://nix-cache.${lanDomain}";
       };
-      internalPki.rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;
+      internalPki.rootCaCertificate = ../../public-keys/internal-pki/home-root-ca.crt;
       flakehubCache.url = nixCaches.flakehub.url;
       nixCache = {
         substituters = [
@@ -73,8 +73,8 @@
     };
     services.ups.credentialMode = "literal";
     trust.ssh.authorizedKeys = [
-      (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
-      (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
+      (readPublicKey ../../public-keys/users/jgwxhwdl4x.pub)
+      (readPublicKey ../../public-keys/users/jgwxhwdl4x-nix-builder.pub)
     ];
   };
 }

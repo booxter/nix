@@ -1,3 +1,4 @@
+# Numeric identities shared across hosts and storage boundaries.
 {
   groups = {
     media.gid = 169;

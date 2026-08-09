@@ -18,13 +18,13 @@
 
     srvarr.primary = {
       provider = "beast";
-      publicKey = readPublicKey ../public-keys/restic/srvarr.pub;
+      publicKey = readPublicKey ../../public-keys/restic/srvarr.pub;
       offsite = "b2";
     };
 
     org.primary = {
       provider = "beast";
-      publicKey = readPublicKey ../public-keys/restic/org.pub;
+      publicKey = readPublicKey ../../public-keys/restic/org.pub;
       # Repository names are durable storage identities. Keep the pre-rename
       # namespace so existing local and B2 snapshot history remains intact.
       storageName = "orgvm";
@@ -33,13 +33,13 @@
 
     home.primary = {
       provider = "beast";
-      publicKey = readPublicKey ../public-keys/restic/home.pub;
+      publicKey = readPublicKey ../../public-keys/restic/home.pub;
       offsite = "b2";
     };
 
     pki.primary = {
       provider = "beast";
-      publicKey = readPublicKey ../public-keys/restic/pki.pub;
+      publicKey = readPublicKey ../../public-keys/restic/pki.pub;
       offsite = "b2";
     };
   };

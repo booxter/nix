@@ -1,11 +1,8 @@
 {
-  lanDomain,
+  nixCaches,
   publicDomain,
   readPublicKey,
 }:
-let
-  nixCacheUrlWithPriority = url: priority: "${url}?priority=${toString priority}";
-in
 rec {
   public = {
     domain = publicDomain;
@@ -15,29 +12,7 @@ rec {
     watchstate = 8080;
   };
 
-  nixCaches =
-    let
-      homeUrl = "https://nix-cache.${lanDomain}/default";
-      flakehubUrl = "https://cache.flakehub.com";
-    in
-    {
-      nixos = {
-        url = "https://cache.nixos.org/";
-        key = readPublicKey ../public-keys/nix-cache/nixos.pub;
-      };
-      home = {
-        url = homeUrl;
-        key = readPublicKey ../public-keys/nix-cache/home.pub;
-        defaultUrl = nixCacheUrlWithPriority homeUrl 30;
-        lanUrl = nixCacheUrlWithPriority homeUrl 10;
-        vpnUrl = nixCacheUrlWithPriority homeUrl 30;
-      };
-      flakehub = {
-        url = flakehubUrl;
-        lanUrl = nixCacheUrlWithPriority flakehubUrl 30;
-        vpnUrl = nixCacheUrlWithPriority flakehubUrl 10;
-      };
-    };
+  inherit nixCaches;
 
   lan = {
     cidr = "192.168.0.0/16";
@@ -91,11 +66,11 @@ rec {
       mair = {
         host = "mair";
         address = "10.83.0.10/32";
-        publicKey = readPublicKey ../public-keys/wireguard/home-mair.pub;
+        publicKey = readPublicKey ../../public-keys/wireguard/home-mair.pub;
       };
       unifi-travel-router = {
         address = "10.83.0.20/32";
-        publicKey = readPublicKey ../public-keys/wireguard/home-unifi-travel-router.pub;
+        publicKey = readPublicKey ../../public-keys/wireguard/home-unifi-travel-router.pub;
       };
     };
   };
