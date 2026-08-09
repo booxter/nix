@@ -27,7 +27,7 @@ let
     spec:
     (spec.hostKind or null) == "proxmox"
     && (facts.realms.${spec.realm}.services.proxmox or null) != null
-  ) facts.hosts.nixosHostSpecs;
+  ) (builtins.attrValues facts.hosts.nixos);
   proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxLabHostSpecs);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (

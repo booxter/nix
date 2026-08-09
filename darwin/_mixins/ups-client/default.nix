@@ -8,7 +8,7 @@
 let
   cfg = config.host.ups;
   serverName = cfg.client.server;
-  serverSpec = if serverName == null then null else facts.hosts.nixosHosts.${serverName} or null;
+  serverSpec = if serverName == null then null else facts.hosts.nixos.${serverName} or null;
   upsServer = if serverName == null then null else facts.ups.serversByName.${serverName} or null;
   clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   serverCredentialMode =

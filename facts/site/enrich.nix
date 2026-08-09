@@ -28,11 +28,12 @@ raw
     staticRoutes = [
       {
         destination = raw.wireguard.home.cidr;
-        nextHop = hosts.nixosHosts.${raw.wireguard.home.gateway.host}.ipAddress;
+        nextHop = hosts.nixos.${raw.wireguard.home.gateway.host}.ipAddress;
         distance = 1;
         name = "wg-home";
       }
     ];
-    dnsRecords = staticDnsRecords ++ builtins.concatMap renderHostDnsRecords hosts.nixosHostSpecs;
+    dnsRecords =
+      staticDnsRecords ++ lib.concatMap renderHostDnsRecords (builtins.attrValues hosts.nixos);
   };
 }

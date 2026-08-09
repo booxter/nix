@@ -117,9 +117,9 @@
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) facts.hosts.darwinHosts;
+      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) facts.hosts.darwin;
 
-      nixosConfigurations = builtins.mapAttrs (_: mkNixos) facts.hosts.nixosHosts;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) facts.hosts.nixos;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";

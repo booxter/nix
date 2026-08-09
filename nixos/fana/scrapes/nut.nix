@@ -4,8 +4,8 @@
   pkgs,
 }:
 let
-  upsServerSpecs = map (name: facts.hosts.nixosHosts.${name}) (
-    builtins.filter (name: facts.hosts.nixosHosts.${name}.realm == "home") facts.ups.servers
+  upsServerSpecs = map (name: facts.hosts.nixos.${name}) (
+    builtins.filter (name: facts.hosts.nixos.${name}.realm == "home") facts.ups.servers
   );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [

@@ -9,7 +9,7 @@ let
     hostName:
     let
       host =
-        hosts.nixosHosts.${hostName} or (throw "UPS server '${hostName}' references an unknown NixOS host");
+        hosts.nixos.${hostName} or (throw "UPS server '${hostName}' references an unknown NixOS host");
       address = host.ipAddress or (throw "UPS server '${hostName}' does not have a stable IPv4 address");
     in
     {

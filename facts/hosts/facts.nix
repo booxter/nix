@@ -100,7 +100,7 @@ in
     }
   ];
 
-  darwinHosts = lib.mapAttrs (name: spec: spec // { inherit name; }) {
+  darwin = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
       platform = "aarch64-darwin";
       realm = "home";
@@ -143,7 +143,7 @@ in
     };
   };
 
-  nixosHostSpecs = [
+  nixos = [
     {
       hostKind = "nixos";
       name = frame;

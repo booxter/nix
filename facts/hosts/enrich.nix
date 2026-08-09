@@ -46,10 +46,11 @@ let
         normalized.localDnsName
       ];
     };
-  darwinHosts = lib.mapAttrs (_: normalizeHostSpec) raw.darwinHosts;
-  nixosHostSpecs = map normalizeNixosHostSpec raw.nixosHostSpecs;
+  darwin = lib.mapAttrs (_: normalizeHostSpec) raw.darwin;
+  nixosSpecs = map normalizeNixosHostSpec raw.nixos;
+  nixosNames = map (spec: spec.name) nixosSpecs;
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
-    builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
+    builtins.filter (spec: spec ? dhcpReservation) nixosSpecs
   );
   dhcpReservationsByHostname = builtins.listToAttrs (
     map (reservation: {
@@ -57,23 +58,26 @@ let
       value = reservation;
     }) (managedDhcpReservations ++ raw.staticDhcpReservations)
   );
-  nixosHosts = builtins.listToAttrs (
-    map (spec: {
-      name = spec.name;
-      value = spec;
-    }) nixosHostSpecs
-  );
-  hostSpecsByName = darwinHosts // nixosHosts;
+  nixos =
+    assert lib.assertMsg (
+      builtins.length nixosNames == builtins.length (lib.unique nixosNames)
+    ) "NixOS host names must be unique";
+    builtins.listToAttrs (
+      map (spec: {
+        name = spec.name;
+        value = spec;
+      }) nixosSpecs
+    );
+  hostSpecsByName = darwin // nixos;
 in
 raw
 // {
   inherit
-    darwinHosts
+    darwin
     dhcpReservationsByHostname
     hostSpecsByName
     managedDhcpReservations
-    nixosHosts
-    nixosHostSpecs
+    nixos
     ;
 
   secretDomainsByHost = lib.mapAttrs (_: spec: (realmFor spec).secretDomain) hostSpecsByName;

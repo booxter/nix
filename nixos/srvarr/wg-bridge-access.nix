@@ -9,7 +9,7 @@
 }:
 let
   cfg = config.host.vpnNamespaceBridgeAccess;
-  wgBridgeAddress = facts.hosts.nixosHosts.srvarr.wgNamespace.bridgeAddress;
+  wgBridgeAddress = facts.hosts.nixos.srvarr.wgNamespace.bridgeAddress;
   tcpPorts = lib.unique cfg.tcpPorts;
   bridgeAccessConfig = (pkgs.formats.json { }).generate "wg-bridge-access.json" {
     namespace = "wg";

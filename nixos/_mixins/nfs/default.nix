@@ -84,7 +84,7 @@ let
   clientFileSystems = lib.mapAttrs' (
     _: link:
     lib.nameValuePair link.mountPoint {
-      device = "${facts.hosts.nixosHosts.${link.provider}.ipAddress}:${link.exportPath}";
+      device = "${facts.hosts.nixos.${link.provider}.ipAddress}:${link.exportPath}";
       fsType = "nfs";
       options = mountOptions;
     }
@@ -118,7 +118,7 @@ let
     lib.concatMapStringsSep "\n" (
       link:
       "${export.path} ${
-        facts.hosts.nixosHosts.${link.clientName}.ipAddress
+        facts.hosts.nixos.${link.clientName}.ipAddress
       }(${lib.concatStringsSep "," (exportOptions export)})"
     ) (builtins.attrValues clients)
   ) (builtins.attrNames providedExports);

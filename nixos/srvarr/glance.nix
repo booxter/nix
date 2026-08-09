@@ -28,7 +28,7 @@ let
   };
   dashService = fleetServices.byId.dash;
   degoogService = fleetServices.byId.goo;
-  pkiSpec = facts.hosts.nixosHosts.pki;
+  pkiSpec = facts.hosts.nixos.pki;
   pkiCaServer = pkiSpec.caServer;
   pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
   serviceCatalog = map (

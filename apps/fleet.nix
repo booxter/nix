@@ -10,34 +10,24 @@ let
 
   fleetFacts = {
     aliases =
-      builtins.listToAttrs (
-        map (spec: {
-          inherit (spec) name;
-          value = spec.name;
-        }) facts.hosts.nixosHostSpecs
-      )
-      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwinHosts;
+      pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos
+      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwin;
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
       platform = spec.platform;
       runtimeHost = spec.name;
       sshHost = spec.name;
-    }) facts.hosts.darwinHosts;
+    }) facts.hosts.darwin;
     lanDnsServer = lan.gateway.address;
     lanDomain = facts.site.lan.domain;
-    nixos = builtins.listToAttrs (
-      map (spec: {
-        inherit (spec) name;
-        value = {
-          displayName = spec.name;
-          inherit (spec) realm;
-          platform = spec.platform or "x86_64-linux";
-          runtimeHost = spec.name;
-          sshHost = spec.name;
-        };
-      }) facts.hosts.nixosHostSpecs
-    );
+    nixos = pkgs.lib.mapAttrs (_: spec: {
+      displayName = spec.name;
+      inherit (spec) realm;
+      platform = spec.platform or "x86_64-linux";
+      runtimeHost = spec.name;
+      sshHost = spec.name;
+    }) facts.hosts.nixos;
   };
   wireguardHome = {
     subnet = wgHome.cidr;
@@ -53,12 +43,7 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wireguardGatewaySshHost;
   };
-  vmTargets = builtins.listToAttrs (
-    map (spec: {
-      inherit (spec) name;
-      value = spec.name;
-    }) facts.hosts.nixosHostSpecs
-  );
+  vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
   fleetTools = pkgs.callPackage ./fleet-tools {
     inherit fleetFacts vmTargets wireguardHome;
   };

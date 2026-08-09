@@ -6,7 +6,7 @@
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  srvarrSpec = facts.hosts.nixosHosts.srvarr;
+  srvarrSpec = facts.hosts.nixos.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   transmissionStateDir = "${stateDir}/.config/transmission-daemon";

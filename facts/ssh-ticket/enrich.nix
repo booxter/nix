@@ -32,8 +32,8 @@ let
       trustedCaPublicKeys = if enabled then ticketPolicy.trustedCaPublicKeys else [ ];
     };
   targets =
-    map (mkTarget "nixos") hosts.nixosHostSpecs
-    ++ lib.mapAttrsToList (_: mkTarget "darwin") hosts.darwinHosts;
+    lib.mapAttrsToList (_: mkTarget "nixos") hosts.nixos
+    ++ lib.mapAttrsToList (_: mkTarget "darwin") hosts.darwin;
 in
 raw
 // {

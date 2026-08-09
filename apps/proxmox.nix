@@ -6,7 +6,7 @@
 }:
 let
   proxmoxPkgs = inputs.proxmox-nixos.packages.${system};
-  vmSpecs = builtins.filter (spec: spec.isVM or false) facts.hosts.nixosHostSpecs;
+  vmSpecs = builtins.filter (spec: spec.isVM or false) (builtins.attrValues facts.hosts.nixos);
   vmTypes = map (spec: spec.name) vmSpecs;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = proxmoxPkgs.nixmoxer;

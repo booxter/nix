@@ -7,7 +7,7 @@ let
   accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   slskdRoot = "${mediaDir}/slskd";
-  srvarrSpec = facts.hosts.nixosHosts.srvarr;
+  srvarrSpec = facts.hosts.nixos.srvarr;
   apiPort = 5030;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.slskd;
   wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
