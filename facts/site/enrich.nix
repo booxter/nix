@@ -1,7 +1,6 @@
 {
   context,
   facts,
-  lib,
 }:
 raw:
 let
@@ -15,12 +14,6 @@ let
   staticDnsRecords = [
     (mkDnsARecord "unifi.${lanDomain}" raw.lan.gateway.address)
   ];
-  renderHostDnsRecords =
-    spec:
-    (map (domain: mkDnsARecord domain spec.ipAddress) (spec.dnsAliases or [ ]))
-    ++ map (label: mkDnsARecord "${label}.${lanDomain}" spec.ipAddress) (
-      lib.unique (spec.localDnsAliases or [ ])
-    );
 in
 raw
 // {
@@ -33,7 +26,6 @@ raw
         name = "wg-home";
       }
     ];
-    dnsRecords =
-      staticDnsRecords ++ lib.concatMap renderHostDnsRecords (builtins.attrValues hosts.nixos);
+    dnsRecords = staticDnsRecords;
   };
 }

@@ -3,7 +3,7 @@
   lib,
 }:
 let
-  inherit (context) frame lanDomain;
+  inherit (context) frame;
 
   builderDhcpReservations = {
     "1" = {
@@ -67,9 +67,6 @@ let
         match = macAddress;
         ip = ipAddress;
       };
-    }
-    // lib.optionalAttrs (index == 1) {
-      dnsAliases = [ "proxmox.${lanDomain}" ];
     };
 in
 {
@@ -201,7 +198,6 @@ in
       name = "cache";
       realm = "home";
       userProfile = "personal";
-      localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
         ip = "192.168.20.7";
