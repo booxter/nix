@@ -53,14 +53,6 @@ in
     };
   };
 
-  networking.wireless.enable = false;
-  networking.wireless.secretsFile = "/etc/wireless.secrets";
-  networking.wireless.networks = {
-    booxter = {
-      pskRaw = "ext:psk_booxter";
-    };
-  };
-
   services.displayManager.gdm = {
     enable = true;
   };
