@@ -14,7 +14,7 @@ let
   prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
   blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;
   prometheusMtlsTlsConfig = {
-    ca_file = toString internalPkiRootCaPath;
+    ca_file = "${internalPkiRootCaPath}";
     cert_file = config.sops.secrets.${prometheusScrapeMaterialization.certificateSecretName}.path;
     key_file = config.sops.secrets.${prometheusScrapeMaterialization.keySecretName}.path;
   };
