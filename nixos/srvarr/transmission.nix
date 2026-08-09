@@ -9,6 +9,7 @@ let
   srvarrSpec = hostInventory.nixosHosts.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
+  transmissionStateDir = "${stateDir}/.config/transmission-daemon";
   tuning = config.host.srvarrTuning;
   wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
@@ -23,6 +24,19 @@ in
     ./transmission-torrent-cleaner.nix
     ./transmission-prioritizer.nix
   ];
+
+  host.backups.sources.transmission = {
+    title = "Transmission";
+    paths = [ transmissionStateDir ];
+    exclude = [
+      "${transmissionStateDir}/*.tmp.*"
+      "${transmissionStateDir}/blocklists"
+      "${transmissionStateDir}/blocklists/**"
+      "${transmissionStateDir}/dht.dat"
+      "${transmissionStateDir}/settings.json"
+      "${transmissionStateDir}/stats.json"
+    ];
+  };
 
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";
@@ -80,7 +94,6 @@ in
       # upstream in the nixpkgs Transmission module.
       BindPaths = lib.mkForce (
         let
-          transmissionSettingsDir = "${config.services.transmission.home}/.config/transmission-daemon";
           transmissionDownloadDir = config.services.transmission.settings.download-dir;
           transmissionIncompleteDir = config.services.transmission.settings.incomplete-dir;
           transmissionWatchDir = config.services.transmission.settings.watch-dir;
@@ -90,7 +103,7 @@ in
             && !lib.hasPrefix "${transmissionDownloadDir}/" transmissionIncompleteDir;
         in
         [
-          transmissionSettingsDir
+          transmissionStateDir
           transmissionDownloadDir
           "/run"
         ]
