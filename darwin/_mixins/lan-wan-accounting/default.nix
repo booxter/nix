@@ -1,7 +1,6 @@
 {
   config,
   facts,
-  hostSpec,
   lib,
   pkgs,
   ...
@@ -84,7 +83,7 @@ in
 
     interfaces = lib.mkOption {
       type = with lib.types; listOf str;
-      default = hostSpec.lanWanInterfaces or [ ];
+      default = [ "en0" ];
       example = [
         "en0"
         "en1"

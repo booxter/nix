@@ -104,7 +104,6 @@ in
       observability.capacityProfile = "interactive";
       isOperatorSeat = true;
       isSecretsOperator = true;
-      lanWanInterfaces = [ "en0" ];
     };
     mmini = {
       realm = "home";
@@ -115,7 +114,6 @@ in
       };
       isOperatorSeat = true;
       isSecretsOperator = true;
-      lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
       realm = "work";
@@ -123,10 +121,6 @@ in
       availability = "intermittent";
       isOperatorSeat = true;
       isSecretsOperator = true;
-      lanWanInterfaces = [
-        "en0"
-        "en7"
-      ];
     };
   };
 

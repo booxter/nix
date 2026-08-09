@@ -12,6 +12,10 @@ in
 
   host.codex.mcp.maas.enable = true;
   host.hardware.isLaptop = true;
+  host.observability.lanWan.interfaces = [
+    "en0"
+    "en7"
+  ];
 
   host.fleetCacheWarmer = {
     enable = true;
