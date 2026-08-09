@@ -39,7 +39,6 @@ let
       diskSize = 150;
       cores = 24;
       hmFull = false;
-      nspawnTestBuilder = true;
     };
 
   labProxmoxSpec =
@@ -150,7 +149,6 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       hardware =
         let
@@ -214,7 +212,6 @@ in
       platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
-      nspawnTestBuilder = true;
       hmFull = false;
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
