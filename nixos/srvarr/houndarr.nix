@@ -16,7 +16,7 @@ let
   arrServiceUnits = map (name: "${name}.service") arrServiceNames;
   runtimeUnits = [ "nginx.service" ] ++ arrServiceUnits;
   arrProbeUrls = map (
-    name: "https://${name}.${hostInventory.site.lan.domain}:9443/ping"
+    name: "https://${name}.${config.host.network.lanDomain}:9443/ping"
   ) arrServiceNames;
   srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";

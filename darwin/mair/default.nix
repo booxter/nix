@@ -37,7 +37,7 @@ in
     address = [ wgHome.peers.mair.address ];
     dns = [
       lan.gateway.address
-      lan.domain
+      config.host.network.lanDomain
     ];
     privateKeyFile = config.sops.secrets."wireguard/gw/privateKey".path;
 

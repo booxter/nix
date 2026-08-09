@@ -22,7 +22,7 @@ rec {
 
   nixCaches =
     let
-      homeUrl = "https://nix-cache.${lan.domain}/default";
+      homeUrl = "https://nix-cache.${lanDomain}/default";
       flakehubUrl = "https://cache.flakehub.com";
     in
     {
@@ -46,7 +46,6 @@ rec {
 
   lan = {
     cidr = "192.168.0.0/16";
-    domain = lanDomain;
     gateway = {
       host = "gateway";
       address = "192.168.0.1";

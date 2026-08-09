@@ -54,7 +54,7 @@ let
     {
       icon = "sh:proxmox";
       title = "Proxmox VE";
-      url = "https://proxmox.${hostInventory.site.lan.domain}/";
+      url = "https://proxmox.${config.host.network.lanDomain}/";
     }
     {
       icon = "sh:smallstep";

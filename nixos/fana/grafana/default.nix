@@ -1,12 +1,10 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  lan = hostInventory.site.lan;
-  grafanaHost = "grafana.${lan.domain}";
+  grafanaHost = "grafana.${config.host.network.lanDomain}";
   oidcClient = config.host.sso.oidc.clients.grafana;
   oidcScopes = config.host.sso.oidc.baseScopes;
   alertmanagerPort = 9093;

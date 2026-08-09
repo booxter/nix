@@ -240,7 +240,7 @@ let
       lib.unique (
         map (host: "https://${host}/oauth2/callback") gate.externalHostNames
         ++ map (host: "https://${host}/oauth2/callback") (
-          lib.concatMap hostInventory.toInternalHttpsServiceHosts gate.internalHttpsServiceNames
+          lib.concatMap (hostInventory.toInternalHttpsServiceHosts config.host.network.lanDomain) gate.internalHttpsServiceNames
         )
       );
 

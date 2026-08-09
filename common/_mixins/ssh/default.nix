@@ -10,7 +10,7 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
   managedKnownHosts = lib.mapAttrs (name: spec: {
-    hostNames = hostInventory.toSshKnownHostNames spec;
+    hostNames = hostInventory.toSshKnownHostNames config.host.network.lanDomain spec;
     publicKey = readPublicKey (hostKeyPath name);
   }) hostInventory.hostSpecsByName;
 in

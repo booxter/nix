@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostInventory,
@@ -83,7 +84,7 @@ in
 
   host.internalHttps.services.atticd = {
     enable = true;
-    serverName = "nix-cache.${hostInventory.site.lan.domain}";
+    serverName = "nix-cache.${config.host.network.lanDomain}";
     localAliases = [ "nix-cache" ];
     upstream = "http://127.0.0.1:8080";
     locationExtraConfig = ''

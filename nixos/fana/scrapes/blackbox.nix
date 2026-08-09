@@ -135,8 +135,8 @@ let
       id = "unifi";
       scope = "internal";
       title = "UniFi Console";
-      probeUrl = "https://unifi.${lan.domain}/";
-      url = "https://unifi.${lan.domain}/";
+      probeUrl = "https://unifi.${config.host.network.lanDomain}/";
+      url = "https://unifi.${config.host.network.lanDomain}/";
       tlsRotation = "manual";
     }
   ];
@@ -147,8 +147,8 @@ let
         id = "proxmox";
         scope = "internal";
         title = "Proxmox VE";
-        probeUrl = "https://proxmox.${lan.domain}/";
-        url = "https://proxmox.${lan.domain}/";
+        probeUrl = "https://proxmox.${config.host.network.lanDomain}/";
+        url = "https://proxmox.${config.host.network.lanDomain}/";
       }
     ]
     ++ proxmoxServiceCatalog

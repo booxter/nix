@@ -93,6 +93,7 @@ pkgs.testers.runNixOSTest {
     { lib, ... }:
     {
       imports = [
+        ../../common/_mixins/network
         ../../nixos/_mixins/external-service.nix
         ../../nixos/_mixins/sso
       ];
@@ -133,9 +134,10 @@ pkgs.testers.runNixOSTest {
       config = {
         _module.args.hostInventory = {
           servicesById.id.publicHost = "id.example.invalid";
-          site.lan.domain = "example.invalid";
-          toInternalHttpsServiceHosts = serviceName: [ "${serviceName}.example.invalid" ];
+          toInternalHttpsServiceHosts = _: serviceName: [ "${serviceName}.example.invalid" ];
         };
+
+        host.network.lanDomain = "example.invalid";
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 

@@ -24,7 +24,7 @@ let
       sshHost = spec.name;
     }) hostInventory.darwinHosts;
     lanDnsServer = lan.gateway.address;
-    lanDomain = lan.domain;
+    lanDomain = hostInventory.lanDomain;
     nixos = builtins.listToAttrs (
       map (spec: {
         inherit (spec) name;
@@ -42,7 +42,7 @@ let
     subnet = wgHome.cidr;
     dns = [
       lan.gateway.address
-      lan.domain
+      hostInventory.lanDomain
     ];
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
     allowedIps = [

@@ -21,7 +21,7 @@ let
   paperlessGptContainerUid = "10001";
   paperlessGptContainerGid = "10001";
   paperlessGptPort = 8080;
-  paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
+  paperlessGptHost = "${paperlessGptService.id}.${config.host.network.lanDomain}";
   paperlessGptOauth2ProxyPort = 4181;
   oidcClient = config.host.sso.oidc.clients.paperless;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -54,7 +54,7 @@ let
         }
       );
   ollamaTunnelPort = 11435;
-  ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
+  ollamaInternalHost = "ollama.${config.host.network.lanDomain}";
   ollamaClient = config.host.internalPki.clients.ollama;
   ociImages = import ../../oci { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
@@ -193,7 +193,7 @@ in
       PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
       PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
         paperlessService.publicHost
-        "paperless.${hostInventory.site.lan.domain}"
+        "paperless.${config.host.network.lanDomain}"
         "paperless.local"
         "127.0.0.1"
         "localhost"

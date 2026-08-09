@@ -15,14 +15,14 @@ let
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = caServer.port;
   caUrl = "https://${config.networking.hostName}:${toString caPort}";
-  caProvisioner = "bootstrap@home.arpa";
+  caProvisioner = "bootstrap@${config.host.network.lanDomain}";
   pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   caDnsNames = lib.unique (
-    hostInventory.toNixosHostCertificateDnsNames hostSpec
+    hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain hostSpec
     ++ [
       config.networking.hostName
       config.services.avahi.hostName

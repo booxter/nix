@@ -102,7 +102,7 @@ in
       hostWhitelist = [
         config.networking.hostName
       ]
-      ++ hostInventory.toInternalHttpsServiceHosts "sabnzbd";
+      ++ hostInventory.toInternalHttpsServiceHosts config.host.network.lanDomain "sabnzbd";
       inherit
         mediaDir
         wgNamespaceAddress

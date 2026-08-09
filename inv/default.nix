@@ -129,6 +129,8 @@ let
       throw "host ${spec.name} does not have a stable IPv4 address";
 in
 rec {
+  inherit lanDomain;
+
   backups = backupFacts // {
     clients = backupClients;
   };
@@ -142,7 +144,7 @@ rec {
 
   toLocalDnsName = label: "${label}.local";
   toSshKnownHostNames =
-    spec:
+    domain: spec:
     let
       inherit (spec) name;
       lowercaseName = lib.toLower name;
@@ -150,12 +152,12 @@ rec {
     lib.unique (
       [ name ]
       ++ lib.optional (lowercaseName != name) lowercaseName
-      ++ lib.optional (lib.hasSuffix "-linux" spec.platform) "${name}.${site.lan.domain}"
+      ++ lib.optional (lib.hasSuffix "-linux" spec.platform) "${name}.${domain}"
       ++ [ (toLocalDnsName name) ]
       ++ lib.optional (lowercaseName != name) (toLocalDnsName lowercaseName)
     );
   toInternalHttpsServiceHosts =
-    serviceName:
+    domain: serviceName:
     let
       endpointName = servicesById.${serviceName}.internalEndpointName;
     in
@@ -163,13 +165,13 @@ rec {
       throw "service ${serviceName} does not have an internal HTTPS endpoint"
     else
       [
-        "${endpointName}.${site.lan.domain}"
+        "${endpointName}.${domain}"
         endpointName
         (toLocalDnsName endpointName)
       ];
-  toNixosHostCertificateDnsNames = spec: [
+  toNixosHostCertificateDnsNames = domain: spec: [
     spec.name
-    "${spec.name}.${site.lan.domain}"
+    "${spec.name}.${domain}"
     (toLocalDnsName spec.name)
   ];
   toHostIpv4Address = aliasIpv4Address;
@@ -193,7 +195,6 @@ rec {
 
       dnsRecords =
         let
-          lanDomain = siteFacts.lan.domain;
           staticDnsRecords = [
             (mkDnsARecord "unifi.${lanDomain}" siteFacts.lan.gateway.address)
           ];

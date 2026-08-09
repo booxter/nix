@@ -9,7 +9,7 @@ let
   oauth2ProxyCookieName = "_srvarr_admin_sso";
   protectedServiceIds = hostInventory.srvarrAdminAppIds;
   protectedServiceHosts = lib.unique (
-    lib.concatMap hostInventory.toInternalHttpsServiceHosts protectedServiceIds
+    lib.concatMap (hostInventory.toInternalHttpsServiceHosts config.host.network.lanDomain) protectedServiceIds
   );
   houndarrManagedServiceNames = [
     "lidarr"
@@ -133,7 +133,7 @@ in
     enable = true;
     inherit clientId;
     displayName = "srvarr admin apps";
-    originLanding = "https://bazarr.${hostInventory.site.lan.domain}/";
+    originLanding = "https://bazarr.${config.host.network.lanDomain}/";
     cookieName = oauth2ProxyCookieName;
     allowedGroups = [ "media-admins" ];
     groupClaim = "media_groups";

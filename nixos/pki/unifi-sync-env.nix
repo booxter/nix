@@ -1,4 +1,4 @@
-{ hostInventory }:
+{ hostInventory, lanDomain }:
 let
   lan = hostInventory.site.lan;
   netboot = lan.netboot;
@@ -29,8 +29,8 @@ let
   );
 
   mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
-  mainDomainName = lan.domain;
-  mainDomainSearchJson = builtins.toJSON [ lan.domain ];
+  mainDomainName = lanDomain;
+  mainDomainSearchJson = builtins.toJSON [ lanDomain ];
   domainSearchOption =
     if lan ? customDhcpOptions && lan.customDhcpOptions ? domainSearch then
       lan.customDhcpOptions.domainSearch

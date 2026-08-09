@@ -24,10 +24,10 @@ in
     displayName = "Home Assistant";
     public = true;
     originUrls = [
-      "https://home.${hostInventory.site.lan.domain}/auth/oidc/welcome"
-      "https://home.${hostInventory.site.lan.domain}/auth/oidc/callback"
+      "https://home.${config.host.network.lanDomain}/auth/oidc/welcome"
+      "https://home.${config.host.network.lanDomain}/auth/oidc/callback"
     ];
-    originLanding = "https://home.${hostInventory.site.lan.domain}/";
+    originLanding = "https://home.${config.host.network.lanDomain}/";
     scopeMaps = {
       ${homeAssistantSso.adminGroup} = oidcScopes ++ [ "home_groups" ];
       ${homeAssistantSso.userGroup} = oidcScopes ++ [ "home_groups" ];
@@ -58,7 +58,7 @@ in
         name = "Home";
         country = "US";
         currency = "USD";
-        internal_url = "https://home.${hostInventory.site.lan.domain}";
+        internal_url = "https://home.${config.host.network.lanDomain}";
         unit_system = "us_customary";
         time_zone = config.time.timeZone;
       };

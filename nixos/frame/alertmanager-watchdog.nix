@@ -1,7 +1,6 @@
 {
   config,
   framePkgs,
-  hostInventory,
   lib,
   ...
 }:
@@ -9,7 +8,7 @@ let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
   watchdogClient = config.host.internalPki.clients.${watchdogName};
-  alertmanagerReadyUrl = "https://alertmanager.${hostInventory.site.lan.domain}/-/ready";
+  alertmanagerReadyUrl = "https://alertmanager.${config.host.network.lanDomain}/-/ready";
 in
 {
   host.internalPki.clients.${watchdogName} = {

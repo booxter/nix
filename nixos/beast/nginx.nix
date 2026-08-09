@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   lib,
   outputs,
@@ -26,7 +27,7 @@ let
   };
   backendMtlsServices = builtins.mapAttrs (id: localPort: {
     clientName = id;
-    serverName = "${id}.${hostInventory.site.lan.domain}";
+    serverName = "${id}.${config.host.network.lanDomain}";
     inherit localPort;
   }) backendMtlsServicePorts;
   publicServiceBackendAddresses = {

@@ -144,7 +144,7 @@ in
 
               serverName = lib.mkOption {
                 type = str;
-                default = "${name}.${hostInventory.site.lan.domain}";
+                default = "${name}.${config.host.network.lanDomain}";
                 description = "DNS name presented by the internal HTTPS vhost.";
               };
 

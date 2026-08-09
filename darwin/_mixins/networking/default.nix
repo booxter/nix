@@ -9,7 +9,7 @@ let
   hostname = config.networking.hostName;
 in
 {
-  environment.etc."resolver/${lan.domain}".text = ''
+  environment.etc."resolver/${config.host.network.lanDomain}".text = ''
     nameserver ${lan.gateway.address}
   '';
 

@@ -12,7 +12,7 @@ let
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
-  watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";
+  watchstateHostName = "watchstate.${config.host.network.lanDomain}";
   watchstateSso = hostInventory.sso.applications.watchstate;
   watchstateSystemUser = watchstateSso.bootstrapOwner;
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};

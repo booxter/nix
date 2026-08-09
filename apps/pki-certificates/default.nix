@@ -35,9 +35,9 @@ let
   );
   unifiDefaultsFile = builtins.toFile "pki-unifi-defaults.json" (
     builtins.toJSON {
-      commonName = "unifi.${hostInventory.site.lan.domain}";
+      commonName = "unifi.${hostInventory.lanDomain}";
       sans = [
-        "unifi.${hostInventory.site.lan.domain}"
+        "unifi.${hostInventory.lanDomain}"
         "unifi"
       ];
       gatewayIp = hostInventory.site.lan.gateway.address;
