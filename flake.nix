@@ -70,14 +70,20 @@
     let
       inherit (self) outputs;
       hostInventory = import ./inv { lib = inputs.nixpkgs.lib; };
-      hostSpecialArgs = spec: {
-        inherit
-          inputs
-          outputs
-          hostInventory
-          ;
-        hostSpec = spec;
-      };
+      hostSpecialArgs =
+        spec:
+        let
+          hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+        in
+        {
+          inherit
+            inputs
+            outputs
+            hostInventory
+            ;
+          inherit (hostPlatform) isDarwin isLinux;
+          hostSpec = spec;
+        };
       mkNixos =
         spec:
         inputs.nixpkgs.lib.nixosSystem {
