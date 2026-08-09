@@ -153,7 +153,7 @@ class HbaMetrics:
         )
         self.info = self.gauge(
             "info",
-            "Static Broadcom HBA metadata.",
+            "Static storage-controller metadata.",
             (
                 "adapter_type",
                 "controller",

@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 from prometheus_client.parser import text_string_to_metric_families
 
-from beast_storage_observability.hba import (
+from storage_observability.hba import (
     HbaError,
     HbaExporter,
     HbaMetrics,
     StorcliSource,
     SubprocessStorcliSource,
 )
-from beast_storage_observability.models import BayMapping, StorcliDocument
+from storage_observability.models import BayMapping, StorcliDocument
 
 from .metrics import samples as metric_samples
 from .metrics import value
@@ -244,4 +244,4 @@ def test_exporter_publishes_failure_metric_before_returning_error(tmp_path: Path
 
 def test_subprocess_source_reports_missing_storcli() -> None:
     with pytest.raises(HbaError, match="could not execute StorCLI"):
-        SubprocessStorcliSource("beast-storcli-does-not-exist").collect()
+        SubprocessStorcliSource("storage-storcli-does-not-exist").collect()

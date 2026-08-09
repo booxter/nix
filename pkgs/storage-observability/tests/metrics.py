@@ -1,3 +1,5 @@
+"""Helpers for asserting Prometheus text output."""
+
 from prometheus_client import CollectorRegistry, generate_latest
 from prometheus_client.parser import text_string_to_metric_families
 

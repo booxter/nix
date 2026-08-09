@@ -1,3 +1,5 @@
+"""Validated StorCLI and disk-bay data models."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

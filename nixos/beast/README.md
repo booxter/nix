@@ -63,7 +63,8 @@ curl -I https://search.ihar.dev/oauth2/sign_in
 - `/volume2` is a Btrfs filesystem mounted with `compress=zstd`, `noatime`, and
   `nofail`.
 - A `.snapshots` subvolume is ensured on boot for Snapper.
-- Disk-to-bay mapping is maintained in `nixos/beast/default.nix`.
+- Storage capabilities and disk-to-bay mapping are maintained in
+  `nixos/beast/storage.nix`.
 
 ## NFS
 
@@ -158,8 +159,8 @@ Saved, Playback Start, and Playback Stop events.
 - Snapper timeline snapshots for `/volume2` (daily/weekly/monthly/yearly).
 - Monthly Btrfs scrub of `/volume2`.
 - `smartd` autodetects disks for health monitoring.
-- Useful tools installed: `btrfs-progs`, `mdadm`, `smartmontools`, `nvme-cli`,
-  `hdparm`, `lm_sensors`.
+- Useful tools installed by the declared storage traits include `mdadm`,
+  `smartmontools`, `hdparm`, and `storcli`.
 
 ### Corsair PSU telemetry
 

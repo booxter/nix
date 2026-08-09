@@ -11,7 +11,6 @@
   imports = [
     ./sso.nix
     ./btrfs.nix
-    ./disk-bays.nix
     ./igpu.nix
     ./jellyfin.nix
     ./jellyfin-maintenance.nix
@@ -24,7 +23,7 @@
     ./nfs.nix
     ./nginx.nix
     ./pause.nix
-    ./raid.nix
+    ./storage.nix
     ./watchstate.nix
   ];
 

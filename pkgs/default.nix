@@ -42,5 +42,9 @@ in
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
+  storage-observability = pkgs.callPackage ./storage-observability {
+    inherit atomicFileWrites;
+  };
+
   sops-tools = sopsTools;
 }
