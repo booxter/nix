@@ -10,6 +10,10 @@ let
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+  unlockKey =
+    path:
+    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${readPublicKey path}'';
 in
 {
   _module.args.framePkgs = framePkgs;
@@ -17,14 +21,24 @@ in
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./alertmanager-watchdog.nix
-    ./remote-luks.nix
     ./ups.nix
   ];
 
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
   host.desktop.hyprland.enable = true;
-  host.luks.enable = true;
+  host.luks = {
+    enable = true;
+    remoteUnlock = {
+      enable = true;
+      kernelModules = [ "r8169" ];
+      networkInterface = "enp191s0";
+      authorizedKeys = [
+        (unlockKey ../../public-keys/users/mair.pub)
+        (unlockKey ../../public-keys/users/mmini.pub)
+      ];
+    };
+  };
   host.observability.blackbox.remote.enable = true;
   host.hardware = {
     drmCard = "card1";

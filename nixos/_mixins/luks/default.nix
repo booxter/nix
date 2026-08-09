@@ -8,6 +8,8 @@ let
   isPhysicalHost = !config.host.isVM;
 in
 {
+  imports = [ ./remote-unlock.nix ];
+
   options.host.luks.enable = lib.mkEnableOption "LUKS-encrypted disk layout";
 
   config = lib.mkMerge [
