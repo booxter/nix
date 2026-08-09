@@ -1,14 +1,16 @@
 {
-  upsName,
-  upsDescription,
-  upsShutdownDelaySeconds ? 600,
-  isCriticalNode ? false,
-  upsmonPasswordText ? null,
-  upsslavePasswordText ? null,
+  config,
+  hostInventory,
+  lib,
   ...
 }:
-{ config, lib, ... }:
 let
+  cfg = config.host.ups;
+  credentialMode = hostInventory.realms.${config.host.realm}.services.ups.credentialMode;
+  useLiteralPasswords = credentialMode == "literal";
+  upsName = hostInventory.toUpsName config.networking.hostName;
+  upsmonPasswordText = if useLiteralPasswords then "upsmon123" else null;
+  upsslavePasswordText = if useLiteralPasswords then "upsslave123" else null;
   upsmonPasswordFile =
     if upsmonPasswordText == null then
       config.sops.secrets."nut/users/upsmon/password".path
@@ -21,23 +23,23 @@ let
       "/etc/nut/upsslave.pass";
 in
 {
-  host.ups.scheduler = {
-    enable = true;
-    critical = isCriticalNode;
-    shutdownDelaySeconds = upsShutdownDelaySeconds;
-  };
+  config = lib.mkIf cfg.server.enable {
+    host.ups.scheduler = {
+      enable = true;
+      inherit (cfg.shutdown) critical;
+      shutdownDelaySeconds = cfg.shutdown.delaySeconds;
+    };
 
-  environment.etc."nut/upsmon.pass" = lib.mkIf (upsmonPasswordText != null) {
-    text = "${upsmonPasswordText}\n";
-    mode = "0600";
-  };
-  environment.etc."nut/upsslave.pass" = lib.mkIf (upsslavePasswordText != null) {
-    text = "${upsslavePasswordText}\n";
-    mode = "0600";
-  };
+    environment.etc."nut/upsmon.pass" = lib.mkIf useLiteralPasswords {
+      text = "${upsmonPasswordText}\n";
+      mode = "0600";
+    };
+    environment.etc."nut/upsslave.pass" = lib.mkIf useLiteralPasswords {
+      text = "${upsslavePasswordText}\n";
+      mode = "0600";
+    };
 
-  sops.secrets = lib.mkMerge [
-    (lib.mkIf (upsmonPasswordText == null) {
+    sops.secrets = lib.mkIf (!useLiteralPasswords) {
       "nut/users/upsmon/password" = {
         mode = "0400";
         restartUnits = [
@@ -45,57 +47,55 @@ in
           "upsmon.service"
         ];
       };
-    })
-    (lib.mkIf (upsslavePasswordText == null) {
       "nut/users/upsslave/password" = {
         mode = "0400";
         restartUnits = [ "upsd.service" ];
       };
-    })
-  ];
-
-  power.ups = {
-    enable = true;
-    mode = "netserver";
-    openFirewall = true;
-
-    ups.${upsName} = {
-      driver = "usbhid-ups";
-      port = "auto";
-      description = upsDescription;
     };
 
-    upsd.listen = [
-      { address = "0.0.0.0"; }
-      { address = "::"; }
-    ];
+    power.ups = {
+      enable = true;
+      mode = "netserver";
+      openFirewall = true;
 
-    users = {
+      ups.${upsName} = {
+        driver = "usbhid-ups";
+        port = "auto";
+        description = cfg.server.description;
+      };
+
+      upsd.listen = [
+        { address = "0.0.0.0"; }
+        { address = "::"; }
+      ];
+
+      users = {
+        upsmon = {
+          passwordFile = upsmonPasswordFile;
+          upsmon = "primary";
+        };
+        upsslave = {
+          passwordFile = upsslavePasswordFile;
+          upsmon = "secondary";
+        };
+      };
+
+      upsmon.monitor.local = {
+        system = upsName;
+        user = "upsmon";
+        type = "master";
+      };
+    };
+
+    systemd.services = lib.mkIf (!useLiteralPasswords) {
+      upsd = {
+        wants = [ "sops-install-secrets.service" ];
+        after = [ "sops-install-secrets.service" ];
+      };
       upsmon = {
-        passwordFile = upsmonPasswordFile;
-        upsmon = "primary";
+        wants = [ "sops-install-secrets.service" ];
+        after = [ "sops-install-secrets.service" ];
       };
-      upsslave = {
-        passwordFile = upsslavePasswordFile;
-        upsmon = "secondary";
-      };
-    };
-
-    upsmon.monitor.local = {
-      system = upsName;
-      user = "upsmon";
-      type = "master";
-    };
-  };
-
-  systemd.services = lib.mkIf (upsmonPasswordText == null || upsslavePasswordText == null) {
-    upsd = {
-      wants = [ "sops-install-secrets.service" ];
-      after = [ "sops-install-secrets.service" ];
-    };
-    upsmon = {
-      wants = [ "sops-install-secrets.service" ];
-      after = [ "sops-install-secrets.service" ];
     };
   };
 }

@@ -55,6 +55,7 @@ let
   };
   ssoFacts = import ./sso.nix;
   yubiFacts = import ./yubi.nix { inherit frame mmini; };
+  upsFacts = import ./ups.nix;
 
   normalizeService =
     glanceCategoryIds: localDnsName:
@@ -141,6 +142,7 @@ rec {
   sshTicket = sshTicketFacts;
   sso = ssoFacts;
   yubi = yubiFacts;
+  ups = upsFacts;
 
   toLocalDnsName = label: "${label}.local";
   toSshKnownHostNames =

@@ -80,9 +80,6 @@ let
     }
     // lib.optionalAttrs (index == 1) {
       dnsAliases = [ "proxmox.${lanDomain}" ];
-    }
-    // lib.optionalAttrs (index != 1) {
-      upsHost = "prx1-lab";
     };
 in
 {
@@ -135,7 +132,6 @@ in
       isOperatorSeat = true;
       isSecretsOperator = true;
       vnc.enable = true;
-      upsHost = frame;
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
@@ -288,7 +284,6 @@ in
       userProfile = "nvidia";
       isOperatorSeat = true;
       stateVersion = "25.11";
-      upsHost = nvws;
       dhcpReservation = {
         match = "bc:24:11:ed:30:d3";
         ip = "192.168.10.138";
@@ -305,7 +300,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
@@ -324,7 +318,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      upsHost = "prx1-lab";
       dnsAliases = [ "dash.${publicDomain}" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
@@ -351,7 +344,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -369,7 +361,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -387,7 +378,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
@@ -410,7 +400,6 @@ in
         # Fixed step-ca HTTP API route for the trusted root bundle.
         rootsPath = "/roots.pem";
       };
-      upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
       diskSize = 50;
@@ -428,7 +417,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "26.05";
-      upsHost = "prx1-lab";
       proxNode = "prx2-lab";
       cores = 4;
       memorySize = 8;
@@ -441,7 +429,7 @@ in
       };
     }
   ]
-  ++ map (idx: (builderSpec idx) // { upsHost = "prx1-lab"; }) [
+  ++ map builderSpec [
     1
     2
     3

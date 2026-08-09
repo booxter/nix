@@ -4,9 +4,9 @@
   pkgs,
 }:
 let
-  beastSpec = hostInventory.nixosHosts.beast;
-  frameSpec = hostInventory.nixosHosts.frame;
-  prx1Spec = hostInventory.nixosHosts."prx1-lab";
+  upsServerSpecs = map (name: hostInventory.nixosHosts.${name}) (
+    builtins.filter (name: hostInventory.nixosHosts.${name}.realm == "home") hostInventory.ups.servers
+  );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [
     "battery.charge"
@@ -70,18 +70,11 @@ in
     };
   };
 
-  scrapeConfigs = [
-    (mkNutScrape {
-      jobName = "nut-prx1";
-      spec = prx1Spec;
-    })
-    (mkNutScrape {
-      jobName = "nut-beast";
-      spec = beastSpec;
-    })
-    (mkNutScrape {
-      jobName = "nut-frame";
-      spec = frameSpec;
-    })
-  ];
+  scrapeConfigs = map (
+    spec:
+    mkNutScrape {
+      jobName = "nut-${lib.removeSuffix "-lab" spec.name}";
+      inherit spec;
+    }
+  ) upsServerSpecs;
 }

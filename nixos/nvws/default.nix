@@ -3,12 +3,14 @@ let
   username = config.host.username;
 in
 {
-  imports = [
-    ./ups.nix
-  ];
-
   host.isProxmox = true;
   host.network.primaryInterface = "enp3s0f0";
+  host.ups = {
+    server = {
+      description = "APC UPS 1500VA";
+    };
+    shutdown.critical = true;
+  };
 
   # Work machines do not use sops-managed login passwords.
   users.users = {

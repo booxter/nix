@@ -13,6 +13,7 @@
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
+    ./_mixins/ups
     ./_mixins/yubi
     ./_mixins/attic
     ./_mixins/flakehub-cache

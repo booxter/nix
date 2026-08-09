@@ -14,7 +14,6 @@ in
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./ollama.nix
-    ./ups.nix
   ];
 
   host = {
@@ -71,6 +70,9 @@ in
       };
       wayland.enable = true;
       x11.enable = true;
+    };
+    ups.server = {
+      description = "APC UPS 1500VA";
     };
   };
 

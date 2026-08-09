@@ -37,6 +37,7 @@ in
     ./_mixins/sketchybar-network
     ./_mixins/sudo
     ./_mixins/thermal-accounting
+    ./_mixins/ups-client
     ./_mixins/xquartz
     ./_mixins/yubi.nix
     ./_mixins/attic

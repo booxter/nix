@@ -25,7 +25,6 @@
     ./nginx.nix
     ./pause.nix
     ./raid.nix
-    ./ups.nix
     ./watchstate.nix
   ];
 
@@ -34,6 +33,12 @@
   host.observability.blackbox.remote.enable = true;
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
+  host.ups = {
+    server = {
+      description = "APC Back-UPS RS 1500MS2";
+    };
+    shutdown.critical = true;
+  };
 
   networking.resolvconf.enable = true;
 

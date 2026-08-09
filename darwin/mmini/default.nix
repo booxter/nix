@@ -1,9 +1,5 @@
 { ... }:
 {
-  imports = [
-    ./ups.nix
-  ];
-
   host.fleetCacheWarmer = {
     enable = true;
     targetRealm = "home";

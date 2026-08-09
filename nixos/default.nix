@@ -41,6 +41,7 @@ in
       ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client
+      ./_mixins/ups-server.nix
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
