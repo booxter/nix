@@ -315,6 +315,11 @@ in
                         default = null;
                         description = "Optional Prometheus scrape interval.";
                       };
+                      discover = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether the central Prometheus server should discover this metric automatically.";
+                      };
                       labels = lib.mkOption {
                         type = lib.types.attrsOf lib.types.str;
                         default = { };

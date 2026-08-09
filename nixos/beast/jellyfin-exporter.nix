@@ -51,6 +51,7 @@ in
 
   host.web.services.jellyfin.metrics.default = {
     enable = true;
+    scrapeInterval = "5s";
     port = jellyfinExporterPort;
     upstream = "http://127.0.0.1:${toString jellyfinExporterInternalPort}/metrics";
   };

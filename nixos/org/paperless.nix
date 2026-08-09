@@ -353,6 +353,11 @@ in
   host.web.services.paperless = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
+    public.locationExtraConfig = ''
+      client_max_body_size 512m;
+      proxy_read_timeout 300s;
+      proxy_send_timeout 300s;
+    '';
     internal = {
       recommendedProxySettings = false;
       locationExtraConfig = ''

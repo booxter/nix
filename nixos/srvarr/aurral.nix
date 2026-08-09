@@ -135,6 +135,9 @@ in
   host.web.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
+    public.locationExtraConfig = ''
+      proxy_set_header X-Forwarded-For $remote_addr;
+    '';
   };
 
   services.nginx.proxyCachePath.aurral-images = {

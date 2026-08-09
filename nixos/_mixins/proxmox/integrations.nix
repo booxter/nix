@@ -323,6 +323,7 @@ in
         metrics.default = {
           enable = true;
           endpointName = "pve";
+          discover = false;
           jobName = "pve";
           openFirewall = exporterCfg.openFirewall;
           port = exporterCfg.publicPort;
