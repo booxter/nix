@@ -54,6 +54,7 @@ let
   reframeConfigPath = instance: "/run/secrets-rendered/reframe-${instance}.conf";
   reframeServer = lib.getExe' pkgs.reframe "reframe-server";
   reframeStreamer = lib.getExe' pkgs.reframe "reframe-streamer";
+  xml = pkgs.formats.xml { };
 
   mkReframeConfig =
     spec@{
@@ -101,27 +102,33 @@ let
   # GDM uses Mutter before login. Mutter's monitors.xml v2 format groups each
   # connector and synthetic EDID identity into a logical monitor with the same
   # position and scale that Hyprland consumes from inventory after login.
-  mkGdmLogicalMonitor = display: ''
-    <logicalmonitor>
-      <x>${toString display.logical.x}</x>
-      <y>${toString display.logical.y}</y>
-      ${lib.optionalString display.primary "<primary>yes</primary>"}
-      <scale>${toString display.scale}</scale>
-      <monitor>
-        <monitorspec>
-          <connector>${display.connector}</connector>
-          <vendor>${syntheticEdid.vendor}</vendor>
-          <product>${syntheticEdid.product}</product>
-          <serial>${syntheticEdid.serial}</serial>
-        </monitorspec>
-        <mode>
-          <width>${toString display.mode.width}</width>
-          <height>${toString display.mode.height}</height>
-          <rate>${toString syntheticEdid.refreshRate}</rate>
-        </mode>
-      </monitor>
-    </logicalmonitor>
-  '';
+  mkGdmLogicalMonitor =
+    display:
+    {
+      inherit (display.logical) x y;
+      inherit (display) scale;
+      monitor = {
+        monitorspec = {
+          inherit (display) connector;
+          inherit (syntheticEdid) product serial vendor;
+        };
+        mode = {
+          inherit (display.mode) height width;
+          rate = syntheticEdid.refreshRate;
+        };
+      };
+    }
+    // lib.optionalAttrs display.primary { primary = "yes"; };
+  gdmMonitorsXml = xml.generate "monitors.xml" {
+    monitors = {
+      "@version" = "2";
+      policy.stores.store = "system";
+      configuration = {
+        layoutmode = "logical";
+        logicalmonitor = map mkGdmLogicalMonitor displays;
+      };
+    };
+  };
 in
 assert lib.assertMsg (lib.all (
   display: display.scale == displayScale
@@ -149,19 +156,7 @@ assert lib.assertMsg (lib.all (
 
   # Match Hyprland's inventory-derived logical layout at the GDM login screen.
   # ReFrame maps pointer coordinates against the same calculated desktop.
-  environment.etc."xdg/monitors.xml".text = ''
-    <monitors version="2">
-      <policy>
-        <stores>
-          <store>system</store>
-        </stores>
-      </policy>
-      <configuration>
-        <layoutmode>logical</layoutmode>
-        ${lib.concatMapStrings mkGdmLogicalMonitor displays}
-      </configuration>
-    </monitors>
-  '';
+  environment.etc."xdg/monitors.xml".source = gdmMonitorsXml;
 
   services.reframe.enable = true;
 
