@@ -37,6 +37,7 @@ in
       ./_mixins/lan-wan-accounting
       ./_mixins/luks
       ./_mixins/nix
+      ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/proxmox

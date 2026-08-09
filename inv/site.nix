@@ -11,12 +11,7 @@ rec {
     domain = publicDomain;
   };
 
-  gids = {
-    media = 169;
-  };
-
   ports = {
-    nfs = 2049;
     watchstate = 8080;
   };
 

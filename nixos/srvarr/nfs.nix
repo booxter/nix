@@ -1,34 +1,10 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  mediaPath = "/data/media";
-  # Resilient NFS client behavior:
-  # - hard: block I/O until the server is back (avoid soft I/O errors).
-  # - nofail/_netdev/network-online: don't fail boot when NAS is down.
-  # - automount + idle timeout: remount on demand after outages.
-  # - mount-timeout: fail each mount attempt quickly, retry on next access.
-  mediaMountOptions = [
-    "nfsvers=4"
-    "hard"
-    "nofail"
-    "_netdev"
-    "noatime"
-    "x-systemd.automount"
-    "x-systemd.idle-timeout=0"
-    "x-systemd.mount-timeout=30s"
-    "x-systemd.requires=network-online.target"
-    "x-systemd.after=network-online.target"
-  ];
-  media = {
-    device = "${beastNfsAddress}:/volume2/Media";
-    fsType = "nfs";
-    options = mediaMountOptions;
-  };
+  mediaPath = config.host.srvarrPaths.mediaDir;
   networkOnlineUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -58,16 +34,12 @@ let
   ) config.systemd.tmpfiles.rules;
 in
 {
-  boot.supportedFilesystems = [ "nfs" ];
   systemd.tmpfiles.rules = [
     # Keep the legacy media-root tmpfiles rule in eval for parity with the old
     # stack; the generated tmpfiles file below still filters NFS-managed paths.
     "d '${mediaPath}'  2775 root media - -"
   ];
 
-  # local qemu vms override filesystems
-  fileSystems."${mediaPath}" = media;
-  virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
   environment.etc."tmpfiles.d/00-nixos.conf".text = ''
     # This file is created automatically and should not be modified.
     # Please change the option `systemd.tmpfiles.rules` instead.
@@ -76,7 +48,6 @@ in
     ${lib.concatStringsSep "\n" filteredTmpfilesRules}
   '';
 
-  users.groups.media.gid = hostInventory.site.gids.media;
   users.users.${config.services.bazarr.user}.extraGroups = [ "media" ];
 
   # Make services that r/w to NFS require the media mount.

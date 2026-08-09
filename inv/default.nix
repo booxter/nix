@@ -15,6 +15,7 @@ let
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
+  nfsFacts = import ./nfs.nix;
   observabilityFacts = import ./observability.nix;
   sites = import ./sites.nix;
   backupLinks = lib.mapAttrs (
@@ -36,6 +37,37 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain;
   };
+  normalizeNfsLink =
+    clientName: linkName: link:
+    let
+      provider =
+        nfsFacts.providers.${link.provider}
+          or (throw "NFS link ${clientName}.${linkName} references unknown provider '${link.provider}'");
+      exportName = link.export or linkName;
+      export =
+        provider.exports.${exportName}
+          or (throw "NFS link ${clientName}.${linkName} references unknown export '${exportName}' on provider '${link.provider}'");
+    in
+    link
+    // {
+      inherit clientName exportName linkName;
+      exportPath = export.path;
+    };
+  nfsLinks = lib.mapAttrs (clientName: lib.mapAttrs (normalizeNfsLink clientName)) nfsFacts.links;
+  nfsProviderFsidsAreUnique = lib.all (
+    provider:
+    let
+      fsids = map (export: export.fsid) (builtins.attrValues provider.exports);
+    in
+    builtins.length fsids == builtins.length (lib.unique fsids)
+  ) (builtins.attrValues nfsFacts.providers);
+  nfsClientMountPointsAreUnique = lib.all (
+    links:
+    let
+      mountPoints = map (link: link.mountPoint) (builtins.attrValues links);
+    in
+    builtins.length mountPoints == builtins.length (lib.unique mountPoints)
+  ) (builtins.attrValues nfsLinks);
   realmFor =
     spec:
     let
@@ -79,6 +111,14 @@ rec {
   inherit lanDomain;
   observability = observabilityFacts;
   inherit sites;
+
+  nfs =
+    assert lib.assertMsg nfsProviderFsidsAreUnique "NFS providers must use unique export FSIDs";
+    assert lib.assertMsg nfsClientMountPointsAreUnique "NFS clients must use unique mount points";
+    nfsFacts
+    // {
+      links = nfsLinks;
+    };
 
   backups = backupFacts // {
     links = backupLinks;

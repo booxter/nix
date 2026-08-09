@@ -212,7 +212,7 @@ in
           DEFAULT_LANGUAGE = "en";
           TZ = "America/New_York";
           PUID = toString accounts.uids.pinepods;
-          PGID = toString hostInventory.site.gids.media;
+          PGID = toString config.users.groups.media.gid;
 
           # Keep local login available for gPodder-compatible mobile/API clients,
           # while making SSO the normal browser account-provisioning path.

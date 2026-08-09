@@ -18,7 +18,7 @@ let
     "--uid"
     (toString accounts.uids.bazarr)
     "--gid"
-    (toString hostInventory.site.gids.media)
+    (toString config.users.groups.media.gid)
   ];
 in
 {

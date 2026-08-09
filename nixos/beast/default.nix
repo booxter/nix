@@ -1,5 +1,4 @@
 {
-  hostInventory,
   inputs,
   pkgs,
   ...
@@ -28,8 +27,6 @@
     ./raid.nix
     ./watchstate.nix
   ];
-
-  users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.blackbox.remote.enable = true;
   host.backups.server.enable = true;
