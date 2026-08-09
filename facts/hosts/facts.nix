@@ -102,7 +102,6 @@ in
       userProfile = "personal";
       availability = "intermittent";
       observability.capacityProfile = "interactive";
-      isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
       lanWanInterfaces = [ "en0" ];
@@ -114,7 +113,6 @@ in
         capacityProfile = "interactive";
         thermalProfile = "no-cpu";
       };
-      isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
       lanWanInterfaces = [ "en0" ];
@@ -123,7 +121,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       availability = "intermittent";
-      isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
       lanWanInterfaces = [

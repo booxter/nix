@@ -3,6 +3,7 @@
   facts,
   hostSpec,
   isDarwin,
+  isDesktop,
   isLinux,
   lib,
   system,
@@ -46,10 +47,10 @@ in
 
     isDesktop = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.isDesktop or false;
+      default = isDesktop;
       readOnly = true;
       internal = true;
-      description = "Whether this host has a desktop environment.";
+      description = "Whether the host configuration includes a desktop environment.";
     };
 
     isOperatorSeat = lib.mkOption {
