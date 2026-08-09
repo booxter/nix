@@ -42,8 +42,22 @@ in
 
   systemd.services.bazarr.serviceConfig.ExecStartPre = "+${enforceBazarrAuthCommand}";
 
-  host.internalHttps.services.bazarr = {
+  host.web.services.bazarr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.bazarr.listenPort}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/api/system/ping";
+      };
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "media-admin";
+    };
   };
 }

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  vikunjaService = hostInventory.servicesById.vikunja;
+  vikunjaPublicHost = "vi.${hostInventory.site.public.domain}";
   vikunjaMetricsMtlsPort = 9345;
   oidcClient = config.host.sso.oidc.clients.vikunja;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -16,6 +16,8 @@ let
   vikunjaTimezone = "America/New_York";
 in
 {
+  system.stateVersion = "25.11";
+
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [
@@ -23,19 +25,6 @@ in
     ./degoog.nix
     ./paperless.nix
   ];
-
-  host.sso.oidc.registrations.vikunja = {
-    displayName = "Vikunja";
-    originUrls = [ "${vikunjaService.url}/auth/openid/sso" ];
-    originLanding = "${vikunjaService.url}/";
-    allowInsecureClientDisablePkce = true;
-    scopeMaps."vikunja-users" = oidcScopes;
-    secret = {
-      sopsKey = "vikunja/oidc/client_secret";
-      name = "vikunjaOidcClientSecret";
-      restartUnits = [ "vikunja.service" ];
-    };
-  };
 
   sops.secrets = {
     vikunjaMailerPassword = {
@@ -56,7 +45,7 @@ in
     enable = true;
     environmentFiles = [ config.sops.templates."vikunja-secrets.env".path ];
     frontendScheme = "https";
-    frontendHostname = vikunjaService.publicHost;
+    frontendHostname = vikunjaPublicHost;
     port = vikunjaPort;
     settings = {
       defaultsettings = {
@@ -92,16 +81,43 @@ in
     };
   };
 
-  host.internalHttps.services.vikunja = {
+  host.web.services.vikunja = {
     enable = true;
     upstream = "http://127.0.0.1:${toString vikunjaPort}";
-    publicAliases = [ vikunjaService.publicHost ];
-    mtls.enable = true;
-  };
-
-  host.observability.prometheusEndpoints.vikunja = {
-    enable = true;
-    port = vikunjaMetricsMtlsPort;
-    upstream = "http://127.0.0.1:${toString vikunjaPort}/api/v1/metrics";
+    public = {
+      enable = true;
+      hostName = vikunjaPublicHost;
+    };
+    health.frontend = {
+      enable = true;
+      path = "";
+    };
+    metrics.default = {
+      enable = true;
+      port = vikunjaMetricsMtlsPort;
+      upstream = "http://127.0.0.1:${toString vikunjaPort}/api/v1/metrics";
+    };
+    auth = {
+      mode = "oidc";
+      oidcRegistration = {
+        displayName = "Vikunja";
+        originUrls = [ "https://${vikunjaPublicHost}/auth/openid/sso" ];
+        originLanding = "https://${vikunjaPublicHost}/";
+        allowInsecureClientDisablePkce = true;
+        scopeMaps."vikunja-users" = oidcScopes;
+        secret = {
+          sopsKey = "vikunja/oidc/client_secret";
+          name = "vikunjaOidcClientSecret";
+          restartUnits = [ "vikunja.service" ];
+        };
+      };
+    };
+    presentation = {
+      title = "Vikunja";
+      dashboard = {
+        enable = true;
+        category = "user";
+      };
+    };
   };
 }

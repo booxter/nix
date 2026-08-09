@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   srvarrPkgs,
   ...
@@ -10,7 +9,6 @@ let
   stateDir = "${config.host.srvarrPaths.stateDir}/seerr";
   user = "seerr";
   group = "seerr";
-  seerrService = hostInventory.servicesById.seerr;
 in
 {
   services.seerr = {
@@ -39,10 +37,20 @@ in
     uid = accounts.uids.seerr;
   };
 
-  host.internalHttps.services.seerr = {
+  host.web.services.seerr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
-    publicAliases = [ seerrService.publicHost ];
-    mtls.enable = true;
+    public = {
+      enable = true;
+      hostName = "js.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/login";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
   };
 }

@@ -16,7 +16,7 @@ let
   arrServiceUnits = map (name: "${name}.service") arrServiceNames;
   runtimeUnits = [ "nginx.service" ] ++ arrServiceUnits;
   arrProbeUrls = map (
-    name: "https://${name}.${hostInventory.site.lan.domain}:9443/ping"
+    name: "https://${name}.${config.host.network.lanDomain}:9443/ping"
   ) arrServiceNames;
   srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
@@ -164,8 +164,25 @@ in
     ];
   };
 
-  host.internalHttps.services.houndarr = {
+  host.web.services.houndarr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/api/health";
+      };
+    };
+    presentation = {
+      icon = "sh:houndarr.png";
+      dashboard = {
+        enable = true;
+        category = "media-admin";
+      };
+    };
   };
 }

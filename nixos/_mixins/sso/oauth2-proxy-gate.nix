@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   pkgs,
   ...
@@ -232,6 +231,16 @@ let
 
   enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
+  internalHttpsServiceHosts =
+    serviceName:
+    let
+      endpointName = config.host.web.services.${serviceName}.internal.endpointName;
+    in
+    [
+      "${endpointName}.${config.host.network.lanDomain}"
+      endpointName
+      "${endpointName}.local"
+    ];
   originUrlsFor =
     gate:
     if gate.externalOrigin != null then
@@ -240,7 +249,7 @@ let
       lib.unique (
         map (host: "https://${host}/oauth2/callback") gate.externalHostNames
         ++ map (host: "https://${host}/oauth2/callback") (
-          lib.concatMap hostInventory.toInternalHttpsServiceHosts gate.internalHttpsServiceNames
+          lib.concatMap internalHttpsServiceHosts gate.internalHttpsServiceNames
         )
       );
 

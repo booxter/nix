@@ -15,6 +15,7 @@ let
   balloonSize = hostSpec.balloonSize or null;
   diskSize = hostSpec.diskSize or 100;
   dhcpReservation = hostSpec.dhcpReservation or null;
+  primaryInterface = config.host.network.primaryInterface;
 in
 {
   imports = [
@@ -36,6 +37,13 @@ in
   config = lib.mkMerge (
     [
       (lib.mkIf config.host.isProxmox {
+        assertions = [
+          {
+            assertion = primaryInterface != null;
+            message = "host.isProxmox requires host.network.primaryInterface";
+          }
+        ];
+
         # Hypervisors upgrade on a separate schedule to avoid disrupting guest
         # VMs running on top.
         system.autoUpgrade = {
@@ -80,7 +88,7 @@ in
         services.resolved.settings.Resolve.ResolveUnicastSingleLabel = true;
 
         systemd.network.networks."10-lan" = {
-          matchConfig.Name = [ hostSpec.netIface ];
+          matchConfig.Name = lib.optional (primaryInterface != null) primaryInterface;
           networkConfig.Bridge = bridgeName;
         };
 

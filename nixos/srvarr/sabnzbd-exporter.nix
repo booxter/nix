@@ -33,7 +33,7 @@ in
     ];
   };
 
-  host.observability.prometheusEndpoints.sabnzbd = {
+  host.web.services.sabnzbd.metrics.default = {
     enable = true;
     port = 9387;
     upstream = "http://127.0.0.1:${toString sabnzbdExporterInternalPort}/metrics";

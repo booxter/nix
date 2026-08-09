@@ -17,7 +17,6 @@ sops-edit = "sops_tools.cli:edit_main"
 sops-pass = "sops_tools.cli:pass_main"
 sops-runtime-key = "sops_tools.runtime_key:main"
 sops-set = "sops_tools.cli:set_main"
-sops-ups-sync = "sops_tools.cli:ups_sync_main"
 sops-update = "sops_tools.cli:update_main"
 
 [tool.setuptools]

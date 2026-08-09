@@ -1,6 +1,7 @@
-{ hostInventory, ... }:
+{ config, ... }:
 let
-  aurralService = hostInventory.servicesById.aurral;
+  aurralPublicHost = "mu.${config.host.network.publicDomain}";
+  aurralPublicUrl = "https://${aurralPublicHost}";
   redisPort = 6379;
   redisServiceUnit = "redis-oauth2-proxy-aurral.service";
 in
@@ -23,7 +24,7 @@ in
     enable = true;
     clientId = "aurral";
     displayName = "Aurral";
-    originLanding = "${aurralService.url}/";
+    originLanding = "${aurralPublicUrl}/";
     cookieName = "_aurral_sso";
     allowedGroups = [
       "media-admins"
@@ -38,8 +39,8 @@ in
       redisConnectionUrl = "redis://127.0.0.1:${toString redisPort}/0";
       inherit redisServiceUnit;
     };
-    whitelistDomains = [ aurralService.publicHost ];
-    externalHostNames = [ aurralService.publicHost ];
+    whitelistDomains = [ aurralPublicHost ];
+    externalHostNames = [ aurralPublicHost ];
     authCookieVariableName = "aurral_auth_cookie";
     authRequestHeaders = [
       {

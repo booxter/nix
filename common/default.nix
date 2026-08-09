@@ -2,14 +2,18 @@
   imports = [
     ./_mixins/cli
     ./_mixins/codex
+    ./_mixins/hardware
     ./_mixins/host.nix
     ./_mixins/internal-pki
+    ./_mixins/network
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/remote-control/server
     ./_mixins/secrets
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
+    ./_mixins/ups
     ./_mixins/yubi
     ./_mixins/attic
     ./_mixins/flakehub-cache

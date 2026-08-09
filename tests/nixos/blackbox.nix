@@ -48,7 +48,10 @@ pkgs.testers.runNixOSTest {
   nodes.machine =
     { lib, ... }:
     {
-      imports = [ ../../nixos/_mixins/observability ];
+      imports = [
+        ../../common/_mixins/network
+        ../../nixos/_mixins/observability
+      ];
 
       options = {
         host = {
@@ -114,8 +117,7 @@ pkgs.testers.runNixOSTest {
               };
               nodeExporter.mtls = false;
             };
-            site.lan.domain = "example.invalid";
-            toNixosHostCertificateDnsNames = _: [ "blackbox" ];
+            toNixosHostCertificateDnsNames = _: _: [ "blackbox" ];
           };
           hostSpec = { };
         };
@@ -128,6 +130,8 @@ pkgs.testers.runNixOSTest {
             allowedUDPPorts = [ targetDnsPort ];
           };
         };
+
+        host.network.lanDomain = "example.invalid";
 
         host.observability = {
           enable = true;

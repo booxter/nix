@@ -133,19 +133,36 @@ in
       };
     };
 
-  host.internalHttps.services.transmission = {
+  host.web.services.transmission = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
-    recommendedProxySettings = false;
-    # Transmission RPC rejects the public LAN hostname, so preserve the
-    # existing whitelisted host on the upstream hop.
-    locationExtraConfig = ''
-      proxy_set_header Host ${config.networking.hostName};
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header X-Forwarded-Host $host;
-      proxy_set_header X-Forwarded-Server $hostname;
-    '';
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/__probe/transmission-rpc";
+        module = "http_service_409";
+      };
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "media-admin";
+    };
+    internal = {
+      recommendedProxySettings = false;
+      # Transmission RPC rejects the public LAN hostname, so preserve the
+      # existing whitelisted host on the upstream hop.
+      locationExtraConfig = ''
+        proxy_set_header Host ${config.networking.hostName};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Server $hostname;
+      '';
+    };
   };
 }

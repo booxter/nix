@@ -1,53 +1,25 @@
 {
+  config,
   hostInventory,
   lib,
   outputs,
   ...
 }:
 let
-  arrVmAddress = hostInventory.toNixosHostIpv4Address "srvarr";
-  orgVmAddress = hostInventory.toNixosHostIpv4Address "org";
-  backendMtlsServicePorts = {
-    id = 18443;
-    dash = 18081;
-    seerr = 15055;
-    romm = 18080;
-    aurral = 13001;
-    audiobookshelf = 19292;
-    pinepods = 18040;
-    shelfmark = 18084;
-    vikunja = 13456;
-    notes = 18086;
-    paperless = 12881;
-    llm = 14000;
-    ai = 14001;
-    search = 18083;
-    goo = 14444;
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
   };
-  backendMtlsServices = builtins.mapAttrs (id: localPort: {
-    clientName = id;
-    serverName = "${id}.${hostInventory.site.lan.domain}";
-    inherit localPort;
-  }) backendMtlsServicePorts;
-  publicServiceBackendAddresses = {
-    beast = "127.0.0.1";
-    srvarr = arrVmAddress;
-    org = orgVmAddress;
-  };
-  publicServicePorts = {
-    jellyfin = 8096;
-    seerr = outputs.nixosConfigurations.srvarr.config.services.seerr.port;
-    aurral = outputs.nixosConfigurations.srvarr.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.srvarr.config.services.audiobookshelf.port;
-    pinepods =
-      outputs.nixosConfigurations.srvarr.config.systemd.services.podman-pinepods.environment.PINEPODS_LISTEN_PORT;
-    shelfmark = outputs.nixosConfigurations.srvarr.config.services.shelfmark.environment.FLASK_PORT;
-    vikunja = outputs.nixosConfigurations.org.config.services.vikunja.port;
-    paperless = outputs.nixosConfigurations.org.config.services.paperless.port;
-  };
+  publicServices = builtins.filter (
+    contribution: contribution.value.public.ingressHost == config.networking.hostName
+  ) fleetServices.public;
+  mtlsPublicServices = builtins.filter (
+    contribution: contribution.value.public.transport == "internal-mtls"
+  ) publicServices;
   jellyfinDownloadProxyPort = 18096;
   jellyfinDownloadRateBytesPerSecond = 5 * 1000 * 1000 / 8;
-  jellyfinPublicHost = "jf.${hostInventory.site.public.domain}";
+  jellyfinService = fleetServices.byId.jellyfin;
+  jellyfinBackend = lib.removePrefix "http://" jellyfinService.public.directUpstream;
+  jellyfinPublicHost = jellyfinService.public.hostName;
   jellyfinProxyHeaders = ''
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -58,11 +30,16 @@ let
   '';
 in
 {
-  host.internalPki.clients = builtins.mapAttrs (_: _: {
-    enable = true;
-    category = "internal";
-    materializations.default.restartUnits = [ "stunnel.service" ];
-  }) backendMtlsServices;
+  host.internalPki.clients = builtins.listToAttrs (
+    map (contribution: {
+      name = contribution.id;
+      value = {
+        enable = true;
+        category = "internal";
+        materializations.default.restartUnits = [ "nginx.service" ];
+      };
+    }) mtlsPublicServices
+  );
 
   # Keep public gateway config-only changes from dropping long-lived proxied streams.
   services.nginx.enableReload = true;
@@ -100,7 +77,7 @@ in
         http-request set-var(txn.client_scope) str(external)
         http-request set-var(txn.client_scope) str(lan) if { req.hdr_ip(X-Real-IP) -m ip 127.0.0.0/8 ::1 ${hostInventory.site.lan.cidr} fe80::/10 fc00::/7 }
         http-response set-bandwidth-limit jellyfin_downloads if { var(txn.client_scope) -m str external }
-        server jellyfin 127.0.0.1:${toString publicServicePorts.jellyfin}
+        server jellyfin ${jellyfinBackend}
     '';
   };
 
@@ -116,45 +93,28 @@ in
       username = "ihrachyshka";
     };
     virtualHosts = builtins.listToAttrs (
-      map (service: {
-        name = service.publicHost;
+      map (contribution: {
+        name = contribution.value.public.hostName;
         value =
-          if builtins.hasAttr service.id backendMtlsServices then
+          if contribution.value.public.transport == "internal-mtls" then
             let
-              backend = backendMtlsServices.${service.id};
+              service = contribution.value;
             in
             {
-              proxyPass = "https://${backend.serverName}";
+              proxyPass = service.internal.url;
               upstreamTls = {
                 enable = true;
-                inherit (backend)
-                  clientName
-                  serverName
-                  localPort
-                  ;
+                clientName = contribution.id;
+                serverName = service.internal.serverName;
               };
-              locationExtraConfig =
-                lib.optionalString (service.id == "aurral") ''
-                  proxy_set_header X-Forwarded-For $remote_addr;
-                ''
-                + lib.optionalString (service.id == "notes") ''
-                  proxy_buffer_size 128k;
-                  proxy_buffers 4 256k;
-                  proxy_busy_buffers_size 256k;
-                ''
-                + lib.optionalString (service.id == "paperless") ''
-                  client_max_body_size 512m;
-                  proxy_read_timeout 300s;
-                  proxy_send_timeout 300s;
-                '';
+              inherit (service.public) locationExtraConfig;
             }
           else
             {
-              proxyPass = "http://${publicServiceBackendAddresses.${service.owner}}:${
-                toString publicServicePorts.${service.id}
-              }";
+              proxyPass = contribution.value.public.directUpstream;
+              inherit (contribution.value.public) locationExtraConfig;
             };
-      }) hostInventory.publicServices
+      }) publicServices
     );
   };
 

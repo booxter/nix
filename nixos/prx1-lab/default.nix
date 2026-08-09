@@ -1,9 +1,16 @@
 {
+  system.stateVersion = "25.11";
+
   imports = [
-    (import ../disko { })
     ./netboot.nix
-    ./ups.nix
   ];
 
   host.isProxmox = true;
+  host.network.primaryInterface = "enp5s0f0np0";
+  host.ups = {
+    server = {
+      description = "APC UPS 1500VA";
+    };
+    shutdown.critical = true;
+  };
 }

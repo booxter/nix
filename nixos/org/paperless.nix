@@ -8,8 +8,7 @@
   ...
 }:
 let
-  paperlessService = hostInventory.servicesById.paperless;
-  paperlessGptService = hostInventory.servicesById."paperless-gpt";
+  paperlessService = config.host.web.services.paperless;
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
@@ -21,7 +20,7 @@ let
   paperlessGptContainerUid = "10001";
   paperlessGptContainerGid = "10001";
   paperlessGptPort = 8080;
-  paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
+  paperlessGptHost = "paperless-gpt.${config.host.network.lanDomain}";
   paperlessGptOauth2ProxyPort = 4181;
   oidcClient = config.host.sso.oidc.clients.paperless;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -54,7 +53,7 @@ let
         }
       );
   ollamaTunnelPort = 11435;
-  ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
+  ollamaInternalHost = "ollama.${config.host.network.lanDomain}";
   ollamaClient = config.host.internalPki.clients.ollama;
   ociImages = import ../../oci { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
@@ -87,26 +86,29 @@ let
 
 in
 {
-  host.sso.oidc.registrations.paperless = {
-    displayName = "Paperless";
-    originUrls = [ "${paperlessService.url}/accounts/oidc/sso/login/callback/" ];
-    originLanding = "${paperlessService.url}/";
-    scopeMaps = {
-      "paperless-admins" = oidcScopes ++ [ "groups" ];
-      "paperless-users" = oidcScopes ++ [ "groups" ];
-    };
-    claimMaps.groups.valuesByGroup = {
-      "paperless-admins" = [ "paperless-admins" ];
-      "paperless-users" = [ "paperless-users" ];
-    };
-    secret = {
-      sopsKey = "paperless/oidc/client_secret";
-      name = "paperless/oidc/client_secret";
-      restartUnits = [
-        "paperless-scheduler.service"
-        "paperless-task-queue.service"
-        "paperless-web.service"
-      ];
+  host.web.services.paperless.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "Paperless";
+      originUrls = [ "${paperlessService.public.url}/accounts/oidc/sso/login/callback/" ];
+      originLanding = "${paperlessService.public.url}/";
+      scopeMaps = {
+        "paperless-admins" = oidcScopes ++ [ "groups" ];
+        "paperless-users" = oidcScopes ++ [ "groups" ];
+      };
+      claimMaps.groups.valuesByGroup = {
+        "paperless-admins" = [ "paperless-admins" ];
+        "paperless-users" = [ "paperless-users" ];
+      };
+      secret = {
+        sopsKey = "paperless/oidc/client_secret";
+        name = "paperless/oidc/client_secret";
+        restartUnits = [
+          "paperless-scheduler.service"
+          "paperless-task-queue.service"
+          "paperless-web.service"
+        ];
+      };
     };
   };
 
@@ -181,7 +183,7 @@ in
     enable = true;
     address = "127.0.0.1";
     database.createLocally = true;
-    domain = paperlessService.publicHost;
+    domain = paperlessService.public.hostName;
     environmentFile = config.sops.templates."paperless-oidc.env".path;
     mediaDir = "${paperlessStoragePath}/media";
     consumptionDir = "${paperlessStoragePath}/consume";
@@ -192,13 +194,13 @@ in
       PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
       PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
       PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
-        paperlessService.publicHost
-        "paperless.${hostInventory.site.lan.domain}"
+        paperlessService.public.hostName
+        "paperless.${config.host.network.lanDomain}"
         "paperless.local"
         "127.0.0.1"
         "localhost"
       ];
-      PAPERLESS_CSRF_TRUSTED_ORIGINS = paperlessService.url;
+      PAPERLESS_CSRF_TRUSTED_ORIGINS = paperlessService.public.url;
       PAPERLESS_DISABLE_REGULAR_LOGIN = false;
       PAPERLESS_CONSUMER_IGNORE_PATTERN = lib.concatStringsSep "," [
         ".DS_STORE/*"
@@ -350,55 +352,96 @@ in
     ];
   };
 
-  host.internalHttps.services.paperless = {
+  host.web.services.paperless = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
-    publicAliases = [ paperlessService.publicHost ];
-    mtls.enable = true;
-    recommendedProxySettings = false;
-    locationExtraConfig = ''
-      client_max_body_size 512m;
-      proxy_set_header Host ${paperlessService.publicHost};
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header X-Forwarded-Host ${paperlessService.publicHost};
-      proxy_set_header X-Forwarded-Server $hostname;
-      proxy_read_timeout 300s;
-      proxy_send_timeout 300s;
-    '';
-  };
-
-  host.internalHttps.services.paperless-gpt = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString paperlessGptPort}";
-  };
-
-  host.sso.oauth2ProxyGates.paperless-gpt = {
-    enable = true;
-    clientId = "paperless-gpt";
-    displayName = "Paperless GPT";
-    originLanding = "https://${paperlessGptHost}/";
-    httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
-    cookieName = "_paperless_gpt_sso";
-    allowedGroups = [ "paperless-admins" ];
-    groupClaim = "paperless_groups";
-    whitelistDomains = [ paperlessGptHost ];
-    internalHttpsServiceNames = [ "paperless-gpt" ];
-    authCookieVariableName = "paperless_gpt_auth_cookie";
-    probeLocationsByName.paperless-gpt."= /api/version" = {
-      proxyPass = "http://127.0.0.1:${toString paperlessGptPort}";
-      recommendedProxySettings = true;
-      extraConfig = ''
-        auth_request off;
+    public = {
+      enable = true;
+      hostName = "papers.${config.host.network.publicDomain}";
+      locationExtraConfig = ''
+        client_max_body_size 512m;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
       '';
+    };
+    health.frontend = {
+      enable = true;
+      path = "/accounts/login/";
+    };
+    presentation = {
+      title = "Paperless";
+      icon = "sh:paperless-ngx";
+      dashboard = {
+        enable = true;
+        category = "infrastructure";
+      };
+    };
+    internal = {
+      recommendedProxySettings = false;
+      locationExtraConfig = ''
+        client_max_body_size 512m;
+        proxy_set_header Host ${paperlessService.public.hostName};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host ${paperlessService.public.hostName};
+        proxy_set_header X-Forwarded-Server $hostname;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+      '';
+    };
+    metrics.default = {
+      enable = true;
+      port = paperlessMetricsMtlsPort;
+      upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
     };
   };
 
-  host.observability.prometheusEndpoints.paperless = {
+  host.web.services.paperless-gpt = {
     enable = true;
-    port = paperlessMetricsMtlsPort;
-    upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
+    upstream = "http://127.0.0.1:${toString paperlessGptPort}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/api/version";
+      };
+    };
+    presentation = {
+      title = "Paperless GPT";
+      icon = "sh:paperless-ngx";
+      dashboard = {
+        enable = true;
+        category = "infrastructure";
+      };
+    };
+  };
+
+  host.web.services.paperless-gpt.auth = {
+    mode = "oauth2-proxy";
+    oauth2ProxyGate = {
+      enable = true;
+      clientId = "paperless-gpt";
+      displayName = "Paperless GPT";
+      originLanding = "https://${paperlessGptHost}/";
+      httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
+      cookieName = "_paperless_gpt_sso";
+      allowedGroups = [ "paperless-admins" ];
+      groupClaim = "paperless_groups";
+      whitelistDomains = [ paperlessGptHost ];
+      internalHttpsServiceNames = [ "paperless-gpt" ];
+      authCookieVariableName = "paperless_gpt_auth_cookie";
+      probeLocationsByName.paperless-gpt."= /api/version" = {
+        proxyPass = "http://127.0.0.1:${toString paperlessGptPort}";
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+        '';
+      };
+    };
   };
 
   host.internalPki.clients.ollama = {
@@ -472,7 +515,7 @@ in
         OLLAMA_HOST = "http://127.0.0.1:${toString ollamaTunnelPort}";
         OLLAMA_THINK = "false";
         PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
-        PAPERLESS_PUBLIC_URL = paperlessService.url;
+        PAPERLESS_PUBLIC_URL = paperlessService.public.url;
         PDF_COPY_METADATA = "true";
         PDF_OCR_COMPLETE_TAG = paperlessGptOcrCompleteTag;
         PDF_OCR_TAGGING = "true";

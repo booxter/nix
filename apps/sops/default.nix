@@ -13,8 +13,6 @@ in
     "sops-copy" =
       appSpec "${sopsTools}/bin/sops-copy" "Copy a top-level key path between host secrets.";
     "sops-set" = appSpec "${sopsTools}/bin/sops-set" "Set a single host secret key path from stdin.";
-    "sops-ups-sync" =
-      appSpec "${sopsTools}/bin/sops-ups-sync" "Sync NUT UPS server passwords into client secrets.";
     "sops-pass" = appSpec "${sopsTools}/bin/sops-pass" "Hash and store a NixOS login password.";
   };
 }

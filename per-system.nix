@@ -2,7 +2,6 @@
   inputs,
   outputs,
   system,
-  username,
 }:
 let
   plainPkgs = inputs.nixpkgs.legacyPackages.${system};
@@ -15,11 +14,10 @@ let
     ];
   };
   plainFleet = import ./apps/fleet.nix {
-    inherit username;
     pkgs = plainPkgs;
   };
   fleet = import ./apps/fleet.nix {
-    inherit pkgs username;
+    inherit pkgs;
   };
   packageUpdates = import ./apps/package-updates { inherit pkgs; };
   proxmox = import ./apps/proxmox.nix { inherit inputs system; };

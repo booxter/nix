@@ -18,6 +18,8 @@ let
   };
 in
 {
+  system.stateVersion = "25.11";
+
   imports = [
     ./qos.nix
     ./wg-home-exporter.nix

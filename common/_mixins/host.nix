@@ -203,10 +203,10 @@ in
 
     username = lib.mkOption {
       type = lib.types.str;
-      default = hostSpec.username;
+      default = "ihrachyshka";
       readOnly = true;
       internal = true;
-      description = "Primary user declared by the host inventory.";
+      description = "Primary user for managed hosts.";
     };
 
     userProfile = lib.mkOption {
@@ -220,13 +220,6 @@ in
       description = "User environment profile declared by the host inventory.";
     };
 
-    ups.client.server = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = hostSpec.upsHost or null;
-      readOnly = true;
-      internal = true;
-      description = "Inventory host providing this host's UPS service.";
-    };
   };
 
   config = {
@@ -247,6 +240,5 @@ in
 
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
-    system.stateVersion = hostSpec.stateVersion;
   };
 }

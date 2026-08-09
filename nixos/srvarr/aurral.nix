@@ -12,7 +12,7 @@ let
   aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
   slskdDownloadsDir = "${mediaPath}/slskd/complete";
-  aurralService = hostInventory.servicesById.aurral;
+  aurralPublicHost = config.host.web.services.aurral.public.hostName;
   aurralAdminUsers = lib.attrNames (
     lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
   );
@@ -132,12 +132,30 @@ in
     };
   };
 
-  host.internalHttps.services.aurral = {
+  host.web.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
-    publicAliases = [ aurralService.publicHost ];
-    mtls.enable = true;
-    probe.enable = true;
+    public = {
+      enable = true;
+      hostName = "mu.${config.host.network.publicDomain}";
+      locationExtraConfig = ''
+        proxy_set_header X-Forwarded-For $remote_addr;
+      '';
+    };
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/api/health/live";
+      };
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
   };
 
   services.nginx.proxyCachePath.aurral-images = {
@@ -151,7 +169,7 @@ in
   # Cache only immutable cache-key responses. The query-based warming endpoint
   # remains on the normal proxy path because Aurral still emits it for misses.
   services.nginx.virtualHosts."internal-https-aurral".locations = aurralImageLocations;
-  services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
+  services.nginx.virtualHosts.${aurralPublicHost}.locations = aurralImageLocations;
 
   # Aurral's OAuth gate lives on beast because only the public hostname is
   # browser-protected. The backend probe still needs a probe-only listener on

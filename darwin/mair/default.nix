@@ -11,6 +11,8 @@ let
   wgHome = hostInventory.site.wireguard.home;
 in
 {
+  system.stateVersion = 6;
+
   imports = [
     ./nix-cache-preference.nix
     ./opencode.nix
@@ -37,7 +39,7 @@ in
     address = [ wgHome.peers.mair.address ];
     dns = [
       lan.gateway.address
-      lan.domain
+      config.host.network.lanDomain
     ];
     privateKeyFile = config.sops.secrets."wireguard/gw/privateKey".path;
 

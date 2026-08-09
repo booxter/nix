@@ -12,7 +12,7 @@ let
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
-  watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";
+  watchstateHostName = "watchstate.${config.host.network.lanDomain}";
   watchstateSso = hostInventory.sso.applications.watchstate;
   watchstateSystemUser = watchstateSso.bootstrapOwner;
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
@@ -182,36 +182,57 @@ in
     paths = [ watchstateBackupStagingDir ];
   };
 
-  host.internalHttps.services.watchstate = {
+  host.web.services.watchstate = {
     enable = true;
     upstream = "http://127.0.0.1:${toString watchstatePort}";
-    locationExtraConfig = ''
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/v1/api/system/healthcheck";
+      };
+    };
+    presentation = {
+      title = "WatchState";
+      icon = "sh:watchstate.png";
+      dashboard = {
+        enable = true;
+        category = "media-admin";
+      };
+    };
+    internal.locationExtraConfig = ''
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;
     '';
   };
 
-  host.sso.oauth2ProxyGates.watchstate = {
-    enable = true;
-    clientId = "watchstate";
-    displayName = "WatchState";
-    originLanding = "https://${watchstateHostName}/";
-    httpAddress = "http://127.0.0.1:4182";
-    cookieName = "_watchstate_sso";
-    allowedGroups = [ watchstateSso.adminGroup ];
-    groupClaim = "media_groups";
-    whitelistDomains = [ watchstateHostName ];
-    internalHttpsServiceNames = [ "watchstate" ];
-    # WatchState uses X-User for its own identity selection.
-    authRequestHeaders = [ ];
-    # WatchState's frontend uses Authorization for its own API session.
-    clearAuthorizationHeader = false;
-    probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
-      proxyPass = "http://127.0.0.1:${toString watchstatePort}";
-      recommendedProxySettings = true;
-      extraConfig = ''
-        auth_request off;
-      '';
+  host.web.services.watchstate.auth = {
+    mode = "oauth2-proxy";
+    oauth2ProxyGate = {
+      enable = true;
+      clientId = "watchstate";
+      displayName = "WatchState";
+      originLanding = "https://${watchstateHostName}/";
+      httpAddress = "http://127.0.0.1:4182";
+      cookieName = "_watchstate_sso";
+      allowedGroups = [ watchstateSso.adminGroup ];
+      groupClaim = "media_groups";
+      whitelistDomains = [ watchstateHostName ];
+      internalHttpsServiceNames = [ "watchstate" ];
+      # WatchState uses X-User for its own identity selection.
+      authRequestHeaders = [ ];
+      # WatchState's frontend uses Authorization for its own API session.
+      clearAuthorizationHeader = false;
+      probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
+        proxyPass = "http://127.0.0.1:${toString watchstatePort}";
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+        '';
+      };
     };
   };
 

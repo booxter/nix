@@ -16,7 +16,7 @@ let
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
-  hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
+  hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain hostSpec;
   certInstallUnit = "proxmox-api-certificate.service";
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
@@ -29,9 +29,9 @@ let
     && (hostInventory.realms.${spec.realm}.services.proxmox or null) != null
   ) hostInventory.nixosHostSpecs;
   proxmoxLabHosts = lib.unique (
-    lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
+    lib.concatMap (hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain) proxmoxLabHostSpecs
   );
-  proxmoxCanonicalHost = "proxmox.${hostInventory.site.lan.domain}";
+  proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [
       "https://${proxmoxCanonicalHost}"
@@ -149,7 +149,7 @@ in
 
     issuerUrl = lib.mkOption {
       type = lib.types.str;
-      default = "https://${hostInventory.servicesById.id.publicHost}/oauth2/openid/${oidcCfg.clientId}";
+      default = "https://id.${config.host.network.publicDomain}/oauth2/openid/${oidcCfg.clientId}";
       defaultText = "\${issuerBase}/oauth2/openid/\${clientId}";
       description = "OIDC issuer URL used by the Proxmox VE realm.";
     };
@@ -298,20 +298,38 @@ in
 
       # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
       # 8006 listener for Proxmox-native/root fallback access.
-      host.internalHttps.services.proxmox = {
+      host.web.services."proxmox-${config.networking.hostName}" = {
         enable = true;
-        serverName = cfg.serverName;
-        serverAliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;
-        localAliases = [ ];
-        port = cfg.publicPort;
-        secretPrefix = cfg.secretPrefix;
         upstream = "https://127.0.0.1:${toString cfg.port}";
-        locationExtraConfig = ''
-          proxy_ssl_name ${cfg.serverName};
-          proxy_ssl_server_name on;
-          proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
-          proxy_ssl_verify on;
-        '';
+        internal = {
+          endpointName = "proxmox";
+          serverName = cfg.serverName;
+          aliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;
+          localAliases = [ ];
+          port = cfg.publicPort;
+          secretPrefix = cfg.secretPrefix;
+          locationExtraConfig = ''
+            proxy_ssl_name ${cfg.serverName};
+            proxy_ssl_server_name on;
+            proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
+            proxy_ssl_verify on;
+          '';
+        };
+        health.frontend.enable = true;
+        presentation = {
+          title = "Proxmox ${config.networking.hostName}";
+          icon = "sh:proxmox";
+        };
+        metrics.default = {
+          enable = true;
+          endpointName = "pve";
+          discover = false;
+          jobName = "pve";
+          openFirewall = exporterCfg.openFirewall;
+          port = exporterCfg.publicPort;
+          path = "/";
+          upstream = "http://127.0.0.1:${toString exporterCfg.internalPort}";
+        };
       };
 
       sops.secrets.proxmoxApiServerCrt = {
@@ -358,19 +376,23 @@ in
       };
     })
     (lib.mkIf oidcCfg.enable {
-      host.sso.oidc.registrations.proxmox = {
-        clientId = oidcCfg.clientId;
-        displayName = "Proxmox VE";
-        originUrls = proxmoxOriginUrls;
-        originLanding = "https://${proxmoxCanonicalHost}/";
-        scopeMaps.${oidcCfg.allowedGroup} = oidcScopes ++ [ oidcCfg.groupsClaim ];
-        claimMaps.${oidcCfg.groupsClaim}.valuesByGroup.${oidcCfg.allowedGroup} = [
-          oidcCfg.allowedGroup
-        ];
-        secret = {
-          sopsKey = oidcCfg.clientSecretKey;
-          name = "proxmoxOidcClientSecret";
-          restartUnits = [ oidcRealmUnit ];
+      host.web.services."proxmox-${config.networking.hostName}".auth = {
+        mode = "oidc";
+        registrationName = "proxmox";
+        oidcRegistration = {
+          clientId = oidcCfg.clientId;
+          displayName = "Proxmox VE";
+          originUrls = proxmoxOriginUrls;
+          originLanding = "https://${proxmoxCanonicalHost}/";
+          scopeMaps.${oidcCfg.allowedGroup} = oidcScopes ++ [ oidcCfg.groupsClaim ];
+          claimMaps.${oidcCfg.groupsClaim}.valuesByGroup.${oidcCfg.allowedGroup} = [
+            oidcCfg.allowedGroup
+          ];
+          secret = {
+            sopsKey = oidcCfg.clientSecretKey;
+            name = "proxmoxOidcClientSecret";
+            restartUnits = [ oidcRealmUnit ];
+          };
         };
       };
 
@@ -452,13 +474,6 @@ in
         environment.REQUESTS_CA_BUNDLE = "${internalPkiRootCaPath}";
       };
 
-      host.observability.prometheusEndpoints.pve = {
-        enable = true;
-        port = exporterCfg.publicPort;
-        path = "/";
-        upstream = "http://127.0.0.1:${toString exporterCfg.internalPort}";
-        openFirewall = exporterCfg.openFirewall;
-      };
     })
   ];
 }

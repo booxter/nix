@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  outputs,
   pkiPkgs,
   pkgs,
   ...
@@ -9,17 +10,25 @@
 let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
-  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
-  lan = hostInventory.site.lan;
+  lanDomain = config.host.network.lanDomain;
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
+  webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
+    inherit fleetServices hostInventory;
+  };
+  unifiSyncEnv = import ./unifi-sync-env.nix {
+    inherit hostInventory lanDomain webDnsRecords;
+  };
   wgHome = hostInventory.site.wireguard.home;
   wgHomeExporterPort = 9586;
-  wgHomeExporterHost = "gw.${lan.domain}";
+  wgHomeExporterHost = "gw.${lanDomain}";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
   wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
     address = builtins.head (lib.splitString "/" peer.address);
-    domain = "${peer.host}.${lan.domain}";
+    domain = "${peer.host}.${lanDomain}";
     inherit (peer) publicKey;
   }) (lib.filterAttrs (_name: peer: peer ? host) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);

@@ -1,7 +1,6 @@
 {
   frame,
   mmini,
-  username,
 }:
 let
   sopsAgeIdentity = {
@@ -23,7 +22,6 @@ in
   ageIdentity = sopsAgeIdentity;
 
   devices.personal = {
-    owner = username;
     hosts = [
       frame
       mmini

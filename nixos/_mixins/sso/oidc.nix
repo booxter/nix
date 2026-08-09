@@ -1,12 +1,11 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
   inherit (lib) mkOption types;
-  issuerBaseUrl = "https://${hostInventory.servicesById.id.publicHost}";
+  issuerBaseUrl = "https://id.${config.host.network.publicDomain}";
   baseScopes = [
     "openid"
     "email"

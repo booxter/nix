@@ -19,16 +19,27 @@ let
     forceSSL = vhost.forceSSL;
     enableACME = vhost.enableACME;
     locations."/" = {
-      proxyPass =
-        if vhost.upstreamTls.enable then
-          "http://127.0.0.1:${toString vhost.upstreamTls.localPort}"
-        else
-          vhost.proxyPass;
+      proxyPass = vhost.proxyPass;
       proxyWebsockets = vhost.proxyWebsockets;
       recommendedProxySettings = false;
       extraConfig =
         recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
         + lib.optionalString vhost.upstreamTls.enable ''
+          proxy_ssl_certificate ${
+            config.sops.secrets.${
+              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.certificateSecretName
+            }.path
+          };
+          proxy_ssl_certificate_key ${
+            config.sops.secrets.${
+              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.keySecretName
+            }.path
+          };
+          proxy_ssl_trusted_certificate ${vhost.upstreamTls.trustedCaCertificate};
+          proxy_ssl_verify on;
+          proxy_ssl_server_name on;
+          proxy_ssl_name ${vhost.upstreamTls.serverName};
+
           # Backends may emit their internal canonical URL in absolute redirects.
           proxy_redirect https://${vhost.upstreamTls.serverName}/ $scheme://$host/;
           proxy_redirect http://${vhost.upstreamTls.serverName}/ $scheme://$host/;
@@ -127,12 +138,6 @@ in
                 description = "TLS server name used for upstream SNI and certificate verification.";
               };
 
-              localPort = lib.mkOption {
-                type = with lib.types; nullOr port;
-                default = null;
-                description = "Loopback port on this host where the local mTLS tunnel listens.";
-              };
-
               trustedCaCertificate = lib.mkOption {
                 type = lib.types.path;
                 default = internalPkiRootCaPath;
@@ -171,10 +176,6 @@ in
               {
                 assertion = vhost.upstreamTls.serverName != "";
                 message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
-              }
-              {
-                assertion = vhost.upstreamTls.localPort != null;
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.localPort must be set when upstream mTLS is enabled.";
               }
               {
                 assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
@@ -234,19 +235,6 @@ in
     })
 
     (lib.mkIf hasPublicVhosts {
-      assertions = [
-        {
-          assertion =
-            let
-              ports = builtins.map (vhost: vhost.upstreamTls.localPort) (
-                builtins.attrValues enabledUpstreamTlsVhosts
-              );
-            in
-            (builtins.length ports) == (builtins.length (lib.unique ports));
-          message = "host.externalService upstream mTLS tunnels must use unique local ports.";
-        }
-      ];
-
       security.acme = {
         acceptTerms = true;
         defaults.email = cfg.acmeEmail;
@@ -259,33 +247,7 @@ in
         virtualHosts = lib.mapAttrs (_: mkPublicVhost) cfg.virtualHosts;
       };
 
-      services.stunnel = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
-        enable = true;
-        # Reverse-proxy mTLS tunnels are chatty at stunnel's upstream "info"
-        # default, logging each accepted connection and TLS session detail.
-        logLevel = lib.mkDefault "warning";
-        user = null;
-        group = null;
-        clients = lib.mapAttrs (_: vhost: {
-          accept = "127.0.0.1:${toString vhost.upstreamTls.localPort}";
-          connect = "${vhost.upstreamTls.serverName}:443";
-          cert =
-            config.sops.secrets.${
-              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.certificateSecretName
-            }.path;
-          key =
-            config.sops.secrets.${
-              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.keySecretName
-            }.path;
-          checkHost = vhost.upstreamTls.serverName;
-          sni = vhost.upstreamTls.serverName;
-          CAFile = "${vhost.upstreamTls.trustedCaCertificate}";
-          verifyChain = true;
-          OCSPaia = false;
-        }) enabledUpstreamTlsVhosts;
-      };
-
-      systemd.services.stunnel = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
+      systemd.services.nginx = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
         wants = [ "sops-install-secrets.service" ];
         after = [ "sops-install-secrets.service" ];
       };

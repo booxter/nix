@@ -8,7 +8,6 @@
 }:
 let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  grafanaPort = 3000;
   prometheusPort = 9090;
   prometheusScrapeClient = config.host.internalPki.clients."prometheus-scrape-node";
   prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
@@ -35,7 +34,6 @@ let
   blackboxScrapes = import ./scrapes/blackbox.nix {
     inherit
       config
-      grafanaPort
       hostInventory
       lib
       outputs
@@ -52,7 +50,8 @@ let
   };
   serviceScrapes = import ./scrapes/services.nix {
     inherit
-      hostInventory
+      config
+      lib
       outputs
       prometheusMtlsTlsConfig
       ;

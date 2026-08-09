@@ -1,8 +1,6 @@
 { ... }:
 {
-  imports = [
-    ./ups.nix
-  ];
+  system.stateVersion = 5;
 
   host.fleetCacheWarmer = {
     enable = true;

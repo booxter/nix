@@ -1,5 +1,4 @@
 {
-  hostInventory,
   lib,
   osConfig,
   pkgs,
@@ -7,9 +6,10 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  dashUrl = hostInventory.servicesById.dash.url;
-  degoogUrl = hostInventory.servicesById.goo.url;
-  firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];
+  publicDomain = osConfig.host.network.publicDomain;
+  dashUrl = "https://dash.${publicDomain}";
+  degoogUrl = "https://goo.${publicDomain}";
+  firefoxDohExcludedDomains = [ publicDomain ];
 in
 {
   stylix.targets.firefox.profileNames = [ "default" ];
@@ -128,7 +128,7 @@ in
 
     policies = {
       "3rdparty".Extensions."uBlock0@raymondhill.net" = {
-        toAdd.trustedSiteDirectives = [ hostInventory.site.public.domain ];
+        toAdd.trustedSiteDirectives = [ publicDomain ];
       };
       DNSOverHTTPS = {
         ExcludedDomains = firefoxDohExcludedDomains;

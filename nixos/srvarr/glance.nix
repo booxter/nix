@@ -9,52 +9,46 @@
 let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
-  glanceServices = builtins.filter (service: service.showInGlance) hostInventory.services;
-  dashService = hostInventory.servicesById.dash;
-  degoogService = hostInventory.servicesById.goo;
-  fanaHostConfig = outputs.nixosConfigurations.fana.config;
-  fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
+  glanceCategories = [
+    {
+      id = "user";
+      title = "User Apps";
+    }
+    {
+      id = "media-admin";
+      title = "Media Admin";
+    }
+    {
+      id = "infrastructure";
+      title = "Infrastructure";
+    }
+  ];
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
+  dashService = fleetServices.byId.dash;
+  degoogService = fleetServices.byId.goo;
   pkiSpec = hostInventory.nixosHosts.pki;
   pkiCaServer = pkiSpec.caServer;
   pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
-  srvarrHttpsServices = config.host.internalHttps.services;
-  internalHttpsServicesFor =
-    service:
-    if service.owner == "srvarr" then
-      srvarrHttpsServices
-    else if service.owner == "fana" then
-      fanaHttpsServices
-    else
-      outputs.nixosConfigurations.${service.owner}.config.host.internalHttps.services;
-  internalHttpsServiceFor =
-    service:
-    let
-      internalHttpsServices = internalHttpsServicesFor service;
-      serviceConfig = builtins.getAttr service.id internalHttpsServices;
-    in
-    if builtins.hasAttr service.id internalHttpsServices && serviceConfig.enable then
-      serviceConfig
-    else
-      throw "Glance service ${service.id} must expose enabled internal HTTPS";
   serviceCatalog = map (
-    service:
-    if service.scope == "external" then
-      service
-    else
-      let
-        httpsService = internalHttpsServiceFor service;
-      in
-      service
-      // {
-        url = "https://${httpsService.serverName}/";
-        probeUrl = "https://${httpsService.serverName}${service.probePath}";
-      }
-  ) glanceServices;
+    contribution:
+    let
+      service = contribution.value;
+      baseUrl = if service.public.enable then service.public.url else service.internal.url;
+    in
+    {
+      inherit (service.presentation) icon title;
+      category = service.presentation.dashboard.category;
+      url = "${baseUrl}/";
+      probeUrl = "${baseUrl}${service.health.frontend.path}";
+    }
+  ) fleetServices.dashboard;
   infrastructureLinks = [
     {
       icon = "sh:proxmox";
       title = "Proxmox VE";
-      url = "https://proxmox.${hostInventory.site.lan.domain}/";
+      url = "https://proxmox.${config.host.network.lanDomain}/";
     }
     {
       icon = "sh:smallstep";
@@ -72,7 +66,7 @@ let
     else
       [ ];
   servicesForCategory =
-    category: builtins.filter (service: service.glanceCategory == category.id) serviceCatalog;
+    category: builtins.filter (service: service.category == category.id) serviceCatalog;
   siteFor =
     site:
     {
@@ -120,7 +114,7 @@ let
                 {
                   type = "search";
                   autofocus = true;
-                  search-engine = "${degoogService.url}/search?q={QUERY}";
+                  search-engine = "${degoogService.public.url}/search?q={QUERY}";
                 }
               ]
               ++ map monitorWidgetFor sections;
@@ -129,9 +123,9 @@ let
         }
       ];
     };
-  allServiceSections = serviceSectionsFor hostInventory.glanceCategories;
+  allServiceSections = serviceSectionsFor glanceCategories;
   externalServiceSections = serviceSectionsFor (
-    builtins.filter (category: category.id == "user") hostInventory.glanceCategories
+    builtins.filter (category: category.id == "user") glanceCategories
   );
   externalSettings = mkGlanceSettings {
     port = glanceExternalPort;
@@ -181,17 +175,27 @@ in
     };
   };
 
-  host.internalHttps.services = {
+  host.web.services = {
     glance = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceInternalPort}";
-      publicAliases = [ dashService.publicHost ];
+      internal.publicAliases = [ dashService.public.hostName ];
     };
 
     dash = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceExternalPort}";
-      mtls.enable = true;
+      public = {
+        enable = true;
+        hostName = "dash.${config.host.network.publicDomain}";
+        serveOnOwner = false;
+        splitDnsHost = config.networking.hostName;
+      };
+      health.frontend.enable = true;
+      presentation = {
+        title = "Dashboard";
+        icon = "sh:glance";
+      };
     };
   };
 }

@@ -9,7 +9,7 @@
 }:
 let
   hostname = hostSpec.name;
-  username = hostSpec.username;
+  username = config.host.username;
 in
 {
   imports = [
@@ -37,6 +37,7 @@ in
     ./_mixins/sketchybar-network
     ./_mixins/sudo
     ./_mixins/thermal-accounting
+    ./_mixins/ups-client
     ./_mixins/xquartz
     ./_mixins/yubi.nix
     ./_mixins/attic
@@ -55,7 +56,10 @@ in
     };
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.${username} = ../hm;
+    users.${username} = {
+      imports = [ ../hm ];
+      home.stateVersion = "25.11";
+    };
   };
 
   host.remoteGui.x11.enable = lib.mkDefault (config.host.remoteAccess.x11 && config.host.isDesktop);

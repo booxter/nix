@@ -1,12 +1,10 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  lan = hostInventory.site.lan;
-  grafanaHost = "grafana.${lan.domain}";
+  grafanaHost = "grafana.${config.host.network.lanDomain}";
   oidcClient = config.host.sso.oidc.clients.grafana;
   oidcScopes = config.host.sso.oidc.baseScopes;
   alertmanagerPort = 9093;
@@ -18,24 +16,27 @@ let
   grafanaLokiUid = "P8E80F9AEF21F6940";
 in
 {
-  host.sso.oidc.registrations.grafana = {
-    displayName = "Grafana";
-    originUrls = [ "https://${grafanaHost}/login/generic_oauth" ];
-    originLanding = "https://${grafanaHost}/";
-    scopeMaps = {
-      "grafana-admins" = oidcScopes;
-      "grafana-viewers" = oidcScopes;
-    };
-    claimMaps.grafana_role.valuesByGroup = {
-      "grafana-admins" = [ "admin" ];
-      "grafana-viewers" = [ "viewer" ];
-    };
-    secret = {
-      sopsKey = "grafana/oidc/client_secret";
-      name = "grafanaOidcClientSecret";
-      owner = "grafana";
-      group = "grafana";
-      restartUnits = [ "grafana.service" ];
+  host.web.services.grafana.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "Grafana";
+      originUrls = [ "https://${grafanaHost}/login/generic_oauth" ];
+      originLanding = "https://${grafanaHost}/";
+      scopeMaps = {
+        "grafana-admins" = oidcScopes;
+        "grafana-viewers" = oidcScopes;
+      };
+      claimMaps.grafana_role.valuesByGroup = {
+        "grafana-admins" = [ "admin" ];
+        "grafana-viewers" = [ "viewer" ];
+      };
+      secret = {
+        sopsKey = "grafana/oidc/client_secret";
+        name = "grafanaOidcClientSecret";
+        owner = "grafana";
+        group = "grafana";
+        restartUnits = [ "grafana.service" ];
+      };
     };
   };
 
@@ -246,9 +247,17 @@ in
     };
   };
 
-  host.internalHttps.services.grafana = {
+  host.web.services.grafana = {
     enable = true;
     upstream = "http://127.0.0.1:${toString grafanaPort}";
+    health.frontend = {
+      enable = true;
+      path = "/login";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "infrastructure";
+    };
   };
 
   systemd.services.grafana = {

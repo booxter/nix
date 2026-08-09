@@ -1,0 +1,101 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.host.observability.alertmanagerWatchdog;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  watchdogName = "fana-alertmanager-watchdog";
+  watchdogClient = config.host.internalPki.clients.${watchdogName};
+  watchdogPackage = pkgs.callPackage ./alertmanager-watchdog {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
+  alertmanagerReadyUrl = "https://alertmanager.${config.host.network.lanDomain}/-/ready";
+in
+{
+  options.host.observability.alertmanagerWatchdog.enable =
+    lib.mkEnableOption "independent Alertmanager readiness watchdog";
+
+  config = lib.mkIf cfg.enable {
+    host.internalPki.clients.${watchdogName} = {
+      enable = true;
+      category = "internal";
+      materializations.default.restartUnits = [ "${watchdogName}.service" ];
+    };
+
+    sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken = {
+      key = "watchdog/telegram/bot_token";
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "${watchdogName}.service" ];
+    };
+    sops.secrets.fanaAlertmanagerWatchdogTelegramChatId = {
+      key = "watchdog/telegram/chat_id";
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "${watchdogName}.service" ];
+    };
+
+    systemd.services.${watchdogName} = {
+      description = "Watch fana Alertmanager readiness and notify Telegram";
+      wants = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
+      after = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.escapeShellArgs [
+          (lib.getExe watchdogPackage)
+          "--url"
+          alertmanagerReadyUrl
+          "--ca-file"
+          "${internalPkiRootCaPath}"
+        ];
+        TimeoutStartSec = "45s";
+        DynamicUser = true;
+        StateDirectory = watchdogName;
+        RuntimeDirectory = watchdogName;
+        LoadCredential = [
+          "telegram-bot-token:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken.path}"
+          "telegram-chat-id:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramChatId.path}"
+          "mtls-client-crt:${
+            config.sops.secrets.${watchdogClient.materializations.default.certificateSecretName}.path
+          }"
+          "mtls-client-key:${
+            config.sops.secrets.${watchdogClient.materializations.default.keySecretName}.path
+          }"
+        ];
+        NoNewPrivileges = true;
+        PrivateDevices = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
+        RestrictRealtime = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+      };
+    };
+
+    systemd.timers.${watchdogName} = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2m";
+        OnUnitActiveSec = "1m";
+        AccuracySec = "10s";
+      };
+    };
+  };
+}

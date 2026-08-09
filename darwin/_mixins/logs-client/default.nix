@@ -133,7 +133,7 @@ in
 
       serverName = lib.mkOption {
         type = lib.types.str;
-        default = "loki.${hostInventory.site.lan.domain}";
+        default = "loki.${config.host.network.lanDomain}";
         description = "TLS server name used for Loki writes.";
       };
 

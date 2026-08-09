@@ -26,7 +26,6 @@ from .passwords import (
 from .process import SubprocessRunner
 from .repository import RuntimeEnvironment, SecretRepository
 from .secrets import CommandSopsBackend, SecretService, SopsBackend
-from .ups import UpsInventory, UpsService
 
 
 class SopsBackendFactory(Protocol):
@@ -233,42 +232,6 @@ def pass_main(
         else:
             print(f"Updated users/{result.user}/hashedPassword in {result.secret}.")
         print(f"{result.action} {' and '.join(result.entries)}.")
-        return 0
-
-    return _run(command)
-
-
-def ups_sync_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
-    def command() -> int:
-        parser = _parser("Sync UPS passwords into client host secrets.")
-        parser.add_argument("--all", action="store_true")
-        parser.add_argument("server", nargs="?")
-        parser.add_argument("clients", nargs="*")
-        args = parser.parse_args(argv)
-        if args.all and (args.server or args.clients):
-            parser.error("--all cannot be combined with a server or clients")
-        if not args.all and not args.server:
-            parser.error("provide a server or --all")
-
-        inventory_file = os.environ.get("UPS_CLIENTS_BY_SERVER_FILE")
-        if not inventory_file:
-            raise ToolError("UPS_CLIENTS_BY_SERVER_FILE is not set.")
-        current = application or Application.discover()
-        service = UpsService(
-            current.secrets(args.domain), UpsInventory.load(Path(inventory_file))
-        )
-        servers = service.inventory.servers if args.all else (args.server,)
-        if not servers:
-            raise ToolError("No UPS clients found in inventory.")
-        for server in servers:
-            clients = None if args.all or not args.clients else tuple(args.clients)
-            selected = service.sync_server(server, clients)
-            if not selected:
-                print(f"No UPS clients to sync for {server}.")
-            for client in selected:
-                print(f"Synced {server} UPS password to {client}.")
         return 0
 
     return _run(command)

@@ -69,19 +69,21 @@
     inputs@{ self, ... }:
     let
       inherit (self) outputs;
-      username = "ihrachyshka";
-      hostInventory = import ./inv {
-        inherit username;
-        lib = inputs.nixpkgs.lib;
-      };
-      hostSpecialArgs = spec: {
-        inherit
-          inputs
-          outputs
-          hostInventory
-          ;
-        hostSpec = spec;
-      };
+      hostInventory = import ./inv { lib = inputs.nixpkgs.lib; };
+      hostSpecialArgs =
+        spec:
+        let
+          hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+        in
+        {
+          inherit
+            inputs
+            outputs
+            hostInventory
+            ;
+          inherit (hostPlatform) isDarwin isLinux;
+          hostSpec = spec;
+        };
       mkNixos =
         spec:
         inputs.nixpkgs.lib.nixosSystem {
@@ -107,7 +109,6 @@
                 inputs
                 outputs
                 system
-                username
                 ;
             }
           );

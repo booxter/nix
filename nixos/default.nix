@@ -9,7 +9,7 @@
 }:
 let
   hostname = hostSpec.name;
-  username = hostSpec.username;
+  username = config.host.username;
 in
 (
   {
@@ -26,21 +26,27 @@ in
       ./_mixins/auto-upgrade
       ./_mixins/backups
       ./_mixins/builder.nix
+      ./_mixins/desktop
       ./_mixins/external-service.nix
       ./_mixins/firmware
+      ./_mixins/hardware
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/luks
       ./_mixins/nix
       ./_mixins/observability
+      ./_mixins/ollama
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso
       ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client
+      ./_mixins/ups-server.nix
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
+      ./_mixins/web
       ./_mixins/yubi.nix
     ];
 
@@ -54,7 +60,10 @@ in
       };
       useGlobalPkgs = true;
       useUserPackages = true;
-      users.${username} = ../hm;
+      users.${username} = {
+        imports = [ ../hm ];
+        home.stateVersion = config.system.stateVersion;
+      };
     };
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;

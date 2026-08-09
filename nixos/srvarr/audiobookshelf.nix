@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   pkgs,
   srvarrPkgs,
@@ -12,7 +11,7 @@ let
   port = 9292;
   stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
   user = "audiobookshelf";
-  audiobookshelfService = hostInventory.servicesById.audiobookshelf;
+  audiobookshelfPublicUrl = config.host.web.services.audiobookshelf.public.url;
   oidcClient = config.host.sso.oidc.clients.audiobookshelf;
   oidcScopes = config.host.sso.oidc.baseScopes;
   backupSettingsFile = pkgs.writeText "audiobookshelf-backup-settings.json" (
@@ -74,25 +73,28 @@ let
   ];
 in
 {
-  host.sso.oidc.registrations.audiobookshelf = {
-    displayName = "Audiobookshelf";
-    originUrls = [
-      "${audiobookshelfService.url}/auth/openid/callback"
-      "${audiobookshelfService.url}/auth/openid/mobile-redirect"
-    ];
-    originLanding = "${audiobookshelfService.url}/";
-    scopeMaps = {
-      "media-admins" = oidcScopes ++ [ "abs_groups" ];
-      "media-users" = oidcScopes ++ [ "abs_groups" ];
-    };
-    claimMaps.abs_groups.valuesByGroup = {
-      "media-admins" = [ "admin" ];
-      "media-users" = [ "user" ];
-    };
-    secret = {
-      sopsKey = "audiobookshelf/oidc/client_secret";
-      name = "audiobookshelf/oidc/client_secret";
-      restartUnits = [ "audiobookshelf-oidc-bootstrap.service" ];
+  host.web.services.audiobookshelf.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "Audiobookshelf";
+      originUrls = [
+        "${audiobookshelfPublicUrl}/auth/openid/callback"
+        "${audiobookshelfPublicUrl}/auth/openid/mobile-redirect"
+      ];
+      originLanding = "${audiobookshelfPublicUrl}/";
+      scopeMaps = {
+        "media-admins" = oidcScopes ++ [ "abs_groups" ];
+        "media-users" = oidcScopes ++ [ "abs_groups" ];
+      };
+      claimMaps.abs_groups.valuesByGroup = {
+        "media-admins" = [ "admin" ];
+        "media-users" = [ "user" ];
+      };
+      secret = {
+        sopsKey = "audiobookshelf/oidc/client_secret";
+        name = "audiobookshelf/oidc/client_secret";
+        restartUnits = [ "audiobookshelf-oidc-bootstrap.service" ];
+      };
     };
   };
 
@@ -178,19 +180,31 @@ in
     uid = accounts.uids.audiobookshelf;
   };
 
-  host.internalHttps.services.audiobookshelf = {
+  host.web.services.audiobookshelf = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
-    publicAliases = [ audiobookshelfService.publicHost ];
-    mtls.enable = true;
-    recommendedProxySettings = false;
-    locationExtraConfig = ''
-      proxy_set_header Host $audiobookshelf_proxy_host;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $audiobookshelf_proxy_proto;
-      proxy_set_header X-Forwarded-Host $audiobookshelf_proxy_host;
-      proxy_set_header X-Forwarded-Server $hostname;
-    '';
+    public = {
+      enable = true;
+      hostName = "au.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
+    internal = {
+      recommendedProxySettings = false;
+      locationExtraConfig = ''
+        proxy_set_header Host $audiobookshelf_proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $audiobookshelf_proxy_proto;
+        proxy_set_header X-Forwarded-Host $audiobookshelf_proxy_host;
+        proxy_set_header X-Forwarded-Server $hostname;
+      '';
+    };
   };
 }

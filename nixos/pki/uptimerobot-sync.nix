@@ -1,12 +1,15 @@
 {
   config,
-  hostInventory,
   lib,
+  outputs,
   pkiPkgs,
   pkgs,
   ...
 }:
 let
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
   monitorLimit = 10;
   excludedServiceIds = [
     # Degoog is an evaluation deployment covered by the fleet blackbox probes.
@@ -19,20 +22,26 @@ let
     "search"
   ];
   monitoredServices = builtins.filter (
-    service: !(builtins.elem service.id excludedServiceIds)
-  ) hostInventory.publicServices;
+    contribution: !(builtins.elem contribution.id excludedServiceIds)
+  ) fleetServices.public;
   servicesFile = pkgs.writeText "uptimerobot-services.json" (
     builtins.toJSON (
-      map (service: {
-        inherit (service) id title;
-        url = service.probeUrl;
+      map (contribution: {
+        inherit (contribution) id;
+        inherit (contribution.value.presentation) title;
+        url = "${contribution.value.public.url}${contribution.value.health.frontend.path}";
       }) monitoredServices
     )
   );
 in
-assert lib.assertMsg (builtins.length monitoredServices <= monitorLimit)
-  "UptimeRobot monitor limit exceeded: configured ${toString (builtins.length monitoredServices)}, limit ${toString monitorLimit}";
 {
+  assertions = [
+    {
+      assertion = builtins.length monitoredServices <= monitorLimit;
+      message = "UptimeRobot monitor limit exceeded: configured ${toString (builtins.length monitoredServices)}, limit ${toString monitorLimit}";
+    }
+  ];
+
   users.users.uptimerobot-sync = {
     isSystemUser = true;
     group = "uptimerobot-sync";
@@ -45,7 +54,7 @@ assert lib.assertMsg (builtins.length monitoredServices <= monitorLimit)
   };
 
   systemd.services.uptimerobot-sync = {
-    description = "Sync UptimeRobot monitors from service inventory";
+    description = "Sync UptimeRobot monitors from the fleet web service registry";
     wants = [
       "network-online.target"
       "sops-install-secrets.service"
@@ -84,7 +93,7 @@ assert lib.assertMsg (builtins.length monitoredServices <= monitorLimit)
   };
 
   systemd.timers.uptimerobot-sync = {
-    description = "Periodically sync UptimeRobot monitors from service inventory";
+    description = "Periodically sync UptimeRobot monitors from the fleet web service registry";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "5m";

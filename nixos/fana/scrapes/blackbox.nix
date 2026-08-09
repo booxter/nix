@@ -1,6 +1,5 @@
 {
   config,
-  grafanaPort,
   hostInventory,
   lib,
   outputs,
@@ -9,149 +8,93 @@
 }:
 let
   lan = hostInventory.site.lan;
-  blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
-  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
-  httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
+  nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
+  fleetServices = import ../../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   publicWanHost = beastHostConfig.host.externalService.ddns.hostname;
-  publicServiceCatalog = hostInventory.publicServices;
+  publicServiceCatalog = map (contribution: {
+    inherit (contribution) id;
+    inherit (contribution.value.presentation) title;
+    publicHost = contribution.value.public.hostName;
+    probePath = contribution.value.health.frontend.path;
+  }) fleetServices.public;
   publicWanProbeUrlFor = service: "https://${publicWanHost}${service.probePath}";
   publicDnsModuleNameFor = service: "dns_public_${service.id}";
   publicDnsCnameRegexpFor =
     service:
     "^${lib.escapeRegex "${service.publicHost}."}\\s+[0-9]+\\s+IN\\s+CNAME\\s+${lib.escapeRegex "${publicWanHost}."}$";
-  srvarrHostConfig = outputs.nixosConfigurations.srvarr.config;
-  srvarrPortFor =
-    serviceId:
+  blackboxModuleFor =
+    service: configuredModule:
+    if configuredModule == "http_service" && service.internal.clientAuth == "mtls" then
+      "http_service_mtls"
+    else
+      configuredModule;
+  frontendProbeCatalog = map (
+    contribution:
+    let
+      service = contribution.value;
+      usePublic = service.public.enable;
+      baseUrl = if usePublic then service.public.url else service.internal.url;
+    in
     {
-      aurral = srvarrHostConfig.systemd.services.aurral.environment.PORT;
-      audiobookshelf = srvarrHostConfig.services.audiobookshelf.port;
-      pinepods = srvarrHostConfig.systemd.services.podman-pinepods.environment.PINEPODS_LISTEN_PORT;
-      bazarr = srvarrHostConfig.services.bazarr.listenPort;
-      houndarr = srvarrHostConfig.systemd.services.houndarr.environment.HOUNDARR_PORT;
-      lidarr = srvarrHostConfig.services.lidarr.settings.server.port;
-      prowlarr = srvarrHostConfig.services.prowlarr.settings.server.port;
-      radarr = srvarrHostConfig.services.radarr.settings.server.port;
-      sabnzbd = srvarrHostConfig.services.sabnzbd.settings.misc.port;
-      shelfmark = srvarrHostConfig.services.shelfmark.environment.FLASK_PORT;
-      sonarr = srvarrHostConfig.services.sonarr.settings.server.port;
-      transmission = srvarrHostConfig.services.transmission.settings.rpc-port;
-    }
-    .${serviceId};
-  ownerHostConfigFor =
-    service:
-    if service.owner == "fana" then config else outputs.nixosConfigurations.${service.owner}.config;
-  ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalHttps.services;
-  httpsServiceFor =
-    service:
-    let
-      httpsServices = ownerHttpsServicesFor service;
-    in
-    if
-      builtins.hasAttr service.id httpsServices && (builtins.getAttr service.id httpsServices).enable
-    then
-      builtins.getAttr service.id httpsServices
-    else
-      null;
-  # Builds the target URL for a service owned by another NixOS host. Normal
-  # OAuth/front-door probes use :443, for example
-  # `https://search.home.arpa/oauth2/sign_in`; backend probes use the
-  # probe-only listener, for example `https://search.home.arpa:9443/healthz`,
-  # so auth-bypass checks stay off the public gateway's :443 upstream path.
-  mkOwnerServiceProbe =
-    service: probePath: useProbeListener:
-    let
-      httpsService = httpsServiceFor service;
-      probePortSuffix = lib.optionalString (
-        useProbeListener && httpsService.probe.port != 443
-      ) ":${toString httpsService.probe.port}";
-    in
-    if httpsService != null then
-      {
-        blackboxModule = if httpsService.mtls.enable then "http_service_mtls" else "http_service";
-        probeUrl = "https://${httpsService.serverName}${probePortSuffix}${probePath}";
-        url = "https://${httpsService.serverName}/";
-      }
-    else if service.owner == "fana" then
-      {
-        probeUrl = "http://127.0.0.1:${toString grafanaPort}/${probePath}";
-        url = "http://${service.displayHost}:3000/";
-      }
-    else if service.owner == "srvarr" then
-      {
-        probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${probePath}";
-        url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
-      }
-    else
-      throw "Blackbox service ${service.id} must expose enabled internal HTTPS";
-  inventoryServiceCatalog = map (
-    service:
-    if service.scope == "external" then
-      service
-    else
-      service // (mkOwnerServiceProbe service service.probePath false)
-  ) blackboxServices;
-  backendProbeCatalog = map (
-    service:
-    let
-      ownerProbe = mkOwnerServiceProbe service service.backendProbe.path true;
-    in
-    service
-    // ownerProbe
-    // {
+      inherit (contribution) id;
+      inherit (service.presentation) title;
       blackboxModule =
-        service.backendProbe.blackboxModule or (ownerProbe.blackboxModule or "http_service");
-      backend_probe = service.backendProbe.name or "http";
-      backend_probe_title = service.backendProbe.title or "Backend HTTP";
-      scope = "backend";
+        if usePublic then
+          service.health.frontend.module
+        else
+          blackboxModuleFor service service.health.frontend.module;
+      probeUrl = "${baseUrl}${service.health.frontend.path}";
+      scope = if usePublic then "external" else "internal";
+      url = "${baseUrl}/";
     }
-  ) (builtins.filter (service: service ? backendProbe) blackboxServices);
-  serviceHttpProbeCatalog = inventoryServiceCatalog ++ backendProbeCatalog;
+  ) fleetServices.frontendProbes;
+  backendProbeCatalog = map (
+    contribution:
+    let
+      service = contribution.value;
+      portSuffix = lib.optionalString (
+        service.health.backend.port != 443
+      ) ":${toString service.health.backend.port}";
+    in
+    {
+      inherit (contribution) id;
+      inherit (service.presentation) title;
+      blackboxModule = blackboxModuleFor service service.health.backend.module;
+      backend_probe = "http";
+      backend_probe_title = service.health.backend.title;
+      probeUrl = "https://${service.internal.serverName}${portSuffix}${service.health.backend.path}";
+      scope = "backend";
+      url = "${service.internal.url}/";
+    }
+  ) fleetServices.backendProbes;
+  serviceHttpProbeCatalog = frontendProbeCatalog ++ backendProbeCatalog;
   usesHttpMtls = builtins.any (service: (service.blackboxModule or null) == "http_service_mtls") (
     serviceHttpProbeCatalog
   );
-  proxmoxLabNodeNames = builtins.filter (
-    name:
-    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
-  ) nixosConfigNames;
-  proxmoxServiceCatalog = map (
-    name:
-    let
-      hostConfig = outputs.nixosConfigurations.${name}.config;
-      apiCertificate = hostConfig.host.proxmox.apiCertificate;
-      url = httpsUrlFor apiCertificate.serverName apiCertificate.publicPort;
-    in
-    {
-      id = "proxmox-${hostConfig.networking.hostName}";
-      scope = "internal";
-      title = "Proxmox ${hostConfig.networking.hostName}";
-      probeUrl = url;
-      inherit url;
-    }
-  ) proxmoxLabNodeNames;
   manualTlsServiceCatalog = [
     {
       id = "unifi";
       scope = "internal";
       title = "UniFi Console";
-      probeUrl = "https://unifi.${lan.domain}/";
-      url = "https://unifi.${lan.domain}/";
+      probeUrl = "https://unifi.${config.host.network.lanDomain}/";
+      url = "https://unifi.${config.host.network.lanDomain}/";
       tlsRotation = "manual";
     }
   ];
   serviceCatalog =
-    inventoryServiceCatalog
+    frontendProbeCatalog
     ++ [
       {
         id = "proxmox";
         scope = "internal";
         title = "Proxmox VE";
-        probeUrl = "https://proxmox.${lan.domain}/";
-        url = "https://proxmox.${lan.domain}/";
+        probeUrl = "https://proxmox.${config.host.network.lanDomain}/";
+        url = "https://proxmox.${config.host.network.lanDomain}/";
       }
     ]
-    ++ proxmoxServiceCatalog
     ++ manualTlsServiceCatalog;
   dnsProbeTargets = [
     {

@@ -4,12 +4,8 @@
 }:
 {
   lanDomain,
-  publicDomain,
-  publicServiceHosts,
 }:
 let
-  prxStateVersion = "25.11";
-  prxNetIface = "enp5s0f0np0";
   nvws = "nvws";
 
   builderDhcpReservations = {
@@ -41,7 +37,6 @@ let
       userProfile = "personal";
       proxNode = "prx${idx'}-lab";
       dhcpReservation = builderDhcpReservations.${idx'};
-      stateVersion = "25.11";
       memorySize = 64;
       balloonSize = 48;
       diskSize = 150;
@@ -73,8 +68,6 @@ let
       realm = "home";
       userProfile = "personal";
       hmFull = false;
-      stateVersion = prxStateVersion;
-      netIface = prxNetIface;
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -82,9 +75,6 @@ let
     }
     // lib.optionalAttrs (index == 1) {
       dnsAliases = [ "proxmox.${lanDomain}" ];
-    }
-    // lib.optionalAttrs (index != 1) {
-      upsHost = "prx1-lab";
     };
 in
 {
@@ -113,8 +103,6 @@ in
 
   darwinHosts = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
-      stateVersion = 6;
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
@@ -127,8 +115,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
-      stateVersion = 5;
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
@@ -137,12 +123,9 @@ in
       isOperatorSeat = true;
       isSecretsOperator = true;
       vnc.enable = true;
-      upsHost = frame;
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
-      stateVersion = 5;
-      hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "work";
       userProfile = "nvidia";
@@ -162,7 +145,6 @@ in
     {
       hostKind = "nixos";
       name = frame;
-      stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
@@ -243,8 +225,6 @@ in
       isBuilder = true;
       nspawnTestBuilder = true;
       hmFull = false;
-      stateVersion = "25.11";
-      netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
       dhcpReservation = {
@@ -255,12 +235,10 @@ in
     {
       hostKind = "nixos";
       name = "beast";
-      stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       critical = true;
-      dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
@@ -290,8 +268,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       isOperatorSeat = true;
-      stateVersion = "25.11";
-      upsHost = nvws;
       dhcpReservation = {
         match = "bc:24:11:ed:30:d3";
         ip = "192.168.10.138";
@@ -307,8 +283,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
-      upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
@@ -326,9 +300,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
-      upsHost = "prx1-lab";
-      dnsAliases = [ "dash.${publicDomain}" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";
@@ -353,8 +324,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -371,8 +340,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -389,8 +356,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
-      upsHost = "prx1-lab";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
@@ -407,13 +372,11 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "25.11";
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.
         rootsPath = "/roots.pem";
       };
-      upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
       diskSize = 50;
@@ -430,8 +393,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      stateVersion = "26.05";
-      upsHost = "prx1-lab";
       proxNode = "prx2-lab";
       cores = 4;
       memorySize = 8;
@@ -444,7 +405,7 @@ in
       };
     }
   ]
-  ++ map (idx: (builderSpec idx) // { upsHost = "prx1-lab"; }) [
+  ++ map builderSpec [
     1
     2
     3

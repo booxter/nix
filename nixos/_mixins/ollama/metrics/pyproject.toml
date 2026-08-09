@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ollama-metrics"
+version = "0.1.0"
+description = "Prometheus textfile collector for Ollama state"
+requires-python = ">=3.11"
+dependencies = ["prometheus-client", "pydantic"]
+
+[project.scripts]
+ollama-metrics = "ollama_metrics.collector:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=ollama_metrics --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/ollama_metrics"]
+strict = true
+
+[tool.ruff]
+line-length = 100

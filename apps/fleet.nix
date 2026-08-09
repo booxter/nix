@@ -1,13 +1,7 @@
-{
-  pkgs,
-  username ? "ihrachyshka",
-}:
+{ pkgs }:
 let
   appSpec = import ./app-spec.nix;
-  hostInventory = import ../inv {
-    inherit username;
-    lib = pkgs.lib;
-  };
+  hostInventory = import ../inv { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = wgHome.gateway.host;
@@ -30,7 +24,7 @@ let
       sshHost = spec.name;
     }) hostInventory.darwinHosts;
     lanDnsServer = lan.gateway.address;
-    lanDomain = lan.domain;
+    lanDomain = hostInventory.lanDomain;
     nixos = builtins.listToAttrs (
       map (spec: {
         inherit (spec) name;
@@ -48,7 +42,7 @@ let
     subnet = wgHome.cidr;
     dns = [
       lan.gateway.address
-      lan.domain
+      hostInventory.lanDomain
     ];
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
     allowedIps = [

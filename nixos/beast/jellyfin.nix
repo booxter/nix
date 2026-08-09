@@ -1,5 +1,10 @@
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 let
+  jellyfinPort = 8096;
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
     builtins.toJSON {
       Serilog = {
@@ -19,6 +24,25 @@ let
   );
 in
 {
+  host.web.services.jellyfin = {
+    enable = true;
+    internal.enable = false;
+    public = {
+      enable = true;
+      hostName = "jf.${config.host.network.publicDomain}";
+      transport = "direct";
+      directUpstream = "http://127.0.0.1:${toString jellyfinPort}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/web/";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
+  };
+
   services.jellyfin = {
     enable = true;
   };
