@@ -9,7 +9,7 @@
 }:
 let
   accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
-  ociImages = import ../../oci { inherit pkgs; };
+  ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
 
   pinepodsService = config.host.web.services.pinepods;
   pinepodsSso = facts.sso.applications.pinepods;

@@ -10,7 +10,7 @@
 let
   sourceLibraryRoot = "${facts.shared-storage.resources.media.path}/library";
   jellyfinLibraryRoot = "/media/library";
-  ociImages = import ../../oci { inherit pkgs; };
+  ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${config.host.network.lanDomain}";

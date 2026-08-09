@@ -1,16 +1,12 @@
-{ pkgs }:
+{
+  facts,
+  pkgs,
+}:
 let
-  pins = builtins.fromJSON (builtins.readFile ./images.json);
-
   mkImage =
     _name: pin:
-    let
-      ref = "${pin.image}:${pin.tag}";
-    in
     pin
     // {
-      inherit ref;
-
       imageFile = pkgs.dockerTools.pullImage {
         imageName = pin.image;
         imageDigest = pin.digest;
@@ -22,4 +18,4 @@ let
       };
     };
 in
-builtins.mapAttrs mkImage pins
+builtins.mapAttrs mkImage facts.oci-images
