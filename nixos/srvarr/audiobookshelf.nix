@@ -175,6 +175,12 @@ in
     };
   };
 
+  host.backups.sources.audiobookshelf = {
+    title = "Audiobookshelf";
+    capture.type = "scheduled";
+    capture.scheduled.outputPaths = [ "${stateDir}/backups" ];
+  };
+
   users.users.${user} = {
     home = lib.mkForce "/var/empty";
     uid = accounts.uids.audiobookshelf;

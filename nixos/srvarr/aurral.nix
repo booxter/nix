@@ -40,6 +40,17 @@ let
   };
 in
 {
+  host.backups.sources.aurral-database = {
+    title = "Aurral";
+    capture = {
+      type = "sqlite";
+      database = {
+        path = "${aurralStateDir}/aurral.db";
+        destinationDir = "${config.host.srvarrPaths.stateDir}/aurral-backup/latest";
+      };
+    };
+  };
+
   # Sharp resolves fonts through fontconfig when rendering playlist artwork.
   fonts.packages = [ pkgs.dejavu_fonts ];
 

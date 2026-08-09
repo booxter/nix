@@ -202,18 +202,21 @@ in
     mariadb = lib.mkOption {
       type = with lib.types; attrsOf (submodule mariadbArtifactModule);
       default = { };
+      internal = true;
       description = "MariaDB backup artifacts generated before Restic runs.";
     };
 
     postgresql = lib.mkOption {
       type = with lib.types; attrsOf (submodule postgresqlArtifactModule);
       default = { };
+      internal = true;
       description = "PostgreSQL backup artifacts generated before Restic runs.";
     };
 
     sqlite = lib.mkOption {
       type = with lib.types; attrsOf (submodule sqliteArtifactModule);
       default = { };
+      internal = true;
       description = "SQLite backup artifacts generated before Restic runs.";
     };
   };

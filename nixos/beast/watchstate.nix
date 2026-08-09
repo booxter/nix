@@ -176,10 +176,15 @@ in
     };
   };
 
-  host.backups.jobs.beast.preparations.watchstate-native-backup = {
-    service = "watchstate-native-backup";
-    title = "WatchState Native Backup";
-    paths = [ watchstateBackupStagingDir ];
+  host.backups.sources.watchstate = {
+    title = "WatchState";
+    capture = {
+      type = "unit";
+      unit = {
+        service = "watchstate-native-backup";
+        outputPaths = [ watchstateBackupStagingDir ];
+      };
+    };
   };
 
   host.web.services.watchstate = {

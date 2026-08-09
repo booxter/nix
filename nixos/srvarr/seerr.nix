@@ -11,6 +11,20 @@ let
   group = "seerr";
 in
 {
+  host.backups.sources.seerr-database = {
+    title = "Seerr";
+    capture = {
+      type = "sqlite";
+      database = {
+        path = "${stateDir}/db/db.sqlite3";
+        destinationDir = "${config.host.srvarrPaths.stateDir}/seerr-backup/latest";
+        extraCopies = [
+          { source = "${stateDir}/settings.json"; }
+        ];
+      };
+    };
+  };
+
   services.seerr = {
     enable = true;
     configDir = stateDir;

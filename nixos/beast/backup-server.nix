@@ -1,14 +1,11 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  backupInventory = hostInventory.backups;
   cloudGroup = "restic-cloud";
-  inherit (backupInventory) clients;
-  inherit (backupInventory.cloud) bucketName;
+  clients = config.host.backups.server.clients;
   offloadUser = name: if name == "beast" then cloudGroup else "restic-${name}-offload";
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -16,20 +13,7 @@ let
 in
 {
   host.backups.server = {
-    enable = true;
-    inherit (backupInventory.server) localClient repositoryRoot;
-    clients = lib.mapAttrs (name: client: {
-      inherit (client) publicKey storageName;
-      cloud = {
-        enable = true;
-        repository = "b2:${bucketName}:hosts/${client.storageName}";
-        prefix = "hosts/${client.storageName}";
-        sourcePasswordFile = config.sops.secrets.${cloudSecret name "localPassword"}.path;
-        passwordFile = config.sops.secrets.${cloudSecret name "password"}.path;
-      };
-    }) clients;
     cloud = {
-      inherit bucketName;
       applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
       applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
       # Keep uploads serialized and packs small so shaped B2 requests finish

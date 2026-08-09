@@ -364,9 +364,15 @@ in
 
   };
 
-  host.backups.jobs.beast.preparations.pinepods-native-backup = {
-    service = "pinepods-native-backup";
-    title = "PinePods Native Backup";
+  host.backups.sources.pinepods = {
+    title = "PinePods";
+    capture = {
+      type = "unit";
+      unit = {
+        service = "pinepods-native-backup";
+        outputPaths = [ backupDir ];
+      };
+    };
   };
 
   host.web.services.pinepods = {

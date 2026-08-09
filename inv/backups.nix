@@ -1,23 +1,46 @@
 { readPublicKey }:
 {
-  server = {
-    host = "beast";
+  providers.beast = {
     repositoryRoot = "/volume2/backups/restic-prod/hosts";
-    localClient = "beast";
+
+    offsite.b2 = {
+      bucketName = "ihar-restic-prod";
+      prefix = "hosts";
+    };
   };
 
-  cloud.bucketName = "ihar-restic-prod";
+  links = {
+    beast.primary = {
+      provider = "beast";
+      transport = "local";
+      offsite = "b2";
+    };
 
-  clients = {
-    beast.publicKey = null;
-    srvarr.publicKey = readPublicKey ../public-keys/restic/srvarr.pub;
-    org = {
+    srvarr.primary = {
+      provider = "beast";
+      publicKey = readPublicKey ../public-keys/restic/srvarr.pub;
+      offsite = "b2";
+    };
+
+    org.primary = {
+      provider = "beast";
       publicKey = readPublicKey ../public-keys/restic/org.pub;
       # Repository names are durable storage identities. Keep the pre-rename
       # namespace so existing local and B2 snapshot history remains intact.
       storageName = "orgvm";
+      offsite = "b2";
     };
-    home.publicKey = readPublicKey ../public-keys/restic/home.pub;
-    pki.publicKey = readPublicKey ../public-keys/restic/pki.pub;
+
+    home.primary = {
+      provider = "beast";
+      publicKey = readPublicKey ../public-keys/restic/home.pub;
+      offsite = "b2";
+    };
+
+    pki.primary = {
+      provider = "beast";
+      publicKey = readPublicKey ../public-keys/restic/pki.pub;
+      offsite = "b2";
+    };
   };
 }

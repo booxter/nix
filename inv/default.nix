@@ -15,15 +15,22 @@ let
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
-  backupClients = lib.mapAttrs (
-    name: client:
-    client
-    // rec {
-      storageName = client.storageName or name;
-      repositoryPath = "${backupFacts.server.repositoryRoot}/${storageName}";
-      ingestUser = "restic-${name}";
-    }
-  ) backupFacts.clients;
+  backupLinks = lib.mapAttrs (
+    clientName:
+    lib.mapAttrs (
+      linkName: link:
+      let
+        provider = backupFacts.providers.${link.provider};
+        storageName = link.storageName or clientName;
+      in
+      link
+      // {
+        inherit clientName linkName storageName;
+        repositoryPath = "${provider.repositoryRoot}/${storageName}";
+        ingestUser = "restic-${clientName}";
+      }
+    )
+  ) backupFacts.links;
   hostFacts = hostFactsFor {
     inherit lanDomain;
   };
@@ -70,7 +77,7 @@ rec {
   inherit lanDomain;
 
   backups = backupFacts // {
-    clients = backupClients;
+    links = backupLinks;
   };
 
   inherit realms;

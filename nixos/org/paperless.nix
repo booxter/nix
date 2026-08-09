@@ -86,6 +86,21 @@ let
 
 in
 {
+  host.backups.sources = {
+    paperless = {
+      paths = [
+        config.services.paperless.dataDir
+        paperlessStoragePath
+      ];
+      capture = {
+        type = "postgresql";
+        database.destinationDir = "/var/lib/paperless-backup/latest";
+        database.requiresMountsFor = [ config.services.paperless.dataDir ];
+      };
+    };
+    paperless-gpt.paths = [ paperlessGptStateDir ];
+  };
+
   host.web.services.paperless.auth = {
     mode = "oidc";
     oidcRegistration = {
