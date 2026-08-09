@@ -5,8 +5,6 @@
   ...
 }:
 {
-  imports = [ ./firefox.nix ];
-
   config = lib.mkIf (config.host.userProfile == "personal") {
     environment.systemPackages = with pkgs; [
       defaultbrowser
