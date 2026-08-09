@@ -188,7 +188,10 @@ in
     # ReFrame maps pointer coordinates against the same calculated desktop.
     environment.etc."xdg/monitors.xml".source = gdmMonitorsXml;
 
-    services.reframe.enable = true;
+    services = {
+      openssh.enable = true;
+      reframe.enable = true;
+    };
 
     sops.secrets.reframeVncPassword = {
       key = "reframe/vnc/password";
