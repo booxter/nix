@@ -27,9 +27,25 @@ in
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.blackbox.remote.enable = true;
-  hardware.gpu = {
-    vendors = [ "amd" ];
-    compute = "rocm";
+  hardware = {
+    drmCard = "card1";
+    displays = [
+      {
+        position = "left";
+        connector = "DP-4";
+        x = 0;
+        primary = true;
+      }
+      {
+        position = "right";
+        connector = "DP-2";
+        x = 2560;
+      }
+    ];
+    gpu = {
+      vendors = [ "amd" ];
+      compute = "rocm";
+    };
   };
 
   networking.wireless.enable = false;

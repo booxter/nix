@@ -2,6 +2,7 @@
   imports = [
     ./_mixins/cli
     ./_mixins/codex
+    ./_mixins/hardware
     ./_mixins/host.nix
     ./_mixins/internal-pki
     ./_mixins/nix
