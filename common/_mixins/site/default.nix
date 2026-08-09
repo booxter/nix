@@ -6,7 +6,7 @@
   ...
 }:
 let
-  siteName = hostSpec.site or null;
+  siteName = hostSpec.site or "home";
   site = if siteName == null then null else hostInventory.sites.${siteName} or null;
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
 in
