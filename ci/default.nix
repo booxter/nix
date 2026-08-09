@@ -10,6 +10,7 @@ let
   mkTarget =
     {
       attr,
+      diff ? false,
       host,
       name,
       system,
@@ -21,12 +22,14 @@ let
         name
         system
         ;
+      inherit diff;
       runner = runners.${system} or (throw "No CI runner configured for ${system}");
     };
   mkNixosTarget =
     spec:
     mkTarget {
       attr = "nixosConfigurations.${spec.name}.config.system.build.toplevel";
+      diff = true;
       host = spec.name;
       name = "${spec.name} (${spec.platform})";
       system = spec.platform;
@@ -35,13 +38,12 @@ let
     name: spec:
     mkTarget {
       attr = "darwinConfigurations.${name}.system";
+      diff = true;
       host = name;
       name = "${name} (${spec.platform})";
       system = spec.platform;
     };
   builderSystem = hostInventory.nixosHosts.builder1.platform;
-in
-{
   buildTargets =
     map mkNixosTarget hostInventory.nixosHostSpecs
     ++ lib.mapAttrsToList mkDarwinTarget hostInventory.darwinHosts
@@ -71,4 +73,17 @@ in
         system = builderSystem;
       })
     ];
+  githubActionsBuildMatrix = {
+    include = lib.imap0 (index: target: {
+      name = target.name;
+      cmd = "nix build .#${target.attr} -L --show-trace";
+      diff_machine = if target.diff then target.host else "";
+      diff_order = if target.diff then lib.fixedWidthString 3 "0" (toString index) else "";
+      os = target.runner;
+    }) buildTargets;
+  };
+in
+{
+  buildTargets = map (target: builtins.removeAttrs target [ "diff" ]) buildTargets;
+  inherit githubActionsBuildMatrix;
 }
