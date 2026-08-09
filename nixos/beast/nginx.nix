@@ -18,6 +18,7 @@ let
   jellyfinDownloadProxyPort = 18096;
   jellyfinDownloadRateBytesPerSecond = 5 * 1000 * 1000 / 8;
   jellyfinService = fleetServices.byId.jellyfin;
+  jellyfinBackend = lib.removePrefix "http://" jellyfinService.public.directUpstream;
   jellyfinPublicHost = jellyfinService.public.hostName;
   jellyfinProxyHeaders = ''
     proxy_set_header Host $host;
@@ -76,7 +77,7 @@ in
         http-request set-var(txn.client_scope) str(external)
         http-request set-var(txn.client_scope) str(lan) if { req.hdr_ip(X-Real-IP) -m ip 127.0.0.0/8 ::1 ${hostInventory.site.lan.cidr} fe80::/10 fc00::/7 }
         http-response set-bandwidth-limit jellyfin_downloads if { var(txn.client_scope) -m str external }
-        server jellyfin 127.0.0.1:${toString config.services.jellyfin.port}
+        server jellyfin ${jellyfinBackend}
     '';
   };
 

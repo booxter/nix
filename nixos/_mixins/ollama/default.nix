@@ -29,7 +29,6 @@ in
         enable = true;
         upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
         internal = {
-          aliases = [ "ollama.local" ];
           clientAuth = "mtls";
           localAliases = [ "ollama" ];
           locationExtraConfig = ''
