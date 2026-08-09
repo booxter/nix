@@ -4,7 +4,6 @@ let
 in
 {
   imports = [
-    (import ../disko { })
     ./ups.nix
   ];
 

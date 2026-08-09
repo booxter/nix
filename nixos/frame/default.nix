@@ -15,7 +15,6 @@ in
   _module.args.framePkgs = framePkgs;
 
   imports = [
-    (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./alertmanager-watchdog.nix
     ./remote-luks.nix
@@ -25,6 +24,7 @@ in
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
+  host.luks.enable = true;
   host.observability.blackbox.remote.enable = true;
   host.hardware = {
     drmCard = "card1";

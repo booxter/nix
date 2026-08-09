@@ -31,6 +31,7 @@ in
       ./_mixins/hardware
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/luks
       ./_mixins/nix
       ./_mixins/observability
       ./_mixins/proxmox
