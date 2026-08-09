@@ -1,17 +1,23 @@
-{ lib, ... }:
+{
+  hostInventory,
+  lib,
+  ...
+}:
 let
+  accounts = hostInventory.accounts;
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
-  servarrAccounts = import ../srvarr/accounts.nix;
   mediaRoot = "/volume2/Media";
   mediaPodcastsRoot = "${mediaRoot}/podcasts";
   mediaRommRoot = "${mediaRoot}/romm";
   mediaSlskdRoot = "${mediaRoot}/slskd";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
-  pinepodsUser = toString servarrAccounts.uids.pinepods;
-  rommUser = toString servarrAccounts.uids.romm;
-  slskdUser = toString servarrAccounts.uids.slskd;
+  pinepodsUser = toString accounts.users.pinepods.uid;
+  rommUser = toString accounts.users.romm.uid;
+  sabnzbdUser = toString accounts.users.sabnzbd.uid;
+  slskdUser = toString accounts.users.slskd.uid;
+  transmissionUser = toString accounts.users.transmission.uid;
 
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
@@ -114,49 +120,49 @@ let
     {
       path = mediaTorrentRoot;
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/.incomplete";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/.watch";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/manual";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/lidarr";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/radarr";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/sonarr";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
       path = "${mediaTorrentRoot}/shelfmark";
       mode = "0755";
-      user = "70";
+      user = transmissionUser;
       group = "media";
     }
     {
@@ -180,55 +186,55 @@ let
     {
       path = mediaUsenetRoot;
       mode = "0755";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/.incomplete";
       mode = "0755";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/.watch";
       mode = "0755";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/watch";
       mode = "0755";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/manual";
       mode = "0775";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/lidarr";
       mode = "0775";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/radarr";
       mode = "0775";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/sonarr";
       mode = "0775";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
     {
       path = "${mediaUsenetRoot}/shelfmark";
       mode = "0775";
-      user = "38";
+      user = sabnzbdUser;
       group = "media";
     }
   ]

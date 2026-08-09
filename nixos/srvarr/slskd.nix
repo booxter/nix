@@ -4,7 +4,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   slskdRoot = "${mediaDir}/slskd";
   srvarrSpec = hostInventory.nixosHosts.srvarr;

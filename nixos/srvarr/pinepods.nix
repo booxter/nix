@@ -8,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
   ociImages = import ../../oci { inherit pkgs; };
 
   pinepodsService = config.host.web.services.pinepods;

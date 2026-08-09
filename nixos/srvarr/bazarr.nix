@@ -7,7 +7,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
   group = "media";
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";

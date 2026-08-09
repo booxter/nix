@@ -5,7 +5,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   port = 6336;
   user = "sabnzbd";

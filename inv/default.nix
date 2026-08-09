@@ -15,6 +15,7 @@ let
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
+  accountFacts = import ./accounts.nix;
   nfsFacts = import ./nfs.nix;
   observabilityFacts = import ./observability.nix;
   sites = import ./sites.nix;
@@ -109,6 +110,7 @@ let
 in
 rec {
   inherit lanDomain;
+  accounts = accountFacts;
   observability = observabilityFacts;
   inherit sites;
 

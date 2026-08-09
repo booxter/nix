@@ -8,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
   rommSso = hostInventory.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
