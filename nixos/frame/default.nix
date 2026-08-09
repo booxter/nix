@@ -11,9 +11,6 @@ let
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  unlockKey =
-    path:
-    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${readPublicKey path}'';
 in
 {
   _module.args.framePkgs = framePkgs;
@@ -71,8 +68,8 @@ in
         enable = true;
         kernelModules = [ "r8169" ];
         authorizedKeys = [
-          (unlockKey ../../public-keys/users/mair.pub)
-          (unlockKey ../../public-keys/users/mmini.pub)
+          (readPublicKey ../../public-keys/users/mair.pub)
+          (readPublicKey ../../public-keys/users/mmini.pub)
         ];
       };
     };

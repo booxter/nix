@@ -5,6 +5,9 @@
 }:
 let
   cfg = config.host.luks.remoteUnlock;
+  unlockKey =
+    key:
+    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${key}'';
 in
 {
   options.host.luks.remoteUnlock = {
@@ -52,7 +55,7 @@ in
         ssh = {
           enable = true;
           hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
-          inherit (cfg) authorizedKeys;
+          authorizedKeys = map unlockKey cfg.authorizedKeys;
         };
       };
       systemd.network = {
