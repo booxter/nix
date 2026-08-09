@@ -31,6 +31,7 @@ let
     {
       isBuilder = true;
       isVM = true;
+      observability.capacityProfile = "cpu-bursty";
       name = "builder${idx'}";
       platform = "x86_64-linux";
       realm = "home";
@@ -68,6 +69,7 @@ let
       realm = "home";
       userProfile = "personal";
       hmFull = false;
+      observability.capacityProfile = "hypervisor";
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -107,6 +109,7 @@ in
       realm = "home";
       userProfile = "personal";
       availability = "intermittent";
+      observability.capacityProfile = "interactive";
       hasTouchId = true;
       isDesktop = true;
       isOperatorSeat = true;
@@ -119,6 +122,10 @@ in
       realm = "home";
       userProfile = "personal";
       isBuilder = true;
+      observability = {
+        capacityProfile = "interactive";
+        thermalProfile = "no-cpu";
+      };
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
@@ -149,6 +156,7 @@ in
       realm = "home";
       userProfile = "personal";
       isBuilder = true;
+      observability.capacityProfile = "cpu-bursty";
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
