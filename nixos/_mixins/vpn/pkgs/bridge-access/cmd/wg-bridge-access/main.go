@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/booxter/nix-config/srvarr-network-tools/internal/bridgeaccess"
+	"github.com/booxter/nix-config/vpn-namespace-bridge-access/internal/bridgeaccess"
 )
 
 func run(arguments []string, stderr io.Writer) error {

@@ -3,7 +3,7 @@
   lib,
 }:
 buildGoModule {
-  pname = "srvarr-network-tools";
+  pname = "vpn-namespace-bridge-access";
   version = "0.1.0";
 
   src = ./.;
@@ -22,7 +22,7 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Native network namespace tools for srvarr";
+    description = "Manage host access to services in VPN namespaces";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "wg-bridge-access";

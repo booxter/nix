@@ -6,45 +6,29 @@
   ...
 }:
 let
-  srvarrSpec = facts.hosts.nixos.srvarr;
-  networkOnlineUnitDeps = {
-    Wants = [ "network-online.target" ];
-    After = [ "network-online.target" ];
-  };
-  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
-  wgUnitDepsBase = networkOnlineUnitDeps // {
-    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
-    BindsTo = [ "wg.service" ];
-    PartOf = [ "wg.service" ];
-  };
-  wgTimerDeps = {
-    After = [ "wg.service" ];
-  };
+  namespace = "wg";
 in
 {
   imports = [
-    ./wg-bridge-access.nix
     (import ./update-dynamic-ip.nix {
       inherit
         lib
+        namespace
         srvarrPkgs
         utils
-        wgTimerDeps
-        wgUnitDepsBase
         ;
     })
   ];
 
-  vpnNamespaces.wg = {
+  host.vpn.namespaces.${namespace} = {
     accessibleFrom = [
       "127.0.0.1"
       facts.site.lan.cidr
       "10.0.0.0/8"
     ];
-    bridgeAddress = wgBridgeAddress;
+    bridgeAddress = "192.168.50.5";
     enable = true;
-    namespaceAddress = wgNamespaceAddress;
+    namespaceAddress = "192.168.50.1";
     wireguardConfigFile = "/data/.secret/vpn/wg.conf";
   };
 }

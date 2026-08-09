@@ -41,8 +41,6 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  network-tools = pkgs.callPackage ./network-tools { };
-
   pinepods-tools = pkgs.callPackage ./pinepods-tools { };
 
   romm-tools = pkgs.callPackage ./romm-tools { };

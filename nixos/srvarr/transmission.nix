@@ -1,17 +1,16 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  srvarrSpec = facts.hosts.nixos.srvarr;
-  peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
+  vpnClient = config.host.vpn.clients.transmission;
+  vpnNamespace = config.host.vpn.namespaces.${vpnClient.namespace};
+  peerPort = vpnClient.forwardedPorts.peer.port;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   transmissionStateDir = "${stateDir}/.config/transmission-daemon";
   tuning = config.host.srvarrTuning;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
@@ -65,7 +64,7 @@ in
       pex-enabled = true;
       port-forwarding-enabled = false;
       rpc-authentication-required = false;
-      rpc-bind-address = wgNamespaceAddress;
+      rpc-bind-address = vpnNamespace.namespaceAddress;
       rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
       rpc-whitelist = "127.0.0.1,192.168.*,10.*";
       sort-mode = "progress";
@@ -114,20 +113,16 @@ in
         ) transmissionWatchDir
       );
     };
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
-  vpnNamespaces.wg.openVPNPorts = [
-    {
-      port = peerPort;
+  host.vpn.clients.transmission = {
+    namespace = "wg";
+    bridgeTcpPorts = [ config.services.transmission.settings.rpc-port ];
+    forwardedPorts.peer = {
+      port = 45486;
       protocol = "both";
-    }
-  ];
-
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.services.transmission.settings.rpc-port ];
+    };
+  };
 
   # Keep the host-local helper on loopback, but target the actual namespace
   # address directly instead of the old fixed proxy address.
@@ -142,7 +137,7 @@ in
       locations."/" = {
         recommendedProxySettings = true;
         proxyWebsockets = true;
-        proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
+        proxyPass = lib.mkForce "http://${vpnNamespace.namespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
       };
     };
 

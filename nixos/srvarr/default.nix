@@ -1,15 +1,10 @@
-{
-  inputs,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 {
   system.stateVersion = "25.11";
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
   imports = [
-    inputs.vpnconfinement.nixosModules.default
     ./arr.nix
     ./audiobookshelf.nix
     ./aurral.nix

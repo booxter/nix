@@ -1,4 +1,4 @@
-module github.com/booxter/nix-config/srvarr-network-tools
+module github.com/booxter/nix-config/vpn-namespace-bridge-access
 
 go 1.26.4
 
