@@ -14,11 +14,15 @@ let
   fleetServices = import ../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
+  fleetNetwork = import ../_lib/fleet-host-network.nix { inherit config outputs; };
   webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices facts;
+    inherit fleetServices;
+    addressFor = fleetNetwork.addressFor;
   };
   unifiSyncEnv = import ./unifi-sync-env.nix {
     inherit facts lanDomain webDnsRecords;
+    addressFor = fleetNetwork.addressFor;
+    reservations = config.host.network.ipController.reservations;
   };
   wgHome = facts.site.wireguard.home;
   wgHomeExporterPort = 9586;

@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   outputs,
   ...
 }:
 let
   tuning = config.host.srvarrTuning;
-  beastNfsAddress = facts.hosts.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
+  beastNfsAddress = beastHostConfig.host.network.ipAddress;
   beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
   beastNfsPort = beastHostConfig.services.nfs.settings.nfsd.port;
   beastNfsRateMbit = 1500;

@@ -18,11 +18,8 @@ let
     let
       validated = builtins.seq (realmFor spec) spec;
       lowercaseName = lib.toLower validated.name;
-      ipAddress =
-        if validated ? dhcpReservation then validated.dhcpReservation.ip else validated.ipAddress or null;
     in
     validated
-    // lib.optionalAttrs (ipAddress != null) { inherit ipAddress; }
     // {
       localDnsName = "${validated.name}.local";
       sshKnownHostNames = lib.unique (
@@ -49,15 +46,6 @@ let
   darwin = lib.mapAttrs (_: normalizeHostSpec false) raw.darwin;
   nixosSpecs = map normalizeNixosHostSpec raw.nixos;
   nixosNames = map (spec: spec.name) nixosSpecs;
-  managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
-    builtins.filter (spec: spec ? dhcpReservation) nixosSpecs
-  );
-  dhcpReservationsByHostname = builtins.listToAttrs (
-    map (reservation: {
-      name = reservation.hostname;
-      value = reservation;
-    }) (managedDhcpReservations ++ raw.staticDhcpReservations)
-  );
   nixos =
     assert lib.assertMsg (
       builtins.length nixosNames == builtins.length (lib.unique nixosNames)
@@ -74,9 +62,7 @@ raw
 // {
   inherit
     darwin
-    dhcpReservationsByHostname
     hostSpecsByName
-    managedDhcpReservations
     nixos
     ;
 }

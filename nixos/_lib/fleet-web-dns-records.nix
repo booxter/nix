@@ -1,13 +1,13 @@
 {
+  addressFor,
   fleetServices,
-  facts,
   ttlSeconds ? 300,
 }:
 let
   mkRecord = domain: hostName: {
     type = "A_RECORD";
     inherit domain;
-    ipv4Address = facts.hosts.nixos.${hostName}.ipAddress;
+    ipv4Address = addressFor hostName;
     inherit ttlSeconds;
   };
   internalRecords =

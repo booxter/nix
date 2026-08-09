@@ -11,6 +11,12 @@ in
 {
   system.stateVersion = "25.11";
 
+  host.network.reservation = {
+    enable = true;
+    address = "192.168.20.7";
+    identifiers = [ "bc:24:11:0d:85:41" ];
+  };
+
   environment.systemPackages = with pkgs; [
     attic-client
   ];

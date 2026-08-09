@@ -1,12 +1,13 @@
 {
+  addressFor,
   facts,
   lanDomain,
+  reservations,
   webDnsRecords ? [ ],
 }:
 let
   lan = facts.site.lan;
   netboot = lan.netboot;
-  netbootHost = facts.hosts.nixos.${netboot.host};
 
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
 
@@ -27,7 +28,7 @@ let
       })
       (
         builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
-          facts.hosts.managedDhcpReservations ++ facts.hosts.staticDhcpReservations
+          reservations
         )
       )
   );
@@ -46,7 +47,7 @@ let
     else
       null;
 
-  networkTftpServer = netbootHost.ipAddress;
+  networkTftpServer = addressFor netboot.host;
 
   networkBootfile = netboot.bootfile;
   dnsRecordsByDomain = builtins.listToAttrs (
@@ -56,9 +57,16 @@ let
     }) (webDnsRecords ++ lan.dnsRecords)
   );
   dnsRecordsJson = builtins.toJSON (builtins.attrValues dnsRecordsByDomain);
-  staticRoutesJson = builtins.toJSON (lan.staticRoutes or [ ]);
+  staticRoutes = map (
+    route:
+    removeAttrs route [ "nextHopHost" ]
+    // {
+      nextHop = addressFor route.nextHopHost;
+    }
+  ) (lan.staticRoutes or [ ]);
+  staticRoutesJson = builtins.toJSON staticRoutes;
   classlessStaticRoutesJson = builtins.toJSON (
-    (builtins.filter (route: route.enabled or true) (lan.staticRoutes or [ ]))
+    (builtins.filter (route: route.enabled or true) staticRoutes)
     ++ [
       {
         name = "default";

@@ -20,6 +20,12 @@ in
 {
   system.stateVersion = "25.11";
 
+  host.network.reservation = {
+    enable = true;
+    address = "192.168.20.3";
+    identifiers = [ "bc:24:11:91:b5:77" ];
+  };
+
   imports = [
     ./qos.nix
     ./wg-home-exporter.nix

@@ -60,6 +60,15 @@ in
 
   host.backups.sources.step-ca.paths = [ stepStateDir ];
 
+  host.network = {
+    reservation = {
+      enable = true;
+      address = "192.168.20.5";
+      identifiers = [ "bc:24:11:c6:ab:fc" ];
+    };
+    ipController.enable = true;
+  };
+
   sops.secrets.pkiRotationGithubToken = {
     key = "github/pki_rotation/token";
     mode = "0400";

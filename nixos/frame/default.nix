@@ -52,7 +52,14 @@
         ];
       };
     };
-    network.primaryInterface = "enp191s0";
+    network = {
+      primaryInterface = "enp191s0";
+      reservation = {
+        enable = true;
+        address = "192.168.11.228";
+        identifiers = [ "9c:bf:0d:00:fa:0a" ];
+      };
+    };
     observability = {
       alertmanagerWatchdog.enable = true;
       blackbox.remote.enable = true;

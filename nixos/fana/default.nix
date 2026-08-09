@@ -5,6 +5,12 @@
 {
   system.stateVersion = "25.11";
 
+  host.network.reservation = {
+    enable = true;
+    address = "192.168.13.110";
+    identifiers = [ "bc:24:11:06:e8:8b" ];
+  };
+
   imports = [
     ./grafana
     ./loki.nix

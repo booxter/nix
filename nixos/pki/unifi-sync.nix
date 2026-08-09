@@ -11,12 +11,16 @@ let
   fleetServices = import ../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
+  fleetNetwork = import ../_lib/fleet-host-network.nix { inherit config outputs; };
   webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices facts;
+    inherit fleetServices;
+    addressFor = fleetNetwork.addressFor;
   };
   unifiSyncEnv = import ./unifi-sync-env.nix {
     inherit facts webDnsRecords;
+    addressFor = fleetNetwork.addressFor;
     lanDomain = config.host.network.lanDomain;
+    reservations = config.host.network.ipController.reservations;
   };
 in
 {

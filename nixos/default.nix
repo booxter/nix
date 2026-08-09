@@ -44,6 +44,7 @@ in
       ./_mixins/qos
       ./_mixins/sso
       ./_mixins/shared-storage.nix
+      ./_mixins/site-ip
       ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client

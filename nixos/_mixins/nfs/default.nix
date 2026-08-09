@@ -3,11 +3,13 @@
   facts,
   hostSpec,
   lib,
+  outputs,
   utils,
   ...
 }:
 let
   hostName = hostSpec.name;
+  fleetNetwork = import ../../_lib/fleet-host-network.nix { inherit config outputs; };
   nfsPort = 2049;
   provider = facts.nfs.providers.${hostName} or null;
   hostLinks = facts.nfs.links.${hostName} or { };
@@ -84,7 +86,7 @@ let
   clientFileSystems = lib.mapAttrs' (
     _: link:
     lib.nameValuePair link.mountPoint {
-      device = "${facts.hosts.nixos.${link.provider}.ipAddress}:${link.exportPath}";
+      device = "${fleetNetwork.addressFor link.provider}:${link.exportPath}";
       fsType = "nfs";
       options = mountOptions;
     }
@@ -117,9 +119,7 @@ let
     in
     lib.concatMapStringsSep "\n" (
       link:
-      "${export.path} ${
-        facts.hosts.nixos.${link.clientName}.ipAddress
-      }(${lib.concatStringsSep "," (exportOptions export)})"
+      "${export.path} ${fleetNetwork.addressFor link.clientName}(${lib.concatStringsSep "," (exportOptions export)})"
     ) (builtins.attrValues clients)
   ) (builtins.attrNames providedExports);
   exportPaths = map (export: export.path) (builtins.attrValues providedExports);

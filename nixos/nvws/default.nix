@@ -8,8 +8,15 @@ in
   host = {
     isBuilder = true;
     isProxmox = true;
+    network = {
+      primaryInterface = "enp3s0f0";
+      reservation = {
+        enable = true;
+        address = "192.168.15.100";
+        identifiers = [ "ac:b4:80:40:05:2e" ];
+      };
+    };
   };
-  host.network.primaryInterface = "enp3s0f0";
   host.ups = {
     server = {
       description = "APC UPS 1500VA";

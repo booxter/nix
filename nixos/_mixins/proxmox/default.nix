@@ -15,7 +15,7 @@ let
   memorySize = hostSpec.memorySize or 8;
   balloonSize = hostSpec.balloonSize or null;
   diskSize = hostSpec.diskSize or 100;
-  dhcpReservation = hostSpec.dhcpReservation or null;
+  reservation = config.host.network.reservation;
   primaryInterface = config.host.network.primaryInterface;
 in
 {
@@ -73,7 +73,7 @@ in
         ];
 
         services.proxmox-ve = {
-          ipAddress = hostSpec.ipAddress;
+          ipAddress = config.host.network.ipAddress;
           enable = true;
           bridges = [ bridgeName ];
         };
@@ -137,8 +137,8 @@ in
               model = "virtio";
               bridge = bridgeName;
             }
-            // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
-              macaddr = dhcpReservation.match;
+            // inputs.nixpkgs.lib.optionalAttrs reservation.enable {
+              macaddr = builtins.head reservation.identifiers;
             }
           )
         ];

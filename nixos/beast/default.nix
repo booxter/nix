@@ -27,7 +27,14 @@
 
   host.observability.blackbox.remote.enable = true;
   host.backups.server.enable = true;
-  host.network.primaryInterface = "enp6s0";
+  host.network = {
+    primaryInterface = "enp6s0";
+    reservation = {
+      enable = true;
+      address = "192.168.16.3";
+      identifiers = [ "bc:fc:e7:3b:fe:da" ];
+    };
+  };
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
   host.ups = {

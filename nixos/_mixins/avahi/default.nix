@@ -5,7 +5,7 @@
   ...
 }:
 let
-  aliasAddress = hostSpec.ipAddress;
+  aliasAddress = config.host.network.ipAddress;
   aliases = config.host.internalHttps.localAliases;
   aliasService = alias: {
     name = "avahi-alias-${alias}";

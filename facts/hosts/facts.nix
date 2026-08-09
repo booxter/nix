@@ -5,21 +5,6 @@
 let
   inherit (context) frame;
 
-  builderDhcpReservations = {
-    "1" = {
-      match = "bc:24:11:49:bf:fc";
-      ip = "192.168.12.106";
-    };
-    "2" = {
-      match = "bc:24:11:dc:ea:2c";
-      ip = "192.168.13.243";
-    };
-    "3" = {
-      match = "bc:24:11:2a:ee:d7";
-      ip = "192.168.11.114";
-    };
-  };
-
   builderSpec =
     idx:
     let
@@ -32,7 +17,6 @@ let
       realm = "home";
       userProfile = "personal";
       proxNode = "prx${idx'}-lab";
-      dhcpReservation = builderDhcpReservations.${idx'};
       memorySize = 64;
       balloonSize = 48;
       diskSize = 150;
@@ -49,12 +33,10 @@ let
     let
       index' = toString index;
       name = "prx${index'}-lab";
-      ipAddress = "192.168.15.${toString (index + 9)}";
     in
     {
       hostKind = "proxmox";
       inherit
-        ipAddress
         macAddress
         name
         proxmoxUpgradeTime
@@ -63,36 +45,9 @@ let
       userProfile = "personal";
       hmFull = false;
       observability.capacityProfile = "hypervisor";
-      dhcpReservation = {
-        match = macAddress;
-        ip = ipAddress;
-      };
     };
 in
 {
-  staticDhcpReservations = [
-    {
-      identifiers = [ "7c:b7:7b:04:05:99" ];
-      hostname = "mdx";
-      ip = "192.168.10.100";
-    }
-    {
-      identifiers = [ "06:b5:a3:b9:6b:e0" ];
-      hostname = "mlt";
-      ip = "192.168.11.2";
-    }
-    {
-      identifiers = [ "78:2d:7e:24:2d:f9" ];
-      hostname = "sw-lab";
-      ip = "192.168.15.1";
-    }
-    {
-      identifiers = [ "bc:fc:e7:3b:f5:99" ];
-      hostname = "beast-ipmi";
-      ip = "192.168.16.4";
-    }
-  ];
-
   darwin = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
       realm = "home";
@@ -132,10 +87,6 @@ in
       isOperatorSeat = true;
       isSecretsOperator = true;
       sshTicket.allowX11Forwarding = true;
-      dhcpReservation = {
-        match = "9c:bf:0d:00:fa:0a";
-        ip = "192.168.11.228";
-      };
     }
     {
       hostKind = "proxmox";
@@ -143,12 +94,7 @@ in
       realm = "work";
       userProfile = "nvidia";
       hmFull = false;
-      ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
-      dhcpReservation = {
-        match = "ac:b4:80:40:05:2e";
-        ip = "192.168.15.100";
-      };
     }
     {
       hostKind = "nixos";
@@ -158,10 +104,6 @@ in
       critical = true;
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
-      dhcpReservation = {
-        match = "bc:fc:e7:3b:fe:da";
-        ip = "192.168.16.3";
-      };
     }
     (labProxmoxSpec {
       index = 1;
@@ -184,10 +126,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       isOperatorSeat = true;
-      dhcpReservation = {
-        match = "bc:24:11:ed:30:d3";
-        ip = "192.168.10.138";
-      };
       cores = 64;
       memorySize = 128;
       proxNode = "nvws";
@@ -197,10 +135,6 @@ in
       name = "cache";
       realm = "home";
       userProfile = "personal";
-      dhcpReservation = {
-        match = "bc:24:11:0d:85:41";
-        ip = "192.168.20.7";
-      };
       hmFull = false;
       cores = 16;
       memorySize = 16;
@@ -214,10 +148,6 @@ in
       cores = 16;
       memorySize = 32;
       hmFull = false;
-      dhcpReservation = {
-        match = "bc:24:11:19:4d:d1";
-        ip = "192.168.20.2";
-      };
     }
     {
       isVM = true;
@@ -228,10 +158,6 @@ in
       memorySize = 16;
       diskSize = 300;
       hmFull = false;
-      dhcpReservation = {
-        match = "bc:24:11:06:e8:8b";
-        ip = "192.168.13.110";
-      };
     }
     {
       isVM = true;
@@ -242,10 +168,6 @@ in
       memorySize = 8;
       diskSize = 64;
       hmFull = false;
-      dhcpReservation = {
-        match = "bc:24:11:91:b5:77";
-        ip = "192.168.20.3";
-      };
     }
     {
       isVM = true;
@@ -256,10 +178,6 @@ in
       memorySize = 16;
       diskSize = 80;
       hmFull = false;
-      dhcpReservation = {
-        match = "bc:24:11:fd:eb:9c";
-        ip = "192.168.20.4";
-      };
     }
     {
       isVM = true;
@@ -275,10 +193,6 @@ in
       memorySize = 4;
       diskSize = 50;
       hmFull = false;
-      dhcpReservation = {
-        match = "bc:24:11:c6:ab:fc";
-        ip = "192.168.20.5";
-      };
     }
     {
       isVM = true;
@@ -290,10 +204,6 @@ in
       memorySize = 8;
       diskSize = 80;
       hmFull = false;
-      dhcpReservation = {
-        match = "02:48:4f:4d:45:01";
-        ip = "192.168.20.6";
-      };
     }
   ]
   ++ map builderSpec [

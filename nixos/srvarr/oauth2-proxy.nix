@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
@@ -32,7 +31,7 @@ let
     "radarr"
     "sonarr"
   ];
-  srvarrAddress = facts.hosts.nixos.srvarr.ipAddress;
+  srvarrAddress = config.host.network.ipAddress;
   backendPorts = {
     bazarr = config.services.bazarr.listenPort;
     houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;

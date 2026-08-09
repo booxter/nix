@@ -2,6 +2,7 @@
   config,
   facts,
   lib,
+  outputs,
   ...
 }:
 let
@@ -9,6 +10,7 @@ let
   serverName = cfg.client.server;
   serverSpec = if serverName == null then null else facts.hosts.nixos.${serverName} or null;
   upsServer = if serverName == null then null else facts.ups.serversByName.${serverName} or null;
+  fleetNetwork = import ../../_lib/fleet-host-network.nix { inherit config outputs; };
   clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   serverCredentialMode =
     if serverSpec == null then null else facts.realms.${serverSpec.realm}.services.ups.credentialMode;
@@ -54,7 +56,7 @@ in
         enable = true;
         mode = "netclient";
         upsmon.monitor.${monitorName} = {
-          system = "${upsServer.name}@${upsServer.address}";
+          system = "${upsServer.name}@${fleetNetwork.addressFor serverName}";
           user = "upsslave";
           inherit passwordFile;
           type = "slave";

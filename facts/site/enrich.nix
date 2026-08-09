@@ -1,11 +1,9 @@
 {
   context,
-  facts,
 }:
 raw:
 let
   inherit (context) lanDnsRecordTtlSeconds lanDomain;
-  hosts = facts.hosts;
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
     ttlSeconds = lanDnsRecordTtlSeconds;
@@ -21,7 +19,7 @@ raw
     staticRoutes = [
       {
         destination = raw.wireguard.home.cidr;
-        nextHop = hosts.nixos.${raw.wireguard.home.gateway.host}.ipAddress;
+        nextHopHost = raw.wireguard.home.gateway.host;
         distance = 1;
         name = "wg-home";
       }
