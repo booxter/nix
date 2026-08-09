@@ -26,7 +26,7 @@ in
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.blackbox.remote.enable = true;
-  hardware = {
+  host.hardware = {
     drmCard = "card1";
     displayMode = {
       width = 3840;
@@ -77,7 +77,7 @@ in
   ];
 
   security.pam.services.hyprlock = { };
-  remote-control.server = {
+  host.remote-control.server = {
     vnc = {
       enable = true;
       basePort = 5933;

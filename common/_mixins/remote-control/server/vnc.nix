@@ -5,9 +5,9 @@
   ...
 }:
 let
-  cfg = config.remote-control.server.vnc;
-  displayMode = config.hardware.displayMode;
-  displayScale = config.hardware.scale;
+  cfg = config.host.remote-control.server.vnc;
+  displayMode = config.host.hardware.displayMode;
+  displayScale = config.host.hardware.scale;
   displayResolution = "${toString displayMode.width}x${toString displayMode.height}";
   logicalDisplayWidth = builtins.floor (displayMode.width / displayScale);
   logicalDisplayHeight = builtins.floor (displayMode.height / displayScale);
@@ -22,7 +22,7 @@ let
       width = logicalDisplayWidth;
       height = logicalDisplayHeight;
     };
-  }) config.hardware.displays;
+  }) config.host.hardware.displays;
 
   maxLogicalExtent =
     position: size:
@@ -78,7 +78,7 @@ let
     }:
     ''
       [reframe]
-      card=${config.hardware.drmCard}
+      card=${config.host.hardware.drmCard}
       connector=${connector}
       rotation=0
       desktop-width=${toString desktopWidth}
@@ -147,20 +147,20 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = config.hardware.drmCard != null;
-        message = "VNC remote control requires hardware.drmCard";
+        assertion = config.host.hardware.drmCard != null;
+        message = "VNC remote control requires host.hardware.drmCard";
       }
       {
         assertion = displayMode != null;
-        message = "VNC remote control requires hardware.displayMode";
+        message = "VNC remote control requires host.hardware.displayMode";
       }
       {
         assertion = displayScale != null;
-        message = "VNC remote control requires hardware.scale";
+        message = "VNC remote control requires host.hardware.scale";
       }
       {
         assertion = displays != [ ];
-        message = "VNC remote control requires at least one hardware.displays entry";
+        message = "VNC remote control requires at least one host.hardware.displays entry";
       }
     ];
 

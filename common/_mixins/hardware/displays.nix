@@ -1,6 +1,6 @@
 { lib, ... }:
 {
-  options.hardware = {
+  options.host.hardware = {
     drmCard = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
       default = null;

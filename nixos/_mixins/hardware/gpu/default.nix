@@ -5,7 +5,7 @@
     ./rocm.nix
   ];
 
-  options.hardware.gpu = {
+  options.host.hardware.gpu = {
     vendors = lib.mkOption {
       type = lib.types.listOf (
         lib.types.enum [
