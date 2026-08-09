@@ -42,40 +42,7 @@ function toBuildMatrixEntries(targets) {
   });
 }
 
-function appendMapping(mapping, prefix, field, name) {
-  if (!prefix) {
-    return;
-  }
-
-  if (!mapping.has(prefix)) {
-    mapping.set(prefix, new Set());
-  }
-  mapping.get(prefix).add(name);
-}
-
-function buildHostPathMap(targets, field) {
-  const mapping = new Map();
-
-  for (const target of targets) {
-    const hostTarget = hostTargetForAttr(target.attr);
-    if (hostTarget) {
-      appendMapping(
-        mapping,
-        `${hostTarget.platform}/${hostTarget.host}/`,
-        field,
-        target.name,
-      );
-    }
-  }
-
-  return Array.from(mapping.entries()).map(([prefix, names]) => ({
-    prefix,
-    [field]: Array.from(names),
-  }));
-}
-
 module.exports = {
-  buildHostPathMap,
   nixBuildCmd,
   toBuildMatrixEntries,
 };

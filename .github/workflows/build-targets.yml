@@ -25,7 +25,7 @@ jobs:
     name: Format check
     runs-on: ubuntu-slim
     outputs:
-      ci_target_facts: ${{ steps.ci_target_facts.outputs.facts }}
+      matrix: ${{ steps.build_matrix.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,91 +54,28 @@ jobs:
           target_facts="$(nix eval --json .#lib.ciTargetFacts)"
           printf 'facts=%s\n' "${target_facts}" >>"${GITHUB_OUTPUT}"
 
-  plan-build-matrix:
-    name: plan build matrix
-    needs:
-      - format
-    runs-on: ubuntu-slim
-    outputs:
-      docs_only: ${{ steps.plan.outputs.docs_only }}
-      matrix: ${{ steps.plan.outputs.matrix }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
       - name: Compute build matrix
-        id: plan
+        id: build_matrix
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          CI_TARGET_FACTS: ${{ needs.format.outputs.ci_target_facts }}
+          CI_TARGET_FACTS: ${{ steps.ci_target_facts.outputs.facts }}
         with:
           script: |
-            const planner = require("./.github/scripts/plan-ci-matrix.js");
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
             const buildTargets = JSON.parse(process.env.CI_TARGET_FACTS).buildTargets;
-            const fullMatrix = {
+            const matrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
-            const hostPathMap = targetInventory.buildHostPathMap(buildTargets, "jobs");
-
-            if (context.eventName !== "pull_request") {
-              core.info("Non-PR event, using full build matrix.");
-              core.setOutput("docs_only", "false");
-              core.setOutput("matrix", JSON.stringify(fullMatrix));
-              return;
-            }
-
-            const result = await planner.planMatrix({
-              context,
-              github,
-              eventName: context.eventName,
-              fullMatrix,
-              machinePathMap: hostPathMap,
-              mappingField: "jobs",
-              skipWhenDocsOnly: true,
-              skipWhenSelectionEmpty: true,
-              scopeByOs: true,
-            });
-            core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
-            core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
-            if (result.docsOnly) {
-              core.setOutput("docs_only", "true");
-              core.info("Docs-only pull request detected, skipping heavy build jobs.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              return;
-            }
-            if (result.ignoredOnly) {
-              core.setOutput("docs_only", "true");
-              core.info("Only selection-neutral files changed, skipping heavy build jobs.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              return;
-            }
-            core.setOutput("docs_only", "false");
-            if (result.scopeReason === "darwin") {
-              core.info(`Darwin-only change detected, scoping matrix to ${result.matrix.include.length} macOS job(s).`);
-            } else if (result.scopeReason === "nixos") {
-              core.info(`NixOS-only change detected, scoping matrix to ${result.matrix.include.length} Linux job(s).`);
-            }
-            core.info(
-              result.machineSpecific
-                ? `Using machine-specific build matrix with ${result.matrix.include.length} job(s).`
-                : `Using scoped/full build matrix with ${result.matrix.include.length} job(s).`
-            );
-
-            core.setOutput("matrix", JSON.stringify(result.matrix));
+            core.setOutput("matrix", JSON.stringify(matrix));
 
   build:
-    if: needs.plan-build-matrix.outputs.docs_only != 'true'
     needs:
       - format
-      - plan-build-matrix
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.plan-build-matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.format.outputs.matrix) }}
 
     timeout-minutes: 180
 
@@ -347,16 +284,13 @@ jobs:
   post-config-diffs:
     name: post config diffs
     needs:
-      - plan-build-matrix
       - format
       - build
     if: >-
       ${{
         always() &&
         github.event_name == 'pull_request' &&
-        needs.plan-build-matrix.result == 'success' &&
         needs.format.result == 'success' &&
-        needs.plan-build-matrix.outputs.docs_only != 'true' &&
         needs.build.result == 'success'
       }}
     runs-on: ubuntu-slim
@@ -379,7 +313,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          BUILD_MATRIX: ${{ needs.plan-build-matrix.outputs.matrix }}
+          BUILD_MATRIX: ${{ needs.format.outputs.matrix }}
           HEAD_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -405,15 +339,15 @@ jobs:
               return;
             }
 
-            let plannedMatrix = { include: [] };
+            let buildMatrix = { include: [] };
             try {
-              plannedMatrix = JSON.parse(process.env.BUILD_MATRIX || "{\"include\":[]}");
+              buildMatrix = JSON.parse(process.env.BUILD_MATRIX || "{\"include\":[]}");
             } catch (error) {
-              core.warning(`Could not parse planned build matrix: ${error.message}`);
+              core.warning(`Could not parse build matrix: ${error.message}`);
             }
 
             const safeMachineName = (machine) => machine.replace(/[^A-Za-z0-9._-]/g, "-");
-            const expectedDiffEntries = (plannedMatrix.include || [])
+            const expectedDiffEntries = (buildMatrix.include || [])
               .filter((entry) => entry.diff_machine)
               .map((entry) => ({
                 key: `${entry.diff_order}-${safeMachineName(entry.diff_machine)}`,
@@ -628,7 +562,7 @@ jobs:
                 if (packageChangeEntries.length > 0) {
                   core.notice("Skipping auto-merge because major config diff changes were detected.");
                 } else {
-                  core.notice("Skipping auto-merge because no config diff-capable targets were selected.");
+                  core.notice("Skipping auto-merge because the matrix has no config diff-capable targets.");
                 }
                 return;
               }
@@ -730,7 +664,7 @@ jobs:
             } else if (expectedDiffEntries.length > 0) {
               appendBlock("_None._");
             } else {
-              appendBlock("_No selected build target has config diff support._");
+              appendBlock("_The build matrix has no config diff-capable target._");
             }
 
             appendBlock("### Minor changes");
@@ -808,7 +742,6 @@ jobs:
     name: CI (all jobs)
     if: ${{ always() }}
     needs:
-      - plan-build-matrix
       - format
       - build
       - post-config-diffs
@@ -818,17 +751,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ needs.plan-build-matrix.result }}" != "success" ] || [ "${{ needs.format.result }}" != "success" ]; then
+          if [ "${{ needs.format.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
-            echo "plan-build-matrix=${{ needs.plan-build-matrix.result }}"
             echo "format=${{ needs.format.result }}"
             exit 1
-          fi
-
-          if [ "${{ needs.plan-build-matrix.outputs.docs_only }}" = "true" ]; then
-            echo "Docs-only change detected; skipped build."
-            echo "All CI jobs passed."
-            exit 0
           fi
 
           if [ "${{ needs.build.result }}" != "success" ]; then
