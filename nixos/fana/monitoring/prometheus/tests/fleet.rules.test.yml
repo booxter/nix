@@ -312,7 +312,7 @@ tests:
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Proxmox node memory headroom low on prx1-lab"
+              summary: "Hypervisor memory headroom low on prx1-lab"
               description: "prx1-lab has less than 16 GiB available or is above 90% memory use for 5 minutes."
 
   - interval: 30s
@@ -334,7 +334,7 @@ tests:
               job: node-mtls
               severity: critical
             exp_annotations:
-              summary: "Proxmox node memory headroom critical on prx1-lab"
+              summary: "Hypervisor memory headroom critical on prx1-lab"
               description: "prx1-lab has less than 8 GiB available or is above 95% memory use for 5 minutes."
 
   - interval: 30s
