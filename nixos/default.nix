@@ -28,6 +28,7 @@ in
       ./_mixins/builder.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware
+      ./_mixins/hardware
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/nix

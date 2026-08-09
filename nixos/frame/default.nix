@@ -27,6 +27,7 @@ in
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.blackbox.remote.enable = true;
+  hardware.gpu = [ "amd" ];
   nixpkgs.config.rocmSupport = true;
 
   networking.wireless.enable = false;
@@ -75,9 +76,6 @@ in
   };
 
   environment.systemPackages = with pkgs; [
-    amdgpu_top
-    clinfo
-    radeontop
     rocmPackages.rocm-smi
     rocmPackages.rocminfo
     waypipe
