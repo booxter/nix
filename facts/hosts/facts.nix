@@ -107,7 +107,6 @@ in
       userProfile = "personal";
       availability = "intermittent";
       observability.capacityProfile = "interactive";
-      hasTouchId = true;
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
@@ -132,7 +131,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       availability = "intermittent";
-      hasTouchId = true;
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;

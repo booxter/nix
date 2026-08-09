@@ -85,14 +85,6 @@ in
       description = "Expected host availability for monitoring.";
     };
 
-    hasTouchId = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.hasTouchId or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host has Touch ID-backed authentication.";
-    };
-
     isSecretsOperator = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isSecretsOperator or false;
@@ -103,7 +95,7 @@ in
 
     hasHardwareAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = config.host.hasTouchId || config.host.hasYubiAgeIdentity;
+      default = (isDarwin && config.host.hardware.hasTouchId) || config.host.hasYubiAgeIdentity;
       readOnly = true;
       internal = true;
       description = "Whether this host can use a hardware-backed age identity.";

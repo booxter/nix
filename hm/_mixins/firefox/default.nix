@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   pkgs,
@@ -10,12 +11,18 @@ let
   dashUrl = "https://dash.${publicDomain}";
   degoogUrl = "https://goo.${publicDomain}";
   firefoxDohExcludedDomains = [ publicDomain ];
+  useSignedDarwinFirefox =
+    isDarwin && osConfig.host.hardware.hasTouchId && config.programs.firefox.enable;
 in
 {
   stylix.targets.firefox.profileNames = [ "default" ];
 
   programs.firefox = {
     enable = true;
+    # Home Manager's wrapper replaces the executable inside Mozilla's signed
+    # app bundle and breaks the entitlement macOS requires for Touch ID-backed
+    # passkeys. Install the upstream bundle separately on Touch ID Macs.
+    package = lib.mkIf useSignedDarwinFirefox null;
     # Pin Firefox to the legacy on-disk profile root until we intentionally
     # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
     configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
@@ -144,4 +151,6 @@ in
   home.sessionVariables = {
     BROWSER = if isDarwin then "open" else "xdg-open";
   };
+
+  home.packages = lib.mkIf useSignedDarwinFirefox [ pkgs.firefox-bin-unwrapped ];
 }

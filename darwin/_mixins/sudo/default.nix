@@ -1,7 +1,7 @@
 { config, lib, ... }:
 {
-  security.pam.services.sudo_local.touchIdAuth = lib.mkDefault config.host.hasTouchId;
-  security.pam.services.sudo_local.reattach = lib.mkDefault config.host.hasTouchId;
+  security.pam.services.sudo_local.touchIdAuth = lib.mkDefault config.host.hardware.hasTouchId;
+  security.pam.services.sudo_local.reattach = lib.mkDefault config.host.hardware.hasTouchId;
 
   # Set sudo timeout to 30 minutes
   security.sudo.extraConfig = ''

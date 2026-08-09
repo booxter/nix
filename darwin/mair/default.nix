@@ -21,7 +21,7 @@ in
   };
 
   host = {
-    browser.firefox.touchIdPasskeys.enable = true;
+    hardware.isLaptop = true;
     remote-control = {
       client = {
         vnc.enable = true;

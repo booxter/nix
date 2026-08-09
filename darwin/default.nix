@@ -22,6 +22,7 @@ in
   ++ [
     ./_mixins/defaults
     ./_mixins/fonts
+    ./_mixins/hardware
     ./_mixins/fleet-cache-warmer
     ./_mixins/homebrew
     ./_mixins/internal-pki

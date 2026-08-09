@@ -11,6 +11,7 @@ in
   system.stateVersion = 5;
 
   host.codex.mcp.maas.enable = true;
+  host.hardware.isLaptop = true;
 
   host.fleetCacheWarmer = {
     enable = true;
