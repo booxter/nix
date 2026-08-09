@@ -19,12 +19,16 @@ def _sync_directory(path: Path) -> None:
 def atomic_path(
     path: Path,
     *,
-    mode: int = 0o600,
+    mode: int | None = None,
+    create_mode: int = 0o600,
     uid: int | None = None,
     gid: int | None = None,
 ) -> Iterator[Path]:
     """Yield a temporary sibling and durably replace path on success."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    effective_mode = mode
+    if effective_mode is None:
+        effective_mode = path.stat().st_mode & 0o777 if path.exists() else create_mode
     descriptor, temporary_name = tempfile.mkstemp(
         dir=path.parent,
         prefix=f".{path.name}.",
@@ -41,7 +45,7 @@ def atomic_path(
                     uid if uid is not None else -1,
                     gid if gid is not None else -1,
                 )
-            os.fchmod(descriptor, mode)
+            os.fchmod(descriptor, effective_mode)
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
@@ -55,13 +59,20 @@ def write_text_atomic(
     path: Path,
     content: str,
     *,
-    mode: int = 0o600,
+    mode: int | None = None,
+    create_mode: int = 0o600,
     uid: int | None = None,
     gid: int | None = None,
     encoding: str = "utf-8",
 ) -> None:
     """Durably replace a text file without exposing partial content."""
-    with atomic_path(path, mode=mode, uid=uid, gid=gid) as temporary:
+    with atomic_path(
+        path,
+        mode=mode,
+        create_mode=create_mode,
+        uid=uid,
+        gid=gid,
+    ) as temporary:
         temporary.write_text(content, encoding=encoding)
 
 
@@ -69,10 +80,17 @@ def write_bytes_atomic(
     path: Path,
     content: bytes,
     *,
-    mode: int = 0o600,
+    mode: int | None = None,
+    create_mode: int = 0o600,
     uid: int | None = None,
     gid: int | None = None,
 ) -> None:
     """Durably replace a binary file without exposing partial content."""
-    with atomic_path(path, mode=mode, uid=uid, gid=gid) as temporary:
+    with atomic_path(
+        path,
+        mode=mode,
+        create_mode=create_mode,
+        uid=uid,
+        gid=gid,
+    ) as temporary:
         temporary.write_bytes(content)
