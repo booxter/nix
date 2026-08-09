@@ -9,7 +9,6 @@ let
   cfg = config.host.nixCache;
   realmNixCache = facts.realms.${config.host.realm}.services.nixCache or null;
   username = config.host.username;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;
   hasBuildMachines = config.nix.buildMachines != [ ];
   needsProxmoxCache =
@@ -73,7 +72,7 @@ in
           "https://cache.saumon.network/proxmox-nixos"
         ];
         extra-trusted-public-keys = lib.optionals needsProxmoxCache [
-          (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
+          facts.public-keys.nix-cache.proxmox-nixos
         ];
       }
       // lib.optionalAttrs hasBuildMachines {

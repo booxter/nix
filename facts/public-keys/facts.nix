@@ -1,6 +1,6 @@
 {
   lib,
-  root ? ../../public-keys,
+  root ? ./files,
 }:
 (import ../_lib/namespaced-files.nix { inherit lib; }) {
   inherit root;

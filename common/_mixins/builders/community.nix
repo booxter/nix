@@ -1,11 +1,11 @@
 {
-  lib,
   config,
+  facts,
+  lib,
   ...
 }:
 let
   username = config.host.username;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   linuxFeatures = [
     "benchmark"
     "big-parallel"
@@ -15,7 +15,7 @@ let
   communityBuilders = {
     darwin-builder = {
       hostName = "darwin-build-box.nix-community.org";
-      publicKeyFile = ../../../public-keys/hosts/nix-community-darwin-build-box.pub;
+      publicKey = facts.public-keys.hosts.nix-community-darwin-build-box;
       systems = [ "aarch64-darwin" ];
       maxJobs = 2;
       speedFactor = 20;
@@ -23,7 +23,7 @@ let
     };
     remote-linux-builder = {
       hostName = "aarch64-build-box.nix-community.org";
-      publicKeyFile = ../../../public-keys/hosts/nix-community-aarch64-build-box.pub;
+      publicKey = facts.public-keys.hosts.nix-community-aarch64-build-box;
       systems = [ "aarch64-linux" ];
       maxJobs = 10;
       speedFactor = 20;
@@ -31,7 +31,7 @@ let
     };
     remote-linux-x86-builder = {
       hostName = "build-box.nix-community.org";
-      publicKeyFile = ../../../public-keys/hosts/nix-community-build-box.pub;
+      publicKey = facts.public-keys.hosts.nix-community-build-box;
       systems = [ "x86_64-linux" ];
       maxJobs = 5;
       speedFactor = 20;
@@ -47,7 +47,7 @@ in
       knownHosts = lib.mapAttrs' (
         _: builder:
         lib.nameValuePair builder.hostName {
-          publicKey = readPublicKey builder.publicKeyFile;
+          inherit (builder) publicKey;
         }
       ) communityBuilders;
       extraConfig =

@@ -7,11 +7,9 @@
 let
   username = config.host.username;
   realmSsh = facts.realms.${config.host.realm}.trust.ssh;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
   managedKnownHosts = lib.mapAttrs (name: spec: {
     hostNames = spec.sshKnownHostNames;
-    publicKey = readPublicKey (hostKeyPath name);
+    publicKey = facts.public-keys.hosts.${name};
   }) facts.hosts.hostSpecsByName;
 in
 {
@@ -49,7 +47,7 @@ in
     programs.ssh.knownHosts = managedKnownHosts // {
       frame-initrd = {
         hostNames = [ "frame-initrd" ];
-        publicKey = readPublicKey ../../../public-keys/hosts/frame-initrd.pub;
+        publicKey = facts.public-keys.hosts.frame-initrd;
       };
     };
 

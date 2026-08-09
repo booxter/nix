@@ -1,11 +1,9 @@
 {
+  facts,
   inputs,
   lib,
   ...
 }:
-let
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-in
 {
   system.stateVersion = "25.11";
 
@@ -48,8 +46,8 @@ in
         enable = true;
         kernelModules = [ "r8169" ];
         authorizedKeys = [
-          (readPublicKey ../../public-keys/users/mair.pub)
-          (readPublicKey ../../public-keys/users/mmini.pub)
+          facts.public-keys.users.mair
+          facts.public-keys.users.mmini
         ];
       };
     };

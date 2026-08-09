@@ -1,12 +1,10 @@
 {
   config,
   facts,
-  lib,
   ...
 }:
 let
   username = config.host.username;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lan = facts.site.lan;
   wgHome = facts.site.wireguard.home;
 in
@@ -45,7 +43,7 @@ in
 
     peers = [
       {
-        publicKey = readPublicKey ../../public-keys/wireguard/home-gateway.pub;
+        publicKey = facts.public-keys.wireguard.home-gateway;
         endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
         allowedIPs = [
           wgHome.cidr
