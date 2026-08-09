@@ -449,7 +449,7 @@ in
           "pveproxy.service"
         ]
         ++ sopsInstallSecretsUnit;
-        environment.REQUESTS_CA_BUNDLE = toString internalPkiRootCaPath;
+        environment.REQUESTS_CA_BUNDLE = "${internalPkiRootCaPath}";
       };
 
       host.observability.prometheusEndpoints.pve = {

@@ -420,7 +420,7 @@ in
       key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
       checkHost = ollamaInternalHost;
       sni = ollamaInternalHost;
-      CAFile = toString config.host.internalPki.rootCaCertificate;
+      CAFile = "${config.host.internalPki.rootCaCertificate}";
       verifyChain = true;
       OCSPaia = false;
     };
