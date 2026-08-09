@@ -8,7 +8,7 @@ let
   accounts = hostInventory.accounts;
   resources = lib.filterAttrs (
     _: resource: resource.provider == hostSpec.name
-  ) hostInventory.sharedStorage.resources;
+  ) hostInventory.shared-storage.resources;
   managedUserSpecs = lib.concatMap (
     resource:
     map (name: {

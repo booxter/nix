@@ -8,8 +8,8 @@
 let
   darwinHostSpecs = lib.mapAttrsToList (
     name: spec: spec // { inherit name; }
-  ) hostInventory.darwinHosts;
-  allHostSpecs = darwinHostSpecs ++ hostInventory.nixosHostSpecs;
+  ) hostInventory.hosts.darwinHosts;
+  allHostSpecs = darwinHostSpecs ++ hostInventory.hosts.nixosHostSpecs;
   vncHosts = builtins.filter (host: host.vnc.enable or false) allHostSpecs;
   directHosts = builtins.filter (host: !(host.vnc.sshTunnel or false)) vncHosts;
   tunneledHosts = builtins.filter (host: host.vnc.sshTunnel or false) vncHosts;

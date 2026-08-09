@@ -8,7 +8,7 @@
   ...
 }:
 let
-  sourceLibraryRoot = "${hostInventory.sharedStorage.resources.media.path}/library";
+  sourceLibraryRoot = "${hostInventory.shared-storage.resources.media.path}/library";
   jellyfinLibraryRoot = "/media/library";
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;

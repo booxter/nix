@@ -1,19 +1,22 @@
 {
   context,
-  hosts,
+  factLibraryName,
+  inventory,
   inventoryLib,
   lib,
-  nixCaches,
   readPublicKey,
 }:
 inventoryLib.finalize {
+  name = factLibraryName;
   facts = import ./facts.nix {
-    inherit nixCaches readPublicKey;
-    inherit (context) publicDomain;
+    inherit readPublicKey;
+    inherit (context) lanDomain publicDomain;
+    nixCaches = inventory.nix-caches;
   };
   enrich = import ./enrich.nix {
-    inherit hosts lib;
+    inherit lib;
     inherit (context) lanDnsRecordTtlSeconds lanDomain;
+    hosts = inventory.hosts;
   };
   assertions = import ./asserts.nix { inherit lib; };
 }

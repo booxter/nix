@@ -9,7 +9,7 @@
 }:
 let
   pkiPkgs = import ./pkgs pkgs;
-  caServer = hostInventory.nixosHosts.pki.caServer;
+  caServer = hostInventory.hosts.nixosHosts.pki.caServer;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
@@ -22,11 +22,11 @@ let
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   caDnsNames = lib.unique (
-    hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain hostSpec
+    hostSpec.certificateDnsNames
     ++ [
       config.networking.hostName
       config.services.avahi.hostName
-      (hostInventory.toLocalDnsName config.services.avahi.hostName)
+      "${config.services.avahi.hostName}.local"
     ]
   );
   bootstrapConfig = (pkgs.formats.json { }).generate "step-ca-bootstrap.json" {

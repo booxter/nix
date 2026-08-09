@@ -16,7 +16,7 @@ let
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
-  hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain hostSpec;
+  hostCertificateDnsNames = hostSpec.certificateDnsNames;
   certInstallUnit = "proxmox-api-certificate.service";
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
@@ -27,10 +27,8 @@ let
     spec:
     (spec.hostKind or null) == "proxmox"
     && (hostInventory.realms.${spec.realm}.services.proxmox or null) != null
-  ) hostInventory.nixosHostSpecs;
-  proxmoxLabHosts = lib.unique (
-    lib.concatMap (hostInventory.toNixosHostCertificateDnsNames config.host.network.lanDomain) proxmoxLabHostSpecs
-  );
+  ) hostInventory.hosts.nixosHostSpecs;
+  proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxLabHostSpecs);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [

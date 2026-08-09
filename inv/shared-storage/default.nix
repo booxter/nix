@@ -1,11 +1,15 @@
 {
-  accounts,
+  factLibraryName,
+  inventory,
   inventoryLib,
   lib,
-  mediaLibraries,
 }:
 inventoryLib.finalize {
-  facts = import ./facts.nix { inherit mediaLibraries; };
-  enrich = import ./enrich.nix { inherit accounts lib; };
+  name = factLibraryName;
+  facts = import ./facts.nix { mediaLibraries = inventory.media-libraries; };
+  enrich = import ./enrich.nix {
+    accounts = inventory.accounts;
+    inherit lib;
+  };
   assertions = import ./asserts.nix { inherit lib; };
 }

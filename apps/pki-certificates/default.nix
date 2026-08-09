@@ -20,24 +20,24 @@ let
         name: system:
         let
           isLinux = lib.hasSuffix "-linux" system;
-          spec = hostInventory.hostSpecsByName.${name};
+          spec = hostInventory.hosts.hostSpecsByName.${name};
           caServer = spec.caServer or null;
         in
         {
           inherit system;
           configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
           runtimeHost = spec.name;
-          secretDomain = hostInventory.secretDomainsByHost.${name};
+          secretDomain = hostInventory.hosts.secretDomainsByHost.${name};
           caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
-      ) hostInventory.systemsByHost
+      ) hostInventory.hosts.systemsByHost
     )
   );
   unifiDefaultsFile = builtins.toFile "pki-unifi-defaults.json" (
     builtins.toJSON {
-      commonName = "unifi.${hostInventory.lanDomain}";
+      commonName = "unifi.${hostInventory.site.lan.domain}";
       sans = [
-        "unifi.${hostInventory.lanDomain}"
+        "unifi.${hostInventory.site.lan.domain}"
         "unifi"
       ];
       gatewayIp = hostInventory.site.lan.gateway.address;

@@ -14,7 +14,7 @@ let
   inventory = import ../../../ci { inherit hostInventory lib; };
   ciValidatedWarmTargets = map (target: target.attr) (
     lib.filter (
-      target: hostInventory.hostSpecsByName.${target.host}.realm == targetRealm
+      target: hostInventory.hosts.hostSpecsByName.${target.host}.realm == targetRealm
     ) inventory.buildTargets
   );
 in

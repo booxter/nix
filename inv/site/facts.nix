@@ -1,4 +1,5 @@
 {
+  lanDomain,
   nixCaches,
   publicDomain,
   readPublicKey,
@@ -15,6 +16,7 @@ rec {
   inherit nixCaches;
 
   lan = {
+    domain = lanDomain;
     cidr = "192.168.0.0/16";
     gateway = {
       host = "gateway";

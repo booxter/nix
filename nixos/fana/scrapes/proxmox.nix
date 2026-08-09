@@ -4,7 +4,7 @@
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) hostInventory.hosts.nixosHostSpecs;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)

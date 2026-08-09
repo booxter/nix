@@ -6,7 +6,7 @@
 let
   lan = hostInventory.site.lan;
   netboot = lan.netboot;
-  netbootHost = hostInventory.nixosHosts.${netboot.host};
+  netbootHost = hostInventory.hosts.nixosHosts.${netboot.host};
 
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
 
@@ -27,7 +27,7 @@ let
       })
       (
         builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
-          hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations
+          hostInventory.hosts.managedDhcpReservations ++ hostInventory.hosts.staticDhcpReservations
         )
       )
   );
@@ -46,7 +46,7 @@ let
     else
       null;
 
-  networkTftpServer = hostInventory.toHostIpv4Address netbootHost;
+  networkTftpServer = netbootHost.ipAddress;
 
   networkBootfile = netboot.bootfile;
   dnsRecordsByDomain = builtins.listToAttrs (

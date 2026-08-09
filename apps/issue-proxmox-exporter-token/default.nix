@@ -16,8 +16,8 @@ let
     builtins.toJSON (
       lib.mapAttrs (name: system: {
         inherit system;
-        secretDomain = hostInventory.secretDomainsByHost.${name};
-      }) hostInventory.systemsByHost
+        secretDomain = hostInventory.hosts.secretDomainsByHost.${name};
+      }) hostInventory.hosts.systemsByHost
     )
   );
   runtimePath = lib.makeBinPath [

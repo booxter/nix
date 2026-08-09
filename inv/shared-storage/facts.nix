@@ -112,7 +112,7 @@ let
           "usenet/sonarr"
           "usenet/shelfmark"
         ]
-    ++ map (library: mediaDirectory { path = "library/${library.path}"; }) mediaLibraries;
+    ++ map (library: mediaDirectory { path = "library/${library.path}"; }) mediaLibraries.libraries;
 in
 {
   resources = {

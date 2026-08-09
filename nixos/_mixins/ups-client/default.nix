@@ -7,7 +7,10 @@
 let
   cfg = config.host.ups;
   serverName = cfg.client.server;
-  serverSpec = if serverName == null then null else hostInventory.nixosHosts.${serverName} or null;
+  serverSpec =
+    if serverName == null then null else hostInventory.hosts.nixosHosts.${serverName} or null;
+  upsServer =
+    if serverName == null then null else hostInventory.ups.serversByName.${serverName} or null;
   clientCredentialMode = hostInventory.realms.${config.host.realm}.services.ups.credentialMode;
   serverCredentialMode =
     if serverSpec == null then
@@ -35,7 +38,7 @@ in
         }
       ];
     }
-    (lib.mkIf (serverSpec != null) {
+    (lib.mkIf (serverSpec != null && upsServer != null) {
       host.ups.scheduler = {
         enable = true;
         inherit (cfg.shutdown) critical;
@@ -56,7 +59,7 @@ in
         enable = true;
         mode = "netclient";
         upsmon.monitor.${monitorName} = {
-          system = "${hostInventory.toUpsName serverName}@${hostInventory.toHostIpv4Address serverSpec}";
+          system = "${upsServer.name}@${upsServer.address}";
           user = "upsslave";
           inherit passwordFile;
           type = "slave";

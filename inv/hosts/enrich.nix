@@ -1,4 +1,5 @@
 {
+  lanDomain,
   lib,
   realms,
 }:
@@ -10,9 +11,41 @@ let
       realmName = spec.realm or (throw "host ${spec.name} does not declare a realm");
     in
     realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
-  normalizeHostSpec = spec: builtins.seq (realmFor spec) spec;
+  normalizeHostSpec =
+    spec:
+    let
+      validated = builtins.seq (realmFor spec) spec;
+      lowercaseName = lib.toLower validated.name;
+      ipAddress =
+        if validated ? dhcpReservation then validated.dhcpReservation.ip else validated.ipAddress or null;
+    in
+    validated
+    // lib.optionalAttrs (ipAddress != null) { inherit ipAddress; }
+    // {
+      localDnsName = "${validated.name}.local";
+      sshKnownHostNames = lib.unique (
+        [ validated.name ]
+        ++ lib.optional (lowercaseName != validated.name) lowercaseName
+        ++ lib.optional (lib.hasSuffix "-linux" validated.platform) "${validated.name}.${lanDomain}"
+        ++ [ "${validated.name}.local" ]
+        ++ lib.optional (lowercaseName != validated.name) "${lowercaseName}.local"
+      );
+    };
+  normalizeNixosHostSpec =
+    spec:
+    let
+      normalized = normalizeHostSpec spec;
+    in
+    normalized
+    // {
+      certificateDnsNames = [
+        normalized.name
+        "${normalized.name}.${lanDomain}"
+        normalized.localDnsName
+      ];
+    };
   darwinHosts = lib.mapAttrs (_: normalizeHostSpec) facts.darwinHosts;
-  nixosHostSpecs = map normalizeHostSpec facts.nixosHostSpecs;
+  nixosHostSpecs = map normalizeNixosHostSpec facts.nixosHostSpecs;
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
     builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
   );
@@ -29,15 +62,6 @@ let
     }) nixosHostSpecs
   );
   hostSpecsByName = darwinHosts // nixosHosts;
-  aliasIpv4Address =
-    spec:
-    if spec ? dhcpReservation then
-      spec.dhcpReservation.ip
-    else if spec ? ipAddress then
-      spec.ipAddress
-    else
-      throw "host ${spec.name} does not have a stable IPv4 address";
-  toLocalDnsName = label: "${label}.local";
 in
 facts
 // {
@@ -48,31 +72,8 @@ facts
     managedDhcpReservations
     nixosHosts
     nixosHostSpecs
-    toLocalDnsName
     ;
 
   secretDomainsByHost = lib.mapAttrs (_: spec: (realmFor spec).secretDomain) hostSpecsByName;
   systemsByHost = lib.mapAttrs (_: spec: spec.platform) hostSpecsByName;
-
-  toHostIpv4Address = aliasIpv4Address;
-  toNixosHostIpv4Address = name: aliasIpv4Address nixosHosts.${name};
-  toNixosHostCertificateDnsNames = domain: spec: [
-    spec.name
-    "${spec.name}.${domain}"
-    (toLocalDnsName spec.name)
-  ];
-  toSshKnownHostNames =
-    domain: spec:
-    let
-      inherit (spec) name;
-      lowercaseName = lib.toLower name;
-    in
-    lib.unique (
-      [ name ]
-      ++ lib.optional (lowercaseName != name) lowercaseName
-      ++ lib.optional (lib.hasSuffix "-linux" spec.platform) "${name}.${domain}"
-      ++ [ (toLocalDnsName name) ]
-      ++ lib.optional (lowercaseName != name) (toLocalDnsName lowercaseName)
-    );
-  toUpsName = name: "${lib.strings.toUpper name}-UPS";
 }

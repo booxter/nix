@@ -8,7 +8,7 @@
   ...
 }:
 let
-  mediaLibraries = hostInventory.mediaLibraries;
+  mediaLibraries = hostInventory.media-libraries.libraries;
   jellyfinLibraryRoot = "/media/library";
   watchstatePort = hostInventory.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";

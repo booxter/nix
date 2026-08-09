@@ -7,7 +7,7 @@ let
   mkRecord = domain: hostName: {
     type = "A_RECORD";
     inherit domain;
-    ipv4Address = hostInventory.toNixosHostIpv4Address hostName;
+    ipv4Address = hostInventory.hosts.nixosHosts.${hostName}.ipAddress;
     inherit ttlSeconds;
   };
   internalRecords =

@@ -13,18 +13,18 @@ let
         map (spec: {
           inherit (spec) name;
           value = spec.name;
-        }) hostInventory.nixosHostSpecs
+        }) hostInventory.hosts.nixosHostSpecs
       )
-      // pkgs.lib.mapAttrs (name: _: name) hostInventory.darwinHosts;
+      // pkgs.lib.mapAttrs (name: _: name) hostInventory.hosts.darwinHosts;
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
       platform = spec.platform;
       runtimeHost = spec.name;
       sshHost = spec.name;
-    }) hostInventory.darwinHosts;
+    }) hostInventory.hosts.darwinHosts;
     lanDnsServer = lan.gateway.address;
-    lanDomain = hostInventory.lanDomain;
+    lanDomain = hostInventory.site.lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
         inherit (spec) name;
@@ -35,14 +35,14 @@ let
           runtimeHost = spec.name;
           sshHost = spec.name;
         };
-      }) hostInventory.nixosHostSpecs
+      }) hostInventory.hosts.nixosHostSpecs
     );
   };
   wireguardHome = {
     subnet = wgHome.cidr;
     dns = [
       lan.gateway.address
-      hostInventory.lanDomain
+      hostInventory.site.lan.domain
     ];
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
     allowedIps = [
@@ -56,7 +56,7 @@ let
     map (spec: {
       inherit (spec) name;
       value = spec.name;
-    }) hostInventory.nixosHostSpecs
+    }) hostInventory.hosts.nixosHostSpecs
   );
   fleetTools = pkgs.callPackage ./fleet-tools {
     inherit fleetInventory vmTargets wireguardHome;

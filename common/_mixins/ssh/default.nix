@@ -10,9 +10,9 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
   managedKnownHosts = lib.mapAttrs (name: spec: {
-    hostNames = hostInventory.toSshKnownHostNames config.host.network.lanDomain spec;
+    hostNames = spec.sshKnownHostNames;
     publicKey = readPublicKey (hostKeyPath name);
-  }) hostInventory.hostSpecsByName;
+  }) hostInventory.hosts.hostSpecsByName;
 in
 {
   imports = [ ./ticket-server.nix ];

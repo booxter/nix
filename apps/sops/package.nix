@@ -3,7 +3,7 @@ let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
   secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
-    builtins.toJSON hostInventory.secretDomainsByHost
+    builtins.toJSON hostInventory.hosts.secretDomainsByHost
   );
   source = pkgs.lib.fileset.toSource {
     root = ../..;

@@ -1,15 +1,20 @@
 {
   context,
-  hosts,
+  factLibraryName,
+  inventory,
   inventoryLib,
   lib,
   readPublicKey,
-  realms,
 }:
 inventoryLib.finalize {
+  name = factLibraryName;
   facts = import ./facts.nix {
     inherit readPublicKey;
     inherit (context) frame mmini;
   };
-  enrich = import ./enrich.nix { inherit hosts lib realms; };
+  enrich = import ./enrich.nix {
+    inherit lib;
+    hosts = inventory.hosts;
+    realms = inventory.realms;
+  };
 }

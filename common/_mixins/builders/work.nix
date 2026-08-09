@@ -8,7 +8,7 @@ let
   username = config.host.username;
   identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
   user = "ihrachyshka";
-  builderSpec = hostInventory.nixosHosts.nvws;
+  builderSpec = hostInventory.hosts.nixosHosts.nvws;
   nspawnFeatures = [
     "devnet"
     "uid-range"

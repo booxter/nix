@@ -117,9 +117,8 @@ pkgs.testers.runNixOSTest {
               };
               nodeExporter.mtls = false;
             };
-            toNixosHostCertificateDnsNames = _: _: [ "blackbox" ];
           };
-          hostSpec = { };
+          hostSpec.certificateDnsNames = [ "blackbox" ];
         };
 
         networking = {

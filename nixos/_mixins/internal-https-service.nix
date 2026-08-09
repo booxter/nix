@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
@@ -10,7 +9,7 @@ let
   lanDomain = config.host.network.lanDomain;
   # A local alias like `search` is served both as the single-label name and as
   # mDNS, for example `search` and `search.local`.
-  localServerAliasesFor = aliases: aliases ++ builtins.map hostInventory.toLocalDnsName aliases;
+  localServerAliasesFor = aliases: aliases ++ map (alias: "${alias}.local") aliases;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
   # All hostnames that consume an nginx server_name on this machine. Example:
   # the Search service owns `search.home.arpa`, `search`, `search.local`, and

@@ -16,8 +16,8 @@ let
   ];
   renderHostDnsRecords =
     spec:
-    (map (domain: mkDnsARecord domain (hosts.toHostIpv4Address spec)) (spec.dnsAliases or [ ]))
-    ++ map (label: mkDnsARecord "${label}.${lanDomain}" (hosts.toHostIpv4Address spec)) (
+    (map (domain: mkDnsARecord domain spec.ipAddress) (spec.dnsAliases or [ ]))
+    ++ map (label: mkDnsARecord "${label}.${lanDomain}" spec.ipAddress) (
       lib.unique (spec.localDnsAliases or [ ])
     );
 in
@@ -27,7 +27,7 @@ facts
     staticRoutes = [
       {
         destination = facts.wireguard.home.cidr;
-        nextHop = hosts.toNixosHostIpv4Address facts.wireguard.home.gateway.host;
+        nextHop = hosts.nixosHosts.${facts.wireguard.home.gateway.host}.ipAddress;
         distance = 1;
         name = "wg-home";
       }

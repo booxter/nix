@@ -7,7 +7,7 @@
 }:
 let
   hostname = config.networking.hostName;
-  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) hostInventory.hosts.nixosHostSpecs;
   mkNodeLabels = name: hostConfig: isProxmox: {
     availability = hostConfig.host.availability;
     capacity_profile = hostConfig.host.observability.capacityProfile;
