@@ -10,7 +10,7 @@ from prometheus_client import CollectorRegistry
 from prometheus_client.parser import text_string_to_metric_families
 from pydantic import ValidationError
 
-from frame_observability.ollama import (
+from ollama_metrics.collector import (
     Arguments,
     OllamaSource,
     Snapshot,
@@ -18,7 +18,7 @@ from frame_observability.ollama import (
     parse_arguments,
     success_registry,
 )
-from frame_observability.textfile import render, write
+from ollama_metrics.textfile import render, write
 
 
 class StaticTransport:

@@ -35,6 +35,7 @@ in
       ./_mixins/luks
       ./_mixins/nix
       ./_mixins/observability
+      ./_mixins/ollama
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso

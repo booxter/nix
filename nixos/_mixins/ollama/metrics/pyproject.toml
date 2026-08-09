@@ -3,14 +3,14 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "frame-observability"
+name = "ollama-metrics"
 version = "0.1.0"
-description = "Prometheus textfile collector for Frame Ollama state"
+description = "Prometheus textfile collector for Ollama state"
 requires-python = ">=3.11"
 dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]
-frame-ollama-metrics = "frame_observability.ollama:main"
+ollama-metrics = "ollama_metrics.collector:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -19,14 +19,14 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=frame_observability --cov-report=term-missing --cov-fail-under=90"
+addopts = "-q --cov=ollama_metrics --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
 
 [tool.mypy]
-files = ["src/frame_observability"]
+files = ["src/ollama_metrics"]
 strict = true
 
 [tool.ruff]

@@ -3,7 +3,7 @@
   python3,
 }:
 python3.pkgs.buildPythonApplication {
-  pname = "frame-observability";
+  pname = "ollama-metrics";
   version = "0.1.0";
   pyproject = true;
 
@@ -26,16 +26,16 @@ python3.pkgs.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/frame_observability
+    mypy src/ollama_metrics
   '';
 
-  pythonImportsCheck = [ "frame_observability" ];
+  pythonImportsCheck = [ "ollama_metrics" ];
 
   meta = {
-    description = "Prometheus textfile collector for Frame Ollama state";
+    description = "Prometheus textfile collector for Ollama state";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "frame-ollama-metrics";
+    mainProgram = "ollama-metrics";
     platforms = lib.platforms.linux;
   };
 }

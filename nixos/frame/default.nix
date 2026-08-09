@@ -2,22 +2,17 @@
   config,
   inputs,
   lib,
-  pkgs,
   ...
 }:
 let
-  framePkgs = import ./pkgs pkgs;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
 in
 {
   system.stateVersion = "25.11";
   home-manager.users.${config.host.username}.home.stateVersion = "25.11";
 
-  _module.args.framePkgs = framePkgs;
-
   imports = [
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-    ./ollama.nix
   ];
 
   host = {
@@ -66,6 +61,10 @@ in
     observability = {
       alertmanagerWatchdog.enable = true;
       blackbox.remote.enable = true;
+    };
+    ollama = {
+      enable = true;
+      enableMetrics = true;
     };
     remote-control.server = {
       vnc = {
