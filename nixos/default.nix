@@ -46,6 +46,7 @@ in
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
+      ./_mixins/web
       ./_mixins/yubi.nix
     ];
 
