@@ -7,9 +7,26 @@
 }:
 let
   inherit (hostSpec) vnc;
-  displayHardware = hostSpec.hardware;
-  inherit (displayHardware) displays;
-  displayScale = (builtins.head displays).scale;
+  displayMode = {
+    width = 3840;
+    height = 2160;
+    refreshRate = 60;
+  };
+  displayScale = 1.5;
+  logicalDisplayWidth = builtins.floor (displayMode.width / displayScale);
+  logicalDisplayHeight = builtins.floor (displayMode.height / displayScale);
+  displays = map (display: {
+    name = display.position;
+    inherit (display) connector primary;
+    scale = displayScale;
+    mode = displayMode;
+    logical = {
+      inherit (display) x;
+      y = 0;
+      width = logicalDisplayWidth;
+      height = logicalDisplayHeight;
+    };
+  }) config.hardware.displays;
 
   maxLogicalExtent =
     position: size:
@@ -65,7 +82,7 @@ let
     }:
     ''
       [reframe]
-      card=${displayHardware.drmCard}
+      card=${config.hardware.drmCard}
       connector=${connector}
       rotation=0
       desktop-width=${toString desktopWidth}
@@ -101,7 +118,7 @@ let
 
   # GDM uses Mutter before login. Mutter's monitors.xml v2 format groups each
   # connector and synthetic EDID identity into a logical monitor with the same
-  # position and scale that Hyprland consumes from inventory after login.
+  # position and scale that Hyprland uses after login.
   mkGdmLogicalMonitor =
     display:
     {
@@ -130,10 +147,18 @@ let
     };
   };
 in
-assert lib.assertMsg (lib.all (
-  display: display.scale == displayScale
-) displays) "ReFrame pointer mapping currently requires a uniform display scale";
 {
+  assertions = [
+    {
+      assertion = config.hardware.drmCard != null;
+      message = "Frame remote desktop requires hardware.drmCard";
+    }
+    {
+      assertion = displays != [ ];
+      message = "Frame remote desktop requires at least one hardware.displays entry";
+    }
+  ];
+
   # The KVM removes the monitors' EDIDs when it selects another computer. Use
   # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
   # (monitor identity and timing data, not executable code). NixOS puts it in
@@ -154,7 +179,7 @@ assert lib.assertMsg (lib.all (
     );
   };
 
-  # Match Hyprland's inventory-derived logical layout at the GDM login screen.
+  # Match Hyprland's logical layout at the GDM login screen.
   # ReFrame maps pointer coordinates against the same calculated desktop.
   environment.etc."xdg/monitors.xml".source = gdmMonitorsXml;
 
