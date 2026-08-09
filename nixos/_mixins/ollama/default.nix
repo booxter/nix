@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   pkgs,
   ...
@@ -9,7 +8,6 @@ let
   cfg = config.host.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   ollamaMetrics = pkgs.callPackage ./metrics { };
-  ollamaService = hostInventory.servicesById.ollama;
 in
 {
   options.host.ollama = {
@@ -31,7 +29,7 @@ in
         enable = true;
         upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
         internal = {
-          aliases = [ ollamaService.displayHost ];
+          aliases = [ "ollama.local" ];
           clientAuth = "mtls";
           localAliases = [ "ollama" ];
           locationExtraConfig = ''

@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   srvarrPkgs,
   ...
@@ -12,27 +11,30 @@ let
   booksDir = "${mediaDir}/library/books";
   ebookConverterStateDir = "/var/lib/ebook-converter";
   user = "shelfmark";
-  shelfmarkService = hostInventory.servicesById.shelfmark;
+  shelfmarkService = config.host.web.services.shelfmark;
   oidcClient = config.host.sso.oidc.clients.shelfmark;
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  host.sso.oidc.registrations.shelfmark = {
-    displayName = "Shelfmark";
-    originUrls = [ "${shelfmarkService.url}/api/auth/oidc/callback" ];
-    originLanding = "${shelfmarkService.url}/";
-    scopeMaps = {
-      "media-admins" = oidcScopes ++ [ "media_groups" ];
-      "media-users" = oidcScopes ++ [ "media_groups" ];
-    };
-    claimMaps.media_groups.valuesByGroup = {
-      "media-admins" = [ "media-admins" ];
-      "media-users" = [ "media-users" ];
-    };
-    secret = {
-      sopsKey = "shelfmark/oidc/client_secret";
-      name = "shelfmark/oidc/client_secret";
-      restartUnits = [ "shelfmark.service" ];
+  host.web.services.shelfmark.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "Shelfmark";
+      originUrls = [ "${shelfmarkService.public.url}/api/auth/oidc/callback" ];
+      originLanding = "${shelfmarkService.public.url}/";
+      scopeMaps = {
+        "media-admins" = oidcScopes ++ [ "media_groups" ];
+        "media-users" = oidcScopes ++ [ "media_groups" ];
+      };
+      claimMaps.media_groups.valuesByGroup = {
+        "media-admins" = [ "media-admins" ];
+        "media-users" = [ "media-users" ];
+      };
+      secret = {
+        sopsKey = "shelfmark/oidc/client_secret";
+        name = "shelfmark/oidc/client_secret";
+        restartUnits = [ "shelfmark.service" ];
+      };
     };
   };
 
@@ -102,14 +104,26 @@ in
   host.web.services.shelfmark = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.shelfmark.environment.FLASK_PORT}";
+    public = {
+      enable = true;
+      hostName = "shelf.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/api/health";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
     internal = {
       recommendedProxySettings = false;
       locationExtraConfig = ''
-        proxy_set_header Host ${shelfmarkService.publicHost};
+        proxy_set_header Host ${shelfmarkService.public.hostName};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host ${shelfmarkService.publicHost};
+        proxy_set_header X-Forwarded-Host ${shelfmarkService.public.hostName};
         proxy_set_header X-Forwarded-Server $hostname;
       '';
     };

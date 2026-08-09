@@ -24,13 +24,8 @@ let
       ingestUser = "restic-${name}";
     }
   ) backupFacts.clients;
-  serviceFacts = import ./services.nix { inherit publicDomain; };
-  glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
-  publicServiceHosts = map (service: service.publicHost) (
-    builtins.filter (service: service ? publicHost) serviceFacts.definitions
-  );
   hostFacts = hostFactsFor {
-    inherit lanDomain publicDomain publicServiceHosts;
+    inherit lanDomain;
   };
   realmFor =
     spec:
@@ -57,64 +52,6 @@ let
   yubiFacts = import ./yubi.nix { inherit frame mmini; };
   upsFacts = import ./ups.nix;
 
-  normalizeService =
-    glanceCategoryIds: localDnsName:
-    {
-      id,
-      owner,
-      probePath,
-      publicHost ? null,
-      title ? lib.strings.toSentenceCase id,
-      icon ? "sh:${id}",
-      blackboxProbe ? true,
-      backendProbe ? null,
-      glanceCategory ? null,
-      internalEndpointName ? id,
-    }:
-    let
-      scope = if publicHost == null then "internal" else "external";
-      showInGlance = glanceCategory != null;
-      service = {
-        inherit
-          blackboxProbe
-          glanceCategory
-          icon
-          id
-          internalEndpointName
-          owner
-          probePath
-          scope
-          showInGlance
-          title
-          ;
-      }
-      // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
-      // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
-      resolvedService =
-        service
-        // lib.optionalAttrs (service ? publicHost) (rec {
-          inherit (service) publicHost;
-          url = "https://${publicHost}";
-          probeUrl = "${url}${service.probePath}";
-        })
-        // lib.optionalAttrs (service.scope == "internal") {
-          displayHost = localDnsName owner;
-          probeHost = owner;
-        };
-      category = glanceCategory;
-      categoryLabel = if category == null then "<missing>" else category;
-    in
-    assert lib.asserts.assertMsg (
-      category == null || builtins.elem category glanceCategoryIds
-    ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
-    resolvedService;
-
-  serviceLocalDnsAliases =
-    services: owner:
-    map (service: service.internalEndpointName) (
-      builtins.filter (service: service.owner == owner && service.internalEndpointName != null) services
-    );
-
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
     ttlSeconds = lanDnsRecordTtlSeconds;
@@ -136,7 +73,6 @@ rec {
     clients = backupClients;
   };
 
-  inherit (serviceFacts) glanceCategories;
   inherit realms;
 
   sshTicket = sshTicketFacts;
@@ -158,19 +94,6 @@ rec {
       ++ [ (toLocalDnsName name) ]
       ++ lib.optional (lowercaseName != name) (toLocalDnsName lowercaseName)
     );
-  toInternalHttpsServiceHosts =
-    domain: serviceName:
-    let
-      endpointName = servicesById.${serviceName}.internalEndpointName;
-    in
-    if endpointName == null then
-      throw "service ${serviceName} does not have an internal HTTPS endpoint"
-    else
-      [
-        "${endpointName}.${domain}"
-        endpointName
-        (toLocalDnsName endpointName)
-      ];
   toNixosHostCertificateDnsNames = domain: spec: [
     spec.name
     "${spec.name}.${domain}"
@@ -179,11 +102,6 @@ rec {
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHosts.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
-  srvarrAdminAppIds = map (service: service.id) (
-    builtins.filter (
-      service: service.owner == "srvarr" && service.glanceCategory == "media-admin"
-    ) services
-  );
   site = siteFacts // {
     lan = siteFacts.lan // {
       staticRoutes = [
@@ -204,14 +122,12 @@ rec {
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
             ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
-              lib.unique ((spec.localDnsAliases or [ ]) ++ serviceLocalDnsAliases services spec.name)
+              lib.unique (spec.localDnsAliases or [ ])
             );
         in
         staticDnsRecords ++ builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };
   };
-
-  services = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
 
   darwinHosts = normalizedDarwinHosts;
   nixosHostSpecs = normalizedNixosHostSpecs;
@@ -241,12 +157,4 @@ rec {
 
   systemsByHost = lib.mapAttrs (_: spec: spec.platform) hostSpecsByName;
 
-  publicServices = builtins.filter (service: service.scope == "external") services;
-
-  servicesById = builtins.listToAttrs (
-    map (service: {
-      name = service.id;
-      value = service;
-    }) services
-  );
 }

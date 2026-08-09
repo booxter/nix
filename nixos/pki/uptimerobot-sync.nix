@@ -54,7 +54,7 @@ in
   };
 
   systemd.services.uptimerobot-sync = {
-    description = "Sync UptimeRobot monitors from service inventory";
+    description = "Sync UptimeRobot monitors from the fleet web service registry";
     wants = [
       "network-online.target"
       "sops-install-secrets.service"
@@ -93,7 +93,7 @@ in
   };
 
   systemd.timers.uptimerobot-sync = {
-    description = "Periodically sync UptimeRobot monitors from service inventory";
+    description = "Periodically sync UptimeRobot monitors from the fleet web service registry";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "5m";

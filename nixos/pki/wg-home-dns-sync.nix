@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  outputs,
   pkiPkgs,
   pkgs,
   ...
@@ -10,8 +11,14 @@ let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
+  webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
+    inherit fleetServices hostInventory;
+  };
   unifiSyncEnv = import ./unifi-sync-env.nix {
-    inherit hostInventory lanDomain;
+    inherit hostInventory lanDomain webDnsRecords;
   };
   wgHome = hostInventory.site.wireguard.home;
   wgHomeExporterPort = 9586;

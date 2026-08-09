@@ -1,12 +1,23 @@
 {
   config,
   hostInventory,
+  lib,
+  outputs,
   pkiPkgs,
   ...
 }:
 let
   cfg = config.services.unifi-sync;
-  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
+  fleetServices = import ../_lib/fleet-web-services.nix {
+    inherit config lib outputs;
+  };
+  webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
+    inherit fleetServices hostInventory;
+  };
+  unifiSyncEnv = import ./unifi-sync-env.nix {
+    inherit hostInventory webDnsRecords;
+    lanDomain = config.host.network.lanDomain;
+  };
 in
 {
   services.unifi-sync = {

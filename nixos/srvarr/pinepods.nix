@@ -11,7 +11,7 @@ let
   accounts = import ./accounts.nix;
   ociImages = import ../../oci { inherit pkgs; };
 
-  pinepodsService = hostInventory.servicesById.pinepods;
+  pinepodsService = config.host.web.services.pinepods;
   pinepodsSso = hostInventory.sso.applications.pinepods;
   bootstrapOwnerName = pinepodsSso.bootstrapOwner;
   bootstrapAdmin = hostInventory.sso.users.${bootstrapOwnerName};
@@ -68,24 +68,27 @@ let
   ];
 in
 {
-  host.sso.oidc.registrations.pinepods = {
-    displayName = "PinePods";
-    originUrls = [ "${pinepodsService.url}/api/auth/callback" ];
-    originLanding = "${pinepodsService.url}/";
-    # PinePods 0.9.0 explicitly requires a confidential client without PKCE.
-    allowInsecureClientDisablePkce = true;
-    scopeMaps = {
-      ${pinepodsSso.adminGroup} = oidcScopes ++ [ "pinepods_roles" ];
-      ${pinepodsSso.userGroup} = oidcScopes ++ [ "pinepods_roles" ];
-    };
-    claimMaps.pinepods_roles.valuesByGroup = {
-      ${pinepodsSso.adminGroup} = [ "admin" ];
-      ${pinepodsSso.userGroup} = [ "user" ];
-    };
-    secret = {
-      sopsKey = "pinepods/oidc/client_secret";
-      name = "pinepods/oidc/client_secret";
-      restartUnits = [ "podman-pinepods.service" ];
+  host.web.services.pinepods.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "PinePods";
+      originUrls = [ "${pinepodsService.public.url}/api/auth/callback" ];
+      originLanding = "${pinepodsService.public.url}/";
+      # PinePods 0.9.0 explicitly requires a confidential client without PKCE.
+      allowInsecureClientDisablePkce = true;
+      scopeMaps = {
+        ${pinepodsSso.adminGroup} = oidcScopes ++ [ "pinepods_roles" ];
+        ${pinepodsSso.userGroup} = oidcScopes ++ [ "pinepods_roles" ];
+      };
+      claimMaps.pinepods_roles.valuesByGroup = {
+        ${pinepodsSso.adminGroup} = [ "admin" ];
+        ${pinepodsSso.userGroup} = [ "user" ];
+      };
+      secret = {
+        sopsKey = "pinepods/oidc/client_secret";
+        name = "pinepods/oidc/client_secret";
+        restartUnits = [ "podman-pinepods.service" ];
+      };
     };
   };
 
@@ -199,7 +202,7 @@ in
           DB_NAME = database;
           VALKEY_HOST = "10.0.2.2";
           VALKEY_PORT = toString valkeyPort;
-          HOSTNAME = pinepodsService.url;
+          HOSTNAME = pinepodsService.public.url;
           PINEPODS_PORT = "443";
           PROXY_PROTOCOL = "https";
           REVERSE_PROXY = "False";
@@ -369,14 +372,30 @@ in
   host.web.services.pinepods = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
+    public = {
+      enable = true;
+      hostName = "pod.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/api/health";
+    };
+    presentation = {
+      title = "PinePods";
+      icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
+      dashboard = {
+        enable = true;
+        category = "user";
+      };
+    };
     internal = {
       recommendedProxySettings = false;
       locationExtraConfig = ''
-        proxy_set_header Host ${pinepodsService.publicHost};
+        proxy_set_header Host ${pinepodsService.public.hostName};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Forwarded-Host ${pinepodsService.publicHost};
+        proxy_set_header X-Forwarded-Host ${pinepodsService.public.hostName};
         proxy_set_header X-Forwarded-Server $hostname;
         proxy_read_timeout 300s;
         proxy_send_timeout 300s;

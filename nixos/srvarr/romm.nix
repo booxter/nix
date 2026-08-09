@@ -44,7 +44,7 @@ let
   ociImages = import ../../oci { inherit pkgs; };
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
-  rommService = hostInventory.servicesById.romm;
+  rommPublicUrl = config.host.web.services.romm.public.url;
   oidcClient = config.host.sso.oidc.clients.romm;
   oidcScopes = config.host.sso.oidc.baseScopes;
   rommDbInitCommand = utils.escapeSystemdExecArgs [
@@ -69,7 +69,7 @@ let
     PYTHONDONTWRITEBYTECODE = "1";
     PYTHONUNBUFFERED = "1";
     PYTHONPATH = "/backend";
-    ROMM_BASE_URL = rommService.url;
+    ROMM_BASE_URL = rommPublicUrl;
     ROMM_SESSION_SECURE_COOKIE = "true";
     DB_HOST = "localhost";
     DB_USER = "romm";
@@ -94,7 +94,7 @@ let
     OIDC_AUTOLOGIN = "false";
     OIDC_PROVIDER = "SSO";
     OIDC_CLIENT_ID = oidcClient.clientId;
-    OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
+    OIDC_REDIRECT_URI = "${rommPublicUrl}/api/oauth/openid";
     OIDC_SERVER_APPLICATION_URL = oidcClient.issuerUrl;
     OIDC_SERVER_METADATA_URL = oidcClient.discoveryUrl;
     OIDC_CLAIM_ROLES = "romm_roles";
@@ -196,33 +196,36 @@ let
   ];
 in
 {
-  host.sso.oidc.registrations.romm = {
-    displayName = "RomM";
-    originUrls = [ "${rommService.url}/api/oauth/openid" ];
-    originLanding = "${rommService.url}/";
-    allowInsecureClientDisablePkce = true;
-    scopeMaps = {
-      ${rommSso.adminGroup} = oidcScopes ++ [ "romm_roles" ];
-      ${rommSso.editorGroup} = oidcScopes ++ [ "romm_roles" ];
-      ${rommSso.viewerGroup} = oidcScopes ++ [ "romm_roles" ];
-    };
-    claimMaps.romm_roles.valuesByGroup = {
-      ${rommSso.adminGroup} = [ rommSso.adminGroup ];
-      ${rommSso.editorGroup} = [ rommSso.editorGroup ];
-      ${rommSso.viewerGroup} = [ rommSso.viewerGroup ];
-    };
-    secret = {
-      sopsKey = "romm/oidc/clientSecret";
-      name = "romm/oidc/clientSecret";
-      owner = user;
-      group = "media";
-      restartUnits = [
-        "romm-setup.service"
-        "podman-romm-api.service"
-        "podman-romm-scheduler.service"
-        "podman-romm-worker.service"
-        "podman-romm-watcher.service"
-      ];
+  host.web.services.romm.auth = {
+    mode = "oidc";
+    oidcRegistration = {
+      displayName = "RomM";
+      originUrls = [ "${rommPublicUrl}/api/oauth/openid" ];
+      originLanding = "${rommPublicUrl}/";
+      allowInsecureClientDisablePkce = true;
+      scopeMaps = {
+        ${rommSso.adminGroup} = oidcScopes ++ [ "romm_roles" ];
+        ${rommSso.editorGroup} = oidcScopes ++ [ "romm_roles" ];
+        ${rommSso.viewerGroup} = oidcScopes ++ [ "romm_roles" ];
+      };
+      claimMaps.romm_roles.valuesByGroup = {
+        ${rommSso.adminGroup} = [ rommSso.adminGroup ];
+        ${rommSso.editorGroup} = [ rommSso.editorGroup ];
+        ${rommSso.viewerGroup} = [ rommSso.viewerGroup ];
+      };
+      secret = {
+        sopsKey = "romm/oidc/clientSecret";
+        name = "romm/oidc/clientSecret";
+        owner = user;
+        group = "media";
+        restartUnits = [
+          "romm-setup.service"
+          "podman-romm-api.service"
+          "podman-romm-scheduler.service"
+          "podman-romm-worker.service"
+          "podman-romm-watcher.service"
+        ];
+      };
     };
   };
 
@@ -617,6 +620,21 @@ in
     enable = true;
     upstream = "http://127.0.0.1:${toString apiPort}";
     internal.path = "/api";
+    public = {
+      enable = true;
+      hostName = "game.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/api/heartbeat";
+    };
+    presentation = {
+      title = "RomM";
+      dashboard = {
+        enable = true;
+        category = "user";
+      };
+    };
   };
 
   assertions = [

@@ -9,7 +9,6 @@
 let
   homeAssistantPort = 8123;
   homeAssistantMetricsPort = 9346;
-  homeAssistantService = hostInventory.servicesById.home;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
   bootstrapOwnerName = homeAssistantSso.bootstrapOwner;
   bootstrapOwner = hostInventory.sso.users.${bootstrapOwnerName};
@@ -20,21 +19,25 @@ let
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  host.sso.oidc.registrations.home-assistant = {
-    displayName = "Home Assistant";
-    public = true;
-    originUrls = [
-      "https://home.${config.host.network.lanDomain}/auth/oidc/welcome"
-      "https://home.${config.host.network.lanDomain}/auth/oidc/callback"
-    ];
-    originLanding = "https://home.${config.host.network.lanDomain}/";
-    scopeMaps = {
-      ${homeAssistantSso.adminGroup} = oidcScopes ++ [ "home_groups" ];
-      ${homeAssistantSso.userGroup} = oidcScopes ++ [ "home_groups" ];
-    };
-    claimMaps.home_groups.valuesByGroup = {
-      ${homeAssistantSso.adminGroup} = [ homeAssistantSso.adminGroup ];
-      ${homeAssistantSso.userGroup} = [ homeAssistantSso.userGroup ];
+  host.web.services.home.auth = {
+    mode = "oidc";
+    registrationName = "home-assistant";
+    oidcRegistration = {
+      displayName = "Home Assistant";
+      public = true;
+      originUrls = [
+        "https://home.${config.host.network.lanDomain}/auth/oidc/welcome"
+        "https://home.${config.host.network.lanDomain}/auth/oidc/callback"
+      ];
+      originLanding = "https://home.${config.host.network.lanDomain}/";
+      scopeMaps = {
+        ${homeAssistantSso.adminGroup} = oidcScopes ++ [ "home_groups" ];
+        ${homeAssistantSso.userGroup} = oidcScopes ++ [ "home_groups" ];
+      };
+      claimMaps.home_groups.valuesByGroup = {
+        ${homeAssistantSso.adminGroup} = [ homeAssistantSso.adminGroup ];
+        ${homeAssistantSso.userGroup} = [ homeAssistantSso.userGroup ];
+      };
     };
   };
 
@@ -146,6 +149,15 @@ in
   host.web.services.home = {
     enable = true;
     upstream = "http://127.0.0.1:${toString homeAssistantPort}";
+    health.frontend.enable = true;
+    presentation = {
+      title = "Home Assistant";
+      icon = "sh:home-assistant";
+      dashboard = {
+        enable = true;
+        category = "infrastructure";
+      };
+    };
     internal.locationExtraConfig = ''
       proxy_buffering off;
       proxy_read_timeout 3600s;
@@ -209,10 +221,6 @@ in
   };
 
   assertions = [
-    {
-      assertion = homeAssistantService.owner == "home";
-      message = "The Home Assistant service catalog entry must be owned by the home host.";
-    }
     {
       assertion = builtins.elem homeAssistantSso.adminGroup bootstrapOwner.groups;
       message = "The Home Assistant bootstrap owner must belong to its SSO admin group.";

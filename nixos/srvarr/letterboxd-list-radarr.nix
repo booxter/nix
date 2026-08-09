@@ -73,5 +73,7 @@ in
   host.web.services.letterboxd-list-radarr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
+    health.frontend.enable = true;
+    presentation.title = "Letterboxd Radarr";
   };
 }

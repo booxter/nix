@@ -31,6 +31,20 @@ in
       host.web.services.${name} = {
         enable = true;
         upstream = "http://127.0.0.1:${toString serviceCfg.settings.server.port}";
+        health = {
+          frontend = {
+            enable = true;
+            path = "/oauth2/sign_in";
+          };
+          backend = {
+            enable = true;
+            path = "/ping";
+          };
+        };
+        presentation.dashboard = {
+          enable = true;
+          category = "media-admin";
+        };
       };
     };
 }

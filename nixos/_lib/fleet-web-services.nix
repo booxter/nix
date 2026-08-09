@@ -38,6 +38,9 @@ let
   unknownIngressServices = builtins.filter (
     contribution: !builtins.hasAttr contribution.value.public.ingressHost outputs.nixosConfigurations
   ) publicContributions;
+  unknownSplitDnsServices = builtins.filter (
+    contribution: !builtins.hasAttr contribution.value.public.splitDnsHost outputs.nixosConfigurations
+  ) publicContributions;
   byId = lib.mapAttrs (
     _: entries:
     let
@@ -72,6 +75,10 @@ assert lib.assertMsg (duplicatePublicHosts == { }) (
 assert lib.assertMsg (unknownIngressServices == [ ]) (
   "web services reference unknown public ingress hosts: "
   + lib.concatStringsSep ", " (map showContribution unknownIngressServices)
+);
+assert lib.assertMsg (unknownSplitDnsServices == [ ]) (
+  "web services reference unknown split-DNS hosts: "
+  + lib.concatStringsSep ", " (map showContribution unknownSplitDnsServices)
 );
 {
   inherit

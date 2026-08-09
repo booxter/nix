@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
@@ -36,7 +35,6 @@ in
         { name, config, ... }:
         let
           serviceName = name;
-          inventoryService = hostInventory.servicesById.${serviceName} or null;
         in
         {
           options = {
@@ -164,13 +162,13 @@ in
             public = {
               enable = lib.mkOption {
                 type = lib.types.bool;
-                default = inventoryService != null && inventoryService ? publicHost;
+                default = false;
                 description = "Whether to expose ${serviceName} through public ingress.";
               };
 
               hostName = lib.mkOption {
                 type = lib.types.nullOr lib.types.str;
-                default = if inventoryService != null then inventoryService.publicHost or null else null;
+                default = null;
                 description = "Public DNS hostname served by the ingress host.";
               };
 
@@ -178,6 +176,12 @@ in
                 type = lib.types.str;
                 default = "beast";
                 description = "NixOS host providing public ingress for this service.";
+              };
+
+              splitDnsHost = lib.mkOption {
+                type = lib.types.str;
+                default = config.public.ingressHost;
+                description = "NixOS host that internal DNS resolves the public hostname to.";
               };
 
               transport = lib.mkOption {
@@ -220,12 +224,12 @@ in
               frontend = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-                  default = inventoryService != null && inventoryService.blackboxProbe;
+                  default = false;
                   description = "Whether to probe the ${serviceName} frontend.";
                 };
                 path = lib.mkOption {
                   type = lib.types.str;
-                  default = if inventoryService == null then "/" else inventoryService.probePath;
+                  default = "/";
                   description = "Frontend health probe path.";
                 };
                 module = lib.mkOption {
@@ -238,16 +242,12 @@ in
               backend = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-                  default = inventoryService != null && inventoryService ? backendProbe;
+                  default = false;
                   description = "Whether to probe the ${serviceName} backend.";
                 };
                 path = lib.mkOption {
                   type = lib.types.str;
-                  default =
-                    if inventoryService != null && inventoryService ? backendProbe then
-                      inventoryService.backendProbe.path
-                    else
-                      "/";
+                  default = "/";
                   description = "Backend health probe path exposed on the probe-only listener.";
                 };
                 port = lib.mkOption {
@@ -257,11 +257,7 @@ in
                 };
                 module = lib.mkOption {
                   type = lib.types.str;
-                  default =
-                    if inventoryService != null && inventoryService ? backendProbe then
-                      inventoryService.backendProbe.blackboxModule or "http_service"
-                    else
-                      "http_service";
+                  default = "http_service";
                   description = "Blackbox exporter module for the backend probe.";
                 };
                 title = lib.mkOption {
@@ -343,6 +339,11 @@ in
                 default = "none";
                 description = "Authentication integration used by this service.";
               };
+              registrationName = lib.mkOption {
+                type = lib.types.str;
+                default = serviceName;
+                description = "Name used for the compiled OIDC registration or oauth2-proxy gate.";
+              };
               oidcRegistration = lib.mkOption {
                 type = lib.types.attrsOf lib.types.anything;
                 default = { };
@@ -358,24 +359,23 @@ in
             presentation = {
               title = lib.mkOption {
                 type = lib.types.str;
-                default =
-                  if inventoryService == null then lib.strings.toSentenceCase serviceName else inventoryService.title;
+                default = lib.strings.toSentenceCase serviceName;
                 description = "Human-readable service title.";
               };
               icon = lib.mkOption {
                 type = lib.types.str;
-                default = if inventoryService == null then "sh:${serviceName}" else inventoryService.icon;
+                default = "sh:${serviceName}";
                 description = "Dashboard icon identifier or URL.";
               };
               dashboard = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-                  default = inventoryService != null && inventoryService.showInGlance;
+                  default = false;
                   description = "Whether to show ${serviceName} on the service dashboard.";
                 };
                 category = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
-                  default = if inventoryService == null then null else inventoryService.glanceCategory;
+                  default = null;
                   description = "Dashboard category containing the service.";
                 };
               };
@@ -480,12 +480,14 @@ in
     })
 
     (lib.mkIf (oidcServices != { }) {
-      host.sso.oidc.registrations = lib.mapAttrs (_: service: service.auth.oidcRegistration) oidcServices;
+      host.sso.oidc.registrations = lib.mapAttrs' (
+        _: service: lib.nameValuePair service.auth.registrationName service.auth.oidcRegistration
+      ) oidcServices;
     })
 
     (lib.mkIf (oauth2ProxyServices != { }) {
-      host.sso.oauth2ProxyGates = lib.mapAttrs (
-        _: service: service.auth.oauth2ProxyGate
+      host.sso.oauth2ProxyGates = lib.mapAttrs' (
+        _: service: lib.nameValuePair service.auth.registrationName service.auth.oauth2ProxyGate
       ) oauth2ProxyServices;
     })
   ];

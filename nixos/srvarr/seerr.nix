@@ -40,5 +40,17 @@ in
   host.web.services.seerr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
+    public = {
+      enable = true;
+      hostName = "js.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/login";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
+    };
   };
 }

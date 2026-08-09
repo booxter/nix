@@ -9,7 +9,7 @@
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  idPublicHost = config.host.web.services.id.public.hostName;
   sso = hostInventory.sso;
   oidcClients = import ./oidc-clients.nix {
     inherit lib outputs;
@@ -50,7 +50,7 @@ let
       basicSecretFile = if client.public then null else secretPathFor client.clientId;
     }) oidcClients;
   kanidmPort = 18085;
-  kanidmLocalHost = idService.id;
+  kanidmLocalHost = "id";
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
@@ -83,7 +83,7 @@ let
   mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
     schedule = "*/30 * * * * * *";
     instanceDisplayName = "SSO";
-    instanceUrl = "https://${idService.publicHost}";
+    instanceUrl = "https://${idPublicHost}";
     mailFromAddress = "ihar.hrachyshka@gmail.com";
     mailReplyToAddress = "ihar.hrachyshka@gmail.com";
     mailRelay = "smtp.gmail.com";
@@ -180,8 +180,8 @@ in
       settings = {
         adminbindpath = "/run/kanidmd/kanidm.socket";
         bindaddress = "127.0.0.1:${toString kanidmPort}";
-        domain = idService.publicHost;
-        origin = "https://${idService.publicHost}";
+        domain = idPublicHost;
+        origin = "https://${idPublicHost}";
         tls_chain = config.sops.secrets.kanidmServerCrt.path;
         tls_key = config.sops.secrets.kanidmServerKey.path;
         online_backup = {
@@ -208,9 +208,21 @@ in
   host.web.services.id = {
     enable = true;
     upstream = "https://127.0.0.1:${toString kanidmPort}";
+    public = {
+      enable = true;
+      hostName = "id.${config.host.network.publicDomain}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/status";
+    };
+    presentation = {
+      title = "SSO";
+      icon = "sh:kanidm";
+    };
     internal.locationExtraConfig = ''
-      proxy_set_header Host ${idService.publicHost};
-      proxy_set_header X-Forwarded-Host ${idService.publicHost};
+      proxy_set_header Host ${idPublicHost};
+      proxy_set_header X-Forwarded-Host ${idPublicHost};
     '';
   };
 

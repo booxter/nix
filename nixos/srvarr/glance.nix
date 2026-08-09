@@ -9,6 +9,20 @@
 let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
+  glanceCategories = [
+    {
+      id = "user";
+      title = "User Apps";
+    }
+    {
+      id = "media-admin";
+      title = "Media Admin";
+    }
+    {
+      id = "infrastructure";
+      title = "Infrastructure";
+    }
+  ];
   fleetServices = import ../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
@@ -109,9 +123,9 @@ let
         }
       ];
     };
-  allServiceSections = serviceSectionsFor hostInventory.glanceCategories;
+  allServiceSections = serviceSectionsFor glanceCategories;
   externalServiceSections = serviceSectionsFor (
-    builtins.filter (category: category.id == "user") hostInventory.glanceCategories
+    builtins.filter (category: category.id == "user") glanceCategories
   );
   externalSettings = mkGlanceSettings {
     port = glanceExternalPort;
@@ -171,7 +185,17 @@ in
     dash = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceExternalPort}";
-      public.serveOnOwner = false;
+      public = {
+        enable = true;
+        hostName = "dash.${config.host.network.publicDomain}";
+        serveOnOwner = false;
+        splitDnsHost = config.networking.hostName;
+      };
+      health.frontend.enable = true;
+      presentation = {
+        title = "Dashboard";
+        icon = "sh:glance";
+      };
     };
   };
 }

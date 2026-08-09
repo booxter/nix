@@ -1,5 +1,5 @@
 {
-  hostInventory,
+  config,
   pkgs,
   ...
 }:
@@ -29,9 +29,17 @@ in
     internal.enable = false;
     public = {
       enable = true;
-      hostName = "jf.${hostInventory.site.public.domain}";
+      hostName = "jf.${config.host.network.publicDomain}";
       transport = "direct";
       directUpstream = "http://127.0.0.1:${toString jellyfinPort}";
+    };
+    health.frontend = {
+      enable = true;
+      path = "/web/";
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "user";
     };
   };
 

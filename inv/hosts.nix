@@ -4,8 +4,6 @@
 }:
 {
   lanDomain,
-  publicDomain,
-  publicServiceHosts,
 }:
 let
   nvws = "nvws";
@@ -241,7 +239,6 @@ in
       realm = "home";
       userProfile = "personal";
       critical = true;
-      dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
@@ -303,7 +300,6 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      dnsAliases = [ "dash.${publicDomain}" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";

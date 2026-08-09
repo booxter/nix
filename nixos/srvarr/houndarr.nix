@@ -167,5 +167,22 @@ in
   host.web.services.houndarr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/api/health";
+      };
+    };
+    presentation = {
+      icon = "sh:houndarr.png";
+      dashboard = {
+        enable = true;
+        category = "media-admin";
+      };
+    };
   };
 }

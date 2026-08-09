@@ -7,9 +7,25 @@
 let
   clientId = "srvarr-admin-apps";
   oauth2ProxyCookieName = "_srvarr_admin_sso";
-  protectedServiceIds = hostInventory.srvarrAdminAppIds;
+  protectedServices = lib.filterAttrs (
+    _: service:
+    service.enable
+    && service.presentation.dashboard.enable
+    && service.presentation.dashboard.category == "media-admin"
+  ) config.host.web.services;
+  protectedServiceIds = builtins.attrNames protectedServices;
   protectedServiceHosts = lib.unique (
-    lib.concatMap (hostInventory.toInternalHttpsServiceHosts config.host.network.lanDomain) protectedServiceIds
+    lib.concatMap (
+      serviceName:
+      let
+        endpointName = protectedServices.${serviceName}.internal.endpointName;
+      in
+      [
+        "${endpointName}.${config.host.network.lanDomain}"
+        endpointName
+        "${endpointName}.local"
+      ]
+    ) protectedServiceIds
   );
   houndarrManagedServiceNames = [
     "lidarr"

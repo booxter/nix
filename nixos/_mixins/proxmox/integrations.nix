@@ -149,7 +149,7 @@ in
 
     issuerUrl = lib.mkOption {
       type = lib.types.str;
-      default = "https://${hostInventory.servicesById.id.publicHost}/oauth2/openid/${oidcCfg.clientId}";
+      default = "https://id.${config.host.network.publicDomain}/oauth2/openid/${oidcCfg.clientId}";
       defaultText = "\${issuerBase}/oauth2/openid/\${clientId}";
       description = "OIDC issuer URL used by the Proxmox VE realm.";
     };
@@ -376,19 +376,23 @@ in
       };
     })
     (lib.mkIf oidcCfg.enable {
-      host.sso.oidc.registrations.proxmox = {
-        clientId = oidcCfg.clientId;
-        displayName = "Proxmox VE";
-        originUrls = proxmoxOriginUrls;
-        originLanding = "https://${proxmoxCanonicalHost}/";
-        scopeMaps.${oidcCfg.allowedGroup} = oidcScopes ++ [ oidcCfg.groupsClaim ];
-        claimMaps.${oidcCfg.groupsClaim}.valuesByGroup.${oidcCfg.allowedGroup} = [
-          oidcCfg.allowedGroup
-        ];
-        secret = {
-          sopsKey = oidcCfg.clientSecretKey;
-          name = "proxmoxOidcClientSecret";
-          restartUnits = [ oidcRealmUnit ];
+      host.web.services."proxmox-${config.networking.hostName}".auth = {
+        mode = "oidc";
+        registrationName = "proxmox";
+        oidcRegistration = {
+          clientId = oidcCfg.clientId;
+          displayName = "Proxmox VE";
+          originUrls = proxmoxOriginUrls;
+          originLanding = "https://${proxmoxCanonicalHost}/";
+          scopeMaps.${oidcCfg.allowedGroup} = oidcScopes ++ [ oidcCfg.groupsClaim ];
+          claimMaps.${oidcCfg.groupsClaim}.valuesByGroup.${oidcCfg.allowedGroup} = [
+            oidcCfg.allowedGroup
+          ];
+          secret = {
+            sopsKey = oidcCfg.clientSecretKey;
+            name = "proxmoxOidcClientSecret";
+            restartUnits = [ oidcRealmUnit ];
+          };
         };
       };
 

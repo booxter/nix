@@ -7,6 +7,12 @@
       description = "Local network DNS domain.";
     };
 
+    publicDomain = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "ihar.dev";
+      description = "Public DNS domain used for internet-facing services.";
+    };
+
     primaryInterface = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
       default = null;

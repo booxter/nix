@@ -101,8 +101,10 @@ in
     settings = import ./sabnzbd-settings.nix {
       hostWhitelist = [
         config.networking.hostName
-      ]
-      ++ hostInventory.toInternalHttpsServiceHosts config.host.network.lanDomain "sabnzbd";
+        "sabnzbd.${config.host.network.lanDomain}"
+        "sabnzbd"
+        "sabnzbd.local"
+      ];
       inherit
         mediaDir
         wgNamespaceAddress
@@ -147,5 +149,23 @@ in
   host.web.services.sabnzbd = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/__probe/sabnzbd-version";
+      };
+    };
+    presentation = {
+      title = "SABNZB";
+      icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
+      dashboard = {
+        enable = true;
+        category = "media-admin";
+      };
+    };
   };
 }

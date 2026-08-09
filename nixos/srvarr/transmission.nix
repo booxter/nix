@@ -136,6 +136,21 @@ in
   host.web.services.transmission = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/__probe/transmission-rpc";
+        module = "http_service_409";
+      };
+    };
+    presentation.dashboard = {
+      enable = true;
+      category = "media-admin";
+    };
     internal = {
       recommendedProxySettings = false;
       # Transmission RPC rejects the public LAN hostname, so preserve the

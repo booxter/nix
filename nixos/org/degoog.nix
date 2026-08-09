@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   lib,
   orgPkgs,
   pkgs,
@@ -62,9 +61,9 @@ let
         "${orgPkgs.degoog-georgvwt-extensions}/themes/gruvbox";
     };
   };
-  degoogService = hostInventory.servicesById.goo;
-  jellyfinService = hostInventory.servicesById.jellyfin;
-  rommService = hostInventory.servicesById.romm;
+  degoogService = config.host.web.services.goo;
+  jellyfinPublicUrl = "https://jf.${config.host.network.publicDomain}";
+  rommPublicUrl = "https://game.${config.host.network.publicDomain}";
   serviceName = "degoog";
   serviceUser = serviceName;
   stateDir = "/var/lib/${serviceName}";
@@ -117,12 +116,12 @@ in
       degoog-org-official-extensions-jellyfin-command = {
         apiKey = config.sops.placeholder."degoog/jellyfin_api_key";
         headerName = "X-Emby-Token";
-        url = jellyfinService.url;
+        url = jellyfinPublicUrl;
       };
       degoog-org-official-extensions-reddit-engine.includeNsfw = "true";
       degoog-org-official-extensions-romm-command = {
         apiToken = config.sops.placeholder."degoog/romm_api_token";
-        url = rommService.url;
+        url = rommPublicUrl;
       };
       degoog-org-official-extensions-tmdb-slot.apiKey = config.sops.placeholder."degoog/tmdb_api_key";
       georgvwt-georgvwt-degoog-stuff-reddit-slot.filterNsfw = false;
@@ -218,34 +217,59 @@ in
   host.web.services.goo = {
     enable = true;
     inherit upstream;
+    public = {
+      enable = true;
+      hostName = "goo.${config.host.network.publicDomain}";
+    };
+    health = {
+      frontend = {
+        enable = true;
+        path = "/oauth2/sign_in";
+      };
+      backend = {
+        enable = true;
+        path = "/readyz";
+      };
+    };
+    presentation = {
+      title = "Degoog";
+      icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
+      dashboard = {
+        enable = true;
+        category = "user";
+      };
+    };
   };
 
-  host.sso.oauth2ProxyGates.goo = {
-    enable = true;
-    clientId = "goo";
-    displayName = "Degoog";
-    originLanding = "${degoogService.url}/";
-    httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
-    cookieName = "_goo_sso";
-    allowedGroups = [ "degoog-users" ];
-    groupClaim = "degoog_groups";
-    externalOrigin = degoogService.url;
-    whitelistDomains = [ degoogService.publicHost ];
-    internalHttpsServiceNames = [ "goo" ];
-    authCookieVariableName = "goo_auth_cookie";
-    authRequestHeaders = [
-      {
-        variableName = "goo_user";
-        upstreamHeader = "x_auth_request_preferred_username";
-        proxyHeader = "X-User";
-      }
-    ];
-    probeLocationsByName.goo."= /readyz" = {
-      proxyPass = upstream;
-      recommendedProxySettings = true;
-      extraConfig = ''
-        auth_request off;
-      '';
+  host.web.services.goo.auth = {
+    mode = "oauth2-proxy";
+    oauth2ProxyGate = {
+      enable = true;
+      clientId = "goo";
+      displayName = "Degoog";
+      originLanding = "${degoogService.public.url}/";
+      httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
+      cookieName = "_goo_sso";
+      allowedGroups = [ "degoog-users" ];
+      groupClaim = "degoog_groups";
+      externalOrigin = degoogService.public.url;
+      whitelistDomains = [ degoogService.public.hostName ];
+      internalHttpsServiceNames = [ "goo" ];
+      authCookieVariableName = "goo_auth_cookie";
+      authRequestHeaders = [
+        {
+          variableName = "goo_user";
+          upstreamHeader = "x_auth_request_preferred_username";
+          proxyHeader = "X-User";
+        }
+      ];
+      probeLocationsByName.goo."= /readyz" = {
+        proxyPass = upstream;
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+        '';
+      };
     };
   };
 }

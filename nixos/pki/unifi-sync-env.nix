@@ -1,4 +1,8 @@
-{ hostInventory, lanDomain }:
+{
+  hostInventory,
+  lanDomain,
+  webDnsRecords ? [ ],
+}:
 let
   lan = hostInventory.site.lan;
   netboot = lan.netboot;
@@ -45,7 +49,13 @@ let
   networkTftpServer = hostInventory.toHostIpv4Address netbootHost;
 
   networkBootfile = netboot.bootfile;
-  dnsRecordsJson = builtins.toJSON lan.dnsRecords;
+  dnsRecordsByDomain = builtins.listToAttrs (
+    map (record: {
+      name = record.domain;
+      value = record;
+    }) (webDnsRecords ++ lan.dnsRecords)
+  );
+  dnsRecordsJson = builtins.toJSON (builtins.attrValues dnsRecordsByDomain);
   staticRoutesJson = builtins.toJSON (lan.staticRoutes or [ ]);
   classlessStaticRoutesJson = builtins.toJSON (
     (builtins.filter (route: route.enabled or true) (lan.staticRoutes or [ ]))
