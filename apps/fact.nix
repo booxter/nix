@@ -6,13 +6,14 @@ let
   names = builtins.attrNames facts;
   cases = pkgs.lib.concatMapStringsSep "\n" (name: ''
     ${pkgs.lib.escapeShellArg name})
-      printf '%s\n' ${pkgs.lib.escapeShellArg (builtins.toJSON facts.${name})}
+      printf '%s\n' ${pkgs.lib.escapeShellArg (builtins.toJSON facts.${name})} | jq .
       ;;
   '') names;
   listedNames = pkgs.lib.concatMapStringsSep " " pkgs.lib.escapeShellArg names;
 in
 pkgs.writeShellApplication {
   name = "fact";
+  runtimeInputs = [ pkgs.jq ];
   text = ''
     if [[ $# -ne 1 ]]; then
       echo "usage: fact --list | fact <name>" >&2
