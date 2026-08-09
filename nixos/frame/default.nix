@@ -18,7 +18,6 @@ in
     (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./alertmanager-watchdog.nix
-    ./remote-desktop.nix
     ./remote-luks.nix
     ./ups.nix
   ];
@@ -79,6 +78,10 @@ in
 
   security.pam.services.hyprlock = { };
   remote-control.server = {
+    vnc = {
+      enable = true;
+      basePort = 5933;
+    };
     wayland.enable = true;
     x11.enable = true;
   };
