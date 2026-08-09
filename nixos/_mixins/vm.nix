@@ -4,6 +4,7 @@
   inputs,
   lib,
   modulesPath,
+  system,
   ...
 }:
 let
@@ -13,7 +14,7 @@ let
   memorySize = hostSpec.memorySize or 8;
   diskSize = hostSpec.diskSize or 100;
   sshPort = hostSpec.sshPort or null;
-  virtPlatform = hostSpec.virtPlatform or hostSpec.platform;
+  virtPlatform = hostSpec.virtPlatform or system;
   GiB = 1024 * 1024 * 1024;
   # VM disks can be much smaller than physical hosts. Start GC at 20%
   # free and target 40%, capped at the physical-host thresholds.

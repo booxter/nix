@@ -14,6 +14,9 @@
 }:
 let
   pythonPackages = python3.pkgs;
+  systemsByHost =
+    lib.mapAttrs (_: _: "x86_64-linux") facts.hosts.nixos
+    // lib.mapAttrs (_: _: "aarch64-darwin") facts.hosts.darwin;
   hostsFile = builtins.toFile "pki-certificate-hosts.json" (
     builtins.toJSON (
       lib.mapAttrs (
@@ -30,7 +33,7 @@ let
           secretDomain = facts.hosts.secretDomainsByHost.${name};
           caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
-      ) facts.hosts.systemsByHost
+      ) systemsByHost
     )
   );
   unifiDefaultsFile = builtins.toFile "pki-unifi-defaults.json" (

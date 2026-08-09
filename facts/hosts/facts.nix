@@ -29,7 +29,6 @@ let
       isVM = true;
       observability.capacityProfile = "cpu-bursty";
       name = "builder${idx'}";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       proxNode = "prx${idx'}-lab";
@@ -60,7 +59,6 @@ let
         name
         proxmoxUpgradeTime
         ;
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       hmFull = false;
@@ -100,7 +98,6 @@ in
 
   darwin = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
-      platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
       availability = "intermittent";
@@ -111,7 +108,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
-      platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
       observability = {
@@ -124,7 +120,6 @@ in
       lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
-      platform = "aarch64-darwin";
       realm = "work";
       userProfile = "nvidia";
       availability = "intermittent";
@@ -142,7 +137,6 @@ in
     {
       hostKind = "nixos";
       name = frame;
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       observability.capacityProfile = "cpu-bursty";
@@ -209,7 +203,6 @@ in
     {
       hostKind = "proxmox";
       name = "nvws";
-      platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
       hmFull = false;
@@ -223,7 +216,6 @@ in
     {
       hostKind = "nixos";
       name = "beast";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       critical = true;
@@ -252,7 +244,6 @@ in
     {
       isVM = true;
       name = "nv";
-      platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
       isOperatorSeat = true;
@@ -268,7 +259,6 @@ in
     {
       isVM = true;
       name = "cache";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       localDnsAliases = [ "nix-cache" ];
@@ -285,7 +275,6 @@ in
     {
       isVM = true;
       name = "srvarr";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       wgNamespace = {
@@ -309,7 +298,6 @@ in
     {
       isVM = true;
       name = "fana";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       cores = 8;
@@ -325,7 +313,6 @@ in
     {
       isVM = true;
       name = "gw";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       cores = 2;
@@ -341,7 +328,6 @@ in
     {
       isVM = true;
       name = "org";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       cores = 4;
@@ -357,7 +343,6 @@ in
     {
       isVM = true;
       name = "pki";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       caServer = {
@@ -378,7 +363,6 @@ in
     {
       isVM = true;
       name = "home";
-      platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
       proxNode = "prx2-lab";

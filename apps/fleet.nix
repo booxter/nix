@@ -15,7 +15,7 @@ let
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
-      platform = spec.platform;
+      platform = "aarch64-darwin";
       runtimeHost = spec.name;
       sshHost = spec.name;
     }) facts.hosts.darwin;
@@ -24,7 +24,7 @@ let
     nixos = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
-      platform = spec.platform or "x86_64-linux";
+      platform = "x86_64-linux";
       runtimeHost = spec.name;
       sshHost = spec.name;
     }) facts.hosts.nixos;

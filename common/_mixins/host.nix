@@ -2,15 +2,15 @@
   config,
   facts,
   hostSpec,
-  inputs,
+  isDarwin,
+  isLinux,
   lib,
+  system,
   ...
 }:
 let
   hostname = hostSpec.name;
-  hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
   realm = facts.realms.${config.host.realm};
-  inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
 in
@@ -23,7 +23,7 @@ in
       default = system;
       readOnly = true;
       internal = true;
-      description = "Nix platform declared by host facts.";
+      description = "Nix platform selected by the host configuration constructor.";
     };
 
     isDarwin = lib.mkOption {
@@ -31,7 +31,7 @@ in
       default = isDarwin;
       readOnly = true;
       internal = true;
-      description = "Whether the facts platform uses the Darwin kernel.";
+      description = "Whether the selected platform uses the Darwin kernel.";
     };
 
     isLinux = lib.mkOption {
@@ -39,7 +39,7 @@ in
       default = isLinux;
       readOnly = true;
       internal = true;
-      description = "Whether the facts platform uses the Linux kernel.";
+      description = "Whether the selected platform uses the Linux kernel.";
     };
 
     isBuilder = lib.mkEnableOption "Nix builder participation";

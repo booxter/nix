@@ -12,12 +12,15 @@
 }:
 let
   pythonPackages = python3.pkgs;
+  systemsByHost =
+    lib.mapAttrs (_: _: "x86_64-linux") facts.hosts.nixos
+    // lib.mapAttrs (_: _: "aarch64-darwin") facts.hosts.darwin;
   hostsFile = builtins.toFile "pki-tool-hosts.json" (
     builtins.toJSON (
       lib.mapAttrs (name: system: {
         inherit system;
         secretDomain = facts.hosts.secretDomainsByHost.${name};
-      }) facts.hosts.systemsByHost
+      }) systemsByHost
     )
   );
   runtimePath = lib.makeBinPath [

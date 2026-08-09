@@ -71,15 +71,16 @@
       inherit (self) outputs;
       facts = import ./facts { lib = inputs.nixpkgs.lib; };
       hostSpecialArgs =
-        spec:
+        system: spec:
         let
-          hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+          hostPlatform = inputs.nixpkgs.lib.systems.elaborate system;
         in
         {
           inherit
             inputs
             outputs
             facts
+            system
             ;
           inherit (hostPlatform) isDarwin isLinux;
           hostSpec = spec;
@@ -87,13 +88,13 @@
       mkNixos =
         spec:
         inputs.nixpkgs.lib.nixosSystem {
-          specialArgs = hostSpecialArgs spec;
+          specialArgs = hostSpecialArgs "x86_64-linux" spec;
           modules = [ ./nixos ];
         };
       mkDarwin =
         spec:
         inputs.nix-darwin.lib.darwinSystem {
-          specialArgs = hostSpecialArgs spec;
+          specialArgs = hostSpecialArgs "aarch64-darwin" spec;
           modules = [ ./darwin ];
         };
       perSystem =

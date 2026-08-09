@@ -4,6 +4,7 @@
   inputs,
   lib,
   pkgs,
+  system,
   ...
 }:
 let
@@ -52,7 +53,7 @@ in
         };
 
         nixpkgs.overlays = [
-          inputs.proxmox-nixos.overlays.${hostSpec.platform}
+          inputs.proxmox-nixos.overlays.${system}
           (
             _final: prev:
             let

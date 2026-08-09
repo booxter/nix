@@ -14,7 +14,7 @@ let
     in
     realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
   normalizeHostSpec =
-    spec:
+    isLinux: spec:
     let
       validated = builtins.seq (realmFor spec) spec;
       lowercaseName = lib.toLower validated.name;
@@ -28,7 +28,7 @@ let
       sshKnownHostNames = lib.unique (
         [ validated.name ]
         ++ lib.optional (lowercaseName != validated.name) lowercaseName
-        ++ lib.optional (lib.hasSuffix "-linux" validated.platform) "${validated.name}.${lanDomain}"
+        ++ lib.optional isLinux "${validated.name}.${lanDomain}"
         ++ [ "${validated.name}.local" ]
         ++ lib.optional (lowercaseName != validated.name) "${lowercaseName}.local"
       );
@@ -36,7 +36,7 @@ let
   normalizeNixosHostSpec =
     spec:
     let
-      normalized = normalizeHostSpec spec;
+      normalized = normalizeHostSpec true spec;
     in
     normalized
     // {
@@ -46,7 +46,7 @@ let
         normalized.localDnsName
       ];
     };
-  darwin = lib.mapAttrs (_: normalizeHostSpec) raw.darwin;
+  darwin = lib.mapAttrs (_: normalizeHostSpec false) raw.darwin;
   nixosSpecs = map normalizeNixosHostSpec raw.nixos;
   nixosNames = map (spec: spec.name) nixosSpecs;
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
@@ -81,5 +81,4 @@ raw
     ;
 
   secretDomainsByHost = lib.mapAttrs (_: spec: (realmFor spec).secretDomain) hostSpecsByName;
-  systemsByHost = lib.mapAttrs (_: spec: spec.platform) hostSpecsByName;
 }
