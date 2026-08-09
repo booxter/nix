@@ -101,7 +101,7 @@ in
       ExecStart = lib.escapeShellArgs [
         (lib.getExe beastPkgs.storage-observability)
         "--bay-map"
-        "/etc/beast-hba-bay-map.json"
+        "/etc/disk-bay-map.json"
         "--output-file"
         "${textfileDir}/hba.prom"
       ];

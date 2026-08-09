@@ -4,14 +4,14 @@
   makeWrapper,
   python3,
   ruff,
-  storcli,
+  utillinux,
 }:
 let
   pythonPackages = python3.pkgs;
 in
 pythonPackages.buildPythonApplication {
-  pname = "beast-storage-observability";
-  version = "0.2.0";
+  pname = "disk-bay-exporter";
+  version = "0.1.0";
   pyproject = true;
 
   src = ./.;
@@ -34,21 +34,21 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/beast_storage_observability
+    mypy src/disk_bay_exporter
   '';
 
-  pythonImportsCheck = [ "beast_storage_observability" ];
+  pythonImportsCheck = [ "disk_bay_exporter" ];
 
   postFixup = ''
-    wrapProgram "$out/bin/beast-hba-metrics" \
-      --prefix PATH : ${lib.makeBinPath [ storcli ]}
+    wrapProgram "$out/bin/disk-bay-metrics" \
+      --prefix PATH : ${lib.makeBinPath [ utillinux ]}
   '';
 
   meta = {
-    description = "Typed Prometheus storage collectors for beast";
+    description = "Export physical disk-bay mappings as Prometheus metrics";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "beast-hba-metrics";
+    mainProgram = "disk-bay-metrics";
     platforms = lib.platforms.linux;
   };
 }

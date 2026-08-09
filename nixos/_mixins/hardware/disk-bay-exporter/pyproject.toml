@@ -3,15 +3,14 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "beast-storage-observability"
-version = "0.2.0"
-description = "Typed Prometheus storage collectors for beast"
+name = "disk-bay-exporter"
+version = "0.1.0"
+description = "Export physical disk-bay mappings as Prometheus metrics"
 requires-python = ">=3.11"
 dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
 
 [project.scripts]
-beast-hba-metrics = "beast_storage_observability.cli:hba_main"
-beast-md-metrics = "beast_storage_observability.cli:md_main"
+disk-bay-metrics = "disk_bay_exporter.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -20,17 +19,17 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-beast_storage_observability = ["py.typed"]
+disk_bay_exporter = ["py.typed"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=beast_storage_observability --cov-report=term-missing --cov-fail-under=85"
+addopts = "-q --cov=disk_bay_exporter --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
 
 [tool.mypy]
-files = ["src/beast_storage_observability"]
+files = ["src/disk_bay_exporter"]
 plugins = ["pydantic.mypy"]
 strict = true
 

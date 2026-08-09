@@ -1,3 +1,6 @@
 {
-  imports = [ ./gpu ];
+  imports = [
+    ./disk-bays.nix
+    ./gpu
+  ];
 }

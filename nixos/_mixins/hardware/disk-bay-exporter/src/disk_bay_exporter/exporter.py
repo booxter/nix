@@ -11,28 +11,40 @@ from prometheus_client import CollectorRegistry, Gauge, generate_latest
 from .models import BayMapping, BayMappings
 
 
-class LsbkSource(Protocol):
-    def collect(self) -> dict[str, str]:
-        """Return a mapping from disk serial to device name (e.g. {"ZYD0CASB": "sda"})."""
+@dataclass(frozen=True)
+class CommandResult:
+    returncode: int
+    stdout: str
+
+
+class CommandRunner(Protocol):
+    def run(self, args: list[str]) -> CommandResult:
+        """Run a command and return its exit status and standard output."""
 
 
 @dataclass(frozen=True)
-class SubprocessLsbkSource:
+class SubprocessCommandRunner:
+    def run(self, args: list[str]) -> CommandResult:
+        result = subprocess.run(args, check=False, capture_output=True, text=True)
+        return CommandResult(returncode=result.returncode, stdout=result.stdout)
+
+
+class SerialDeviceSource(Protocol):
+    def collect(self) -> dict[str, str]:
+        """Map disk serials to kernel device names."""
+
+
+@dataclass(frozen=True)
+class LsblkSource:
+    runner: CommandRunner
     executable: str = "lsblk"
 
     def collect(self) -> dict[str, str]:
-        result = subprocess.run(
-            [self.executable, "-dn", "-o", "NAME,SERIAL"],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+        result = self.runner.run([self.executable, "-dn", "-o", "NAME,SERIAL"])
         if result.returncode != 0:
             return {}
         mapping: dict[str, str] = {}
         for line in result.stdout.strip().splitlines():
-            if not line.strip():
-                continue
             parts = line.strip().split()
             if len(parts) >= 2 and parts[1]:
                 mapping[parts[1]] = parts[0]
@@ -44,7 +56,7 @@ class DiskBayMetrics:
         self.registry = CollectorRegistry()
         self.info = Gauge(
             "host_observability_disk_bay_info",
-            "Current mapping of beast disk device names to physical bays.",
+            "Current mapping of disk device names to physical bays.",
             ("device", "bay", "bay_row", "bay_col", "serial", "model"),
             registry=self.registry,
         )
@@ -62,14 +74,13 @@ class DiskBayMetrics:
 
 @dataclass(frozen=True)
 class DiskBayExporter:
-    source: LsbkSource
+    source: SerialDeviceSource
 
     def run(self, bay_map: Path, output_path: Path) -> None:
         mappings = BayMappings.model_validate_json(bay_map.read_text(encoding="utf-8"))
-        by_serial = mappings.by_serial()
         serial_to_device = self.source.collect()
         metrics = DiskBayMetrics()
-        for serial, mapping in by_serial.items():
+        for serial, mapping in mappings.by_serial().items():
             device = serial_to_device.get(serial)
             if device is not None:
                 metrics.collect(device, mapping)
