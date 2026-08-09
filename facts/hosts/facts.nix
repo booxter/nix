@@ -190,7 +190,6 @@ in
       };
       cores = 64;
       memorySize = 128;
-      sshPort = 10000;
       proxNode = "nvws";
     }
     {
@@ -202,7 +201,6 @@ in
         match = "bc:24:11:0d:85:41";
         ip = "192.168.20.7";
       };
-      sshPort = 10004;
       hmFull = false;
       cores = 16;
       memorySize = 16;
@@ -224,7 +222,6 @@ in
       };
       cores = 16;
       memorySize = 32;
-      sshPort = 10005;
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:19:4d:d1";
@@ -239,7 +236,6 @@ in
       cores = 8;
       memorySize = 16;
       diskSize = 300;
-      sshPort = 10006;
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:06:e8:8b";
@@ -254,7 +250,6 @@ in
       cores = 2;
       memorySize = 8;
       diskSize = 64;
-      sshPort = 10008;
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:91:b5:77";
@@ -269,7 +264,6 @@ in
       cores = 4;
       memorySize = 16;
       diskSize = 80;
-      sshPort = 10009;
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:fd:eb:9c";
@@ -289,7 +283,6 @@ in
       cores = 2;
       memorySize = 4;
       diskSize = 50;
-      sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:c6:ab:fc";
@@ -305,7 +298,6 @@ in
       cores = 4;
       memorySize = 8;
       diskSize = 80;
-      sshPort = 10011;
       hmFull = false;
       dhcpReservation = {
         match = "02:48:4f:4d:45:01";

@@ -13,7 +13,6 @@ let
   cores = hostSpec.cores or 4;
   memorySize = hostSpec.memorySize or 8;
   diskSize = hostSpec.diskSize or 100;
-  sshPort = hostSpec.sshPort or null;
   virtPlatform = hostSpec.virtPlatform or system;
   GiB = 1024 * 1024 * 1024;
   # VM disks can be much smaller than physical hosts. Start GC at 20%
@@ -39,13 +38,6 @@ in
       cores = inputs.nixpkgs.lib.min cores 8;
       memorySize = memorySize * 1024;
       diskSize = diskSize * 1024;
-      forwardPorts = lib.optionals (sshPort != null) [
-        {
-          from = "host";
-          guest.port = 22;
-          host.port = sshPort;
-        }
-      ];
     };
 
     system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
