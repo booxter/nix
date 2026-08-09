@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
   hostname = config.networking.hostName;
-  nixosConfigNames = map (spec: spec.name) hostInventory.hosts.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) facts.hosts.nixosHostSpecs;
   mkNodeLabels = name: hostConfig: isProxmox: {
     availability = hostConfig.host.availability;
     capacity_profile = hostConfig.host.observability.capacityProfile;

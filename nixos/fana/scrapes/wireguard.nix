@@ -1,11 +1,11 @@
 {
-  hostInventory,
+  facts,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  wgHome = hostInventory.site.wireguard.home;
+  wgHome = facts.site.wireguard.home;
   gatewayHostConfig = outputs.nixosConfigurations.${wgHome.gateway.host}.config;
   wgHomeEndpoint = gatewayHostConfig.host.observability.prometheusEndpoints."wg-home";
   gatewayTargetHost = wgHome.gateway.host;

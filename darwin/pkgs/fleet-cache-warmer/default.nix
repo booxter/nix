@@ -10,12 +10,10 @@
 }:
 
 let
-  hostInventory = import ../../../inv { inherit lib; };
-  inventory = import ../../../ci { inherit hostInventory lib; };
+  facts = import ../../../facts { inherit lib; };
+  ci = import ../../../ci { inherit facts lib; };
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (
-      target: hostInventory.hosts.hostSpecsByName.${target.host}.realm == targetRealm
-    ) inventory.buildTargets
+    lib.filter (target: facts.hosts.hostSpecsByName.${target.host}.realm == targetRealm) ci.buildTargets
   );
 in
 rustPlatform.buildRustPackage {

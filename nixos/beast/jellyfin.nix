@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   pkgs,
   ...
 }:
@@ -66,7 +66,7 @@ in
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
   fileSystems."/media" = {
-    device = hostInventory.shared-storage.resources.media.path;
+    device = facts.shared-storage.resources.media.path;
     fsType = "none";
     options = [
       "bind"

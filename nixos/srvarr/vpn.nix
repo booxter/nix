@@ -1,12 +1,12 @@
 {
-  hostInventory,
+  facts,
   lib,
   srvarrPkgs,
   utils,
   ...
 }:
 let
-  srvarrSpec = hostInventory.hosts.nixosHosts.srvarr;
+  srvarrSpec = facts.hosts.nixosHosts.srvarr;
   networkOnlineUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -39,7 +39,7 @@ in
   vpnNamespaces.wg = {
     accessibleFrom = [
       "127.0.0.1"
-      hostInventory.site.lan.cidr
+      facts.site.lan.cidr
       "10.0.0.0/8"
     ];
     bridgeAddress = wgBridgeAddress;

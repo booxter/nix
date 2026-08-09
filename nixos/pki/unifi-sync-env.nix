@@ -1,12 +1,12 @@
 {
-  hostInventory,
+  facts,
   lanDomain,
   webDnsRecords ? [ ],
 }:
 let
-  lan = hostInventory.site.lan;
+  lan = facts.site.lan;
   netboot = lan.netboot;
-  netbootHost = hostInventory.hosts.nixosHosts.${netboot.host};
+  netbootHost = facts.hosts.nixosHosts.${netboot.host};
 
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
 
@@ -27,7 +27,7 @@ let
       })
       (
         builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
-          hostInventory.hosts.managedDhcpReservations ++ hostInventory.hosts.staticDhcpReservations
+          facts.hosts.managedDhcpReservations ++ facts.hosts.staticDhcpReservations
         )
       )
   );

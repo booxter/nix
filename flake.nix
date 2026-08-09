@@ -69,7 +69,7 @@
     inputs@{ self, ... }:
     let
       inherit (self) outputs;
-      hostInventory = import ./inv { lib = inputs.nixpkgs.lib; };
+      facts = import ./facts { lib = inputs.nixpkgs.lib; };
       hostSpecialArgs =
         spec:
         let
@@ -79,7 +79,7 @@
           inherit
             inputs
             outputs
-            hostInventory
+            facts
             ;
           inherit (hostPlatform) isDarwin isLinux;
           hostSpec = spec;
@@ -116,16 +116,16 @@
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.hosts.darwinHosts;
+      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) facts.hosts.darwinHosts;
 
-      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.hosts.nixosHosts;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) facts.hosts.nixosHosts;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
 
-      lib.ciTargetInventory = import ./ci {
-        inherit hostInventory;
+      lib.ciTargetFacts = import ./ci {
+        inherit facts;
         lib = inputs.nixpkgs.lib;
       };
 

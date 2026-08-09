@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   ...
@@ -75,7 +75,7 @@ in
         stick-table type integer size 10 expire 1h store bytes_out_rate(1s)
         filter bwlim-out jellyfin_downloads limit ${toString jellyfinDownloadRateBytesPerSecond} key be_id
         http-request set-var(txn.client_scope) str(external)
-        http-request set-var(txn.client_scope) str(lan) if { req.hdr_ip(X-Real-IP) -m ip 127.0.0.0/8 ::1 ${hostInventory.site.lan.cidr} fe80::/10 fc00::/7 }
+        http-request set-var(txn.client_scope) str(lan) if { req.hdr_ip(X-Real-IP) -m ip 127.0.0.0/8 ::1 ${facts.site.lan.cidr} fe80::/10 fc00::/7 }
         http-response set-bandwidth-limit jellyfin_downloads if { var(txn.client_scope) -m str external }
         server jellyfin ${jellyfinBackend}
     '';

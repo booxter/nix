@@ -109,7 +109,7 @@ pkgs.testers.runNixOSTest {
 
       config = {
         _module.args = {
-          hostInventory = {
+          facts = {
             realms.test.services.observability = {
               loki = {
                 writeUrl = null;

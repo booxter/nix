@@ -1,23 +1,23 @@
 {
   beastPkgs,
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
-  sourceLibraryRoot = "${hostInventory.shared-storage.resources.media.path}/library";
+  sourceLibraryRoot = "${facts.shared-storage.resources.media.path}/library";
   jellyfinLibraryRoot = "/media/library";
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${config.host.network.lanDomain}";
-  watchstateSso = hostInventory.sso.applications.watchstate;
+  watchstateSso = facts.sso.applications.watchstate;
   watchstateSystemUser = watchstateSso.bootstrapOwner;
-  watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
-  watchstatePort = hostInventory.site.ports.watchstate;
+  watchstateSystemAccount = facts.sso.users.${watchstateSystemUser};
+  watchstatePort = facts.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
   watchstateBackupStagingDir = "/volume2/backups/staging/watchstate";
   watchstateUid = 296;

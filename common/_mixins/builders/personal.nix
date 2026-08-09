@@ -1,12 +1,12 @@
 {
   lib,
   config,
-  hostInventory,
+  facts,
   ...
 }:
 let
   username = config.host.username;
-  builderSpec = n: hostInventory.hosts.nixosHosts."builder${toString n}";
+  builderSpec = n: facts.hosts.nixosHosts."builder${toString n}";
   builderSpecs = map builderSpec (lib.range 1 3);
 in
 {
@@ -58,9 +58,7 @@ in
         };
       in
       (map (toBuilder builderSpeedFactor) builderSpecs)
-      ++ lib.optional (config.networking.hostName != "frame") (
-        toBuilder 200 hostInventory.hosts.nixosHosts.frame
-      )
+      ++ lib.optional (config.networking.hostName != "frame") (toBuilder 200 facts.hosts.nixosHosts.frame)
       ++ lib.optional (config.networking.hostName != "mmini") {
         hostName = "mmini";
         systems = [ "aarch64-darwin" ];

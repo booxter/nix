@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   srvarrPkgs,
@@ -14,7 +14,7 @@ let
   slskdDownloadsDir = "${mediaPath}/slskd/complete";
   aurralPublicHost = config.host.web.services.aurral.public.hostName;
   aurralAdminUsers = lib.attrNames (
-    lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
+    lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) facts.sso.users
   );
   aurralUnitDeps = {
     Wants = [ "network-online.target" ];

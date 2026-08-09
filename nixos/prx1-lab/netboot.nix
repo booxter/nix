@@ -1,11 +1,11 @@
 {
-  hostInventory,
+  facts,
   hostSpec,
   pkgs,
   ...
 }:
 let
-  netboot = hostInventory.site.lan.netboot;
+  netboot = facts.site.lan.netboot;
 in
 {
   services.atftpd = {

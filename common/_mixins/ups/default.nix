@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   ...
@@ -12,7 +12,7 @@ in
   options.host.ups = {
     server = {
       enable = lib.mkEnableOption "local UPS server" // {
-        default = builtins.elem hostSpec.name hostInventory.ups.servers;
+        default = builtins.elem hostSpec.name facts.ups.servers;
       };
 
       description = lib.mkOption {
@@ -24,7 +24,7 @@ in
 
     client.server = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = hostInventory.ups.clients.${hostSpec.name} or null;
+      default = facts.ups.clients.${hostSpec.name} or null;
       description = "Host providing the UPS service monitored by this host.";
     };
 

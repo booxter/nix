@@ -1,12 +1,12 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   ...
 }:
 let
-  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  realmObservability = facts.realms.${config.host.realm}.services.observability or null;
 in
 {
   imports = [ ./node-exporter.nix ];
@@ -15,20 +15,20 @@ in
     enable = lib.mkEnableOption "host-side observability services";
 
     capacityProfile = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames hostInventory.observability.profiles.capacity);
+      type = lib.types.enum (builtins.attrNames facts.observability.profiles.capacity);
       default = hostSpec.observability.capacityProfile or "standard";
       readOnly = true;
       internal = true;
-      description = "Capacity alert policy selected by inventory.";
+      description = "Capacity alert policy selected by facts.";
     };
 
     thermalProfile = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames hostInventory.observability.profiles.thermal);
+      type = lib.types.enum (builtins.attrNames facts.observability.profiles.thermal);
       default =
         hostSpec.observability.thermalProfile or (if config.host.isVM then "none" else "standard");
       readOnly = true;
       internal = true;
-      description = "Thermal alert policy selected by inventory.";
+      description = "Thermal alert policy selected by facts.";
     };
   };
 

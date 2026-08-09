@@ -5,7 +5,7 @@ UniFi state sync. It runs `step-ca`, keeps the CA state in `/var/lib/step-ca`,
 and is the machine from which we issue internal HTTPS and Prometheus mTLS leaf
 certificates into host `sops` secrets. It also runs Kanidm as the fleet OIDC
 identity provider and runs the `unifi-sync` timer so trusted-LAN DHCP and split
-DNS stay converged with inventory.
+DNS stay converged with facts.
 
 ## PKI Use
 
@@ -120,7 +120,7 @@ nix run .#reset-oidc -- kasia
 
 Kanidm person email addresses are stored under
 `kanidm/person_mail_addresses/<username>` in the `pki` SOPS file. Add the
-matching `mailAddressSopsKey` to the person's inventory entry, then set the
+matching `mailAddressSopsKey` to the person's facts entry, then set the
 encrypted value from standard input:
 
 ```bash

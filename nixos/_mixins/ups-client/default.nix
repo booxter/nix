@@ -1,22 +1,17 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.ups;
   serverName = cfg.client.server;
-  serverSpec =
-    if serverName == null then null else hostInventory.hosts.nixosHosts.${serverName} or null;
-  upsServer =
-    if serverName == null then null else hostInventory.ups.serversByName.${serverName} or null;
-  clientCredentialMode = hostInventory.realms.${config.host.realm}.services.ups.credentialMode;
+  serverSpec = if serverName == null then null else facts.hosts.nixosHosts.${serverName} or null;
+  upsServer = if serverName == null then null else facts.ups.serversByName.${serverName} or null;
+  clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   serverCredentialMode =
-    if serverSpec == null then
-      null
-    else
-      hostInventory.realms.${serverSpec.realm}.services.ups.credentialMode;
+    if serverSpec == null then null else facts.realms.${serverSpec.realm}.services.ups.credentialMode;
   monitorName = if serverSpec == null then "" else serverSpec.name;
   monitorSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
@@ -33,8 +28,8 @@ in
           message = "host.ups.client.server must name a NixOS host";
         }
         {
-          assertion = builtins.elem serverName hostInventory.ups.servers;
-          message = "host.ups.client.server must reference an inventory UPS server";
+          assertion = builtins.elem serverName facts.ups.servers;
+          message = "host.ups.client.server must reference a UPS server declared in facts";
         }
       ];
     }

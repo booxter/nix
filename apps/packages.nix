@@ -1,13 +1,13 @@
 pkgs:
 let
   atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes { };
-  hostInventory = import ../inv { inherit (pkgs) lib; };
-  sopsTools = import ./sops/package.nix { inherit hostInventory pkgs; };
+  facts = import ../facts { inherit (pkgs) lib; };
+  sopsTools = import ./sops/package.nix { inherit facts pkgs; };
   certificateTools = pkgs.callPackage ./pki-certificates {
-    inherit atomicFileWrites hostInventory sopsTools;
+    inherit atomicFileWrites facts sopsTools;
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
-    inherit hostInventory sopsTools;
+    inherit facts sopsTools;
   };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
   seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };

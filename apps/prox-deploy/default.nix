@@ -40,7 +40,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "prox_deploy" ];
 
   meta = {
-    description = "Deploy inventory-backed NixOS VMs through nixmoxer";
+    description = "Deploy facts-backed NixOS VMs through nixmoxer";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "prox-deploy";

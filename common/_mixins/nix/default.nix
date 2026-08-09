@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.nixCache;
-  realmNixCache = hostInventory.realms.${config.host.realm}.services.nixCache or null;
+  realmNixCache = facts.realms.${config.host.realm}.services.nixCache or null;
   username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;

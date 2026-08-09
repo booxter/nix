@@ -1,6 +1,6 @@
 {
   age-plugin-se,
-  hostInventory,
+  facts,
   lib,
   makeWrapper,
   nix,
@@ -16,8 +16,8 @@ let
     builtins.toJSON (
       lib.mapAttrs (name: system: {
         inherit system;
-        secretDomain = hostInventory.hosts.secretDomainsByHost.${name};
-      }) hostInventory.hosts.systemsByHost
+        secretDomain = facts.hosts.secretDomainsByHost.${name};
+      }) facts.hosts.systemsByHost
     )
   );
   runtimePath = lib.makeBinPath [

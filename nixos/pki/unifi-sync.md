@@ -2,13 +2,13 @@
 
 ## Goal
 
-`unifi-sync` keeps UniFi DHCP, local DNS, and inventory-backed routing state in
-sync with this repository. It lets the Nix inventory remain the source of truth
+`unifi-sync` keeps UniFi DHCP, local DNS, and facts-backed routing state in
+sync with this repository. It lets the Nix facts remain the source of truth
 while UniFi continues to serve the network-facing DHCP and DNS behavior.
 
 The service is intentionally narrow: it reconciles declarative fleet data into
 UniFi and avoids carrying hand-maintained network values in operational notes.
-Exact addresses, domains, routes, and option definitions belong in inventory and
+Exact addresses, domains, routes, and option definitions belong in facts and
 the generated service environment.
 
 ## Architecture
@@ -19,12 +19,12 @@ to converge the configured site.
 
 The data path is:
 
-1. Fleet facts are defined in [inv/default.nix](../../inv/default.nix).
+1. Fleet facts are defined in [facts/default.nix](../../facts/default.nix).
 2. [unifi-sync-env.nix](./unifi-sync-env.nix) renders those facts into
    the environment consumed by the service.
 3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the
    service and timer, while [unifi-sync.nix](./unifi-sync.nix) supplies the
-   PKI host's inventory and secret.
+   PKI host's facts and secret.
 4. [cli.py](./pkgs/unifi-sync/src/unifi_sync/cli.py) reads the environment,
    compares it with UniFi state, and applies only the required changes.
 
@@ -32,13 +32,13 @@ The data path is:
 
 The sync covers the UniFi-owned parts of trusted-LAN configuration:
 
-- fixed DHCP reservations for inventory hosts
+- fixed DHCP reservations for facts hosts
 - local DNS records and split DNS records
 - DHCP network settings, including custom option definitions and values
-- inventory-backed static routes
+- facts-backed static routes
 - network boot settings
 
-Classless static route DHCP data is calculated from structured route inventory.
+Classless static route DHCP data is calculated from structured route facts.
 The repository should not store manually encoded DHCP payloads as configuration.
 
 ## WireGuard DNS
@@ -48,12 +48,12 @@ systemd service on the same host. It observes WireGuard exporter metrics over
 mTLS, derives which peer-specific DNS overrides should exist, and applies that
 DNS subset through the shared in-process UniFi client and reconciler.
 
-Keeping this logic separate lets normal inventory sync run on its timer while
+Keeping this logic separate lets normal facts sync run on its timer while
 WireGuard DNS can react on a shorter polling loop.
 
 ## Operating Notes
 
-Treat the Nix inventory and generated environment as the source of truth. If a
+Treat the Nix facts and generated environment as the source of truth. If a
 managed UniFi object is changed or deleted in the UniFi UI, the next sync should
 recreate or restore it from repository state.
 

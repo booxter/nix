@@ -2,7 +2,7 @@
 
 This host is a minimal WireGuard gateway VM. Client peers are declared in
 `nixos/gw/default.nix`, while the shared tunnel topology lives in
-`inv/default.nix` under `site.wireguard.home` and `site.lan`.
+`facts/default.nix` under `site.wireguard.home` and `site.lan`.
 
 ## Client setup
 
@@ -14,7 +14,7 @@ wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
 Pick a free address from `site.wireguard.home.cidr` in
-`inv/default.nix` and add
+`facts/default.nix` and add
 the peer to the `vpnPeers` list in `nixos/gw/default.nix`:
 
 ```nix
@@ -37,7 +37,7 @@ Generate a client config locally from the tracked topology:
 
 ```bash
 nix run .#wg-home-client-config -- \
-  --peer <inventory-peer-name> \
+  --peer <facts-peer-name> \
   --private-key-file ./client.key \
   --fetch-server-public-key \
   --output ./client.conf
@@ -59,7 +59,7 @@ qrencode -t ansiutf8 < client.conf
 
 ## Peer status exporter
 
-`gw` exposes inventory-backed WireGuard peer status through an mTLS-protected
+`gw` exposes facts-backed WireGuard peer status through an mTLS-protected
 nginx endpoint for the DNS automation on `pki`:
 
 - service: `prometheus-wireguard-exporter.service`

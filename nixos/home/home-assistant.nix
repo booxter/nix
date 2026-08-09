@@ -1,7 +1,7 @@
 {
   config,
   homeAssistantTools,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
@@ -9,9 +9,9 @@
 let
   homeAssistantPort = 8123;
   homeAssistantMetricsPort = 9346;
-  homeAssistantSso = hostInventory.sso.applications.home-assistant;
+  homeAssistantSso = facts.sso.applications.home-assistant;
   bootstrapOwnerName = homeAssistantSso.bootstrapOwner;
-  bootstrapOwner = hostInventory.sso.users.${bootstrapOwnerName};
+  bootstrapOwner = facts.sso.users.${bootstrapOwnerName};
   bootstrapBaseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   bootstrapClientId = "http://127.0.0.1:${toString homeAssistantPort}/";
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";

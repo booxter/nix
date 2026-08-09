@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
@@ -8,8 +8,8 @@
 let
   darwinHostSpecs = lib.mapAttrsToList (
     name: spec: spec // { inherit name; }
-  ) hostInventory.hosts.darwinHosts;
-  allHostSpecs = darwinHostSpecs ++ hostInventory.hosts.nixosHostSpecs;
+  ) facts.hosts.darwinHosts;
+  allHostSpecs = darwinHostSpecs ++ facts.hosts.nixosHostSpecs;
   vncHosts = builtins.filter (host: host.vnc.enable or false) allHostSpecs;
   directHosts = builtins.filter (host: !(host.vnc.sshTunnel or false)) vncHosts;
   tunneledHosts = builtins.filter (host: host.vnc.sshTunnel or false) vncHosts;
@@ -74,7 +74,7 @@ let
         cat <<'EOF'
       Usage: vnc-open [--${lib.concatStringsSep "|--" displayNames}] [HOST]
 
-      Open macOS Screen Sharing for an inventory host with VNC enabled.
+      Open macOS Screen Sharing for a facts host with VNC enabled.
       If HOST is omitted, select one interactively.
       Display selection applies only to tunneled multi-display hosts.
 

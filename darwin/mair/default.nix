@@ -1,14 +1,14 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  lan = hostInventory.site.lan;
-  wgHome = hostInventory.site.wireguard.home;
+  lan = facts.site.lan;
+  wgHome = facts.site.wireguard.home;
 in
 {
   system.stateVersion = 6;

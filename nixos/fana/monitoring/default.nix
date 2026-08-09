@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   utils,
@@ -9,7 +9,7 @@
 let
   hostname = config.networking.hostName;
   catalog = import ./catalog.nix;
-  monitoringPackage = pkgs.callPackage ./package.nix { inherit hostInventory; };
+  monitoringPackage = pkgs.callPackage ./package.nix { inherit facts; };
   alertmanagerPort = 9093;
   grafanaPort = config.services.grafana.settings.server.http_port;
   validateAlertmanagerConfig = utils.escapeSystemdExecArgs [

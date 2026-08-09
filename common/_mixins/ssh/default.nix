@@ -1,18 +1,18 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   username = config.host.username;
-  realmSsh = hostInventory.realms.${config.host.realm}.trust.ssh;
+  realmSsh = facts.realms.${config.host.realm}.trust.ssh;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
   managedKnownHosts = lib.mapAttrs (name: spec: {
     hostNames = spec.sshKnownHostNames;
     publicKey = readPublicKey (hostKeyPath name);
-  }) hostInventory.hosts.hostSpecsByName;
+  }) facts.hosts.hostSpecsByName;
 in
 {
   imports = [ ./ticket-server.nix ];

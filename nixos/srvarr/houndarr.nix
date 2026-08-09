@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   srvarrPkgs,
   utils,
@@ -18,7 +18,7 @@ let
   arrProbeUrls = map (
     name: "https://${name}.${config.host.network.lanDomain}:9443/ping"
   ) arrServiceNames;
-  srvarrAddress = hostInventory.hosts.nixosHosts.srvarr.ipAddress;
+  srvarrAddress = facts.hosts.nixosHosts.srvarr.ipAddress;
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   statusMetricsFile = "${nodeExporterTextfileDir}/houndarr-status.prom";

@@ -13,7 +13,7 @@
 - The packaged `auth_oidc` component connects Home Assistant to Kanidm. The
   `home-admins` and `home-users` claims map to Home Assistant roles.
 - A first-boot oneshot uses the SOPS-managed bootstrap password to create the
-  inventory-selected Home Assistant owner and complete onboarding through the
+  facts-selected Home Assistant owner and complete onboarding through the
   supported HTTP API. The owner's first OIDC login links to that account.
 
 ## Observability

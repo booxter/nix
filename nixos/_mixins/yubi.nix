@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
@@ -8,7 +8,7 @@
 let
   hostname = config.networking.hostName;
   username = config.host.username;
-  pamU2f = hostInventory.yubi.devices.personal.applets.fido2.pamU2f.${hostname} or null;
+  pamU2f = facts.yubi.devices.personal.applets.fido2.pamU2f.${hostname} or null;
 in
 {
   config = lib.mkMerge [

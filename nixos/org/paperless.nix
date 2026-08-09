@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   orgPkgs,
   pkgs,
@@ -11,7 +11,7 @@ let
   paperlessService = config.host.web.services.paperless;
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
-  paperlessStoragePath = hostInventory.nfs.links.org.paperless.mountPoint;
+  paperlessStoragePath = facts.nfs.links.org.paperless.mountPoint;
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoTag = "paperless-gpt-auto";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";

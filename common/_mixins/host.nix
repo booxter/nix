@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   inputs,
   lib,
@@ -9,7 +9,7 @@
 let
   hostname = hostSpec.name;
   hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
-  realm = hostInventory.realms.${config.host.realm};
+  realm = facts.realms.${config.host.realm};
   inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
@@ -23,7 +23,7 @@ in
       default = system;
       readOnly = true;
       internal = true;
-      description = "Nix platform declared by the host inventory.";
+      description = "Nix platform declared by host facts.";
     };
 
     isDarwin = lib.mkOption {
@@ -31,7 +31,7 @@ in
       default = isDarwin;
       readOnly = true;
       internal = true;
-      description = "Whether the inventory platform uses the Darwin kernel.";
+      description = "Whether the facts platform uses the Darwin kernel.";
     };
 
     isLinux = lib.mkOption {
@@ -39,7 +39,7 @@ in
       default = isLinux;
       readOnly = true;
       internal = true;
-      description = "Whether the inventory platform uses the Linux kernel.";
+      description = "Whether the facts platform uses the Linux kernel.";
     };
 
     isBuilder = lib.mkOption {
@@ -111,10 +111,10 @@ in
 
     hasYubiAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = builtins.elem hostname hostInventory.yubi.ageIdentity.hosts;
+      default = builtins.elem hostname facts.yubi.ageIdentity.hosts;
       readOnly = true;
       internal = true;
-      description = "Whether the YubiKey inventory assigns an age identity to this host.";
+      description = "Whether YubiKey facts assign an age identity to this host.";
     };
 
     isVM = lib.mkOption {
@@ -134,16 +134,16 @@ in
     };
 
     realm = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames hostInventory.realms);
+      type = lib.types.enum (builtins.attrNames facts.realms);
       default = hostSpec.realm;
       readOnly = true;
       internal = true;
-      description = "Infrastructure and trust realm declared by the host inventory.";
+      description = "Infrastructure and trust realm declared by host facts.";
     };
 
     secretDomain = lib.mkOption {
       type = lib.types.str;
-      default = hostInventory.realms.${config.host.realm}.secretDomain;
+      default = facts.realms.${config.host.realm}.secretDomain;
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";
@@ -217,7 +217,7 @@ in
       default = hostSpec.userProfile;
       readOnly = true;
       internal = true;
-      description = "User environment profile declared by the host inventory.";
+      description = "User environment profile declared by host facts.";
     };
 
   };
@@ -226,7 +226,7 @@ in
     assertions = [
       {
         assertion = isDarwin != isLinux;
-        message = "Inventory platform ${system} must identify exactly one supported kernel.";
+        message = "Facts platform ${system} must identify exactly one supported kernel.";
       }
       {
         assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;

@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   utils,
@@ -9,8 +9,8 @@
 let
   hostName = hostSpec.name;
   nfsPort = 2049;
-  provider = hostInventory.nfs.providers.${hostName} or null;
-  hostLinks = hostInventory.nfs.links.${hostName} or { };
+  provider = facts.nfs.providers.${hostName} or null;
+  hostLinks = facts.nfs.links.${hostName} or { };
   allLinks = lib.concatMapAttrs (
     clientName:
     lib.mapAttrs' (
@@ -22,7 +22,7 @@ let
         }
       )
     )
-  ) hostInventory.nfs.links;
+  ) facts.nfs.links;
   providedLinks = lib.filterAttrs (_: link: link.provider == hostName) allLinks;
   providedExports = if provider == null then { } else provider.exports;
   participatingExports =
@@ -30,7 +30,7 @@ let
     // builtins.listToAttrs (
       map (link: {
         name = "${link.provider}-${link.exportName}";
-        value = hostInventory.nfs.providers.${link.provider}.exports.${link.exportName};
+        value = facts.nfs.providers.${link.provider}.exports.${link.exportName};
       }) (builtins.attrValues hostLinks)
     );
   sharedGroups =
@@ -54,7 +54,7 @@ let
   anonymousIdentityAssertions = lib.concatMap (
     name:
     let
-      expected = hostInventory.accounts.users.${name};
+      expected = facts.accounts.users.${name};
       user = config.users.users.${name} or null;
       group = config.users.groups.${expected.group} or null;
     in
@@ -64,7 +64,7 @@ let
         message = "NFS anonymous identity ${name} must use UID ${toString expected.uid}";
       }
       {
-        assertion = group != null && group.gid == hostInventory.accounts.groups.${expected.group}.gid;
+        assertion = group != null && group.gid == facts.accounts.groups.${expected.group}.gid;
         message = "NFS anonymous identity ${name} must use the shared ${expected.group} GID";
       }
     ]
@@ -84,7 +84,7 @@ let
   clientFileSystems = lib.mapAttrs' (
     _: link:
     lib.nameValuePair link.mountPoint {
-      device = "${hostInventory.hosts.nixosHosts.${link.provider}.ipAddress}:${link.exportPath}";
+      device = "${facts.hosts.nixosHosts.${link.provider}.ipAddress}:${link.exportPath}";
       fsType = "nfs";
       options = mountOptions;
     }
@@ -118,7 +118,7 @@ let
     lib.concatMapStringsSep "\n" (
       link:
       "${export.path} ${
-        hostInventory.hosts.nixosHosts.${link.clientName}.ipAddress
+        facts.hosts.nixosHosts.${link.clientName}.ipAddress
       }(${lib.concatStringsSep "," (exportOptions export)})"
     ) (builtins.attrValues clients)
   ) (builtins.attrNames providedExports);

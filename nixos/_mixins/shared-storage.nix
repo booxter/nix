@@ -1,14 +1,14 @@
 {
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   ...
 }:
 let
-  accounts = hostInventory.accounts;
+  accounts = facts.accounts;
   resources = lib.filterAttrs (
     _: resource: resource.provider == hostSpec.name
-  ) hostInventory.shared-storage.resources;
+  ) facts.shared-storage.resources;
   managedUserSpecs = lib.concatMap (
     resource:
     map (name: {

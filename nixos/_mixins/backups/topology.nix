@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   hostName = config.networking.hostName;
-  provider = hostInventory.backups.providers.${hostName} or null;
-  hostLinks = hostInventory.backups.links.${hostName} or { };
+  provider = facts.backups.providers.${hostName} or null;
+  hostLinks = facts.backups.links.${hostName} or { };
   cloudUploadRateMbit = config.host.site.policies.backups.maxUploadMbit;
   cloudQosEnabled = config.host.backups.server.enable;
   clientLinks = lib.concatMapAttrs (
@@ -21,7 +21,7 @@ let
         }
       )
     )
-  ) hostInventory.backups.links;
+  ) facts.backups.links;
   providedLinks = lib.filterAttrs (_: link: link.provider == hostName) clientLinks;
   clients = lib.mapAttrs' (
     _: link:

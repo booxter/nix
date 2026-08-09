@@ -1,5 +1,5 @@
 {
-  hostInventory,
+  facts,
   lib,
 }:
 let
@@ -39,12 +39,12 @@ let
       name = "${name} (${spec.platform})";
       system = spec.platform;
     };
-  builderSystem = hostInventory.hosts.nixosHosts.builder1.platform;
+  builderSystem = facts.hosts.nixosHosts.builder1.platform;
 in
 {
   buildTargets =
-    map mkNixosTarget hostInventory.hosts.nixosHostSpecs
-    ++ lib.mapAttrsToList mkDarwinTarget hostInventory.hosts.darwinHosts
+    map mkNixosTarget facts.hosts.nixosHostSpecs
+    ++ lib.mapAttrsToList mkDarwinTarget facts.hosts.darwinHosts
     ++ [
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vm";

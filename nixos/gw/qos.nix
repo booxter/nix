@@ -1,6 +1,6 @@
-{ hostInventory, ... }:
+{ facts, ... }:
 let
-  wgHome = hostInventory.site.wireguard.home;
+  wgHome = facts.site.wireguard.home;
 in
 {
   # Keep WireGuard peer downloads from filling the constrained home uplink.

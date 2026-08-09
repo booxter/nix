@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   rootConfig = config;
   cfg = config.host.internalPki;
-  realmInternalPki = hostInventory.realms.${config.host.realm}.services.internalPki or null;
+  realmInternalPki = facts.realms.${config.host.realm}.services.internalPki or null;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
   secretBaseName =
     clientName: materializationName:
@@ -82,7 +82,7 @@ in
       type = lib.types.path;
       default =
         if realmInternalPki == null then
-          hostInventory.realms.home.services.internalPki.rootCaCertificate
+          facts.realms.home.services.internalPki.rootCaCertificate
         else
           realmInternalPki.rootCaCertificate;
       readOnly = true;

@@ -1,30 +1,30 @@
 { pkgs }:
 let
   appSpec = import ./app-spec.nix;
-  hostInventory = import ../inv { lib = pkgs.lib; };
-  lan = hostInventory.site.lan;
-  wgHome = hostInventory.site.wireguard.home;
+  facts = import ../facts { lib = pkgs.lib; };
+  lan = facts.site.lan;
+  wgHome = facts.site.wireguard.home;
   wireguardGatewaySshHost = wgHome.gateway.host;
   appPackages = import ./packages.nix pkgs;
 
-  fleetInventory = {
+  fleetFacts = {
     aliases =
       builtins.listToAttrs (
         map (spec: {
           inherit (spec) name;
           value = spec.name;
-        }) hostInventory.hosts.nixosHostSpecs
+        }) facts.hosts.nixosHostSpecs
       )
-      // pkgs.lib.mapAttrs (name: _: name) hostInventory.hosts.darwinHosts;
+      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwinHosts;
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
       platform = spec.platform;
       runtimeHost = spec.name;
       sshHost = spec.name;
-    }) hostInventory.hosts.darwinHosts;
+    }) facts.hosts.darwinHosts;
     lanDnsServer = lan.gateway.address;
-    lanDomain = hostInventory.site.lan.domain;
+    lanDomain = facts.site.lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
         inherit (spec) name;
@@ -35,14 +35,14 @@ let
           runtimeHost = spec.name;
           sshHost = spec.name;
         };
-      }) hostInventory.hosts.nixosHostSpecs
+      }) facts.hosts.nixosHostSpecs
     );
   };
   wireguardHome = {
     subnet = wgHome.cidr;
     dns = [
       lan.gateway.address
-      hostInventory.site.lan.domain
+      facts.site.lan.domain
     ];
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
     allowedIps = [
@@ -56,10 +56,10 @@ let
     map (spec: {
       inherit (spec) name;
       value = spec.name;
-    }) hostInventory.hosts.nixosHostSpecs
+    }) facts.hosts.nixosHostSpecs
   );
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetInventory vmTargets wireguardHome;
+    inherit fleetFacts vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {

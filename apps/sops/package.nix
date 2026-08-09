@@ -1,9 +1,9 @@
-{ hostInventory, pkgs }:
+{ facts, pkgs }:
 let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
   secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
-    builtins.toJSON hostInventory.hosts.secretDomainsByHost
+    builtins.toJSON facts.hosts.secretDomainsByHost
   );
   source = pkgs.lib.fileset.toSource {
     root = ../..;

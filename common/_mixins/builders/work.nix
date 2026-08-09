@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
@@ -8,7 +8,7 @@ let
   username = config.host.username;
   identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
   user = "ihrachyshka";
-  builderSpec = hostInventory.hosts.nixosHosts.nvws;
+  builderSpec = facts.hosts.nixosHosts.nvws;
   nspawnFeatures = [
     "devnet"
     "uid-range"

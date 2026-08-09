@@ -1,10 +1,10 @@
 {
-  hostInventory,
+  facts,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map (spec: spec.name) hostInventory.hosts.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) facts.hosts.nixosHostSpecs;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)

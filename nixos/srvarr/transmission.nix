@@ -1,12 +1,12 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  srvarrSpec = hostInventory.hosts.nixosHosts.srvarr;
+  srvarrSpec = facts.hosts.nixosHosts.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   transmissionStateDir = "${stateDir}/.config/transmission-daemon";

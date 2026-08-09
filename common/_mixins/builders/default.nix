@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
@@ -14,7 +14,7 @@
   options.host = {
     build.pools = lib.mkOption {
       type = with lib.types; listOf str;
-      default = hostInventory.realms.${config.host.realm}.build.pools;
+      default = facts.realms.${config.host.realm}.build.pools;
       readOnly = true;
       internal = true;
       description = "Nix builder pools made available by the host realm.";

@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   srvarrPkgs,
@@ -8,13 +8,13 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = hostInventory.accounts; };
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   ociImages = import ../../oci { inherit pkgs; };
 
   pinepodsService = config.host.web.services.pinepods;
-  pinepodsSso = hostInventory.sso.applications.pinepods;
+  pinepodsSso = facts.sso.applications.pinepods;
   bootstrapOwnerName = pinepodsSso.bootstrapOwner;
-  bootstrapAdmin = hostInventory.sso.users.${bootstrapOwnerName};
+  bootstrapAdmin = facts.sso.users.${bootstrapOwnerName};
   oidcClient = config.host.sso.oidc.clients.pinepods;
   oidcScopes = config.host.sso.oidc.baseScopes;
   image = ociImages.pinepods.ref;

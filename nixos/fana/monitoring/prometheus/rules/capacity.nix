@@ -1,10 +1,10 @@
 {
-  hostInventory,
+  facts,
   lib,
 }:
 let
   inherit (import ./lib.nix { inherit lib; }) mkAlert mkGroup;
-  profiles = hostInventory.observability.profiles.capacity;
+  profiles = facts.observability.profiles.capacity;
   profileNames = builtins.attrNames profiles;
   mkCpuAlert =
     profileName: severity: threshold:
