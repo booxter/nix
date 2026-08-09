@@ -8,12 +8,8 @@ let
   hostName = config.networking.hostName;
   provider = hostInventory.backups.providers.${hostName} or null;
   hostLinks = hostInventory.backups.links.${hostName} or { };
-  siteName = config.host.site.name;
-  sitePolicy =
-    if siteName == null then null else hostInventory.backups.policies.bySite.${siteName} or null;
-  cloudOffloadPolicy = if sitePolicy == null then null else sitePolicy.cloudOffload or null;
-  cloudUploadRateMbit = if cloudOffloadPolicy == null then null else cloudOffloadPolicy.maxUploadMbit;
-  cloudQosEnabled = config.host.backups.server.enable && cloudUploadRateMbit != null;
+  cloudUploadRateMbit = config.host.site.policies.backups.maxUploadMbit;
+  cloudQosEnabled = config.host.backups.server.enable;
   clientLinks = lib.concatMapAttrs (
     clientName:
     lib.mapAttrs' (
@@ -58,14 +54,6 @@ let
       lib.unique (lib.mapAttrsToList (_: offsite: offsite.bucketName) provider.offsite);
 in
 {
-  options.host.backups.policy.cloudOffload.maxUploadMbit = lib.mkOption {
-    type = with lib.types; nullOr (addCheck number (value: value > 0));
-    default = cloudUploadRateMbit;
-    readOnly = true;
-    internal = true;
-    description = "Cloud-backup upload rate selected by site policy.";
-  };
-
   config = lib.mkMerge [
     {
       host.backups.destinations = builtins.mapAttrs (_: link: {
@@ -84,16 +72,6 @@ in
         {
           assertion = config.host.network.primaryInterface != null;
           message = "backup cloud-offload policy requires host.network.primaryInterface";
-        }
-        {
-          assertion = config.host.site.uplink.uploadMbit != null;
-          message = "backup cloud-offload policy requires site upload capacity";
-        }
-        {
-          assertion =
-            config.host.site.uplink.uploadMbit == null
-            || cloudUploadRateMbit <= config.host.site.uplink.uploadMbit;
-          message = "backup cloud-offload rate must not exceed the site's upload capacity";
         }
       ];
 

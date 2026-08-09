@@ -1,7 +1,5 @@
 { readPublicKey }:
 {
-  policies.bySite.home.cloudOffload.maxUploadMbit = 10;
-
   providers.beast = {
     repositoryRoot = "/volume2/backups/restic-prod/hosts";
 
