@@ -56,28 +56,28 @@ let
       };
     };
   dashboardManifest = {
-      dataSources = {
-        prometheus = {
-          type = "prometheus";
-          uid = grafanaPrometheusUid;
-        };
-        loki = {
-          type = "loki";
-          uid = grafanaLokiUid;
-        };
+    dataSources = {
+      prometheus = {
+        type = "prometheus";
+        uid = grafanaPrometheusUid;
       };
-      hosts = lib.mapAttrsToList dashboardHost observableConfigurations;
-      network.internet = {
-        ingress = {
-          capacityMbit = config.host.site.uplink.downloadMbit;
-          targetMbit = config.host.site.policies.downloaders.maxDownloadMbit;
-        };
-        egress = {
-          capacityMbit = config.host.site.uplink.uploadMbit;
-          targetMbit = config.host.site.policies.backups.maxUploadMbit;
-        };
+      loki = {
+        type = "loki";
+        uid = grafanaLokiUid;
       };
     };
+    hosts = lib.mapAttrsToList dashboardHost observableConfigurations;
+    network.internet = {
+      ingress = {
+        capacityMbit = config.host.site.uplink.downloadMbit;
+        targetMbit = config.host.site.policies.downloaders.maxDownloadMbit;
+      };
+      egress = {
+        capacityMbit = config.host.site.uplink.uploadMbit;
+        targetMbit = config.host.site.policies.backups.maxUploadMbit;
+      };
+    };
+  };
   dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
     builtins.toJSON dashboardManifest
   );
