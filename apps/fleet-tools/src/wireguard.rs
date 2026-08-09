@@ -375,11 +375,11 @@ mod tests {
     }
 
     #[test]
-    fn help_lists_inventory_backed_peers() {
+    fn help_lists_facts_backed_peers() {
         let help = WireguardArgs::command().render_long_help().to_string();
 
         assert!(help.contains("--peer mair"));
-        assert!(help.contains("Inventory-backed peers: mair"));
+        assert!(help.contains("Facts-backed peers: mair"));
     }
 
     #[test]

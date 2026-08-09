@@ -25,7 +25,7 @@ jobs:
     name: Format check
     runs-on: ubuntu-slim
     outputs:
-      ci_target_inventory: ${{ steps.ci_target_inventory.outputs.inventory }}
+      ci_target_facts: ${{ steps.ci_target_facts.outputs.facts }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -47,10 +47,12 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve CI target inventory
-        id: ci_target_inventory
+      - name: Resolve CI target facts
+        id: ci_target_facts
         shell: bash
-        run: printf 'inventory=%s\n' "$(nix eval --json .#lib.ciTargetInventory)" >>"${GITHUB_OUTPUT}"
+        run: |
+          target_facts="$(nix eval --json .#lib.ciTargetFacts)"
+          printf 'facts=%s\n' "${target_facts}" >>"${GITHUB_OUTPUT}"
 
   plan-build-matrix:
     name: plan build matrix
@@ -70,12 +72,12 @@ jobs:
         id: plan
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          CI_TARGET_INVENTORY: ${{ needs.format.outputs.ci_target_inventory }}
+          CI_TARGET_FACTS: ${{ needs.format.outputs.ci_target_facts }}
         with:
           script: |
             const planner = require("./.github/scripts/plan-ci-matrix.js");
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const buildTargets = JSON.parse(process.env.CI_TARGET_INVENTORY).buildTargets;
+            const buildTargets = JSON.parse(process.env.CI_TARGET_FACTS).buildTargets;
             const fullMatrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
