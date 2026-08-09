@@ -50,7 +50,7 @@ in
         "--url"
         alertmanagerReadyUrl
         "--ca-file"
-        (toString internalPkiRootCaPath)
+        "${internalPkiRootCaPath}"
       ];
       TimeoutStartSec = "45s";
       DynamicUser = true;
