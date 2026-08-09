@@ -14,12 +14,12 @@ let
     finalize =
       {
         name,
-        facts,
+        raw,
         enrich ? (value: value),
         assertions ? (_: [ ]),
       }:
       let
-        checkedFacts = factsLib.requireSerializable "facts module ${name} raw facts" facts;
+        checkedFacts = factsLib.requireSerializable "facts module ${name} raw facts" raw;
         enriched = enrich checkedFacts;
         asserted = lib.foldl' (
           result: check:
@@ -29,7 +29,12 @@ let
       in
       factsLib.requireSerializable "facts module ${name} result" asserted;
 
-    evalModule = name: value: factsLib.requireSerializable "facts module ${name} result" value;
+    callWith =
+      availableArgs: value:
+      if builtins.isFunction value then
+        value (builtins.intersectAttrs (builtins.functionArgs value) availableArgs)
+      else
+        value;
 
     discoverFactLibraries =
       directory:
@@ -49,14 +54,30 @@ let
         facts = lib.mapAttrs (
           name: path:
           let
-            module = import path;
             availableArgs = commonArgs // {
-              factsModuleName = name;
-              inherit facts factsLib;
+              inherit facts;
             };
-            moduleArgs = builtins.intersectAttrs (builtins.functionArgs module) availableArgs;
+            call = factsLib.callWith availableArgs;
+            raw = call (import (path + "/facts.nix"));
+            enrich =
+              if builtins.pathExists (path + "/enrich.nix") then
+                call (import (path + "/enrich.nix"))
+              else
+                value: value;
+            assertions =
+              if builtins.pathExists (path + "/asserts.nix") then
+                call (import (path + "/asserts.nix"))
+              else
+                _: [ ];
           in
-          factsLib.evalModule name (module moduleArgs)
+          factsLib.finalize {
+            inherit
+              assertions
+              enrich
+              name
+              raw
+              ;
+          }
         ) factLibraries;
       in
       factsLib.publish directory facts;

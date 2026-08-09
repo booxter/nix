@@ -1,9 +1,14 @@
 {
-  lanDomain,
-  nixCaches,
-  publicCertificates,
-  publicKeys,
+  context,
+  facts,
 }:
+let
+  inherit (context) lanDomain;
+  inherit (facts) nix-caches public-certificates public-keys;
+  nixCaches = nix-caches;
+  publicCertificates = public-certificates;
+  publicKeys = public-keys;
+in
 {
   home = {
     build.pools = [

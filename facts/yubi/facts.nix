@@ -1,8 +1,6 @@
-{
-  frame,
-  mmini,
-}:
+{ context }:
 let
+  inherit (context) frame mmini;
   sopsAgeIdentity = {
     hosts = [
       frame

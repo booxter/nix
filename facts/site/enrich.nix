@@ -1,18 +1,19 @@
 {
-  hosts,
-  lanDnsRecordTtlSeconds,
-  lanDomain,
+  context,
+  facts,
   lib,
 }:
-facts:
+raw:
 let
+  inherit (context) lanDnsRecordTtlSeconds lanDomain;
+  hosts = facts.hosts;
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
     ttlSeconds = lanDnsRecordTtlSeconds;
     inherit domain ipv4Address;
   };
   staticDnsRecords = [
-    (mkDnsARecord "unifi.${lanDomain}" facts.lan.gateway.address)
+    (mkDnsARecord "unifi.${lanDomain}" raw.lan.gateway.address)
   ];
   renderHostDnsRecords =
     spec:
@@ -21,13 +22,13 @@ let
       lib.unique (spec.localDnsAliases or [ ])
     );
 in
-facts
+raw
 // {
-  lan = facts.lan // {
+  lan = raw.lan // {
     staticRoutes = [
       {
-        destination = facts.wireguard.home.cidr;
-        nextHop = hosts.nixosHosts.${facts.wireguard.home.gateway.host}.ipAddress;
+        destination = raw.wireguard.home.cidr;
+        nextHop = hosts.nixosHosts.${raw.wireguard.home.gateway.host}.ipAddress;
         distance = 1;
         name = "wg-home";
       }

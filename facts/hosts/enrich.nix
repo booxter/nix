@@ -1,10 +1,12 @@
 {
-  lanDomain,
+  context,
+  facts,
   lib,
-  realms,
 }:
-facts:
+raw:
 let
+  inherit (context) lanDomain;
+  realms = facts.realms;
   realmFor =
     spec:
     let
@@ -44,8 +46,8 @@ let
         normalized.localDnsName
       ];
     };
-  darwinHosts = lib.mapAttrs (_: normalizeHostSpec) facts.darwinHosts;
-  nixosHostSpecs = map normalizeNixosHostSpec facts.nixosHostSpecs;
+  darwinHosts = lib.mapAttrs (_: normalizeHostSpec) raw.darwinHosts;
+  nixosHostSpecs = map normalizeNixosHostSpec raw.nixosHostSpecs;
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
     builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
   );
@@ -53,7 +55,7 @@ let
     map (reservation: {
       name = reservation.hostname;
       value = reservation;
-    }) (managedDhcpReservations ++ facts.staticDhcpReservations)
+    }) (managedDhcpReservations ++ raw.staticDhcpReservations)
   );
   nixosHosts = builtins.listToAttrs (
     map (spec: {
@@ -63,7 +65,7 @@ let
   );
   hostSpecsByName = darwinHosts // nixosHosts;
 in
-facts
+raw
 // {
   inherit
     darwinHosts

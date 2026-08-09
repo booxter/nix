@@ -1,5 +1,6 @@
-{ mediaLibraries }:
+{ facts }:
 let
+  mediaLibraries = facts.media-libraries;
   mediaDirectory =
     {
       path,

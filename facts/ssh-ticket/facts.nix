@@ -1,9 +1,10 @@
 {
-  frame,
-  mmini,
-  publicKeys,
+  context,
+  facts,
 }:
 let
+  inherit (context) frame mmini;
+  publicKeys = facts.public-keys;
   yubikeyIssuer = {
     publicKey = publicKeys.users.yubikey;
     keyName = "id_ed25519_sk_rk";

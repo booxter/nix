@@ -1,8 +1,10 @@
 {
-  lanDomain,
-  publicKeys,
+  context,
+  facts,
 }:
 let
+  inherit (context) lanDomain;
+  publicKeys = facts.public-keys;
   urlWithPriority = url: priority: "${url}?priority=${toString priority}";
   homeUrl = "https://nix-cache.${lanDomain}/default";
   flakehubUrl = "https://cache.flakehub.com";

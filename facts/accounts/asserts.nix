@@ -1,8 +1,8 @@
 { lib }:
-facts:
+raw:
 let
-  uids = map (account: account.uid) (builtins.attrValues facts.users);
-  gids = map (group: group.gid) (builtins.attrValues facts.groups);
+  uids = map (account: account.uid) (builtins.attrValues raw.users);
+  gids = map (group: group.gid) (builtins.attrValues raw.groups);
 in
 [
   {

@@ -1,16 +1,17 @@
 {
+  facts,
   lib,
-  sharedStorage,
 }:
-facts:
+raw:
 let
-  providers = builtins.attrValues facts.providers;
+  sharedStorage = facts.shared-storage;
+  providers = builtins.attrValues raw.providers;
   providerStorageMatches = lib.all (
     providerName:
     lib.all (export: sharedStorage.resources.${export.storageName}.provider == providerName) (
-      builtins.attrValues facts.providers.${providerName}.exports
+      builtins.attrValues raw.providers.${providerName}.exports
     )
-  ) (builtins.attrNames facts.providers);
+  ) (builtins.attrNames raw.providers);
   providerFsidsAreUnique = lib.all (
     provider:
     let
@@ -24,7 +25,7 @@ let
       mountPoints = map (link: link.mountPoint) (builtins.attrValues links);
     in
     builtins.length mountPoints == builtins.length (lib.unique mountPoints)
-  ) (builtins.attrValues facts.links);
+  ) (builtins.attrValues raw.links);
 in
 [
   {

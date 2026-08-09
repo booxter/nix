@@ -1,7 +1,7 @@
 { lib }:
-facts:
+raw:
 let
-  links = builtins.concatLists (map builtins.attrValues (builtins.attrValues facts.links));
+  links = builtins.concatLists (map builtins.attrValues (builtins.attrValues raw.links));
   repositoryPaths = map (link: link.repositoryPath) links;
 in
 [

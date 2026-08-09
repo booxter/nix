@@ -1,9 +1,10 @@
 {
-  hosts,
+  facts,
   lib,
 }:
-facts:
+raw:
 let
+  hosts = facts.hosts;
   serverFor =
     hostName:
     let
@@ -16,12 +17,12 @@ let
       name = "${lib.strings.toUpper hostName}-UPS";
     };
 in
-facts
+raw
 // {
   serversByName = builtins.listToAttrs (
     map (hostName: {
       name = hostName;
       value = serverFor hostName;
-    }) facts.servers
+    }) raw.servers
   );
 }

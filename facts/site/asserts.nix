@@ -1,7 +1,7 @@
 { lib }:
-facts:
+raw:
 let
-  dnsDomains = map (record: record.domain) facts.lan.dnsRecords;
+  dnsDomains = map (record: record.domain) raw.lan.dnsRecords;
 in
 [
   {

@@ -1,9 +1,9 @@
 {
-  frame,
-  lanDomain,
+  context,
   lib,
 }:
 let
+  inherit (context) frame lanDomain;
   nvws = "nvws";
 
   builderDhcpReservations = {

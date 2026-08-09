@@ -1,10 +1,11 @@
 {
-  accounts,
+  facts,
   lib,
-  sharedStorage,
 }:
-facts:
+raw:
 let
+  accounts = facts.accounts;
+  sharedStorage = facts.shared-storage;
   normalizeExport =
     providerName: exportName: export:
     let
@@ -31,7 +32,7 @@ let
     // {
       exports = lib.mapAttrs (normalizeExport providerName) provider.exports;
     }
-  ) facts.providers;
+  ) raw.providers;
   normalizeLink =
     clientName: linkName: link:
     let
@@ -49,8 +50,8 @@ let
       exportPath = export.path;
     };
 in
-facts
+raw
 // {
   inherit providers;
-  links = lib.mapAttrs (clientName: lib.mapAttrs (normalizeLink clientName)) facts.links;
+  links = lib.mapAttrs (clientName: lib.mapAttrs (normalizeLink clientName)) raw.links;
 }

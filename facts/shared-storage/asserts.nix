@@ -1,7 +1,7 @@
 { lib }:
-facts:
+raw:
 let
-  resources = builtins.attrValues facts.resources;
+  resources = builtins.attrValues raw.resources;
   resourcePaths = map (resource: resource.path) resources;
   resourcePathsAreUnique =
     builtins.length resourcePaths == builtins.length (lib.unique resourcePaths);

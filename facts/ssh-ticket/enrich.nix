@@ -1,10 +1,11 @@
 {
-  hosts,
+  facts,
   lib,
-  realms,
 }:
-facts:
+raw:
 let
+  hosts = facts.hosts;
+  realms = facts.realms;
   mkTarget =
     kind: spec:
     let
@@ -34,7 +35,7 @@ let
     map (mkTarget "nixos") hosts.nixosHostSpecs
     ++ lib.mapAttrsToList (_: mkTarget "darwin") hosts.darwinHosts;
 in
-facts
+raw
 // {
   inherit targets;
 

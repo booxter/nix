@@ -1,4 +1,7 @@
-{ publicKeys }:
+{ facts }:
+let
+  publicKeys = facts.public-keys;
+in
 {
   providers.beast = {
     repositoryRoot = "/volume2/backups/restic-prod/hosts";

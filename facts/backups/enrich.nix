@@ -1,13 +1,13 @@
 { lib }:
-facts:
-facts
+raw:
+raw
 // {
   links = lib.mapAttrs (
     clientName:
     lib.mapAttrs (
       linkName: link:
       let
-        provider = facts.providers.${link.provider};
+        provider = raw.providers.${link.provider};
         storageName = link.storageName or clientName;
       in
       link
@@ -17,5 +17,5 @@ facts
         ingestUser = "restic-${clientName}";
       }
     )
-  ) facts.links;
+  ) raw.links;
 }

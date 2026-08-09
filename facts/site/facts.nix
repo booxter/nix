@@ -1,9 +1,12 @@
 {
-  lanDomain,
-  nixCaches,
-  publicDomain,
-  publicKeys,
+  context,
+  facts,
 }:
+let
+  inherit (context) lanDomain publicDomain;
+  nixCaches = facts.nix-caches;
+  publicKeys = facts.public-keys;
+in
 rec {
   public = {
     domain = publicDomain;

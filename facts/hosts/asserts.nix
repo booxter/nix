@@ -1,9 +1,9 @@
 { lib }:
-facts:
+raw:
 let
-  names = builtins.attrNames facts.darwinHosts ++ map (spec: spec.name) facts.nixosHostSpecs;
+  names = builtins.attrNames raw.darwinHosts ++ map (spec: spec.name) raw.nixosHostSpecs;
   reservationNames = map (reservation: reservation.hostname) (
-    facts.managedDhcpReservations ++ facts.staticDhcpReservations
+    raw.managedDhcpReservations ++ raw.staticDhcpReservations
   );
 in
 [

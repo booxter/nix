@@ -1,6 +1,7 @@
-{ accounts, lib }:
-facts:
+{ facts, lib }:
+raw:
 let
+  accounts = facts.accounts;
   normalizeDirectory =
     resourceName: resource: directory:
     let
@@ -25,7 +26,7 @@ let
       inherit absolutePath group owner;
     };
 in
-facts
+raw
 // {
   resources = lib.mapAttrs (
     resourceName: resource:
@@ -34,5 +35,5 @@ facts
       inherit resourceName;
       directories = map (normalizeDirectory resourceName resource) resource.directories;
     }
-  ) facts.resources;
+  ) raw.resources;
 }
