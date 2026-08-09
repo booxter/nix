@@ -3,19 +3,15 @@
     backingMount = "/volume2";
     exports = {
       media = {
-        path = "/volume2/Media";
+        storage = "media";
         fsid = 10;
-        permissions.sharedGroup = {
-          name = "media";
-          gid = 169;
-        };
       };
       nixCache = {
-        path = "/volume2/nix-cache";
+        storage = "nixCache";
         fsid = 11;
       };
       paperless = {
-        path = "/volume2/paperless";
+        storage = "paperless";
         fsid = 12;
         anonymousIdentity = "paperless";
       };

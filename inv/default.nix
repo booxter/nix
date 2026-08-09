@@ -16,6 +16,8 @@ let
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
   accountFacts = import ./accounts.nix;
+  mediaLibraries = import ./media-libraries.nix;
+  sharedStorageFacts = import ./shared-storage.nix { inherit mediaLibraries; };
   nfsFacts = import ./nfs.nix;
   observabilityFacts = import ./observability.nix;
   sites = import ./sites.nix;
@@ -38,11 +40,81 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain;
   };
+  normalizeStorageDirectory =
+    resourceName: resource: directory:
+    let
+      ownerAccount = accountFacts.users.${directory.owner} or null;
+      owner =
+        if ownerAccount != null then
+          toString ownerAccount.uid
+        else if directory.owner == "root" then
+          "root"
+        else
+          throw "shared storage ${resourceName} directory '${directory.path}' references unknown owner '${directory.owner}'";
+      group =
+        if builtins.hasAttr directory.group accountFacts.groups || directory.group == "root" then
+          directory.group
+        else
+          throw "shared storage ${resourceName} directory '${directory.path}' references unknown group '${directory.group}'";
+      absolutePath =
+        if directory.path == "." then resource.path else "${resource.path}/${directory.path}";
+    in
+    directory
+    // {
+      inherit absolutePath group owner;
+    };
+  normalizeStorageResource =
+    resourceName: resource:
+    resource
+    // {
+      inherit resourceName;
+      directories = map (normalizeStorageDirectory resourceName resource) resource.directories;
+    };
+  sharedStorageResources = lib.mapAttrs normalizeStorageResource sharedStorageFacts.resources;
+  sharedStoragePaths = map (resource: resource.path) (builtins.attrValues sharedStorageResources);
+  sharedStoragePathsAreUnique =
+    builtins.length sharedStoragePaths == builtins.length (lib.unique sharedStoragePaths);
+  sharedStorageDirectoryPathsAreUnique = lib.all (
+    resource:
+    let
+      paths = map (directory: directory.absolutePath) resource.directories;
+    in
+    builtins.length paths == builtins.length (lib.unique paths)
+  ) (builtins.attrValues sharedStorageResources);
+  normalizeNfsExport =
+    providerName: exportName: export:
+    let
+      storageName = export.storage or exportName;
+      storage =
+        sharedStorageResources.${storageName}
+          or (throw "NFS export ${providerName}.${exportName} references unknown shared storage '${storageName}'");
+      sharedGroup = storage.sharedGroup or null;
+    in
+    assert lib.assertMsg (storage.provider == providerName)
+      "NFS export ${providerName}.${exportName} and shared storage ${storageName} must use the same provider";
+    export
+    // {
+      inherit storageName;
+      path = storage.path;
+    }
+    // lib.optionalAttrs (sharedGroup != null) {
+      permissions.sharedGroup = {
+        name = sharedGroup;
+        gid = accountFacts.groups.${sharedGroup}.gid;
+      };
+    };
+  nfsProviders = lib.mapAttrs (
+    providerName: provider:
+    provider
+    // {
+      exports = lib.mapAttrs (normalizeNfsExport providerName) provider.exports;
+    }
+  ) nfsFacts.providers;
   normalizeNfsLink =
     clientName: linkName: link:
     let
       provider =
-        nfsFacts.providers.${link.provider}
+        nfsProviders.${link.provider}
           or (throw "NFS link ${clientName}.${linkName} references unknown provider '${link.provider}'");
       exportName = link.export or linkName;
       export =
@@ -61,7 +133,7 @@ let
       fsids = map (export: export.fsid) (builtins.attrValues provider.exports);
     in
     builtins.length fsids == builtins.length (lib.unique fsids)
-  ) (builtins.attrValues nfsFacts.providers);
+  ) (builtins.attrValues nfsProviders);
   nfsClientMountPointsAreUnique = lib.all (
     links:
     let
@@ -111,14 +183,25 @@ in
 rec {
   inherit lanDomain;
   accounts = accountFacts;
+  inherit mediaLibraries;
   observability = observabilityFacts;
   inherit sites;
+
+  sharedStorage =
+    assert lib.assertMsg sharedStoragePathsAreUnique "shared storage resources must use unique paths";
+    assert lib.assertMsg sharedStorageDirectoryPathsAreUnique
+      "shared storage resources must use unique directory paths";
+    sharedStorageFacts
+    // {
+      resources = sharedStorageResources;
+    };
 
   nfs =
     assert lib.assertMsg nfsProviderFsidsAreUnique "NFS providers must use unique export FSIDs";
     assert lib.assertMsg nfsClientMountPointsAreUnique "NFS clients must use unique mount points";
     nfsFacts
     // {
+      providers = nfsProviders;
       links = nfsLinks;
     };
 

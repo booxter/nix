@@ -1,11 +1,12 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
 }:
 let
-  nfsPath = "/cache";
+  nfsPath = hostInventory.nfs.links.cache.nixCache.mountPoint;
 in
 {
   system.stateVersion = "25.11";

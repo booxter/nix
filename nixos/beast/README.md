@@ -65,6 +65,8 @@ curl -I https://search.ihar.dev/oauth2/sign_in
 - A `.snapshots` subvolume is ensured on boot for Snapper.
 - Storage capabilities and disk-to-bay mapping are maintained in
   `nixos/beast/storage.nix`.
+- Shared export paths, directory trees, ownership, and media-library facts are
+  maintained statically under `inv/`.
 
 ## NFS
 
@@ -72,6 +74,7 @@ curl -I https://search.ihar.dev/oauth2/sign_in
   currently include:
   - `/volume2/Media`
   - `/volume2/nix-cache`
+  - `/volume2/paperless`
 - NFSv4 is enabled; NFSv3 is disabled.
 - Firewall opens TCP/UDP 2049; `rpcbind` is forced off.
 

@@ -1,3 +1,4 @@
+# Static media catalog shared by storage provisioning and Jellyfin configuration.
 [
   {
     name = "Movies";

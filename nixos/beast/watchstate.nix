@@ -8,7 +8,8 @@
   ...
 }:
 let
-  mediaPaths = import ./media-paths.nix;
+  sourceLibraryRoot = "${hostInventory.sharedStorage.resources.media.path}/library";
+  jellyfinLibraryRoot = "/media/library";
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
@@ -128,7 +129,7 @@ in
       ports = [ "127.0.0.1:${toString watchstatePort}:${toString watchstatePort}" ];
       volumes = [
         "${watchstateDataDir}:/config:rw"
-        "${mediaPaths.sourceLibraryRoot}:${mediaPaths.jellyfinLibraryRoot}:ro"
+        "${sourceLibraryRoot}:${jellyfinLibraryRoot}:ro"
       ];
     };
   };
@@ -149,7 +150,7 @@ in
     ];
     unitConfig.RequiresMountsFor = [
       watchstateDataDir
-      mediaPaths.sourceLibraryRoot
+      sourceLibraryRoot
     ];
   };
 

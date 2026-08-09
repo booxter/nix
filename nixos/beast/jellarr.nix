@@ -8,8 +8,8 @@
   ...
 }:
 let
-  mediaLibraries = import ./media-libraries.nix;
-  mediaPaths = import ./media-paths.nix;
+  mediaLibraries = hostInventory.mediaLibraries;
+  jellyfinLibraryRoot = "/media/library";
   watchstatePort = hostInventory.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
@@ -287,7 +287,7 @@ in
               }:
               {
                 pathInfos = [
-                  { path = mediaPaths.jellyfinLibraryRoot + "/" + path; }
+                  { path = jellyfinLibraryRoot + "/" + path; }
                 ];
 
                 typeOptions = getTypeOptions {
