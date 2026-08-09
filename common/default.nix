@@ -10,6 +10,7 @@
     ./_mixins/nixpkgs
     ./_mixins/remote-control/server
     ./_mixins/secrets
+    ./_mixins/site
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo

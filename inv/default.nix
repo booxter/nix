@@ -15,6 +15,7 @@ let
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
+  sites = import ./sites.nix;
   backupLinks = lib.mapAttrs (
     clientName:
     lib.mapAttrs (
@@ -75,6 +76,7 @@ let
 in
 rec {
   inherit lanDomain;
+  inherit sites;
 
   backups = backupFacts // {
     links = backupLinks;

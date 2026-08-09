@@ -237,6 +237,7 @@ in
       name = "beast";
       platform = "x86_64-linux";
       realm = "home";
+      site = "home";
       userProfile = "personal";
       critical = true;
       hmFull = false;
