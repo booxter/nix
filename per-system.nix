@@ -5,6 +5,7 @@
   system,
 }:
 let
+  lib = inputs.nixpkgs.lib;
   plainPkgs = inputs.nixpkgs.legacyPackages.${system};
   pkgs = import inputs.nixpkgs {
     inherit system;
@@ -14,39 +15,33 @@ let
       outputs.overlays.modifications
     ];
   };
-  plainFleet = import ./apps/fleet.nix {
-    pkgs = plainPkgs;
-  };
-  fleet = import ./apps/fleet.nix {
-    inherit pkgs;
-  };
-  packageUpdates = import ./apps/package-updates { inherit pkgs; };
-  proxmox = import ./apps/proxmox.nix { inherit inputs system; };
-  sops = import ./apps/sops {
-    sopsTools = pkgs.sops-tools;
-  };
-  fact = import ./apps/fact.nix { inherit facts pkgs; };
   appSet = import ./apps {
     inherit
-      fact
-      fleet
-      packageUpdates
-      pkgs
-      proxmox
-      sops
-      ;
-  };
-in
-{
-  inherit (appSet) apps;
-  checks = appSet.packages // import ./checks.nix { inherit pkgs; };
-  packages = import ./packages.nix {
-    inherit
+      facts
       inputs
+      outputs
+      pkgs
       system
       ;
-    fleet = plainFleet;
-    pkgs = plainPkgs;
   };
-  formatter = import ./fmt plainPkgs;
-}
+  commonArgs = {
+    inherit
+      appSet
+      facts
+      inputs
+      outputs
+      pkgs
+      plainPkgs
+      system
+      ;
+  };
+  modulePaths =
+    lib.mapAttrs'
+      (fileName: _: lib.nameValuePair (lib.removeSuffix ".nix" fileName) (./per-system + "/${fileName}"))
+      (
+        lib.filterAttrs (fileName: type: type == "regular" && lib.hasSuffix ".nix" fileName) (
+          builtins.readDir ./per-system
+        )
+      );
+in
+lib.mapAttrs (_: path: import path commonArgs) modulePaths
