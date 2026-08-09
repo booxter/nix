@@ -1,9 +1,12 @@
 {
   config,
+  hostSpec,
   lib,
   ...
 }:
 {
+  imports = lib.optional (lib.hasSuffix "-linux" hostSpec.platform) ./x11.nix;
+
   options.remote-control.server = {
     enable = lib.mkEnableOption "remote-control server functionality";
 

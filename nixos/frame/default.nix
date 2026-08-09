@@ -53,7 +53,7 @@ in
   ];
 
   security.pam.services.hyprlock = { };
-  services.openssh.settings.X11Forwarding = true;
+  remote-control.server.x11.enable = true;
 
   services.ollama = {
     enable = true;
