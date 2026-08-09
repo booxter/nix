@@ -2,13 +2,6 @@
 let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
-  upsClientsByServer = import ./ups-clients.nix {
-    inherit hostInventory;
-    lib = pkgs.lib;
-  };
-  upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
-    builtins.toJSON upsClientsByServer
-  );
   secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
     builtins.toJSON hostInventory.secretDomainsByHost
   );
@@ -73,8 +66,7 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set SOPS_SECRET_DOMAINS_FILE ${secretDomainsByHostFile} \
-        --set UPS_CLIENTS_BY_SERVER_FILE ${upsClientsByServerFile}
+        --set SOPS_SECRET_DOMAINS_FILE ${secretDomainsByHostFile}
     done
   '';
 
