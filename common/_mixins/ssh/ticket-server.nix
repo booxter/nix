@@ -11,11 +11,12 @@ let
   isDarwin = lib.hasSuffix "-darwin" hostSpec.platform;
   isLinux = lib.hasSuffix "-linux" hostSpec.platform;
   target = hostInventory.sshTicket.targetsByName.${config.networking.hostName};
+  principal = "${username}@${target.name}";
   caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
   caPublicKeyFile = pkgs.writeText "fleet-user-cas.pub" (
     lib.concatMapStrings (publicKey: "${publicKey}\n") target.trustedCaPublicKeys
   );
-  principalsFile = pkgs.writeText "${username}-authorized_principals" "${target.principal}\n";
+  principalsFile = pkgs.writeText "${username}-authorized_principals" "${principal}\n";
 in
 {
   config = lib.mkMerge [
@@ -26,7 +27,7 @@ in
 
       services.openssh.settings.TrustedUserCAKeys = lib.mkIf target.enabled caPublicKeyPath;
       users.users.${username}.openssh.authorizedPrincipals = lib.mkIf target.enabled [
-        target.principal
+        principal
       ];
     })
     (lib.optionalAttrs isDarwin {

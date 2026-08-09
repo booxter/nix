@@ -69,11 +69,7 @@
     inputs@{ self, ... }:
     let
       inherit (self) outputs;
-      username = "ihrachyshka";
-      hostInventory = import ./inv {
-        inherit username;
-        lib = inputs.nixpkgs.lib;
-      };
+      hostInventory = import ./inv { lib = inputs.nixpkgs.lib; };
       hostSpecialArgs = spec: {
         inherit
           inputs
@@ -107,7 +103,6 @@
                 inputs
                 outputs
                 system
-                username
                 ;
             }
           );

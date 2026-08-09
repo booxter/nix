@@ -203,10 +203,10 @@ in
 
     username = lib.mkOption {
       type = lib.types.str;
-      default = hostSpec.username;
+      default = "ihrachyshka";
       readOnly = true;
       internal = true;
-      description = "Primary user declared by the host inventory.";
+      description = "Primary user for managed hosts.";
     };
 
     userProfile = lib.mkOption {

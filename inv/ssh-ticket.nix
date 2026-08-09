@@ -6,7 +6,6 @@
   nixosHostSpecs,
   readPublicKey,
   realms,
-  username,
 }:
 let
   secretivePublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
@@ -36,7 +35,6 @@ let
         "${name}.local"
       ];
       allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
-      principal = if enabled then "${username}@${name}" else "";
       defaultTtl = "30m";
       maxTtl = "2h";
       caPublicKeyConfigured = enabled && ticketPolicy.trustedCaPublicKeys != [ ];

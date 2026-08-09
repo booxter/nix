@@ -9,7 +9,7 @@
 }:
 let
   hostname = hostSpec.name;
-  username = hostSpec.username;
+  username = config.host.username;
 in
 {
   imports = [

@@ -7,7 +7,7 @@
   ...
 }:
 let
-  username = config.home.username;
+  username = osConfig.host.username;
   hostname = osConfig.networking.hostName;
   realm = osConfig.host.realm;
   homeManagerPkgs = import ../../pkgs pkgs;
@@ -17,7 +17,9 @@ let
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
-  ticketTargets = builtins.filter (target: target.realm == realm) hostInventory.sshTicket.targets;
+  ticketTargets = map (
+    target: target // lib.optionalAttrs target.enabled { principal = "${username}@${target.name}"; }
+  ) (builtins.filter (target: target.realm == realm) hostInventory.sshTicket.targets);
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
   enabledTicketTargets = builtins.filter (target: target.enabled) ticketTargets;
   ticketHostBlock =

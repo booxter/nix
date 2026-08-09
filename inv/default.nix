@@ -1,7 +1,4 @@
-{
-  lib,
-  username ? "ihrachyshka",
-}:
+{ lib }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lanDnsRecordTtlSeconds = 300;
@@ -41,7 +38,7 @@ let
       realmName = spec.realm or (throw "host ${spec.name} does not declare a realm");
     in
     realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
-  normalizeHostSpec = spec: builtins.seq (realmFor spec) ({ inherit username; } // spec);
+  normalizeHostSpec = spec: builtins.seq (realmFor spec) spec;
   normalizedDarwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
   normalizedNixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
 
@@ -52,13 +49,12 @@ let
       mmini
       readPublicKey
       realms
-      username
       ;
     darwinHosts = normalizedDarwinHosts;
     nixosHostSpecs = normalizedNixosHostSpecs;
   };
   ssoFacts = import ./sso.nix;
-  yubiFacts = import ./yubi.nix { inherit frame mmini username; };
+  yubiFacts = import ./yubi.nix { inherit frame mmini; };
 
   normalizeService =
     glanceCategoryIds: localDnsName:

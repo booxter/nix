@@ -1,13 +1,7 @@
-{
-  pkgs,
-  username ? "ihrachyshka",
-}:
+{ pkgs }:
 let
   appSpec = import ./app-spec.nix;
-  hostInventory = import ../inv {
-    inherit username;
-    lib = pkgs.lib;
-  };
+  hostInventory = import ../inv { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = wgHome.gateway.host;
