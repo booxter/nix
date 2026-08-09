@@ -22,6 +22,12 @@ let
   ];
 in
 {
+  host.backups.sources.bazarr = {
+    title = "Bazarr";
+    capture.type = "scheduled";
+    capture.scheduled.outputPaths = [ "${stateDir}/backup" ];
+  };
+
   services.bazarr = {
     enable = true;
     dataDir = stateDir;

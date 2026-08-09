@@ -12,6 +12,12 @@ in
 lib.mkMerge [
   (servarrCommon.mkServarrService { inherit name; })
   {
+    host.backups.sources.${name} = {
+      title = lib.strings.toSentenceCase name;
+      capture.type = "scheduled";
+      capture.scheduled.outputPaths = [ "${stateDir}/Backups" ];
+    };
+
     services.${name} = {
       dataDir = stateDir;
       user = user;
