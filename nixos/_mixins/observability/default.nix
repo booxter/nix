@@ -6,5 +6,6 @@
     ./loki.nix
     ./node-exporter.nix
     ./prometheus-endpoints.nix
+    ./systemd-expectations.nix
   ];
 }

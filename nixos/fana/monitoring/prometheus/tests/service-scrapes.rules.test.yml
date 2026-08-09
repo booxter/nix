@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="home-assistant",instance="home"}'
+      - series: 'up{job="home-assistant",instance="home",service="home",scrape_profile="application",availability="always"}'
         values: "0x12"
     alert_rule_test:
       - eval_time: 5m
@@ -17,6 +17,9 @@ tests:
               category: service
               instance: home
               job: home-assistant
+              service: home
+              scrape_profile: application
+              availability: always
               severity: warning
             exp_annotations:
               summary: "Application metrics scrape down: home-assistant on home"
@@ -24,7 +27,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="jellyfin",instance="beast"}'
+      - series: 'up{job="jellyfin",instance="beast",service="jellyfin",scrape_profile="application",availability="always"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -32,7 +35,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="lolek",instance="beast"}'
+      - series: 'up{job="lolek",instance="beast",service="lolek",scrape_profile="application",availability="always"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -45,6 +48,9 @@ tests:
               category: service
               instance: beast
               job: lolek
+              service: lolek
+              scrape_profile: application
+              availability: always
               severity: warning
             exp_annotations:
               summary: "Application metrics scrape down: lolek on beast"

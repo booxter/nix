@@ -1,4 +1,5 @@
 rule_files:
+  - ../rules/capacity.rules.yml
   - ../rules/fleet.rules.yml
 
 evaluation_interval: 30s
@@ -6,7 +7,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="standard"}'
         values: "0+4.5x13"
     alert_rule_test:
       - eval_time: 5m
@@ -26,7 +27,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="standard"}'
         values: "0+1.5x13"
     alert_rule_test:
       - eval_time: 5m
@@ -46,13 +47,13 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_cpu_seconds_total{instance="builder2",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="builder2",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="cpu-bursty"}'
         values: "0+1.5x13"
-      - series: 'node_cpu_seconds_total{instance="frame",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="frame",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="cpu-bursty"}'
         values: "0+1.5x13"
-      - series: 'node_cpu_seconds_total{instance="mair",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="mair",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="interactive"}'
         values: "0+1.5x13"
-      - series: 'node_cpu_seconds_total{instance="mmini",job="node-mtls",cpu="0",mode="idle"}'
+      - series: 'node_cpu_seconds_total{instance="mmini",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="interactive"}'
         values: "0+1.5x13"
     alert_rule_test:
       - eval_time: 5m30s
@@ -62,9 +63,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls",scrape_profile="node",capacity_profile="standard"}'
         values: "15x12"
-      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls",scrape_profile="node",capacity_profile="standard"}'
         values: "100x12"
     alert_rule_test:
       - eval_time: 4m30s
@@ -84,9 +85,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls",scrape_profile="node",capacity_profile="standard"}'
         values: "5x12"
-      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls",scrape_profile="node",capacity_profile="standard"}'
         values: "100x12"
     alert_rule_test:
       - eval_time: 4m30s
@@ -106,13 +107,13 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="mair",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="mair",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "5x12"
-      - series: 'node_memory_MemTotal_bytes{instance="mair",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="mair",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "100x12"
-      - series: 'node_memory_MemAvailable_bytes{instance="mmini",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="mmini",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "5x12"
-      - series: 'node_memory_MemTotal_bytes{instance="mmini",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="mmini",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "100x12"
     alert_rule_test:
       - eval_time: 5m
@@ -282,9 +283,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "25769803776x12"
-      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "137438953472x12"
     alert_rule_test:
       - eval_time: 5m
@@ -294,9 +295,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "16106127360x12"
-      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "137438953472x12"
     alert_rule_test:
       - eval_time: 4m30s
@@ -316,9 +317,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "7516192768x12"
-      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",capacity_profile="hypervisor"}'
         values: "137438953472x12"
     alert_rule_test:
       - eval_time: 4m30s

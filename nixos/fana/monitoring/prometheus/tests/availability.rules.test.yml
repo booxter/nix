@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="beast",scrape_expectation="always"}'
+      - series: 'up{job="node-mtls",instance="beast",scrape_profile="node",availability="always"}'
         values: "1x22"
     alert_rule_test:
       - eval_time: 10m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="beast",scrape_expectation="always"}'
+      - series: 'up{job="node-mtls",instance="beast",scrape_profile="node",availability="always"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -27,6 +27,7 @@ tests:
               category: observability
               instance: beast
               job: node-mtls
+              scrape_profile: node
               severity: warning
             exp_annotations:
               summary: "Node telemetry down: beast"
@@ -36,7 +37,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="beast"}'
+      - series: 'up{job="node-mtls",instance="beast",scrape_profile="node"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 10m
@@ -47,6 +48,7 @@ tests:
               category: observability
               instance: beast
               job: node-mtls
+              scrape_profile: node
               severity: warning
             exp_annotations:
               summary: "Node telemetry down: beast"
@@ -54,7 +56,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="mair",scrape_expectation="intermittent"}'
+      - series: 'up{job="node-mtls",instance="mair",scrape_profile="node",availability="intermittent"}'
         values: "0x22"
     alert_rule_test:
       - eval_time: 10m
@@ -62,37 +64,38 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-dns",instance="gateway"}'
+      - series: 'up{job="blackbox-dns",instance="gateway",scrape_profile="probe"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
 
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-dns",instance="gateway"}'
+      - series: 'up{job="blackbox-dns",instance="gateway",scrape_profile="probe"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
       - eval_time: 5m
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
         exp_alerts:
           - exp_labels:
-              alertname: DNSProbeScrapeDown
+              alertname: ProbeScrapeDown
               category: observability
               instance: gateway
               job: blackbox-dns
+              scrape_profile: probe
               severity: warning
             exp_annotations:
-              summary: "DNS probe scrape down: gateway"
-              description: "Prometheus has been unable to scrape the blackbox DNS probe target gateway for 5 minutes."
+              summary: "Probe scrape down: blackbox-dns / gateway"
+              description: "Prometheus has been unable to collect the blackbox-dns probe target gateway for 5 minutes."
       - eval_time: 5m30s
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
 
   - interval: 30s
     input_series:
-      - series: 'up{job="smartctl",instance="beast"}'
+      - series: 'up{job="smartctl",instance="beast",component="smartctl",scrape_profile="hardware"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -100,7 +103,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="smartctl",instance="beast"}'
+      - series: 'up{job="smartctl",instance="beast",component="smartctl",scrape_profile="hardware"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -113,6 +116,8 @@ tests:
               category: storage
               instance: beast
               job: smartctl
+              component: smartctl
+              scrape_profile: hardware
               severity: warning
             exp_annotations:
               summary: "SMART exporter down: beast"
