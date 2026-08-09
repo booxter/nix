@@ -15,6 +15,7 @@ let
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
+  networkFacts = import ./network.nix;
   sites = import ./sites.nix;
   backupLinks = lib.mapAttrs (
     clientName:
@@ -81,6 +82,7 @@ rec {
   backups = backupFacts // {
     links = backupLinks;
   };
+  network = networkFacts;
 
   inherit realms;
 

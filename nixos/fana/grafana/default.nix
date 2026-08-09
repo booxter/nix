@@ -1,6 +1,8 @@
 {
   config,
+  hostInventory,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -14,8 +16,22 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
+  siteNetworkPolicy = hostInventory.network.policies.bySite.${config.host.site.name};
+  dashboardDirectory = import ./dashboards.nix {
+    inherit lib pkgs;
+    downloadCapacityMbit = config.host.site.uplink.downloadMbit;
+    downloadersMaxMbit = siteNetworkPolicy.downloaders.maxDownloadMbit;
+    uploadCapacityMbit = config.host.site.uplink.uploadMbit;
+  };
 in
 {
+  assertions = [
+    {
+      assertion = siteNetworkPolicy.downloaders.maxDownloadMbit <= config.host.site.uplink.downloadMbit;
+      message = "site downloader policy must not exceed the site's download capacity";
+    }
+  ];
+
   host.web.services.grafana.auth = {
     mode = "oidc";
     oidcRegistration = {
@@ -165,7 +181,7 @@ in
             disableDeletion = false;
             editable = false;
             updateIntervalSeconds = 30;
-            options.path = ./dashboards;
+            options.path = dashboardDirectory;
           }
         ];
       };

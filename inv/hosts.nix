@@ -324,6 +324,7 @@ in
       name = "fana";
       platform = "x86_64-linux";
       realm = "home";
+      site = "home";
       userProfile = "personal";
       cores = 8;
       memorySize = 16;
