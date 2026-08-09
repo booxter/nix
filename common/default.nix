@@ -6,6 +6,7 @@
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/remote-control/server
     ./_mixins/secrets
     ./_mixins/ssh
     ./_mixins/stylix
