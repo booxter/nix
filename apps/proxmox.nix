@@ -19,6 +19,6 @@ in
     prox-deploy = proxDeploy;
   };
   appSpecs = {
-    prox-deploy = appSpec "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
+    prox-deploy = appSpec proxDeploy "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
   };
 }

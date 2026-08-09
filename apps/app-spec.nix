@@ -1,1 +1,7 @@
-program: description: { inherit program description; }
+package: program: description: {
+  inherit
+    description
+    package
+    program
+    ;
+}

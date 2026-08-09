@@ -26,9 +26,7 @@ let
     sopsTools = pkgs.sops-tools;
   };
   fact = import ./apps/fact.nix { inherit facts pkgs; };
-in
-{
-  apps = import ./apps {
+  appSet = import ./apps {
     inherit
       fact
       fleet
@@ -38,16 +36,10 @@ in
       sops
       ;
   };
-  checks = import ./checks.nix {
-    inherit
-      fact
-      facts
-      fleet
-      packageUpdates
-      pkgs
-      proxmox
-      ;
-  };
+in
+{
+  inherit (appSet) apps;
+  checks = appSet.packages // import ./checks.nix { inherit pkgs; };
   packages = import ./packages.nix {
     inherit
       inputs
