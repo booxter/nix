@@ -7,6 +7,13 @@
 let
   hostName = config.networking.hostName;
   provider = hostInventory.backups.providers.${hostName} or null;
+  hostLinks = hostInventory.backups.links.${hostName} or { };
+  siteName = config.host.site.name;
+  sitePolicy =
+    if siteName == null then null else hostInventory.backups.policies.bySite.${siteName} or null;
+  cloudOffloadPolicy = if sitePolicy == null then null else sitePolicy.cloudOffload or null;
+  cloudUploadRateMbit = if cloudOffloadPolicy == null then null else cloudOffloadPolicy.maxUploadMbit;
+  cloudQosEnabled = config.host.backups.server.enable && cloudUploadRateMbit != null;
   clientLinks = lib.concatMapAttrs (
     clientName:
     lib.mapAttrs' (
@@ -51,33 +58,82 @@ let
       lib.unique (lib.mapAttrsToList (_: offsite: offsite.bucketName) provider.offsite);
 in
 {
-  config = lib.mkIf (provider != null) {
-    assertions = [
-      {
-        assertion = builtins.length localClients <= 1;
-        message = "backup provider ${hostName} may have at most one local client";
-      }
-      {
-        assertion = builtins.length bucketNames == 1;
-        message = "backup provider ${hostName} currently requires one shared cloud bucket";
-      }
-      {
-        assertion =
-          builtins.length (builtins.attrNames clients) == builtins.length (builtins.attrNames providedLinks);
-        message = "backup provider ${hostName} may have only one link per client";
-      }
-    ];
-
-    host.backups.server = {
-      inherit clients localClient;
-      inherit (provider) repositoryRoot;
-      cloud.bucketName = builtins.head bucketNames;
-    };
-
-    host.backups.destinations = lib.mkMerge (
-      lib.mapAttrsToList (_: link: {
-        ${link.linkName}.user = config.host.backups.server.cloud.group;
-      }) localLinks
-    );
+  options.host.backups.policy.cloudOffload.maxUploadMbit = lib.mkOption {
+    type = with lib.types; nullOr (addCheck number (value: value > 0));
+    default = cloudUploadRateMbit;
+    readOnly = true;
+    internal = true;
+    description = "Cloud-backup upload rate selected by site policy.";
   };
+
+  config = lib.mkMerge [
+    {
+      host.backups.destinations = builtins.mapAttrs (_: link: {
+        inherit (link)
+          ingestUser
+          provider
+          repositoryPath
+          ;
+        transport = link.transport or "sftp";
+        publicKey = link.publicKey or null;
+        offsite = link.offsite or null;
+      }) hostLinks;
+    }
+    (lib.mkIf cloudQosEnabled {
+      assertions = [
+        {
+          assertion = config.host.network.primaryInterface != null;
+          message = "backup cloud-offload policy requires host.network.primaryInterface";
+        }
+        {
+          assertion = config.host.site.uplink.uploadMbit != null;
+          message = "backup cloud-offload policy requires site upload capacity";
+        }
+        {
+          assertion =
+            config.host.site.uplink.uploadMbit == null
+            || cloudUploadRateMbit <= config.host.site.uplink.uploadMbit;
+          message = "backup cloud-offload rate must not exceed the site's upload capacity";
+        }
+      ];
+
+      host.backups.server.cloud.requiredUnits = [ "qos-wan.service" ];
+      host.qos.interfaces.wan = {
+        device = config.host.network.primaryInterface;
+        limits.cloud-backup = {
+          rateMbit = cloudUploadRateMbit;
+          match.users = config.host.backups.server.generated.offloadUsers;
+        };
+      };
+    })
+    (lib.mkIf (provider != null) {
+      assertions = [
+        {
+          assertion = builtins.length localClients <= 1;
+          message = "backup provider ${hostName} may have at most one local client";
+        }
+        {
+          assertion = builtins.length bucketNames == 1;
+          message = "backup provider ${hostName} currently requires one shared cloud bucket";
+        }
+        {
+          assertion =
+            builtins.length (builtins.attrNames clients) == builtins.length (builtins.attrNames providedLinks);
+          message = "backup provider ${hostName} may have only one link per client";
+        }
+      ];
+
+      host.backups.server = {
+        inherit clients localClient;
+        inherit (provider) repositoryRoot;
+        cloud.bucketName = builtins.head bucketNames;
+      };
+
+      host.backups.destinations = lib.mkMerge (
+        lib.mapAttrsToList (_: link: {
+          ${link.linkName}.user = config.host.backups.server.cloud.group;
+        }) localLinks
+      );
+    })
+  ];
 }

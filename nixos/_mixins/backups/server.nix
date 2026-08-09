@@ -17,7 +17,6 @@ let
     _: client: lib.hasPrefix "b2:" client.cloud.repository
   ) enabledCloudClients;
   usageEnabled = b2Clients != { };
-  qosEnabled = enabledCloudClients != { } && cfg.cloud.qos.enable && cfg.cloud.qos.interface != null;
   sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
   ingestUser = name: "restic-${name}";
   repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
@@ -212,27 +211,6 @@ in
         };
       };
 
-      qos = {
-        enable = lib.mkEnableOption "cloud-backup upload shaping" // {
-          default = true;
-        };
-
-        interface = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-          default = config.host.network.primaryInterface;
-          description = "Network interface used for cloud-backup upload shaping.";
-        };
-
-        profile = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "wan";
-        };
-
-        rateMbit = lib.mkOption {
-          type = lib.types.addCheck lib.types.number (value: value > 0);
-          default = 10;
-        };
-      };
     };
 
     generated.offloadUsers = lib.mkOption {
@@ -259,10 +237,6 @@ in
           || cfg.clients.${cfg.localClient}.cloud.enable;
         message = "host.backups.server.localClient must have cloud offload enabled";
       }
-      {
-        assertion = enabledCloudClients == { } || !cfg.cloud.qos.enable || cfg.cloud.qos.interface != null;
-        message = "host.backups.server.cloud.qos requires host.network.primaryInterface or an explicit interface";
-      }
     ]
     ++ lib.mapAttrsToList (name: client: {
       assertion =
@@ -286,22 +260,9 @@ in
 
     host.backups.server.generated.offloadUsers = offloadUsers;
 
-    host.backups.server.cloud = {
-      requiredUnits = lib.optional qosEnabled "qos-${cfg.cloud.qos.profile}.service";
-    }
-    // lib.optionalAttrs usageEnabled {
+    host.backups.server.cloud = lib.optionalAttrs usageEnabled {
       applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
       applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
-    };
-
-    host.qos.interfaces = lib.optionalAttrs qosEnabled {
-      ${cfg.cloud.qos.profile} = {
-        device = cfg.cloud.qos.interface;
-        limits.cloud-backup = {
-          rateMbit = cfg.cloud.qos.rateMbit;
-          match.users = offloadUsers;
-        };
-      };
     };
 
     sops.secrets =

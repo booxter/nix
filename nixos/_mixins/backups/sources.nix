@@ -1,13 +1,11 @@
 {
   config,
-  hostInventory,
   lib,
   utils,
   ...
 }:
 let
   hostName = config.networking.hostName;
-  links = hostInventory.backups.links.${hostName} or { };
   cfg = config.host.backups;
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   inherit (utils.systemdUtils.unitOptions) unitOption;
@@ -15,15 +13,15 @@ let
   secretSuffix = name: lib.optionalString (name != "primary") "/${name}";
 
   destinationModule =
-    { name, ... }:
-    let
-      link = links.${name};
-    in
+    {
+      config,
+      name,
+      ...
+    }:
     {
       options = {
         provider = lib.mkOption {
           type = lib.types.str;
-          default = link.provider;
           readOnly = true;
           internal = true;
         };
@@ -32,32 +30,27 @@ let
             "local"
             "sftp"
           ];
-          default = link.transport or "sftp";
-          readOnly = true;
+          default = "sftp";
           internal = true;
         };
         repositoryPath = lib.mkOption {
           type = lib.types.str;
-          default = link.repositoryPath;
           readOnly = true;
           internal = true;
         };
         ingestUser = lib.mkOption {
           type = lib.types.str;
-          default = link.ingestUser;
           readOnly = true;
           internal = true;
         };
         publicKey = lib.mkOption {
           type = with lib.types; nullOr str;
-          default = link.publicKey or null;
-          readOnly = true;
+          default = null;
           internal = true;
         };
         offsite = lib.mkOption {
           type = with lib.types; nullOr str;
-          default = link.offsite or null;
-          readOnly = true;
+          default = null;
           internal = true;
         };
         user = lib.mkOption {
@@ -98,20 +91,20 @@ let
         generated = {
           jobName = lib.mkOption {
             type = lib.types.str;
-            default = if name == "primary" then link.provider else "${link.provider}-${name}";
+            default = if name == "primary" then config.provider else "${config.provider}-${name}";
             readOnly = true;
             internal = true;
           };
           providerHost = lib.mkOption {
             type = lib.types.str;
-            default = link.provider;
+            default = config.provider;
             readOnly = true;
             internal = true;
           };
           repositoryPasswordSecret = lib.mkOption {
             type = lib.types.str;
             default =
-              if (link.transport or "sftp") == "local" then
+              if config.transport == "local" then
                 "backup/restic/${hostName}/cloud/localPassword"
               else
                 "backup/restic/local/password${secretSuffix name}";
@@ -287,7 +280,7 @@ in
   options.host.backups = {
     destinations = lib.mkOption {
       type = with lib.types; attrsOf (submodule destinationModule);
-      default = builtins.mapAttrs (_: _: { }) links;
+      default = { };
       description = "Backup destinations assigned to this host by fleet inventory.";
     };
 
