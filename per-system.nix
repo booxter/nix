@@ -1,4 +1,5 @@
 {
+  facts,
   inputs,
   outputs,
   system,
@@ -24,10 +25,12 @@ let
   sops = import ./apps/sops {
     sopsTools = pkgs.sops-tools;
   };
+  fact = import ./apps/fact.nix { inherit facts pkgs; };
 in
 {
   apps = import ./apps {
     inherit
+      fact
       fleet
       packageUpdates
       pkgs
@@ -37,6 +40,8 @@ in
   };
   checks = import ./checks.nix {
     inherit
+      fact
+      facts
       fleet
       packageUpdates
       pkgs

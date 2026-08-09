@@ -106,6 +106,7 @@
             system:
             import ./per-system.nix {
               inherit
+                facts
                 inputs
                 outputs
                 system

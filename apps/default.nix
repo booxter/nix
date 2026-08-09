@@ -1,4 +1,5 @@
 {
+  fact,
   fleet,
   packageUpdates,
   pkgs,
@@ -13,6 +14,7 @@ let
     // fleet.appSpecs
     // proxmox.appSpecs
     // {
+      fact = appSpec (pkgs.lib.getExe fact) "List fact libraries or print one as JSON.";
       get-ff-cookie = appSpec (pkgs.lib.getExe pkgs.get-ff-cookie) "Export Firefox cookies as Netscape cookies.txt on stdout.";
       flake-input-update-summary = appSpec (pkgs.lib.getExe pkgs.flake-input-update-summary) "Generate a revision-linked flake input update summary.";
     };

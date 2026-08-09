@@ -1,10 +1,29 @@
 {
+  fact,
+  facts,
   fleet,
   packageUpdates,
   pkgs,
   proxmox,
 }:
 {
+  fact =
+    let
+      factNames = builtins.attrNames facts;
+      expectedNames = pkgs.lib.concatStringsSep "\n" factNames;
+      sampleName = builtins.head factNames;
+      expectedJson = builtins.toJSON facts.${sampleName};
+    in
+    pkgs.runCommand "fact-check" { } ''
+      test "$(${fact}/bin/fact --list)" = ${pkgs.lib.escapeShellArg expectedNames}
+      test "$(${fact}/bin/fact ${pkgs.lib.escapeShellArg sampleName})" = ${pkgs.lib.escapeShellArg expectedJson}
+      if ${fact}/bin/fact unknown >/dev/null 2>&1; then
+        echo "unknown fact library unexpectedly succeeded" >&2
+        exit 1
+      fi
+      touch "$out"
+    '';
+
   get-ff-cookie = pkgs.get-ff-cookie;
   join-media-parts = pkgs.join-media-parts;
 
