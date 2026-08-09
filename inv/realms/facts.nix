@@ -1,6 +1,7 @@
 {
   lanDomain,
   nixCaches,
+  publicCertificates,
   publicKeys,
 }:
 {
@@ -34,7 +35,7 @@
         cacheName = "local";
         endpoint = "https://nix-cache.${lanDomain}";
       };
-      internalPki.rootCaCertificate = ../../public-certificates/internal-pki/home-root-ca.crt;
+      internalPki.rootCaCertificate = publicCertificates.internal-pki.home-root-ca;
       flakehubCache.url = nixCaches.flakehub.url;
       nixCache = {
         substituters = [
