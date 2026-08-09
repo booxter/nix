@@ -10,7 +10,6 @@
     ./jobs.nix
     ./metrics
     ./server.nix
-    ./sources.nix
   ];
 
   environment.systemPackages = lib.optional (

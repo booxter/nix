@@ -21,9 +21,6 @@ let
   ingestUser = name: "restic-${name}";
   repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
   offloadUser = name: if name == cfg.localClient then cfg.cloud.group else "restic-${name}-offload";
-  cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
-  applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
-  applicationKeySecret = "backup/restic/cloud/b2/applicationKey";
   offloadService = name: "restic-${name}-cloud-offload";
   aclService = name: "restic-${name}-repo-acl";
   cloudStateDir = name: "restic-cloud-${name}";
@@ -191,10 +188,7 @@ in
 
       dependencyUnits = lib.mkOption {
         type = with lib.types; listOf str;
-        default = [
-          "network-online.target"
-          "sops-install-secrets.service"
-        ];
+        default = [ "network-online.target" ];
       };
 
       requiredUnits = lib.mkOption {
@@ -259,43 +253,6 @@ in
     }) cfg.clients;
 
     host.backups.server.generated.offloadUsers = offloadUsers;
-
-    host.backups.server.cloud = lib.optionalAttrs usageEnabled {
-      applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
-      applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
-    };
-
-    sops.secrets =
-      builtins.listToAttrs (
-        lib.concatMap (name: [
-          {
-            name = cloudSecret name "localPassword";
-            value = {
-              owner = offloadUser name;
-              group = offloadUser name;
-              mode = "0400";
-            };
-          }
-          {
-            name = cloudSecret name "password";
-            value = {
-              owner = offloadUser name;
-              group = offloadUser name;
-              mode = "0400";
-            };
-          }
-        ]) (builtins.attrNames enabledCloudClients)
-      )
-      // lib.optionalAttrs usageEnabled {
-        ${applicationKeyIdSecret} = {
-          group = cfg.cloud.group;
-          mode = "0440";
-        };
-        ${applicationKeySecret} = {
-          group = cfg.cloud.group;
-          mode = "0440";
-        };
-      };
 
     services.openssh.enable = true;
 
