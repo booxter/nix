@@ -53,11 +53,12 @@ in
 
   imports = [
     ./id.nix
-    ./backup.nix
     ./unifi-sync.nix
     ./uptimerobot-sync.nix
     ./wg-home-dns-sync.nix
   ];
+
+  host.backups.sources.step-ca.paths = [ stepStateDir ];
 
   sops.secrets.pkiRotationGithubToken = {
     key = "github/pki_rotation/token";

@@ -196,6 +196,20 @@ let
   ];
 in
 {
+  host.backups.sources.romm-database = {
+    title = "RomM";
+    capture = {
+      type = "mariadb";
+      database = {
+        name = "romm";
+        destinationDir = "${config.host.srvarrPaths.stateDir}/romm-mariadb-backup/latest";
+        requiresMountsFor = [ config.host.srvarrPaths.stateDir ];
+        after = [ "romm-db-init.service" ];
+        requires = [ "romm-db-init.service" ];
+      };
+    };
+  };
+
   host.web.services.romm.auth = {
     mode = "oidc";
     oidcRegistration = {

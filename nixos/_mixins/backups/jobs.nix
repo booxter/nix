@@ -207,6 +207,7 @@ in
   options.host.backups.jobs = lib.mkOption {
     type = with lib.types; attrsOf (submodule jobModule);
     default = { };
+    internal = true;
     description = "Scheduled Restic backup pipelines.";
   };
 

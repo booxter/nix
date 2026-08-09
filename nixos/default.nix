@@ -25,6 +25,9 @@ in
       ./_mixins/avahi
       ./_mixins/auto-upgrade
       ./_mixins/backups
+      ./_mixins/backups/server-sops.nix
+      ./_mixins/backups/sources.nix
+      ./_mixins/backups/topology.nix
       ./_mixins/builder.nix
       ./_mixins/desktop
       ./_mixins/external-service.nix

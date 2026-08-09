@@ -105,6 +105,15 @@ let
   ];
 in
 {
+  systemd.tmpfiles.rules = [
+    "d /var/lib/kanidm/backups 0700 kanidm kanidm - -"
+  ];
+
+  host.backups.sources.kanidm = {
+    capture.type = "scheduled";
+    capture.scheduled.outputPaths = [ "/var/lib/kanidm/backups" ];
+  };
+
   assertions = [
     {
       assertion = unknownOidcGroups == [ ];

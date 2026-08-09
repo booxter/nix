@@ -89,6 +89,8 @@ let
   ];
 in
 {
+  host.backups.sources.degoog.paths = [ stateDir ];
+
   sops.secrets = lib.genAttrs (map (name: "degoog/${name}") secretNames) (_: {
     owner = serviceUser;
     group = serviceUser;

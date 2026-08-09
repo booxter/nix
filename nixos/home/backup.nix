@@ -10,11 +10,7 @@ let
   databasePath = "${stateDir}/home-assistant_v2.db";
   homeAssistantPort = 8123;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
-  backup = hostInventory.backups;
-  backupClient = backup.clients.${config.networking.hostName};
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
-  resticPasswordSecret = "backup/restic/local/password";
-  resticSshKeySecret = "backup/restic/local/ssh/privateKey";
   baseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   clientId = "http://127.0.0.1:${toString homeAssistantPort}/";
 in
@@ -46,17 +42,8 @@ in
     };
   };
 
-  sops.secrets = {
-    ${resticPasswordSecret} = { };
-    ${resticSshKeySecret} = {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-    };
-  };
-
-  host.backups.jobs.beast = {
-    title = "Restic To Beast";
+  host.backups.sources.home-assistant = {
+    title = "Home Assistant";
     paths = [ stateDir ];
     exclude = [
       databasePath
@@ -68,20 +55,9 @@ in
       "${stateDir}/tts"
       "${stateDir}/tts/**"
     ];
-    repository = {
-      type = "sftp";
-      path = backupClient.repositoryPath;
-      passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
-      dependencyUnits = [ "sops-install-secrets.service" ];
-      sftp = {
-        host = backup.server.host;
-        user = backupClient.ingestUser;
-        identityFile = config.sops.secrets.${resticSshKeySecret}.path;
-      };
-    };
-    preparations.home-assistant-native-backup = {
-      service = "home-assistant-native-backup";
-      title = "Home Assistant Native Backup";
+    capture = {
+      type = "unit";
+      unit.service = "home-assistant-native-backup";
     };
   };
 }

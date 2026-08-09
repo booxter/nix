@@ -21,10 +21,20 @@ in
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [
-    ./backup.nix
     ./degoog.nix
     ./paperless.nix
   ];
+
+  host.backups.sources.vikunja = {
+    paths = [ "/var/lib/vikunja/files" ];
+    capture = {
+      type = "sqlite";
+      database = {
+        path = "/var/lib/vikunja/vikunja.db";
+        destinationDir = "/var/lib/vikunja-backup/latest";
+      };
+    };
+  };
 
   sops.secrets = {
     vikunjaMailerPassword = {

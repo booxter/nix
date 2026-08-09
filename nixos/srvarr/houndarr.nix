@@ -42,6 +42,27 @@ let
   ];
 in
 {
+  # Houndarr has no native backup format. Its documented complete state is the
+  # SQLite database plus the Fernet master key used to decrypt stored Arr API
+  # keys.
+  host.backups.sources.houndarr-database = {
+    title = "Houndarr";
+    capture = {
+      type = "sqlite";
+      database = {
+        path = "${stateDir}/houndarr.db";
+        destinationDir = "${config.host.srvarrPaths.stateDir}/houndarr-backup/latest";
+        extraCopies = [
+          {
+            source = "${stateDir}/houndarr.masterkey";
+            mode = "0600";
+            optional = false;
+          }
+        ];
+      };
+    };
+  };
+
   users = {
     groups.houndarr = { };
     users.houndarr = {

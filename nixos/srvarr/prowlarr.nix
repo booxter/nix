@@ -13,6 +13,12 @@ in
 lib.mkMerge [
   (servarrCommon.mkServarrService { name = "prowlarr"; })
   {
+    host.backups.sources.prowlarr = {
+      title = "Prowlarr";
+      capture.type = "scheduled";
+      capture.scheduled.outputPaths = [ "${stateDir}/Backups" ];
+    };
+
     systemd.tmpfiles.rules = [
       "d '${stateDir}' 0700 ${user} root - -"
     ];

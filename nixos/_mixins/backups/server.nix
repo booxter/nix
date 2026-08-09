@@ -188,7 +188,7 @@ in
 
       dependencyUnits = lib.mkOption {
         type = with lib.types; listOf str;
-        default = [ ];
+        default = [ "network-online.target" ];
       };
 
       requiredUnits = lib.mkOption {
@@ -204,6 +204,7 @@ in
           Persistent = true;
         };
       };
+
     };
 
     generated.offloadUsers = lib.mkOption {

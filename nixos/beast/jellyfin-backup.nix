@@ -1,7 +1,6 @@
 {
   beastPkgs,
   config,
-  hostInventory,
   lib,
   utils,
   ...
@@ -12,8 +11,6 @@ let
   keepLocalBackups = 7;
   keepJellyfinSourceBackups = 1;
   backupApiKeySecret = "jellyfin/apiKey";
-  localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
-  localRepo = hostInventory.backups.clients.${config.networking.hostName}.repositoryPath;
   backupCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' beastPkgs.jellyfin-tools "jellyfin-built-in-backup")
     "--url"
@@ -70,24 +67,14 @@ in
     };
   };
 
-  host.backups.jobs.beast = {
-    title = "Beast Local Restic";
-    user = "restic-cloud";
-    repository = {
-      type = "local";
-      path = localRepo;
-      passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
-      dependencyUnits = [ "sops-install-secrets.service" ];
-    };
-    preparations.jellyfin-built-in-backup = {
-      service = "jellyfin-built-in-backup";
-      title = "Jellyfin Built-In Backup";
-      paths = [ stagingDir ];
-    };
-    timerConfig = {
-      OnCalendar = "04:45";
-      RandomizedDelaySec = "5m";
-      Persistent = true;
+  host.backups.sources.jellyfin = {
+    title = "Jellyfin";
+    capture = {
+      type = "unit";
+      unit = {
+        service = "jellyfin-built-in-backup";
+        outputPaths = [ stagingDir ];
+      };
     };
   };
 }
