@@ -16,6 +16,29 @@ let
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
+  host.backups.sources.shelfmark = {
+    title = "Shelfmark";
+    paths = [ "${stateDir}/plugins" ];
+    capture = {
+      type = "sqlite";
+      database = {
+        path = "${stateDir}/users.db";
+        destinationDir = "${config.host.srvarrPaths.stateDir}/shelfmark-backup/latest";
+        extraCopies = [
+          {
+            source = "${stateDir}/.flask_secret";
+            mode = "0600";
+            optional = false;
+          }
+          {
+            source = "${stateDir}/settings.json";
+            optional = false;
+          }
+        ];
+      };
+    };
+  };
+
   host.web.services.shelfmark.auth = {
     mode = "oidc";
     oidcRegistration = {
