@@ -8,7 +8,7 @@
     ./_mixins/network
     ./_mixins/nix
     ./_mixins/nixpkgs
-    ./_mixins/remote-control/server
+    ./_mixins/remote-control
     ./_mixins/secrets
     ./_mixins/site
     ./_mixins/ssh

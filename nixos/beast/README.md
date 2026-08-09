@@ -63,14 +63,18 @@ curl -I https://search.ihar.dev/oauth2/sign_in
 - `/volume2` is a Btrfs filesystem mounted with `compress=zstd`, `noatime`, and
   `nofail`.
 - A `.snapshots` subvolume is ensured on boot for Snapper.
-- Disk-to-bay mapping is maintained in `nixos/beast/default.nix`.
+- Storage capabilities and disk-to-bay mapping are maintained in
+  `nixos/beast/storage.nix`.
+- Shared export paths, directory trees, ownership, and media-library facts are
+  maintained statically under `facts/`.
 
 ## NFS
 
-- Exports are restricted to `site.lan.cidr` from `inv/default.nix` and
+- Exports are restricted to `site.lan.cidr` from `facts/default.nix` and
   currently include:
   - `/volume2/Media`
   - `/volume2/nix-cache`
+  - `/volume2/paperless`
 - NFSv4 is enabled; NFSv3 is disabled.
 - Firewall opens TCP/UDP 2049; `rpcbind` is forced off.
 
@@ -118,7 +122,7 @@ internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
 and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
-`sso.applications.watchstate.bootstrapOwner` in `inv/default.nix`; its
+`sso.applications.watchstate.bootstrapOwner` in `facts/default.nix`; its
 password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
 These credentials bootstrap WatchState's internal token but are not presented
 to users: after the outer OIDC gate succeeds, WatchState trusts nginx's
@@ -135,7 +139,7 @@ the restricted `jellyfin_shared` backend cannot see a library.
 
 The remaining initial configuration is an explicit, staged operation:
 
-1. Sign in through the OIDC gate; WatchState automatically uses the inventory
+1. Sign in through the OIDC gate; WatchState automatically uses the facts
    bootstrap owner internally.
 2. Add the same `https://jf.ihar.dev` Jellyfin server twice,
    using distinct backend names such as `jellyfin_user` and
@@ -158,8 +162,8 @@ Saved, Playback Start, and Playback Stop events.
 - Snapper timeline snapshots for `/volume2` (daily/weekly/monthly/yearly).
 - Monthly Btrfs scrub of `/volume2`.
 - `smartd` autodetects disks for health monitoring.
-- Useful tools installed: `btrfs-progs`, `mdadm`, `smartmontools`, `nvme-cli`,
-  `hdparm`, `lm_sensors`.
+- Useful tools installed by the declared storage traits include `mdadm`,
+  `smartmontools`, `hdparm`, and `storcli`.
 
 ### Corsair PSU telemetry
 

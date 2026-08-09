@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
@@ -8,7 +8,7 @@
 let
   cfg = config.host.observability;
   lokiCfg = cfg.loki;
-  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  realmObservability = facts.realms.${config.host.realm}.services.observability or null;
   realmLoki =
     if realmObservability == null then
       {

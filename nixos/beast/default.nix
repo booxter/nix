@@ -1,5 +1,4 @@
 {
-  hostInventory,
   inputs,
   pkgs,
   ...
@@ -12,7 +11,6 @@
   imports = [
     ./sso.nix
     ./btrfs.nix
-    ./disk-bays.nix
     ./igpu.nix
     ./jellyfin.nix
     ./jellyfin-maintenance.nix
@@ -20,16 +18,12 @@
     ./jellyfin-backup.nix
     ./jellarr.nix
     ./meilisearch.nix
-    ./library-dirs.nix
     ./lolek.nix
-    ./nfs.nix
     ./nginx.nix
     ./pause.nix
-    ./raid.nix
+    ./storage.nix
     ./watchstate.nix
   ];
-
-  users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.blackbox.remote.enable = true;
   host.backups.server.enable = true;

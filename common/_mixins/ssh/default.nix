@@ -1,18 +1,16 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   username = config.host.username;
-  realmSsh = hostInventory.realms.${config.host.realm}.trust.ssh;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
+  realmSsh = facts.realms.${config.host.realm}.trust.ssh;
   managedKnownHosts = lib.mapAttrs (name: spec: {
-    hostNames = hostInventory.toSshKnownHostNames config.host.network.lanDomain spec;
-    publicKey = readPublicKey (hostKeyPath name);
-  }) hostInventory.hostSpecsByName;
+    hostNames = spec.sshKnownHostNames;
+    publicKey = facts.public-keys.hosts.${name};
+  }) facts.hosts.hostSpecsByName;
 in
 {
   imports = [ ./ticket-server.nix ];
@@ -49,7 +47,7 @@ in
     programs.ssh.knownHosts = managedKnownHosts // {
       frame-initrd = {
         hostNames = [ "frame-initrd" ];
-        publicKey = readPublicKey ../../../public-keys/hosts/frame-initrd.pub;
+        publicKey = facts.public-keys.hosts.frame-initrd;
       };
     };
 

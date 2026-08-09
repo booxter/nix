@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
@@ -16,9 +16,9 @@ in
     enable = lib.mkEnableOption "scheduled fleet cache warming";
 
     targetRealm = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames hostInventory.realms);
+      type = lib.types.enum (builtins.attrNames facts.realms);
       default = config.host.realm;
-      description = "Realm whose CI inventory targets should be warmed.";
+      description = "Realm whose CI build targets should be warmed.";
     };
 
     pushToAttic = lib.mkOption {

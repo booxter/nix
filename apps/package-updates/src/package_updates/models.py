@@ -35,6 +35,20 @@ class OciPins(RootModel[dict[str, OciPin]]):
     pass
 
 
+class OciFactPin(OciPin):
+    ref: str = Field(min_length=1)
+
+
+class OciFactPins(RootModel[dict[str, OciFactPin]]):
+    def editable(self) -> OciPins:
+        return OciPins(
+            {
+                name: OciPin.model_validate(pin.model_dump(exclude={"ref"}))
+                for name, pin in self.root.items()
+            }
+        )
+
+
 class PrefetchedImage(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 

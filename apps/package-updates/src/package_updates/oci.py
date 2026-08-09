@@ -1,28 +1,32 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Protocol, TextIO
 
 from natsort import natsorted
 from pydantic import ValidationError
+
+from atomic_file_writes import write_text_atomic
 
 from package_updates.common import (
     Runner,
     SubprocessRunner,
     ToolPaths,
     UpdateError,
-    atomic_write_json,
     checked,
     find_repo_root,
     print_error,
 )
 from package_updates.models import (
     ImageConfig,
+    OciFactPins,
     OciPin,
     OciPins,
     PrefetchedImage,
@@ -46,6 +50,14 @@ works with the managed service.
 """
 SOURCE_LABEL = "org.opencontainers.image.source"
 REVISION_LABEL = "org.opencontainers.image.revision"
+PINS_PATH = Path("facts/oci-images/facts.nix")
+RENDER_EXPRESSION = """
+let
+  flake = builtins.getFlake (builtins.getEnv "OCI_IMAGE_REPO_ROOT");
+  pins = builtins.fromJSON (builtins.readFile (builtins.getEnv "OCI_IMAGE_PINS_JSON"));
+in
+flake.inputs.nixpkgs.lib.generators.toPretty { } pins
+"""
 
 
 class OciBackend(Protocol):
@@ -54,6 +66,66 @@ class OciBackend(Protocol):
     def prefetch(self, image: str, tag: str) -> PrefetchedImage: ...
 
     def labels(self, image: str, tag: str, digest: str) -> dict[str, str]: ...
+
+
+class OciPinStore(Protocol):
+    def load(self) -> OciPins: ...
+
+    def save(self, pins: OciPins) -> None: ...
+
+
+class NixFactOciPinStore:
+    def __init__(self, repo_root: Path, nix: str, runner: Runner) -> None:
+        self.repo_root = repo_root
+        self.nix = nix
+        self.runner = runner
+
+    def load(self) -> OciPins:
+        output = checked(
+            self.runner.run(
+                [self.nix, "run", ".#fact", "--", "oci-images"],
+                cwd=self.repo_root,
+            ),
+            "OCI image fact lookup",
+        )
+        return OciFactPins.model_validate_json(output).editable()
+
+    def save(self, pins: OciPins) -> None:
+        with NamedTemporaryFile(
+            mode="w",
+            prefix="oci-image-pins-",
+            suffix=".json",
+            encoding="utf-8",
+            delete=False,
+        ) as temporary:
+            json.dump(pins.model_dump(mode="json", by_alias=True), temporary)
+            temporary_path = Path(temporary.name)
+        try:
+            output = checked(
+                self.runner.run(
+                    [
+                        self.nix,
+                        "eval",
+                        "--impure",
+                        "--raw",
+                        "--expr",
+                        RENDER_EXPRESSION,
+                    ],
+                    cwd=self.repo_root,
+                    environment={
+                        "OCI_IMAGE_PINS_JSON": str(temporary_path),
+                        "OCI_IMAGE_REPO_ROOT": str(self.repo_root),
+                    },
+                ),
+                "OCI image fact rendering",
+            )
+        finally:
+            temporary_path.unlink()
+        write_text_atomic(
+            self.repo_root / PINS_PATH,
+            output.rstrip() + "\n",
+            create_mode=0o644,
+        )
 
 
 class CommandOciBackend:
@@ -107,10 +179,6 @@ class CommandOciBackend:
         if result.returncode != 0:
             return {}
         return ImageConfig.model_validate_json(result.stdout).merged_labels()
-
-
-def load_pins(path: Path) -> OciPins:
-    return OciPins.model_validate_json(path.read_text())
 
 
 def selected_pins(
@@ -184,7 +252,7 @@ def summary_row(
 def update_oci_images(
     pins: OciPins,
     selected: Sequence[tuple[str, OciPin]],
-    pins_file: Path,
+    pin_store: OciPinStore,
     summary_file: Path,
     backend: OciBackend,
     stdout: TextIO,
@@ -214,10 +282,7 @@ def update_oci_images(
             current.digest = prefetched.image_digest
             current.hash = prefetched.hash
             if current.model_dump() != old.model_dump():
-                atomic_write_json(
-                    pins_file,
-                    pins.model_dump(mode="json", by_alias=True),
-                )
+                pin_store.save(pins)
             print("::endgroup::", file=stdout)
             summary.write(
                 summary_row(
@@ -238,23 +303,36 @@ def build_parser() -> argparse.ArgumentParser:
         description=("Update pinned OCI image tags from the registry and write a Markdown summary.")
     )
     parser.add_argument("--summary-file", type=Path)
-    parser.add_argument("--pins-file", type=Path)
     parser.add_argument("--target")
     parser.add_argument("--list-targets", action="store_true")
     return parser
 
 
 def main(cli_arguments: Sequence[str] | None = None) -> int:
+    return run(cli_arguments)
+
+
+def run(
+    cli_arguments: Sequence[str] | None = None,
+    *,
+    cwd: Path | None = None,
+    runner: Runner | None = None,
+    tools: ToolPaths | None = None,
+    stdout: TextIO | None = None,
+    stderr: TextIO | None = None,
+) -> int:
     arguments = build_parser().parse_args(cli_arguments)
+    command_runner = runner or SubprocessRunner()
+    command_tools = tools or ToolPaths.from_environment()
+    command_stdout = stdout or sys.stdout
+    command_stderr = stderr or sys.stderr
     try:
-        repo_root = find_repo_root(Path.cwd())
-        pins_file = arguments.pins_file or Path(
-            os.environ.get("OCI_IMAGE_PINS_FILE", repo_root / "oci/images.json")
-        )
-        pins = load_pins(pins_file)
+        repo_root = find_repo_root(cwd or Path.cwd())
+        pin_store = NixFactOciPinStore(repo_root, command_tools.nix, command_runner)
+        pins = pin_store.load()
         if arguments.list_targets:
             for name, pin in pins.root.items():
-                print(f"{name}\t{pin.image}:{pin.tag}")
+                print(f"{name}\t{pin.image}:{pin.tag}", file=command_stdout)
             return 0
         summary_file = arguments.summary_file or Path(
             os.environ.get(
@@ -263,15 +341,15 @@ def main(cli_arguments: Sequence[str] | None = None) -> int:
             )
         )
         selected = selected_pins(pins, arguments.target)
-        backend = CommandOciBackend(repo_root, ToolPaths.from_environment(), SubprocessRunner())
+        backend = CommandOciBackend(repo_root, command_tools, command_runner)
         update_oci_images(
             pins,
             selected,
-            pins_file,
+            pin_store,
             summary_file,
             backend,
-            sys.stdout,
+            command_stdout,
         )
     except (OSError, UpdateError, ValidationError) as error:
-        return print_error(error, sys.stderr)
+        return print_error(error, command_stderr)
     return 0

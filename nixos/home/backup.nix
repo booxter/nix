@@ -1,7 +1,7 @@
 {
   config,
   homeAssistantTools,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
@@ -9,7 +9,7 @@ let
   stateDir = "/var/lib/hass";
   databasePath = "${stateDir}/home-assistant_v2.db";
   homeAssistantPort = 8123;
-  homeAssistantSso = hostInventory.sso.applications.home-assistant;
+  homeAssistantSso = facts.sso.applications.home-assistant;
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
   baseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   clientId = "http://127.0.0.1:${toString homeAssistantPort}/";

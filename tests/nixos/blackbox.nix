@@ -109,7 +109,7 @@ pkgs.testers.runNixOSTest {
 
       config = {
         _module.args = {
-          hostInventory = {
+          facts = {
             realms.test.services.observability = {
               loki = {
                 writeUrl = null;
@@ -117,9 +117,8 @@ pkgs.testers.runNixOSTest {
               };
               nodeExporter.mtls = false;
             };
-            toNixosHostCertificateDnsNames = _: _: [ "blackbox" ];
           };
-          hostSpec = { };
+          hostSpec.certificateDnsNames = [ "blackbox" ];
         };
 
         networking = {

@@ -312,7 +312,7 @@ def test_waypipe_reports_an_unavailable_cocoa_way_agent() -> None:
 
         assert status == 1
         assert "Unable to start Cocoa-Way through launchd" in stderr
-        assert "Activate host.remoteGui.wayland" in stderr
+        assert "Activate host.remote-control.client.wayland" in stderr
         assert process.calls[-1] == (
             "/bin/launchctl",
             "kickstart",

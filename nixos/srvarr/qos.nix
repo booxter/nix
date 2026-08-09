@@ -1,15 +1,15 @@
 {
   config,
-  hostInventory,
+  facts,
   outputs,
   ...
 }:
 let
   tuning = config.host.srvarrTuning;
-  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  beastNfsAddress = facts.hosts.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
-  beastNfsPort = hostInventory.site.ports.nfs;
+  beastNfsPort = beastHostConfig.services.nfs.settings.nfsd.port;
   beastNfsRateMbit = 1500;
   wgEndpointPort = 1637;
   jellyfinClientName = "jellyfin-upload-policy";

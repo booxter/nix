@@ -1,11 +1,11 @@
 {
-  hostInventory,
+  facts,
   lib,
   pkgs,
 }:
 let
-  upsServerSpecs = map (name: hostInventory.nixosHosts.${name}) (
-    builtins.filter (name: hostInventory.nixosHosts.${name}.realm == "home") hostInventory.ups.servers
+  upsServerSpecs = map (name: facts.hosts.nixos.${name}) (
+    builtins.filter (name: facts.hosts.nixos.${name}.realm == "home") facts.ups.servers
   );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [
@@ -29,7 +29,7 @@ let
       params = {
         # Use the stable LAN DNS hostname rather than .local/mDNS.
         server = [ spec.name ];
-        ups = [ (hostInventory.toUpsName spec.name) ];
+        ups = [ facts.ups.serversByName.${spec.name}.name ];
       };
       static_configs = [
         {

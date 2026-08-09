@@ -1,12 +1,12 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  vikunjaPublicHost = "vi.${hostInventory.site.public.domain}";
+  vikunjaPublicHost = "vi.${facts.site.public.domain}";
   vikunjaMetricsMtlsPort = 9345;
   oidcClient = config.host.sso.oidc.clients.vikunja;
   oidcScopes = config.host.sso.oidc.baseScopes;

@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   slskdRoot = "${mediaDir}/slskd";
-  srvarrSpec = hostInventory.nixosHosts.srvarr;
+  srvarrSpec = facts.hosts.nixos.srvarr;
   apiPort = 5030;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.slskd;
   wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;

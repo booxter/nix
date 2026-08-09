@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   inputs,
   lib,
@@ -37,11 +37,13 @@ in
       ./_mixins/lan-wan-accounting
       ./_mixins/luks
       ./_mixins/nix
+      ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso
+      ./_mixins/shared-storage.nix
       ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client
@@ -56,7 +58,7 @@ in
     home-manager = {
       extraSpecialArgs = {
         inherit
-          hostInventory
+          facts
           hostSpec
           inputs
           ;

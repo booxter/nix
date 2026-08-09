@@ -35,6 +35,7 @@ let
       );
       gpuVendors = hostConfig.host.hardware.gpu.vendors or [ ];
       fileSystems = builtins.attrValues (hostConfig.fileSystems or { });
+      diskBays = hostConfig.host.hardware.storage.diskBays or null;
     in
     {
       inherit name;
@@ -47,7 +48,13 @@ let
       services = builtins.attrNames enabledServices;
       storage = {
         btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;
-        diskBays = hostConfig.host.hardware.storage.diskBays or null;
+        diskBays =
+          if diskBays == null then
+            null
+          else
+            {
+              inherit (diskBays) columns rows;
+            };
         nvme = false;
       };
       backups = {

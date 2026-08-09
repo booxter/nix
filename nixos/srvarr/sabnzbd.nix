@@ -1,15 +1,15 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   port = 6336;
   user = "sabnzbd";
-  wgNamespaceAddress = hostInventory.nixosHosts.srvarr.wgNamespace.namespaceAddress;
+  wgNamespaceAddress = facts.hosts.nixos.srvarr.wgNamespace.namespaceAddress;
   sabnzbdServerNames = [
     "news.frugalusenet.com"
     "news.newshosting.com"

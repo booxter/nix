@@ -1,12 +1,12 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.attic;
-  realmAttic = hostInventory.realms.${config.host.realm}.services.attic or null;
+  realmAttic = facts.realms.${config.host.realm}.services.attic or null;
 in
 {
   options.host.attic = {

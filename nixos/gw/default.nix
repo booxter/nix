@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  hostInventory,
+  facts,
   ...
 }:
 let
-  wgHome = hostInventory.site.wireguard.home;
+  wgHome = facts.site.wireguard.home;
   wgInterface = "wg0";
   wgListenPort = wgHome.gateway.listenPort;
   wgAddress = wgHome.gateway.address;

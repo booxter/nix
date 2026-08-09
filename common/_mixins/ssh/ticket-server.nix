@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   pkgs,
@@ -10,7 +10,7 @@ let
   username = config.host.username;
   isDarwin = lib.hasSuffix "-darwin" hostSpec.platform;
   isLinux = lib.hasSuffix "-linux" hostSpec.platform;
-  target = hostInventory.sshTicket.targetsByName.${config.networking.hostName};
+  target = facts.ssh-ticket.targetsByName.${config.networking.hostName};
   principal = "${username}@${target.name}";
   caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
   caPublicKeyFile = pkgs.writeText "fleet-user-cas.pub" (

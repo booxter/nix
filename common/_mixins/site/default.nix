@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   ...
 }:
 let
   siteName = hostSpec.site or "home";
-  site = if siteName == null then null else hostInventory.sites.${siteName} or null;
+  site = if siteName == null then null else facts.sites.${siteName} or null;
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
 in
 {
@@ -17,7 +17,7 @@ in
       default = siteName;
       readOnly = true;
       internal = true;
-      description = "Physical site assigned by host inventory.";
+      description = "Physical site assigned by host facts.";
     };
 
     uplink = {

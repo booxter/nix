@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
 let
-  lan = hostInventory.site.lan;
+  lan = facts.site.lan;
   nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
   fleetServices = import ../../_lib/fleet-web-services.nix {
     inherit config lib outputs;

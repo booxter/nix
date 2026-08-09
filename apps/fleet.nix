@@ -1,48 +1,39 @@
-{ pkgs }:
+{
+  facts,
+  pkgs,
+}:
 let
-  appSpec = import ./app-spec.nix;
-  hostInventory = import ../inv { lib = pkgs.lib; };
-  lan = hostInventory.site.lan;
-  wgHome = hostInventory.site.wireguard.home;
+  lan = facts.site.lan;
+  wgHome = facts.site.wireguard.home;
   wireguardGatewaySshHost = wgHome.gateway.host;
   appPackages = import ./packages.nix pkgs;
 
-  fleetInventory = {
+  fleetFacts = {
     aliases =
-      builtins.listToAttrs (
-        map (spec: {
-          inherit (spec) name;
-          value = spec.name;
-        }) hostInventory.nixosHostSpecs
-      )
-      // pkgs.lib.mapAttrs (name: _: name) hostInventory.darwinHosts;
+      pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos
+      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwin;
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
       platform = spec.platform;
       runtimeHost = spec.name;
       sshHost = spec.name;
-    }) hostInventory.darwinHosts;
+    }) facts.hosts.darwin;
     lanDnsServer = lan.gateway.address;
-    lanDomain = hostInventory.lanDomain;
-    nixos = builtins.listToAttrs (
-      map (spec: {
-        inherit (spec) name;
-        value = {
-          displayName = spec.name;
-          inherit (spec) realm;
-          platform = spec.platform or "x86_64-linux";
-          runtimeHost = spec.name;
-          sshHost = spec.name;
-        };
-      }) hostInventory.nixosHostSpecs
-    );
+    lanDomain = facts.site.lan.domain;
+    nixos = pkgs.lib.mapAttrs (_: spec: {
+      displayName = spec.name;
+      inherit (spec) realm;
+      platform = spec.platform or "x86_64-linux";
+      runtimeHost = spec.name;
+      sshHost = spec.name;
+    }) facts.hosts.nixos;
   };
   wireguardHome = {
     subnet = wgHome.cidr;
     dns = [
       lan.gateway.address
-      hostInventory.lanDomain
+      facts.site.lan.domain
     ];
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
     allowedIps = [
@@ -52,14 +43,9 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wireguardGatewaySshHost;
   };
-  vmTargets = builtins.listToAttrs (
-    map (spec: {
-      inherit (spec) name;
-      value = spec.name;
-    }) hostInventory.nixosHostSpecs
-  );
+  vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetInventory vmTargets wireguardHome;
+    inherit fleetFacts vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -132,32 +118,5 @@ in
     join-media-parts = pkgs.join-media-parts;
     hba-flash = hbaFlash;
     wg-home-client-config = wgHomeClientConfig;
-  };
-  appSpecs = {
-    deploy = appSpec "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-    vm = appSpec "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
-    diff = appSpec "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
-    "run-check-target" =
-      appSpec "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
-    "issue-observability-cert" =
-      appSpec "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
-    "issue-internal-service-cert" =
-      appSpec "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
-    "issue-proxmox-exporter-token" =
-      appSpec "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
-    "seerr-request-storage" =
-      appSpec "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
-    "seerr-update-user-tags" =
-      appSpec "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
-    "pki-rotation" =
-      appSpec "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
-    "reset-oidc" =
-      appSpec "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
-    "join-media-parts" =
-      appSpec "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
-    "hba-flash" =
-      appSpec "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
-    "wg-home-client-config" =
-      appSpec "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
   };
 }

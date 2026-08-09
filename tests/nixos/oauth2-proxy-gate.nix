@@ -132,7 +132,7 @@ pkgs.testers.runNixOSTest {
       };
 
       config = {
-        _module.args.hostInventory = {
+        _module.args.facts = {
           servicesById.id.publicHost = "id.example.invalid";
           toInternalHttpsServiceHosts = _: serviceName: [ "${serviceName}.example.invalid" ];
         };

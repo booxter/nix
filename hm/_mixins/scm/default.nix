@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   lib,
   osConfig,
   pkgs,
@@ -10,7 +11,6 @@ let
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
   username = config.home.username;
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   scmPkgs = import ./pkgs { inherit pkgs; };
   fullName = "Ihar Hrachyshka";
   privateEmail = "ihar.hrachyshka@gmail.com";
@@ -222,10 +222,10 @@ in
     '';
 
     ".ssh/known_hosts.d/github.com".text =
-      lib.concatMapStringsSep "\n" readPublicKey [
-        ../../../public-keys/hosts/github.com.ed25519.pub
-        ../../../public-keys/hosts/github.com.rsa.pub
-        ../../../public-keys/hosts/github.com.ecdsa.pub
+      lib.concatStringsSep "\n" [
+        facts.public-keys.hosts."github.com.ed25519"
+        facts.public-keys.hosts."github.com.rsa"
+        facts.public-keys.hosts."github.com.ecdsa"
       ]
       + "\n";
   };

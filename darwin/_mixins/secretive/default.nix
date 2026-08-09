@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   lib,
   pkgs,
   ...
@@ -32,7 +33,7 @@ in
     '';
 
     home-manager.users.${username} = {
-      home.file.".ssh/secretive.pub".source = ../../../public-keys/mair-secretive.pub;
+      home.file.".ssh/secretive.pub".text = facts.public-keys.users.mair-secretive + "\n";
       programs.git.settings.user.signingKey = "${userHome}/.ssh/secretive.pub";
     };
   };

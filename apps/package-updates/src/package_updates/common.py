@@ -46,7 +46,7 @@ class SubprocessRunner:
         completed = subprocess.run(
             arguments,
             cwd=cwd,
-            env=None if environment is None else dict(environment),
+            env=None if environment is None else os.environ | dict(environment),
             check=False,
             text=True,
             stdout=subprocess.PIPE if capture else None,
@@ -92,9 +92,8 @@ def find_repo_root(start: Path) -> Path:
 
 
 def atomic_write_json(path: Path, value: object) -> None:
-    mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
     content = json.dumps(value, indent=2, sort_keys=True) + "\n"
-    write_text_atomic(path, content, mode=mode)
+    write_text_atomic(path, content, create_mode=0o644)
 
 
 def checked(result: CommandResult, description: str) -> str:

@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   pkiPkgs,
@@ -10,7 +10,7 @@
 }:
 let
   idPublicHost = config.host.web.services.id.public.hostName;
-  sso = hostInventory.sso;
+  sso = facts.sso;
   oidcClients = import ./oidc-clients.nix {
     inherit lib outputs;
     providerHost = config.networking.hostName;

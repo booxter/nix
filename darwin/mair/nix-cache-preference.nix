@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   ...
 }:
 let
   username = config.host.username;
-  nixCaches = hostInventory.site.nixCaches;
+  nixCaches = facts.site.nixCaches;
   extraSubstituters = lib.remove nixCaches.flakehub.url (
     config.nix.settings."extra-substituters" or [ ]
   );

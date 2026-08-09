@@ -24,7 +24,7 @@ python3.pkgs.buildPythonApplication {
   pythonImportsCheck = [ "unifi_sync" ];
 
   meta = {
-    description = "Sync UniFi reservations, DHCP settings, DNS records, and static routes from inventory";
+    description = "Sync UniFi reservations, DHCP settings, DNS records, and static routes from facts";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "unifi-sync";

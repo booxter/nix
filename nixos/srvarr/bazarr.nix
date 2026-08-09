@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   srvarrPkgs,
   utils,
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   group = "media";
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";
@@ -18,7 +18,7 @@ let
     "--uid"
     (toString accounts.uids.bazarr)
     "--gid"
-    (toString hostInventory.site.gids.media)
+    (toString config.users.groups.media.gid)
   ];
 in
 {

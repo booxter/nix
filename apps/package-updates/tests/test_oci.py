@@ -12,11 +12,11 @@ from package_updates.common import CommandResult, Runner, ToolPaths, UpdateError
 from package_updates.models import OciPin, OciPins, PrefetchedImage
 from package_updates.oci import (
     CommandOciBackend,
+    NixFactOciPinStore,
     changelog_for,
     image_diff_url,
     latest_tag,
-    load_pins,
-    main,
+    run,
     selected_pins,
     summary_row,
     update_oci_images,
@@ -42,6 +42,17 @@ class FakeOciBackend:
             "org.opencontainers.image.source": "https://github.com/example/romm",
             "org.opencontainers.image.revision": revision,
         }
+
+
+class FakePinStore:
+    def __init__(self) -> None:
+        self.saved: list[OciPins] = []
+
+    def load(self) -> OciPins:
+        raise AssertionError("load is not expected")
+
+    def save(self, pins: OciPins) -> None:
+        self.saved.append(pins.model_copy(deep=True))
 
 
 class OciRunner(Runner):
@@ -81,6 +92,30 @@ class OciRunner(Runner):
         return CommandResult(0)
 
 
+class FactRunner(Runner):
+    def __init__(self) -> None:
+        self.calls: list[tuple[tuple[str, ...], Mapping[str, str] | None]] = []
+
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        cwd: Path,
+        environment: Mapping[str, str] | None = None,
+        capture: bool = True,
+    ) -> CommandResult:
+        del cwd, capture
+        self.calls.append((tuple(arguments), environment))
+        if arguments[1] == "run":
+            fact = make_pin().model_dump(mode="json", by_alias=True) | {
+                "ref": "docker.io/example/romm:4.9.1"
+            }
+            return CommandResult(0, json.dumps({"romm": fact}))
+        assert environment is not None
+        rendered = '{ romm = { tag = "4.10.0"; }; }\n'
+        return CommandResult(0, rendered)
+
+
 def make_pin(*, tag: str = "4.9.1") -> OciPin:
     return OciPin.model_validate(
         {
@@ -95,9 +130,8 @@ def make_pin(*, tag: str = "4.9.1") -> OciPin:
 
 
 def test_updates_pin_and_writes_summary(tmp_path: Path) -> None:
-    pins_file = tmp_path / "oci-images.json"
     pins = OciPins({"romm": make_pin(), "other": make_pin(tag="4.10.0")})
-    pins_file.write_text(json.dumps(pins.model_dump(mode="json", by_alias=True)))
+    pin_store = FakePinStore()
     backend = FakeOciBackend()
     summary = tmp_path / "summary.md"
     stdout = io.StringIO()
@@ -105,17 +139,18 @@ def test_updates_pin_and_writes_summary(tmp_path: Path) -> None:
     update_oci_images(
         pins,
         selected_pins(pins, "romm"),
-        pins_file,
+        pin_store,
         summary,
         backend,
         stdout,
     )
 
-    updated = json.loads(pins_file.read_text())
-    assert updated["romm"]["tag"] == "4.10.0"
-    assert updated["romm"]["digest"] == "sha256:new"
-    assert updated["romm"]["hash"] == "sha256-newhash"
-    assert updated["other"]["tag"] == "4.10.0"
+    assert len(pin_store.saved) == 1
+    updated = pin_store.saved[0].root
+    assert updated["romm"].tag == "4.10.0"
+    assert updated["romm"].digest == "sha256:new"
+    assert updated["romm"].hash == "sha256-newhash"
+    assert updated["other"].tag == "4.10.0"
     assert (
         "| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | "
         "`sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | "
@@ -128,14 +163,13 @@ def test_updates_pin_and_writes_summary(tmp_path: Path) -> None:
 
 def test_same_tag_digest_change_skips_label_lookup(tmp_path: Path) -> None:
     pins = OciPins({"romm": make_pin(tag="4.10.0")})
-    pins_file = tmp_path / "pins.json"
-    pins_file.write_text(json.dumps(pins.model_dump(mode="json", by_alias=True)))
+    pin_store = FakePinStore()
     backend = FakeOciBackend()
     summary = tmp_path / "summary.md"
     update_oci_images(
         pins,
         selected_pins(pins, "romm"),
-        pins_file,
+        pin_store,
         summary,
         backend,
         io.StringIO(),
@@ -154,10 +188,8 @@ def test_tag_selection_uses_natural_order_and_reports_bad_filters() -> None:
         latest_tag("example", "[", tags)
 
 
-def test_pins_are_loaded_selected_and_validated(tmp_path: Path) -> None:
-    path = tmp_path / "pins.json"
-    path.write_text(json.dumps({"romm": make_pin().model_dump(mode="json", by_alias=True)}))
-    pins = load_pins(path)
+def test_pins_are_selected_and_validated() -> None:
+    pins = OciPins({"romm": make_pin()})
     assert selected_pins(pins, "romm")[0][0] == "romm"
     with pytest.raises(UpdateError, match="No OCI image targets matched"):
         selected_pins(pins, "missing")
@@ -197,29 +229,41 @@ def test_command_backend_parses_registry_boundaries(tmp_path: Path) -> None:
     )
 
 
-def test_console_entrypoint_lists_targets(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    (tmp_path / ".git").mkdir()
-    (tmp_path / "flake.nix").touch()
-    pins_file = tmp_path / "pins.json"
-    pins_file.write_text(json.dumps({"romm": make_pin().model_dump(mode="json", by_alias=True)}))
-    monkeypatch.chdir(tmp_path)
-    assert main(["--pins-file", str(pins_file), "--list-targets"]) == 0
-    assert capsys.readouterr().out == "romm\tdocker.io/example/romm:4.9.1\n"
+def test_nix_fact_store_loads_final_facts_and_renders_raw_facts(tmp_path: Path) -> None:
+    (tmp_path / "facts" / "oci-images").mkdir(parents=True)
+    pins_path = tmp_path / "facts" / "oci-images" / "facts.nix"
+    pins_path.write_text("{}\n")
+    runner = FactRunner()
+    store = NixFactOciPinStore(tmp_path, "nix", runner)
+
+    pins = store.load()
+    assert pins.root["romm"].tag == "4.9.1"
+    assert not hasattr(pins.root["romm"], "ref")
+    pins.root["romm"].tag = "4.10.0"
+    store.save(pins)
+
+    assert pins_path.read_text() == '{ romm = { tag = "4.10.0"; }; }\n'
+    assert runner.calls[0][0] == ("nix", "run", ".#fact", "--", "oci-images")
+    render_call, environment = runner.calls[1]
+    assert render_call[:4] == ("nix", "eval", "--impure", "--raw")
+    assert environment is not None
+    assert environment["OCI_IMAGE_REPO_ROOT"] == str(tmp_path)
+    assert not Path(environment["OCI_IMAGE_PINS_JSON"]).exists()
 
 
-def test_console_entrypoint_reports_missing_target(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_console_entrypoint_lists_fact_targets(tmp_path: Path) -> None:
     (tmp_path / ".git").mkdir()
     (tmp_path / "flake.nix").touch()
-    pins_file = tmp_path / "pins.json"
-    pins_file.write_text(json.dumps({"romm": make_pin().model_dump(mode="json", by_alias=True)}))
-    monkeypatch.chdir(tmp_path)
-    assert main(["--pins-file", str(pins_file), "--target", "missing"]) == 1
-    assert "No OCI image targets matched" in capsys.readouterr().err
+    stdout = io.StringIO()
+
+    assert run(["--list-targets"], cwd=tmp_path, runner=FactRunner(), stdout=stdout) == 0
+    assert stdout.getvalue() == "romm\tdocker.io/example/romm:4.9.1\n"
+
+
+def test_console_entrypoint_reports_missing_target(tmp_path: Path) -> None:
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "flake.nix").touch()
+    stderr = io.StringIO()
+
+    assert run(["--target", "missing"], cwd=tmp_path, runner=FactRunner(), stderr=stderr) == 1
+    assert "No OCI image targets matched" in stderr.getvalue()

@@ -1,5 +1,6 @@
 {
   config,
+  isDarwin,
   lib,
   pkgs,
   ...
@@ -21,7 +22,7 @@
           sops
           sops-tools
         ]
-        ++ lib.optional config.host.hasTouchId age-plugin-se;
+        ++ lib.optional (isDarwin && config.host.hardware.hasTouchId) age-plugin-se;
     })
   ];
 }

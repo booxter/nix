@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   lib,
   pkgs,
   srvarrPkgs,
@@ -7,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   port = 9292;
   stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
   user = "audiobookshelf";

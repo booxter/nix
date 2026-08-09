@@ -1,7 +1,7 @@
 {
   formats,
   gettext,
-  hostInventory,
+  facts,
   lib,
   prometheus,
   prometheus-alertmanager,
@@ -15,7 +15,7 @@ let
     "availability.rules.yml" = import ./prometheus/rules/availability.nix {
       inherit lib;
     };
-    "capacity.rules.yml" = import ./prometheus/rules/capacity.nix { inherit hostInventory lib; };
+    "capacity.rules.yml" = import ./prometheus/rules/capacity.nix { inherit facts lib; };
     "service-scrapes.rules.yml" = import ./prometheus/rules/service-scrapes.nix { inherit lib; };
     "systemd.rules.yml" = import ./prometheus/rules/systemd.nix { inherit lib; };
   };

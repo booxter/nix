@@ -1,13 +1,13 @@
 {
   config,
-  hostInventory,
+  facts,
   inputs,
   lib,
   ...
 }:
 let
   cfg = config.host.flakehubCache;
-  realmFlakehubCache = hostInventory.realms.${config.host.realm}.services.flakehubCache or null;
+  realmFlakehubCache = facts.realms.${config.host.realm}.services.flakehubCache or null;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key

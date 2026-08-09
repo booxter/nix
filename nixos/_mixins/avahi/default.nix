@@ -1,17 +1,16 @@
 {
   config,
-  hostInventory,
   hostSpec,
   lib,
   ...
 }:
 let
-  aliasAddress = hostInventory.toHostIpv4Address hostSpec;
+  aliasAddress = hostSpec.ipAddress;
   aliases = lib.unique ((hostSpec.localDnsAliases or [ ]) ++ config.host.internalHttps.localAliases);
   aliasService = alias: {
     name = "avahi-alias-${alias}";
     value = {
-      description = "Avahi mDNS host alias ${hostInventory.toLocalDnsName alias}";
+      description = "Avahi mDNS host alias ${alias}.local";
       after = [ "avahi-daemon.service" ];
       requires = [ "avahi-daemon.service" ];
       wantedBy = [ "multi-user.target" ];
@@ -20,7 +19,7 @@ let
           "${config.services.avahi.package}/bin/avahi-publish-address"
           "-f"
           "-R"
-          (hostInventory.toLocalDnsName alias)
+          "${alias}.local"
           aliasAddress
         ];
         Restart = "on-failure";

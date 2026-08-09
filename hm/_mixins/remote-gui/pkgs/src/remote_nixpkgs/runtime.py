@@ -206,7 +206,7 @@ class CocoaWayManager:
         if result.returncode != 0:
             raise RunError(
                 f"Unable to start Cocoa-Way through launchd service {self.settings.service}.\n"
-                "Activate host.remoteGui.wayland, or start Cocoa-Way manually."
+                "Activate host.remote-control.client.wayland, or start Cocoa-Way manually."
             )
 
         for attempt in range(self.settings.attempts):

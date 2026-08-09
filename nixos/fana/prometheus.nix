@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  hostInventory,
+  facts,
   outputs,
   pkgs,
   ...
@@ -25,7 +25,7 @@ let
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
-      hostInventory
+      facts
       lib
       outputs
       prometheusMtlsTlsConfig
@@ -34,7 +34,7 @@ let
   blackboxScrapes = import ./scrapes/blackbox.nix {
     inherit
       config
-      hostInventory
+      facts
       lib
       outputs
       blackboxHttpMtlsTlsConfig
@@ -43,7 +43,7 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
-      hostInventory
+      facts
       outputs
       prometheusMtlsTlsConfig
       ;
@@ -58,7 +58,7 @@ let
   };
   wireguardScrapes = import ./scrapes/wireguard.nix {
     inherit
-      hostInventory
+      facts
       lib
       outputs
       prometheusMtlsTlsConfig
@@ -66,7 +66,7 @@ let
   };
   nutScrapes = import ./scrapes/nut.nix {
     inherit
-      hostInventory
+      facts
       lib
       pkgs
       ;

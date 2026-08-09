@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       oci_target:
-        description: Optional OCI image target from lib/oci-images/images.json.
+        description: Optional OCI image target from the oci-images facts.
         required: false
         type: string
   schedule:
@@ -35,6 +35,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
 
       - name: Plan targets
         id: plan
@@ -82,14 +85,14 @@ jobs:
 
           if [[ "${run_oci_images}" -eq 1 ]]; then
             oci_targets="$(
-              jq -c --arg target "${OCI_TARGET}" '
+              nix run .#fact -- oci-images | jq -c --arg target "${OCI_TARGET}" '
                 def branch_slug: gsub("[^A-Za-z0-9._-]"; "-");
                 [
                   to_entries[]
                   | select($target == "" or .key == $target)
                   | {target: .key, branch: (.key | branch_slug)}
                 ]
-              ' lib/oci-images/images.json
+              '
             )"
             if [[ "$(jq 'length' <<< "${oci_targets}")" -eq 0 ]]; then
               echo "No OCI image targets matched: ${OCI_TARGET}" >&2
@@ -198,5 +201,4 @@ jobs:
           branch: ci/oci-image-update-${{ matrix.branch }}
           delete-branch: true
           add-paths: |
-            lib/oci-images/images.json
-            lib/oci-images/keys/*
+            facts/oci-images/facts.nix

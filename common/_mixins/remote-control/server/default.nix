@@ -1,15 +1,18 @@
 {
   config,
+  isDarwin,
   isLinux,
   lib,
   ...
 }:
 {
-  imports = lib.optionals isLinux [
-    ./vnc.nix
-    ./wayland.nix
-    ./x11.nix
-  ];
+  imports =
+    lib.optionals isLinux [
+      ./vnc.nix
+      ./wayland.nix
+      ./x11.nix
+    ]
+    ++ lib.optional isDarwin ./vnc-darwin.nix;
 
   options.host.remote-control.server = {
     enable = lib.mkEnableOption "remote-control server functionality";

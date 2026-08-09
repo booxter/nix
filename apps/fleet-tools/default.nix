@@ -4,7 +4,7 @@
   curl,
   diffutils,
   dix,
-  fleetInventory,
+  fleetFacts,
   fzf,
   lib,
   makeWrapper,
@@ -49,14 +49,14 @@ rustPlatform.buildRustPackage {
   DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";
   DEPLOY_REPO_URL = "https://github.com/booxter/nix.git";
   DEPLOY_SSH = lib.getExe openssh;
-  FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
+  FLEET_HOSTS_JSON = builtins.toJSON fleetFacts;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;
   WG_HOME_HELP = ''
     Examples:
       wg-home-client-config --peer mair --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
       wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --server-public-key KEY
 
-    Inventory-backed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
+    Facts-backed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
   '';
   WG_HOME_SSH = lib.getExe openssh;
   CHECK_NIX = lib.getExe nix;

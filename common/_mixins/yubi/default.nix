@@ -1,12 +1,12 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   hostname = config.networking.hostName;
-  residentSsh = hostInventory.yubi.devices.personal.applets.fido2.residentSsh;
+  residentSsh = facts.yubi.devices.personal.applets.fido2.residentSsh;
 in
 {
   options.programs.yubi = {
@@ -15,7 +15,7 @@ in
       default = builtins.elem hostname residentSsh.hosts;
       readOnly = true;
       internal = true;
-      description = "Whether the YubiKey inventory assigns this host a resident SSH key.";
+      description = "Whether YubiKey facts assign this host a resident SSH key.";
     };
 
     age.enable = lib.mkEnableOption "YubiKey-backed age identity tooling";

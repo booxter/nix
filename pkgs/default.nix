@@ -4,10 +4,10 @@ let
   appPackages = import ../apps/packages.nix pkgs;
   atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
-  hostInventory = import ../inv { inherit (pkgs) lib; };
+  facts = import ../facts { inherit (pkgs) lib; };
   pkiCertificates = appPackages.issue-internal-service-cert;
   sopsTools = import ../apps/sops/package.nix {
-    inherit hostInventory pkgs;
+    inherit facts pkgs;
   };
 in
 {
@@ -41,6 +41,10 @@ in
   };
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
+
+  storage-observability = pkgs.callPackage ./storage-observability {
+    inherit atomicFileWrites;
+  };
 
   sops-tools = sopsTools;
 }

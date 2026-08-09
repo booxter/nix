@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "storage-observability"
+version = "0.2.0"
+description = "Typed Prometheus collectors for Linux storage hardware"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
+
+[project.scripts]
+storage-storcli-metrics = "storage_observability.cli:hba_main"
+storage-md-metrics = "storage_observability.cli:md_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+storage_observability = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=storage_observability --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/storage_observability"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

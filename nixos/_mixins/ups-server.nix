@@ -1,14 +1,14 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.ups;
-  credentialMode = hostInventory.realms.${config.host.realm}.services.ups.credentialMode;
+  credentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   useLiteralPasswords = credentialMode == "literal";
-  upsName = hostInventory.toUpsName config.networking.hostName;
+  upsName = facts.ups.serversByName.${config.networking.hostName}.name;
   upsmonPasswordText = if useLiteralPasswords then "upsmon123" else null;
   upsslavePasswordText = if useLiteralPasswords then "upsslave123" else null;
   upsmonPasswordFile =

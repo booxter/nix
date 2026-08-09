@@ -281,7 +281,7 @@ in
     destinations = lib.mkOption {
       type = with lib.types; attrsOf (submodule destinationModule);
       default = { };
-      description = "Backup destinations assigned to this host by fleet inventory.";
+      description = "Backup destinations assigned to this host by fleet facts.";
     };
 
     sources = lib.mkOption {

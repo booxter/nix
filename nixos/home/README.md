@@ -13,7 +13,7 @@
 - The packaged `auth_oidc` component connects Home Assistant to Kanidm. The
   `home-admins` and `home-users` claims map to Home Assistant roles.
 - A first-boot oneshot uses the SOPS-managed bootstrap password to create the
-  inventory-selected Home Assistant owner and complete onboarding through the
+  facts-selected Home Assistant owner and complete onboarding through the
   supported HTTP API. The owner's first OIDC login links to that account.
 
 ## Observability
@@ -37,9 +37,10 @@ Before the first deployment:
 
 1. Bootstrap `secrets/main/home.yaml` with the VM's age recipient.
 2. Replace the bootstrap password and host password placeholders.
-3. Replace `public-keys/hosts/home.pub` with the installed VM SSH host key.
+3. Replace `facts/public-keys/files/hosts/home.pub` with the installed VM SSH
+   host key.
 4. Generate the restic SSH keypair, commit the public key at
-   `public-keys/restic/home.pub`, and store the private key in SOPS.
+   `facts/public-keys/files/restic/home.pub`, and store the private key in SOPS.
 5. Issue the `home` internal HTTPS certificate and the Home Assistant and node
    observability certificates with the fleet PKI apps.
 6. Replace the new beast cloud-repository password placeholders.

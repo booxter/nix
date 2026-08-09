@@ -1,22 +1,23 @@
 {
   beastPkgs,
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
-  mediaPaths = import ./media-paths.nix;
-  ociImages = import ../../oci { inherit pkgs; };
+  sourceLibraryRoot = "${facts.shared-storage.resources.media.path}/library";
+  jellyfinLibraryRoot = "/media/library";
+  ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${config.host.network.lanDomain}";
-  watchstateSso = hostInventory.sso.applications.watchstate;
+  watchstateSso = facts.sso.applications.watchstate;
   watchstateSystemUser = watchstateSso.bootstrapOwner;
-  watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
-  watchstatePort = hostInventory.site.ports.watchstate;
+  watchstateSystemAccount = facts.sso.users.${watchstateSystemUser};
+  watchstatePort = facts.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
   watchstateBackupStagingDir = "/volume2/backups/staging/watchstate";
   watchstateUid = 296;
@@ -128,7 +129,7 @@ in
       ports = [ "127.0.0.1:${toString watchstatePort}:${toString watchstatePort}" ];
       volumes = [
         "${watchstateDataDir}:/config:rw"
-        "${mediaPaths.sourceLibraryRoot}:${mediaPaths.jellyfinLibraryRoot}:ro"
+        "${sourceLibraryRoot}:${jellyfinLibraryRoot}:ro"
       ];
     };
   };
@@ -149,7 +150,7 @@ in
     ];
     unitConfig.RequiresMountsFor = [
       watchstateDataDir
-      mediaPaths.sourceLibraryRoot
+      sourceLibraryRoot
     ];
   };
 

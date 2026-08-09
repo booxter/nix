@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   hostSpec,
   inputs,
   lib,
@@ -9,7 +9,7 @@
 let
   hostname = hostSpec.name;
   hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
-  realm = hostInventory.realms.${config.host.realm};
+  realm = facts.realms.${config.host.realm};
   inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
@@ -23,7 +23,7 @@ in
       default = system;
       readOnly = true;
       internal = true;
-      description = "Nix platform declared by the host inventory.";
+      description = "Nix platform declared by host facts.";
     };
 
     isDarwin = lib.mkOption {
@@ -31,7 +31,7 @@ in
       default = isDarwin;
       readOnly = true;
       internal = true;
-      description = "Whether the inventory platform uses the Darwin kernel.";
+      description = "Whether the facts platform uses the Darwin kernel.";
     };
 
     isLinux = lib.mkOption {
@@ -39,24 +39,10 @@ in
       default = isLinux;
       readOnly = true;
       internal = true;
-      description = "Whether the inventory platform uses the Linux kernel.";
+      description = "Whether the facts platform uses the Linux kernel.";
     };
 
-    isBuilder = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isBuilder or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host is a Nix builder.";
-    };
-
-    builder.supportsNspawnTests = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.nspawnTestBuilder or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this builder supports nspawn-based NixOS tests.";
-    };
+    isBuilder = lib.mkEnableOption "Nix builder participation";
 
     isDesktop = lib.mkOption {
       type = lib.types.bool;
@@ -85,14 +71,6 @@ in
       description = "Expected host availability for monitoring.";
     };
 
-    hasTouchId = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.hasTouchId or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host has Touch ID-backed authentication.";
-    };
-
     isSecretsOperator = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isSecretsOperator or false;
@@ -103,7 +81,7 @@ in
 
     hasHardwareAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = config.host.hasTouchId || config.host.hasYubiAgeIdentity;
+      default = (isDarwin && config.host.hardware.hasTouchId) || config.host.hasYubiAgeIdentity;
       readOnly = true;
       internal = true;
       description = "Whether this host can use a hardware-backed age identity.";
@@ -111,10 +89,10 @@ in
 
     hasYubiAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = builtins.elem hostname hostInventory.yubi.ageIdentity.hosts;
+      default = builtins.elem hostname facts.yubi.ageIdentity.hosts;
       readOnly = true;
       internal = true;
-      description = "Whether the YubiKey inventory assigns an age identity to this host.";
+      description = "Whether YubiKey facts assign an age identity to this host.";
     };
 
     isVM = lib.mkOption {
@@ -134,16 +112,16 @@ in
     };
 
     realm = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames hostInventory.realms);
+      type = lib.types.enum (builtins.attrNames facts.realms);
       default = hostSpec.realm;
       readOnly = true;
       internal = true;
-      description = "Infrastructure and trust realm declared by the host inventory.";
+      description = "Infrastructure and trust realm declared by host facts.";
     };
 
     secretDomain = lib.mkOption {
       type = lib.types.str;
-      default = hostInventory.realms.${config.host.realm}.secretDomain;
+      default = facts.realms.${config.host.realm}.secretDomain;
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";
@@ -175,32 +153,6 @@ in
       };
     };
 
-    remoteAccess = {
-      appleRemoteManagement = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.appleRemoteManagement or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether Apple Remote Management is available in this realm.";
-      };
-
-      vncClient = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.vncClient or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether this host should provide the fleet VNC client.";
-      };
-
-      x11 = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.services.remoteAccess.x11 or false;
-        readOnly = true;
-        internal = true;
-        description = "Whether X11 forwarding is available in this realm.";
-      };
-    };
-
     username = lib.mkOption {
       type = lib.types.str;
       default = "ihrachyshka";
@@ -217,7 +169,7 @@ in
       default = hostSpec.userProfile;
       readOnly = true;
       internal = true;
-      description = "User environment profile declared by the host inventory.";
+      description = "User environment profile declared by host facts.";
     };
 
   };
@@ -226,15 +178,11 @@ in
     assertions = [
       {
         assertion = isDarwin != isLinux;
-        message = "Inventory platform ${system} must identify exactly one supported kernel.";
+        message = "Facts platform ${system} must identify exactly one supported kernel.";
       }
       {
         assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
         message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
-      }
-      {
-        assertion = !config.host.builder.supportsNspawnTests || config.host.isBuilder;
-        message = "nspawn test support requires ${hostname} to be a Nix builder.";
       }
     ];
 

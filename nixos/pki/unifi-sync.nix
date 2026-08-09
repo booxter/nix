@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   pkiPkgs,
@@ -12,10 +12,10 @@ let
     inherit config lib outputs;
   };
   webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices hostInventory;
+    inherit fleetServices facts;
   };
   unifiSyncEnv = import ./unifi-sync-env.nix {
-    inherit hostInventory webDnsRecords;
+    inherit facts webDnsRecords;
     lanDomain = config.host.network.lanDomain;
   };
 in

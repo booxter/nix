@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   orgPkgs,
   pkgs,
@@ -9,10 +9,9 @@
 }:
 let
   paperlessService = config.host.web.services.paperless;
-  beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
-  paperlessStoragePath = "/data/paperless";
+  paperlessStoragePath = facts.nfs.links.org.paperless.mountPoint;
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoTag = "paperless-gpt-auto";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
@@ -55,22 +54,9 @@ let
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${config.host.network.lanDomain}";
   ollamaClient = config.host.internalPki.clients.ollama;
-  ociImages = import ../../oci { inherit pkgs; };
+  ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
-
-  nfsMountOptions = [
-    "nfsvers=4"
-    "hard"
-    "nofail"
-    "_netdev"
-    "noatime"
-    "x-systemd.automount"
-    "x-systemd.idle-timeout=0"
-    "x-systemd.mount-timeout=30s"
-    "x-systemd.requires=network-online.target"
-    "x-systemd.after=network-online.target"
-  ];
 
   paperlessNfsPaths = [
     "${paperlessStoragePath}/consume"
@@ -125,20 +111,6 @@ in
         ];
       };
     };
-  };
-
-  boot.supportedFilesystems = [ "nfs" ];
-
-  fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:/volume2/paperless";
-    fsType = "nfs";
-    options = nfsMountOptions;
-  };
-
-  virtualisation.vmVariant.virtualisation.fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:/volume2/paperless";
-    fsType = "nfs";
-    options = nfsMountOptions;
   };
 
   sops.secrets = {

@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   outputs,
   pkiPkgs,
@@ -15,12 +15,12 @@ let
     inherit config lib outputs;
   };
   webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices hostInventory;
+    inherit fleetServices facts;
   };
   unifiSyncEnv = import ./unifi-sync-env.nix {
-    inherit hostInventory lanDomain webDnsRecords;
+    inherit facts lanDomain webDnsRecords;
   };
-  wgHome = hostInventory.site.wireguard.home;
+  wgHome = facts.site.wireguard.home;
   wgHomeExporterPort = 9586;
   wgHomeExporterHost = "gw.${lanDomain}";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";

@@ -1,16 +1,16 @@
 {
   beastPkgs,
   config,
-  hostInventory,
+  facts,
   hostSpec,
   lib,
   inputs,
   ...
 }:
 let
-  mediaLibraries = import ./media-libraries.nix;
-  mediaPaths = import ./media-paths.nix;
-  watchstatePort = hostInventory.site.ports.watchstate;
+  mediaLibraries = facts.media-libraries.libraries;
+  jellyfinLibraryRoot = "/media/library";
+  watchstatePort = facts.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
     owner = "jellyfin";
@@ -109,7 +109,7 @@ in
     environmentFile = config.sops.templates."jellarr.env".path;
     config = {
       version = 1;
-      base_url = "https://jf.${hostInventory.site.public.domain}:443";
+      base_url = "https://jf.${facts.site.public.domain}:443";
       #base_url = "http://localhost:8096";
       system = {
         serverName = "main";
@@ -287,7 +287,7 @@ in
               }:
               {
                 pathInfos = [
-                  { path = mediaPaths.jellyfinLibraryRoot + "/" + path; }
+                  { path = jellyfinLibraryRoot + "/" + path; }
                 ];
 
                 typeOptions = getTypeOptions {

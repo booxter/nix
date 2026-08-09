@@ -1,6 +1,6 @@
 {
   config,
-  hostInventory,
+  facts,
   lib,
   pkgs,
   srvarrPkgs,
@@ -8,8 +8,8 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
-  rommSso = hostInventory.sso.applications.romm;
+  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  rommSso = facts.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
     rommSso.editorGroup
@@ -18,13 +18,9 @@ let
   rommGroupsFor = person: builtins.filter (group: builtins.elem group person.groups) rommAccessGroups;
   rommAdmins = lib.filterAttrs (
     _: person: builtins.elem rommSso.adminGroup person.groups
-  ) hostInventory.sso.users;
-  rommAuthorizedUsers = lib.filterAttrs (
-    _: person: rommGroupsFor person != [ ]
-  ) hostInventory.sso.users;
-  mediaUsers = lib.filterAttrs (
-    _: person: builtins.elem "media-users" person.groups
-  ) hostInventory.sso.users;
+  ) facts.sso.users;
+  rommAuthorizedUsers = lib.filterAttrs (_: person: rommGroupsFor person != [ ]) facts.sso.users;
+  mediaUsers = lib.filterAttrs (_: person: builtins.elem "media-users" person.groups) facts.sso.users;
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
@@ -41,7 +37,7 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
-  ociImages = import ../../oci { inherit pkgs; };
+  ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
   rommPublicUrl = config.host.web.services.romm.public.url;

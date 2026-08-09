@@ -1,12 +1,12 @@
 {
   lib,
   config,
-  hostInventory,
+  facts,
   ...
 }:
 let
   username = config.host.username;
-  builderSpec = n: hostInventory.nixosHosts."builder${toString n}";
+  builderSpec = n: facts.hosts.nixos."builder${toString n}";
   builderSpecs = map builderSpec (lib.range 1 3);
 in
 {
@@ -54,13 +54,11 @@ in
           system = "x86_64-linux";
           protocol = "ssh-ng";
           maxJobs = 4;
-          supportedFeatures = features ++ lib.optionals (hostSpec.nspawnTestBuilder or false) nspawnFeatures;
+          supportedFeatures = features ++ nspawnFeatures;
         };
       in
       (map (toBuilder builderSpeedFactor) builderSpecs)
-      ++ lib.optional (config.networking.hostName != "frame") (
-        toBuilder 200 hostInventory.nixosHosts.frame
-      )
+      ++ lib.optional (config.networking.hostName != "frame") (toBuilder 200 facts.hosts.nixos.frame)
       ++ lib.optional (config.networking.hostName != "mmini") {
         hostName = "mmini";
         systems = [ "aarch64-darwin" ];

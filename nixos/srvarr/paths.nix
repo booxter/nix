@@ -1,4 +1,5 @@
 {
+  facts,
   lib,
   ...
 }:
@@ -10,7 +11,7 @@
   };
 
   config.host.srvarrPaths = {
-    mediaDir = "/data/media";
+    mediaDir = facts.nfs.links.srvarr.media.mountPoint;
     # Preserve the historical state root so backups and existing service state
     # continue to land in the same place.
     stateDir = "/data/.state/nixarr";
