@@ -19,6 +19,7 @@ let
         metric
         // {
           inherit serviceName;
+          serviceAvailability = service.observability.availability;
         }
       )
     ) (lib.filterAttrs (_: metric: metric.enable) service.metrics)
@@ -329,6 +330,15 @@ in
               description = "Prometheus endpoints exported by this web service.";
             };
 
+            observability.availability = lib.mkOption {
+              type = lib.types.enum [
+                "always"
+                "intermittent"
+              ];
+              default = rootConfig.host.availability;
+              description = "Availability policy inherited by this service's metrics and probes.";
+            };
+
             auth = {
               mode = lib.mkOption {
                 type = lib.types.enum [
@@ -476,6 +486,15 @@ in
           port
           upstream
           ;
+        scrape = {
+          enable = metric.discover;
+          inherit (metric) jobName labels;
+          profile = "application";
+          component = metric.serviceName;
+          service = metric.serviceName;
+          availability = metric.serviceAvailability;
+          interval = metric.scrapeInterval;
+        };
       }) enabledMetrics;
     })
 

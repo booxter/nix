@@ -48,7 +48,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  serviceScrapes = import ./scrapes/services.nix {
+  endpointScrapes = import ./scrapes/endpoints.nix {
     inherit
       config
       lib
@@ -76,7 +76,7 @@ let
   prometheusRetention = "${toString retentionDays}d";
 in
 {
-  assertions = nodeScrapes.assertions;
+  assertions = nodeScrapes.assertions ++ endpointScrapes.assertions;
 
   host.observability.blackbox = {
     enable = true;
@@ -145,7 +145,7 @@ in
     ++ proxmoxScrapes.scrapeConfigs
     ++ nutScrapes.scrapeConfigs
     ++ blackboxScrapes.scrapeConfigs
-    ++ serviceScrapes.scrapeConfigs
+    ++ endpointScrapes.scrapeConfigs
     ++ unpollerScrapes.scrapeConfigs
     ++ wireguardScrapes.scrapeConfigs;
   };

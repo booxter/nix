@@ -4,7 +4,6 @@ let
   backupTestFile = ./prometheus/tests/backup.rules.test.yml;
   controlPlaneRuleFile = ./prometheus/rules/control-plane.rules.yml;
   controlPlaneTestFile = ./prometheus/tests/control-plane.rules.test.yml;
-  availabilityRuleFile = ./prometheus/rules/availability.rules.yml;
   availabilityTestFile = ./prometheus/tests/availability.rules.test.yml;
   customJobsRuleFile = ./prometheus/rules/custom-jobs.rules.yml;
   customJobsTestFile = ./prometheus/tests/custom-jobs.rules.test.yml;
@@ -26,7 +25,6 @@ let
   proxmoxTestFile = ./prometheus/tests/proxmox.rules.test.yml;
   serviceProbesRuleFile = ./prometheus/rules/service-probes.rules.yml;
   serviceProbesTestFile = ./prometheus/tests/service-probes.rules.test.yml;
-  serviceScrapesRuleFile = ./prometheus/rules/service-scrapes.rules.yml;
   serviceScrapesTestFile = ./prometheus/tests/service-scrapes.rules.test.yml;
   storageRuleFile = ./prometheus/rules/storage.rules.yml;
   storageTestFile = ./prometheus/tests/storage.rules.test.yml;
@@ -48,7 +46,6 @@ in
     ruleFiles = [
       backupRuleFile
       controlPlaneRuleFile
-      availabilityRuleFile
       customJobsRuleFile
       dnsRuleFile
       fleetRuleFile
@@ -59,7 +56,6 @@ in
       pkiRuleFile
       proxmoxRuleFile
       serviceProbesRuleFile
-      serviceScrapesRuleFile
       storageRuleFile
       thermalRuleFile
       upsRuleFile

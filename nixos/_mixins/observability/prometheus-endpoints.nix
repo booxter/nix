@@ -75,6 +75,61 @@ in
                   default = "";
                   description = "Extra nginx location config for this endpoint.";
                 };
+
+                scrape = {
+                  enable = lib.mkEnableOption "central Prometheus discovery for this endpoint";
+
+                  jobName = lib.mkOption {
+                    type = str;
+                    default = name;
+                    description = "Prometheus scrape job name.";
+                  };
+
+                  profile = lib.mkOption {
+                    type = str;
+                    default = "infrastructure";
+                    description = "Semantic scrape policy consumed by alerts and dashboards.";
+                  };
+
+                  component = lib.mkOption {
+                    type = str;
+                    default = name;
+                    description = "Component producing the metrics.";
+                  };
+
+                  service = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Fleet web service represented by the endpoint, when applicable.";
+                  };
+
+                  availability = lib.mkOption {
+                    type = enum [
+                      "always"
+                      "intermittent"
+                    ];
+                    default = config.host.availability;
+                    description = "Availability policy for this scrape target.";
+                  };
+
+                  interval = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Optional Prometheus scrape interval.";
+                  };
+
+                  timeout = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Optional Prometheus scrape timeout.";
+                  };
+
+                  labels = lib.mkOption {
+                    type = attrsOf str;
+                    default = { };
+                    description = "Additional static labels attached to this target.";
+                  };
+                };
               };
             }
           )

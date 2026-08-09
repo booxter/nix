@@ -1,0 +1,95 @@
+rule_files:
+  - ../rules/systemd.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'node_systemd_unit_state{instance="home",name="home-assistant.service",scrape_profile="node",state="active"}'
+        values: "1x12"
+      - series: 'up{instance="home",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedSystemdUnitInactive
+
+  - interval: 30s
+    input_series:
+      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'node_systemd_unit_state{instance="home",name="home-assistant.service",scrape_profile="node",state="active"}'
+        values: "0x12"
+      - series: 'up{instance="home",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: ExpectedSystemdUnitInactive
+      - eval_time: 5m
+        alertname: ExpectedSystemdUnitInactive
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedSystemdUnitInactive
+              category: systemd
+              instance: home
+              name: home-assistant.service
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Systemd unit inactive: home-assistant.service on home"
+              description: "NixOS expects home-assistant.service to remain active on home, but systemd has not reported it active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'nixos_systemd_unit_expected_active{instance="srvarr",name="houndarr-status-collector.timer",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'up{instance="srvarr",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedSystemdUnitInactive
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedSystemdUnitInactive
+              category: systemd
+              instance: srvarr
+              name: houndarr-status-collector.timer
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Systemd unit inactive: houndarr-status-collector.timer on srvarr"
+              description: "NixOS expects houndarr-status-collector.timer to remain active on srvarr, but systemd has not reported it active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'nixos_systemd_unit_expected_active{instance="home",name="home-assistant.service",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'up{instance="home",scrape_profile="node"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedSystemdUnitInactive
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="gw",name="wireguard-wg0.service",scrape_profile="node",state="failed"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: SystemdUnitFailed
+      - eval_time: 5m
+        alertname: SystemdUnitFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: SystemdUnitFailed
+              category: systemd
+              instance: gw
+              name: wireguard-wg0.service
+              scrape_profile: node
+              severity: warning
+              state: failed
+            exp_annotations:
+              summary: "Systemd unit failed: wireguard-wg0.service on gw"
+              description: "The systemd unit wireguard-wg0.service on gw has remained failed for 5 minutes."

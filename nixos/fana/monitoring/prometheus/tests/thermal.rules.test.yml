@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
         values: "80x22"
     alert_rule_test:
       - eval_time: 10m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
         values: "90x20 80x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -35,7 +35,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini"}'
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node",thermal_profile="no-cpu"}'
         values: "90x22"
     alert_rule_test:
       - eval_time: 10m30s
@@ -155,7 +155,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda"}'
+      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda",component="smartctl"}'
         values: "45x62"
     alert_rule_test:
       - eval_time: 30m
@@ -163,7 +163,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda"}'
+      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda",component="smartctl"}'
         values: "55x60 45x2"
     alert_rule_test:
       - eval_time: 29m30s

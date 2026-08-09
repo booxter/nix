@@ -34,6 +34,10 @@ let
       static_configs = [
         {
           targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+          labels = {
+            component = "nut";
+            scrape_profile = "power";
+          };
         }
       ];
       relabel_configs = [

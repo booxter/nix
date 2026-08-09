@@ -80,6 +80,12 @@ in
     enable = true;
     port = lolekMetricsMtlsPort;
     upstream = "http://127.0.0.1:${toString lolekMetricsInternalPort}/metrics";
+    scrape = {
+      enable = true;
+      profile = "application";
+      component = "lolek";
+      service = "lolek";
+    };
   };
 
   systemd.services.lolek = {

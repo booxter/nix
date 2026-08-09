@@ -6,36 +6,36 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-arr",instance="grafana"}'
+      - series: 'up{job="blackbox-services",instance="grafana"}'
         values: "1x12"
-      - series: 'up{job="blackbox-arr",instance="jellyfin"}'
+      - series: 'up{job="blackbox-services",instance="jellyfin"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
-        alertname: BlackboxARRScrapeDown
+        alertname: BlackboxServiceScrapeDown
 
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-arr",instance="grafana"}'
+      - series: 'up{job="blackbox-services",instance="grafana"}'
         values: "0x10 1x2"
-      - series: 'up{job="blackbox-arr",instance="jellyfin"}'
+      - series: 'up{job="blackbox-services",instance="jellyfin"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: BlackboxARRScrapeDown
+        alertname: BlackboxServiceScrapeDown
       - eval_time: 5m
-        alertname: BlackboxARRScrapeDown
+        alertname: BlackboxServiceScrapeDown
         exp_alerts:
           - exp_labels:
-              alertname: BlackboxARRScrapeDown
+              alertname: BlackboxServiceScrapeDown
               category: observability
-              job: blackbox-arr
+              job: blackbox-services
               severity: warning
             exp_annotations:
               summary: "Public service probe scrape down"
-              description: "Prometheus has been unable to scrape any blackbox-arr probe targets for 5 minutes."
+              description: "Prometheus has been unable to scrape any blackbox-services probe targets for 5 minutes."
       - eval_time: 5m30s
-        alertname: BlackboxARRScrapeDown
+        alertname: BlackboxServiceScrapeDown
 
   - interval: 30s
     input_series:
@@ -81,7 +81,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_success{job="blackbox-services",instance="jellyfin",scope="external"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -89,7 +89,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_success{job="blackbox-services",instance="jellyfin",scope="external"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -101,7 +101,7 @@ tests:
               alertname: PublicServiceProbeDown
               category: service
               instance: jellyfin
-              job: blackbox-arr
+              job: blackbox-services
               scope: external
               severity: warning
             exp_annotations:
@@ -147,7 +147,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
+      - series: 'probe_success{job="blackbox-services",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -155,7 +155,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
+      - series: 'probe_success{job="blackbox-services",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -167,7 +167,7 @@ tests:
               alertname: InternalServiceProbeDown
               category: service
               instance: radarr
-              job: blackbox-arr
+              job: blackbox-services
               scope: internal
               service: radarr
               service_title: Radarr
@@ -179,7 +179,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="proxmox-prx1-lab",scope="internal",service="proxmox-prx1-lab",service_title="Proxmox prx1-lab",target="https://prx1-lab/"}'
+      - series: 'probe_success{job="blackbox-services",instance="proxmox-prx1-lab",scope="internal",service="proxmox-prx1-lab",service_title="Proxmox prx1-lab",target="https://prx1-lab/"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 5m
@@ -189,7 +189,7 @@ tests:
               alertname: InternalServiceProbeDown
               category: service
               instance: proxmox-prx1-lab
-              job: blackbox-arr
+              job: blackbox-services
               scope: internal
               service: proxmox-prx1-lab
               service_title: Proxmox prx1-lab

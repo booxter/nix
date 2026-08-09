@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  outputs,
   pkgs,
   ...
 }:
@@ -15,14 +16,85 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
-  dashboardDirectory = import ./dashboards.nix {
-    inherit lib pkgs;
-    downloadCapacityMbit = config.host.site.uplink.downloadMbit;
-    downloadersMaxMbit = config.host.site.policies.downloaders.maxDownloadMbit;
-    uploadCapacityMbit = config.host.site.uplink.uploadMbit;
+  localHost = config.networking.hostName;
+  nixosConfigurations = outputs.nixosConfigurations // {
+    ${localHost} = { inherit config; };
   };
+  fleetConfigurations = nixosConfigurations // outputs.darwinConfigurations;
+  observableConfigurations = lib.filterAttrs (
+    _: configuration:
+    configuration.config.host.realm == config.host.realm
+    && configuration.config.host.observability.enable
+  ) fleetConfigurations;
+  dashboardHost =
+    name: configuration:
+    let
+      hostConfig = configuration.config;
+      enabledServices = lib.filterAttrs (_: service: service.enable) (
+        hostConfig.host.web.services or { }
+      );
+      gpuVendors = hostConfig.host.hardware.gpu.vendors or [ ];
+      fileSystems = builtins.attrValues (hostConfig.fileSystems or { });
+    in
+    {
+      inherit name;
+      platform = if hostConfig.host.isDarwin then "darwin" else "linux";
+      inherit (hostConfig.host.observability) capacityProfile thermalProfile;
+      virtual = hostConfig.host.isVM;
+      builder = hostConfig.host.isBuilder;
+      hypervisor = hostConfig.host.isProxmox or false;
+      gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
+      services = builtins.attrNames enabledServices;
+      storage = {
+        btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;
+        diskBays = hostConfig.host.hardware.storage.diskBays or null;
+        nvme = false;
+      };
+      backups = {
+        client = (hostConfig.host.backups.jobs or { }) != { };
+        server = hostConfig.host.backups.server.enable or false;
+      };
+    };
+  dashboardManifest = {
+    dataSources = {
+      prometheus = {
+        type = "prometheus";
+        uid = grafanaPrometheusUid;
+      };
+      loki = {
+        type = "loki";
+        uid = grafanaLokiUid;
+      };
+    };
+    hosts = lib.mapAttrsToList dashboardHost observableConfigurations;
+    network.internet = {
+      ingress = {
+        capacityMbit = config.host.site.uplink.downloadMbit;
+        targetMbit = config.host.site.policies.downloaders.maxDownloadMbit;
+      };
+      egress = {
+        capacityMbit = config.host.site.uplink.uploadMbit;
+        targetMbit = config.host.site.policies.backups.maxUploadMbit;
+      };
+    };
+  };
+  dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
+    builtins.toJSON dashboardManifest
+  );
+  dashboardGenerator = pkgs.callPackage ./dashboard-generator/package.nix { };
+  dashboardDirectory = pkgs.runCommandLocal "fana-grafana-dashboards" { } ''
+    mkdir "$out"
+    ${lib.getExe dashboardGenerator} --config ${dashboardConfig} --output "$out"
+  '';
 in
 {
+  imports = [ ./options.nix ];
+
+  host.observability.grafana = {
+    inherit dashboardManifest;
+    dashboardPackage = dashboardDirectory;
+  };
+
   host.web.services.grafana.auth = {
     mode = "oidc";
     oidcRegistration = {
@@ -172,7 +244,10 @@ in
             disableDeletion = false;
             editable = false;
             updateIntervalSeconds = 30;
-            options.path = dashboardDirectory;
+            options = {
+              path = config.host.observability.grafana.dashboardPackage;
+              foldersFromFilesStructure = true;
+            };
           }
         ];
       };

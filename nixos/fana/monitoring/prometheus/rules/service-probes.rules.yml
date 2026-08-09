@@ -2,15 +2,15 @@ groups:
   - name: service-probes
     interval: 30s
     rules:
-      - alert: BlackboxARRScrapeDown
-        expr: max by(job) (up{job="blackbox-arr"}) < 1
+      - alert: BlackboxServiceScrapeDown
+        expr: max by(job) (up{job="blackbox-services"}) < 1
         for: 5m
         labels:
           severity: warning
           category: observability
         annotations:
           summary: "Public service probe scrape down"
-          description: "Prometheus has been unable to scrape any blackbox-arr probe targets for 5 minutes."
+          description: "Prometheus has been unable to scrape any blackbox-services probe targets for 5 minutes."
       - alert: BlackboxPublicWANScrapeDown
         expr: max by(job) (up{job="blackbox-public-wan"}) < 1
         for: 5m
@@ -30,7 +30,7 @@ groups:
           summary: "Backend service probe scrape down"
           description: "Prometheus has been unable to scrape any blackbox-backend probe targets for 5 minutes."
       - alert: PublicServiceProbeDown
-        expr: probe_success{job="blackbox-arr",scope="external"} < 1
+        expr: probe_success{job="blackbox-services",scope="external"} < 1
         for: 5m
         labels:
           severity: warning
@@ -48,7 +48,7 @@ groups:
           summary: "Public service WAN probe down: {{ $labels.service_title }}"
           description: "The WAN blackbox probe for {{ $labels.service_title }} ({{ $labels.public_host }} via {{ $labels.target }}) has been failing for 5 minutes."
       - alert: InternalServiceProbeDown
-        expr: probe_success{job="blackbox-arr",scope="internal"} < 1
+        expr: probe_success{job="blackbox-services",scope="internal"} < 1
         for: 5m
         labels:
           severity: warning

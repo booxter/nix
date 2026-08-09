@@ -1,5 +1,8 @@
 {
+  formats,
   gettext,
+  hostInventory,
+  lib,
   prometheus,
   prometheus-alertmanager,
   stdenvNoCC,
@@ -7,6 +10,26 @@
 let
   catalog = import ./catalog.nix;
   sharePath = "share/fana-monitoring";
+  yaml = formats.yaml { };
+  generatedRuleDefinitions = {
+    "availability.rules.yml" = import ./prometheus/rules/availability.nix {
+      inherit lib;
+    };
+    "capacity.rules.yml" = import ./prometheus/rules/capacity.nix { inherit hostInventory lib; };
+    "service-scrapes.rules.yml" = import ./prometheus/rules/service-scrapes.nix { inherit lib; };
+    "systemd.rules.yml" = import ./prometheus/rules/systemd.nix { inherit lib; };
+  };
+  generatedRules = lib.mapAttrs (
+    name: definition: yaml.generate name definition
+  ) generatedRuleDefinitions;
+  generatedRuleFiles =
+    finalPackage:
+    map (name: "${finalPackage}/${sharePath}/prometheus/rules/${name}") (
+      builtins.attrNames generatedRules
+    );
+  installGeneratedRules = lib.concatMapStringsSep "\n" (
+    name: "cp ${generatedRules.${name}} prometheus/rules/${lib.escapeShellArg name}"
+  ) (builtins.attrNames generatedRules);
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "fana-monitoring";
@@ -19,6 +42,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     prometheus.cli
     prometheus-alertmanager
   ];
+  postPatch = installGeneratedRules;
   checkPhase = ''
     runHook preCheck
 
@@ -50,9 +74,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   passthru = {
-    prometheusRuleFiles = map (
-      file: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${baseNameOf file}"
-    ) catalog.prometheus.ruleFiles;
+    prometheusRuleFiles =
+      generatedRuleFiles finalAttrs.finalPackage
+      ++ map (
+        file: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${baseNameOf file}"
+      ) catalog.prometheus.ruleFiles;
   };
 
   meta.description = "Fana Alertmanager configuration and Prometheus alert rules";

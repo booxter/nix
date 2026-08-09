@@ -53,6 +53,11 @@ in
     enable = true;
     port = smartctlExporterPort;
     upstream = "http://127.0.0.1:${toString smartctlExporterInternalPort}/metrics";
+    scrape = {
+      enable = true;
+      profile = "hardware";
+      component = "smartctl";
+    };
   };
 
   services.prometheus.exporters.node = {
