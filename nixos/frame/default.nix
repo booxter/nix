@@ -23,6 +23,7 @@ in
 
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
+  host.desktop.hyprland.enable = true;
   host.luks.enable = true;
   host.observability.blackbox.remote.enable = true;
   host.hardware = {
@@ -52,12 +53,6 @@ in
     };
   };
 
-  services.displayManager.gdm = {
-    enable = true;
-  };
-  services.displayManager.defaultSession = "hyprland";
-  programs.hyprland.enable = true;
-
   # systemd's global bpf-restrict-fs link took roughly three minutes to detach
   # during reboot while the kernel waited for a Tasks RCU grace period. No
   # service on this host uses RestrictFileSystems=, so keep the other default
@@ -67,7 +62,6 @@ in
     "yama"
   ];
 
-  security.pam.services.hyprlock = { };
   host.remote-control.server = {
     vnc = {
       enable = true;

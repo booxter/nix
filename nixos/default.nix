@@ -26,6 +26,7 @@ in
       ./_mixins/auto-upgrade
       ./_mixins/backups
       ./_mixins/builder.nix
+      ./_mixins/desktop
       ./_mixins/external-service.nix
       ./_mixins/firmware
       ./_mixins/hardware
