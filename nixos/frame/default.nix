@@ -24,46 +24,67 @@ in
     ./ups.nix
   ];
 
-  # This host needs manual local or remote unlock after boot; never auto-reboot
-  # on upgrades.
-  host.desktop.hyprland.enable = true;
-  host.luks = {
-    enable = true;
-    remoteUnlock = {
-      enable = true;
-      kernelModules = [ "r8169" ];
-      authorizedKeys = [
-        (unlockKey ../../public-keys/users/mair.pub)
-        (unlockKey ../../public-keys/users/mmini.pub)
+  host = {
+    desktop.hyprland.enable = true;
+    hardware = {
+      drmCard = "card1";
+      displayMode = {
+        width = 3840;
+        height = 2160;
+        refreshRate = 60;
+      };
+      scale = 1.5;
+      displays = [
+        {
+          position = "left";
+          connector = "DP-4";
+          x = 0;
+          primary = true;
+        }
+        {
+          position = "right";
+          connector = "DP-2";
+          x = 2560;
+        }
       ];
+      gpu = {
+        vendors = [ "amd" ];
+        compute = "rocm";
+      };
     };
-  };
-  host.network.primaryInterface = "enp191s0";
-  host.observability.blackbox.remote.enable = true;
-  host.hardware = {
-    drmCard = "card1";
-    displayMode = {
-      width = 3840;
-      height = 2160;
-      refreshRate = 60;
+    internalHttps.services.ollama = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
+      mtls.enable = true;
+      serverAliases = [ ollamaService.displayHost ];
+      localAliases = [ "ollama" ];
+      locationExtraConfig = ''
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+      '';
     };
-    scale = 1.5;
-    displays = [
-      {
-        position = "left";
-        connector = "DP-4";
-        x = 0;
-        primary = true;
-      }
-      {
-        position = "right";
-        connector = "DP-2";
-        x = 2560;
-      }
-    ];
-    gpu = {
-      vendors = [ "amd" ];
-      compute = "rocm";
+    # This host needs manual local or remote unlock after boot; never
+    # auto-reboot on upgrades.
+    luks = {
+      enable = true;
+      remoteUnlock = {
+        enable = true;
+        kernelModules = [ "r8169" ];
+        authorizedKeys = [
+          (unlockKey ../../public-keys/users/mair.pub)
+          (unlockKey ../../public-keys/users/mmini.pub)
+        ];
+      };
+    };
+    network.primaryInterface = "enp191s0";
+    observability.blackbox.remote.enable = true;
+    remote-control.server = {
+      vnc = {
+        enable = true;
+        basePort = 5933;
+      };
+      wayland.enable = true;
+      x11.enable = true;
     };
   };
 
@@ -75,15 +96,6 @@ in
     "landlock"
     "yama"
   ];
-
-  host.remote-control.server = {
-    vnc = {
-      enable = true;
-      basePort = 5933;
-    };
-    wayland.enable = true;
-    x11.enable = true;
-  };
 
   services.ollama = {
     enable = true;
@@ -165,16 +177,4 @@ in
   systemd.tmpfiles.rules = [
     "d ${nodeExporterTextfileDir} 0755 root root - -"
   ];
-
-  host.internalHttps.services.ollama = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
-    mtls.enable = true;
-    serverAliases = [ ollamaService.displayHost ];
-    localAliases = [ "ollama" ];
-    locationExtraConfig = ''
-      proxy_read_timeout 600s;
-      proxy_send_timeout 600s;
-    '';
-  };
 }
