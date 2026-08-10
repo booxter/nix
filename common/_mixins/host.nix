@@ -43,8 +43,6 @@ in
       description = "Whether the selected platform uses the Linux kernel.";
     };
 
-    isBuilder = lib.mkEnableOption "Nix builder participation";
-
     isDesktop = lib.mkOption {
       type = lib.types.bool;
       default = isDesktop;

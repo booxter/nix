@@ -52,7 +52,8 @@ let
     name: builder:
     "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
     + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -";
-  enabled = builtins.elem "community" config.host.build.pools && config.host.isOperatorSeat;
+  externalPools = facts.realms.${config.host.realm}.build.externalPools;
+  enabled = builtins.elem "community" externalPools && config.host.isOperatorSeat;
 in
 {
   config = lib.mkIf enabled {

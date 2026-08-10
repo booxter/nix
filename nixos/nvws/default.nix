@@ -6,7 +6,10 @@ in
   system.stateVersion = "25.11";
 
   host = {
-    isBuilder = true;
+    nix.builder = {
+      enable = true;
+      hostName = "nvws.local";
+    };
     isProxmox = true;
     network = {
       macAddress = "ac:b4:80:40:05:2e";

@@ -2,7 +2,7 @@
 {
   system.stateVersion = 5;
 
-  host.isBuilder = true;
+  host.nix.builder.enable = true;
 
   host.fleetCacheWarmer = {
     enable = true;

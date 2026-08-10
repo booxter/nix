@@ -13,7 +13,10 @@
 
   host = {
     desktop.hyprland.enable = true;
-    isBuilder = true;
+    nix.builder = {
+      enable = true;
+      speedFactor = 200;
+    };
     hardware = {
       drmCard = "card1";
       displayMode = {

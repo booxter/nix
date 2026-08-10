@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  config = lib.mkIf config.host.isBuilder {
+  config = lib.mkIf config.host.nix.builder.enable {
     system.autoUpgrade = {
       dates = lib.mkOverride 900 "Mon 03:00";
       rebootWindow = {

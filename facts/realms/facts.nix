@@ -11,10 +11,10 @@ let
 in
 {
   home = {
-    build.pools = [
-      "community"
-      "personal"
-    ];
+    build = {
+      externalPools = [ "community" ];
+      sshIdentityFile = "id_ed25519";
+    };
     management = {
       manageNetworkIdentity = true;
       managePasswordSecrets = true;
@@ -63,7 +63,10 @@ in
   };
 
   work = {
-    build.pools = [ "work" ];
+    build = {
+      externalPools = [ ];
+      sshIdentityFile = "jgwxhwdl4x-nix-builder";
+    };
     management = {
       manageNetworkIdentity = false;
       managePasswordSecrets = false;

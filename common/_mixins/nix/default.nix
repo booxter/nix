@@ -13,7 +13,7 @@ let
   hasBuildMachines = config.nix.buildMachines != [ ];
   needsProxmoxCache =
     (config.host.isLinux && config.host.isProxmox)
-    || config.host.isBuilder
+    || config.host.nix.builder.enable
     || config.host.isOperatorSeat;
 in
 {
