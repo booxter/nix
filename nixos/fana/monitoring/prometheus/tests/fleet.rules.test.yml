@@ -53,8 +53,6 @@ tests:
         values: "0+1.5x13"
       - series: 'node_cpu_seconds_total{instance="mair",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="interactive"}'
         values: "0+1.5x13"
-      - series: 'node_cpu_seconds_total{instance="mmini",job="node-mtls",cpu="0",mode="idle",scrape_profile="node",capacity_profile="interactive"}'
-        values: "0+1.5x13"
     alert_rule_test:
       - eval_time: 5m30s
         alertname: NodeCpuUsageHigh
@@ -110,10 +108,6 @@ tests:
       - series: 'node_memory_MemAvailable_bytes{instance="mair",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "5x12"
       - series: 'node_memory_MemTotal_bytes{instance="mair",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
-        values: "100x12"
-      - series: 'node_memory_MemAvailable_bytes{instance="mmini",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
-        values: "5x12"
-      - series: 'node_memory_MemTotal_bytes{instance="mmini",job="node-mtls",scrape_profile="node",capacity_profile="interactive"}'
         values: "100x12"
     alert_rule_test:
       - eval_time: 5m

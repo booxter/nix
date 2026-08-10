@@ -19,10 +19,12 @@ in
 
     capacityProfile = lib.mkOption {
       type = lib.types.enum (builtins.attrNames facts.observability.profiles.capacity);
-      default = hostSpec.observability.capacityProfile or "standard";
+      default =
+        hostSpec.observability.capacityProfile
+          or (if config.host.hardware.isLaptop then "interactive" else "standard");
       readOnly = true;
       internal = true;
-      description = "Capacity alert policy selected by facts.";
+      description = "Capacity alert policy derived from host role and hardware.";
     };
   };
 

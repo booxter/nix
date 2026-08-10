@@ -51,14 +51,12 @@ in
       realm = "home";
       userProfile = "personal";
       availability = "intermittent";
-      observability.capacityProfile = "interactive";
       isOperatorSeat = true;
       isSecretsOperator = true;
     };
     mmini = {
       realm = "home";
       userProfile = "personal";
-      observability.capacityProfile = "interactive";
       isOperatorSeat = true;
       isSecretsOperator = true;
     };
