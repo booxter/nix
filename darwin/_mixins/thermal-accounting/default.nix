@@ -40,16 +40,18 @@ in
         }
       ];
 
-      launchd.daemons.observability-thermal-export.serviceConfig = {
-        ProgramArguments = [
+      launchd.daemons.observability-thermal-export = {
+        command = lib.escapeShellArgs [
           (lib.getExe thermalExporter)
           "--ismc"
           (lib.getExe cfg.package)
         ];
-        RunAtLoad = true;
-        StartInterval = cfg.intervalSeconds;
-        StandardOutPath = "/var/log/observability-thermal-export.log";
-        StandardErrorPath = "/var/log/observability-thermal-export.log";
+        serviceConfig = {
+          RunAtLoad = true;
+          StartInterval = cfg.intervalSeconds;
+          StandardOutPath = "/var/log/observability-thermal-export.log";
+          StandardErrorPath = "/var/log/observability-thermal-export.log";
+        };
       };
     })
   ];

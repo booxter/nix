@@ -28,6 +28,7 @@ in
     ./_mixins/homebrew
     ./_mixins/internal-pki
     ./_mixins/lan-wan-accounting
+    ./_mixins/launchd
     ./_mixins/logs-client
     ./_mixins/networking
     ./_mixins/nix

@@ -68,10 +68,8 @@ in
 
   config = lib.mkIf cfg.enable {
     launchd.daemons.fleet-cache-warmer = {
+      command = lib.escapeShellArgs [ (lib.getExe warmerPackage) ];
       serviceConfig = {
-        ProgramArguments = [
-          (lib.getExe warmerPackage)
-        ];
         StartCalendarInterval = cfg.startCalendarInterval;
         WorkingDirectory = cfg.rootDir;
         EnvironmentVariables = {

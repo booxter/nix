@@ -114,11 +114,11 @@ in
       '';
 
       launchd.daemons.nut-upsmon = {
+        command = lib.escapeShellArgs [
+          "${pkgs.nut}/sbin/upsmon"
+          "-D"
+        ];
         serviceConfig = {
-          ProgramArguments = [
-            "${pkgs.nut}/sbin/upsmon"
-            "-D"
-          ];
           RunAtLoad = true;
           KeepAlive = true;
           EnvironmentVariables = {

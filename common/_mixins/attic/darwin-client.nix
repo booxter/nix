@@ -14,12 +14,12 @@ in
     launchd.daemons = lib.mapAttrs' (
       name: server:
       lib.nameValuePair "attic-watch-store-${name}" {
+        command = lib.escapeShellArgs [
+          (lib.getExe pkgs.attic-client)
+          "watch-store"
+          "${name}:${server.cacheName}"
+        ];
         serviceConfig = {
-          ProgramArguments = [
-            (lib.getExe pkgs.attic-client)
-            "watch-store"
-            "${name}:${server.cacheName}"
-          ];
           RunAtLoad = true;
           KeepAlive = true;
           WorkingDirectory = rootDir;
