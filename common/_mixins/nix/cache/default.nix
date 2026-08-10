@@ -14,15 +14,15 @@ let
       default = null;
       description = "Default Nix substituter priority override.";
     };
-    lan = lib.mkOption {
+    tunnelInactive = lib.mkOption {
       type = priorityType;
       default = null;
-      description = "Nix substituter priority while directly connected to the LAN.";
+      description = "Nix substituter priority while the relevant WireGuard tunnel is inactive.";
     };
-    vpn = lib.mkOption {
+    tunnelActive = lib.mkOption {
       type = priorityType;
       default = null;
-      description = "Nix substituter priority while connected through VPN.";
+      description = "Nix substituter priority while the relevant WireGuard tunnel is active.";
     };
   };
   commonCacheOptions = {
@@ -36,6 +36,21 @@ let
       description = "Signing keys trusted for this cache.";
     };
     priorities = priorityOptions;
+    reachability = {
+      kind = lib.mkOption {
+        type = lib.types.enum [
+          "public"
+          "internal"
+        ];
+        default = "public";
+        description = "Whether the cache is publicly reachable or requires a private network.";
+      };
+      network = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Private network required to reach an internal cache.";
+      };
+    };
   };
   contributionType = lib.types.submodule {
     options = commonCacheOptions // {
@@ -63,13 +78,7 @@ let
       outputs
       ;
   };
-  substituterFor =
-    profile: cache:
-    let
-      profilePriority = cache.priorities.${profile};
-      priority = if profilePriority == null then cache.priorities.default else profilePriority;
-    in
-    cache.substituter + lib.optionalString (priority != null) "?priority=${toString priority}";
+  cacheLib = import ./lib.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
 in
 {
@@ -106,7 +115,7 @@ in
     };
 
     nix.settings = {
-      substituters = lib.mkForce (map (substituterFor "default") caches);
+      substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);
       trusted-public-keys = lib.mkForce (
         lib.unique (builtins.concatMap (cache: cache.trustedPublicKeys) caches)
       );

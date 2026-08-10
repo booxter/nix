@@ -3,6 +3,8 @@
   ...
 }:
 {
+  imports = [ ./cache-preference.nix ];
+
   nix.gc.interval = [
     {
       Hour = 3;

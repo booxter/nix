@@ -12,7 +12,6 @@ in
   system.stateVersion = 6;
 
   imports = [
-    ./nix-cache-preference.nix
     ./opencode.nix
   ];
 
@@ -22,6 +21,10 @@ in
 
   host = {
     hardware.isLaptop = true;
+    network.wireguardClients.home = {
+      interface = "wg0";
+      providesAccessTo = [ config.host.realm ];
+    };
     remote-control = {
       client = {
         vnc.enable = true;

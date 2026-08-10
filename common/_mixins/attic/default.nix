@@ -109,10 +109,14 @@ in
       scope = "realm";
       substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
       trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
+      reachability = {
+        kind = "internal";
+        network = config.host.realm;
+      };
       priorities = {
         default = 30;
-        lan = 10;
-        vpn = 30;
+        tunnelInactive = 10;
+        tunnelActive = 30;
       };
     };
   };
