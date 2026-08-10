@@ -52,11 +52,12 @@ in
       (lib.mkIf config.host.isProxmox {
         host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
-        # Hypervisors upgrade on a separate schedule to avoid disrupting guest
-        # VMs running on top.
-        host.autoUpgrade = {
-          schedule.calendar = lib.mkDefault "Mon 04:00";
-          reboot.window.lower = lib.mkDefault "03:45";
+        host.autoUpgrade.claims.proxmox-node = {
+          switch.cadence = "weekly";
+          reboot.cadence = "weekly";
+          availabilityGroups = [
+            "proxmox:${config.host.realm}:${config.host.proxmox.cluster}"
+          ];
         };
 
         nixpkgs.overlays = [
@@ -124,6 +125,10 @@ in
       })
     ]
     ++ lib.optional isVM {
+      host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
+        hosts = model.guestNodes.${hostSpec.name} or [ ];
+      };
+
       virtualisation.proxmox = {
         inherit cores;
         name = hostSpec.name;

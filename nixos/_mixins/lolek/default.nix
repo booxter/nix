@@ -1,9 +1,13 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
   ...
 }:
+let
+  cfg = config.host.lolek;
+in
 {
   imports = [
     inputs.lolek.nixosModules.default
@@ -31,6 +35,13 @@
         default = 9568;
         description = "mTLS port exposing Lolek metrics to Prometheus.";
       };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    host.autoUpgrade.claims.lolek.reboot = {
+      cadence = "weekly";
+      weekday = "Sat";
     };
   };
 }

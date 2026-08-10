@@ -19,6 +19,11 @@ let
 in
 {
   config = lib.mkIf config.host.attic.client.enable {
+    host.autoUpgrade.claims.attic-client.exclusions = lib.mapAttrs (_: server: {
+      hosts = [ server.hostName ];
+      minimumGapMinutes = 5;
+    }) servers;
+
     systemd.services = lib.mapAttrs' (
       name: server:
       lib.nameValuePair "attic-watch-store-${name}" {

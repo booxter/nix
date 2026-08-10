@@ -4,6 +4,11 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    host.autoUpgrade.claims.attic-server = {
+      switch.cadence = "weekly";
+      reboot.cadence = "weekly";
+    };
+
     services.atticd = {
       enable = true;
       environmentFile = cfg.environmentFile;

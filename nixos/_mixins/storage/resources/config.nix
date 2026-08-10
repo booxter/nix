@@ -89,6 +89,11 @@ in
 {
   config = lib.mkMerge [
     {
+      host.autoUpgrade.claims.storage.exclusions = lib.mapAttrs (_: claim: {
+        hosts = [ claim.provider ];
+        minimumGapMinutes = 5;
+      }) remoteClaims;
+
       host.network.stableAddress.requiredBy =
         lib.optional (model.providedRemoteClaims != [ ]) "NFS provider"
         ++ lib.optional (remoteClaims != { }) "NFS export ACL";

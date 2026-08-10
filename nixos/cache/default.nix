@@ -49,17 +49,4 @@ in
       '';
     };
   };
-
-  # Upgrade cache before the Monday critical-infra window so the cache is
-  # ready before machines that may consume it during their own auto-updates.
-  host.autoUpgrade = {
-    schedule = {
-      calendar = "Mon 03:30";
-      randomizedDelay = "5min";
-    };
-    reboot.window = {
-      lower = "02:59";
-      upper = "06:00";
-    };
-  };
 }

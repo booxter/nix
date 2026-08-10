@@ -183,4 +183,11 @@ in
       };
     };
   };
+
+  config = lib.mkIf cfg.enable {
+    host.autoUpgrade.claims.jellyfin.reboot = {
+      cadence = "weekly";
+      weekday = "Sat";
+    };
+  };
 }
