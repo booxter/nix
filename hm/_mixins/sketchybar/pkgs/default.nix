@@ -1,6 +1,6 @@
 {
   alertmanager ? null,
-  attentionInbox,
+  attentionInbox ? null,
   codexTools,
   jellyfin ? null,
   pkgs,
@@ -8,10 +8,10 @@
 }:
 let
   inherit (pkgs) lib;
+  attentionInboxEnabled = attentionInbox != null;
   pluginNames = [
     "aerospace"
     "alertmanager"
-    "attention-inbox"
     "battery"
     "clock"
     "codex"
@@ -25,7 +25,8 @@ let
     "spotify"
     "stock"
     "volume"
-  ];
+  ]
+  ++ lib.optional attentionInboxEnabled "attention-inbox";
   goPluginNames = [
     "alertmanager"
     "clock"
@@ -37,13 +38,15 @@ let
     "stock"
     "volume"
   ];
-  packagedPluginNames = goPluginNames ++ [
-    "attention-inbox"
-    "battery"
-    "codex"
-    "codex-work"
-    "spotify"
-  ];
+  packagedPluginNames =
+    goPluginNames
+    ++ [
+      "battery"
+      "codex"
+      "codex-work"
+      "spotify"
+    ]
+    ++ lib.optional attentionInboxEnabled "attention-inbox";
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   swiftApplets = pkgs.callPackage ./swift-applets { };
@@ -129,7 +132,9 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin" "$out/libexec/sketchybar"
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
-    ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
+    ${lib.optionalString attentionInboxEnabled (
+      makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"
+    )}
     ${makeBinaryPluginWrapper "battery" swiftApplets "sketchybar-battery"}
     ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
     ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}

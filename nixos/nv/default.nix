@@ -10,6 +10,7 @@ in
   host.userEnvironment = {
     roles.developer.enable = true;
     features = {
+      attentionInbox.enable = true;
       codex = {
         usageStatus.enable = false;
         resetCredits.enable = false;

@@ -8,6 +8,7 @@
 let
   inherit (osConfig.host) isDarwin;
   userEnvironment = osConfig.host.userEnvironment;
+  attentionInboxCfg = userEnvironment.features.attentionInbox;
   cliCfg = userEnvironment.features.cli;
   repositoryCatalog = userEnvironment.repositories.catalog;
   requiredRepositories = userEnvironment.repositories.required;
@@ -155,7 +156,6 @@ in
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
-      cliPkgs.attention-inbox
       bc
       curl
       delve # go debugger
@@ -187,6 +187,7 @@ in
       # python
       python313
     ]
+    ++ lib.optional attentionInboxCfg.enable cliPkgs.attention-inbox
     ++ lib.optionals isDarwin [
       container
     ]

@@ -8,6 +8,7 @@
 let
   internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
   inherit (osConfig.host) isDarwin;
+  attentionInboxCfg = osConfig.host.userEnvironment.features.attentionInbox;
   codexCfg = osConfig.host.userEnvironment.features.codex;
   isNvidia = osConfig.host.userProfile == "nvidia";
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
@@ -80,7 +81,7 @@ let
   '';
   sketchybarPlugins = import ./pkgs {
     inherit pkgs;
-    attentionInbox = cliPkgs.attention-inbox;
+    attentionInbox = if attentionInboxCfg.enable then cliPkgs.attention-inbox else null;
     codexTools = codexPkgs.codex-usage-status;
     pluginColors = pluginColorEnv;
     alertmanager =
@@ -226,7 +227,7 @@ let
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
-    lib.optionalString isNvidia ''
+    lib.optionalString attentionInboxCfg.enable ''
       sketchybar --add item attention.inbox right                                \
                  --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
                                        update_freq=1200                          \

@@ -159,6 +159,8 @@ in
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
+      attentionInbox.enable = lib.mkEnableOption "attention inbox";
+
       cli = {
         enable = lib.mkEnableOption "interactive command-line development environment";
 
