@@ -2,7 +2,6 @@
   beastPkgs,
   config,
   facts,
-  hostSpec,
   lib,
   inputs,
   ...
@@ -152,7 +151,7 @@ in
         # explicit subtitle-mode/burn-in options declaratively.
         enableHardwareEncoding = true;
         hardwareAccelerationType = "qsv";
-        qsvDevice = hostSpec.hardware.igpu.renderDevice;
+        qsvDevice = config.host.hardware.gpu.renderDevice;
         hardwareDecodingCodecs = [
           "h264"
           "hevc"

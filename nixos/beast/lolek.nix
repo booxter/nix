@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   inputs,
   pkgs,
   ...
@@ -64,7 +63,7 @@ in
       LOLEK_YT_DLP_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
     };
     hardwareAcceleration.backend = "qsv";
-    hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
+    hardwareAcceleration.device = config.host.hardware.gpu.renderDevice;
     metrics = {
       enable = true;
       port = lolekMetricsInternalPort;

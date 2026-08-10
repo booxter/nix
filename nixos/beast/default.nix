@@ -11,7 +11,6 @@
   imports = [
     ./sso.nix
     ./btrfs.nix
-    ./igpu.nix
     ./jellyfin.nix
     ./jellyfin-maintenance.nix
     ./jellyfin-exporter.nix
@@ -27,6 +26,10 @@
 
   host.observability.blackbox.remote.enable = true;
   host.backups.server.enable = true;
+  host.hardware.gpu = {
+    vendors = [ "intel" ];
+    renderDevice = "/dev/dri/renderD128";
+  };
   host.network = {
     macAddress = "bc:fc:e7:3b:fe:da";
     primaryInterface = "enp6s0";

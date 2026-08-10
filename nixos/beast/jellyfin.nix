@@ -53,7 +53,11 @@ in
     ${pkgs.coreutils}/bin/install -m 0600 -o jellyfin -g jellyfin ${jellyfinLoggingConfig} /var/lib/jellyfin/config/logging.json
   '';
 
-  users.users.jellyfin.extraGroups = [ "media" ];
+  users.users.jellyfin.extraGroups = [
+    "media"
+    "render"
+    "video"
+  ];
 
   systemd.services.jellyfin = {
     # If /volume2 is slow during boot and /media mounts later, bring Jellyfin

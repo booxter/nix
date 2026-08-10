@@ -91,7 +91,6 @@ in
       userProfile = "personal";
       critical = true;
       hmFull = false;
-      hardware.igpu.renderDevice = "/dev/dri/renderD128";
     }
     (labProxmoxSpec {
       index = 1;
