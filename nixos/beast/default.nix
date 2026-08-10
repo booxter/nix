@@ -15,7 +15,6 @@
     ./jellyfin-backup.nix
     ./jellarr.nix
     ./meilisearch.nix
-    ./lolek.nix
     ./storage.nix
     ./watchstate.nix
   ];
@@ -34,6 +33,7 @@
     vendors = [ "intel" ];
     renderDevice = "/dev/dri/renderD128";
   };
+  host.lolek.enable = true;
   host.network = {
     ethernet.disablePauseFrames.enable = true;
     interfaces = {
