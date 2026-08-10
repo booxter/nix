@@ -28,19 +28,9 @@ rec {
         ip = "192.168.10.100";
       }
       {
-        identifiers = [ "06:b5:a3:b9:6b:e0" ];
-        hostname = "mlt";
-        ip = "192.168.11.2";
-      }
-      {
         identifiers = [ "78:2d:7e:24:2d:f9" ];
         hostname = "sw-lab";
         ip = "192.168.15.1";
-      }
-      {
-        identifiers = [ "bc:fc:e7:3b:f5:99" ];
-        hostname = "beast-ipmi";
-        ip = "192.168.16.4";
       }
     ];
     gateway = {
