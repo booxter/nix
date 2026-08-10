@@ -19,6 +19,7 @@ in
   imports = [
     ./_mixins/password-store
     ./_mixins/podman-machine
+    ./_mixins/ssh
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
@@ -28,11 +29,9 @@ in
   ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
-    ./_mixins/gnupg
     ./_mixins/podman
     ./_mixins/scm
     ./_mixins/security
-    ./_mixins/ssh
   ]
   ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.editor.enable) [
     ./_mixins/nixvim

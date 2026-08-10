@@ -153,7 +153,6 @@ in
       fd
       fzf
       cliPkgs.gh-restart-failed-jobs
-      gnupg
       go
       hydra-check
       (lima.override { withAdditionalGuestAgents = true; })
