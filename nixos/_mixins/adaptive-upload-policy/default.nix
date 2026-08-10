@@ -75,12 +75,6 @@ in
         description = "Minimum upload rate while external streams are active.";
       };
 
-      bitrateHeadroomPercent = lib.mkOption {
-        type = lib.types.ints.between 0 100;
-        default = 10;
-        description = "Percentage of extra bandwidth reserved above observed stream bitrates.";
-      };
-
       relaxationHoldSeconds = lib.mkOption {
         type = lib.types.ints.unsigned;
         default = 90;

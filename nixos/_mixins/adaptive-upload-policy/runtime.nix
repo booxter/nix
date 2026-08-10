@@ -28,7 +28,7 @@ let
       media_types = cfg.source.jellyfin.mediaTypes;
       idle_rate_mbit = cfg.policy.idleRateMbit;
       minimum_rate_mbit = cfg.policy.minimumRateMbit;
-      bitrate_headroom_fraction = cfg.policy.bitrateHeadroomPercent / 100.0;
+      bitrate_headroom_fraction = 1.0;
       relaxation_hold_seconds = cfg.policy.relaxationHoldSeconds;
     };
     transmission =
