@@ -5,8 +5,14 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.autoUpgrade.claims.attic-server = {
-      switch.cadence = "weekly";
-      reboot.cadence = "weekly";
+      switch = {
+        cadence = "weekly";
+        weekday = "Tue";
+      };
+      reboot = {
+        cadence = "weekly";
+        weekday = "Tue";
+      };
     };
 
     services.atticd = {

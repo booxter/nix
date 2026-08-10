@@ -167,15 +167,15 @@ in
         start = lib.mkOption {
           type = clockType;
           default = {
-            hour = 0;
-            minute = 0;
+            hour = 3;
+            minute = 30;
           };
         };
         end = lib.mkOption {
           type = clockType;
           default = {
             hour = 6;
-            minute = 0;
+            minute = 30;
           };
         };
       };
