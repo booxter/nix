@@ -43,20 +43,17 @@ in
       userProfile = "personal";
       availability = "intermittent";
       isOperatorSeat = true;
-      isSecretsOperator = true;
     };
     mmini = {
       realm = "home";
       userProfile = "personal";
       isOperatorSeat = true;
-      isSecretsOperator = true;
     };
     JGWXHWDL4X = {
       realm = "work";
       userProfile = "nvidia";
       availability = "intermittent";
       isOperatorSeat = true;
-      isSecretsOperator = true;
     };
   };
 
@@ -68,7 +65,6 @@ in
       userProfile = "personal";
       isDesktop = true;
       isOperatorSeat = true;
-      isSecretsOperator = true;
       sshTicket.allowX11Forwarding = true;
     }
     {

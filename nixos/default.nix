@@ -48,6 +48,7 @@ in
       ./_mixins/ollama
       ./_mixins/proxmox
       ./_mixins/qos
+      ./_mixins/security
       ./_mixins/sso
       ./_mixins/storage
       ./_mixins/shared-storage.nix
@@ -61,7 +62,6 @@ in
       ./_mixins/watchstate
       ./_mixins/web
       ./_mixins/wireguard
-      ./_mixins/yubi.nix
     ];
 
     home-manager = {

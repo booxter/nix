@@ -26,9 +26,9 @@ in
     ./_mixins/nixvim
     ./_mixins/podman
     ./_mixins/scm
+    ./_mixins/security
     ./_mixins/ssh
     ./_mixins/tmux
-    ./_mixins/yubi.nix
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace

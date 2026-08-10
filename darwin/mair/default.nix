@@ -13,9 +13,12 @@
   host = {
     hardware.isLaptop = true;
     network.interfaces.en0.kind = "wireless";
-    security.secrets.operator.ageIdentity = {
-      backend = "secure-enclave";
-      path = "/Users/${config.host.username}/.config/sops/age/mair-se.txt";
+    security = {
+      secrets.operator.ageIdentity = {
+        backend = "secure-enclave";
+        path = "/Users/${config.host.username}/.config/sops/age/mair-se.txt";
+      };
+      ssh.credentials.backend = "secretive";
     };
     remote-control = {
       client = {
@@ -24,7 +27,6 @@
       };
       server.vnc.enable = true;
     };
-    secretive.enable = true;
     wireguard.client = {
       enable = true;
       network = "home";

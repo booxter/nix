@@ -1,4 +1,4 @@
-{ ... }:
+{ config, facts, ... }:
 {
   system.stateVersion = 5;
 
@@ -13,5 +13,12 @@
     server.vnc.enable = true;
   };
 
-  host.security.smartCard.enable = true;
+  host.security = {
+    smartCard.enable = true;
+    secrets.operator.ageIdentity = {
+      backend = "yubikey";
+      path = "/Users/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
+    };
+    ssh.credentials.backend = "yubikey";
+  };
 }

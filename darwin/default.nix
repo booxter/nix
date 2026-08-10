@@ -33,7 +33,6 @@ in
     ./_mixins/nix
     ./_mixins/observability
     ./_mixins/security
-    ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sketchybar-network

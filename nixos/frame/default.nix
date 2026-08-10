@@ -1,4 +1,5 @@
 {
+  config,
   facts,
   inputs,
   lib,
@@ -79,6 +80,18 @@
       };
       wayland.enable = true;
       x11.enable = true;
+    };
+    security = {
+      authentication.u2f = {
+        enable = true;
+        appId = "pam://frame";
+        origin = "pam://frame";
+      };
+      secrets.operator.ageIdentity = {
+        backend = "yubikey";
+        path = "/home/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
+      };
+      ssh.credentials.backend = "yubikey";
     };
     ups.server = {
       description = "APC UPS 1500VA";

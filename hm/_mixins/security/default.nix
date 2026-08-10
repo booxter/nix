@@ -7,7 +7,8 @@
   ...
 }:
 let
-  cfg = osConfig.programs.yubi;
+  sshCredentialBackend = osConfig.host.security.ssh.credentials.backend;
+  useYubiSshIdentity = sshCredentialBackend == "yubikey";
   operatorAgeIdentity = osConfig.host.security.secrets.operator.ageIdentity;
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
   residentSsh = facts.yubi.devices.personal.applets.fido2.residentSsh;
@@ -59,7 +60,7 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf cfg.ssh.enable {
+    (lib.mkIf useYubiSshIdentity {
       programs.git.settings = {
         gpg.ssh.program = "${gitSshSign}";
         user.signingKey = yubikeySshKey;
