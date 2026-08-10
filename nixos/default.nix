@@ -43,6 +43,7 @@ in
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso
+      ./_mixins/storage
       ./_mixins/shared-storage.nix
       ./_mixins/site-ip
       ./_mixins/ups-client

@@ -10,7 +10,6 @@
 
   imports = [
     ./sso.nix
-    ./btrfs.nix
     ./jellyfin.nix
     ./jellyfin-maintenance.nix
     ./jellyfin-exporter.nix

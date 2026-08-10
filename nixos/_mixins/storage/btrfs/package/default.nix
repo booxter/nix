@@ -3,15 +3,13 @@
   lib,
 }:
 buildGoModule {
-  pname = "backup-server-tools";
+  pname = "btrfs-maintenance";
   version = "0.1.0";
 
   src = ./.;
   vendorHash = null;
 
-  subPackages = [
-    "cmd/restic-repo-acl"
-  ];
+  subPackages = [ "cmd/btrfs-maintenance" ];
 
   preCheck = ''
     test -z "$(gofmt -l cmd internal)"
@@ -24,9 +22,10 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Native maintenance tools for a Restic backup server";
+    description = "Maintain Btrfs snapshots and interrupted scrubs";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
+    mainProgram = "btrfs-maintenance";
     platforms = lib.platforms.linux;
   };
 }
