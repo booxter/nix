@@ -101,6 +101,7 @@
       };
     };
     ups.server = {
+      enable = true;
       description = "APC UPS 1500VA";
     };
   };

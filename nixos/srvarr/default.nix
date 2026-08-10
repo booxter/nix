@@ -16,6 +16,8 @@
     };
   };
 
+  host.ups.client.server = "prx1-lab";
+
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
   host.aurral = {

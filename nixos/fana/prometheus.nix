@@ -66,8 +66,9 @@ let
   };
   nutScrapes = import ./scrapes/nut.nix {
     inherit
-      facts
+      config
       lib
+      outputs
       pkgs
       ;
   };

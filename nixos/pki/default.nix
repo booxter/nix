@@ -79,6 +79,8 @@ in
     };
   };
 
+  host.ups.client.server = "prx1-lab";
+
   sops.secrets.pkiRotationGithubToken = {
     key = "github/pki_rotation/token";
     mode = "0400";

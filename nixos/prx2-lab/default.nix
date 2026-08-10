@@ -11,4 +11,5 @@
       address = "192.168.15.11";
     };
   };
+  host.ups.client.server = "prx1-lab";
 }

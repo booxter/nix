@@ -6,6 +6,7 @@ in
   system.stateVersion = "25.11";
 
   host.network.macAddress = "bc:24:11:ed:30:d3";
+  host.ups.client.server = "nvws";
 
   host.userEnvironment = {
     preset = "nvidia";

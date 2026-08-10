@@ -21,6 +21,8 @@
     server.vnc.enable = true;
   };
 
+  host.ups.client.server = "frame";
+
   host.security = {
     smartCard.enable = true;
     secrets.operator.ageIdentity = {

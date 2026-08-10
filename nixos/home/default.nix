@@ -10,6 +10,8 @@
     };
   };
 
+  host.ups.client.server = "prx1-lab";
+
   _module.args.homeAssistantTools = pkgs.callPackage ./pkgs/home-assistant-tools { };
 
   imports = [

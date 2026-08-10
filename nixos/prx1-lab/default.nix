@@ -19,6 +19,7 @@
   host.proxmox.apiCertificate.serverName = "proxmox.${config.host.network.lanDomain}";
   host.ups = {
     server = {
+      enable = true;
       description = "APC UPS 1500VA";
     };
     shutdown.waitForLowBattery = true;

@@ -38,6 +38,7 @@
   };
   host.ups = {
     server = {
+      enable = true;
       description = "APC Back-UPS RS 1500MS2";
     };
     shutdown.waitForLowBattery = true;

@@ -8,7 +8,7 @@ let
   cfg = config.host.ups;
   credentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   useLiteralPasswords = credentialMode == "literal";
-  upsName = facts.ups.serversByName.${config.networking.hostName}.name;
+  upsName = cfg.server.name;
   upsmonPasswordText = if useLiteralPasswords then "upsmon123" else null;
   upsslavePasswordText = if useLiteralPasswords then "upsslave123" else null;
   upsmonPasswordFile =

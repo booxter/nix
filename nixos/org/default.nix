@@ -26,6 +26,8 @@ in
     };
   };
 
+  host.ups.client.server = "prx1-lab";
+
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [

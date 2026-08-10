@@ -28,4 +28,6 @@
       openFirewall = lib.mkForce false;
     };
   };
+
+  host.ups.client.server = "prx1-lab";
 }

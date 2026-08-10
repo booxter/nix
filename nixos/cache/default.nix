@@ -30,6 +30,8 @@ in
     mountPoint = "/cache";
   };
 
+  host.ups.client.server = "prx1-lab";
+
   environment.systemPackages = with pkgs; [
     attic-client
   ];
