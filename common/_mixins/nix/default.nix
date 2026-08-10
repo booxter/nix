@@ -12,9 +12,7 @@ let
   GiB = 1024 * 1024 * 1024;
   hasBuildMachines = config.nix.buildMachines != [ ];
   needsProxmoxCache =
-    (config.host.isLinux && config.host.isProxmox)
-    || config.host.nix.builder.enable
-    || config.host.isOperatorSeat;
+    config.host.isProxmox || config.host.nix.builder.enable || config.host.isOperatorSeat;
 in
 {
   imports = [ ./flakehub-cache ];
