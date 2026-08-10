@@ -40,7 +40,6 @@ let
     {
       inherit name;
       platform = if hostConfig.host.isDarwin then "darwin" else "linux";
-      inherit (hostConfig.host.observability) capacityProfile;
       virtual = hostConfig.host.isVM;
       builder = hostConfig.host.nix.builder.enable;
       hypervisor = hostConfig.host.isProxmox or false;

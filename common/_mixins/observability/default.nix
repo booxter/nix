@@ -1,7 +1,6 @@
 {
   config,
   facts,
-  hostSpec,
   lib,
   ...
 }:
@@ -14,19 +13,7 @@ in
     ./node-exporter.nix
   ];
 
-  options.host.observability = {
-    enable = lib.mkEnableOption "host-side observability services";
-
-    capacityProfile = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames facts.observability.profiles.capacity);
-      default =
-        hostSpec.observability.capacityProfile
-          or (if config.host.hardware.isLaptop then "interactive" else "standard");
-      readOnly = true;
-      internal = true;
-      description = "Capacity alert policy derived from host role and hardware.";
-    };
-  };
+  options.host.observability.enable = lib.mkEnableOption "host-side observability services";
 
   config = lib.mkMerge [
     {

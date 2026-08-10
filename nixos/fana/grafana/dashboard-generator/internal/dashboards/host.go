@@ -9,7 +9,7 @@ import (
 )
 
 func hostTags(host Host) []string {
-	tags := []string{"host", host.Platform, host.CapacityProfile}
+	tags := []string{"host", host.Platform}
 	if host.Virtual {
 		tags = append(tags, "virtual")
 	} else {

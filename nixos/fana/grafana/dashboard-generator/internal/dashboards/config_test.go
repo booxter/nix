@@ -24,7 +24,6 @@ func TestDecodeConfig(t *testing.T) {
     {
       "name": "frame",
       "platform": "linux",
-      "capacityProfile": "cpu-bursty",
       "gpuVendor": null,
       "services": [],
       "storage": {},
@@ -65,7 +64,6 @@ func TestDecodeConfigRejectsMissingPrometheusUID(t *testing.T) {
     {
       "name": "frame",
       "platform": "linux",
-      "capacityProfile": "cpu-bursty",
       "gpuVendor": null,
       "services": [],
       "storage": {},

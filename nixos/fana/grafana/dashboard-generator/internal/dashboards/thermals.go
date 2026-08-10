@@ -33,13 +33,13 @@ func ThermalsOverview(config Config) (dashboard.Dashboard, error) {
 	}).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: summary[0].ID, Grid: summary[0].Grid, Title: "Hottest Hypervisor CPU / Package",
-			Expression: `topk(1, avg_over_time((` + thermalCPU(`capacity_profile="hypervisor"`) + `)[2m:30s]))`,
+			Expression: `topk(1, avg_over_time((` + thermalCPU(`host_hypervisor="true"`) + `)[2m:30s]))`,
 			Legend:     "{{instance}}", Unit: units.Celsius, DataSource: datasource,
 			Thresholds: warningCriticalThresholds(80, 85),
 		})).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: summary[1].ID, Grid: summary[1].Grid, Title: "Hottest Other CPU / Package",
-			Expression: `topk(1, avg_over_time((` + thermalCPU(`capacity_profile!="hypervisor"`) + `)[2m:30s]))`,
+			Expression: `topk(1, avg_over_time((` + thermalCPU(`host_hypervisor="false"`) + `)[2m:30s]))`,
 			Legend:     "{{instance}}", Unit: units.Celsius, DataSource: datasource,
 			Thresholds: warningCriticalThresholds(60, 75),
 		})).

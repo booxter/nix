@@ -12,7 +12,6 @@ let
     in
     {
       isVM = true;
-      observability.capacityProfile = "cpu-bursty";
       name = "builder${idx'}";
       realm = "home";
       userProfile = "personal";
@@ -42,7 +41,6 @@ let
       realm = "home";
       userProfile = "personal";
       hmFull = false;
-      observability.capacityProfile = "hypervisor";
     };
 in
 {
@@ -75,7 +73,6 @@ in
       name = frame;
       realm = "home";
       userProfile = "personal";
-      observability.capacityProfile = "cpu-bursty";
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
