@@ -6,65 +6,59 @@
 }:
 let
   username = config.host.username;
-  builderSpec = n: facts.hosts.nixos."builder${toString n}";
-  builderSpecs = map builderSpec (lib.range 1 3);
+  identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
+  sshUser = "ihrachyshka";
+  builderNames = map (n: "builder${toString n}") (lib.range 1 3);
+  builderSpecs = map (name: facts.hosts.nixos.${name}) builderNames;
+  sshHosts = [
+    "frame"
+    "mmini"
+    "mair"
+  ]
+  ++ builderNames;
+  features = [
+    "nixos-test"
+    "benchmark"
+    "big-parallel"
+    "kvm"
+  ];
+  nspawnFeatures = [
+    "devnet"
+    "uid-range"
+  ];
+  builderSpeedFactor = 100;
+  preferredBuilderSpeedFactor = 200;
+  toSshConfig = hostname: ''
+    Host ${hostname}
+      Hostname ${hostname}
+      IdentityFile ${identityFile}
+      IdentitiesOnly yes
+      User ${sshUser}
+  '';
+  toBuilder = speedFactor: hostSpec: {
+    hostName = hostSpec.name;
+    inherit speedFactor;
+    system = "x86_64-linux";
+    protocol = "ssh-ng";
+    maxJobs = 4;
+    supportedFeatures = features ++ nspawnFeatures;
+  };
+  enabled = builtins.elem "personal" config.host.build.pools && config.host.isOperatorSeat;
 in
 {
-  config = lib.mkIf (builtins.elem "personal" config.host.build.pools && config.host.isOperatorSeat) {
-    programs.ssh = {
-      extraConfig =
-        let
-          identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
-          user = "ihrachyshka";
-          toHost = hostname: ''
-            Host ${hostname}
-              Hostname ${hostname}
-              IdentityFile ${identityFile}
-              IdentitiesOnly yes
-              User ${user}
-          '';
-        in
-        lib.concatStringsSep "\n" (
-          map toHost (
-            [
-              "frame"
-              "mmini"
-              "mair"
-            ]
-            ++ (map (spec: spec.name) builderSpecs)
-          )
-        );
-    };
+  config = lib.mkIf enabled {
+    programs.ssh.extraConfig = lib.concatStringsSep "\n" (map toSshConfig sshHosts);
     nix.buildMachines =
-      let
-        features = [
-          "nixos-test"
-          "benchmark"
-          "big-parallel"
-          "kvm"
-        ];
-        nspawnFeatures = [
-          "devnet"
-          "uid-range"
-        ];
-        builderSpeedFactor = 100; # prefer these builders; higher the better
-        toBuilder = speedFactor: hostSpec: {
-          hostName = hostSpec.name;
-          inherit speedFactor;
-          system = "x86_64-linux";
-          protocol = "ssh-ng";
-          maxJobs = 4;
-          supportedFeatures = features ++ nspawnFeatures;
-        };
-      in
       (map (toBuilder builderSpeedFactor) builderSpecs)
-      ++ lib.optional (config.networking.hostName != "frame") (toBuilder 200 facts.hosts.nixos.frame)
+      ++ lib.optional (config.networking.hostName != "frame") (
+        toBuilder preferredBuilderSpeedFactor facts.hosts.nixos.frame
+      )
       ++ lib.optional (config.networking.hostName != "mmini") {
         hostName = "mmini";
         systems = [ "aarch64-darwin" ];
         protocol = "ssh-ng";
         maxJobs = 4;
-        speedFactor = 100;
+        speedFactor = builderSpeedFactor;
         supportedFeatures = features;
       };
   };

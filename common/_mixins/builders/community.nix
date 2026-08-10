@@ -6,6 +6,8 @@
 }:
 let
   username = config.host.username;
+  identityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
+  sshUser = "booxter";
   linuxFeatures = [
     "benchmark"
     "big-parallel"
@@ -39,35 +41,25 @@ let
     };
   };
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
+  toKnownHost = _: builder: lib.nameValuePair builder.hostName { inherit (builder) publicKey; };
+  toSshConfig = name: builder: ''
+    Host ${name}
+      Hostname ${builder.hostName}
+      IdentityFile ${identityFile}
+      User ${sshUser}
+  '';
+  toReviewBuilder =
+    name: builder:
+    "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
+    + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -";
   enabled = builtins.elem "community" config.host.build.pools && config.host.isOperatorSeat;
 in
 {
   config = lib.mkIf enabled {
     programs.ssh = {
-      knownHosts = lib.mapAttrs' (
-        _: builder:
-        lib.nameValuePair builder.hostName {
-          inherit (builder) publicKey;
-        }
-      ) communityBuilders;
-      extraConfig =
-        let
-          communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
-          user = "booxter";
-        in
-        lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (name: builder: ''
-            Host ${name}
-              Hostname ${builder.hostName}
-              IdentityFile ${communityBuilderIdentityFile}
-              User ${user}
-          '') communityBuilders
-        );
+      knownHosts = lib.mapAttrs' toKnownHost communityBuilders;
+      extraConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList toSshConfig communityBuilders);
     };
-    host.nixpkgsReview.extraBuilders = lib.mapAttrsToList (
-      name: builder:
-      "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
-      + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"
-    ) communityBuilders;
+    host.nixpkgsReview.extraBuilders = lib.mapAttrsToList toReviewBuilder communityBuilders;
   };
 }
