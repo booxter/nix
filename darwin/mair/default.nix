@@ -28,7 +28,7 @@
     wireguard.client = {
       enable = true;
       network = "home";
-      address = "10.83.0.10/32";
+      address = "10.83.0.10";
       publicKey = facts.public-keys.wireguard.home-mair;
       privateKeySecret = "wireguard/gw/privateKey";
     };

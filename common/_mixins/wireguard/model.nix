@@ -5,6 +5,7 @@
   outputs,
 }:
 let
+  ip = import ../../lib/ipv4.nix { inherit lib; };
   localHost = hostSpec.name;
   localCandidate = {
     hostName = localHost;
@@ -99,6 +100,22 @@ let
   duplicatePeerPublicKeyNetworks = builtins.attrNames (
     lib.filterAttrs (_: hasDuplicatePeerField "publicKey") networks
   );
+  peerAddressesOutsideCidrNetworks = builtins.attrNames (
+    lib.filterAttrs (
+      _: network:
+      builtins.any (
+        peer: peer.address != null && network.cidr != null && !ip.inCidr network.cidr peer.address
+      ) (builtins.attrValues network.peers)
+    ) networks
+  );
+  serverAddressesOutsideCidrNetworks = builtins.attrNames (
+    lib.filterAttrs (
+      _: network:
+      network.server.address != null
+      && network.cidr != null
+      && !ip.inCidr network.cidr network.server.address
+    ) networks
+  );
 in
 {
   inherit
@@ -107,6 +124,8 @@ in
     duplicatePeerPublicKeyNetworks
     duplicateServerNames
     networks
+    peerAddressesOutsideCidrNetworks
+    serverAddressesOutsideCidrNetworks
     unknownClientNetworks
     ;
 }

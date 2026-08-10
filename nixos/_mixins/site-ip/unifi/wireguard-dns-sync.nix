@@ -33,7 +33,7 @@ let
   wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
-    address = builtins.head (lib.splitString "/" peer.address);
+    inherit (peer) address;
     domain = "${peer.host}.${lanDomain}";
     inherit (peer) publicKey;
   }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);

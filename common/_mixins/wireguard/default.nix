@@ -7,11 +7,14 @@
 }:
 let
   nullableString = with lib.types; nullOr nonEmptyStr;
+  ip = import ../../lib/ipv4.nix { inherit lib; };
+  nullableIpv4Address = with lib.types; nullOr (addCheck nonEmptyStr ip.validIpv4);
+  nullableIpv4Cidr = with lib.types; nullOr (addCheck nonEmptyStr ip.validCidr);
   peerOptions = {
     address = lib.mkOption {
-      type = nullableString;
+      type = nullableIpv4Address;
       default = null;
-      description = "WireGuard tunnel address assigned to this peer.";
+      description = "IPv4 address assigned to this WireGuard peer, without a prefix length.";
     };
     publicKey = lib.mkOption {
       type = nullableString;
@@ -56,15 +59,15 @@ in
       };
 
       cidr = lib.mkOption {
-        type = nullableString;
+        type = nullableIpv4Cidr;
         default = null;
         description = "Address range allocated to this WireGuard network.";
       };
 
       address = lib.mkOption {
-        type = nullableString;
+        type = nullableIpv4Address;
         default = null;
-        description = "Server address on the WireGuard network.";
+        description = "Server IPv4 address on the WireGuard network, without a prefix length.";
       };
 
       listenPort = lib.mkOption {

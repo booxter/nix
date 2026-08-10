@@ -18,7 +18,7 @@ in
 
     networking.wg-quick.interfaces.${cfg.interface} = {
       inherit (cfg) autostart;
-      address = [ cfg.address ];
+      address = [ "${cfg.address}/32" ];
       inherit (network.clientPolicy) dns;
       privateKeyFile = config.sops.secrets.${cfg.privateKeySecret}.path;
 

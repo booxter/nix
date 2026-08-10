@@ -11,8 +11,7 @@ let
   gatewayTargetHost = wgHome.server.host;
   peers = lib.mapAttrsToList (name: peer: {
     inherit name;
-    address = builtins.head (lib.splitString "/" peer.address);
-    inherit (peer) publicKey;
+    inherit (peer) address publicKey;
   }) wgHome.peers;
   mkPeerMetricRelabels = peer: [
     {

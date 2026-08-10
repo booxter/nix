@@ -56,7 +56,7 @@ rustPlatform.buildRustPackage {
       wg-home-client-config --peer mair --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
       wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --server-public-key KEY
 
-    Facts-backed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
+    Managed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
   '';
   WG_HOME_SSH = lib.getExe openssh;
   CHECK_NIX = lib.getExe nix;

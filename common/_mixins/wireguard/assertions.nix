@@ -72,5 +72,13 @@ in
       assertion = model.duplicatePeerPublicKeyNetworks == [ ];
       message = "WireGuard peers have duplicate public keys in networks: ${lib.concatStringsSep ", " model.duplicatePeerPublicKeyNetworks}";
     }
+    {
+      assertion = model.serverAddressesOutsideCidrNetworks == [ ];
+      message = "WireGuard server addresses fall outside their network CIDRs: ${lib.concatStringsSep ", " model.serverAddressesOutsideCidrNetworks}";
+    }
+    {
+      assertion = model.peerAddressesOutsideCidrNetworks == [ ];
+      message = "WireGuard peer addresses fall outside their network CIDRs: ${lib.concatStringsSep ", " model.peerAddressesOutsideCidrNetworks}";
+    }
   ];
 }

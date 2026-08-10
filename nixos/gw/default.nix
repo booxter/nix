@@ -17,7 +17,7 @@
     network = "home";
     interface = "wg0";
     cidr = "10.83.0.0/24";
-    address = "10.83.0.1/24";
+    address = "10.83.0.1";
     listenPort = 51820;
     publicEndpoint = "wg.${facts.site.public.domain}";
     publicKey = facts.public-keys.wireguard.home-gateway;
@@ -39,7 +39,7 @@
     };
     qos.uploadLimitMbit = 10;
     externalPeers.unifi-travel-router = {
-      address = "10.83.0.20/32";
+      address = "10.83.0.20";
       publicKey = facts.public-keys.wireguard.home-unifi-travel-router;
     };
   };

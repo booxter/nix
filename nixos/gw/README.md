@@ -22,7 +22,7 @@ host.wireguard.client = {
   enable = true;
   network = "home";
   publicKey = "<contents of client.pub>";
-  address = "<peer-address>/32";
+  address = "<peer-address>";
   privateKeySecret = "wireguard/gw/privateKey";
 };
 ```

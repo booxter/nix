@@ -5,11 +5,12 @@
 }:
 let
   cfg = config.host.wireguard.server;
+  ip = import ../../../../common/lib/ipv4.nix { inherit lib; };
   network = config.host.wireguard.networks.${cfg.network} or null;
   peers = builtins.attrValues network.peers;
   mkPeer = peer: {
     inherit (peer) publicKey;
-    allowedIPs = [ peer.address ] ++ (peer.extraAllowedIPs or [ ]);
+    allowedIPs = [ "${peer.address}/32" ] ++ (peer.extraAllowedIPs or [ ]);
   };
 in
 {
@@ -31,7 +32,7 @@ in
       };
 
       wireguard.interfaces.${cfg.interface} = {
-        ips = [ network.server.address ];
+        ips = [ "${network.server.address}/${toString (ip.prefixLength network.cidr)}" ];
         inherit (network.server) listenPort;
         privateKeyFile = "/var/lib/wireguard/${cfg.interface}.key";
         generatePrivateKeyFile = true;
