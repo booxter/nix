@@ -9,7 +9,6 @@
   _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
 
   imports = [
-    ./sso.nix
     ./jellyfin.nix
     ./jellyfin-maintenance.nix
     ./jellyfin-exporter.nix

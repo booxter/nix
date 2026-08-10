@@ -71,6 +71,15 @@ in
         default = [ ];
         description = "SSO groups whose members receive Aurral administrator access.";
       };
+
+      allowedGroups = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = [
+          "media-admins"
+          "media-users"
+        ];
+        description = "SSO groups allowed to access Aurral.";
+      };
     };
 
     backups.enable = lib.mkOption {

@@ -4,16 +4,14 @@
   ...
 }:
 let
-  enabledGates = lib.filterAttrs (
-    _: gate: gate.enable && gate.sessionRefresh != null
-  ) config.host.sso.oauth2ProxyGates;
-  redisPorts = map (gate: gate.sessionRefresh.redisPort) (builtins.attrValues enabledGates);
+  enabledRedisServers = lib.filterAttrs (_: server: server.enable) config.services.redis.servers;
+  redisPorts = map (server: server.port) (builtins.attrValues enabledRedisServers);
 in
 {
   config.assertions = [
     {
       assertion = builtins.length redisPorts == builtins.length (lib.unique redisPorts);
-      message = "oauth2-proxy Redis session stores must use unique ports";
+      message = "enabled Redis servers must use unique ports";
     }
   ];
 }
