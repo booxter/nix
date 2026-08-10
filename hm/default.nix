@@ -7,6 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
+  firefoxCfg = osConfig.host.userEnvironment.features.firefox;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
@@ -44,7 +45,7 @@ in
   ++ lib.optionals isDesktop [
     ./_mixins/spicetify
   ]
-  ++ lib.optionals (isPersonal && isDesktop) [
+  ++ lib.optionals firefoxCfg.enable [
     ./_mixins/firefox
   ]
   ++ lib.optionals (hmFull && isNvidia) [

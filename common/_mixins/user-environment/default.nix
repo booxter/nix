@@ -155,6 +155,16 @@ in
         };
       };
 
+      firefox = {
+        enable = lib.mkEnableOption "managed Firefox browser";
+
+        makeDefault = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to make Firefox the default browser where supported.";
+        };
+      };
+
       scm = {
         enable = lib.mkEnableOption "source-control development environment";
 
@@ -227,6 +237,7 @@ in
         })
         (lib.mkIf cfg.roles.workstation.enable {
           email.enable = lib.mkDefault true;
+          firefox.enable = lib.mkDefault true;
         })
       ];
     };

@@ -36,6 +36,7 @@ in
         account = "nvidia";
         gmailctl.enable = false;
       };
+      firefox.enable = false;
     };
   };
   host.nix.cacheWarmer.enable = true;
