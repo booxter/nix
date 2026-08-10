@@ -5,7 +5,6 @@
   ...
 }:
 let
-  cfg = config.host.proxmox;
   hostName = config.networking.hostName;
   model = import ./model.nix {
     inherit
@@ -21,19 +20,11 @@ in
       assertion = !config.host.isProxmox || config.host.network.primaryInterface != null;
       message = "host.isProxmox requires host.network.primaryInterface";
     }
-    {
-      assertion = config.host.isProxmox == (cfg.node.cluster != null);
-      message = "${hostName} must declare host.proxmox.node.cluster exactly when it is a Proxmox node";
-    }
-    {
-      assertion = config.host.isVM == (cfg.guest.cluster != null);
-      message = "${hostName} must declare host.proxmox.guest.cluster exactly when it is a VM";
-    }
   ]
-  ++ lib.optionals (cfg.guest.cluster != null) [
+  ++ lib.optionals config.host.isVM [
     {
       assertion = model.guestNodes.${hostName} != [ ];
-      message = "${hostName} references Proxmox cluster '${cfg.guest.cluster}' without any nodes";
+      message = "${hostName} references Proxmox cluster '${config.host.proxmox.cluster}' without any nodes in realm '${config.host.realm}'";
     }
   ];
 }

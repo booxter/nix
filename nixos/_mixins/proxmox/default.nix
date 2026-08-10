@@ -36,18 +36,10 @@ in
     (import ../../disko { device = "/dev/sda"; })
   ];
 
-  options.host.proxmox = {
-    node.cluster = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if config.host.isProxmox then "default" else null;
-      description = "Proxmox cluster to which this hypervisor belongs.";
-    };
-
-    guest.cluster = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if config.host.isVM then "default" else null;
-      description = "Proxmox cluster on which this guest may run.";
-    };
+  options.host.proxmox.cluster = lib.mkOption {
+    type = lib.types.nonEmptyStr;
+    default = "default";
+    description = "Proxmox cluster used when this host participates as a node or guest.";
   };
 
   config = lib.mkMerge (

@@ -3,12 +3,12 @@
   build =
     hosts:
     let
-      nodes = lib.filterAttrs (_: host: host.nodeCluster != null) hosts;
-      guests = lib.filterAttrs (_: host: host.guestCluster != null) hosts;
+      nodes = lib.filterAttrs (_: host: host.isNode) hosts;
+      guests = lib.filterAttrs (_: host: host.isGuest) hosts;
       nodesByRealmCluster = lib.foldl' (
         result: name:
         let
-          cluster = nodes.${name}.nodeCluster;
+          cluster = nodes.${name}.cluster;
           realm = nodes.${name}.realm;
           realmClusters = result.${realm} or { };
         in
@@ -29,7 +29,7 @@
         ;
 
       guestNodes = lib.mapAttrs (
-        _: guest: nodesByRealmCluster.${guest.realm}.${guest.guestCluster} or [ ]
+        _: guest: nodesByRealmCluster.${guest.realm}.${guest.cluster} or [ ]
       ) guests;
     };
 }

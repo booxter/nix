@@ -6,8 +6,9 @@
 let
   hostName = config.networking.hostName;
   hostView = hostConfig: {
-    guestCluster = hostConfig.host.proxmox.guest.cluster;
-    nodeCluster = hostConfig.host.proxmox.node.cluster;
+    cluster = hostConfig.host.proxmox.cluster;
+    isGuest = hostConfig.host.isVM;
+    isNode = hostConfig.host.isProxmox;
     realm = hostConfig.host.realm;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];
