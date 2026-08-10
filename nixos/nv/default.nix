@@ -9,10 +9,16 @@ in
 
   host.userEnvironment = {
     roles.developer.enable = true;
-    features.codex = {
-      usageStatus.enable = false;
-      resetCredits.enable = false;
-      workUsageStatus.enable = true;
+    features = {
+      codex = {
+        usageStatus.enable = false;
+        resetCredits.enable = false;
+        workUsageStatus.enable = true;
+      };
+      scm = {
+        identity = "nvidia";
+        sendEmail.transport = "nvidia";
+      };
     };
   };
 
