@@ -27,6 +27,8 @@ let
     }) jobs;
 in
 {
+  imports = [ ./observability.nix ];
+
   assertions =
     assertionsFor "launchd.daemons" config.launchd.daemons
     ++ assertionsFor "launchd.agents" config.launchd.agents
