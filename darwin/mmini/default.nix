@@ -13,10 +13,5 @@
     server.vnc.enable = true;
   };
 
-  programs.yubi = {
-    smartCard = {
-      enable = true;
-      sshSudoPassword.enable = true;
-    };
-  };
+  host.security.smartCard.enable = true;
 }

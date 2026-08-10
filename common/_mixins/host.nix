@@ -126,13 +126,6 @@ in
         description = "Whether this host manages local password secrets.";
       };
 
-      sudoWheelNeedsPassword = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.sudoWheelNeedsPassword;
-        readOnly = true;
-        internal = true;
-        description = "Whether wheel users must enter a password for sudo.";
-      };
     };
 
     username = lib.mkOption {

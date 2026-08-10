@@ -35,6 +35,7 @@ in
       ./_mixins/firmware
       ./_mixins/hardware
       ./_mixins/internal-https-service.nix
+      ./_mixins/jellarr
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
@@ -79,7 +80,7 @@ in
       };
     };
     virtualisation.containers.enable = true;
-    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
+    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.security.sudo.wheelNeedsPassword;
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

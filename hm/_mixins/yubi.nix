@@ -14,7 +14,7 @@ let
   yubikeySshKey = "${config.home.homeDirectory}/.ssh/${residentSsh.keyName}";
   fallbackSshKey = "${config.home.homeDirectory}/.ssh/id_ed25519";
   sshSudoPasswordEnabled =
-    osConfig.host.isDarwin && osConfig.programs.yubi.smartCard.sshSudoPassword.enable;
+    osConfig.host.isDarwin && osConfig.host.security.sudo.sshPasswordAuth.enable;
   localSshIdentityConfig = ''
     Match exec "test -z \"$SSH_CONNECTION\""
       IdentityFile ${yubikeySshKey}

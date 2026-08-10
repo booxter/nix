@@ -12,6 +12,7 @@
     ./_mixins/nixpkgs
     ./_mixins/power
     ./_mixins/remote-control
+    ./_mixins/security
     ./_mixins/secrets
     ./_mixins/site
     ./_mixins/ssh
