@@ -1,20 +1,13 @@
 {
-  beastPkgs,
   config,
   facts,
   lib,
-  inputs,
   ...
 }:
 let
   mediaLibraries = facts.media-libraries.libraries;
-  jellyfinLibraryRoot = "${config.host.jellyfin.media.mountPoint}/library";
+  jellyfinLibraryRoot = config.host.jellarr.target.mediaLibraryRoot;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
-  jellyfinSecretFile = {
-    owner = "jellyfin";
-    group = "jellyfin";
-    mode = "0400";
-  };
   userDefinitions = [
     {
       name = "Ihar";
@@ -78,36 +71,13 @@ let
   ];
 in
 {
-  imports = [
-    inputs.jellarr.nixosModules.default
-  ];
-
-  sops = {
-    secrets = lib.genAttrs (map (user: mkJellyfinUserPasswordSecret user.name) userDefinitions) (
-      _: jellyfinSecretFile
-    );
-    templates."jellarr.env" = {
-      inherit (jellyfinSecretFile) owner group mode;
-      content = ''
-        JELLARR_API_KEY=${config.sops.placeholder."jellyfin/apiKey"}
-      '';
-    };
-  };
-
-  systemd.services.jellarr = {
-    wants = [ "sops-install-secrets.service" ];
-    after = [ "sops-install-secrets.service" ];
+  host.jellarr = {
+    enable = true;
+    target.host = "beast";
   };
 
   services.jellarr = {
-    enable = true;
-    package = beastPkgs.jellarr;
-    user = "jellyfin";
-    group = "jellyfin";
-    environmentFile = config.sops.templates."jellarr.env".path;
     config = {
-      version = 1;
-      base_url = config.host.jellyfin.publicUrl;
       system = {
         serverName = "main";
         libraryScanFanoutConcurrency = 4;
@@ -149,7 +119,7 @@ in
         # explicit subtitle-mode/burn-in options declaratively.
         enableHardwareEncoding = true;
         hardwareAccelerationType = "qsv";
-        qsvDevice = config.host.hardware.gpu.renderDevice;
+        qsvDevice = config.host.jellarr.target.gpuRenderDevice;
         hardwareDecodingCodecs = [
           "h264"
           "hevc"
@@ -398,7 +368,7 @@ in
             configuration.GenericOptions = [
               {
                 WebhookName = "WatchState Global Webhook";
-                WebhookUri = "${config.host.watchstate.localUrl}/v1/api/webhook";
+                WebhookUri = config.host.jellarr.target.watchstateWebhookUrl;
                 NotificationTypes = [
                   "ItemAdded"
                   "UserDataSaved"
