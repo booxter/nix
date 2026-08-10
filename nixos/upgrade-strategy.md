@@ -57,7 +57,9 @@ The planner treats the five-minute randomized delay as part of every occupied
 slot. Static scheduling prevents planned windows from overlapping; runtime
 maintenance guards still handle live conditions such as active Jellyfin
 playback. The authoritative result is
-`host.autoUpgrade.plan` in each evaluated NixOS configuration.
+`host.autoUpgrade.plan` in each evaluated NixOS configuration. Run
+`nix run .#upgrade-show` to display the complete fleet plan and its contributing
+claims.
 
 ## Warmup Scope
 
