@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.host.observability.lanWan;
+  declaredInterfaces = builtins.attrNames config.host.network.interfaces;
   textfileDir = config.host.observability.nodeExporter.textfile.directory;
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
@@ -73,7 +74,8 @@ in
 
     interfaces = lib.mkOption {
       type = with lib.types; listOf str;
-      default = [ "en0" ];
+      default = declaredInterfaces;
+      defaultText = lib.literalExpression "builtins.attrNames config.host.network.interfaces";
       example = [
         "en0"
         "en1"
@@ -94,6 +96,12 @@ in
         {
           assertion = !cfg.enable || cfg.interfaces != [ ];
           message = "host.observability.lanWan requires at least one interface";
+        }
+        {
+          assertion = lib.all (
+            interface: builtins.hasAttr interface config.host.network.interfaces
+          ) cfg.interfaces;
+          message = "host.observability.lanWan.interfaces must reference declared host.network.interfaces";
         }
       ];
     }

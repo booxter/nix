@@ -6,6 +6,8 @@
 
   host.nix.cacheWarmer.enable = true;
 
+  host.network.interfaces.en0.kind = "ethernet";
+
   host.remote-control = {
     client.enable = true;
     server.vnc.enable = true;
