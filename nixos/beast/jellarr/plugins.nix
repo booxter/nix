@@ -6,18 +6,19 @@
 let
   model = import ./model.nix { inherit config lib; };
   registry = import ./plugin-registry.nix;
-  enabledPluginIds = builtins.filter (
-    plugin: builtins.elem plugin model.requiredPlugins
-  ) registry.pluginOrder;
+  enabledPlugins = lib.filterAttrs (
+    plugin: _: builtins.elem plugin model.requiredPlugins
+  ) registry.plugins;
   enabledRepositoryIds = lib.unique (
-    map (plugin: registry.plugins.${plugin}.repository) enabledPluginIds
+    map (plugin: plugin.repository) (builtins.attrValues enabledPlugins)
   );
+  enabledRepositories = lib.filterAttrs (
+    repository: _: builtins.elem repository enabledRepositoryIds
+  ) registry.repositories;
 in
 {
   host.jellyfin.declarativeConfig = {
-    system.pluginRepositories = map (repository: registry.repositories.${repository}) (
-      builtins.filter (repository: builtins.elem repository enabledRepositoryIds) registry.repositoryOrder
-    );
-    plugins = map (plugin: { inherit (registry.plugins.${plugin}) name; }) enabledPluginIds;
+    system.pluginRepositories = builtins.attrValues enabledRepositories;
+    plugins = map (plugin: { inherit (plugin) name; }) (builtins.attrValues enabledPlugins);
   };
 }

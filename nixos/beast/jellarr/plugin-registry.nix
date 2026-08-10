@@ -21,13 +21,6 @@
       enabled = true;
     };
   };
-  repositoryOrder = [
-    "jellyfin-stable"
-    "porndb"
-    "letterboxd"
-    "lastfm"
-  ];
-
   plugins = {
     audiodb = {
       name = "AudioDB";
@@ -70,16 +63,4 @@
       repository = "jellyfin-stable";
     };
   };
-  pluginOrder = [
-    "audiodb"
-    "letterboxd"
-    "lastfm"
-    "lrclib"
-    "musicbrainz"
-    "omdb"
-    "studio-images"
-    "porndb"
-    "tvdb"
-    "tmdb"
-  ];
 }
