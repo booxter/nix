@@ -1,20 +1,22 @@
 {
   config,
   lib,
+  outputs,
   ...
 }:
 let
   cfg = config.host.watchstate;
+  model = import ./model.nix { inherit config outputs; };
 in
 {
   config = lib.mkIf cfg.enable {
-    host.jellyfin.declarativeConfig.plugins = [
+    host.watchstate.jellyfin.declarativeConfig.plugins = [
       {
         name = "Webhook";
         configuration.GenericOptions = [
           {
             WebhookName = "WatchState Global Webhook";
-            WebhookUri = "${cfg.localUrl}/v1/api/webhook";
+            WebhookUri = model.webhookUrl;
             NotificationTypes = [
               "ItemAdded"
               "UserDataSaved"

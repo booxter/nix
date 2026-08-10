@@ -12,9 +12,22 @@ let
     else
       null;
   jellyfin = if targetConfig == null then null else targetConfig.host.jellyfin;
+  configurations =
+    map (configuration: configuration.config) (
+      builtins.attrValues (removeAttrs outputs.nixosConfigurations [ localHost ])
+    )
+    ++ [ config ];
+  watchstates = builtins.filter (
+    hostConfig:
+    hostConfig.host.watchstate.enable && hostConfig.host.watchstate.jellyfin.host == targetHost
+  ) configurations;
+  watchstatePlugins = builtins.concatLists (
+    map (hostConfig: hostConfig.host.watchstate.jellyfin.declarativeConfig.plugins or [ ]) watchstates
+  );
+  jellyfinConfig = if jellyfin == null then { } else jellyfin.declarativeConfig;
 in
 {
-  inherit exists;
+  inherit exists watchstates;
   jellyfinEnabled = jellyfin != null && jellyfin.enable;
   url =
     if jellyfin == null || !jellyfin.enable then
@@ -23,5 +36,7 @@ in
       jellyfin.localUrl
     else
       jellyfin.publicUrl;
-  declarativeConfig = if jellyfin == null then { } else jellyfin.declarativeConfig;
+  declarativeConfig = jellyfinConfig // {
+    plugins = (jellyfinConfig.plugins or [ ]) ++ watchstatePlugins;
+  };
 }
