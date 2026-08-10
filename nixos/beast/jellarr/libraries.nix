@@ -5,18 +5,17 @@
   ...
 }:
 let
-  getTypeOptions = import ./library-types.nix { inherit lib; };
+  model = import ./model.nix { inherit facts lib; };
   libraryRoot = "${config.host.jellyfin.media.mountPoint}/library";
   getLibraryOptions =
     {
       path,
-      isAdult ? false,
-      isMusic ? false,
-      preferTmdb ? false,
+      kind,
+      typeOptions,
     }:
     {
       pathInfos = [ { path = "${libraryRoot}/${path}"; } ];
-      typeOptions = getTypeOptions { inherit isAdult preferTmdb; };
+      inherit typeOptions;
       automaticallyAddToCollection = true;
       enableChapterImageExtraction = true;
       # Generate these on demand or via dedicated jobs, not during scans.
@@ -31,7 +30,7 @@ let
       automaticRefreshIntervalDays = 14;
       enableRealtimeMonitor = true;
     }
-    // lib.optionalAttrs isMusic {
+    // lib.optionalAttrs (kind == "music") {
       saveLyricsWithMedia = true;
       useCustomTagDelimiters = true;
       customTagDelimiters = [ ";" ];
@@ -42,10 +41,7 @@ in
   host.jellyfin.declarativeConfig.library.virtualFolders = map (library: {
     inherit (library) name collectionType;
     libraryOptions = getLibraryOptions {
-      inherit (library) path;
-      isAdult = library.isAdult or false;
-      isMusic = library.collectionType == "music";
-      preferTmdb = library.preferTmdb or false;
+      inherit (library) path kind typeOptions;
     };
-  }) facts.media-libraries.libraries;
+  }) model.libraries;
 }

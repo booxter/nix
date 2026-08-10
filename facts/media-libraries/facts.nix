@@ -4,57 +4,57 @@
     {
       name = "Movies";
       path = "movies";
-      collectionType = "movies";
+      kind = "movies";
     }
     {
       name = "Shows";
       path = "shows";
-      collectionType = "tvshows";
+      kind = "series";
     }
     {
       name = "Family";
       path = "family";
-      collectionType = "movies";
+      kind = "movies";
     }
     {
       name = "Anime";
       path = "anime";
-      collectionType = "movies";
+      kind = "movies";
     }
     {
       name = "Docu";
       path = "docu";
-      collectionType = "movies";
+      kind = "movies";
     }
     {
       name = "Stand-up";
       path = "standup";
-      collectionType = "movies";
+      kind = "movies";
     }
     {
       name = "Attic";
       path = "attic";
-      collectionType = "movies";
-      isAdult = true;
-      preferTmdb = true;
+      kind = "movies";
+      audience = "adult";
+      metadataPolicy = "tmdb-first";
     }
     {
       name = "Fruit";
       path = "xxx";
-      collectionType = "movies";
-      isAdult = true;
-      preferTmdb = true;
+      kind = "movies";
+      audience = "adult";
+      metadataPolicy = "tmdb-first";
     }
     {
       name = "Fruitsies";
       path = "fruitsies";
-      collectionType = "tvshows";
-      isAdult = true;
+      kind = "series";
+      audience = "adult";
     }
     {
       name = "Music";
       path = "music";
-      collectionType = "music";
+      kind = "music";
     }
   ];
 }
