@@ -20,11 +20,7 @@ in
     "en7"
   ];
 
-  host.fleetCacheWarmer = {
-    enable = true;
-    targetRealm = "work";
-    pushToAttic = false;
-  };
+  host.nix.cacheWarmer.enable = true;
 
   # Keep nixpkgs-review's worktrees in a dedicated real directory under
   # /nix/var on this managed workstation.

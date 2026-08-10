@@ -4,11 +4,7 @@
 
   host.nix.builder.enable = true;
 
-  host.fleetCacheWarmer = {
-    enable = true;
-    targetRealm = "home";
-    pushToAttic = true;
-  };
+  host.nix.cacheWarmer.enable = true;
 
   host.remote-control = {
     client = {

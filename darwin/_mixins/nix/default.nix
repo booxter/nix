@@ -3,7 +3,10 @@
   ...
 }:
 {
-  imports = [ ./cache-preference.nix ];
+  imports = [
+    ./cache-preference.nix
+    ./cache-warmer
+  ];
 
   nix.gc.interval = [
     {

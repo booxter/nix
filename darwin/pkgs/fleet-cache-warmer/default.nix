@@ -4,16 +4,16 @@
   clippy,
   nix,
   pushToAttic ? true,
+  realm,
   rustfmt,
   rustPlatform,
-  targetRealm,
 }:
 
 let
   facts = import ../../../facts { inherit lib; };
   ci = import ../../../ci { inherit facts lib; };
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: facts.hosts.hostSpecsByName.${target.host}.realm == targetRealm) ci.buildTargets
+    lib.filter (target: facts.hosts.hostSpecsByName.${target.host}.realm == realm) ci.buildTargets
   );
 in
 rustPlatform.buildRustPackage {

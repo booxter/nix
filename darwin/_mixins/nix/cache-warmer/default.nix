@@ -1,35 +1,29 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.fleetCacheWarmer;
+  cfg = config.host.nix.cacheWarmer;
   atticCaches = lib.mapAttrsToList (
     name: server: "${name}:${server.cacheName}"
   ) config.host.attic.realmServers;
-  warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
-    inherit (cfg) pushToAttic targetRealm;
+  warmerPackage = pkgs.callPackage ../../../pkgs/fleet-cache-warmer {
+    inherit (cfg) pushToAttic;
+    realm = config.host.realm;
   };
 in
 {
   imports = [ ./assertions.nix ];
 
-  options.host.fleetCacheWarmer = {
+  options.host.nix.cacheWarmer = {
     enable = lib.mkEnableOption "scheduled fleet cache warming";
-
-    targetRealm = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames facts.realms);
-      default = config.host.realm;
-      description = "Realm whose CI build targets should be warmed.";
-    };
 
     pushToAttic = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Whether to push successfully built outputs to Attic after warming.";
+      default = config.host.attic.realmServers != { };
+      description = "Whether to push successfully built outputs to every Attic cache in this host's realm.";
     };
 
     flakeRef = lib.mkOption {

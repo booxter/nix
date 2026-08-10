@@ -93,8 +93,8 @@ The filtered list is embedded in the installed launchd closure.
 
 `cache` remains the Attic server. It is not the build orchestrator.
 
-`JGWXHWDL4X` runs the work warmup with `pushToAttic = false` because there is no
-work Attic cache. It uses configured Nix remote builders for work Linux targets.
+`JGWXHWDL4X` runs the work warmup without pushing because its realm has no
+Attic server. It uses configured Nix remote builders for work Linux targets.
 
 ## Procedure
 
@@ -103,7 +103,7 @@ The daily home-realm warmup procedure is:
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30` and `20:30`.
 2. The warmer uses the target list embedded in its installed launchd closure and
    builds those attributes from `github:booxter/nix`.
-3. The warmer selects targets based on its configured `targetRealm`.
+3. The warmer selects targets belonging to the host's declared realm.
 4. The warmer filters out facts entries that no longer evaluate at that
    flake revision.
 5. The warmer builds the remaining targets in one `nix build --keep-going`
@@ -113,8 +113,9 @@ The daily home-realm warmup procedure is:
    produces no successful outputs, it falls back to target-by-target builds.
 6. Missing or broken targets are logged and skipped so one failure does not
    abort the whole run.
-7. If `pushToAttic` is enabled, the warmer explicitly pushes the resulting store
-   paths into the `default` Attic cache with `--ignore-upstream-cache-filter`.
+7. If the realm has Attic servers, the warmer explicitly pushes the resulting
+   store paths into every discovered Attic cache with
+   `--ignore-upstream-cache-filter`.
 8. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
