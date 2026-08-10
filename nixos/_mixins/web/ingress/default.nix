@@ -17,6 +17,8 @@ let
   ) publicServices;
 in
 {
+  imports = [ ./bandwidth-limits.nix ];
+
   options.host.web.ingress = {
     enable = lib.mkEnableOption "public HTTPS ingress controller";
 

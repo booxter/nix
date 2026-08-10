@@ -219,6 +219,61 @@ in
                 description = "Additional public ingress nginx location configuration.";
               };
 
+              routes = lib.mkOption {
+                type = lib.types.attrsOf (
+                  lib.types.submodule (
+                    { name, ... }:
+                    {
+                      options = {
+                        location = lib.mkOption {
+                          type = lib.types.nonEmptyStr;
+                          description = "nginx location expression for the ${name} public route.";
+                        };
+
+                        upstream = lib.mkOption {
+                          type = with lib.types; nullOr nonEmptyStr;
+                          default = null;
+                          description = "Route-specific upstream URL, or null to use the service public upstream.";
+                        };
+
+                        proxyWebsockets = lib.mkOption {
+                          type = lib.types.bool;
+                          default = false;
+                          description = "Whether the ${name} public route proxies WebSocket connections.";
+                        };
+
+                        bandwidthLimit = {
+                          enable = lib.mkEnableOption "shared egress bandwidth limiting for the ${name} route";
+
+                          listenPort = lib.mkOption {
+                            type = lib.types.port;
+                            description = "Ingress-local HAProxy port used for the ${name} route.";
+                          };
+
+                          bytesPerSecond = lib.mkOption {
+                            type = lib.types.ints.positive;
+                            description = "Aggregate external response bandwidth allowed for the ${name} route.";
+                          };
+
+                          unlimitedCidrs = lib.mkOption {
+                            type = with lib.types; listOf nonEmptyStr;
+                            default = [
+                              "127.0.0.0/8"
+                              "::1"
+                              "fe80::/10"
+                              "fc00::/7"
+                            ];
+                            description = "Client networks excluded from the ${name} route bandwidth limit.";
+                          };
+                        };
+                      };
+                    }
+                  )
+                );
+                default = { };
+                description = "Additional structured routes served by public ingress.";
+              };
+
               serveOnOwner = lib.mkOption {
                 type = lib.types.bool;
                 default = true;

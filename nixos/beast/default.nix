@@ -16,7 +16,6 @@
     ./jellarr.nix
     ./meilisearch.nix
     ./lolek.nix
-    ./nginx.nix
     ./storage.nix
     ./watchstate.nix
   ];
