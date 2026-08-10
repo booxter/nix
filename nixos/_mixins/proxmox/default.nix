@@ -10,12 +10,11 @@
 let
   isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
-  macAddress = hostSpec.macAddress or null;
+  macAddress = config.host.network.macAddress;
   cores = hostSpec.cores or 4;
   memorySize = hostSpec.memorySize or 8;
   balloonSize = hostSpec.balloonSize or null;
   diskSize = hostSpec.diskSize or 100;
-  reservation = config.host.network.reservation;
   primaryInterface = config.host.network.primaryInterface;
 in
 {
@@ -38,6 +37,8 @@ in
   config = lib.mkMerge (
     [
       (lib.mkIf config.host.isProxmox {
+        host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
+
         assertions = [
           {
             assertion = primaryInterface != null;
@@ -137,8 +138,8 @@ in
               model = "virtio";
               bridge = bridgeName;
             }
-            // inputs.nixpkgs.lib.optionalAttrs reservation.enable {
-              macaddr = builtins.head reservation.identifiers;
+            // inputs.nixpkgs.lib.optionalAttrs (macAddress != null) {
+              macaddr = macAddress;
             }
           )
         ];

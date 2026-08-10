@@ -24,6 +24,8 @@ let
 in
 {
   config = lib.mkIf cfg.server.enable {
+    host.network.stableAddress.requiredBy = [ "UPS server" ];
+
     host.ups.scheduler = {
       enable = true;
       inherit (cfg.shutdown) critical;

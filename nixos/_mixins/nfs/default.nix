@@ -128,6 +128,8 @@ in
   config = lib.mkMerge [
     {
       assertions = anonymousIdentityAssertions;
+      host.network.stableAddress.requiredBy =
+        lib.optional (provider != null) "NFS provider" ++ lib.optional (hostLinks != { }) "NFS export ACL";
       users.groups = sharedGroups;
     }
 

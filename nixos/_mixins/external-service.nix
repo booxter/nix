@@ -154,6 +154,9 @@ in
 
   config = lib.mkMerge [
     {
+      host.network.stableAddress.requiredBy = lib.optional hasPublicVhosts "public ingress";
+    }
+    {
       assertions =
         lib.optionals cfg.ddns.enable [
           {

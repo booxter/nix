@@ -61,10 +61,10 @@ in
   host.backups.sources.step-ca.paths = [ stepStateDir ];
 
   host.network = {
+    macAddress = "bc:24:11:c6:ab:fc";
     reservation = {
       enable = true;
       address = "192.168.20.5";
-      identifiers = [ "bc:24:11:c6:ab:fc" ];
     };
     ipController.enable = true;
   };

@@ -27,7 +27,6 @@ let
   labProxmoxSpec =
     {
       index,
-      macAddress,
       proxmoxUpgradeTime,
     }:
     let
@@ -37,7 +36,6 @@ let
     {
       hostKind = "proxmox";
       inherit
-        macAddress
         name
         proxmoxUpgradeTime
         ;
@@ -94,7 +92,6 @@ in
       realm = "work";
       userProfile = "nvidia";
       hmFull = false;
-      macAddress = "ac:b4:80:40:05:2e";
     }
     {
       hostKind = "nixos";
@@ -108,17 +105,14 @@ in
     (labProxmoxSpec {
       index = 1;
       proxmoxUpgradeTime = "Mon 03:50";
-      macAddress = "38:05:25:30:7d:89";
     })
     (labProxmoxSpec {
       index = 2;
       proxmoxUpgradeTime = "Mon 04:20";
-      macAddress = "38:05:25:30:7f:7d";
     })
     (labProxmoxSpec {
       index = 3;
       proxmoxUpgradeTime = "Mon 04:50";
-      macAddress = "38:05:25:30:7d:69";
     })
     {
       isVM = true;

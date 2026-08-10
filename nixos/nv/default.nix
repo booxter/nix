@@ -5,11 +5,7 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.network.reservation = {
-    enable = true;
-    address = "192.168.10.138";
-    identifiers = [ "bc:24:11:ed:30:d3" ];
-  };
+  host.network.macAddress = "bc:24:11:ed:30:d3";
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

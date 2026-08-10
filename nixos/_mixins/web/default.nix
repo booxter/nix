@@ -408,6 +408,10 @@ in
 
   config = lib.mkMerge [
     {
+      host.network.stableAddress.requiredBy = lib.optional (
+        internalServices != { }
+      ) "internal web service DNS";
+
       assertions = builtins.concatLists (
         lib.mapAttrsToList (serviceName: service: [
           {

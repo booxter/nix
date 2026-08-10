@@ -2,10 +2,12 @@
 {
   system.stateVersion = "25.11";
 
-  host.network.reservation = {
-    enable = true;
-    address = "192.168.20.2";
-    identifiers = [ "bc:24:11:19:4d:d1" ];
+  host.network = {
+    macAddress = "bc:24:11:19:4d:d1";
+    reservation = {
+      enable = true;
+      address = "192.168.20.2";
+    };
   };
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;

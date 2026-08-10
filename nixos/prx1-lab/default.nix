@@ -8,11 +8,11 @@
 
   host.isProxmox = true;
   host.network = {
+    macAddress = "38:05:25:30:7d:89";
     primaryInterface = "enp5s0f0np0";
     reservation = {
       enable = true;
       address = "192.168.15.10";
-      identifiers = [ "38:05:25:30:7d:89" ];
     };
   };
   host.proxmox.apiCertificate.serverName = "proxmox.${config.host.network.lanDomain}";

@@ -18,10 +18,12 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.network.reservation = {
-    enable = true;
-    address = "192.168.20.4";
-    identifiers = [ "bc:24:11:fd:eb:9c" ];
+  host.network = {
+    macAddress = "bc:24:11:fd:eb:9c";
+    reservation = {
+      enable = true;
+      address = "192.168.20.4";
+    };
   };
 
   _module.args.orgPkgs = import ./pkgs pkgs;

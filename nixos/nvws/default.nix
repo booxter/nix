@@ -9,11 +9,11 @@ in
     isBuilder = true;
     isProxmox = true;
     network = {
+      macAddress = "ac:b4:80:40:05:2e";
       primaryInterface = "enp3s0f0";
       reservation = {
         enable = true;
         address = "192.168.15.100";
-        identifiers = [ "ac:b4:80:40:05:2e" ];
       };
     };
   };

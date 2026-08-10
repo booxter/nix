@@ -11,12 +11,22 @@ let
   lan = facts.site.lan;
 
   localNetwork = {
-    inherit (cfg) ipAddress ipController reservation;
+    inherit (cfg)
+      ipAddress
+      ipController
+      macAddress
+      reservation
+      ;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];
   networksByHost =
     lib.mapAttrs (_: configuration: {
-      inherit (configuration.config.host.network) ipAddress ipController reservation;
+      inherit (configuration.config.host.network)
+        ipAddress
+        ipController
+        macAddress
+        reservation
+        ;
     }) otherConfigurations
     // {
       ${hostName} = localNetwork;
@@ -25,7 +35,7 @@ let
   managedReservations = lib.mapAttrsToList (name: network: {
     hostname = name;
     ip = network.reservation.address;
-    inherit (network.reservation) identifiers;
+    identifiers = lib.optional (network.macAddress != null) network.macAddress;
   }) (lib.filterAttrs (_: network: network.reservation.enable) networksByHost);
   reservations = managedReservations ++ lan.reservations;
 
@@ -60,6 +70,12 @@ let
 in
 {
   options.host.network = {
+    macAddress = lib.mkOption {
+      type = with lib.types; nullOr (strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}");
+      default = null;
+      description = "MAC address of the host's primary site network interface.";
+    };
+
     reservation = {
       enable = lib.mkEnableOption "a site IPv4 address reservation";
 
@@ -68,12 +84,13 @@ in
         default = null;
         description = "IPv4 address requested from the site IP controller.";
       };
+    };
 
-      identifiers = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        default = [ ];
-        description = "Client identifiers, normally MAC addresses, used for the reservation.";
-      };
+    stableAddress.requiredBy = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ ];
+      internal = true;
+      description = "Relationships that require this host to retain a stable site address.";
     };
 
     ipAddress = lib.mkOption {
@@ -97,24 +114,35 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = lib.optionals cfg.reservation.enable [
-        {
-          assertion = cfg.reservation.address != null;
-          message = "host.network.reservation.address must be set when the reservation is enabled";
-        }
-        {
-          assertion = cfg.reservation.identifiers != [ ];
-          message = "host.network.reservation.identifiers must not be empty when the reservation is enabled";
-        }
-        {
-          assertion = cfg.reservation.address != null && validIpv4 cfg.reservation.address;
-          message = "host.network.reservation.address must be a valid IPv4 address";
-        }
-        {
-          assertion = cfg.reservation.address != null && inCidr lan.cidr cfg.reservation.address;
-          message = "host.network.reservation.address must belong to the site LAN ${lan.cidr}";
-        }
-      ];
+      assertions =
+        lib.optionals cfg.reservation.enable [
+          {
+            assertion = cfg.reservation.address != null;
+            message = "host.network.reservation.address must be set when the reservation is enabled";
+          }
+          {
+            assertion = cfg.macAddress != null;
+            message = "host.network.macAddress must be set when the reservation is enabled";
+          }
+          {
+            assertion = cfg.reservation.address != null && validIpv4 cfg.reservation.address;
+            message = "host.network.reservation.address must be a valid IPv4 address";
+          }
+          {
+            assertion = cfg.reservation.address != null && inCidr lan.cidr cfg.reservation.address;
+            message = "host.network.reservation.address must belong to the site LAN ${lan.cidr}";
+          }
+        ]
+        ++ [
+          {
+            assertion = cfg.stableAddress.requiredBy == [ ] || cfg.reservation.enable;
+            message = "${hostName} requires a stable site address for: ${lib.concatStringsSep ", " (lib.unique cfg.stableAddress.requiredBy)}";
+          }
+          {
+            assertion = !cfg.reservation.enable || cfg.stableAddress.requiredBy != [ ];
+            message = "${hostName} declares a site IP reservation without a stable-address requirement";
+          }
+        ];
     }
 
     (lib.mkIf cfg.ipController.enable {
@@ -137,6 +165,10 @@ in
           assertion =
             builtins.length reservationIdentifiers == builtins.length (lib.unique reservationIdentifiers);
           message = "site IP reservation identifiers must be unique";
+        }
+        {
+          assertion = lib.all (reservation: reservation.identifiers != [ ]) reservations;
+          message = "all site IP reservations must declare a client identifier";
         }
         {
           assertion = lib.all (reservation: inCidr lan.cidr reservation.ip) reservations;
