@@ -1,18 +1,19 @@
 {
-  # Keep /volume2 for compatibility with existing NFS client paths.
-  fileSystems."/volume2" = {
-    device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
-    fsType = "btrfs";
-    options = [
-      "compress=zstd"
-      "noatime"
-      "nofail"
-      "x-systemd.device-timeout=5min"
-      "x-systemd.mount-timeout=15min"
-    ];
+  host.storage.volumes.bulk = {
+    # Keep /volume2 as the durable path published to existing NFS clients.
+    mountPoint = "/volume2";
+    fileSystem = {
+      device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
+      fsType = "btrfs";
+      options = [
+        "compress=zstd"
+        "noatime"
+      ];
+    };
+    activation.slow = true;
+    requiredAtBoot = true;
+    btrfs.snapshots.enable = true;
   };
-
-  host.storage.btrfs.snapshots."/volume2".enable = true;
 
   host.hardware.storage = {
     mdraid = {
