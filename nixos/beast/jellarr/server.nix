@@ -1,4 +1,8 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  render = config.host.hardware.gpu.render;
+  qsvAvailable = render.vendor == "intel" && render.device != null;
+in
 {
   host.jellyfin.declarativeConfig = {
     system = {
@@ -7,8 +11,8 @@
       parallelImageEncodingLimit = 2;
       enableMetrics = true;
       trickplayOptions = {
-        enableHwAcceleration = true;
-        enableHwEncoding = true;
+        enableHwAcceleration = qsvAvailable;
+        enableHwEncoding = qsvAvailable;
         processThreads = 4;
       };
     };
@@ -16,9 +20,7 @@
     encoding = {
       # TODO: revisit subtitle hardcoding policy once jellarr exposes
       # explicit subtitle-mode/burn-in options declaratively.
-      enableHardwareEncoding = true;
-      hardwareAccelerationType = "qsv";
-      qsvDevice = config.host.hardware.gpu.renderDevice;
+      enableHardwareEncoding = qsvAvailable;
       hardwareDecodingCodecs = [
         "h264"
         "hevc"
@@ -29,6 +31,10 @@
       enableDecodingColorDepth10Vp9 = true;
       allowHevcEncoding = true;
       allowAv1Encoding = false;
+    }
+    // lib.optionalAttrs qsvAvailable {
+      hardwareAccelerationType = "qsv";
+      qsvDevice = render.device;
     };
   };
 }

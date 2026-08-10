@@ -20,7 +20,7 @@
   host.backups.server.enable = true;
   host.hardware.gpu = {
     vendors = [ "intel" ];
-    renderDevice = "/dev/dri/renderD128";
+    render.device = "/dev/dri/renderD128";
   };
   host.jellyfin = {
     enable = true;
