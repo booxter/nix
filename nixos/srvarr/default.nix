@@ -7,6 +7,7 @@
   system.stateVersion = "25.11";
 
   host.network = {
+    interfaces.ens18.kind = "ethernet";
     macAddress = "bc:24:11:19:4d:d1";
     primaryInterface = "ens18";
     reservation = {

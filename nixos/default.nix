@@ -37,6 +37,7 @@ in
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/luks
+      ./_mixins/network
       ./_mixins/nix
       ./_mixins/nfs
       ./_mixins/observability

@@ -12,6 +12,7 @@ in
     };
     isProxmox = true;
     network = {
+      interfaces.enp3s0f0.kind = "ethernet";
       macAddress = "ac:b4:80:40:05:2e";
       primaryInterface = "enp3s0f0";
       reservation = {
