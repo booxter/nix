@@ -35,6 +35,7 @@ in
       ./_mixins/firmware
       ./_mixins/hardware
       ./_mixins/internal-https-service.nix
+      ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
       ./_mixins/luks
@@ -56,6 +57,7 @@ in
       ./_mixins/user
       ./_mixins/vm.nix
       ./_mixins/vpn
+      ./_mixins/watchstate
       ./_mixins/web
       ./_mixins/wireguard
       ./_mixins/yubi.nix

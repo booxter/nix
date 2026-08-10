@@ -9,10 +9,6 @@ rec {
     domain = publicDomain;
   };
 
-  ports = {
-    watchstate = 8080;
-  };
-
   lan = {
     domain = lanDomain;
     cidr = "192.168.0.0/16";

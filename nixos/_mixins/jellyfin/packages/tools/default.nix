@@ -36,7 +36,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "jellyfin_tools" ];
 
   meta = {
-    description = "Back up Jellyfin and gate Beast maintenance on playback";
+    description = "Back up Jellyfin and gate maintenance on playback";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };

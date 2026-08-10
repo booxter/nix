@@ -8,8 +8,7 @@
 }:
 let
   mediaLibraries = facts.media-libraries.libraries;
-  jellyfinLibraryRoot = "/media/library";
-  watchstatePort = facts.site.ports.watchstate;
+  jellyfinLibraryRoot = "${config.host.jellyfin.media.mountPoint}/library";
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
     owner = "jellyfin";
@@ -108,8 +107,7 @@ in
     environmentFile = config.sops.templates."jellarr.env".path;
     config = {
       version = 1;
-      base_url = "https://jf.${facts.site.public.domain}:443";
-      #base_url = "http://localhost:8096";
+      base_url = config.host.jellyfin.publicUrl;
       system = {
         serverName = "main";
         libraryScanFanoutConcurrency = 4;
@@ -400,7 +398,7 @@ in
             configuration.GenericOptions = [
               {
                 WebhookName = "WatchState Global Webhook";
-                WebhookUri = "http://127.0.0.1:${toString watchstatePort}/v1/api/webhook";
+                WebhookUri = "${config.host.watchstate.localUrl}/v1/api/webhook";
                 NotificationTypes = [
                   "ItemAdded"
                   "UserDataSaved"

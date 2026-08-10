@@ -1,4 +1,5 @@
 {
+  facts,
   inputs,
   pkgs,
   ...
@@ -9,14 +10,9 @@
   _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
 
   imports = [
-    ./jellyfin.nix
-    ./jellyfin-maintenance.nix
-    ./jellyfin-exporter.nix
-    ./jellyfin-backup.nix
     ./jellarr.nix
     ./meilisearch.nix
     ./storage.nix
-    ./watchstate.nix
   ];
 
   host.observability.blackbox.remote.enable = true;
@@ -32,6 +28,11 @@
   host.hardware.gpu = {
     vendors = [ "intel" ];
     renderDevice = "/dev/dri/renderD128";
+  };
+  host.jellyfin = {
+    enable = true;
+    media.source = facts.shared-storage.resources.media.path;
+    backups.stagingDirectory = "/volume2/backups/staging/jellyfin";
   };
   host.lolek.enable = true;
   host.autoUpgrade.reboot = {
@@ -56,6 +57,10 @@
       description = "APC Back-UPS RS 1500MS2";
     };
     shutdown.waitForLowBattery = true;
+  };
+  host.watchstate = {
+    enable = true;
+    backups.stagingDirectory = "/volume2/backups/staging/watchstate";
   };
 
   environment.systemPackages = [ pkgs.join-media-parts ];

@@ -3,15 +3,15 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "watchstate-tools"
+name = "jellyfin-tools"
 version = "0.1.0"
-description = "Render authentication and back up the Beast WatchState service"
+description = "Back up Jellyfin and gate maintenance on playback"
 requires-python = ">=3.11"
-dependencies = ["atomic-file-writes", "bcrypt", "podman", "pydantic"]
+dependencies = ["jellyfin-apiclient-python", "pydantic", "pystemd"]
 
 [project.scripts]
-watchstate-native-backup = "watchstate_tools.cli:backup_main"
-watchstate-render-auth = "watchstate_tools.cli:auth_main"
+jellyfin-built-in-backup = "jellyfin_tools.cli:backup_main"
+wait-for-jellyfin-idle = "jellyfin_tools.cli:wait_main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -20,17 +20,17 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-watchstate_tools = ["py.typed"]
+jellyfin_tools = ["py.typed"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=watchstate_tools --cov-report=term-missing --cov-fail-under=85"
+addopts = "-q --cov=jellyfin_tools --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
 
 [tool.mypy]
-files = ["src/watchstate_tools"]
+files = ["src/jellyfin_tools"]
 plugins = ["pydantic.mypy"]
 strict = true
 
