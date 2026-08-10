@@ -6,8 +6,7 @@
   ...
 }:
 let
-  cfg = config.host.flakehubCache;
-  realmFlakehubCache = facts.realms.${config.host.realm}.services.flakehubCache or null;
+  cfg = config.host.nix.flakehubCache;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key
@@ -25,29 +24,19 @@ let
     lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
 in
 {
-  options.host.flakehubCache = {
+  options.host.nix.flakehubCache = {
     enable = lib.mkEnableOption "credentialed FlakeHub binary cache";
 
     url = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = if realmFlakehubCache == null then null else realmFlakehubCache.url;
-      description = "FlakeHub binary cache URL provided by this host's realm.";
+      type = lib.types.nonEmptyStr;
+      default = facts.nix-caches.flakehub.url;
+      description = "FlakeHub binary cache URL.";
     };
   };
 
   config = lib.mkMerge [
     {
-      host.flakehubCache.enable = lib.mkDefault (realmFlakehubCache != null);
-      assertions = [
-        {
-          assertion = !cfg.enable || realmFlakehubCache != null;
-          message = "realm '${config.host.realm}' does not define a FlakeHub cache";
-        }
-        {
-          assertion = !cfg.enable || cfg.url != null;
-          message = "host.flakehubCache.url must be set when the FlakeHub cache is enabled";
-        }
-      ];
+      host.nix.flakehubCache.enable = lib.mkDefault (config.host.realm == "home");
     }
     (lib.mkIf cfg.enable {
       nix.settings = {

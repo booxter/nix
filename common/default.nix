@@ -18,7 +18,6 @@
     ./_mixins/ups
     ./_mixins/yubi
     ./_mixins/attic
-    ./_mixins/flakehub-cache
     ./_mixins/builders
   ];
 }

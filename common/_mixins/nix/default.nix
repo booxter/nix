@@ -17,6 +17,8 @@ let
     || config.host.isOperatorSeat;
 in
 {
+  imports = [ ./flakehub-cache ];
+
   options.host.nixCache = {
     enable = lib.mkEnableOption "realm-provided Nix binary caches";
 
