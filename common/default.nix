@@ -5,6 +5,7 @@
     ./_mixins/hardware
     ./_mixins/host.nix
     ./_mixins/internal-pki
+    ./_mixins/luks
     ./_mixins/mcp
     ./_mixins/network
     ./_mixins/nix

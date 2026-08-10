@@ -61,12 +61,6 @@ in
         };
       }
       // lib.optionalAttrs osConfig.host.ssh.fleetBootHosts {
-        frame-boot = {
-          HostName = "frame";
-          HostKeyAlias = "frame-initrd";
-          User = "root";
-          RequestTTY = "force";
-        };
         mmini-boot = {
           # FileVault's pre-boot SSH server requires a local account password
           # before the normal host keys and ticket CA are available.

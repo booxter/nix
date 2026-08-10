@@ -10,9 +10,9 @@ let
     ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${key}'';
 in
 {
-  options.host.luks.remoteUnlock = {
-    enable = lib.mkEnableOption "remote LUKS unlock through initrd SSH";
+  imports = [ ./remote-unlock/assertions.nix ];
 
+  options.host.luks.remoteUnlock = {
     kernelModules = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
@@ -33,21 +33,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = config.host.luks.enable;
-        message = "host.luks.remoteUnlock requires host.luks.enable";
-      }
-      {
-        assertion = cfg.networkInterface != null;
-        message = "host.luks.remoteUnlock requires a networkInterface";
-      }
-      {
-        assertion = cfg.authorizedKeys != [ ];
-        message = "host.luks.remoteUnlock requires at least one authorized key";
-      }
-    ];
-
     boot.initrd = {
       availableKernelModules = cfg.kernelModules;
       network = {
