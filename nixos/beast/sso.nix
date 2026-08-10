@@ -2,24 +2,8 @@
 let
   aurralPublicHost = "mu.${config.host.network.publicDomain}";
   aurralPublicUrl = "https://${aurralPublicHost}";
-  redisPort = 6379;
-  redisServiceUnit = "redis-oauth2-proxy-aurral.service";
 in
 {
-  services.redis.servers.oauth2-proxy-aurral = {
-    enable = true;
-    bind = "127.0.0.1";
-    port = redisPort;
-    openFirewall = false;
-    save = [ ];
-    appendOnly = true;
-    appendFsync = "everysec";
-    settings = {
-      maxmemory = "64mb";
-      maxmemory-policy = "volatile-ttl";
-    };
-  };
-
   host.sso.oauth2ProxyGates.aurral = {
     enable = true;
     clientId = "aurral";
@@ -36,8 +20,6 @@ in
     sessionRefresh = {
       intervalSeconds = 14 * 60;
       lifetimeSeconds = 8 * 60 * 60;
-      redisConnectionUrl = "redis://127.0.0.1:${toString redisPort}/0";
-      inherit redisServiceUnit;
     };
     whitelistDomains = [ aurralPublicHost ];
     externalHostNames = [ aurralPublicHost ];

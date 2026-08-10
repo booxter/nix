@@ -8,6 +8,7 @@ let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
   probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
+  gateHelpers = import ./oauth2-proxy-gate-lib.nix { };
 
   gateSubmodule =
     gateName:
@@ -81,14 +82,10 @@ let
                   description = "Maximum oauth2-proxy session lifetime in seconds.";
                 };
 
-                redisConnectionUrl = lib.mkOption {
-                  type = str;
-                  description = "Redis connection URL for the oauth2-proxy session store.";
-                };
-
-                redisServiceUnit = lib.mkOption {
-                  type = str;
-                  description = "Systemd unit providing the Redis session store.";
+                redisPort = lib.mkOption {
+                  type = port;
+                  default = 6379;
+                  description = "Loopback Redis port for the oauth2-proxy session store.";
                 };
               };
             });
@@ -291,7 +288,7 @@ let
     ++ lib.optionals (gate.sessionRefresh != null) [
       (mkArg "cookie-expire" "${toString gate.sessionRefresh.lifetimeSeconds}s")
       (mkArg "cookie-refresh" "${toString gate.sessionRefresh.intervalSeconds}s")
-      (mkArg "redis-connection-url" gate.sessionRefresh.redisConnectionUrl)
+      (mkArg "redis-connection-url" (gateHelpers.redisConnectionUrl gate))
       (mkArg "session-store-type" "redis")
     ]
     ++ mkArgs "allowed-group" gate.allowedGroups
@@ -584,7 +581,9 @@ in
     systemd.services = lib.mapAttrs' (
       gateName: gate:
       let
-        sessionStoreUnits = lib.optional (gate.sessionRefresh != null) gate.sessionRefresh.redisServiceUnit;
+        sessionStoreUnits = lib.optional (gate.sessionRefresh != null) (
+          gateHelpers.redisServiceUnit gateName
+        );
       in
       lib.nameValuePair gate.serviceName {
         description = "OAuth2 Proxy";
