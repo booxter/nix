@@ -1,7 +1,9 @@
 {
   config,
+  facts,
   hostSpec,
   lib,
+  outputs,
   pkgs,
   utils,
   ...
@@ -15,6 +17,10 @@ let
   caUrl = "https://${config.networking.hostName}:${toString caPort}";
   caProvisioner = "bootstrap@${config.host.network.lanDomain}";
   pkiRotationBaseBranch = "master";
+  pkiStatusInventory = import ./inventory.nix {
+    inherit facts lib outputs;
+    rootCaCertificate = ./root-ca.crt;
+  };
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   stepStateDir = "/var/lib/step-ca";
@@ -133,26 +139,15 @@ in
 
   systemd.services.pki-status-export = {
     description = "Export internal PKI status metrics for node exporter";
-    wants = [
-      "network-online.target"
-      "step-ca.service"
-    ];
-    after = [
-      "network-online.target"
-      "step-ca.service"
-    ];
+    wants = [ "step-ca.service" ];
+    after = [ "step-ca.service" ];
     serviceConfig = {
       Type = "oneshot";
-      Environment = [
-        "HOME=/root"
-        "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
-      ];
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
           --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
-          --sops-age-key-file /var/lib/sops-nix/key.txt \
           export-metrics \
-          --base-branch ${pkiRotationBaseBranch} \
+          --inventory-manifest ${pkiStatusInventory} \
           --output ${pkiStatusMetricsPath}
       '';
     };

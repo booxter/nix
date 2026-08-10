@@ -37,7 +37,10 @@ This is intentional:
 `pki` runs two PKI jobs:
 
 - `pki-status-export`
-  - scans managed certificates
+  - consumes a build-time certificate inventory manifest from the Nix store
+  - reads only the root CA, relevant encrypted host secrets, and the live
+    intermediate CA certificate
+  - does not clone the repository or require network access
   - exports Prometheus textfile metrics through node exporter
   - covers internal root/intermediate CA state plus repo-managed internal leaf
     certs

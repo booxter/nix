@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,7 +12,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from pki_certificates.models import FleetHosts, HostCertificateConfig
 
-from pki_rotation.inventory import CertificateInventoryBuilder
+from pki_rotation.inventory import (
+    CertificateInventoryBuilder,
+    ManifestCertificateSpecSource,
+    load_certificate_manifest,
+)
 from pki_rotation.models import (
     CertificateCategory,
     CertificateSpec,
@@ -224,3 +229,52 @@ def test_parse_certificate_rejects_non_pem_text() -> None:
         assert "PEM" in str(error)
     else:
         raise AssertionError("invalid certificate was accepted")
+
+
+def test_manifest_source_adds_runtime_intermediate_certificate(tmp_path: Path) -> None:
+    root = tmp_path / "root.crt"
+    secret = tmp_path / "host.yaml"
+    manifest_path = tmp_path / "inventory.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "authority_host": "pki",
+                "certificates": [
+                    {
+                        "host": "pki",
+                        "category": "ca",
+                        "name": "root",
+                        "source_kind": "repo_file",
+                        "file_path": str(root),
+                        "secret": None,
+                    },
+                    {
+                        "host": "host",
+                        "category": "internal_https_server",
+                        "name": "web",
+                        "source_kind": "repo_secret",
+                        "file_path": None,
+                        "secret": {
+                            "host": "host",
+                            "path": str(secret),
+                            "prefix": "internal/web",
+                            "certificate_field": "server_crt_unencrypted",
+                        },
+                    },
+                ],
+            }
+        )
+    )
+
+    source = ManifestCertificateSpecSource(load_certificate_manifest(manifest_path))
+    specs = source.specs(Path("/unused"), Path("/intermediate.crt"))
+
+    assert [
+        (spec.name, spec.file_path) for spec in specs if spec.category is CertificateCategory.CA
+    ] == [
+        ("intermediate", Path("/intermediate.crt")),
+        ("root", root),
+    ]
+    leaf = next(spec for spec in specs if spec.category is not CertificateCategory.CA)
+    assert leaf.secret is not None
+    assert leaf.secret.path == secret

@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import tempfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,9 +16,13 @@ from sops_tools.process import SubprocessRunner
 
 from .errors import RotationError
 from .github import GitHubPullRequestFactory, PullRequestFactory
-from .inventory import NixCertificateSpecSource
+from .inventory import (
+    ManifestCertificateSpecSource,
+    NixCertificateSpecSource,
+    load_certificate_manifest,
+)
 from .metrics import certificate_metrics, rotation_metrics
-from .models import CertificateInventory, CheckoutRequest, RotationRequest, RotationSummary
+from .models import CertificateInventory, RotationRequest, RotationSummary
 from .repository import GitRepositoryFactory, RepositoryFactory, authenticated_git_environment
 from .rotation import (
     CertificateRotator,
@@ -87,23 +90,17 @@ class Application:
     def export(
         self,
         *,
-        repo_root: Path | None,
-        repo_url: str,
-        base_branch: str,
+        inventory_manifest: Path,
         intermediate_certificate: Path,
         rotation_window_days: int,
     ) -> str:
-        if repo_root is not None:
-            return certificate_metrics(
-                self.scan(repo_root, intermediate_certificate, rotation_window_days)
-            )
-        with tempfile.TemporaryDirectory(prefix="pki-status-export-") as temporary:
-            worktree = Path(temporary) / "repo"
-            repository = self.repositories.create()
-            repository.clone(CheckoutRequest(repo_url, base_branch, worktree))
-            return certificate_metrics(
-                self.scan(worktree, intermediate_certificate, rotation_window_days)
-            )
+        scanner = CertificateScanner(
+            ManifestCertificateSpecSource(load_certificate_manifest(inventory_manifest)),
+            self.clock,
+        )
+        return certificate_metrics(
+            scanner.scan(Path("/"), intermediate_certificate, rotation_window_days)
+        )
 
     def dry_run(self, repo_root: Path, request: RotationRequest) -> RotationSummary:
         candidates = rotation_candidates(
@@ -166,8 +163,7 @@ def parser() -> argparse.ArgumentParser:
 
     export = modes.add_parser("export-metrics", help="export certificate status metrics")
     export.add_argument("--output", type=Path)
-    export.add_argument("--repo-url", default=DEFAULT_REPOSITORY_URL)
-    export.add_argument("--base-branch", default=DEFAULT_BASE_BRANCH)
+    export.add_argument("--inventory-manifest", type=Path, required=True)
 
     rotate = modes.add_parser("rotate", help="rotate due leaf certificates through a PR")
     rotate.add_argument("--dry-run", action="store_true")
@@ -233,13 +229,8 @@ def run(
         print(inventory.model_dump_json(indent=2), file=stdout)
         return 0
     if command == "export-metrics":
-        repo_root = (
-            current.repository_root(repo_root_argument) if repo_root_argument is not None else None
-        )
         content = current.export(
-            repo_root=repo_root,
-            repo_url=cast(str, arguments.repo_url),
-            base_branch=cast(str, arguments.base_branch),
+            inventory_manifest=cast(Path, arguments.inventory_manifest),
             intermediate_certificate=intermediate,
             rotation_window_days=window,
         )

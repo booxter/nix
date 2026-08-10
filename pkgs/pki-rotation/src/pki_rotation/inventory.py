@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from pydantic import ValidationError
 from pki_certificates.models import FleetHosts, HostCertificateConfig
 from pki_certificates.repository import NixConfigSource
+from sops_tools.errors import ToolError
 from sops_tools.process import ProcessRunner
 
 from .models import (
     CertificateCategory,
+    CertificateManifest,
     CertificateSpec,
     SecretLocation,
     SourceKind,
@@ -156,3 +159,29 @@ class NixCertificateSpecSource:
             configs,
             intermediate_certificate,
         ).specs()
+
+
+def load_certificate_manifest(path: Path) -> CertificateManifest:
+    try:
+        return CertificateManifest.model_validate_json(path.read_bytes())
+    except (OSError, ValidationError) as error:
+        raise ToolError(f"invalid PKI certificate inventory manifest {path}: {error}") from error
+
+
+@dataclass(frozen=True)
+class ManifestCertificateSpecSource:
+    manifest: CertificateManifest
+
+    def specs(self, repo_root: Path, intermediate_certificate: Path) -> tuple[CertificateSpec, ...]:
+        del repo_root
+        specs = [entry.spec() for entry in self.manifest.certificates]
+        specs.append(
+            CertificateSpec(
+                host=self.manifest.authority_host,
+                category=CertificateCategory.CA,
+                name="intermediate",
+                source_kind=SourceKind.HOST_FILE,
+                file_path=intermediate_certificate,
+            )
+        )
+        return tuple(sorted(specs, key=lambda spec: (spec.category.value, spec.host, spec.name)))
