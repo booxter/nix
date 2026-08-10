@@ -11,8 +11,6 @@ let
     atomicFileWrites = pkgs.atomic-file-writes;
     inherit transmissionCommon;
   };
-  positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
-  positiveInt = lib.types.addCheck lib.types.int (value: value > 0);
 in
 {
   imports = [
@@ -48,32 +46,32 @@ in
     };
 
     intervalSeconds = lib.mkOption {
-      type = positiveInt;
+      type = lib.types.ints.positive;
       default = 5;
       description = "Polling interval used by the decider and appliers.";
     };
 
     maxStateAgeSeconds = lib.mkOption {
-      type = with lib.types; nullOr positiveInt;
+      type = with lib.types; nullOr ints.positive;
       default = null;
       description = "Maximum accepted state age, or null for three polling intervals.";
     };
 
     fallbackRateMbit = lib.mkOption {
-      type = positiveNumber;
+      type = lib.types.ints.positive;
       description = "Conservative upload rate used when policy state is unavailable.";
     };
 
     policy = {
       idleRateMbit = lib.mkOption {
-        type = positiveNumber;
+        type = lib.types.ints.positive;
         default = 25;
         description = "Upload rate allowed when no external streams are active.";
       };
 
       minimumRateMbit = lib.mkOption {
-        type = positiveNumber;
-        default = 0.5;
+        type = lib.types.ints.positive;
+        default = 1;
         description = "Minimum upload rate while external streams are active.";
       };
 
@@ -97,7 +95,7 @@ in
       };
 
       requestTimeoutSeconds = lib.mkOption {
-        type = positiveInt;
+        type = lib.types.ints.positive;
         default = 10;
         description = "Jellyfin exporter request timeout.";
       };
@@ -155,7 +153,7 @@ in
       };
 
       requestTimeoutSeconds = lib.mkOption {
-        type = positiveInt;
+        type = lib.types.ints.positive;
         default = 20;
         description = "Transmission RPC request timeout.";
       };
