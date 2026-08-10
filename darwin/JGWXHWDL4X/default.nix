@@ -37,6 +37,7 @@ in
         gmailctl.enable = false;
       };
       firefox.enable = false;
+      homerow.enable = false;
     };
   };
   host.nix.cacheWarmer.enable = true;

@@ -165,6 +165,8 @@ in
         };
       };
 
+      homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
+
       scm = {
         enable = lib.mkEnableOption "source-control development environment";
 
@@ -238,6 +240,9 @@ in
         (lib.mkIf cfg.roles.workstation.enable {
           email.enable = lib.mkDefault true;
           firefox.enable = lib.mkDefault true;
+        })
+        (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
+          homerow.enable = lib.mkDefault true;
         })
       ];
     };
