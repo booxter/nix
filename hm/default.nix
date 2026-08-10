@@ -7,6 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
+  cliCfg = osConfig.host.userEnvironment.features.cli;
   firefoxCfg = osConfig.host.userEnvironment.features.firefox;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
@@ -19,8 +20,10 @@ in
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
-  ++ lib.optionals hmFull [
+  ++ lib.optionals cliCfg.enable [
     ./_mixins/cli
+  ]
+  ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
     ./_mixins/gnupg

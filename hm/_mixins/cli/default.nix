@@ -7,24 +7,33 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  isPersonal = osConfig.host.userProfile == "personal";
+  userEnvironment = osConfig.host.userEnvironment;
+  cliCfg = userEnvironment.features.cli;
+  repositoryCatalog = userEnvironment.repositories.catalog;
+  requiredRepositories = userEnvironment.repositories.required;
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
+  repositoryPath =
+    repository:
+    let
+      basePath =
+        {
+          home = config.home.homeDirectory;
+          xdgData = config.xdg.dataHome;
+        }
+        .${repository.destination.base};
+    in
+    "${basePath}/${repository.destination.path}";
   syncRepoConfig = (pkgs.formats.json { }).generate "sync-repo.json" {
-    repositories = {
-      dotfiles = {
-        remote = "git@github.com:booxter/dotfiles.git";
-        path = "${config.home.homeDirectory}/.priv-bin";
-      };
-      gmailctl = {
-        remote = "git@github.com:booxter/gmailctl-private-config.git";
-        path = "${config.home.homeDirectory}/.gmailctl";
-      };
-      pass = {
-        remote = "git@github.com:booxter/pass.git";
-        path = config.programs.password-store.settings.PASSWORD_STORE_DIR;
-      };
-    };
+    repositories = builtins.listToAttrs (
+      map (name: {
+        inherit name;
+        value = {
+          inherit (repositoryCatalog.${name}) remote;
+          path = repositoryPath repositoryCatalog.${name};
+        };
+      }) requiredRepositories
+    );
   };
   syncRepo = pkgs.symlinkJoin {
     name = "sync-repo-configured";
@@ -125,7 +134,7 @@ in
   programs.less.enable = true;
 
   # cli password manager
-  programs.password-store = {
+  programs.password-store = lib.mkIf cliCfg.passwordStore.enable {
     enable = true;
     settings = {
       # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
@@ -181,8 +190,10 @@ in
     ++ lib.optionals isDarwin [
       container
     ]
-    ++ lib.optionals isPersonal [
+    ++ lib.optionals (requiredRepositories != [ ]) [
       syncRepo
+    ]
+    ++ lib.optionals cliCfg.ramalama.enable [
       ramalama
     ];
 
@@ -191,7 +202,7 @@ in
     MANPAGER = "page -t man";
   };
 
-  home.sessionPath = lib.optionals isPersonal [
+  home.sessionPath = [
     "$HOME/.priv-bin"
   ];
 

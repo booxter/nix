@@ -3,6 +3,7 @@ let
   cfg = config.host.userEnvironment;
   emailCfg = cfg.features.email;
   emailAccount = cfg.emailAccounts.${emailCfg.account} or null;
+  requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.repositories.requests));
   authenticationType = lib.types.enum [
     "oauth2"
     "password"
@@ -88,6 +89,29 @@ let
       };
     };
   };
+  repositoryType = lib.types.submodule {
+    options = {
+      remote = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Git remote used to synchronize the repository.";
+      };
+
+      destination = {
+        base = lib.mkOption {
+          type = lib.types.enum [
+            "home"
+            "xdgData"
+          ];
+          description = "Base directory used to resolve the repository checkout.";
+        };
+
+        path = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          description = "Repository checkout path relative to its base directory.";
+        };
+      };
+    };
+  };
 in
 {
   options.host.userEnvironment = {
@@ -109,10 +133,44 @@ in
       description = "Named email accounts available to user-environment features.";
     };
 
+    repositories = {
+      catalog = lib.mkOption {
+        type = lib.types.attrsOf repositoryType;
+        default = { };
+        description = "Repositories available to user-environment consumers.";
+      };
+
+      requests = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.listOf lib.types.nonEmptyStr);
+        default = { };
+        description = "Repository requirements grouped by their declaring consumer.";
+      };
+
+      required = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = requiredRepositories;
+        readOnly = true;
+        internal = true;
+        description = "Unique repositories required by user-environment consumers.";
+      };
+    };
+
     roles.developer.enable = lib.mkEnableOption "interactive software development environment";
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
+      cli = {
+        enable = lib.mkEnableOption "interactive command-line development environment";
+
+        passwordStore.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the pass password manager.";
+        };
+
+        ramalama.enable = lib.mkEnableOption "RamaLama local AI tooling";
+      };
+
       codex = {
         enable = lib.mkEnableOption "Codex coding agent";
 
@@ -234,8 +292,42 @@ in
         };
       };
 
+      repositories = {
+        catalog = {
+          dotfiles = {
+            remote = "git@github.com:booxter/dotfiles.git";
+            destination = {
+              base = "home";
+              path = ".priv-bin";
+            };
+          };
+          gmailctl = {
+            remote = "git@github.com:booxter/gmailctl-private-config.git";
+            destination = {
+              base = "home";
+              path = ".gmailctl";
+            };
+          };
+          pass = {
+            remote = "git@github.com:booxter/pass.git";
+            destination = {
+              base = "xdgData";
+              path = "password-store";
+            };
+          };
+        };
+
+        requests = {
+          gmailctl = lib.optionals (emailCfg.enable && emailCfg.gmailctl.enable) [ "gmailctl" ];
+          passwordStore = lib.optionals (cfg.features.cli.enable && cfg.features.cli.passwordStore.enable) [
+            "pass"
+          ];
+        };
+      };
+
       features = lib.mkMerge [
         (lib.mkIf cfg.roles.developer.enable {
+          cli.enable = lib.mkDefault true;
           codex.enable = lib.mkDefault true;
           scm.enable = lib.mkDefault true;
         })
@@ -253,6 +345,18 @@ in
     };
 
     assertions = [
+      {
+        assertion = lib.all (name: builtins.hasAttr name cfg.repositories.catalog) requiredRepositories;
+        message = "host.userEnvironment.repositories.requests must name declared repositories";
+      }
+      {
+        assertion = lib.all (
+          repository:
+          !lib.hasPrefix "/" repository.destination.path
+          && lib.all (component: component != "..") (lib.splitString "/" repository.destination.path)
+        ) (builtins.attrValues cfg.repositories.catalog);
+        message = "host.userEnvironment repository destinations must be safe relative paths";
+      }
       {
         assertion = !emailCfg.enable || emailAccount != null;
         message = "host.userEnvironment.features.email.account must name a declared email account";

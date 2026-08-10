@@ -25,7 +25,11 @@
         developer.enable = true;
         workstation.enable = true;
       };
-      features.codex.warmer.enable = true;
+      features = {
+        cli.ramalama.enable = true;
+        codex.warmer.enable = true;
+      };
+      repositories.requests.host = [ "dotfiles" ];
     };
     remote-control = {
       client = {
