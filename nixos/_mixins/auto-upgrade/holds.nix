@@ -11,7 +11,6 @@ let
   cfg = config.host.autoUpgrade;
   metricsCfg = config.host.observability.nixosUpgrade;
   textfileDir = config.host.observability.nodeExporter.textfile.directory;
-  isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
     inherit (cfg) holds;
@@ -32,6 +31,8 @@ let
   ];
 in
 {
+  imports = [ ./holds/assertions.nix ];
+
   options.host.autoUpgrade = {
     holds = lib.mkOption {
       type =
@@ -68,22 +69,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = lib.concatMap (hold: [
-        {
-          assertion = builtins.match isoDatePattern hold.startDate != null;
-          message = "host.autoUpgrade.holds startDate `${hold.startDate}` must use YYYY-MM-DD.";
-        }
-        {
-          assertion = builtins.match isoDatePattern hold.stopDate != null;
-          message = "host.autoUpgrade.holds stopDate `${hold.stopDate}` must use YYYY-MM-DD.";
-        }
-        {
-          assertion = hold.startDate <= hold.stopDate;
-          message = "host.autoUpgrade.holds range `${hold.startDate}..${hold.stopDate}` must not end before it starts.";
-        }
-      ]) cfg.holds;
-    }
     (lib.mkIf (cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })

@@ -54,6 +54,8 @@ let
   };
 in
 {
+  imports = [ ./external-service/assertions.nix ];
+
   options.host.externalService = {
     acmeEmail = lib.mkOption {
       type = lib.types.str;
@@ -161,39 +163,6 @@ in
     {
       host.network.stableAddress.requiredBy = lib.optional hasPublicVhosts "public ingress";
     }
-    {
-      assertions =
-        lib.optionals cfg.ddns.enable [
-          {
-            assertion = cfg.ddns.username != "";
-            message = "host.externalService.ddns.username must be set when DDNS is enabled.";
-          }
-          {
-            assertion = cfg.ddns.hostname != "";
-            message = "host.externalService.ddns.hostname must be set when DDNS is enabled.";
-          }
-        ]
-        ++ builtins.concatLists (
-          lib.mapAttrsToList (
-            hostName: vhost:
-            lib.optionals vhost.upstreamTls.enable [
-              {
-                assertion = vhost.upstreamTls.clientName != "";
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must be set when upstream mTLS is enabled.";
-              }
-              {
-                assertion = vhost.upstreamTls.serverName != "";
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
-              }
-              {
-                assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.internalPki.clients entry.";
-              }
-            ]
-          ) cfg.virtualHosts
-        );
-    }
-
     (lib.mkIf cfg.ddns.enable {
       # Keep ddclient on a stable system user instead of DynamicUser. During
       # switch-to-configuration we observed transient startup failures where the

@@ -48,29 +48,6 @@ let
           _: export: export ? permissions && export.permissions ? sharedGroup
         ) participatingExports
       );
-  anonymousIdentityNames = lib.unique (
-    map (export: export.anonymousIdentity) (
-      builtins.attrValues (lib.filterAttrs (_: export: export ? anonymousIdentity) participatingExports)
-    )
-  );
-  anonymousIdentityAssertions = lib.concatMap (
-    name:
-    let
-      expected = facts.accounts.users.${name};
-      user = config.users.users.${name} or null;
-      group = config.users.groups.${expected.group} or null;
-    in
-    [
-      {
-        assertion = user != null && user.uid == expected.uid;
-        message = "NFS anonymous identity ${name} must use UID ${toString expected.uid}";
-      }
-      {
-        assertion = group != null && group.gid == facts.accounts.groups.${expected.group}.gid;
-        message = "NFS anonymous identity ${name} must use the shared ${expected.group} GID";
-      }
-    ]
-  ) anonymousIdentityNames;
   mountOptions = [
     "nfsvers=4"
     "hard"
@@ -125,9 +102,10 @@ let
   exportPaths = map (export: export.path) (builtins.attrValues providedExports);
 in
 {
+  imports = [ ./assertions.nix ];
+
   config = lib.mkMerge [
     {
-      assertions = anonymousIdentityAssertions;
       host.network.stableAddress.requiredBy =
         lib.optional (provider != null) "NFS provider" ++ lib.optional (hostLinks != { }) "NFS export ACL";
       users.groups = sharedGroups;
@@ -140,15 +118,6 @@ in
     })
 
     (lib.mkIf (provider != null) {
-      assertions = [
-        {
-          assertion = lib.all (
-            exportName: builtins.any (link: link.exportName == exportName) (builtins.attrValues providedLinks)
-          ) (builtins.attrNames providedExports);
-          message = "NFS provider ${hostName} has an export without a client link";
-        }
-      ];
-
       services.nfs = {
         server = {
           enable = true;

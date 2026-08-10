@@ -16,7 +16,7 @@ let
   hostModule = platformDirectory + "/${hostname}";
 in
 {
-  imports = lib.optional (builtins.pathExists hostModule) hostModule;
+  imports = [ ./host/assertions.nix ] ++ lib.optional (builtins.pathExists hostModule) hostModule;
 
   options.host = {
     platform = lib.mkOption {
@@ -173,17 +173,6 @@ in
   };
 
   config = {
-    assertions = [
-      {
-        assertion = isDarwin != isLinux;
-        message = "Facts platform ${system} must identify exactly one supported kernel.";
-      }
-      {
-        assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
-        message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
-      }
-    ];
-
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
   };

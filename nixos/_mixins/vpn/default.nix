@@ -101,17 +101,12 @@ let
       };
     }
   ) validClients;
-  unknownNamespaces = lib.filterAttrs (
-    _: client: !builtins.hasAttr client.namespace cfg.namespaces
-  ) enabledClients;
-  disabledNamespaces = lib.filterAttrs (
-    _: client:
-    builtins.hasAttr client.namespace cfg.namespaces && !cfg.namespaces.${client.namespace}.enable
-  ) enabledClients;
-  serviceNames = map (client: client.serviceName) (builtins.attrValues enabledClients);
 in
 {
-  imports = [ inputs.vpnconfinement.nixosModules.default ];
+  imports = [
+    inputs.vpnconfinement.nixosModules.default
+    ./assertions.nix
+  ];
 
   options.host.vpn = {
     namespaces = lib.mkOption {
@@ -189,21 +184,6 @@ in
   };
 
   config = lib.mkIf (enabledNamespaces != { } || enabledClients != { }) {
-    assertions = [
-      {
-        assertion = unknownNamespaces == { };
-        message = "host.vpn.clients reference unknown namespaces: ${lib.concatStringsSep ", " (builtins.attrNames unknownNamespaces)}";
-      }
-      {
-        assertion = disabledNamespaces == { };
-        message = "host.vpn.clients reference disabled namespaces: ${lib.concatStringsSep ", " (builtins.attrNames disabledNamespaces)}";
-      }
-      {
-        assertion = builtins.length serviceNames == builtins.length (lib.unique serviceNames);
-        message = "host.vpn.clients must use unique systemd service names";
-      }
-    ];
-
     vpnNamespaces = lib.mapAttrs (namespaceName: namespace: {
       inherit (namespace)
         accessibleFrom

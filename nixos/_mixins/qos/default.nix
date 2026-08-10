@@ -185,6 +185,8 @@ let
   hasIngress = lib.any (profileName: profileData.${profileName}.ifbInterfaces != { }) profileNames;
 in
 {
+  imports = [ ./assertions.nix ];
+
   options.host.qos = {
     interfaces = lib.mkOption {
       type = lib.types.attrsOf interfaceType;
@@ -215,25 +217,6 @@ in
   };
 
   config = {
-    assertions = [
-      {
-        assertion = lib.all (name: builtins.match "^[A-Za-z0-9_]+$" name != null) profileNames;
-        message = "host.qos.interfaces names may contain only letters, digits, and underscores";
-      }
-      {
-        assertion =
-          let
-            devices = map (name: cfg.interfaces.${name}.device) profileNames;
-          in
-          builtins.length devices == builtins.length (lib.unique devices);
-        message = "each host.qos.interfaces profile must own a distinct device";
-      }
-      {
-        assertion = lib.all (profileName: cfg.interfaces.${profileName}.limits != { }) profileNames;
-        message = "each host.qos.interfaces profile must define at least one limit";
-      }
-    ];
-
     host.qos.classIds = builtins.mapAttrs (
       _: data: builtins.mapAttrs (_: minor: "1:${lib.toLower (lib.toHexString minor)}") data.classMinors
     ) profileData;

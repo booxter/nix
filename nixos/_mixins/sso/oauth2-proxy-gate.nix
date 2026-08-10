@@ -410,6 +410,8 @@ let
     });
 in
 {
+  imports = [ ./oauth2-proxy-gate/assertions.nix ];
+
   options.host.sso.oauth2ProxyGates = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule ({ name, ... }@args: gateSubmodule name args));
     default = { };
@@ -434,46 +436,6 @@ in
         restartUnits = [ "${gate.serviceName}.service" ];
       };
     }) enabledGates;
-
-    assertions =
-      builtins.concatLists (
-        lib.mapAttrsToList (
-          gateName: gate:
-          [
-            {
-              assertion = gate.allowedGroups != [ ];
-              message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
-            }
-            {
-              assertion = gate.whitelistDomains != [ ];
-              message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
-            }
-          ]
-          ++ lib.optional (gate.sessionRefresh != null) {
-            assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
-            message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
-          }
-          ++ probeHelpers.assertionsFor gateName gate
-        ) enabledGates
-      )
-      ++ [
-        {
-          assertion =
-            let
-              serviceNames = map (gate: gate.serviceName) (builtins.attrValues enabledGates);
-            in
-            (builtins.length serviceNames) == (builtins.length (lib.unique serviceNames));
-          message = "host.sso.oauth2ProxyGates must use unique serviceName values.";
-        }
-        {
-          assertion =
-            let
-              httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues enabledGates);
-            in
-            (builtins.length httpAddresses) == (builtins.length (lib.unique httpAddresses));
-          message = "host.sso.oauth2ProxyGates must use unique httpAddress values.";
-        }
-      ];
 
     users.groups = builtins.listToAttrs (
       map (group: {

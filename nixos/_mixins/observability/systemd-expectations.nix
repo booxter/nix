@@ -110,20 +110,15 @@ in
     # unitConfig also recurses through the tmpfiles rules generated below.
     host.observability.systemd.excludedUnits = [ "systemd-tmpfiles-resetup.service" ];
 
-    assertions = [
-      {
-        assertion = lib.all (labels: !(labels ? name)) (builtins.attrValues unitLabels);
-        message = "host.observability.systemd.unitLabels must not override the unit name label";
-      }
-      {
-        assertion = lib.all (name: builtins.elem name expectedUnits) (builtins.attrNames unitLabels);
-        message = "host.observability.systemd.unitLabels may only label expected active units";
-      }
-      {
-        assertion = lib.all (name: builtins.hasAttr name units) cfg.systemd.excludedUnits;
-        message = "host.observability.systemd.excludedUnits may only name defined systemd units";
-      }
-    ];
+    assertions = import ./systemd-expectations/assertions.nix {
+      inherit
+        cfg
+        expectedUnits
+        lib
+        unitLabels
+        units
+        ;
+    };
 
     systemd.tmpfiles.rules = [
       "d ${textfileDir} 0755 root root - -"
