@@ -13,7 +13,7 @@ in
     en0.kind = "wireless";
     en7.kind = "ethernet";
   };
-  host.secrets.operatorAgeIdentity = {
+  host.security.secrets.operator.ageIdentity = {
     backend = "secure-enclave";
     path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
   };

@@ -8,7 +8,7 @@
 let
   hostname = config.networking.hostName;
   username = config.host.username;
-  operatorAgeIdentity = config.host.secrets.operatorAgeIdentity;
+  operatorAgeIdentity = config.host.security.secrets.operator.ageIdentity;
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
   pamU2f = facts.yubi.devices.personal.applets.fido2.pamU2f.${hostname} or null;
 in

@@ -6,7 +6,7 @@
 }:
 let
   username = config.host.username;
-  managePasswordSecrets = config.host.management.managePasswordSecrets;
+  managePasswordSecrets = config.host.security.secrets.manageLocalPasswords;
   rootPasswordSecret = "users/root/hashedPassword";
   userPasswordSecret = "users/${username}/hashedPassword";
 in

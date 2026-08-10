@@ -8,7 +8,7 @@
 }:
 let
   cfg = osConfig.programs.yubi;
-  operatorAgeIdentity = osConfig.host.secrets.operatorAgeIdentity;
+  operatorAgeIdentity = osConfig.host.security.secrets.operator.ageIdentity;
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
   residentSsh = facts.yubi.devices.personal.applets.fido2.residentSsh;
   yubikeySshKey = "${config.home.homeDirectory}/.ssh/${residentSsh.keyName}";

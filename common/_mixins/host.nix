@@ -77,22 +77,6 @@ in
       description = "Expected host availability for monitoring.";
     };
 
-    isSecretsOperator = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isSecretsOperator or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host manages repository secrets.";
-    };
-
-    hasYubiAgeIdentity = lib.mkOption {
-      type = lib.types.bool;
-      default = builtins.elem hostname facts.yubi.ageIdentity.hosts;
-      readOnly = true;
-      internal = true;
-      description = "Whether YubiKey facts assign an age identity to this host.";
-    };
-
     isVM = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isVM or false;
@@ -116,14 +100,6 @@ in
         readOnly = true;
         internal = true;
         description = "Whether this host manages its network identity.";
-      };
-
-      managePasswordSecrets = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.managePasswordSecrets;
-        readOnly = true;
-        internal = true;
-        description = "Whether this host manages local password secrets.";
       };
 
     };

@@ -13,7 +13,6 @@
     ./_mixins/power
     ./_mixins/remote-control
     ./_mixins/security
-    ./_mixins/secrets
     ./_mixins/site
     ./_mixins/ssh
     ./_mixins/stylix

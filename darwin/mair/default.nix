@@ -13,7 +13,7 @@
   host = {
     hardware.isLaptop = true;
     network.interfaces.en0.kind = "wireless";
-    secrets.operatorAgeIdentity = {
+    security.secrets.operator.ageIdentity = {
       backend = "secure-enclave";
       path = "/Users/${config.host.username}/.config/sops/age/mair-se.txt";
     };
