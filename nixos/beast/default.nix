@@ -22,7 +22,6 @@
     vendors = [ "intel" ];
     render.device = "/dev/dri/renderD128";
   };
-  host.jellarr.enable = true;
   host.lolek.enable = true;
   host.autoUpgrade.reboot = {
     mode = "scheduled";
