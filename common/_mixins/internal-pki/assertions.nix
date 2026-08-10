@@ -4,6 +4,15 @@
   lib,
   model,
 }:
+let
+  managedCertificates = config.host.internalPki.managedCertificates;
+  managedCertificateKeys = map (
+    certificate: "${certificate.category}/${certificate.name}"
+  ) managedCertificates;
+  managedCertificateSourceKeys = map (
+    certificate: "${certificate.secretPrefix}/${certificate.certificateField}"
+  ) managedCertificates;
+in
 [
   {
     assertion = builtins.length model.authorityNames <= 1;
@@ -24,5 +33,16 @@
   {
     assertion = !config.host.internalPki.enable || model.realmAuthority != null;
     message = "realm '${config.host.realm}' has no internal PKI authority";
+  }
+  {
+    assertion =
+      builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
+    message = "host.internalPki.managedCertificates must not duplicate a category/name pair";
+  }
+  {
+    assertion =
+      builtins.length managedCertificateSourceKeys
+      == builtins.length (lib.unique managedCertificateSourceKeys);
+    message = "host.internalPki.managedCertificates must not duplicate a SOPS certificate field";
   }
 ]

@@ -9,12 +9,6 @@ let
   rootConfig = config;
   cfg = config.host.internalPki;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
-  managedCertificateKeys = map (
-    certificate: "${certificate.category}/${certificate.name}"
-  ) cfg.managedCertificates;
-  managedCertificateSourceKeys = map (
-    certificate: "${certificate.secretPrefix}/${certificate.certificateField}"
-  ) cfg.managedCertificates;
   managedCertificateType = lib.types.submodule {
     options = {
       category = lib.mkOption {
@@ -264,28 +258,14 @@ in
       certificateField = "client_crt_unencrypted";
     }) enabledClients;
 
-    assertions =
-      import ./assertions.nix {
-        inherit
-          config
-          enabledClients
-          lib
-          model
-          ;
-      }
-      ++ [
-        {
-          assertion =
-            builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
-          message = "host.internalPki.managedCertificates must not duplicate a category/name pair";
-        }
-        {
-          assertion =
-            builtins.length managedCertificateSourceKeys
-            == builtins.length (lib.unique managedCertificateSourceKeys);
-          message = "host.internalPki.managedCertificates must not duplicate a SOPS certificate field";
-        }
-      ];
+    assertions = import ./assertions.nix {
+      inherit
+        config
+        enabledClients
+        lib
+        model
+        ;
+    };
 
     security.pki.certificateFiles = lib.optionals (cfg.enable && cfg.rootCaCertificate != null) [
       cfg.rootCaCertificate
