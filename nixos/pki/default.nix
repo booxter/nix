@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   pkgs,
@@ -9,11 +8,10 @@
 }:
 let
   pkiPkgs = import ./pkgs pkgs;
-  caServer = facts.hosts.nixos.pki.caServer;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
-  caPort = caServer.port;
+  caPort = config.host.internalPki.authority.port;
   caUrl = "https://${config.networking.hostName}:${toString caPort}";
   caProvisioner = "bootstrap@${config.host.network.lanDomain}";
   pkiRotationBaseBranch = "master";
@@ -57,6 +55,11 @@ in
   ];
 
   host.backups.sources.step-ca.paths = [ stepStateDir ];
+
+  host.internalPki.authority = {
+    enable = true;
+    rootCaCertificate = ./root-ca.crt;
+  };
 
   host.network = {
     macAddress = "bc:24:11:c6:ab:fc";

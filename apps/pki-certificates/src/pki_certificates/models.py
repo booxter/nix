@@ -14,7 +14,6 @@ class HostFacts(BaseModel):
     configuration: Literal["nixosConfigurations", "darwinConfigurations"]
     runtime_host: str = Field(alias="runtimeHost")
     realm: str
-    ca_url: str | None = Field(alias="caUrl")
 
 
 class FleetHosts(RootModel[dict[str, HostFacts]]):
@@ -62,6 +61,7 @@ class HostIdentity(BaseModel):
 class HostCertificateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
+    ca_url: str | None
     identity: HostIdentity
     internal_services: dict[str, InternalServiceConfig]
     clients: dict[str, CertificateClientConfig]

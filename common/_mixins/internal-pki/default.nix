@@ -1,14 +1,46 @@
 {
   config,
-  facts,
+  hostSpec,
   lib,
+  outputs,
   ...
 }:
 let
   rootConfig = config;
   cfg = config.host.internalPki;
-  realmInternalPki = facts.realms.${config.host.realm}.services.internalPki or null;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
+  realmAuthorityType = lib.types.submodule {
+    options = {
+      hostName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Host providing the realm's internal PKI authority.";
+      };
+      rootCaCertificate = lib.mkOption {
+        type = lib.types.path;
+        description = "Root CA certificate published by the realm authority.";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        description = "HTTPS port of the realm authority API.";
+      };
+      rootsPath = lib.mkOption {
+        type = lib.types.str;
+        description = "Realm authority API path serving the trusted root bundle.";
+      };
+      url = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Resolved realm authority API URL.";
+      };
+    };
+  };
+  model = import ./model.nix {
+    inherit
+      config
+      hostSpec
+      lib
+      outputs
+      ;
+  };
   secretBaseName =
     clientName: materializationName:
     "internal-pki-client-${clientName}"
@@ -78,13 +110,47 @@ in
   options.host.internalPki = {
     enable = lib.mkEnableOption "trust in and client identities for the realm's internal PKI";
 
+    authority = {
+      enable = lib.mkEnableOption "the internal PKI authority for this host's realm";
+
+      rootCaCertificate = lib.mkOption {
+        type = with lib.types; nullOr path;
+        default = null;
+        description = "Root CA certificate published by this authority.";
+      };
+
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8443;
+        description = "HTTPS port of the certificate authority API.";
+      };
+
+      rootsPath = lib.mkOption {
+        type = lib.types.str;
+        default = "/roots.pem";
+        description = "Certificate authority API path serving the trusted root bundle.";
+      };
+
+      url = lib.mkOption {
+        type = lib.types.str;
+        default = "https://${config.networking.hostName}:${toString cfg.authority.port}";
+        readOnly = true;
+        internal = true;
+        description = "Resolved certificate authority API URL.";
+      };
+    };
+
+    realmAuthority = lib.mkOption {
+      type = with lib.types; nullOr realmAuthorityType;
+      default = model.realmAuthority;
+      readOnly = true;
+      internal = true;
+      description = "Internal PKI authority discovered for this host's realm.";
+    };
+
     rootCaCertificate = lib.mkOption {
-      type = lib.types.path;
-      default =
-        if realmInternalPki == null then
-          facts.realms.home.services.internalPki.rootCaCertificate
-        else
-          realmInternalPki.rootCaCertificate;
+      type = with lib.types; nullOr path;
+      default = if model.realmAuthority == null then null else model.realmAuthority.rootCaCertificate;
       readOnly = true;
       internal = true;
       description = "Root CA certificate for the realm's internal PKI.";
@@ -147,18 +213,18 @@ in
   };
 
   config = {
-    host.internalPki.enable = lib.mkDefault (realmInternalPki != null);
+    host.internalPki.enable = lib.mkDefault (model.realmAuthority != null);
 
-    assertions = [
-      {
-        assertion = cfg.enable || enabledClients == { };
-        message =
-          "realm '${config.host.realm}' does not define an internal PKI, but host '${config.networking.hostName}' enables clients: "
-          + lib.concatStringsSep ", " (builtins.attrNames enabledClients);
-      }
-    ];
+    assertions = import ./assertions.nix {
+      inherit
+        config
+        enabledClients
+        lib
+        model
+        ;
+    };
 
-    security.pki.certificateFiles = lib.mkIf cfg.enable [
+    security.pki.certificateFiles = lib.optionals (cfg.enable && cfg.rootCaCertificate != null) [
       cfg.rootCaCertificate
     ];
 

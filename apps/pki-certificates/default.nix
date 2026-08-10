@@ -24,14 +24,12 @@ let
         let
           isLinux = lib.hasSuffix "-linux" system;
           spec = facts.hosts.hostSpecsByName.${name};
-          caServer = spec.caServer or null;
         in
         {
           inherit system;
           configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
           runtimeHost = spec.name;
           inherit (spec) realm;
-          caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
       ) systemsByHost
     )

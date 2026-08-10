@@ -61,6 +61,9 @@ class NixConfigSource:
     query: Path
     _cache: dict[str, HostCertificateConfig] = field(default_factory=dict)
 
+    def ca_url(self, host: str) -> str | None:
+        return self._config(host).ca_url
+
     def certificate_config(self, host: str) -> HostCertificateConfig:
         return self._config(host)
 

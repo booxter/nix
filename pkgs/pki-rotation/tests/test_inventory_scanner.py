@@ -29,14 +29,12 @@ def fleet_hosts() -> FleetHosts:
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
                 "realm": "home",
-                "caUrl": "https://pki.home.arpa:8443",
             },
             "host": {
                 "system": "aarch64-darwin",
                 "configuration": "darwinConfigurations",
                 "runtimeHost": "host-runtime",
                 "realm": "work",
-                "caUrl": None,
             },
         }
     )
@@ -51,6 +49,7 @@ def host_config() -> HostCertificateConfig:
     }
     return HostCertificateConfig.model_validate(
         {
+            "ca_url": None,
             "identity": {
                 "dns_name": "host.home.arpa",
                 "networking_name": "host",

@@ -41,7 +41,7 @@ class CertificateInventoryBuilder:
                 category=CertificateCategory.CA,
                 name="root",
                 source_kind=SourceKind.REPOSITORY_FILE,
-                file_path=(self.repo_root / "public-keys" / "internal-pki" / "home-root-ca.crt"),
+                file_path=(self.repo_root / "nixos" / "pki" / "root-ca.crt"),
             ),
             CertificateSpec(
                 host=pki.runtime_host,

@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -28,9 +27,8 @@ let
   };
   dashService = fleetServices.byId.dash;
   degoogService = fleetServices.byId.goo;
-  pkiSpec = facts.hosts.nixos.pki;
-  pkiCaServer = pkiSpec.caServer;
-  pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
+  pkiAuthority = config.host.internalPki.realmAuthority;
+  pkiRootCaUrl = "${pkiAuthority.url}${pkiAuthority.rootsPath}";
   serviceCatalog = map (
     contribution:
     let

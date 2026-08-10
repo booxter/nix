@@ -71,14 +71,12 @@ def fleet_hosts() -> FleetHosts:
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "host-runtime",
                 "realm": "home",
-                "caUrl": None,
             },
             "pki": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
                 "realm": "home",
-                "caUrl": "https://pki.home.arpa:8443",
             },
         }
     )
@@ -176,6 +174,14 @@ class RecordingStore:
         self.calls.append((host, secret_prefix, certificate, client))
 
 
+@dataclass(frozen=True)
+class StaticAuthoritySource:
+    url: str | None = "https://pki.home.arpa:8443"
+
+    def ca_url(self, host: str) -> str | None:
+        return self.url
+
+
 def managed_service():
     issuer = RecordingIssuer()
     store = RecordingStore()
@@ -212,6 +218,7 @@ def test_remote_issuer_copies_source_and_builds_on_ca_target():
         runner,
         Path("/repo"),
         fleet_hosts(),
+        StaticAuthoritySource(),
         False,
         Path("/unused"),
     )
@@ -249,6 +256,7 @@ def test_remote_issuer_local_mode_uses_installed_helper():
         runner,
         Path("/repo"),
         fleet_hosts(),
+        StaticAuthoritySource(),
         True,
         Path("/nix/store/helper/bin/pki-issue-certificate-remote"),
     )
@@ -292,6 +300,7 @@ def test_managed_service_rejects_disabled_configuration():
 
 def test_nix_config_source_validates_and_combines_fleet_configuration():
     value = {
+        "ca_url": None,
         "identity": {
             "dns_name": "host.home.arpa",
             "networking_name": "host",
@@ -368,6 +377,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
     assert source.observability_client_names("host") == ["scraper"]
     assert source.observability_client("host", "scraper").common_name == "scraper.host"
     assert source.host_identity("host").avahi_name == "host-avahi"
+    assert source.ca_url("host") is None
     assert source.certificate_config("host").identity.dns_name == "host.home.arpa"
     assert len(runner.calls) == 1
     assert runner.calls[0] == [

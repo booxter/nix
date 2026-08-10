@@ -4,9 +4,8 @@
 }:
 let
   inherit (context) lanDomain;
-  inherit (facts) nix-caches public-certificates public-keys;
+  inherit (facts) nix-caches public-keys;
   nixCaches = nix-caches;
-  publicCertificates = public-certificates;
   publicKeys = public-keys;
 in
 {
@@ -37,7 +36,6 @@ in
       attic = {
         endpoint = "https://nix-cache.${lanDomain}";
       };
-      internalPki.rootCaCertificate = publicCertificates.internal-pki.home-root-ca;
       nixCache = {
         substituters = [
           nixCaches.nixos.url

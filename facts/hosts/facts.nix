@@ -178,11 +178,6 @@ in
       name = "pki";
       realm = "home";
       userProfile = "personal";
-      caServer = {
-        port = 8443;
-        # Fixed step-ca HTTP API route for the trusted root bundle.
-        rootsPath = "/roots.pem";
-      };
       cores = 2;
       memorySize = 4;
       diskSize = 50;
