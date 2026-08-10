@@ -20,6 +20,7 @@ let
     serverSpec != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
   passwordFile =
     if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
+  shutdownDelay = config.host.power.shutdown.delaySeconds;
 in
 {
   config = lib.mkMerge [
@@ -36,10 +37,10 @@ in
       ];
     }
     (lib.mkIf (serverSpec != null && upsServer != null) {
-      host.ups.scheduler = {
+      host.ups.scheduler = lib.mkIf (shutdownDelay != null) {
         enable = true;
         inherit (cfg.shutdown) critical;
-        shutdownDelaySeconds = cfg.shutdown.delaySeconds;
+        shutdownDelaySeconds = shutdownDelay;
       };
 
       environment.etc."nut/upsclient.pass" = lib.mkIf useLiteralPassword {

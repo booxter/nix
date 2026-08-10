@@ -10,6 +10,7 @@
     ./_mixins/network
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/power
     ./_mixins/remote-control
     ./_mixins/secrets
     ./_mixins/site

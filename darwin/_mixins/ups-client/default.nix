@@ -2,12 +2,14 @@
   config,
   facts,
   lib,
+  outputs,
   pkgs,
   ...
 }:
 let
   cfg = config.host.ups;
   serverName = cfg.client.server;
+  fleetNetwork = import ../../../nixos/_lib/fleet-host-network.nix { inherit config outputs; };
   serverSpec = if serverName == null then null else facts.hosts.nixos.${serverName} or null;
   upsServer = if serverName == null then null else facts.ups.serversByName.${serverName} or null;
   clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
@@ -19,6 +21,7 @@ let
     serverSpec != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
   monitorPassword =
     if useLiteralPassword then "upsslave123" else config.sops.placeholder.${monitorPasswordSecret};
+  shutdownDelay = config.host.power.shutdown.delaySeconds;
 in
 {
   config = lib.mkMerge [
@@ -55,7 +58,7 @@ in
         mode = "0400";
         content = ''
           MINSUPPLIES 1
-          MONITOR ${upsServer.name}@${upsServer.address} 1 upsslave ${monitorPassword} slave
+          MONITOR ${upsServer.name}@${fleetNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
           NOTIFYCMD ${pkgs.nut}/bin/upssched
           NOTIFYFLAG ONBATT SYSLOG+EXEC
           NOTIFYFLAG ONLINE SYSLOG+EXEC
@@ -72,11 +75,11 @@ in
         LOCKFN /var/lib/nut/upssched.lock
 
         ${
-          if cfg.shutdown.critical then
+          if cfg.shutdown.critical || shutdownDelay == null then
             ""
           else
             ''
-              AT ONBATT * START-TIMER onbatt ${toString cfg.shutdown.delaySeconds}
+              AT ONBATT * START-TIMER onbatt ${toString shutdownDelay}
               AT ONLINE * CANCEL-TIMER onbatt
             ''
         }

@@ -21,15 +21,16 @@ let
       config.sops.secrets."nut/users/upsslave/password".path
     else
       "/etc/nut/upsslave.pass";
+  shutdownDelay = config.host.power.shutdown.delaySeconds;
 in
 {
   config = lib.mkIf cfg.server.enable {
     host.network.stableAddress.requiredBy = [ "UPS server" ];
 
-    host.ups.scheduler = {
+    host.ups.scheduler = lib.mkIf (shutdownDelay != null) {
       enable = true;
       inherit (cfg.shutdown) critical;
-      shutdownDelaySeconds = cfg.shutdown.delaySeconds;
+      shutdownDelaySeconds = shutdownDelay;
     };
 
     environment.etc."nut/upsmon.pass" = lib.mkIf useLiteralPasswords {
