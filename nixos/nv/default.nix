@@ -8,20 +8,8 @@ in
   host.network.macAddress = "bc:24:11:ed:30:d3";
 
   host.userEnvironment = {
+    preset = "nvidia";
     roles.developer.enable = true;
-    features = {
-      attentionInbox.enable = true;
-      codex = {
-        usageStatus.enable = false;
-        resetCredits.enable = false;
-        workUsageStatus.enable = true;
-      };
-      nvidiaDevelopment.enable = true;
-      scm = {
-        identity = "nvidia";
-        sendEmail.transport = "nvidia";
-      };
-    };
   };
 
   # Work machines do not use sops-managed login passwords; this VM does not

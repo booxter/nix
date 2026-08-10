@@ -21,16 +21,11 @@
       ssh.credentials.backend = "secretive";
     };
     userEnvironment = {
+      preset = "personal";
       roles = {
         developer.enable = true;
         workstation.enable = true;
       };
-      features = {
-        cli.ramalama.enable = true;
-        codex.warmer.enable = true;
-        podmanDesktop.enable = true;
-      };
-      repositories.requests.host = [ "dotfiles" ];
     };
     remote-control = {
       client = {

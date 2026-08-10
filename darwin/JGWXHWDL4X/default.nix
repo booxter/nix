@@ -18,30 +18,10 @@ in
     path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
   };
   host.userEnvironment = {
+    preset = "nvidia";
     roles = {
       developer.enable = true;
       workstation.enable = true;
-    };
-    features = {
-      attentionInbox.enable = true;
-      codex = {
-        usageStatus.enable = false;
-        resetCredits.enable = false;
-        workUsageStatus.enable = true;
-      };
-      scm = {
-        identity = "nvidia";
-        sendEmail.transport = "nvidia";
-      };
-      email = {
-        account = "nvidia";
-        gmailctl.enable = false;
-      };
-      firefox.enable = false;
-      homerow.enable = false;
-      microsoftTeams.enable = true;
-      nvidiaDevelopment.enable = true;
-      podmanMachine.enable = false;
     };
   };
   host.nix.cacheWarmer.enable = true;

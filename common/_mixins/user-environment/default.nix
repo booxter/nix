@@ -114,6 +114,8 @@ let
   };
 in
 {
+  imports = [ ./presets.nix ];
+
   options.host.userEnvironment = {
     identities = lib.mkOption {
       type = lib.types.attrsOf identityType;
