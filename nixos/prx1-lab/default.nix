@@ -7,6 +7,7 @@
   ];
 
   host.isProxmox = true;
+  host.autoUpgrade.schedule.calendar = "Mon 03:50";
   host.network = {
     interfaces.enp5s0f0np0.kind = "ethernet";
     macAddress = "38:05:25:30:7d:89";

@@ -33,7 +33,7 @@ in
         exportToNodeExporter = lib.mkDefault config.host.observability.enable;
       };
     }
-    (lib.mkIf cfg.enable {
+    (lib.mkIf (cfg.enable && config.host.autoUpgrade.enable) {
       systemd.services.nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
 
       systemd.tmpfiles.rules =

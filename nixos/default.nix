@@ -38,6 +38,7 @@ in
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
       ./_mixins/luks
+      ./_mixins/maintenance
       ./_mixins/network
       ./_mixins/nix
       ./_mixins/nfs

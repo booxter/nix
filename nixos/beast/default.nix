@@ -34,6 +34,10 @@
     renderDevice = "/dev/dri/renderD128";
   };
   host.lolek.enable = true;
+  host.autoUpgrade.reboot = {
+    mode = "scheduled";
+    calendar = "Sat 04:00";
+  };
   host.network = {
     ethernet.disablePauseFrames.enable = true;
     interfaces = {

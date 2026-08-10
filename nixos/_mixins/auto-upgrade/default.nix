@@ -1,79 +1,89 @@
 {
-  config,
   lib,
   pkgs,
-  utils,
   ...
 }:
 let
   autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
-  rebootIfNeeded = utils.escapeSystemdExecArgs [
-    (lib.getExe autoUpgradeTools)
-    "reboot-if-needed"
-    "--shutdown-executable"
-    "${config.systemd.package}/bin/shutdown"
-  ];
 in
 {
   imports = [
+    ./assertions.nix
+    ./config.nix
     ./holds.nix
     ./metrics.nix
   ];
 
-  config = lib.mkMerge [
-    {
-      _module.args.autoUpgradeTools = autoUpgradeTools;
+  options.host.autoUpgrade = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to upgrade this host automatically.";
+    };
 
-      system.autoUpgrade = {
-        enable = true;
-        flake = "github:booxter/nix#${config.networking.hostName}";
-        flags = [
-          "-L"
-          "--show-trace"
+    schedule = {
+      calendar = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "05:15";
+        description = "Systemd calendar expression for unattended upgrades.";
+      };
+
+      randomizedDelay = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "5min";
+        description = "Random delay applied to the unattended upgrade schedule.";
+      };
+    };
+
+    reboot = {
+      mode = lib.mkOption {
+        type = lib.types.enum [
+          "with-upgrade"
+          "scheduled"
+          "never"
         ];
-        # Run inherited daily upgrades after the Monday Proxmox node window.
-        dates = lib.mkDefault "05:15";
-        randomizedDelaySec = "5min";
-        persistent = false;
-        allowReboot = true;
-        rebootWindow = {
-          lower = "04:00";
-          upper = "06:00";
-        };
+        default = "with-upgrade";
+        description = "Whether unattended reboots happen with upgrades, on a separate schedule, or never.";
       };
 
-      host.autoUpgrade.holds = [
-        {
-          startDate = "2026-06-08";
-          stopDate = "2026-06-28";
-        }
-      ];
-    }
-    (lib.mkIf (config.host.isCritical && config.system.autoUpgrade.enable) {
-      system.autoUpgrade = {
-        allowReboot = lib.mkForce false;
-        rebootWindow = lib.mkForce null;
+      calendar = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Systemd calendar expression for separately scheduled required reboots.";
       };
 
-      systemd.services.nixos-weekly-reboot-if-needed = {
-        description = "Reboot once a week if the current NixOS profile needs it";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = rebootIfNeeded;
-        };
+      randomizedDelay = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "5min";
+        description = "Random delay applied to separately scheduled reboots.";
       };
 
-      systemd.timers.nixos-weekly-reboot-if-needed = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "Sat 04:00";
-          RandomizedDelaySec = "5min";
-          Persistent = false;
-          Unit = "nixos-weekly-reboot-if-needed.service";
+      window = {
+        lower = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "04:00";
+          description = "Start of the reboot window used by with-upgrade reboots.";
+        };
+
+        upper = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "06:00";
+          description = "End of the reboot window used by with-upgrade reboots.";
         };
       };
-    })
-  ];
+    };
+  };
+
+  config = {
+    _module.args.autoUpgradeTools = autoUpgradeTools;
+
+    host.autoUpgrade.holds = [
+      {
+        startDate = "2026-06-08";
+        stopDate = "2026-06-28";
+      }
+    ];
+  };
 }

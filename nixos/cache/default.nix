@@ -1,7 +1,6 @@
 {
   config,
   facts,
-  lib,
   pkgs,
   ...
 }:
@@ -48,10 +47,14 @@ in
 
   # Upgrade cache before the Monday critical-infra window so the cache is
   # ready before machines that may consume it during their own auto-updates.
-  system.autoUpgrade.dates = lib.mkForce "Mon 03:30";
-  system.autoUpgrade.randomizedDelaySec = lib.mkForce "5min";
-  system.autoUpgrade.rebootWindow = {
-    lower = lib.mkForce "02:59";
-    upper = lib.mkForce "06:00";
+  host.autoUpgrade = {
+    schedule = {
+      calendar = "Mon 03:30";
+      randomizedDelay = "5min";
+    };
+    reboot.window = {
+      lower = "02:59";
+      upper = "06:00";
+    };
   };
 }

@@ -62,18 +62,18 @@ in
       description = ''
         Inclusive local-date ranges during which unattended NixOS auto-upgrade
         maintenance should be skipped. Timers still fire on schedule, but the
-        upgrade service and delayed critical-host reboot service exit cleanly
+        upgrade service and separately scheduled reboot service exit cleanly
         before they perform changes.
       '';
     };
   };
 
   config = lib.mkMerge [
-    (lib.mkIf (cfg.holds != [ ]) {
+    (lib.mkIf (cfg.enable && cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf (cfg.holds != [ ] && config.host.isCritical && config.system.autoUpgrade.enable) {
-      systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
+    (lib.mkIf (cfg.holds != [ ] && cfg.reboot.mode == "scheduled" && cfg.enable) {
+      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
     (lib.mkIf metricsCfg.enable {
       # Update immediately on switch so adding or removing a hold changes alert

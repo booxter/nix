@@ -23,20 +23,14 @@ let
     };
 
   labProxmoxSpec =
-    {
-      index,
-      proxmoxUpgradeTime,
-    }:
+    { index }:
     let
       index' = toString index;
       name = "prx${index'}-lab";
     in
     {
       hostKind = "proxmox";
-      inherit
-        name
-        proxmoxUpgradeTime
-        ;
+      inherit name;
       realm = "home";
       userProfile = "personal";
       hmFull = false;
@@ -89,21 +83,11 @@ in
       name = "beast";
       realm = "home";
       userProfile = "personal";
-      critical = true;
       hmFull = false;
     }
-    (labProxmoxSpec {
-      index = 1;
-      proxmoxUpgradeTime = "Mon 03:50";
-    })
-    (labProxmoxSpec {
-      index = 2;
-      proxmoxUpgradeTime = "Mon 04:20";
-    })
-    (labProxmoxSpec {
-      index = 3;
-      proxmoxUpgradeTime = "Mon 04:50";
-    })
+    (labProxmoxSpec { index = 1; })
+    (labProxmoxSpec { index = 2; })
+    (labProxmoxSpec { index = 3; })
     {
       isVM = true;
       name = "nv";

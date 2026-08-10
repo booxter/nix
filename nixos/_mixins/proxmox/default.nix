@@ -54,9 +54,9 @@ in
 
         # Hypervisors upgrade on a separate schedule to avoid disrupting guest
         # VMs running on top.
-        system.autoUpgrade = {
-          dates = hostSpec.proxmoxUpgradeTime or "Mon 04:00";
-          rebootWindow.lower = lib.mkForce "03:45";
+        host.autoUpgrade = {
+          schedule.calendar = lib.mkDefault "Mon 04:00";
+          reboot.window.lower = lib.mkDefault "03:45";
         };
 
         nixpkgs.overlays = [

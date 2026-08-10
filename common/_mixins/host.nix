@@ -101,14 +101,6 @@ in
       description = "Whether this host is a virtual machine.";
     };
 
-    isCritical = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.critical or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host should avoid frequent unattended reboots.";
-    };
-
     realm = lib.mkOption {
       type = lib.types.enum (builtins.attrNames facts.realms);
       default = hostSpec.realm;
