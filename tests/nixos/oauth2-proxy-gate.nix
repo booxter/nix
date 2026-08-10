@@ -99,9 +99,26 @@ pkgs.testers.runNixOSTest {
       ];
 
       options = {
+        host.internalPki = {
+          clients = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+          };
+
+          rootCaCertificate = lib.mkOption {
+            type = lib.types.path;
+            default = pkgs.writeText "oauth2-proxy-gate-test-root-ca.pem" "";
+          };
+        };
+
         host.internalHttps.services = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
           default = { };
+        };
+
+        host.network.stableAddress.requiredBy = lib.mkOption {
+          type = lib.types.listOf lib.types.nonEmptyStr;
+          default = [ ];
         };
 
         sops.secrets = lib.mkOption {
