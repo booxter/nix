@@ -10,6 +10,7 @@ let
   hostname = config.networking.hostName;
   cfg = config.host.autoUpgrade;
   metricsCfg = config.host.observability.nixosUpgrade;
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
@@ -27,7 +28,7 @@ let
     "--config"
     toolsConfig
     "--output"
-    "${metricsCfg.textfileDir}/nixos-upgrade-hold.prom"
+    "${textfileDir}/nixos-upgrade-hold.prom"
   ];
 in
 {
