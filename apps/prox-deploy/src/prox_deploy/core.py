@@ -7,11 +7,11 @@ from typing import Protocol
 @dataclass(frozen=True)
 class DeployRequest:
     vm_type: str
-    proxmox_host: str
+    node: str
 
     @property
     def password_reference(self) -> str:
-        return f"host/{self.proxmox_host}/root"
+        return f"host/{self.node}/root"
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ def deploy_vm(
     deployer.deploy(
         request,
         ProxmoxCredentials(
-            host=request.proxmox_host,
+            host=request.node,
             user="root",
             password=password,
         ),

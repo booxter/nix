@@ -51,6 +51,7 @@ let
   ];
 in
 {
+  host.proxmox.guest.cluster = "lab";
   system.stateVersion = "25.11";
 
   _module.args = { inherit pkiPkgs; };

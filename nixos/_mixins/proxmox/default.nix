@@ -3,6 +3,7 @@
   hostSpec,
   inputs,
   lib,
+  outputs,
   pkgs,
   system,
   ...
@@ -16,9 +17,17 @@ let
   balloonSize = hostSpec.balloonSize or null;
   diskSize = hostSpec.diskSize or 100;
   primaryInterface = config.host.network.primaryInterface;
+  model = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
+  };
 in
 {
   imports = [
+    ./assertions.nix
     ./integrations.nix
     inputs.proxmox-nixos.nixosModules.proxmox-ve
   ]
@@ -27,17 +36,29 @@ in
     (import ../../disko { device = "/dev/sda"; })
   ];
 
+  options.host.proxmox = {
+    node.cluster = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Proxmox cluster to which this hypervisor belongs.";
+    };
+
+    guest.cluster = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Proxmox cluster on which this guest may run.";
+    };
+  };
+
   config = lib.mkMerge (
     [
+      {
+        host.power.shutdown.before.proxmox-cluster = lib.optionals isVM (
+          model.guestNodes.${hostSpec.name} or [ ]
+        );
+      }
       (lib.mkIf config.host.isProxmox {
         host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
-
-        assertions = [
-          {
-            assertion = primaryInterface != null;
-            message = "host.isProxmox requires host.network.primaryInterface";
-          }
-        ];
 
         # Hypervisors upgrade on a separate schedule to avoid disrupting guest
         # VMs running on top.
@@ -114,7 +135,6 @@ in
       virtualisation.proxmox = {
         inherit cores;
         name = hostSpec.name;
-        node = hostSpec.proxNode or "prx1-lab";
         autoInstall = true;
         memory = memorySize * 1024;
         balloon = if balloonSize == null then null else balloonSize * 1024;

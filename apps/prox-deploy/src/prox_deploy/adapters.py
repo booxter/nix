@@ -50,7 +50,7 @@ class PassPasswordStore:
 
 
 class NixmoxerCallback(Protocol):
-    def __call__(self, flake: bool, machine: str) -> object: ...
+    def __call__(self, flake: bool, machine: str, node: str | None = None) -> object: ...
 
 
 def load_nixmoxer_callback() -> NixmoxerCallback:
@@ -79,7 +79,7 @@ class NixmoxerDeployer:
             self._environment,
             credentials.as_nixmoxer_environment(),
         ):
-            self._callback_loader()(True, request.vm_type)
+            self._callback_loader()(True, request.vm_type, request.node)
 
 
 @contextmanager

@@ -1,16 +1,20 @@
 {
-  facts,
   inputs,
+  outputs,
   pkgs,
   system,
 }:
 let
   proxmoxPkgs = inputs.proxmox-nixos.packages.${system};
-  vmSpecs = builtins.filter (spec: spec.isVM or false) (builtins.attrValues facts.hosts.nixos);
-  vmTypes = map (spec: spec.name) vmSpecs;
+  hostViews = pkgs.lib.mapAttrs (_: configuration: {
+    guestCluster = configuration.config.host.proxmox.guest.cluster;
+    nodeCluster = configuration.config.host.proxmox.node.cluster;
+  }) outputs.nixosConfigurations;
+  proxmoxModel = (import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; }).build hostViews;
+  vmNodes = proxmoxModel.guestNodes;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = proxmoxPkgs.nixmoxer;
-    inherit vmTypes;
+    inherit vmNodes;
   };
 in
 {

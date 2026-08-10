@@ -5,6 +5,7 @@ in
 {
   system.stateVersion = "25.11";
 
+  host.proxmox.guest.cluster = "work";
   host.network.macAddress = "bc:24:11:ed:30:d3";
 
   # Work machines do not use sops-managed login passwords; this VM does not

@@ -15,7 +15,6 @@ let
       name = "builder${idx'}";
       realm = "home";
       userProfile = "personal";
-      proxNode = "prx${idx'}-lab";
       memorySize = 64;
       balloonSize = 48;
       diskSize = 150;
@@ -114,7 +113,6 @@ in
       isOperatorSeat = true;
       cores = 64;
       memorySize = 128;
-      proxNode = "nvws";
     }
     {
       isVM = true;
@@ -180,7 +178,6 @@ in
       name = "home";
       realm = "home";
       userProfile = "personal";
-      proxNode = "prx2-lab";
       cores = 4;
       memorySize = 8;
       diskSize = 80;
