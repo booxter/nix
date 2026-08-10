@@ -7,33 +7,13 @@
 }:
 let
   isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
+  mcps = import ./mcp.nix { inherit lib osConfig; };
   codexPkgs = import ./pkgs {
     inherit pkgs;
     codex = config.programs.codex.package;
   };
-  claudeModel = "opus";
   modelEffort = "high";
-  deployFirefoxDevtoolsMcp = isPersonal;
-  nixosMcpServer = {
-    command = lib.getExe pkgs.mcp-nixos;
-    args = [ ];
-  };
-  codexMcpServers = {
-    nixos = nixosMcpServer;
-  }
-  // lib.optionalAttrs deployFirefoxDevtoolsMcp {
-    firefox-devtools = {
-      command = lib.getExe pkgs.firefox-devtools-mcp;
-      args = [
-        "--profile-path"
-        "${config.xdg.dataHome}/firefox-devtools-mcp"
-        "--accept-insecure-certs"
-        "--viewport"
-        "1440x1000"
-      ];
-    };
-  };
+  hasFirefoxDevtoolsMcp = builtins.hasAttr "firefox-devtools" osConfig.host.mcp.pool;
   agentContext = ''
     This machine uses Nix on macOS or Linux. If a required tool is missing,
     prefer repository flake apps or dev shells; otherwise use
@@ -73,7 +53,7 @@ let
   '';
   codexContext =
     agentContext
-    + lib.optionalString deployFirefoxDevtoolsMcp ''
+    + lib.optionalString hasFirefoxDevtoolsMcp ''
       Only use the Firefox DevTools MCP when the user explicitly requests browser
       interaction or browser-based debugging.
     '';
@@ -94,6 +74,8 @@ in
       model_reasoning_effort = modelEffort;
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
+      desktop.keepRemoteControlAwakeWhilePluggedIn = true;
+      mcp_servers = mcps;
       mcp_oauth_credentials_store = "file";
       notice.fast_default_opt_out = true;
 
@@ -108,26 +90,7 @@ in
         "current-dir"
         "context-remaining"
       ];
-      mcp_servers = codexMcpServers;
       shell_environment_policy.set = codingAgentEnv;
-    };
-  };
-
-  programs.claude-code = lib.mkIf isNvidia {
-    enable = true;
-    context = agentContext;
-    mcpServers.nixos = nixosMcpServer;
-
-    settings = {
-      outputStyle = "Proactive";
-      editorMode = "vim";
-      fastModePerSessionOptIn = true;
-
-      permissions = {
-        defaultMode = "auto";
-        disableBypassPermissionsMode = "disable";
-      };
-      env = codingAgentEnv;
     };
   };
 
@@ -142,10 +105,4 @@ in
         codexPkgs.codex-usage-status
         codexPkgs.codex-rate-limit-reset-credits
       ];
-
-  # Work remote settings pin the default model and effort; user settings lose to
-  # that managed layer, but CLI flags still win for shell launches.
-  home.shellAliases = lib.optionalAttrs isNvidia {
-    claude = "command claude --model ${claudeModel} --effort ${modelEffort}";
-  };
 }

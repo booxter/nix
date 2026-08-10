@@ -11,28 +11,19 @@ let
   codexHome = hmConfig.home.sessionVariables.CODEX_HOME or "${hmConfig.home.homeDirectory}/.codex";
   codexConfigFile = lib.removePrefix "${hmConfig.home.homeDirectory}/" "${codexHome}/config.toml";
   tomlFormat = pkgs.formats.toml { };
-  mcps = import ./mcps.nix { inherit config lib; };
-  effectiveCodexSettings = lib.recursiveUpdate codexConfig.settings (
-    {
-      desktop.keepRemoteControlAwakeWhilePluggedIn = true;
-    }
-    // lib.optionalAttrs mcps.enabled mcps.settings
+  hasMcpSecrets = lib.any (server: server.secretNames != [ ]) (
+    builtins.attrValues config.host.mcp.pool
   );
-  generatedCodexConfig = tomlFormat.generate "codex-system-config" effectiveCodexSettings;
+  generatedCodexConfig = tomlFormat.generate "codex-system-config" codexConfig.settings;
 in
 {
-  options.host.codex.mcp = mcps.options;
-
   config = {
-    assertions = mcps.assertions;
-
     environment.etc."codex/config.toml" = lib.mkIf codexConfig.enable {
       source =
-        if mcps.enabled then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
+        if hasMcpSecrets then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
     };
 
-    sops = lib.mkIf mcps.enabled {
-      secrets = mcps.secrets;
+    sops = lib.mkIf hasMcpSecrets {
       templates."codex-config.toml" = {
         owner = username;
         group = "staff";
