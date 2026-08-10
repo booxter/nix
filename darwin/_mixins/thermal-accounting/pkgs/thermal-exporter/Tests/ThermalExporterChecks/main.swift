@@ -39,6 +39,10 @@ func testStructuredCollection() throws {
     ismcSucceeded: true
   )
   let metrics = try ThermalCollector.collect(snapshot)
+  try expect(
+    metrics.value("host_observability_darwin_thermal_sample_timestamp_seconds") == 1234,
+    "thermal sample timestamp"
+  )
   try expect(metrics.value("host_observability_darwin_thermal_warning_level") == 2, "thermal level")
   try expect(
     metrics.value(

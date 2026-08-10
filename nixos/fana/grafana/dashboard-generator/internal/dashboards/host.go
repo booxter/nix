@@ -142,7 +142,11 @@ func HostDashboard(config Config, host Host) (dashboard.Dashboard, error) {
 			Grid: thermal.Grid, DataSource: datasource,
 			Targets: []PrometheusTarget{{
 				RefID: "A", Legend: "{{sensor}} {{type}} {{group}}",
-				Expression: fmt.Sprintf(`node_thermal_zone_temp{%[1]s} or node_hwmon_temp_celsius{%[1]s} or host_observability_darwin_temperature_group_max_celsius{%[1]s}`, selector),
+				Expression: fmt.Sprintf(`node_thermal_zone_temp{%[1]s} or node_hwmon_temp_celsius{%[1]s} or `, selector) +
+					freshDarwinThermalMetric(
+						"host_observability_darwin_temperature_group_max_celsius",
+						fmt.Sprintf(`instance=%q`, host.Name),
+					),
 			}},
 		}))
 	}

@@ -45,7 +45,7 @@ public enum ThermalCollector {
     )
     metrics.set(prefix + "powermetrics_collect_success", snapshot.powermetricsSucceeded ? 1 : 0)
     metrics.set(prefix + "ismc_collect_success", snapshot.ismcSucceeded ? 1 : 0)
-    metrics.set(prefix + "powermetrics_sample_timestamp_seconds", snapshot.timestamp.timeIntervalSince1970)
+    metrics.set(prefix + "thermal_sample_timestamp_seconds", snapshot.timestamp.timeIntervalSince1970)
 
     for reading in powerReadings(in: snapshot.powermetrics) {
       metrics.set(prefix + "power_watts", reading.watts, labels: [.init("domain", reading.domain)])
@@ -112,7 +112,7 @@ public enum ThermalCollector {
       help: "Whether the last iSMC temperature collection succeeded."
     )
     metrics.register(
-      prefix + "powermetrics_sample_timestamp_seconds",
+      prefix + "thermal_sample_timestamp_seconds",
       help: "Unix timestamp of the latest Darwin thermal sample."
     )
     metrics.register(

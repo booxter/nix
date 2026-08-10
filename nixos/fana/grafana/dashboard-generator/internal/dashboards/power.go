@@ -88,7 +88,7 @@ func PowerOverview(config Config) (dashboard.Dashboard, error) {
 		Unit: units.Watt, DataSource: datasource, Min: ptr(0.0),
 		Targets: []PrometheusTarget{{
 			RefID: "A", Legend: "{{instance}}",
-			Expression: `sum by(instance) (avg_over_time(` + nodeMetric("host_observability_darwin_power_watts") + `[20m]))`,
+			Expression: `sum by(instance) (avg_over_time((` + freshDarwinThermalMetric("host_observability_darwin_power_watts") + `)[20m:30s]))`,
 		}},
 	}))
 	flags := layout.row(10, 24)[0]
