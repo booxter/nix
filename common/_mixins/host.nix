@@ -85,14 +85,6 @@ in
       description = "Whether this host manages repository secrets.";
     };
 
-    hasHardwareAgeIdentity = lib.mkOption {
-      type = lib.types.bool;
-      default = (isDarwin && config.host.hardware.hasTouchId) || config.host.hasYubiAgeIdentity;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host can use a hardware-backed age identity.";
-    };
-
     hasYubiAgeIdentity = lib.mkOption {
       type = lib.types.bool;
       default = builtins.elem hostname facts.yubi.ageIdentity.hosts;

@@ -8,11 +8,13 @@
 let
   hostname = config.networking.hostName;
   username = config.host.username;
+  operatorAgeIdentity = config.host.secrets.operatorAgeIdentity;
+  useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
   pamU2f = facts.yubi.devices.personal.applets.fido2.pamU2f.${hostname} or null;
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf config.programs.yubi.age.enable {
+    (lib.mkIf useYubiAgeIdentity {
       services.pcscd.enable = true;
       security.polkit = {
         enable = true;

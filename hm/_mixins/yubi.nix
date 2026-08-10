@@ -8,10 +8,11 @@
 }:
 let
   cfg = osConfig.programs.yubi;
+  operatorAgeIdentity = osConfig.host.secrets.operatorAgeIdentity;
+  useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
   residentSsh = facts.yubi.devices.personal.applets.fido2.residentSsh;
   yubikeySshKey = "${config.home.homeDirectory}/.ssh/${residentSsh.keyName}";
   fallbackSshKey = "${config.home.homeDirectory}/.ssh/id_ed25519";
-  yubikeyAgeIdentityFile = "${config.xdg.configHome}/sops/age/${facts.yubi.ageIdentity.identityFileName}";
   sshSudoPasswordEnabled =
     osConfig.host.isDarwin && osConfig.programs.yubi.smartCard.sshSudoPassword.enable;
   localSshIdentityConfig = ''
@@ -66,9 +67,8 @@ in
       programs.ssh.extraConfig = lib.mkAfter localSshIdentityConfig;
     })
 
-    (lib.mkIf cfg.age.enable {
+    (lib.mkIf useYubiAgeIdentity {
       home.packages = [ pkgs.age-plugin-yubikey ];
-      home.sessionVariables.SOPS_AGE_KEY_FILE = lib.mkDefault yubikeyAgeIdentityFile;
     })
 
     (lib.mkIf sshSudoPasswordEnabled {

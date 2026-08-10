@@ -4,7 +4,6 @@
   ...
 }:
 let
-  username = config.host.username;
   lan = facts.site.lan;
   wgHome = facts.site.wireguard.home;
 in
@@ -15,15 +14,15 @@ in
     ./opencode.nix
   ];
 
-  home-manager.users.${username} = {
-    home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
-  };
-
   host = {
     hardware.isLaptop = true;
     network.wireguardClients.home = {
       interface = "wg0";
       providesAccessTo = [ config.host.realm ];
+    };
+    secrets.operatorAgeIdentity = {
+      backend = "secure-enclave";
+      path = "/Users/${config.host.username}/.config/sops/age/mair-se.txt";
     };
     remote-control = {
       client = {

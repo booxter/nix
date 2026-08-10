@@ -1,6 +1,4 @@
 {
-  config,
-  hostSpec,
   lib,
   pkgs,
   ...
@@ -15,10 +13,6 @@ in
     {
       assertion = isDarwin != isLinux;
       message = "Facts platform ${system} must identify exactly one supported kernel.";
-    }
-    {
-      assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
-      message = "Secrets operator ${hostSpec.name} must have a hardware-backed age identity.";
     }
   ];
 }

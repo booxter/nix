@@ -17,7 +17,5 @@ in
       internal = true;
       description = "Whether YubiKey facts assign this host a resident SSH key.";
     };
-
-    age.enable = lib.mkEnableOption "YubiKey-backed age identity tooling";
   };
 }
