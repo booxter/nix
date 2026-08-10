@@ -87,10 +87,7 @@
     };
     backups.stagingDirectory = "/volume2/backups/staging/jellyfin";
   };
-  host.jellarr = {
-    enable = true;
-    target.host = "beast";
-  };
+  host.jellarr.enable = true;
   host.lolek.enable = true;
   host.autoUpgrade.reboot = {
     mode = "scheduled";
