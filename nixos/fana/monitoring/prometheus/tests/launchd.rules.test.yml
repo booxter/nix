@@ -1,0 +1,176 @@
+rule_files:
+  - ../rules/launchd.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.node",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.node",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="system",name="org.nixos.node",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.node",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.missing",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedLaunchdJobMissing
+              category: launchd
+              domain: system
+              instance: mair
+              mode: continuous
+              name: org.nixos.missing
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job missing: org.nixos.missing on mair"
+              description: "Nix expects org.nixos.missing in the system launchd domain on mair, but it has not been loaded for 5 minutes."
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.stopped",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.stopped",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="system",name="org.nixos.stopped",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.stopped",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedLaunchdJobNotRunning
+              category: launchd
+              domain: system
+              instance: mair
+              mode: continuous
+              name: org.nixos.stopped
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job stopped: org.nixos.stopped on mair"
+              description: "The continuous launchd job org.nixos.stopped on mair has been loaded but not running for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.scheduled",mode="scheduled",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.scheduled",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="system",name="org.nixos.scheduled",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.scheduled",scrape_profile="node"}'
+        values: "78x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: LaunchdJobFailed
+              category: launchd
+              domain: system
+              instance: mair
+              mode: scheduled
+              name: org.nixos.scheduled
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job failed: org.nixos.scheduled on mair"
+              description: "The last invocation of org.nixos.scheduled on mair failed and the job has not been running for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.running",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.running",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="system",name="org.nixos.running",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.running",scrape_profile="node"}'
+        values: "78x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="system",name="org.nixos.missing",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+        values: "-1000x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DarwinLaunchdExporterUnhealthy
+        exp_alerts:
+          - exp_labels:
+              alertname: DarwinLaunchdExporterUnhealthy
+              category: launchd
+              instance: mair
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd state export unhealthy on mair"
+              description: "Native launchd state collection on mair has failed, gone stale, or disappeared for 5 minutes."
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing

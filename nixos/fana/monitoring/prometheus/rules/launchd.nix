@@ -1,0 +1,100 @@
+{ lib }:
+let
+  inherit (import ./lib.nix { inherit lib; }) mkAlert mkGroup;
+  collectorHealthy = ''
+    and on(instance)
+    host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 1
+    and on(instance)
+    time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} <= 120
+    and on(instance)
+    up{scrape_profile="node"} == 1
+  '';
+in
+{
+  groups = [
+    (mkGroup {
+      name = "launchd";
+      rules = [
+        (mkAlert {
+          name = "DarwinLaunchdExporterUnhealthy";
+          expr = ''
+            (
+              host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 0
+              or
+              time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} > 120
+              or
+              (
+                node_uname_info{scrape_profile="node",sysname="Darwin"} == 1
+                unless on(instance)
+                host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"}
+              )
+            )
+            and on(instance)
+            up{scrape_profile="node"} == 1
+          '';
+          for = "5m";
+          severity = "warning";
+          category = "launchd";
+          summary = "Launchd state export unhealthy on {{ $labels.instance }}";
+          description = "Native launchd state collection on {{ $labels.instance }} has failed, gone stale, or disappeared for 5 minutes.";
+        })
+        (mkAlert {
+          name = "ExpectedLaunchdJobMissing";
+          expr = ''
+            (
+              nix_darwin_launchd_job_expected{scrape_profile="node"} == 1
+              unless on(instance, domain, name)
+              host_observability_darwin_launchd_job_loaded{scrape_profile="node"} == 1
+            )
+            ${collectorHealthy}
+          '';
+          for = "5m";
+          severity = "warning";
+          category = "launchd";
+          summary = "Launchd job missing: {{ $labels.name }} on {{ $labels.instance }}";
+          description = "Nix expects {{ $labels.name }} in the {{ $labels.domain }} launchd domain on {{ $labels.instance }}, but it has not been loaded for 5 minutes.";
+        })
+        (mkAlert {
+          name = "ExpectedLaunchdJobNotRunning";
+          expr = ''
+            (
+              (
+                nix_darwin_launchd_job_expected{scrape_profile="node",mode="continuous"} == 1
+                and on(instance, domain, name)
+                host_observability_darwin_launchd_job_loaded{scrape_profile="node"} == 1
+              )
+              unless on(instance, domain, name)
+              host_observability_darwin_launchd_job_running{scrape_profile="node"} == 1
+            )
+            ${collectorHealthy}
+          '';
+          for = "5m";
+          severity = "warning";
+          category = "launchd";
+          summary = "Launchd job stopped: {{ $labels.name }} on {{ $labels.instance }}";
+          description = "The continuous launchd job {{ $labels.name }} on {{ $labels.instance }} has been loaded but not running for 5 minutes.";
+        })
+        (mkAlert {
+          name = "LaunchdJobFailed";
+          expr = ''
+            (
+              (
+                nix_darwin_launchd_job_expected{scrape_profile="node"} == 1
+                and on(instance, domain, name)
+                host_observability_darwin_launchd_job_last_exit_code{scrape_profile="node"} != 0
+              )
+              unless on(instance, domain, name)
+              host_observability_darwin_launchd_job_running{scrape_profile="node"} == 1
+            )
+            ${collectorHealthy}
+          '';
+          for = "5m";
+          severity = "warning";
+          category = "launchd";
+          summary = "Launchd job failed: {{ $labels.name }} on {{ $labels.instance }}";
+          description = "The last invocation of {{ $labels.name }} on {{ $labels.instance }} failed and the job has not been running for 5 minutes.";
+        })
+      ];
+    })
+  ];
+}
