@@ -67,7 +67,7 @@ in
 
   programs.home-manager.enable = true; # let it manage itself
   programs.podman-machine = {
-    enable = isDarwin && isDesktop && isPersonal;
+    enable = osConfig.host.userEnvironment.features.podmanMachine.enable;
     provider = "libkrun";
     cpus = 4;
     memoryMiB = 8192;

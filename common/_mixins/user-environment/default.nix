@@ -167,6 +167,8 @@ in
 
       homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
 
+      podmanMachine.enable = lib.mkEnableOption "managed Podman virtual machine";
+
       scm = {
         enable = lib.mkEnableOption "source-control development environment";
 
@@ -243,6 +245,9 @@ in
         })
         (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
           homerow.enable = lib.mkDefault true;
+        })
+        (lib.mkIf (cfg.roles.developer.enable && config.host.isDarwin) {
+          podmanMachine.enable = lib.mkDefault true;
         })
       ];
     };

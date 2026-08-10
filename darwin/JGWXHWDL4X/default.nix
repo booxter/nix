@@ -38,6 +38,7 @@ in
       };
       firefox.enable = false;
       homerow.enable = false;
+      podmanMachine.enable = false;
     };
   };
   host.nix.cacheWarmer.enable = true;
