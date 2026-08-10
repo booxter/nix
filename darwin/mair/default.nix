@@ -18,9 +18,8 @@
     };
     remote-control = {
       client = {
-        vnc.enable = true;
+        enable = true;
         wayland.enable = true;
-        x11.enable = true;
       };
       server.vnc.enable = true;
     };

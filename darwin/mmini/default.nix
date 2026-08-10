@@ -7,10 +7,7 @@
   host.nix.cacheWarmer.enable = true;
 
   host.remote-control = {
-    client = {
-      vnc.enable = true;
-      x11.enable = true;
-    };
+    client.enable = true;
     server.vnc.enable = true;
   };
 

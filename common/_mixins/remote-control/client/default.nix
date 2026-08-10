@@ -30,7 +30,7 @@
     wayland.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Whether to enable Wayland remote-control client functionality.";
+      description = "Whether to enable opt-in Wayland remote-control client functionality.";
     };
   };
 
@@ -47,9 +47,8 @@
     ];
 
     host.remote-control.client = {
-      vnc.enable = lib.mkDefault config.host.remote-control.client.enable;
+      vnc.enable = lib.mkDefault (config.host.remote-control.client.enable && isDarwin);
       x11.enable = lib.mkDefault config.host.remote-control.client.enable;
-      wayland.enable = lib.mkDefault config.host.remote-control.client.enable;
     };
   };
 }
