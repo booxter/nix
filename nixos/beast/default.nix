@@ -40,7 +40,7 @@
     server = {
       description = "APC Back-UPS RS 1500MS2";
     };
-    shutdown.critical = true;
+    shutdown.waitForLowBattery = true;
   };
 
   networking.resolvconf.enable = true;

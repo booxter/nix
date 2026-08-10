@@ -24,7 +24,7 @@ in
     server = {
       description = "APC UPS 1500VA";
     };
-    shutdown.critical = true;
+    shutdown.waitForLowBattery = true;
   };
 
   # Work machines do not use sops-managed login passwords.

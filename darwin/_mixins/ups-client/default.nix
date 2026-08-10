@@ -75,7 +75,7 @@ in
         LOCKFN /var/lib/nut/upssched.lock
 
         ${
-          if cfg.shutdown.critical || shutdownDelay == null then
+          if cfg.shutdown.waitForLowBattery || shutdownDelay == null then
             ""
           else
             ''

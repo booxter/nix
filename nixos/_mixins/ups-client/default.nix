@@ -39,7 +39,7 @@ in
     (lib.mkIf (serverSpec != null && upsServer != null) {
       host.ups.scheduler = lib.mkIf (shutdownDelay != null) {
         enable = true;
-        inherit (cfg.shutdown) critical;
+        inherit (cfg.shutdown) waitForLowBattery;
         shutdownDelaySeconds = shutdownDelay;
       };
 

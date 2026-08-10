@@ -12,7 +12,7 @@ in
       message = "host.ups.server.description is required when the UPS server is enabled";
     }
     {
-      assertion = !cfg.shutdown.critical || cfg.server.enable;
+      assertion = !cfg.shutdown.waitForLowBattery || cfg.server.enable;
       message = "only a UPS server may wait for a low-battery event";
     }
   ];

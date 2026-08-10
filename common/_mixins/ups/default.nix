@@ -43,7 +43,7 @@ in
     };
 
     shutdown = {
-      critical = lib.mkOption {
+      waitForLowBattery = lib.mkOption {
         type = lib.types.bool;
         default = false;
         description = "Whether to wait for low battery instead of using a shutdown timer.";

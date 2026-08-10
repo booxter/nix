@@ -20,6 +20,6 @@
     server = {
       description = "APC UPS 1500VA";
     };
-    shutdown.critical = true;
+    shutdown.waitForLowBattery = true;
   };
 }

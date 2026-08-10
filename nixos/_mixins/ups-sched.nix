@@ -11,7 +11,7 @@ in
   options.host.ups.scheduler = {
     enable = lib.mkEnableOption "UPS shutdown scheduling";
 
-    critical = lib.mkOption {
+    waitForLowBattery = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Whether to wait for a low-battery event before shutting down.";
@@ -70,7 +70,7 @@ in
         PIPEFN /run/nut/upssched.pipe
         LOCKFN /run/nut/upssched.lock
         ${
-          if cfg.critical then
+          if cfg.waitForLowBattery then
             ""
           else
             ''
