@@ -10,7 +10,7 @@ let
   cliCfg = osConfig.host.userEnvironment.features.cli;
   firefoxCfg = osConfig.host.userEnvironment.features.firefox;
   nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
-  isPersonal = osConfig.host.userProfile == "personal";
+  podmanDesktopCfg = osConfig.host.userEnvironment.features.podmanDesktop;
   hmFull = hostSpec.hmFull or true;
   username = osConfig.host.username;
 in
@@ -80,9 +80,6 @@ in
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
-    let
-      vlc = if isDarwin then pkgs.vlc-bin else pkgs.vlc;
-    in
     with pkgs;
     [
     ]
@@ -92,12 +89,5 @@ in
       telegram-desktop
       wireshark
     ]
-    ++ lib.optionals (isPersonal && isDesktop) [
-      vlc
-      podman-desktop
-      wmctrl
-      xauth
-      xprop
-      xwininfo
-    ];
+    ++ lib.optional podmanDesktopCfg.enable podman-desktop;
 }

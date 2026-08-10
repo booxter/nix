@@ -231,6 +231,8 @@ in
 
       nvidiaDevelopment.enable = lib.mkEnableOption "NVIDIA development environment";
 
+      podmanDesktop.enable = lib.mkEnableOption "Podman Desktop application";
+
       podmanMachine.enable = lib.mkEnableOption "managed Podman virtual machine";
 
       scm = {

@@ -101,6 +101,7 @@
       features = {
         cli.ramalama.enable = true;
         codex.warmer.enable = true;
+        podmanDesktop.enable = true;
       };
       repositories.requests.host = [ "dotfiles" ];
     };
