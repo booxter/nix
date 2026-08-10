@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   ...
 }:
 {
@@ -24,6 +25,13 @@
       server.vnc.enable = true;
     };
     secretive.enable = true;
+    wireguard.client = {
+      enable = true;
+      network = "home";
+      address = "10.83.0.10/32";
+      publicKey = facts.public-keys.wireguard.home-mair;
+      privateKeySecret = "wireguard/gw/privateKey";
+    };
   };
 
 }

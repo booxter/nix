@@ -1,9 +1,10 @@
 # gw (NixOS VM)
 
-This host is a minimal WireGuard gateway VM. The server and client registry
-lives in `facts/site/facts.nix` under `wireguard.home`. Assigning `gw` as the
-gateway host makes the shared WireGuard server module configure its interface,
-firewall, NAT, DDNS, traffic shaping, and exporter.
+This host is a minimal WireGuard gateway VM. Its native
+`host.wireguard.server` declaration makes the shared server module configure
+the interface, firewall, NAT, DDNS, traffic shaping, and exporter. Managed
+clients register independently through `host.wireguard.client`; the fleet
+model joins both declarations by network name.
 
 ## Client setup
 
@@ -14,21 +15,22 @@ umask 077
 wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
-Pick a free address from `wireguard.home.cidr` in `facts/site/facts.nix` and
-add the peer to `wireguard.home.peers`:
+For a managed host, declare the client in that host's configuration:
 
 ```nix
-mair = {
-  host = "mair"; # Only for a managed fleet client.
+host.wireguard.client = {
+  enable = true;
+  network = "home";
   publicKey = "<contents of client.pub>";
   address = "<peer-address>/32";
+  privateKeySecret = "wireguard/gw/privateKey";
 };
 ```
 
-For a managed fleet client, `host` registers the machine with the shared
-WireGuard client module. The module provisions its SOPS private-key secret and
-`wg-quick` interface from these facts. Omit `host` for an externally managed
-peer such as a phone or travel router.
+The shared client module provisions its SOPS private-key secret and `wg-quick`
+interface from this declaration and the matching server policy. Add a phone,
+travel router, or other unmanaged peer under
+`host.wireguard.server.externalPeers` on `gw` instead.
 
 Deploy or redeploy the VM:
 
@@ -42,13 +44,13 @@ Generate a client config locally from the tracked topology:
 
 ```bash
 nix run .#wg-home-client-config -- \
-  --peer <facts-peer-name> \
+  --peer <peer-name> \
   --private-key-file ./client.key \
   --fetch-server-public-key \
   --output ./client.conf
 ```
 
-For a peer that is not modeled in `site.wireguard.home.peers`, use
+For a peer that is not modeled in the native topology, use
 `--address <peer-address>/32` instead of `--peer`.
 
 Generated client configs use the LAN DNS server plus the `home.arpa` search
@@ -64,7 +66,7 @@ qrencode -t ansiutf8 < client.conf
 
 ## Peer status exporter
 
-`gw` exposes facts-backed WireGuard peer status through an mTLS-protected
+`gw` exposes option-backed WireGuard peer status through an mTLS-protected
 nginx endpoint for the DNS automation on `pki`:
 
 - service: `prometheus-wireguard-exporter.service`

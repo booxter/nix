@@ -16,14 +16,6 @@ in
 raw
 // {
   lan = raw.lan // {
-    staticRoutes = [
-      {
-        destination = raw.wireguard.home.cidr;
-        nextHopHost = raw.wireguard.home.gateway.host;
-        distance = 1;
-        name = "wg-home";
-      }
-    ];
     dnsRecords = staticDnsRecords;
   };
 }

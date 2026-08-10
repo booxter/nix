@@ -3,6 +3,7 @@
   facts,
   lanDomain,
   reservations,
+  staticRoutes ? [ ],
   webDnsRecords ? [ ],
 }:
 let
@@ -57,16 +58,16 @@ let
     }) (webDnsRecords ++ lan.dnsRecords)
   );
   dnsRecordsJson = builtins.toJSON (builtins.attrValues dnsRecordsByDomain);
-  staticRoutes = map (
+  renderedStaticRoutes = map (
     route:
     removeAttrs route [ "nextHopHost" ]
     // {
       nextHop = addressFor route.nextHopHost;
     }
-  ) (lan.staticRoutes or [ ]);
-  staticRoutesJson = builtins.toJSON staticRoutes;
+  ) staticRoutes;
+  staticRoutesJson = builtins.toJSON renderedStaticRoutes;
   classlessStaticRoutesJson = builtins.toJSON (
-    (builtins.filter (route: route.enabled or true) staticRoutes)
+    (builtins.filter (route: route.enabled or true) renderedStaticRoutes)
     ++ [
       {
         name = "default";

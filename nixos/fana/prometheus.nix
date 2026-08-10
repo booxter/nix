@@ -58,7 +58,7 @@ let
   };
   wireguardScrapes = import ./scrapes/wireguard.nix {
     inherit
-      facts
+      config
       lib
       outputs
       prometheusMtlsTlsConfig

@@ -12,7 +12,7 @@ let
   metricsName = "wg-${cfg.network}";
 in
 {
-  config = lib.mkIf (cfg.network != null) {
+  config = lib.mkIf cfg.enable {
     host.observability.prometheusEndpoints.${metricsName} = {
       enable = true;
       port = publicPort;

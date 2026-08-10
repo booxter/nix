@@ -8,19 +8,8 @@
 }:
 let
   unifiPkgs = import ./pkgs pkgs;
-  localHost = config.networking.hostName;
   controller = config.host.network.ipController;
-  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  wireguardInterfacesByHost =
-    lib.mapAttrs (
-      _: configuration: configuration.config.networking.wireguard.interfaces
-    ) otherConfigurations
-    // {
-      ${localHost} = config.networking.wireguard.interfaces;
-    };
-  fleetWireguardEnabled = lib.any (interfaces: interfaces != { }) (
-    builtins.attrValues wireguardInterfacesByHost
-  );
+  fleetWireguardEnabled = config.host.wireguard.networks != { };
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
@@ -37,9 +26,9 @@ let
     addressFor = fleetNetwork.addressFor;
     reservations = config.host.network.ipController.reservations;
   };
-  wgHome = facts.site.wireguard.home;
-  wgHomeExporterPort = 9586;
-  wgHomeExporterHost = "gw.${lanDomain}";
+  wgHome = config.host.wireguard.networks.home;
+  wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
+  wgHomeEndpoint = wgHomeServerConfig.host.observability.prometheusEndpoints."wg-home";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
   wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
@@ -47,7 +36,7 @@ let
     address = builtins.head (lib.splitString "/" peer.address);
     domain = "${peer.host}.${lanDomain}";
     inherit (peer) publicKey;
-  }) (lib.filterAttrs (_name: peer: peer ? host) wgHome.peers);
+  }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
 lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEnabled) {
@@ -84,7 +73,7 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
       User = unifiSyncCfg.user;
       Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${
+      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${internalPkiRootCaPath} --client-cert-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
       } --client-key-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path

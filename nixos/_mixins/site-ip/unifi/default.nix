@@ -18,11 +18,18 @@ let
     inherit fleetServices;
     addressFor = fleetNetwork.addressFor;
   };
+  wireguardStaticRoutes = lib.mapAttrsToList (name: network: {
+    destination = network.cidr;
+    nextHopHost = network.server.host;
+    distance = 1;
+    name = "wg-${name}";
+  }) config.host.wireguard.networks;
   unifiSyncEnv = import ./environment.nix {
     inherit facts webDnsRecords;
     addressFor = fleetNetwork.addressFor;
     lanDomain = config.host.network.lanDomain;
     reservations = config.host.network.ipController.reservations;
+    staticRoutes = (facts.site.lan.staticRoutes or [ ]) ++ wireguardStaticRoutes;
   };
 in
 {

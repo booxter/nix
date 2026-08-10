@@ -1,6 +1,7 @@
 {
   facts,
   inputs,
+  outputs,
   plainPkgs,
   system,
   ...
@@ -10,7 +11,13 @@ let
   basePackages = pkgs.lib.filterAttrs (
     _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
   ) (import ../pkgs pkgs);
-  fleet = import ../apps/fleet.nix { inherit facts pkgs; };
+  fleet = import ../apps/fleet.nix {
+    inherit
+      facts
+      outputs
+      pkgs
+      ;
+  };
   orgPackages = import ../nixos/org/pkgs pkgs;
 in
 basePackages

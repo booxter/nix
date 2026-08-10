@@ -14,9 +14,7 @@ let
   );
   client = config.host.wireguard.client;
   enable =
-    config.host.hardware.isLaptop
-    && client.network != null
-    && builtins.elem client.network internalNetworks;
+    config.host.hardware.isLaptop && client.enable && builtins.elem client.network internalNetworks;
   cacheLib = import ../../../common/_mixins/nix/cache/lib.nix { inherit lib; };
   substitutersFor = profile: map (cacheLib.substituterFor profile) caches;
   tunnelInactiveSubstituters = lib.concatStringsSep " " (substitutersFor "tunnelInactive");

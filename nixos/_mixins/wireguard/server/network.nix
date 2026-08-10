@@ -1,12 +1,11 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.wireguard.server;
-  network = facts.site.wireguard.${cfg.network};
+  network = config.host.wireguard.networks.${cfg.network} or null;
   peers = builtins.attrValues network.peers;
   mkPeer = peer: {
     inherit (peer) publicKey;
@@ -14,14 +13,14 @@ let
   };
 in
 {
-  config = lib.mkIf (cfg.network != null) {
+  config = lib.mkIf (cfg.enable && network != null) {
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
     host.network.stableAddress.requiredBy = [ "WireGuard server ${cfg.network}" ];
 
     networking = {
       firewall = {
-        allowedUDPPorts = [ network.gateway.listenPort ];
+        allowedUDPPorts = [ network.server.listenPort ];
         trustedInterfaces = [ cfg.interface ];
       };
 
@@ -32,8 +31,8 @@ in
       };
 
       wireguard.interfaces.${cfg.interface} = {
-        ips = [ network.gateway.address ];
-        inherit (network.gateway) listenPort;
+        ips = [ network.server.address ];
+        inherit (network.server) listenPort;
         privateKeyFile = "/var/lib/wireguard/${cfg.interface}.key";
         generatePrivateKeyFile = true;
         peers = map mkPeer peers;

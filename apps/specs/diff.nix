@@ -1,5 +1,10 @@
-{ facts, pkgs, ... }:
 {
-  package = (import ../fleet.nix { inherit facts pkgs; }).packages.diff;
+  facts,
+  outputs,
+  pkgs,
+  ...
+}:
+{
+  package = (import ../fleet.nix { inherit facts outputs pkgs; }).packages.diff;
   description = "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
 }

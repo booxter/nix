@@ -1,22 +1,16 @@
 {
   config,
-  facts,
   isDarwin,
   lib,
   ...
 }:
 let
   cfg = config.host.wireguard.client;
-  network = facts.site.wireguard.${cfg.network};
-  peers = builtins.filter (peer: (peer.host or null) == config.networking.hostName) (
-    builtins.attrValues network.peers
-  );
-  peer = builtins.head peers;
-  privateKeySecret = "wireguard/${network.gateway.host}/privateKey";
+  network = config.host.wireguard.networks.${cfg.network} or null;
 in
 {
-  config = lib.mkIf (cfg.network != null) {
-    sops.secrets.${privateKeySecret} = {
+  config = lib.mkIf (cfg.enable && network != null) {
+    sops.secrets.${cfg.privateKeySecret} = {
       owner = "root";
       group = if isDarwin then "wheel" else "root";
       mode = "0400";
@@ -24,15 +18,15 @@ in
 
     networking.wg-quick.interfaces.${cfg.interface} = {
       inherit (cfg) autostart;
-      address = [ peer.address ];
-      inherit (network.client) dns;
-      privateKeyFile = config.sops.secrets.${privateKeySecret}.path;
+      address = [ cfg.address ];
+      inherit (network.clientPolicy) dns;
+      privateKeyFile = config.sops.secrets.${cfg.privateKeySecret}.path;
 
       peers = [
         {
-          publicKey = network.gateway.publicKey;
-          endpoint = "${network.gateway.publicEndpoint}:${toString network.gateway.listenPort}";
-          inherit (network.client) allowedIPs persistentKeepalive;
+          publicKey = network.server.publicKey;
+          endpoint = "${network.server.publicEndpoint}:${toString network.server.listenPort}";
+          inherit (network.clientPolicy) allowedIPs persistentKeepalive;
         }
       ];
     };

@@ -1,10 +1,8 @@
 {
   context,
-  facts,
 }:
 let
   inherit (context) lanDomain publicDomain;
-  publicKeys = facts.public-keys;
 in
 rec {
   public = {
@@ -64,44 +62,6 @@ rec {
         type = "text";
         signed = false;
         encoding = "text";
-      };
-    };
-  };
-
-  wireguard.home = {
-    cidr = "10.83.0.0/24";
-    client = {
-      allowedIPs = [
-        wireguard.home.cidr
-        lan.cidr
-      ];
-      dns = [
-        lan.gateway.address
-        lan.domain
-      ];
-      persistentKeepalive = 25;
-    };
-    gateway = {
-      host = "gw";
-      address = "10.83.0.1/24";
-      listenPort = 51820;
-      publicEndpoint = "wg.${public.domain}";
-      publicKey = publicKeys.wireguard.home-gateway;
-      dynamicDns = {
-        hostname = "ihrachyshka-gw.freeddns.org";
-        username = "ihrachyshka";
-      };
-      qos.uploadLimitMbit = 10;
-    };
-    peers = {
-      mair = {
-        host = "mair";
-        address = "10.83.0.10/32";
-        publicKey = publicKeys.wireguard.home-mair;
-      };
-      unifi-travel-router = {
-        address = "10.83.0.20/32";
-        publicKey = publicKeys.wireguard.home-unifi-travel-router;
       };
     };
   };

@@ -1,11 +1,12 @@
 {
   facts,
+  outputs,
   pkgs,
 }:
 let
   lan = facts.site.lan;
-  wgHome = facts.site.wireguard.home;
-  wireguardGatewaySshHost = wgHome.gateway.host;
+  fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
+  wgHome = fleetConfiguration.config.host.wireguard.networks.home;
   appPackages = import ./packages.nix pkgs;
 
   fleetFacts = {
@@ -31,11 +32,11 @@ let
   };
   wireguardHome = {
     subnet = wgHome.cidr;
-    inherit (wgHome.client) dns;
-    endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
-    allowedIps = wgHome.client.allowedIPs;
+    inherit (wgHome.clientPolicy) dns;
+    endpoint = "${wgHome.server.publicEndpoint}:${toString wgHome.server.listenPort}";
+    allowedIps = wgHome.clientPolicy.allowedIPs;
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
-    gatewaySshHost = wireguardGatewaySshHost;
+    gatewaySshHost = wgHome.server.host;
   };
   vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
   fleetTools = pkgs.callPackage ./fleet-tools {
