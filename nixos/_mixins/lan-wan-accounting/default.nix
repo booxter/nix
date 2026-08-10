@@ -125,8 +125,8 @@ in
 
     interface = lib.mkOption {
       type = with lib.types; nullOr str;
-      default = null;
-      description = "If set, only account traffic entering or leaving through this interface.";
+      default = config.host.network.primaryInterface;
+      description = "Interface whose traffic should be accounted, or null to account all non-loopback traffic.";
     };
 
     wanUdpSubclass = lib.mkOption {

@@ -36,8 +36,6 @@
       address = "192.168.16.3";
     };
   };
-  # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
-  host.observability.lanWan.interface = "enp6s0";
   host.ups = {
     server = {
       description = "APC Back-UPS RS 1500MS2";
