@@ -2,22 +2,12 @@
   config,
   facts,
   lib,
-  outputs,
   ...
 }:
 let
-  fleetServices = import ../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
-  publicServices = builtins.filter (
-    contribution: contribution.value.public.ingressHost == config.networking.hostName
-  ) fleetServices.public;
-  mtlsPublicServices = builtins.filter (
-    contribution: contribution.value.public.transport == "internal-mtls"
-  ) publicServices;
   jellyfinDownloadProxyPort = 18096;
   jellyfinDownloadRateBytesPerSecond = 5 * 1000 * 1000 / 8;
-  jellyfinService = fleetServices.byId.jellyfin;
+  jellyfinService = config.host.web.services.jellyfin;
   jellyfinBackend = lib.removePrefix "http://" jellyfinService.public.directUpstream;
   jellyfinPublicHost = jellyfinService.public.hostName;
   jellyfinProxyHeaders = ''
@@ -30,19 +20,6 @@ let
   '';
 in
 {
-  host.internalPki.clients = builtins.listToAttrs (
-    map (contribution: {
-      name = contribution.id;
-      value = {
-        enable = true;
-        category = "internal";
-      };
-    }) mtlsPublicServices
-  );
-
-  # Keep public gateway config-only changes from dropping long-lived proxied streams.
-  services.nginx.enableReload = true;
-
   # Send only original-file downloads through HAProxy, which provides a shared
   # bandwidth bucket. All other Jellyfin requests continue to go directly to
   # Jellyfin so playback is unaffected.
@@ -83,38 +60,6 @@ in
   systemd.services.nginx = {
     wants = [ "haproxy.service" ];
     after = [ "haproxy.service" ];
-  };
-
-  host.externalService = {
-    ddns = {
-      enable = true;
-      hostname = "ihrachyshka-beast.freeddns.org";
-      username = "ihrachyshka";
-    };
-    virtualHosts = builtins.listToAttrs (
-      map (contribution: {
-        name = contribution.value.public.hostName;
-        value =
-          if contribution.value.public.transport == "internal-mtls" then
-            let
-              service = contribution.value;
-            in
-            {
-              proxyPass = service.internal.url;
-              upstreamTls = {
-                enable = true;
-                clientName = contribution.id;
-                serverName = service.internal.serverName;
-              };
-              inherit (service.public) locationExtraConfig;
-            }
-          else
-            {
-              proxyPass = contribution.value.public.directUpstream;
-              inherit (contribution.value.public) locationExtraConfig;
-            };
-      }) publicServices
-    );
   };
 
 }

@@ -30,7 +30,10 @@ let
   ) enabledServices;
 in
 {
-  imports = [ ./assertions.nix ];
+  imports = [
+    ./assertions.nix
+    ./ingress
+  ];
 
   options.host.web.services = lib.mkOption {
     type = lib.types.attrsOf (
@@ -176,15 +179,15 @@ in
               };
 
               ingressHost = lib.mkOption {
-                type = lib.types.str;
-                default = "beast";
-                description = "NixOS host providing public ingress for this service.";
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Explicit public ingress host, or null to use the realm controller.";
               };
 
               splitDnsHost = lib.mkOption {
-                type = lib.types.str;
-                default = config.public.ingressHost;
-                description = "NixOS host that internal DNS resolves the public hostname to.";
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Explicit split-DNS host, or null to use the resolved ingress host.";
               };
 
               transport = lib.mkOption {

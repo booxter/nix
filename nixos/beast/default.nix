@@ -22,6 +22,14 @@
   ];
 
   host.observability.blackbox.remote.enable = true;
+  host.web.ingress = {
+    enable = true;
+    dynamicDns = {
+      enable = true;
+      hostname = "ihrachyshka-beast.freeddns.org";
+      username = "ihrachyshka";
+    };
+  };
   host.backups.server.enable = true;
   host.hardware.gpu = {
     vendors = [ "intel" ];
