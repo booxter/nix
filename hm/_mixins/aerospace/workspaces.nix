@@ -1,4 +1,4 @@
-{ isNvidia, lib }:
+{ lib, microsoftTeamsEnabled }:
 
 (map toString (lib.range 1 4))
 ++ [
@@ -6,4 +6,4 @@
   "e" # email
   "s" # spotify
 ]
-++ (lib.optional isNvidia "t")
+++ (lib.optional microsoftTeamsEnabled "t")

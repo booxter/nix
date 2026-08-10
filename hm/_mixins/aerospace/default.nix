@@ -7,12 +7,12 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  isNvidia = osConfig.host.userProfile == "nvidia";
+  microsoftTeamsEnabled = osConfig.host.userEnvironment.features.microsoftTeams.enable;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
   aerospaceX11Actions = pkgs.callPackage ./pkgs { };
-  workspaceNames = import ./workspaces.nix { inherit isNvidia lib; };
+  workspaceNames = import ./workspaces.nix { inherit lib microsoftTeamsEnabled; };
   moveCommand =
     direction:
     if config.programs.xquartz.enable then
@@ -164,14 +164,14 @@ in
           run = [ "move-node-to-workspace e" ];
         }
       ]
-      ++ lib.optionals isNvidia [
+      ++ lib.optionals microsoftTeamsEnabled [
         {
           "if" = "test %{app-bundle-id} = com.microsoft.teams2";
           run = [ "move-node-to-workspace t" ];
         }
       ];
 
-      workspace-to-monitor-force-assignment = {
+      workspace-to-monitor-force-assignment = lib.optionalAttrs microsoftTeamsEnabled {
         "t" = "secondary";
       };
 

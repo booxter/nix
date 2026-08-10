@@ -227,6 +227,8 @@ in
 
       homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
 
+      microsoftTeams.enable = lib.mkEnableOption "Microsoft Teams desktop workflow";
+
       nvidiaDevelopment.enable = lib.mkEnableOption "NVIDIA development environment";
 
       podmanMachine.enable = lib.mkEnableOption "managed Podman virtual machine";

@@ -10,10 +10,10 @@ let
   inherit (osConfig.host) isDarwin;
   attentionInboxCfg = osConfig.host.userEnvironment.features.attentionInbox;
   codexCfg = osConfig.host.userEnvironment.features.codex;
-  isNvidia = osConfig.host.userProfile == "nvidia";
+  microsoftTeamsEnabled = osConfig.host.userEnvironment.features.microsoftTeams.enable;
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
-  workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
+  workspaceNames = import ../aerospace/workspaces.nix { inherit lib microsoftTeamsEnabled; };
   inherit (config.lib.stylix) colors;
   sketchybarColors = {
     background = "0xff${colors.base00}";

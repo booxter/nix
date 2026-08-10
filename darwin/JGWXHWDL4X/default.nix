@@ -39,6 +39,7 @@ in
       };
       firefox.enable = false;
       homerow.enable = false;
+      microsoftTeams.enable = true;
       nvidiaDevelopment.enable = true;
       podmanMachine.enable = false;
     };
