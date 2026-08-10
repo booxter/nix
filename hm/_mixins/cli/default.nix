@@ -9,7 +9,6 @@ let
   inherit (osConfig.host) isDarwin;
   userEnvironment = osConfig.host.userEnvironment;
   attentionInboxCfg = userEnvironment.features.attentionInbox;
-  cliCfg = userEnvironment.features.cli;
   repositoryCatalog = userEnvironment.repositories.catalog;
   requiredRepositories = userEnvironment.repositories.required;
   homeManagerPkgs = import ../../pkgs pkgs;
@@ -134,15 +133,6 @@ in
   programs.jq.enable = true;
   programs.less.enable = true;
 
-  # cli password manager
-  programs.password-store = lib.mkIf cliCfg.passwordStore.enable {
-    enable = true;
-    settings = {
-      # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
-      PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
-    };
-  };
-
   # starship prompt
   programs.starship = {
     enable = true;
@@ -193,9 +183,6 @@ in
     ]
     ++ lib.optionals (requiredRepositories != [ ]) [
       syncRepo
-    ]
-    ++ lib.optionals cliCfg.ramalama.enable [
-      ramalama
     ];
 
   home.sessionVariables = {

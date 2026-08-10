@@ -7,8 +7,9 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
-  cliCfg = osConfig.host.userEnvironment.features.cli;
+  developerToolsCfg = osConfig.host.userEnvironment.features.developerTools;
   firefoxCfg = osConfig.host.userEnvironment.features.firefox;
+  localAiCfg = osConfig.host.userEnvironment.features.localAi;
   nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
   podmanDesktopCfg = osConfig.host.userEnvironment.features.podmanDesktop;
   hmFull = hostSpec.hmFull or true;
@@ -16,22 +17,27 @@ let
 in
 {
   imports = [
+    ./_mixins/password-store
     ./_mixins/podman-machine
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
-  ++ lib.optionals cliCfg.enable [
+  ++ lib.optionals (developerToolsCfg.enable && developerToolsCfg.commandLine.enable) [
     ./_mixins/cli
   ]
   ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
     ./_mixins/gnupg
-    ./_mixins/nixvim
     ./_mixins/podman
     ./_mixins/scm
     ./_mixins/security
     ./_mixins/ssh
+  ]
+  ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.editor.enable) [
+    ./_mixins/nixvim
+  ]
+  ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.tmux.enable) [
     ./_mixins/tmux
   ]
   ++ lib.optionals isDesktop [
@@ -89,5 +95,8 @@ in
       telegram-desktop
       wireshark
     ]
-    ++ lib.optional podmanDesktopCfg.enable podman-desktop;
+    ++ lib.optional podmanDesktopCfg.enable podman-desktop
+    ++ lib.optionals (localAiCfg.enable && localAiCfg.ramalama.enable) [
+      ramalama
+    ];
 }

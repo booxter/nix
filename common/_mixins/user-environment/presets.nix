@@ -5,8 +5,8 @@ let
     personal = {
       roles.developer = {
         features = {
-          cli.ramalama.enable = true;
           codex.warmer.enable = true;
+          localAi.enable = true;
           scm = {
             identity = "personal";
             sendEmail.transport = "gmail";

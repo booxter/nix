@@ -163,16 +163,36 @@ in
     features = {
       attentionInbox.enable = lib.mkEnableOption "attention inbox";
 
-      cli = {
-        enable = lib.mkEnableOption "interactive command-line development environment";
+      developerTools = {
+        enable = lib.mkEnableOption "development tool suite";
 
-        passwordStore.enable = lib.mkOption {
+        commandLine.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Whether to provide the pass password manager.";
+          description = "Whether to provide command-line development tools.";
         };
 
-        ramalama.enable = lib.mkEnableOption "RamaLama local AI tooling";
+        editor.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the development editor environment.";
+        };
+
+        tmux.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the tmux development environment.";
+        };
+      };
+
+      localAi = {
+        enable = lib.mkEnableOption "local AI tooling";
+
+        ramalama.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide RamaLama.";
+        };
       };
 
       codex = {
@@ -329,15 +349,17 @@ in
 
         requests = {
           gmailctl = lib.optionals (emailCfg.enable && emailCfg.gmailctl.enable) [ "gmailctl" ];
-          passwordStore = lib.optionals (cfg.features.cli.enable && cfg.features.cli.passwordStore.enable) [
-            "pass"
-          ];
+          passwordStore =
+            lib.optionals (cfg.features.developerTools.enable && cfg.features.developerTools.commandLine.enable)
+              [
+                "pass"
+              ];
         };
       };
 
       features = lib.mkMerge [
         (lib.mkIf cfg.roles.developer.enable {
-          cli.enable = lib.mkDefault true;
+          developerTools.enable = lib.mkDefault true;
           codex.enable = lib.mkDefault true;
           scm.enable = lib.mkDefault true;
         })
