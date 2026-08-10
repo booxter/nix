@@ -40,6 +40,8 @@ This is intentional:
   - consumes a build-time certificate inventory manifest from the Nix store
   - reads only the root CA, relevant encrypted host secrets, and the live
     intermediate CA certificate
+  - derives its manifest from certificate records registered by the owning
+    host modules
   - does not clone the repository or require network access
   - exports Prometheus textfile metrics through node exporter
   - covers internal root/intermediate CA state plus repo-managed internal leaf

@@ -363,6 +363,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
                 "sans": ["host"],
             }
         },
+        "managed_certificates": [],
     }
     runner = AttributeRunner(value)
     source = NixConfigSource(runner, Path("/repo"), fleet_hosts(), Path("/query.nix"))

@@ -84,65 +84,17 @@ class CertificateInventoryBuilder:
         secret_path: Path,
         config: HostCertificateConfig,
     ) -> list[CertificateSpec]:
-        specs: list[CertificateSpec] = []
-        proxmox_prefix = config.proxmox_api.secret_prefix if config.proxmox_api else None
-        for name, service in sorted(config.internal_services.items()):
-            duplicate_proxmox = name == "proxmox" and service.secret_prefix == proxmox_prefix
-            if service.enable and not duplicate_proxmox:
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        CertificateCategory.INTERNAL_HTTPS_SERVER,
-                        name,
-                        service.secret_prefix,
-                        "server_crt_unencrypted",
-                    )
-                )
-        if config.proxmox_api is not None:
-            specs.append(
-                self._secret_spec(
-                    host,
-                    secret_path,
-                    CertificateCategory.INTERNAL_HTTPS_SERVER,
-                    "proxmox-api",
-                    config.proxmox_api.secret_prefix,
-                    "server_crt_unencrypted",
-                )
+        return [
+            self._secret_spec(
+                host,
+                secret_path,
+                CertificateCategory(certificate.category),
+                certificate.name,
+                certificate.secret_prefix,
+                certificate.certificate_field,
             )
-        for name, client in sorted(config.clients.items()):
-            if client.enable:
-                category = (
-                    CertificateCategory.OBSERVABILITY_CLIENT
-                    if client.category == "observability"
-                    else CertificateCategory.INTERNAL_HTTPS_CLIENT
-                )
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        category,
-                        name,
-                        client.secret_prefix,
-                        "client_crt_unencrypted",
-                    )
-                )
-        endpoints = dict(config.observability_endpoints)
-        if config.node_exporter is not None:
-            endpoints["node_exporter"] = config.node_exporter
-        for name, endpoint in sorted(endpoints.items()):
-            if endpoint.enable:
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER,
-                        name,
-                        endpoint.secret_prefix,
-                        "server_crt_unencrypted",
-                    )
-                )
-        return specs
+            for certificate in config.managed_certificates
+        ]
 
 
 @dataclass(frozen=True)

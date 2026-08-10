@@ -9,6 +9,40 @@ let
   rootConfig = config;
   cfg = config.host.internalPki;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
+  managedCertificateKeys = map (
+    certificate: "${certificate.category}/${certificate.name}"
+  ) cfg.managedCertificates;
+  managedCertificateSourceKeys = map (
+    certificate: "${certificate.secretPrefix}/${certificate.certificateField}"
+  ) cfg.managedCertificates;
+  managedCertificateType = lib.types.submodule {
+    options = {
+      category = lib.mkOption {
+        type = lib.types.enum [
+          "internal_https_server"
+          "internal_https_client"
+          "observability_endpoint_server"
+          "observability_client"
+        ];
+        description = "Managed certificate category used by rotation and monitoring.";
+      };
+      name = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Certificate name within its host and category.";
+      };
+      secretPrefix = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SOPS key prefix containing the certificate.";
+      };
+      certificateField = lib.mkOption {
+        type = lib.types.enum [
+          "client_crt_unencrypted"
+          "server_crt_unencrypted"
+        ];
+        description = "Certificate field below the SOPS key prefix.";
+      };
+    };
+  };
   realmAuthorityType = lib.types.submodule {
     options = {
       hostName = lib.mkOption {
@@ -210,19 +244,48 @@ in
       default = { };
       description = "Internal PKI client identities used by services on this host.";
     };
+
+    managedCertificates = lib.mkOption {
+      type = lib.types.listOf managedCertificateType;
+      default = [ ];
+      internal = true;
+      description = "Normalized repository-managed certificates owned by this host configuration.";
+    };
   };
 
   config = {
     host.internalPki.enable = lib.mkDefault (model.realmAuthority != null);
 
-    assertions = import ./assertions.nix {
-      inherit
-        config
-        enabledClients
-        lib
-        model
-        ;
-    };
+    host.internalPki.managedCertificates = lib.mapAttrsToList (name: client: {
+      category =
+        if client.category == "observability" then "observability_client" else "internal_https_client";
+      inherit name;
+      inherit (client) secretPrefix;
+      certificateField = "client_crt_unencrypted";
+    }) enabledClients;
+
+    assertions =
+      import ./assertions.nix {
+        inherit
+          config
+          enabledClients
+          lib
+          model
+          ;
+      }
+      ++ [
+        {
+          assertion =
+            builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
+          message = "host.internalPki.managedCertificates must not duplicate a category/name pair";
+        }
+        {
+          assertion =
+            builtins.length managedCertificateSourceKeys
+            == builtins.length (lib.unique managedCertificateSourceKeys);
+          message = "host.internalPki.managedCertificates must not duplicate a SOPS certificate field";
+        }
+      ];
 
     security.pki.certificateFiles = lib.optionals (cfg.enable && cfg.rootCaCertificate != null) [
       cfg.rootCaCertificate

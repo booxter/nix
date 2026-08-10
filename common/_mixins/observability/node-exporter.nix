@@ -58,6 +58,15 @@ in
   };
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
+    host.internalPki.managedCertificates = [
+      {
+        category = "observability_endpoint_server";
+        name = "node_exporter";
+        inherit (cfg.mtls) secretPrefix;
+        certificateField = "server_crt_unencrypted";
+      }
+    ];
+
     sops.secrets = {
       prometheusNodeExporterServerCrt = {
         key = "${cfg.mtls.secretPrefix}/server_crt_unencrypted";

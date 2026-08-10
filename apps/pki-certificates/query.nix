@@ -43,4 +43,5 @@ in
       }
     else
       null;
+  managed_certificates = configuredHost.host.internalPki.managedCertificates;
 }

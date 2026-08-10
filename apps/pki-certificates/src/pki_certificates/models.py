@@ -50,6 +50,22 @@ class ObservabilityEndpointConfig(BaseModel):
     secret_prefix: str = Field(alias="secretPrefix")
 
 
+class ManagedCertificateConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+
+    category: Literal[
+        "internal_https_server",
+        "internal_https_client",
+        "observability_endpoint_server",
+        "observability_client",
+    ]
+    name: str
+    secret_prefix: str = Field(alias="secretPrefix")
+    certificate_field: Literal["client_crt_unencrypted", "server_crt_unencrypted"] = Field(
+        alias="certificateField"
+    )
+
+
 class HostIdentity(BaseModel):
     model_config = ConfigDict(frozen=True, strict=True)
 
@@ -68,6 +84,7 @@ class HostCertificateConfig(BaseModel):
     proxmox_api: InternalServiceConfig | None
     observability_endpoints: dict[str, ObservabilityEndpointConfig]
     node_exporter: ObservabilityEndpointConfig | None
+    managed_certificates: list[ManagedCertificateConfig]
 
 
 class CertificateRequest(BaseModel):

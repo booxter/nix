@@ -283,6 +283,15 @@ in
       ];
     }
     (lib.mkIf cfg.enable {
+      host.internalPki.managedCertificates = [
+        {
+          category = "internal_https_server";
+          name = "proxmox-api";
+          inherit (cfg) secretPrefix;
+          certificateField = "server_crt_unencrypted";
+        }
+      ];
+
       assertions = [
         {
           assertion = config.services.proxmox-ve.enable;

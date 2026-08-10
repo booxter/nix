@@ -97,6 +97,50 @@ def host_config() -> HostCertificateConfig:
                 "port": 9100,
                 "secretPrefix": "prometheus/node_exporter",
             },
+            "managed_certificates": [
+                {
+                    "category": "internal_https_server",
+                    "name": "web",
+                    "secretPrefix": "internal/web",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_server",
+                    "name": "proxmox-api",
+                    "secretPrefix": "internal/proxmox",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "internal",
+                    "secretPrefix": "clients/client",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "external",
+                    "secretPrefix": "clients/external",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "observability_client",
+                    "name": "loki",
+                    "secretPrefix": "prometheus/loki",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "api",
+                    "secretPrefix": "prometheus/api",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "node_exporter",
+                    "secretPrefix": "prometheus/node_exporter",
+                    "certificateField": "server_crt_unencrypted",
+                },
+            ],
         }
     )
 
