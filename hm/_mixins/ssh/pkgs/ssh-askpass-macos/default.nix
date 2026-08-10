@@ -35,7 +35,6 @@ swiftPackages.stdenv.mkDerivation {
   meta = {
     description = "Native macOS OpenSSH askpass dialog";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "ssh-askpass-macos";
     platforms = lib.platforms.darwin;
   };

@@ -39,7 +39,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Merge managed Degoog plugin settings";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "degoog-merge-plugin-settings";
     platforms = lib.platforms.linux;
   };

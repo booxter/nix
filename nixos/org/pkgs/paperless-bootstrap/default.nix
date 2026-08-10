@@ -40,7 +40,6 @@ pythonPackages.buildPythonPackage {
   meta = {
     description = "Declarative Paperless user and token bootstrap";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

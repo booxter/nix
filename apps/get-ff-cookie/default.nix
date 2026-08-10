@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Export Firefox cookies in Netscape format";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "get-ff-cookie";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

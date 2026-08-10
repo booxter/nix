@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Render authentication and back up the Beast WatchState service";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

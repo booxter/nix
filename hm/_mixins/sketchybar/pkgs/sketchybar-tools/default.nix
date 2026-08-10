@@ -34,7 +34,6 @@ buildGoModule {
   meta = {
     description = "Native personal plugins for SketchyBar";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sketchybar-jellyfin";
     platforms = lib.platforms.darwin;
   };

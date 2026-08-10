@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Review a nixpkgs pull request using the fleet's remote builders";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "nr";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

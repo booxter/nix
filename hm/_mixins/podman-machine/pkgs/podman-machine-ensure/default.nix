@@ -27,7 +27,6 @@ buildGoModule {
   meta = {
     description = "Reconcile a declaratively configured Podman machine";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "podman-machine-ensure";
     platforms = lib.platforms.darwin;
   };

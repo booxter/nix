@@ -45,7 +45,6 @@ pythonPackages.buildPythonApplication {
     description = "Set PostgreSQL role passwords from secret files";
     license = lib.licenses.mit;
     mainProgram = "postgresql-set-role-password";
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

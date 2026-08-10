@@ -35,7 +35,6 @@ pythonPackages.buildPythonPackage {
   meta = {
     description = "Typed subprocess runner for internal Git applications";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

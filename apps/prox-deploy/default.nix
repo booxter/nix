@@ -42,7 +42,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Deploy cluster-backed NixOS VMs through nixmoxer";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "prox-deploy";
     platforms = lib.platforms.unix;
   };

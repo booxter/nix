@@ -46,7 +46,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Host integration tools for the srvarr RomM service";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "romm-db-init";
     platforms = lib.platforms.linux;
   };

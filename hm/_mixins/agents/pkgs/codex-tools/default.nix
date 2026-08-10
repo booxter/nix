@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Typed helpers for local Codex account automation";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "codex-usage-status";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

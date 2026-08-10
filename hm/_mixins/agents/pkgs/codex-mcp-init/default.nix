@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Authenticate configured Codex HTTP MCP servers";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "codex-mcp-init";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

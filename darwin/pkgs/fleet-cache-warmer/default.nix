@@ -52,7 +52,6 @@ rustPlatform.buildRustPackage {
   meta = {
     description = "Build CI-validated fleet outputs and optionally push them to Attic";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "fleet-cache-warmer";
     platforms = lib.platforms.darwin;
   };

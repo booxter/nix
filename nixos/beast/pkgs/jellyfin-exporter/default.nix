@@ -27,7 +27,6 @@ buildGoModule rec {
     homepage = "https://github.com/booxter/jellyfin_exporter";
     changelog = "https://github.com/booxter/jellyfin_exporter/commit/${rev}";
     license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "jellyfin_exporter";
     platforms = lib.platforms.unix;
   };

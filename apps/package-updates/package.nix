@@ -63,7 +63,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Typed package and OCI update automation";
     license = pkgs.lib.licenses.mit;
-    maintainers = with pkgs.lib.maintainers; [ booxter ];
     mainProgram = "update-packages";
     platforms = pkgs.lib.platforms.unix;
   };

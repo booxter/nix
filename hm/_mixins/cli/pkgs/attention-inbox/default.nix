@@ -42,7 +42,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Collect attention items from external services into one inbox";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "attention-inbox";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

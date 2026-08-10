@@ -36,7 +36,6 @@ swiftPackages.stdenv.mkDerivation {
   meta = {
     description = "Native Swift applets for SketchyBar";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sketchybar-spotify";
     platforms = lib.platforms.darwin;
   };

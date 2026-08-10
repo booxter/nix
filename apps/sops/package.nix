@@ -73,7 +73,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Repository-aware helpers for managing host secrets with SOPS";
     license = pkgs.lib.licenses.mit;
-    maintainers = with pkgs.lib.maintainers; [ booxter ];
     platforms = pkgs.lib.platforms.linux ++ pkgs.lib.platforms.darwin;
   };
 }

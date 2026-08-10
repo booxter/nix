@@ -46,6 +46,5 @@ buildGoModule rec {
     license = lib.licenses.gpl3Only;
     mainProgram = "iSMC";
     platforms = lib.platforms.darwin;
-    maintainers = [ ];
   };
 }

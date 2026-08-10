@@ -26,7 +26,6 @@ python3.pkgs.buildPythonApplication {
   meta = {
     description = "Sync UniFi reservations, DHCP settings, DNS records, and static routes from facts";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "unifi-sync";
     platforms = lib.platforms.linux;
   };

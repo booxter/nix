@@ -45,7 +45,6 @@ stdenv.mkDerivation {
     description = "Darwin libpcap probe for LAN/WAN interface byte accounting";
     license = lib.licenses.mit;
     mainProgram = "darwin-lan-wan-bpf";
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.darwin;
   };
 }

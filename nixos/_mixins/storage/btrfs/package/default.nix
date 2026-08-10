@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Maintain Btrfs snapshots and interrupted scrubs";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "btrfs-maintenance";
     platforms = lib.platforms.linux;
   };

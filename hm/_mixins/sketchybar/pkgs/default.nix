@@ -151,7 +151,6 @@ pkgs.stdenvNoCC.mkDerivation {
   meta = {
     description = "Personal SketchyBar plugins";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.darwin;
   };
 }

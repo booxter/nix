@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Manage host access to services in VPN namespaces";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "wg-bridge-access";
     platforms = lib.platforms.linux;
   };

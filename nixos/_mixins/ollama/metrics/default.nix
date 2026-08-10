@@ -34,7 +34,6 @@ python3.pkgs.buildPythonApplication {
   meta = {
     description = "Prometheus textfile collector for Ollama state";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "ollama-metrics";
     platforms = lib.platforms.linux;
   };

@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Initialize and reconcile the local Smallstep CA";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "step-ca-bootstrap";
     platforms = lib.platforms.linux;
   };

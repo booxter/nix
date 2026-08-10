@@ -122,7 +122,6 @@ python313Packages.buildPythonApplication (finalAttrs: {
     homepage = "https://github.com/av1155/houndarr";
     changelog = "https://github.com/av1155/houndarr/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.agpl3Only;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "houndarr";
     platforms = lib.platforms.linux;
   };

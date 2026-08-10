@@ -45,7 +45,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Preflight and flash the Broadcom HBA on beast";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "hba-flash";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

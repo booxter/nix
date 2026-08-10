@@ -36,7 +36,6 @@ rustPlatform.buildRustPackage {
   meta = {
     description = "Native Linux OpenSSH askpass frontend";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "ssh-askpass-linux";
     platforms = lib.platforms.linux;
   };

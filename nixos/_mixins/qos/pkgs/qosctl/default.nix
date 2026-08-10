@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Apply named per-interface traffic limits";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "qosctl";
     platforms = lib.platforms.linux;
   };

@@ -198,7 +198,6 @@ stdenv.mkDerivation {
     homepage = "https://github.com/lklynet/aurral";
     changelog = "https://github.com/lklynet/aurral/releases/tag/v${version}";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = pname;
     platforms = lib.platforms.linux;
   };
