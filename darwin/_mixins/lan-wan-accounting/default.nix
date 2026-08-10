@@ -7,8 +7,7 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  nodeCfg = config.services.prometheus.exporters.node;
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
@@ -19,15 +18,6 @@ let
   accessBpfGid = 101;
   serviceUid = 536;
   lanWanPackage = darwinPkgs.darwin-lan-wan-bpf;
-  nodeExporterArgs = lib.escapeShellArgs (
-    [
-      "--web.listen-address"
-      "${nodeCfg.listenAddress}:${toString nodeCfg.port}"
-    ]
-    ++ map (collector: "--collector.${collector}") nodeCfg.enabledCollectors
-    ++ map (collector: "--no-collector.${collector}") nodeCfg.disabledCollectors
-    ++ nodeCfg.extraFlags
-  );
   programArguments = [
     (lib.getExe cfg.package)
   ]
@@ -47,7 +37,7 @@ let
     "-6"
     cidr
   ]) cfg.lanSubnets6
-  ++ [
+  ++ lib.optionals cfg.exportToNodeExporter [
     "--textfile"
     textfilePath
   ];
@@ -110,19 +100,6 @@ in
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];
 
-      services.prometheus.exporters.node = lib.mkIf cfg.exportToNodeExporter {
-        extraFlags = [
-          "--collector.textfile"
-          "--collector.textfile.directory=${textfileDir}"
-        ];
-      };
-
-      # Work around nix-darwin node-exporter flag joining while still letting
-      # nix-darwin generate the wait4path wrapper from launchd.command.
-      launchd.daemons.prometheus-node-exporter.command = lib.mkIf cfg.exportToNodeExporter (
-        lib.mkForce "${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
-      );
-
       ids.uids.${serviceUser} = serviceUid;
 
       users.users.${serviceUser} = {
@@ -134,7 +111,7 @@ in
       };
       users.knownUsers = [ serviceUser ];
 
-      system.activationScripts.launchd.text = lib.mkBefore ''
+      system.activationScripts.launchd.text = lib.mkAfter ''
         access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
         if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
           echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
@@ -149,8 +126,10 @@ in
         fi
 
         mkdir -p ${textfileDir} ${stateDir}
-        chown ${serviceUser}:${accessBpfGroup} ${textfileDir} ${stateDir}
-        chmod 0755 ${textfileDir} ${stateDir}
+        chown root:${accessBpfGroup} ${textfileDir}
+        chmod 0775 ${textfileDir}
+        chown ${serviceUser}:${accessBpfGroup} ${stateDir}
+        chmod 0755 ${stateDir}
       '';
 
       launchd.daemons.observability-lan-wan-accounting = {
