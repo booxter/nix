@@ -112,17 +112,6 @@ in
       description = "Primary user for managed hosts.";
     };
 
-    userProfile = lib.mkOption {
-      type = lib.types.enum [
-        "nvidia"
-        "personal"
-      ];
-      default = hostSpec.userProfile;
-      readOnly = true;
-      internal = true;
-      description = "User environment profile declared by host facts.";
-    };
-
   };
 
   config = {
