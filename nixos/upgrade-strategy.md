@@ -7,20 +7,29 @@ This repo uses a two-stage flow:
    CI-validated outputs. The work laptop warms the work outputs locally without
    pushing to Attic.
 
-The point of the warmup is to make the next upgrade window and later interactive
-work substitute from the LAN cache instead of rebuilding or downloading on
-demand.
+The point of the warmup is to make the next maintenance window and later
+interactive work substitute from the LAN cache instead of rebuilding or
+downloading on demand.
 
 ## Rationale
 
-The schedule is organized around a few ordering rules:
+NixOS modules contribute maintenance claims instead of assigning calendars to
+individual hosts. The auto-upgrade planner combines those claims and allocates
+deterministic slots inside the fleet's midnight-to-06:00 maintenance window.
 
-- Update infrastructure first on Monday morning: Nix builder VMs, then
-  `cache`, then Proxmox nodes. These machines support or host the rest of the
-  fleet, so they get a separate maintenance lane.
-- Keep regular NixOS machines on a daily cadence. Hosts that inherit the default
-  `nixos/default.nix` schedule upgrade every morning instead of waiting for a
-  weekly batch.
+The current claims enforce these rules:
+
+- Builders, the Attic server, and Proxmox nodes use weekly Monday maintenance.
+- Members of a builder pool and nodes in a Proxmox cluster receive distinct
+  slots.
+- Attic clients do not overlap the Attic server.
+- Proxmox guests do not overlap nodes in their cluster.
+- Remote storage consumers do not overlap their storage provider.
+- Interactive services such as Jellyfin and Lolek request a separate weekly
+  Saturday reboot while retaining daily non-rebooting upgrades.
+- Hosts requiring interactive LUKS unlock never reboot automatically.
+- Regular NixOS machines retain the daily `05:15` preference unless a
+  relationship requires another slot.
 - Run local backup work before the daily upgrade window on machines that have
   local backups. Application-specific prep runs first, then restic pushes to
   `beast`, then those machines may enter the daily upgrade/reboot window.
@@ -37,23 +46,18 @@ All times below are in `America/New_York`.
 | --- | --- | --- |
 | `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, and opens a PR. |
 | `08:30` and `20:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized non-work closures into Attic. |
-| `03:00` Monday | Nix builder VM upgrade window | Set in `facts/default.nix` for `builder1`, `builder2`, and `builder3`. |
-| `03:30` Monday | `cache` upgrade window | Set in `nixos/cache/default.nix`. |
-| `03:50`, `04:20`, and `04:50` Monday | Proxmox lab hypervisor upgrade windows | The nodes are staggered by 30 minutes in `facts/default.nix` to preserve cluster quorum. |
+| `00:00`, `00:40`, `01:20`, and `02:40` Monday | Home-realm builder maintenance | Builder-pool claims stagger `builder1`, `builder2`, `builder3`, and `frame`; `frame` does not reboot. |
+| `02:00` Monday | `cache` maintenance | Attic client/server exclusions keep cache consumers out of this slot. |
+| `02:40`, `03:20`, and `04:40` Monday | Proxmox lab node maintenance | Cluster and guest claims preserve node and guest availability. |
 | `05:15` daily | Default NixOS upgrade window | Most NixOS hosts inherit this from `nixos/default.nix`. |
+| `03:20` Saturday | `beast` conditional reboot | Jellyfin and Lolek request a weekly interactive-service reboot; storage relationships keep it separate from consumers. |
 <!-- markdownlint-enable MD013 -->
 
-`system.autoUpgrade.randomizedDelaySec = 5min` is enabled for the fleet, so
-actual upgrade start time may drift within that window. `frame` still upgrades
-on schedule but does not auto-reboot.
-
-The early Monday builder and cache windows allow auto-reboots from `02:59` until
-`06:00`, so kernel, initrd, or module changes staged during those early windows
-can activate without waiting for manual intervention.
-
-The Proxmox lab nodes may reboot from `03:45` until `06:00`. Their staggered
-windows keep two quorum members available and give guest VMs time to recover
-before the inherited `05:15` fleet upgrade window.
+The planner treats the five-minute randomized delay as part of every occupied
+slot. Static scheduling prevents planned windows from overlapping; runtime
+maintenance guards still handle live conditions such as active Jellyfin
+playback. The authoritative result is
+`host.autoUpgrade.plan` in each evaluated NixOS configuration.
 
 ## Warmup Scope
 
