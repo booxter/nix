@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   hostSpec,
   isLinux,
   lib,
@@ -10,20 +11,54 @@ let
   model = import ./model.nix {
     inherit
       config
+      facts
       hostSpec
       lib
       outputs
       ;
   };
+  useType = lib.types.enum [
+    "build"
+    "nixpkgs"
+  ];
   builderType = lib.types.submodule {
     options = {
-      name = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Fleet name of the builder.";
+      source = lib.mkOption {
+        type = lib.types.enum [
+          "external"
+          "fleet"
+        ];
+        default = "external";
+        description = "Whether the builder is managed by this flake.";
+      };
+      uses = lib.mkOption {
+        type = lib.types.nonEmptyListOf useType;
+        description = "Consumers allowed to use the builder.";
       };
       hostName = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        description = "SSH hostname advertised by the builder.";
+        description = "Network hostname of the builder.";
+      };
+      publicKey = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "SSH host public key of an external builder.";
+      };
+      protocol = lib.mkOption {
+        type = lib.types.enum [
+          "ssh"
+          "ssh-ng"
+        ];
+        default = "ssh";
+        description = "Nix store protocol used to reach the builder.";
+      };
+      sshKey = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH identity file used to authenticate to the builder.";
+      };
+      sshUser = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH user used to reach the builder.";
       };
       systems = lib.mkOption {
         type = with lib.types; nonEmptyListOf nonEmptyStr;
@@ -48,7 +83,9 @@ in
   imports = [
     ./assertions.nix
     ./community.nix
-    ./realm.nix
+    ./build.nix
+    ./nixpkgs-review.nix
+    ./ssh.nix
   ];
 
   options.host.nix = {
@@ -87,23 +124,29 @@ in
         ];
         description = "Nix system features advertised to builder clients.";
       };
+
+      uses = lib.mkOption {
+        type = lib.types.nonEmptyListOf useType;
+        default = [
+          "build"
+          "nixpkgs"
+        ];
+        description = "Consumers allowed to use this builder.";
+      };
+    };
+
+    external-builders = lib.mkOption {
+      type = lib.types.attrsOf builderType;
+      default = { };
+      description = "Builders not managed by this flake that are available to this host.";
     };
 
     builder-pool = lib.mkOption {
-      type = lib.types.listOf builderType;
+      type = lib.types.attrsOf builderType;
       default = model.builderPool;
       readOnly = true;
       internal = true;
-      description = "Enabled builders in this host's realm, excluding the host itself.";
-    };
-  };
-
-  options.host = {
-    nixpkgsReview.extraBuilders = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      internal = true;
-      description = "Review-only Nix builders in machines-file format.";
+      description = "Normalized builders available to this host, excluding the host itself.";
     };
   };
 }

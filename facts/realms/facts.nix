@@ -12,7 +12,6 @@ in
 {
   home = {
     build = {
-      externalPools = [ "community" ];
       sshIdentityFile = "id_ed25519";
     };
     management = {
@@ -64,7 +63,6 @@ in
 
   work = {
     build = {
-      externalPools = [ ];
       sshIdentityFile = "jgwxhwdl4x-nix-builder";
     };
     management = {
