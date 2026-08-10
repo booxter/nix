@@ -12,6 +12,7 @@ in
     ./assertions.nix
     ./auth.nix
     ./backups.nix
+    ./jellarr.nix
     ./service.nix
     ./web.nix
   ];

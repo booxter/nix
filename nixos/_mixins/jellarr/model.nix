@@ -12,7 +12,6 @@ let
     else
       null;
   jellyfin = if targetConfig == null then null else targetConfig.host.jellyfin;
-  watchstate = if targetConfig == null then null else targetConfig.host.watchstate;
 in
 {
   inherit exists;
@@ -24,10 +23,5 @@ in
       jellyfin.localUrl
     else
       jellyfin.publicUrl;
-  mediaLibraryRoot =
-    if jellyfin == null || !jellyfin.enable then null else "${jellyfin.media.mountPoint}/library";
-  gpuRenderDevice =
-    if jellyfin == null || !jellyfin.enable then null else targetConfig.host.hardware.gpu.renderDevice;
-  watchstateWebhookUrl =
-    if watchstate == null || !watchstate.enable then null else "${watchstate.localUrl}/v1/api/webhook";
+  declarativeConfig = if jellyfin == null then { } else jellyfin.declarativeConfig;
 }

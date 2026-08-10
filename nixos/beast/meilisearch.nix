@@ -24,33 +24,31 @@ in
     };
   };
 
-  services = {
-    meilisearch = {
-      enable = true;
-      listenAddress = "127.0.0.1";
-      listenPort = meilisearchPort;
-      masterKeyFile = config.sops.secrets.${meilisearchMasterKeySecret}.path;
-      settings.env = "production";
-    };
+  host.jellyfin.declarativeConfig = {
+    system.pluginRepositories = [
+      {
+        name = "Meilisearch";
+        url = "https://raw.githubusercontent.com/arnesacnussem/jellyfin-plugin-meilisearch/refs/heads/master/manifest.json";
+        enabled = true;
+      }
+    ];
+    plugins = [
+      {
+        name = "Meilisearch";
+        configuration = {
+          Url = meilisearchUrl;
+          MatchingStrategy = "all";
+        };
+      }
+    ];
+  };
 
-    jellarr.config = {
-      system.pluginRepositories = [
-        {
-          name = "Meilisearch";
-          url = "https://raw.githubusercontent.com/arnesacnussem/jellyfin-plugin-meilisearch/refs/heads/master/manifest.json";
-          enabled = true;
-        }
-      ];
-      plugins = [
-        {
-          name = "Meilisearch";
-          configuration = {
-            Url = meilisearchUrl;
-            MatchingStrategy = "all";
-          };
-        }
-      ];
-    };
+  services.meilisearch = {
+    enable = true;
+    listenAddress = "127.0.0.1";
+    listenPort = meilisearchPort;
+    masterKeyFile = config.sops.secrets.${meilisearchMasterKeySecret}.path;
+    settings.env = "production";
   };
 
   systemd.services = {

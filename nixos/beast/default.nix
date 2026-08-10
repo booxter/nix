@@ -7,7 +7,7 @@
   system.stateVersion = "25.11";
 
   imports = [
-    ./jellarr.nix
+    ./jellarr
     ./meilisearch.nix
     ./storage.nix
   ];
@@ -30,6 +30,10 @@
     enable = true;
     media.source = facts.shared-storage.resources.media.path;
     backups.stagingDirectory = "/volume2/backups/staging/jellyfin";
+  };
+  host.jellarr = {
+    enable = true;
+    target.host = "beast";
   };
   host.lolek.enable = true;
   host.autoUpgrade.reboot = {

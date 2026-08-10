@@ -1,17 +1,25 @@
 {
   config,
   lib,
+  outputs,
   ...
 }:
 let
   cfg = config.host.jellarr;
-  passwordSecret = user: "jellyfin/users/${lib.toLower user.name}/password";
-  configuredUsers = if cfg.enable then config.services.jellarr.config.users else [ ];
-  passwordSecrets = lib.genAttrs (map passwordSecret configuredUsers) (_: {
+  model = import ./model.nix { inherit config outputs; };
+  configuredUsers = model.declarativeConfig.users or [ ];
+  passwordSecrets = lib.genAttrs (map (user: user.passwordSecret) configuredUsers) (_: {
     owner = "jellarr";
     group = "jellarr";
     mode = "0400";
   });
+  jellarrUsers = map (
+    user:
+    removeAttrs user [ "passwordSecret" ]
+    // {
+      passwordFile = config.sops.secrets.${user.passwordSecret}.path;
+    }
+  ) configuredUsers;
 in
 {
   config = lib.mkIf cfg.enable {
@@ -33,9 +41,10 @@ in
       enable = true;
       package = cfg.package;
       environmentFile = config.sops.templates."jellarr.env".path;
-      config = {
+      config = model.declarativeConfig // {
         version = 1;
         base_url = cfg.target.url;
+        users = jellarrUsers;
       };
     };
 

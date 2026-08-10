@@ -12,6 +12,7 @@ in
   imports = [
     ./assertions.nix
     ./backups.nix
+    ./jellarr.nix
     ./maintenance.nix
     ./media.nix
     ./observability.nix

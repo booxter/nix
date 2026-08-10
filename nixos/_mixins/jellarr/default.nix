@@ -40,30 +40,6 @@ in
         internal = true;
         description = "Jellyfin API URL reachable from the Jellarr host.";
       };
-
-      mediaLibraryRoot = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = model.mediaLibraryRoot;
-        readOnly = true;
-        internal = true;
-        description = "Media-library root as seen by the target Jellyfin server.";
-      };
-
-      gpuRenderDevice = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = model.gpuRenderDevice;
-        readOnly = true;
-        internal = true;
-        description = "DRM render device used by the target Jellyfin server.";
-      };
-
-      watchstateWebhookUrl = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = model.watchstateWebhookUrl;
-        readOnly = true;
-        internal = true;
-        description = "WatchState webhook URL reachable from the target Jellyfin server.";
-      };
     };
   };
 }
