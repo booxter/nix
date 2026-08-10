@@ -53,6 +53,7 @@ in
     ./jellarr.nix
     ./maintenance.nix
     ./media.nix
+    ./meilisearch.nix
     ./observability.nix
     ./service.nix
     ./web.nix
@@ -116,6 +117,8 @@ in
       default = { };
       description = "Media libraries consumed by this Jellyfin installation.";
     };
+
+    meilisearch.enable = lib.mkEnableOption "Meilisearch-backed Jellyfin search";
 
     web = {
       public.enable = lib.mkOption {

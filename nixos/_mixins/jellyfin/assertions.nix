@@ -16,6 +16,10 @@ in
       message = "host.jellyfin.backups.stagingDirectory must be set when Jellyfin backups are enabled.";
     }
     {
+      assertion = !cfg.meilisearch.enable || cfg.enable;
+      message = "host.jellyfin.meilisearch.enable requires host.jellyfin.enable.";
+    }
+    {
       assertion = !cfg.enable || cfg.web.transport != "direct" || config.host.web.ingress.enable;
       message = "host.jellyfin.web.transport `direct` requires this host to run realm ingress.";
     }
