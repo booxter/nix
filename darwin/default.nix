@@ -40,7 +40,6 @@ in
     ./_mixins/ups-client
     ./_mixins/xquartz
     ./_mixins/yubi.nix
-    ./_mixins/attic
     ./_mixins/browser
   ];
 

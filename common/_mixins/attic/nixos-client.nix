@@ -15,7 +15,7 @@ let
   ];
 in
 {
-  config = lib.mkIf config.host.attic.enable {
+  config = lib.mkIf config.host.attic.client.enable {
     systemd.services.attic-watch-store = {
       description = "Watch the Nix store and push new paths to Attic";
       wantedBy = [ "multi-user.target" ];

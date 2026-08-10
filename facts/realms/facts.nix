@@ -36,7 +36,6 @@ in
     };
     services = {
       attic = {
-        cacheName = "local";
         endpoint = "https://nix-cache.${lanDomain}";
       };
       internalPki.rootCaCertificate = publicCertificates.internal-pki.home-root-ca;
