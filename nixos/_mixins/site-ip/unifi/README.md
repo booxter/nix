@@ -13,18 +13,18 @@ the generated service environment.
 
 ## Architecture
 
-`pki` runs `unifi-sync` as a systemd oneshot with a timer. The service
-uses a UniFi API key from sops-managed secrets and calls the UniFi Network API
-to converge the configured site.
+A host selecting the `unifi` IP-controller flavor runs `unifi-sync` as a
+systemd oneshot with a timer. The service uses a UniFi API key from
+sops-managed secrets and calls the UniFi Network API to converge the configured
+site.
 
 The data path is:
 
-1. Fleet facts are defined in [facts/default.nix](../../facts/default.nix).
-2. [unifi-sync-env.nix](./unifi-sync-env.nix) renders those facts into
+1. Fleet facts are defined in [facts/default.nix](../../../../facts/default.nix).
+2. [environment.nix](./environment.nix) renders those facts into
    the environment consumed by the service.
-3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the
-   service and timer, while [unifi-sync.nix](./unifi-sync.nix) supplies the
-   PKI host's facts and secret.
+3. [service.nix](./service.nix) defines the service and timer, while the UniFi
+   controller module supplies its fleet data and secret.
 4. [cli.py](./pkgs/unifi-sync/src/unifi_sync/cli.py) reads the environment,
    compares it with UniFi state, and applies only the required changes.
 
@@ -32,7 +32,7 @@ The data path is:
 
 The sync covers the UniFi-owned parts of trusted-LAN configuration:
 
-- fixed DHCP reservations for facts hosts
+- declared DHCP reservations for managed and unmanaged site hosts
 - local DNS records and split DNS records
 - DHCP network settings, including custom option definitions and values
 - facts-backed static routes
@@ -57,8 +57,8 @@ Treat the Nix facts and generated environment as the source of truth. If a
 managed UniFi object is changed or deleted in the UniFi UI, the next sync should
 recreate or restore it from repository state.
 
-For dry runs, inspect the pki service command and append `--dry-run` before a
-deployment or live run. Add tests for encoding or payload behavior in
+For dry runs, inspect the controller service command and append `--dry-run`
+before a deployment or live run. Add tests for encoding or payload behavior in
 [test_cli.py](./pkgs/unifi-sync/tests/test_cli.py) rather than documenting sample
 encoded values here.
 

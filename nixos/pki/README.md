@@ -14,7 +14,7 @@ DNS stay converged with facts.
 - Root trust anchor distributed from:
   - [common/_mixins/internal-pki/home-internal-pki-root-ca.crt](../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt)
 - UniFi sync service docs:
-  - [unifi-sync.md](./unifi-sync.md)
+  - [UniFi IP controller](../_mixins/site-ip/unifi/README.md)
 
 ## Managed Services
 
@@ -138,5 +138,5 @@ printf '%s' 'user@example.com' \
 
 ## Related Docs
 
-- [unifi-sync.md](./unifi-sync.md)
+- [UniFi IP controller](../_mixins/site-ip/unifi/README.md)
 - [../../docs/pki-rotation-plan.md](../../docs/pki-rotation-plan.md)

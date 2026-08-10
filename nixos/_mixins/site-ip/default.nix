@@ -69,6 +69,12 @@ let
     && builtins.div (ipv4ToInt address) blockSize == builtins.div (ipv4ToInt network) blockSize;
 in
 {
+  imports = [
+    ./unifi
+    ./unifi/service.nix
+    ./unifi/wireguard-dns-sync.nix
+  ];
+
   options.host.network = {
     macAddress = lib.mkOption {
       type = with lib.types; nullOr (strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}");
@@ -102,6 +108,12 @@ in
 
     ipController = {
       enable = lib.mkEnableOption "the site IP allocation controller";
+
+      flavor = lib.mkOption {
+        type = with lib.types; nullOr (enum [ "unifi" ]);
+        default = null;
+        description = "IP controller implementation used to reconcile site network state.";
+      };
 
       reservations = lib.mkOption {
         type = with lib.types; listOf attrs;
@@ -147,6 +159,10 @@ in
 
     (lib.mkIf cfg.ipController.enable {
       assertions = [
+        {
+          assertion = cfg.ipController.flavor != null;
+          message = "host.network.ipController.flavor must be set when the controller is enabled";
+        }
         {
           assertion = builtins.length (builtins.attrNames controllers) == 1;
           message = "exactly one NixOS host must enable host.network.ipController";

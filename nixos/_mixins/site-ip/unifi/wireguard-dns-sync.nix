@@ -3,23 +3,36 @@
   facts,
   lib,
   outputs,
-  pkiPkgs,
   pkgs,
   ...
 }:
 let
+  unifiPkgs = import ./pkgs pkgs;
+  localHost = config.networking.hostName;
+  controller = config.host.network.ipController;
+  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
+  wireguardInterfacesByHost =
+    lib.mapAttrs (
+      _: configuration: configuration.config.networking.wireguard.interfaces
+    ) otherConfigurations
+    // {
+      ${localHost} = config.networking.wireguard.interfaces;
+    };
+  fleetWireguardEnabled = lib.any (interfaces: interfaces != { }) (
+    builtins.attrValues wireguardInterfacesByHost
+  );
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
-  fleetServices = import ../_lib/fleet-web-services.nix {
+  fleetServices = import ../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
-  fleetNetwork = import ../_lib/fleet-host-network.nix { inherit config outputs; };
-  webDnsRecords = import ../_lib/fleet-web-dns-records.nix {
+  fleetNetwork = import ../../../_lib/fleet-host-network.nix { inherit config outputs; };
+  webDnsRecords = import ../../../_lib/fleet-web-dns-records.nix {
     inherit fleetServices;
     addressFor = fleetNetwork.addressFor;
   };
-  unifiSyncEnv = import ./unifi-sync-env.nix {
+  unifiSyncEnv = import ./environment.nix {
     inherit facts lanDomain webDnsRecords;
     addressFor = fleetNetwork.addressFor;
     reservations = config.host.network.ipController.reservations;
@@ -37,7 +50,7 @@ let
   }) (lib.filterAttrs (_name: peer: peer ? host) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
-{
+lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEnabled) {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
@@ -71,7 +84,7 @@ in
       User = unifiSyncCfg.user;
       Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${
+      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
       } --client-key-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path

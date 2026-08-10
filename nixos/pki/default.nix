@@ -53,9 +53,7 @@ in
 
   imports = [
     ./id.nix
-    ./unifi-sync.nix
     ./uptimerobot-sync.nix
-    ./wg-home-dns-sync.nix
   ];
 
   host.backups.sources.step-ca.paths = [ stepStateDir ];
@@ -66,7 +64,10 @@ in
       enable = true;
       address = "192.168.20.5";
     };
-    ipController.enable = true;
+    ipController = {
+      enable = true;
+      flavor = "unifi";
+    };
   };
 
   sops.secrets.pkiRotationGithubToken = {
