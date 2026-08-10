@@ -11,7 +11,6 @@ in
       hostName = "nvws.local";
     };
     isProxmox = true;
-    proxmox.node.cluster = "work";
     network = {
       macAddress = "ac:b4:80:40:05:2e";
       primaryInterface = "enp3s0f0";

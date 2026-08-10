@@ -11,7 +11,6 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.proxmox.guest.cluster = "lab";
   host.network = {
     macAddress = "bc:24:11:0d:85:41";
     reservation = {

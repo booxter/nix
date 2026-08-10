@@ -39,13 +39,13 @@ in
   options.host.proxmox = {
     node.cluster = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
-      default = null;
+      default = if config.host.isProxmox then "default" else null;
       description = "Proxmox cluster to which this hypervisor belongs.";
     };
 
     guest.cluster = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
-      default = null;
+      default = if config.host.isVM then "default" else null;
       description = "Proxmox cluster on which this guest may run.";
     };
   };

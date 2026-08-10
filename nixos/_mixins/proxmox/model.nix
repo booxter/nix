@@ -8,6 +8,7 @@ let
   hostView = hostConfig: {
     guestCluster = hostConfig.host.proxmox.guest.cluster;
     nodeCluster = hostConfig.host.proxmox.node.cluster;
+    realm = hostConfig.host.realm;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];
   hosts = lib.mapAttrs (_: configuration: hostView configuration.config) otherConfigurations // {
