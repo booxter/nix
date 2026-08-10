@@ -55,6 +55,7 @@ in
       ./_mixins/vm.nix
       ./_mixins/vpn
       ./_mixins/web
+      ./_mixins/wireguard
       ./_mixins/yubi.nix
     ];
 

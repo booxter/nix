@@ -37,24 +37,5 @@
       description = "Declared interface used as the primary interface for host services.";
     };
 
-    wireguardClients = lib.mkOption {
-      type = lib.types.attrsOf (
-        lib.types.submodule {
-          options = {
-            interface = lib.mkOption {
-              type = lib.types.strMatching "[A-Za-z0-9_.-]+";
-              description = "WireGuard interface providing the declared network access.";
-            };
-
-            providesAccessTo = lib.mkOption {
-              type = with lib.types; listOf nonEmptyStr;
-              description = "Private networks reachable through this WireGuard client.";
-            };
-          };
-        }
-      );
-      default = { };
-      description = "WireGuard clients and the private networks they make reachable.";
-    };
   };
 }

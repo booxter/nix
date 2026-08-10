@@ -31,15 +31,9 @@ let
   };
   wireguardHome = {
     subnet = wgHome.cidr;
-    dns = [
-      lan.gateway.address
-      facts.site.lan.domain
-    ];
+    inherit (wgHome.client) dns;
     endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
-    allowedIps = [
-      wgHome.cidr
-      lan.cidr
-    ];
+    allowedIps = wgHome.client.allowedIPs;
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wireguardGatewaySshHost;
   };

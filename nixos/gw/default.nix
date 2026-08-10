@@ -1,84 +1,15 @@
-{
-  config,
-  lib,
-  facts,
-  ...
-}:
-let
-  wgHome = facts.site.wireguard.home;
-  wgInterface = "wg0";
-  wgListenPort = wgHome.gateway.listenPort;
-  wgAddress = wgHome.gateway.address;
-  lanInterface = "ens18";
-  vpnPeers = lib.mapAttrsToList (name: peer: peer // { inherit name; }) wgHome.peers;
-
-  mkPeer = peer: {
-    inherit (peer) publicKey;
-    allowedIPs = [ peer.address ] ++ (peer.extraAllowedIPs or [ ]);
-  };
-in
+{ ... }:
 {
   system.stateVersion = "25.11";
 
   host.network = {
+    interfaces.ens18.kind = "ethernet";
     macAddress = "bc:24:11:91:b5:77";
+    primaryInterface = "ens18";
     reservation = {
       enable = true;
       address = "192.168.20.3";
     };
-    stableAddress.requiredBy = [ "WireGuard gateway" ];
   };
 
-  imports = [
-    ./qos.nix
-    ./wg-home-exporter.nix
-  ];
-
-  host.externalService.ddns = {
-    enable = true;
-    hostname = "ihrachyshka-gw.freeddns.org";
-    username = "ihrachyshka";
-  };
-
-  assertions = [
-    {
-      assertion =
-        let
-          addresses = map (peer: peer.address) vpnPeers;
-        in
-        lib.length addresses == lib.length (lib.unique addresses);
-      message = "WireGuard peers on ${config.networking.hostName} must use unique tunnel IP addresses.";
-    }
-  ];
-
-  boot.kernel.sysctl = {
-    "net.ipv4.ip_forward" = 1;
-  };
-
-  networking = {
-    firewall = {
-      allowedUDPPorts = [ wgListenPort ];
-      # WireGuard peers are already authenticated by key, so treat tunnel
-      # traffic as trusted once it reaches the gateway.
-      trustedInterfaces = [ wgInterface ];
-    };
-
-    nat = {
-      enable = true;
-      externalInterface = lanInterface;
-      internalInterfaces = [ wgInterface ];
-    };
-
-    wireguard.interfaces.${wgInterface} = {
-      ips = [ wgAddress ];
-      listenPort = wgListenPort;
-      privateKeyFile = "/var/lib/wireguard/${wgInterface}.key";
-      generatePrivateKeyFile = true;
-      peers = map mkPeer vpnPeers;
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    "d /var/lib/wireguard 0700 root root -"
-  ];
 }

@@ -18,6 +18,7 @@
     ./_mixins/stylix
     ./_mixins/terminfo
     ./_mixins/ups
+    ./_mixins/wireguard
     ./_mixins/yubi
     ./_mixins/attic
     ./_mixins/builders

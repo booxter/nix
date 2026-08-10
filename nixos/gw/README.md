@@ -1,8 +1,9 @@
 # gw (NixOS VM)
 
-This host is a minimal WireGuard gateway VM. Client peers are declared in
-`nixos/gw/default.nix`, while the shared tunnel topology lives in
-`facts/default.nix` under `site.wireguard.home` and `site.lan`.
+This host is a minimal WireGuard gateway VM. The server and client registry
+lives in `facts/site/facts.nix` under `wireguard.home`. Assigning `gw` as the
+gateway host makes the shared WireGuard server module configure its interface,
+firewall, NAT, DDNS, traffic shaping, and exporter.
 
 ## Client setup
 
@@ -13,17 +14,21 @@ umask 077
 wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
-Pick a free address from `site.wireguard.home.cidr` in
-`facts/default.nix` and add
-the peer to the `vpnPeers` list in `nixos/gw/default.nix`:
+Pick a free address from `wireguard.home.cidr` in `facts/site/facts.nix` and
+add the peer to `wireguard.home.peers`:
 
 ```nix
-{
-  name = "iphone";
+mair = {
+  host = "mair"; # Only for a managed fleet client.
   publicKey = "<contents of client.pub>";
   address = "<peer-address>/32";
-}
+};
 ```
+
+For a managed fleet client, `host` registers the machine with the shared
+WireGuard client module. The module provisions its SOPS private-key secret and
+`wg-quick` interface from these facts. Omit `host` for an externally managed
+peer such as a phone or travel router.
 
 Deploy or redeploy the VM:
 
