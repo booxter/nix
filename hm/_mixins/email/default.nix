@@ -7,18 +7,22 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
-  username = config.home.username;
+  userEnvironment = osConfig.host.userEnvironment;
+  emailCfg = userEnvironment.features.email;
+  emailAccount = userEnvironment.emailAccounts.${emailCfg.account};
+  identity = userEnvironment.identities.${emailAccount.identity};
+  smtpTransport = userEnvironment.smtpTransports.${emailAccount.smtpTransport};
+  authenticationMethod = {
+    oauth2 = 10;
+    password = 3;
+  };
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {
-  imports = lib.optionals isPersonal [
-    ./gmailctl.nix
-  ];
+  imports = [ ./gmailctl.nix ];
 
   # Thunderbird
-  programs.thunderbird = {
+  programs.thunderbird = lib.mkIf (emailCfg.enable && emailCfg.thunderbird.enable) {
     enable = true;
     package = pkgs.thunderbird;
     profiles.default = {
@@ -58,48 +62,36 @@ in
   };
 
   # Accounts
-  accounts.email.accounts =
+  accounts.email.accounts = lib.mkIf emailCfg.enable (
     let
       commonCfg = {
-        realName = "Ihar Hrachyshka";
+        realName = identity.fullName;
         thunderbird = {
-          enable = true;
+          enable = emailCfg.thunderbird.enable;
           perIdentitySettings = id: {
             # The account UI stores "Compose messages in HTML format" per identity.
             "mail.identity.id_${id}.compose_html" = false;
           };
           settings = id: {
-            "mail.server.server_${id}.authMethod" = 10; # OAuth2
+            "mail.server.server_${id}.authMethod" = authenticationMethod.${emailAccount.imapAuthentication};
             # Thunderbird treats this as a filesystem path during folder/filter
             # validation; keep it absolute.
             "mail.server.server_${id}.directory" =
               "${config.home.homeDirectory}/${thunderbirdProfilesPath}/default/ImapMail/${id}";
-            "mail.smtpserver.smtp_${id}.authMethod" =
-              if isNvidia then
-                3 # plain
-              else
-                10; # OAuth2
+            "mail.smtpserver.smtp_${id}.authMethod" = authenticationMethod.${emailAccount.smtpAuthentication};
           };
         };
         primary = true;
       };
     in
     {
-      default =
-        (
-          if isNvidia then
-            {
-              flavor = "outlook.office365.com";
-              address = "${username}@nvidia.com";
-              smtp.host = lib.mkForce "mail.nvidia.com";
-            }
-          else
-            {
-              flavor = "gmail.com";
-              address = "ihar.hrachyshka@gmail.com";
-            }
-        )
-        // commonCfg;
-    };
+      default = {
+        inherit (emailAccount) flavor;
+        address = identity.email;
+        smtp.host = lib.mkForce smtpTransport.server;
+      }
+      // commonCfg;
+    }
+  );
 
 }

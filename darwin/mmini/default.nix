@@ -7,7 +7,10 @@
   host.nix.cacheWarmer.enable = true;
 
   host.userEnvironment = {
-    roles.developer.enable = true;
+    roles = {
+      developer.enable = true;
+      workstation.enable = true;
+    };
     features.codex.warmer.enable = true;
   };
 

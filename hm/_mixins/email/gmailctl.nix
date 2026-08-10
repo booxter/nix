@@ -7,6 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
+  emailCfg = osConfig.host.userEnvironment.features.email;
   gmailctlConfigDir = "${config.home.homeDirectory}/.gmailctl";
   gmailctlExe = lib.getExe' pkgs.gmailctl "gmailctl";
   gmailctlKeepaliveCommand = [
@@ -19,7 +20,7 @@ let
     "/dev/null"
   ];
 in
-{
+lib.mkIf (emailCfg.enable && emailCfg.gmailctl.enable) {
   home.packages = [
     pkgs.gmailctl
   ];

@@ -18,7 +18,10 @@ in
     path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
   };
   host.userEnvironment = {
-    roles.developer.enable = true;
+    roles = {
+      developer.enable = true;
+      workstation.enable = true;
+    };
     features = {
       codex = {
         usageStatus.enable = false;
@@ -28,6 +31,10 @@ in
       scm = {
         identity = "nvidia";
         sendEmail.transport = "nvidia";
+      };
+      email = {
+        account = "nvidia";
+        gmailctl.enable = false;
       };
     };
   };

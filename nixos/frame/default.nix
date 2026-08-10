@@ -94,7 +94,10 @@
       ssh.credentials.backend = "yubikey";
     };
     userEnvironment = {
-      roles.developer.enable = true;
+      roles = {
+        developer.enable = true;
+        workstation.enable = true;
+      };
       features.codex.warmer.enable = true;
     };
     ups.server = {

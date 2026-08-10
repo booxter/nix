@@ -1,6 +1,12 @@
 { config, lib, ... }:
 let
   cfg = config.host.userEnvironment;
+  emailCfg = cfg.features.email;
+  emailAccount = cfg.emailAccounts.${emailCfg.account} or null;
+  authenticationType = lib.types.enum [
+    "oauth2"
+    "password"
+  ];
   identityType = lib.types.submodule {
     options = {
       fullName = lib.mkOption {
@@ -52,6 +58,36 @@ let
       };
     };
   };
+  emailAccountType = lib.types.submodule {
+    options = {
+      identity = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Named identity used by the email account.";
+      };
+
+      flavor = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Home Manager email-provider flavor.";
+      };
+
+      imapAuthentication = lib.mkOption {
+        type = authenticationType;
+        default = "oauth2";
+        description = "Authentication method used for incoming email.";
+      };
+
+      smtpTransport = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Named SMTP transport used by the email account.";
+      };
+
+      smtpAuthentication = lib.mkOption {
+        type = authenticationType;
+        default = "oauth2";
+        description = "Authentication method used for outgoing email.";
+      };
+    };
+  };
 in
 {
   options.host.userEnvironment = {
@@ -67,7 +103,14 @@ in
       description = "Named SMTP transports available to user-environment features.";
     };
 
+    emailAccounts = lib.mkOption {
+      type = lib.types.attrsOf emailAccountType;
+      default = { };
+      description = "Named email accounts available to user-environment features.";
+    };
+
     roles.developer.enable = lib.mkEnableOption "interactive software development environment";
+    roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
       codex = {
@@ -88,6 +131,28 @@ in
         workUsageStatus.enable = lib.mkEnableOption "work Codex usage status integration";
 
         warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
+      };
+
+      email = {
+        enable = lib.mkEnableOption "managed email environment";
+
+        account = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "gmail";
+          description = "Named email account configured on this host.";
+        };
+
+        thunderbird.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to configure the selected account in Thunderbird.";
+        };
+
+        gmailctl.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide gmailctl and keep its OAuth token active.";
+        };
       };
 
       scm = {
@@ -141,13 +206,48 @@ in
         };
       };
 
-      features = lib.mkIf cfg.roles.developer.enable {
-        codex.enable = lib.mkDefault true;
-        scm.enable = lib.mkDefault true;
+      emailAccounts = {
+        gmail = {
+          identity = "personal";
+          flavor = "gmail.com";
+          smtpTransport = "gmail";
+        };
+        nvidia = {
+          identity = "nvidia";
+          flavor = "outlook.office365.com";
+          smtpTransport = "nvidia";
+          smtpAuthentication = "password";
+        };
       };
+
+      features = lib.mkMerge [
+        (lib.mkIf cfg.roles.developer.enable {
+          codex.enable = lib.mkDefault true;
+          scm.enable = lib.mkDefault true;
+        })
+        (lib.mkIf cfg.roles.workstation.enable {
+          email.enable = lib.mkDefault true;
+        })
+      ];
     };
 
     assertions = [
+      {
+        assertion = !emailCfg.enable || emailAccount != null;
+        message = "host.userEnvironment.features.email.account must name a declared email account";
+      }
+      {
+        assertion =
+          !emailCfg.enable || emailAccount == null || builtins.hasAttr emailAccount.identity cfg.identities;
+        message = "selected email account must name a declared identity";
+      }
+      {
+        assertion =
+          !emailCfg.enable
+          || emailAccount == null
+          || builtins.hasAttr emailAccount.smtpTransport cfg.smtpTransports;
+        message = "selected email account must name a declared SMTP transport";
+      }
       {
         assertion = !cfg.features.scm.enable || builtins.hasAttr cfg.features.scm.identity cfg.identities;
         message = "host.userEnvironment.features.scm.identity must name a declared identity";
