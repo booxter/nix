@@ -33,7 +33,7 @@ let
       media_types = cfg.source.jellyfin.mediaTypes;
       idle_rate_mbit = cfg.policy.idleRateMbit;
       minimum_rate_mbit = cfg.policy.minimumRateMbit;
-      bitrate_headroom_fraction = cfg.policy.bitrateHeadroomFraction;
+      bitrate_headroom_fraction = cfg.policy.bitrateHeadroomPercent / 100.0;
       relaxation_hold_seconds = cfg.policy.relaxationHoldSeconds;
     };
     transmission =
@@ -41,7 +41,7 @@ let
         {
           rpc_url = transmissionRpcUrl;
           request_timeout_seconds = cfg.outputs.transmission.requestTimeoutSeconds;
-          headroom_fraction = cfg.outputs.transmission.headroomFraction;
+          headroom_fraction = cfg.outputs.transmission.headroomPercent / 100.0;
         }
       else
         null;

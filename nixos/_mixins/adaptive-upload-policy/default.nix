@@ -13,7 +13,6 @@ let
   };
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
   positiveInt = lib.types.addCheck lib.types.int (value: value > 0);
-  fraction = lib.types.addCheck lib.types.number (value: value >= 0 && value <= 1);
 in
 {
   imports = [
@@ -78,10 +77,10 @@ in
         description = "Minimum upload rate while external streams are active.";
       };
 
-      bitrateHeadroomFraction = lib.mkOption {
-        type = fraction;
-        default = 0.1;
-        description = "Extra bandwidth reserved above observed stream bitrates.";
+      bitrateHeadroomPercent = lib.mkOption {
+        type = lib.types.ints.between 0 100;
+        default = 10;
+        description = "Percentage of extra bandwidth reserved above observed stream bitrates.";
       };
 
       relaxationHoldSeconds = lib.mkOption {
@@ -161,10 +160,10 @@ in
         description = "Transmission RPC request timeout.";
       };
 
-      headroomFraction = lib.mkOption {
-        type = fraction;
-        default = 0.95;
-        description = "Fraction of the policy target assigned to Transmission.";
+      headroomPercent = lib.mkOption {
+        type = lib.types.ints.between 1 100;
+        default = 95;
+        description = "Percentage of the policy target assigned to Transmission.";
       };
     };
 
