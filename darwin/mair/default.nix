@@ -20,6 +20,10 @@
       };
       ssh.credentials.backend = "secretive";
     };
+    userEnvironment = {
+      roles.developer.enable = true;
+      features.codex.warmer.enable = true;
+    };
     remote-control = {
       client = {
         enable = true;

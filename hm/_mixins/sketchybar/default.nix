@@ -8,8 +8,8 @@
 let
   internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
   inherit (osConfig.host) isDarwin;
+  codexCfg = osConfig.host.userEnvironment.features.codex;
   isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
@@ -260,7 +260,7 @@ let
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString isPersonal ''
+    lib.optionalString (codexCfg.enable && codexCfg.usageStatus.enable) ''
       sketchybar --add item codex.5h left                                  \
                  --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
                                 update_freq=60                             \
@@ -305,7 +305,7 @@ let
                                           background.border_width=0         \
                                           background.height=24
     ''
-    + lib.optionalString isNvidia ''
+    + lib.optionalString (codexCfg.enable && codexCfg.workUsageStatus.enable) ''
       sketchybar --add item codex.work left                                 \
                  --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
                                   update_freq=60                            \

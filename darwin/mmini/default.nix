@@ -6,6 +6,11 @@
 
   host.nix.cacheWarmer.enable = true;
 
+  host.userEnvironment = {
+    roles.developer.enable = true;
+    features.codex.warmer.enable = true;
+  };
+
   host.network.interfaces.en0.kind = "ethernet";
 
   host.remote-control = {

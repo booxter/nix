@@ -6,7 +6,10 @@
   ...
 }:
 let
-  isNvidia = osConfig.host.userProfile == "nvidia";
+  codexCfg = osConfig.host.userEnvironment.features.codex;
+  hasOauthHttpMcp = lib.any (server: server.http != null && server.http.auth == "oauth") (
+    builtins.attrValues osConfig.host.mcp.pool
+  );
   mcps = import ./mcp.nix { inherit lib osConfig; };
   codexPkgs = import ./pkgs {
     inherit pkgs;
@@ -65,7 +68,7 @@ in
 {
   imports = [ ./codex-warmer.nix ];
 
-  programs.codex = {
+  programs.codex = lib.mkIf codexCfg.enable {
     enable = true;
     context = codexContext;
 
@@ -95,14 +98,14 @@ in
   };
 
   home.packages =
-    if isNvidia then
-      [
-        codexPkgs.codex-mcp-init
-        codexPkgs.codex-work-usage-status
-      ]
-    else
-      [
-        codexPkgs.codex-usage-status
-        codexPkgs.codex-rate-limit-reset-credits
-      ];
+    lib.optionals (codexCfg.enable && hasOauthHttpMcp) [ codexPkgs.codex-mcp-init ]
+    ++ lib.optionals (codexCfg.enable && codexCfg.usageStatus.enable) [
+      codexPkgs.codex-usage-status
+    ]
+    ++ lib.optionals (codexCfg.enable && codexCfg.resetCredits.enable) [
+      codexPkgs.codex-rate-limit-reset-credits
+    ]
+    ++ lib.optionals (codexCfg.enable && codexCfg.workUsageStatus.enable) [
+      codexPkgs.codex-work-usage-status
+    ];
 }

@@ -7,6 +7,15 @@ in
 
   host.network.macAddress = "bc:24:11:ed:30:d3";
 
+  host.userEnvironment = {
+    roles.developer.enable = true;
+    features.codex = {
+      usageStatus.enable = false;
+      resetCredits.enable = false;
+      workUsageStatus.enable = true;
+    };
+  };
+
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.
   security.sudo.wheelNeedsPassword = false;

@@ -93,6 +93,10 @@
       };
       ssh.credentials.backend = "yubikey";
     };
+    userEnvironment = {
+      roles.developer.enable = true;
+      features.codex.warmer.enable = true;
+    };
     ups.server = {
       description = "APC UPS 1500VA";
     };

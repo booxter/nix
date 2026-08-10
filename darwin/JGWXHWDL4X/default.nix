@@ -17,5 +17,13 @@ in
     backend = "secure-enclave";
     path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
   };
+  host.userEnvironment = {
+    roles.developer.enable = true;
+    features.codex = {
+      usageStatus.enable = false;
+      resetCredits.enable = false;
+      workUsageStatus.enable = true;
+    };
+  };
   host.nix.cacheWarmer.enable = true;
 }
