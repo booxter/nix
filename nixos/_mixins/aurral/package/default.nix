@@ -29,8 +29,8 @@ let
     fetcherVersion = 2;
     hash = npmDepsHash;
   };
-  runtimeStateDir = "/data/.state/nixarr/aurral";
-  runtimeFlowDir = "/data/media/library/flows";
+  runtimeStateDir = "/var/lib/aurral";
+  runtimeFlowDir = "${runtimeStateDir}/flows";
 in
 stdenv.mkDerivation {
   inherit pname version src;
@@ -66,8 +66,8 @@ stdenv.mkDerivation {
     # hard refresh.
     ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
-    # AURRAL_DATA_DIR lives below /data/.state, which sendFile rejects by default.
-    ../../../../overlays/aurral-allow-hidden-image-cache-path.patch
+    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile rejects by default.
+    ./aurral-allow-hidden-image-cache-path.patch
   ];
 
   postPatch = ''

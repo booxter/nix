@@ -20,8 +20,6 @@ in
 
   transmission-common = transmissionCommon;
 
-  aurral = pkgs.callPackage ./aurral { };
-
   houndarr = pkgs.callPackage ./houndarr { };
 
   houndarr-tools = pkgs.callPackage ./houndarr-tools { };

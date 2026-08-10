@@ -26,7 +26,7 @@ basePackages
   ismc = pkgs.callPackage ../darwin/pkgs/ismc { };
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-  aurral = pkgs.callPackage ../nixos/srvarr/pkgs/aurral { };
+  aurral = pkgs.callPackage ../nixos/_mixins/aurral/package { };
   inherit (orgPackages)
     degoog
     degoog-devinside-extensions

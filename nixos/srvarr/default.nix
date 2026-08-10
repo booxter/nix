@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 {
   system.stateVersion = "25.11";
 
@@ -12,10 +16,19 @@
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
+  host.aurral = {
+    enable = true;
+    stateDir = "${config.host.srvarrPaths.stateDir}/aurral";
+    flowDir = "${config.host.srvarrPaths.mediaDir}/library/flows";
+    extraWritePaths = [ "${config.host.srvarrPaths.mediaDir}/slskd/complete" ];
+    extraGroups = [ "media" ];
+    publicHostName = "mu.${config.host.network.publicDomain}";
+    authProxy.adminGroups = [ "media-admins" ];
+  };
+
   imports = [
     ./arr.nix
     ./audiobookshelf.nix
-    ./aurral.nix
     ./ebook-converter.nix
     ./glance.nix
     ./houndarr.nix

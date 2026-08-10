@@ -24,6 +24,7 @@ in
       ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade
+      ./_mixins/aurral
       ./_mixins/backups
       ./_mixins/backups/server-sops.nix
       ./_mixins/backups/sources.nix
