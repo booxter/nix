@@ -9,7 +9,7 @@ let
   inherit (osConfig.host) isDarwin isDesktop;
   cliCfg = osConfig.host.userEnvironment.features.cli;
   firefoxCfg = osConfig.host.userEnvironment.features.firefox;
-  isNvidia = osConfig.host.userProfile == "nvidia";
+  nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
   isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
   username = osConfig.host.username;
@@ -51,7 +51,7 @@ in
   ++ lib.optionals firefoxCfg.enable [
     ./_mixins/firefox
   ]
-  ++ lib.optionals (hmFull && isNvidia) [
+  ++ lib.optionals nvidiaDevelopmentCfg.enable [
     ./_mixins/krew
     ./_mixins/nv
   ];

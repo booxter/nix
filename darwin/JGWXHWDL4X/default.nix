@@ -38,6 +38,7 @@ in
       };
       firefox.enable = false;
       homerow.enable = false;
+      nvidiaDevelopment.enable = true;
       podmanMachine.enable = false;
     };
   };

@@ -15,6 +15,7 @@ in
         resetCredits.enable = false;
         workUsageStatus.enable = true;
       };
+      nvidiaDevelopment.enable = true;
       scm = {
         identity = "nvidia";
         sendEmail.transport = "nvidia";
