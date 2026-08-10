@@ -10,6 +10,30 @@ let
   isPersonal = osConfig.host.userProfile == "personal";
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
+  syncRepoConfig = (pkgs.formats.json { }).generate "sync-repo.json" {
+    repositories = {
+      dotfiles = {
+        remote = "git@github.com:booxter/dotfiles.git";
+        path = "${config.home.homeDirectory}/.priv-bin";
+      };
+      gmailctl = {
+        remote = "git@github.com:booxter/gmailctl-private-config.git";
+        path = "${config.home.homeDirectory}/.gmailctl";
+      };
+      pass = {
+        remote = "git@github.com:booxter/pass.git";
+        path = config.programs.password-store.settings.PASSWORD_STORE_DIR;
+      };
+    };
+  };
+  syncRepo = pkgs.symlinkJoin {
+    name = "sync-repo-configured";
+    paths = [ cliPkgs.sync-repo ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/sync-repo" --add-flags ${lib.escapeShellArg "--config ${syncRepoConfig}"}
+    '';
+  };
   nr = cliPkgs.nr.override {
     builders = osConfig.host.nix.nixpkgs-review.builders;
   };
@@ -158,7 +182,7 @@ in
       container
     ]
     ++ lib.optionals isPersonal [
-      cliPkgs.sync-repo
+      syncRepo
       ramalama
     ];
 

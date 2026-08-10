@@ -18,7 +18,10 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ gitCommandRunner ];
+  dependencies = [
+    gitCommandRunner
+    pythonPackages.pydantic
+  ];
 
   nativeCheckInputs = with pythonPackages; [
     git

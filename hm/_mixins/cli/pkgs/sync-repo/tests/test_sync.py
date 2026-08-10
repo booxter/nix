@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -6,10 +7,10 @@ from pathlib import Path
 
 from git_command_runner import SubprocessGitRunner
 from sync_repo.cli import main
+from sync_repo.config import ConfigurationError, load_repository_specs
 from sync_repo.git import (
     RepositorySpec,
     RepositorySynchronizer,
-    repository_specs,
 )
 
 
@@ -245,18 +246,81 @@ def test_rejects_non_repository_and_detached_head(tmp_path: Path) -> None:
     assert f"detached HEAD in {fixture.checkout}" in detached_stderr
 
 
-def test_repository_paths_follow_environment(tmp_path: Path) -> None:
-    home = tmp_path / "home"
+def write_configuration(path: Path, repositories: object) -> None:
+    path.write_text(json.dumps({"repositories": repositories}), encoding="utf-8")
 
-    defaults = repository_specs(home, {})
-    xdg = repository_specs(home, {"XDG_DATA_HOME": str(tmp_path / "data")})
-    explicit = repository_specs(
-        home,
-        {"PASSWORD_STORE_DIR": str(tmp_path / "passwords")},
+
+def test_loads_repository_configuration(tmp_path: Path) -> None:
+    path = tmp_path / "sync-repo.json"
+    write_configuration(
+        path,
+        {
+            "pass": {
+                "remote": "git@example.com:pass.git",
+                "path": str(tmp_path / "password-store"),
+            }
+        },
     )
 
-    assert defaults["gmailctl"].path == home / ".gmailctl"
-    assert defaults["dotfiles"].path == home / ".priv-bin"
-    assert defaults["pass"].path == home / ".local" / "share" / "password-store"
-    assert xdg["pass"].path == tmp_path / "data" / "password-store"
-    assert explicit["pass"].path == tmp_path / "passwords"
+    repositories = load_repository_specs(path)
+
+    assert repositories == {
+        "pass": RepositorySpec(
+            name="pass",
+            remote="git@example.com:pass.git",
+            path=tmp_path / "password-store",
+        )
+    }
+
+
+def test_reports_missing_and_invalid_configuration(tmp_path: Path) -> None:
+    missing = tmp_path / "missing.json"
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text('{"repositories":{"pass":{"remote":""}}}', encoding="utf-8")
+
+    for path, expected in (
+        (missing, "cannot read configuration"),
+        (invalid, "invalid configuration"),
+    ):
+        try:
+            load_repository_specs(path)
+        except ConfigurationError as error:
+            assert expected in str(error)
+        else:
+            raise AssertionError(f"expected ConfigurationError for {path}")
+
+
+def test_cli_loads_configured_repository(tmp_path: Path) -> None:
+    fixture = repository_fixture(tmp_path)
+    path = tmp_path / "sync-repo.json"
+    write_configuration(
+        path,
+        {
+            "dotfiles": {
+                "remote": str(fixture.remote),
+                "path": str(fixture.checkout),
+            }
+        },
+    )
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    status = main(
+        ["--config", str(path), "dotfiles"],
+        synchronizer=RepositorySynchronizer(SubprocessGitRunner(environment=git_environment())),
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert status == 0
+    assert stderr.getvalue() == ""
+    assert f"cloned dotfiles into {fixture.checkout}" in stdout.getvalue()
+
+
+def test_cli_reports_configuration_failure(tmp_path: Path) -> None:
+    stderr = io.StringIO()
+
+    status = main(["--config", str(tmp_path / "missing.json"), "pass"], stderr=stderr)
+
+    assert status == 1
+    assert "cannot read configuration" in stderr.getvalue()
