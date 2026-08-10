@@ -1,26 +1,21 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
   username = config.host.username;
-  nixCaches = facts.site.nixCaches;
-  extraSubstituters = lib.remove nixCaches.flakehub.url (
-    config.nix.settings."extra-substituters" or [ ]
-  );
+  caches = builtins.attrValues config.host.nix.caches;
+  substituterFor =
+    profile: cache:
+    let
+      profilePriority = cache.priorities.${profile};
+      priority = if profilePriority == null then cache.priorities.default else profilePriority;
+    in
+    cache.substituter + lib.optionalString (priority != null) "?priority=${toString priority}";
   cacheSubstituters =
-    preferHomeCache:
-    [
-      nixCaches.nixos.url
-      (if preferHomeCache then nixCaches.home.lanUrl else nixCaches.home.vpnUrl)
-    ]
-    ++ extraSubstituters
-    ++ [
-      (if preferHomeCache then nixCaches.flakehub.lanUrl else nixCaches.flakehub.vpnUrl)
-    ];
+    preferHomeCache: map (substituterFor (if preferHomeCache then "lan" else "vpn")) caches;
   lanSubstituters = lib.concatStringsSep " " (cacheSubstituters true);
   vpnSubstituters = lib.concatStringsSep " " (cacheSubstituters false);
   nixCachePreferenceWrapper = pkgs.writeShellApplication {

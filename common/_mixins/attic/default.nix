@@ -1,13 +1,45 @@
 {
   config,
-  facts,
+  hostSpec,
   isDarwin,
   isLinux,
   lib,
+  outputs,
   ...
 }:
 let
-  realmAttic = facts.realms.${config.host.realm}.services.attic or null;
+  model = import ./model.nix {
+    inherit
+      config
+      hostSpec
+      lib
+      outputs
+      ;
+  };
+  realmServerType = lib.types.submodule {
+    options = {
+      hostName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Host providing this realm Attic server.";
+      };
+      endpoint = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "HTTPS endpoint of this realm Attic server.";
+      };
+      cacheName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Attic cache hosted by this server.";
+      };
+      substituter = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Nix substituter URL for this Attic cache.";
+      };
+      trustedPublicKey = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Nix signing public key for this Attic cache.";
+      };
+    };
+  };
 in
 {
   imports = [
@@ -24,13 +56,31 @@ in
     client = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = realmAttic != null;
-        description = "Whether to upload new Nix store paths to the realm's Attic server.";
+        default = model.realmServers != { };
+        description = "Whether to upload new Nix store paths to the realm's Attic servers.";
       };
     };
 
     server = {
       enable = lib.mkEnableOption "an Attic binary cache server";
+
+      endpoint = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "HTTPS endpoint published to clients in this realm.";
+      };
+
+      cacheName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "default";
+        description = "Attic cache published by this server.";
+      };
+
+      trustedPublicKey = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Nix signing public key published to clients in this realm.";
+      };
 
       environmentFile = lib.mkOption {
         type = lib.types.str;
@@ -42,6 +92,27 @@ in
         type = lib.types.nonEmptyStr;
         default = "/var/lib/atticd/storage";
         description = "Filesystem path used for Attic server storage.";
+      };
+    };
+
+    realmServers = lib.mkOption {
+      type = lib.types.attrsOf realmServerType;
+      default = model.realmServers;
+      readOnly = true;
+      internal = true;
+      description = "Attic servers discovered in this host's realm.";
+    };
+  };
+
+  config = lib.mkIf config.host.attic.server.enable {
+    host.nix.cacheContributions.${config.networking.hostName} = {
+      scope = "realm";
+      substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
+      trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
+      priorities = {
+        default = 30;
+        lan = 10;
+        vpn = 30;
       };
     };
   };

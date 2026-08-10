@@ -4,8 +4,7 @@
 }:
 let
   inherit (context) lanDomain;
-  inherit (facts) nix-caches public-keys;
-  nixCaches = nix-caches;
+  inherit (facts) public-keys;
   publicKeys = public-keys;
 in
 {
@@ -33,19 +32,6 @@ in
       ];
     };
     services = {
-      attic = {
-        endpoint = "https://nix-cache.${lanDomain}";
-      };
-      nixCache = {
-        substituters = [
-          nixCaches.nixos.url
-          nixCaches.home.defaultUrl
-        ];
-        trustedPublicKeys = [
-          nixCaches.nixos.key
-          nixCaches.home.key
-        ];
-      };
       observability = {
         loki = {
           writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";

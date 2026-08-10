@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   inputs,
   lib,
   ...
@@ -29,7 +28,7 @@ in
 
     url = lib.mkOption {
       type = lib.types.nonEmptyStr;
-      default = facts.nix-caches.flakehub.url;
+      default = "https://cache.flakehub.com";
       description = "FlakeHub binary cache URL.";
     };
   };
@@ -41,8 +40,15 @@ in
     (lib.mkIf cfg.enable {
       nix.settings = {
         netrc-file = config.sops.templates."flakehub-netrc".path;
-        extra-substituters = [ cfg.url ];
-        extra-trusted-public-keys = flakehubCacheKeys;
+      };
+
+      host.nix.cacheContributions.flakehub = {
+        substituter = cfg.url;
+        trustedPublicKeys = flakehubCacheKeys;
+        priorities = {
+          lan = 30;
+          vpn = 10;
+        };
       };
 
       sops = {

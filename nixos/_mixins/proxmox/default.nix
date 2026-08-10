@@ -27,13 +27,6 @@ in
     (import ../../disko { device = "/dev/sda"; })
   ];
 
-  options.host.isProxmox = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    internal = true;
-    description = "Whether this host is a Proxmox VE node.";
-  };
-
   config = lib.mkMerge (
     [
       (lib.mkIf config.host.isProxmox {

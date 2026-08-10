@@ -1,48 +1,21 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.nixCache;
-  realmNixCache = facts.realms.${config.host.realm}.services.nixCache or null;
   username = config.host.username;
   GiB = 1024 * 1024 * 1024;
   hasBuildMachines = config.nix.buildMachines != [ ];
-  needsProxmoxCache =
-    config.host.isProxmox || config.host.nix.builder.enable || config.host.isOperatorSeat;
 in
 {
-  imports = [ ./flakehub-cache ];
-
-  options.host.nixCache = {
-    enable = lib.mkEnableOption "realm-provided Nix binary caches";
-
-    substituters = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = if realmNixCache == null then [ ] else realmNixCache.substituters;
-      description = "Nix substituters provided by this host's realm.";
-    };
-
-    trustedPublicKeys = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = if realmNixCache == null then [ ] else realmNixCache.trustedPublicKeys;
-      description = "Trusted Nix cache signing keys provided by this host's realm.";
-    };
-  };
+  imports = [
+    ./cache
+    ./flakehub-cache
+  ];
 
   config = {
-    host.nixCache.enable = lib.mkDefault (realmNixCache != null);
-
-    assertions = [
-      {
-        assertion = !cfg.enable || realmNixCache != null;
-        message = "realm '${config.host.realm}' does not define Nix binary caches";
-      }
-    ];
-
     nix = {
       gc = {
         automatic = true;
@@ -68,22 +41,12 @@ in
         min-free = lib.mkDefault (40 * GiB);
         max-free = lib.mkDefault (80 * GiB);
 
-        extra-substituters = lib.optionals needsProxmoxCache [
-          "https://cache.saumon.network/proxmox-nixos"
-        ];
-        extra-trusted-public-keys = lib.optionals needsProxmoxCache [
-          facts.public-keys.nix-cache.proxmox-nixos
-        ];
       }
       // lib.optionalAttrs hasBuildMachines {
         builders-use-substitutes = true;
       }
       // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
-      }
-      // lib.optionalAttrs cfg.enable {
-        substituters = lib.mkForce cfg.substituters;
-        trusted-public-keys = lib.mkForce cfg.trustedPublicKeys;
       };
     };
   };

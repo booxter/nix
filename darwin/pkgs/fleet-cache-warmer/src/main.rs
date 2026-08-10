@@ -121,7 +121,7 @@ impl Backend for CommandBackend {
 struct Warmer<B> {
     name: String,
     targets: Vec<String>,
-    attic_cache: Option<String>,
+    attic_caches: Vec<String>,
     backend: B,
 }
 
@@ -225,7 +225,7 @@ impl<B: Backend> Warmer<B> {
             return Ok(());
         }
 
-        if let Some(cache) = &self.attic_cache {
+        for cache in &self.attic_caches {
             log_line(
                 log,
                 format!(
@@ -241,7 +241,8 @@ impl<B: Backend> Warmer<B> {
                     outputs.len()
                 ),
             )?;
-        } else {
+        }
+        if self.attic_caches.is_empty() {
             log_line(
                 log,
                 format!(
@@ -303,13 +304,19 @@ fn main() -> Result<()> {
         }
         return Ok(());
     }
-    let attic_cache = push_to_attic().then(|| {
-        env::var("FLEET_CACHE_WARMER_ATTIC_CACHE").unwrap_or_else(|_| "default".to_owned())
-    });
+    let attic_caches = if push_to_attic() {
+        serde_json::from_str(
+            &env::var("FLEET_CACHE_WARMER_ATTIC_CACHES")
+                .unwrap_or_else(|_| "[\"default\"]".to_owned()),
+        )
+        .context("invalid FLEET_CACHE_WARMER_ATTIC_CACHES JSON")?
+    } else {
+        Vec::new()
+    };
     Warmer {
         name: NAME.to_owned(),
         targets,
-        attic_cache,
+        attic_caches,
         backend: CommandBackend,
     }
     .run(&mut io::stderr())
@@ -345,11 +352,11 @@ mod tests {
         }
     }
 
-    fn warmer(backend: FakeBackend, cache: Option<&str>) -> Warmer<FakeBackend> {
+    fn warmer(backend: FakeBackend, caches: &[&str]) -> Warmer<FakeBackend> {
         Warmer {
             name: "fleet-cache-warmer".to_owned(),
             targets: vec!["flake#one".to_owned(), "flake#two".to_owned()],
-            attic_cache: cache.map(str::to_owned),
+            attic_caches: caches.iter().map(|cache| (*cache).to_owned()).collect(),
             backend,
         }
     }
@@ -421,7 +428,7 @@ mod tests {
             }]),
             ..Default::default()
         };
-        let mut warmer = warmer(backend, Some("default"));
+        let mut warmer = warmer(backend, &["cache-a:default", "cache-b:default"]);
         let mut log = Vec::new();
         warmer.run(&mut log).unwrap();
         assert_eq!(
@@ -430,10 +437,16 @@ mod tests {
         );
         assert_eq!(
             warmer.backend.pushes,
-            vec![(
-                "default".to_owned(),
-                vec!["/nix/store/a".into(), "/nix/store/b".into()]
-            )]
+            vec![
+                (
+                    "cache-a:default".to_owned(),
+                    vec!["/nix/store/a".into(), "/nix/store/b".into()]
+                ),
+                (
+                    "cache-b:default".to_owned(),
+                    vec!["/nix/store/a".into(), "/nix/store/b".into()]
+                )
+            ]
         );
         let log = String::from_utf8(log).unwrap();
         assert!(log.contains("batched build reported failures"));
@@ -442,7 +455,7 @@ mod tests {
 
     #[test]
     fn skips_missing_targets_and_does_not_build_when_none_resolve() {
-        let mut warmer = warmer(FakeBackend::default(), None);
+        let mut warmer = warmer(FakeBackend::default(), &[]);
         let mut log = Vec::new();
         warmer.run(&mut log).unwrap();
         assert!(warmer.backend.build_calls.is_empty());
@@ -475,7 +488,7 @@ mod tests {
             ]),
             ..Default::default()
         };
-        let mut warmer = warmer(backend, None);
+        let mut warmer = warmer(backend, &[]);
         let mut log = Vec::new();
         warmer.run(&mut log).unwrap();
         assert_eq!(warmer.backend.build_calls.len(), 3);
@@ -506,7 +519,7 @@ mod tests {
             ]),
             ..Default::default()
         };
-        let mut warmer = warmer(backend, Some("default"));
+        let mut warmer = warmer(backend, &["default"]);
         let mut log = Vec::new();
         warmer.run(&mut log).unwrap();
         assert!(warmer.backend.pushes.is_empty());

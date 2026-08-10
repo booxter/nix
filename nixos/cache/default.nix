@@ -21,7 +21,9 @@ in
 
   host.attic.server = {
     enable = true;
+    endpoint = config.host.web.services.atticd.internal.url;
     storagePath = nfsPath;
+    trustedPublicKey = facts.public-keys.nix-cache.home;
   };
 
   environment.systemPackages = with pkgs; [

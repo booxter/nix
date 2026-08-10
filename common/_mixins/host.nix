@@ -43,6 +43,13 @@ in
       description = "Whether the selected platform uses the Linux kernel.";
     };
 
+    isProxmox = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      internal = true;
+      description = "Whether this host is a Proxmox VE node.";
+    };
+
     isDesktop = lib.mkOption {
       type = lib.types.bool;
       default = isDesktop;

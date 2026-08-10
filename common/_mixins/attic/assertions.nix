@@ -1,21 +1,17 @@
+{ config, ... }:
 {
-  config,
-  facts,
-  ...
-}:
-let
-  cfg = config.host.attic;
-  realmAttic = facts.realms.${config.host.realm}.services.attic or null;
-in
-{
-  config.assertions = [
+  assertions = [
     {
-      assertion = !cfg.client.enable || realmAttic != null;
-      message = "realm '${config.host.realm}' does not define an Attic service";
+      assertion = !config.host.attic.server.enable || config.host.attic.server.endpoint != null;
+      message = "Attic server '${config.networking.hostName}' must declare its client endpoint";
     }
     {
-      assertion = !cfg.server.enable || realmAttic != null;
-      message = "Attic servers must belong to a realm that defines an Attic service";
+      assertion = !config.host.attic.server.enable || config.host.attic.server.trustedPublicKey != null;
+      message = "Attic server '${config.networking.hostName}' must declare its Nix signing public key";
+    }
+    {
+      assertion = !config.host.attic.client.enable || config.host.attic.realmServers != { };
+      message = "realm '${config.host.realm}' has no Attic servers";
     }
   ];
 }

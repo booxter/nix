@@ -7,29 +7,33 @@
 let
   rootDir = "/private/var/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
+  servers = config.host.attic.realmServers;
 in
 {
   config = lib.mkIf config.host.attic.client.enable {
-    launchd.daemons.attic-watch-store = {
-      serviceConfig = {
-        ProgramArguments = [
-          (lib.getExe pkgs.attic-client)
-          "watch-store"
-          "default"
-        ];
-        RunAtLoad = true;
-        KeepAlive = true;
-        WorkingDirectory = rootDir;
-        EnvironmentVariables = {
-          HOME = rootDir;
-          NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+    launchd.daemons = lib.mapAttrs' (
+      name: server:
+      lib.nameValuePair "attic-watch-store-${name}" {
+        serviceConfig = {
+          ProgramArguments = [
+            (lib.getExe pkgs.attic-client)
+            "watch-store"
+            "${name}:${server.cacheName}"
+          ];
+          RunAtLoad = true;
+          KeepAlive = true;
+          WorkingDirectory = rootDir;
+          EnvironmentVariables = {
+            HOME = rootDir;
+            NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+            SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+          };
+          ProcessType = "Background";
+          StandardOutPath = "/var/log/attic-watch-store.log";
+          StandardErrorPath = "/var/log/attic-watch-store.log";
         };
-        ProcessType = "Background";
-        StandardOutPath = "/var/log/attic-watch-store.log";
-        StandardErrorPath = "/var/log/attic-watch-store.log";
-      };
-    };
+      }
+    ) servers;
 
     sops.templates."attic-client-config.toml".group = lib.mkForce "wheel";
 

@@ -4,7 +4,6 @@
 }:
 let
   inherit (context) lanDomain publicDomain;
-  nixCaches = facts.nix-caches;
   publicKeys = facts.public-keys;
 in
 rec {
@@ -15,8 +14,6 @@ rec {
   ports = {
     watchstate = 8080;
   };
-
-  inherit nixCaches;
 
   lan = {
     domain = lanDomain;

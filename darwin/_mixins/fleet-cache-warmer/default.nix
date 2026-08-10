@@ -7,11 +7,16 @@
 }:
 let
   cfg = config.host.fleetCacheWarmer;
+  atticCaches = lib.mapAttrsToList (
+    name: server: "${name}:${server.cacheName}"
+  ) config.host.attic.realmServers;
   warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
     inherit (cfg) pushToAttic targetRealm;
   };
 in
 {
+  imports = [ ./assertions.nix ];
+
   options.host.fleetCacheWarmer = {
     enable = lib.mkEnableOption "scheduled fleet cache warming";
 
@@ -31,12 +36,6 @@ in
       type = lib.types.str;
       default = "github:booxter/nix";
       description = "Flake reference to warm.";
-    };
-
-    atticCache = lib.mkOption {
-      type = lib.types.str;
-      default = "default";
-      description = "Attic cache name used when pushToAttic is enabled.";
     };
 
     startCalendarInterval = lib.mkOption {
@@ -80,7 +79,7 @@ in
           FLEET_CACHE_WARMER_FLAKE = cfg.flakeRef;
         }
         // lib.optionalAttrs cfg.pushToAttic {
-          FLEET_CACHE_WARMER_ATTIC_CACHE = cfg.atticCache;
+          FLEET_CACHE_WARMER_ATTIC_CACHES = builtins.toJSON atticCaches;
           NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };

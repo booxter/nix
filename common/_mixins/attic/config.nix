@@ -1,12 +1,19 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.attic.client;
-  realmAttic = facts.realms.${config.host.realm}.services.attic or null;
+  servers = config.host.attic.realmServers;
+  serverNames = builtins.attrNames servers;
+  serverConfig = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: server: ''
+      [servers."${name}"]
+      endpoint = "${server.endpoint}"
+      token = "${config.sops.placeholder."attic/token"}"
+    '') servers
+  );
 in
 {
   config = lib.mkIf cfg.enable {
@@ -17,10 +24,8 @@ in
         group = "root";
         mode = "0400";
         content = ''
-          default-server = "realm"
-          [servers.realm]
-          endpoint = "${realmAttic.endpoint}"
-          token = "${config.sops.placeholder."attic/token"}"
+          default-server = "${builtins.head serverNames}"
+          ${serverConfig}
         '';
       };
     };
