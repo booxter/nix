@@ -1,6 +1,7 @@
 {
   imports = [
     ./btrfs
+    ./resources
     ./volumes
   ];
 }

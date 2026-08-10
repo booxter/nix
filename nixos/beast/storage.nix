@@ -15,6 +15,50 @@
     btrfs.snapshots.enable = true;
   };
 
+  host.storage.resources = {
+    media = {
+      volume = "bulk";
+      relativePath = "Media";
+      sharedGroup = "media";
+      directoryDefaults = {
+        group = "media";
+        mode = "2775";
+        enforce = true;
+      };
+      identities.groups = [ "media" ];
+      nfs = {
+        enable = true;
+        fsid = 10;
+      };
+    };
+    nixCache = {
+      volume = "bulk";
+      relativePath = "nix-cache";
+      nfs = {
+        enable = true;
+        fsid = 11;
+      };
+    };
+    paperless = {
+      volume = "bulk";
+      relativePath = "paperless";
+      directoryDefaults = {
+        owner = "paperless";
+        group = "paperless";
+        mode = "0750";
+      };
+      identities = {
+        groups = [ "paperless" ];
+        users = [ "paperless" ];
+      };
+      nfs = {
+        enable = true;
+        fsid = 12;
+        anonymousIdentity = "paperless";
+      };
+    };
+  };
+
   host.hardware.storage = {
     mdraid = {
       enable = true;

@@ -1,7 +1,4 @@
-{
-  facts,
-  lib,
-}:
+{ config, lib }:
 let
   profiles = import ./profiles.nix { inherit lib; };
   compileLibrary =
@@ -16,7 +13,7 @@ let
       typeOptions = profiles.typeOptions library;
       requiredPlugins = lib.unique (kind.requiredPlugins ++ audience.requiredPlugins);
     };
-  libraries = map compileLibrary facts.media-libraries.libraries;
+  libraries = map compileLibrary (builtins.attrValues config.host.jellyfin.libraries);
 in
 {
   inherit libraries;

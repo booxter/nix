@@ -5,7 +5,7 @@
   ...
 }:
 let
-  nfsPath = facts.nfs.links.cache.nixCache.mountPoint;
+  nfsPath = config.host.storage.claims.nixCache.mountPoint;
 in
 {
   system.stateVersion = "25.11";
@@ -23,6 +23,11 @@ in
     endpoint = config.host.web.services.atticd.internal.url;
     storagePath = nfsPath;
     trustedPublicKey = facts.public-keys.nix-cache.home;
+  };
+
+  host.storage.claims.nixCache = {
+    provider = "beast";
+    mountPoint = "/cache";
   };
 
   environment.systemPackages = with pkgs; [

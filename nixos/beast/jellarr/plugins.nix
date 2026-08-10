@@ -1,10 +1,10 @@
 {
-  facts,
+  config,
   lib,
   ...
 }:
 let
-  model = import ./model.nix { inherit facts lib; };
+  model = import ./model.nix { inherit config lib; };
   registry = import ./plugin-registry.nix;
   enabledPluginIds = builtins.filter (
     plugin: builtins.elem plugin model.requiredPlugins

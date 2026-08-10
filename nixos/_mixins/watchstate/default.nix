@@ -43,11 +43,7 @@ in
     library = {
       source = lib.mkOption {
         type = with lib.types; nullOr absolutePath;
-        default =
-          if config.host.jellyfin.media.source == null then
-            null
-          else
-            "${config.host.jellyfin.media.source}/library";
+        default = "${config.host.jellyfin.media.mountPoint}/library";
         readOnly = true;
         internal = true;
         description = "Host media-library path exposed read-only to WatchState.";

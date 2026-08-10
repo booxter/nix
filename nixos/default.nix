@@ -43,7 +43,6 @@ in
       ./_mixins/maintenance
       ./_mixins/network
       ./_mixins/nix
-      ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/proxmox
@@ -51,7 +50,6 @@ in
       ./_mixins/security
       ./_mixins/sso
       ./_mixins/storage
-      ./_mixins/shared-storage.nix
       ./_mixins/site-ip
       ./_mixins/ups-client
       ./_mixins/ups-server.nix

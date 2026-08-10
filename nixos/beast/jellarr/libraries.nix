@@ -1,11 +1,10 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
-  model = import ./model.nix { inherit facts lib; };
+  model = import ./model.nix { inherit config lib; };
   libraryRoot = "${config.host.jellyfin.media.mountPoint}/library";
   getLibraryOptions =
     {

@@ -7,6 +7,44 @@
 let
   cfg = config.host.jellyfin;
   absolutePath = lib.types.strMatching "^/.*";
+  libraryModule =
+    { name, ... }:
+    {
+      options = {
+        name = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = name;
+          description = "Jellyfin display name for the library.";
+        };
+        path = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = name;
+          description = "Directory below the media resource's library root.";
+        };
+        kind = lib.mkOption {
+          type = lib.types.enum [
+            "movies"
+            "series"
+            "music"
+          ];
+          description = "Media kind determining Jellyfin collection and provider policy.";
+        };
+        audience = lib.mkOption {
+          type = lib.types.enum [
+            "general"
+            "adult"
+          ];
+          default = "general";
+        };
+        metadataPolicy = lib.mkOption {
+          type = lib.types.enum [
+            "default"
+            "tmdb-first"
+          ];
+          default = "default";
+        };
+      };
+    };
 in
 {
   imports = [
@@ -54,10 +92,16 @@ in
     };
 
     media = {
-      source = lib.mkOption {
-        type = with lib.types; nullOr absolutePath;
-        default = null;
-        description = "Host path containing the media tree.";
+      provider = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = config.networking.hostName;
+        description = "Host providing Jellyfin's media storage resource.";
+      };
+
+      resource = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "media";
+        description = "Storage resource containing Jellyfin's media tree.";
       };
 
       mountPoint = lib.mkOption {
@@ -65,6 +109,12 @@ in
         default = "/media";
         description = "Stable path presented to Jellyfin and its consumers.";
       };
+    };
+
+    libraries = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule libraryModule);
+      default = { };
+      description = "Media libraries consumed by this Jellyfin installation.";
     };
 
     web = {
