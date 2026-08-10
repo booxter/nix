@@ -21,9 +21,5 @@ in
       assertion = !cfg.enable || cfg.target.url != null;
       message = "Remote Jellarr targets must publish a Jellyfin URL.";
     }
-    {
-      assertion = !cfg.enable || builtins.length model.watchstates <= 1;
-      message = "A Jellyfin target may have at most one WatchState integration.";
-    }
   ];
 }

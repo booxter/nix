@@ -28,13 +28,6 @@ in
         default = config.networking.hostName;
         description = "NixOS host running the Jellyfin instance synchronized by WatchState.";
       };
-
-      declarativeConfig = lib.mkOption {
-        type = lib.types.attrs;
-        default = { };
-        internal = true;
-        description = "Jellarr configuration contributed to the target Jellyfin instance.";
-      };
     };
 
     port = lib.mkOption {
