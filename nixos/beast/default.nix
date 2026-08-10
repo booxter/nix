@@ -43,7 +43,5 @@
     shutdown.waitForLowBattery = true;
   };
 
-  networking.resolvconf.enable = true;
-
   environment.systemPackages = [ pkgs.join-media-parts ];
 }
