@@ -135,7 +135,7 @@ func HostDashboard(config Config, host Host) (dashboard.Dashboard, error) {
 		Targets: hostNetworkTargets(host, selector),
 	}))
 
-	if host.ThermalProfile != "none" {
+	if !host.Virtual {
 		thermal := layout.row(8, 24)[0]
 		builder.WithPanel(timeSeries(TimeseriesOptions{
 			ID: thermal.ID, Title: "Temperature", Unit: units.Celsius,

@@ -58,10 +58,7 @@ in
     mmini = {
       realm = "home";
       userProfile = "personal";
-      observability = {
-        capacityProfile = "interactive";
-        thermalProfile = "no-cpu";
-      };
+      observability.capacityProfile = "interactive";
       isOperatorSeat = true;
       isSecretsOperator = true;
     };

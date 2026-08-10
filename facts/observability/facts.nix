@@ -39,11 +39,5 @@
         };
       };
     };
-
-    thermal = {
-      standard.cpu = true;
-      no-cpu.cpu = false;
-      none = { };
-    };
   };
 }

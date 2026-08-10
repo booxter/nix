@@ -107,7 +107,6 @@ type Host struct {
 	Name            string      `json:"name"`
 	Platform        string      `json:"platform"`
 	CapacityProfile string      `json:"capacityProfile"`
-	ThermalProfile  string      `json:"thermalProfile"`
 	GPUVendor       *string     `json:"gpuVendor"`
 	Services        []string    `json:"services"`
 	Storage         HostStorage `json:"storage"`
@@ -162,8 +161,8 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 		if host.Platform != "linux" && host.Platform != "darwin" {
 			return Config{}, fmt.Errorf("host %q has invalid platform %q", host.Name, host.Platform)
 		}
-		if host.CapacityProfile == "" || host.ThermalProfile == "" {
-			return Config{}, fmt.Errorf("host %q lacks observability profiles", host.Name)
+		if host.CapacityProfile == "" {
+			return Config{}, fmt.Errorf("host %q lacks a capacity profile", host.Name)
 		}
 		if host.Storage.DiskBays != nil {
 			layout := host.Storage.DiskBays

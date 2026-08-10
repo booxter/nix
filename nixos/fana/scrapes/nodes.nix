@@ -19,7 +19,6 @@ let
     instance = name;
     realm = hostConfig.host.realm;
     scrape_profile = "node";
-    thermal_profile = hostConfig.host.observability.thermalProfile;
   };
   mkRemoteNixosNodeTargetConfig =
     name:

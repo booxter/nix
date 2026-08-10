@@ -20,7 +20,7 @@ var testConfig = Config{
 	Hosts: []Host{
 		{
 			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
-			ThermalProfile: "standard", Builder: true, Backups: HostBackups{Server: true},
+			Builder: true, Backups: HostBackups{Server: true},
 			Storage: HostStorage{DiskBays: &DiskBayLayout{Rows: 5, Columns: 3}},
 			Services: []string{
 				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
@@ -37,7 +37,7 @@ var testConfig = Config{
 func TestHostDashboardReflectsHostCapabilities(t *testing.T) {
 	host := Host{
 		Name: "prx1-lab", Platform: "linux", CapacityProfile: "hypervisor",
-		ThermalProfile: "standard", Hypervisor: true,
+		Hypervisor: true,
 	}
 	model, err := HostDashboard(testConfig, host)
 	if err != nil {

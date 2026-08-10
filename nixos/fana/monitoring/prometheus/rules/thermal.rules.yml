@@ -6,10 +6,10 @@ groups:
         expr: |
           max by(instance) (
             (
-              node_thermal_zone_temp{scrape_profile="node",thermal_profile="standard",type=~"cpu-thermal|x86_pkg_temp"}
-              or node_hwmon_temp_celsius{scrape_profile="node",thermal_profile="standard",chip=~"platform_coretemp_0|pci0000:00_0000:00:18_3",sensor="temp1"}
+              node_thermal_zone_temp{scrape_profile="node",host_class="hardware",type=~"cpu-thermal|x86_pkg_temp"}
+              or node_hwmon_temp_celsius{scrape_profile="node",host_class="hardware",chip=~"platform_coretemp_0|pci0000:00_0000:00:18_3",sensor="temp1"}
             )
-            or host_observability_darwin_temperature_group_max_celsius{scrape_profile="node",thermal_profile="standard",group="cpu"}
+            or host_observability_darwin_temperature_group_max_celsius{scrape_profile="node",host_class="hardware",group="cpu"}
           ) > 85
         for: 10m
         labels:

@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node"}'
         values: "80x22"
     alert_rule_test:
       - eval_time: 10m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node"}'
         values: "90x20 80x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -35,11 +35,20 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node",thermal_profile="no-cpu"}'
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node"}'
         values: "90x22"
     alert_rule_test:
       - eval_time: 10m30s
         alertname: CPUTemperatureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: CPUTemperatureHigh
+              category: thermal
+              instance: mmini
+              severity: warning
+            exp_annotations:
+              summary: "CPU temperature high on mmini"
+              description: "mmini has sustained CPU/package temperature above 85C for 10 minutes."
 
   - interval: 30s
     input_series:
