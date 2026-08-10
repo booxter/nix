@@ -7,6 +7,8 @@
 let
   cfg = config.host.xquartz;
   xquartz = pkgs.xquartz;
+  username = config.host.username;
+  userLogDirectory = "${config.users.users.${username}.home}/Library/Logs/nix-darwin";
 in
 {
   options.host.xquartz = {
@@ -31,6 +33,8 @@ in
         Sockets."org.nixos.xquartz:0".SecureSocketWithKey = "DISPLAY";
         ServiceIPC = true;
         EnableTransactions = true;
+        StandardOutPath = "${userLogDirectory}/xquartz-startx.log";
+        StandardErrorPath = "${userLogDirectory}/xquartz-startx.log";
       };
     };
 
@@ -45,7 +49,13 @@ in
         MachServices."org.nixos.xquartz.privileged_startx" = true;
         TimeOut = 120;
         EnableTransactions = true;
+        StandardOutPath = "/var/log/nix-darwin/xquartz-privileged-startx.log";
+        StandardErrorPath = "/var/log/nix-darwin/xquartz-privileged-startx.log";
       };
     };
+
+    system.activationScripts.launchd.text = lib.mkBefore ''
+      install -d -m 0755 -o ${lib.escapeShellArg username} -g staff ${lib.escapeShellArg userLogDirectory}
+    '';
   };
 }
