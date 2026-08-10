@@ -7,6 +7,11 @@ let
     _: client: client.enable && client.category == "internal"
   ) config.host.internalPki.clients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
+  nginxMtlsClientNames = lib.unique (
+    lib.filter (clientName: clientName != "") (
+      map (vhost: vhost.upstreamTls.clientName) (builtins.attrValues enabledUpstreamTlsVhosts)
+    )
+  );
   recommendedProxyHeaders = hostHeader: ''
     proxy_set_header Host ${hostHeader};
     proxy_set_header X-Real-IP $remote_addr;
@@ -238,6 +243,15 @@ in
     })
 
     (lib.mkIf hasPublicVhosts {
+      host.internalPki.clients = lib.genAttrs nginxMtlsClientNames (_: {
+        materializations.default = {
+          owner = config.services.nginx.user;
+          group = config.services.nginx.group;
+          mode = "0400";
+          restartUnits = [ "nginx.service" ];
+        };
+      });
+
       security.acme = {
         acceptTerms = true;
         defaults.email = cfg.acmeEmail;

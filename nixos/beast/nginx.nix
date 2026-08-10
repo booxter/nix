@@ -36,7 +36,6 @@ in
       value = {
         enable = true;
         category = "internal";
-        materializations.default.restartUnits = [ "nginx.service" ];
       };
     }) mtlsPublicServices
   );
