@@ -21,6 +21,7 @@ in
   ]
   ++ [
     ./_mixins/defaults
+    ./_mixins/docker-desktop
     ./_mixins/etc
     ./_mixins/fonts
     ./_mixins/hardware
