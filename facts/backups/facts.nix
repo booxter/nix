@@ -7,6 +7,7 @@ in
     repositoryRoot = "/volume2/backups/restic-prod/hosts";
 
     offsite.b2 = {
+      backend = "b2";
       bucketName = "ihar-restic-prod";
       prefix = "hosts";
     };

@@ -34,6 +34,7 @@ let
           prefix = "${offsite.prefix}/${link.storageName}";
         in
         {
+          backend = offsite.backend;
           enable = true;
           repository = "b2:${offsite.bucketName}:${prefix}";
           inherit prefix;

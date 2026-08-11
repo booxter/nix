@@ -149,5 +149,7 @@ def test_restic_environment_preserves_parent_and_adds_credentials() -> None:
         "PATH": "/bin",
         "B2_ACCOUNT_ID": "id",
         "B2_ACCOUNT_KEY": "key",
+        "AWS_ACCESS_KEY_ID": "id",
+        "AWS_SECRET_ACCESS_KEY": "key",
         "RESTIC_CACHE_DIR": "/cache",
     }

@@ -13,9 +13,10 @@ let
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.clients;
-  b2Clients = lib.filterAttrs (
-    _: client: lib.hasPrefix "b2:" client.cloud.repository
+  credentialedCloudClients = lib.filterAttrs (
+    _: client: client.cloud.backend != "local"
   ) enabledCloudClients;
+  b2Clients = lib.filterAttrs (_: client: client.cloud.backend == "b2") enabledCloudClients;
   usageEnabled = b2Clients != { };
   sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
   ingestUser = name: "restic-${name}";
@@ -39,6 +40,7 @@ let
     in
     (pkgs.formats.json { }).generate "${offloadService name}.json" (
       {
+        backend = client.cloud.backend;
         sourceRepository = repositoryPath name;
         sourcePasswordFile = client.cloud.sourcePasswordFile;
         destinationRepository = client.cloud.repository;
@@ -46,10 +48,10 @@ let
         packSizeMib = cfg.cloud.packSizeMib;
         pruneOptions = client.cloud.pruneOpts;
       }
-      // lib.optionalAttrs (builtins.hasAttr name b2Clients) {
-        b2ApplicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
-        b2ApplicationKeyFile = cfg.cloud.applicationKeyFile;
-        b2Connections = cfg.cloud.b2Connections;
+      // lib.optionalAttrs (builtins.hasAttr name credentialedCloudClients) {
+        applicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
+        applicationKeyFile = cfg.cloud.applicationKeyFile;
+        backendConnections = cfg.cloud.backendConnections;
       }
     );
   usageConfig = (pkgs.formats.json { }).generate "restic-cloud-usage.json" {
@@ -108,6 +110,16 @@ in
 
                 cloud = {
                   enable = lib.mkEnableOption "cloud offload for this repository";
+
+                  backend = lib.mkOption {
+                    type = enum [
+                      "local"
+                      "b2"
+                      "s3"
+                    ];
+                    default = "local";
+                    description = "Restic backend used by the cloud repository.";
+                  };
 
                   repository = lib.mkOption {
                     type = str;
@@ -178,7 +190,7 @@ in
         default = null;
       };
 
-      b2Connections = lib.mkOption {
+      backendConnections = lib.mkOption {
         type = lib.types.ints.positive;
         default = 2;
       };

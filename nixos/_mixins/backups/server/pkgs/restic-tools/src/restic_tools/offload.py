@@ -80,8 +80,8 @@ class ResticOffloadClient:
 
     def copy(self) -> None:
         backend_options = (
-            ("-o", f"b2.connections={self.config.b2_connections}")
-            if self.config.destination_repository.startswith("b2:")
+            ("-o", f"{self.config.backend}.connections={self.config.backend_connections}")
+            if self.config.backend != "local"
             else ()
         )
         self._checked(

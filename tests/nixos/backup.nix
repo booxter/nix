@@ -53,6 +53,7 @@ pkgs.testers.runNixOSTest {
         clients.test = {
           publicKey = clientPublicKey;
           cloud = {
+            backend = "local";
             enable = true;
             repository = "/srv/cloud/test";
             sourcePasswordFile = "/etc/backup-test/password";
