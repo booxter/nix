@@ -36,7 +36,8 @@ let
         {
           backend = offsite.backend;
           enable = true;
-          repository = "b2:${offsite.bucketName}:${prefix}";
+          repository = "${offsite.repositoryRoot}/${prefix}";
+          inherit (offsite) storageProvider;
           inherit prefix;
           sourcePasswordFile =
             config.sops.secrets."backup/restic/${link.clientName}/cloud/localPassword".path;

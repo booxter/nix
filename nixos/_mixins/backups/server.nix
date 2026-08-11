@@ -16,8 +16,10 @@ let
   credentialedCloudClients = lib.filterAttrs (
     _: client: client.cloud.backend != "local"
   ) enabledCloudClients;
-  b2Clients = lib.filterAttrs (_: client: client.cloud.backend == "b2") enabledCloudClients;
-  usageEnabled = b2Clients != { };
+  b2StorageClients = lib.filterAttrs (
+    _: client: client.cloud.storageProvider == "b2"
+  ) enabledCloudClients;
+  usageEnabled = b2StorageClients != { };
   sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
   ingestUser = name: "restic-${name}";
   repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
@@ -66,7 +68,7 @@ let
       bucket = cfg.cloud.bucketName;
       inherit (client.cloud) prefix repository;
       passwordFile = client.cloud.passwordFile;
-    }) b2Clients;
+    }) b2StorageClients;
   };
   command = executable: arguments: utils.escapeSystemdExecArgs ([ executable ] ++ arguments);
   cloudService =
@@ -152,6 +154,12 @@ in
                     type = str;
                     default = "";
                     description = "Destination Restic repository.";
+                  };
+
+                  storageProvider = lib.mkOption {
+                    type = nullOr (enum [ "b2" ]);
+                    default = null;
+                    description = "Object-storage provider used for provider-specific usage metrics.";
                   };
 
                   prefix = lib.mkOption {

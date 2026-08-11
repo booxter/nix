@@ -7,9 +7,11 @@ in
     repositoryRoot = "/volume2/backups/restic-prod/hosts";
 
     offsite.b2 = {
-      backend = "b2";
+      backend = "s3";
       bucketName = "ihar-restic-prod";
       prefix = "hosts";
+      repositoryRoot = "s3:https://s3.us-east-005.backblazeb2.com/ihar-restic-prod";
+      storageProvider = "b2";
     };
   };
 
