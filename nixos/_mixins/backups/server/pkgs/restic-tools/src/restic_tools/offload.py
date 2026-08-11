@@ -109,6 +109,13 @@ def offload(client: OffloadClient) -> None:
             client.initialize()
         client.unlock()
         client.copy()
+    except Exception:
+        client.unlock()
+        raise
+
+
+def prune(client: OffloadClient) -> None:
+    try:
         client.unlock()
         client.prune()
     except Exception:

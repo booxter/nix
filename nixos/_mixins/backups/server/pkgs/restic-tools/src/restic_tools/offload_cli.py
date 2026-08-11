@@ -47,6 +47,14 @@ def run(
     arguments: argparse.Namespace,
     client_factory: ClientFactory = SystemClientFactory(),
 ) -> int:
+    offload(load_client(arguments, client_factory))
+    return 0
+
+
+def load_client(
+    arguments: argparse.Namespace,
+    client_factory: ClientFactory = SystemClientFactory(),
+) -> OffloadClient:
     config = OffloadConfig.model_validate_json(arguments.config.read_text(encoding="utf-8"))
     if config.application_key_id_file is None and config.application_key_file is None:
         environment = system_environment()
@@ -58,8 +66,7 @@ def run(
         )
     else:
         raise ValueError("both cloud application key files must be configured together")
-    offload(client_factory(config, environment))
-    return 0
+    return client_factory(config, environment)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

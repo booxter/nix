@@ -7,8 +7,10 @@ from pathlib import Path
 import pytest
 
 from restic_tools.models import OffloadConfig
-from restic_tools.offload import OffloadFailure, offload
+from restic_tools.offload import OffloadFailure, offload, prune
 from restic_tools.offload_cli import parser, run
+from restic_tools.prune_cli import parser as prune_parser
+from restic_tools.prune_cli import run as run_prune
 
 
 @dataclass
@@ -65,8 +67,8 @@ def test_missing_destination_is_initialized_and_offloaded() -> None:
 
     assert restic.initialized
     assert restic.copied
-    assert restic.pruned
-    assert restic.unlocks == 2
+    assert not restic.pruned
+    assert restic.unlocks == 1
 
 
 def test_failed_copy_unlocks_and_does_not_prune() -> None:
@@ -78,6 +80,15 @@ def test_failed_copy_unlocks_and_does_not_prune() -> None:
     assert raised.value.exit_code == 17
     assert restic.unlocks == 2
     assert not restic.pruned
+
+
+def test_prune_unlocks_and_prunes_destination() -> None:
+    restic = StatefulRestic(exists=True)
+
+    prune(restic)
+
+    assert restic.pruned
+    assert restic.unlocks == 1
 
 
 @dataclass
@@ -112,6 +123,21 @@ def test_cli_loads_config_and_credentials(tmp_path: Path) -> None:
     assert factory.environment["AWS_ACCESS_KEY_ID"] == "application-id"
     assert factory.environment["AWS_SECRET_ACCESS_KEY"] == "application-key"
     assert client.copied
+
+
+def test_prune_cli_loads_config_and_credentials(tmp_path: Path) -> None:
+    offload_config = config(tmp_path)
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        offload_config.model_dump_json(by_alias=True),
+        encoding="utf-8",
+    )
+    arguments = prune_parser().parse_args(["--config", str(config_path)])
+    client = StatefulRestic(exists=True)
+    factory = RecordingFactory(client)
+
+    assert run_prune(arguments, factory) == 0
+    assert client.pruned
 
 
 def test_cli_supports_destination_without_b2_credentials(tmp_path: Path) -> None:
