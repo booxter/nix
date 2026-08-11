@@ -6,8 +6,7 @@
   ...
 }:
 let
-  requiredRepositories = osConfig.host.userEnvironment.repositories.required;
-  enabled = builtins.elem "pass" requiredRepositories;
+  enabled = osConfig.host.userEnvironment.features.passwordStore.enable;
 in
 {
   config = lib.mkIf enabled {

@@ -253,6 +253,8 @@ in
 
       nvidiaDevelopment.enable = lib.mkEnableOption "NVIDIA development environment";
 
+      passwordStore.enable = lib.mkEnableOption "password-store environment";
+
       podmanDesktop.enable = lib.mkEnableOption "Podman Desktop application";
 
       podmanMachine.enable = lib.mkEnableOption "managed Podman virtual machine";
@@ -349,11 +351,7 @@ in
 
         requests = {
           gmailctl = lib.optionals (emailCfg.enable && emailCfg.gmailctl.enable) [ "gmailctl" ];
-          passwordStore =
-            lib.optionals (cfg.features.developerTools.enable && cfg.features.developerTools.commandLine.enable)
-              [
-                "pass"
-              ];
+          passwordStore = lib.optional cfg.features.passwordStore.enable "pass";
         };
       };
 
@@ -361,6 +359,7 @@ in
         (lib.mkIf cfg.roles.developer.enable {
           developerTools.enable = lib.mkDefault true;
           codex.enable = lib.mkDefault true;
+          passwordStore.enable = lib.mkDefault true;
           scm.enable = lib.mkDefault true;
         })
         (lib.mkIf cfg.roles.workstation.enable {
