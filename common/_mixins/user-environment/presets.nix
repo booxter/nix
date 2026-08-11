@@ -23,7 +23,6 @@ let
       };
     };
     nvidia = {
-      defaults.features.podmanMachine.enable = false;
       roles.developer.features = {
         attentionInbox.enable = true;
         codex = {
