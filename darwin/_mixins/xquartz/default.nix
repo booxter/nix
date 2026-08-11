@@ -19,7 +19,7 @@ in
     # XQuartz itself is installed by Home Manager. The launchd jobs still need
     # package-internal helpers under libexec and etc/X11, which Home Manager's
     # profile symlink farm does not expose, so point launchd at the store path.
-    launchd.user.agents.xquartz-startx = {
+    launchd.agents.xquartz-startx = {
       command = lib.escapeShellArgs [
         "${xquartz}/libexec/launchd_startx"
         "${xquartz}/bin/startx"
