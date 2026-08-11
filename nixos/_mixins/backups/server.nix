@@ -185,7 +185,7 @@ in
 
       packSizeMib = lib.mkOption {
         type = lib.types.ints.positive;
-        default = 4;
+        default = 16;
       };
 
       dependencyUnits = lib.mkOption {
