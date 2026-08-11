@@ -180,7 +180,7 @@ in
 
       b2Connections = lib.mkOption {
         type = lib.types.ints.positive;
-        default = 1;
+        default = 2;
       };
 
       packSizeMib = lib.mkOption {
