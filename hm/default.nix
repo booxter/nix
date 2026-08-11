@@ -12,6 +12,7 @@ let
   localAiCfg = osConfig.host.userEnvironment.features.localAi;
   nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
   podmanDesktopCfg = osConfig.host.userEnvironment.features.podmanDesktop;
+  sshCfg = osConfig.host.userEnvironment.features.ssh;
   hmFull = hostSpec.hmFull or true;
   username = osConfig.host.username;
 in
@@ -19,9 +20,11 @@ in
   imports = [
     ./_mixins/password-store
     ./_mixins/podman-machine
-    ./_mixins/ssh
     ./_mixins/xquartz
     ./_mixins/zsh
+  ]
+  ++ lib.optionals sshCfg.enable [
+    ./_mixins/ssh
   ]
   ++ lib.optionals (developerToolsCfg.enable && developerToolsCfg.commandLine.enable) [
     ./_mixins/cli

@@ -282,6 +282,8 @@ in
           };
         };
       };
+
+      ssh.enable = lib.mkEnableOption "SSH client environment";
     };
   };
 
@@ -361,6 +363,7 @@ in
           codex.enable = lib.mkDefault true;
           passwordStore.enable = lib.mkDefault true;
           scm.enable = lib.mkDefault true;
+          ssh.enable = lib.mkDefault true;
         })
         (lib.mkIf cfg.roles.workstation.enable {
           email.enable = lib.mkDefault true;
