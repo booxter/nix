@@ -201,7 +201,7 @@ in
                   pruneTimerConfig = lib.mkOption {
                     type = attrsOf unitOption;
                     default = {
-                      OnCalendar = "07:00";
+                      OnCalendar = "Sun *-*-* 07:00:00";
                       RandomizedDelaySec = "5m";
                       Persistent = true;
                     };
