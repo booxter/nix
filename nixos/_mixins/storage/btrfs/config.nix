@@ -51,9 +51,11 @@ in
             suffix = helpers.scrubUnitSuffix mountPoint;
           in
           {
-            "btrfs-scrub-${suffix}".serviceConfig.ExecStart = lib.mkForce (
-              scrubCommand "scrub-start-or-resume" mountPoint
-            );
+            "btrfs-scrub-${suffix}" = {
+              after = [ (helpers.mountUnit mountPoint) ];
+              requires = [ (helpers.mountUnit mountPoint) ];
+              serviceConfig.ExecStart = lib.mkForce (scrubCommand "scrub-start-or-resume" mountPoint);
+            };
 
             "btrfs-scrub-resume-${suffix}" = {
               description = "Resume interrupted Btrfs scrub on ${mountPoint}";
