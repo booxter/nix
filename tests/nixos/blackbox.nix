@@ -65,6 +65,11 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
+          internalPki.managedCertificates = lib.mkOption {
+            type = lib.types.listOf lib.types.anything;
+            default = [ ];
+          };
+
           isProxmox = lib.mkOption {
             type = lib.types.bool;
             default = false;
