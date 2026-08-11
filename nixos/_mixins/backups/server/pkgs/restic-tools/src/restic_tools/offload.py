@@ -23,6 +23,8 @@ class OffloadClient(Protocol):
 
     def copy(self) -> None: ...
 
+    def forget(self) -> None: ...
+
     def prune(self) -> None: ...
 
 
@@ -99,8 +101,11 @@ class ResticOffloadClient:
             ),
         )
 
+    def forget(self) -> None:
+        self._checked("forget", ("forget", *self.config.prune_options))
+
     def prune(self) -> None:
-        self._checked("forget", ("forget", "--prune", *self.config.prune_options))
+        self._checked("prune", ("prune",))
 
 
 def offload(client: OffloadClient) -> None:
@@ -117,6 +122,7 @@ def offload(client: OffloadClient) -> None:
 def prune(client: OffloadClient) -> None:
     try:
         client.unlock()
+        client.forget()
         client.prune()
     except Exception:
         client.unlock()

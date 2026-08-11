@@ -19,6 +19,7 @@ class StatefulRestic:
     fail_copy: bool = False
     initialized: bool = False
     copied: bool = False
+    forgotten: bool = False
     pruned: bool = False
     unlocks: int = 0
 
@@ -36,6 +37,9 @@ class StatefulRestic:
         if self.fail_copy:
             raise OffloadFailure("copy", 17)
         self.copied = True
+
+    def forget(self) -> None:
+        self.forgotten = True
 
     def prune(self) -> None:
         self.pruned = True
@@ -87,6 +91,7 @@ def test_prune_unlocks_and_prunes_destination() -> None:
 
     prune(restic)
 
+    assert restic.forgotten
     assert restic.pruned
     assert restic.unlocks == 1
 
