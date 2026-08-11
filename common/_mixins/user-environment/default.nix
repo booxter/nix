@@ -178,6 +178,8 @@ in
           description = "Whether to provide the development editor environment.";
         };
 
+        kubernetes.enable = lib.mkEnableOption "Kubernetes development tools";
+
         tmux.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;

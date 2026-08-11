@@ -29,6 +29,9 @@ in
   ++ lib.optionals (developerToolsCfg.enable && developerToolsCfg.commandLine.enable) [
     ./_mixins/cli
   ]
+  ++ lib.optionals (developerToolsCfg.enable && developerToolsCfg.kubernetes.enable) [
+    ./_mixins/kubernetes
+  ]
   ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
@@ -60,7 +63,6 @@ in
     ./_mixins/firefox
   ]
   ++ lib.optionals nvidiaDevelopmentCfg.enable [
-    ./_mixins/krew
     ./_mixins/nv
   ];
 

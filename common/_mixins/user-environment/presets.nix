@@ -30,6 +30,7 @@ let
           resetCredits.enable = false;
           workUsageStatus.enable = true;
         };
+        developerTools.kubernetes.enable = true;
         nvidiaDevelopment.enable = true;
         scm = {
           identity = "nvidia";
