@@ -16,22 +16,24 @@ let
       "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
   # On macOS, act connects through the forwarded host socket, but job
   # containers need the VM-internal socket with SELinux labeling disabled.
-  actPodmanArgs = lib.optionalString isDarwin (
+  actPodmanArgs = lib.optionalString (isDarwin && podmanMachine.enable) (
     " --container-daemon-socket=unix:///run/user/$UID/podman/podman.sock"
     + " --container-options=--security-opt=label=disable"
   );
 in
 {
   home = {
-    # programs.podman-machine owns the package when it manages a Darwin VM.
-    packages = lib.optionals (!(isDarwin && podmanMachine.enable)) [ podmanPackage ];
+    # programs.podman-machine owns the package when it manages a Darwin VM;
+    # Docker Desktop supplies the container engine when that feature is off.
+    packages = lib.optionals (!isDarwin) [ podmanPackage ];
 
-    sessionVariables = {
-      DOCKER_HOST = podmanSocket;
-    }
-    // lib.optionalAttrs isDarwin {
-      CONTAINERS_MACHINE_PROVIDER = podmanMachine.provider;
-    };
+    sessionVariables =
+      lib.optionalAttrs (!isDarwin || podmanMachine.enable) {
+        DOCKER_HOST = podmanSocket;
+      }
+      // lib.optionalAttrs (isDarwin && podmanMachine.enable) {
+        CONTAINERS_MACHINE_PROVIDER = podmanMachine.provider;
+      };
 
     shellAliases = {
       # remove once https://github.com/nektos/act/issues/2329 is fixed

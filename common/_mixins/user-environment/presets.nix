@@ -31,7 +31,9 @@ let
           workUsageStatus.enable = true;
         };
         developerTools.kubernetes.enable = true;
+        dockerDesktop.enable = true;
         nvidiaDevelopment.enable = true;
+        podmanMachine.enable = false;
         scm = {
           identity = "nvidia";
           sendEmail.transport = "nvidia";

@@ -217,6 +217,8 @@ in
         warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
       };
 
+      dockerDesktop.enable = lib.mkEnableOption "Docker Desktop application";
+
       email = {
         enable = lib.mkEnableOption "managed email environment";
 
