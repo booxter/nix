@@ -23,7 +23,6 @@ let
       };
     };
     nvidia = {
-      defaults.features.podmanMachine.enable = false;
       roles.developer.features = {
         attentionInbox.enable = true;
         codex = {
@@ -31,6 +30,7 @@ let
           resetCredits.enable = false;
           workUsageStatus.enable = true;
         };
+        developerTools.kubernetes.enable = true;
         nvidiaDevelopment.enable = true;
         scm = {
           identity = "nvidia";

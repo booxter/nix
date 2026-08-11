@@ -12,12 +12,7 @@ in
   home.sessionPath = [
     "$HOME/src/ngn2-ssh-utils"
     "$HOME/src/nvpn"
-    "$HOME/.krew/bin"
   ];
-
-  home.shellAliases = {
-    k = "kubectl";
-  };
 
   home.packages =
     with pkgs;
@@ -29,16 +24,7 @@ in
         gitlab-ci-local
         gpclient
         homeManagerPkgs.jinjanator
-        kind
-        kubectl
-        kubectx
-        kubevirt
         nvPkgs.nico-cli
-        (wrapHelm kubernetes-helm {
-          plugins = with kubernetes-helmPlugins; [
-            helm-unittest
-          ];
-        })
         teleport
         trivy
         vault-bin
