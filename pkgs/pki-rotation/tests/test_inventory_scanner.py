@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,7 +12,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from pki_certificates.models import FleetHosts, HostCertificateConfig
 
-from pki_rotation.inventory import CertificateInventoryBuilder
+from pki_rotation.inventory import (
+    CertificateInventoryBuilder,
+    ManifestCertificateSpecSource,
+    load_certificate_manifest,
+)
 from pki_rotation.models import (
     CertificateCategory,
     CertificateSpec,
@@ -28,15 +33,13 @@ def fleet_hosts() -> FleetHosts:
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
-                "secretDomain": "main",
-                "caUrl": "https://pki.home.arpa:8443",
+                "realm": "home",
             },
             "host": {
                 "system": "aarch64-darwin",
                 "configuration": "darwinConfigurations",
                 "runtimeHost": "host-runtime",
-                "secretDomain": "work",
-                "caUrl": None,
+                "realm": "work",
             },
         }
     )
@@ -51,6 +54,7 @@ def host_config() -> HostCertificateConfig:
     }
     return HostCertificateConfig.model_validate(
         {
+            "ca_url": None,
             "identity": {
                 "dns_name": "host.home.arpa",
                 "networking_name": "host",
@@ -93,6 +97,50 @@ def host_config() -> HostCertificateConfig:
                 "port": 9100,
                 "secretPrefix": "prometheus/node_exporter",
             },
+            "managed_certificates": [
+                {
+                    "category": "internal_https_server",
+                    "name": "web",
+                    "secretPrefix": "internal/web",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_server",
+                    "name": "proxmox-api",
+                    "secretPrefix": "internal/proxmox",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "internal",
+                    "secretPrefix": "clients/client",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "external",
+                    "secretPrefix": "clients/external",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "observability_client",
+                    "name": "loki",
+                    "secretPrefix": "prometheus/loki",
+                    "certificateField": "client_crt_unencrypted",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "api",
+                    "secretPrefix": "prometheus/api",
+                    "certificateField": "server_crt_unencrypted",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "node_exporter",
+                    "secretPrefix": "prometheus/node_exporter",
+                    "certificateField": "server_crt_unencrypted",
+                },
+            ],
         }
     )
 
@@ -107,7 +155,7 @@ class StaticConfigs:
         return self.value
 
 
-def test_inventory_uses_secret_domains_and_all_managed_categories(tmp_path: Path) -> None:
+def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> None:
     secret = tmp_path / "secrets" / "work" / "host.yaml"
     secret.parent.mkdir(parents=True)
     secret.write_text("{}")
@@ -225,3 +273,52 @@ def test_parse_certificate_rejects_non_pem_text() -> None:
         assert "PEM" in str(error)
     else:
         raise AssertionError("invalid certificate was accepted")
+
+
+def test_manifest_source_adds_runtime_intermediate_certificate(tmp_path: Path) -> None:
+    root = tmp_path / "root.crt"
+    secret = tmp_path / "host.yaml"
+    manifest_path = tmp_path / "inventory.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "authority_host": "pki",
+                "certificates": [
+                    {
+                        "host": "pki",
+                        "category": "ca",
+                        "name": "root",
+                        "source_kind": "repo_file",
+                        "file_path": str(root),
+                        "secret": None,
+                    },
+                    {
+                        "host": "host",
+                        "category": "internal_https_server",
+                        "name": "web",
+                        "source_kind": "repo_secret",
+                        "file_path": None,
+                        "secret": {
+                            "host": "host",
+                            "path": str(secret),
+                            "prefix": "internal/web",
+                            "certificate_field": "server_crt_unencrypted",
+                        },
+                    },
+                ],
+            }
+        )
+    )
+
+    source = ManifestCertificateSpecSource(load_certificate_manifest(manifest_path))
+    specs = source.specs(Path("/unused"), Path("/intermediate.crt"))
+
+    assert [
+        (spec.name, spec.file_path) for spec in specs if spec.category is CertificateCategory.CA
+    ] == [
+        ("intermediate", Path("/intermediate.crt")),
+        ("root", root),
+    ]
+    leaf = next(spec for spec in specs if spec.category is not CertificateCategory.CA)
+    assert leaf.secret is not None
+    assert leaf.secret.path == secret

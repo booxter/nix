@@ -47,7 +47,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Export physical disk-bay mappings as Prometheus metrics";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "disk-bay-metrics";
     platforms = lib.platforms.linux;
   };

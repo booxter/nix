@@ -11,10 +11,9 @@ DNS stay converged with facts.
 
 - CA service: `step-ca` on TCP `8443`
 - CA state: `/var/lib/step-ca`
-- Root trust anchor distributed from:
-  - [common/_mixins/internal-pki/home-internal-pki-root-ca.crt](../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt)
+- Root trust anchor: [root-ca.crt](./root-ca.crt)
 - UniFi sync service docs:
-  - [unifi-sync.md](./unifi-sync.md)
+  - [UniFi IP controller](../_mixins/site-ip/unifi/README.md)
 
 ## Managed Services
 
@@ -131,12 +130,12 @@ printf '%s' 'user@example.com' \
 ## Secret Handling
 
 - Issuers update the target host secret file in
-  `secrets/<domain>/<host>.yaml`
+  `secrets/<realm>/<host>.yaml`
 - They run `sops-update` automatically before rewriting the encrypted file
 - If a host does not have its secret file yet, bootstrap it first with the
   usual `sops` helpers
 
 ## Related Docs
 
-- [unifi-sync.md](./unifi-sync.md)
+- [UniFi IP controller](../_mixins/site-ip/unifi/README.md)
 - [../../docs/pki-rotation-plan.md](../../docs/pki-rotation-plan.md)

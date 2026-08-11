@@ -12,12 +12,15 @@
 }:
 let
   pythonPackages = python3.pkgs;
+  systemsByHost =
+    lib.mapAttrs (_: _: "x86_64-linux") facts.hosts.nixos
+    // lib.mapAttrs (_: _: "aarch64-darwin") facts.hosts.darwin;
   hostsFile = builtins.toFile "pki-tool-hosts.json" (
     builtins.toJSON (
       lib.mapAttrs (name: system: {
+        inherit (facts.hosts.hostSpecsByName.${name}) realm;
         inherit system;
-        secretDomain = facts.hosts.secretDomainsByHost.${name};
-      }) facts.hosts.systemsByHost
+      }) systemsByHost
     )
   );
   runtimePath = lib.makeBinPath [
@@ -67,7 +70,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Issue the Proxmox exporter API token and store it with SOPS";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "issue-proxmox-exporter-token";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

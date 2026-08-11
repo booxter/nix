@@ -144,26 +144,9 @@ let
   };
 in
 {
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = config.host.hardware.drmCard != null;
-        message = "VNC remote control requires host.hardware.drmCard";
-      }
-      {
-        assertion = displayMode != null;
-        message = "VNC remote control requires host.hardware.displayMode";
-      }
-      {
-        assertion = displayScale != null;
-        message = "VNC remote control requires host.hardware.scale";
-      }
-      {
-        assertion = displays != [ ];
-        message = "VNC remote control requires at least one host.hardware.displays entry";
-      }
-    ];
+  imports = [ ./vnc/assertions.nix ];
 
+  config = lib.mkIf cfg.enable {
     # The KVM removes the monitors' EDIDs when it selects another computer. Use
     # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
     # (monitor identity and timing data, not executable code). NixOS puts it in

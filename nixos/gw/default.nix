@@ -1,75 +1,49 @@
-{
-  config,
-  lib,
-  facts,
-  ...
-}:
-let
-  wgHome = facts.site.wireguard.home;
-  wgInterface = "wg0";
-  wgListenPort = wgHome.gateway.listenPort;
-  wgAddress = wgHome.gateway.address;
-  lanInterface = "ens18";
-  vpnPeers = lib.mapAttrsToList (name: peer: peer // { inherit name; }) wgHome.peers;
-
-  mkPeer = peer: {
-    inherit (peer) publicKey;
-    allowedIPs = [ peer.address ] ++ (peer.extraAllowedIPs or [ ]);
-  };
-in
+{ facts, ... }:
 {
   system.stateVersion = "25.11";
 
-  imports = [
-    ./qos.nix
-    ./wg-home-exporter.nix
-  ];
-
-  host.externalService.ddns = {
-    enable = true;
-    hostname = "ihrachyshka-gw.freeddns.org";
-    username = "ihrachyshka";
-  };
-
-  assertions = [
-    {
-      assertion =
-        let
-          addresses = map (peer: peer.address) vpnPeers;
-        in
-        lib.length addresses == lib.length (lib.unique addresses);
-      message = "WireGuard peers on ${config.networking.hostName} must use unique tunnel IP addresses.";
-    }
-  ];
-
-  boot.kernel.sysctl = {
-    "net.ipv4.ip_forward" = 1;
-  };
-
-  networking = {
-    firewall = {
-      allowedUDPPorts = [ wgListenPort ];
-      # WireGuard peers are already authenticated by key, so treat tunnel
-      # traffic as trusted once it reaches the gateway.
-      trustedInterfaces = [ wgInterface ];
-    };
-
-    nat = {
+  host.network = {
+    interfaces.ens18.kind = "ethernet";
+    macAddress = "bc:24:11:91:b5:77";
+    primaryInterface = "ens18";
+    reservation = {
       enable = true;
-      externalInterface = lanInterface;
-      internalInterfaces = [ wgInterface ];
-    };
-
-    wireguard.interfaces.${wgInterface} = {
-      ips = [ wgAddress ];
-      listenPort = wgListenPort;
-      privateKeyFile = "/var/lib/wireguard/${wgInterface}.key";
-      generatePrivateKeyFile = true;
-      peers = map mkPeer vpnPeers;
+      address = "192.168.20.3";
     };
   };
 
-  systemd.tmpfiles.rules = [
-    "d /var/lib/wireguard 0700 root root -"
-  ];
+  host.wireguard.server = {
+    enable = true;
+    network = "home";
+    interface = "wg0";
+    cidr = "10.83.0.0/24";
+    address = "10.83.0.1";
+    listenPort = 51820;
+    publicEndpoint = "wg.${facts.site.public.domain}";
+    publicKey = facts.public-keys.wireguard.home-gateway;
+    clientPolicy = {
+      allowedIPs = [
+        "10.83.0.0/24"
+        facts.site.lan.cidr
+      ];
+      dns = [
+        facts.site.lan.gateway.address
+        facts.site.lan.domain
+      ];
+      persistentKeepalive = 25;
+    };
+    dynamicDns = {
+      enable = true;
+      hostname = "ihrachyshka-gw.freeddns.org";
+      username = "ihrachyshka";
+    };
+    qos.uploadLimitMbit = 10;
+    externalPeers.unifi-travel-router = {
+      address = "10.83.0.20";
+      publicKey = facts.public-keys.wireguard.home-unifi-travel-router;
+    };
+  };
+
+  host.ups.client.server = "prx1-lab";
+
 }

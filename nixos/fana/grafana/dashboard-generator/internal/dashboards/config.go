@@ -104,17 +104,15 @@ type HostBackups struct {
 }
 
 type Host struct {
-	Name            string      `json:"name"`
-	Platform        string      `json:"platform"`
-	CapacityProfile string      `json:"capacityProfile"`
-	ThermalProfile  string      `json:"thermalProfile"`
-	GPUVendor       *string     `json:"gpuVendor"`
-	Services        []string    `json:"services"`
-	Storage         HostStorage `json:"storage"`
-	Backups         HostBackups `json:"backups"`
-	Virtual         bool        `json:"virtual"`
-	Builder         bool        `json:"builder"`
-	Hypervisor      bool        `json:"hypervisor"`
+	Name       string      `json:"name"`
+	Platform   string      `json:"platform"`
+	GPUVendor  *string     `json:"gpuVendor"`
+	Services   []string    `json:"services"`
+	Storage    HostStorage `json:"storage"`
+	Backups    HostBackups `json:"backups"`
+	Virtual    bool        `json:"virtual"`
+	Builder    bool        `json:"builder"`
+	Hypervisor bool        `json:"hypervisor"`
 }
 
 var hostNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
@@ -161,9 +159,6 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 		seenHosts[host.Name] = struct{}{}
 		if host.Platform != "linux" && host.Platform != "darwin" {
 			return Config{}, fmt.Errorf("host %q has invalid platform %q", host.Name, host.Platform)
-		}
-		if host.CapacityProfile == "" || host.ThermalProfile == "" {
-			return Config{}, fmt.Errorf("host %q lacks observability profiles", host.Name)
 		}
 		if host.Storage.DiskBays != nil {
 			layout := host.Storage.DiskBays

@@ -20,8 +20,6 @@ in
 
   transmission-common = transmissionCommon;
 
-  aurral = pkgs.callPackage ./aurral { };
-
   houndarr = pkgs.callPackage ./houndarr { };
 
   houndarr-tools = pkgs.callPackage ./houndarr-tools { };
@@ -40,8 +38,6 @@ in
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
-
-  network-tools = pkgs.callPackage ./network-tools { };
 
   pinepods-tools = pkgs.callPackage ./pinepods-tools { };
 

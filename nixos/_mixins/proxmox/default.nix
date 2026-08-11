@@ -3,22 +3,43 @@
   hostSpec,
   inputs,
   lib,
+  outputs,
   pkgs,
+  system,
   ...
 }:
 let
   isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
-  macAddress = hostSpec.macAddress or null;
+  macAddress = config.host.network.macAddress;
   cores = hostSpec.cores or 4;
   memorySize = hostSpec.memorySize or 8;
   balloonSize = hostSpec.balloonSize or null;
   diskSize = hostSpec.diskSize or 100;
-  dhcpReservation = hostSpec.dhcpReservation or null;
   primaryInterface = config.host.network.primaryInterface;
+  model = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
+  };
+  nodeMaintenanceDays = [
+    "Wed"
+    "Thu"
+    "Fri"
+    "Sun"
+  ];
+  clusterNodes = model.nodesByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
+  nodeMaintenanceDay =
+    let
+      nodeIndex = lib.lists.findFirstIndex (name: name == hostSpec.name) 0 clusterNodes;
+    in
+    builtins.elemAt nodeMaintenanceDays (lib.mod nodeIndex (builtins.length nodeMaintenanceDays));
 in
 {
   imports = [
+    ./assertions.nix
     ./integrations.nix
     inputs.proxmox-nixos.nixosModules.proxmox-ve
   ]
@@ -27,32 +48,38 @@ in
     (import ../../disko { device = "/dev/sda"; })
   ];
 
-  options.host.isProxmox = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    internal = true;
-    description = "Whether this host is a Proxmox VE node.";
+  options.host.proxmox.cluster = lib.mkOption {
+    type = lib.types.nonEmptyStr;
+    default = "default";
+    description = "Proxmox cluster used when this host participates as a node or guest.";
   };
 
   config = lib.mkMerge (
     [
+      {
+        host.power.shutdown.before.proxmox-cluster = lib.optionals isVM (
+          model.guestNodes.${hostSpec.name} or [ ]
+        );
+      }
       (lib.mkIf config.host.isProxmox {
-        assertions = [
-          {
-            assertion = primaryInterface != null;
-            message = "host.isProxmox requires host.network.primaryInterface";
-          }
-        ];
+        host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
-        # Hypervisors upgrade on a separate schedule to avoid disrupting guest
-        # VMs running on top.
-        system.autoUpgrade = {
-          dates = hostSpec.proxmoxUpgradeTime or "Mon 04:00";
-          rebootWindow.lower = lib.mkForce "03:45";
+        host.autoUpgrade.claims.proxmox-node = {
+          switch = {
+            cadence = "weekly";
+            weekday = nodeMaintenanceDay;
+          };
+          reboot = {
+            cadence = "weekly";
+            weekday = nodeMaintenanceDay;
+          };
+          availabilityGroups = [
+            "proxmox:${config.host.realm}:${config.host.proxmox.cluster}"
+          ];
         };
 
         nixpkgs.overlays = [
-          inputs.proxmox-nixos.overlays.${hostSpec.platform}
+          inputs.proxmox-nixos.overlays.${system}
           (
             _final: prev:
             let
@@ -72,7 +99,7 @@ in
         ];
 
         services.proxmox-ve = {
-          ipAddress = hostSpec.ipAddress;
+          ipAddress = config.host.network.ipAddress;
           enable = true;
           bridges = [ bridgeName ];
         };
@@ -116,10 +143,13 @@ in
       })
     ]
     ++ lib.optional isVM {
+      host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
+        hosts = model.guestNodes.${hostSpec.name} or [ ];
+      };
+
       virtualisation.proxmox = {
         inherit cores;
         name = hostSpec.name;
-        node = hostSpec.proxNode or "prx1-lab";
         autoInstall = true;
         memory = memorySize * 1024;
         balloon = if balloonSize == null then null else balloonSize * 1024;
@@ -136,8 +166,8 @@ in
               model = "virtio";
               bridge = bridgeName;
             }
-            // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
-              macaddr = dhcpReservation.match;
+            // inputs.nixpkgs.lib.optionalAttrs (macAddress != null) {
+              macaddr = macAddress;
             }
           )
         ];

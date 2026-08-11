@@ -24,6 +24,7 @@ in
       ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade
+      ./_mixins/aurral
       ./_mixins/backups
       ./_mixins/backups/server-sops.nix
       ./_mixins/backups/sources.nix
@@ -34,25 +35,31 @@ in
       ./_mixins/firmware
       ./_mixins/hardware
       ./_mixins/internal-https-service.nix
+      ./_mixins/jellarr
+      ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
+      ./_mixins/lolek
       ./_mixins/luks
+      ./_mixins/maintenance
+      ./_mixins/network
       ./_mixins/nix
-      ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/proxmox
       ./_mixins/qos
+      ./_mixins/security
       ./_mixins/sso
-      ./_mixins/shared-storage.nix
-      ./_mixins/attic
-      ./_mixins/unifi-sync
+      ./_mixins/storage
+      ./_mixins/site-ip
       ./_mixins/ups-client
       ./_mixins/ups-server.nix
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
+      ./_mixins/vpn
+      ./_mixins/watchstate
       ./_mixins/web
-      ./_mixins/yubi.nix
+      ./_mixins/wireguard
     ];
 
     home-manager = {
@@ -71,7 +78,7 @@ in
       };
     };
     virtualisation.containers.enable = true;
-    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
+    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.security.sudo.wheelNeedsPassword;
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

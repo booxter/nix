@@ -10,8 +10,10 @@ let
   networkingName = dnsName;
   avahiName = configuredHost.services.avahi.hostName or dnsName;
   nodeExporterEnabled = configuredHost.host.observability.nodeExporter.mtls.enable or false;
+  authority = configuredHost.host.internalPki.authority;
 in
 {
+  ca_url = if authority.enable then authority.url else null;
   identity = {
     dns_name = dnsName;
     networking_name = networkingName;
@@ -41,4 +43,5 @@ in
       }
     else
       null;
+  managed_certificates = configuredHost.host.internalPki.managedCertificates;
 }

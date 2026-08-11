@@ -8,6 +8,7 @@ let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
   probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
+  gateHelpers = import ./oauth2-proxy-gate-lib.nix { };
 
   gateSubmodule =
     gateName:
@@ -81,14 +82,10 @@ let
                   description = "Maximum oauth2-proxy session lifetime in seconds.";
                 };
 
-                redisConnectionUrl = lib.mkOption {
-                  type = str;
-                  description = "Redis connection URL for the oauth2-proxy session store.";
-                };
-
-                redisServiceUnit = lib.mkOption {
-                  type = str;
-                  description = "Systemd unit providing the Redis session store.";
+                redisPort = lib.mkOption {
+                  type = port;
+                  default = 6379;
+                  description = "Loopback Redis port for the oauth2-proxy session store.";
                 };
               };
             });
@@ -291,7 +288,7 @@ let
     ++ lib.optionals (gate.sessionRefresh != null) [
       (mkArg "cookie-expire" "${toString gate.sessionRefresh.lifetimeSeconds}s")
       (mkArg "cookie-refresh" "${toString gate.sessionRefresh.intervalSeconds}s")
-      (mkArg "redis-connection-url" gate.sessionRefresh.redisConnectionUrl)
+      (mkArg "redis-connection-url" (gateHelpers.redisConnectionUrl gate))
       (mkArg "session-store-type" "redis")
     ]
     ++ mkArgs "allowed-group" gate.allowedGroups
@@ -413,6 +410,8 @@ let
     });
 in
 {
+  imports = [ ./oauth2-proxy-gate/assertions.nix ];
+
   options.host.sso.oauth2ProxyGates = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule ({ name, ... }@args: gateSubmodule name args));
     default = { };
@@ -437,46 +436,6 @@ in
         restartUnits = [ "${gate.serviceName}.service" ];
       };
     }) enabledGates;
-
-    assertions =
-      builtins.concatLists (
-        lib.mapAttrsToList (
-          gateName: gate:
-          [
-            {
-              assertion = gate.allowedGroups != [ ];
-              message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
-            }
-            {
-              assertion = gate.whitelistDomains != [ ];
-              message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
-            }
-          ]
-          ++ lib.optional (gate.sessionRefresh != null) {
-            assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
-            message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
-          }
-          ++ probeHelpers.assertionsFor gateName gate
-        ) enabledGates
-      )
-      ++ [
-        {
-          assertion =
-            let
-              serviceNames = map (gate: gate.serviceName) (builtins.attrValues enabledGates);
-            in
-            (builtins.length serviceNames) == (builtins.length (lib.unique serviceNames));
-          message = "host.sso.oauth2ProxyGates must use unique serviceName values.";
-        }
-        {
-          assertion =
-            let
-              httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues enabledGates);
-            in
-            (builtins.length httpAddresses) == (builtins.length (lib.unique httpAddresses));
-          message = "host.sso.oauth2ProxyGates must use unique httpAddress values.";
-        }
-      ];
 
     users.groups = builtins.listToAttrs (
       map (group: {
@@ -584,7 +543,9 @@ in
     systemd.services = lib.mapAttrs' (
       gateName: gate:
       let
-        sessionStoreUnits = lib.optional (gate.sessionRefresh != null) gate.sessionRefresh.redisServiceUnit;
+        sessionStoreUnits = lib.optional (gate.sessionRefresh != null) (
+          gateHelpers.redisServiceUnit gateName
+        );
       in
       lib.nameValuePair gate.serviceName {
         description = "OAuth2 Proxy";

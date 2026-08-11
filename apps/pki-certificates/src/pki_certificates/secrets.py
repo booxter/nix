@@ -6,7 +6,7 @@ from typing import Protocol
 
 from sops_tools.model import KeyPath
 from sops_tools.process import SubprocessRunner
-from sops_tools.repository import RuntimeEnvironment, SecretDomain, SecretRepository
+from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService, UpdateResult
 
 from .models import CertificateMaterial, FleetHosts
@@ -31,15 +31,15 @@ class SecretWriter(Protocol):
 
 
 class SecretWriterFactory(Protocol):
-    def create(self, runtime: RuntimeEnvironment, domain: SecretDomain) -> SecretWriter: ...
+    def create(self, runtime: RuntimeEnvironment, realm: Realm) -> SecretWriter: ...
 
 
 @dataclass(frozen=True)
 class CommandSecretWriterFactory:
-    def create(self, runtime: RuntimeEnvironment, domain: SecretDomain) -> SecretWriter:
-        environment = runtime.command_environment(domain)
+    def create(self, runtime: RuntimeEnvironment, realm: Realm) -> SecretWriter:
+        environment = runtime.command_environment(realm)
         return SecretService(
-            SecretRepository(runtime.repo_root, domain),
+            SecretRepository(runtime.repo_root, realm),
             CommandSopsBackend(
                 SubprocessRunner(environment),
                 runtime.repo_root / ".sops.yaml",
@@ -62,8 +62,8 @@ class SopsCertificateStore:
         client: bool,
     ) -> None:
         facts = host_facts(self.hosts, host)
-        domain = self.runtime.resolve_domain(facts.secret_domain)
-        service = self.factory.create(self.runtime, domain)
+        realm = self.runtime.resolve_realm(facts.realm)
+        service = self.factory.create(self.runtime, realm)
         service.update(host)
         prefix = KeyPath.parse(secret_prefix)
         certificate_field = "client_crt_unencrypted" if client else "server_crt_unencrypted"

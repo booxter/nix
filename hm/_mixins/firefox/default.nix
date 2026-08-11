@@ -11,6 +11,7 @@ let
   dashUrl = "https://dash.${publicDomain}";
   degoogUrl = "https://goo.${publicDomain}";
   firefoxDohExcludedDomains = [ publicDomain ];
+  legacyProfiles = "1";
   useSignedDarwinFirefox =
     isDarwin && osConfig.host.hardware.hasTouchId && config.programs.firefox.enable;
 in
@@ -151,6 +152,14 @@ in
   home.sessionVariables = {
     BROWSER = if isDarwin then "open" else "xdg-open";
   };
+
+  home.activation.firefoxLaunchdEnvironment = lib.mkIf useSignedDarwinFirefox (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      # Finder/Dock-launched GUI apps inherit the user launchd environment,
+      # not Home Manager's shell session variables.
+      /bin/launchctl setenv MOZ_LEGACY_PROFILES ${legacyProfiles}
+    ''
+  );
 
   home.packages = lib.mkIf useSignedDarwinFirefox [ pkgs.firefox-bin-unwrapped ];
 }

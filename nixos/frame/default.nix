@@ -1,4 +1,5 @@
 {
+  config,
   facts,
   inputs,
   lib,
@@ -13,7 +14,10 @@
 
   host = {
     desktop.hyprland.enable = true;
-    isBuilder = true;
+    nix.builder = {
+      enable = true;
+      speedFactor = 200;
+    };
     hardware = {
       drmCard = "card1";
       displayMode = {
@@ -52,7 +56,15 @@
         ];
       };
     };
-    network.primaryInterface = "enp191s0";
+    network = {
+      interfaces.enp191s0.kind = "ethernet";
+      macAddress = "9c:bf:0d:00:fa:0a";
+      primaryInterface = "enp191s0";
+      reservation = {
+        enable = true;
+        address = "192.168.11.228";
+      };
+    };
     observability = {
       alertmanagerWatchdog.enable = true;
       blackbox.remote.enable = true;
@@ -69,7 +81,27 @@
       wayland.enable = true;
       x11.enable = true;
     };
+    security = {
+      authentication.u2f = {
+        enable = true;
+        appId = "pam://frame";
+        origin = "pam://frame";
+      };
+      secrets.operator.ageIdentity = {
+        backend = "yubikey";
+        path = "/home/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
+      };
+      ssh.credentials.backend = "yubikey";
+    };
+    userEnvironment = {
+      preset = "personal";
+      roles = {
+        developer.enable = true;
+        workstation.enable = true;
+      };
+    };
     ups.server = {
+      enable = true;
       description = "APC UPS 1500VA";
     };
   };

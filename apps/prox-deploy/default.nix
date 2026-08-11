@@ -4,7 +4,7 @@
   pass,
   python3,
   ruff,
-  vmTypes,
+  vmNodes,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -28,7 +28,7 @@ pythonPackages.buildPythonApplication {
 
   makeWrapperArgs = [
     "--set PROX_DEPLOY_PASS ${lib.escapeShellArg (lib.getExe pass)}"
-    "--set PROX_DEPLOY_VM_TYPES_JSON ${lib.escapeShellArg (builtins.toJSON vmTypes)}"
+    "--set PROX_DEPLOY_VM_NODES_JSON ${lib.escapeShellArg (builtins.toJSON vmNodes)}"
   ];
 
   preCheck = ''
@@ -40,9 +40,8 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "prox_deploy" ];
 
   meta = {
-    description = "Deploy facts-backed NixOS VMs through nixmoxer";
+    description = "Deploy cluster-backed NixOS VMs through nixmoxer";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "prox-deploy";
     platforms = lib.platforms.unix;
   };

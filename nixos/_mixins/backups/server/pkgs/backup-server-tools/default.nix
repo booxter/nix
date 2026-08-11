@@ -10,7 +10,6 @@ buildGoModule {
   vendorHash = null;
 
   subPackages = [
-    "cmd/btrfs-maintenance"
     "cmd/restic-repo-acl"
   ];
 
@@ -27,7 +26,6 @@ buildGoModule {
   meta = {
     description = "Native maintenance tools for a Restic backup server";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

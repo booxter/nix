@@ -70,15 +70,13 @@ def fleet_hosts() -> FleetHosts:
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "host-runtime",
-                "secretDomain": "main",
-                "caUrl": None,
+                "realm": "home",
             },
             "pki": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "pki-runtime",
-                "secretDomain": "main",
-                "caUrl": "https://pki.home.arpa:8443",
+                "realm": "home",
             },
         }
     )
@@ -176,6 +174,14 @@ class RecordingStore:
         self.calls.append((host, secret_prefix, certificate, client))
 
 
+@dataclass(frozen=True)
+class StaticAuthoritySource:
+    url: str | None = "https://pki.home.arpa:8443"
+
+    def ca_url(self, host: str) -> str | None:
+        return self.url
+
+
 def managed_service():
     issuer = RecordingIssuer()
     store = RecordingStore()
@@ -212,6 +218,7 @@ def test_remote_issuer_copies_source_and_builds_on_ca_target():
         runner,
         Path("/repo"),
         fleet_hosts(),
+        StaticAuthoritySource(),
         False,
         Path("/unused"),
     )
@@ -249,6 +256,7 @@ def test_remote_issuer_local_mode_uses_installed_helper():
         runner,
         Path("/repo"),
         fleet_hosts(),
+        StaticAuthoritySource(),
         True,
         Path("/nix/store/helper/bin/pki-issue-certificate-remote"),
     )
@@ -292,6 +300,7 @@ def test_managed_service_rejects_disabled_configuration():
 
 def test_nix_config_source_validates_and_combines_fleet_configuration():
     value = {
+        "ca_url": None,
         "identity": {
             "dns_name": "host.home.arpa",
             "networking_name": "host",
@@ -354,6 +363,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
                 "sans": ["host"],
             }
         },
+        "managed_certificates": [],
     }
     runner = AttributeRunner(value)
     source = NixConfigSource(runner, Path("/repo"), fleet_hosts(), Path("/query.nix"))
@@ -368,6 +378,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
     assert source.observability_client_names("host") == ["scraper"]
     assert source.observability_client("host", "scraper").common_name == "scraper.host"
     assert source.host_identity("host").avahi_name == "host-avahi"
+    assert source.ca_url("host") is None
     assert source.certificate_config("host").identity.dns_name == "host.home.arpa"
     assert len(runner.calls) == 1
     assert runner.calls[0] == [
@@ -404,10 +415,10 @@ class RecordingSecretWriter:
 @dataclass
 class RecordingSecretFactory:
     writer: RecordingSecretWriter
-    domains: list[str] = field(default_factory=list)
+    realms: list[str] = field(default_factory=list)
 
-    def create(self, runtime, domain):
-        self.domains.append(domain.name)
+    def create(self, runtime, realm):
+        self.realms.append(realm.name)
         return self.writer
 
 
@@ -426,7 +437,7 @@ def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path)
 
     store.write("host", "prometheus/client", material(), client=True)
 
-    assert factory.domains == ["main"]
+    assert factory.realms == ["home"]
     assert writer.calls == [
         ("update", "host", False),
         (

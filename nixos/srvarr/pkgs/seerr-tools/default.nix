@@ -42,7 +42,6 @@ let
     meta = {
       description = "Seerr storage reporting and maintenance tools";
       license = lib.licenses.mit;
-      maintainers = with lib.maintainers; [ booxter ];
       platforms = lib.platforms.linux ++ lib.platforms.darwin;
     };
   };

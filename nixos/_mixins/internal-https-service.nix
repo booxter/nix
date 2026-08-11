@@ -11,21 +11,18 @@ let
   # mDNS, for example `search` and `search.local`.
   localServerAliasesFor = aliases: aliases ++ map (alias: "${alias}.local") aliases;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
+  inventoryServices = lib.filterAttrs (
+    name: service:
+    !(
+      name == "proxmox"
+      && config.host.proxmox.apiCertificate.enable
+      && service.secretPrefix == config.host.proxmox.apiCertificate.secretPrefix
+    )
+  ) enabledServices;
   # All hostnames that consume an nginx server_name on this machine. Example:
   # the Search service owns `search.home.arpa`, `search`, `search.local`, and
   # the public sibling vhost `search.ihar.dev`.
-  serviceServerNames =
-    service:
-    [
-      service.serverName
-    ]
-    ++ service.serverAliases
-    ++ service.publicAliases;
-  enabledServerNames = builtins.concatMap serviceServerNames (builtins.attrValues enabledServices);
   enabledProbeServices = lib.filterAttrs (_: service: service.probe.enable) enabledServices;
-  servicesWithProbePortConflicts = lib.filterAttrs (
-    _: service: service.probe.enable && service.probe.port == service.port
-  ) enabledServices;
   secretAttrName = serviceName: "internal-https-${serviceName}";
   # Listener tuple shared by all surfaces for one service. Example: normal
   # service vhosts listen on :443 while probe-only vhosts listen on :9443.
@@ -124,6 +121,8 @@ let
     };
 in
 {
+  imports = [ ./internal-https-service/assertions.nix ];
+
   options.host.internalHttps.localAliases = lib.mkOption {
     type = with lib.types; listOf str;
     default = [ ];
@@ -260,21 +259,16 @@ in
   };
 
   config = lib.mkIf (enabledServices != { }) {
+    host.internalPki.managedCertificates = lib.mapAttrsToList (name: service: {
+      category = "internal_https_server";
+      inherit name;
+      inherit (service) secretPrefix;
+      certificateField = "server_crt_unencrypted";
+    }) inventoryServices;
+
     host.internalHttps.localAliases = lib.unique (
       builtins.concatMap (service: service.localAliases) (builtins.attrValues enabledServices)
     );
-
-    assertions = lib.optionals (enabledServices != { }) [
-      {
-        assertion =
-          (builtins.length enabledServerNames) == (builtins.length (lib.unique enabledServerNames));
-        message = "host.internalHttps.services must not reuse the same serverName, serverAlias, or publicAlias on one host.";
-      }
-      {
-        assertion = servicesWithProbePortConflicts == { };
-        message = "host.internalHttps.services probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames servicesWithProbePortConflicts)}";
-      }
-    ];
 
     sops.secrets =
       lib.mapAttrs' (

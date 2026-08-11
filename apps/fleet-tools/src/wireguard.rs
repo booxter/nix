@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
+use std::net::Ipv4Addr;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -24,7 +25,7 @@ pub struct WireguardTopology {
     pub dns: Vec<String>,
     pub endpoint: String,
     pub allowed_ips: Vec<Ipv4Net>,
-    pub peers: BTreeMap<String, Ipv4Net>,
+    pub peers: BTreeMap<String, Ipv4Addr>,
     pub gateway_ssh_host: String,
 }
 
@@ -139,15 +140,19 @@ pub fn resolve_address(
     explicit: Option<Ipv4Net>,
 ) -> Result<Ipv4Net> {
     let address = match peer {
-        Some(name) => *topology.peers.get(name).with_context(|| {
-            let known = topology
-                .peers
-                .keys()
-                .cloned()
-                .collect::<Vec<_>>()
-                .join(", ");
-            format!("unknown inventory peer '{name}'; known peers: {known}")
-        })?,
+        Some(name) => Ipv4Net::new(
+            *topology.peers.get(name).with_context(|| {
+                let known = topology
+                    .peers
+                    .keys()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("unknown inventory peer '{name}'; known peers: {known}")
+            })?,
+            32,
+        )
+        .context("inventory peer address is invalid")?,
         None => explicit.context("peer address is required")?,
     };
 
@@ -375,11 +380,11 @@ mod tests {
     }
 
     #[test]
-    fn help_lists_facts_backed_peers() {
+    fn help_lists_managed_peers() {
         let help = WireguardArgs::command().render_long_help().to_string();
 
         assert!(help.contains("--peer mair"));
-        assert!(help.contains("Facts-backed peers: mair"));
+        assert!(help.contains("Managed peers: mair"));
     }
 
     #[test]

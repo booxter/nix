@@ -15,6 +15,7 @@ let
   homeAssistantTestFile = ./prometheus/tests/home-assistant.rules.test.yml;
   llmRuleFile = ./prometheus/rules/llm.rules.yml;
   llmTestFile = ./prometheus/tests/llm.rules.test.yml;
+  launchdTestFile = ./prometheus/tests/launchd.rules.test.yml;
   mediaPolicyRuleFile = ./prometheus/rules/media-policy.rules.yml;
   mediaPolicyTestFile = ./prometheus/tests/media-policy.rules.test.yml;
   networkProbesRuleFile = ./prometheus/rules/network-probes.rules.yml;
@@ -71,6 +72,7 @@ in
       fleetTestFile
       homeAssistantTestFile
       llmTestFile
+      launchdTestFile
       mediaPolicyTestFile
       networkProbesTestFile
       pkiTestFile

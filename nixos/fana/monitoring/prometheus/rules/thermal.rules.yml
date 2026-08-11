@@ -6,10 +6,14 @@ groups:
         expr: |
           max by(instance) (
             (
-              node_thermal_zone_temp{scrape_profile="node",thermal_profile="standard",type=~"cpu-thermal|x86_pkg_temp"}
-              or node_hwmon_temp_celsius{scrape_profile="node",thermal_profile="standard",chip=~"platform_coretemp_0|pci0000:00_0000:00:18_3",sensor="temp1"}
+              node_thermal_zone_temp{scrape_profile="node",host_class="hardware",type=~"cpu-thermal|x86_pkg_temp"}
+              or node_hwmon_temp_celsius{scrape_profile="node",host_class="hardware",chip=~"platform_coretemp_0|pci0000:00_0000:00:18_3",sensor="temp1"}
             )
-            or host_observability_darwin_temperature_group_max_celsius{scrape_profile="node",thermal_profile="standard",group="cpu"}
+            or (
+              host_observability_darwin_temperature_group_max_celsius{scrape_profile="node",host_class="hardware",group="cpu"}
+                and on(instance)
+              (time() - host_observability_darwin_thermal_sample_timestamp_seconds{scrape_profile="node",host_class="hardware"} < 120)
+            )
           ) > 85
         for: 10m
         labels:
@@ -19,7 +23,16 @@ groups:
           summary: "CPU temperature high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes."
       - alert: StorageTemperatureHigh
-        expr: max by(instance) (node_hwmon_temp_celsius{job="node-mtls",host_class="hardware",chip=~"nvme_.*",sensor="temp1"} or host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc"} or host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="storage"}) > 75
+        expr: |
+          max by(instance) (
+            node_hwmon_temp_celsius{job="node-mtls",host_class="hardware",chip=~"nvme_.*",sensor="temp1"}
+            or host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc"}
+            or (
+              host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="storage"}
+                and on(instance)
+              (time() - host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware"} < 120)
+            )
+          ) > 75
         for: 10m
         labels:
           severity: warning
@@ -32,7 +45,11 @@ groups:
           max by(instance) (
             node_hwmon_temp_celsius{job="node-mtls",host_class="hardware"}
             or host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc"}
-            or host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware"}
+            or (
+              host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware"}
+                and on(instance)
+              (time() - host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware"} < 120)
+            )
           ) > 110
         for: 5m
         labels:
@@ -60,11 +77,20 @@ groups:
           summary: "HDD temperature high on {{ $labels.instance }}"
           description: "Drive {{ $labels.device }} on {{ $labels.instance }} has sustained temperature above 50C for 30 minutes."
       - alert: DarwinThermalExportFailed
-        expr: host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware"} < 1
+        expr: |
+          (host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware"} < 1)
+          or (time() - host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware"} > 120)
+          or (
+            max by(instance, job, host_class, scrape_profile) (
+              node_uname_info{job="node-mtls",host_class="hardware",sysname="Darwin"}
+            )
+              unless on(instance)
+            host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware"}
+          )
         for: 10m
         labels:
           severity: warning
           category: thermal
         annotations:
           summary: "Darwin thermal export failed on {{ $labels.instance }}"
-          description: "The iSMC-based thermal collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes."
+          description: "The Darwin thermal collector has been failing or stale on {{ $labels.instance }} for 10 minutes."

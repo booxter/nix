@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node"}'
         values: "80x22"
     alert_rule_test:
       - eval_time: 10m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node",thermal_profile="standard"}'
+      - series: 'node_thermal_zone_temp{job="node-mtls",host_class="hardware",type="x86_pkg_temp",instance="beast",scrape_profile="node"}'
         values: "90x20 80x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -35,8 +35,29 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node",thermal_profile="no-cpu"}'
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node"}'
         values: "90x22"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini",scrape_profile="node"}'
+        values: "0+30x22"
+    alert_rule_test:
+      - eval_time: 10m30s
+        alertname: CPUTemperatureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: CPUTemperatureHigh
+              category: thermal
+              instance: mmini
+              severity: warning
+            exp_annotations:
+              summary: "CPU temperature high on mmini"
+              description: "mmini has sustained CPU/package temperature above 85C for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini",scrape_profile="node"}'
+        values: "90x22"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini",scrape_profile="node"}'
+        values: "0x22"
     alert_rule_test:
       - eval_time: 10m30s
         alertname: CPUTemperatureHigh
@@ -74,6 +95,8 @@ tests:
     input_series:
       - series: 'host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware",instance="mmini"}'
         values: "110x12"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "0+30x12"
     alert_rule_test:
       - eval_time: 5m
         alertname: HostTemperatureCritical
@@ -88,6 +111,8 @@ tests:
         values: "120x10 100x2"
       - series: 'host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware",instance="mair"}'
         values: "120x10 100x2"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mair"}'
+        values: "0+30x12"
     alert_rule_test:
       - eval_time: 4m30s
         alertname: HostTemperatureCritical
@@ -188,6 +213,10 @@ tests:
     input_series:
       - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
         values: "1x22"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "0+30x22"
+      - series: 'node_uname_info{job="node-mtls",host_class="hardware",instance="mmini",sysname="Darwin"}'
+        values: "1x22"
     alert_rule_test:
       - eval_time: 10m
         alertname: DarwinThermalExportFailed
@@ -196,6 +225,10 @@ tests:
     input_series:
       - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
         values: "0x20 1x2"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "0+30x22"
+      - series: 'node_uname_info{job="node-mtls",host_class="hardware",instance="mmini",sysname="Darwin"}'
+        values: "1x22"
     alert_rule_test:
       - eval_time: 9m30s
         alertname: DarwinThermalExportFailed
@@ -211,6 +244,54 @@ tests:
               severity: warning
             exp_annotations:
               summary: "Darwin thermal export failed on mmini"
-              description: "The iSMC-based thermal collector has not been exporting successfully on mmini for 10 minutes."
+              description: "The Darwin thermal collector has been failing or stale on mmini for 10 minutes."
       - eval_time: 10m30s
         alertname: DarwinThermalExportFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "1x26"
+      - series: 'host_observability_darwin_thermal_sample_timestamp_seconds{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "0x26"
+      - series: 'node_uname_info{job="node-mtls",host_class="hardware",instance="mmini",sysname="Darwin"}'
+        values: "1x26"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: DarwinThermalExportFailed
+      - eval_time: 12m30s
+        alertname: DarwinThermalExportFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: DarwinThermalExportFailed
+              category: thermal
+              host_class: hardware
+              instance: mmini
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Darwin thermal export failed on mmini"
+              description: "The Darwin thermal collector has been failing or stale on mmini for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "1x22"
+      - series: 'node_uname_info{job="node-mtls",host_class="hardware",instance="mmini",sysname="Darwin"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: DarwinThermalExportFailed
+      - eval_time: 10m
+        alertname: DarwinThermalExportFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: DarwinThermalExportFailed
+              category: thermal
+              host_class: hardware
+              instance: mmini
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Darwin thermal export failed on mmini"
+              description: "The Darwin thermal collector has been failing or stale on mmini for 10 minutes."

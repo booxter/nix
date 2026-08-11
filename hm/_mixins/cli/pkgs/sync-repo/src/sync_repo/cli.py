@@ -1,16 +1,15 @@
 import argparse
-import os
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TextIO
 
+from sync_repo.config import ConfigurationError, load_repository_specs
 from sync_repo.git import (
     RepositorySpec,
     RepositorySynchronizer,
     SyncError,
     SyncOutcome,
-    repository_specs,
 )
 
 
@@ -19,20 +18,21 @@ def main(
     *,
     specs: Mapping[str, RepositorySpec] | None = None,
     synchronizer: RepositorySynchronizer | None = None,
-    home: Path | None = None,
-    environ: Mapping[str, str] | None = None,
     stdout: TextIO = sys.stdout,
     stderr: TextIO = sys.stderr,
 ) -> int:
     parser = argparse.ArgumentParser(
         prog="sync-repo",
-        description="Synchronize one of: gmailctl, pass, dotfiles.",
+        description="Synchronize a configured Git repository on demand.",
     )
+    parser.add_argument("--config", type=Path, required=specs is None)
     parser.add_argument("name")
     arguments = parser.parse_args(argv)
-    user_home = home or Path.home()
-    environment = os.environ if environ is None else environ
-    repositories = specs or repository_specs(user_home, environment)
+    try:
+        repositories = specs or load_repository_specs(arguments.config)
+    except ConfigurationError as error:
+        print(f"sync-repo: {error}", file=stderr)
+        return 1
     try:
         spec = repositories[arguments.name]
     except KeyError:

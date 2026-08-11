@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   outputs,
   ...
 }:
 let
   tuning = config.host.srvarrTuning;
-  beastNfsAddress = facts.hosts.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
+  beastNfsAddress = beastHostConfig.host.network.ipAddress;
   beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
   beastNfsPort = beastHostConfig.services.nfs.settings.nfsd.port;
   beastNfsRateMbit = 1500;
@@ -52,7 +51,7 @@ in
   };
 
   host.qos.interfaces.wan = {
-    device = "ens18";
+    device = config.host.network.primaryInterface;
     limits = {
       nfs = {
         rateMbit = beastNfsRateMbit;
@@ -82,7 +81,6 @@ in
   };
 
   host.observability.lanWan = {
-    interface = "ens18";
     # nft postrouting overcounts the WireGuard transport on this host, so use
     # the shaped tc class as the authoritative WAN egress counter instead.
     wanTransmitTcClass = config.host.qos.classIds.wan.wireguard-upload;

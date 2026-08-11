@@ -33,7 +33,6 @@ pythonPackages.buildPythonPackage {
   meta = {
     description = "Typed durable atomic file replacement helpers";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

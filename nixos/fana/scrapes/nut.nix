@@ -1,11 +1,19 @@
 {
-  facts,
+  config,
   lib,
+  outputs,
   pkgs,
 }:
 let
-  upsServerSpecs = map (name: facts.hosts.nixos.${name}) (
-    builtins.filter (name: facts.hosts.nixos.${name}.realm == "home") facts.ups.servers
+  model = import ../../../common/_mixins/ups/model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
+  };
+  upsServers = builtins.attrValues (
+    lib.filterAttrs (_: server: server.realm == config.host.realm) model.servers
   );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [
@@ -29,7 +37,7 @@ let
       params = {
         # Use the stable LAN DNS hostname rather than .local/mDNS.
         server = [ spec.name ];
-        ups = [ facts.ups.serversByName.${spec.name}.name ];
+        ups = [ spec.ups.server.name ];
       };
       static_configs = [
         {
@@ -80,5 +88,5 @@ in
       jobName = "nut-${lib.removeSuffix "-lab" spec.name}";
       inherit spec;
     }
-  ) upsServerSpecs;
+  ) upsServers;
 }

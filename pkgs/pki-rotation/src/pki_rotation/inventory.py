@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from pydantic import ValidationError
 from pki_certificates.models import FleetHosts, HostCertificateConfig
 from pki_certificates.repository import NixConfigSource
+from sops_tools.errors import ToolError
 from sops_tools.process import ProcessRunner
 
 from .models import (
     CertificateCategory,
+    CertificateManifest,
     CertificateSpec,
     SecretLocation,
     SourceKind,
@@ -41,7 +44,7 @@ class CertificateInventoryBuilder:
                 category=CertificateCategory.CA,
                 name="root",
                 source_kind=SourceKind.REPOSITORY_FILE,
-                file_path=(self.repo_root / "public-keys" / "internal-pki" / "home-root-ca.crt"),
+                file_path=(self.repo_root / "nixos" / "pki" / "root-ca.crt"),
             ),
             CertificateSpec(
                 host=pki.runtime_host,
@@ -52,7 +55,7 @@ class CertificateInventoryBuilder:
             ),
         ]
         for host, facts in sorted(self.hosts.root.items()):
-            secret_path = self.repo_root / "secrets" / facts.secret_domain / f"{host}.yaml"
+            secret_path = self.repo_root / "secrets" / facts.realm / f"{host}.yaml"
             if not secret_path.is_file():
                 continue
             specs.extend(self._host_specs(host, secret_path, self.configs.certificate_config(host)))
@@ -81,65 +84,17 @@ class CertificateInventoryBuilder:
         secret_path: Path,
         config: HostCertificateConfig,
     ) -> list[CertificateSpec]:
-        specs: list[CertificateSpec] = []
-        proxmox_prefix = config.proxmox_api.secret_prefix if config.proxmox_api else None
-        for name, service in sorted(config.internal_services.items()):
-            duplicate_proxmox = name == "proxmox" and service.secret_prefix == proxmox_prefix
-            if service.enable and not duplicate_proxmox:
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        CertificateCategory.INTERNAL_HTTPS_SERVER,
-                        name,
-                        service.secret_prefix,
-                        "server_crt_unencrypted",
-                    )
-                )
-        if config.proxmox_api is not None:
-            specs.append(
-                self._secret_spec(
-                    host,
-                    secret_path,
-                    CertificateCategory.INTERNAL_HTTPS_SERVER,
-                    "proxmox-api",
-                    config.proxmox_api.secret_prefix,
-                    "server_crt_unencrypted",
-                )
+        return [
+            self._secret_spec(
+                host,
+                secret_path,
+                CertificateCategory(certificate.category),
+                certificate.name,
+                certificate.secret_prefix,
+                certificate.certificate_field,
             )
-        for name, client in sorted(config.clients.items()):
-            if client.enable:
-                category = (
-                    CertificateCategory.OBSERVABILITY_CLIENT
-                    if client.category == "observability"
-                    else CertificateCategory.INTERNAL_HTTPS_CLIENT
-                )
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        category,
-                        name,
-                        client.secret_prefix,
-                        "client_crt_unencrypted",
-                    )
-                )
-        endpoints = dict(config.observability_endpoints)
-        if config.node_exporter is not None:
-            endpoints["node_exporter"] = config.node_exporter
-        for name, endpoint in sorted(endpoints.items()):
-            if endpoint.enable:
-                specs.append(
-                    self._secret_spec(
-                        host,
-                        secret_path,
-                        CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER,
-                        name,
-                        endpoint.secret_prefix,
-                        "server_crt_unencrypted",
-                    )
-                )
-        return specs
+            for certificate in config.managed_certificates
+        ]
 
 
 @dataclass(frozen=True)
@@ -156,3 +111,29 @@ class NixCertificateSpecSource:
             configs,
             intermediate_certificate,
         ).specs()
+
+
+def load_certificate_manifest(path: Path) -> CertificateManifest:
+    try:
+        return CertificateManifest.model_validate_json(path.read_bytes())
+    except (OSError, ValidationError) as error:
+        raise ToolError(f"invalid PKI certificate inventory manifest {path}: {error}") from error
+
+
+@dataclass(frozen=True)
+class ManifestCertificateSpecSource:
+    manifest: CertificateManifest
+
+    def specs(self, repo_root: Path, intermediate_certificate: Path) -> tuple[CertificateSpec, ...]:
+        del repo_root
+        specs = [entry.spec() for entry in self.manifest.certificates]
+        specs.append(
+            CertificateSpec(
+                host=self.manifest.authority_host,
+                category=CertificateCategory.CA,
+                name="intermediate",
+                source_kind=SourceKind.HOST_FILE,
+                file_path=intermediate_certificate,
+            )
+        )
+        return tuple(sorted(specs, key=lambda spec: (spec.category.value, spec.host, spec.name)))

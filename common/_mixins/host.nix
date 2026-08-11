@@ -2,20 +2,21 @@
   config,
   facts,
   hostSpec,
-  inputs,
+  isDarwin,
+  isDesktop,
+  isLinux,
   lib,
+  system,
   ...
 }:
 let
   hostname = hostSpec.name;
-  hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
   realm = facts.realms.${config.host.realm};
-  inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
 in
 {
-  imports = lib.optional (builtins.pathExists hostModule) hostModule;
+  imports = [ ./host/assertions.nix ] ++ lib.optional (builtins.pathExists hostModule) hostModule;
 
   options.host = {
     platform = lib.mkOption {
@@ -23,7 +24,7 @@ in
       default = system;
       readOnly = true;
       internal = true;
-      description = "Nix platform declared by host facts.";
+      description = "Nix platform selected by the host configuration constructor.";
     };
 
     isDarwin = lib.mkOption {
@@ -31,7 +32,7 @@ in
       default = isDarwin;
       readOnly = true;
       internal = true;
-      description = "Whether the facts platform uses the Darwin kernel.";
+      description = "Whether the selected platform uses the Darwin kernel.";
     };
 
     isLinux = lib.mkOption {
@@ -39,17 +40,22 @@ in
       default = isLinux;
       readOnly = true;
       internal = true;
-      description = "Whether the facts platform uses the Linux kernel.";
+      description = "Whether the selected platform uses the Linux kernel.";
     };
 
-    isBuilder = lib.mkEnableOption "Nix builder participation";
+    isProxmox = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      internal = true;
+      description = "Whether this host is a Proxmox VE node.";
+    };
 
     isDesktop = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.isDesktop or false;
+      default = isDesktop;
       readOnly = true;
       internal = true;
-      description = "Whether this host has a desktop environment.";
+      description = "Whether the host configuration includes a desktop environment.";
     };
 
     isOperatorSeat = lib.mkOption {
@@ -71,30 +77,6 @@ in
       description = "Expected host availability for monitoring.";
     };
 
-    isSecretsOperator = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isSecretsOperator or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host manages repository secrets.";
-    };
-
-    hasHardwareAgeIdentity = lib.mkOption {
-      type = lib.types.bool;
-      default = (isDarwin && config.host.hardware.hasTouchId) || config.host.hasYubiAgeIdentity;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host can use a hardware-backed age identity.";
-    };
-
-    hasYubiAgeIdentity = lib.mkOption {
-      type = lib.types.bool;
-      default = builtins.elem hostname facts.yubi.ageIdentity.hosts;
-      readOnly = true;
-      internal = true;
-      description = "Whether YubiKey facts assign an age identity to this host.";
-    };
-
     isVM = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isVM or false;
@@ -103,28 +85,12 @@ in
       description = "Whether this host is a virtual machine.";
     };
 
-    isCritical = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.critical or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host should avoid frequent unattended reboots.";
-    };
-
     realm = lib.mkOption {
       type = lib.types.enum (builtins.attrNames facts.realms);
       default = hostSpec.realm;
       readOnly = true;
       internal = true;
       description = "Infrastructure and trust realm declared by host facts.";
-    };
-
-    secretDomain = lib.mkOption {
-      type = lib.types.str;
-      default = facts.realms.${config.host.realm}.secretDomain;
-      readOnly = true;
-      internal = true;
-      description = "SOPS secret domain selected for this host.";
     };
 
     management = {
@@ -136,21 +102,6 @@ in
         description = "Whether this host manages its network identity.";
       };
 
-      managePasswordSecrets = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.managePasswordSecrets;
-        readOnly = true;
-        internal = true;
-        description = "Whether this host manages local password secrets.";
-      };
-
-      sudoWheelNeedsPassword = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.sudoWheelNeedsPassword;
-        readOnly = true;
-        internal = true;
-        description = "Whether wheel users must enter a password for sudo.";
-      };
     };
 
     username = lib.mkOption {
@@ -161,31 +112,9 @@ in
       description = "Primary user for managed hosts.";
     };
 
-    userProfile = lib.mkOption {
-      type = lib.types.enum [
-        "nvidia"
-        "personal"
-      ];
-      default = hostSpec.userProfile;
-      readOnly = true;
-      internal = true;
-      description = "User environment profile declared by host facts.";
-    };
-
   };
 
   config = {
-    assertions = [
-      {
-        assertion = isDarwin != isLinux;
-        message = "Facts platform ${system} must identify exactly one supported kernel.";
-      }
-      {
-        assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
-        message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
-      }
-    ];
-
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
   };

@@ -10,7 +10,7 @@ let
   hostname = config.networking.hostName;
   cfg = config.host.autoUpgrade;
   metricsCfg = config.host.observability.nixosUpgrade;
-  isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
     inherit (cfg) holds;
@@ -27,10 +27,12 @@ let
     "--config"
     toolsConfig
     "--output"
-    "${metricsCfg.textfileDir}/nixos-upgrade-hold.prom"
+    "${textfileDir}/nixos-upgrade-hold.prom"
   ];
 in
 {
+  imports = [ ./holds/assertions.nix ];
+
   options.host.autoUpgrade = {
     holds = lib.mkOption {
       type =
@@ -60,34 +62,18 @@ in
       description = ''
         Inclusive local-date ranges during which unattended NixOS auto-upgrade
         maintenance should be skipped. Timers still fire on schedule, but the
-        upgrade service and delayed critical-host reboot service exit cleanly
+        upgrade service and separately scheduled reboot service exit cleanly
         before they perform changes.
       '';
     };
   };
 
   config = lib.mkMerge [
-    {
-      assertions = lib.concatMap (hold: [
-        {
-          assertion = builtins.match isoDatePattern hold.startDate != null;
-          message = "host.autoUpgrade.holds startDate `${hold.startDate}` must use YYYY-MM-DD.";
-        }
-        {
-          assertion = builtins.match isoDatePattern hold.stopDate != null;
-          message = "host.autoUpgrade.holds stopDate `${hold.stopDate}` must use YYYY-MM-DD.";
-        }
-        {
-          assertion = hold.startDate <= hold.stopDate;
-          message = "host.autoUpgrade.holds range `${hold.startDate}..${hold.stopDate}` must not end before it starts.";
-        }
-      ]) cfg.holds;
-    }
-    (lib.mkIf (cfg.holds != [ ]) {
+    (lib.mkIf (cfg.enable && cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf (cfg.holds != [ ] && config.host.isCritical && config.system.autoUpgrade.enable) {
-      systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
+    (lib.mkIf (cfg.holds != [ ] && cfg.reboot.mode == "scheduled" && cfg.enable) {
+      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
     (lib.mkIf metricsCfg.enable {
       # Update immediately on switch so adding or removing a hold changes alert

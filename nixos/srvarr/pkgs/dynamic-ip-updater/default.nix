@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Update the MyAnonamouse dynamic seedbox address";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "update-dynamic-ip";
     platforms = lib.platforms.linux;
   };

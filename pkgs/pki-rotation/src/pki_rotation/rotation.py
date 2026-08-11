@@ -82,9 +82,17 @@ class PkiManagedServiceFactory:
             hostname=socket.gethostname().split(".", maxsplit=1)[0],
             values=values,
         )
+        configs = NixConfigSource(runner, repo_root, self.hosts, self.query)
         return ManagedCertificateService(
-            NixConfigSource(runner, repo_root, self.hosts, self.query),
-            RemoteCertificateIssuer(runner, repo_root, self.hosts, True, self.remote_program),
+            configs,
+            RemoteCertificateIssuer(
+                runner,
+                repo_root,
+                self.hosts,
+                configs,
+                True,
+                self.remote_program,
+            ),
             SopsCertificateStore(runtime, self.hosts),
         )
 

@@ -2,14 +2,14 @@
   hostWhitelist,
   mediaDir,
   port,
-  wgNamespaceAddress,
+  vpnNamespaceAddress,
 }:
 {
   misc = {
     complete_dir = "${mediaDir}/usenet/manual";
     dirscan_dir = "${mediaDir}/usenet/watch";
     download_dir = "${mediaDir}/usenet/.incomplete";
-    host = wgNamespaceAddress;
+    host = vpnNamespaceAddress;
     host_whitelist = "${builtins.concatStringsSep "," hostWhitelist},";
     local_ranges = ",";
     permissions = 775;

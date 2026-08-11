@@ -18,7 +18,10 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ gitCommandRunner ];
+  dependencies = [
+    gitCommandRunner
+    pythonPackages.pydantic
+  ];
 
   nativeCheckInputs = with pythonPackages; [
     git
@@ -48,7 +51,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Synchronize a personal Git repository on demand";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sync-repo";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

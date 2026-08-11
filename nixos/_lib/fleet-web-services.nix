@@ -14,7 +14,13 @@ let
     // {
       ${localHost} = lib.filterAttrs (_: service: service.enable) config.host.web.services;
     };
-  contributions = builtins.concatLists (
+  hostConfigs = lib.mapAttrs (_: configuration: configuration.config) otherConfigurations // {
+    ${localHost} = config;
+  };
+  ingressControllersByRealm = builtins.groupBy (hostName: hostConfigs.${hostName}.host.realm) (
+    builtins.attrNames (lib.filterAttrs (_: hostConfig: hostConfig.host.web.ingress.enable) hostConfigs)
+  );
+  rawContributions = builtins.concatLists (
     lib.mapAttrsToList (
       hostName: services:
       lib.mapAttrsToList (serviceName: service: {
@@ -24,6 +30,37 @@ let
       }) services
     ) servicesByHost
   );
+  resolvePublicContribution =
+    contribution:
+    if !contribution.value.public.enable then
+      contribution
+    else
+      let
+        ownerRealm = hostConfigs.${contribution.owner}.host.realm;
+        realmControllers = ingressControllersByRealm.${ownerRealm} or [ ];
+        explicitIngressHost = contribution.value.public.ingressHost;
+        ingressHost =
+          if explicitIngressHost != null then
+            explicitIngressHost
+          else if builtins.length realmControllers == 1 then
+            builtins.head realmControllers
+          else
+            null;
+        splitDnsHost =
+          if contribution.value.public.splitDnsHost != null then
+            contribution.value.public.splitDnsHost
+          else
+            ingressHost;
+      in
+      contribution
+      // {
+        value = contribution.value // {
+          public = contribution.value.public // {
+            inherit ingressHost splitDnsHost;
+          };
+        };
+      };
+  contributions = map resolvePublicContribution rawContributions;
   contributionsById = builtins.groupBy (contribution: contribution.id) contributions;
   duplicateIds = lib.filterAttrs (_: entries: builtins.length entries != 1) contributionsById;
   publicContributions = builtins.filter (
@@ -36,10 +73,20 @@ let
     _: entries: builtins.length entries != 1
   ) contributionsByPublicHost;
   unknownIngressServices = builtins.filter (
-    contribution: !builtins.hasAttr contribution.value.public.ingressHost outputs.nixosConfigurations
+    contribution:
+    contribution.value.public.ingressHost == null
+    || !builtins.hasAttr contribution.value.public.ingressHost outputs.nixosConfigurations
+  ) publicContributions;
+  disabledIngressServices = builtins.filter (
+    contribution:
+    contribution.value.public.ingressHost != null
+    && builtins.hasAttr contribution.value.public.ingressHost hostConfigs
+    && !hostConfigs.${contribution.value.public.ingressHost}.host.web.ingress.enable
   ) publicContributions;
   unknownSplitDnsServices = builtins.filter (
-    contribution: !builtins.hasAttr contribution.value.public.splitDnsHost outputs.nixosConfigurations
+    contribution:
+    contribution.value.public.splitDnsHost == null
+    || !builtins.hasAttr contribution.value.public.splitDnsHost outputs.nixosConfigurations
   ) publicContributions;
   byId = lib.mapAttrs (
     _: entries:
@@ -73,8 +120,12 @@ assert lib.assertMsg (duplicatePublicHosts == { }) (
   + lib.concatStringsSep ", " (builtins.attrNames duplicatePublicHosts)
 );
 assert lib.assertMsg (unknownIngressServices == [ ]) (
-  "web services reference unknown public ingress hosts: "
+  "web services require one realm ingress controller or an explicit known ingress host: "
   + lib.concatStringsSep ", " (map showContribution unknownIngressServices)
+);
+assert lib.assertMsg (disabledIngressServices == [ ]) (
+  "web services reference hosts without host.web.ingress.enable: "
+  + lib.concatStringsSep ", " (map showContribution disabledIngressServices)
 );
 assert lib.assertMsg (unknownSplitDnsServices == [ ]) (
   "web services reference unknown split-DNS hosts: "

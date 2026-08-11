@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -25,31 +25,6 @@ class SyncError(Exception):
 
 class RebaseFailed(SyncError):
     """A rebase stopped for manual conflict resolution."""
-
-
-def repository_specs(
-    home: Path,
-    environ: Mapping[str, str],
-) -> dict[str, RepositorySpec]:
-    xdg_data = Path(environ.get("XDG_DATA_HOME", home / ".local" / "share"))
-    password_store = Path(environ.get("PASSWORD_STORE_DIR", xdg_data / "password-store"))
-    return {
-        "gmailctl": RepositorySpec(
-            "gmailctl",
-            "git@github.com:booxter/gmailctl-private-config.git",
-            home / ".gmailctl",
-        ),
-        "pass": RepositorySpec(
-            "pass",
-            "git@github.com:booxter/pass.git",
-            password_store,
-        ),
-        "dotfiles": RepositorySpec(
-            "dotfiles",
-            "git@github.com:booxter/dotfiles.git",
-            home / ".priv-bin",
-        ),
-    }
 
 
 def _divergence(result: GitResult, upstream: str) -> tuple[int, int]:

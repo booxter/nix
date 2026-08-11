@@ -3,20 +3,10 @@ let
   cfg = config.host.observability;
 in
 {
-  options.host.observability.nodeExporter = {
-    openFirewall = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to open the firewall for the Prometheus node exporter.";
-    };
-
-    textfile.directory = lib.mkOption {
-      type = lib.types.str;
-      default = "/var/lib/prometheus-node-exporter-textfile";
-      readOnly = true;
-      internal = true;
-      description = "Canonical node exporter textfile collector directory.";
-    };
+  options.host.observability.nodeExporter.openFirewall = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Whether to open the firewall for the Prometheus node exporter.";
   };
 
   config = lib.mkIf cfg.enable (

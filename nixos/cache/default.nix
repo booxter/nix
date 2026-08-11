@@ -1,62 +1,40 @@
 {
   config,
   facts,
-  lib,
   pkgs,
   ...
 }:
 let
-  nfsPath = facts.nfs.links.cache.nixCache.mountPoint;
+  nfsPath = config.host.storage.claims.nixCache.mountPoint;
 in
 {
   system.stateVersion = "25.11";
 
+  host.network = {
+    macAddress = "bc:24:11:0d:85:41";
+    reservation = {
+      enable = true;
+      address = "192.168.20.7";
+    };
+  };
+
+  host.attic.server = {
+    enable = true;
+    endpoint = config.host.web.services.atticd.internal.url;
+    storagePath = nfsPath;
+    trustedPublicKey = facts.public-keys.nix-cache.home;
+  };
+
+  host.storage.claims.nixCache = {
+    provider = "beast";
+    mountPoint = "/cache";
+  };
+
+  host.ups.client.server = "prx1-lab";
+
   environment.systemPackages = with pkgs; [
     attic-client
   ];
-
-  # https://docs.attic.rs/admin-guide/deployment/nixos.html
-  services.atticd = {
-    enable = true;
-
-    # Replace with absolute path to your environment file
-    # Put in file: ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=$(nix run nixpkgs#openssl -- genrsa -traditional 4096 | base64 -w0)
-    environmentFile = "/etc/atticd.env";
-
-    settings = {
-      listen = "127.0.0.1:8080";
-
-      jwt = { };
-
-      # Data chunking
-      #
-      # Warning: If you change any of the values here, it will be
-      # difficult to reuse existing chunks for newly-uploaded NARs
-      # since the cutpoints will be different. As a result, the
-      # deduplication ratio will suffer for a while after the change.
-      chunking = {
-        # The minimum NAR size to trigger chunking
-        #
-        # If 0, chunking is disabled entirely for newly-uploaded NARs.
-        # If 1, all NARs are chunked.
-        nar-size-threshold = 64 * 1024; # 64 KiB
-
-        # The preferred minimum size of a chunk, in bytes
-        min-size = 16 * 1024; # 16 KiB
-
-        # The preferred average size of a chunk, in bytes
-        avg-size = 64 * 1024; # 64 KiB
-
-        # The preferred maximum size of a chunk, in bytes
-        max-size = 256 * 1024; # 256 KiB
-      };
-
-      storage = {
-        type = "local";
-        path = nfsPath;
-      };
-    };
-  };
 
   host.web.services.atticd = {
     enable = true;
@@ -73,15 +51,4 @@ in
       '';
     };
   };
-
-  # Upgrade cache before the Monday critical-infra window so the cache is
-  # ready before machines that may consume it during their own auto-updates.
-  system.autoUpgrade.dates = lib.mkForce "Mon 03:30";
-  system.autoUpgrade.randomizedDelaySec = lib.mkForce "5min";
-  system.autoUpgrade.rebootWindow = {
-    lower = lib.mkForce "02:59";
-    upper = lib.mkForce "06:00";
-  };
-
-  systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }

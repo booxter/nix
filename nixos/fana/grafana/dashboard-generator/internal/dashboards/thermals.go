@@ -12,13 +12,13 @@ func thermalCPU(matchers ...string) string {
 	darwinMatchers := append(append([]string{}, matchers...), `group="cpu"`)
 	return `max by(instance) (` + nodeMetric("node_thermal_zone_temp", thermalZoneMatchers...) + ` or ` +
 		nodeMetric("node_hwmon_temp_celsius", hwmonMatchers...) + ` or ` +
-		nodeMetric("host_observability_darwin_temperature_group_max_celsius", darwinMatchers...) + `)`
+		freshDarwinThermalMetric("host_observability_darwin_temperature_group_max_celsius", darwinMatchers...) + `)`
 }
 
 func thermalStorage() string {
 	return `max by(instance) (` + nodeMetric("node_hwmon_temp_celsius", `chip=~"nvme_.*"`, `sensor="temp1"`) +
 		` or ` + nodeMetric("host_observability_hba_temperature_celsius", `sensor="roc"`) +
-		` or ` + nodeMetric("host_observability_darwin_temperature_group_max_celsius", `group="storage"`) + `)`
+		` or ` + freshDarwinThermalMetric("host_observability_darwin_temperature_group_max_celsius", `group="storage"`) + `)`
 }
 
 func ThermalsOverview(config Config) (dashboard.Dashboard, error) {
@@ -33,13 +33,13 @@ func ThermalsOverview(config Config) (dashboard.Dashboard, error) {
 	}).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: summary[0].ID, Grid: summary[0].Grid, Title: "Hottest Hypervisor CPU / Package",
-			Expression: `topk(1, avg_over_time((` + thermalCPU(`capacity_profile="hypervisor"`) + `)[2m:30s]))`,
+			Expression: `topk(1, avg_over_time((` + thermalCPU(`host_hypervisor="true"`) + `)[2m:30s]))`,
 			Legend:     "{{instance}}", Unit: units.Celsius, DataSource: datasource,
 			Thresholds: warningCriticalThresholds(80, 85),
 		})).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: summary[1].ID, Grid: summary[1].Grid, Title: "Hottest Other CPU / Package",
-			Expression: `topk(1, avg_over_time((` + thermalCPU(`capacity_profile!="hypervisor"`) + `)[2m:30s]))`,
+			Expression: `topk(1, avg_over_time((` + thermalCPU(`host_hypervisor="false"`) + `)[2m:30s]))`,
 			Legend:     "{{instance}}", Unit: units.Celsius, DataSource: datasource,
 			Thresholds: warningCriticalThresholds(60, 75),
 		})).
@@ -58,8 +58,8 @@ func ThermalsOverview(config Config) (dashboard.Dashboard, error) {
 			Unit: units.Short, DataSource: datasource, Min: ptr(0.0), Max: ptr(2.0), Background: true,
 			Thresholds: warningCriticalThresholds(1, 2),
 			Targets: []PrometheusTarget{
-				{RefID: "A", Expression: nodeMetric("host_observability_darwin_thermal_warning_level"), Legend: "{{instance}} thermal"},
-				{RefID: "B", Expression: nodeMetric("host_observability_darwin_performance_warning_level"), Legend: "{{instance}} performance"},
+				{RefID: "A", Expression: freshDarwinThermalMetric("host_observability_darwin_thermal_warning_level"), Legend: "{{instance}} thermal"},
+				{RefID: "B", Expression: freshDarwinThermalMetric("host_observability_darwin_performance_warning_level"), Legend: "{{instance}} performance"},
 			},
 		}))
 
@@ -78,7 +78,7 @@ func ThermalsOverview(config Config) (dashboard.Dashboard, error) {
 			title: "Hottest Exposed Sensor By Host", unit: units.Celsius, legend: "{{instance}}",
 			expression: `avg_over_time((max by(instance) (` + nodeMetric("node_hwmon_temp_celsius") + ` or ` +
 				nodeMetric("host_observability_hba_temperature_celsius", `sensor="roc"`) + ` or ` +
-				nodeMetric("host_observability_darwin_temperature_max_celsius") + `))[5m:30s])`,
+				freshDarwinThermalMetric("host_observability_darwin_temperature_max_celsius") + `))[5m:30s])`,
 			thresholds: warningCriticalThresholds(60, 75),
 		},
 		{

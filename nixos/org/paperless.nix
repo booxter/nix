@@ -11,7 +11,7 @@ let
   paperlessService = config.host.web.services.paperless;
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
-  paperlessStoragePath = facts.nfs.links.org.paperless.mountPoint;
+  paperlessStoragePath = config.host.storage.claims.paperless.mountPoint;
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoTag = "paperless-gpt-auto";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
@@ -72,6 +72,17 @@ let
 
 in
 {
+  host.storage.claims.paperless = {
+    provider = "beast";
+    mountPoint = "/data/paperless";
+    directories = {
+      "." = { };
+      consume = { };
+      export = { };
+      media = { };
+    };
+  };
+
   host.backups.sources = {
     paperless = {
       paths = [

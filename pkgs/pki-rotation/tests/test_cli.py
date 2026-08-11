@@ -156,6 +156,12 @@ def flake_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def inventory_manifest(tmp_path: Path) -> Path:
+    manifest = tmp_path / "inventory.json"
+    manifest.write_text('{"authority_host":"pki","certificates":[]}')
+    return manifest
+
+
 def test_scan_and_export_dispatch_use_typed_models(tmp_path: Path) -> None:
     root = flake_root(tmp_path)
     app, _, _ = application()
@@ -165,9 +171,16 @@ def test_scan_and_export_dispatch_use_typed_models(tmp_path: Path) -> None:
     assert json.loads(scan_output.getvalue())[0]["cert_name"] == "web"
 
     metrics = tmp_path / "metrics" / "pki.prom"
+    manifest = inventory_manifest(tmp_path)
     assert (
         run(
-            ["--repo-root", str(root), "export-metrics", "--output", str(metrics)],
+            [
+                "export-metrics",
+                "--inventory-manifest",
+                str(manifest),
+                "--output",
+                str(metrics),
+            ],
             application=app,
         )
         == 0
@@ -176,20 +189,18 @@ def test_scan_and_export_dispatch_use_typed_models(tmp_path: Path) -> None:
     assert metrics.stat().st_mode & 0o777 == 0o644
 
 
-def test_export_clones_when_no_repository_root_is_supplied() -> None:
+def test_export_uses_manifest_without_cloning(tmp_path: Path) -> None:
     app, repositories, _ = application()
 
     content = app.export(
-        repo_root=None,
-        repo_url="https://github.com/owner/repo.git",
-        base_branch="master",
+        inventory_manifest=inventory_manifest(tmp_path),
         intermediate_certificate=Path("/intermediate.crt"),
         rotation_window_days=45,
     )
 
     assert "host_observability_pki_cert_expected" in content
-    assert repositories.repository.clones[0].branch == "master"
-    assert repositories.environments == [None]
+    assert repositories.repository.clones == []
+    assert repositories.environments == []
 
 
 def test_rotate_dry_run_writes_summary_and_metrics(tmp_path: Path) -> None:

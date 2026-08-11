@@ -5,6 +5,14 @@ in
 {
   system.stateVersion = "25.11";
 
+  host.network.macAddress = "bc:24:11:ed:30:d3";
+  host.ups.client.server = "nvws";
+
+  host.userEnvironment = {
+    preset = "nvidia";
+    roles.developer.enable = true;
+  };
+
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.
   security.sudo.wheelNeedsPassword = false;

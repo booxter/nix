@@ -1,6 +1,6 @@
 {
-  facts,
   inputs,
+  outputs,
   pkgs,
   system,
   ...
@@ -9,8 +9,8 @@
   package =
     (import ../proxmox.nix {
       inherit
-        facts
         inputs
+        outputs
         pkgs
         system
         ;

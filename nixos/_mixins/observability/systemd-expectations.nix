@@ -22,18 +22,27 @@ let
   activationLinks =
     unit: (unit.wantedBy or [ ]) ++ (unit.requiredBy or [ ]) ++ (unit.upheldBy or [ ]);
   dependencies = unit: (unit.wants or [ ]) ++ (unit.requires or [ ]) ++ (unit.upholds or [ ]);
+  isEnabled = unit: unit.enable or true;
   roots = lib.mapAttrsToList (name: _: { key = name; }) (
-    lib.filterAttrs (_: unit: activationLinks unit != [ ]) units
+    lib.filterAttrs (_: unit: isEnabled unit && activationLinks unit != [ ]) units
   );
   activatedUnits = lib.genericClosure {
     startSet = roots;
     operator =
       item:
       map (name: { key = name; }) (
-        builtins.filter (name: builtins.hasAttr name units) (dependencies units.${item.key})
+        builtins.filter (name: builtins.hasAttr name units && isEnabled units.${name}) (
+          dependencies units.${item.key}
+        )
       );
   };
   activatedNames = map (item: item.key) activatedUnits;
+  isStopWhenUnneeded =
+    name:
+    builtins.elem (units.${name}.unitConfig.StopWhenUnneeded or false) [
+      true
+      "yes"
+    ];
   isPersistentService =
     name:
     let
@@ -53,10 +62,14 @@ let
     );
   isExpected =
     name:
-    lib.hasSuffix ".timer" name
-    || lib.hasSuffix ".socket" name
-    || lib.hasSuffix ".path" name
-    || (lib.hasSuffix ".service" name && isPersistentService name);
+    !builtins.elem name cfg.systemd.excludedUnits
+    && !isStopWhenUnneeded name
+    && (
+      lib.hasSuffix ".timer" name
+      || lib.hasSuffix ".socket" name
+      || lib.hasSuffix ".path" name
+      || (lib.hasSuffix ".service" name && isPersistentService name)
+    );
   expectedUnits = builtins.sort builtins.lessThan (builtins.filter isExpected activatedNames);
   unitLabels = cfg.systemd.unitLabels;
   escapeLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
@@ -78,23 +91,34 @@ let
   );
 in
 {
-  options.host.observability.systemd.unitLabels = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
-    default = { };
-    description = "Prometheus labels attached to expected systemd units.";
+  options.host.observability.systemd = {
+    excludedUnits = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Systemd units excluded from expected-active monitoring.";
+    };
+
+    unitLabels = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
+      default = { };
+      description = "Prometheus labels attached to expected systemd units.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = lib.all (labels: !(labels ? name)) (builtins.attrValues unitLabels);
-        message = "host.observability.systemd.unitLabels must not override the unit name label";
-      }
-      {
-        assertion = lib.all (name: builtins.elem name expectedUnits) (builtins.attrNames unitLabels);
-        message = "host.observability.systemd.unitLabels may only label expected active units";
-      }
-    ];
+    # This unit runs only while switching configurations. Inspecting its
+    # unitConfig also recurses through the tmpfiles rules generated below.
+    host.observability.systemd.excludedUnits = [ "systemd-tmpfiles-resetup.service" ];
+
+    assertions = import ./systemd-expectations/assertions.nix {
+      inherit
+        cfg
+        expectedUnits
+        lib
+        unitLabels
+        units
+        ;
+    };
 
     systemd.tmpfiles.rules = [
       "d ${textfileDir} 0755 root root - -"

@@ -4,10 +4,11 @@
   pkgs,
   ...
 }:
+let
+  cfg = config.host.userEnvironment.features.firefox;
+in
 {
-  imports = [ ./firefox.nix ];
-
-  config = lib.mkIf (config.host.userProfile == "personal") {
+  config = lib.mkIf (cfg.enable && cfg.makeDefault) {
     environment.systemPackages = with pkgs; [
       defaultbrowser
     ];

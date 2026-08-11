@@ -37,7 +37,12 @@ This is intentional:
 `pki` runs two PKI jobs:
 
 - `pki-status-export`
-  - scans managed certificates
+  - consumes a build-time certificate inventory manifest from the Nix store
+  - reads only the root CA, relevant encrypted host secrets, and the live
+    intermediate CA certificate
+  - derives its manifest from certificate records registered by the owning
+    host modules
+  - does not clone the repository or require network access
   - exports Prometheus textfile metrics through node exporter
   - covers internal root/intermediate CA state plus repo-managed internal leaf
     certs
@@ -61,7 +66,7 @@ branch.
 3. If one or more leaf certs are due, `pki-rotate` reissues them from the local
    `step-ca` on `pki`.
 4. Updated certs are written back into the corresponding
-   `secrets/<domain>/*.yaml` files.
+   `secrets/<realm>/*.yaml` files.
 5. The controller commits those encrypted updates to `ci/pki-rotate`.
 6. It opens or updates a PR against the base branch.
 7. After review and merge, the existing upgrade and deploy flow rolls the new
@@ -117,7 +122,7 @@ It does not imply routine rotation of the root or intermediate CA.
 ## Operational Requirements
 
 - `pki` needs GitHub credentials that can push a branch and open a PR
-- store that credential in `secrets/main/pki.yaml` at
+- store that credential in `secrets/home/pki.yaml` at
   `github.pki_rotation.token`
 - the token only needs repository `Contents: Read and write` and `Pull requests:
   Read and write` on `booxter/nix`

@@ -638,11 +638,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1779928723,
-        "narHash": "sha256-oliJNkRlVodEcbgycz/vnO2Cmj3cNgkBYt3iWJsLEcU=",
+        "lastModified": 1786376471,
+        "narHash": "sha256-TjMLd6D3Z/abmtEk6sQ/AWz+45ndBxB/nI59D5C1hr8=",
         "owner": "booxter",
         "repo": "proxmox-nixos",
-        "rev": "cdb0db3a4c820094603a7e84c7ef1d87bd3e903e",
+        "rev": "891e18db884d11a701516c3c349161e6baf5324c",
         "type": "github"
       },
       "original": {

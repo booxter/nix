@@ -33,23 +33,18 @@ in
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];
 
-      assertions = [
-        {
-          assertion = config.host.observability.lanWan.enable;
-          message = "Darwin thermal export currently requires host.observability.lanWan.enable so node exporter textfile support is configured.";
-        }
-      ];
-
-      launchd.daemons.observability-thermal-export.serviceConfig = {
-        ProgramArguments = [
+      launchd.daemons.observability-thermal-export = {
+        command = lib.escapeShellArgs [
           (lib.getExe thermalExporter)
           "--ismc"
           (lib.getExe cfg.package)
         ];
-        RunAtLoad = true;
-        StartInterval = cfg.intervalSeconds;
-        StandardOutPath = "/var/log/observability-thermal-export.log";
-        StandardErrorPath = "/var/log/observability-thermal-export.log";
+        serviceConfig = {
+          RunAtLoad = true;
+          StartInterval = cfg.intervalSeconds;
+          StandardOutPath = "/var/log/observability-thermal-export.log";
+          StandardErrorPath = "/var/log/observability-thermal-export.log";
+        };
       };
     })
   ];

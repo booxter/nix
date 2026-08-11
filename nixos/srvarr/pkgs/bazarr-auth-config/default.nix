@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Disable Bazarr's local authentication settings";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "enforce-bazarr-auth-config";
     platforms = lib.platforms.linux;
   };

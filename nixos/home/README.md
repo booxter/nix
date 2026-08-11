@@ -35,7 +35,7 @@ archive.
 
 Before the first deployment:
 
-1. Bootstrap `secrets/main/home.yaml` with the VM's age recipient.
+1. Bootstrap `secrets/home/home.yaml` with the VM's age recipient.
 2. Replace the bootstrap password and host password placeholders.
 3. Replace `facts/public-keys/files/hosts/home.pub` with the installed VM SSH
    host key.

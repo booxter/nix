@@ -16,7 +16,10 @@ from .models import (
     CertificateRequest,
     FleetHosts,
 )
-from .repository import host_facts
+
+
+class CertificateAuthoritySource(Protocol):
+    def ca_url(self, host: str) -> str | None: ...
 
 
 class CertificateIssuer(Protocol):
@@ -71,17 +74,18 @@ class RemoteCertificateIssuer:
     runner: ProcessRunner
     repo_root: Path
     hosts: FleetHosts
+    authorities: CertificateAuthoritySource
     local_ca: bool
     remote_program: Path
 
     def issue(self, ca_host: str, common_name: str, sans: tuple[str, ...]) -> CertificateMaterial:
-        facts = host_facts(self.hosts, ca_host)
-        if facts.ca_url is None:
+        ca_url = self.authorities.ca_url(ca_host)
+        if ca_url is None:
             raise ToolError(f"host {ca_host} is not configured as a certificate authority")
         request = CertificateRequest(
             common_name=common_name,
             sans=sans,
-            ca_url=facts.ca_url,
+            ca_url=ca_url,
         )
         if self.local_ca:
             output = self.runner.run(

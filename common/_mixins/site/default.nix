@@ -1,5 +1,4 @@
 {
-  config,
   facts,
   hostSpec,
   lib,
@@ -11,6 +10,8 @@ let
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
 in
 {
+  imports = [ ./assertions.nix ];
+
   options.host.site = {
     name = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
@@ -57,20 +58,4 @@ in
     };
   };
 
-  config.assertions = [
-    {
-      assertion = siteName == null || site != null;
-      message = "host '${config.networking.hostName}' references unknown site '${toString siteName}'";
-    }
-  ]
-  ++ lib.optionals (site != null) [
-    {
-      assertion = site.policies.backups.maxUploadMbit <= site.uplink.uploadMbit;
-      message = "site '${siteName}' backup policy must not exceed its upload capacity";
-    }
-    {
-      assertion = site.policies.downloaders.maxDownloadMbit <= site.uplink.downloadMbit;
-      message = "site '${siteName}' downloader policy must not exceed its download capacity";
-    }
-  ];
 }

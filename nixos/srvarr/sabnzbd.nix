@@ -9,7 +9,7 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   port = 6336;
   user = "sabnzbd";
-  wgNamespaceAddress = facts.hosts.nixos.srvarr.wgNamespace.namespaceAddress;
+  vpnNamespace = config.host.vpn.namespaces.wg;
   sabnzbdServerNames = [
     "news.frugalusenet.com"
     "news.newshosting.com"
@@ -105,11 +105,9 @@ in
         "sabnzbd"
         "sabnzbd.local"
       ];
-      inherit
-        mediaDir
-        wgNamespaceAddress
-        ;
+      inherit mediaDir;
       port = port;
+      vpnNamespaceAddress = vpnNamespace.namespaceAddress;
     };
     user = user;
   };
@@ -120,17 +118,16 @@ in
     serviceConfig = {
       Restart = "on-failure";
     };
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
   users.users.${user} = {
     uid = accounts.uids.sabnzbd;
   };
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ port ];
+  host.vpn.clients.sabnzbd = {
+    namespace = "wg";
+    bridgeTcpPorts = [ port ];
+  };
 
   services.nginx.virtualHosts."127.0.0.1:${toString port}" = {
     listen = lib.mkForce [
@@ -142,7 +139,7 @@ in
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString port}";
+      proxyPass = lib.mkForce "http://${vpnNamespace.namespaceAddress}:${toString port}";
     };
   };
 

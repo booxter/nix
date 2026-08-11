@@ -27,8 +27,6 @@ in
 
   issue-proxmox-exporter-token = appPackages.issue-proxmox-exporter-token;
 
-  patch-context = pkgs.callPackage ./patch-context { };
-
   pki-certificates = pkiCertificates;
 
   pki-rotation = pkgs.callPackage ./pki-rotation {

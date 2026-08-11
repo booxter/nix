@@ -47,7 +47,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Typed Prometheus collectors for Linux storage hardware";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "storage-storcli-metrics";
     platforms = lib.platforms.linux;
   };

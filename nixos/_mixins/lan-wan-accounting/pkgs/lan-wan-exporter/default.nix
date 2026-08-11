@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Export nftables LAN/WAN counters through native netlink";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "lan-wan-export";
     platforms = lib.platforms.linux;
   };

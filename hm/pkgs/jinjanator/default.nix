@@ -39,7 +39,6 @@ let
       description = "Package which provides the plugin API for the jinjanator tool";
       homepage = "https://pypi.org/project/jinjanator-plugins";
       license = lib.licenses.asl20;
-      maintainers = with lib.maintainers; [ booxter ];
     };
   };
 in
@@ -85,7 +84,6 @@ python3.pkgs.buildPythonApplication rec {
       bsd2
       asl20
     ];
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "jinjanator";
   };
 }

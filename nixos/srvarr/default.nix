@@ -1,18 +1,38 @@
 {
-  inputs,
+  config,
   pkgs,
   ...
 }:
 {
   system.stateVersion = "25.11";
 
+  host.network = {
+    interfaces.ens18.kind = "ethernet";
+    macAddress = "bc:24:11:19:4d:d1";
+    primaryInterface = "ens18";
+    reservation = {
+      enable = true;
+      address = "192.168.20.2";
+    };
+  };
+
+  host.ups.client.server = "prx1-lab";
+
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
+  host.aurral = {
+    enable = true;
+    stateDir = "${config.host.srvarrPaths.stateDir}/aurral";
+    flowDir = "${config.host.srvarrPaths.mediaDir}/library/flows";
+    extraWritePaths = [ "${config.host.srvarrPaths.mediaDir}/slskd/complete" ];
+    extraGroups = [ "media" ];
+    publicHostName = "mu.${config.host.network.publicDomain}";
+    authProxy.adminGroups = [ "media-admins" ];
+  };
+
   imports = [
-    inputs.vpnconfinement.nixosModules.default
     ./arr.nix
     ./audiobookshelf.nix
-    ./aurral.nix
     ./ebook-converter.nix
     ./glance.nix
     ./houndarr.nix

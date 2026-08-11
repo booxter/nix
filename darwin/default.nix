@@ -21,26 +21,24 @@ in
   ]
   ++ [
     ./_mixins/defaults
+    ./_mixins/etc
     ./_mixins/fonts
     ./_mixins/hardware
-    ./_mixins/fleet-cache-warmer
     ./_mixins/homebrew
     ./_mixins/internal-pki
     ./_mixins/lan-wan-accounting
+    ./_mixins/launchd
     ./_mixins/logs-client
     ./_mixins/networking
     ./_mixins/nix
     ./_mixins/observability
-    ./_mixins/secretive
+    ./_mixins/security
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sketchybar-network
-    ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/ups-client
     ./_mixins/xquartz
-    ./_mixins/yubi.nix
-    ./_mixins/attic
     ./_mixins/browser
   ];
 

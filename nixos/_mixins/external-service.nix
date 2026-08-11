@@ -7,6 +7,11 @@ let
     _: client: client.enable && client.category == "internal"
   ) config.host.internalPki.clients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
+  nginxMtlsClientNames = lib.unique (
+    lib.filter (clientName: clientName != "") (
+      map (vhost: vhost.upstreamTls.clientName) (builtins.attrValues enabledUpstreamTlsVhosts)
+    )
+  );
   recommendedProxyHeaders = hostHeader: ''
     proxy_set_header Host ${hostHeader};
     proxy_set_header X-Real-IP $remote_addr;
@@ -49,6 +54,8 @@ let
   };
 in
 {
+  imports = [ ./external-service/assertions.nix ];
+
   options.host.externalService = {
     acmeEmail = lib.mkOption {
       type = lib.types.str;
@@ -154,38 +161,8 @@ in
 
   config = lib.mkMerge [
     {
-      assertions =
-        lib.optionals cfg.ddns.enable [
-          {
-            assertion = cfg.ddns.username != "";
-            message = "host.externalService.ddns.username must be set when DDNS is enabled.";
-          }
-          {
-            assertion = cfg.ddns.hostname != "";
-            message = "host.externalService.ddns.hostname must be set when DDNS is enabled.";
-          }
-        ]
-        ++ builtins.concatLists (
-          lib.mapAttrsToList (
-            hostName: vhost:
-            lib.optionals vhost.upstreamTls.enable [
-              {
-                assertion = vhost.upstreamTls.clientName != "";
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must be set when upstream mTLS is enabled.";
-              }
-              {
-                assertion = vhost.upstreamTls.serverName != "";
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
-              }
-              {
-                assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.internalPki.clients entry.";
-              }
-            ]
-          ) cfg.virtualHosts
-        );
+      host.network.stableAddress.requiredBy = lib.optional hasPublicVhosts "public ingress";
     }
-
     (lib.mkIf cfg.ddns.enable {
       # Keep ddclient on a stable system user instead of DynamicUser. During
       # switch-to-configuration we observed transient startup failures where the
@@ -235,6 +212,15 @@ in
     })
 
     (lib.mkIf hasPublicVhosts {
+      host.internalPki.clients = lib.genAttrs nginxMtlsClientNames (_: {
+        materializations.default = {
+          owner = config.services.nginx.user;
+          group = config.services.nginx.group;
+          mode = "0400";
+          restartUnits = [ "nginx.service" ];
+        };
+      });
+
       security.acme = {
         acceptTerms = true;
         defaults.email = cfg.acmeEmail;

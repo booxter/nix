@@ -1,18 +1,17 @@
 {
-  facts,
+  config,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  wgHome = facts.site.wireguard.home;
-  gatewayHostConfig = outputs.nixosConfigurations.${wgHome.gateway.host}.config;
+  wgHome = config.host.wireguard.networks.home;
+  gatewayHostConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
   wgHomeEndpoint = gatewayHostConfig.host.observability.prometheusEndpoints."wg-home";
-  gatewayTargetHost = wgHome.gateway.host;
+  gatewayTargetHost = wgHome.server.host;
   peers = lib.mapAttrsToList (name: peer: {
     inherit name;
-    address = builtins.head (lib.splitString "/" peer.address);
-    inherit (peer) publicKey;
+    inherit (peer) address publicKey;
   }) wgHome.peers;
   mkPeerMetricRelabels = peer: [
     {
@@ -41,7 +40,7 @@ in
           targets = [ "${gatewayTargetHost}:${toString wgHomeEndpoint.port}" ];
           labels = {
             component = "wireguard";
-            instance = wgHome.gateway.host;
+            instance = wgHome.server.host;
             scrape_profile = "network";
           };
         }

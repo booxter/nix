@@ -44,12 +44,7 @@ in
   config = {
     services.openssh.enable = true;
 
-    programs.ssh.knownHosts = managedKnownHosts // {
-      frame-initrd = {
-        hostNames = [ "frame-initrd" ];
-        publicKey = facts.public-keys.hosts.frame-initrd;
-      };
-    };
+    programs.ssh.knownHosts = managedKnownHosts;
 
     users.users.${username}.openssh.authorizedKeys.keys = config.host.ssh.authorizedKeys;
   };

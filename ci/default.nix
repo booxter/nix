@@ -3,6 +3,8 @@
   lib,
 }:
 let
+  darwinSystem = "aarch64-darwin";
+  nixosSystem = "x86_64-linux";
   runners = {
     aarch64-darwin = "macos-26";
     x86_64-linux = "ubuntu-latest";
@@ -28,18 +30,17 @@ let
     mkTarget {
       attr = "nixosConfigurations.${spec.name}.config.system.build.toplevel";
       host = spec.name;
-      name = "${spec.name} (${spec.platform})";
-      system = spec.platform;
+      name = "${spec.name} (${nixosSystem})";
+      system = nixosSystem;
     };
   mkDarwinTarget =
-    name: spec:
+    name: _spec:
     mkTarget {
       attr = "darwinConfigurations.${name}.system";
       host = name;
-      name = "${name} (${spec.platform})";
-      system = spec.platform;
+      name = "${name} (${darwinSystem})";
+      system = darwinSystem;
     };
-  builderSystem = facts.hosts.nixos.builder1.platform;
 in
 {
   buildTargets =
@@ -49,26 +50,26 @@ in
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vm";
         host = "builder1";
-        name = "nixos vm builder1 (${builderSystem})";
-        system = builderSystem;
+        name = "nixos vm builder1 (${nixosSystem})";
+        system = nixosSystem;
       })
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vmQemu";
         host = "builder1";
-        name = "nixos vm qemu (${builderSystem})";
-        system = builderSystem;
+        name = "nixos vm qemu (${nixosSystem})";
+        system = nixosSystem;
       })
       (mkTarget {
         attr = "packages.aarch64-darwin.qemu-host-package";
         host = "builder1";
         name = "nixos vm qemu (aarch64-darwin)";
-        system = "aarch64-darwin";
+        system = darwinSystem;
       })
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.virtualisation.proxmox.iso";
         host = "builder1";
-        name = "nixos vm proxmox iso (${builderSystem})";
-        system = builderSystem;
+        name = "nixos vm proxmox iso (${nixosSystem})";
+        system = nixosSystem;
       })
     ];
 }

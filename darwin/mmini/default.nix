@@ -1,27 +1,34 @@
-{ ... }:
+{ config, facts, ... }:
 {
   system.stateVersion = 5;
 
-  host.isBuilder = true;
+  host.nix.builder.enable = true;
 
-  host.fleetCacheWarmer = {
-    enable = true;
-    targetRealm = "home";
-    pushToAttic = true;
+  host.nix.cacheWarmer.enable = true;
+
+  host.userEnvironment = {
+    preset = "personal";
+    roles = {
+      developer.enable = true;
+      workstation.enable = true;
+    };
   };
 
+  host.network.interfaces.en0.kind = "ethernet";
+
   host.remote-control = {
-    client = {
-      vnc.enable = true;
-      x11.enable = true;
-    };
+    client.enable = true;
     server.vnc.enable = true;
   };
 
-  programs.yubi = {
-    smartCard = {
-      enable = true;
-      sshSudoPassword.enable = true;
+  host.ups.client.server = "frame";
+
+  host.security = {
+    smartCard.enable = true;
+    secrets.operator.ageIdentity = {
+      backend = "yubikey";
+      path = "/Users/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
     };
+    ssh.credentials.backend = "yubikey";
   };
 }

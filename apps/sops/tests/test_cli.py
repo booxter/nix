@@ -14,7 +14,7 @@ from sops_tools.cli import (
     set_main,
     update_main,
 )
-from sops_tools.repository import RuntimeEnvironment, SecretDomain, SecretRepository
+from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
 
 from .fakes import MemorySopsBackend, StaticBackendFactory
 
@@ -25,7 +25,7 @@ def application(
     *,
     template: object = None,
 ) -> tuple[Application, MemorySopsBackend]:
-    repository = SecretRepository(tmp_path, SecretDomain("main", None))
+    repository = SecretRepository(tmp_path, Realm("home", None))
     repository.directory.mkdir(parents=True)
     repository.template.write_text(
         yaml.safe_dump({} if template is None else template, sort_keys=False)
@@ -50,7 +50,7 @@ def test_cat_defaults_to_current_host(
 ) -> None:
     current, _ = application(tmp_path, {"beast": {"keep": "value"}})
 
-    assert cat_main(["--domain", "main"], application=current) == 0
+    assert cat_main(["--realm", "home"], application=current) == 0
 
     assert "keep: value" in capsys.readouterr().out
 
@@ -58,9 +58,9 @@ def test_cat_defaults_to_current_host(
 def test_edit_only_invokes_sops_editor(tmp_path: Path) -> None:
     current, backend = application(tmp_path, {"beast": {"keep": "value"}})
 
-    assert edit_main(["--domain", "main", "beast"], application=current) == 0
+    assert edit_main(["--realm", "home", "beast"], application=current) == 0
 
-    assert backend.edits == [current.runtime.repo_root / "secrets/main/beast.yaml"]
+    assert backend.edits == [current.runtime.repo_root / "secrets/home/beast.yaml"]
 
 
 def test_set_reads_the_exact_value_from_stdin(
@@ -73,13 +73,13 @@ def test_set_reads_the_exact_value_from_stdin(
 
     assert (
         set_main(
-            ["--domain", "main", "beast", "nested/key.with-dash"],
+            ["--realm", "home", "beast", "nested/key.with-dash"],
             application=current,
         )
         == 0
     )
 
-    secret = current.runtime.repo_root / "secrets/main/beast.yaml"
+    secret = current.runtime.repo_root / "secrets/home/beast.yaml"
     assert backend.documents[secret] == {
         "keep": "value",
         "nested": {"key.with-dash": " secret  \n"},
@@ -98,8 +98,8 @@ def test_copy_reports_distinct_destination_path(
     assert (
         copy_main(
             [
-                "--domain",
-                "main",
+                "--realm",
+                "home",
                 "source",
                 "destination",
                 "value",
@@ -110,7 +110,7 @@ def test_copy_reports_distinct_destination_path(
         == 0
     )
 
-    secret = current.runtime.repo_root / "secrets/main/destination.yaml"
+    secret = current.runtime.repo_root / "secrets/home/destination.yaml"
     assert backend.documents[secret] == {
         "keep": "value",
         "copied": {"value": "secret"},
@@ -127,10 +127,10 @@ def test_update_reports_change_and_noop(
         template={"keep": "template", "new": "value"},
     )
 
-    assert update_main(["--domain", "main"], application=current) == 0
+    assert update_main(["--realm", "home"], application=current) == 0
     assert "Updated secret from templates:" in capsys.readouterr().out
 
-    assert update_main(["--domain", "main"], application=current) == 0
+    assert update_main(["--realm", "home"], application=current) == 0
     assert "Secret already up to date:" in capsys.readouterr().out
 
 
@@ -139,7 +139,7 @@ def test_expected_errors_are_printed_without_a_traceback(
 ) -> None:
     current, _ = application(tmp_path, {"beast": {}})
 
-    assert cat_main(["--domain", "main", "missing"], application=current) == 1
+    assert cat_main(["--realm", "home", "missing"], application=current) == 1
 
     captured = capsys.readouterr()
     assert "Secret not found:" in captured.err

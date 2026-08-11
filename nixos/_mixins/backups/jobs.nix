@@ -204,6 +204,8 @@ let
   sftpJobs = lib.filterAttrs (_: job: job.repository.type == "sftp") cfg;
 in
 {
+  imports = [ ./jobs/assertions.nix ];
+
   options.host.backups.jobs = lib.mkOption {
     type = with lib.types; attrsOf (submodule jobModule);
     default = { };
@@ -212,25 +214,6 @@ in
   };
 
   config = lib.mkIf (cfg != { }) {
-    assertions = lib.concatLists (
-      lib.mapAttrsToList (name: job: [
-        {
-          assertion = job.paths != [ ] || preparationPaths job != [ ];
-          message = "host.backups.jobs.${name} must include at least one path";
-        }
-        {
-          assertion =
-            job.repository.type != "sftp"
-            || (
-              job.repository.sftp.host != null
-              && job.repository.sftp.user != null
-              && job.repository.sftp.identityFile != null
-            );
-          message = "host.backups.jobs.${name} requires complete SFTP settings";
-        }
-      ]) cfg
-    );
-
     services.restic.backups = resticJobs;
 
     programs.ssh.extraConfig = lib.mkAfter (

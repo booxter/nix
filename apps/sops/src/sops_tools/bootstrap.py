@@ -14,7 +14,7 @@ from .flake import archive_flake_source
 from .model import JsonValue
 from .policy import SopsPolicy
 from .process import ProcessRunner
-from .repository import RuntimeEnvironment, SecretDomain, SecretRepository
+from .repository import RuntimeEnvironment, Realm, SecretRepository
 from .runtime_key import (
     CommandAgeKeyGenerator,
     RuntimeKeyError,
@@ -32,7 +32,7 @@ class RuntimeKeyProvider(Protocol):
 
 
 class OperatorRecipientProvider(Protocol):
-    def recipient(self, domain: SecretDomain) -> str: ...
+    def recipient(self, realm: Realm) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -115,18 +115,18 @@ class CommandOperatorRecipientProvider:
     runner: ProcessRunner
     resolver: AgeRecipientResolver
 
-    def recipient(self, domain: SecretDomain) -> str:
+    def recipient(self, realm: Realm) -> str:
         configured = self.runtime.values.get("SOPS_AGE_KEY_FILE")
         if configured:
             identity = Path(configured)
-        elif domain.name == "main":
+        elif realm.name == "home":
             identity = self.runtime.home / ".config/sops/age/keys.txt"
-        elif domain.identity_file is not None:
-            identity = domain.identity_file
+        elif realm.identity_file is not None:
+            identity = realm.identity_file
         else:
-            identity = self.runtime.domain_identity_file(domain.name)
+            identity = self.runtime.realm_identity_file(realm.name)
 
-        if domain.name == "work" and not identity.is_file():
+        if realm.name == "work" and not identity.is_file():
             self._initialize_work_identity(identity)
         if not identity.is_file():
             raise ToolError(
@@ -178,7 +178,7 @@ class BootstrapService:
         local: bool,
         has_tty: bool,
     ) -> BootstrapResult:
-        self.runtime.assert_domain_host(self.repository.domain, host)
+        self.runtime.assert_realm_host(self.repository.realm, host)
         local = local or host == self.runtime.machine_hostname
         if not local and not has_tty:
             raise ToolError(
@@ -189,7 +189,7 @@ class BootstrapService:
         runtime_recipient = self.runtime_keys.recipient(host, user, local=local)
         if not runtime_recipient:
             raise ToolError(f"Failed to read age public key for {host}.")
-        operator_recipient = self.operator.recipient(self.repository.domain)
+        operator_recipient = self.operator.recipient(self.repository.realm)
 
         policy_path = self.runtime.repo_root / ".sops.yaml"
         created_policy = not policy_path.is_file()
@@ -198,7 +198,7 @@ class BootstrapService:
         control = self._control_plane_recipient(policy, operator_recipient)
         if control is not None:
             recipients.append(control)
-        policy.ensure_host_rule(self.repository.domain.name, host, recipients)
+        policy.ensure_host_rule(self.repository.realm.name, host, recipients)
         policy.write(policy_path)
 
         messages = ["Created .sops.yaml." if created_policy else "Updated .sops.yaml."]
@@ -223,12 +223,12 @@ class BootstrapService:
     def _control_plane_recipient(
         self, policy: SopsPolicy, operator_recipient: str
     ) -> str | None:
-        if self.repository.domain.name != "main":
+        if self.repository.realm.name != "home":
             return None
         return next(
             (
                 recipient
-                for recipient in policy.recipients_for_rule("secrets/main/pki\\.yaml$")
+                for recipient in policy.recipients_for_rule("secrets/home/pki\\.yaml$")
                 if recipient != operator_recipient
             ),
             None,

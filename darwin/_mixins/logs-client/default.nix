@@ -148,6 +148,7 @@ in
       type = with lib.types; listOf str;
       default = [
         "/var/log/*.log"
+        "/var/log/nix-darwin/*.log"
         "/private/var/lib/prometheus-node-exporter/*.log"
       ];
       description = "Absolute file globs to tail and ship to Loki.";

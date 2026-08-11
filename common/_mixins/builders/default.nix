@@ -1,30 +1,152 @@
 {
   config,
   facts,
+  hostSpec,
+  isLinux,
   lib,
+  outputs,
   ...
 }:
+let
+  model = import ./model.nix {
+    inherit
+      config
+      facts
+      hostSpec
+      lib
+      outputs
+      ;
+  };
+  useType = lib.types.enum [
+    "build"
+    "nixpkgs"
+  ];
+  builderType = lib.types.submodule {
+    options = {
+      source = lib.mkOption {
+        type = lib.types.enum [
+          "external"
+          "fleet"
+        ];
+        default = "external";
+        description = "Whether the builder is managed by this flake.";
+      };
+      uses = lib.mkOption {
+        type = lib.types.nonEmptyListOf useType;
+        description = "Consumers allowed to use the builder.";
+      };
+      hostName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Network hostname of the builder.";
+      };
+      publicKey = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "SSH host public key of an external builder.";
+      };
+      protocol = lib.mkOption {
+        type = lib.types.enum [
+          "ssh"
+          "ssh-ng"
+        ];
+        default = "ssh";
+        description = "Nix store protocol used to reach the builder.";
+      };
+      sshKey = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH identity file used to authenticate to the builder.";
+      };
+      sshUser = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH user used to reach the builder.";
+      };
+      systems = lib.mkOption {
+        type = with lib.types; nonEmptyListOf nonEmptyStr;
+        description = "Nix systems supported by the builder.";
+      };
+      maxJobs = lib.mkOption {
+        type = lib.types.ints.positive;
+        description = "Maximum concurrent builds accepted by the builder.";
+      };
+      speedFactor = lib.mkOption {
+        type = lib.types.ints.positive;
+        description = "Relative scheduling preference for the builder.";
+      };
+      supportedFeatures = lib.mkOption {
+        type = with lib.types; listOf nonEmptyStr;
+        description = "Nix system features supported by the builder.";
+      };
+    };
+  };
+in
 {
   imports = [
+    ./assertions.nix
     ./community.nix
-    ./personal.nix
-    ./work.nix
+    ./build.nix
+    ./nixpkgs-review.nix
+    ./ssh.nix
   ];
 
-  options.host = {
-    build.pools = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = facts.realms.${config.host.realm}.build.pools;
-      readOnly = true;
-      internal = true;
-      description = "Nix builder pools made available by the host realm.";
+  options.host.nix = {
+    builder = {
+      enable = lib.mkEnableOption "Nix builder participation";
+
+      hostName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = hostSpec.name;
+        description = "SSH hostname advertised to builder clients.";
+      };
+
+      maxJobs = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 4;
+        description = "Maximum concurrent builds accepted from remote clients.";
+      };
+
+      speedFactor = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 100;
+        description = "Relative scheduling preference advertised to builder clients.";
+      };
+
+      supportedFeatures = lib.mkOption {
+        type = with lib.types; listOf nonEmptyStr;
+        default = [
+          "benchmark"
+          "big-parallel"
+          "kvm"
+          "nixos-test"
+        ]
+        ++ lib.optionals isLinux [
+          "devnet"
+          "uid-range"
+        ];
+        description = "Nix system features advertised to builder clients.";
+      };
+
+      uses = lib.mkOption {
+        type = lib.types.nonEmptyListOf useType;
+        default = [
+          "build"
+          "nixpkgs"
+        ];
+        description = "Consumers allowed to use this builder.";
+      };
     };
 
-    nixpkgsReview.extraBuilders = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
+    external-builders = lib.mkOption {
+      type = lib.types.attrsOf builderType;
+      default = { };
+      description = "Builders not managed by this flake that are available to this host.";
+    };
+
+    builder-pool = lib.mkOption {
+      type = lib.types.attrsOf builderType;
+      default = model.builderPool;
+      readOnly = true;
       internal = true;
-      description = "Review-only Nix builders in machines-file format.";
+      description = "Normalized builders available to this host, excluding the host itself.";
     };
   };
 }

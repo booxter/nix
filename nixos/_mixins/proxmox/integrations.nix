@@ -85,11 +85,7 @@ in
 
     serverAliases = lib.mkOption {
       type = with lib.types; listOf str;
-      default = lib.unique (
-        [ "${config.services.avahi.hostName}.local" ]
-        ++ hostCertificateDnsNames
-        ++ (hostSpec.dnsAliases or [ ])
-      );
+      default = lib.unique ([ "${config.services.avahi.hostName}.local" ] ++ hostCertificateDnsNames);
       description = "Additional DNS names included in the Proxmox VE API certificate.";
     };
 
@@ -287,6 +283,15 @@ in
       ];
     }
     (lib.mkIf cfg.enable {
+      host.internalPki.managedCertificates = [
+        {
+          category = "internal_https_server";
+          name = "proxmox-api";
+          inherit (cfg) secretPrefix;
+          certificateField = "server_crt_unencrypted";
+        }
+      ];
+
       assertions = [
         {
           assertion = config.services.proxmox-ve.enable;

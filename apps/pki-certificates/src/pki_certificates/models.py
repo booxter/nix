@@ -13,8 +13,7 @@ class HostFacts(BaseModel):
     system: str
     configuration: Literal["nixosConfigurations", "darwinConfigurations"]
     runtime_host: str = Field(alias="runtimeHost")
-    secret_domain: str = Field(alias="secretDomain")
-    ca_url: str | None = Field(alias="caUrl")
+    realm: str
 
 
 class FleetHosts(RootModel[dict[str, HostFacts]]):
@@ -51,6 +50,22 @@ class ObservabilityEndpointConfig(BaseModel):
     secret_prefix: str = Field(alias="secretPrefix")
 
 
+class ManagedCertificateConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+
+    category: Literal[
+        "internal_https_server",
+        "internal_https_client",
+        "observability_endpoint_server",
+        "observability_client",
+    ]
+    name: str
+    secret_prefix: str = Field(alias="secretPrefix")
+    certificate_field: Literal["client_crt_unencrypted", "server_crt_unencrypted"] = Field(
+        alias="certificateField"
+    )
+
+
 class HostIdentity(BaseModel):
     model_config = ConfigDict(frozen=True, strict=True)
 
@@ -62,12 +77,14 @@ class HostIdentity(BaseModel):
 class HostCertificateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
+    ca_url: str | None
     identity: HostIdentity
     internal_services: dict[str, InternalServiceConfig]
     clients: dict[str, CertificateClientConfig]
     proxmox_api: InternalServiceConfig | None
     observability_endpoints: dict[str, ObservabilityEndpointConfig]
     node_exporter: ObservabilityEndpointConfig | None
+    managed_certificates: list[ManagedCertificateConfig]
 
 
 class CertificateRequest(BaseModel):

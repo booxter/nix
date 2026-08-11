@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Bootstrap and back up the fleet Home Assistant instance";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "home-assistant-tools";
     platforms = lib.platforms.linux;
   };

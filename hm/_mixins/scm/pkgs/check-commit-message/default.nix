@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Validate the global Git commit message format";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "check-commit-message";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

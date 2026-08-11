@@ -8,7 +8,7 @@ let
   cfg = config.host.ups;
   credentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
   useLiteralPasswords = credentialMode == "literal";
-  upsName = facts.ups.serversByName.${config.networking.hostName}.name;
+  upsName = cfg.server.name;
   upsmonPasswordText = if useLiteralPasswords then "upsmon123" else null;
   upsslavePasswordText = if useLiteralPasswords then "upsslave123" else null;
   upsmonPasswordFile =
@@ -21,13 +21,16 @@ let
       config.sops.secrets."nut/users/upsslave/password".path
     else
       "/etc/nut/upsslave.pass";
+  shutdownDelay = config.host.power.shutdown.delaySeconds;
 in
 {
   config = lib.mkIf cfg.server.enable {
-    host.ups.scheduler = {
+    host.network.stableAddress.requiredBy = [ "UPS server" ];
+
+    host.ups.scheduler = lib.mkIf (shutdownDelay != null) {
       enable = true;
-      inherit (cfg.shutdown) critical;
-      shutdownDelaySeconds = cfg.shutdown.delaySeconds;
+      inherit (cfg.shutdown) waitForLowBattery;
+      shutdownDelaySeconds = shutdownDelay;
     };
 
     environment.etc."nut/upsmon.pass" = lib.mkIf useLiteralPasswords {

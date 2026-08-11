@@ -1,4 +1,64 @@
 {
+  host.storage.volumes.bulk = {
+    # Keep /volume2 as the durable path published to existing NFS clients.
+    mountPoint = "/volume2";
+    fileSystem = {
+      device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
+      fsType = "btrfs";
+      options = [
+        "compress=zstd"
+        "noatime"
+      ];
+    };
+    activation.slow = true;
+    requiredAtBoot = true;
+    btrfs.snapshots.enable = true;
+  };
+
+  host.storage.resources = {
+    media = {
+      volume = "bulk";
+      relativePath = "Media";
+      sharedGroup = "media";
+      directoryDefaults = {
+        group = "media";
+        mode = "2775";
+        enforce = true;
+      };
+      identities.groups = [ "media" ];
+      nfs = {
+        enable = true;
+        fsid = 10;
+      };
+    };
+    nixCache = {
+      volume = "bulk";
+      relativePath = "nix-cache";
+      nfs = {
+        enable = true;
+        fsid = 11;
+      };
+    };
+    paperless = {
+      volume = "bulk";
+      relativePath = "paperless";
+      directoryDefaults = {
+        owner = "paperless";
+        group = "paperless";
+        mode = "0750";
+      };
+      identities = {
+        groups = [ "paperless" ];
+        users = [ "paperless" ];
+      };
+      nfs = {
+        enable = true;
+        fsid = 12;
+        anonymousIdentity = "paperless";
+      };
+    };
+  };
+
   host.hardware.storage = {
     mdraid = {
       enable = true;

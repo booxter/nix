@@ -8,13 +8,13 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
-  username = config.home.username;
+  userEnvironment = osConfig.host.userEnvironment;
+  scmCfg = userEnvironment.features.scm;
+  identity = userEnvironment.identities.${scmCfg.identity};
+  personalIdentity = userEnvironment.identities.personal;
+  smtpTransport = userEnvironment.smtpTransports.${scmCfg.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
-  fullName = "Ihar Hrachyshka";
-  privateEmail = "ihar.hrachyshka@gmail.com";
-  email = if isNvidia then "${username}@nvidia.com" else privateEmail;
+  inherit (identity) email fullName;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
@@ -30,7 +30,7 @@ let
     }) pushDisabledGitHubRepos
   );
 in
-{
+lib.mkIf scmCfg.enable {
   home.shellAliases.g = "git";
 
   # Git
@@ -48,7 +48,7 @@ in
       }
       {
         condition = "gitdir:~/src/nix/";
-        contents.user.email = privateEmail;
+        contents.user.email = personalIdentity.email;
         contentSuffix = "nix-repo-email";
       }
     ];
@@ -87,23 +87,17 @@ in
         project = "ovn";
       };
 
-      sendemail =
-        if isNvidia then
-          {
-            confirm = "auto";
-            smtpServer = "mail.nvidia.com";
-            smtpServerPort = 587;
-            smtpEncryption = "tls";
-            smtpUser = "${username}@nvidia.com";
-          }
-        else
-          {
-            confirm = "auto";
-            smtpServer = "smtp.gmail.com";
-            smtpServerPort = 587;
-            smtpEncryption = "tls";
-            smtpUser = "ihar.hrachyshka@gmail.com";
-          };
+      sendemail = lib.mkIf scmCfg.sendEmail.enable (
+        {
+          confirm = "auto";
+          smtpServer = smtpTransport.server;
+          smtpServerPort = smtpTransport.port;
+          smtpUser = smtpTransport.username;
+        }
+        // lib.optionalAttrs (smtpTransport.encryption != "none") {
+          smtpEncryption = smtpTransport.encryption;
+        }
+      );
 
       # remember and repeat identical merges
       rerere.enabled = true;
@@ -257,9 +251,12 @@ in
       tig
 
     ]
-    ++ lib.optionals (isDarwin && isPersonal) [
-      scmPkgs.git-send-email-store-password
-    ];
+    ++
+      lib.optionals
+        (isDarwin && scmCfg.sendEmail.enable && smtpTransport.credentialStore == "macos-keychain")
+        [
+          scmPkgs.git-send-email-store-password
+        ];
 
   # use vim bindings for tig
   home.file = {

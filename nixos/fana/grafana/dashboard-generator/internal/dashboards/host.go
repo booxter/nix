@@ -9,7 +9,7 @@ import (
 )
 
 func hostTags(host Host) []string {
-	tags := []string{"host", host.Platform, host.CapacityProfile}
+	tags := []string{"host", host.Platform}
 	if host.Virtual {
 		tags = append(tags, "virtual")
 	} else {
@@ -135,14 +135,18 @@ func HostDashboard(config Config, host Host) (dashboard.Dashboard, error) {
 		Targets: hostNetworkTargets(host, selector),
 	}))
 
-	if host.ThermalProfile != "none" {
+	if !host.Virtual {
 		thermal := layout.row(8, 24)[0]
 		builder.WithPanel(timeSeries(TimeseriesOptions{
 			ID: thermal.ID, Title: "Temperature", Unit: units.Celsius,
 			Grid: thermal.Grid, DataSource: datasource,
 			Targets: []PrometheusTarget{{
 				RefID: "A", Legend: "{{sensor}} {{type}} {{group}}",
-				Expression: fmt.Sprintf(`node_thermal_zone_temp{%[1]s} or node_hwmon_temp_celsius{%[1]s} or host_observability_darwin_temperature_group_max_celsius{%[1]s}`, selector),
+				Expression: fmt.Sprintf(`node_thermal_zone_temp{%[1]s} or node_hwmon_temp_celsius{%[1]s} or `, selector) +
+					freshDarwinThermalMetric(
+						"host_observability_darwin_temperature_group_max_celsius",
+						fmt.Sprintf(`instance=%q`, host.Name),
+					),
 			}},
 		}))
 	}

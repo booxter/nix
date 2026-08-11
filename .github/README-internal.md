@@ -6,37 +6,16 @@ This repository uses `.github/workflows/build-targets.yml` to run CI.
 
 For pull requests, CI runs:
 
-1. `plan-build-matrix` to determine change scope.
-2. `format` always.
-3. Heavy jobs only when not docs-only:
-   - `get-hosts-check`
-   - `build` matrix (scoped dynamically)
-4. `ci-success` as the required final gate.
-
-## Dynamic matrix rules (pull requests)
-
-The build matrix is selected in this order:
-
-1. **Docs-only PR** (`README.md`, `docs/**`, or any `*.md` file only):
-   - Skip heavy jobs (`get-hosts-check`, `flake-check`, `build`).
-2. **Darwin-only PR** (all changed files under `darwin/**`):
-   - Run only macOS build jobs.
-3. **NixOS-only PR** (all changed files under `nixos/**`):
-   - Run only Linux build jobs.
-4. **Machine-specific PR** (all changed files match known machine prefixes):
-   - Run only mapped jobs for those machines.
-   - Includes host secrets files under `secrets/<host>.yaml` and
-     `secrets/_templates/<host>.yaml` for mapped hosts.
-5. **Fallback**:
-   - Run full build matrix.
+1. `format` checks formatting and evaluates the full build matrix.
+2. `build` runs every target in the matrix.
+3. `post-config-diffs` publishes advisory machine configuration diffs.
+4. `ci-success` serves as the required final gate.
 
 ## Notes
 
 - `format` runs `nix fmt .`, which uses the flake-pinned formatter and includes
   workflow (`actionlint`) and markdown checks.
-- `push` and `workflow_dispatch` use full matrix behavior (docs-only shortcut is
-  PR-only).
-- If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
+- Pull requests, pushes, and manual runs all use the full build matrix.
 
 ## Config diffs
 
@@ -51,10 +30,8 @@ Pull request jobs explicitly check out GitHub's generated merge ref
 the raw PR branch tip, so diffs reflect the revision CI built after applying the
 PR to the current base branch.
 
-The build matrix selection controls which machines get diffs. Machine-specific
-PRs only diff the selected machine jobs, while scoped or full matrix PRs diff
-the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other
-non-toplevel targets remain build-only.
+Every toplevel NixOS and nix-darwin machine job generates a diff. VM, QEMU,
+ISO, and other non-toplevel targets remain build-only.
 
 The PR comment groups diff results into machines with package or generated
 config changes, machines with closure-size-only or dix path/size-only
@@ -69,8 +46,8 @@ and new revisions and a link to the upstream comparison. Nested inputs use their
 full lock path, while `follows` aliases are omitted.
 The generator and its tests are packaged as
 `nix run .#flake-input-update-summary`.
-For scheduled flake input update PRs, if at least one selected target produced a
-config diff artifact and no package-or-config entries were found, the post job
+For scheduled flake input update PRs, if at least one target produced a config
+diff artifact and no package-or-config entries were found, the post job
 enables GitHub auto-merge for the pull request. The PR must come from
 `ci/flake-update`, have title `flake: update inputs`, include the scheduled
 trigger marker in its body, and change only `flake.lock`. Closure-size-only,

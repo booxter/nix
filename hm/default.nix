@@ -7,28 +7,40 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
-  isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
+  developerToolsCfg = osConfig.host.userEnvironment.features.developerTools;
+  firefoxCfg = osConfig.host.userEnvironment.features.firefox;
+  localAiCfg = osConfig.host.userEnvironment.features.localAi;
+  nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
+  podmanDesktopCfg = osConfig.host.userEnvironment.features.podmanDesktop;
+  sshCfg = osConfig.host.userEnvironment.features.ssh;
   hmFull = hostSpec.hmFull or true;
   username = osConfig.host.username;
 in
 {
   imports = [
+    ./_mixins/password-store
     ./_mixins/podman-machine
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
-  ++ lib.optionals hmFull [
+  ++ lib.optionals sshCfg.enable [
+    ./_mixins/ssh
+  ]
+  ++ lib.optionals (developerToolsCfg.enable && developerToolsCfg.commandLine.enable) [
     ./_mixins/cli
+  ]
+  ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
-    ./_mixins/gnupg
-    ./_mixins/nixvim
     ./_mixins/podman
     ./_mixins/scm
-    ./_mixins/ssh
+    ./_mixins/security
+  ]
+  ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.editor.enable) [
+    ./_mixins/nixvim
+  ]
+  ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.tmux.enable) [
     ./_mixins/tmux
-    ./_mixins/yubi.nix
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace
@@ -44,10 +56,10 @@ in
   ++ lib.optionals isDesktop [
     ./_mixins/spicetify
   ]
-  ++ lib.optionals (isPersonal && isDesktop) [
+  ++ lib.optionals firefoxCfg.enable [
     ./_mixins/firefox
   ]
-  ++ lib.optionals (hmFull && isNvidia) [
+  ++ lib.optionals nvidiaDevelopmentCfg.enable [
     ./_mixins/krew
     ./_mixins/nv
   ];
@@ -66,7 +78,7 @@ in
 
   programs.home-manager.enable = true; # let it manage itself
   programs.podman-machine = {
-    enable = isDarwin && isDesktop && isPersonal;
+    enable = osConfig.host.userEnvironment.features.podmanMachine.enable;
     provider = "libkrun";
     cpus = 4;
     memoryMiB = 8192;
@@ -76,9 +88,6 @@ in
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
-    let
-      vlc = if isDarwin then pkgs.vlc-bin else pkgs.vlc;
-    in
     with pkgs;
     [
     ]
@@ -88,12 +97,8 @@ in
       telegram-desktop
       wireshark
     ]
-    ++ lib.optionals (isPersonal && isDesktop) [
-      vlc
-      podman-desktop
-      wmctrl
-      xauth
-      xprop
-      xwininfo
+    ++ lib.optional podmanDesktopCfg.enable podman-desktop
+    ++ lib.optionals (localAiCfg.enable && localAiCfg.ramalama.enable) [
+      ramalama
     ];
 }

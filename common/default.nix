@@ -5,19 +5,22 @@
     ./_mixins/hardware
     ./_mixins/host.nix
     ./_mixins/internal-pki
+    ./_mixins/luks
+    ./_mixins/mcp
     ./_mixins/network
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/power
     ./_mixins/remote-control
-    ./_mixins/secrets
+    ./_mixins/security
     ./_mixins/site
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
     ./_mixins/ups
-    ./_mixins/yubi
+    ./_mixins/user-environment
+    ./_mixins/wireguard
     ./_mixins/attic
-    ./_mixins/flakehub-cache
     ./_mixins/builders
   ];
 }

@@ -14,7 +14,7 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
-      system.autoUpgrade.allowReboot = lib.mkForce false;
+      host.autoUpgrade.claims.luks.reboot.cadence = "never";
     })
     (lib.mkIf (isPhysicalHost && cfg.enable) (import ../../disko/luks.nix { }))
     (lib.mkIf (isPhysicalHost && !cfg.enable) (import ../../disko { }))

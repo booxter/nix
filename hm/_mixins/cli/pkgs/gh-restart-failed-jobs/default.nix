@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Restart failed GitHub Actions jobs for a pull request";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "gh-restart-failed-jobs";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

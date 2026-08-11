@@ -1,36 +1,28 @@
 {
   config,
-  lib,
   ...
 }:
 let
   username = config.host.username;
-  reviewCacheDir = "/nix/var/nixpkgs-review";
 in
 {
   system.stateVersion = 5;
 
-  host.codex.mcp.maas.enable = true;
   host.hardware.isLaptop = true;
-
-  host.fleetCacheWarmer = {
-    enable = true;
-    targetRealm = "work";
-    pushToAttic = false;
+  host.network.interfaces = {
+    en0.kind = "wireless";
+    en7.kind = "ethernet";
   };
-
-  # Keep nixpkgs-review's worktrees in a dedicated real directory under
-  # /nix/var on this managed workstation.
-  home-manager.users.${username}.home = {
-    sessionVariables.NIXPKGS_REVIEW_CACHE_DIR = reviewCacheDir;
+  host.security.secrets.operator.ageIdentity = {
+    backend = "secure-enclave";
+    path = "/Users/${username}/Library/Application Support/sops/age/work.txt";
   };
-
-  system.activationScripts.preActivation.text = lib.mkAfter ''
-    if [ -L ${lib.escapeShellArg reviewCacheDir} ]; then
-      echo "${reviewCacheDir} must be a real directory, not a symlink" >&2
-      exit 1
-    fi
-
-    /usr/bin/install -d -m 0700 -o ${lib.escapeShellArg username} -g staff ${lib.escapeShellArg reviewCacheDir}
-  '';
+  host.userEnvironment = {
+    preset = "nvidia";
+    roles = {
+      developer.enable = true;
+      workstation.enable = true;
+    };
+  };
+  host.nix.cacheWarmer.enable = true;
 }

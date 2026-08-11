@@ -43,7 +43,6 @@ python313Packages.buildPythonApplication {
     homepage = "https://github.com/gryf/ebook-converter";
     changelog = "https://github.com/gryf/ebook-converter/commits/master";
     license = lib.licenses.gpl3Plus;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "ebook-converter";
     platforms = lib.platforms.linux;
   };

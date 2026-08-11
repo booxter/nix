@@ -7,19 +7,44 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  isPersonal = osConfig.host.userProfile == "personal";
+  userEnvironment = osConfig.host.userEnvironment;
+  attentionInboxCfg = userEnvironment.features.attentionInbox;
+  repositoryCatalog = userEnvironment.repositories.catalog;
+  requiredRepositories = userEnvironment.repositories.required;
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
-  configuredReviewBuilders =
+  repositoryPath =
+    repository:
     let
-      configuredBuilders =
-        if osConfig.nix.buildMachines == [ ] then "" else osConfig.environment.etc."nix/machines".text;
+      basePath =
+        {
+          home = config.home.homeDirectory;
+          xdgData = config.xdg.dataHome;
+        }
+        .${repository.destination.base};
     in
-    lib.filter (builder: builder != "") (lib.splitString "\n" configuredBuilders);
-  nr = cliPkgs.nr.override {
-    builders = lib.concatStringsSep " ; " (
-      configuredReviewBuilders ++ osConfig.host.nixpkgsReview.extraBuilders
+    "${basePath}/${repository.destination.path}";
+  syncRepoConfig = (pkgs.formats.json { }).generate "sync-repo.json" {
+    repositories = builtins.listToAttrs (
+      map (name: {
+        inherit name;
+        value = {
+          inherit (repositoryCatalog.${name}) remote;
+          path = repositoryPath repositoryCatalog.${name};
+        };
+      }) requiredRepositories
     );
+  };
+  syncRepo = pkgs.symlinkJoin {
+    name = "sync-repo-configured";
+    paths = [ cliPkgs.sync-repo ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/sync-repo" --add-flags ${lib.escapeShellArg "--config ${syncRepoConfig}"}
+    '';
+  };
+  nr = cliPkgs.nr.override {
+    builders = osConfig.host.nix.nixpkgs-review.builders;
   };
 in
 {
@@ -108,15 +133,6 @@ in
   programs.jq.enable = true;
   programs.less.enable = true;
 
-  # cli password manager
-  programs.password-store = {
-    enable = true;
-    settings = {
-      # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
-      PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
-    };
-  };
-
   # starship prompt
   programs.starship = {
     enable = true;
@@ -130,7 +146,6 @@ in
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
-      cliPkgs.attention-inbox
       bc
       curl
       delve # go debugger
@@ -138,7 +153,6 @@ in
       fd
       fzf
       cliPkgs.gh-restart-failed-jobs
-      gnupg
       go
       hydra-check
       (lima.override { withAdditionalGuestAgents = true; })
@@ -162,12 +176,12 @@ in
       # python
       python313
     ]
+    ++ lib.optional attentionInboxCfg.enable cliPkgs.attention-inbox
     ++ lib.optionals isDarwin [
       container
     ]
-    ++ lib.optionals isPersonal [
-      cliPkgs.sync-repo
-      ramalama
+    ++ lib.optionals (requiredRepositories != [ ]) [
+      syncRepo
     ];
 
   home.sessionVariables = {
@@ -175,7 +189,7 @@ in
     MANPAGER = "page -t man";
   };
 
-  home.sessionPath = lib.optionals isPersonal [
+  home.sessionPath = [
     "$HOME/.priv-bin"
   ];
 

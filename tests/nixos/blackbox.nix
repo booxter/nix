@@ -7,7 +7,7 @@ let
       -subj /CN=blackbox-test-ca \
       -keyout "$out/ca.key" \
       -out "$out/ca.crt" \
-      -days 1
+      -days 36500
 
     openssl req -new -newkey rsa:2048 -nodes \
       -subj /CN=blackbox \
@@ -22,7 +22,7 @@ let
       -CAcreateserial \
       -copy_extensions copy \
       -out "$out/server.crt" \
-      -days 1
+      -days 36500
 
     openssl req -new -newkey rsa:2048 -nodes \
       -subj /CN=prometheus-test \
@@ -36,7 +36,7 @@ let
       -CAcreateserial \
       -copy_extensions copy \
       -out "$out/client.crt" \
-      -days 1
+      -days 36500
   '';
   localExporter = "http://127.0.0.1:19115";
   targetHttpPort = 18080;
@@ -63,6 +63,11 @@ pkgs.testers.runNixOSTest {
           internalPki.clients = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };
+          };
+
+          internalPki.managedCertificates = lib.mkOption {
+            type = lib.types.listOf lib.types.anything;
+            default = [ ];
           };
 
           isProxmox = lib.mkOption {

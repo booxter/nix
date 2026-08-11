@@ -10,8 +10,10 @@ let
   nixosConfigNames = builtins.attrNames facts.hosts.nixos;
   mkNodeLabels = name: hostConfig: isProxmox: {
     availability = hostConfig.host.availability;
-    capacity_profile = hostConfig.host.observability.capacityProfile;
     component = "node";
+    host_builder = lib.boolToString hostConfig.host.nix.builder.enable;
+    host_hypervisor = lib.boolToString isProxmox;
+    host_laptop = lib.boolToString hostConfig.host.hardware.isLaptop;
     host_network_charts = lib.boolToString (!isProxmox);
     host_network_source = if isProxmox then "classified" else "node";
     host_class = if hostConfig.host.isVM then "virtual" else "hardware";
@@ -19,7 +21,6 @@ let
     instance = name;
     realm = hostConfig.host.realm;
     scrape_profile = "node";
-    thermal_profile = hostConfig.host.observability.thermalProfile;
   };
   mkRemoteNixosNodeTargetConfig =
     name:

@@ -32,10 +32,10 @@ def test_policy_rejects_invalid_top_level_contracts(
 def test_ensure_host_rule_adds_unique_recipients_and_is_idempotent() -> None:
     policy = SopsPolicy.create()
 
-    assert policy.ensure_host_rule("main", "beast", ["age1host", "age1operator"])
-    assert not policy.ensure_host_rule("main", "beast", ["age1host", "age1operator"])
+    assert policy.ensure_host_rule("home", "beast", ["age1host", "age1operator"])
+    assert not policy.ensure_host_rule("home", "beast", ["age1host", "age1operator"])
     assert policy.keys == ["age1host", "age1operator"]
-    assert policy.recipients_for_rule("secrets/main/beast\\.yaml$") == [
+    assert policy.recipients_for_rule("secrets/home/beast\\.yaml$") == [
         "age1host",
         "age1operator",
     ]

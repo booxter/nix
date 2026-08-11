@@ -39,7 +39,6 @@ rustPlatform.buildRustPackage {
     description = "Join ordered TS/MP4/MKV media parts into one file";
     license = lib.licenses.mit;
     mainProgram = "join-media-parts";
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.unix;
   };
 }

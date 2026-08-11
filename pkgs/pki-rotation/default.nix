@@ -73,7 +73,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Inspect and rotate repository-managed internal PKI certificates";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "pki-rotation";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

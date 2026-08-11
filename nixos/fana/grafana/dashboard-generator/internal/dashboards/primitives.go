@@ -16,6 +16,7 @@ import (
 )
 
 const physicalInterfaceExclusion = `lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*`
+const darwinThermalMaxAgeSeconds = 120
 
 type DashboardOptions struct {
 	Title   string
@@ -94,6 +95,12 @@ func applicationMetric(metric, service string, matchers ...string) string {
 
 func nodeMetric(metric string, matchers ...string) string {
 	return profileMetric(metric, "node", matchers...)
+}
+
+func freshDarwinThermalMetric(metric string, matchers ...string) string {
+	return `(` + nodeMetric(metric, matchers...) + ` and on(instance) (` +
+		`time() - ` + nodeMetric("host_observability_darwin_thermal_sample_timestamp_seconds") +
+		fmt.Sprintf(` < %d))`, darwinThermalMaxAgeSeconds)
 }
 
 func profileMetric(metric, profile string, matchers ...string) string {

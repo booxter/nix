@@ -8,7 +8,8 @@
 let
   codexWarmerPackage = (import ./pkgs { inherit pkgs; }).codex-warmer;
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
-  codexWarmerEnabled = osConfig.host.userProfile == "personal";
+  codexCfg = osConfig.host.userEnvironment.features.codex;
+  codexWarmerEnabled = codexCfg.enable && codexCfg.warmer.enable;
   inherit (osConfig.host) isDarwin;
 in
 {

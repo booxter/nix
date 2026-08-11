@@ -1,8 +1,10 @@
 # gw (NixOS VM)
 
-This host is a minimal WireGuard gateway VM. Client peers are declared in
-`nixos/gw/default.nix`, while the shared tunnel topology lives in
-`facts/default.nix` under `site.wireguard.home` and `site.lan`.
+This host is a minimal WireGuard gateway VM. Its native
+`host.wireguard.server` declaration makes the shared server module configure
+the interface, firewall, NAT, DDNS, traffic shaping, and exporter. Managed
+clients register independently through `host.wireguard.client`; the fleet
+model joins both declarations by network name.
 
 ## Client setup
 
@@ -13,17 +15,22 @@ umask 077
 wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
-Pick a free address from `site.wireguard.home.cidr` in
-`facts/default.nix` and add
-the peer to the `vpnPeers` list in `nixos/gw/default.nix`:
+For a managed host, declare the client in that host's configuration:
 
 ```nix
-{
-  name = "iphone";
+host.wireguard.client = {
+  enable = true;
+  network = "home";
   publicKey = "<contents of client.pub>";
-  address = "<peer-address>/32";
-}
+  address = "<peer-address>";
+  privateKeySecret = "wireguard/gw/privateKey";
+};
 ```
+
+The shared client module provisions its SOPS private-key secret and `wg-quick`
+interface from this declaration and the matching server policy. Add a phone,
+travel router, or other unmanaged peer under
+`host.wireguard.server.externalPeers` on `gw` instead.
 
 Deploy or redeploy the VM:
 
@@ -37,13 +44,13 @@ Generate a client config locally from the tracked topology:
 
 ```bash
 nix run .#wg-home-client-config -- \
-  --peer <facts-peer-name> \
+  --peer <peer-name> \
   --private-key-file ./client.key \
   --fetch-server-public-key \
   --output ./client.conf
 ```
 
-For a peer that is not modeled in `site.wireguard.home.peers`, use
+For a peer that is not modeled in the native topology, use
 `--address <peer-address>/32` instead of `--peer`.
 
 Generated client configs use the LAN DNS server plus the `home.arpa` search
@@ -59,7 +66,7 @@ qrencode -t ansiutf8 < client.conf
 
 ## Peer status exporter
 
-`gw` exposes facts-backed WireGuard peer status through an mTLS-protected
+`gw` exposes option-backed WireGuard peer status through an mTLS-protected
 nginx endpoint for the DNS automation on `pki`:
 
 - service: `prometheus-wireguard-exporter.service`

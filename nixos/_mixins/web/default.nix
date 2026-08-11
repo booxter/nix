@@ -30,6 +30,11 @@ let
   ) enabledServices;
 in
 {
+  imports = [
+    ./assertions.nix
+    ./ingress
+  ];
+
   options.host.web.services = lib.mkOption {
     type = lib.types.attrsOf (
       lib.types.submodule (
@@ -174,15 +179,15 @@ in
               };
 
               ingressHost = lib.mkOption {
-                type = lib.types.str;
-                default = "beast";
-                description = "NixOS host providing public ingress for this service.";
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Explicit public ingress host, or null to use the realm controller.";
               };
 
               splitDnsHost = lib.mkOption {
-                type = lib.types.str;
-                default = config.public.ingressHost;
-                description = "NixOS host that internal DNS resolves the public hostname to.";
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Explicit split-DNS host, or null to use the resolved ingress host.";
               };
 
               transport = lib.mkOption {
@@ -212,6 +217,61 @@ in
                 type = lib.types.lines;
                 default = "";
                 description = "Additional public ingress nginx location configuration.";
+              };
+
+              routes = lib.mkOption {
+                type = lib.types.attrsOf (
+                  lib.types.submodule (
+                    { name, ... }:
+                    {
+                      options = {
+                        location = lib.mkOption {
+                          type = lib.types.nonEmptyStr;
+                          description = "nginx location expression for the ${name} public route.";
+                        };
+
+                        upstream = lib.mkOption {
+                          type = with lib.types; nullOr nonEmptyStr;
+                          default = null;
+                          description = "Route-specific upstream URL, or null to use the service public upstream.";
+                        };
+
+                        proxyWebsockets = lib.mkOption {
+                          type = lib.types.bool;
+                          default = false;
+                          description = "Whether the ${name} public route proxies WebSocket connections.";
+                        };
+
+                        bandwidthLimit = {
+                          enable = lib.mkEnableOption "shared egress bandwidth limiting for the ${name} route";
+
+                          listenPort = lib.mkOption {
+                            type = lib.types.port;
+                            description = "Ingress-local HAProxy port used for the ${name} route.";
+                          };
+
+                          bytesPerSecond = lib.mkOption {
+                            type = lib.types.ints.positive;
+                            description = "Aggregate external response bandwidth allowed for the ${name} route.";
+                          };
+
+                          unlimitedCidrs = lib.mkOption {
+                            type = with lib.types; listOf nonEmptyStr;
+                            default = [
+                              "127.0.0.0/8"
+                              "::1"
+                              "fe80::/10"
+                              "fc00::/7"
+                            ];
+                            description = "Client networks excluded from the ${name} route bandwidth limit.";
+                          };
+                        };
+                      };
+                    }
+                  )
+                );
+                default = { };
+                description = "Additional structured routes served by public ingress.";
               };
 
               serveOnOwner = lib.mkOption {
@@ -408,42 +468,10 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = builtins.concatLists (
-        lib.mapAttrsToList (serviceName: service: [
-          {
-            assertion = !service.enable || !service.internal.enable || service.upstream != null;
-            message = "host.web.services.${serviceName}.upstream is required for internal HTTPS exposure";
-          }
-          {
-            assertion = !service.public.enable || service.public.hostName != null;
-            message = "host.web.services.${serviceName}.public.hostName is required for public exposure";
-          }
-          {
-            assertion =
-              !service.public.enable || service.public.transport != "internal-mtls" || service.internal.enable;
-            message = "host.web.services.${serviceName} public exposure requires internal HTTPS";
-          }
-          {
-            assertion =
-              !service.public.enable
-              || service.public.transport != "internal-mtls"
-              || service.internal.clientAuth == "mtls";
-            message = "host.web.services.${serviceName} public ingress requires an mTLS internal endpoint";
-          }
-          {
-            assertion =
-              !service.public.enable
-              || service.public.transport != "direct"
-              || service.public.directUpstream != null;
-            message = "host.web.services.${serviceName} direct public ingress requires directUpstream";
-          }
-          {
-            assertion =
-              !service.presentation.dashboard.enable || service.presentation.dashboard.category != null;
-            message = "host.web.services.${serviceName} dashboard entries require a category";
-          }
-        ]) enabledServices
-      );
+      host.network.stableAddress.requiredBy = lib.optional (
+        internalServices != { }
+      ) "internal web service DNS";
+
     }
 
     (lib.mkIf (internalServices != { }) {

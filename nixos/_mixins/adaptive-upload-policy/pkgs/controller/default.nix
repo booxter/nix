@@ -43,7 +43,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Adaptive upload policy controller for Jellyfin-aware torrent shaping";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "adaptive-upload-controller";
     platforms = lib.platforms.linux;
   };

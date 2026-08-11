@@ -1,69 +1,123 @@
 {
   config,
-  facts,
+  hostSpec,
+  isDarwin,
+  isLinux,
   lib,
+  outputs,
   ...
 }:
 let
-  cfg = config.host.attic;
-  realmAttic = facts.realms.${config.host.realm}.services.attic or null;
+  model = import ./model.nix {
+    inherit
+      config
+      hostSpec
+      lib
+      outputs
+      ;
+  };
+  realmServerType = lib.types.submodule {
+    options = {
+      hostName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Host providing this realm Attic server.";
+      };
+      endpoint = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "HTTPS endpoint of this realm Attic server.";
+      };
+      cacheName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Attic cache hosted by this server.";
+      };
+      substituter = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Nix substituter URL for this Attic cache.";
+      };
+      trustedPublicKey = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Nix signing public key for this Attic cache.";
+      };
+    };
+  };
 in
 {
-  options.host.attic = {
-    enable = lib.mkEnableOption "Attic store upload client";
+  imports = [
+    ./assertions.nix
+    ./config.nix
+  ]
+  ++ lib.optionals isLinux [
+    ./nixos-client.nix
+    ./nixos-server.nix
+  ]
+  ++ lib.optional isDarwin ./darwin-client.nix;
 
-    cacheName = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = null;
-      description = "Attic cache name used as the default upload target.";
+  options.host.attic = {
+    client = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = model.realmServers != { };
+        description = "Whether to upload new Nix store paths to the realm's Attic servers.";
+      };
     };
 
-    endpoint = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = null;
-      description = "Attic server endpoint.";
+    server = {
+      enable = lib.mkEnableOption "an Attic binary cache server";
+
+      endpoint = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "HTTPS endpoint published to clients in this realm.";
+      };
+
+      cacheName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "default";
+        description = "Attic cache published by this server.";
+      };
+
+      trustedPublicKey = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Nix signing public key published to clients in this realm.";
+      };
+
+      environmentFile = lib.mkOption {
+        type = lib.types.str;
+        default = "/etc/atticd.env";
+        description = "Environment file containing the Attic server token secret.";
+      };
+
+      storagePath = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "/var/lib/atticd/storage";
+        description = "Filesystem path used for Attic server storage.";
+      };
+    };
+
+    realmServers = lib.mkOption {
+      type = lib.types.attrsOf realmServerType;
+      default = model.realmServers;
+      readOnly = true;
+      internal = true;
+      description = "Attic servers discovered in this host's realm.";
     };
   };
 
-  config = lib.mkMerge [
-    {
-      host.attic.enable = lib.mkDefault (realmAttic != null);
-      assertions = [
-        {
-          assertion = !cfg.enable || realmAttic != null;
-          message = "realm '${config.host.realm}' does not define an Attic service";
-        }
-        {
-          assertion = !cfg.enable || cfg.cacheName != null;
-          message = "host.attic.cacheName must be set when Attic is enabled";
-        }
-        {
-          assertion = !cfg.enable || cfg.endpoint != null;
-          message = "host.attic.endpoint must be set when Attic is enabled";
-        }
-      ];
-    }
-    (lib.mkIf (realmAttic != null) {
-      host.attic = {
-        cacheName = lib.mkDefault realmAttic.cacheName;
-        endpoint = lib.mkDefault realmAttic.endpoint;
+  config = lib.mkIf config.host.attic.server.enable {
+    host.nix.cacheContributions.${config.networking.hostName} = {
+      scope = "realm";
+      substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
+      trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
+      reachability = {
+        kind = "internal";
+        network = config.host.realm;
       };
-    })
-    (lib.mkIf cfg.enable {
-      sops = {
-        secrets."attic/token" = { };
-        templates."attic-client-config.toml" = {
-          owner = "root";
-          group = "root";
-          mode = "0400";
-          content = ''
-            default-server = "${cfg.cacheName}"
-            [servers.${cfg.cacheName}]
-            endpoint = "${cfg.endpoint}"
-            token = "${config.sops.placeholder."attic/token"}"
-          '';
-        };
+      priorities = {
+        default = 30;
+        tunnelInactive = 10;
+        tunnelActive = 30;
       };
-    })
-  ];
+    };
+  };
 }

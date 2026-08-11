@@ -1,6 +1,6 @@
 {
+  config,
   facts,
-  hostSpec,
   pkgs,
   ...
 }:
@@ -13,7 +13,7 @@ in
     root = "/var/lib/tftp";
     extraOptions = [
       "--bind-address"
-      hostSpec.ipAddress
+      config.host.network.ipAddress
     ];
   };
 

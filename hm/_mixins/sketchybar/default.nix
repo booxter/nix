@@ -8,11 +8,12 @@
 let
   internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
   inherit (osConfig.host) isDarwin;
-  isNvidia = osConfig.host.userProfile == "nvidia";
-  isPersonal = osConfig.host.userProfile == "personal";
+  attentionInboxCfg = osConfig.host.userEnvironment.features.attentionInbox;
+  codexCfg = osConfig.host.userEnvironment.features.codex;
+  microsoftTeamsEnabled = osConfig.host.userEnvironment.features.microsoftTeams.enable;
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
-  workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
+  workspaceNames = import ../aerospace/workspaces.nix { inherit lib microsoftTeamsEnabled; };
   inherit (config.lib.stylix) colors;
   sketchybarColors = {
     background = "0xff${colors.base00}";
@@ -80,7 +81,7 @@ let
   '';
   sketchybarPlugins = import ./pkgs {
     inherit pkgs;
-    attentionInbox = cliPkgs.attention-inbox;
+    attentionInbox = if attentionInboxCfg.enable then cliPkgs.attention-inbox else null;
     codexTools = codexPkgs.codex-usage-status;
     pluginColors = pluginColorEnv;
     alertmanager =
@@ -226,7 +227,7 @@ let
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
-    lib.optionalString isNvidia ''
+    lib.optionalString attentionInboxCfg.enable ''
       sketchybar --add item attention.inbox right                                \
                  --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
                                        update_freq=1200                          \
@@ -260,7 +261,7 @@ let
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString isPersonal ''
+    lib.optionalString (codexCfg.enable && codexCfg.usageStatus.enable) ''
       sketchybar --add item codex.5h left                                  \
                  --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
                                 update_freq=60                             \
@@ -305,7 +306,7 @@ let
                                           background.border_width=0         \
                                           background.height=24
     ''
-    + lib.optionalString isNvidia ''
+    + lib.optionalString (codexCfg.enable && codexCfg.workUsageStatus.enable) ''
       sketchybar --add item codex.work left                                 \
                  --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
                                   update_freq=60                            \

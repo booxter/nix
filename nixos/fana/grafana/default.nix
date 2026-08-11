@@ -40,9 +40,8 @@ let
     {
       inherit name;
       platform = if hostConfig.host.isDarwin then "darwin" else "linux";
-      inherit (hostConfig.host.observability) capacityProfile thermalProfile;
       virtual = hostConfig.host.isVM;
-      builder = hostConfig.host.isBuilder;
+      builder = hostConfig.host.nix.builder.enable;
       hypervisor = hostConfig.host.isProxmox or false;
       gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
       services = builtins.attrNames enabledServices;

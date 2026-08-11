@@ -9,7 +9,7 @@ import yaml
 from sops_tools.model import KeyPath
 from sops_tools.policy import SopsPolicy
 from sops_tools.process import SubprocessRunner
-from sops_tools.repository import SecretDomain, SecretRepository
+from sops_tools.repository import Realm, SecretRepository
 from atomic_file_writes import write_text_atomic
 from sops_tools.secrets import CommandSopsBackend, SecretService
 
@@ -31,10 +31,10 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
 
     policy = SopsPolicy.create()
     for host in ("beast", "source", "destination"):
-        policy.ensure_host_rule("main", host, [recipient])
+        policy.ensure_host_rule("home", host, [recipient])
     policy.write(tmp_path / ".sops.yaml")
 
-    repository = SecretRepository(tmp_path, SecretDomain("main", None))
+    repository = SecretRepository(tmp_path, Realm("home", None))
     repository.directory.mkdir(parents=True)
     repository.template.write_text(
         yaml.safe_dump(

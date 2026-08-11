@@ -36,7 +36,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Render person mail addresses as Kanidm provisioning JSON";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "kanidm-person-mail-provision";
     platforms = lib.platforms.linux;
   };

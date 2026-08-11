@@ -92,17 +92,17 @@ class SopsTokenStore:
     hosts: FleetHosts
 
     def set(self, host: str, key: KeyPath, value: str) -> None:
-        domain = self.runtime.resolve_domain(host_facts(self.hosts, host).secret_domain)
-        repository = SecretRepository(self.runtime.repo_root, domain)
+        realm = self.runtime.resolve_realm(host_facts(self.hosts, host).realm)
+        repository = SecretRepository(self.runtime.repo_root, realm)
         secret = repository.require_secret(host)
-        runner = self._runner(domain.name, domain.identity_file)
+        runner = self._runner(realm.name, realm.identity_file)
         CommandSopsBackend(runner).set_value(secret, key, value)
 
-    def _runner(self, domain: str, identity_file: Path | None) -> ProcessRunner:
+    def _runner(self, realm: str, identity_file: Path | None) -> ProcessRunner:
         from sops_tools.process import SubprocessRunner
 
         environment = dict(self.runtime.values)
-        if domain != "main" and identity_file is not None:
+        if realm != "home" and identity_file is not None:
             environment["SOPS_AGE_KEY_FILE"] = str(identity_file)
         return SubprocessRunner(environment=environment)
 

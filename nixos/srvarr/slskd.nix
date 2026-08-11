@@ -7,11 +7,10 @@ let
   accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   slskdRoot = "${mediaDir}/slskd";
-  srvarrSpec = facts.hosts.nixos.srvarr;
+  vpnClient = config.host.vpn.clients.slskd;
+  vpnNamespace = config.host.vpn.namespaces.${vpnClient.namespace};
   apiPort = 5030;
-  peerPort = srvarrSpec.wgNamespace.forwardedPorts.slskd;
-  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
+  peerPort = vpnClient.forwardedPorts.peer.port;
   secretPath = name: "slskd/${name}";
   slskdSecretNames = [
     (secretPath "soulseek/username")
@@ -41,7 +40,7 @@ in
       SLSKD_SLSK_PASSWORD=${config.sops.placeholder.${secretPath "soulseek/password"}}
       SLSKD_USERNAME=${config.sops.placeholder.${secretPath "web/username"}}
       SLSKD_PASSWORD=${config.sops.placeholder.${secretPath "web/password"}}
-      SLSKD_API_KEY=role=Administrator;cidr=${wgBridgeAddress}/32;${
+      SLSKD_API_KEY=role=Administrator;cidr=${vpnNamespace.bridgeAddress}/32;${
         config.sops.placeholder.${secretPath "web/apiKey"}
       }
     '';
@@ -65,7 +64,7 @@ in
         listen_port = peerPort;
       };
       web = {
-        ip_address = wgNamespaceAddress;
+        ip_address = vpnNamespace.namespaceAddress;
         port = apiPort;
         https.disabled = true;
       };
@@ -75,20 +74,16 @@ in
   systemd.services.slskd = {
     unitConfig.RequiresMountsFor = mediaDir;
     serviceConfig.UMask = "0002";
-    vpnConfinement = {
-      enable = true;
-      vpnNamespace = "wg";
-    };
   };
 
   # The API key crosses only the private host-to-namespace veth. Restrict both
   # the namespace firewall and slskd's own key to the host bridge address.
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ apiPort ];
-
-  vpnNamespaces.wg.openVPNPorts = [
-    {
-      port = peerPort;
+  host.vpn.clients.slskd = {
+    namespace = "wg";
+    bridgeTcpPorts = [ apiPort ];
+    forwardedPorts.peer = {
+      port = 13869;
       protocol = "tcp";
-    }
-  ];
+    };
+  };
 }

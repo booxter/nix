@@ -6,15 +6,27 @@ in
   system.stateVersion = "25.11";
 
   host = {
-    isBuilder = true;
+    nix.builder = {
+      enable = true;
+      hostName = "nvws.local";
+    };
     isProxmox = true;
+    network = {
+      interfaces.enp3s0f0.kind = "ethernet";
+      macAddress = "ac:b4:80:40:05:2e";
+      primaryInterface = "enp3s0f0";
+      reservation = {
+        enable = true;
+        address = "192.168.15.100";
+      };
+    };
   };
-  host.network.primaryInterface = "enp3s0f0";
   host.ups = {
     server = {
+      enable = true;
       description = "APC UPS 1500VA";
     };
-    shutdown.critical = true;
+    shutdown.waitForLowBattery = true;
   };
 
   # Work machines do not use sops-managed login passwords.

@@ -1,11 +1,12 @@
 {
   facts,
+  outputs,
   pkgs,
 }:
 let
   lan = facts.site.lan;
-  wgHome = facts.site.wireguard.home;
-  wireguardGatewaySshHost = wgHome.gateway.host;
+  fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
+  wgHome = fleetConfiguration.config.host.wireguard.networks.home;
   appPackages = import ./packages.nix pkgs;
 
   fleetFacts = {
@@ -15,7 +16,7 @@ let
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
-      platform = spec.platform;
+      platform = "aarch64-darwin";
       runtimeHost = spec.name;
       sshHost = spec.name;
     }) facts.hosts.darwin;
@@ -24,24 +25,18 @@ let
     nixos = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;
-      platform = spec.platform or "x86_64-linux";
+      platform = "x86_64-linux";
       runtimeHost = spec.name;
       sshHost = spec.name;
     }) facts.hosts.nixos;
   };
   wireguardHome = {
     subnet = wgHome.cidr;
-    dns = [
-      lan.gateway.address
-      facts.site.lan.domain
-    ];
-    endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
-    allowedIps = [
-      wgHome.cidr
-      lan.cidr
-    ];
+    inherit (wgHome.clientPolicy) dns;
+    endpoint = "${wgHome.server.publicEndpoint}:${toString wgHome.server.listenPort}";
+    allowedIps = wgHome.clientPolicy.allowedIPs;
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
-    gatewaySshHost = wireguardGatewaySshHost;
+    gatewaySshHost = wgHome.server.host;
   };
   vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
   fleetTools = pkgs.callPackage ./fleet-tools {

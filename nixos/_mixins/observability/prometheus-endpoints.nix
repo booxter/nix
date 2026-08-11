@@ -8,6 +8,9 @@ let
   cfg = config.host.observability;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
+  inventoryEndpoints = lib.filterAttrs (
+    name: _: !(name == "node_exporter" && cfg.nodeExporter.mtls.enable)
+  ) enabledEndpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
   endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues enabledEndpoints);
 in
@@ -145,6 +148,13 @@ in
   };
 
   config = lib.mkIf (cfg.enable && enabledEndpoints != { }) {
+    host.internalPki.managedCertificates = lib.mapAttrsToList (name: endpoint: {
+      category = "observability_endpoint_server";
+      inherit name;
+      inherit (endpoint) secretPrefix;
+      certificateField = "server_crt_unencrypted";
+    }) inventoryEndpoints;
+
     assertions = [
       {
         assertion =

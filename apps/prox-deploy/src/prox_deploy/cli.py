@@ -18,34 +18,48 @@ from .adapters import (
 from .core import DeployRequest, PasswordStore, VmDeployer, deploy_vm
 
 
-def load_vm_types(encoded: str) -> tuple[str, ...]:
+def load_vm_nodes(encoded: str) -> dict[str, tuple[str, ...]]:
     value: object = json.loads(encoded)
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise ProxDeployError("PROX_DEPLOY_VM_TYPES_JSON must contain a JSON string array")
-    return tuple(value)
+    if not isinstance(value, dict) or not all(
+        isinstance(name, str)
+        and isinstance(nodes, list)
+        and nodes
+        and all(isinstance(node, str) for node in nodes)
+        for name, nodes in value.items()
+    ):
+        raise ProxDeployError(
+            "PROX_DEPLOY_VM_NODES_JSON must map VM names to non-empty node arrays"
+        )
+    return {name: tuple(nodes) for name, nodes in value.items()}
 
 
 def build_parser(vm_types: Sequence[str]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Deploy a NixOS VM through nixmoxer")
     parser.add_argument("vm_type", choices=vm_types, metavar="VM_TYPE")
-    parser.add_argument("proxmox_host", metavar="PROXMOX_HOST")
+    parser.add_argument("proxmox_node", metavar="PROXMOX_NODE")
     return parser
 
 
 def run_cli(
     arguments: Sequence[str],
     *,
-    vm_types: Sequence[str],
+    vm_nodes: Mapping[str, tuple[str, ...]],
     password_store: PasswordStore,
     deployer: VmDeployer,
     stderr: TextIO,
 ) -> int:
-    namespace = build_parser(vm_types).parse_args(arguments)
+    namespace = build_parser(tuple(vm_nodes)).parse_args(arguments)
     try:
+        if namespace.proxmox_node not in vm_nodes[namespace.vm_type]:
+            allowed = ", ".join(vm_nodes[namespace.vm_type])
+            raise ProxDeployError(
+                f"node {namespace.proxmox_node} is not in VM {namespace.vm_type}'s cluster; "
+                f"choose one of: {allowed}"
+            )
         deploy_vm(
             DeployRequest(
                 vm_type=namespace.vm_type,
-                proxmox_host=namespace.proxmox_host,
+                node=namespace.proxmox_node,
             ),
             password_store,
             deployer,
@@ -65,7 +79,7 @@ def main(
     deployer: VmDeployer | None = None,
 ) -> int:
     try:
-        vm_types = load_vm_types(environment["PROX_DEPLOY_VM_TYPES_JSON"])
+        vm_nodes = load_vm_nodes(environment["PROX_DEPLOY_VM_NODES_JSON"])
         pass_executable = Path(environment["PROX_DEPLOY_PASS"])
     except KeyError as error:
         print(f"prox-deploy: missing packaged setting {error.args[0]}", file=stderr)
@@ -81,7 +95,7 @@ def main(
 
     return run_cli(
         arguments,
-        vm_types=vm_types,
+        vm_nodes=vm_nodes,
         password_store=password_store,
         deployer=deployer,
         stderr=stderr,

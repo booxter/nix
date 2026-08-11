@@ -8,7 +8,7 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   tableName = "observability_lan_wan";
   interfacePathMode = cfg.mode == "interface-path";
   wanSubclassEnabled = cfg.wanUdpSubclass != null;
@@ -125,8 +125,8 @@ in
 
     interface = lib.mkOption {
       type = with lib.types; nullOr str;
-      default = null;
-      description = "If set, only account traffic entering or leaving through this interface.";
+      default = config.host.network.primaryInterface;
+      description = "Interface whose traffic should be accounted, or null to account all non-loopback traffic.";
     };
 
     wanUdpSubclass = lib.mkOption {
@@ -164,11 +164,6 @@ in
       };
     }
     (lib.mkIf cfg.enable {
-      services.prometheus.exporters.node = {
-        enabledCollectors = [ "textfile" ];
-        extraFlags = [ "--collector.textfile.directory=${textfileDir}" ];
-      };
-
       systemd.tmpfiles.rules = [
         "d ${textfileDir} 0755 root root - -"
       ];

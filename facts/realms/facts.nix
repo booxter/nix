@@ -4,18 +4,14 @@
 }:
 let
   inherit (context) lanDomain;
-  inherit (facts) nix-caches public-certificates public-keys;
-  nixCaches = nix-caches;
-  publicCertificates = public-certificates;
+  inherit (facts) public-keys;
   publicKeys = public-keys;
 in
 {
   home = {
-    build.pools = [
-      "community"
-      "personal"
-    ];
-    secretDomain = "main";
+    build = {
+      sshIdentityFile = "id_ed25519";
+    };
     management = {
       manageNetworkIdentity = true;
       managePasswordSecrets = true;
@@ -36,22 +32,6 @@ in
       ];
     };
     services = {
-      attic = {
-        cacheName = "local";
-        endpoint = "https://nix-cache.${lanDomain}";
-      };
-      internalPki.rootCaCertificate = publicCertificates.internal-pki.home-root-ca;
-      flakehubCache.url = nixCaches.flakehub.url;
-      nixCache = {
-        substituters = [
-          nixCaches.nixos.url
-          nixCaches.home.defaultUrl
-        ];
-        trustedPublicKeys = [
-          nixCaches.nixos.key
-          nixCaches.home.key
-        ];
-      };
       observability = {
         loki = {
           writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";
@@ -65,8 +45,9 @@ in
   };
 
   work = {
-    build.pools = [ "work" ];
-    secretDomain = "work";
+    build = {
+      sshIdentityFile = "jgwxhwdl4x-nix-builder";
+    };
     management = {
       manageNetworkIdentity = false;
       managePasswordSecrets = false;

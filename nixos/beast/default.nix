@@ -1,43 +1,52 @@
-{
-  inputs,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 {
   system.stateVersion = "25.11";
 
-  _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
-
   imports = [
-    ./sso.nix
-    ./btrfs.nix
-    ./igpu.nix
+    ./jellarr
     ./jellyfin.nix
-    ./jellyfin-maintenance.nix
-    ./jellyfin-exporter.nix
-    ./jellyfin-backup.nix
-    ./jellarr.nix
-    ./meilisearch.nix
-    ./lolek.nix
-    ./nginx.nix
-    ./pause.nix
     ./storage.nix
-    ./watchstate.nix
   ];
 
   host.observability.blackbox.remote.enable = true;
+  host.web.ingress = {
+    enable = true;
+    dynamicDns = {
+      enable = true;
+      hostname = "ihrachyshka-beast.freeddns.org";
+      username = "ihrachyshka";
+    };
+  };
   host.backups.server.enable = true;
-  host.network.primaryInterface = "enp6s0";
-  # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
-  host.observability.lanWan.interface = "enp6s0";
+  host.hardware.gpu = {
+    vendors = [ "intel" ];
+    render.device = "/dev/dri/renderD128";
+  };
+  host.lolek.enable = true;
+  host.network = {
+    ethernet.disablePauseFrames.enable = true;
+    interfaces = {
+      enp6s0.kind = "ethernet";
+      enp7s0.kind = "ethernet";
+    };
+    macAddress = "bc:fc:e7:3b:fe:da";
+    primaryInterface = "enp6s0";
+    reservation = {
+      enable = true;
+      address = "192.168.16.3";
+    };
+  };
   host.ups = {
     server = {
+      enable = true;
       description = "APC Back-UPS RS 1500MS2";
     };
-    shutdown.critical = true;
+    shutdown.waitForLowBattery = true;
   };
-
-  networking.resolvconf.enable = true;
+  host.watchstate = {
+    enable = true;
+    backups.stagingDirectory = "/volume2/backups/staging/watchstate";
+  };
 
   environment.systemPackages = [ pkgs.join-media-parts ];
 }

@@ -40,6 +40,14 @@ in
       description = "Platform service group that runs the Prometheus node exporter.";
     };
 
+    textfile.directory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/prometheus-node-exporter-textfile";
+      readOnly = true;
+      internal = true;
+      description = "Canonical node exporter textfile collector directory.";
+    };
+
     mtls = {
       enable = lib.mkEnableOption "mTLS protection for the Prometheus node exporter";
 
@@ -58,6 +66,15 @@ in
   };
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
+    host.internalPki.managedCertificates = [
+      {
+        category = "observability_endpoint_server";
+        name = "node_exporter";
+        inherit (cfg.mtls) secretPrefix;
+        certificateField = "server_crt_unencrypted";
+      }
+    ];
+
     sops.secrets = {
       prometheusNodeExporterServerCrt = {
         key = "${cfg.mtls.secretPrefix}/server_crt_unencrypted";

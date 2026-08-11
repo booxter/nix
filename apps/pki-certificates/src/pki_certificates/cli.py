@@ -52,10 +52,12 @@ class Application:
         if remote_program_name is None:
             raise ToolError("pki-issue-certificate-remote is not available on PATH")
         runner = SubprocessRunner()
+        configs = NixConfigSource(runner, root, hosts, query)
         issuer = RemoteCertificateIssuer(
             runner=runner,
             repo_root=root,
             hosts=hosts,
+            authorities=configs,
             local_ca=environment.get("ISSUE_CERT_LOCAL_CA") == "1",
             remote_program=Path(remote_program_name),
         )
@@ -69,7 +71,7 @@ class Application:
             values=environment,
         )
         managed = ManagedCertificateService(
-            NixConfigSource(runner, root, hosts, query),
+            configs,
             issuer,
             SopsCertificateStore(runtime, hosts),
         )
