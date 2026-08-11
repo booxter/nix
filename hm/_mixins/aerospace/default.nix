@@ -186,4 +186,13 @@ in
       ];
     };
   };
+
+  # Remote activation may run without an Aqua session. A stopped AeroSpace
+  # reads the updated config when it next launches, so only reload a live app.
+  home.file.".aerospace.toml".onChange = lib.mkForce ''
+    if /usr/bin/pgrep -x AeroSpace >/dev/null; then
+      echo "AeroSpace config changed, reloading..."
+      ${lib.getExe' config.programs.aerospace.package "aerospace"} reload-config
+    fi
+  '';
 }
