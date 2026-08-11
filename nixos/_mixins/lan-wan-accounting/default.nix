@@ -8,7 +8,7 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   tableName = "observability_lan_wan";
   interfacePathMode = cfg.mode == "interface-path";
   wanSubclassEnabled = cfg.wanUdpSubclass != null;

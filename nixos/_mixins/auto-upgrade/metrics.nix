@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.observability.nixosUpgrade;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   writeSuccessMetric = utils.escapeSystemdExecArgs [
     (lib.getExe autoUpgradeTools)
     "write-success-metric"

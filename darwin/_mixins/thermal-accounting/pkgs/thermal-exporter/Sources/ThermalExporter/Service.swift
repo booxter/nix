@@ -47,7 +47,7 @@ public struct ThermalExporterService: Sendable {
 
   public init(
     ismcPath: String,
-    textfileDirectory: URL = URL(fileURLWithPath: "/var/lib/prometheus-node-exporter-textfile"),
+    textfileDirectory: URL = URL(fileURLWithPath: "/var/lib/observability-thermal/textfile"),
     stateDirectory: URL = URL(fileURLWithPath: "/var/lib/observability-thermal"),
     runner: any CommandRunning = ProcessRunner(),
     now: @escaping @Sendable () -> Date = { Date() }

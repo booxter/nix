@@ -6,7 +6,7 @@
 let
   cfg = config.host.backups.server;
   enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.clients;
-  usageEnabled = lib.any (client: lib.hasPrefix "b2:" client.cloud.repository) (
+  credentialsEnabled = lib.any (client: client.cloud.backend != "local") (
     builtins.attrValues enabledCloudClients
   );
   offloadUser = name: if name == cfg.localClient then cfg.cloud.group else "restic-${name}-offload";
@@ -22,7 +22,7 @@ in
         "sops-install-secrets.service"
       ];
     }
-    // lib.optionalAttrs usageEnabled {
+    // lib.optionalAttrs credentialsEnabled {
       applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
       applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
     };
@@ -48,7 +48,7 @@ in
           }
         ]) (builtins.attrNames enabledCloudClients)
       )
-      // lib.optionalAttrs usageEnabled {
+      // lib.optionalAttrs credentialsEnabled {
         ${applicationKeyIdSecret} = {
           group = cfg.cloud.group;
           mode = "0440";

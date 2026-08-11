@@ -53,6 +53,7 @@ pkgs.testers.runNixOSTest {
         clients.test = {
           publicKey = clientPublicKey;
           cloud = {
+            backend = "local";
             enable = true;
             repository = "/srv/cloud/test";
             sourcePasswordFile = "/etc/backup-test/password";
@@ -171,6 +172,7 @@ pkgs.testers.runNixOSTest {
         client.succeed("systemctl cat restic-backups-test.timer")
         client.fail("systemctl cat prepare-backup-test.timer")
         server.succeed("systemctl cat restic-test-cloud-offload.timer")
+        server.succeed("systemctl cat restic-test-cloud-prune.timer")
         server.fail("systemctl cat restic-cloud-usage-export.timer")
 
     with subtest("pipeline prepares and snapshots once"):
@@ -190,6 +192,9 @@ pkgs.testers.runNixOSTest {
             "1.0",
         )
         assert 'backup_job="restic-test-cloud-offload"' in metrics
+
+    with subtest("server prunes the cloud repository separately"):
+        server.succeed("systemctl start restic-test-cloud-prune.service")
 
     with subtest("snapshot restores the prepared content"):
         client.succeed("rm -rf /tmp/restore")

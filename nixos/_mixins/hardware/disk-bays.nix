@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.hardware.storage.diskBays;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   mapFile = "/etc/disk-bay-map.json";
   exporterPackage = pkgs.callPackage ./disk-bay-exporter {
     atomicFileWrites = pkgs.atomic-file-writes;

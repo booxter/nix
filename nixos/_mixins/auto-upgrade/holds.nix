@@ -10,7 +10,7 @@ let
   hostname = config.networking.hostName;
   cfg = config.host.autoUpgrade;
   metricsCfg = config.host.observability.nixosUpgrade;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
     inherit (cfg) holds;

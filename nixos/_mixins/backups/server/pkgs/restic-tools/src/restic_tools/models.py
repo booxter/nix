@@ -33,13 +33,14 @@ class ExporterConfig(StrictModel):
 
 
 class OffloadConfig(StrictModel):
+    backend: Literal["local", "b2", "s3"]
     source_repository: Path = Field(alias="sourceRepository")
     source_password_file: Path = Field(alias="sourcePasswordFile")
     destination_repository: str = Field(alias="destinationRepository", min_length=1)
     destination_password_file: Path = Field(alias="destinationPasswordFile")
-    b2_application_key_id_file: Path | None = Field(default=None, alias="b2ApplicationKeyIdFile")
-    b2_application_key_file: Path | None = Field(default=None, alias="b2ApplicationKeyFile")
-    b2_connections: int = Field(default=1, alias="b2Connections", gt=0)
+    application_key_id_file: Path | None = Field(default=None, alias="applicationKeyIdFile")
+    application_key_file: Path | None = Field(default=None, alias="applicationKeyFile")
+    backend_connections: int = Field(default=1, alias="backendConnections", gt=0)
     pack_size_mib: int = Field(alias="packSizeMib", gt=0)
     prune_options: tuple[str, ...] = Field(alias="pruneOptions")
 

@@ -29,7 +29,7 @@ in
           && client.cloud.sourcePasswordFile != ""
           && client.cloud.passwordFile != ""
           && (
-            !lib.hasPrefix "b2:" client.cloud.repository
+            client.cloud.backend == "local"
             || (
               client.cloud.prefix != ""
               && cfg.cloud.bucketName != null

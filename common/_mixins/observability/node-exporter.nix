@@ -40,12 +40,11 @@ in
       description = "Platform service group that runs the Prometheus node exporter.";
     };
 
-    textfile.directory = lib.mkOption {
-      type = lib.types.str;
-      default = "/var/lib/prometheus-node-exporter-textfile";
-      readOnly = true;
+    textfile.directories = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
       internal = true;
-      description = "Canonical node exporter textfile collector directory.";
+      description = "Directories containing metrics for the node exporter textfile collector.";
     };
 
     mtls = {

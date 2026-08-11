@@ -45,6 +45,8 @@ pythonPackages.buildPythonApplication {
       --prefix PATH : ${lib.makeBinPath [ restic ]}
     wrapProgram "$out/bin/restic-cloud-offload" \
       --prefix PATH : ${lib.makeBinPath [ restic ]}
+    wrapProgram "$out/bin/restic-cloud-prune" \
+      --prefix PATH : ${lib.makeBinPath [ restic ]}
   '';
 
   meta = {

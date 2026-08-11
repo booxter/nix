@@ -17,6 +17,7 @@ dependencies = [
 [project.scripts]
 restic-cloud-usage = "restic_tools.cli:main"
 restic-cloud-offload = "restic_tools.offload_cli:main"
+restic-cloud-prune = "restic_tools.prune_cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

@@ -156,7 +156,7 @@ def restic_environment(
     cache_dir: str,
 ) -> dict[str, str]:
     return {
-        **b2_environment(
+        **cloud_environment(
             environment,
             application_key_id=application_key_id,
             application_key=application_key,
@@ -165,7 +165,7 @@ def restic_environment(
     }
 
 
-def b2_environment(
+def cloud_environment(
     environment: Mapping[str, str],
     *,
     application_key_id: str,
@@ -175,6 +175,8 @@ def b2_environment(
         **environment,
         "B2_ACCOUNT_ID": application_key_id,
         "B2_ACCOUNT_KEY": application_key,
+        "AWS_ACCESS_KEY_ID": application_key_id,
+        "AWS_SECRET_ACCESS_KEY": application_key,
     }
 
 

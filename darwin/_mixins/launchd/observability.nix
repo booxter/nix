@@ -7,7 +7,7 @@
 let
   cfg = config.host.observability.launchd;
   exporterName = "observability-launchd-export";
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = "/var/lib/observability-launchd/textfile";
   exporter = pkgs.callPackage ./pkgs/launchd-exporter { };
   hasProgram =
     job:
@@ -100,6 +100,8 @@ in
   };
 
   config = lib.mkIf config.host.observability.enable {
+    host.observability.nodeExporter.textfile.directories.launchd = textfileDir;
+
     assertions = import ./observability/assertions.nix {
       inherit
         cfg
@@ -111,6 +113,8 @@ in
 
     system.activationScripts.launchd.text = lib.mkAfter ''
       mkdir -p ${textfileDir}
+      chown root:wheel ${textfileDir}
+      chmod 0755 ${textfileDir}
       ln -sfn ${expectationsFile} ${textfileDir}/launchd-expectations.prom
     '';
 
