@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.observability;
-  textfileDir = cfg.nodeExporter.textfile.directory;
+  textfileDir = cfg.nodeExporter.textfile.directories.default;
   withSuffix =
     suffix: units:
     lib.mapAttrs' (

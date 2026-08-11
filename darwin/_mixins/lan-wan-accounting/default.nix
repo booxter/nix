@@ -8,7 +8,7 @@
 let
   cfg = config.host.observability.lanWan;
   declaredInterfaces = builtins.attrNames config.host.network.interfaces;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = "${stateDir}/textfile";
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
@@ -108,6 +108,8 @@ in
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];
 
+      host.observability.nodeExporter.textfile.directories.lanWan = textfileDir;
+
       ids.uids.${serviceUser} = serviceUid;
 
       users.users.${serviceUser} = {
@@ -133,11 +135,9 @@ in
           exit 1
         fi
 
-        mkdir -p ${textfileDir} ${stateDir}
-        chown root:${accessBpfGroup} ${textfileDir}
-        chmod 0775 ${textfileDir}
-        chown ${serviceUser}:${accessBpfGroup} ${stateDir}
-        chmod 0755 ${stateDir}
+        mkdir -p ${stateDir} ${textfileDir}
+        chown ${serviceUser}:${accessBpfGroup} ${stateDir} ${textfileDir}
+        chmod 0755 ${stateDir} ${textfileDir}
       '';
 
       launchd.daemons.observability-lan-wan-accounting = {

@@ -8,7 +8,7 @@
 let
   cfg = config.host.hardware.storage.mdraid;
   observabilityEnabled = config.host.observability.enable;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
 in
 {
   config = lib.mkIf cfg.enable (

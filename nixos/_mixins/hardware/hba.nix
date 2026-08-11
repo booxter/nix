@@ -9,7 +9,7 @@ let
   cfg = config.host.hardware.storage.hba;
   diskBays = config.host.hardware.storage.diskBays;
   observabilityEnabled = config.host.observability.enable;
-  textfileDir = config.host.observability.nodeExporter.textfile.directory;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   bayMapFile =
     if diskBays == null then
       pkgs.writeText "empty-disk-bay-map.json" "[]"

@@ -9,7 +9,7 @@ enum CLIError: Error, CustomStringConvertible {
   var description: String {
     switch self {
     case .usage:
-      return "usage: observability-thermal-export --ismc PATH"
+      return "usage: observability-thermal-export --ismc PATH --textfile-directory PATH"
     case .missingISMC:
       return "--ismc is required"
     case let .unknownArgument(argument):
@@ -18,8 +18,14 @@ enum CLIError: Error, CustomStringConvertible {
   }
 }
 
-func parse(_ arguments: [String]) throws -> String {
+struct Options {
+  let ismc: String
+  let textfileDirectory: String
+}
+
+func parse(_ arguments: [String]) throws -> Options {
   var ismc: String?
+  var textfileDirectory = "/var/lib/observability-thermal/textfile"
   var index = 0
   while index < arguments.count {
     switch arguments[index] {
@@ -27,6 +33,10 @@ func parse(_ arguments: [String]) throws -> String {
       index += 1
       guard index < arguments.count else { throw CLIError.missingISMC }
       ismc = arguments[index]
+    case "--textfile-directory":
+      index += 1
+      guard index < arguments.count else { throw CLIError.usage }
+      textfileDirectory = arguments[index]
     case "-h", "--help":
       throw CLIError.usage
     default:
@@ -35,12 +45,15 @@ func parse(_ arguments: [String]) throws -> String {
     index += 1
   }
   guard let ismc else { throw CLIError.missingISMC }
-  return ismc
+  return Options(ismc: ismc, textfileDirectory: textfileDirectory)
 }
 
 do {
-  let ismc = try parse(Array(CommandLine.arguments.dropFirst()))
-  try ThermalExporterService(ismcPath: ismc).run()
+  let options = try parse(Array(CommandLine.arguments.dropFirst()))
+  try ThermalExporterService(
+    ismcPath: options.ismc,
+    textfileDirectory: URL(fileURLWithPath: options.textfileDirectory)
+  ).run()
 } catch {
   FileHandle.standardError.write(Data("observability-thermal-export: \(error)\n".utf8))
   exit(1)

@@ -15,6 +15,7 @@ in
         host.observability.nodeExporter = {
           serviceUser = config.services.prometheus.exporters.node.user;
           serviceGroup = config.services.prometheus.exporters.node.group;
+          textfile.directories.default = "/var/lib/prometheus-node-exporter-textfile";
         };
 
         services.prometheus.exporters.node = {
@@ -25,9 +26,9 @@ in
             "systemd"
             "textfile"
           ];
-          extraFlags = [
-            "--collector.textfile.directory=${cfg.nodeExporter.textfile.directory}"
-          ];
+          extraFlags = map (directory: "--collector.textfile.directory=${directory}") (
+            builtins.attrValues cfg.nodeExporter.textfile.directories
+          );
         };
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
