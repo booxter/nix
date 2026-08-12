@@ -157,6 +157,7 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 			builder.WithPanel(timeSeries(TimeseriesOptions{
 				ID: placement.ID, Grid: placement.Grid, Title: definition.title,
 				Unit: definition.unit, DataSource: datasource, Min: ptr(0.0),
+				Stacking: "transmission", Fill: &fill,
 				Targets: []PrometheusTarget{{
 					RefID: "A", Expression: definition.expression, Legend: definition.legend,
 				}},
@@ -229,7 +230,7 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 	builder.
 		WithPanel(timeSeries(TimeseriesOptions{
 			ID: cueSeries[0].ID, Grid: cueSeries[0].Grid, Title: "Lidarr CUE Splitter Job States",
-			Unit: units.Short, DataSource: datasource, Min: ptr(0.0),
+			Unit: units.Short, DataSource: datasource, Min: ptr(0.0), Stacking: "cue-states", Fill: &fill,
 			Targets: []PrometheusTarget{{
 				RefID: "A", Expression: node("host_observability_lidarr_cue_splitter_jobs"), Legend: "{{state}}",
 			}},

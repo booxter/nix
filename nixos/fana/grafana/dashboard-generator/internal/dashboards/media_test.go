@@ -65,3 +65,43 @@ func TestMediaValueStatsLetGrafanaChooseText(t *testing.T) {
 		t.Errorf("VPN stat text mode = %q, want auto", options.TextMode)
 	}
 }
+
+func TestMediaCategoricalSeriesAreStackedAndFilled(t *testing.T) {
+	model, err := MediaOverview(testConfig)
+	if err != nil {
+		t.Fatalf("MediaOverview() error = %v", err)
+	}
+	titles := []string{
+		"Transmission Upload Throughput By Torrent Priority",
+		"Transmission Download Throughput By Torrent Priority",
+		"Transmission Upload Peers By Torrent Priority",
+		"Transmission Download Peers By Torrent Priority",
+		"Transmission Seeding Torrents",
+		"Transmission Downloading Torrents",
+		"Lidarr CUE Splitter Job States",
+	}
+	for _, title := range titles {
+		t.Run(title, func(t *testing.T) {
+			panel := findPanel(t, model, title)
+			custom, ok := panel.FieldConfig.Defaults.Custom.(*common.GraphFieldConfig)
+			if !ok {
+				t.Fatalf("field config type = %T, want *common.GraphFieldConfig", panel.FieldConfig.Defaults.Custom)
+			}
+			if custom.Stacking == nil || custom.Stacking.Mode == nil || *custom.Stacking.Mode != common.StackingModeNormal {
+				t.Errorf("stacking = %#v, want normal", custom.Stacking)
+			}
+			if custom.FillOpacity == nil || *custom.FillOpacity != 20 {
+				t.Errorf("fill opacity = %v, want 20", custom.FillOpacity)
+			}
+		})
+	}
+
+	outcomes := findPanel(t, model, "Lidarr CUE Splitter Outcomes")
+	custom, ok := outcomes.FieldConfig.Defaults.Custom.(*common.GraphFieldConfig)
+	if !ok {
+		t.Fatalf("outcomes field config type = %T, want *common.GraphFieldConfig", outcomes.FieldConfig.Defaults.Custom)
+	}
+	if custom.Stacking != nil || custom.FillOpacity != nil {
+		t.Errorf("outcomes styling = %#v, want unstacked and unfilled", custom)
+	}
+}
