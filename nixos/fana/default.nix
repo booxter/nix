@@ -13,12 +13,9 @@
     };
   };
 
-  imports = [
-    ./grafana
-  ];
-
   host.observability = {
     alertmanager.enable = true;
+    grafana.enable = true;
     loki.server.enable = true;
     prometheus.server.enable = true;
     unifi.enable = true;

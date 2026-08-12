@@ -10,7 +10,6 @@ let
   cfg = config.host.observability.prometheus.server;
   alertmanagerCfg = config.host.observability.alertmanager;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  prometheusPort = 9090;
   prometheusScrapeClient = config.host.internalPki.clients."prometheus-scrape-node";
   prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
   blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;
@@ -88,6 +87,14 @@ in
   options.host.observability.prometheus.server = {
     enable = lib.mkEnableOption "a Prometheus server";
 
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 9090;
+      readOnly = true;
+      internal = true;
+      description = "Loopback Prometheus HTTP port.";
+    };
+
     retentionDays = lib.mkOption {
       type = lib.types.ints.positive;
       default = 365;
@@ -156,7 +163,7 @@ in
       enable = true;
       checkConfig = "syntax-only";
       listenAddress = "127.0.0.1";
-      port = prometheusPort;
+      port = cfg.port;
       retentionTime = prometheusRetention;
       alertmanagers = lib.optional alertmanagerCfg.enable {
         static_configs = [
@@ -176,22 +183,24 @@ in
             }
           ];
         }
-        {
-          job_name = "grafana";
-          static_configs = [
-            {
-              targets = [
-                "127.0.0.1:${toString config.services.grafana.settings.server.http_port}"
-              ];
-              labels.instance = config.networking.hostName;
-            }
-          ];
-        }
+      ]
+      ++ lib.optional config.host.observability.grafana.enable {
+        job_name = "grafana";
+        static_configs = [
+          {
+            targets = [
+              "127.0.0.1:${toString config.services.grafana.settings.server.http_port}"
+            ];
+            labels.instance = config.networking.hostName;
+          }
+        ];
+      }
+      ++ [
         {
           job_name = "prometheus";
           static_configs = [
             {
-              targets = [ "127.0.0.1:${toString prometheusPort}" ];
+              targets = [ "127.0.0.1:${toString cfg.port}" ];
             }
           ];
         }

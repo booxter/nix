@@ -4,6 +4,7 @@
     ./alertmanager
     ./alertmanager-watchdog.nix
     ./blackbox.nix
+    ./grafana
     ./loki
     ./node-exporter.nix
     ./prometheus-endpoints.nix
