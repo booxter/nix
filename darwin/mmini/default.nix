@@ -1,4 +1,4 @@
-{ config, facts, ... }:
+{ config, ... }:
 {
   system.stateVersion = 5;
 
@@ -27,7 +27,7 @@
     smartCard.enable = true;
     secrets.operator.ageIdentity = {
       backend = "yubikey";
-      path = "/Users/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
+      path = "/Users/${config.host.username}/.config/sops/age/yubi-nix.txt";
     };
     ssh.credentials.backend = "yubikey";
   };

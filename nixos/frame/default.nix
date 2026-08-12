@@ -89,7 +89,7 @@
       };
       secrets.operator.ageIdentity = {
         backend = "yubikey";
-        path = "/home/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
+        path = "/home/${config.host.username}/.config/sops/age/yubi-nix.txt";
       };
       ssh.credentials.backend = "yubikey";
     };

@@ -7,22 +7,16 @@
 }:
 let
   inherit (osConfig.host) isDarwin isLinux;
-  useSecretive = osConfig.host.security.ssh.credentials.backend == "secretive";
   enabled = osConfig.host.userEnvironment.features.ssh.enable;
-  secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =
     if isDarwin then
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
-  secretiveAuthSockInit = ''
-    if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
-      export SSH_AUTH_SOCK="${secretiveSocket}"
-    fi
-  '';
 in
 {
   imports = [
+    ./credentials.nix
     ./known-hosts.nix
     ./ticket-client.nix
   ];
@@ -44,13 +38,6 @@ in
       SuccessExitStatus = 2;
     };
 
-    programs.bash = lib.mkIf useSecretive {
-      profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
-      initExtra = lib.mkOrder 900 secretiveAuthSockInit;
-    };
-
-    programs.zsh.envExtra = lib.mkIf useSecretive (lib.mkOrder 900 secretiveAuthSockInit);
-
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
@@ -61,7 +48,6 @@ in
         "*" = {
           # agent forwarding to remotes
           ForwardAgent = true;
-          AddKeysToAgent = if useSecretive then "no" else "yes";
         };
       }
       // lib.optionalAttrs osConfig.host.ssh.fleetBootHosts {

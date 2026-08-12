@@ -6,7 +6,6 @@
   ...
 }:
 let
-  username = config.host.username;
   secrets = config.host.security.secrets;
   operatorIdentity = secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
@@ -48,14 +47,23 @@ in
       };
     };
 
-    ssh.credentials.backend = lib.mkOption {
-      type = lib.types.enum [
-        "files"
-        "secretive"
-        "yubikey"
-      ];
-      default = "files";
-      description = "Backend providing the operator's SSH authentication and signing identity.";
+    ssh.credentials = {
+      backend = lib.mkOption {
+        type = lib.types.enum [
+          "files"
+          "secretive"
+          "yubikey"
+        ];
+        default = "files";
+        description = "Backend providing the operator's SSH authentication and signing identity.";
+      };
+
+      secretive.publicKey = lib.mkOption {
+        type = lib.types.nullOr lib.types.nonEmptyStr;
+        default = null;
+        description = "Public signing key managed by Secretive.";
+      };
+
     };
   };
 
@@ -74,6 +82,12 @@ in
           assertion = config.host.security.ssh.credentials.backend != "secretive" || isDarwin;
           message = "Secretive SSH credentials require Darwin.";
         }
+        {
+          assertion =
+            config.host.security.ssh.credentials.backend != "secretive"
+            || config.host.security.ssh.credentials.secretive.publicKey != null;
+          message = "Secretive SSH credentials require host.security.ssh.credentials.secretive.publicKey.";
+        }
       ];
 
       sops.age.keyFile = "/var/lib/sops-nix/key.txt";
@@ -89,9 +103,6 @@ in
           sops-tools
         ]
         ++ lib.optional usesSecureEnclave age-plugin-se;
-    })
-    (lib.mkIf (operatorIdentity != null) {
-      home-manager.users.${username}.home.sessionVariables.SOPS_AGE_KEY_FILE = operatorIdentity.path;
     })
   ];
 }

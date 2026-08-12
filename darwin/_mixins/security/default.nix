@@ -1,18 +1,16 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  hostname = config.networking.hostName;
   username = config.host.username;
   userHome = config.users.users.${username}.home;
   smartCard = config.host.security.smartCard;
   sudo = config.host.security.sudo;
-  useSecretive = config.host.security.ssh.credentials.backend == "secretive";
-  secretivePublicKey = facts.public-keys.users.${hostname + "-secretive"};
+  sshCredentials = config.host.security.ssh.credentials;
+  useSecretive = sshCredentials.backend == "secretive";
 in
 {
   options.host.security = {
@@ -35,6 +33,9 @@ in
 
   config = lib.mkMerge [
     {
+      home-manager.users.${username}.host.hm.sudo.sshPasswordAuth.enable =
+        lib.mkDefault sudo.sshPasswordAuth.enable;
+
       security.pam.services.sudo_local.touchIdAuth = lib.mkDefault sudo.touchId.enable;
       security.pam.services.sudo_local.reattach = lib.mkDefault sudo.touchId.enable;
 
@@ -84,7 +85,7 @@ in
       '';
 
       home-manager.users.${username} = {
-        home.file.".ssh/secretive.pub".text = secretivePublicKey + "\n";
+        home.file.".ssh/secretive.pub".text = sshCredentials.secretive.publicKey + "\n";
         programs.git.settings.user.signingKey = "${userHome}/.ssh/secretive.pub";
       };
     })
