@@ -1,4 +1,4 @@
-{ facts, pkgs, ... }:
+{ facts, ... }:
 {
   system.stateVersion = "26.05";
 
@@ -17,10 +17,5 @@
     publicKey = facts.public-keys.restic.home;
   };
 
-  _module.args.homeAssistantTools = pkgs.callPackage ./pkgs/home-assistant-tools { };
-
-  imports = [
-    ./backup.nix
-    ./home-assistant.nix
-  ];
+  host.home-assistant.enable = true;
 }
