@@ -25,7 +25,7 @@ in
 {
   imports = lib.optionals isVM [
     inputs.proxmox-nixos.nixosModules.declarative-vms
-    (import ../../disko { device = "/dev/sda"; })
+    (import ../disko { device = "/dev/sda"; })
   ];
 
   config = lib.optionalAttrs isVM {

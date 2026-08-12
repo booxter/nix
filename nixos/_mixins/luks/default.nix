@@ -16,7 +16,7 @@ in
     (lib.mkIf cfg.enable {
       host.autoUpgrade.claims.luks.reboot.cadence = "never";
     })
-    (lib.mkIf (isPhysicalHost && cfg.enable) (import ../../disko/luks.nix { }))
-    (lib.mkIf (isPhysicalHost && !cfg.enable) (import ../../disko { }))
+    (lib.mkIf (isPhysicalHost && cfg.enable) (import ../disko/luks.nix { }))
+    (lib.mkIf (isPhysicalHost && !cfg.enable) (import ../disko { }))
   ];
 }
