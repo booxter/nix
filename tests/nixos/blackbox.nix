@@ -70,6 +70,11 @@ pkgs.testers.runNixOSTest {
             default = [ ];
           };
 
+          network.ipController.resolved = lib.mkOption {
+            type = lib.types.nullOr lib.types.attrs;
+            default = null;
+          };
+
           isProxmox = lib.mkOption {
             type = lib.types.bool;
             default = false;
@@ -90,6 +95,11 @@ pkgs.testers.runNixOSTest {
               default = "interface-path";
             };
           };
+
+          web.services = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+          };
         };
 
         sops = {
@@ -109,6 +119,10 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
+          templates = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+          };
         };
       };
 
@@ -124,6 +138,7 @@ pkgs.testers.runNixOSTest {
             };
           };
           hostSpec.certificateDnsNames = [ "blackbox" ];
+          outputs.nixosConfigurations = { };
         };
 
         networking = {
