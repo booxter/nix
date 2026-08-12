@@ -13,7 +13,7 @@ let
     "network-online.target"
     "sops-install-secrets.service"
   ];
-  cloudRequiredUnits = lib.optional cfg.offsite.enable "qos-wan.service";
+  cloudRequiredUnits = lib.optional (cfg.offsite.enable && cfg.offsite.qos.enable) "qos-wan.service";
   applicationKeyIdFile = config.sops.secrets."backup/restic/cloud/b2/applicationKeyId".path;
   applicationKeyFile = config.sops.secrets."backup/restic/cloud/b2/applicationKey".path;
   backupServerTools = pkgs.callPackage ./pkgs/backup-server-tools { };
@@ -248,6 +248,8 @@ in
         default = null;
         description = "Object-storage provider used for provider-specific usage metrics.";
       };
+
+      qos.enable = lib.mkEnableOption "traffic shaping for offsite backup uploads";
     };
 
   };

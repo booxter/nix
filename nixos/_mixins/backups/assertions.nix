@@ -107,7 +107,7 @@ in
         message = "host.backups.server.repositories.${name}.cloud requires complete repository credentials";
       }) server.repositories
     )
-    ++ lib.optional (server.enable && server.offsite.enable) {
+    ++ lib.optional (server.enable && server.offsite.enable && server.offsite.qos.enable) {
       assertion = config.host.network.primaryInterface != null;
       message = "backup cloud-offload policy requires host.network.primaryInterface";
     };

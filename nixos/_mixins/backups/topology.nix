@@ -129,7 +129,7 @@ let
     && cfg.server.offsite.enable
     && cfg.server.offsite.storageProvider == "b2"
     && offsitePrefixFor cfg.server == null;
-  cloudQosEnabled = cfg.server.enable && cfg.server.offsite.enable;
+  cloudQosEnabled = cfg.server.enable && cfg.server.offsite.enable && cfg.server.offsite.qos.enable;
 in
 {
   config = lib.mkMerge [
