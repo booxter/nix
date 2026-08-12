@@ -1,17 +1,24 @@
 {
   config,
+  facts,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.nix.cacheWarmer;
+  ci = import ../../../../ci { inherit facts lib; };
+  warmTargets = map (target: target.attr) (
+    lib.filter (
+      target: facts.hosts.hostSpecsByName.${target.host}.realm == config.host.realm
+    ) ci.buildTargets
+  );
   atticCaches = lib.mapAttrsToList (
     name: server: "${name}:${server.cacheName}"
   ) config.host.attic.realmServers;
-  warmerPackage = pkgs.callPackage ../../../pkgs/fleet-cache-warmer {
+  warmerPackage = pkgs.callPackage ./pkgs/fleet-cache-warmer {
     inherit (cfg) pushToAttic;
-    realm = config.host.realm;
+    inherit warmTargets;
   };
 in
 {

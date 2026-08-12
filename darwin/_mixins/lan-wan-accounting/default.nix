@@ -12,13 +12,12 @@ let
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
-  darwinPkgs = import ../../pkgs pkgs;
   # macOS exposes /dev/bpf* as root:access_bpf 0660. Make this the service
   # account's primary group instead of running the capture daemon as root.
   accessBpfGroup = "access_bpf";
   accessBpfGid = 101;
   serviceUid = 536;
-  lanWanPackage = darwinPkgs.darwin-lan-wan-bpf;
+  lanWanPackage = pkgs.callPackage ./pkgs/darwin-lan-wan-bpf { };
   programArguments = [
     (lib.getExe cfg.package)
   ]

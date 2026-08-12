@@ -30,7 +30,7 @@ basePackages
   qemu-host-package = pkgs.qemu;
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-  ismc = pkgs.callPackage ../darwin/pkgs/ismc { };
+  ismc = pkgs.callPackage ../darwin/_mixins/thermal-accounting/pkgs/ismc { };
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   aurral = pkgs.callPackage ../nixos/_mixins/aurral/package { };

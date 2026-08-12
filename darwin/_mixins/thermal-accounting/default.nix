@@ -5,7 +5,6 @@
   ...
 }:
 let
-  darwinPkgs = import ../../pkgs pkgs;
   cfg = config.host.observability.thermal;
   thermalExporter = pkgs.callPackage ./pkgs/thermal-exporter { };
   textfileDir = "/var/lib/observability-thermal/textfile";
@@ -16,7 +15,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = darwinPkgs.ismc;
+      default = pkgs.callPackage ./pkgs/ismc { };
       description = "iSMC package used to collect Darwin temperature sensors.";
     };
 

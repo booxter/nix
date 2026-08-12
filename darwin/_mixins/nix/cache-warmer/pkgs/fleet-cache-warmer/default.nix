@@ -4,18 +4,10 @@
   clippy,
   nix,
   pushToAttic ? true,
-  realm,
   rustfmt,
   rustPlatform,
+  warmTargets,
 }:
-
-let
-  facts = import ../../../facts { inherit lib; };
-  ci = import ../../../ci { inherit facts lib; };
-  ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: facts.hosts.hostSpecsByName.${target.host}.realm == realm) ci.buildTargets
-  );
-in
 rustPlatform.buildRustPackage {
   pname = "fleet-cache-warmer";
   version = "0.1.0";
@@ -34,7 +26,7 @@ rustPlatform.buildRustPackage {
   FLEET_CACHE_WARMER_ATTIC = lib.optionalString pushToAttic (lib.getExe attic-client);
   FLEET_CACHE_WARMER_NIX = lib.getExe nix;
   FLEET_CACHE_WARMER_PUSH_TO_ATTIC = builtins.toJSON pushToAttic;
-  FLEET_CACHE_WARMER_TARGETS_JSON = builtins.toJSON ciValidatedWarmTargets;
+  FLEET_CACHE_WARMER_TARGETS_JSON = builtins.toJSON warmTargets;
 
   nativeCheckInputs = [
     clippy
@@ -47,7 +39,7 @@ rustPlatform.buildRustPackage {
   '';
   cargoTestFlags = [ "--all-targets" ];
 
-  passthru.ciWarmTargets = ciValidatedWarmTargets;
+  passthru.ciWarmTargets = warmTargets;
 
   meta = {
     description = "Build CI-validated fleet outputs and optionally push them to Attic";
