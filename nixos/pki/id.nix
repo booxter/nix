@@ -80,14 +80,15 @@ let
     name
     config.sops.secrets.${personMailSecretName name}.path
   ]) (builtins.attrNames personMailUsers);
+  mailer = config.host.mailer;
   mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
     schedule = "*/30 * * * * * *";
     instanceDisplayName = "SSO";
     instanceUrl = "https://${idPublicHost}";
-    mailFromAddress = "ihar.hrachyshka@gmail.com";
-    mailReplyToAddress = "ihar.hrachyshka@gmail.com";
-    mailRelay = "smtp.gmail.com";
-    mailUsername = "ihar.hrachyshka@gmail.com";
+    mailFromAddress = mailer.fromAddress;
+    mailReplyToAddress = mailer.replyToAddress;
+    mailRelay = mailer.smtp.host;
+    mailUsername = mailer.smtp.username;
     mailConnectTimeoutSeconds = 15;
   };
   writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [
@@ -115,6 +116,10 @@ in
   };
 
   assertions = [
+    {
+      assertion = mailer != null;
+      message = "Kanidm mail sender requires mailer policy for realm '${config.host.realm}'";
+    }
     {
       assertion = unknownOidcGroups == [ ];
       message = "OIDC registrations reference unknown Kanidm groups: ${lib.concatStringsSep ", " unknownOidcGroups}";

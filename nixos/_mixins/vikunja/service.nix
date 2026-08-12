@@ -5,11 +5,19 @@
 }:
 let
   cfg = config.host.vikunja;
+  mailer = config.host.mailer;
   oidcClient = config.host.sso.oidc.clients.vikunja;
 in
 {
   config = lib.mkIf cfg.enable {
-    services.vikunja = {
+    assertions = [
+      {
+        assertion = mailer != null;
+        message = "Vikunja requires mailer policy for realm '${config.host.realm}'";
+      }
+    ];
+
+    services.vikunja = lib.mkIf (mailer != null) {
       enable = true;
       environmentFiles = [ config.sops.templates."vikunja-secrets.env".path ];
       frontendScheme = "https";
@@ -23,10 +31,10 @@ in
         metrics.enabled = true;
         mailer = {
           enabled = true;
-          host = "smtp.gmail.com";
-          port = 587;
-          username = "ihar.hrachyshka@gmail.com";
-          fromemail = "ihar.hrachyshka@gmail.com";
+          host = mailer.smtp.host;
+          port = mailer.smtp.port;
+          username = mailer.smtp.username;
+          fromemail = mailer.fromAddress;
         };
         service = {
           timezone = config.host.site.timeZone;

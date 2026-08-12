@@ -32,6 +32,7 @@
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
       ./_mixins/luks
+      ./_mixins/mailer
       ./_mixins/maintenance
       ./_mixins/network
       ./_mixins/nix

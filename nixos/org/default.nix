@@ -1,5 +1,4 @@
 {
-  facts,
   lib,
   pkgs,
   ...
