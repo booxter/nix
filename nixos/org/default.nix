@@ -13,7 +13,7 @@ let
   vikunjaOidcProviderKey = "sso";
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
-  vikunjaTimezone = "America/New_York";
+  vikunjaTimezone = config.host.site.timeZone;
 in
 {
   system.stateVersion = "25.11";

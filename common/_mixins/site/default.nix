@@ -21,6 +21,14 @@ in
       description = "Physical site assigned by host facts.";
     };
 
+    timeZone = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = if site == null then null else site.timeZone;
+      readOnly = true;
+      internal = true;
+      description = "IANA timezone of the physical site.";
+    };
+
     uplink = {
       downloadMbit = lib.mkOption {
         type = with lib.types; nullOr positiveNumber;

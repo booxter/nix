@@ -210,7 +210,7 @@ in
           PEOPLE_API_URL = "https://people.pinepods.online";
           DEBUG_MODE = "true";
           DEFAULT_LANGUAGE = "en";
-          TZ = "America/New_York";
+          TZ = config.host.site.timeZone;
           PUID = toString accounts.uids.pinepods;
           PGID = toString config.users.groups.media.gid;
 

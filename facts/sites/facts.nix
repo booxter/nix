@@ -1,6 +1,8 @@
-# Per-site capacity and policy facts.
+# Physical-site facts and policies.
 {
   home = {
+    timeZone = "America/New_York";
+
     uplink = {
       downloadMbit = 1000;
       uploadMbit = 40;

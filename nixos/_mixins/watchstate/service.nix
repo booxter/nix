@@ -36,7 +36,7 @@ in
         pull = "never";
         user = "${toString uid}:${toString uid}";
         environment = {
-          TZ = "America/New_York";
+          TZ = config.host.site.timeZone;
           WS_TRUST_LOCAL = "true";
           WS_CRON_IMPORT = "true";
           WS_CRON_IMPORT_AT = "0 */12 * * *";
