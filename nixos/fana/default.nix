@@ -17,11 +17,11 @@
     ./grafana
     ./loki.nix
     ./prometheus.nix
-    ./unpoller.nix
     ./monitoring
   ];
 
   host.observability = {
+    unifi.enable = true;
     nodeExporter = {
       listenAddress = "127.0.0.1";
       mtls.enable = false;

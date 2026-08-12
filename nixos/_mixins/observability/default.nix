@@ -7,5 +7,6 @@
     ./node-exporter.nix
     ./prometheus-endpoints.nix
     ./systemd-expectations.nix
+    ./unifi
   ];
 }

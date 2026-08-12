@@ -72,7 +72,6 @@ let
       pkgs
       ;
   };
-  unpollerScrapes = import ./scrapes/unpoller.nix { };
   retentionDays = 365;
   prometheusRetention = "${toString retentionDays}d";
 in
@@ -147,7 +146,6 @@ in
     ++ nutScrapes.scrapeConfigs
     ++ blackboxScrapes.scrapeConfigs
     ++ endpointScrapes.scrapeConfigs
-    ++ unpollerScrapes.scrapeConfigs
     ++ wireguardScrapes.scrapeConfigs;
   };
 }
