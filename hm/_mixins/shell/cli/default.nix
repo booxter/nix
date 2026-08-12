@@ -146,7 +146,7 @@ lib.mkIf userEnvironment.features.shell.enable {
       fd
       fzf
       mkpasswd
-      (homeManagerPkgs.page.override { neovim = pkgs.neovim; })
+      (homeManagerPkgs.page.override { neovim = config.host.hm.vim.package; })
       openssl
       wget
       yq-go

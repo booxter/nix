@@ -9,6 +9,7 @@
     ./_mixins/security
     ./_mixins/shell
     ./_mixins/ssh
+    ./_mixins/vim
   ];
 
 }
