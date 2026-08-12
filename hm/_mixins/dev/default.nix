@@ -1,7 +1,6 @@
 {
   imports = [
     ./agents
-    ./attention-inbox
     ./cli
     ./editor
     ./nix

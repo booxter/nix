@@ -59,21 +59,20 @@ def test_parse_json_records_rejects_invalid_output(output: str) -> None:
 
 def test_normalizes_gitlab_fields() -> None:
     item = normalize_gitlab_todo(gitlab_todo(7, action="approval_required"))
-    assert item.to_json() == {
-        "id": "gitlab:7",
-        "source": "gitlab",
-        "source_id": 7,
-        "kind": "merge_request",
-        "reason": "approval_required",
-        "context": "tools/widget",
-        "reference": "!42",
-        "title": "Review the change",
-        "body": "Please take a look.",
-        "url": "https://gitlab.example.com/tools/widget/-/merge_requests/42",
-        "author": {"name": "Ada Lovelace", "username": "ada"},
-        "created_at": "2026-07-16T11:00:00Z",
-        "updated_at": "2026-07-16T12:00:00Z",
-    }
+    assert item.id == "gitlab:7"
+    assert item.source == "gitlab"
+    assert item.source_id == 7
+    assert item.kind == "merge_request"
+    assert item.reason == "approval_required"
+    assert item.context == "tools/widget"
+    assert item.reference == "!42"
+    assert item.title == "Review the change"
+    assert item.body == "Please take a look."
+    assert item.url == "https://gitlab.example.com/tools/widget/-/merge_requests/42"
+    assert item.author.name == "Ada Lovelace"
+    assert item.author.username == "ada"
+    assert item.created_at == "2026-07-16T11:00:00Z"
+    assert item.updated_at == "2026-07-16T12:00:00Z"
 
 
 def test_normalizes_offset_timestamps_to_utc() -> None:

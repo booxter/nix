@@ -40,9 +40,9 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "attention_inbox" ];
 
   meta = {
-    description = "Collect attention items from external services into one inbox";
+    description = "Show external-service attention items in SketchyBar";
     license = lib.licenses.mit;
-    mainProgram = "attention-inbox";
+    mainProgram = "attention-inbox-sketchybar";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }
