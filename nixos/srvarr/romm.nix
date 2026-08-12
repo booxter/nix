@@ -9,7 +9,7 @@
 }:
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
-  rommSso = facts.sso.applications.romm;
+  rommSso = config.host.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
     rommSso.editorGroup
@@ -18,9 +18,13 @@ let
   rommGroupsFor = person: builtins.filter (group: builtins.elem group person.groups) rommAccessGroups;
   rommAdmins = lib.filterAttrs (
     _: person: builtins.elem rommSso.adminGroup person.groups
-  ) facts.sso.users;
-  rommAuthorizedUsers = lib.filterAttrs (_: person: rommGroupsFor person != [ ]) facts.sso.users;
-  mediaUsers = lib.filterAttrs (_: person: builtins.elem "media-users" person.groups) facts.sso.users;
+  ) config.host.sso.users;
+  rommAuthorizedUsers = lib.filterAttrs (
+    _: person: rommGroupsFor person != [ ]
+  ) config.host.sso.users;
+  mediaUsers = lib.filterAttrs (
+    _: person: builtins.elem "media-users" person.groups
+  ) config.host.sso.users;
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.

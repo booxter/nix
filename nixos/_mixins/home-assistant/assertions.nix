@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.home-assistant;
-  homeAssistantSso = facts.sso.applications.home-assistant;
-  bootstrapOwner = facts.sso.users.${homeAssistantSso.bootstrapOwner};
+  homeAssistantSso = config.host.sso.applications.home-assistant;
+  bootstrapOwner = config.host.sso.users.${homeAssistantSso.bootstrapOwner};
 in
 {
   config = lib.mkIf cfg.enable {

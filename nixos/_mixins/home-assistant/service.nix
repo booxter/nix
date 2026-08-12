@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.home-assistant;
-  homeAssistantSso = facts.sso.applications.home-assistant;
+  homeAssistantSso = config.host.sso.applications.home-assistant;
   oidcClient = config.host.sso.oidc.clients.home-assistant;
 in
 {

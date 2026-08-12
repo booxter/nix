@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
@@ -9,7 +8,7 @@ let
   homeAssistantTools = config.host.home-assistant.internal.tools;
   stateDir = "/var/lib/hass";
   databasePath = "${stateDir}/home-assistant_v2.db";
-  homeAssistantSso = facts.sso.applications.home-assistant;
+  homeAssistantSso = config.host.sso.applications.home-assistant;
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
   baseUrl = cfg.localUrl;
   clientId = "${cfg.localUrl}/";

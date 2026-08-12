@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkiPkgs,
@@ -10,7 +9,7 @@
 }:
 let
   idPublicHost = config.host.web.services.id.public.hostName;
-  sso = facts.sso;
+  sso = config.host.sso;
   oidcClients = import ./oidc-clients.nix {
     inherit lib outputs;
     providerHost = config.networking.hostName;
@@ -58,7 +57,7 @@ let
   mailSenderTokenFile = "${mailSenderStateDir}/token";
   mailSenderRuntimeDir = "/run/kanidm-mail-sender";
   mailSenderConfigFile = "${mailSenderRuntimeDir}/mail-sender.toml";
-  personMailUsers = lib.filterAttrs (_: person: person ? mailAddressSopsKey) sso.users;
+  personMailUsers = lib.filterAttrs (_: person: person.mailAddressSopsKey != null) sso.users;
   personMailSecretName = name: "kanidm-person-mail-address-${name}";
   personMailProvisionService = "kanidm-person-mail-provision";
   personMailProvisionDir = "/run/${personMailProvisionService}";
@@ -70,7 +69,7 @@ let
       displayName = person.displayName;
       groups = person.groups;
     }
-    // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
+    // lib.optionalAttrs (person.legalName != null) { inherit (person) legalName; }
   ) sso.users;
   personMailProvision = pkiPkgs.kanidm-person-mail-provision;
   personMailProvisionArgs = [

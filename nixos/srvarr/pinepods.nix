@@ -12,9 +12,9 @@ let
   ociImages = import ../_lib/oci-images.nix { inherit facts pkgs; };
 
   pinepodsService = config.host.web.services.pinepods;
-  pinepodsSso = facts.sso.applications.pinepods;
+  pinepodsSso = config.host.sso.applications.pinepods;
   bootstrapOwnerName = pinepodsSso.bootstrapOwner;
-  bootstrapAdmin = facts.sso.users.${bootstrapOwnerName};
+  bootstrapAdmin = config.host.sso.users.${bootstrapOwnerName};
   oidcClient = config.host.sso.oidc.clients.pinepods;
   oidcScopes = config.host.sso.oidc.baseScopes;
   image = ociImages.pinepods.ref;

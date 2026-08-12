@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
@@ -10,7 +9,7 @@ let
   adminUsers = lib.attrNames (
     lib.filterAttrs (
       _: person: lib.any (group: builtins.elem group person.groups) cfg.authProxy.adminGroups
-    ) facts.sso.users
+    ) config.host.sso.users
   );
 in
 {

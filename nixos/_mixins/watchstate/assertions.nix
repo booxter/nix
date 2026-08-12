@@ -1,15 +1,14 @@
 {
   config,
-  facts,
   outputs,
   ...
 }:
 let
   cfg = config.host.watchstate;
   model = import ./model.nix { inherit config outputs; };
-  sso = facts.sso.applications.watchstate;
+  sso = config.host.sso.applications.watchstate;
   systemUser = sso.bootstrapOwner;
-  systemAccount = facts.sso.users.${systemUser};
+  systemAccount = config.host.sso.users.${systemUser};
 in
 {
   assertions = [

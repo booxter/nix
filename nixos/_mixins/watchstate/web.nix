@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.watchstate;
   hostName = "watchstate.${config.host.network.lanDomain}";
-  sso = facts.sso.applications.watchstate;
+  sso = config.host.sso.applications.watchstate;
 in
 {
   config = lib.mkIf cfg.enable {

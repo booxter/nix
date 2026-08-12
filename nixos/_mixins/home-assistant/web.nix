@@ -1,12 +1,11 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.home-assistant;
-  homeAssistantSso = facts.sso.applications.home-assistant;
+  homeAssistantSso = config.host.sso.applications.home-assistant;
   oidcScopes = config.host.sso.oidc.baseScopes;
   hostName = "home.${config.host.network.lanDomain}";
 in

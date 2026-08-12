@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   utils,
@@ -8,7 +7,7 @@
 }:
 let
   cfg = config.host.watchstate;
-  systemUser = facts.sso.applications.watchstate.bootstrapOwner;
+  systemUser = config.host.sso.applications.watchstate.bootstrapOwner;
   atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
   tools = pkgs.callPackage ./packages/tools { inherit atomicFileWrites; };
   renderAuth = utils.escapeSystemdExecArgs [

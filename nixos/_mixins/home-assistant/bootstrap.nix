@@ -1,14 +1,13 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.home-assistant;
-  homeAssistantSso = facts.sso.applications.home-assistant;
+  homeAssistantSso = config.host.sso.applications.home-assistant;
   bootstrapOwnerName = homeAssistantSso.bootstrapOwner;
-  bootstrapOwner = facts.sso.users.${bootstrapOwnerName};
+  bootstrapOwner = config.host.sso.users.${bootstrapOwnerName};
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
 in
 {
