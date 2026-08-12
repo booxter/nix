@@ -10,6 +10,15 @@ let
   scmCfg = devCfg.scm;
 in
 lib.mkIf (devCfg.enable && scmCfg.enable) {
+  host.hm.ssh.knownHosts."github.com" = {
+    hostNames = [ "github.com" ];
+    publicKeys = [
+      facts.public-keys.hosts."github.com.ed25519"
+      facts.public-keys.hosts."github.com.rsa"
+      facts.public-keys.hosts."github.com.ecdsa"
+    ];
+  };
+
   programs.git.settings = {
     url."git@github.com:".pushInsteadOf = "https://github.com/";
 
@@ -52,22 +61,9 @@ lib.mkIf (devCfg.enable && scmCfg.enable) {
     settings.repoPaths.":owner/:repo" = "~/src/:repo";
   };
 
-  home.file = {
-    ".ssh/config.d/github.com".text = ''
-      Host github.com
-        Hostname github.com
-        HostKeyAlias github.com
-        UserKnownHostsFile ~/.ssh/known_hosts.d/github.com
-        User git
-    '';
-
-    ".ssh/known_hosts.d/github.com".text =
-      lib.concatStringsSep "\n" [
-        facts.public-keys.hosts."github.com.ed25519"
-        facts.public-keys.hosts."github.com.rsa"
-        facts.public-keys.hosts."github.com.ecdsa"
-      ]
-      + "\n";
+  programs.ssh.settings."github.com" = {
+    HostName = "github.com";
+    User = "git";
   };
 
   home.packages = [ pkgs.gh ];

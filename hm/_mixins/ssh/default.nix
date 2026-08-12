@@ -22,7 +22,10 @@ let
   '';
 in
 {
-  imports = [ ./ticket-client.nix ];
+  imports = [
+    ./known-hosts.nix
+    ./ticket-client.nix
+  ];
 
   config = lib.mkIf enabled {
     home.sessionVariables = {
