@@ -5,6 +5,8 @@ in
 {
   system.stateVersion = "25.11";
 
+  hardware.cpu.intel.updateMicrocode = true;
+
   host = {
     nix.builder = {
       enable = true;

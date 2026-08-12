@@ -8,6 +8,8 @@
     ./storage.nix
   ];
 
+  hardware.cpu.intel.updateMicrocode = true;
+
   host.observability.blackbox.remote.enable = true;
   host.web.ingress = {
     enable = true;

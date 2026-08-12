@@ -1,6 +1,8 @@
 {
   system.stateVersion = "25.11";
 
+  hardware.cpu.amd.updateMicrocode = true;
+
   host.isProxmox = true;
   host.network = {
     interfaces.enp5s0f0np0.kind = "ethernet";
