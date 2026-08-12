@@ -10,7 +10,7 @@ in
     defaultOrder = 500;
   };
 
-  assertions = [
+  config.assertions = [
     {
       assertion = !cfg.enable || config.host.hm.spotify.enable;
       message = "host.hm.sketchybar.spotify requires host.hm.spotify.";

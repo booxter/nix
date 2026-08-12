@@ -12,7 +12,7 @@ in
     defaultOrder = 100;
   };
 
-  assertions = [
+  config.assertions = [
     {
       assertion = !cfg.enable || config.host.hm.aerospace.enable;
       message = "host.hm.sketchybar.aerospace requires host.hm.aerospace.";
