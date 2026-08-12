@@ -7,15 +7,16 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  featureCfg = osConfig.host.userEnvironment.features.containers;
+  podmanCfg = config.host.hm.podman;
   cfg = config.programs.podman-machine;
-  machineConfig = pkgs.writeText "podman-machine.conf" ''
-    [machine]
-    cpus = ${toString cfg.cpus}
-    disk_size = ${toString cfg.diskSizeGiB}
-    memory = ${toString cfg.memoryMiB}
-    provider = ${builtins.toJSON cfg.provider}
-  '';
+  machineConfig = (pkgs.formats.toml { }).generate "podman-machine.conf" {
+    machine = {
+      cpus = cfg.cpus;
+      disk_size = cfg.diskSizeGiB;
+      memory = cfg.memoryMiB;
+      provider = cfg.provider;
+    };
+  };
   podmanMachineEnsure = pkgs.callPackage ./pkgs/podman-machine-ensure {
     podman = cfg.package;
   };
@@ -86,16 +87,7 @@ in
   };
 
   config = lib.mkMerge [
-    (lib.mkIf featureCfg.enable {
-      programs.podman-machine = {
-        enable = featureCfg.machine.enable && isDarwin;
-        provider = "libkrun";
-        cpus = 4;
-        memoryMiB = 8192;
-        diskSizeGiB = 100;
-        autoStart = true;
-      };
-    })
+    { programs.podman-machine.enable = podmanCfg.enable && podmanCfg.machine.enable; }
     (lib.mkIf cfg.enable {
       assertions = [
         {

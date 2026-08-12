@@ -101,22 +101,6 @@ in
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
-      containers = {
-        enable = lib.mkEnableOption "Podman container development environment";
-
-        machine.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to manage a Podman virtual machine on Darwin.";
-        };
-
-        desktop.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = "Whether to provide Podman Desktop.";
-        };
-      };
-
       shell = {
         enable = lib.mkOption {
           type = lib.types.bool;

@@ -6,22 +6,19 @@ let
       roles.developer = {
         features = {
           dev.agents.codex.warmer.enable = true;
-          containers.enable = true;
           shell.llm.enable = true;
           dev.scm = {
             identity = "personal";
             sendEmail.transport = "gmail";
           };
         };
+        hm.podman = {
+          enable = true;
+          machine.enable = config.host.isDarwin;
+        };
         repositories.requests.preset = [ "dotfiles" ];
       };
       roles.workstation = {
-        features = {
-          containers = {
-            enable = true;
-            desktop.enable = true;
-          };
-        };
         hm = {
           gmailctl = {
             enable = true;
@@ -29,6 +26,11 @@ let
           };
           matrix.enable = true;
           obsidian.enable = true;
+          podman = {
+            enable = true;
+            desktop.enable = true;
+            machine.enable = config.host.isDarwin;
+          };
           spotify = {
             enable = true;
             spicetify.enable = true;

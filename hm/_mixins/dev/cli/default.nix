@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   pkgs,
@@ -7,7 +8,7 @@
 let
   inherit (osConfig.host) isDarwin;
   cfg = osConfig.host.userEnvironment.features.dev;
-  containersCfg = osConfig.host.userEnvironment.features.containers;
+  podmanCfg = config.host.hm.podman;
   cliPkgs = import ./pkgs { inherit pkgs; };
   # On macOS, act connects through the forwarded host socket, but job
   # containers need the VM-internal socket with SELinux labeling disabled.
@@ -28,7 +29,7 @@ lib.mkIf (cfg.enable && cfg.cli.enable) {
     python313
   ];
 
-  home.shellAliases = lib.mkIf containersCfg.enable {
+  home.shellAliases = lib.mkIf podmanCfg.enable {
     # remove once https://github.com/nektos/act/issues/2329 is fixed
     act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04${actPodmanArgs}";
   };
