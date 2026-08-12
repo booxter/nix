@@ -1,29 +1,19 @@
 { config, lib, ... }:
 let
-  cfg = config.host.vpn;
-  enabledNamespaces = lib.filterAttrs (_: namespace: namespace.enable) cfg.namespaces;
-  enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
-  unknownNamespaces = lib.filterAttrs (
-    _: client: !builtins.hasAttr client.namespace cfg.namespaces
-  ) enabledClients;
-  disabledNamespaces = lib.filterAttrs (
-    _: client:
-    builtins.hasAttr client.namespace cfg.namespaces && !cfg.namespaces.${client.namespace}.enable
-  ) enabledClients;
-  serviceNames = map (client: client.serviceName) (builtins.attrValues enabledClients);
+  model = import ./model.nix { inherit config lib; };
 in
 {
-  assertions = lib.optionals (enabledNamespaces != { } || enabledClients != { }) [
+  assertions = lib.optionals model.active [
     {
-      assertion = unknownNamespaces == { };
-      message = "host.vpn.clients reference unknown namespaces: ${lib.concatStringsSep ", " (builtins.attrNames unknownNamespaces)}";
+      assertion = model.unknownNamespaces == { };
+      message = "host.vpn.clients reference unknown namespaces: ${lib.concatStringsSep ", " (builtins.attrNames model.unknownNamespaces)}";
     }
     {
-      assertion = disabledNamespaces == { };
-      message = "host.vpn.clients reference disabled namespaces: ${lib.concatStringsSep ", " (builtins.attrNames disabledNamespaces)}";
+      assertion = model.disabledNamespaces == { };
+      message = "host.vpn.clients reference disabled namespaces: ${lib.concatStringsSep ", " (builtins.attrNames model.disabledNamespaces)}";
     }
     {
-      assertion = builtins.length serviceNames == builtins.length (lib.unique serviceNames);
+      assertion = builtins.length model.serviceNames == builtins.length (lib.unique model.serviceNames);
       message = "host.vpn.clients must use unique systemd service names";
     }
   ];
