@@ -5,6 +5,7 @@
   isLinux,
   lib,
   outputs,
+  pkgs,
   ...
 }:
 let
@@ -104,20 +105,26 @@ in
     };
   };
 
-  config = lib.mkIf config.host.attic.server.enable {
-    host.nix.cacheContributions.${config.networking.hostName} = {
-      scope = "realm";
-      substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
-      trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
-      reachability = {
-        kind = "internal";
-        network = config.host.realm;
-      };
-      priorities = {
-        default = 30;
-        tunnelInactive = 10;
-        tunnelActive = 30;
-      };
-    };
+  config = {
+    environment.systemPackages = lib.optional (
+      config.host.attic.client.enable || config.host.attic.server.enable
+    ) pkgs.attic-client;
+
+    host.nix.cacheContributions.${config.networking.hostName} =
+      lib.mkIf config.host.attic.server.enable
+        {
+          scope = "realm";
+          substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
+          trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
+          reachability = {
+            kind = "internal";
+            network = config.host.realm;
+          };
+          priorities = {
+            default = 30;
+            tunnelInactive = 10;
+            tunnelActive = 30;
+          };
+        };
   };
 }
