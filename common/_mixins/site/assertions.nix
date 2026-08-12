@@ -1,29 +1,31 @@
-{
-  config,
-  facts,
-  hostSpec,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 let
-  siteName = hostSpec.site or "home";
-  site = if siteName == null then null else facts.sites.${siteName} or null;
+  cfg = config.host.site;
+  values = [
+    cfg.timeZone
+    cfg.uplink.downloadMbit
+    cfg.uplink.uploadMbit
+    cfg.policies.backups.maxUploadMbit
+    cfg.policies.downloaders.maxDownloadMbit
+  ];
+  configured = value: value != null;
 in
 {
   config.assertions = [
     {
-      assertion = siteName == null || site != null;
-      message = "host '${config.networking.hostName}' references unknown site '${toString siteName}'";
+      assertion =
+        if cfg.name == null then lib.all (value: !configured value) values else lib.all configured values;
+      message = "host.site properties must all be configured exactly when host.site.name is set";
     }
   ]
-  ++ lib.optionals (site != null) [
+  ++ lib.optionals (cfg.name != null && lib.all configured values) [
     {
-      assertion = site.policies.backups.maxUploadMbit <= site.uplink.uploadMbit;
-      message = "site '${siteName}' backup policy must not exceed its upload capacity";
+      assertion = cfg.policies.backups.maxUploadMbit <= cfg.uplink.uploadMbit;
+      message = "site '${cfg.name}' backup policy must not exceed its upload capacity";
     }
     {
-      assertion = site.policies.downloaders.maxDownloadMbit <= site.uplink.downloadMbit;
-      message = "site '${siteName}' downloader policy must not exceed its download capacity";
+      assertion = cfg.policies.downloaders.maxDownloadMbit <= cfg.uplink.downloadMbit;
+      message = "site '${cfg.name}' downloader policy must not exceed its download capacity";
     }
   ];
 }
