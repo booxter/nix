@@ -27,10 +27,13 @@ let
             enable = true;
             warmer.enable = true;
           };
+          matrix.enable = true;
+          obsidian.enable = true;
           spotify = {
             enable = true;
             spicetify.enable = true;
           };
+          telegram.enable = true;
           thunderbird = {
             enable = true;
             user = "personal";
@@ -67,10 +70,13 @@ let
           apps.teams.enable = true;
         };
         hm = {
+          matrix.enable = true;
+          obsidian.enable = true;
           spotify = {
             enable = true;
             spicetify.enable = true;
           };
+          telegram.enable = true;
           thunderbird = {
             enable = true;
             user = "nvidia";

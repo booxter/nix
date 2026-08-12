@@ -239,18 +239,6 @@ in
       apps = {
         enable = lib.mkEnableOption "graphical workstation application suite";
 
-        communication.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide graphical communication clients.";
-        };
-
-        notes.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the graphical notes application.";
-        };
-
         chatgpt.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
