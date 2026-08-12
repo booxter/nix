@@ -15,7 +15,7 @@ in
 {
   realm = configuredHost.host.realm;
   authority = configuredHost.host.pki.realmAuthority;
-  ca_url = if configuredHost.host.pki.role == "authority" then authority.url else null;
+  ca_url = if configuredHost.host.pki.role == "authority" then authority.api.url else null;
   identity = {
     dns_name = dnsName;
     networking_name = networkingName;

@@ -155,22 +155,38 @@ in
     };
 
     authority = {
+      displayName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "${config.host.realm} Internal PKI";
+        description = "Human-readable name for the realm certificate authority.";
+      };
+
       rootCaCertificate = lib.mkOption {
         type = with lib.types; nullOr path;
         default = null;
         description = "Root CA certificate published by this authority.";
       };
 
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 8443;
-        description = "HTTPS port of the certificate authority API.";
-      };
+      api = {
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8443;
+          description = "HTTPS port of the certificate authority API.";
+        };
 
-      rootsPath = lib.mkOption {
-        type = lib.types.str;
-        default = "/roots.pem";
-        description = "Certificate authority API path serving the trusted root bundle.";
+        rootsPath = lib.mkOption {
+          type = lib.types.str;
+          default = "/roots.pem";
+          description = "Certificate authority API path serving the trusted root bundle.";
+        };
+
+        url = lib.mkOption {
+          type = lib.types.str;
+          default = "https://${config.networking.hostName}:${toString cfg.authority.api.port}";
+          readOnly = true;
+          internal = true;
+          description = "Resolved certificate authority API URL.";
+        };
       };
 
       provisioner = lib.mkOption {
@@ -185,13 +201,6 @@ in
         description = "Lifetime of leaf certificates issued by this authority.";
       };
 
-      url = lib.mkOption {
-        type = lib.types.str;
-        default = "https://${config.networking.hostName}:${toString cfg.authority.port}";
-        readOnly = true;
-        internal = true;
-        description = "Resolved certificate authority API URL.";
-      };
     };
 
     realmAuthority = lib.mkOption {

@@ -1,55 +1,11 @@
 {
-  config,
-  facts,
-  hostSpec,
   lib,
-  outputs,
   pkgs,
-  utils,
   ...
 }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   pkiPkgs = import ./pkgs pkgs;
-  caName = "Home Internal PKI";
-  certLifetimeDays = 180;
-  certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
-  caPort = config.host.pki.authority.port;
-  caUrl = "https://${config.networking.hostName}:${toString caPort}";
-  caProvisioner = "bootstrap@${config.host.network.lanDomain}";
-  pkiRotationBaseBranch = "master";
-  pkiStatusInventory = import ./inventory.nix {
-    inherit facts lib outputs;
-    rootCaCertificate = ./root-ca.crt;
-  };
-  pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
-  pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
-  stepStateDir = "/var/lib/step-ca";
-  stepPasswordFile = "${stepStateDir}/password.txt";
-  caDnsNames = lib.unique (
-    hostSpec.certificateDnsNames
-    ++ [
-      config.networking.hostName
-      config.services.avahi.hostName
-      "${config.services.avahi.hostName}.local"
-    ]
-  );
-  bootstrapConfig = (pkgs.formats.json { }).generate "step-ca-bootstrap.json" {
-    stateDirectory = stepStateDir;
-    name = caName;
-    url = caUrl;
-    dnsNames = caDnsNames;
-    address = ":${toString caPort}";
-    provisioner = caProvisioner;
-    certificateLifetime = certLifetime;
-  };
-  bootstrapCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe pkiPkgs.step-ca-bootstrap)
-    "--config"
-    bootstrapConfig
-    "--step"
-    (lib.getExe pkgs.step-cli)
-  ];
 in
 {
   system.stateVersion = "25.11";
@@ -61,7 +17,6 @@ in
     ./uptimerobot-sync.nix
   ];
 
-  host.backups.sources.step-ca.paths = [ stepStateDir ];
   host.backups.destinations.primary = {
     server = "beast";
     publicKey = readPublicKey ./restic.pub;
@@ -70,6 +25,7 @@ in
   host.pki = {
     role = "authority";
     authority = {
+      displayName = "Home Internal PKI";
       rootCaCertificate = ./root-ca.crt;
     };
   };
@@ -92,131 +48,4 @@ in
 
   host.ups.client.server = "prx1-lab";
 
-  sops.secrets.pkiRotationGithubToken = {
-    key = "github/pki_rotation/token";
-    mode = "0400";
-    restartUnits = [ "pki-rotate.service" ];
-  };
-
-  # Run the PKI host behind the standard node-exporter mTLS configuration.
-  host.observability.enable = true;
-  host.observability.nodeExporter.mtls.enable = true;
-
-  networking.firewall.allowedTCPPorts = [ caPort ];
-
-  environment.systemPackages = with pkgs; [
-    pki-rotation
-    step-ca
-    step-cli
-  ];
-
-  users.users.step-ca = {
-    isSystemUser = true;
-    group = "step-ca";
-    home = stepStateDir;
-    createHome = false;
-  };
-
-  users.groups.step-ca = { };
-
-  # TODO: once CA material is managed explicitly instead of bootstrapped on
-  # first boot, switch this host to nixpkgs `services.step-ca`.
-  systemd.services.step-ca = {
-    description = "Smallstep certificate authority";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Type = "notify";
-      User = "step-ca";
-      Group = "step-ca";
-      UMask = "0077";
-      StateDirectory = "step-ca";
-      WorkingDirectory = stepStateDir;
-      Environment = [
-        "HOME=${stepStateDir}"
-        "STEPPATH=${stepStateDir}"
-      ];
-      ExecStartPre = bootstrapCommand;
-      ExecStart = "${pkgs.step-ca}/bin/step-ca ${stepStateDir}/config/ca.json --password-file ${stepPasswordFile}";
-      Restart = "on-failure";
-      RestartSec = "5s";
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -"
-  ];
-
-  systemd.services.pki-status-export = {
-    description = "Export internal PKI status metrics for node exporter";
-    wants = [ "step-ca.service" ];
-    after = [ "step-ca.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = ''
-        ${pkgs.pki-rotation}/bin/pki-rotation \
-          --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
-          export-metrics \
-          --inventory-manifest ${pkiStatusInventory} \
-          --output ${pkiStatusMetricsPath}
-      '';
-    };
-  };
-
-  systemd.timers.pki-status-export = {
-    description = "Refresh internal PKI status metrics";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "5m";
-      OnUnitActiveSec = "1h";
-      RandomizedDelaySec = "5m";
-      Persistent = true;
-      Unit = "pki-status-export.service";
-    };
-  };
-
-  systemd.services.pki-rotate = {
-    description = "Rotate due internal PKI leaf certs and open a review PR";
-    wants = [
-      "network-online.target"
-      "sops-install-secrets.service"
-      "step-ca.service"
-    ];
-    after = [
-      "network-online.target"
-      "sops-install-secrets.service"
-      "step-ca.service"
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      Environment = [
-        "HOME=/root"
-        "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
-      ];
-      ExecStart = ''
-        ${pkgs.pki-rotation}/bin/pki-rotation \
-          --rotation-window-days 45 \
-          --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
-          --sops-age-key-file /var/lib/sops-nix/key.txt \
-          rotate \
-          --base-branch ${pkiRotationBaseBranch} \
-          --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
-          --metrics-output ${pkiRotationMetricsPath}
-      '';
-    };
-  };
-
-  systemd.timers.pki-rotate = {
-    description = "Run the internal PKI rotation controller";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "daily";
-      RandomizedDelaySec = "1h";
-      Persistent = true;
-      Unit = "pki-rotate.service";
-    };
-  };
 }

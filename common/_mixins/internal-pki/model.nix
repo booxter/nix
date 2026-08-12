@@ -37,12 +37,10 @@ let
         inherit (candidate) hostName realm;
         inherit (candidate.authority)
           leafLifetimeDays
-          port
           provisioner
           rootCaCertificate
-          rootsPath
-          url
           ;
+        inherit (candidate.authority.api) port rootsPath url;
       }
     else
       null;

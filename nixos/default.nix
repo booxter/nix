@@ -40,6 +40,7 @@
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/paperless
+      ./_mixins/pki
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/romm
