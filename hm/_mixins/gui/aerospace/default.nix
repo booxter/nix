@@ -13,7 +13,7 @@ let
   sketchybarHeight = 30; # TODO: parametrize it?
 
   aerospaceX11Actions = pkgs.callPackage ./pkgs { };
-  defaultWorkspaceNames = map toString (lib.range 1 4);
+  defaultWorkspaceNames = map toString (lib.range 1 cfg.numberedWorkspaces);
   requestedWorkspaceNames = builtins.attrNames cfg.workspaces;
   workspaceNames = lib.unique (defaultWorkspaceNames ++ requestedWorkspaceNames);
   workspaceRules = lib.concatMap (
@@ -58,6 +58,12 @@ in
       type = lib.types.bool;
       default = guiCfg.x11.enable;
       description = "Whether AeroSpace actions should support X11 windows.";
+    };
+
+    numberedWorkspaces = lib.mkOption {
+      type = lib.types.ints.between 1 9;
+      default = 4;
+      description = "Number of persistent numbered workspaces.";
     };
 
     workspaces = lib.mkOption {
