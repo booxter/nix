@@ -157,7 +157,7 @@ in
     };
     presentation.dashboard = {
       enable = true;
-      category = "media-admin";
+      section = "media-admin";
     };
     internal = {
       recommendedProxySettings = false;

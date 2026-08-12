@@ -44,7 +44,7 @@ in
         title = "Vikunja";
         dashboard = {
           enable = true;
-          category = "user";
+          section = "user";
         };
       };
     };

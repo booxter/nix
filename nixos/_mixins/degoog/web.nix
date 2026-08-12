@@ -43,7 +43,7 @@ in
         icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
         dashboard = {
           enable = true;
-          category = "user";
+          section = "user";
         };
       };
       auth = {

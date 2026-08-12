@@ -41,7 +41,7 @@ in
         icon = "sh:home-assistant";
         dashboard = {
           enable = true;
-          category = "infrastructure";
+          section = "infrastructure";
         };
       };
       internal.locationExtraConfig = ''

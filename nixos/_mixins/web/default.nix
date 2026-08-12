@@ -474,10 +474,10 @@ in
                   default = false;
                   description = "Whether to show ${serviceName} on the service dashboard.";
                 };
-                category = lib.mkOption {
+                section = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
                   default = null;
-                  description = "Dashboard category containing the service.";
+                  description = "Dashboard section containing the service.";
                 };
               };
             };

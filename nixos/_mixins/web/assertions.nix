@@ -34,7 +34,7 @@ in
       }
       {
         assertion =
-          !service.presentation.dashboard.enable || service.presentation.dashboard.category != null;
+          !service.presentation.dashboard.enable || service.presentation.dashboard.section != null;
         message = "host.web.services.${serviceName} dashboard entries require a category";
       }
       {

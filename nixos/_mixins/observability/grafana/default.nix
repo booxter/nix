@@ -356,7 +356,7 @@ in
       };
       presentation.dashboard = {
         enable = true;
-        category = "infrastructure";
+        section = "infrastructure";
       };
     };
 

@@ -201,7 +201,7 @@ in
       icon = "sh:houndarr.png";
       dashboard = {
         enable = true;
-        category = "media-admin";
+        section = "media-admin";
       };
     };
   };

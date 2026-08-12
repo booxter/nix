@@ -28,7 +28,7 @@ in
         icon = "sh:watchstate.png";
         dashboard = {
           enable = true;
-          category = "media-admin";
+          section = "media-admin";
         };
       };
       internal.locationExtraConfig = ''

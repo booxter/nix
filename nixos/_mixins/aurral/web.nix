@@ -52,7 +52,7 @@ in
           observability.importance = "important";
           presentation.dashboard = {
             enable = true;
-            category = "user";
+            section = "user";
           };
           auth = lib.mkIf cfg.authProxy.enable {
             mode = "oauth2-proxy";

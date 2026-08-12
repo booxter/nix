@@ -648,7 +648,7 @@ in
       title = "RomM";
       dashboard = {
         enable = true;
-        category = "user";
+        section = "user";
       };
     };
   };

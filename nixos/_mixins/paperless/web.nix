@@ -39,7 +39,7 @@ in
         icon = "sh:paperless-ngx";
         dashboard = {
           enable = true;
-          category = "infrastructure";
+          section = "infrastructure";
         };
       };
       internal = {
@@ -81,7 +81,7 @@ in
         icon = "sh:paperless-ngx";
         dashboard = {
           enable = true;
-          category = "infrastructure";
+          section = "infrastructure";
         };
       };
       auth = lib.mkIf (ssoApplication != null) {

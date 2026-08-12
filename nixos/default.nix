@@ -23,6 +23,7 @@
       ./_mixins/builder.nix
       ./_mixins/desktop
       ./_mixins/degoog
+      ./_mixins/dashboard
       ./_mixins/external-service.nix
       ./_mixins/hardware
       ./_mixins/hm

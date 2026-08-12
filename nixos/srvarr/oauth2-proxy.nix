@@ -10,7 +10,7 @@ let
     _: service:
     service.enable
     && service.presentation.dashboard.enable
-    && service.presentation.dashboard.category == "media-admin"
+    && service.presentation.dashboard.section == "media-admin"
   ) config.host.web.services;
   protectedServiceIds = builtins.attrNames protectedServices;
   protectedServiceHosts = lib.unique (

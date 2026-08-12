@@ -392,7 +392,7 @@ in
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
       dashboard = {
         enable = true;
-        category = "user";
+        section = "user";
       };
     };
     internal = {

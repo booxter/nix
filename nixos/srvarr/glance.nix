@@ -37,7 +37,7 @@ let
     in
     {
       inherit (service.presentation) icon title;
-      category = service.presentation.dashboard.category;
+      category = service.presentation.dashboard.section;
       url = "${baseUrl}/";
       probeUrl = "${baseUrl}${service.health.frontend.path}";
     }

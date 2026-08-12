@@ -200,7 +200,7 @@ in
     observability.importance = "important";
     presentation.dashboard = {
       enable = true;
-      category = "user";
+      section = "user";
     };
     internal = {
       recommendedProxySettings = false;
