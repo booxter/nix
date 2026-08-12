@@ -145,12 +145,6 @@ in
 
         agents = {
           codex = {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = true;
-              description = "Whether to provide the Codex coding agent.";
-            };
-
             usageStatus.enable = lib.mkOption {
               type = lib.types.bool;
               default = true;
@@ -161,8 +155,6 @@ in
 
             warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
           };
-
-          opencode.enable = lib.mkEnableOption "OpenCode coding agent";
         };
 
         scm = {

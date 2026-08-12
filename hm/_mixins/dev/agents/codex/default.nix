@@ -7,7 +7,7 @@
 }:
 let
   devCfg = osConfig.host.userEnvironment.features.dev;
-  codexCfg = devCfg.agents.codex;
+  cfg = config.host.hm.dev.codex;
   hasOauthHttpMcp = lib.any (server: server.http != null && server.http.auth == "oauth") (
     builtins.attrValues osConfig.host.mcp.pool
   );
@@ -34,7 +34,7 @@ in
 {
   imports = [ ./codex-warmer.nix ];
 
-  programs.codex = lib.mkIf (devCfg.enable && codexCfg.enable) {
+  programs.codex = lib.mkIf (devCfg.enable && cfg.enable) {
     enable = true;
     context = codexContext;
 
@@ -66,7 +66,7 @@ in
     };
   };
 
-  home.packages = lib.optionals (devCfg.enable && codexCfg.enable && hasOauthHttpMcp) [
+  home.packages = lib.optionals (devCfg.enable && cfg.enable && hasOauthHttpMcp) [
     codexPkgs.codex-mcp-init
   ];
 }

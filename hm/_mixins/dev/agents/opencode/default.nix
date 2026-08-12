@@ -1,15 +1,12 @@
 {
+  config,
   lib,
   osConfig,
   ...
 }:
 {
   programs.opencode =
-    lib.mkIf
-      (
-        osConfig.host.userEnvironment.features.dev.enable
-        && osConfig.host.userEnvironment.features.dev.agents.opencode.enable
-      )
+    lib.mkIf (osConfig.host.userEnvironment.features.dev.enable && config.host.hm.dev.opencode.enable)
       {
         enable = true;
         settings = {

@@ -13,5 +13,5 @@ in
     mode = "0400";
   };
 
-  host.userEnvironment.features.dev.agents.opencode.enable = true;
+  home-manager.users.${username}.host.hm.dev.opencode.enable = true;
 }

@@ -11,6 +11,7 @@ let
   devCfg = osConfig.host.userEnvironment.features.dev;
   attentionInboxCfg = devCfg.attentionInbox;
   codexCfg = devCfg.agents.codex;
+  codexEnabled = devCfg.enable && config.host.hm.dev.codex.enable;
   desktopEnvironmentEnabled = osConfig.host.userEnvironment.features.gui.enable;
   appsCfg = osConfig.host.userEnvironment.features.apps;
   microsoftTeamsEnabled = appsCfg.enable && appsCfg.teams.enable;
@@ -85,7 +86,7 @@ let
   sketchybarPlugins = import ./pkgs {
     inherit pkgs;
     attentionInbox = if devCfg.enable && attentionInboxCfg.enable then attentionInboxPackage else null;
-    codexTools = if devCfg.enable && codexCfg.enable then codexPkgs.codex-usage-status else null;
+    codexTools = if codexEnabled then codexPkgs.codex-usage-status else null;
     pluginColors = pluginColorEnv;
     alertmanager =
       if config.programs.sketchybarAlertmanager.enable then
@@ -264,7 +265,7 @@ let
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString (devCfg.enable && codexCfg.enable && codexCfg.usageStatus.enable) ''
+    lib.optionalString (codexEnabled && codexCfg.usageStatus.enable) ''
       sketchybar --add item codex.5h left                                  \
                  --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
                                 update_freq=60                             \
@@ -309,7 +310,7 @@ let
                                           background.border_width=0         \
                                           background.height=24
     ''
-    + lib.optionalString (devCfg.enable && codexCfg.enable && codexCfg.workUsageStatus.enable) ''
+    + lib.optionalString (codexEnabled && codexCfg.workUsageStatus.enable) ''
       sketchybar --add item codex.work left                                 \
                  --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
                                   update_freq=60                            \

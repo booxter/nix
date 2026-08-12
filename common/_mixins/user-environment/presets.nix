@@ -13,6 +13,7 @@ let
           dev.scm.sendEmail.transport = "gmail";
         };
         hm = {
+          dev.codex.enable = true;
           podman = {
             enable = true;
             machine.enable = config.host.isDarwin;
@@ -68,6 +69,7 @@ let
         dev.nvidia.enable = true;
         dev.scm.sendEmail.transport = "nvidia";
       };
+      roles.developer.hm.dev.codex.enable = true;
       roles.workstation = {
         features = {
           apps.homerow.enable = false;
