@@ -6,16 +6,18 @@
   ...
 }:
 let
-  guiCfg = osConfig.host.userEnvironment.features.gui;
+  cfg = config.host.hm.xquartz;
 in
 {
-  config = lib.mkIf (guiCfg.enable && guiCfg.x11.enable) (
+  options.host.hm.xquartz.enable = lib.mkEnableOption "XQuartz desktop integration";
+
+  config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
         assertions = [
           {
             assertion = osConfig.host.isDarwin;
-            message = "features.gui.x11 is only supported on Darwin.";
+            message = "host.hm.xquartz is only supported on Darwin.";
           }
         ];
 

@@ -8,7 +8,6 @@
 let
   inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.aerospace;
-  guiCfg = osConfig.host.userEnvironment.features.gui;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
@@ -56,7 +55,7 @@ in
 
     x11.enable = lib.mkOption {
       type = lib.types.bool;
-      default = guiCfg.x11.enable;
+      default = config.host.hm.xquartz.enable;
       description = "Whether AeroSpace actions should support X11 windows.";
     };
 
@@ -105,8 +104,8 @@ in
           message = "host.hm.aerospace is only supported on Darwin.";
         }
         {
-          assertion = !cfg.x11.enable || guiCfg.x11.enable;
-          message = "host.hm.aerospace.x11 requires features.gui.x11.";
+          assertion = !cfg.x11.enable || config.host.hm.xquartz.enable;
+          message = "host.hm.aerospace.x11 requires host.hm.xquartz.";
         }
       ];
 

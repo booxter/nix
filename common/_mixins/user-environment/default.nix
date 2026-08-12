@@ -182,7 +182,6 @@ in
 
       gui = {
         enable = lib.mkEnableOption "managed graphical desktop environment";
-        x11.enable = lib.mkEnableOption "X11 desktop integration";
       };
 
       apps = {
@@ -281,10 +280,6 @@ in
       {
         assertion = !cfg.features.gui.enable || config.host.isDesktop;
         message = "The managed graphical desktop environment requires a desktop host.";
-      }
-      {
-        assertion = !cfg.features.gui.x11.enable || cfg.features.gui.enable;
-        message = "X11 desktop integration requires the graphical desktop environment.";
       }
       {
         assertion = !cfg.features.net.graphical.enable || cfg.features.net.enable;

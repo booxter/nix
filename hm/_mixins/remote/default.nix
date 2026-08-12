@@ -23,8 +23,8 @@ in
         message = "programs.remote-control.client.wayland requires a Darwin desktop host";
       }
       ++ lib.optional (cfg.x11.enable && isDarwin) {
-        assertion = osConfig.host.userEnvironment.features.gui.x11.enable;
-        message = "programs.remote-control.client.x11 on Darwin requires features.gui.x11";
+        assertion = config.host.hm.xquartz.enable;
+        message = "programs.remote-control.client.x11 on Darwin requires host.hm.xquartz";
       };
 
     home.packages = lib.optional (cfg.x11.enable || cfg.wayland.enable) remoteControlRunners;

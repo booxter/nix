@@ -6,6 +6,6 @@
     ./jankyborders
     ./kitty
     ./sketchybar
-    ./x11
+    ./xquartz
   ];
 }
