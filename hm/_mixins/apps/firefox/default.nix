@@ -13,7 +13,6 @@ let
   dashUrl = "https://dash.${publicDomain}";
   degoogUrl = "https://goo.${publicDomain}";
   firefoxDohExcludedDomains = [ publicDomain ];
-  legacyProfiles = "1";
   useSignedDarwinFirefox =
     isDarwin && osConfig.host.hardware.hasTouchId && config.programs.firefox.enable;
 in
@@ -159,7 +158,7 @@ lib.mkIf enabled {
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       # Finder/Dock-launched GUI apps inherit the user launchd environment,
       # not Home Manager's shell session variables.
-      /bin/launchctl setenv MOZ_LEGACY_PROFILES ${legacyProfiles}
+      /bin/launchctl setenv MOZ_LEGACY_PROFILES 1
     ''
   );
 
