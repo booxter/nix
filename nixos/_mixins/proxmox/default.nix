@@ -24,18 +24,6 @@ let
       outputs
       ;
   };
-  nodeMaintenanceDays = [
-    "Wed"
-    "Thu"
-    "Fri"
-    "Sun"
-  ];
-  clusterNodes = model.nodesByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
-  nodeMaintenanceDay =
-    let
-      nodeIndex = lib.lists.findFirstIndex (name: name == hostSpec.name) 0 clusterNodes;
-    in
-    builtins.elemAt nodeMaintenanceDays (lib.mod nodeIndex (builtins.length nodeMaintenanceDays));
 in
 {
   imports = [
@@ -65,14 +53,8 @@ in
         host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
         host.autoUpgrade.claims.proxmox-node = {
-          switch = {
-            cadence = "weekly";
-            weekday = nodeMaintenanceDay;
-          };
-          reboot = {
-            cadence = "weekly";
-            weekday = nodeMaintenanceDay;
-          };
+          switch.cadence = "weekly";
+          reboot.cadence = "weekly";
           availabilityGroups = [
             "proxmox:${config.host.realm}:${config.host.proxmox.cluster}"
           ];

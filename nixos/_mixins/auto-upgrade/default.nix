@@ -193,9 +193,10 @@ in
           minute = 0;
         };
       };
-      weeklyDay = lib.mkOption {
+      preferredWeeklyDay = lib.mkOption {
         type = weekdayType;
         default = "Mon";
+        description = "Preferred weekday when the planner may choose any day for weekly maintenance.";
       };
       slotDurationMinutes = lib.mkOption {
         type = lib.types.ints.positive;

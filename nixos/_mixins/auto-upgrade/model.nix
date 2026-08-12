@@ -21,6 +21,15 @@ let
     ${localHost} = hostView config;
   };
   hostNames = builtins.attrNames hosts;
+  allWeekdays = [
+    "Mon"
+    "Tue"
+    "Wed"
+    "Thu"
+    "Fri"
+    "Sat"
+    "Sun"
+  ];
   policyHosts = lib.filterAttrs (_: host: host.realm == config.host.realm) hosts;
   policyMismatches = builtins.attrNames (
     lib.filterAttrs (_: host: host.policy != localPolicy) policyHosts
@@ -33,7 +42,7 @@ let
       cadences = map (claim: claim.${operation}.cadence) (
         builtins.filter (claim: claim.${operation}.cadence != null) claims
       );
-      weekdays = lib.unique (
+      requestedWeekdays = lib.unique (
         map (claim: claim.${operation}.weekday) (
           builtins.filter (claim: claim.${operation}.weekday != null) claims
         )
@@ -42,13 +51,14 @@ let
       weekday =
         if cadence != "weekly" then
           null
-        else if weekdays == [ ] then
-          localPolicy.weeklyDay
+        else if requestedWeekdays != [ ] then
+          builtins.head requestedWeekdays
         else
-          builtins.head weekdays;
+          null;
     in
     {
-      inherit cadence weekday weekdays;
+      weekdays = requestedWeekdays;
+      inherit cadence weekday;
       availabilityGroups = lib.unique (builtins.concatMap (claim: claim.availabilityGroups) claims);
       exclusions = builtins.concatMap (claim: builtins.attrValues claim.exclusions) claims;
     };
@@ -130,20 +140,20 @@ let
     lib.range 0 slotCount
   );
   preferredStart =
-    operation: operationConfig:
+    operation: operationConfig: weekday:
     if operationConfig.cadence == "daily" then
       clockMinutes localPolicy.dailyAt
-    else if operation == "reboot" && operationConfig.weekday != localPolicy.weeklyDay then
+    else if operation == "reboot" && weekday != localPolicy.preferredWeeklyDay then
       clockMinutes localPolicy.deferredRebootAt
     else
       windowStart;
-  orderedCandidates =
-    operation: operationConfig:
-    if operationConfig.cadence == "weekly" && operationConfig.weekday == localPolicy.weeklyDay then
+  orderedStarts =
+    operation: operationConfig: weekday:
+    if operationConfig.cadence == "weekly" && weekday == localPolicy.preferredWeeklyDay then
       candidateStarts
     else
       let
-        preferred = preferredStart operation operationConfig;
+        preferred = preferredStart operation operationConfig weekday;
         distance = value: if value < preferred then preferred - value else value - preferred;
         candidates = lib.unique (
           candidateStarts ++ lib.optional (preferred >= windowStart && preferred <= latestStart) preferred
@@ -152,6 +162,24 @@ let
       builtins.sort (
         left: right: distance left < distance right || (distance left == distance right && left < right)
       ) candidates;
+  candidateWeekdays =
+    operationConfig:
+    if operationConfig.cadence != "weekly" then
+      [ null ]
+    else if operationConfig.weekday != null then
+      [ operationConfig.weekday ]
+    else
+      [ localPolicy.preferredWeeklyDay ]
+      ++ builtins.filter (weekday: weekday != localPolicy.preferredWeeklyDay) allWeekdays;
+  scheduleCandidates =
+    operation: operationConfig:
+    builtins.concatMap (
+      weekday:
+      map (start: {
+        inherit (operationConfig) cadence;
+        inherit start weekday;
+      }) (orderedStarts operation operationConfig weekday)
+    ) (candidateWeekdays operationConfig);
   allocateOperation =
     operation: initialAssignments: remainingHosts:
     let
@@ -164,13 +192,7 @@ let
             hostName = builtins.head remaining;
             operationConfig = policies.${hostName}.${operation};
             candidate = lib.findFirst (
-              start:
-              let
-                schedule = {
-                  inherit (operationConfig) cadence weekday;
-                  inherit start;
-                };
-              in
+              schedule:
               lib.all (
                 assignedHost:
                 let
@@ -180,12 +202,17 @@ let
                 !conflicts hostName assignedHost operation
                 || !schedulesOverlap schedule assigned exclusion.minimumGapMinutes
               ) (builtins.attrNames assignments)
-            ) null (orderedCandidates operation operationConfig);
-            fallback = preferredStart operation operationConfig;
-            schedule = {
-              inherit (operationConfig) cadence weekday;
-              start = if candidate == null then fallback else candidate;
-            };
+            ) null (scheduleCandidates operation operationConfig);
+            fallbackWeekday = builtins.head (candidateWeekdays operationConfig);
+            schedule =
+              if candidate != null then
+                candidate
+              else
+                {
+                  inherit (operationConfig) cadence;
+                  weekday = fallbackWeekday;
+                  start = preferredStart operation operationConfig fallbackWeekday;
+                };
           in
           if operationConfig.cadence == "never" then
             allocate (builtins.tail remaining) (
