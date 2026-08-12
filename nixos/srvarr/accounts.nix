@@ -11,7 +11,6 @@
     prowlarr = 293;
     radarr = 275;
     seerr = 262;
-    shelfmark = 250;
     sonarr = 274;
   };
 }

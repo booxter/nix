@@ -28,6 +28,10 @@ lib.mkIf (config.host.realm == "home") {
         viewerGroup = "romm-viewers";
         bootstrapOwner = "ihar";
       };
+      shelfmark = {
+        adminGroup = "media-admins";
+        userGroup = "media-users";
+      };
       watchstate = {
         adminGroup = "media-admins";
         bootstrapOwner = "ihar";

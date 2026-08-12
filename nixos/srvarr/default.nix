@@ -29,6 +29,63 @@ in
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
+  host.media.libraries = {
+    books = {
+      contentType = "ebooks";
+      storage = {
+        claim = "media";
+        relativePath = "library/books";
+      };
+    };
+    audiobooks = {
+      contentType = "audiobooks";
+      storage = {
+        claim = "media";
+        relativePath = "library/audiobooks";
+      };
+    };
+  };
+
+  host.downloads.routes = {
+    shelfmark-torrent = {
+      client = "transmission";
+      label = "shelfmark";
+      storage = {
+        claim = "media";
+        relativePath = "torrents/shelfmark";
+      };
+    };
+    shelfmark-usenet = {
+      client = "sabnzbd";
+      category = "shelfmark";
+      storage = {
+        claim = "media";
+        relativePath = "usenet/shelfmark";
+      };
+    };
+  };
+
+  host.ebookConverter = {
+    enable = true;
+    library = "books";
+  };
+
+  host.shelfmark = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/shelfmark";
+    publicHostName = "shelf.${config.host.network.publicDomain}";
+    libraries = {
+      ebooks = "books";
+      audiobooks = "audiobooks";
+    };
+    downloaders = {
+      torrent.route = "shelfmark-torrent";
+      usenet.route = "shelfmark-usenet";
+    };
+    integrations.ebookConverter.enable = true;
+    presentation.audiobookLibraryService = "audiobookshelf";
+  };
+
   host.aurral = {
     enable = true;
     stateDir = "/data/.state/nixarr/aurral";
@@ -63,7 +120,6 @@ in
   imports = [
     ./arr.nix
     ./audiobookshelf.nix
-    ./ebook-converter.nix
     ./glance.nix
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
@@ -75,7 +131,6 @@ in
     ./qos.nix
     ./sabnzbd.nix
     ./seerr.nix
-    ./shelfmark.nix
     ./tuning.nix
     ./transmission.nix
     ./vpn.nix

@@ -15,9 +15,6 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  # Removed once the srvarr deployment consumes host.ebookConverter directly.
-  ebook-converter = import ../../_mixins/ebook-converter/package { inherit pkgs; };
-
   transmission-common = transmissionCommon;
 
   houndarr = pkgs.callPackage ./houndarr { };
