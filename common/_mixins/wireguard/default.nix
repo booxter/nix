@@ -7,7 +7,7 @@
 }:
 let
   nullableString = with lib.types; nullOr nonEmptyStr;
-  ip = import ../../lib/ipv4.nix { inherit lib; };
+  ip = import ../../_lib/ipv4.nix { inherit lib; };
   nullableIpv4Address = with lib.types; nullOr (addCheck nonEmptyStr ip.validIpv4);
   nullableIpv4Cidr = with lib.types; nullOr (addCheck nonEmptyStr ip.validCidr);
   peerOptions = {

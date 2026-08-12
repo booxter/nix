@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   outputs,
@@ -10,7 +9,7 @@ let
   localCandidate = {
     hostName = config.networking.hostName;
     inherit (config.host) realm;
-    enable = config.host.luks.remoteUnlock.enable;
+    inherit (config.host.luks.remoteUnlock) enable publicKey;
   };
   otherConfigurations = builtins.removeAttrs (
     outputs.nixosConfigurations // outputs.darwinConfigurations
@@ -19,7 +18,7 @@ let
     lib.mapAttrs (_: configuration: {
       hostName = configuration.config.networking.hostName;
       inherit (configuration.config.host) realm;
-      enable = configuration.config.host.luks.remoteUnlock.enable;
+      inherit (configuration.config.host.luks.remoteUnlock) enable publicKey;
     }) otherConfigurations
     // {
       ${localHost} = localCandidate;
@@ -36,7 +35,7 @@ in
     in
     lib.nameValuePair name {
       inherit (server) hostName;
-      publicKey = facts.public-keys.hosts.${name};
+      inherit (server) publicKey;
     }
   ) realmServers;
 }

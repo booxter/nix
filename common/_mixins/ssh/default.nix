@@ -1,21 +1,41 @@
 {
   config,
   facts,
+  hostSpec,
+  isDarwin,
   lib,
+  outputs,
   ...
 }:
 let
   username = config.host.username;
   realmSsh = facts.realms.${config.host.realm}.trust.ssh;
+  readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
+  hostDirectory = (if isDarwin then ../../../darwin else ../../../nixos) + "/${hostSpec.name}";
+  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
+  publicHostKeyFor =
+    name:
+    if name == hostSpec.name then
+      config.host.ssh.publicHostKey
+    else
+      configurations.${name}.config.host.ssh.publicHostKey;
   managedKnownHosts = lib.mapAttrs (name: spec: {
     hostNames = spec.sshKnownHostNames;
-    publicKey = facts.public-keys.hosts.${name};
+    publicKey = publicHostKeyFor name;
   }) facts.hosts.hostSpecsByName;
 in
 {
   imports = [ ./ticket-server.nix ];
 
   options.host.ssh = {
+    publicHostKey = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = readPublicKey (hostDirectory + "/ssh_host_ed25519_key.pub");
+      readOnly = true;
+      internal = true;
+      description = "SSH host public key published to the managed fleet.";
+    };
+
     authorizedKeys = lib.mkOption {
       type = with lib.types; listOf str;
       default = realmSsh.authorizedKeys;

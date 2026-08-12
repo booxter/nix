@@ -1,9 +1,7 @@
-{
-  facts,
-}:
+{ lib }:
 let
-  inherit (facts) public-keys;
-  publicKeys = public-keys;
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+  sshPublicKey = name: readPublicKey (../../common/_mixins/ssh/public-keys + "/${name}.pub");
 in
 {
   home = {
@@ -16,16 +14,16 @@ in
     };
     trust.ssh = {
       authorizedKeys = [
-        publicKeys.users.mmini
-        publicKeys.users.mair
-        publicKeys.users.frame
-        publicKeys.users.yubikey
-        publicKeys.users.mair-secretive
+        (sshPublicKey "mmini")
+        (sshPublicKey "mair")
+        (sshPublicKey "frame")
+        (sshPublicKey "yubikey")
+        (sshPublicKey "mair-secretive")
       ];
       fleetBootHosts = true;
       tickets.trustedCaPublicKeys = [
-        publicKeys.ssh-ca.fleet-user-ca
-        publicKeys.users.yubikey
+        (sshPublicKey "fleet-user-ca")
+        (sshPublicKey "yubikey")
       ];
     };
     services = {
@@ -44,8 +42,8 @@ in
     };
     services.ups.credentialMode = "literal";
     trust.ssh.authorizedKeys = [
-      publicKeys.users.jgwxhwdl4x
-      publicKeys.users.jgwxhwdl4x-nix-builder
+      (sshPublicKey "jgwxhwdl4x")
+      (sshPublicKey "jgwxhwdl4x-nix-builder")
     ];
   };
 }

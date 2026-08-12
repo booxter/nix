@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   outputs,
@@ -10,7 +9,6 @@ let
   model = import ./model.nix {
     inherit
       config
-      facts
       hostSpec
       lib
       outputs
@@ -27,7 +25,15 @@ in
 {
   imports = [ ./assertions.nix ];
 
-  options.host.luks.remoteUnlock.enable = lib.mkEnableOption "remote LUKS unlock through initrd SSH";
+  options.host.luks.remoteUnlock = {
+    enable = lib.mkEnableOption "remote LUKS unlock through initrd SSH";
+
+    publicKey = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Initrd SSH host public key published to operator seats.";
+    };
+  };
 
   config = lib.mkIf config.host.isOperatorSeat {
     programs.ssh = {

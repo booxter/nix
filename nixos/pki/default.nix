@@ -9,6 +9,7 @@
   ...
 }:
 let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   pkiPkgs = import ./pkgs pkgs;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
@@ -63,7 +64,7 @@ in
   host.backups.sources.step-ca.paths = [ stepStateDir ];
   host.backups.destinations.primary = {
     server = "beast";
-    publicKey = facts.public-keys.restic.pki;
+    publicKey = readPublicKey ./restic.pub;
   };
 
   host.internalPki.authority = {

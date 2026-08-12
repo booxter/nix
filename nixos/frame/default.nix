@@ -1,10 +1,12 @@
 {
   config,
-  facts,
   inputs,
   lib,
   ...
 }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "25.11";
 
@@ -49,10 +51,11 @@
       enable = true;
       remoteUnlock = {
         enable = true;
+        publicKey = readPublicKey ./initrd_ssh_host_ed25519_key.pub;
         kernelModules = [ "r8169" ];
         authorizedKeys = [
-          facts.public-keys.users.mair
-          facts.public-keys.users.mmini
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
         ];
       };
     };

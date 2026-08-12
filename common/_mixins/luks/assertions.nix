@@ -1,17 +1,13 @@
 {
   config,
-  facts,
   ...
 }:
-let
-  endpointName = "${config.networking.hostName}-luks";
-in
 {
   assertions = [
     {
       assertion =
-        !config.host.luks.remoteUnlock.enable || builtins.hasAttr endpointName facts.public-keys.hosts;
-      message = "host.luks.remoteUnlock requires public key facts.public-keys.hosts.${endpointName}";
+        !config.host.luks.remoteUnlock.enable || config.host.luks.remoteUnlock.publicKey != null;
+      message = "host.luks.remoteUnlock.publicKey must be set when remote unlock is enabled";
     }
   ];
 }

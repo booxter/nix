@@ -1,11 +1,11 @@
 {
-  facts,
   lib,
   osConfig,
   pkgs,
   ...
 }:
 let
+  readPublicKey = import ../../../../common/_lib/read-public-key.nix { inherit lib; };
   devCfg = osConfig.host.userEnvironment.features.dev;
   scmCfg = devCfg.scm;
 in
@@ -13,9 +13,9 @@ lib.mkIf (devCfg.enable && scmCfg.enable) {
   host.hm.ssh.knownHosts."github.com" = {
     hostNames = [ "github.com" ];
     publicKeys = [
-      facts.public-keys.hosts."github.com.ed25519"
-      facts.public-keys.hosts."github.com.rsa"
-      facts.public-keys.hosts."github.com.ecdsa"
+      (readPublicKey ./github/known-hosts/ed25519.pub)
+      (readPublicKey ./github/known-hosts/rsa.pub)
+      (readPublicKey ./github/known-hosts/ecdsa.pub)
     ];
   };
 

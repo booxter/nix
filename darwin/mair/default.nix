@@ -1,8 +1,11 @@
 {
   config,
-  facts,
+  lib,
   ...
 }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = 6;
 
@@ -41,7 +44,7 @@
       enable = true;
       network = "home";
       address = "10.83.0.10";
-      publicKey = facts.public-keys.wireguard.home-mair;
+      publicKey = readPublicKey ./wireguard.pub;
       privateKeySecret = "wireguard/gw/privateKey";
     };
   };

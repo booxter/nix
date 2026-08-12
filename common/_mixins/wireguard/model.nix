@@ -5,7 +5,7 @@
   outputs,
 }:
 let
-  ip = import ../../lib/ipv4.nix { inherit lib; };
+  ip = import ../../_lib/ipv4.nix { inherit lib; };
   localHost = hostSpec.name;
   localCandidate = {
     hostName = localHost;

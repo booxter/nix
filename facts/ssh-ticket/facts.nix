@@ -1,12 +1,13 @@
 {
   context,
-  facts,
+  lib,
 }:
 let
   inherit (context) frame mmini;
-  publicKeys = facts.public-keys;
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+  sshPublicKey = name: readPublicKey (../../common/_mixins/ssh/public-keys + "/${name}.pub");
   yubikeyIssuer = {
-    publicKey = publicKeys.users.yubikey;
+    publicKey = sshPublicKey "yubikey";
     keyName = "id_ed25519_sk_rk";
     useAgent = false;
   };
@@ -14,7 +15,7 @@ in
 {
   issuers = {
     mair = {
-      publicKey = publicKeys.ssh-ca.fleet-user-ca;
+      publicKey = sshPublicKey "fleet-user-ca";
       keyName = "fleet-user-ca.pub";
       useAgent = true;
     };

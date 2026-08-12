@@ -1,4 +1,7 @@
-{ facts, ... }:
+{ facts, lib, ... }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "25.11";
 
@@ -20,7 +23,7 @@
     address = "10.83.0.1";
     listenPort = 51820;
     publicEndpoint = "wg.${facts.site.public.domain}";
-    publicKey = facts.public-keys.wireguard.home-gateway;
+    publicKey = readPublicKey ./wireguard.pub;
     clientPolicy = {
       allowedIPs = [
         "10.83.0.0/24"
@@ -40,7 +43,7 @@
     qos.uploadLimitMbit = 10;
     externalPeers.unifi-travel-router = {
       address = "10.83.0.20";
-      publicKey = facts.public-keys.wireguard.home-unifi-travel-router;
+      publicKey = readPublicKey ./wireguard-peers/unifi-travel-router.pub;
     };
   };
 

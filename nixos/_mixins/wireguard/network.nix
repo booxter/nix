@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.wireguard.server;
-  ip = import ../../../common/lib/ipv4.nix { inherit lib; };
+  ip = import ../../../common/_lib/ipv4.nix { inherit lib; };
   network = config.host.wireguard.networks.${cfg.network} or null;
   peers = builtins.attrValues network.peers;
   mkPeer = peer: {

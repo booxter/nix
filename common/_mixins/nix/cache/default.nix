@@ -1,12 +1,12 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   outputs,
   ...
 }:
 let
+  readPublicKey = import ../../../_lib/read-public-key.nix { inherit lib; };
   priorityType = with lib.types; nullOr int;
   priorityOptions = {
     default = lib.mkOption {
@@ -104,13 +104,13 @@ in
     host.nix.cacheContributions = {
       nixos = {
         substituter = "https://cache.nixos.org/";
-        trustedPublicKeys = [ facts.public-keys.nix-cache.nixos ];
+        trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
       };
 
       proxmox = {
         enable = config.host.isProxmox || config.host.nix.builder.enable || config.host.isOperatorSeat;
         substituter = "https://cache.saumon.network/proxmox-nixos";
-        trustedPublicKeys = [ facts.public-keys.nix-cache.proxmox-nixos ];
+        trustedPublicKeys = [ (readPublicKey ./public-keys/proxmox-nixos.pub) ];
       };
     };
 

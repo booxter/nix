@@ -1,9 +1,12 @@
 {
   config,
-  facts,
+  lib,
   pkgs,
   ...
 }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "25.11";
 
@@ -21,7 +24,7 @@
 
   host.backups.destinations.primary = {
     server = "beast";
-    publicKey = facts.public-keys.restic.srvarr;
+    publicKey = readPublicKey ./restic.pub;
   };
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;

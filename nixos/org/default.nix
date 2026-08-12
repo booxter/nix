@@ -6,6 +6,7 @@
   ...
 }:
 let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   vikunjaPublicHost = "vi.${facts.site.public.domain}";
   vikunjaMetricsMtlsPort = 9345;
   oidcClient = config.host.sso.oidc.clients.vikunja;
@@ -30,7 +31,7 @@ in
 
   host.backups.destinations.primary = {
     server = "beast";
-    publicKey = facts.public-keys.restic.org;
+    publicKey = readPublicKey ./restic.pub;
     # Preserve the existing repository namespace and snapshot history.
     storageName = "orgvm";
   };

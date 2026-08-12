@@ -1,9 +1,10 @@
 {
   config,
-  facts,
+  lib,
   ...
 }:
 let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   nfsPath = config.host.storage.claims.nixCache.mountPoint;
 in
 {
@@ -20,7 +21,7 @@ in
   host.attic.server = {
     enable = true;
     storagePath = nfsPath;
-    trustedPublicKey = facts.public-keys.nix-cache.home;
+    trustedPublicKey = readPublicKey ./attic-signing.pub;
   };
 
   host.storage.claims.nixCache = {

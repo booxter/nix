@@ -1,4 +1,7 @@
-{ facts, ... }:
+{ lib, ... }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "26.05";
 
@@ -14,7 +17,7 @@
 
   host.backups.destinations.primary = {
     server = "beast";
-    publicKey = facts.public-keys.restic.home;
+    publicKey = readPublicKey ./restic.pub;
   };
 
   host.home-assistant.enable = true;
