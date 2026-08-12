@@ -55,8 +55,16 @@ in
         message = "host.network.ipController.flavor must be set when the controller is enabled";
       }
       {
+        assertion = cfg.ipController.target.endpoint != null;
+        message = "host.network.ipController.target.endpoint must be set when the controller is enabled";
+      }
+      {
+        assertion = cfg.ipController.target.site != null;
+        message = "host.network.ipController.target.site must be set when the controller is enabled";
+      }
+      {
         assertion = builtins.length (builtins.attrNames model.controllers) == 1;
-        message = "exactly one NixOS host must enable host.network.ipController";
+        message = "exactly one NixOS host per physical site must enable host.network.ipController";
       }
       {
         assertion =

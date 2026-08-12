@@ -24,7 +24,9 @@ let
   unifiSyncEnv = import ./environment.nix {
     inherit facts lanDomain webDnsRecords;
     addressFor = fleetNetwork.addressFor;
+    baseUrl = controller.target.endpoint;
     reservations = config.host.network.ipController.reservations;
+    site = controller.target.site;
   };
   wgHome = config.host.wireguard.networks.home;
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;

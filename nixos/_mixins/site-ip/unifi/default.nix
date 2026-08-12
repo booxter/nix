@@ -27,8 +27,10 @@ let
   unifiSyncEnv = import ./environment.nix {
     inherit facts webDnsRecords;
     addressFor = fleetNetwork.addressFor;
+    baseUrl = controller.target.endpoint;
     lanDomain = config.host.network.lanDomain;
     reservations = config.host.network.ipController.reservations;
+    site = controller.target.site;
     staticRoutes = (facts.site.lan.staticRoutes or [ ]) ++ wireguardStaticRoutes;
   };
 in

@@ -1,8 +1,10 @@
 {
   addressFor,
+  baseUrl,
   facts,
   lanDomain,
   reservations,
+  site,
   staticRoutes ? [ ],
   webDnsRecords ? [ ],
 }:
@@ -77,8 +79,6 @@ let
     ]
   );
 
-  baseUrl = "https://unifi";
-  site = "default";
 in
 {
   inherit

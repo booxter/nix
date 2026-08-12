@@ -80,6 +80,10 @@ in
     ipController = {
       enable = true;
       flavor = "unifi";
+      target = {
+        endpoint = "https://unifi";
+        site = "default";
+      };
     };
   };
 
