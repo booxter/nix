@@ -20,41 +20,17 @@ let
     lib.filter (server: server.instructions != "") (builtins.attrValues osConfig.host.mcp.pool)
   );
   agentContext = ''
-    This machine uses Nix on macOS or Linux. If a required tool is missing,
-    prefer repository flake apps or dev shells; otherwise use
-    `nix shell nixpkgs#<package> -c <command>` instead of installing it globally.
-    Nix builders for x86_64-linux and aarch64-darwin are available for
-    cross-platform builds.
+    This machine uses Nix. Use it to access tools that are not installed. Never
+    install tools permanently. Use remote builders for other platforms.
 
-    Never push, post, deploy, or change managed hosts unless the user
-    explicitly asks. Before posting a bug report, show the user the exact
-    contents and get their confirmation.
+    Never push, post, deploy, or change managed hosts unless user explicitly
+    asks. Before posting to web, show user exact contents and get confirmation.
 
-    When creating or amending Git commits:
-    - Follow the repository's existing commit-message style.
-    - Keep the subject at most 72 characters; prefer 50 or fewer when that
-      remains clear.
-    - Separate a body from the subject with a blank line.
-    - Hard-wrap body prose at 72 characters. Hard-wrapping means inserting
-      newline characters so each physical prose line is at most 72 characters;
-      terminal or editor soft wrapping does not count.
-    - Do not split URLs, literal code, long identifiers, or Git trailers solely
-      to satisfy the limit.
-    - For multiline messages, compose and validate the complete message in a
-      file and use `git commit -F <file>` instead of a long `-m` argument.
-    - Never bypass commit-message validation with `--no-verify` or disable the
-      `commit-message-format` hook.
-    - If validation fails, edit the saved message and run
-      `git hook run commit-msg -- "$(git rev-parse --git-path COMMIT_EDITMSG)"`
-      until it passes, then retry the commit once. Do not repeatedly create and
-      amend commits while guessing at the format.
+    Follow repo existing commit message style. Never bypass commit-message
+    validation with `--no-verify` or disable commit message hook.
 
-    When creating pull requests:
-    - Keep descriptions terse: at most three bullets describing material changes.
-    - Do not add headings or boilerplate sections such as Summary, Validation, or Testing.
-    - Mention checks only when they failed, were skipped, or require reviewer action.
-    - Do not restate the title or commit messages.
-    - These rules override generic PR-body conventions from publishing workflows.
+    When creating pull requests, keep description terse. No headings and
+    boilerplate such as Summary, Validation, or Testing. No slop. Be brief.
   '';
   codexContext = agentContext + mcpInstructions;
 in
