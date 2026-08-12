@@ -8,7 +8,7 @@ let
   cfg = config.host.hm.gmailctl;
 in
 {
-  imports = [ ./gmailctl-warmer.nix ];
+  imports = [ ./warmer.nix ];
 
   options.host.hm.gmailctl = {
     enable = lib.mkEnableOption "gmailctl";

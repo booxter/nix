@@ -9,9 +9,10 @@ let
 in
 {
   imports = [
-    ./email
     ./firefox
+    ./gmailctl
     ./spicetify
+    ./thunderbird.nix
   ];
 
   config = lib.mkIf cfg.enable {
