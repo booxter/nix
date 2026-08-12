@@ -57,7 +57,7 @@ in
         "applehv"
         "libkrun"
       ];
-      default = "libkrun";
+      default = "applehv";
       description = "Virtualization provider used by the managed Podman machine.";
     };
 

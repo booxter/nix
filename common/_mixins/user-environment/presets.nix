@@ -6,15 +6,17 @@ let
       roles.developer = {
         features = {
           dev.agents.codex.warmer.enable = true;
-          shell.llm.enable = true;
           dev.scm = {
             identity = "personal";
             sendEmail.transport = "gmail";
           };
         };
-        hm.podman = {
-          enable = true;
-          machine.enable = config.host.isDarwin;
+        hm = {
+          podman = {
+            enable = true;
+            machine.enable = config.host.isDarwin;
+          };
+          ramalama.enable = true;
         };
         repositories.requests.preset = [ "dotfiles" ];
       };

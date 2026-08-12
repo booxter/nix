@@ -1,15 +1,24 @@
 {
+  config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
 let
-  shellCfg = osConfig.host.userEnvironment.features.shell;
-  cfg = shellCfg.llm;
+  cfg = config.host.hm.ramalama;
 in
 {
-  home.packages = lib.optionals (shellCfg.enable && cfg.enable && cfg.ramalama.enable) [
-    pkgs.ramalama
-  ];
+  options.host.hm.ramalama.enable = lib.mkEnableOption "RamaLama";
+
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = config.host.hm.podman.enable;
+        message = "host.hm.ramalama requires host.hm.podman";
+      }
+    ];
+
+    home.packages = [ pkgs.ramalama ];
+    programs.podman-machine.provider = "libkrun";
+  };
 }

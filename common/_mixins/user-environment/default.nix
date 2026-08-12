@@ -101,22 +101,10 @@ in
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
-      shell = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the command-line power-user environment.";
-        };
-
-        llm = {
-          enable = lib.mkEnableOption "local LLM tooling";
-
-          ramalama.enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to provide RamaLama.";
-          };
-        };
+      shell.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to provide the command-line power-user environment.";
       };
 
       net = {
