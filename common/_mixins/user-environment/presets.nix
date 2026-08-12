@@ -15,15 +15,22 @@ let
         };
         repositories.requests.preset = [ "dotfiles" ];
       };
-      roles.workstation.features = {
-        containers = {
-          enable = true;
-          desktop.enable = true;
+      roles.workstation = {
+        features = {
+          containers = {
+            enable = true;
+            desktop.enable = true;
+          };
+          apps.email.account = "gmail";
         };
-        apps.email = {
-          account = "gmail";
-          gmailctl.enable = true;
+        hm = {
+          gmailctl = {
+            enable = true;
+            warmer.enable = true;
+          };
+          thunderbird.enable = true;
         };
+        repositories.requests.gmailctl = [ "gmailctl" ];
       };
     };
     nvidia = {
@@ -40,25 +47,36 @@ let
           sendEmail.transport = "nvidia";
         };
       };
-      roles.workstation.features = {
-        apps.email = {
-          account = "nvidia";
-          gmailctl.enable = false;
+      roles.workstation = {
+        features = {
+          apps.email.account = "nvidia";
+          apps.firefox.enable = false;
+          apps.homerow.enable = false;
+          apps.teams.enable = true;
         };
-        apps.firefox.enable = false;
-        apps.homerow.enable = false;
-        apps.teams.enable = true;
+        hm.thunderbird.enable = true;
       };
     };
   };
   applyPresetDefaults = lib.mapAttrsRecursive (_: value: lib.mkOverride 900 value);
+  userEnvironmentFragment = fragment: builtins.removeAttrs fragment [ "hm" ];
   mkPresetConfig =
     name: definition:
     lib.mkIf (cfg.preset == name) (
       lib.mkMerge (
         [ (applyPresetDefaults (definition.defaults or { })) ]
         ++ lib.mapAttrsToList (
-          role: fragment: lib.mkIf cfg.roles.${role}.enable (applyPresetDefaults fragment)
+          role: fragment:
+          lib.mkIf cfg.roles.${role}.enable (applyPresetDefaults (userEnvironmentFragment fragment))
+        ) (definition.roles or { })
+      )
+    );
+  mkPresetHmConfig =
+    name: definition:
+    lib.mkIf (cfg.preset == name) (
+      lib.mkMerge (
+        lib.mapAttrsToList (
+          role: fragment: lib.mkIf cfg.roles.${role}.enable (applyPresetDefaults (fragment.hm or { }))
         ) (definition.roles or { })
       )
     );
@@ -69,5 +87,10 @@ in
     default = null;
     description = "Named fleet policy providing overridable user-environment feature defaults.";
   };
-  config.host.userEnvironment = lib.mkMerge (lib.mapAttrsToList mkPresetConfig presetDefinitions);
+  config = {
+    host.userEnvironment = lib.mkMerge (lib.mapAttrsToList mkPresetConfig presetDefinitions);
+    home-manager.users.${config.host.username}.host.hm = lib.mkMerge (
+      lib.mapAttrsToList mkPresetHmConfig presetDefinitions
+    );
+  };
 }

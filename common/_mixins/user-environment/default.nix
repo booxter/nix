@@ -336,17 +336,6 @@ in
             description = "Named email account configured on this host.";
           };
 
-          thunderbird.enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to configure the selected account in Thunderbird.";
-          };
-
-          gmailctl.enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to provide gmailctl and keep its OAuth token active.";
-          };
         };
 
         firefox = {
@@ -438,9 +427,6 @@ in
         };
 
         requests = {
-          gmailctl = lib.optionals (cfg.features.apps.enable && emailCfg.enable && emailCfg.gmailctl.enable) [
-            "gmailctl"
-          ];
           pass = lib.optional cfg.features.security.pass.enable "pass";
         };
       };
