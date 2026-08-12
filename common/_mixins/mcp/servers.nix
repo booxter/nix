@@ -30,6 +30,10 @@ in
 
     firefox-devtools = {
       realms = [ "home" ];
+      instructions = ''
+        Only use the Firefox DevTools MCP when the user explicitly requests browser
+        interaction or browser-based debugging.
+      '';
       stdio = {
         command = lib.getExe pkgs.firefox-devtools-mcp;
         args = [

@@ -17,7 +17,9 @@ let
     codex = config.programs.codex.package;
   };
   modelEffort = "high";
-  hasFirefoxDevtoolsMcp = builtins.hasAttr "firefox-devtools" osConfig.host.mcp.pool;
+  mcpInstructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
+    lib.filter (server: server.instructions != "") (builtins.attrValues osConfig.host.mcp.pool)
+  );
   agentContext = ''
     This machine uses Nix on macOS or Linux. If a required tool is missing,
     prefer repository flake apps or dev shells; otherwise use
@@ -55,12 +57,7 @@ let
     - Do not restate the title or commit messages.
     - These rules override generic PR-body conventions from publishing workflows.
   '';
-  codexContext =
-    agentContext
-    + lib.optionalString hasFirefoxDevtoolsMcp ''
-      Only use the Firefox DevTools MCP when the user explicitly requests browser
-      interaction or browser-based debugging.
-    '';
+  codexContext = agentContext + mcpInstructions;
   codingAgentEnv = {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";

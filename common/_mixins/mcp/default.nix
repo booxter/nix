@@ -70,6 +70,11 @@ let
         default = null;
         description = "Optional fleet hosts where the MCP server is available.";
       };
+      instructions = lib.mkOption {
+        type = lib.types.lines;
+        default = "";
+        description = "Default agent instructions for using the MCP server.";
+      };
       stdio = lib.mkOption {
         type = with lib.types; nullOr stdioType;
         default = null;
