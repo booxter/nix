@@ -196,6 +196,8 @@ let
   ];
 in
 {
+  host.romm.enable = true;
+
   host.backups.sources.romm-database = {
     title = "RomM";
     capture = {

@@ -41,6 +41,7 @@
       ./_mixins/paperless
       ./_mixins/proxmox
       ./_mixins/qos
+      ./_mixins/romm
       ./_mixins/security
       ./_mixins/sso
       ./_mixins/storage
