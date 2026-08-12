@@ -55,17 +55,17 @@ pkgs.testers.runNixOSTest {
 
       options = {
         host = {
-          internalPki.rootCaCertificate = lib.mkOption {
+          pki.rootCaCertificate = lib.mkOption {
             type = lib.types.path;
             default = "${testPki}/ca.crt";
           };
 
-          internalPki.clients = lib.mkOption {
+          pki.clients = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };
           };
 
-          internalPki.managedCertificates = lib.mkOption {
+          pki.managedCertificates = lib.mkOption {
             type = lib.types.listOf lib.types.anything;
             default = [ ];
           };
@@ -170,7 +170,7 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.internalPki.clients.loki.enable = false;
+        host.pki.clients.loki.enable = false;
 
         sops.secrets = {
           "prometheus-mtls-blackbox-server-crt".path = "${testPki}/server.crt";

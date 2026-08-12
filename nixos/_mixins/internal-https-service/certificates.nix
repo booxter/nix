@@ -16,7 +16,7 @@ let
 in
 {
   config = lib.mkIf (enabledServices != { }) {
-    host.internalPki.managedCertificates = lib.mkAfter (
+    host.pki.managedCertificates = lib.mkAfter (
       lib.mapAttrsToList (name: service: {
         category = "internal_https_server";
         inherit name;

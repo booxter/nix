@@ -6,9 +6,9 @@
 }:
 let
   cfg = config.host.observability.alertmanagerWatchdog;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
-  watchdogClient = config.host.internalPki.clients.${watchdogName};
+  watchdogClient = config.host.pki.clients.${watchdogName};
   watchdogPackage = pkgs.callPackage ./alertmanager-watchdog {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -19,7 +19,7 @@ in
     lib.mkEnableOption "independent Alertmanager readiness watchdog";
 
   config = lib.mkIf cfg.enable {
-    host.internalPki.clients.${watchdogName} = {
+    host.pki.clients.${watchdogName} = {
       enable = true;
       category = "internal";
       materializations.default.restartUnits = [ "${watchdogName}.service" ];
@@ -57,7 +57,7 @@ in
           "--url"
           alertmanagerReadyUrl
           "--ca-file"
-          "${internalPkiRootCaPath}"
+          "${pkiRootCaPath}"
         ];
         TimeoutStartSec = "45s";
         DynamicUser = true;

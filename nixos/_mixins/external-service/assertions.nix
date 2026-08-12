@@ -3,7 +3,7 @@ let
   cfg = config.host.externalService;
   enabledMtlsClients = lib.filterAttrs (
     _: client: client.enable && client.category == "internal"
-  ) config.host.internalPki.clients;
+  ) config.host.pki.clients;
 in
 {
   assertions =
@@ -31,7 +31,7 @@ in
           }
           {
             assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
-            message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.internalPki.clients entry.";
+            message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.pki.clients entry.";
           }
         ]
       ) cfg.virtualHosts

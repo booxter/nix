@@ -5,10 +5,10 @@
   ...
 }:
 let
-  rootCertPath = config.host.internalPki.rootCaCertificate;
+  rootCertPath = config.host.pki.rootCaCertificate;
 in
 {
-  system.activationScripts.postActivation.text = lib.mkIf config.host.internalPki.enable (
+  system.activationScripts.postActivation.text = lib.mkIf (rootCertPath != null) (
     lib.mkAfter ''
       cert_path=${lib.escapeShellArg "${rootCertPath}"}
       desired_sha256="$(${pkgs.openssl}/bin/openssl x509 -in "$cert_path" -noout -fingerprint -sha256 | /usr/bin/cut -d= -f2 | /usr/bin/tr -d ':')"

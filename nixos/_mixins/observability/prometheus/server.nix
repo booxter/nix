@@ -9,17 +9,17 @@
 let
   cfg = config.host.observability.prometheus.server;
   alertmanagerCfg = config.host.observability.alertmanager;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  prometheusScrapeClient = config.host.internalPki.clients."prometheus-scrape-node";
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  prometheusScrapeClient = config.host.pki.clients."prometheus-scrape-node";
   prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
   blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;
   prometheusMtlsTlsConfig = {
-    ca_file = "${internalPkiRootCaPath}";
+    ca_file = "${pkiRootCaPath}";
     cert_file = config.sops.secrets.${prometheusScrapeMaterialization.certificateSecretName}.path;
     key_file = config.sops.secrets.${prometheusScrapeMaterialization.keySecretName}.path;
   };
   blackboxHttpMtlsTlsConfig = {
-    ca_file = "${internalPkiRootCaPath}";
+    ca_file = "${pkiRootCaPath}";
     cert_file = config.sops.secrets.${blackboxScrapeMaterialization.certificateSecretName}.path;
     key_file = config.sops.secrets.${blackboxScrapeMaterialization.keySecretName}.path;
   };
@@ -111,7 +111,7 @@ in
       port = 9115;
     };
 
-    host.internalPki.clients."prometheus-scrape-node" = {
+    host.pki.clients."prometheus-scrape-node" = {
       enable = true;
       category = "observability";
       secretPrefix = "prometheus/scrape_node";

@@ -7,13 +7,13 @@
 let
   username = config.host.username;
   clientName = "sketchybar-jellyfin";
-  client = config.host.internalPki.clients.${clientName};
+  client = config.host.pki.clients.${clientName};
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
   enable = config.host.userEnvironment.features.gui.enable && config.host.observability.enable;
 in
 {
-  host.internalPki.clients.${clientName} = {
+  host.pki.clients.${clientName} = {
     inherit enable;
     category = "observability";
     materializations.default = {

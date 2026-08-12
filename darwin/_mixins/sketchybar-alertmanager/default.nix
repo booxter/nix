@@ -6,12 +6,12 @@
 let
   username = config.host.username;
   clientName = "sketchybar-alertmanager";
-  client = config.host.internalPki.clients.${clientName};
+  client = config.host.pki.clients.${clientName};
   lanDomain = config.host.network.lanDomain;
   enable = config.host.userEnvironment.features.gui.enable && config.host.observability.enable;
 in
 {
-  host.internalPki.clients.${clientName} = {
+  host.pki.clients.${clientName} = {
     inherit enable;
     category = "internal";
     materializations.default = {

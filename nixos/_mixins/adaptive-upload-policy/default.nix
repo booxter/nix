@@ -5,7 +5,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   transmissionCommon = pkgs.callPackage ../../srvarr/pkgs/transmission-common { };
   defaultPackage = pkgs.callPackage ./pkgs/controller {
     atomicFileWrites = pkgs.atomic-file-writes;
@@ -113,7 +113,7 @@ in
 
         caFile = lib.mkOption {
           type = lib.types.path;
-          default = internalPkiRootCaPath;
+          default = pkiRootCaPath;
           description = "CA certificate used to verify the Jellyfin exporter.";
         };
 

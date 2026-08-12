@@ -2,10 +2,10 @@
 let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   enabledMtlsClients = lib.filterAttrs (
     _: client: client.enable && client.category == "internal"
-  ) config.host.internalPki.clients;
+  ) config.host.pki.clients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
   nginxMtlsClientNames = lib.unique (
     lib.filter (clientName: clientName != "") (
@@ -136,7 +136,7 @@ in
               clientName = lib.mkOption {
                 type = lib.types.str;
                 default = "";
-                description = "Name of the internal-category host.internalPki.clients entry used for the upstream connection.";
+                description = "Name of the internal-category host.pki.clients entry used for the upstream connection.";
               };
 
               serverName = lib.mkOption {
@@ -147,7 +147,7 @@ in
 
               trustedCaCertificate = lib.mkOption {
                 type = lib.types.path;
-                default = internalPkiRootCaPath;
+                default = pkiRootCaPath;
                 description = "CA bundle used to verify the upstream TLS certificate.";
               };
             };
@@ -212,7 +212,7 @@ in
     })
 
     (lib.mkIf hasPublicVhosts {
-      host.internalPki.clients = lib.genAttrs nginxMtlsClientNames (_: {
+      host.pki.clients = lib.genAttrs nginxMtlsClientNames (_: {
         materializations.default = {
           owner = config.services.nginx.user;
           group = config.services.nginx.group;

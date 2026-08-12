@@ -8,7 +8,7 @@
 let
   cfg = config.host.hm.sketchybar;
   inherit (osConfig.host) isDarwin;
-  internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = osConfig.host.pki.rootCaCertificate;
   theme = import ./theme.nix {
     inherit config pkgs;
     height = cfg.height;
@@ -41,12 +41,12 @@ let
     pluginColors = theme.pluginEnvironment;
     alertmanager = lib.optionalAttrs cfg.alertmanager.enable {
       url = cfg.alertmanager.url;
-      caCertificate = internalPkiRootCaPath;
+      caCertificate = pkiRootCaPath;
       inherit (cfg.alertmanager) clientCertificate clientKey;
     };
     jellyfin = lib.optionalAttrs cfg.jellyfin.enable {
       inherit (cfg.jellyfin) metricsUrl clientCertificate clientKey;
-      caCertificate = internalPkiRootCaPath;
+      caCertificate = pkiRootCaPath;
     };
   };
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''

@@ -54,7 +54,7 @@ in
   config = lib.mkIf cfg.enable {
     services.nginx.enableReload = true;
 
-    host.internalPki.clients = builtins.listToAttrs (
+    host.pki.clients = builtins.listToAttrs (
       map (contribution: {
         name = contribution.id;
         value = {

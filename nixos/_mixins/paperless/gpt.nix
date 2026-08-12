@@ -25,12 +25,12 @@ let
   autoTag = "paperless-gpt-auto";
   autoOcrTag = "paperless-gpt-ocr-auto";
   ocrCompleteTag = "paperless-gpt-ocr-complete";
-  ollamaClient = config.host.internalPki.clients.paperless-ollama;
+  ollamaClient = config.host.pki.clients.paperless-ollama;
   ollamaServerName = gptProvider.host.web.services.ollama.internal.serverName;
 in
 {
   config = lib.mkIf (cfg.enable && cfg.gpt.enable) {
-    host.internalPki.clients.paperless-ollama = {
+    host.pki.clients.paperless-ollama = {
       enable = true;
       category = "internal";
       commonName = "paperless-gpt.${config.networking.hostName}";
@@ -49,7 +49,7 @@ in
         key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
         checkHost = ollamaServerName;
         sni = ollamaServerName;
-        CAFile = "${config.host.internalPki.rootCaCertificate}";
+        CAFile = "${config.host.pki.rootCaCertificate}";
         verifyChain = true;
         OCSPaia = false;
       };

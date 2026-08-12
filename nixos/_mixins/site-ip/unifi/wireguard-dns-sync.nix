@@ -10,7 +10,7 @@ let
   unifiPkgs = import ./pkgs pkgs;
   controller = config.host.network.ipController;
   fleetWireguardEnabled = config.host.wireguard.networks != { };
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
   fleetServices = import ../../../_lib/fleet-web-services.nix {
@@ -32,7 +32,7 @@ let
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
   wgHomeEndpoint = wgHomeServerConfig.host.observability.prometheusEndpoints."wg-home";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
-  wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
+  wgHomeDnsSyncClient = config.host.pki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
     inherit (peer) address;
@@ -45,7 +45,7 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
-  host.internalPki.clients."wg-home-dns-sync" = {
+  host.pki.clients."wg-home-dns-sync" = {
     enable = true;
     category = "observability";
     secretPrefix = wgHomeDnsSyncClientSecretPrefix;
@@ -75,7 +75,7 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
       User = unifiSyncCfg.user;
       Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${internalPkiRootCaPath} --client-cert-file ${
+      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${pkiRootCaPath} --client-cert-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
       } --client-key-file ${
         config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path

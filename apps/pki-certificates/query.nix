@@ -10,17 +10,19 @@ let
   networkingName = dnsName;
   avahiName = configuredHost.services.avahi.hostName or dnsName;
   nodeExporterEnabled = configuredHost.host.observability.nodeExporter.mtls.enable or false;
-  authority = configuredHost.host.internalPki.authority;
+  authority = configuredHost.host.pki.authority;
 in
 {
-  ca_url = if authority.enable then authority.url else null;
+  realm = configuredHost.host.realm;
+  authority = configuredHost.host.pki.realmAuthority;
+  ca_url = if configuredHost.host.pki.role == "authority" then authority.url else null;
   identity = {
     dns_name = dnsName;
     networking_name = networkingName;
     avahi_name = avahiName;
   };
   internal_services = configuredHost.host.internalHttps.services or { };
-  clients = configuredHost.host.internalPki.clients or { };
+  clients = configuredHost.host.pki.clients or { };
   proxmox_api =
     if configuredHost.host.proxmox.apiCertificate.enable or false then
       configuredHost.host.proxmox.apiCertificate
@@ -43,5 +45,5 @@ in
       }
     else
       null;
-  managed_certificates = configuredHost.host.internalPki.managedCertificates;
+  managed_certificates = configuredHost.host.pki.managedCertificates;
 }

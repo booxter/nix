@@ -21,7 +21,7 @@ let
       model.server;
   enabledPkiClients = lib.filterAttrs (
     _: client: client.enable && client.category == "observability"
-  ) config.host.internalPki.clients;
+  ) config.host.pki.clients;
   lokiClientCertCredentialPath = "/run/credentials/alloy.service/loki-client.crt";
   lokiClientKeyCredentialPath = "/run/credentials/alloy.service/loki-client.key";
   lokiMtlsClient =
@@ -53,7 +53,7 @@ in
       clientName = lib.mkOption {
         type = lib.types.str;
         default = "loki";
-        description = "Name of the host.internalPki.clients entry used for Loki writes.";
+        description = "Name of the host.pki.clients entry used for Loki writes.";
       };
 
       serverName = lib.mkOption {
@@ -64,7 +64,7 @@ in
 
       trustedCaCertificate = lib.mkOption {
         type = lib.types.path;
-        default = config.host.internalPki.rootCaCertificate;
+        default = config.host.pki.rootCaCertificate;
         description = "CA bundle used to verify the Loki writer endpoint.";
       };
     };
@@ -76,7 +76,7 @@ in
         writeUrl = lib.mkDefault realmLoki.writeUrl;
         mtls.enable = lib.mkDefault realmLoki.mtls;
       };
-      host.internalPki.clients.loki = {
+      host.pki.clients.loki = {
         enable = lib.mkDefault (cfg.enable && lokiCfg.writeUrl != null && lokiCfg.mtls.enable);
         category = "observability";
         secretPrefix = "observability/clients/loki";
@@ -138,7 +138,7 @@ in
           assertions = [
             {
               assertion = lokiMtlsClient != null;
-              message = "host.observability.loki.mtls.clientName must reference an enabled observability-category host.internalPki.clients entry.";
+              message = "host.observability.loki.mtls.clientName must reference an enabled observability-category host.pki.clients entry.";
             }
           ];
 

@@ -11,7 +11,7 @@ let
   exporterCfg = config.host.proxmox.prometheusExporter;
   realmProxmox = facts.realms.${config.host.realm}.services.proxmox or null;
   certInstallUnit = "proxmox-api-certificate.service";
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
   certInstallCommand = utils.escapeSystemdExecArgs [
@@ -32,7 +32,7 @@ in
       host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && realmProxmox != null);
     }
     (lib.mkIf cfg.enable {
-      host.internalPki.managedCertificates = [
+      host.pki.managedCertificates = [
         {
           category = "internal_https_server";
           name = "proxmox-api";
@@ -56,7 +56,7 @@ in
           locationExtraConfig = ''
             proxy_ssl_name ${cfg.serverName};
             proxy_ssl_server_name on;
-            proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
+            proxy_ssl_trusted_certificate ${pkiRootCaPath};
             proxy_ssl_verify on;
           '';
         };

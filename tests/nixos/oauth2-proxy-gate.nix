@@ -99,7 +99,7 @@ pkgs.testers.runNixOSTest {
       ];
 
       options = {
-        host.internalPki = {
+        host.pki = {
           clients = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };

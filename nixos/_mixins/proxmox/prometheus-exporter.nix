@@ -2,7 +2,7 @@
 let
   cfg = config.host.proxmox.prometheusExporter;
   certInstallUnit = "proxmox-api-certificate.service";
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
@@ -54,7 +54,7 @@ in
           "pveproxy.service"
         ]
         ++ sopsInstallSecretsUnit;
-        environment.REQUESTS_CA_BUNDLE = "${internalPkiRootCaPath}";
+        environment.REQUESTS_CA_BUNDLE = "${pkiRootCaPath}";
       };
     })
   ];

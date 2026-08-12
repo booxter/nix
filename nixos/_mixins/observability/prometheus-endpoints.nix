@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.observability;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
   inventoryEndpoints = lib.filterAttrs (
     name: _: !(name == "node_exporter" && cfg.nodeExporter.mtls.enable)
@@ -154,7 +154,7 @@ in
   };
 
   config = lib.mkIf (cfg.enable && enabledEndpoints != { }) {
-    host.internalPki.managedCertificates = lib.mapAttrsToList (name: endpoint: {
+    host.pki.managedCertificates = lib.mapAttrsToList (name: endpoint: {
       category = "observability_endpoint_server";
       inherit name;
       inherit (endpoint) secretPrefix;
@@ -209,9 +209,9 @@ in
           ];
           sslCertificate = config.sops.secrets."${endpointSecretAttrName endpointName}-server-crt".path;
           sslCertificateKey = config.sops.secrets."${endpointSecretAttrName endpointName}-server-key".path;
-          sslTrustedCertificate = internalPkiRootCaPath;
+          sslTrustedCertificate = pkiRootCaPath;
           extraConfig = ''
-            ssl_client_certificate ${internalPkiRootCaPath};
+            ssl_client_certificate ${pkiRootCaPath};
             ssl_verify_client on;
           '';
           locations.${endpoint.path} = {

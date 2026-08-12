@@ -12,7 +12,7 @@ let
   beastNfsRateMbit = 1500;
   wgEndpointPort = 1637;
   jellyfinClientName = "jellyfin-upload-policy";
-  jellyfinClient = config.host.internalPki.clients.${jellyfinClientName};
+  jellyfinClient = config.host.pki.clients.${jellyfinClientName};
 in
 {
   services.adaptive-upload-policy = {
@@ -39,7 +39,7 @@ in
     group = "media";
   };
 
-  host.internalPki.clients.${jellyfinClientName} = {
+  host.pki.clients.${jellyfinClientName} = {
     enable = true;
     category = "internal";
     secretPrefix = "prometheus/clients/jellyfin-upload-policy";

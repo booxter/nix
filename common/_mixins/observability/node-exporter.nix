@@ -58,14 +58,14 @@ in
 
       trustedCaCertificate = lib.mkOption {
         type = lib.types.path;
-        default = config.host.internalPki.rootCaCertificate;
+        default = config.host.pki.rootCaCertificate;
         description = "CA bundle used to authenticate node exporter clients.";
       };
     };
   };
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
-    host.internalPki.managedCertificates = [
+    host.pki.managedCertificates = [
       {
         category = "observability_endpoint_server";
         name = "node_exporter";

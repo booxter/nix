@@ -6,7 +6,7 @@ let
     probeServices
     secretName
     ;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
 
   tlsVhost = serviceName: service: port: {
     extraConfig = lib.optionalString service.mtls.enable ''
@@ -22,7 +22,7 @@ let
     ];
     sslCertificate = config.sops.secrets."${secretName serviceName}-server-crt".path;
     sslCertificateKey = config.sops.secrets."${secretName serviceName}-server-key".path;
-    sslTrustedCertificate = internalPkiRootCaPath;
+    sslTrustedCertificate = pkiRootCaPath;
   };
 
   proxyVhost =

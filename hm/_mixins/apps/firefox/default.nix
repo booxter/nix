@@ -140,16 +140,11 @@ in
           ExcludedDomains = firefoxDohExcludedDomains;
         };
       }
-      //
-        lib.optionalAttrs
-          (
-            isDarwin && osConfig.host.internalPki.enable && osConfig.host.internalPki.rootCaCertificate != null
-          )
-          {
-            Certificates = {
-              ImportEnterpriseRoots = true;
-            };
-          };
+      // lib.optionalAttrs (isDarwin && osConfig.host.pki.rootCaCertificate != null) {
+        Certificates = {
+          ImportEnterpriseRoots = true;
+        };
+      };
     };
 
     home.sessionVariables = {

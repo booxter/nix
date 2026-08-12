@@ -14,7 +14,7 @@ let
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
-  caPort = config.host.internalPki.authority.port;
+  caPort = config.host.pki.authority.port;
   caUrl = "https://${config.networking.hostName}:${toString caPort}";
   caProvisioner = "bootstrap@${config.host.network.lanDomain}";
   pkiRotationBaseBranch = "master";
@@ -67,9 +67,11 @@ in
     publicKey = readPublicKey ./restic.pub;
   };
 
-  host.internalPki.authority = {
-    enable = true;
-    rootCaCertificate = ./root-ca.crt;
+  host.pki = {
+    role = "authority";
+    authority = {
+      rootCaCertificate = ./root-ca.crt;
+    };
   };
 
   host.network = {

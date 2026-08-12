@@ -27,7 +27,7 @@ let
   };
   dashService = fleetServices.byId.dash;
   degoogService = fleetServices.byId.goo;
-  pkiAuthority = config.host.internalPki.realmAuthority;
+  pkiAuthority = config.host.pki.realmAuthority;
   pkiRootCaUrl = "${pkiAuthority.url}${pkiAuthority.rootsPath}";
   serviceCatalog = map (
     contribution:

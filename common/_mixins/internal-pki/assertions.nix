@@ -5,7 +5,7 @@
   model,
 }:
 let
-  managedCertificates = config.host.internalPki.managedCertificates;
+  managedCertificates = config.host.pki.managedCertificates;
   managedCertificateKeys = map (
     certificate: "${certificate.category}/${certificate.name}"
   ) managedCertificates;
@@ -20,8 +20,7 @@ in
   }
   {
     assertion =
-      !config.host.internalPki.authority.enable
-      || config.host.internalPki.authority.rootCaCertificate != null;
+      config.host.pki.role != "authority" || config.host.pki.authority.rootCaCertificate != null;
     message = "internal PKI authority '${config.networking.hostName}' must declare its root CA certificate";
   }
   {
@@ -31,18 +30,14 @@ in
       + lib.concatStringsSep ", " (builtins.attrNames enabledClients);
   }
   {
-    assertion = !config.host.internalPki.enable || model.realmAuthority != null;
-    message = "realm '${config.host.realm}' has no internal PKI authority";
-  }
-  {
     assertion =
       builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
-    message = "host.internalPki.managedCertificates must not duplicate a category/name pair";
+    message = "host.pki.managedCertificates must not duplicate a category/name pair";
   }
   {
     assertion =
       builtins.length managedCertificateSourceKeys
       == builtins.length (lib.unique managedCertificateSourceKeys);
-    message = "host.internalPki.managedCertificates must not duplicate a SOPS certificate field";
+    message = "host.pki.managedCertificates must not duplicate a SOPS certificate field";
   }
 ]

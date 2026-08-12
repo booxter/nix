@@ -30,7 +30,7 @@ let
         certificate:
         secretSpec host secretPath certificate.category certificate.name certificate.secretPrefix
           certificate.certificateField
-      ) configuredHost.host.internalPki.managedCertificates
+      ) configuredHost.host.pki.managedCertificates
     );
 
   leafCertificates = lib.concatLists (lib.mapAttrsToList hostSpecs facts.hosts.hostSpecsByName);

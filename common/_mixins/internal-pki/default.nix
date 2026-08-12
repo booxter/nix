@@ -7,7 +7,7 @@
 }:
 let
   rootConfig = config;
-  cfg = config.host.internalPki;
+  cfg = config.host.pki;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
   managedCertificateType = lib.types.submodule {
     options = {
@@ -39,6 +39,10 @@ let
   };
   realmAuthorityType = lib.types.submodule {
     options = {
+      realm = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Realm served by this authority.";
+      };
       hostName = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "Host providing the realm's internal PKI authority.";
@@ -58,6 +62,14 @@ let
       url = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "Resolved realm authority API URL.";
+      };
+      provisioner = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Smallstep provisioner used for realm leaf issuance.";
+      };
+      leafLifetimeDays = lib.mkOption {
+        type = lib.types.ints.positive;
+        description = "Lifetime of leaf certificates issued by this authority.";
       };
     };
   };
@@ -135,12 +147,14 @@ let
     };
 in
 {
-  options.host.internalPki = {
-    enable = lib.mkEnableOption "trust in and client identities for the realm's internal PKI";
+  options.host.pki = {
+    role = lib.mkOption {
+      type = with lib.types; nullOr (enum [ "authority" ]);
+      default = null;
+      description = "Realm PKI role claimed by this host.";
+    };
 
     authority = {
-      enable = lib.mkEnableOption "the internal PKI authority for this host's realm";
-
       rootCaCertificate = lib.mkOption {
         type = with lib.types; nullOr path;
         default = null;
@@ -157,6 +171,18 @@ in
         type = lib.types.str;
         default = "/roots.pem";
         description = "Certificate authority API path serving the trusted root bundle.";
+      };
+
+      provisioner = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "bootstrap@${config.host.network.lanDomain}";
+        description = "Smallstep provisioner used for realm leaf issuance.";
+      };
+
+      leafLifetimeDays = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 180;
+        description = "Lifetime of leaf certificates issued by this authority.";
       };
 
       url = lib.mkOption {
@@ -248,9 +274,7 @@ in
   };
 
   config = {
-    host.internalPki.enable = lib.mkDefault (model.realmAuthority != null);
-
-    host.internalPki.managedCertificates = lib.mapAttrsToList (name: client: {
+    host.pki.managedCertificates = lib.mapAttrsToList (name: client: {
       category =
         if client.category == "observability" then "observability_client" else "internal_https_client";
       inherit name;
@@ -267,7 +291,7 @@ in
         ;
     };
 
-    security.pki.certificateFiles = lib.optionals (cfg.enable && cfg.rootCaCertificate != null) [
+    security.pki.certificateFiles = lib.optionals (cfg.rootCaCertificate != null) [
       cfg.rootCaCertificate
     ];
 

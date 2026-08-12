@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.rootCaCertificate;
   lanDomain = config.host.network.lanDomain;
   localServerAliasesFor = aliases: aliases ++ map (alias: "${alias}.local") aliases;
 in
@@ -119,7 +119,7 @@ in
 
                   trustedCaCertificate = lib.mkOption {
                     type = path;
-                    default = internalPkiRootCaPath;
+                    default = pkiRootCaPath;
                     description = "CA certificate bundle trusted for inbound client certificate verification.";
                   };
                 };
