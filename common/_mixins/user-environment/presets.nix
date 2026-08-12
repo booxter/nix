@@ -22,6 +22,7 @@ let
       };
       roles.workstation = {
         hm = {
+          firefox.enable = true;
           gmailctl = {
             enable = true;
             warmer.enable = true;
@@ -69,7 +70,6 @@ let
       };
       roles.workstation = {
         features = {
-          apps.firefox.enable = false;
           apps.homerow.enable = false;
           apps.teams.enable = true;
         };

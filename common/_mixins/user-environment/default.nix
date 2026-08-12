@@ -217,18 +217,10 @@ in
           description = "Whether to provide the ChatGPT desktop client where supported.";
         };
 
-        firefox = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to provide the managed Firefox browser.";
-          };
-
-          makeDefault = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to make Firefox the default browser where supported.";
-          };
+        firefox.makeDefault = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to make Firefox the default browser where supported.";
         };
 
         homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
