@@ -195,7 +195,7 @@ func valueStat(options ValueStatOptions) *stat.PanelBuilder {
 		Datasource(options.DataSource).
 		GridPos(options.Grid).
 		Unit(options.Unit).
-		TextMode(common.BigValueTextModeValueAndName).
+		TextMode(common.BigValueTextModeAuto).
 		Orientation(common.VizOrientationAuto).
 		ReduceOptions(common.NewReduceDataOptionsBuilder().
 			Values(false).

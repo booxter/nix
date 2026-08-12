@@ -23,7 +23,7 @@ func NetworkOverview(config Config) (dashboard.Dashboard, error) {
 	layout := newPanelLayout()
 	classified := func(direction, scope string) string {
 		return nodeMetric("host_observability_network_bytes_total",
-			`host_network_source="classified"`, fmt.Sprintf(`direction=%q`, direction), fmt.Sprintf(`scope=%q`, scope))
+			fmt.Sprintf(`direction=%q`, direction), fmt.Sprintf(`scope=%q`, scope))
 	}
 	nodeInterface := func(metric string) string {
 		return nodeMetric(metric, `host_network_source="node"`, fmt.Sprintf(`device!~%q`, physicalInterfaceExclusion))

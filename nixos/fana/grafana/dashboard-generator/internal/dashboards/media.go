@@ -109,7 +109,7 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 		Targets: []PrometheusTarget{{
 			RefID: "A", Legend: "{{instance}}",
 			Expression: `sum by(instance) (rate(` + nodeMetric("host_observability_network_bytes_total",
-				`host_network_source="classified"`, `direction="transmit"`, `scope="wan"`) + `[5m])) * 8`,
+				`direction="transmit"`, `scope="wan"`) + `[5m])) * 8`,
 		}},
 	}))
 
