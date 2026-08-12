@@ -13,6 +13,17 @@ let
 in
 {
   config = lib.mkIf (cfg.enable && ssoApplication != null) {
+    host.site.search.providers.degoog = {
+      enable = true;
+      title = "Degoog";
+      aliases = [ "@goo" ];
+      endpoints.public = {
+        baseUrl = service.public.url;
+        searchPath = "/search";
+        queryParameter = "q";
+      };
+    };
+
     host.degoog.catalog.features.settings-access.settings = {
       middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
       trusted-header-settings-auth-middleware.allowedUsers = lib.concatStringsSep "," (
