@@ -30,6 +30,7 @@ let
             enable = true;
             warmer.enable = true;
           };
+          hyprland.enable = !config.host.isDarwin;
           kitty.enable = true;
           matrix.enable = true;
           obsidian.enable = true;
