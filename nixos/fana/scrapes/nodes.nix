@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
   hostname = config.networking.hostName;
-  nixosConfigNames = builtins.attrNames facts.hosts.nixos;
+  nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
   mkNodeLabels = name: hostConfig: isProxmox: {
     availability = hostConfig.host.availability;
     component = "node";
@@ -33,7 +32,7 @@ let
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
-    name != "fana" && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
+    name != hostname && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
   ) nixosConfigNames;
   remoteNixosNonMtlsNodeTargetNames = builtins.filter (
     name:

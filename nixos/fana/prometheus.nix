@@ -25,7 +25,6 @@ let
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
-      facts
       lib
       outputs
       prometheusMtlsTlsConfig
@@ -43,7 +42,8 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
-      facts
+      config
+      lib
       outputs
       prometheusMtlsTlsConfig
       ;

@@ -1,20 +1,34 @@
 {
-  facts,
+  config,
+  lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = builtins.attrNames facts.hosts.nixos;
-  proxmoxLabNodeNames = builtins.filter (
-    name:
-    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
-  ) nixosConfigNames;
-  proxmoxClusterScrapeNodeName = "prx1-lab";
+  localHost = config.networking.hostName;
+  model = import ../../_mixins/proxmox/model.nix {
+    inherit config lib outputs;
+  };
+  hostConfigFor =
+    name: if name == localHost then config else outputs.nixosConfigurations.${name}.config;
+  exporterEnabled = name: (hostConfigFor name).host.proxmox.prometheusExporter.enable;
+  proxmoxNodeNames = builtins.filter (name: exporterEnabled name) (builtins.attrNames model.nodes);
+  clusterRepresentativeNames = builtins.concatLists (
+    lib.mapAttrsToList (
+      _: clusters:
+      lib.concatMap (
+        nodeNames:
+        let
+          exporterNodeNames = builtins.filter exporterEnabled nodeNames;
+        in
+        lib.optional (exporterNodeNames != [ ]) (builtins.head exporterNodeNames)
+      ) (builtins.attrValues clusters)
+    ) model.nodesByRealmCluster
+  );
   mkProxmoxPveTargetConfig =
     name:
     let
-      hostConfig = outputs.nixosConfigurations.${name}.config;
+      hostConfig = hostConfigFor name;
       endpoint = hostConfig.host.observability.prometheusEndpoints.pve;
     in
     {
@@ -27,8 +41,8 @@ let
       };
       targets = [ "${name}:${toString endpoint.port}" ];
     };
-  proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxLabNodeNames;
-  proxmoxClusterTargetConfigs = [ (mkProxmoxPveTargetConfig proxmoxClusterScrapeNodeName) ];
+  proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxNodeNames;
+  proxmoxClusterTargetConfigs = map mkProxmoxPveTargetConfig clusterRepresentativeNames;
   proxmoxPveRelabelConfigs = [
     {
       source_labels = [ "pve_target" ];
