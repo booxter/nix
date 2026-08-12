@@ -66,7 +66,6 @@ let
           usageStatus.enable = false;
           workUsageStatus.enable = true;
         };
-        dev.nvidia.enable = true;
         dev.scm.sendEmail.transport = "nvidia";
       };
       roles.developer.hm.dev = {
@@ -74,6 +73,7 @@ let
         codex.enable = true;
         go.enable = true;
         k8s.enable = true;
+        nvidia.enable = true;
       };
       roles.developer.hm.docker.enable = true;
       roles.workstation = {

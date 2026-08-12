@@ -178,8 +178,6 @@ in
             };
           };
         };
-
-        nvidia.enable = lib.mkEnableOption "NVIDIA development environment";
       };
 
       gui = {
