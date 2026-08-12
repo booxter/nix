@@ -115,6 +115,14 @@ in
       boot.supportedFilesystems = [ "nfs" ];
     })
 
+    {
+      systemd.services = lib.mkMerge (
+        map (attachment: {
+          ${attachment.unit}.unitConfig.RequiresMountsFor = [ attachment.mountPoint ];
+        }) model.localAttachments
+      );
+    }
+
     (lib.mkIf (model.providedRemoteClaims != [ ]) {
       services.nfs = {
         server = {

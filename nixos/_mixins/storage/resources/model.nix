@@ -51,6 +51,19 @@ let
     ) nodes
   );
   localClaims = lib.mapAttrs (normalizeClaim hostName) config.host.storage.claims;
+  localAttachments = builtins.concatLists (
+    lib.mapAttrsToList (
+      claimName: claim:
+      lib.mapAttrsToList (name: attachment: {
+        inherit
+          claimName
+          name
+          ;
+        inherit (attachment) unit;
+        inherit (claim) mountPoint;
+      }) claim.attachments
+    ) localClaims
+  );
   providedClaims = builtins.filter (claim: claim.provider == hostName) allClaims;
   providedRemoteClaims = builtins.filter (claim: !claim.local) providedClaims;
   localResources = lib.mapAttrs (
@@ -139,6 +152,7 @@ in
     allClaims
     directoriesByPath
     hostName
+    localAttachments
     localClaims
     localResources
     managedGroups
