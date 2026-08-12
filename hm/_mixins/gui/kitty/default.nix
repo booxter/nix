@@ -9,7 +9,7 @@
   config = lib.mkIf config.host.hm.kitty.enable {
     programs.kitty = {
       enable = true;
-      shellIntegration.enableZshIntegration = true;
+      shellIntegration.enableZshIntegration = config.programs.zsh.enable;
       settings = {
         macos_quit_when_last_window_closed = true;
         close_on_child_death = true;
