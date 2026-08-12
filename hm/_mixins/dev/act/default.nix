@@ -20,6 +20,8 @@ in
   options.host.hm.dev.act.enable = lib.mkEnableOption "Act GitHub Actions runner";
 
   config = lib.mkIf (osConfig.host.userEnvironment.features.dev.enable && cfg.enable) {
+    host.hm.podman.api.enable = lib.mkIf podmanCfg.enable true;
+
     home.packages = [ pkgs.act ];
 
     home.shellAliases = lib.mkIf podmanCfg.enable {

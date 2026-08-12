@@ -19,6 +19,7 @@ in
 {
   options.host.hm.podman = {
     enable = lib.mkEnableOption "Podman container environment";
+    api.enable = lib.mkEnableOption "Podman Docker-compatible API socket";
     desktop.enable = lib.mkEnableOption "Podman Desktop";
     machine.enable = lib.mkEnableOption "managed Podman virtual machine";
   };
@@ -26,6 +27,10 @@ in
   config = lib.mkMerge [
     {
       assertions = [
+        {
+          assertion = !cfg.api.enable || cfg.enable;
+          message = "host.hm.podman.api requires host.hm.podman";
+        }
         {
           assertion = !cfg.desktop.enable || cfg.enable;
           message = "host.hm.podman.desktop requires host.hm.podman";
@@ -44,16 +49,17 @@ in
           ++ lib.optional cfg.desktop.enable pkgs.podman-desktop
           ++ lib.optional isDarwin pkgs.container;
 
-        sessionVariables = {
-          DOCKER_HOST = podmanSocket;
-        }
-        // lib.optionalAttrs isDarwin {
-          CONTAINERS_MACHINE_PROVIDER = podmanMachine.provider;
-        };
+        sessionVariables =
+          lib.optionalAttrs cfg.api.enable {
+            DOCKER_HOST = podmanSocket;
+          }
+          // lib.optionalAttrs isDarwin {
+            CONTAINERS_MACHINE_PROVIDER = podmanMachine.provider;
+          };
       };
 
       # Keep the rootless Docker-compatible API socket available through systemd.
-      systemd.user.services.podman = lib.mkIf (!isDarwin) {
+      systemd.user.services.podman = lib.mkIf (!isDarwin && cfg.api.enable) {
         Unit = {
           Description = "Podman API Service";
           Requires = [ "podman.socket" ];
@@ -68,7 +74,7 @@ in
         };
       };
 
-      systemd.user.sockets.podman = lib.mkIf (!isDarwin) {
+      systemd.user.sockets.podman = lib.mkIf (!isDarwin && cfg.api.enable) {
         Unit.Description = "Podman API Socket";
 
         Socket = {
