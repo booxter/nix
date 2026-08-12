@@ -1,12 +1,11 @@
 {
   config,
-  facts,
   lib,
   srvarrPkgs,
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
   booksDir = "${mediaDir}/library/books";

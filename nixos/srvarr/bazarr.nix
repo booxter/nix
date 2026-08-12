@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   srvarrPkgs,
   utils,
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   group = "media";
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";

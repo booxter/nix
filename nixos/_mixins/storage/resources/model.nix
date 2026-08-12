@@ -1,10 +1,10 @@
 {
   config,
-  facts,
   lib,
   outputs,
 }:
 let
+  accounts = config.host.accounts;
   hostName = config.networking.hostName;
   nodeConfig = nodeConfig: {
     inherit (nodeConfig.host.storage) claims resources volumes;
@@ -63,11 +63,11 @@ let
       ownerName = if directory.owner == null then defaults.owner else directory.owner;
       groupName = if directory.group == null then defaults.group else directory.group;
       group =
-        if groupName == "root" || builtins.hasAttr groupName facts.accounts.groups then
+        if groupName == "root" || builtins.hasAttr groupName accounts.groups then
           groupName
         else
           throw "storage resource ${resource.providerName}.${resource.resourceName} directory '${path}' references unknown group '${groupName}'";
-      ownerAccount = facts.accounts.users.${ownerName} or null;
+      ownerAccount = accounts.users.${ownerName} or null;
       owner =
         if ownerName == "root" then
           "root"
@@ -108,14 +108,14 @@ let
   managedGroups = builtins.listToAttrs (
     map (name: {
       inherit name;
-      value.gid = facts.accounts.groups.${name}.gid;
+      value.gid = accounts.groups.${name}.gid;
     }) identityGroupNames
   );
   managedUsers = builtins.listToAttrs (
     map (
       name:
       let
-        account = facts.accounts.users.${name};
+        account = accounts.users.${name};
       in
       {
         inherit name;

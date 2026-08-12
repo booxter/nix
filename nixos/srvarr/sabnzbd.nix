@@ -1,11 +1,10 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   port = 6336;
   user = "sabnzbd";

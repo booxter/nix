@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   ...
@@ -9,7 +8,6 @@ let
   model = import ./model.nix {
     inherit
       config
-      facts
       lib
       outputs
       ;
@@ -89,7 +87,7 @@ in
   ++ lib.concatMap (
     name:
     let
-      expected = facts.accounts.users.${name};
+      expected = config.host.accounts.users.${name};
       user = config.users.users.${name} or null;
       group = config.users.groups.${expected.group} or null;
     in
@@ -99,7 +97,7 @@ in
         message = "NFS anonymous identity ${name} must use UID ${toString expected.uid}";
       }
       {
-        assertion = group != null && group.gid == facts.accounts.groups.${expected.group}.gid;
+        assertion = group != null && group.gid == config.host.accounts.groups.${expected.group}.gid;
         message = "NFS anonymous identity ${name} must use the shared ${expected.group} GID";
       }
     ]

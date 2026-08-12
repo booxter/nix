@@ -1,11 +1,10 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   servarrCommon = import ./servarr-common.nix { inherit config lib; };
   stateDir = "${config.host.srvarrPaths.stateDir}/prowlarr";
   user = "prowlarr";

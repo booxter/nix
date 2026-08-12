@@ -8,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
+  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   rommSso = facts.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
