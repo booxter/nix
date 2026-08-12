@@ -1,7 +1,10 @@
 {
   clippy,
   lib,
+  makeWrapper,
+  nix,
   openssh,
+  providerInventory ? { },
   rustfmt,
   rustPlatform,
 }:
@@ -26,6 +29,7 @@ rustPlatform.buildRustPackage {
     clippy
     rustfmt
   ];
+  nativeBuildInputs = [ makeWrapper ];
 
   preCheck = ''
     cargo fmt --check
@@ -33,8 +37,15 @@ rustPlatform.buildRustPackage {
   '';
   cargoTestFlags = [ "--all-targets" ];
 
+  postFixup = ''
+    wrapProgram "$out/bin/reset-oidc" \
+      --prefix PATH : ${lib.makeBinPath [ nix ]} \
+      --set RESET_OIDC_PROVIDERS_FILE ${builtins.toFile "sso-providers.json" (builtins.toJSON providerInventory)} \
+      --set RESET_OIDC_PROVIDERS_QUERY_FILE ${../../providers-query.nix}
+  '';
+
   meta = {
-    description = "Administrative Kanidm tools for the PKI host";
+    description = "Administrative tools for a Kanidm SSO provider";
     license = lib.licenses.mit;
     mainProgram = "reset-oidc";
     platforms = lib.platforms.unix;

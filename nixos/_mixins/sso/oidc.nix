@@ -6,8 +6,8 @@
 let
   inherit (lib) mkOption types;
   realmProvider = config.host.sso.realmProvider;
-  issuerBaseUrl = realmProvider.publicUrl;
-  baseScopes = realmProvider.baseScopes;
+  issuerBaseUrl = if realmProvider == null then null else realmProvider.publicUrl;
+  baseScopes = if realmProvider == null then [ ] else realmProvider.baseScopes;
   registrationType = types.submodule (
     { name, ... }:
     {
@@ -133,20 +133,21 @@ let
   clients = lib.mapAttrs (
     _: registration:
     let
-      openidBaseUrl = "${issuerBaseUrl}/oauth2/openid/${registration.clientId}";
+      providerUrl =
+        assert issuerBaseUrl != null;
+        issuerBaseUrl;
+      openidBaseUrl = "${providerUrl}/oauth2/openid/${registration.clientId}";
       secret = registration.secret;
     in
     registration
     // {
-      inherit
-        baseScopes
-        issuerBaseUrl
-        ;
-      authorizationUrl = "${issuerBaseUrl}/ui/oauth2";
+      inherit baseScopes;
+      issuerBaseUrl = providerUrl;
+      authorizationUrl = "${providerUrl}/ui/oauth2";
       discoveryUrl = "${openidBaseUrl}/.well-known/openid-configuration";
       issuerUrl = openidBaseUrl;
       jwksUrl = "${openidBaseUrl}/public_key.jwk";
-      tokenUrl = "${issuerBaseUrl}/oauth2/token";
+      tokenUrl = "${providerUrl}/oauth2/token";
       userinfoUrl = "${openidBaseUrl}/userinfo";
       secret = secret // {
         path = if registration.public then null else config.sops.secrets.${secret.name}.path;

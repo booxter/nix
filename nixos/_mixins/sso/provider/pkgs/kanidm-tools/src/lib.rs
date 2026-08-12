@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::future::Future;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -23,8 +24,8 @@ const SSH_PROGRAM: &str = match option_env!("RESET_OIDC_SSH") {
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Send a Kanidm OIDC credential reset email through pki",
-    after_help = "Examples:\n  reset-oidc ihar\n  reset-oidc kasia"
+    about = "Send a Kanidm OIDC credential reset email through the realm provider",
+    after_help = "Example:\n  reset-oidc account-name"
 )]
 pub struct ClientArgs {
     /// Kanidm person account ID.
@@ -35,15 +36,65 @@ pub struct ClientArgs {
     #[arg(value_name = "EMAIL")]
     pub email: Option<String>,
 
-    /// OpenSSH destination of the Kanidm host.
-    #[arg(
-        long,
-        env = "RESET_OIDC_SSH_TARGET",
-        default_value = "pki",
-        hide_env_values = true,
-        value_parser = ssh_target
-    )]
-    pub target: String,
+    /// Realm whose SSO provider should handle the reset.
+    #[arg(long, value_parser = non_empty)]
+    pub realm: Option<String>,
+
+    /// Explicit OpenSSH destination overriding provider discovery.
+    #[arg(long, env = "RESET_OIDC_SSH_TARGET", hide_env_values = true, value_parser = ssh_target)]
+    pub target: Option<String>,
+}
+
+pub type ProviderInventory = BTreeMap<String, String>;
+
+pub fn load_provider_inventory(path: &Path) -> Result<ProviderInventory> {
+    let file = std::fs::File::open(path)
+        .with_context(|| format!("failed to open SSO provider inventory {}", path.display()))?;
+    serde_json::from_reader(file)
+        .with_context(|| format!("failed to read SSO provider inventory {}", path.display()))
+}
+
+pub fn discover_repo_root(cwd: &Path) -> Result<PathBuf> {
+    cwd.ancestors()
+        .find(|candidate| candidate.join("flake.nix").is_file())
+        .map(Path::to_path_buf)
+        .context("could not find the repository root from the current directory")
+}
+
+pub fn query_provider_inventory(query: &Path, repo_root: &Path) -> Result<ProviderInventory> {
+    let output = Command::new("nix-instantiate")
+        .args(["--eval", "--strict", "--json"])
+        .arg(query)
+        .args(["--argstr", "repo"])
+        .arg(repo_root)
+        .output()
+        .context("failed to evaluate the SSO provider inventory")?;
+    ensure!(
+        output.status.success(),
+        "failed to evaluate the SSO provider inventory: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    serde_json::from_slice(&output.stdout).context("invalid evaluated SSO provider inventory")
+}
+
+fn provider_target(arguments: &ClientArgs, providers: &ProviderInventory) -> Result<String> {
+    if let Some(target) = &arguments.target {
+        return Ok(target.clone());
+    }
+    if let Some(realm) = &arguments.realm {
+        return providers
+            .get(realm)
+            .cloned()
+            .with_context(|| format!("realm '{realm}' has no SSO provider"));
+    }
+    if providers.len() == 1 {
+        return Ok(providers
+            .first_key_value()
+            .expect("one provider was present")
+            .1
+            .clone());
+    }
+    bail!("--realm is required when multiple SSO providers are configured")
 }
 
 pub(crate) fn non_empty(value: &str) -> Result<String, String> {
@@ -133,11 +184,13 @@ impl ResetTransport for SshTransport {
 
 pub fn run_client(
     arguments: ClientArgs,
+    providers: &ProviderInventory,
     transport: &impl ResetTransport,
     output: &mut impl Write,
 ) -> Result<()> {
+    let target = provider_target(&arguments, providers)?;
     let request = ResetRequest::new(arguments.user_id, arguments.email);
-    transport.send(&arguments.target, &request)?;
+    transport.send(&target, &request)?;
 
     match &request.email {
         Some(email) => writeln!(
@@ -198,7 +251,13 @@ mod tests {
     use anyhow::{bail, Result};
     use clap::{error::ErrorKind, Parser};
 
-    use super::{run_client, run_server, ClientArgs, ResetRequest, ResetTransport};
+    use super::{
+        run_client, run_server, ClientArgs, ProviderInventory, ResetRequest, ResetTransport,
+    };
+
+    fn providers() -> ProviderInventory {
+        ProviderInventory::from([("test-realm".to_owned(), "provider-node".to_owned())])
+    }
 
     #[derive(Default)]
     struct FakeTransport {
@@ -220,12 +279,14 @@ mod tests {
 
     #[test]
     fn parses_existing_positional_interface() {
-        let arguments = ClientArgs::try_parse_from(["reset-oidc", "ihar", "i@example.com"])
-            .expect("arguments should parse");
+        let arguments =
+            ClientArgs::try_parse_from(["reset-oidc", "test-user", "user@example.invalid"])
+                .expect("arguments should parse");
 
-        assert_eq!(arguments.user_id, "ihar");
-        assert_eq!(arguments.email.as_deref(), Some("i@example.com"));
-        assert_eq!(arguments.target, "pki");
+        assert_eq!(arguments.user_id, "test-user");
+        assert_eq!(arguments.email.as_deref(), Some("user@example.invalid"));
+        assert_eq!(arguments.target, None);
+        assert_eq!(arguments.realm, None);
     }
 
     #[test]
@@ -234,7 +295,7 @@ mod tests {
             ClientArgs::try_parse_from(["reset-oidc", ""]).expect_err("empty user should fail");
         assert_eq!(empty.kind(), ErrorKind::ValueValidation);
 
-        let target = ClientArgs::try_parse_from(["reset-oidc", "--target=-V", "ihar"])
+        let target = ClientArgs::try_parse_from(["reset-oidc", "--target=-V", "test-user"])
             .expect_err("option-shaped target should fail");
         assert_eq!(target.kind(), ErrorKind::ValueValidation);
     }
@@ -243,22 +304,24 @@ mod tests {
     fn client_sends_request_and_reports_selected_email() {
         let transport = FakeTransport::default();
         let arguments = ClientArgs {
-            user_id: "ihar".to_owned(),
-            email: Some("i@example.com".to_owned()),
-            target: "pki.example".to_owned(),
+            user_id: "test-user".to_owned(),
+            email: Some("user@example.invalid".to_owned()),
+            realm: None,
+            target: None,
         };
         let mut output = Vec::new();
 
-        run_client(arguments, &transport, &mut output).expect("client should succeed");
+        run_client(arguments, &providers(), &transport, &mut output)
+            .expect("client should succeed");
 
         let sent = transport.sent.borrow();
         assert_eq!(sent.len(), 1);
-        assert_eq!(sent[0].0, "pki.example");
-        assert_eq!(sent[0].1.user_id, "ihar");
-        assert_eq!(sent[0].1.email.as_deref(), Some("i@example.com"));
+        assert_eq!(sent[0].0, "provider-node");
+        assert_eq!(sent[0].1.user_id, "test-user");
+        assert_eq!(sent[0].1.email.as_deref(), Some("user@example.invalid"));
         assert_eq!(
             String::from_utf8(output).expect("output should be UTF-8"),
-            "Requested OIDC credential reset email for ihar at i@example.com.\n"
+            "Requested OIDC credential reset email for test-user at user@example.invalid.\n"
         );
     }
 
@@ -269,13 +332,14 @@ mod tests {
             ..FakeTransport::default()
         };
         let arguments = ClientArgs {
-            user_id: "ihar".to_owned(),
+            user_id: "test-user".to_owned(),
             email: None,
-            target: "pki".to_owned(),
+            realm: Some("test-realm".to_owned()),
+            target: None,
         };
         let mut output = Vec::new();
 
-        let error = run_client(arguments, &transport, &mut output)
+        let error = run_client(arguments, &providers(), &transport, &mut output)
             .expect_err("transport failure should propagate");
 
         assert!(error.to_string().contains("transport failed"));
@@ -285,10 +349,10 @@ mod tests {
     #[tokio::test]
     async fn server_decodes_and_dispatches_request() {
         let input =
-            Cursor::new(br#"{"protocol_version":1,"user_id":"kasia","email":null}"#.to_vec());
+            Cursor::new(br#"{"protocol_version":1,"user_id":"second-user","email":null}"#.to_vec());
 
         run_server(input, |request| async move {
-            assert_eq!(request.user_id, "kasia");
+            assert_eq!(request.user_id, "second-user");
             assert_eq!(request.email, None);
             Ok(())
         })
@@ -299,7 +363,7 @@ mod tests {
     #[tokio::test]
     async fn server_rejects_wrong_protocol_before_dispatch() {
         let input =
-            Cursor::new(br#"{"protocol_version":2,"user_id":"ihar","email":null}"#.to_vec());
+            Cursor::new(br#"{"protocol_version":2,"user_id":"test-user","email":null}"#.to_vec());
         let dispatched = RefCell::new(false);
 
         let error = run_server(input, |_| async {
@@ -318,7 +382,7 @@ mod tests {
     #[tokio::test]
     async fn server_rejects_unknown_fields() {
         let input = Cursor::new(
-            br#"{"protocol_version":1,"user_id":"ihar","email":null,"ttl":1}"#.to_vec(),
+            br#"{"protocol_version":1,"user_id":"test-user","email":null,"ttl":1}"#.to_vec(),
         );
 
         let error = run_server(input, |_| async { Ok(()) })

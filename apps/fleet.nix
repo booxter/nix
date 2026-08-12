@@ -93,7 +93,7 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
+  resetOidc = pkgs.callPackage ../nixos/_mixins/sso/provider/pkgs/kanidm-tools { };
   wgHomeClientConfig = fleetTools;
 in
 {

@@ -4,7 +4,10 @@
   ...
 }:
 let
-  ssoPkgs = import ./pkgs pkgs;
+  ssoPkgs = import ./pkgs {
+    inherit pkgs;
+    providerInventory.${config.host.realm} = config.networking.hostName;
+  };
 in
 {
   imports = [ ./kanidm.nix ];

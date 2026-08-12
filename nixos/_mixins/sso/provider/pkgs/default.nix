@@ -1,6 +1,9 @@
-pkgs:
+{
+  pkgs,
+  providerInventory ? { },
+}:
 let
-  kanidmTools = pkgs.callPackage ./kanidm-tools { };
+  kanidmTools = pkgs.callPackage ./kanidm-tools { inherit providerInventory; };
 in
 {
   kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision {
