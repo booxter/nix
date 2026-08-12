@@ -6,7 +6,7 @@
 }:
 let
   localHost = config.networking.hostName;
-  model = import ../../_mixins/proxmox/model.nix {
+  model = import ../../../proxmox/model.nix {
     inherit config lib outputs;
   };
   hostConfigFor =

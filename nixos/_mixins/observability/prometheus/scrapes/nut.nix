@@ -5,7 +5,7 @@
   pkgs,
 }:
 let
-  model = import ../../../common/_mixins/ups/model.nix {
+  model = import ../../../../../common/_mixins/ups/model.nix {
     inherit
       config
       lib

@@ -23,7 +23,7 @@ let
     cert_file = config.sops.secrets.${blackboxScrapeMaterialization.certificateSecretName}.path;
     key_file = config.sops.secrets.${blackboxScrapeMaterialization.keySecretName}.path;
   };
-  nodeScrapes = import ../../../fana/scrapes/nodes.nix {
+  nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
       lib
@@ -31,7 +31,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  blackboxScrapes = import ../../../fana/scrapes/blackbox.nix {
+  blackboxScrapes = import ./scrapes/blackbox.nix {
     inherit
       config
       facts
@@ -41,7 +41,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  proxmoxScrapes = import ../../../fana/scrapes/proxmox.nix {
+  proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
       config
       lib
@@ -49,7 +49,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  endpointScrapes = import ../../../fana/scrapes/endpoints.nix {
+  endpointScrapes = import ./scrapes/endpoints.nix {
     inherit
       config
       lib
@@ -57,15 +57,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  wireguardScrapes = import ../../../fana/scrapes/wireguard.nix {
-    inherit
-      config
-      lib
-      outputs
-      prometheusMtlsTlsConfig
-      ;
-  };
-  nutScrapes = import ../../../fana/scrapes/nut.nix {
+  nutScrapes = import ./scrapes/nut.nix {
     inherit
       config
       lib
@@ -209,8 +201,7 @@ in
       ++ proxmoxScrapes.scrapeConfigs
       ++ nutScrapes.scrapeConfigs
       ++ blackboxScrapes.scrapeConfigs
-      ++ endpointScrapes.scrapeConfigs
-      ++ wireguardScrapes.scrapeConfigs;
+      ++ endpointScrapes.scrapeConfigs;
     };
   };
 }

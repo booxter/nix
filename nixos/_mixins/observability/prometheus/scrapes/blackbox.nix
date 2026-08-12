@@ -9,7 +9,7 @@
 let
   lan = facts.site.lan;
   nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
-  fleetServices = import ../../_lib/fleet-web-services.nix {
+  fleetServices = import ../../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
   beastHostConfig = outputs.nixosConfigurations.beast.config;

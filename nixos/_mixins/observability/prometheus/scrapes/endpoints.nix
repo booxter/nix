@@ -32,7 +32,7 @@ let
   entriesByJob = lib.groupBy (entry: entry.endpoint.scrape.jobName) endpointEntries;
   scrapeShape = entry: {
     inherit (entry.endpoint) path;
-    inherit (entry.endpoint.scrape) interval timeout;
+    inherit (entry.endpoint.scrape) interval metricRelabelConfigs timeout;
   };
   incompatibleJobs = builtins.attrNames (
     lib.filterAttrs (
@@ -68,7 +68,10 @@ let
       }) entries;
     }
     // lib.optionalAttrs (scrape.interval != null) { scrape_interval = scrape.interval; }
-    // lib.optionalAttrs (scrape.timeout != null) { scrape_timeout = scrape.timeout; };
+    // lib.optionalAttrs (scrape.timeout != null) { scrape_timeout = scrape.timeout; }
+    // lib.optionalAttrs (scrape.metricRelabelConfigs != [ ]) {
+      metric_relabel_configs = scrape.metricRelabelConfigs;
+    };
 in
 {
   assertions = [

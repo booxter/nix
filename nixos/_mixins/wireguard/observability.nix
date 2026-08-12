@@ -1,15 +1,33 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.wireguard.server;
+  network = config.host.wireguard.networks.${cfg.network};
   internalAddress = "127.0.0.1";
   internalPort = 9587;
   publicPort = 9586;
   metricsName = "wg-${cfg.network}";
+  peers = lib.mapAttrsToList (name: peer: {
+    inherit name;
+    inherit (peer) address publicKey;
+  }) network.peers;
+  mkPeerMetricRelabels = peer: [
+    {
+      source_labels = [ "public_key" ];
+      target_label = "peer";
+      regex = lib.escapeRegex peer.publicKey;
+      replacement = peer.name;
+    }
+    {
+      source_labels = [ "public_key" ];
+      target_label = "peer_address";
+      regex = lib.escapeRegex peer.publicKey;
+      replacement = peer.address;
+    }
+  ];
 in
 {
   config = lib.mkIf cfg.enable {
@@ -18,8 +36,15 @@ in
       port = publicPort;
       path = "/metrics";
       upstream = "http://${internalAddress}:${toString internalPort}/metrics";
-      serverName = "${config.networking.hostName}.${facts.site.lan.domain}";
+      serverName = "${config.networking.hostName}.${config.host.network.lanDomain}";
       secretPrefix = "prometheus/${metricsName}";
+      scrape = {
+        enable = true;
+        jobName = "wireguard";
+        profile = "network";
+        component = "wireguard";
+        metricRelabelConfigs = lib.concatMap mkPeerMetricRelabels peers;
+      };
     };
 
     services.prometheus.exporters.wireguard = {

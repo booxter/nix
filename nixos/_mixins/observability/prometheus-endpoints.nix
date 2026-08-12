@@ -131,6 +131,12 @@ in
                     default = { };
                     description = "Additional static labels attached to this target.";
                   };
+
+                  metricRelabelConfigs = lib.mkOption {
+                    type = listOf attrs;
+                    default = [ ];
+                    description = "Metric relabeling rules supplied by the endpoint owner.";
+                  };
                 };
               };
             }
