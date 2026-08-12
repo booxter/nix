@@ -7,6 +7,7 @@
 let
   username = config.host.username;
   appsCfg = config.host.userEnvironment.features.apps;
+  wiresharkEnabled = config.home-manager.users.${username}.host.hm.wireshark.enable;
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
@@ -43,7 +44,7 @@ in
       ++ lib.optionals (appsCfg.enable && appsCfg.chatgpt.enable) [
         "chatgpt"
       ]
-      ++ lib.optionals config.host.userEnvironment.features.net.graphical.enable [
+      ++ lib.optionals wiresharkEnabled [
         "wireshark-chmodbpf"
       ]
       ++ lib.optionals (appsCfg.enable && appsCfg.homerow.enable) [ "homerow" ];

@@ -112,12 +112,6 @@ in
           default = true;
           description = "Whether to provide network diagnostic tools.";
         };
-
-        graphical.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = "Whether to provide graphical network diagnostic tools.";
-        };
       };
 
       dev = {
@@ -248,7 +242,6 @@ in
         (lib.mkIf cfg.roles.workstation.enable {
           apps.enable = lib.mkDefault true;
           gui.enable = lib.mkDefault true;
-          net.graphical.enable = lib.mkDefault true;
         })
         (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
           apps.homerow.enable = lib.mkDefault true;
@@ -264,14 +257,6 @@ in
       {
         assertion = !cfg.features.gui.enable || config.host.isDesktop;
         message = "The managed graphical desktop environment requires a desktop host.";
-      }
-      {
-        assertion = !cfg.features.net.graphical.enable || cfg.features.net.enable;
-        message = "Graphical network diagnostic tools require network diagnostics.";
-      }
-      {
-        assertion = !cfg.features.net.graphical.enable || config.host.isDesktop;
-        message = "Graphical network diagnostic tools require a desktop host.";
       }
       {
         assertion = lib.all (name: builtins.hasAttr name cfg.repositories.catalog) requiredRepositories;

@@ -57,6 +57,7 @@ let
               };
             };
           };
+          wireshark.enable = true;
         };
       };
     };
@@ -102,6 +103,7 @@ let
               };
             };
           };
+          wireshark.enable = true;
           zoom.enable = true;
         };
       };

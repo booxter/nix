@@ -8,9 +8,9 @@ let
   cfg = osConfig.host.userEnvironment.features.net;
 in
 {
-  config = lib.mkIf cfg.enable {
-    home.packages = lib.optional cfg.graphical.enable pkgs.wireshark;
+  imports = [ ./wireshark.nix ];
 
+  config = lib.mkIf cfg.enable {
     programs.zsh.initContent = lib.mkAfter ''
       iftop() {
         local primary_iface
