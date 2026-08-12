@@ -15,6 +15,7 @@ let
         hm = {
           dev.act.enable = true;
           dev.codex.enable = true;
+          dev.go.enable = true;
           podman = {
             enable = true;
             machine.enable = config.host.isDarwin;
@@ -73,6 +74,7 @@ let
       roles.developer.hm.dev = {
         act.enable = true;
         codex.enable = true;
+        go.enable = true;
       };
       roles.workstation = {
         features = {
