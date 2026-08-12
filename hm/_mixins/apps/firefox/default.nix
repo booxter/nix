@@ -9,13 +9,25 @@ let
   inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.firefox;
   publicDomain = osConfig.host.network.publicDomain;
-  degoogUrl = "https://goo.${publicDomain}";
+  searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};
+  searchEndpoint =
+    if searchProvider.endpoints.public != null then
+      searchProvider.endpoints.public
+    else
+      searchProvider.endpoints.internal;
   firefoxDohExcludedDomains = [ publicDomain ];
 in
 {
   imports = [ ./passkeys.nix ];
 
-  options.host.hm.firefox.enable = lib.mkEnableOption "managed Firefox browser";
+  options.host.hm.firefox = {
+    enable = lib.mkEnableOption "managed Firefox browser";
+
+    search.provider = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "Site search provider selected for Firefox.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     stylix.targets.firefox.profileNames = [ "default" ];
@@ -27,25 +39,25 @@ in
       configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
       profiles.default = {
         search = {
-          default = "degoog";
-          privateDefault = "degoog";
+          default = cfg.search.provider;
+          privateDefault = cfg.search.provider;
           force = true;
           engines = {
-            degoog = {
-              name = "Degoog";
+            ${cfg.search.provider} = {
+              name = searchProvider.title;
               urls = [
                 {
-                  template = "${degoogUrl}/search";
+                  template = "${searchEndpoint.baseUrl}${searchEndpoint.searchPath}";
                   params = [
                     {
-                      name = "q";
+                      name = searchEndpoint.queryParameter;
                       value = "{searchTerms}";
                     }
                   ];
                 }
               ];
-              searchForm = degoogUrl;
-              definedAliases = [ "@goo" ];
+              searchForm = searchEndpoint.baseUrl;
+              definedAliases = searchProvider.aliases;
             };
             ddg = { };
           };

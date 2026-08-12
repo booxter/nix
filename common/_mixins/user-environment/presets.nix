@@ -28,7 +28,10 @@ let
       roles.workstation = {
         hm = {
           numberedWorkspaces = if config.host.isDarwin then 4 else 6;
-          firefox.enable = true;
+          firefox = {
+            enable = true;
+            search.provider = "degoog";
+          };
           gmailctl = {
             enable = true;
             warmer.enable = true;
