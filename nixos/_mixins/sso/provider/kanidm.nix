@@ -234,6 +234,10 @@ in
         enable = true;
         path = "/status";
       };
+      observability = {
+        importance = "critical";
+        externalProbe.requirement = "required";
+      };
       presentation = {
         title = provider.displayName;
         icon = "sh:kanidm";

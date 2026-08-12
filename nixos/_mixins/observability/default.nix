@@ -11,5 +11,6 @@
     ./prometheus/server.nix
     ./systemd-expectations.nix
     ./unifi
+    ./uptimerobot
   ];
 }

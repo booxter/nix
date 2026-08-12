@@ -37,6 +37,7 @@ in
           path = "/readyz";
         };
       };
+      observability.importance = "best-effort";
       presentation = {
         title = "Degoog";
         icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";

@@ -386,6 +386,7 @@ in
       enable = true;
       path = "/api/health";
     };
+    observability.importance = "best-effort";
     presentation = {
       title = "PinePods";
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";

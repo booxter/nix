@@ -190,6 +190,10 @@ in
         splitDnsHost = config.networking.hostName;
       };
       health.frontend.enable = true;
+      observability = {
+        importance = "critical";
+        externalProbe.requirement = "required";
+      };
       presentation = {
         title = "Dashboard";
         icon = "sh:glance";

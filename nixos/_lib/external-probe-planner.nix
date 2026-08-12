@@ -6,6 +6,12 @@ let
     "normal"
     "best-effort"
   ];
+  importanceRanks = {
+    critical = 4;
+    important = 3;
+    normal = 2;
+    best-effort = 1;
+  };
   byId = builtins.sort (left: right: left.id < right.id);
   roundRobinByOwner =
     candidates:
@@ -39,6 +45,7 @@ in
 {
   capacity,
   candidates,
+  minimumImportance ? "best-effort",
   spreadByOwner ? true,
 }:
 let
@@ -46,6 +53,11 @@ let
     candidate:
     candidate.value.observability.externalProbe.enable
     && candidate.value.observability.externalProbe.requirement != "disabled"
+    && (
+      candidate.value.observability.externalProbe.requirement == "required"
+      ||
+        importanceRanks.${candidate.value.observability.importance} >= importanceRanks.${minimumImportance}
+    )
   ) candidates;
   required = orderCandidates spreadByOwner (
     builtins.filter (

@@ -8,7 +8,7 @@ import pytest
 from uptimerobot_sync import app
 
 
-def service(id="search", title="Search", url="https://search.example/health"):
+def service(id="search", title="Search", url="https://search.example.invalid/health"):
     return app.Service(id=id, title=title, url=url)
 
 
@@ -16,7 +16,7 @@ def monitor(
     id,
     *,
     title="Search",
-    url="https://search.example/health",
+    url="https://search.example.invalid/health",
     interval=300,
     type="HTTP",
     timeout=30,
@@ -56,7 +56,7 @@ def test_create_missing_monitor():
 
     actions = app.reconcile(client, [service()], 300)
 
-    assert actions == ["create search (https://search.example/health)"]
+    assert actions == ["create search (https://search.example.invalid/health)"]
     assert client.created == [app.desired_monitor(service(), 300)]
 
 
@@ -69,7 +69,7 @@ def test_adopt_monitor_by_url():
 
 
 def test_adopt_monitor_by_title_when_url_changes():
-    client = FakeClient([monitor(7, url="https://old.example/health")])
+    client = FakeClient([monitor(7, url="https://old.example.invalid/health")])
 
     app.reconcile(client, [service()], 300)
 
@@ -81,8 +81,8 @@ def test_adopt_monitor_by_title_when_url_changes():
 def test_delete_all_monitors_absent_from_inventory():
     client = FakeClient(
         [
-            monitor(1, title="Old", url="https://old.example"),
-            monitor(2, title="Manual", url="https://manual.example"),
+            monitor(1, title="Old", url="https://old.example.invalid"),
+            monitor(2, title="Manual", url="https://manual.example.invalid"),
         ]
     )
 
@@ -104,7 +104,7 @@ def test_dry_run_does_not_mutate():
 
     actions = app.reconcile(client, [service()], 300, dry_run=True)
 
-    assert actions == ["create search (https://search.example/health)"]
+    assert actions == ["create search (https://search.example.invalid/health)"]
     assert client.created == []
 
 
@@ -127,8 +127,8 @@ def test_inventory_validates_duplicates_and_types(tmp_path):
     inventory.write_text(
         json.dumps(
             [
-                {"id": "one", "title": "One", "url": "https://one.test"},
-                {"id": "one", "title": "Two", "url": "https://two.test"},
+                {"id": "one", "title": "One", "url": "https://one.example.invalid"},
+                {"id": "one", "title": "Two", "url": "https://two.example.invalid"},
             ]
         ),
         encoding="utf-8",
@@ -155,12 +155,12 @@ class RecordingTransport:
 
 def test_client_validates_monitor_list_and_bearer_auth():
     transport = RecordingTransport({"data": [{"id": 17, "friendlyName": "Monitor"}]})
-    client = app.UptimeRobotClient("https://api.example/v3/", "secret", transport)
+    client = app.UptimeRobotClient("https://api.example.invalid/v3/", "secret", transport)
 
     assert client.list_monitors() == [app.Monitor(id=17, friendlyName="Monitor")]
     assert transport.request_data == (
         "GET",
-        "https://api.example/v3/monitors",
+        "https://api.example.invalid/v3/monitors",
         None,
     )
 

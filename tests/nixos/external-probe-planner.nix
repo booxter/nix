@@ -58,6 +58,42 @@ let
     capacity = 0;
     inherit candidates;
   };
+  normalAndAbove = plan {
+    capacity = 10;
+    inherit candidates;
+    minimumImportance = "normal";
+  };
+  controllerConfiguration = {
+    config.host.observability.uptimeRobot.controller.enable = true;
+  };
+  duplicateControllerEvaluation = lib.evalModules {
+    specialArgs = {
+      hostSpec.name = "local-node";
+      outputs.nixosConfigurations = {
+        controller-a = controllerConfiguration;
+        controller-b = controllerConfiguration;
+      };
+    };
+    modules = [
+      ../../nixos/_mixins/observability/uptimerobot/options.nix
+      ../../nixos/_mixins/observability/uptimerobot/assertions.nix
+      {
+        options = {
+          assertions = lib.mkOption {
+            type = lib.types.listOf lib.types.attrs;
+            default = [ ];
+          };
+          host.isLinux = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+          };
+        };
+      }
+    ];
+  };
+  duplicateControllerFailures = builtins.filter (
+    assertion: !assertion.assertion
+  ) duplicateControllerEvaluation.config.assertions;
 in
 assert
   selected.selectedIds == [
@@ -68,6 +104,11 @@ assert
   ];
 assert map (entry: entry.id) selected.omitted == [ "best-effort-service" ];
 assert overflow.requiredOverflow;
+assert !builtins.elem "best-effort-service" normalAndAbove.selectedIds;
+assert
+  map (assertion: assertion.message) duplicateControllerFailures == [
+    "The fleet has multiple UptimeRobot controllers: controller-a, controller-b"
+  ];
 pkgs.runCommand "external-probe-planner-test" { } ''
   touch "$out"
 ''

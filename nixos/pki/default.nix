@@ -1,20 +1,12 @@
 {
   lib,
-  pkgs,
   ...
 }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
-  pkiPkgs = import ./pkgs pkgs;
 in
 {
   system.stateVersion = "25.11";
-
-  _module.args = { inherit pkiPkgs; };
-
-  imports = [
-    ./uptimerobot-sync.nix
-  ];
 
   host.backups.destinations.primary = {
     server = "beast";
@@ -30,6 +22,8 @@ in
   };
 
   host.sso.role = "provider";
+
+  host.observability.uptimeRobot.controller.enable = true;
 
   host.network = {
     macAddress = "bc:24:11:c6:ab:fc";
