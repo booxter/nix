@@ -66,11 +66,12 @@ stdenv.mkDerivation {
     # hard refresh.
     ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
-    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile rejects by default.
-    ./aurral-allow-hidden-image-cache-path.patch
   ];
 
   postPatch = ''
+    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile rejects by default.
+    patch --batch --fuzz=0 -p1 < ${./aurral-allow-hidden-image-cache-path.patch}
+
     # TODO: Submit managed slskd settings as an upstream feature request and patch.
     patch --batch --fuzz=0 -p1 < ${./managed-slskd-settings.patch}
 
