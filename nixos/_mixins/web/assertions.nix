@@ -37,6 +37,14 @@ in
           !service.presentation.dashboard.enable || service.presentation.dashboard.category != null;
         message = "host.web.services.${serviceName} dashboard entries require a category";
       }
+      {
+        assertion = !service.observability.externalProbe.enable || service.public.enable;
+        message = "host.web.services.${serviceName} external probing requires public exposure";
+      }
+      {
+        assertion = !service.observability.externalProbe.enable || service.health.frontend.enable;
+        message = "host.web.services.${serviceName} external probing requires a frontend health probe";
+      }
     ]) enabledServices
   );
 }

@@ -390,13 +390,44 @@ in
               description = "Prometheus endpoints exported by this web service.";
             };
 
-            observability.availability = lib.mkOption {
-              type = lib.types.enum [
-                "always"
-                "intermittent"
-              ];
-              default = rootConfig.host.availability;
-              description = "Availability policy inherited by this service's metrics and probes.";
+            observability = {
+              availability = lib.mkOption {
+                type = lib.types.enum [
+                  "always"
+                  "intermittent"
+                ];
+                default = rootConfig.host.availability;
+                description = "Availability policy inherited by this service's metrics and probes.";
+              };
+
+              importance = lib.mkOption {
+                type = lib.types.enum [
+                  "critical"
+                  "important"
+                  "normal"
+                  "best-effort"
+                ];
+                default = "normal";
+                description = "Operational importance used to prioritize capacity-limited monitoring.";
+              };
+
+              externalProbe = {
+                enable = lib.mkOption {
+                  type = lib.types.bool;
+                  default = config.public.enable && config.health.frontend.enable;
+                  description = "Whether this public frontend is eligible for external probing.";
+                };
+
+                requirement = lib.mkOption {
+                  type = lib.types.enum [
+                    "required"
+                    "eligible"
+                    "disabled"
+                  ];
+                  default = "eligible";
+                  description = "Whether an external-probe planner must, may, or must not select this service.";
+                };
+              };
             };
 
             auth = {
