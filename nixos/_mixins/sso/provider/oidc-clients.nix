@@ -1,11 +1,20 @@
 {
   lib,
+  localRegistrations,
   outputs,
   providerHost,
+  realm,
 }:
 let
-  consumerConfigurations = removeAttrs outputs.nixosConfigurations [ providerHost ];
-  contributions = lib.concatLists (
+  consumerConfigurations = lib.filterAttrs (_: host: host.config.host.realm == realm) (
+    removeAttrs outputs.nixosConfigurations [ providerHost ]
+  );
+  localContributions = lib.mapAttrsToList (registrationName: registration: {
+    hostName = providerHost;
+    inherit registrationName;
+    provider = removeAttrs registration [ "secret" ];
+  }) localRegistrations;
+  remoteContributions = lib.concatLists (
     lib.mapAttrsToList (
       hostName: host:
       lib.mapAttrsToList (registrationName: registration: {
@@ -17,6 +26,7 @@ let
       }) host.config.host.sso.oidc.registrations
     ) consumerConfigurations
   );
+  contributions = localContributions ++ remoteContributions;
   contributionsByClientId = builtins.groupBy (
     contribution: contribution.provider.clientId
   ) contributions;

@@ -13,7 +13,6 @@ in
   _module.args = { inherit pkiPkgs; };
 
   imports = [
-    ./id.nix
     ./uptimerobot-sync.nix
   ];
 

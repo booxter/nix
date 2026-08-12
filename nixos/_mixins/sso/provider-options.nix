@@ -76,6 +76,11 @@ in
         ];
         description = "OIDC scopes requested by every client.";
       };
+      mail.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether the provider sends enrollment and credential-reset mail.";
+      };
     };
 
     realmProvider = lib.mkOption {
