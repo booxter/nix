@@ -30,6 +30,8 @@ in
     };
   };
 
+  host.sso.role = "provider";
+
   host.network = {
     macAddress = "bc:24:11:c6:ab:fc";
     reservation = {

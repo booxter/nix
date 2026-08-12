@@ -5,12 +5,9 @@
 }:
 let
   inherit (lib) mkOption types;
-  issuerBaseUrl = "https://id.${config.host.network.publicDomain}";
-  baseScopes = [
-    "openid"
-    "email"
-    "profile"
-  ];
+  realmProvider = config.host.sso.realmProvider;
+  issuerBaseUrl = realmProvider.publicUrl;
+  baseScopes = realmProvider.baseScopes;
   registrationType = types.submodule (
     { name, ... }:
     {
