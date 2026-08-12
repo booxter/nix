@@ -54,7 +54,7 @@ in
         system = nixosSystem;
       })
       (mkTarget {
-        attr = "nixosConfigurations.builder1.config.system.build.vmQemu";
+        attr = "nixosConfigurations.builder1.config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu";
         host = "builder1";
         name = "nixos vm qemu (${nixosSystem})";
         system = nixosSystem;

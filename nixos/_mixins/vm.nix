@@ -39,7 +39,5 @@ in
       memorySize = memorySize * 1024;
       diskSize = diskSize * 1024;
     };
-
-    system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
   };
 }
