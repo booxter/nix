@@ -47,9 +47,7 @@ in
       ./_mixins/sso
       ./_mixins/storage
       ./_mixins/site-ip
-      ./_mixins/ups-client
-      ./_mixins/ups-server.nix
-      ./_mixins/ups-sched.nix
+      ./_mixins/ups
       ./_mixins/user
       ./_mixins/vm.nix
       ./_mixins/vpn
