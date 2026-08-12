@@ -45,6 +45,7 @@
       ./_mixins/site-ip
       ./_mixins/ups
       ./_mixins/user
+      ./_mixins/vikunja
       ./_mixins/vm.nix
       ./_mixins/vpn
       ./_mixins/watchstate

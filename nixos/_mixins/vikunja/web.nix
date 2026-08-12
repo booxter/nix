@@ -1,0 +1,52 @@
+{
+  config,
+  lib,
+  ...
+}:
+let
+  cfg = config.host.vikunja;
+  oidcScopes = config.host.sso.oidc.baseScopes;
+in
+{
+  config = lib.mkIf cfg.enable {
+    host.web.services.vikunja = {
+      enable = true;
+      upstream = cfg.localUrl;
+      public = {
+        enable = true;
+        hostName = cfg.publicHost;
+      };
+      health.frontend = {
+        enable = true;
+        path = "";
+      };
+      metrics.default = {
+        enable = true;
+        port = cfg.metrics.port;
+        upstream = "${cfg.localUrl}/api/v1/metrics";
+      };
+      auth = {
+        mode = "oidc";
+        oidcRegistration = {
+          displayName = "Vikunja";
+          originUrls = [ "https://${cfg.publicHost}/auth/openid/sso" ];
+          originLanding = "https://${cfg.publicHost}/";
+          allowInsecureClientDisablePkce = true;
+          scopeMaps."vikunja-users" = oidcScopes;
+          secret = {
+            sopsKey = "vikunja/oidc/client_secret";
+            name = "vikunjaOidcClientSecret";
+            restartUnits = [ "vikunja.service" ];
+          };
+        };
+      };
+      presentation = {
+        title = "Vikunja";
+        dashboard = {
+          enable = true;
+          category = "user";
+        };
+      };
+    };
+  };
+}
