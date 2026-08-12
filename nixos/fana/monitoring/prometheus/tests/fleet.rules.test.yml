@@ -66,16 +66,6 @@ tests:
     alert_rule_test:
       - eval_time: 5m30s
         alertname: NodeCpuUsageHigh
-        exp_alerts:
-          - exp_labels:
-              alertname: NodeCpuUsageHigh
-              category: capacity
-              instance: nvws
-              job: node-mtls
-              severity: warning
-            exp_annotations:
-              summary: "Node CPU usage high on nvws"
-              description: "nvws CPU busy has been above 80% for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -322,8 +312,16 @@ tests:
     alert_rule_test:
       - eval_time: 5m
         alertname: NodeMemoryUsageHigh
-      - eval_time: 5m
-        alertname: ProxmoxNodeMemoryHeadroomLow
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeMemoryUsageHigh
+              category: capacity
+              instance: prx1-lab
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node memory usage high on prx1-lab"
+              description: "prx1-lab memory usage has been above 80% for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -333,19 +331,19 @@ tests:
         values: "137438953472x12"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: ProxmoxNodeMemoryHeadroomLow
+        alertname: NodeMemoryUsageHigh
       - eval_time: 5m
-        alertname: ProxmoxNodeMemoryHeadroomLow
+        alertname: NodeMemoryUsageHigh
         exp_alerts:
           - exp_labels:
-              alertname: ProxmoxNodeMemoryHeadroomLow
+              alertname: NodeMemoryUsageHigh
               category: capacity
               instance: prx1-lab
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Hypervisor memory headroom low on prx1-lab"
-              description: "prx1-lab has less than 16 GiB available or is above 90% memory use for 5 minutes."
+              summary: "Node memory usage high on prx1-lab"
+              description: "prx1-lab memory usage has been above 80% for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -355,19 +353,19 @@ tests:
         values: "137438953472x12"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: ProxmoxNodeMemoryHeadroomCritical
+        alertname: NodeMemoryUsageCritical
       - eval_time: 5m
-        alertname: ProxmoxNodeMemoryHeadroomCritical
+        alertname: NodeMemoryUsageCritical
         exp_alerts:
           - exp_labels:
-              alertname: ProxmoxNodeMemoryHeadroomCritical
+              alertname: NodeMemoryUsageCritical
               category: capacity
               instance: prx1-lab
               job: node-mtls
               severity: critical
             exp_annotations:
-              summary: "Hypervisor memory headroom critical on prx1-lab"
-              description: "prx1-lab has less than 8 GiB available or is above 95% memory use for 5 minutes."
+              summary: "Node memory usage critical on prx1-lab"
+              description: "prx1-lab memory usage has been above 90% for 5 minutes."
 
   - interval: 30s
     input_series:

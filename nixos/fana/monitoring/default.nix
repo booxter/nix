@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   utils,
@@ -9,7 +8,9 @@
 let
   hostname = config.networking.hostName;
   catalog = import ./catalog.nix;
-  monitoringPackage = pkgs.callPackage ./package.nix { inherit facts; };
+  monitoringPackage = pkgs.callPackage ./package.nix {
+    capacityAlertPolicy = config.host.observability.alerts.capacity;
+  };
   alertmanagerPort = 9093;
   grafanaPort = config.services.grafana.settings.server.http_port;
   validateAlertmanagerConfig = utils.escapeSystemdExecArgs [
@@ -19,6 +20,11 @@ let
   ];
 in
 {
+  imports = [
+    ./assertions.nix
+    ./options.nix
+  ];
+
   assertions = [
     {
       assertion = lib.length config.services.prometheus.alertmanagers == 1;
