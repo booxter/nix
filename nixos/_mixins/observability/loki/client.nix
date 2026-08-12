@@ -1,22 +1,24 @@
 {
   config,
-  facts,
   lib,
+  outputs,
   pkgs,
   ...
 }:
 let
   cfg = config.host.observability;
   lokiCfg = cfg.loki;
-  realmObservability = facts.realms.${config.host.realm}.services.observability or null;
+  model = import ../../../../common/_mixins/observability/loki-model.nix {
+    inherit config lib outputs;
+  };
   realmLoki =
-    if realmObservability == null then
+    if model.server == null then
       {
         writeUrl = null;
         mtls = false;
       }
     else
-      realmObservability.loki;
+      model.server;
   enabledPkiClients = lib.filterAttrs (
     _: client: client.enable && client.category == "observability"
   ) config.host.internalPki.clients;

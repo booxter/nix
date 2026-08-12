@@ -1,15 +1,16 @@
 {
   config,
-  facts,
   lib,
+  outputs,
   ...
 }:
 let
-  realmObservability = facts.realms.${config.host.realm}.services.observability or null;
+  lokiModel = import ./loki-model.nix {
+    inherit config lib outputs;
+  };
 in
 {
   imports = [
-    ./assertions.nix
     ./node-exporter.nix
   ];
 
@@ -17,10 +18,10 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability.enable = lib.mkDefault (realmObservability != null);
+      host.observability.enable = lib.mkDefault (lokiModel.server != null);
     }
-    (lib.mkIf (realmObservability != null) {
-      host.observability.nodeExporter.mtls.enable = lib.mkDefault realmObservability.nodeExporter.mtls;
+    (lib.mkIf config.host.observability.enable {
+      host.observability.nodeExporter.mtls.enable = lib.mkDefault true;
     })
   ];
 }

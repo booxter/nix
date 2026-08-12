@@ -1,9 +1,7 @@
 {
-  context,
   facts,
 }:
 let
-  inherit (context) lanDomain;
   inherit (facts) public-keys;
   publicKeys = public-keys;
 in
@@ -31,13 +29,6 @@ in
       ];
     };
     services = {
-      observability = {
-        loki = {
-          writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";
-          mtls = true;
-        };
-        nodeExporter.mtls = true;
-      };
       proxmox.oidcManagerHost = "prx1-lab";
       ups.credentialMode = "sops";
     };
