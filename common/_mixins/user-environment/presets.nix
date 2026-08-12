@@ -84,6 +84,7 @@ let
         hm = {
           matrix.enable = true;
           obsidian.enable = true;
+          slack.enable = true;
           spotify = {
             enable = true;
             spicetify.enable = true;
@@ -100,6 +101,7 @@ let
               };
             };
           };
+          zoom.enable = true;
         };
       };
     };

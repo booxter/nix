@@ -19,22 +19,14 @@ lib.mkIf
       "$HOME/src/nvpn"
     ];
 
-    home.packages =
-      with pkgs;
-      (
-        [
-          dive
-          gitlab-ci-local
-          gpclient
-          homeManagerPkgs.jinjanator
-          nvPkgs.nico-cli
-          teleport
-          trivy
-          vault-bin
-        ]
-        ++ lib.optionals osConfig.host.isDesktop [
-          slack
-          zoom-us
-        ]
-      );
+    home.packages = with pkgs; [
+      dive
+      gitlab-ci-local
+      gpclient
+      homeManagerPkgs.jinjanator
+      nvPkgs.nico-cli
+      teleport
+      trivy
+      vault-bin
+    ];
   }
