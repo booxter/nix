@@ -22,9 +22,6 @@ in
     host.hm.podman = {
       enable = true;
       api.enable = true;
-    }
-    // lib.optionalAttrs isDarwin {
-      machine.enable = true;
     };
 
     home.packages = [ pkgs.act ];

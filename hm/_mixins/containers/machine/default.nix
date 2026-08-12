@@ -87,7 +87,7 @@ in
   };
 
   config = lib.mkMerge [
-    { programs.podman-machine.enable = podmanCfg.enable && podmanCfg.machine.enable; }
+    { programs.podman-machine.enable = podmanCfg.enable && isDarwin; }
     (lib.mkIf cfg.enable {
       assertions = [
         {

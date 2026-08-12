@@ -21,7 +21,6 @@ in
     enable = lib.mkEnableOption "Podman container environment";
     api.enable = lib.mkEnableOption "Podman Docker-compatible API socket";
     desktop.enable = lib.mkEnableOption "Podman Desktop";
-    machine.enable = lib.mkEnableOption "managed Podman virtual machine";
   };
 
   config = lib.mkMerge [
@@ -34,10 +33,6 @@ in
         {
           assertion = !cfg.desktop.enable || cfg.enable;
           message = "host.hm.podman.desktop requires host.hm.podman";
-        }
-        {
-          assertion = !cfg.machine.enable || cfg.enable;
-          message = "host.hm.podman.machine requires host.hm.podman";
         }
       ];
     }

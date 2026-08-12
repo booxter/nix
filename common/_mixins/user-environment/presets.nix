@@ -18,7 +18,6 @@ let
           dev.go.enable = true;
           podman = {
             enable = true;
-            machine.enable = config.host.isDarwin;
           };
           ramalama.enable = true;
         };
@@ -36,7 +35,6 @@ let
           podman = {
             enable = true;
             desktop.enable = true;
-            machine.enable = config.host.isDarwin;
           };
           spotify = {
             enable = true;
