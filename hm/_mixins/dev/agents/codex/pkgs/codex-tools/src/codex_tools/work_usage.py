@@ -17,14 +17,6 @@ class WorkCredits:
     overage_limit_reached: bool
     balance: int | float | None
 
-    def to_json(self) -> JsonObject:
-        return {
-            "has_credits": self.has_credits,
-            "unlimited": self.unlimited,
-            "overage_limit_reached": self.overage_limit_reached,
-            "balance": self.balance,
-        }
-
 
 @dataclass(frozen=True)
 class WorkUsage:
@@ -44,26 +36,6 @@ class WorkUsage:
     window_seconds: int | None
     elapsed_seconds: int
     credits: WorkCredits
-
-    def to_json(self) -> JsonObject:
-        return {
-            "account_id": self.account_id,
-            "email": self.email,
-            "plan_type": self.plan_type,
-            "reached": self.reached,
-            "source": self.source,
-            "limit": self.limit,
-            "used": self.used,
-            "remaining": self.remaining,
-            "used_percent": self.used_percent,
-            "remaining_percent": self.remaining_percent,
-            "reset_after_seconds": self.reset_after_seconds,
-            "reset_at": self.reset_at,
-            "window_start_at": self.window_start_at,
-            "window_seconds": self.window_seconds,
-            "elapsed_seconds": self.elapsed_seconds,
-            "credits": self.credits.to_json(),
-        }
 
 
 def normalize_work_usage(response: JsonObject, *, now: float) -> WorkUsage:
@@ -120,18 +92,3 @@ class WorkUsageService:
             },
         )
         return normalize_work_usage(response, now=now)
-
-
-def format_work_usage(usage: WorkUsage) -> str:
-    def display(value: object) -> object:
-        return "?" if value is None else value
-
-    return "\n".join(
-        (
-            f"remaining: {display(usage.remaining_percent)}%",
-            f"used: {display(usage.used_percent)}%",
-            f"credits: {display(usage.remaining)} / {display(usage.limit)}",
-            f"reset_after_seconds: {display(usage.reset_after_seconds)}",
-            f"reset_at: {display(usage.reset_at)}",
-        )
-    )

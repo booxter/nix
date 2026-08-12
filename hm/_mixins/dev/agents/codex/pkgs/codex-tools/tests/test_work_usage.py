@@ -1,14 +1,9 @@
-import io
-import json
-from pathlib import Path
-
 import pytest
 
 from codex_tools.auth import CodexAuth
-from codex_tools.cli import work_usage_main
 from codex_tools.errors import CodexToolsError
 from codex_tools.usage import USAGE_ENDPOINT
-from codex_tools.work_usage import WorkUsageService, format_work_usage, normalize_work_usage
+from codex_tools.work_usage import WorkUsageService, normalize_work_usage
 from fakes import FakeJsonHttpClient
 
 
@@ -69,55 +64,9 @@ def test_rejects_missing_limit_and_account() -> None:
         WorkUsageService(FakeJsonHttpClient({})).fetch(CodexAuth("token", None), now=0)
 
 
-def test_formats_missing_values() -> None:
-    usage = normalize_work_usage({"spend_control": {"individual_limit": {}}}, now=0)
-
-    assert format_work_usage(usage).splitlines() == [
-        "remaining: ?%",
-        "used: ?%",
-        "credits: ? / ?",
-        "reset_after_seconds: ?",
-        "reset_at: ?",
-    ]
-
-
 def test_rejects_malformed_work_usage_fields() -> None:
     with pytest.raises(CodexToolsError, match="Invalid work usage response"):
         normalize_work_usage(
             {"spend_control": {"individual_limit": {"limit": "invalid"}}},
             now=0,
         )
-
-
-def test_work_usage_main_writes_json(tmp_path: Path) -> None:
-    auth_path = tmp_path / "auth.json"
-    auth_path.write_text(
-        json.dumps({"tokens": {"access_token": "token", "account_id": "account"}}),
-        encoding="utf-8",
-    )
-    stdout = io.StringIO()
-
-    status = work_usage_main(
-        ["--json", "--auth-file", str(auth_path)],
-        client=FakeJsonHttpClient({USAGE_ENDPOINT: work_response()}),
-        now=1_700_000_000,
-        stdout=stdout,
-    )
-
-    assert status == 0
-    assert json.loads(stdout.getvalue())["remaining_percent"] == 75
-
-
-def test_work_usage_main_requires_account_id(tmp_path: Path) -> None:
-    auth_path = tmp_path / "auth.json"
-    auth_path.write_text(json.dumps({"tokens": {"access_token": "token"}}), encoding="utf-8")
-    stderr = io.StringIO()
-
-    status = work_usage_main(
-        ["--auth-file", str(auth_path)],
-        client=FakeJsonHttpClient({}),
-        stderr=stderr,
-    )
-
-    assert status == 1
-    assert f"No account id found in {auth_path}" in stderr.getvalue()

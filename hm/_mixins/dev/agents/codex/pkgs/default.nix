@@ -8,6 +8,4 @@ rec {
   codex-mcp-init = pkgs.callPackage ./codex-mcp-init { inherit codex; };
 
   codex-warmer = codex-usage-status;
-
-  codex-work-usage-status = codex-usage-status;
 }
