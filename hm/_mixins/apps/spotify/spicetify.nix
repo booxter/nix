@@ -6,6 +6,7 @@
   ...
 }:
 let
+  cfg = config.host.hm.spotify;
   spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};
   # The addToQueueTop source was renamed before spicetify-nix caught up.
   priorityQueue = spicePkgs.extensions.addToQueueTop // {
@@ -16,7 +17,7 @@ in
 {
   imports = [ inputs.spicetify-nix.homeManagerModules.spicetify ];
 
-  programs.spicetify = lib.mkIf config.host.hm.spotify.enable {
+  programs.spicetify = lib.mkIf (cfg.enable && cfg.spicetify.enable) {
     enable = true;
     enabledExtensions = with spicePkgs.extensions; [
       aiBandBlocker

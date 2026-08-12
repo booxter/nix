@@ -28,7 +28,10 @@ let
             enable = true;
             warmer.enable = true;
           };
-          spotify.enable = true;
+          spotify = {
+            enable = true;
+            spicetify.enable = true;
+          };
           thunderbird.enable = true;
         };
       };
@@ -55,7 +58,10 @@ let
           apps.teams.enable = true;
         };
         hm = {
-          spotify.enable = true;
+          spotify = {
+            enable = true;
+            spicetify.enable = true;
+          };
           thunderbird.enable = true;
         };
       };
