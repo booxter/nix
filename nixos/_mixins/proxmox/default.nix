@@ -164,16 +164,5 @@ in
 
       boot.growPartition = true;
     }
-    ++ lib.optional isVM (
-      lib.mkIf config.host.isProxmox {
-        virtualisation.vmVariant.virtualisation.forwardPorts = [
-          {
-            from = "host";
-            guest.port = 8006;
-            host.port = 8006;
-          }
-        ];
-      }
-    )
   );
 }
