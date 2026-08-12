@@ -27,8 +27,6 @@ func FleetOverview(config Config) (dashboard.Dashboard, error) {
 		node("node_memory_inactive_bytes") + `) / ` + node("node_memory_total_bytes") + `)))`
 	rootUsed := `100 * (1 - (` + node("node_filesystem_avail_bytes", `mountpoint="/"`, `fstype!=""`) +
 		` / ` + node("node_filesystem_size_bytes", `mountpoint="/"`, `fstype!=""`) + `))`
-	swapTotal := node("node_memory_SwapTotal_bytes")
-
 	series := []fleetSeries{
 		{
 			title: "Node Exporter Up", unit: units.Short, legend: "{{instance}}",
@@ -61,25 +59,6 @@ func FleetOverview(config Config) (dashboard.Dashboard, error) {
 			legend: "{{instance}}", expression: `time() - ` + node("node_nixos_upgrade_last_success_time_seconds"),
 			min: ptr(0.0),
 		},
-		{
-			title: "Swap Used", unit: units.Percent, legend: "{{instance}}",
-			expression: `100 * (1 - (` + node("node_memory_SwapFree_bytes") + ` / ` + swapTotal +
-				`)) and on(instance) ` + swapTotal + ` > 0`,
-			thresholds: warningCriticalThresholds(70, 80), min: ptr(0.0), max: ptr(100.0),
-		},
-		{
-			title: "Swap Capacity", unit: units.BytesIEC, legend: "{{instance}}",
-			expression: swapTotal + ` > 0`, min: ptr(0.0),
-		},
-		{
-			title: "Swap Churn", unit: units.PacketsPerSecond, legend: "{{instance}}",
-			expression: `rate(` + node("node_vmstat_pswpin") + `[5m]) + rate(` + node("node_vmstat_pswpout") + `[5m])`,
-			thresholds: absoluteThresholds(
-				dashboard.Threshold{Color: "green", Value: nil},
-				dashboard.Threshold{Color: "orange", Value: ptr(1000.0)},
-			),
-			min: ptr(0.0),
-		},
 	}
 
 	builder := newDashboard(DashboardOptions{
@@ -91,7 +70,6 @@ func FleetOverview(config Config) (dashboard.Dashboard, error) {
 	placements = append(placements, layout.row(8, 12, 12)...)
 	placements = append(placements, layout.row(8, 24)...)
 	placements = append(placements, layout.row(8, 12, 12)...)
-	placements = append(placements, layout.row(8, 8, 8, 8)...)
 	for index, definition := range series {
 		placement := placements[index]
 		builder.WithPanel(timeSeries(TimeseriesOptions{
