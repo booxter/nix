@@ -15,19 +15,6 @@ let
   scmPkgs = import ./pkgs { inherit pkgs; };
   inherit (config.host.hm) email fullName;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
-  pushDisabledGitHubRepos = [
-    "NixOS/nixpkgs"
-    "ovn-kubernetes/ovn-kubernetes"
-  ];
-  pushDisabledGitHubUrls = builtins.listToAttrs (
-    map (repo: {
-      name = "file:///dev/null/git-push-disabled/${repo}";
-      value.pushInsteadOf = [
-        "git@github.com:${repo}.git"
-        "https://github.com/${repo}.git"
-      ];
-    }) pushDisabledGitHubRepos
-  );
 in
 lib.mkIf (devCfg.enable && scmCfg.enable) {
   home.shellAliases.g = "git";
@@ -118,8 +105,7 @@ lib.mkIf (devCfg.enable && scmCfg.enable) {
         # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token,
         # while leaving fetches on HTTPS.
         "git@github.com:".pushInsteadOf = "https://github.com/";
-      }
-      // pushDisabledGitHubUrls;
+      };
 
       # Preserve the credential helper that programs.gh normally configures.
       credential = {
