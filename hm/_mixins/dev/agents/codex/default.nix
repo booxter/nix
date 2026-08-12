@@ -8,6 +8,7 @@
 let
   devCfg = osConfig.host.userEnvironment.features.dev;
   cfg = config.host.hm.dev.codex;
+  inherit (osConfig.host) isDarwin;
   hasOauthHttpMcp = lib.any (server: server.http != null && server.http.auth == "oauth") (
     builtins.attrValues osConfig.host.mcp.pool
   );
@@ -33,6 +34,17 @@ let
 in
 {
   imports = [ ./codex-warmer.nix ];
+
+  host.hm.sketchybar.codex.enable = lib.mkDefault (
+    isDarwin && cfg.enable && config.host.hm.sketchybar.enable
+  );
+
+  assertions = [
+    {
+      assertion = !cfg.usage.warmer.enable || cfg.usage.account == "personal";
+      message = "host.hm.dev.codex.usage.warmer is only supported for personal accounts.";
+    }
+  ];
 
   programs.codex = lib.mkIf (devCfg.enable && cfg.enable) {
     enable = true;

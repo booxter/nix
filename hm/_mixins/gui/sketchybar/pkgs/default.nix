@@ -1,35 +1,13 @@
 {
   alertmanager ? null,
-  attentionInbox ? null,
-  codexTools ? null,
   jellyfin ? null,
   pkgs,
+  pluginNames,
+  pluginPackages,
   pluginColors,
 }:
 let
   inherit (pkgs) lib;
-  attentionInboxEnabled = attentionInbox != null;
-  codexEnabled = codexTools != null;
-  pluginNames = [
-    "aerospace"
-    "alertmanager"
-    "battery"
-    "clock"
-    "disk"
-    "front_app"
-    "github-status"
-    "ip_address"
-    "jellyfin"
-    "network"
-    "spotify"
-    "stock"
-    "volume"
-  ]
-  ++ lib.optionals codexEnabled [
-    "codex"
-    "codex-work"
-  ]
-  ++ lib.optional attentionInboxEnabled "attention-inbox";
   goPluginNames = [
     "alertmanager"
     "clock"
@@ -41,17 +19,11 @@ let
     "stock"
     "volume"
   ];
-  packagedPluginNames =
-    goPluginNames
-    ++ [
-      "battery"
-      "spotify"
-    ]
-    ++ lib.optionals codexEnabled [
-      "codex"
-      "codex-work"
-    ]
-    ++ lib.optional attentionInboxEnabled "attention-inbox";
+  swiftPluginNames = [
+    "battery"
+    "spotify"
+  ];
+  packagedPluginNames = goPluginNames ++ swiftPluginNames ++ builtins.attrNames pluginPackages;
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   swiftApplets = pkgs.callPackage ./swift-applets { };
@@ -111,6 +83,8 @@ let
         ${environmentArguments environment}
     '';
   makeGoPluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
+  makeExternalPluginWrapper =
+    name: value: makeBinaryPluginWrapper name value.package value.executable;
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "sketchybar-plugins";
@@ -137,24 +111,16 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin" "$out/libexec/sketchybar"
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
-    ${lib.optionalString attentionInboxEnabled (
-      makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"
+    ${lib.optionalString (builtins.elem "battery" pluginNames) (
+      makeBinaryPluginWrapper "battery" swiftApplets "sketchybar-battery"
     )}
-    ${makeBinaryPluginWrapper "battery" swiftApplets "sketchybar-battery"}
-    ${lib.optionalString codexEnabled (makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar")}
-    ${lib.optionalString codexEnabled (
-      makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"
+    ${lib.optionalString (builtins.elem "spotify" pluginNames) (
+      makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"
     )}
-    ${makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"}
-    ${makeGoPluginWrapper "alertmanager" "sketchybar-alertmanager"}
-    ${makeGoPluginWrapper "clock" "sketchybar-clock"}
-    ${makeGoPluginWrapper "disk" "sketchybar-disk"}
-    ${makeGoPluginWrapper "github-status" "sketchybar-github-status"}
-    ${makeGoPluginWrapper "ip_address" "sketchybar-ip-address"}
-    ${makeGoPluginWrapper "jellyfin" "sketchybar-jellyfin"}
-    ${makeGoPluginWrapper "network" "sketchybar-network"}
-    ${makeGoPluginWrapper "stock" "sketchybar-stock"}
-    ${makeGoPluginWrapper "volume" "sketchybar-volume"}
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList makeExternalPluginWrapper pluginPackages)}
+    ${lib.concatMapStringsSep "\n" (
+      name: makeGoPluginWrapper name "sketchybar-${lib.replaceString "_" "-" name}"
+    ) (builtins.filter (name: builtins.elem name pluginNames) goPluginNames)}
     runHook postInstall
   '';
 

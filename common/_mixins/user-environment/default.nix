@@ -141,22 +141,6 @@ in
           description = "Whether to provide the development editor environment.";
         };
 
-        attentionInbox.enable = lib.mkEnableOption "attention inbox";
-
-        agents = {
-          codex = {
-            usageStatus.enable = lib.mkOption {
-              type = lib.types.bool;
-              default = true;
-              description = "Whether to provide standard Codex usage status integration.";
-            };
-
-            workUsageStatus.enable = lib.mkEnableOption "work Codex usage status integration";
-
-            warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
-          };
-        };
-
         scm = {
           enable = lib.mkOption {
             type = lib.types.bool;

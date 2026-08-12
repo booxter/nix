@@ -22,7 +22,7 @@ in
     };
   };
 
-  home-manager.users.${username}.programs.sketchybarJellyfin = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.jellyfin = lib.mkIf enable {
     enable = true;
     metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${config.host.network.lanDomain}/d/fana-media-pipe";

@@ -20,9 +20,9 @@ in
     };
   };
 
-  home-manager.users.${username}.programs.sketchybarAlertmanager = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.alertmanager = lib.mkIf enable {
     enable = true;
-    alertmanagerUrl = "https://alertmanager.${lanDomain}/api/v2/alerts";
+    url = "https://alertmanager.${lanDomain}/api/v2/alerts";
     grafanaUrl = "https://grafana.${lanDomain}/alerting/groups";
     clientCertificate =
       config.sops.secrets.${client.materializations.default.certificateSecretName}.path;

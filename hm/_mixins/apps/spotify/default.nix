@@ -21,6 +21,7 @@ in
     }
     (lib.mkIf cfg.enable {
       host.hm.aerospace.workspaces.s.appBundleIds = [ "com.spotify.client" ];
+      host.hm.sketchybar.spotify.enable = lib.mkDefault config.host.hm.sketchybar.enable;
     })
   ];
 }

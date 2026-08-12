@@ -9,12 +9,14 @@ let
       };
       roles.developer = {
         features = {
-          dev.agents.codex.warmer.enable = true;
           dev.scm.sendEmail.transport = "gmail";
         };
         hm = {
           dev.act.enable = true;
-          dev.codex.enable = true;
+          dev.codex = {
+            enable = true;
+            usage.warmer.enable = true;
+          };
           dev.go.enable = true;
           podman = {
             enable = true;
@@ -63,21 +65,18 @@ let
         fullName = "Ihar Hrachyshka";
         email = "${config.host.username}@nvidia.com";
       };
-      roles.developer.features = {
-        dev.attentionInbox.enable = true;
-        dev.agents.codex = {
-          usageStatus.enable = false;
-          workUsageStatus.enable = true;
-        };
-        dev.scm.sendEmail.transport = "nvidia";
-      };
+      roles.developer.features.dev.scm.sendEmail.transport = "nvidia";
       roles.developer.hm.dev = {
         act.enable = true;
-        codex.enable = true;
+        codex = {
+          enable = true;
+          usage.account = "corporate";
+        };
         go.enable = true;
         k8s.enable = true;
         nvidia.enable = true;
       };
+      roles.developer.hm.sketchybar.attentionInbox.enable = true;
       roles.developer.hm.docker.enable = true;
       roles.workstation = {
         features.apps.homerow.enable = false;

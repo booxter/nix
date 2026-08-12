@@ -6,397 +6,63 @@
   ...
 }:
 let
-  internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
-  inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.sketchybar;
-  devCfg = osConfig.host.userEnvironment.features.dev;
-  attentionInboxCfg = devCfg.attentionInbox;
-  codexCfg = devCfg.agents.codex;
-  codexEnabled = devCfg.enable && config.host.hm.dev.codex.enable;
-  attentionInboxPackage = pkgs.callPackage ../../dev/attention-inbox/pkgs { };
-  codexPkgs = import ../../dev/agents/codex/pkgs { inherit pkgs; };
-  workspaceNames = config.host.hm.aerospace.workspaceNames;
-  inherit (config.lib.stylix) colors;
-  sketchybarColors = {
-    background = "0xff${colors.base00}";
-    backgroundAlt = "0xff${colors.base01}";
-    neutral = "0xff${colors.base05}";
-    red = "0xff${colors.base08}";
-    orange = "0xff${colors.base09}";
-    yellow = "0xff${colors.base0A}";
-    green = "0xff${colors.base0B}";
-    cyan = "0xff${colors.base0C}";
-    blue = "0xff${colors.base0D}";
-    purple = "0xff${colors.base0E}";
+  inherit (osConfig.host) isDarwin;
+  internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
+  theme = import ./theme.nix {
+    inherit config pkgs;
+    height = cfg.height;
   };
-  pluginColorEnv = {
-    SKETCHYBAR_COLOR_NEUTRAL = sketchybarColors.neutral;
-    SKETCHYBAR_COLOR_RED = sketchybarColors.red;
-    SKETCHYBAR_COLOR_ORANGE = sketchybarColors.orange;
-    SKETCHYBAR_COLOR_YELLOW = sketchybarColors.yellow;
-    SKETCHYBAR_COLOR_GREEN = sketchybarColors.green;
-    SKETCHYBAR_COLOR_BLUE = sketchybarColors.blue;
-    SKETCHYBAR_COLOR_PURPLE = sketchybarColors.purple;
+
+  positionRank = {
+    left = 0;
+    center = 1;
+    right = 2;
   };
-  sketchybarTheme = pkgs.writeText "sketchybar-gruvbox-theme" ''
-    black="${sketchybarColors.background}"
-    blue="${sketchybarColors.blue}"
-    blue1="${sketchybarColors.backgroundAlt}"
-    cyan="${sketchybarColors.cyan}"
-    green="${sketchybarColors.green}"
-    magenta="${sketchybarColors.purple}"
-    orange="${sketchybarColors.orange}"
-    purple="${sketchybarColors.purple}"
-    red="${sketchybarColors.red}"
-    transparent="0x00000000"
-    white="${sketchybarColors.neutral}"
-    yellow="${sketchybarColors.yellow}"
+  namedApplets = lib.mapAttrsToList (name: value: value // { inherit name; }) cfg.internal.applets;
+  orderedApplets = lib.sort (
+    left: right:
+    if positionRank.${left.position} != positionRank.${right.position} then
+      positionRank.${left.position} < positionRank.${right.position}
+    else if left.order != right.order then
+      left.order < right.order
+    else
+      left.name < right.name
+  ) namedApplets;
+  appletConfig = pkgs.writeText "sketchybar-items.sh" (
+    lib.concatMapStringsSep "\n" (applet: applet.script) orderedApplets
+  );
+  pluginNames = lib.unique (lib.concatMap (applet: applet.plugins) orderedApplets);
+  pluginPackages = lib.mergeAttrsList (map (applet: applet.pluginPackages) orderedApplets);
+  extraPackages = lib.unique (lib.concatMap (applet: applet.packages) orderedApplets);
 
-    BAR_COLOR="$black"
-    BAR_BLUR_RADIUS=0
-    BAR_POSITION="top"
-    BAR_HEIGHT=${toString cfg.height}
-    BAR_PADDING=0
-    BAR_Y_OFFSET=0
-    BAR_CORNER_RADIUS=0
-    BAR_MARGIN=0
-
-    BACKGROUND_COLOR="$blue1"
-    BACKGROUND_BORDER_COLOR="$blue"
-    BACKGROUND_BORDER_WIDTH=0
-    LABEL_ALIGN="center"
-    LABEL_COLOR="$blue"
-    LABEL_HIGHLIGHT_COLOR="$red"
-
-    ICON_BASE_FONT="SF Pro"
-    ICON_FONT="$ICON_BASE_FONT:Bold:14.0"
-    LABEL_BASE_FONT="${config.stylix.fonts.monospace.name}"
-    LABEL_FONT="$LABEL_BASE_FONT:Regular:14.0"
-    LABEL_HIGHLIGHT_FONT="$LABEL_BASE_FONT:ExtraBold:14.0"
-
-    BACKGROUND_CORNER_RADIUS=4
-    BACKGROUND_HEIGHT=24
-    LABEL_Y_OFFSET=1
-    LABEL_PADDING=6
-    BRACKET_BACKGROUND_BORDER_WIDTH=2
-    BRACKET_BACKGROUND_CORNER_RADIUS=12
-  '';
   sketchybarPlugins = import ./pkgs {
-    inherit pkgs;
-    attentionInbox = if devCfg.enable && attentionInboxCfg.enable then attentionInboxPackage else null;
-    codexTools = if codexEnabled then codexPkgs.codex-usage-status else null;
-    pluginColors = pluginColorEnv;
-    alertmanager =
-      if config.programs.sketchybarAlertmanager.enable then
-        {
-          url = config.programs.sketchybarAlertmanager.alertmanagerUrl;
-          caCertificate = "${internalPkiRootCaPath}";
-          clientCertificate = config.programs.sketchybarAlertmanager.clientCertificate;
-          clientKey = config.programs.sketchybarAlertmanager.clientKey;
-        }
-      else
-        null;
-    jellyfin =
-      if config.programs.sketchybarJellyfin.enable then
-        {
-          metricsUrl = config.programs.sketchybarJellyfin.metricsUrl;
-          caCertificate = "${internalPkiRootCaPath}";
-          clientCertificate = config.programs.sketchybarJellyfin.clientCertificate;
-          clientKey = config.programs.sketchybarJellyfin.clientKey;
-        }
-      else
-        null;
+    inherit pkgs pluginNames pluginPackages;
+    pluginColors = theme.pluginEnvironment;
+    alertmanager = lib.optionalAttrs cfg.alertmanager.enable {
+      url = cfg.alertmanager.url;
+      caCertificate = internalPkiRootCaPath;
+      inherit (cfg.alertmanager) clientCertificate clientKey;
+    };
+    jellyfin = lib.optionalAttrs cfg.jellyfin.enable {
+      inherit (cfg.jellyfin) metricsUrl clientCertificate clientKey;
+      caCertificate = internalPkiRootCaPath;
+    };
   };
-  diskItem = pkgs.writeText "sketchybar-disk-item.sh" ''
-    sketchybar --add item disk left                              \
-               --set disk script="$PLUGIN_DIR/disk.sh"          \
-                          update_freq=60                         \
-                          icon.drawing=off                       \
-               --subscribe disk system_woke
-  '';
-  networkItem = pkgs.writeText "sketchybar-network-item.sh" (
-    lib.optionalString config.programs.sketchybarNetwork.enable ''
-      sketchybar --add item  network.up right                              \
-                 --set       network.up script="$PLUGIN_DIR/network.sh"    \
-                                        update_freq=20                     \
-                                        padding_left=2                     \
-                                        padding_right=2                    \
-                                        background.border_width=0          \
-                                        background.height=24               \
-                                        icon=⇡                             \
-                                        icon.color=$YELLOW                 \
-                                        label.color=$YELLOW                \
-                                                                           \
-                 --add item  network.down right                            \
-                 --set       network.down script="$PLUGIN_DIR/network.sh"  \
-                                     update_freq=20                        \
-                                     padding_left=8                        \
-                                     padding_right=2                       \
-                                     background.border_width=0             \
-                                     background.height=24                  \
-                                     icon=⇣                                \
-                                     icon.color=$GREEN                     \
-                                     label.color=$GREEN
-    ''
-    + ''
-      sketchybar --add bracket status ip_address${lib.optionalString config.programs.sketchybarNetwork.enable " network.up network.down"} \
-                 --set         status background.color=$BACKGROUND \
-                                      background.border_color=$BLUE
-    ''
-  );
-  githubStatusItem = pkgs.writeText "sketchybar-github-status-item.sh" ''
-    sketchybar --add item github-status right                           \
-               --set github-status script="$PLUGIN_DIR/github-status.sh" \
-                                   update_freq=60                       \
-                                   drawing=off                          \
-                                   icon=""                            \
-                                   icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
-                                   icon.color="${sketchybarColors.red}" \
-                                   icon.padding_left=6                  \
-                                   icon.padding_right=6                 \
-                                   label.drawing=off                    \
-                                   click_script="/usr/bin/open https://www.githubstatus.com" \
-               --subscribe github-status system_woke
-  '';
-  alertmanagerItem = pkgs.writeText "sketchybar-alertmanager-item.sh" (
-    lib.optionalString config.programs.sketchybarAlertmanager.enable ''
-      sketchybar --add item alertmanager right                               \
-                 --set alertmanager script="$PLUGIN_DIR/alertmanager.sh"     \
-                                    update_freq=60                           \
-                                    drawing=off                              \
-                                    icon.padding_left=6                      \
-                                    icon.padding_right=2                     \
-                                    label.padding_left=2                     \
-                                    label.padding_right=6                    \
-                                    click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarAlertmanager.grafanaUrl}"                                       \
-                 --subscribe alertmanager system_woke
-    ''
-  );
-  jellyfinItem = pkgs.writeText "sketchybar-jellyfin-item.sh" (
-    lib.optionalString config.programs.sketchybarJellyfin.enable ''
-      sketchybar --add item jellyfin right                              \
-                 --set jellyfin script="$PLUGIN_DIR/jellyfin.sh"       \
-                                update_freq=30                          \
-                                drawing=off                             \
-                                icon="󰼁"                               \
-                                icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
-                                icon.color="${sketchybarColors.purple}" \
-                                icon.padding_left=6                     \
-                                icon.padding_right=2                    \
-                                label.padding_left=2                    \
-                                label.padding_right=6                   \
-                                popup.align=right                       \
-                                popup.background.color="$BACKGROUND_COLOR" \
-                                popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
-                                popup.background.border_width=1        \
-                                popup.background.corner_radius=6       \
-                 --subscribe jellyfin system_woke mouse.clicked
-
-      sketchybar --add item jellyfin.bandwidth popup.jellyfin          \
-                 --set jellyfin.bandwidth updates=off                   \
-                                           drawing=off                   \
-                                           icon.drawing=off              \
-                                           label.align=left              \
-                                           label.padding_left=8          \
-                                           label.padding_right=8         \
-                                           background.border_width=0     \
-                                           background.height=24
-
-      for index in {0..7}; do
-        sketchybar --add item "jellyfin.session.$index" popup.jellyfin \
-                   --set "jellyfin.session.$index" updates=off          \
-                                                   drawing=off           \
-                                                   icon.drawing=off      \
-                                                   label.align=left      \
-                                                   label.padding_left=8  \
-                                                   label.padding_right=8 \
-                                                   background.border_width=0 \
-                                                   background.height=24
-      done
-
-      sketchybar --add item jellyfin.dashboard popup.jellyfin          \
-                 --set jellyfin.dashboard updates=off                   \
-                                           icon="󰈹"                    \
-                                           icon.padding_left=8          \
-                                           icon.padding_right=4         \
-                                           label="Open Grafana"        \
-                                           label.align=left             \
-                                           label.padding_left=4         \
-                                           label.padding_right=8        \
-                                           background.border_width=0    \
-                                           background.height=24         \
-                                           click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarJellyfin.dashboardUrl}; sketchybar --set jellyfin popup.drawing=off"
-    ''
-  );
-  attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
-    lib.optionalString (devCfg.enable && attentionInboxCfg.enable) ''
-      sketchybar --add item attention.inbox right                                \
-                 --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
-                                       update_freq=1200                          \
-                                       drawing=off                               \
-                                       icon.drawing=off                          \
-                                       icon.padding_left=6                       \
-                                       icon.padding_right=2                      \
-                                       label.padding_left=2                      \
-                                       label.padding_right=6                     \
-                                       click_script="sketchybar --set attention.inbox popup.drawing=toggle" \
-                                       popup.align=right                         \
-                                       popup.background.color="$BACKGROUND_COLOR" \
-                                       popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
-                                       popup.background.border_width=1           \
-                                       popup.background.corner_radius=6          \
-                 --subscribe attention.inbox system_woke
-
-      for index in {0..9}; do
-        sketchybar --add item "attention.inbox.$index" popup.attention.inbox     \
-                   --set "attention.inbox.$index" updates=off                    \
-                                                    drawing=off                   \
-                                                    icon.drawing=off              \
-                                                    icon.padding_left=8           \
-                                                    icon.padding_right=4          \
-                                                    label.align=left              \
-                                                    label.padding_left=8          \
-                                                    label.padding_right=8         \
-                                                    background.border_width=0     \
-                                                    background.height=24
-      done
-    ''
-  );
-  codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString (codexEnabled && codexCfg.usageStatus.enable) ''
-      sketchybar --add item codex.5h left                                  \
-                 --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
-                                update_freq=60                             \
-                                icon.drawing=off                           \
-                                label.padding_left=6                       \
-                                label.padding_right=6                      \
-                                background.border_width=0                  \
-                                background.corner_radius=6                 \
-                                background.height=24                       \
-                 --subscribe codex.5h system_woke                         \
-                                                                            \
-                 --add item codex.weekly left                              \
-                 --set codex.weekly updates=off                            \
-                                    icon.drawing=off                        \
-                                    label.padding_left=6                    \
-                                    label.padding_right=6                   \
-                                    background.border_width=0               \
-                                    background.corner_radius=6              \
-                                    background.height=24                    \
-                                                                            \
-                 --add item codex.resets left                              \
-                 --set codex.resets script="$PLUGIN_DIR/codex.sh"          \
-                                   click_script="sketchybar --set codex.resets popup.drawing=toggle" \
-                                   icon.drawing=off                         \
-                                   label.padding_left=6                     \
-                                   label.padding_right=6                    \
-                                   background.border_width=0                \
-                                   background.corner_radius=6               \
-                                   background.height=24                     \
-                                   popup.align=left                         \
-                                   popup.background.color="$BACKGROUND_COLOR" \
-                                   popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
-                                   popup.background.border_width=1           \
-                                   popup.background.corner_radius=6          \
-                 --subscribe codex.resets mouse.entered mouse.exited        \
-                                                                            \
-                 --add item codex.resets.expiry popup.codex.resets          \
-                 --set codex.resets.expiry updates=off                      \
-                                          icon.drawing=off                  \
-                                          label.padding_left=8              \
-                                          label.padding_right=8             \
-                                          background.border_width=0         \
-                                          background.height=24
-    ''
-    + lib.optionalString (codexEnabled && codexCfg.workUsageStatus.enable) ''
-      sketchybar --add item codex.work left                                 \
-                 --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
-                                  update_freq=60                            \
-                                  icon.drawing=off                          \
-                                  label.padding_left=6                      \
-                                  label.padding_right=6                     \
-                                  background.border_width=0                 \
-                                  background.corner_radius=6                \
-                                  background.height=24                      \
-                                  popup.align=left                          \
-                                  popup.background.color="$BACKGROUND_COLOR" \
-                                  popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
-                                  popup.background.border_width=1            \
-                                  popup.background.corner_radius=6           \
-                 --subscribe codex.work system_woke mouse.entered mouse.exited \
-                                                                           \
-                 --add item codex.work.credits popup.codex.work             \
-                 --set codex.work.credits updates=off                       \
-                                          icon.drawing=off                  \
-                                          label.padding_left=8              \
-                                          label.padding_right=8             \
-                                          background.border_width=0         \
-                                          background.height=24              \
-                                                                           \
-                 --add item codex.work.reset popup.codex.work               \
-                 --set codex.work.reset updates=off                         \
-                                        icon.drawing=off                    \
-                                        label.padding_left=8                \
-                                        label.padding_right=8               \
-                                        background.border_width=0           \
-                                        background.height=24
-    ''
-  );
-  aerospaceSpacesItem = pkgs.writeText "sketchybar-aerospace-spaces.sh" (
-    lib.optionalString config.host.hm.aerospace.sketchybar.enable (
-      ''
-        sketchybar --add event aerospace_workspace_change
-      ''
-      + lib.concatMapStringsSep "\n" (
-        sid:
-        let
-          escapedSid = lib.escapeShellArg sid;
-        in
-        ''
-          sketchybar --add item space.${sid} left \
-              --subscribe space.${sid} aerospace_workspace_change \
-              --set space.${sid} \
-              background.color=0x44${colors.base05} \
-              background.corner_radius=5 \
-              background.height=25 \
-              background.drawing=off \
-              label="${sid}" \
-              click_script="aerospace workspace ${escapedSid}" \
-              script="$CONFIG_DIR/plugins/aerospace.sh ${escapedSid}"
-        ''
-      ) workspaceNames
-    )
-  );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
-    mkdir -p "$out"
-    cp -R ${./sketchybar}/. "$out/"
-    chmod -R u+w "$out"
-    mkdir -p "$out/plugins"
-    rm -rf "$out/themes"
-    mkdir -p "$out/themes"
-    ln -s ${sketchybarTheme} "$out/themes/gruvbox"
-    mkdir -p "$out/items"
-    rm -f "$out/items/aerospace-spaces.sh"
-    rm -f "$out/items/disk.sh"
-    rm -f "$out/items/alertmanager.sh"
-    rm -f "$out/items/jellyfin.sh"
-    rm -f "$out/items/network.sh"
-    rm -f "$out/items/attention-inbox.sh"
-    rm -f "$out/items/github-status.sh"
-    ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
-    ln -s ${diskItem} "$out/items/disk.sh"
-    ln -s ${codexItem} "$out/items/codex.sh"
-    ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
-    ln -s ${jellyfinItem} "$out/items/jellyfin.sh"
-    ln -s ${networkItem} "$out/items/network.sh"
-    ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
-    ln -s ${githubStatusItem} "$out/items/github-status.sh"
+    ${lib.getExe pkgs.bash} -n ${appletConfig}
+    mkdir -p "$out/plugins" "$out/themes"
+    cp ${./sketchybar/sketchybarrc} "$out/sketchybarrc"
+    ln -s ${theme.file} "$out/themes/gruvbox"
+    ln -s ${appletConfig} "$out/items.sh"
     ${lib.concatMapStringsSep "\n" (name: ''
       ln -s ${sketchybarPlugins}/bin/${name} "$out/plugins/${name}.sh"
-    '') sketchybarPlugins.pluginNames}
+    '') pluginNames}
   '';
 in
 {
+  imports = [ ./applets ];
+
   options.host.hm.sketchybar = {
     enable = lib.mkOption {
       type = lib.types.bool;
@@ -409,55 +75,45 @@ in
       default = 30;
       description = "Sketchybar height in pixels.";
     };
-  };
 
-  options.programs.sketchybarNetwork.enable = lib.mkEnableOption "LAN/WAN traffic-rate indicators in SketchyBar";
-
-  options.programs.sketchybarAlertmanager = {
-    enable = lib.mkEnableOption "Alertmanager firing-alert indicator in SketchyBar";
-
-    alertmanagerUrl = lib.mkOption {
-      type = lib.types.str;
-      description = "mTLS-protected Alertmanager alerts API URL.";
-    };
-
-    grafanaUrl = lib.mkOption {
-      type = lib.types.str;
-      description = "Grafana alert groups page opened when the indicator is clicked.";
-    };
-
-    clientCertificate = lib.mkOption {
-      type = lib.types.str;
-      description = "Path to the Alertmanager mTLS client certificate.";
-    };
-
-    clientKey = lib.mkOption {
-      type = lib.types.str;
-      description = "Path to the Alertmanager mTLS client key.";
-    };
-  };
-
-  options.programs.sketchybarJellyfin = {
-    enable = lib.mkEnableOption "active Jellyfin stream indicator in SketchyBar";
-
-    metricsUrl = lib.mkOption {
-      type = lib.types.str;
-      description = "mTLS-protected Jellyfin exporter metrics URL.";
-    };
-
-    dashboardUrl = lib.mkOption {
-      type = lib.types.str;
-      description = "Grafana media dashboard opened from the indicator popup.";
-    };
-
-    clientCertificate = lib.mkOption {
-      type = lib.types.str;
-      description = "Path to the Jellyfin exporter mTLS client certificate.";
-    };
-
-    clientKey = lib.mkOption {
-      type = lib.types.str;
-      description = "Path to the Jellyfin exporter mTLS client key.";
+    internal.applets = lib.mkOption {
+      internal = true;
+      default = { };
+      description = "Enabled Sketchybar applet definitions.";
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            position = lib.mkOption {
+              type = lib.types.enum [
+                "left"
+                "center"
+                "right"
+              ];
+            };
+            order = lib.mkOption { type = lib.types.int; };
+            script = lib.mkOption { type = lib.types.lines; };
+            plugins = lib.mkOption {
+              type = lib.types.listOf lib.types.nonEmptyStr;
+              default = [ ];
+            };
+            pluginPackages = lib.mkOption {
+              default = { };
+              type = lib.types.attrsOf (
+                lib.types.submodule {
+                  options = {
+                    package = lib.mkOption { type = lib.types.package; };
+                    executable = lib.mkOption { type = lib.types.nonEmptyStr; };
+                  };
+                }
+              );
+            };
+            packages = lib.mkOption {
+              type = lib.types.listOf lib.types.package;
+              default = [ ];
+            };
+          };
+        }
+      );
     };
   };
 
@@ -475,10 +131,9 @@ in
         source = sketchybarConfig;
         recursive = true;
       };
-      # Let launchd own the process lifetime. Aerospace only sends workspace events.
       service.enable = true;
       extraPackages =
-        (lib.optional config.host.hm.aerospace.sketchybar.enable pkgs.aerospace)
+        extraPackages
         ++ (with pkgs; [
           gnugrep
           curl

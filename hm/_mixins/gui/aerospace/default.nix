@@ -109,6 +109,7 @@ in
   config = lib.mkMerge [
     {
       host.hm.aerospace.workspaceNames = workspaceNames;
+      host.hm.sketchybar.aerospace.enable = lib.mkDefault cfg.sketchybar.enable;
       assertions = [
         {
           assertion = !cfg.sketchybar.enable || cfg.enable;

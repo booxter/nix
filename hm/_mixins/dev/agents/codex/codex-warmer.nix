@@ -10,7 +10,11 @@ let
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
   devCfg = osConfig.host.userEnvironment.features.dev;
   codexCfg = config.host.hm.dev.codex;
-  codexWarmerEnabled = devCfg.enable && codexCfg.enable && devCfg.agents.codex.warmer.enable;
+  codexWarmerEnabled =
+    devCfg.enable
+    && codexCfg.enable
+    && codexCfg.usage.account == "personal"
+    && codexCfg.usage.warmer.enable;
   inherit (osConfig.host) isDarwin;
 in
 {
