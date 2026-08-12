@@ -16,9 +16,6 @@ let
     inherit pkgs;
     codex = config.programs.codex.package;
   };
-  mcpInstructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
-    lib.filter (server: server.instructions != "") (builtins.attrValues osConfig.host.mcp.pool)
-  );
   agentContext = ''
     This machine uses Nix. Use it to access tools that are not installed. Never
     install tools permanently. Use remote builders for other platforms.
@@ -32,7 +29,7 @@ let
     When creating pull requests, keep description terse. No headings and
     boilerplate such as Summary, Validation, or Testing. No slop. Be brief.
   '';
-  codexContext = agentContext + mcpInstructions;
+  codexContext = agentContext + osConfig.host.mcp.instructions;
 in
 {
   imports = [ ./codex-warmer.nix ];

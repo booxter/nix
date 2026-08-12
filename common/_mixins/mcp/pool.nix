@@ -40,8 +40,11 @@ let
       http = if server.http == null then null else resolveHttp server.http;
     };
   pool = lib.mapAttrs normalizeServer rawPool;
+  instructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
+    lib.filter (server: server.instructions != "") (builtins.attrValues pool)
+  );
   requiredSecrets = lib.unique (lib.concatMap secretNamesFor (builtins.attrValues rawPool));
 in
 {
-  inherit pool requiredSecrets;
+  inherit instructions pool requiredSecrets;
 }

@@ -121,6 +121,14 @@ in
       internal = true;
       description = "MCP servers available in this host's realm and deployment scope.";
     };
+
+    instructions = lib.mkOption {
+      type = lib.types.lines;
+      default = model.instructions;
+      readOnly = true;
+      internal = true;
+      description = "Default agent instructions for the available MCP servers.";
+    };
   };
 
   config.sops.secrets = lib.genAttrs model.requiredSecrets (_: { });
