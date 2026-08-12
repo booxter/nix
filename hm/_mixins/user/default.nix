@@ -23,5 +23,11 @@ in
       default = defaultHomePage;
       description = "Default browser home page of the Home Manager user.";
     };
+
+    numberedWorkspaces = lib.mkOption {
+      type = lib.types.ints.between 1 9;
+      default = 4;
+      description = "Default number of numbered desktop workspaces.";
+    };
   };
 }

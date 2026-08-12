@@ -72,7 +72,7 @@ in
 
     numberedWorkspaces = lib.mkOption {
       type = lib.types.ints.between 1 9;
-      default = 4;
+      default = config.host.hm.numberedWorkspaces;
       description = "Number of persistent numbered workspaces.";
     };
 

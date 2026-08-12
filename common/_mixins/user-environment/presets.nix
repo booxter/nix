@@ -25,6 +25,7 @@ let
       };
       roles.workstation = {
         hm = {
+          numberedWorkspaces = if config.host.isDarwin then 4 else 6;
           firefox.enable = true;
           gmailctl = {
             enable = true;

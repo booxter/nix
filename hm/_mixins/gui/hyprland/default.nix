@@ -18,15 +18,61 @@ let
   renderMonitor =
     display:
     "${display.connector}, ${toString displayMode.width}x${toString displayMode.height}@${toString displayMode.refreshRate}, ${toString display.x}x0, ${toString scale}";
+  workspaceNames = map toString (lib.range 1 cfg.numberedWorkspaces);
+  leftWorkspaceNames = map toString (lib.range 1 cfg.leftMonitorWorkspaces);
+  rightWorkspaceNames =
+    if cfg.leftMonitorWorkspaces < cfg.numberedWorkspaces then
+      map toString (lib.range (cfg.leftMonitorWorkspaces + 1) cfg.numberedWorkspaces)
+    else
+      [ ];
+  workspaceIcons =
+    builtins.listToAttrs (map (workspace: lib.nameValuePair workspace "") workspaceNames)
+    // {
+      active = "";
+      default = "";
+      empty = "";
+      visible = "";
+    };
+  persistentWorkspaces = {
+    "*" = leftWorkspaceNames;
+  }
+  // lib.optionalAttrs (rightWorkspaceNames != [ ]) {
+    "${right.connector}" = rightWorkspaceNames;
+  };
+  workspaceMonitorRules =
+    map (workspace: "${workspace}, monitor:${left.connector}") leftWorkspaceNames
+    ++ map (workspace: "${workspace}, monitor:${right.connector}") rightWorkspaceNames;
+  workspaceBindings = lib.concatMap (workspace: [
+    "${super}, ${workspace}, workspace, ${workspace}"
+    "${super}_SHIFT, ${workspace}, movetoworkspacesilent, ${workspace}"
+  ]) workspaceNames;
 in
 {
-  options.host.hm.hyprland.enable = lib.mkEnableOption "Hyprland desktop environment";
+  options.host.hm.hyprland = {
+    enable = lib.mkEnableOption "Hyprland desktop environment";
+
+    numberedWorkspaces = lib.mkOption {
+      type = lib.types.ints.between 1 9;
+      default = config.host.hm.numberedWorkspaces;
+      description = "Number of numbered Hyprland workspaces.";
+    };
+
+    leftMonitorWorkspaces = lib.mkOption {
+      type = lib.types.ints.between 1 9;
+      default = lib.min 4 cfg.numberedWorkspaces;
+      description = "Number of leading workspaces assigned to the left monitor.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = !osConfig.host.isDarwin;
         message = "host.hm.hyprland is only supported on Linux.";
+      }
+      {
+        assertion = cfg.leftMonitorWorkspaces <= cfg.numberedWorkspaces;
+        message = "host.hm.hyprland.leftMonitorWorkspaces cannot exceed numberedWorkspaces.";
       }
     ];
 
@@ -134,30 +180,8 @@ in
             show-special = true;
             active-only = false;
             format = "{name}:{icon}";
-            format-icons = {
-              "1" = "";
-              "2" = "";
-              "3" = "";
-              "4" = "";
-              "5" = "";
-              "6" = "";
-              active = "";
-              default = "";
-              empty = "";
-              visible = "";
-            };
-            persistent-workspaces = {
-              "*" = [
-                "1"
-                "2"
-                "3"
-                "4"
-              ];
-              "${right.connector}" = [
-                "5"
-                "6"
-              ];
-            };
+            format-icons = workspaceIcons;
+            persistent-workspaces = persistentWorkspaces;
           };
           clock = {
             format = "{:%H:%M}";
@@ -213,16 +237,7 @@ in
           force_zero_scaling = true;
         };
 
-        workspace = [
-          # left
-          "1, monitor:${left.connector}"
-          "2, monitor:${left.connector}"
-          "3, monitor:${left.connector}"
-          "4, monitor:${left.connector}"
-          # right
-          "5, monitor:${right.connector}"
-          "6, monitor:${right.connector}"
-        ];
+        workspace = workspaceMonitorRules;
 
         input =
           let
@@ -261,21 +276,6 @@ in
 
           "${super}_SHIFT, F, fullscreen, toggle"
 
-          # TODO: parametrize the number of workspaces
-          "${super}, 1, workspace, 1"
-          "${super}, 2, workspace, 2"
-          "${super}, 3, workspace, 3"
-          "${super}, 4, workspace, 4"
-          "${super}, 5, workspace, 5"
-          "${super}, 6, workspace, 6"
-
-          "${super}_SHIFT, 1, movetoworkspacesilent, 1"
-          "${super}_SHIFT, 2, movetoworkspacesilent, 2"
-          "${super}_SHIFT, 3, movetoworkspacesilent, 3"
-          "${super}_SHIFT, 4, movetoworkspacesilent, 4"
-          "${super}_SHIFT, 5, movetoworkspacesilent, 5"
-          "${super}_SHIFT, 6, movetoworkspacesilent, 6"
-
           "${super}, Q, killactive"
           "${super}_SHIFT, Q, exit"
 
@@ -288,7 +288,8 @@ in
           "${cmdButton}, V, sendshortcut, CTRL, v, class:^([^k]|k($|[^i]|i($|[^t]|t($|[^t]|t($|[^y])))))*$" # holly shit... re2 doesn't support negatives like (?!...)
           "${cmdButton}, V, sendshortcut, CTRL SHIFT, v, class:^kitty$"
 
-        ];
+        ]
+        ++ workspaceBindings;
       };
     };
   };
