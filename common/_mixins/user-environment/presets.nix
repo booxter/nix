@@ -13,6 +13,7 @@ let
           dev.scm.sendEmail.transport = "gmail";
         };
         hm = {
+          dev.act.enable = true;
           dev.codex.enable = true;
           podman = {
             enable = true;
@@ -69,7 +70,10 @@ let
         dev.nvidia.enable = true;
         dev.scm.sendEmail.transport = "nvidia";
       };
-      roles.developer.hm.dev.codex.enable = true;
+      roles.developer.hm.dev = {
+        act.enable = true;
+        codex.enable = true;
+      };
       roles.workstation = {
         features = {
           apps.homerow.enable = false;

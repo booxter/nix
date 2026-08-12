@@ -1,0 +1,30 @@
+{
+  config,
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.host.hm.dev.act;
+  podmanCfg = config.host.hm.podman;
+  inherit (osConfig.host) isDarwin;
+  # On macOS, act connects through the forwarded host socket, but job
+  # containers need the VM-internal socket with SELinux labeling disabled.
+  podmanArgs = lib.optionalString isDarwin (
+    " --container-daemon-socket=unix:///run/user/$UID/podman/podman.sock"
+    + " --container-options=--security-opt=label=disable"
+  );
+in
+{
+  options.host.hm.dev.act.enable = lib.mkEnableOption "Act GitHub Actions runner";
+
+  config = lib.mkIf (osConfig.host.userEnvironment.features.dev.enable && cfg.enable) {
+    home.packages = [ pkgs.act ];
+
+    home.shellAliases = lib.mkIf podmanCfg.enable {
+      # remove once https://github.com/nektos/act/issues/2329 is fixed
+      act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04${podmanArgs}";
+    };
+  };
+}

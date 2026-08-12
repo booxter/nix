@@ -1,5 +1,6 @@
 {
   imports = [
+    ./act
     ./agents
     ./cli
     ./editor
