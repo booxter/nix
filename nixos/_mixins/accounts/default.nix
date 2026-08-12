@@ -49,6 +49,7 @@ in
       };
 
       users = {
+        ebook-converter.uid = 298;
         paperless = {
           uid = 315;
           group = "paperless";
@@ -56,6 +57,7 @@ in
         pinepods.uid = 296;
         romm.uid = 295;
         sabnzbd.uid = 38;
+        shelfmark.uid = 250;
         slskd.uid = 297;
         transmission.uid = 70;
       };

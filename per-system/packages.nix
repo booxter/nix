@@ -40,6 +40,6 @@ basePackages
   degoog-official-extensions = degoogPackages.officialExtensions;
   degoog-stackexchange-engine = degoogPackages.stackexchangeEngine;
   degoog-toolkit-extensions = degoogPackages.toolkitExtensions;
-  ebook-converter-cli = pkgs.callPackage ../nixos/srvarr/pkgs/ebook-converter-cli { };
+  ebook-converter-cli = pkgs.callPackage ../nixos/_mixins/ebook-converter/package/cli { };
   houndarr = pkgs.callPackage ../nixos/srvarr/pkgs/houndarr { };
 }

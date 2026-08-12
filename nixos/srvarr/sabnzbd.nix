@@ -34,6 +34,31 @@ let
     username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
     password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
   '') sabnzbdServerNames;
+  downloadModel = import ../_mixins/downloads/model.nix { inherit config lib; };
+  sabnzbdRoutes = lib.filterAttrs (_: route: route.clientName == "sabnzbd") downloadModel.routes;
+  routeCategories = lib.mapAttrs' (
+    _: route:
+    lib.nameValuePair route.category {
+      name = route.category;
+      order = 50;
+      pp = "";
+      script = "Default";
+      dir = route.path;
+      newzbin = "";
+      priority = -100;
+    }
+  ) sabnzbdRoutes;
+  sabnzbdSettings = import ./sabnzbd-settings.nix {
+    hostWhitelist = [
+      config.networking.hostName
+      "sabnzbd.${config.host.network.lanDomain}"
+      "sabnzbd"
+      "sabnzbd.local"
+    ];
+    inherit mediaDir;
+    port = port;
+    vpnNamespaceAddress = vpnNamespace.namespaceAddress;
+  };
 in
 {
   imports = [
@@ -62,16 +87,8 @@ in
     configFile = null;
     group = "media";
     secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
-    settings = import ./sabnzbd-settings.nix {
-      hostWhitelist = [
-        config.networking.hostName
-        "sabnzbd.${config.host.network.lanDomain}"
-        "sabnzbd"
-        "sabnzbd.local"
-      ];
-      inherit mediaDir;
-      port = port;
-      vpnNamespaceAddress = vpnNamespace.namespaceAddress;
+    settings = sabnzbdSettings // {
+      categories = sabnzbdSettings.categories // routeCategories;
     };
     user = user;
   };
@@ -90,7 +107,6 @@ in
           "lidarr"
           "manual"
           "radarr"
-          "shelfmark"
           "sonarr"
           "watch"
         ]
@@ -106,6 +122,21 @@ in
       };
     };
   host.storage.claims.media.attachments.sabnzbd.unit = "sabnzbd";
+
+  host.downloads.clients.sabnzbd = {
+    kind = "usenet";
+    implementation = "sabnzbd";
+    endpoint = "http://127.0.0.1:${toString port}";
+    authentication = {
+      type = "api-key";
+      secret = "sabnzbd/apiKey";
+    };
+    storageDefaults = {
+      owner = user;
+      group = "media";
+      mode = "0775";
+    };
+  };
 
   systemd.services.sabnzbd = {
     serviceConfig = {

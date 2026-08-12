@@ -24,6 +24,8 @@
       ./_mixins/desktop
       ./_mixins/degoog
       ./_mixins/dashboard
+      ./_mixins/downloads
+      ./_mixins/ebook-converter
       ./_mixins/external-service.nix
       ./_mixins/glance
       ./_mixins/hardware
@@ -37,6 +39,7 @@
       ./_mixins/luks
       ./_mixins/mailer
       ./_mixins/maintenance
+      ./_mixins/media-libraries
       ./_mixins/network
       ./_mixins/nix
       ./_mixins/observability
@@ -47,6 +50,7 @@
       ./_mixins/qos
       ./_mixins/romm
       ./_mixins/security
+      ./_mixins/shelfmark
       ./_mixins/slskd
       ./_mixins/sso
       ./_mixins/storage

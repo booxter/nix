@@ -53,7 +53,6 @@ in
           "lidarr"
           "manual"
           "radarr"
-          "shelfmark"
           "sonarr"
         ]
     )
@@ -103,6 +102,17 @@ in
       watch-dir-enabled = true;
     };
     user = "transmission";
+  };
+
+  host.downloads.clients.transmission = {
+    kind = "torrent";
+    implementation = "transmission";
+    endpoint = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc";
+    storageDefaults = {
+      owner = "transmission";
+      group = "media";
+      mode = "0755";
+    };
   };
 
   systemd.services.transmission = {

@@ -1,6 +1,5 @@
 pkgs:
 let
-  ebookConverterCli = pkgs.callPackage ./ebook-converter-cli { };
   transmissionCommon = pkgs.callPackage ./transmission-common { };
   transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
@@ -16,7 +15,8 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  ebook-converter-cli = ebookConverterCli;
+  # Removed once the srvarr deployment consumes host.ebookConverter directly.
+  ebook-converter = import ../../_mixins/ebook-converter/package { inherit pkgs; };
 
   transmission-common = transmissionCommon;
 
@@ -29,11 +29,6 @@ in
   seerr-tools = seerrTools.package;
 
   audiobookshelf-tools = pkgs.callPackage ./audiobookshelf-tools { };
-
-  ebook-converter = pkgs.callPackage ./ebook-converter {
-    atomicFileWrites = pkgs.atomic-file-writes;
-    inherit ebookConverterCli;
-  };
 
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
     atomicFileWrites = pkgs.atomic-file-writes;
