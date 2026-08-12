@@ -4,11 +4,11 @@
   ...
 }:
 let
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   vpnClient = config.host.vpn.clients.transmission;
   vpnNamespace = config.host.vpn.namespaces.${vpnClient.namespace};
   peerPort = vpnClient.forwardedPorts.peer.port;
-  stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
+  stateDir = "/data/.state/nixarr/transmission";
   transmissionStateDir = "${stateDir}/.config/transmission-daemon";
   tuning = config.host.srvarrTuning;
   # Keep Transmission a little below the conservative tc floor so
@@ -36,6 +36,34 @@ in
       "${transmissionStateDir}/stats.json"
     ];
   };
+
+  host.storage.claims.media.directories =
+    builtins.listToAttrs (
+      map
+        (path: {
+          name = "torrents/${path}";
+          value = {
+            owner = "transmission";
+            mode = "0755";
+          };
+        })
+        [
+          ".incomplete"
+          ".watch"
+          "lidarr"
+          "manual"
+          "radarr"
+          "shelfmark"
+          "sonarr"
+        ]
+    )
+    // {
+      torrents = {
+        owner = "transmission";
+        mode = "0755";
+      };
+    };
+  host.storage.claims.media.attachments.transmission.unit = "transmission";
 
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";

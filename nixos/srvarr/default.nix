@@ -31,8 +31,8 @@ in
 
   host.aurral = {
     enable = true;
-    stateDir = "${config.host.srvarrPaths.stateDir}/aurral";
-    flowDir = "${config.host.srvarrPaths.mediaDir}/library/flows";
+    stateDir = "/data/.state/nixarr/aurral";
+    flowDir = "${config.host.storage.claims.media.mountPoint}/library/flows";
     slskd = {
       enable = true;
       instance = "music";
@@ -68,9 +68,8 @@ in
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
     ./lidarr-cue-splitter.nix
-    ./nfs.nix
     ./oauth2-proxy.nix
-    ./paths.nix
+    ./storage.nix
     ./pinepods.nix
     ./romm.nix
     ./qos.nix

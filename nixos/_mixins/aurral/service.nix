@@ -22,7 +22,7 @@ in
     users.users.aurral = {
       isSystemUser = true;
       group = "aurral";
-      extraGroups = lib.optionals slskdEnabled [ selected.group ];
+      extraGroups = lib.unique ([ cfg.storage.group ] ++ lib.optionals slskdEnabled [ selected.group ]);
     };
 
     sops.templates."aurral-slskd.env" = lib.mkIf slskdEnabled {
@@ -40,6 +40,14 @@ in
       "z ${cfg.stateDir} 0750 aurral aurral - -"
     ];
 
+    host.storage.claims.${cfg.storage.claim} = {
+      directories.${cfg.storage.relativePath} = {
+        group = cfg.storage.group;
+        mode = "2775";
+      };
+      attachments.aurral.unit = "aurral";
+    };
+
     systemd.services.aurral = {
       description = "Aurral music discovery and flow download service";
       wantedBy = [ "multi-user.target" ];
@@ -47,7 +55,6 @@ in
         Wants = [ "network-online.target" ];
         After = [ "network-online.target" ] ++ lib.optional slskdEnabled "${selected.unitName}.service";
         Requires = lib.optional slskdEnabled "${selected.unitName}.service";
-        RequiresMountsFor = [ cfg.flowDir ] ++ lib.optional slskdEnabled selected.completedDir;
       };
       path = [
         pkgs.coreutils

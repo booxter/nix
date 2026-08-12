@@ -5,7 +5,7 @@
 }:
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   port = 6336;
   user = "sabnzbd";
   vpnNamespace = config.host.vpn.namespaces.wg;
@@ -34,41 +34,6 @@ let
     username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
     password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
   '') sabnzbdServerNames;
-  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${user} media - -";
-  usenetDirRules = [
-    {
-      mode = "0755";
-      suffix = "";
-    }
-    {
-      mode = "0755";
-      suffix = "/.incomplete";
-    }
-    {
-      mode = "0775";
-      suffix = "/watch";
-    }
-    {
-      mode = "0775";
-      suffix = "/manual";
-    }
-    {
-      mode = "0775";
-      suffix = "/lidarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/radarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/sonarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/shelfmark";
-    }
-  ];
 in
 {
   imports = [
@@ -111,7 +76,36 @@ in
     user = user;
   };
 
-  systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.suffix) usenetDirRules;
+  host.storage.claims.media.directories =
+    builtins.listToAttrs (
+      map
+        (path: {
+          name = "usenet/${path}";
+          value = {
+            owner = user;
+            mode = "0775";
+          };
+        })
+        [
+          "lidarr"
+          "manual"
+          "radarr"
+          "shelfmark"
+          "sonarr"
+          "watch"
+        ]
+    )
+    // {
+      usenet = {
+        owner = user;
+        mode = "0755";
+      };
+      "usenet/.incomplete" = {
+        owner = user;
+        mode = "0755";
+      };
+    };
+  host.storage.claims.media.attachments.sabnzbd.unit = "sabnzbd";
 
   systemd.services.sabnzbd = {
     serviceConfig = {

@@ -5,13 +5,15 @@
   ...
 }:
 let
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   booksDir = "${mediaDir}/library/books";
   stateDir = "/var/lib/ebook-converter";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/ebook-converter.prom";
 in
 {
+  host.storage.claims.media.attachments.ebook-converter.unit = "ebook-converter";
+
   systemd.tmpfiles.rules = [
     "d '${stateDir}' 0770 shelfmark media - -"
     "z ${nodeExporterTextfileDir} 0775 root media - -"
@@ -22,7 +24,6 @@ in
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
-    unitConfig.RequiresMountsFor = booksDir;
     serviceConfig = {
       ExecStart = lib.escapeShellArgs [
         (lib.getExe srvarrPkgs.ebook-converter)

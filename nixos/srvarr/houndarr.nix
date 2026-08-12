@@ -18,7 +18,7 @@ let
     name: "https://${name}.${config.host.network.lanDomain}:9443/ping"
   ) arrServiceNames;
   srvarrAddress = config.host.network.ipAddress;
-  stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
+  stateDir = "/data/.state/nixarr/houndarr";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   statusMetricsFile = "${nodeExporterTextfileDir}/houndarr-status.prom";
   waitForArrBackendsCommand = utils.escapeSystemdExecArgs (
@@ -50,7 +50,7 @@ in
       type = "sqlite";
       database = {
         path = "${stateDir}/houndarr.db";
-        destinationDir = "${config.host.srvarrPaths.stateDir}/houndarr-backup/latest";
+        destinationDir = "/data/.state/nixarr/houndarr-backup/latest";
         extraCopies = [
           {
             source = "${stateDir}/houndarr.masterkey";

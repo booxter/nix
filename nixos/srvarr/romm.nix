@@ -25,14 +25,14 @@ let
   mediaUsers = lib.filterAttrs (
     _: person: builtins.elem "media-users" person.groups
   ) config.host.sso.users;
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
   rommBasePath = "${mediaDir}/romm";
-  stateDir = "${config.host.srvarrPaths.stateDir}/romm";
+  stateDir = "/data/.state/nixarr/romm";
   # Host-local MariaDB singleton. RomM is the only current consumer, but keep
   # the storage path neutral so future local databases can share it explicitly.
-  mysqlDataDir = "${config.host.srvarrPaths.stateDir}/mysql";
+  mysqlDataDir = "/data/.state/nixarr/mysql";
   webDir = "${stateDir}/web";
   nginxDir = "${stateDir}/nginx";
   integrationDir = "${stateDir}/integration";
@@ -198,14 +198,40 @@ in
 {
   host.romm.enable = true;
 
+  host.storage.claims.media.directories =
+    builtins.listToAttrs (
+      map
+        (path: {
+          name = "romm/${path}";
+          value = {
+            owner = user;
+          };
+        })
+        [
+          "assets"
+          "cache"
+          "config"
+          "library"
+          "library/bios"
+          "library/roms"
+          "library/roms/pc"
+          "resources"
+          "sync"
+        ]
+    )
+    // {
+      romm.owner = user;
+    };
+  host.storage.claims.media.attachments.romm-setup.unit = "romm-setup";
+
   host.backups.sources.romm-database = {
     title = "RomM";
     capture = {
       type = "mariadb";
       database = {
         name = "romm";
-        destinationDir = "${config.host.srvarrPaths.stateDir}/romm-mariadb-backup/latest";
-        requiresMountsFor = [ config.host.srvarrPaths.stateDir ];
+        destinationDir = "/data/.state/nixarr/romm-mariadb-backup/latest";
+        requiresMountsFor = [ "/data/.state/nixarr" ];
         after = [ "romm-db-init.service" ];
         requires = [ "romm-db-init.service" ];
       };
@@ -287,15 +313,6 @@ in
     "d '${nginxDir}' 0750 ${user} media - -"
     "d '${integrationDir}' 0750 ${user} media - -"
     "d '${valkeyDir}' 0750 ${user} media - -"
-    "d '${rommBasePath}' 2775 ${user} media - -"
-    "d '${rommBasePath}/assets' 2775 ${user} media - -"
-    "d '${rommBasePath}/cache' 2775 ${user} media - -"
-    "d '${rommBasePath}/config' 2775 ${user} media - -"
-    "d '${rommBasePath}/resources' 2775 ${user} media - -"
-    "d '${rommBasePath}/sync' 2775 ${user} media - -"
-    "d '${rommBasePath}/library' 2775 ${user} media - -"
-    "d '${rommBasePath}/library/roms' 2775 ${user} media - -"
-    "d '${rommBasePath}/library/bios' 2775 ${user} media - -"
   ];
 
   services.mysql = {
@@ -318,7 +335,7 @@ in
       "sops-install-secrets.service"
     ]
     ++ tmpfilesSetupUnits;
-    unitConfig.RequiresMountsFor = config.host.srvarrPaths.stateDir;
+    unitConfig.RequiresMountsFor = "/data/.state/nixarr";
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = config.sops.templates."romm.env".path;
@@ -330,7 +347,7 @@ in
     description = "RomM Valkey cache and queue";
     wantedBy = [ "multi-user.target" ];
     after = tmpfilesSetupUnits;
-    unitConfig.RequiresMountsFor = config.host.srvarrPaths.stateDir;
+    unitConfig.RequiresMountsFor = "/data/.state/nixarr";
     serviceConfig = {
       ExecStart = "${pkgs.valkey}/bin/valkey-server --bind 127.0.0.1 --port ${toString redisPort} --dir ${valkeyDir} --appendonly yes --save 60 1";
       User = user;
@@ -388,10 +405,7 @@ in
       "romm-web-assets.service"
     ];
     after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
-    unitConfig.RequiresMountsFor = [
-      mediaDir
-      stateDir
-    ];
+    unitConfig.RequiresMountsFor = [ stateDir ];
     environment = podmanRuntimeEnvironment;
     serviceConfig = {
       Type = "oneshot";

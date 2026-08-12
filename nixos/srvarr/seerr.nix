@@ -6,7 +6,7 @@
 }:
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
-  stateDir = "${config.host.srvarrPaths.stateDir}/seerr";
+  stateDir = "/data/.state/nixarr/seerr";
   user = "seerr";
   group = "seerr";
 in
@@ -17,7 +17,7 @@ in
       type = "sqlite";
       database = {
         path = "${stateDir}/db/db.sqlite3";
-        destinationDir = "${config.host.srvarrPaths.stateDir}/seerr-backup/latest";
+        destinationDir = "/data/.state/nixarr/seerr-backup/latest";
         extraCopies = [
           { source = "${stateDir}/settings.json"; }
         ];

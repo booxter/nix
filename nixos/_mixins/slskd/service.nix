@@ -65,7 +65,6 @@ let
       description = "slskd instance ${instance.name}";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      unitConfig.RequiresMountsFor = [ instance.claim.mountPoint ];
       serviceConfig = {
         Type = "simple";
         User = instance.user;
@@ -101,24 +100,27 @@ let
         RestrictSUIDSGID = true;
       };
     };
-  directoryRequests = lib.foldl' lib.recursiveUpdate { } (
+  claimRequests = lib.foldl' lib.recursiveUpdate { } (
     lib.mapAttrsToList (_: instance: {
-      ${instance.storage.claim}.directories = builtins.listToAttrs (
-        map
-          (relativePath: {
-            name = relativePath;
-            value = {
-              owner = instance.user;
-              group = instance.group;
-              mode = "2775";
-            };
-          })
-          [
-            instance.storage.relativePath
-            "${instance.storage.relativePath}/incomplete"
-            "${instance.storage.relativePath}/complete"
-          ]
-      );
+      ${instance.storage.claim} = {
+        directories = builtins.listToAttrs (
+          map
+            (relativePath: {
+              name = relativePath;
+              value = {
+                owner = instance.user;
+                group = instance.group;
+                mode = "2775";
+              };
+            })
+            [
+              instance.storage.relativePath
+              "${instance.storage.relativePath}/incomplete"
+              "${instance.storage.relativePath}/complete"
+            ]
+        );
+        attachments.${instance.unitName}.unit = instance.unitName;
+      };
     }) model.resolved
   );
 in
@@ -130,7 +132,7 @@ in
       inherit (model.cfg) group;
     };
 
-    host.storage.claims = directoryRequests;
+    host.storage.claims = claimRequests;
 
     host.vpn.clients = lib.mapAttrs' (
       _: instance:

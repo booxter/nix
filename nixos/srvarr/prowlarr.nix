@@ -6,7 +6,7 @@
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   servarrCommon = import ./servarr-common.nix { inherit config lib; };
-  stateDir = "${config.host.srvarrPaths.stateDir}/prowlarr";
+  stateDir = "/data/.state/nixarr/prowlarr";
   user = "prowlarr";
   group = "prowlarr";
 in

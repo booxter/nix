@@ -24,10 +24,10 @@ let
   database = "pinepods";
   port = 8040;
   valkeyPort = 6382;
-  stateDir = "${config.host.srvarrPaths.stateDir}/pinepods";
+  stateDir = "/data/.state/nixarr/pinepods";
   databaseDir = "${stateDir}/postgresql";
   backupDir = "${stateDir}/backups";
-  downloadsDir = "${config.host.srvarrPaths.mediaDir}/podcasts/pinepods";
+  downloadsDir = "${config.host.storage.claims.media.mountPoint}/podcasts/pinepods";
 
   serviceDependencies = [
     "network-online.target"
@@ -68,6 +68,9 @@ let
   ];
 in
 {
+  host.storage.claims.media.directories."podcasts/pinepods".owner = user;
+  host.storage.claims.media.attachments.pinepods.unit = "podman-pinepods";
+
   host.web.services.pinepods.auth = {
     mode = "oidc";
     oidcRegistration = {
@@ -342,7 +345,6 @@ in
       environment.PINEPODS_LISTEN_PORT = toString port;
       unitConfig.RequiresMountsFor = [
         stateDir
-        downloadsDir
       ];
     };
 

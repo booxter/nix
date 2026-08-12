@@ -6,8 +6,8 @@
 }:
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
-  stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  stateDir = "/data/.state/nixarr/shelfmark";
+  mediaDir = config.host.storage.claims.media.mountPoint;
   booksDir = "${mediaDir}/library/books";
   ebookConverterStateDir = "/var/lib/ebook-converter";
   user = "shelfmark";
@@ -16,6 +16,8 @@ let
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
+  host.storage.claims.media.attachments.shelfmark.unit = "shelfmark";
+
   host.backups.sources.shelfmark = {
     title = "Shelfmark";
     paths = [ "${stateDir}/plugins" ];
@@ -23,7 +25,7 @@ in
       type = "sqlite";
       database = {
         path = "${stateDir}/users.db";
-        destinationDir = "${config.host.srvarrPaths.stateDir}/shelfmark-backup/latest";
+        destinationDir = "/data/.state/nixarr/shelfmark-backup/latest";
         extraCopies = [
           {
             source = "${stateDir}/.flask_secret";
@@ -114,6 +116,7 @@ in
       mediaDir
     ];
     StateDirectory = lib.mkForce "";
+    UMask = lib.mkForce "0002";
     User = user;
   };
 

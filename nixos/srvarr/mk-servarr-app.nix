@@ -6,12 +6,14 @@
 }:
 let
   servarrCommon = import ./servarr-common.nix { inherit config lib; };
-  stateDir = "${config.host.srvarrPaths.stateDir}/${name}";
+  stateDir = "/data/.state/nixarr/${name}";
   user = name;
 in
 lib.mkMerge [
   (servarrCommon.mkServarrService { inherit name; })
   {
+    host.storage.claims.media.attachments.${name}.unit = name;
+
     host.backups.sources.${name} = {
       title = lib.strings.toSentenceCase name;
       capture.type = "scheduled";
@@ -23,6 +25,8 @@ lib.mkMerge [
       user = user;
       group = "media";
     };
+
+    systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
 
     users = {
       groups = lib.optionalAttrs (apiGroup != null) {

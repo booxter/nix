@@ -25,6 +25,12 @@
         mode = "2775";
         enforce = true;
       };
+      directories = {
+        library = { };
+        "library/audiobooks" = { };
+        "library/books" = { };
+        podcasts = { };
+      };
       identities.groups = [ "media" ];
       nfs = {
         enable = true;

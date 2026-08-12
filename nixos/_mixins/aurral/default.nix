@@ -42,6 +42,26 @@ in
       description = "Directory where Aurral stores downloaded flows.";
     };
 
+    storage = {
+      claim = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "media";
+        description = "Storage claim containing Aurral flows.";
+      };
+
+      relativePath = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "library/flows";
+        description = "Flow directory relative to the selected storage claim.";
+      };
+
+      group = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "media";
+        description = "Shared storage group for Aurral flows.";
+      };
+    };
+
     slskd = {
       enable = lib.mkEnableOption "a host-local slskd integration";
 

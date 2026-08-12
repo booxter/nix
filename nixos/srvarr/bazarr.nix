@@ -8,7 +8,7 @@
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   group = "media";
-  stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
+  stateDir = "/data/.state/nixarr/bazarr";
   user = "bazarr";
   enforceBazarrAuthCommand = utils.escapeSystemdExecArgs [
     (lib.getExe srvarrPkgs.bazarr-auth-config)
@@ -27,6 +27,8 @@ in
     capture.scheduled.outputPaths = [ "${stateDir}/backup" ];
   };
 
+  host.storage.claims.media.attachments.bazarr.unit = "bazarr";
+
   services.bazarr = {
     enable = true;
     dataDir = stateDir;
@@ -39,13 +41,15 @@ in
   ];
 
   users.users.${user} = {
-    extraGroups = lib.mkForce [ "media" ];
     home = lib.mkForce "/var/empty";
     isSystemUser = true;
     uid = accounts.uids.bazarr;
   };
 
-  systemd.services.bazarr.serviceConfig.ExecStartPre = "+${enforceBazarrAuthCommand}";
+  systemd.services.bazarr.serviceConfig = {
+    ExecStartPre = "+${enforceBazarrAuthCommand}";
+    UMask = lib.mkForce "0002";
+  };
 
   host.web.services.bazarr = {
     enable = true;

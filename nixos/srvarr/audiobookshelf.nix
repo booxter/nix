@@ -9,7 +9,7 @@
 let
   accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
   port = 9292;
-  stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
+  stateDir = "/data/.state/nixarr/audiobookshelf";
   user = "audiobookshelf";
   audiobookshelfPublicUrl = config.host.web.services.audiobookshelf.public.url;
   oidcClient = config.host.sso.oidc.clients.audiobookshelf;
@@ -73,6 +73,8 @@ let
   ];
 in
 {
+  host.storage.claims.media.attachments.audiobookshelf.unit = "audiobookshelf";
+
   host.web.services.audiobookshelf.auth = {
     mode = "oidc";
     oidcRegistration = {
@@ -120,9 +122,13 @@ in
     "d '${stateDir}' 0700 ${user} root - -"
   ];
 
-  # Upstream assumes dataDir lives under /var/lib; keep only the overrides
-  # needed for the absolute state path we use on srvarr.
-  systemd.services.audiobookshelf.serviceConfig.WorkingDirectory = lib.mkForce stateDir;
+  # Upstream assumes dataDir lives under /var/lib. An absolute StateDirectory
+  # is ignored by systemd, so keep only the service settings that work for the
+  # historical absolute state path.
+  systemd.services.audiobookshelf.serviceConfig = {
+    StateDirectory = lib.mkForce null;
+    WorkingDirectory = lib.mkForce stateDir;
+  };
 
   services.nginx.commonHttpConfig = ''
     map $http_x_forwarded_host $audiobookshelf_proxy_host {

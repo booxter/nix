@@ -5,9 +5,9 @@
   ...
 }:
 let
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   sabnzbdCompleteDir = config.services.sabnzbd.settings.misc.complete_dir;
-  lidarrStateDir = "${config.host.srvarrPaths.stateDir}/lidarr";
+  lidarrStateDir = "/data/.state/nixarr/lidarr";
   stateDir = "/var/lib/lidarr-cue-splitter";
   workRoot = "${mediaDir}/.cue-splitter-work";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
@@ -18,8 +18,12 @@ let
   ];
 in
 {
+  host.storage.claims.media.directories.".cue-splitter-work" = {
+    mode = "2775";
+  };
+  host.storage.claims.media.attachments.lidarr-cue-splitter.unit = "lidarr-cue-splitter";
+
   systemd.tmpfiles.rules = [
-    "d ${workRoot} 2775 lidarr media - -"
     "z ${nodeExporterTextfileDir} 0775 root media - -"
   ];
 
@@ -28,7 +32,6 @@ in
     wantedBy = [ "multi-user.target" ];
     wants = serviceDeps;
     after = serviceDeps;
-    unitConfig.RequiresMountsFor = mediaDir;
     serviceConfig = {
       ExecStart = lib.escapeShellArgs [
         (lib.getExe srvarrPkgs.lidarr-cue-splitter)
