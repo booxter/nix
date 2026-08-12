@@ -2,7 +2,6 @@
   config,
   lib,
   osConfig,
-  pkgs,
   ...
 }:
 let
@@ -62,7 +61,6 @@ in
 
     programs.thunderbird = {
       enable = true;
-      package = pkgs.thunderbird;
       profiles.default = {
         isDefault = true;
         settings = {
