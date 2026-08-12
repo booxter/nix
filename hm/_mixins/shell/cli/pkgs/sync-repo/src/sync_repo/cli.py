@@ -26,13 +26,20 @@ def main(
         description="Synchronize a configured Git repository on demand.",
     )
     parser.add_argument("--config", type=Path, required=specs is None)
-    parser.add_argument("name")
+    parser.add_argument("name", nargs="?", help="configured repository name")
     arguments = parser.parse_args(argv)
     try:
-        repositories = specs or load_repository_specs(arguments.config)
+        repositories = specs if specs is not None else load_repository_specs(arguments.config)
     except ConfigurationError as error:
         print(f"sync-repo: {error}", file=stderr)
         return 1
+
+    if arguments.name is None:
+        print("Available repositories:", file=stdout)
+        for name in sorted(repositories):
+            print(f"  {name}", file=stdout)
+        return 0
+
     try:
         spec = repositories[arguments.name]
     except KeyError:

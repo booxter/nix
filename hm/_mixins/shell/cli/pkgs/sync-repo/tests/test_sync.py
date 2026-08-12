@@ -227,6 +227,36 @@ def test_rejects_unknown_repository_names(tmp_path: Path) -> None:
         assert f"unknown repository: {name}" in stderr
 
 
+def test_lists_configured_repository_names_without_selection(tmp_path: Path) -> None:
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    specs = {
+        "pass": RepositorySpec("pass", "git@example.com:pass.git", tmp_path / "pass"),
+        "dotfiles": RepositorySpec(
+            "dotfiles",
+            "git@example.com:dotfiles.git",
+            tmp_path / "dotfiles",
+        ),
+    }
+
+    status = main([], specs=specs, stdout=stdout, stderr=stderr)
+
+    assert status == 0
+    assert stdout.getvalue() == "Available repositories:\n  dotfiles\n  pass\n"
+    assert stderr.getvalue() == ""
+
+
+def test_lists_no_names_for_empty_configuration() -> None:
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    status = main([], specs={}, stdout=stdout, stderr=stderr)
+
+    assert status == 0
+    assert stdout.getvalue() == "Available repositories:\n"
+    assert stderr.getvalue() == ""
+
+
 def test_rejects_non_repository_and_detached_head(tmp_path: Path) -> None:
     fixture = repository_fixture(tmp_path)
     fixture.checkout.mkdir(parents=True)
