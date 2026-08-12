@@ -8,6 +8,12 @@ in
     ./thunderbird.nix
   ];
 
-  host.hm.thunderbird.enable =
-    appsCfg.enable && appsCfg.email.enable && appsCfg.email.thunderbird.enable;
+  host.hm = {
+    gmailctl = {
+      enable = appsCfg.enable && appsCfg.email.enable && appsCfg.email.gmailctl.enable;
+      warmer.enable = appsCfg.enable && appsCfg.email.enable && appsCfg.email.gmailctl.enable;
+    };
+
+    thunderbird.enable = appsCfg.enable && appsCfg.email.enable && appsCfg.email.thunderbird.enable;
+  };
 }
