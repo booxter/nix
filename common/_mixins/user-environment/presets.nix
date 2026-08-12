@@ -30,7 +30,6 @@ let
           };
           thunderbird.enable = true;
         };
-        repositories.requests.gmailctl = [ "gmailctl" ];
       };
     };
     nvidia = {

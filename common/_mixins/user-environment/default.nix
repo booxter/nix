@@ -427,6 +427,9 @@ in
         };
 
         requests = {
+          gmailctl =
+            lib.optional config.home-manager.users.${config.host.username}.host.hm.gmailctl.enable
+              "gmailctl";
           pass = lib.optional cfg.features.security.pass.enable "pass";
         };
       };
