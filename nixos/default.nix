@@ -1,15 +1,10 @@
 {
   config,
-  facts,
-  hostSpec,
   inputs,
   lib,
   pkgs,
   ...
 }:
-let
-  username = config.host.username;
-in
 (
   {
     imports = [
@@ -17,7 +12,6 @@ in
       ../common
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
-      inputs.home-manager.nixosModules.home-manager
     ]
     ++ [
       ./_mixins/adaptive-upload-policy
@@ -29,6 +23,7 @@ in
       ./_mixins/desktop
       ./_mixins/external-service.nix
       ./_mixins/hardware
+      ./_mixins/hm
       ./_mixins/internal-https-service
       ./_mixins/jellarr
       ./_mixins/jellyfin
@@ -55,21 +50,6 @@ in
       ./_mixins/wireguard
     ];
 
-    home-manager = {
-      extraSpecialArgs = {
-        inherit
-          facts
-          hostSpec
-          inputs
-          ;
-      };
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      users.${username} = {
-        imports = [ ../hm ];
-        home.stateVersion = config.system.stateVersion;
-      };
-    };
     virtualisation.containers.enable = true;
     time.timeZone = config.host.site.timeZone;
 
