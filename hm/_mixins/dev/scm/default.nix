@@ -11,11 +11,9 @@ let
   userEnvironment = osConfig.host.userEnvironment;
   devCfg = userEnvironment.features.dev;
   scmCfg = devCfg.scm;
-  identity = config.host.hm.user.${scmCfg.identity};
-  personalIdentity = config.host.hm.user.personal;
   smtpTransport = userEnvironment.smtpTransports.${scmCfg.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
-  inherit (identity) email fullName;
+  inherit (config.host.hm) email fullName;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
@@ -46,7 +44,7 @@ lib.mkIf (devCfg.enable && scmCfg.enable) {
       }
       {
         condition = "gitdir:~/src/nix/";
-        contents.user.email = personalIdentity.email;
+        contents.user.email = "ihar.hrachyshka@gmail.com";
         contentSuffix = "nix-repo-email";
       }
     ];

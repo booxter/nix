@@ -1,7 +1,6 @@
 { config, lib, ... }:
 let
   cfg = config.host.userEnvironment;
-  hmUsers = config.home-manager.users.${config.host.username}.host.hm.user;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.repositories.requests));
   smtpTransportType = lib.types.submodule {
     options = {
@@ -179,12 +178,6 @@ in
             description = "Whether to provide the source-control development environment.";
           };
 
-          identity = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "personal";
-            description = "Named identity used by source-control tools.";
-          };
-
           sendEmail = {
             enable = lib.mkOption {
               type = lib.types.bool;
@@ -329,13 +322,6 @@ in
           && lib.all (component: component != "..") (lib.splitString "/" repository.destination.path)
         ) (builtins.attrValues cfg.repositories.catalog);
         message = "host.userEnvironment repository destinations must be safe relative paths";
-      }
-      {
-        assertion =
-          !cfg.features.dev.enable
-          || !cfg.features.dev.scm.enable
-          || builtins.hasAttr cfg.features.dev.scm.identity hmUsers;
-        message = "host.userEnvironment.features.dev.scm.identity must name a declared Home Manager user identity";
       }
       {
         assertion =

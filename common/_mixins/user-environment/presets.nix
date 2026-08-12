@@ -3,13 +3,14 @@ let
   cfg = config.host.userEnvironment;
   presetDefinitions = {
     personal = {
+      defaults.hm = {
+        fullName = "Ihar Hrachyshka";
+        email = "ihar.hrachyshka@gmail.com";
+      };
       roles.developer = {
         features = {
           dev.agents.codex.warmer.enable = true;
-          dev.scm = {
-            identity = "personal";
-            sendEmail.transport = "gmail";
-          };
+          dev.scm.sendEmail.transport = "gmail";
         };
         hm = {
           podman = {
@@ -41,7 +42,6 @@ let
           telegram.enable = true;
           thunderbird = {
             enable = true;
-            user = "personal";
             account = {
               flavor = "gmail.com";
               imapAuthentication = "oauth2";
@@ -55,6 +55,10 @@ let
       };
     };
     nvidia = {
+      defaults.hm = {
+        fullName = "Ihar Hrachyshka";
+        email = "${config.host.username}@nvidia.com";
+      };
       roles.developer.features = {
         dev.attentionInbox.enable = true;
         dev.agents.codex = {
@@ -63,10 +67,7 @@ let
           workUsageStatus.enable = true;
         };
         dev.nvidia.enable = true;
-        dev.scm = {
-          identity = "nvidia";
-          sendEmail.transport = "nvidia";
-        };
+        dev.scm.sendEmail.transport = "nvidia";
       };
       roles.workstation = {
         features = {
@@ -83,7 +84,6 @@ let
           telegram.enable = true;
           thunderbird = {
             enable = true;
-            user = "nvidia";
             account = {
               flavor = "outlook.office365.com";
               imapAuthentication = "oauth2";
@@ -103,7 +103,7 @@ let
     name: definition:
     lib.mkIf (cfg.preset == name) (
       lib.mkMerge (
-        [ (applyPresetDefaults (definition.defaults or { })) ]
+        [ (applyPresetDefaults (userEnvironmentFragment (definition.defaults or { }))) ]
         ++ lib.mapAttrsToList (
           role: fragment:
           lib.mkIf cfg.roles.${role}.enable (applyPresetDefaults (userEnvironmentFragment fragment))
@@ -114,7 +114,8 @@ let
     name: definition:
     lib.mkIf (cfg.preset == name) (
       lib.mkMerge (
-        lib.mapAttrsToList (
+        [ (applyPresetDefaults (definition.defaults.hm or { })) ]
+        ++ lib.mapAttrsToList (
           role: fragment: lib.mkIf cfg.roles.${role}.enable (applyPresetDefaults (fragment.hm or { }))
         ) (definition.roles or { })
       )

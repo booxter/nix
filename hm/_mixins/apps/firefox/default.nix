@@ -9,7 +9,6 @@ let
   inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.firefox;
   publicDomain = osConfig.host.network.publicDomain;
-  dashUrl = "https://dash.${publicDomain}";
   degoogUrl = "https://goo.${publicDomain}";
   firefoxDohExcludedDomains = [ publicDomain ];
   useSignedDarwinFirefox =
@@ -65,7 +64,7 @@ in
           "browser.translations.neverTranslateLanguages" = "en,ru,be,uk,cz,pl";
 
           # UX fixes
-          "browser.startup.homepage" = dashUrl;
+          "browser.startup.homepage" = config.host.hm.homePage;
           "browser.newtab.url" = "about:blank";
           "browser.ctrlTab.sortByRecentlyUsed" = false;
           "browser.tabs.closeWindowWithLastTab" = true;

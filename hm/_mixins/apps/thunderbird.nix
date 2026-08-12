@@ -7,7 +7,6 @@
 let
   inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.thunderbird;
-  identity = config.host.hm.user.${cfg.user};
   authenticationMethod = {
     oauth2 = 10;
     password = 3;
@@ -18,11 +17,6 @@ in
 {
   options.host.hm.thunderbird = {
     enable = lib.mkEnableOption "managed Thunderbird email client";
-
-    user = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      description = "Named host.hm.user identity configured in Thunderbird.";
-    };
 
     account = {
       flavor = lib.mkOption {
@@ -52,13 +46,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = builtins.hasAttr cfg.user config.host.hm.user;
-        message = "host.hm.thunderbird.user must name a declared host.hm.user identity";
-      }
-    ];
-
     programs.thunderbird = {
       enable = true;
       profiles.default = {
@@ -99,8 +86,8 @@ in
 
     accounts.email.accounts.default = {
       inherit (cfg.account) flavor;
-      address = identity.email;
-      realName = identity.fullName;
+      address = config.host.hm.email;
+      realName = config.host.hm.fullName;
       primary = true;
       smtp.host = lib.mkForce cfg.account.smtp.server;
       thunderbird = {
