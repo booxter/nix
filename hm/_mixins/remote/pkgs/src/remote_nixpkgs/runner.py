@@ -40,8 +40,12 @@ class RemoteNixpkgsRunner:
         self.session = session
         self.stderr = stderr
 
-    def _nix_arguments(self, options: RunOptions) -> tuple[list[str], Mapping[str, str] | None]:
-        arguments = ["nix", "--extra-experimental-features", "nix-command flakes"]
+    def _nix_arguments(
+        self,
+        options: RunOptions,
+        subcommand: str,
+    ) -> tuple[list[str], Mapping[str, str] | None]:
+        arguments = ["nix", "--extra-experimental-features", "nix-command flakes", subcommand]
         environment: Mapping[str, str] | None = None
         if options.allow_unfree:
             arguments.append("--impure")
@@ -63,12 +67,11 @@ class RemoteNixpkgsRunner:
         return result.stdout
 
     def run(self, options: RunOptions) -> NoReturn:
-        nix, environment = self._nix_arguments(options)
         print(f"Building {options.installable} on {self.session.host}...", file=self.stderr)
+        nix_build, environment = self._nix_arguments(options, "build")
         build_output = self._run_required(
             [
-                *nix,
-                "build",
+                *nix_build,
                 "--no-link",
                 "--print-out-paths",
                 "-L",
@@ -85,8 +88,9 @@ class RemoteNixpkgsRunner:
 
         command = options.command
         if command is None:
+            nix_eval, environment = self._nix_arguments(options, "eval")
             evaluated = self.session.run(
-                [*nix, "eval", "--raw", f"{options.installable}.meta.mainProgram"],
+                [*nix_eval, "--raw", f"{options.installable}.meta.mainProgram"],
                 environment,
             )
             if evaluated.returncode == 0:

@@ -173,7 +173,10 @@ def test_builds_and_runs_through_x11() -> None:
     assert process.calls[0] == ("/bin/launchctl", "getenv", "DISPLAY")
     build_command = shlex.split(process.calls[1][-1])
     assert build_command[:3] == ["env", "NIXPKGS_ALLOW_UNFREE=1", "nix"]
-    assert "--impure" in build_command
+    assert build_command.index("build") < build_command.index("--impure")
+    eval_command = shlex.split(process.calls[2][-1])
+    assert eval_command[:3] == ["env", "NIXPKGS_ALLOW_UNFREE=1", "nix"]
+    assert eval_command.index("eval") < eval_command.index("--impure")
     assert process.calls[1][:-1] == (
         "ssh",
         "-o",
