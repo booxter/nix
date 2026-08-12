@@ -1,10 +1,12 @@
 {
+  config,
   lib,
-  osConfig,
   ...
 }:
 {
-  config = lib.mkIf osConfig.host.userEnvironment.features.gui.enable {
+  options.host.hm.kitty.enable = lib.mkEnableOption "Kitty terminal emulator";
+
+  config = lib.mkIf config.host.hm.kitty.enable {
     programs.kitty = {
       enable = true;
       shellIntegration.enableZshIntegration = true;

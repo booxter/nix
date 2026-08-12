@@ -30,6 +30,7 @@ let
             enable = true;
             warmer.enable = true;
           };
+          kitty.enable = true;
           matrix.enable = true;
           obsidian.enable = true;
           podman = {
@@ -79,6 +80,7 @@ let
       roles.workstation = {
         features.apps.homerow.enable = false;
         hm = {
+          kitty.enable = true;
           matrix.enable = true;
           obsidian.enable = true;
           slack.enable = true;

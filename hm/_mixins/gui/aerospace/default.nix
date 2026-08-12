@@ -64,6 +64,12 @@ in
       description = "Whether to integrate AeroSpace workspaces with Sketchybar.";
     };
 
+    kitty.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = cfg.enable && config.host.hm.kitty.enable;
+      description = "Whether to provide AeroSpace bindings for Kitty.";
+    };
+
     numberedWorkspaces = lib.mkOption {
       type = lib.types.ints.between 1 9;
       default = 4;
@@ -111,6 +117,14 @@ in
         {
           assertion = !cfg.sketchybar.enable || config.host.hm.sketchybar.enable;
           message = "host.hm.aerospace.sketchybar requires host.hm.sketchybar.";
+        }
+        {
+          assertion = !cfg.kitty.enable || cfg.enable;
+          message = "host.hm.aerospace.kitty requires host.hm.aerospace.";
+        }
+        {
+          assertion = !cfg.kitty.enable || config.host.hm.kitty.enable;
+          message = "host.hm.aerospace.kitty requires host.hm.kitty.";
         }
       ];
     }
@@ -179,6 +193,8 @@ in
 
             alt-shift-s = "exec-and-forget screencapture -i -c";
 
+          }
+          // lib.optionalAttrs cfg.kitty.enable {
             cmd-backtick = "exec-and-forget ${pkgs.kitty}/bin/kitten quick-access-terminal";
             # Use LaunchServices so Kitty starts with the current GUI launchd environment.
             alt-enter = "exec-and-forget /usr/bin/open -n -b net.kovidgoyal.kitty --args --directory ~";
