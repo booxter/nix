@@ -1,13 +1,11 @@
 {
   config,
-  facts,
   isDarwin,
   lib,
   pkgs,
   ...
 }:
 let
-  realm = facts.realms.${config.host.realm};
   username = config.host.username;
   secrets = config.host.security.secrets;
   operatorIdentity = secrets.operator.ageIdentity;
@@ -58,14 +56,6 @@ in
       ];
       default = "files";
       description = "Backend providing the operator's SSH authentication and signing identity.";
-    };
-
-    sudo.wheelNeedsPassword = lib.mkOption {
-      type = lib.types.bool;
-      default = realm.management.sudoWheelNeedsPassword;
-      readOnly = true;
-      internal = true;
-      description = "Whether wheel users must enter a password for sudo.";
     };
   };
 

@@ -71,7 +71,6 @@ in
       };
     };
     virtualisation.containers.enable = true;
-    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.security.sudo.wheelNeedsPassword;
     time.timeZone = config.host.site.timeZone;
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

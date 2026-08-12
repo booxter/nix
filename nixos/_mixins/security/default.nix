@@ -1,10 +1,12 @@
 {
   config,
+  facts,
   lib,
   pkgs,
   ...
 }:
 let
+  realm = facts.realms.${config.host.realm};
   username = config.host.username;
   operatorAgeIdentity = config.host.security.secrets.operator.ageIdentity;
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
@@ -29,6 +31,8 @@ in
 
   config = lib.mkMerge [
     {
+      security.sudo.wheelNeedsPassword = lib.mkDefault realm.management.sudoWheelNeedsPassword;
+
       assertions = [
         {
           assertion = !u2f.enable || (u2f.appId != null && u2f.origin != null);
