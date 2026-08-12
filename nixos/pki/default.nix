@@ -61,6 +61,10 @@ in
   ];
 
   host.backups.sources.step-ca.paths = [ stepStateDir ];
+  host.backups.destinations.primary = {
+    server = "beast";
+    publicKey = facts.public-keys.restic.pki;
+  };
 
   host.internalPki.authority = {
     enable = true;

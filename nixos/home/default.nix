@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ facts, pkgs, ... }:
 {
   system.stateVersion = "26.05";
 
@@ -11,6 +11,11 @@
   };
 
   host.ups.client.server = "prx1-lab";
+
+  host.backups.destinations.primary = {
+    server = "beast";
+    publicKey = facts.public-keys.restic.home;
+  };
 
   _module.args.homeAssistantTools = pkgs.callPackage ./pkgs/home-assistant-tools { };
 

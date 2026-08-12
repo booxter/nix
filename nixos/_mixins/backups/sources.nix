@@ -12,92 +12,103 @@ let
   positiveInt = lib.types.addCheck lib.types.int (value: value > 0);
   secretSuffix = name: lib.optionalString (name != "primary") "/${name}";
 
-  destinationModule =
+  destinationPolicyOptions = {
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "root";
+      description = "User running the local Restic pipeline.";
+    };
+    timerConfig = lib.mkOption {
+      type = with lib.types; nullOr (attrsOf unitOption);
+      default = {
+        OnCalendar = "04:45";
+        RandomizedDelaySec = "5m";
+        Persistent = true;
+      };
+      description = "Timer configuration for the complete local backup pipeline.";
+    };
+    retention = {
+      daily = lib.mkOption {
+        type = positiveInt;
+        default = 7;
+      };
+      weekly = lib.mkOption {
+        type = positiveInt;
+        default = 8;
+      };
+      monthly = lib.mkOption {
+        type = positiveInt;
+        default = 6;
+      };
+    };
+    check = {
+      enable = lib.mkEnableOption "Restic repository checks after backup";
+      options = lib.mkOption {
+        type = with lib.types; listOf str;
+        default = [ ];
+      };
+    };
+  };
+
+  destinationRequestModule =
+    {
+      name,
+      ...
+    }:
+    {
+      options = destinationPolicyOptions // {
+        enable = lib.mkEnableOption "the ${name} backup destination" // {
+          default = true;
+        };
+        server = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          description = "Host providing the backup repository.";
+        };
+        storageName = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = hostName;
+          description = "Durable repository name on the backup server.";
+        };
+        publicKey = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+          description = "SSH public key accepted by the backup server for this client.";
+        };
+      };
+    };
+
+  resolvedDestinationModule =
     {
       config,
       name,
       ...
     }:
     {
-      options = {
-        provider = lib.mkOption {
-          type = lib.types.str;
-          readOnly = true;
-          internal = true;
-        };
+      options = destinationPolicyOptions // {
+        server = lib.mkOption { type = lib.types.nonEmptyStr; };
+        storageName = lib.mkOption { type = lib.types.nonEmptyStr; };
         transport = lib.mkOption {
           type = lib.types.enum [
             "local"
             "sftp"
           ];
-          default = "sftp";
-          internal = true;
         };
-        repositoryPath = lib.mkOption {
-          type = lib.types.str;
-          readOnly = true;
-          internal = true;
-        };
-        ingestUser = lib.mkOption {
-          type = lib.types.str;
-          readOnly = true;
-          internal = true;
-        };
+        repositoryPath = lib.mkOption { type = lib.types.str; };
+        ingestUser = lib.mkOption { type = lib.types.str; };
         publicKey = lib.mkOption {
           type = with lib.types; nullOr str;
           default = null;
-          internal = true;
-        };
-        offsite = lib.mkOption {
-          type = with lib.types; nullOr str;
-          default = null;
-          internal = true;
-        };
-        user = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-          description = "User running the local Restic pipeline.";
-        };
-        timerConfig = lib.mkOption {
-          type = with lib.types; nullOr (attrsOf unitOption);
-          default = {
-            OnCalendar = "04:45";
-            RandomizedDelaySec = "5m";
-            Persistent = true;
-          };
-          description = "Timer configuration for the complete local backup pipeline.";
-        };
-        retention = {
-          daily = lib.mkOption {
-            type = positiveInt;
-            default = 7;
-          };
-          weekly = lib.mkOption {
-            type = positiveInt;
-            default = 8;
-          };
-          monthly = lib.mkOption {
-            type = positiveInt;
-            default = 6;
-          };
-        };
-        check = {
-          enable = lib.mkEnableOption "Restic repository checks after backup";
-          options = lib.mkOption {
-            type = with lib.types; listOf str;
-            default = [ ];
-          };
         };
         generated = {
           jobName = lib.mkOption {
             type = lib.types.str;
-            default = if name == "primary" then config.provider else "${config.provider}-${name}";
+            default = if name == "primary" then config.server else "${config.server}-${name}";
             readOnly = true;
             internal = true;
           };
-          providerHost = lib.mkOption {
+          serverHost = lib.mkOption {
             type = lib.types.str;
-            default = config.provider;
+            default = config.server;
             readOnly = true;
             internal = true;
           };
@@ -149,7 +160,7 @@ let
         destination = lib.mkOption {
           type = lib.types.str;
           default = "primary";
-          description = "Fleet backup link that receives this source.";
+          description = "Named backup destination that receives this source.";
         };
         paths = lib.mkOption {
           type = with lib.types; listOf str;
@@ -236,8 +247,8 @@ let
   );
   activeDestinations = lib.filterAttrs (
     name: _: builtins.elem name referencedDestinationNames
-  ) cfg.destinations;
-  destinationFor = source: cfg.destinations.${source.destination};
+  ) cfg.resolvedDestinations;
+  destinationFor = source: cfg.resolvedDestinations.${source.destination};
   jobNameFor = source: (destinationFor source).generated.jobName;
   passwordSecretFor = destination: destination.generated.repositoryPasswordSecret;
   sshKeySecretFor = destination: destination.generated.sshPrivateKeySecret;
@@ -274,9 +285,16 @@ in
 
   options.host.backups = {
     destinations = lib.mkOption {
-      type = with lib.types; attrsOf (submodule destinationModule);
+      type = with lib.types; attrsOf (submodule destinationRequestModule);
       default = { };
-      description = "Backup destinations assigned to this host by fleet facts.";
+      description = "Named backup repositories consumed by this host.";
+    };
+
+    resolvedDestinations = lib.mkOption {
+      type = with lib.types; attrsOf (submodule resolvedDestinationModule);
+      default = { };
+      internal = true;
+      description = "Fleet-resolved runtime backup destinations.";
     };
 
     sources = lib.mkOption {
@@ -313,7 +331,7 @@ in
               if destination.transport == "local" then
                 "${lib.strings.toSentenceCase hostName} Local Restic"
               else
-                "Restic To ${lib.strings.toSentenceCase destination.provider}";
+                "Restic To ${lib.strings.toSentenceCase destination.server}";
             inherit (destination)
               check
               retention
@@ -328,7 +346,7 @@ in
               passwordFile = config.sops.secrets.${passwordSecretFor destination}.path;
               dependencyUnits = [ "sops-install-secrets.service" ];
               sftp = lib.optionalAttrs (destination.transport == "sftp") {
-                host = destination.generated.providerHost;
+                host = destination.generated.serverHost;
                 user = destination.ingestUser;
                 identityFile = config.sops.secrets.${sshKeySecretFor destination}.path;
               };

@@ -10,6 +10,15 @@ in
         message = "host.backups.server.clients must not be empty";
       }
       {
+        assertion = !cfg.offsite.enable || cfg.offsite.repositoryRoot != "";
+        message = "host.backups.server.offsite.repositoryRoot is required when offsite replication is enabled";
+      }
+      {
+        assertion =
+          !cfg.offsite.enable || cfg.offsite.storageProvider != "b2" || cfg.offsite.bucketName != null;
+        message = "host.backups.server.offsite.bucketName is required for B2 usage metrics";
+      }
+      {
         assertion = cfg.localClient == null || builtins.hasAttr cfg.localClient cfg.clients;
         message = "host.backups.server.localClient must reference a configured client";
       }

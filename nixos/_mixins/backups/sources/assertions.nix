@@ -13,7 +13,9 @@ in
 {
   assertions =
     lib.mapAttrsToList (name: source: {
-      assertion = builtins.hasAttr source.destination cfg.destinations;
+      assertion =
+        builtins.hasAttr source.destination cfg.destinations
+        && cfg.destinations.${source.destination}.enable;
       message = "host.backups.sources.${name} references unknown destination '${source.destination}'";
     }) sources
     ++ lib.mapAttrsToList (name: source: {

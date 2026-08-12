@@ -1,5 +1,6 @@
 {
   config,
+  facts,
   pkgs,
   ...
 }:
@@ -17,6 +18,11 @@
   };
 
   host.ups.client.server = "prx1-lab";
+
+  host.backups.destinations.primary = {
+    server = "beast";
+    publicKey = facts.public-keys.restic.srvarr;
+  };
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 

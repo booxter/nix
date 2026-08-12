@@ -112,12 +112,14 @@ in
     localClient = lib.mkOption {
       type = with lib.types; nullOr str;
       default = null;
+      internal = true;
       description = "Client whose repository is written locally by the cloud service account.";
     };
 
     clients = lib.mkOption {
       default = { };
       description = "Restic repositories accepted and optionally offloaded by this server.";
+      internal = true;
       type =
         with lib.types;
         attrsOf (
@@ -211,6 +213,37 @@ in
             }
           )
         );
+    };
+
+    offsite = {
+      enable = lib.mkEnableOption "server-managed offsite replication of accepted repositories";
+
+      backend = lib.mkOption {
+        type = lib.types.enum [
+          "b2"
+          "s3"
+        ];
+        default = "s3";
+        description = "Restic backend used for offsite repositories.";
+      };
+
+      repositoryRoot = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Base Restic repository URL containing one repository per client.";
+      };
+
+      bucketName = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Object-storage bucket used for provider usage metrics.";
+      };
+
+      storageProvider = lib.mkOption {
+        type = with lib.types; nullOr (enum [ "b2" ]);
+        default = null;
+        description = "Object-storage provider used for provider-specific usage metrics.";
+      };
     };
 
     cloud = {

@@ -28,6 +28,13 @@ in
 
   host.ups.client.server = "prx1-lab";
 
+  host.backups.destinations.primary = {
+    server = "beast";
+    publicKey = facts.public-keys.restic.org;
+    # Preserve the existing repository namespace and snapshot history.
+    storageName = "orgvm";
+  };
+
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [

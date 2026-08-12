@@ -1,110 +1,93 @@
 {
   config,
-  facts,
   lib,
+  outputs,
   ...
 }:
 let
   hostName = config.networking.hostName;
-  provider = facts.backups.providers.${hostName} or null;
-  hostLinks = facts.backups.links.${hostName} or { };
+  cfg = config.host.backups;
+  model = import ./topology/model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
+  };
+  clientRequests = model.requestsByClient.${hostName} or [ ];
+  serverRequests = model.requestsByServer.${hostName} or [ ];
   cloudUploadRateMbit = config.host.site.policies.backups.maxUploadMbit;
-  cloudQosEnabled = config.host.backups.server.enable;
-  clientLinks = lib.concatMapAttrs (
-    clientName:
-    lib.mapAttrs' (
-      linkName: link:
-      lib.nameValuePair "${clientName}-${linkName}" (
-        link
-        // {
-          inherit clientName linkName;
-        }
-      )
-    )
-  ) facts.backups.links;
-  providedLinks = lib.filterAttrs (_: link: link.provider == hostName) clientLinks;
-  clients = lib.mapAttrs' (
-    _: link:
-    lib.nameValuePair link.clientName {
-      inherit (link) storageName;
-      publicKey = link.publicKey or null;
-      cloud = lib.optionalAttrs ((link.offsite or null) != null) (
-        let
-          offsite = provider.offsite.${link.offsite};
-          prefix = "${offsite.prefix}/${link.storageName}";
-        in
-        {
-          backend = offsite.backend;
+  cloudQosEnabled = cfg.server.enable && cfg.server.offsite.enable;
+  clients = builtins.listToAttrs (
+    map (request: {
+      name = request.clientName;
+      value = {
+        inherit (request) publicKey storageName;
+        cloud = lib.optionalAttrs request.offsite.enable {
+          inherit (request.offsite)
+            backend
+            prefix
+            repository
+            storageProvider
+            ;
           enable = true;
-          repository = "${offsite.repositoryRoot}/${prefix}";
-          inherit (offsite) storageProvider;
-          inherit prefix;
           sourcePasswordFile =
-            config.sops.secrets."backup/restic/${link.clientName}/cloud/localPassword".path;
-          passwordFile = config.sops.secrets."backup/restic/${link.clientName}/cloud/password".path;
-        }
-      );
-    }
-  ) providedLinks;
-  localLinks = lib.filterAttrs (_: link: (link.transport or "sftp") == "local") providedLinks;
-  localClients = lib.mapAttrsToList (_: link: link.clientName) localLinks;
-  localClient = if localClients == [ ] then null else builtins.head localClients;
-  bucketNames =
-    if provider == null then
-      [ ]
-    else
-      lib.unique (lib.mapAttrsToList (_: offsite: offsite.bucketName) provider.offsite);
-in
-{
-  config = lib.mkMerge [
-    {
-      assertions = import ./topology/assertions.nix {
-        inherit
-          bucketNames
-          clients
-          cloudQosEnabled
-          config
-          hostName
-          lib
-          localClients
-          providedLinks
-          provider
-          ;
-      };
-
-      host.backups.destinations = builtins.mapAttrs (_: link: {
-        inherit (link)
-          ingestUser
-          provider
-          repositoryPath
-          ;
-        transport = link.transport or "sftp";
-        publicKey = link.publicKey or null;
-        offsite = link.offsite or null;
-      }) hostLinks;
-    }
-    (lib.mkIf cloudQosEnabled {
-      host.backups.server.cloud.requiredUnits = [ "qos-wan.service" ];
-      host.qos.interfaces.wan = {
-        device = config.host.network.primaryInterface;
-        limits.cloud-backup = {
-          rateMbit = cloudUploadRateMbit;
-          match.users = config.host.backups.server.generated.offloadUsers;
+            config.sops.secrets."backup/restic/${request.clientName}/cloud/localPassword".path;
+          passwordFile = config.sops.secrets."backup/restic/${request.clientName}/cloud/password".path;
         };
       };
-    })
-    (lib.mkIf (provider != null) {
-      host.backups.server = {
-        inherit clients localClient;
-        inherit (provider) repositoryRoot;
-        cloud.bucketName = builtins.head bucketNames;
-      };
+    }) serverRequests
+  );
+  localClients = map (request: request.clientName) (
+    builtins.filter (request: request.transport == "local") serverRequests
+  );
+  localClient = if localClients == [ ] then null else builtins.head localClients;
+in
+{
+  assertions = import ./topology/assertions.nix {
+    inherit
+      cloudQosEnabled
+      config
+      hostName
+      lib
+      localClients
+      model
+      ;
+  };
 
-      host.backups.destinations = lib.mkMerge (
-        lib.mapAttrsToList (_: link: {
-          ${link.linkName}.user = config.host.backups.server.cloud.group;
-        }) localLinks
-      );
-    })
-  ];
+  host.backups.resolvedDestinations = builtins.listToAttrs (
+    map (request: {
+      name = request.destinationName;
+      value = {
+        inherit (request)
+          check
+          ingestUser
+          publicKey
+          repositoryPath
+          retention
+          server
+          storageName
+          timerConfig
+          transport
+          user
+          ;
+      };
+    }) clientRequests
+  );
+
+  host.backups.server = lib.mkIf cfg.server.enable {
+    inherit clients localClient;
+    cloud = {
+      bucketName = cfg.server.offsite.bucketName;
+      requiredUnits = lib.mkIf cloudQosEnabled [ "qos-wan.service" ];
+    };
+  };
+
+  host.qos.interfaces.wan = lib.mkIf cloudQosEnabled {
+    device = config.host.network.primaryInterface;
+    limits.cloud-backup = {
+      rateMbit = cloudUploadRateMbit;
+      match.users = cfg.server.generated.offloadUsers;
+    };
+  };
 }

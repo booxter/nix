@@ -17,7 +17,20 @@
       username = "ihrachyshka";
     };
   };
-  host.backups.server.enable = true;
+  host.backups = {
+    destinations.primary.server = "beast";
+    server = {
+      enable = true;
+      repositoryRoot = "/volume2/backups/restic-prod/hosts";
+      offsite = {
+        enable = true;
+        backend = "s3";
+        bucketName = "ihar-restic-prod";
+        repositoryRoot = "s3:https://s3.us-east-005.backblazeb2.com/ihar-restic-prod/hosts";
+        storageProvider = "b2";
+      };
+    };
+  };
   host.hardware.gpu = {
     vendors = [ "intel" ];
     render.device = "/dev/dri/renderD128";
