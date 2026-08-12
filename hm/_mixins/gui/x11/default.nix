@@ -34,7 +34,7 @@ in
           XAuthLocation ${lib.getExe pkgs.xauth}
         '';
       }
-      (lib.mkIf config.programs.aerospace.enable {
+      (lib.mkIf (config.programs.aerospace.enable && config.host.hm.aerospace.x11.enable) {
         programs.aerospace.settings.on-window-detected = lib.mkBefore [
           # XQuartz windows manage their own geometry better outside the tiling tree.
           {

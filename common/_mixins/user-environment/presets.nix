@@ -77,8 +77,12 @@ let
       };
       roles.developer.hm.docker.enable = true;
       roles.workstation = {
-        features.apps.homerow.enable = false;
+        features = {
+          apps.homerow.enable = false;
+          gui.x11.enable = true;
+        };
         hm = {
+          aerospace.x11.enable = true;
           matrix.enable = true;
           obsidian.enable = true;
           slack.enable = true;

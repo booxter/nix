@@ -28,13 +28,13 @@ let
   );
   moveCommand =
     direction:
-    if guiCfg.x11.enable then
+    if cfg.x11.enable then
       "exec-and-forget ${lib.getExe' aerospaceX11Actions "aerospace-x11-aware-move"} ${direction}"
     else
       "move ${direction}";
   resizeCommand =
     delta:
-    if guiCfg.x11.enable then
+    if cfg.x11.enable then
       "exec-and-forget ${lib.getExe' aerospaceX11Actions "aerospace-x11-aware-resize"} ${delta}"
     else
       "resize smart ${delta}";
@@ -52,6 +52,12 @@ in
       type = lib.types.bool;
       default = isDarwin;
       description = "Whether to enable the AeroSpace window manager.";
+    };
+
+    x11.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = guiCfg.x11.enable;
+      description = "Whether AeroSpace actions should support X11 windows.";
     };
 
     workspaces = lib.mkOption {
@@ -91,6 +97,10 @@ in
         {
           assertion = isDarwin;
           message = "host.hm.aerospace is only supported on Darwin.";
+        }
+        {
+          assertion = !cfg.x11.enable || guiCfg.x11.enable;
+          message = "host.hm.aerospace.x11 requires features.gui.x11.";
         }
       ];
 
