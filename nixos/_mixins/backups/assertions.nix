@@ -2,7 +2,6 @@
 let
   cfg = config.host.backups;
   inherit (cfg) jobs server;
-  topology = cfg.internal.topology;
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   preparationPaths =
     job: lib.concatMap (preparation: preparation.paths) (builtins.attrValues job.preparations);
@@ -65,20 +64,6 @@ in
         }
       ]) sources
     )
-    ++ [
-      {
-        assertion = topology.unknownServers == [ ];
-        message = "backup destinations reference unknown or disabled servers: ${lib.concatStringsSep ", " topology.unknownServers}";
-      }
-      {
-        assertion = topology.missingPublicKeys == [ ];
-        message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " topology.missingPublicKeys}";
-      }
-      {
-        assertion = topology.duplicateDestinationServers == [ ];
-        message = "backup client may define only one destination per server: ${lib.concatStringsSep ", " topology.duplicateDestinationServers}";
-      }
-    ]
     ++ lib.optionals server.enable (
       [
         {
@@ -106,18 +91,6 @@ in
             || !builtins.hasAttr server.localClient server.repositories
             || server.repositories.${server.localClient}.cloud.enable;
           message = "host.backups.server.localClient must have cloud offload enabled";
-        }
-        {
-          assertion = topology.duplicateRepositoryPaths == [ ];
-          message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " topology.duplicateRepositoryPaths}";
-        }
-        {
-          assertion = !topology.invalidB2Root;
-          message = "B2 offsite repository root must contain its bucket name";
-        }
-        {
-          assertion = builtins.length topology.localClients <= 1;
-          message = "backup server may have at most one local client";
         }
       ]
       ++ lib.mapAttrsToList (name: client: {

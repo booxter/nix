@@ -118,6 +118,12 @@ let
   remoteDestinationsWithoutKeys = lib.filterAttrs (
     _: destination: destination.server != hostName && destination.publicKey == null
   ) enabledDestinations;
+  missingPublicKeys = lib.mapAttrsToList (
+    name: destination: "${hostName}.${name} -> ${destination.server}"
+  ) remoteDestinationsWithoutKeys;
+  unknownServers = lib.mapAttrsToList (
+    name: destination: "${hostName}.${name} -> ${destination.server}"
+  ) unknownDestinations;
   invalidB2Root =
     cfg.server.enable
     && cfg.server.offsite.enable
@@ -126,61 +132,33 @@ let
   cloudQosEnabled = cfg.server.enable && cfg.server.offsite.enable;
 in
 {
-  options.host.backups.internal.topology = {
-    duplicateDestinationServers = lib.mkOption {
-      type = with lib.types; listOf str;
-      internal = true;
-    };
-    duplicateRepositoryPaths = lib.mkOption {
-      type = with lib.types; listOf str;
-      internal = true;
-    };
-    invalidB2Root = lib.mkOption {
-      type = lib.types.bool;
-      internal = true;
-    };
-    localClients = lib.mkOption {
-      type = with lib.types; listOf str;
-      internal = true;
-    };
-    missingPublicKeys = lib.mkOption {
-      type = with lib.types; listOf str;
-      internal = true;
-    };
-    unknownServers = lib.mkOption {
-      type = with lib.types; listOf str;
-      internal = true;
-    };
-  };
+  config = lib.mkMerge [
+    {
+      host.backups.internal.destinations = resolvedDestinations;
 
-  config = {
-    host.backups.internal.topology = {
+      host.backups.server = lib.mkIf cfg.server.enable { inherit localClient repositories; };
+
+      host.qos.interfaces.wan = lib.mkIf cloudQosEnabled {
+        device = config.host.network.primaryInterface;
+        limits.cloud-backup = {
+          rateMbit = config.host.site.policies.backups.maxUploadMbit;
+          match.users = map (name: if name == localClient then cloudGroup else "restic-${name}-offload") (
+            builtins.attrNames repositories
+          );
+        };
+      };
+    }
+    (import ./topology/assertions.nix {
       inherit
         duplicateDestinationServers
         duplicateRepositoryPaths
         invalidB2Root
+        lib
         localClients
+        missingPublicKeys
+        unknownServers
         ;
-      missingPublicKeys = lib.mapAttrsToList (
-        name: destination: "${hostName}.${name} -> ${destination.server}"
-      ) remoteDestinationsWithoutKeys;
-      unknownServers = lib.mapAttrsToList (
-        name: destination: "${hostName}.${name} -> ${destination.server}"
-      ) unknownDestinations;
-    };
-
-    host.backups.internal.destinations = resolvedDestinations;
-
-    host.backups.server = lib.mkIf cfg.server.enable { inherit localClient repositories; };
-
-    host.qos.interfaces.wan = lib.mkIf cloudQosEnabled {
-      device = config.host.network.primaryInterface;
-      limits.cloud-backup = {
-        rateMbit = config.host.site.policies.backups.maxUploadMbit;
-        match.users = map (name: if name == localClient then cloudGroup else "restic-${name}-offload") (
-          builtins.attrNames repositories
-        );
-      };
-    };
-  };
+      serverEnabled = cfg.server.enable;
+    })
+  ];
 }
