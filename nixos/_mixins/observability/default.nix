@@ -1,6 +1,7 @@
 {
   imports = [
     ../../../common/_mixins/observability
+    ./alertmanager
     ./alertmanager-watchdog.nix
     ./blackbox.nix
     ./loki

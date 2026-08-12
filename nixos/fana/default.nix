@@ -15,10 +15,10 @@
 
   imports = [
     ./grafana
-    ./monitoring
   ];
 
   host.observability = {
+    alertmanager.enable = true;
     loki.server.enable = true;
     prometheus.server.enable = true;
     unifi.enable = true;

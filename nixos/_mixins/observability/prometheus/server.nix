@@ -8,6 +8,7 @@
 }:
 let
   cfg = config.host.observability.prometheus.server;
+  alertmanagerCfg = config.host.observability.alertmanager;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   prometheusPort = 9090;
   prometheusScrapeClient = config.host.internalPki.clients."prometheus-scrape-node";
@@ -74,8 +75,16 @@ let
       ;
   };
   prometheusRetention = "${toString cfg.retentionDays}d";
+  monitoringPackage = pkgs.callPackage ../../../fana/monitoring/package.nix {
+    capacityAlertPolicy = config.host.observability.alerts.capacity;
+  };
 in
 {
+  imports = [
+    ./rule-assertions.nix
+    ./rule-options.nix
+  ];
+
   options.host.observability.prometheus.server = {
     enable = lib.mkEnableOption "a Prometheus server";
 
@@ -87,7 +96,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = nodeScrapes.assertions ++ endpointScrapes.assertions;
+    assertions = [
+      {
+        assertion = lib.length config.services.prometheus.alertmanagers == 1;
+        message = "Prometheus expects a single local Alertmanager target.";
+      }
+    ]
+    ++ nodeScrapes.assertions
+    ++ endpointScrapes.assertions;
 
     host.observability.blackbox = {
       enable = true;
@@ -142,7 +158,35 @@ in
       listenAddress = "127.0.0.1";
       port = prometheusPort;
       retentionTime = prometheusRetention;
+      alertmanagers = lib.optional alertmanagerCfg.enable {
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString alertmanagerCfg.port}" ];
+          }
+        ];
+      };
+      ruleFiles = monitoringPackage.prometheusRuleFiles;
       scrapeConfigs = [
+        {
+          job_name = "alertmanager";
+          static_configs = [
+            {
+              targets = [ "127.0.0.1:${toString alertmanagerCfg.port}" ];
+              labels.instance = config.networking.hostName;
+            }
+          ];
+        }
+        {
+          job_name = "grafana";
+          static_configs = [
+            {
+              targets = [
+                "127.0.0.1:${toString config.services.grafana.settings.server.http_port}"
+              ];
+              labels.instance = config.networking.hostName;
+            }
+          ];
+        }
         {
           job_name = "prometheus";
           static_configs = [
