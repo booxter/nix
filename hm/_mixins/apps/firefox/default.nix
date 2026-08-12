@@ -11,10 +11,10 @@ let
   publicDomain = osConfig.host.network.publicDomain;
   degoogUrl = "https://goo.${publicDomain}";
   firefoxDohExcludedDomains = [ publicDomain ];
-  useSignedDarwinFirefox =
-    isDarwin && osConfig.host.hardware.hasTouchId && config.programs.firefox.enable;
 in
 {
+  imports = [ ./passkeys.nix ];
+
   options.host.hm.firefox.enable = lib.mkEnableOption "managed Firefox browser";
 
   config = lib.mkIf cfg.enable {
@@ -22,10 +22,6 @@ in
 
     programs.firefox = {
       enable = true;
-      # Home Manager's wrapper replaces the executable inside Mozilla's signed
-      # app bundle and breaks the entitlement macOS requires for Touch ID-backed
-      # passkeys. Install the upstream bundle separately on Touch ID Macs.
-      package = lib.mkIf useSignedDarwinFirefox null;
       # Pin Firefox to the legacy on-disk profile root until we intentionally
       # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
       configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
@@ -154,15 +150,5 @@ in
     home.sessionVariables = {
       BROWSER = if isDarwin then "open" else "xdg-open";
     };
-
-    home.activation.firefoxLaunchdEnvironment = lib.mkIf useSignedDarwinFirefox (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        # Finder/Dock-launched GUI apps inherit the user launchd environment,
-        # not Home Manager's shell session variables.
-        /bin/launchctl setenv MOZ_LEGACY_PROFILES 1
-      ''
-    );
-
-    home.packages = lib.mkIf useSignedDarwinFirefox [ pkgs.firefox-bin-unwrapped ];
   };
 }
