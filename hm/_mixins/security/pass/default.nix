@@ -1,15 +1,16 @@
 {
   config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
 let
-  enabled = osConfig.host.userEnvironment.features.security.pass.enable;
+  cfg = config.host.hm.pass;
 in
 {
-  config = lib.mkIf enabled {
+  options.host.hm.pass.enable = lib.mkEnableOption "password-store environment";
+
+  config = lib.mkIf cfg.enable {
     programs = {
       gpg.enable = true;
 

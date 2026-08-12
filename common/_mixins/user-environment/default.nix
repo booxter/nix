@@ -180,8 +180,6 @@ in
         homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
       };
 
-      security.pass.enable = lib.mkEnableOption "password-store environment";
-
       ssh.enable = lib.mkEnableOption "SSH client environment";
     };
   };
@@ -229,14 +227,13 @@ in
           gmailctl =
             lib.optional config.home-manager.users.${config.host.username}.host.hm.gmailctl.enable
               "gmailctl";
-          pass = lib.optional cfg.features.security.pass.enable "pass";
+          pass = lib.optional config.home-manager.users.${config.host.username}.host.hm.pass.enable "pass";
         };
       };
 
       features = lib.mkMerge [
         (lib.mkIf cfg.roles.developer.enable {
           dev.enable = lib.mkDefault true;
-          security.pass.enable = lib.mkDefault true;
           ssh.enable = lib.mkDefault true;
         })
         (lib.mkIf cfg.roles.workstation.enable {
@@ -248,6 +245,9 @@ in
         })
       ];
     };
+
+    home-manager.users.${config.host.username}.host.hm.pass.enable =
+      lib.mkDefault cfg.roles.developer.enable;
 
     assertions = [
       {
