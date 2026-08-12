@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   config = lib.mkIf (!config.host.isVM) {
     hardware.enableRedistributableFirmware = true;

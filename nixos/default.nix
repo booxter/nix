@@ -29,7 +29,6 @@ in
       ./_mixins/builder.nix
       ./_mixins/desktop
       ./_mixins/external-service.nix
-      ./_mixins/firmware
       ./_mixins/hardware
       ./_mixins/internal-https-service.nix
       ./_mixins/jellarr
