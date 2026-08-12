@@ -29,17 +29,17 @@ from pki_rotation.scanner import CertificateScanner, parse_certificate
 def fleet_hosts() -> FleetHosts:
     return FleetHosts.model_validate(
         {
-            "pki": {
+            "authority-node": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
-                "runtimeHost": "pki-runtime",
-                "realm": "home",
+                "runtimeHost": "authority-runtime",
+                "realm": "test-realm",
             },
-            "host": {
+            "service-node": {
                 "system": "aarch64-darwin",
                 "configuration": "darwinConfigurations",
-                "runtimeHost": "host-runtime",
-                "realm": "work",
+                "runtimeHost": "service-runtime",
+                "realm": "test-realm",
             },
         }
     )
@@ -48,15 +48,23 @@ def fleet_hosts() -> FleetHosts:
 def host_config() -> HostCertificateConfig:
     client = {
         "enable": True,
-        "commonName": "client.home.arpa",
+        "commonName": "client.example.invalid",
         "sans": [],
         "secretPrefix": "clients/client",
     }
     return HostCertificateConfig.model_validate(
         {
-            "ca_url": None,
+            "realm": "test-realm",
+            "realm_authority": {
+                "hostName": "authority-node",
+                "realm": "test-realm",
+                "url": "https://ca.example.invalid:8443",
+                "provisioner": "bootstrap@example.invalid",
+                "leafLifetimeDays": 180,
+                "rootCaCertificate": "/repo/root-ca.crt",
+            },
             "identity": {
-                "dns_name": "host.home.arpa",
+                "dns_name": "host.example.invalid",
                 "networking_name": "host",
                 "avahi_name": "host",
             },
@@ -65,13 +73,13 @@ def host_config() -> HostCertificateConfig:
                     "enable": True,
                     "port": 443,
                     "secretPrefix": "internal/web",
-                    "serverName": "web.home.arpa",
+                    "serverName": "web.example.invalid",
                 },
                 "proxmox": {
                     "enable": True,
                     "port": 8006,
                     "secretPrefix": "internal/proxmox",
-                    "serverName": "proxmox.home.arpa",
+                    "serverName": "proxmox.example.invalid",
                 },
             },
             "clients": {
@@ -83,7 +91,7 @@ def host_config() -> HostCertificateConfig:
                 "enable": True,
                 "port": 8006,
                 "secretPrefix": "internal/proxmox",
-                "serverName": "proxmox.home.arpa",
+                "serverName": "proxmox.example.invalid",
             },
             "observability_endpoints": {
                 "api": {
@@ -156,7 +164,7 @@ class StaticConfigs:
 
 
 def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> None:
-    secret = tmp_path / "secrets" / "work" / "host.yaml"
+    secret = tmp_path / "secrets" / "test-realm" / "service-node.yaml"
     secret.parent.mkdir(parents=True)
     secret.write_text("{}")
     configs = StaticConfigs(host_config())
@@ -180,14 +188,14 @@ def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> Non
         (CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER, "node_exporter"),
         (CertificateCategory.OBSERVABILITY_CLIENT, "loki"),
     }
-    assert configs.requested == ["host"]
+    assert configs.requested == ["authority-node", "service-node"]
     assert all(spec.secret is None or spec.secret.path == secret for spec in specs)
-    assert specs[0].host == "pki-runtime"
+    assert specs[0].host == "authority-runtime"
 
 
 def certificate_pem(not_before: datetime, not_after: datetime) -> str:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "web.home.arpa")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "web.example.invalid")])
     certificate = (
         x509.CertificateBuilder()
         .subject_name(name)
@@ -260,7 +268,7 @@ def test_scanner_parses_files_and_treats_encrypted_values_as_missing(tmp_path: P
     parsed, missing = inventory.root
     assert parsed.parse_success
     assert parsed.rotation_due
-    assert parsed.common_name == "web.home.arpa"
+    assert parsed.common_name == "web.example.invalid"
     assert parsed.days_remaining == 10
     assert not missing.parse_success
     assert missing.rotation_due
@@ -282,10 +290,11 @@ def test_manifest_source_adds_runtime_intermediate_certificate(tmp_path: Path) -
     manifest_path.write_text(
         json.dumps(
             {
-                "authority_host": "pki",
+                "authority_host": "authority-node",
+                "realm": "test-realm",
                 "certificates": [
                     {
-                        "host": "pki",
+                        "host": "authority-node",
                         "category": "ca",
                         "name": "root",
                         "source_kind": "repo_file",

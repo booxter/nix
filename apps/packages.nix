@@ -4,7 +4,7 @@ let
   facts = import ../facts { inherit (pkgs) lib; };
   sopsTools = import ./sops/package.nix { inherit facts pkgs; };
   certificateTools = pkgs.callPackage ./pki-certificates {
-    inherit atomicFileWrites facts sopsTools;
+    inherit atomicFileWrites sopsTools;
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
     inherit facts sopsTools;

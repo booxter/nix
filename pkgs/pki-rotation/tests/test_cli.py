@@ -158,7 +158,9 @@ def flake_root(tmp_path: Path) -> Path:
 
 def inventory_manifest(tmp_path: Path) -> Path:
     manifest = tmp_path / "inventory.json"
-    manifest.write_text('{"authority_host":"pki","certificates":[]}')
+    manifest.write_text(
+        '{"authority_host":"authority-node","realm":"test-realm","certificates":[]}'
+    )
     return manifest
 
 

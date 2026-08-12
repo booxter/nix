@@ -11,12 +11,13 @@ from sops_tools.process import ProcessRunner
 from .models import (
     CertificateClientConfig,
     ClientCategory,
+    FleetHost,
     FleetHosts,
     HostCertificateConfig,
-    HostFacts,
     HostIdentity,
     InternalServiceConfig,
     ObservabilityEndpointConfig,
+    RealmAuthorityConfig,
 )
 
 
@@ -39,14 +40,26 @@ def configured_file(environment: Mapping[str, str], variable: str) -> Path:
     return Path(value)
 
 
-def load_fleet_hosts(path: Path) -> FleetHosts:
+def query_fleet_hosts(runner: ProcessRunner, repo_root: Path, query: Path) -> FleetHosts:
+    output = runner.run(
+        [
+            "nix-instantiate",
+            "--eval",
+            "--strict",
+            "--json",
+            str(query),
+            "--argstr",
+            "repo",
+            str(repo_root),
+        ]
+    )
     try:
-        return FleetHosts.model_validate_json(path.read_bytes())
-    except (OSError, ValidationError) as error:
-        raise ToolError(f"invalid PKI certificate host inventory {path}: {error}") from error
+        return FleetHosts.model_validate_json(output)
+    except ValidationError as error:
+        raise ToolError(f"invalid evaluated PKI certificate host inventory: {error}") from error
 
 
-def host_facts(hosts: FleetHosts, host: str) -> HostFacts:
+def fleet_host(hosts: FleetHosts, host: str) -> FleetHost:
     try:
         return hosts.root[host]
     except KeyError as error:
@@ -61,8 +74,11 @@ class NixConfigSource:
     query: Path
     _cache: dict[str, HostCertificateConfig] = field(default_factory=dict)
 
-    def ca_url(self, host: str) -> str | None:
-        return self._config(host).ca_url
+    def realm_authority(self, host: str) -> RealmAuthorityConfig:
+        authority = self._config(host).realm_authority
+        if authority is None:
+            raise ToolError(f"host {host} belongs to a realm without a PKI authority")
+        return authority
 
     def certificate_config(self, host: str) -> HostCertificateConfig:
         return self._config(host)
@@ -151,7 +167,7 @@ class NixConfigSource:
     def _config(self, host: str) -> HostCertificateConfig:
         if host in self._cache:
             return self._cache[host]
-        facts = host_facts(self.hosts, host)
+        host_entry = fleet_host(self.hosts, host)
         output = self.runner.run(
             [
                 "nix-instantiate",
@@ -164,7 +180,7 @@ class NixConfigSource:
                 str(self.repo_root),
                 "--argstr",
                 "configuration",
-                facts.configuration,
+                host_entry.configuration,
                 "--argstr",
                 "host",
                 host,

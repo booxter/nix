@@ -37,33 +37,54 @@ class CertificateInventoryBuilder:
     intermediate_certificate: Path
 
     def specs(self) -> tuple[CertificateSpec, ...]:
-        pki = self.hosts.root["pki"]
-        specs = [
-            CertificateSpec(
-                host=pki.runtime_host,
-                category=CertificateCategory.CA,
-                name="root",
-                source_kind=SourceKind.REPOSITORY_FILE,
-                file_path=(self.repo_root / "nixos" / "pki" / "root-ca.crt"),
-            ),
-            CertificateSpec(
-                host=pki.runtime_host,
-                category=CertificateCategory.CA,
-                name="intermediate",
-                source_kind=SourceKind.HOST_FILE,
-                file_path=self.intermediate_certificate,
-            ),
-        ]
-        for host, facts in sorted(self.hosts.root.items()):
-            secret_path = self.repo_root / "secrets" / facts.realm / f"{host}.yaml"
+        configs = {host: self.configs.certificate_config(host) for host in sorted(self.hosts.root)}
+        authorities = {
+            config.realm: config.realm_authority
+            for host, config in configs.items()
+            if config.realm_authority is not None and config.realm_authority.host_name == host
+        }
+        configured_realms = {config.realm for config in configs.values()}
+        missing_realms = sorted(configured_realms - authorities.keys())
+        if missing_realms:
+            raise ToolError(
+                "dynamic PKI scans require a configured authority for every realm; "
+                f"missing: {', '.join(missing_realms)}"
+            )
+        specs: list[CertificateSpec] = []
+        for realm, authority in sorted(authorities.items()):
+            assert authority is not None
+            runtime_host = self.hosts.root[authority.host_name].runtime_host
+            specs.extend(
+                (
+                    CertificateSpec(
+                        host=runtime_host,
+                        realm=realm,
+                        category=CertificateCategory.CA,
+                        name="root",
+                        source_kind=SourceKind.REPOSITORY_FILE,
+                        file_path=Path(authority.root_ca_certificate),
+                    ),
+                    CertificateSpec(
+                        host=runtime_host,
+                        realm=realm,
+                        category=CertificateCategory.CA,
+                        name="intermediate",
+                        source_kind=SourceKind.HOST_FILE,
+                        file_path=self.intermediate_certificate,
+                    ),
+                )
+            )
+        for host, host_entry in sorted(self.hosts.root.items()):
+            secret_path = self.repo_root / "secrets" / host_entry.realm / f"{host}.yaml"
             if not secret_path.is_file():
                 continue
-            specs.extend(self._host_specs(host, secret_path, self.configs.certificate_config(host)))
+            specs.extend(self._host_specs(host, secret_path, configs[host]))
         return tuple(sorted(specs, key=lambda spec: (spec.category.value, spec.host, spec.name)))
 
     @staticmethod
     def _secret_spec(
         host: str,
+        realm: str,
         secret_path: Path,
         category: CertificateCategory,
         name: str,
@@ -72,6 +93,7 @@ class CertificateInventoryBuilder:
     ) -> CertificateSpec:
         return CertificateSpec(
             host=host,
+            realm=realm,
             category=category,
             name=name,
             source_kind=SourceKind.REPOSITORY_SECRET,
@@ -87,6 +109,7 @@ class CertificateInventoryBuilder:
         return [
             self._secret_spec(
                 host,
+                config.realm,
                 secret_path,
                 CertificateCategory(certificate.category),
                 certificate.name,
@@ -130,6 +153,7 @@ class ManifestCertificateSpecSource:
         specs.append(
             CertificateSpec(
                 host=self.manifest.authority_host,
+                realm=self.manifest.realm,
                 category=CertificateCategory.CA,
                 name="intermediate",
                 source_kind=SourceKind.HOST_FILE,

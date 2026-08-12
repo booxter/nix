@@ -12,11 +12,14 @@ from .models import (
     InternalServiceConfig,
     IssueResult,
     ObservabilityEndpointConfig,
+    RealmAuthorityConfig,
 )
 from .secrets import CertificateStore
 
 
 class CertificateConfigSource(Protocol):
+    def realm_authority(self, host: str) -> RealmAuthorityConfig: ...
+
     def internal_service_names(self, host: str) -> list[str]: ...
 
     def internal_service(self, host: str, name: str) -> InternalServiceConfig: ...
@@ -58,7 +61,12 @@ class ManagedCertificateService:
     def observability_client_names(self, host: str) -> list[str]:
         return self.configs.observability_client_names(host)
 
-    def issue_internal_service(self, host: str, name: str, ca_host: str) -> IssueResult:
+    def _ca_host(self, host: str, override: str | None) -> str:
+        return override or self.configs.realm_authority(host).host_name
+
+    def issue_internal_service(
+        self, host: str, name: str, ca_host: str | None = None
+    ) -> IssueResult:
         config = self.configs.internal_service(host, name)
         if not config.enable:
             raise ToolError(f"internal HTTPS service {name} on host {host} is not enabled")
@@ -66,7 +74,7 @@ class ManagedCertificateService:
         if name != "proxmox-api":
             fallback.insert(0, name)
         sans = unique_strings(config.sans or fallback)
-        material = self.issuer.issue(ca_host, config.server_name, sans)
+        material = self.issuer.issue(self._ca_host(host, ca_host), config.server_name, sans)
         self.store.write(host, config.secret_prefix, material, client=False)
         return IssueResult(
             kind="internal-service",
@@ -78,12 +86,14 @@ class ManagedCertificateService:
             port=config.port,
         )
 
-    def issue_internal_client(self, host: str, name: str, ca_host: str) -> IssueResult:
+    def issue_internal_client(
+        self, host: str, name: str, ca_host: str | None = None
+    ) -> IssueResult:
         config = self.configs.internal_client(host, name)
         if not config.enable:
             raise ToolError(f"internal HTTPS client {name} on host {host} is not enabled")
         sans = unique_strings([config.common_name, *config.sans])
-        material = self.issuer.issue(ca_host, config.common_name, sans)
+        material = self.issuer.issue(self._ca_host(host, ca_host), config.common_name, sans)
         self.store.write(host, config.secret_prefix, material, client=True)
         return IssueResult(
             kind="internal-client",
@@ -94,7 +104,9 @@ class ManagedCertificateService:
             secret_prefix=config.secret_prefix,
         )
 
-    def issue_observability_endpoint(self, host: str, name: str, ca_host: str) -> IssueResult:
+    def issue_observability_endpoint(
+        self, host: str, name: str, ca_host: str | None = None
+    ) -> IssueResult:
         config = self.configs.observability_endpoint(host, name)
         if not config.enable:
             raise ToolError(f"observability endpoint {name} on host {host} is not enabled")
@@ -107,7 +119,7 @@ class ManagedCertificateService:
         ]
         sans = unique_strings(config.sans or fallback)
         common_name = f"prometheus-{name}.{identity.dns_name}"
-        material = self.issuer.issue(ca_host, common_name, sans)
+        material = self.issuer.issue(self._ca_host(host, ca_host), common_name, sans)
         self.store.write(host, config.secret_prefix, material, client=False)
         return IssueResult(
             kind="observability-endpoint",
@@ -119,12 +131,14 @@ class ManagedCertificateService:
             port=config.port,
         )
 
-    def issue_observability_client(self, host: str, name: str, ca_host: str) -> IssueResult:
+    def issue_observability_client(
+        self, host: str, name: str, ca_host: str | None = None
+    ) -> IssueResult:
         config = self.configs.observability_client(host, name)
         if not config.enable:
             raise ToolError(f"observability client {name} on host {host} is not enabled")
         sans = unique_strings(config.sans)
-        material = self.issuer.issue(ca_host, config.common_name, sans)
+        material = self.issuer.issue(self._ca_host(host, ca_host), config.common_name, sans)
         self.store.write(host, config.secret_prefix, material, client=True)
         return IssueResult(
             kind="observability-client",

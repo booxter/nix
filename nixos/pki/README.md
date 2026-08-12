@@ -12,8 +12,19 @@ DNS stay converged with facts.
 - CA service: `step-ca` on TCP `8443`
 - CA state: `/var/lib/step-ca`
 - Root trust anchor: [root-ca.crt](./root-ca.crt)
+- Realm ownership: `host.pki.role = "authority"`
 - UniFi sync service docs:
   - [UniFi IP controller](../_mixins/site-ip/unifi/README.md)
+
+The authority role is unique within a realm. Claiming it enables `step-ca`,
+root trust distribution, firewall access, CA backup, certificate inventory,
+rotation, and observability integration. Realm members discover the authority,
+root certificate, API URL, provisioner, and leaf lifetime through
+`host.pki.realmAuthority`; they do not name the authority host themselves.
+
+Authority policy is declared below `host.pki.authority`, including
+`rootCaCertificate`, `displayName`, `api.port`, `provisioner`,
+`leafLifetimeDays`, and rotation settings.
 
 ## Managed Services
 
@@ -87,14 +98,21 @@ nix run .#deploy -- --branch dhcp-unifi srvarr
 UniFi Console certificate for manual import:
 
 ```bash
-nix run .#issue-internal-service-cert -- --unifi --output-dir /private/tmp/unifi-cert
+nix run .#issue-internal-service-cert -- \
+  --unifi \
+  --ca-host pki \
+  --common-name unifi.home.arpa \
+  --san unifi \
+  --gateway-ip 192.168.1.1 \
+  --output-dir /private/tmp/unifi-cert
 ```
 
 This writes `unifi.home.arpa.crt`, `unifi.home.arpa.key`, and
 `unifi.home.arpa.pem` into the output directory using the CA's configured leaf
 lifetime, currently 180 days. The `.pem` file is the certificate plus private
-key next to the standalone private key file. The default certificate covers
-both `unifi.home.arpa` and the short `unifi` name.
+key next to the standalone private key file. UniFi is not a managed fleet
+host, so this manual export flow uses explicitly supplied authority and SANs
+instead of inferring realm or site settings.
 
 PKI status inventory:
 

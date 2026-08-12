@@ -10,7 +10,7 @@ from typing import TextIO, cast
 
 from atomic_file_writes import write_text_atomic
 from pki_certificates.models import FleetHosts
-from pki_certificates.repository import configured_file, discover_repo_root, load_fleet_hosts
+from pki_certificates.repository import configured_file, discover_repo_root, query_fleet_hosts
 from sops_tools.errors import ToolError
 from sops_tools.process import SubprocessRunner
 
@@ -52,11 +52,15 @@ class Application:
 
     @classmethod
     def discover(cls, environment: Mapping[str, str]) -> Application:
-        hosts_path = configured_file(environment, "PKI_ROTATION_HOSTS_FILE")
+        hosts_query = configured_file(environment, "PKI_ROTATION_HOSTS_QUERY_FILE")
         query = configured_file(environment, "PKI_ROTATION_QUERY_FILE")
         remote_program = configured_file(environment, "PKI_ROTATION_CERTIFICATE_HELPER")
-        hosts: FleetHosts = load_fleet_hosts(hosts_path)
         runner = SubprocessRunner()
+        repo_root = discover_repo_root(
+            Path.cwd(),
+            environment.get("PKI_ROTATION_REPO_ROOT"),
+        )
+        hosts: FleetHosts = query_fleet_hosts(runner, repo_root, hosts_query)
         return cls(
             scanner=CertificateScanner(NixCertificateSpecSource(runner, hosts, query)),
             rotator=ManagedCertificateRotator(

@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel
 ClientCategory = Literal["internal", "observability"]
 
 
-class HostFacts(BaseModel):
+class FleetHost(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     system: str
@@ -16,7 +16,7 @@ class HostFacts(BaseModel):
     realm: str
 
 
-class FleetHosts(RootModel[dict[str, HostFacts]]):
+class FleetHosts(RootModel[dict[str, FleetHost]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 
@@ -74,10 +74,22 @@ class HostIdentity(BaseModel):
     avahi_name: str
 
 
+class RealmAuthorityConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
+
+    host_name: str = Field(alias="hostName")
+    realm: str
+    url: str
+    provisioner: str
+    leaf_lifetime_days: int = Field(alias="leafLifetimeDays")
+    root_ca_certificate: str = Field(alias="rootCaCertificate")
+
+
 class HostCertificateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
-    ca_url: str | None
+    realm: str
+    realm_authority: RealmAuthorityConfig | None
     identity: HostIdentity
     internal_services: dict[str, InternalServiceConfig]
     clients: dict[str, CertificateClientConfig]
@@ -93,6 +105,7 @@ class CertificateRequest(BaseModel):
     common_name: str
     sans: tuple[str, ...]
     ca_url: str
+    provisioner: str
 
 
 class CertificateMaterial(BaseModel):
@@ -114,14 +127,6 @@ class IssueResult(BaseModel):
     sans: tuple[str, ...]
     secret_prefix: str
     port: int | None = None
-
-
-class UnifiDefaults(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-    common_name: str = Field(alias="commonName")
-    sans: list[str]
-    gateway_ip: str = Field(alias="gatewayIp")
 
 
 class UnifiResult(BaseModel):

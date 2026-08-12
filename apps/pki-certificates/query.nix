@@ -10,12 +10,11 @@ let
   networkingName = dnsName;
   avahiName = configuredHost.services.avahi.hostName or dnsName;
   nodeExporterEnabled = configuredHost.host.observability.nodeExporter.mtls.enable or false;
-  authority = configuredHost.host.pki.authority;
+  realmAuthority = configuredHost.host.pki.realmAuthority;
 in
 {
   realm = configuredHost.host.realm;
-  authority = configuredHost.host.pki.realmAuthority;
-  ca_url = if configuredHost.host.pki.role == "authority" then authority.api.url else null;
+  realm_authority = realmAuthority;
   identity = {
     dns_name = dnsName;
     networking_name = networkingName;

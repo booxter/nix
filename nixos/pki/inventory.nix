@@ -1,15 +1,21 @@
 {
-  facts,
+  config,
   lib,
   outputs,
-  rootCaCertificate,
 }:
 let
-  authorityHost = facts.hosts.hostSpecsByName.pki.name;
+  authority = config.host.pki.realmAuthority;
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-
-  secretSpec = host: secretPath: category: name: prefix: certificateField: {
-    inherit category host name;
+  realmConfigurations = lib.filterAttrs (
+    _: configuration: configuration.config.host.realm == config.host.realm
+  ) configurations;
+  secretSpec = host: realm: secretPath: category: name: prefix: certificateField: {
+    inherit
+      category
+      host
+      name
+      realm
+      ;
     source_kind = "repo_secret";
     file_path = null;
     secret = {
@@ -18,33 +24,35 @@ let
       certificate_field = certificateField;
     };
   };
-
-  hostSpecs =
-    host: hostFacts:
+  hostCertificates =
+    host: configuration:
     let
-      configuredHost = configurations.${host}.config;
-      secretPath = ../../secrets + "/${hostFacts.realm}/${host}.yaml";
+      hostConfig = configuration.config;
+      realm = hostConfig.host.realm;
+      secretPath = ../../secrets + "/${realm}/${host}.yaml";
     in
     lib.optionals (builtins.pathExists secretPath) (
       map (
         certificate:
-        secretSpec host secretPath certificate.category certificate.name certificate.secretPrefix
+        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix
           certificate.certificateField
-      ) configuredHost.host.pki.managedCertificates
+      ) hostConfig.host.pki.managedCertificates
     );
-
-  leafCertificates = lib.concatLists (lib.mapAttrsToList hostSpecs facts.hosts.hostSpecsByName);
+  leafCertificates = lib.concatLists (lib.mapAttrsToList hostCertificates realmConfigurations);
 in
-builtins.toFile "pki-certificate-inventory.json" (
+assert authority != null;
+builtins.toFile "pki-certificate-inventory-${config.host.realm}.json" (
   builtins.toJSON {
-    authority_host = authorityHost;
+    authority_host = authority.hostName;
+    realm = config.host.realm;
     certificates = [
       {
-        host = authorityHost;
+        host = authority.hostName;
+        realm = config.host.realm;
         category = "ca";
         name = "root";
         source_kind = "repo_file";
-        file_path = rootCaCertificate;
+        file_path = authority.rootCaCertificate;
         secret = null;
       }
     ]

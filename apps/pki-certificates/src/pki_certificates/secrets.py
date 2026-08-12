@@ -10,7 +10,7 @@ from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService, UpdateResult
 
 from .models import CertificateMaterial, FleetHosts
-from .repository import host_facts
+from .repository import fleet_host
 
 
 class CertificateStore(Protocol):
@@ -61,8 +61,8 @@ class SopsCertificateStore:
         *,
         client: bool,
     ) -> None:
-        facts = host_facts(self.hosts, host)
-        realm = self.runtime.resolve_realm(facts.realm)
+        host_entry = fleet_host(self.hosts, host)
+        realm = self.runtime.resolve_realm(host_entry.realm)
         service = self.factory.create(self.runtime, realm)
         service.update(host)
         prefix = KeyPath.parse(secret_prefix)

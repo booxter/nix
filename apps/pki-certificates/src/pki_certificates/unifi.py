@@ -7,7 +7,7 @@ from atomic_file_writes import write_text_atomic
 from sops_tools.errors import ToolError
 
 from .issuer import CertificateIssuer
-from .models import UnifiDefaults, UnifiResult
+from .models import UnifiResult
 from .services import unique_strings
 
 
@@ -27,23 +27,22 @@ def write_output(path: Path, text: str, mode: int, *, force: bool) -> None:
 @dataclass(frozen=True)
 class UnifiCertificateService:
     issuer: CertificateIssuer
-    defaults: UnifiDefaults
 
     def issue(
         self,
         *,
         ca_host: str,
         output_dir: Path,
-        common_name: str | None,
+        common_name: str,
         additional_sans: list[str],
-        include_gateway_ip: bool,
+        gateway_ip: str | None,
         basename: str | None,
         force: bool,
     ) -> UnifiResult:
-        name = common_name or self.defaults.common_name
-        values = [name, *self.defaults.sans, *additional_sans]
-        if include_gateway_ip:
-            values.append(self.defaults.gateway_ip)
+        name = common_name
+        values = [name, *additional_sans]
+        if gateway_ip is not None:
+            values.append(gateway_ip)
         sans = unique_strings(values)
         output_name = validate_basename(basename or name)
         directory = output_dir.expanduser().resolve()

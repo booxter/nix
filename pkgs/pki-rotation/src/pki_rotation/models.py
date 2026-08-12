@@ -35,6 +35,7 @@ class CertificateSpec:
     category: CertificateCategory
     name: str
     source_kind: SourceKind
+    realm: str | None = None
     file_path: Path | None = None
     secret: SecretLocation | None = None
 
@@ -64,6 +65,7 @@ class ManifestCertificateSpec(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     host: str
+    realm: str | None = None
     category: CertificateCategory
     name: str
     source_kind: SourceKind
@@ -83,6 +85,7 @@ class ManifestCertificateSpec(BaseModel):
     def spec(self) -> CertificateSpec:
         return CertificateSpec(
             host=self.host,
+            realm=self.realm,
             category=self.category,
             name=self.name,
             source_kind=self.source_kind,
@@ -95,6 +98,7 @@ class CertificateManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     authority_host: str
+    realm: str
     certificates: tuple[ManifestCertificateSpec, ...]
 
 

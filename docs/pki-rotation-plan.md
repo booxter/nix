@@ -1,9 +1,9 @@
 # PKI Rotation Plan
 
 This repo manages internal PKI leaf certificates through encrypted host
-secrets, so rotation should happen centrally from `pki`, not on each
-host. `pki` already runs `step-ca` and the certificate service. The fleet
-converges from Git state through the normal review and upgrade flow.
+secrets, so rotation happens on the host claiming the realm's
+`host.pki.role = "authority"`, not on each member. The fleet converges from
+Git state through the normal review and upgrade flow.
 
 ## Policy
 
@@ -34,7 +34,7 @@ This is intentional:
 
 ## Runtime Components
 
-`pki` runs two PKI jobs:
+Each realm authority runs two PKI jobs:
 
 - `pki-status-export`
   - consumes a build-time certificate inventory manifest from the Nix store
@@ -64,7 +64,7 @@ branch.
 1. `pki-rotate` scans the repo-managed internal leaf inventory.
 2. If no leaf cert is inside the `45d` rotation window, the run exits cleanly.
 3. If one or more leaf certs are due, `pki-rotate` reissues them from the local
-   `step-ca` on `pki`.
+   `step-ca` authority for that realm.
 4. Updated certs are written back into the corresponding
    `secrets/<realm>/*.yaml` files.
 5. The controller commits those encrypted updates to `ci/pki-rotate`.

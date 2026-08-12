@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   outputs,
@@ -19,8 +18,7 @@ let
   rotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
   inventory = import ../../pki/inventory.nix {
-    inherit facts lib outputs;
-    rootCaCertificate = cfg.rootCaCertificate;
+    inherit config lib outputs;
   };
   dnsNames = lib.unique (
     hostSpec.certificateDnsNames
