@@ -5,7 +5,9 @@
   ...
 }:
 let
-  cfg = config.host.aurral;
+  model = import ./model.nix { inherit config lib; };
+  inherit (model) cfg selected;
+  slskdEnabled = cfg.slskd.enable && selected != null;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
       _: person: lib.any (group: builtins.elem group person.groups) cfg.authProxy.adminGroups
@@ -20,7 +22,17 @@ in
     users.users.aurral = {
       isSystemUser = true;
       group = "aurral";
-      extraGroups = cfg.extraGroups;
+      extraGroups = lib.optionals slskdEnabled [ selected.group ];
+    };
+
+    sops.templates."aurral-slskd.env" = lib.mkIf slskdEnabled {
+      owner = "aurral";
+      group = "aurral";
+      mode = "0400";
+      restartUnits = [ "aurral.service" ];
+      content = ''
+        AURRAL_SLSKD_API_KEY=${config.sops.placeholder."${selected.secretPrefix}/web/apiKey"}
+      '';
     };
 
     systemd.tmpfiles.rules = [
@@ -33,8 +45,9 @@ in
       wantedBy = [ "multi-user.target" ];
       unitConfig = {
         Wants = [ "network-online.target" ];
-        After = [ "network-online.target" ];
-        RequiresMountsFor = [ cfg.flowDir ] ++ cfg.extraWritePaths;
+        After = [ "network-online.target" ] ++ lib.optional slskdEnabled "${selected.unitName}.service";
+        Requires = lib.optional slskdEnabled "${selected.unitName}.service";
+        RequiresMountsFor = [ cfg.flowDir ] ++ lib.optional slskdEnabled selected.completedDir;
       };
       path = [
         pkgs.coreutils
@@ -48,6 +61,14 @@ in
         PORT = toString cfg.port;
         TRUST_PROXY = "2";
       }
+      // lib.optionalAttrs slskdEnabled {
+        AURRAL_SLSKD_MANAGED = "true";
+        AURRAL_SLSKD_URL = selected.apiUrl;
+        AURRAL_SLSKD_PRIORITY = toString cfg.slskd.priority;
+        AURRAL_SLSKD_PREFERRED_FORMAT = cfg.slskd.preferredFormat;
+        AURRAL_SLSKD_STRICT_FORMAT = lib.boolToString cfg.slskd.strictFormat;
+        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = lib.boolToString cfg.slskd.cleanupAfterRuns;
+      }
       // lib.optionalAttrs cfg.authProxy.enable {
         AUTH_PROXY_ENABLED = "true";
         AUTH_PROXY_HEADER = "x-forwarded-user";
@@ -58,6 +79,7 @@ in
       };
       serviceConfig = {
         ExecStart = lib.getExe cfg.package;
+        EnvironmentFile = lib.optional slskdEnabled config.sops.templates."aurral-slskd.env".path;
         User = "aurral";
         Group = "aurral";
         WorkingDirectory = cfg.stateDir;
@@ -73,7 +95,7 @@ in
           cfg.stateDir
           cfg.flowDir
         ]
-        ++ cfg.extraWritePaths;
+        ++ lib.optional slskdEnabled selected.completedDir;
         ProtectHome = true;
         ProtectHostname = true;
         ProtectClock = true;

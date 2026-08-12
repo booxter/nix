@@ -9,6 +9,7 @@ let
 in
 {
   imports = [
+    ./assertions.nix
     ./backups.nix
     ./service.nix
     ./web.nix
@@ -41,16 +42,41 @@ in
       description = "Directory where Aurral stores downloaded flows.";
     };
 
-    extraWritePaths = lib.mkOption {
-      type = lib.types.listOf absolutePath;
-      default = [ ];
-      description = "Additional directories Aurral may modify.";
-    };
+    slskd = {
+      enable = lib.mkEnableOption "a host-local slskd integration";
 
-    extraGroups = lib.mkOption {
-      type = lib.types.listOf lib.types.nonEmptyStr;
-      default = [ ];
-      description = "Additional groups assigned to the Aurral service account.";
+      instance = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Name of the host-local slskd instance used by Aurral.";
+      };
+
+      priority = lib.mkOption {
+        type = lib.types.ints.between 1 1000;
+        default = 10;
+        description = "Aurral source priority assigned to slskd.";
+      };
+
+      preferredFormat = lib.mkOption {
+        type = lib.types.enum [
+          "flac"
+          "mp3"
+        ];
+        default = "flac";
+        description = "Audio format Aurral prefers when searching slskd.";
+      };
+
+      strictFormat = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether Aurral rejects slskd results in other formats.";
+      };
+
+      cleanupAfterRuns = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether Aurral removes slskd downloads after processing them.";
+      };
     };
 
     publicHostName = lib.mkOption {

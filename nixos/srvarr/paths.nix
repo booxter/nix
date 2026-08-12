@@ -63,11 +63,6 @@ in
             owner = "transmission";
             mode = "0755";
           }
-      // directories [
-        "slskd"
-        "slskd/incomplete"
-        "slskd/complete"
-      ] { owner = "slskd"; }
       //
         directories
           [

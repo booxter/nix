@@ -45,6 +45,7 @@
       ./_mixins/qos
       ./_mixins/romm
       ./_mixins/security
+      ./_mixins/slskd
       ./_mixins/sso
       ./_mixins/storage
       ./_mixins/site-ip
