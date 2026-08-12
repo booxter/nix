@@ -26,7 +26,10 @@ pkgs.testers.runNixOSTest {
 
   nodes = {
     server = {
-      imports = [ ../../nixos/_mixins/backups ];
+      imports = [
+        ../../nixos/_mixins/backups/metrics
+        ../../nixos/_mixins/backups/server
+      ];
 
       environment.etc = {
         "ssh/ssh_host_ed25519_key" = {
@@ -50,7 +53,7 @@ pkgs.testers.runNixOSTest {
       host.backups.server = {
         enable = true;
         repositoryRoot = "/srv/restic";
-        clients.test = {
+        repositories.test = {
           publicKey = clientPublicKey;
           cloud = {
             backend = "local";
@@ -89,7 +92,10 @@ pkgs.testers.runNixOSTest {
         };
       in
       {
-        imports = [ ../../nixos/_mixins/backups ];
+        imports = [
+          ../../nixos/_mixins/backups/jobs
+          ../../nixos/_mixins/backups/metrics
+        ];
 
         environment.etc = {
           "backup-test/id_ed25519" = {

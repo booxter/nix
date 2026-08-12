@@ -8,11 +8,19 @@
 let
   cfg = config.host.backups.server;
   inherit (utils.systemdUtils.unitOptions) unitOption;
-  backupServerTools = pkgs.callPackage ./server/pkgs/backup-server-tools { };
-  resticTools = pkgs.callPackage ./server/pkgs/restic-tools {
+  cloudGroup = "restic-cloud";
+  cloudDependencyUnits = [
+    "network-online.target"
+    "sops-install-secrets.service"
+  ];
+  cloudRequiredUnits = lib.optional cfg.offsite.enable "qos-wan.service";
+  applicationKeyIdFile = config.sops.secrets."backup/restic/cloud/b2/applicationKeyId".path;
+  applicationKeyFile = config.sops.secrets."backup/restic/cloud/b2/applicationKey".path;
+  backupServerTools = pkgs.callPackage ./pkgs/backup-server-tools { };
+  resticTools = pkgs.callPackage ./pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
-  enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.clients;
+  enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.repositories;
   credentialedCloudClients = lib.filterAttrs (
     _: client: client.cloud.backend != "local"
   ) enabledCloudClients;
@@ -20,15 +28,14 @@ let
     _: client: client.cloud.storageProvider == "b2"
   ) enabledCloudClients;
   usageEnabled = b2StorageClients != { };
-  sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
+  sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.repositories;
   ingestUser = name: "restic-${name}";
-  repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
-  offloadUser = name: if name == cfg.localClient then cfg.cloud.group else "restic-${name}-offload";
+  repositoryPath = name: "${cfg.repositoryRoot}/${cfg.repositories.${name}.storageName}";
+  offloadUser = name: if name == cfg.localClient then cloudGroup else "restic-${name}-offload";
   offloadService = name: "restic-${name}-cloud-offload";
   pruneService = name: "restic-${name}-cloud-prune";
   aclService = name: "restic-${name}-repo-acl";
   cloudStateDir = name: "restic-cloud-${name}";
-  offloadUsers = map offloadUser (builtins.attrNames enabledCloudClients);
   aclConfig =
     name:
     (pkgs.formats.json { }).generate "${aclService name}.json" {
@@ -39,7 +46,7 @@ let
   cloudConfig =
     name:
     let
-      client = cfg.clients.${name};
+      client = cfg.repositories.${name};
     in
     (pkgs.formats.json { }).generate "restic-${name}-cloud.json" (
       {
@@ -48,24 +55,23 @@ let
         sourcePasswordFile = client.cloud.sourcePasswordFile;
         destinationRepository = client.cloud.repository;
         destinationPasswordFile = client.cloud.passwordFile;
-        packSizeMib = cfg.cloud.packSizeMib;
+        packSizeMib = 16;
         pruneOptions = client.cloud.pruneOpts;
       }
       // lib.optionalAttrs (builtins.hasAttr name credentialedCloudClients) {
-        applicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
-        applicationKeyFile = cfg.cloud.applicationKeyFile;
-        backendConnections = cfg.cloud.backendConnections;
+        inherit applicationKeyFile applicationKeyIdFile;
+        backendConnections = 2;
       }
     );
   usageConfig = (pkgs.formats.json { }).generate "restic-cloud-usage.json" {
-    buckets = [ cfg.cloud.bucketName ];
-    b2ApplicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
-    b2ApplicationKeyFile = cfg.cloud.applicationKeyFile;
+    buckets = [ cfg.offsite.bucketName ];
+    b2ApplicationKeyIdFile = applicationKeyIdFile;
+    b2ApplicationKeyFile = applicationKeyFile;
     repositories = lib.mapAttrsToList (name: client: {
       inherit name;
       backupJob = offloadService name;
       backupTitle = "${name} Cloud Offload";
-      bucket = cfg.cloud.bucketName;
+      bucket = cfg.offsite.bucketName;
       inherit (client.cloud) prefix repository;
       passwordFile = client.cloud.passwordFile;
     }) b2StorageClients;
@@ -75,14 +81,14 @@ let
     name: description: executable:
     let
       aclDependency = lib.optional (builtins.hasAttr name sshClients) "${aclService name}.service";
-      dependencies = cfg.cloud.dependencyUnits ++ cfg.cloud.requiredUnits ++ aclDependency;
+      dependencies = cloudDependencyUnits ++ cloudRequiredUnits ++ aclDependency;
     in
     {
       inherit description;
       restartIfChanged = false;
       stopIfChanged = false;
-      wants = cfg.cloud.dependencyUnits ++ aclDependency;
-      requires = cfg.cloud.requiredUnits;
+      wants = cloudDependencyUnits ++ aclDependency;
+      requires = cloudRequiredUnits;
       after = dependencies;
       unitConfig.RequiresMountsFor = cfg.repositoryRoot;
       serviceConfig = {
@@ -99,8 +105,6 @@ let
     };
 in
 {
-  imports = [ ./server/assertions.nix ];
-
   options.host.backups.server = {
     enable = lib.mkEnableOption "a Restic SFTP repository and cloud-offload server";
 
@@ -116,7 +120,7 @@ in
       description = "Client whose repository is written locally by the cloud service account.";
     };
 
-    clients = lib.mkOption {
+    repositories = lib.mkOption {
       default = { };
       description = "Restic repositories accepted and optionally offloaded by this server.";
       internal = true;
@@ -246,67 +250,10 @@ in
       };
     };
 
-    cloud = {
-      group = lib.mkOption {
-        type = lib.types.str;
-        default = "restic-cloud";
-      };
-
-      bucketName = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
-      };
-
-      applicationKeyIdFile = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
-      };
-
-      applicationKeyFile = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
-      };
-
-      backendConnections = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 2;
-      };
-
-      packSizeMib = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 16;
-      };
-
-      dependencyUnits = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ "network-online.target" ];
-      };
-
-      requiredUnits = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-      };
-
-      usageTimerConfig = lib.mkOption {
-        type = with lib.types; attrsOf unitOption;
-        default = {
-          OnCalendar = "*-*-* 00/4:00:00";
-          RandomizedDelaySec = "10m";
-          Persistent = true;
-        };
-      };
-
-    };
-
-    generated.offloadUsers = lib.mkOption {
-      type = with lib.types; listOf str;
-      readOnly = true;
-      internal = true;
-    };
   };
 
   config = lib.mkIf cfg.enable {
-    host.backups.server.generated.offloadUsers = offloadUsers;
+    environment.systemPackages = [ pkgs.restic ];
 
     services.openssh.enable = true;
 
@@ -314,17 +261,17 @@ in
       lib.mapAttrsToList (
         name: _:
         let
-          owner = if name == cfg.localClient then cfg.cloud.group else ingestUser name;
+          owner = if name == cfg.localClient then cloudGroup else ingestUser name;
         in
         "d ${repositoryPath name} 0750 ${owner} ${owner} - -"
-      ) cfg.clients
+      ) cfg.repositories
       ++ lib.optional (
         enabledCloudClients != { }
       ) "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -";
 
     users.groups =
       lib.optionalAttrs (enabledCloudClients != { }) {
-        ${cfg.cloud.group} = { };
+        ${cloudGroup} = { };
       }
       // lib.mapAttrs' (name: _: lib.nameValuePair (ingestUser name) { }) sshClients
       // lib.mapAttrs' (name: _: lib.nameValuePair (offloadUser name) { }) (
@@ -333,9 +280,9 @@ in
 
     users.users =
       lib.optionalAttrs (enabledCloudClients != { }) {
-        ${cfg.cloud.group} = {
+        ${cloudGroup} = {
           isSystemUser = true;
-          group = cfg.cloud.group;
+          group = cloudGroup;
           createHome = false;
           home = cfg.repositoryRoot;
           shell = pkgs.bash;
@@ -360,7 +307,7 @@ in
           createHome = false;
           home = cfg.repositoryRoot;
           shell = pkgs.bash;
-          extraGroups = [ cfg.cloud.group ];
+          extraGroups = [ cloudGroup ];
         }
       ) (lib.filterAttrs (name: _: name != cfg.localClient) enabledCloudClients);
 
@@ -411,9 +358,9 @@ in
       // lib.optionalAttrs usageEnabled {
         restic-cloud-usage-export = {
           description = "Export Restic cloud and B2 usage metrics";
-          wants = cfg.cloud.dependencyUnits;
-          after = cfg.cloud.dependencyUnits ++ cfg.cloud.requiredUnits;
-          requires = cfg.cloud.requiredUnits;
+          wants = cloudDependencyUnits;
+          after = cloudDependencyUnits ++ cloudRequiredUnits;
+          requires = cloudRequiredUnits;
           serviceConfig = {
             Type = "oneshot";
             StateDirectory = "restic-cloud-usage-metrics";
@@ -450,7 +397,11 @@ in
       // lib.optionalAttrs usageEnabled {
         restic-cloud-usage-export = {
           wantedBy = [ "timers.target" ];
-          timerConfig = cfg.cloud.usageTimerConfig;
+          timerConfig = {
+            OnCalendar = "*-*-* 00/4:00:00";
+            RandomizedDelaySec = "10m";
+            Persistent = true;
+          };
         };
       };
 

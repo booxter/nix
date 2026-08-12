@@ -77,60 +77,19 @@ let
       };
     };
 
-  resolvedDestinationModule =
-    {
-      config,
-      name,
-      ...
-    }:
-    {
-      options = destinationPolicyOptions // {
-        server = lib.mkOption { type = lib.types.nonEmptyStr; };
-        storageName = lib.mkOption { type = lib.types.nonEmptyStr; };
-        transport = lib.mkOption {
-          type = lib.types.enum [
-            "local"
-            "sftp"
-          ];
-        };
-        repositoryPath = lib.mkOption { type = lib.types.str; };
-        ingestUser = lib.mkOption { type = lib.types.str; };
-        publicKey = lib.mkOption {
-          type = with lib.types; nullOr str;
-          default = null;
-        };
-        generated = {
-          jobName = lib.mkOption {
-            type = lib.types.str;
-            default = if name == "primary" then config.server else "${config.server}-${name}";
-            readOnly = true;
-            internal = true;
-          };
-          serverHost = lib.mkOption {
-            type = lib.types.str;
-            default = config.server;
-            readOnly = true;
-            internal = true;
-          };
-          repositoryPasswordSecret = lib.mkOption {
-            type = lib.types.str;
-            default =
-              if config.transport == "local" then
-                "backup/restic/${hostName}/cloud/localPassword"
-              else
-                "backup/restic/local/password${secretSuffix name}";
-            readOnly = true;
-            internal = true;
-          };
-          sshPrivateKeySecret = lib.mkOption {
-            type = lib.types.str;
-            default = "backup/restic/local/ssh/privateKey${secretSuffix name}";
-            readOnly = true;
-            internal = true;
-          };
-        };
+  resolvedDestinationModule = {
+    options = {
+      transport = lib.mkOption {
+        type = lib.types.enum [
+          "local"
+          "sftp"
+        ];
       };
+      repositoryPath = lib.mkOption { type = lib.types.str; };
+      ingestUser = lib.mkOption { type = lib.types.str; };
+      user = lib.mkOption { type = lib.types.str; };
     };
+  };
 
   extraCopyModule = {
     options = {
@@ -242,47 +201,45 @@ let
       };
     };
 
-  referencedDestinationNames = lib.unique (
-    map (source: source.destination) (builtins.attrValues sources)
+  sourceEntries = lib.mapAttrsToList (name: source: source // { inherit name; }) sources;
+  sourcesByDestination = lib.groupBy (source: source.destination) sourceEntries;
+  activeDestinations = lib.mapAttrs (name: resolved: cfg.destinations.${name} // resolved) (
+    lib.filterAttrs (name: _: builtins.hasAttr name sourcesByDestination) cfg.internal.destinations
   );
-  activeDestinations = lib.filterAttrs (
-    name: _: builtins.elem name referencedDestinationNames
-  ) cfg.resolvedDestinations;
-  destinationFor = source: cfg.resolvedDestinations.${source.destination};
-  jobNameFor = source: (destinationFor source).generated.jobName;
-  passwordSecretFor = destination: destination.generated.repositoryPasswordSecret;
-  sshKeySecretFor = destination: destination.generated.sshPrivateKeySecret;
+  destinationFor =
+    source: cfg.destinations.${source.destination} // cfg.internal.destinations.${source.destination};
+  jobNameForDestination =
+    name: destination:
+    if name == "primary" then destination.server else "${destination.server}-${name}";
+  jobNameFor = source: jobNameForDestination source.destination (destinationFor source);
+  passwordSecretFor =
+    name: destination:
+    if destination.transport == "local" then
+      "backup/restic/${hostName}/cloud/localPassword"
+    else
+      "backup/restic/local/password${secretSuffix name}";
+  sshKeySecretFor = name: "backup/restic/local/ssh/privateKey${secretSuffix name}";
   directPathsFor =
     source:
     source.paths
     ++ lib.optionals (source.capture.type == "unit") source.capture.unit.outputPaths
     ++ lib.optionals (source.capture.type == "scheduled") source.capture.scheduled.outputPaths;
-  livePathsForJob =
-    jobName:
-    lib.concatMap directPathsFor (
-      builtins.attrValues (lib.filterAttrs (_: source: jobNameFor source == jobName) sources)
-    );
   pathCovers = root: path: path == root || lib.hasPrefix "${lib.removeSuffix "/" root}/" path;
-  pathsForJob = jobName: lib.unique (livePathsForJob jobName);
-  minimalPathsForJob =
-    jobName:
+  livePathsFor = selectedSources: lib.concatMap directPathsFor selectedSources;
+  minimalPathsFor =
+    selectedSources:
     let
-      paths = pathsForJob jobName;
+      paths = lib.unique (livePathsFor selectedSources);
     in
     builtins.filter (path: !builtins.any (root: root != path && pathCovers root path) paths) paths;
-  excludesForJob =
-    jobName:
-    lib.unique (
-      lib.concatMap (source: source.exclude) (
-        builtins.attrValues (lib.filterAttrs (_: source: jobNameFor source == jobName) sources)
-      )
-    );
+  excludesFor = selectedSources: lib.unique (lib.concatMap (source: source.exclude) selectedSources);
   outputCoveredByJob =
-    jobName: output: builtins.any (root: pathCovers root output) (livePathsForJob jobName);
+    source: output:
+    builtins.any (root: pathCovers root output) (
+      livePathsFor sourcesByDestination.${source.destination}
+    );
 in
 {
-  imports = [ ./sources/assertions.nix ];
-
   options.host.backups = {
     destinations = lib.mkOption {
       type = with lib.types; attrsOf (submodule destinationRequestModule);
@@ -290,11 +247,11 @@ in
       description = "Named backup repositories consumed by this host.";
     };
 
-    resolvedDestinations = lib.mkOption {
+    internal.destinations = lib.mkOption {
       type = with lib.types; attrsOf (submodule resolvedDestinationModule);
       default = { };
       internal = true;
-      description = "Fleet-resolved runtime backup destinations.";
+      description = "Fleet-resolved runtime destination data.";
     };
 
     sources = lib.mkOption {
@@ -307,10 +264,10 @@ in
   config = lib.mkIf (sources != { }) {
     sops.secrets = lib.mkMerge (
       lib.mapAttrsToList (
-        _: destination:
+        name: destination:
         lib.optionalAttrs (destination.transport == "sftp") {
-          ${passwordSecretFor destination} = { };
-          ${sshKeySecretFor destination} = {
+          ${passwordSecretFor name destination} = { };
+          ${sshKeySecretFor name} = {
             owner = destination.user;
             group = if destination.user == "root" then "root" else destination.user;
             mode = "0400";
@@ -321,9 +278,10 @@ in
 
     host.backups.jobs = lib.mkMerge (
       lib.mapAttrsToList (
-        _: destination:
+        name: destination:
         let
-          jobName = destination.generated.jobName;
+          jobName = jobNameForDestination name destination;
+          destinationSources = sourcesByDestination.${name};
         in
         {
           ${jobName} = {
@@ -338,24 +296,24 @@ in
               timerConfig
               user
               ;
-            paths = minimalPathsForJob jobName;
-            exclude = excludesForJob jobName;
+            paths = minimalPathsFor destinationSources;
+            exclude = excludesFor destinationSources;
             repository = {
               type = destination.transport;
               path = destination.repositoryPath;
-              passwordFile = config.sops.secrets.${passwordSecretFor destination}.path;
+              passwordFile = config.sops.secrets.${passwordSecretFor name destination}.path;
               dependencyUnits = [ "sops-install-secrets.service" ];
               sftp = lib.optionalAttrs (destination.transport == "sftp") {
-                host = destination.generated.serverHost;
+                host = destination.server;
                 user = destination.ingestUser;
-                identityFile = config.sops.secrets.${sshKeySecretFor destination}.path;
+                identityFile = config.sops.secrets.${sshKeySecretFor name}.path;
               };
             };
           };
         }
       ) activeDestinations
-      ++ lib.mapAttrsToList (
-        _name: source:
+      ++ map (
+        source:
         let
           jobName = jobNameFor source;
           unitName = source.capture.unit.service;
@@ -373,19 +331,20 @@ in
             };
           };
         }
-      ) sources
+      ) sourceEntries
     );
 
     host.backups.artifacts = lib.mkMerge (
-      lib.mapAttrsToList (
-        name: source:
+      map (
+        source:
         let
+          name = source.name;
           database = source.capture.database;
           common = {
             job = jobNameFor source;
             displayName = source.title;
             destinationDir = database.destinationDir;
-            includeInJob = !outputCoveredByJob (jobNameFor source) database.destinationDir;
+            includeInJob = !outputCoveredByJob source database.destinationDir;
             inherit (database) requiresMountsFor;
           };
         in
@@ -406,7 +365,7 @@ in
           }
         else
           { }
-      ) sources
+      ) sourceEntries
     );
   };
 }

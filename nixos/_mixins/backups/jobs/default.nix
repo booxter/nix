@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   utils,
   ...
 }:
@@ -204,8 +205,6 @@ let
   sftpJobs = lib.filterAttrs (_: job: job.repository.type == "sftp") cfg;
 in
 {
-  imports = [ ./jobs/assertions.nix ];
-
   options.host.backups.jobs = lib.mkOption {
     type = with lib.types; attrsOf (submodule jobModule);
     default = { };
@@ -214,6 +213,8 @@ in
   };
 
   config = lib.mkIf (cfg != { }) {
+    environment.systemPackages = [ pkgs.restic ];
+
     services.restic.backups = resticJobs;
 
     programs.ssh.extraConfig = lib.mkAfter (
