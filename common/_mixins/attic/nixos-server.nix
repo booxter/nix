@@ -1,6 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.host.attic.server;
+  listenAddress = "127.0.0.1:8080";
 in
 {
   config = lib.mkIf cfg.enable {
@@ -15,11 +16,27 @@ in
       };
     };
 
+    host.web.services.atticd = {
+      enable = true;
+      upstream = "http://${listenAddress}";
+      internal = {
+        serverName = "nix-cache.${config.host.network.lanDomain}";
+        localAliases = [ "nix-cache" ];
+        locationExtraConfig = ''
+          client_max_body_size 0;
+          proxy_request_buffering off;
+          proxy_buffering off;
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+        '';
+      };
+    };
+
     services.atticd = {
       enable = true;
       environmentFile = cfg.environmentFile;
       settings = {
-        listen = "127.0.0.1:8080";
+        listen = listenAddress;
         jwt = { };
 
         # Changing these values prevents existing chunks from being reused for

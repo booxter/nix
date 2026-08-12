@@ -67,8 +67,14 @@ in
 
       endpoint = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "HTTPS endpoint published to clients in this realm.";
+        default =
+          if isLinux && config.host.attic.server.enable then
+            config.host.web.services.atticd.internal.url
+          else
+            null;
+        readOnly = true;
+        internal = true;
+        description = "Resolved HTTPS endpoint published to clients in this realm.";
       };
 
       cacheName = lib.mkOption {
