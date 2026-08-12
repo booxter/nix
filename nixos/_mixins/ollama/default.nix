@@ -13,6 +13,24 @@ in
   options.host.ollama = {
     enable = lib.mkEnableOption "Ollama server";
     enableMetrics = lib.mkEnableOption "Ollama Prometheus metrics collector";
+    models = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options.capabilities = lib.mkOption {
+            type = lib.types.listOf (
+              lib.types.enum [
+                "text"
+                "vision"
+              ]
+            );
+            default = [ "text" ];
+            description = "LLM capabilities advertised by this model.";
+          };
+        }
+      );
+      default = { };
+      description = "Ollama models served by this host.";
+    };
   };
 
   config = lib.mkMerge [
@@ -45,10 +63,7 @@ in
         package = pkgs.ollama-rocm;
         host = "127.0.0.1";
         port = 11434;
-        loadModels = [
-          "granite4:32b-a9b-h"
-          "qwen3-vl:8b-instruct"
-        ];
+        loadModels = builtins.attrNames cfg.models;
         syncModels = true;
         environmentVariables.OLLAMA_KEEP_ALIVE = "30m";
       };
