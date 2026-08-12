@@ -2,13 +2,7 @@
 let
   cfg = config.host.userEnvironment;
   hmUsers = config.home-manager.users.${config.host.username}.host.hm.user;
-  emailCfg = cfg.features.apps.email;
-  emailAccount = cfg.emailAccounts.${emailCfg.account} or null;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.repositories.requests));
-  authenticationType = lib.types.enum [
-    "oauth2"
-    "password"
-  ];
   smtpTransportType = lib.types.submodule {
     options = {
       server = lib.mkOption {
@@ -47,36 +41,6 @@ let
       };
     };
   };
-  emailAccountType = lib.types.submodule {
-    options = {
-      identity = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Named identity used by the email account.";
-      };
-
-      flavor = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Home Manager email-provider flavor.";
-      };
-
-      imapAuthentication = lib.mkOption {
-        type = authenticationType;
-        default = "oauth2";
-        description = "Authentication method used for incoming email.";
-      };
-
-      smtpTransport = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Named SMTP transport used by the email account.";
-      };
-
-      smtpAuthentication = lib.mkOption {
-        type = authenticationType;
-        default = "oauth2";
-        description = "Authentication method used for outgoing email.";
-      };
-    };
-  };
   repositoryType = lib.types.submodule {
     options = {
       remote = lib.mkOption {
@@ -109,12 +73,6 @@ in
       type = lib.types.attrsOf smtpTransportType;
       default = { };
       description = "Named SMTP transports available to user-environment features.";
-    };
-
-    emailAccounts = lib.mkOption {
-      type = lib.types.attrsOf emailAccountType;
-      default = { };
-      description = "Named email accounts available to user-environment features.";
     };
 
     repositories = {
@@ -299,21 +257,6 @@ in
           description = "Whether to provide the ChatGPT desktop client where supported.";
         };
 
-        email = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to provide the managed email environment.";
-          };
-
-          account = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "gmail";
-            description = "Named email account configured on this host.";
-          };
-
-        };
-
         firefox = {
           enable = lib.mkOption {
             type = lib.types.bool;
@@ -349,20 +292,6 @@ in
         nvidia = {
           server = "mail.nvidia.com";
           username = "${config.host.username}@nvidia.com";
-        };
-      };
-
-      emailAccounts = {
-        gmail = {
-          identity = "personal";
-          flavor = "gmail.com";
-          smtpTransport = "gmail";
-        };
-        nvidia = {
-          identity = "nvidia";
-          flavor = "outlook.office365.com";
-          smtpTransport = "nvidia";
-          smtpAuthentication = "password";
         };
       };
 
@@ -448,26 +377,6 @@ in
           && lib.all (component: component != "..") (lib.splitString "/" repository.destination.path)
         ) (builtins.attrValues cfg.repositories.catalog);
         message = "host.userEnvironment repository destinations must be safe relative paths";
-      }
-      {
-        assertion = !cfg.features.apps.enable || !emailCfg.enable || emailAccount != null;
-        message = "host.userEnvironment.features.apps.email.account must name a declared email account";
-      }
-      {
-        assertion =
-          !cfg.features.apps.enable
-          || !emailCfg.enable
-          || emailAccount == null
-          || builtins.hasAttr emailAccount.identity hmUsers;
-        message = "selected email account must name a declared Home Manager user identity";
-      }
-      {
-        assertion =
-          !cfg.features.apps.enable
-          || !emailCfg.enable
-          || emailAccount == null
-          || builtins.hasAttr emailAccount.smtpTransport cfg.smtpTransports;
-        message = "selected email account must name a declared SMTP transport";
       }
       {
         assertion =

@@ -21,7 +21,6 @@ let
             enable = true;
             desktop.enable = true;
           };
-          apps.email.account = "gmail";
         };
         hm = {
           gmailctl = {
@@ -32,7 +31,18 @@ let
             enable = true;
             spicetify.enable = true;
           };
-          thunderbird.enable = true;
+          thunderbird = {
+            enable = true;
+            user = "personal";
+            account = {
+              flavor = "gmail.com";
+              imapAuthentication = "oauth2";
+              smtp = {
+                server = "smtp.gmail.com";
+                authentication = "oauth2";
+              };
+            };
+          };
         };
       };
     };
@@ -52,7 +62,6 @@ let
       };
       roles.workstation = {
         features = {
-          apps.email.account = "nvidia";
           apps.firefox.enable = false;
           apps.homerow.enable = false;
           apps.teams.enable = true;
@@ -62,7 +71,18 @@ let
             enable = true;
             spicetify.enable = true;
           };
-          thunderbird.enable = true;
+          thunderbird = {
+            enable = true;
+            user = "nvidia";
+            account = {
+              flavor = "outlook.office365.com";
+              imapAuthentication = "oauth2";
+              smtp = {
+                server = "mail.nvidia.com";
+                authentication = "password";
+              };
+            };
+          };
         };
       };
     };

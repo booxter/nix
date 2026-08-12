@@ -7,21 +7,59 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
-  userEnvironment = osConfig.host.userEnvironment;
-  emailCfg = userEnvironment.features.apps.email;
-  emailAccount = userEnvironment.emailAccounts.${emailCfg.account};
-  identity = config.host.hm.user.${emailAccount.identity};
-  smtpTransport = userEnvironment.smtpTransports.${emailAccount.smtpTransport};
+  cfg = config.host.hm.thunderbird;
+  identity = config.host.hm.user.${cfg.user};
   authenticationMethod = {
     oauth2 = 10;
     password = 3;
   };
+  authenticationType = lib.types.enum (builtins.attrNames authenticationMethod);
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {
-  options.host.hm.thunderbird.enable = lib.mkEnableOption "managed Thunderbird email client";
+  options.host.hm.thunderbird = {
+    enable = lib.mkEnableOption "managed Thunderbird email client";
 
-  config = lib.mkIf config.host.hm.thunderbird.enable {
+    user = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "Named host.hm.user identity configured in Thunderbird.";
+    };
+
+    account = {
+      flavor = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Home Manager email-provider flavor.";
+      };
+
+      imapAuthentication = lib.mkOption {
+        type = authenticationType;
+        default = "oauth2";
+        description = "Authentication method used for incoming email.";
+      };
+
+      smtp = {
+        server = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          description = "SMTP server hostname.";
+        };
+
+        authentication = lib.mkOption {
+          type = authenticationType;
+          default = "oauth2";
+          description = "Authentication method used for outgoing email.";
+        };
+      };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = builtins.hasAttr cfg.user config.host.hm.user;
+        message = "host.hm.thunderbird.user must name a declared host.hm.user identity";
+      }
+    ];
+
     programs.thunderbird = {
       enable = true;
       package = pkgs.thunderbird;
@@ -62,11 +100,11 @@ in
     };
 
     accounts.email.accounts.default = {
-      inherit (emailAccount) flavor;
+      inherit (cfg.account) flavor;
       address = identity.email;
       realName = identity.fullName;
       primary = true;
-      smtp.host = lib.mkForce smtpTransport.server;
+      smtp.host = lib.mkForce cfg.account.smtp.server;
       thunderbird = {
         enable = true;
         perIdentitySettings = id: {
@@ -74,12 +112,12 @@ in
           "mail.identity.id_${id}.compose_html" = false;
         };
         settings = id: {
-          "mail.server.server_${id}.authMethod" = authenticationMethod.${emailAccount.imapAuthentication};
+          "mail.server.server_${id}.authMethod" = authenticationMethod.${cfg.account.imapAuthentication};
           # Thunderbird treats this as a filesystem path during folder/filter
           # validation; keep it absolute.
           "mail.server.server_${id}.directory" =
             "${config.home.homeDirectory}/${thunderbirdProfilesPath}/default/ImapMail/${id}";
-          "mail.smtpserver.smtp_${id}.authMethod" = authenticationMethod.${emailAccount.smtpAuthentication};
+          "mail.smtpserver.smtp_${id}.authMethod" = authenticationMethod.${cfg.account.smtp.authentication};
         };
       };
     };
