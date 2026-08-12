@@ -74,6 +74,7 @@ let
         codex.enable = true;
         go.enable = true;
       };
+      roles.developer.hm.docker.enable = true;
       roles.workstation = {
         features = {
           apps.homerow.enable = false;
