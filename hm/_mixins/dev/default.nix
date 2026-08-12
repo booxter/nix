@@ -5,6 +5,7 @@
     ./cli
     ./editor
     ./go
+    ./k8s
     ./nix
     ./nvidia
     ./scm

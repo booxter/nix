@@ -73,6 +73,7 @@ let
         act.enable = true;
         codex.enable = true;
         go.enable = true;
+        k8s.enable = true;
       };
       roles.developer.hm.docker.enable = true;
       roles.workstation = {
