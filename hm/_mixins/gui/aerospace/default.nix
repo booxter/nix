@@ -9,7 +9,6 @@ let
   inherit (osConfig.host) isDarwin;
   cfg = config.host.hm.aerospace;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
-  sketchybarHeight = 30; # TODO: parametrize it?
 
   aerospaceX11Actions = pkgs.callPackage ./pkgs { };
   defaultWorkspaceNames = map toString (lib.range 1 cfg.numberedWorkspaces);
@@ -59,6 +58,12 @@ in
       description = "Whether AeroSpace actions should support X11 windows.";
     };
 
+    sketchybar.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = cfg.enable && config.host.hm.sketchybar.enable;
+      description = "Whether to integrate AeroSpace workspaces with Sketchybar.";
+    };
+
     numberedWorkspaces = lib.mkOption {
       type = lib.types.ints.between 1 9;
       default = 4;
@@ -96,7 +101,19 @@ in
   };
 
   config = lib.mkMerge [
-    { host.hm.aerospace.workspaceNames = workspaceNames; }
+    {
+      host.hm.aerospace.workspaceNames = workspaceNames;
+      assertions = [
+        {
+          assertion = !cfg.sketchybar.enable || cfg.enable;
+          message = "host.hm.aerospace.sketchybar requires host.hm.aerospace.";
+        }
+        {
+          assertion = !cfg.sketchybar.enable || config.host.hm.sketchybar.enable;
+          message = "host.hm.aerospace.sketchybar requires host.hm.sketchybar.";
+        }
+      ];
+    }
     (lib.mkIf cfg.enable {
       assertions = [
         {
@@ -121,12 +138,14 @@ in
           gaps = {
             outer.left = 2;
             outer.right = 2;
-            outer.top = [
-              {
-                monitor.built-in = 2;
-              }
-              (sketchybarHeight + 2)
-            ];
+            outer.top =
+              if cfg.sketchybar.enable then
+                [
+                  { monitor.built-in = 2; }
+                  (config.host.hm.sketchybar.height + 2)
+                ]
+              else
+                2;
             outer.bottom = 2;
             inner.horizontal = 10;
             inner.vertical = 10;
@@ -217,7 +236,7 @@ in
 
           automatically-unhide-macos-hidden-apps = false;
 
-          exec-on-workspace-change = [
+          exec-on-workspace-change = lib.optionals cfg.sketchybar.enable [
             "/bin/bash"
             "-c"
             "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"

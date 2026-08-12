@@ -8,11 +8,11 @@
 let
   internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
   inherit (osConfig.host) isDarwin;
+  cfg = config.host.hm.sketchybar;
   devCfg = osConfig.host.userEnvironment.features.dev;
   attentionInboxCfg = devCfg.attentionInbox;
   codexCfg = devCfg.agents.codex;
   codexEnabled = devCfg.enable && config.host.hm.dev.codex.enable;
-  desktopEnvironmentEnabled = osConfig.host.userEnvironment.features.gui.enable;
   attentionInboxPackage = pkgs.callPackage ../../dev/attention-inbox/pkgs { };
   codexPkgs = import ../../dev/agents/codex/pkgs { inherit pkgs; };
   workspaceNames = config.host.hm.aerospace.workspaceNames;
@@ -55,7 +55,7 @@ let
     BAR_COLOR="$black"
     BAR_BLUR_RADIUS=0
     BAR_POSITION="top"
-    BAR_HEIGHT=30
+    BAR_HEIGHT=${toString cfg.height}
     BAR_PADDING=0
     BAR_Y_OFFSET=0
     BAR_CORNER_RADIUS=0
@@ -343,27 +343,29 @@ let
     ''
   );
   aerospaceSpacesItem = pkgs.writeText "sketchybar-aerospace-spaces.sh" (
-    ''
-      sketchybar --add event aerospace_workspace_change
-    ''
-    + lib.concatMapStringsSep "\n" (
-      sid:
-      let
-        escapedSid = lib.escapeShellArg sid;
-      in
+    lib.optionalString config.host.hm.aerospace.sketchybar.enable (
       ''
-        sketchybar --add item space.${sid} left \
-            --subscribe space.${sid} aerospace_workspace_change \
-            --set space.${sid} \
-            background.color=0x44${colors.base05} \
-            background.corner_radius=5 \
-            background.height=25 \
-            background.drawing=off \
-            label="${sid}" \
-            click_script="aerospace workspace ${escapedSid}" \
-            script="$CONFIG_DIR/plugins/aerospace.sh ${escapedSid}"
+        sketchybar --add event aerospace_workspace_change
       ''
-    ) workspaceNames
+      + lib.concatMapStringsSep "\n" (
+        sid:
+        let
+          escapedSid = lib.escapeShellArg sid;
+        in
+        ''
+          sketchybar --add item space.${sid} left \
+              --subscribe space.${sid} aerospace_workspace_change \
+              --set space.${sid} \
+              background.color=0x44${colors.base05} \
+              background.corner_radius=5 \
+              background.height=25 \
+              background.drawing=off \
+              label="${sid}" \
+              click_script="aerospace workspace ${escapedSid}" \
+              script="$CONFIG_DIR/plugins/aerospace.sh ${escapedSid}"
+        ''
+      ) workspaceNames
+    )
   );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
     mkdir -p "$out"
@@ -395,6 +397,20 @@ let
   '';
 in
 {
+  options.host.hm.sketchybar = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = isDarwin;
+      description = "Whether to enable Sketchybar.";
+    };
+
+    height = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 30;
+      description = "Sketchybar height in pixels.";
+    };
+  };
+
   options.programs.sketchybarNetwork.enable = lib.mkEnableOption "LAN/WAN traffic-rate indicators in SketchyBar";
 
   options.programs.sketchybarAlertmanager = {
@@ -445,19 +461,29 @@ in
     };
   };
 
-  config.programs.sketchybar = lib.mkIf (desktopEnvironmentEnabled && isDarwin) {
-    enable = true;
-    config = {
-      source = sketchybarConfig;
-      recursive = true;
-    };
-    # Let launchd own the process lifetime. Aerospace only sends workspace events.
-    service.enable = true;
-    extraPackages = with pkgs; [
-      aerospace
-      gnugrep
-      curl
-      jq
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = isDarwin;
+        message = "host.hm.sketchybar is only supported on Darwin.";
+      }
     ];
+
+    programs.sketchybar = {
+      enable = true;
+      config = {
+        source = sketchybarConfig;
+        recursive = true;
+      };
+      # Let launchd own the process lifetime. Aerospace only sends workspace events.
+      service.enable = true;
+      extraPackages =
+        (lib.optional config.host.hm.aerospace.sketchybar.enable pkgs.aerospace)
+        ++ (with pkgs; [
+          gnugrep
+          curl
+          jq
+        ]);
+    };
   };
 }
