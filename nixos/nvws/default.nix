@@ -30,6 +30,7 @@ in
     };
     shutdown.waitForLowBattery = true;
   };
+  host.user.passwords.sops.enable = false;
 
   # Work machines do not use sops-managed login passwords.
   users.users = {

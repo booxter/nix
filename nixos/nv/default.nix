@@ -12,6 +12,7 @@ in
     preset = "nvidia";
     roles.developer.enable = true;
   };
+  host.user.passwords.sops.enable = false;
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

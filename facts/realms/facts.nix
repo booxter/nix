@@ -14,7 +14,6 @@ in
     };
     management = {
       manageNetworkIdentity = true;
-      managePasswordSecrets = true;
       sudoWheelNeedsPassword = false;
     };
     trust.ssh = {
@@ -50,7 +49,6 @@ in
     };
     management = {
       manageNetworkIdentity = false;
-      managePasswordSecrets = false;
       sudoWheelNeedsPassword = true;
     };
     services.ups.credentialMode = "literal";

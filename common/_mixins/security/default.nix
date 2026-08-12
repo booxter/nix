@@ -16,14 +16,6 @@ in
 {
   options.host.security = {
     secrets = {
-      manageLocalPasswords = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.managePasswordSecrets;
-        readOnly = true;
-        internal = true;
-        description = "Whether local account passwords are managed through SOPS.";
-      };
-
       operator = {
         enable = lib.mkOption {
           type = lib.types.bool;
