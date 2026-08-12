@@ -11,7 +11,7 @@ in
   imports = [
     ./firefox
     ./gmailctl
-    ./spicetify
+    ./spotify
     ./thunderbird.nix
   ];
 

@@ -1,7 +1,7 @@
 {
+  config,
   inputs,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
@@ -12,12 +12,11 @@ let
     name = "priority-queue.js";
     src = "${builtins.dirOf spicePkgs.extensions.addToQueueTop.src}/priority-queue";
   };
-  cfg = osConfig.host.userEnvironment.features.apps;
 in
 {
   imports = [ inputs.spicetify-nix.homeManagerModules.spicetify ];
 
-  programs.spicetify = lib.mkIf (cfg.enable && cfg.music.enable) {
+  programs.spicetify = lib.mkIf config.host.hm.spotify.enable {
     enable = true;
     enabledExtensions = with spicePkgs.extensions; [
       aiBandBlocker

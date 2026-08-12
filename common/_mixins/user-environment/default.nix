@@ -311,12 +311,6 @@ in
           description = "Whether to provide the graphical notes application.";
         };
 
-        music.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the managed Spotify client.";
-        };
-
         chatgpt.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
