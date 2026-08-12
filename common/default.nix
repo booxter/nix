@@ -6,6 +6,7 @@
     ./_mixins/host.nix
     ./_mixins/internal-pki
     ./_mixins/luks
+    ./_mixins/look
     ./_mixins/mcp
     ./_mixins/network
     ./_mixins/nix
@@ -15,7 +16,6 @@
     ./_mixins/security
     ./_mixins/site
     ./_mixins/ssh
-    ./_mixins/stylix
     ./_mixins/terminfo
     ./_mixins/ups
     ./_mixins/user-environment

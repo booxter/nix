@@ -4,6 +4,7 @@
     ./_mixins/containers
     ./_mixins/dev
     ./_mixins/gui
+    ./_mixins/look
     ./_mixins/net
     ./_mixins/remote
     ./_mixins/security
