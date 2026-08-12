@@ -8,7 +8,7 @@ let
   clientName = "sketchybar-alertmanager";
   client = config.host.internalPki.clients.${clientName};
   lanDomain = config.host.network.lanDomain;
-  enable = config.host.isDesktop && config.host.observability.enable;
+  enable = config.host.userEnvironment.features.gui.enable && config.host.observability.enable;
 in
 {
   host.internalPki.clients.${clientName} = {

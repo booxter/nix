@@ -5,10 +5,10 @@ let
     personal = {
       roles.developer = {
         features = {
-          codex.warmer.enable = true;
+          dev.agents.codex.warmer.enable = true;
           containers.enable = true;
-          localAi.enable = true;
-          scm = {
+          shell.llm.enable = true;
+          dev.scm = {
             identity = "personal";
             sendEmail.transport = "gmail";
           };
@@ -20,7 +20,7 @@ let
           enable = true;
           desktop.enable = true;
         };
-        email = {
+        apps.email = {
           account = "gmail";
           gmailctl.enable = true;
         };
@@ -28,26 +28,26 @@ let
     };
     nvidia = {
       roles.developer.features = {
-        attentionInbox.enable = true;
-        codex = {
+        dev.attentionInbox.enable = true;
+        dev.agents.codex = {
           usageStatus.enable = false;
           resetCredits.enable = false;
           workUsageStatus.enable = true;
         };
-        nvidiaDevelopment.enable = true;
-        scm = {
+        dev.nvidia.enable = true;
+        dev.scm = {
           identity = "nvidia";
           sendEmail.transport = "nvidia";
         };
       };
       roles.workstation.features = {
-        email = {
+        apps.email = {
           account = "nvidia";
           gmailctl.enable = false;
         };
-        firefox.enable = false;
-        homerow.enable = false;
-        microsoftTeams.enable = true;
+        apps.firefox.enable = false;
+        apps.homerow.enable = false;
+        apps.teams.enable = true;
       };
     };
   };

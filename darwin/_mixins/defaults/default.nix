@@ -117,7 +117,11 @@
   };
 
   system.defaults.CustomUserPreferences."com.superultra.Homerow" =
-    lib.mkIf config.host.userEnvironment.features.homerow.enable
+    lib.mkIf
+      (
+        config.host.userEnvironment.features.apps.enable
+        && config.host.userEnvironment.features.apps.homerow.enable
+      )
       {
         SUEnableAutomaticChecks = 1;
         SUHasLaunchedBefore = 1;

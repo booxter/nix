@@ -6,6 +6,7 @@
 }:
 let
   username = config.host.username;
+  appsCfg = config.host.userEnvironment.features.apps;
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
@@ -35,12 +36,17 @@ in
       extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
-    casks = [
-      "sf-symbols"
-      "wireshark-chmodbpf"
-      "chatgpt"
-    ]
-    ++ lib.optionals config.host.userEnvironment.features.homerow.enable [ "homerow" ];
+    casks =
+      lib.optionals config.host.userEnvironment.features.gui.enable [
+        "sf-symbols"
+      ]
+      ++ lib.optionals (appsCfg.enable && appsCfg.chatgpt.enable) [
+        "chatgpt"
+      ]
+      ++ lib.optionals config.host.userEnvironment.features.net.graphical.enable [
+        "wireshark-chmodbpf"
+      ]
+      ++ lib.optionals (appsCfg.enable && appsCfg.homerow.enable) [ "homerow" ];
   };
 
   nix-homebrew = {

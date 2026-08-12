@@ -5,17 +5,13 @@
   ...
 }:
 let
-  cfg = config.host.xquartz;
+  cfg = config.host.userEnvironment.features.gui;
   xquartz = pkgs.xquartz;
   username = config.host.username;
   userLogDirectory = "${config.users.users.${username}.home}/Library/Logs/nix-darwin";
 in
 {
-  options.host.xquartz = {
-    enable = lib.mkEnableOption "XQuartz launchd integration";
-  };
-
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg.enable && cfg.x11.enable) {
     # XQuartz itself is installed by Home Manager. The launchd jobs still need
     # package-internal helpers under libexec and etc/X11, which Home Manager's
     # profile symlink farm does not expose, so point launchd at the store path.

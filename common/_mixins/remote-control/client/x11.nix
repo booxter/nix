@@ -21,11 +21,7 @@ in
       home-manager.users.${username}.programs.remote-control.client.x11.enable = true;
     }
     // lib.optionalAttrs isDarwin {
-      host.xquartz.enable = true;
-      home-manager.users.${username}.programs.xquartz = {
-        enable = true;
-        configureSsh = true;
-      };
+      host.userEnvironment.features.gui.x11.enable = true;
     }
   );
 }

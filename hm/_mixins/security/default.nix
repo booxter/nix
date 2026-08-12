@@ -59,6 +59,8 @@ let
   '';
 in
 {
+  imports = [ ./pass ];
+
   config = lib.mkMerge [
     (lib.mkIf useYubiSshIdentity {
       programs.git.settings = {

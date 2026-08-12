@@ -8,6 +8,7 @@
 let
   inherit (osConfig.host) isDarwin isLinux;
   useSecretive = osConfig.host.security.ssh.credentials.backend == "secretive";
+  enabled = osConfig.host.userEnvironment.features.ssh.enable;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =
     if isDarwin then
@@ -23,7 +24,7 @@ in
 {
   imports = [ ./ticket-client.nix ];
 
-  config = {
+  config = lib.mkIf enabled {
     home.sessionVariables = {
       SSH_ASKPASS = lib.getExe sshAskpass;
       SSH_ASKPASS_REQUIRE = "prefer";

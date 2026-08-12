@@ -23,7 +23,7 @@ in
 basePackages
 // {
   inherit (inputs.disko.packages.${system}) disko-install;
-  inherit (import ../hm/_mixins/nv/pkgs { inherit pkgs; }) nico-cli;
+  inherit (import ../hm/_mixins/dev/nvidia/pkgs { inherit pkgs; }) nico-cli;
 
   fleet-tools = fleet.packages.fleet-tools;
 

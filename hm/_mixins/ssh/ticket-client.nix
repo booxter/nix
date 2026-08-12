@@ -66,9 +66,13 @@ let
       (ticketEnsureBlock target)
     ]) enabledTicketTargets
   );
+  enabled =
+    osConfig.host.userEnvironment.features.ssh.enable
+    && osConfig.host.ssh.tickets.enable
+    && issuer != null;
 in
 {
-  config = lib.mkIf (osConfig.host.ssh.tickets.enable && issuer != null) {
+  config = lib.mkIf enabled {
     home.packages = [ ticketPackage ];
 
     home.sessionVariables = {

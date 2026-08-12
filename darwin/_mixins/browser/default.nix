@@ -5,10 +5,11 @@
   ...
 }:
 let
-  cfg = config.host.userEnvironment.features.firefox;
+  appsCfg = config.host.userEnvironment.features.apps;
+  cfg = appsCfg.firefox;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.makeDefault) {
+  config = lib.mkIf (appsCfg.enable && cfg.enable && cfg.makeDefault) {
     environment.systemPackages = with pkgs; [
       defaultbrowser
     ];

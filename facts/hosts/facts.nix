@@ -18,7 +18,6 @@ let
       balloonSize = 48;
       diskSize = 150;
       cores = 24;
-      hmFull = false;
     };
 
   labProxmoxSpec =
@@ -31,7 +30,6 @@ let
       hostKind = "proxmox";
       inherit name;
       realm = "home";
-      hmFull = false;
     };
 in
 {
@@ -65,13 +63,11 @@ in
       hostKind = "proxmox";
       name = "nvws";
       realm = "work";
-      hmFull = false;
     }
     {
       hostKind = "nixos";
       name = "beast";
       realm = "home";
-      hmFull = false;
     }
     (labProxmoxSpec { index = 1; })
     (labProxmoxSpec { index = 2; })
@@ -88,7 +84,6 @@ in
       isVM = true;
       name = "cache";
       realm = "home";
-      hmFull = false;
       cores = 16;
       memorySize = 16;
       diskSize = 50; # actual cache is on NFS
@@ -99,7 +94,6 @@ in
       realm = "home";
       cores = 16;
       memorySize = 32;
-      hmFull = false;
     }
     {
       isVM = true;
@@ -108,7 +102,6 @@ in
       cores = 8;
       memorySize = 16;
       diskSize = 300;
-      hmFull = false;
     }
     {
       isVM = true;
@@ -117,7 +110,6 @@ in
       cores = 2;
       memorySize = 8;
       diskSize = 64;
-      hmFull = false;
     }
     {
       isVM = true;
@@ -126,7 +118,6 @@ in
       cores = 4;
       memorySize = 16;
       diskSize = 80;
-      hmFull = false;
     }
     {
       isVM = true;
@@ -135,7 +126,6 @@ in
       cores = 2;
       memorySize = 4;
       diskSize = 50;
-      hmFull = false;
     }
     {
       isVM = true;
@@ -144,7 +134,6 @@ in
       cores = 4;
       memorySize = 8;
       diskSize = 80;
-      hmFull = false;
     }
   ]
   ++ map builderSpec [

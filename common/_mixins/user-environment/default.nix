@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.host.userEnvironment;
-  emailCfg = cfg.features.email;
+  emailCfg = cfg.features.apps.email;
   emailAccount = cfg.emailAccounts.${emailCfg.account} or null;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.repositories.requests));
   authenticationType = lib.types.enum [
@@ -161,8 +161,6 @@ in
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
-      attentionInbox.enable = lib.mkEnableOption "attention inbox";
-
       containers = {
         enable = lib.mkEnableOption "Podman container development environment";
 
@@ -179,13 +177,51 @@ in
         };
       };
 
-      developerTools = {
+      shell = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the command-line power-user environment.";
+        };
+
+        llm = {
+          enable = lib.mkEnableOption "local LLM tooling";
+
+          ramalama.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to provide RamaLama.";
+          };
+        };
+      };
+
+      net = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide network diagnostic tools.";
+        };
+
+        graphical.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether to provide graphical network diagnostic tools.";
+        };
+      };
+
+      dev = {
         enable = lib.mkEnableOption "development tool suite";
 
-        commandLine.enable = lib.mkOption {
+        cli.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
           description = "Whether to provide command-line development tools.";
+        };
+
+        nix.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide Nix development tools.";
         };
 
         editor.enable = lib.mkOption {
@@ -194,106 +230,144 @@ in
           description = "Whether to provide the development editor environment.";
         };
 
-        tmux.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the tmux development environment.";
-        };
-      };
+        attentionInbox.enable = lib.mkEnableOption "attention inbox";
 
-      localAi = {
-        enable = lib.mkEnableOption "local AI tooling";
+        agents = {
+          codex = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to provide the Codex coding agent.";
+            };
 
-        ramalama.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide RamaLama.";
-        };
-      };
+            usageStatus.enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to provide standard Codex usage status integration.";
+            };
 
-      codex = {
-        enable = lib.mkEnableOption "Codex coding agent";
+            resetCredits.enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to provide the Codex reset-credits utility.";
+            };
 
-        usageStatus.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide standard Codex usage status integration.";
-        };
+            workUsageStatus.enable = lib.mkEnableOption "work Codex usage status integration";
 
-        resetCredits.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the Codex reset-credits utility.";
+            warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
+          };
+
+          opencode.enable = lib.mkEnableOption "OpenCode coding agent";
         };
 
-        workUsageStatus.enable = lib.mkEnableOption "work Codex usage status integration";
-
-        warmer.enable = lib.mkEnableOption "periodic Codex usage-window warmer";
-      };
-
-      email = {
-        enable = lib.mkEnableOption "managed email environment";
-
-        account = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "gmail";
-          description = "Named email account configured on this host.";
-        };
-
-        thunderbird.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to configure the selected account in Thunderbird.";
-        };
-
-        gmailctl.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide gmailctl and keep its OAuth token active.";
-        };
-      };
-
-      firefox = {
-        enable = lib.mkEnableOption "managed Firefox browser";
-
-        makeDefault = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to make Firefox the default browser where supported.";
-        };
-      };
-
-      homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
-
-      microsoftTeams.enable = lib.mkEnableOption "Microsoft Teams desktop workflow";
-
-      nvidiaDevelopment.enable = lib.mkEnableOption "NVIDIA development environment";
-
-      passwordStore.enable = lib.mkEnableOption "password-store environment";
-
-      scm = {
-        enable = lib.mkEnableOption "source-control development environment";
-
-        identity = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "personal";
-          description = "Named identity used by source-control tools.";
-        };
-
-        sendEmail = {
+        scm = {
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Whether to configure Git send-email.";
+            description = "Whether to provide the source-control development environment.";
           };
 
-          transport = lib.mkOption {
+          identity = lib.mkOption {
             type = lib.types.nonEmptyStr;
-            default = "gmail";
-            description = "Named SMTP transport used by Git send-email.";
+            default = "personal";
+            description = "Named identity used by source-control tools.";
+          };
+
+          sendEmail = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to configure Git send-email.";
+            };
+
+            transport = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = "gmail";
+              description = "Named SMTP transport used by Git send-email.";
+            };
           };
         };
+
+        nvidia.enable = lib.mkEnableOption "NVIDIA development environment";
       };
+
+      gui = {
+        enable = lib.mkEnableOption "managed graphical desktop environment";
+        x11.enable = lib.mkEnableOption "X11 desktop integration";
+      };
+
+      apps = {
+        enable = lib.mkEnableOption "graphical workstation application suite";
+
+        communication.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide graphical communication clients.";
+        };
+
+        notes.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the graphical notes application.";
+        };
+
+        music.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the managed Spotify client.";
+        };
+
+        chatgpt.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to provide the ChatGPT desktop client where supported.";
+        };
+
+        email = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to provide the managed email environment.";
+          };
+
+          account = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = "gmail";
+            description = "Named email account configured on this host.";
+          };
+
+          thunderbird.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to configure the selected account in Thunderbird.";
+          };
+
+          gmailctl.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to provide gmailctl and keep its OAuth token active.";
+          };
+        };
+
+        firefox = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to provide the managed Firefox browser.";
+          };
+
+          makeDefault = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to make Firefox the default browser where supported.";
+          };
+        };
+
+        homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
+        teams.enable = lib.mkEnableOption "Microsoft Teams desktop workflow";
+      };
+
+      security.pass.enable = lib.mkEnableOption "password-store environment";
 
       ssh.enable = lib.mkEnableOption "SSH client environment";
     };
@@ -364,30 +438,51 @@ in
         };
 
         requests = {
-          gmailctl = lib.optionals (emailCfg.enable && emailCfg.gmailctl.enable) [ "gmailctl" ];
-          passwordStore = lib.optional cfg.features.passwordStore.enable "pass";
+          gmailctl = lib.optionals (cfg.features.apps.enable && emailCfg.enable && emailCfg.gmailctl.enable) [
+            "gmailctl"
+          ];
+          pass = lib.optional cfg.features.security.pass.enable "pass";
         };
       };
 
       features = lib.mkMerge [
         (lib.mkIf cfg.roles.developer.enable {
-          developerTools.enable = lib.mkDefault true;
-          codex.enable = lib.mkDefault true;
-          passwordStore.enable = lib.mkDefault true;
-          scm.enable = lib.mkDefault true;
+          dev.enable = lib.mkDefault true;
+          security.pass.enable = lib.mkDefault true;
           ssh.enable = lib.mkDefault true;
         })
         (lib.mkIf cfg.roles.workstation.enable {
-          email.enable = lib.mkDefault true;
-          firefox.enable = lib.mkDefault true;
+          apps.enable = lib.mkDefault true;
+          gui.enable = lib.mkDefault true;
+          net.graphical.enable = lib.mkDefault true;
         })
         (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
-          homerow.enable = lib.mkDefault true;
+          apps.homerow.enable = lib.mkDefault true;
         })
       ];
     };
 
     assertions = [
+      {
+        assertion = !cfg.features.apps.enable || config.host.isDesktop;
+        message = "The graphical workstation application suite requires a desktop host.";
+      }
+      {
+        assertion = !cfg.features.gui.enable || config.host.isDesktop;
+        message = "The managed graphical desktop environment requires a desktop host.";
+      }
+      {
+        assertion = !cfg.features.gui.x11.enable || cfg.features.gui.enable;
+        message = "X11 desktop integration requires the graphical desktop environment.";
+      }
+      {
+        assertion = !cfg.features.net.graphical.enable || cfg.features.net.enable;
+        message = "Graphical network diagnostic tools require network diagnostics.";
+      }
+      {
+        assertion = !cfg.features.net.graphical.enable || config.host.isDesktop;
+        message = "Graphical network diagnostic tools require a desktop host.";
+      }
       {
         assertion = lib.all (name: builtins.hasAttr name cfg.repositories.catalog) requiredRepositories;
         message = "host.userEnvironment.repositories.requests must name declared repositories";
@@ -401,31 +496,39 @@ in
         message = "host.userEnvironment repository destinations must be safe relative paths";
       }
       {
-        assertion = !emailCfg.enable || emailAccount != null;
-        message = "host.userEnvironment.features.email.account must name a declared email account";
+        assertion = !cfg.features.apps.enable || !emailCfg.enable || emailAccount != null;
+        message = "host.userEnvironment.features.apps.email.account must name a declared email account";
       }
       {
         assertion =
-          !emailCfg.enable || emailAccount == null || builtins.hasAttr emailAccount.identity cfg.identities;
+          !cfg.features.apps.enable
+          || !emailCfg.enable
+          || emailAccount == null
+          || builtins.hasAttr emailAccount.identity cfg.identities;
         message = "selected email account must name a declared identity";
       }
       {
         assertion =
-          !emailCfg.enable
+          !cfg.features.apps.enable
+          || !emailCfg.enable
           || emailAccount == null
           || builtins.hasAttr emailAccount.smtpTransport cfg.smtpTransports;
         message = "selected email account must name a declared SMTP transport";
       }
       {
-        assertion = !cfg.features.scm.enable || builtins.hasAttr cfg.features.scm.identity cfg.identities;
-        message = "host.userEnvironment.features.scm.identity must name a declared identity";
+        assertion =
+          !cfg.features.dev.enable
+          || !cfg.features.dev.scm.enable
+          || builtins.hasAttr cfg.features.dev.scm.identity cfg.identities;
+        message = "host.userEnvironment.features.dev.scm.identity must name a declared identity";
       }
       {
         assertion =
-          !cfg.features.scm.enable
-          || !cfg.features.scm.sendEmail.enable
-          || builtins.hasAttr cfg.features.scm.sendEmail.transport cfg.smtpTransports;
-        message = "host.userEnvironment.features.scm.sendEmail.transport must name a declared SMTP transport";
+          !cfg.features.dev.enable
+          || !cfg.features.dev.scm.enable
+          || !cfg.features.dev.scm.sendEmail.enable
+          || builtins.hasAttr cfg.features.dev.scm.sendEmail.transport cfg.smtpTransports;
+        message = "host.userEnvironment.features.dev.scm.sendEmail.transport must name a declared SMTP transport";
       }
     ];
   };

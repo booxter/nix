@@ -1,43 +1,57 @@
-{ pkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    bind.dnsutils
-    coreutils
-    dig
-    file
-    findutils
-    gawk
-    git
-    gnugrep
-    gnumake
-    gnused
-    gzip
-    htop
-    iftop
-    ipcalc
-    iperf3
-    jq
-    lsof
-    man-pages
-    moreutils
-    ngrep
-    pstree
-    python3
-    rclone
-    ripgrep
-    speedtest-cli
-    sqlite
-    tcpdump
-    tmux
-    tree
-    unzip
-    viddy
-    vim
-    watch
-    yq
-    zip
-    ipmitool
-  ];
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
+  environment.systemPackages =
+    lib.optionals config.host.userEnvironment.features.shell.enable (
+      with pkgs;
+      [
+        coreutils
+        file
+        findutils
+        gawk
+        git
+        gnugrep
+        gnumake
+        gnused
+        gzip
+        htop
+        jq
+        lsof
+        man-pages
+        moreutils
+        pstree
+        python3
+        rclone
+        ripgrep
+        sqlite
+        tmux
+        tree
+        unzip
+        viddy
+        vim
+        watch
+        yq
+        zip
+      ]
+    )
+    ++ lib.optionals config.host.userEnvironment.features.net.enable (
+      with pkgs;
+      [
+        bind.dnsutils
+        dig
+        iftop
+        ipcalc
+        iperf3
+        ipmitool
+        ngrep
+        speedtest-cli
+        tcpdump
+      ]
+    );
 
-  programs.zsh.enable = true;
+  programs.zsh.enable = config.host.userEnvironment.features.shell.enable;
 }

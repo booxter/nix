@@ -6,7 +6,7 @@ in
 {
   options.host.sketchybar.network.enable = lib.mkOption {
     type = lib.types.bool;
-    default = config.host.isDesktop;
+    default = config.host.userEnvironment.features.gui.enable;
     description = "Whether SketchyBar should display LAN/WAN traffic rates.";
   };
 
