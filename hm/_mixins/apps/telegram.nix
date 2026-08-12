@@ -9,5 +9,6 @@
 
   config = lib.mkIf config.host.hm.telegram.enable {
     home.packages = [ pkgs.telegram-desktop ];
+    host.hm.aerospace.workspaces.c.appBundleIds = [ "com.tdesktop.Telegram" ];
   };
 }

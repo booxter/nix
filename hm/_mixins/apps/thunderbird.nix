@@ -46,6 +46,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    host.hm.aerospace.workspaces.e.appBundleIds = [ "org.nixos.thunderbird" ];
+
     programs.thunderbird = {
       enable = true;
       profiles.default = {

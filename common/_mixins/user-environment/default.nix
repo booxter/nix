@@ -201,7 +201,6 @@ in
         };
 
         homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
-        teams.enable = lib.mkEnableOption "Microsoft Teams desktop workflow";
       };
 
       security.pass.enable = lib.mkEnableOption "password-store environment";

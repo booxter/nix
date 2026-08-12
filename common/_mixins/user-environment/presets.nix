@@ -77,10 +77,7 @@ let
       };
       roles.developer.hm.docker.enable = true;
       roles.workstation = {
-        features = {
-          apps.homerow.enable = false;
-          apps.teams.enable = true;
-        };
+        features.apps.homerow.enable = false;
         hm = {
           matrix.enable = true;
           obsidian.enable = true;
@@ -89,6 +86,7 @@ let
             enable = true;
             spicetify.enable = true;
           };
+          teams.enable = true;
           telegram.enable = true;
           thunderbird = {
             enable = true;

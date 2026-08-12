@@ -13,11 +13,9 @@ let
   codexCfg = devCfg.agents.codex;
   codexEnabled = devCfg.enable && config.host.hm.dev.codex.enable;
   desktopEnvironmentEnabled = osConfig.host.userEnvironment.features.gui.enable;
-  appsCfg = osConfig.host.userEnvironment.features.apps;
-  microsoftTeamsEnabled = appsCfg.enable && appsCfg.teams.enable;
   attentionInboxPackage = pkgs.callPackage ../../dev/attention-inbox/pkgs { };
   codexPkgs = import ../../dev/agents/codex/pkgs { inherit pkgs; };
-  workspaceNames = import ../aerospace/workspaces.nix { inherit lib microsoftTeamsEnabled; };
+  workspaceNames = config.host.hm.aerospace.workspaceNames;
   inherit (config.lib.stylix) colors;
   sketchybarColors = {
     background = "0xff${colors.base00}";

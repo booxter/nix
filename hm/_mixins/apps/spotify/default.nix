@@ -10,10 +10,17 @@ in
     spicetify.enable = lib.mkEnableOption "Spicetify customization";
   };
 
-  config.assertions = [
+  config = lib.mkMerge [
     {
-      assertion = !cfg.spicetify.enable || cfg.enable;
-      message = "host.hm.spotify.spicetify requires host.hm.spotify";
+      assertions = [
+        {
+          assertion = !cfg.spicetify.enable || cfg.enable;
+          message = "host.hm.spotify.spicetify requires host.hm.spotify";
+        }
+      ];
     }
+    (lib.mkIf cfg.enable {
+      host.hm.aerospace.workspaces.s.appBundleIds = [ "com.spotify.client" ];
+    })
   ];
 }
