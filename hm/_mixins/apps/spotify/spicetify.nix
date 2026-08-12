@@ -11,7 +11,7 @@ let
   # The addToQueueTop source was renamed before spicetify-nix caught up.
   priorityQueue = spicePkgs.extensions.addToQueueTop // {
     name = "priority-queue.js";
-    src = "${builtins.dirOf spicePkgs.extensions.addToQueueTop.src}/priority-queue";
+    src = "${dirOf spicePkgs.extensions.addToQueueTop.src}/priority-queue";
   };
 in
 {
