@@ -63,7 +63,6 @@ let
         dev.attentionInbox.enable = true;
         dev.agents.codex = {
           usageStatus.enable = false;
-          resetCredits.enable = false;
           workUsageStatus.enable = true;
         };
         dev.nvidia.enable = true;

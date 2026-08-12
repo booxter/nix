@@ -95,9 +95,6 @@ in
 
   home.packages =
     lib.optionals (devCfg.enable && codexCfg.enable && hasOauthHttpMcp) [ codexPkgs.codex-mcp-init ]
-    ++ lib.optionals (devCfg.enable && codexCfg.enable && codexCfg.resetCredits.enable) [
-      codexPkgs.codex-rate-limit-reset-credits
-    ]
     ++ lib.optionals (devCfg.enable && codexCfg.enable && codexCfg.workUsageStatus.enable) [
       codexPkgs.codex-work-usage-status
     ];
