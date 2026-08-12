@@ -1,16 +1,16 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   ...
 }:
 let
   oidcCfg = config.host.proxmox.oidc;
-  realmProxmox = facts.realms.${config.host.realm}.services.proxmox or null;
 in
 {
   options.host.proxmox = {
+    controller.enable = lib.mkEnableOption "cluster-wide Proxmox integrations";
+
     cluster = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "default";
@@ -67,12 +67,6 @@ in
 
     oidc = {
       enable = lib.mkEnableOption "Kanidm OpenID Connect realm for Proxmox VE";
-
-      managerHost = lib.mkOption {
-        type = lib.types.str;
-        default = if realmProxmox == null then "" else realmProxmox.oidcManagerHost;
-        description = "Proxmox node that declaratively manages the cluster-wide OIDC realm.";
-      };
 
       realm = lib.mkOption {
         type = lib.types.str;

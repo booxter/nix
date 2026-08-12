@@ -1,7 +1,6 @@
 {
   config,
   facts,
-  hostSpec,
   lib,
   pkgs,
   utils,
@@ -9,18 +8,15 @@
 }:
 let
   cfg = config.host.proxmox.oidc;
-  realmProxmox = facts.realms.${config.host.realm}.services.proxmox or null;
   oidcScopes = config.host.sso.oidc.baseScopes;
   oidcMappedAdminGroup = "${cfg.allowedGroup}-${cfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  proxmoxLabHostSpecs = builtins.filter (
-    spec:
-    (spec.hostKind or null) == "proxmox"
-    && (facts.realms.${spec.realm}.services.proxmox or null) != null
-  ) (builtins.attrValues facts.hosts.nixos);
+  proxmoxLabHostSpecs = builtins.filter (spec: (spec.hostKind or null) == "proxmox") (
+    builtins.attrValues facts.hosts.nixos
+  );
   proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxLabHostSpecs);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
@@ -59,7 +55,7 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.isProxmox && realmProxmox != null && hostSpec.name == cfg.managerHost
+        config.host.isProxmox && config.host.proxmox.controller.enable
       );
     }
     (lib.mkIf cfg.enable {

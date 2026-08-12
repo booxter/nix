@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   ...
@@ -10,7 +9,6 @@ let
   apiCertificateCfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
   oidcCfg = config.host.proxmox.oidc;
-  realmProxmox = facts.realms.${config.host.realm}.services.proxmox or null;
   model = import ./model.nix {
     inherit
       config
@@ -18,6 +16,8 @@ let
       outputs
       ;
   };
+  clusterControllers =
+    model.controllersByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
 in
 {
   config.assertions = [
@@ -26,8 +26,12 @@ in
       message = "host.isProxmox requires host.network.primaryInterface";
     }
     {
-      assertion = (!apiCertificateCfg.enable && !oidcCfg.enable) || realmProxmox != null;
-      message = "realm '${config.host.realm}' does not define managed Proxmox services";
+      assertion = !config.host.proxmox.controller.enable || config.host.isProxmox;
+      message = "host.proxmox.controller requires host.isProxmox";
+    }
+    {
+      assertion = !config.host.isProxmox || builtins.length clusterControllers == 1;
+      message = "Proxmox cluster '${config.host.proxmox.cluster}' in realm '${config.host.realm}' requires exactly one controller";
     }
     {
       assertion = !apiCertificateCfg.enable || config.services.proxmox-ve.enable;

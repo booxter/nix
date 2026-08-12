@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   utils,
@@ -9,7 +8,6 @@
 let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
-  realmProxmox = facts.realms.${config.host.realm}.services.proxmox or null;
   certInstallUnit = "proxmox-api-certificate.service";
   pkiRootCaPath = config.host.pki.rootCaCertificate;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
@@ -29,7 +27,7 @@ in
 {
   config = lib.mkMerge [
     {
-      host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && realmProxmox != null);
+      host.proxmox.apiCertificate.enable = lib.mkDefault config.host.isProxmox;
     }
     (lib.mkIf cfg.enable {
       host.pki.managedCertificates = [

@@ -19,6 +19,7 @@
     };
   };
   host.proxmox.apiCertificate.serverName = "proxmox.${config.host.network.lanDomain}";
+  host.proxmox.controller.enable = true;
   host.ups = {
     server = {
       enable = true;

@@ -26,10 +26,7 @@ in
         (sshPublicKey "yubikey")
       ];
     };
-    services = {
-      proxmox.oidcManagerHost = "prx1-lab";
-      ups.credentialMode = "sops";
-    };
+    services.ups.credentialMode = "sops";
   };
 
   work = {

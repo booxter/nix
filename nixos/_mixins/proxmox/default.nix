@@ -3,6 +3,7 @@
   imports = [
     ./api-certificate.nix
     ./assertions.nix
+    ./controller.nix
     ./guest.nix
     ./node.nix
     ./oidc.nix

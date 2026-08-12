@@ -7,6 +7,7 @@ let
   hostName = config.networking.hostName;
   hostView = hostConfig: {
     cluster = hostConfig.host.proxmox.cluster;
+    controller = hostConfig.host.proxmox.controller.enable;
     isGuest = hostConfig.host.isVM;
     isNode = hostConfig.host.isProxmox;
     realm = hostConfig.host.realm;
