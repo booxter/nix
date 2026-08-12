@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 from importlib import import_module
+from pathlib import Path
 from typing import Any
 
-from paperless_bootstrap.bootstrap import Repository, UserSpec, reconcile
+from paperless_bootstrap.bootstrap import Error, Repository, UserSpec, load_spec, reconcile
 
 
 class DjangoRepository(Repository):
@@ -30,11 +31,12 @@ class DjangoRepository(Repository):
         self.group_model.objects.get_or_create(name=name)
 
     def reconcile_user(self, spec: UserSpec, password: str) -> None:
-        desired = {
-            "email": spec.email,
+        desired: dict[str, object] = {
             "is_staff": spec.is_staff,
             "is_superuser": spec.is_superuser,
         }
+        if spec.email:
+            desired["email"] = spec.email
         user, _ = self.user_model.objects.get_or_create(
             username=spec.username,
             defaults=desired,
@@ -79,4 +81,8 @@ class DjangoRepository(Repository):
 
 
 def main() -> None:
-    reconcile(DjangoRepository(), os.environ)
+    try:
+        config_path = os.environ["PAPERLESS_BOOTSTRAP_CONFIG"]
+    except KeyError as error:
+        raise Error("PAPERLESS_BOOTSTRAP_CONFIG is not set") from error
+    reconcile(DjangoRepository(), load_spec(Path(config_path)))

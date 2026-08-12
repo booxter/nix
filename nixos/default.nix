@@ -38,6 +38,7 @@
       ./_mixins/nix
       ./_mixins/observability
       ./_mixins/ollama
+      ./_mixins/paperless
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/security

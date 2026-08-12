@@ -30,8 +30,18 @@ in
 
   imports = [
     ./degoog.nix
-    ./paperless.nix
   ];
+
+  host.paperless = {
+    enable = true;
+    storage.provider = "beast";
+    gpt = {
+      enable = true;
+      ollama.providerHost = "frame";
+      textModel = "granite4:32b-a9b-h";
+      visionModel = "qwen3-vl:8b-instruct";
+    };
+  };
 
   host.vikunja.enable = true;
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from collections.abc import Iterator
@@ -11,9 +12,9 @@ from paperless_bootstrap.bootstrap import (
     Error,
     Repository,
     UserSpec,
+    load_spec,
     read_secret,
     reconcile,
-    required_path,
 )
 from paperless_bootstrap.django import DjangoRepository, main
 
@@ -50,34 +51,66 @@ def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
     yield
 
 
+def write_config(
+    path: Path,
+    admin_password: Path,
+    user_password: Path,
+    token: Path,
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "groups": ["paperless-admins", "paperless-users"],
+                "users": [
+                    {
+                        "username": "administrator",
+                        "email": "administrator@example.test",
+                        "passwordFile": str(admin_password),
+                        "isStaff": True,
+                        "isSuperuser": True,
+                    },
+                    {
+                        "username": "reader",
+                        "email": "",
+                        "passwordFile": str(user_password),
+                        "isStaff": False,
+                        "isSuperuser": False,
+                    },
+                ],
+                "token": {"owner": "administrator", "file": str(token)},
+            }
+        )
+    )
+
+
 def paperless_state() -> dict[str, object]:
     from allauth.account.models import EmailAddress
     from django.contrib.auth import get_user_model
     from django.contrib.auth.models import Group
     from rest_framework.authtoken.models import Token
 
-    user_model = get_user_model()
     users = {
         user.username: {
             "email": user.email,
             "is_staff": user.is_staff,
             "is_superuser": user.is_superuser,
             "password": user.check_password("new-admin")
-            if user.username == "ihar"
-            else user.check_password("kasia-pass"),
+            if user.username == "administrator"
+            else user.check_password("reader-pass"),
         }
-        for user in user_model.objects.filter(username__in=["ihar", "kasia"])
+        for user in get_user_model().objects.filter(username__in=["administrator", "reader"])
     }
-    emails = list(
-        EmailAddress.objects.filter(user__username="ihar")
-        .order_by("email")
-        .values("email", "verified", "primary")
-    )
     return {
         "groups": sorted(Group.objects.values_list("name", flat=True)),
         "users": users,
-        "emails": emails,
-        "tokens": list(Token.objects.filter(user__username="ihar").values_list("key", flat=True)),
+        "emails": list(
+            EmailAddress.objects.filter(user__username="administrator")
+            .order_by("email")
+            .values("email", "verified", "primary")
+        ),
+        "tokens": list(
+            Token.objects.filter(user__username="administrator").values_list("key", flat=True)
+        ),
     }
 
 
@@ -90,38 +123,31 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     from django.contrib.auth import get_user_model
 
     admin_password = tmp_path / "admin-password"
-    kasia_password = tmp_path / "kasia-password"
+    user_password = tmp_path / "user-password"
     token = tmp_path / "token"
+    config = tmp_path / "config.json"
     admin_password.write_text("old-admin\n")
-    kasia_password.write_text("kasia-pass\n")
+    user_password.write_text("reader-pass\n")
     token.write_text("a" * 40 + "\n")
-    bootstrap_environment = {
-        "PAPERLESS_IHAR_PASSWORD_FILE": str(admin_password),
-        "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia_password),
-        "PAPERLESS_GPT_API_TOKEN_FILE": str(token),
-    }
+    write_config(config, admin_password, user_password, token)
 
-    reconcile(DjangoRepository(), bootstrap_environment)
+    reconcile(DjangoRepository(), load_spec(config))
 
-    user = get_user_model().objects.get(username="ihar")
+    user = get_user_model().objects.get(username="administrator")
     user.email = "wrong@example.invalid"
     user.is_staff = False
     user.is_superuser = False
     user.save()
-    address = EmailAddress.objects.get(user=user, email="ihar.hrachyshka@gmail.com")
+    address = EmailAddress.objects.get(user=user, email="administrator@example.test")
     address.verified = False
     address.primary = False
     address.save()
-    EmailAddress.objects.create(
-        user=user,
-        email="other@example.invalid",
-        verified=True,
-        primary=True,
-    )
+    sso_user = get_user_model().objects.get(username="reader")
+    sso_user.email = "reader@example.test"
+    sso_user.save()
     admin_password.write_text("new-admin\n")
     token.write_text("b" * 40 + "\n")
-    for name, value in bootstrap_environment.items():
-        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("PAPERLESS_BOOTSTRAP_CONFIG", str(config))
 
     main()
     main()
@@ -129,31 +155,20 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     assert paperless_state() == {
         "groups": ["paperless-admins", "paperless-users"],
         "users": {
-            "ihar": {
-                "email": "ihar.hrachyshka@gmail.com",
+            "administrator": {
+                "email": "administrator@example.test",
                 "is_staff": True,
                 "is_superuser": True,
                 "password": True,
             },
-            "kasia": {
-                "email": "",
+            "reader": {
+                "email": "reader@example.test",
                 "is_staff": False,
                 "is_superuser": False,
                 "password": True,
             },
         },
-        "emails": [
-            {
-                "email": "ihar.hrachyshka@gmail.com",
-                "verified": True,
-                "primary": True,
-            },
-            {
-                "email": "other@example.invalid",
-                "verified": True,
-                "primary": False,
-            },
-        ],
+        "emails": [{"email": "administrator@example.test", "verified": True, "primary": True}],
         "tokens": ["b" * 40],
     }
 
@@ -174,46 +189,42 @@ class UntouchedRepository(Repository):
 
 def test_invalid_token_fails_before_mutating_paperless(tmp_path: Path) -> None:
     admin = tmp_path / "admin"
-    kasia = tmp_path / "kasia"
+    user = tmp_path / "user"
     token = tmp_path / "token"
+    config = tmp_path / "config.json"
     admin.write_text("admin")
-    kasia.write_text("kasia")
+    user.write_text("user")
     token.write_text("short")
+    write_config(config, admin, user, token)
 
     with pytest.raises(Error, match="40-character"):
-        reconcile(
-            UntouchedRepository(),
-            {
-                "PAPERLESS_IHAR_PASSWORD_FILE": str(admin),
-                "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia),
-                "PAPERLESS_GPT_API_TOKEN_FILE": str(token),
-            },
-        )
+        reconcile(UntouchedRepository(), load_spec(config))
 
 
 @pytest.mark.parametrize("contents", ["", "\n\r"])
 def test_empty_secret_is_rejected(tmp_path: Path, contents: str) -> None:
     path = tmp_path / "empty"
     path.write_text(contents)
-
     with pytest.raises(Error, match="empty"):
         read_secret(path)
 
 
-def test_missing_secret_file_is_reported_without_contents(tmp_path: Path) -> None:
-    path = tmp_path / "missing"
+def test_invalid_configuration_is_rejected(tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text('{"groups": [], "users": [], "token": {}}')
+    with pytest.raises(Error, match="users"):
+        load_spec(config)
 
-    with pytest.raises(Error, match=str(path)):
-        read_secret(path)
 
-
-@pytest.mark.parametrize(
-    ("environment", "message"),
-    [({}, "missing"), ({"SECRET": "relative"}, "absolute")],
-)
-def test_secret_paths_are_required_and_absolute(
-    environment: dict[str, str],
-    message: str,
-) -> None:
-    with pytest.raises(Error, match=message):
-        required_path(environment, "SECRET")
+def test_token_owner_must_be_a_declared_user(tmp_path: Path) -> None:
+    password = tmp_path / "password"
+    token = tmp_path / "token"
+    config = tmp_path / "config.json"
+    password.write_text("password")
+    token.write_text("a" * 40)
+    write_config(config, password, password, token)
+    document = json.loads(config.read_text())
+    document["token"]["owner"] = "missing"
+    config.write_text(json.dumps(document))
+    with pytest.raises(Error, match="token owner"):
+        load_spec(config)
