@@ -1,8 +1,4 @@
 { osConfig, ... }:
-let
-  inherit (osConfig.host) isDarwin;
-  username = osConfig.host.username;
-in
 {
   imports = [
     ./_mixins/apps
@@ -16,10 +12,5 @@ in
     ./_mixins/ssh
   ];
 
-  home = {
-    inherit username;
-    homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
-  };
-
-  targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
+  targets.darwin.copyApps.enable = osConfig.host.isDarwin; # populate apps dir for Spotlight
 }
