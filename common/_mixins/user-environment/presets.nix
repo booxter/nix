@@ -6,6 +6,7 @@ let
       roles.developer = {
         features = {
           codex.warmer.enable = true;
+          containers.enable = true;
           localAi.enable = true;
           scm = {
             identity = "personal";
@@ -15,15 +16,17 @@ let
         repositories.requests.preset = [ "dotfiles" ];
       };
       roles.workstation.features = {
+        containers = {
+          enable = true;
+          desktop.enable = true;
+        };
         email = {
           account = "gmail";
           gmailctl.enable = true;
         };
-        podmanDesktop.enable = true;
       };
     };
     nvidia = {
-      defaults.features.podmanMachine.enable = false;
       roles.developer.features = {
         attentionInbox.enable = true;
         codex = {

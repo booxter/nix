@@ -7,6 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin;
+  containersCfg = osConfig.host.userEnvironment.features.containers;
   podmanMachine = config.programs.podman-machine;
   podmanPackage = if isDarwin then podmanMachine.package else pkgs.podman;
   podmanSocket =
@@ -24,7 +25,9 @@ in
 {
   home = {
     # programs.podman-machine owns the package when it manages a Darwin VM.
-    packages = lib.optionals (!(isDarwin && podmanMachine.enable)) [ podmanPackage ];
+    packages =
+      lib.optionals (!(isDarwin && podmanMachine.enable)) [ podmanPackage ]
+      ++ lib.optional containersCfg.desktop.enable pkgs.podman-desktop;
 
     sessionVariables = {
       DOCKER_HOST = podmanSocket;

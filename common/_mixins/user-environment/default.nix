@@ -163,6 +163,22 @@ in
     features = {
       attentionInbox.enable = lib.mkEnableOption "attention inbox";
 
+      containers = {
+        enable = lib.mkEnableOption "Podman container development environment";
+
+        machine.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to manage a Podman virtual machine on Darwin.";
+        };
+
+        desktop.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether to provide Podman Desktop.";
+        };
+      };
+
       developerTools = {
         enable = lib.mkEnableOption "development tool suite";
 
@@ -254,10 +270,6 @@ in
       nvidiaDevelopment.enable = lib.mkEnableOption "NVIDIA development environment";
 
       passwordStore.enable = lib.mkEnableOption "password-store environment";
-
-      podmanDesktop.enable = lib.mkEnableOption "Podman Desktop application";
-
-      podmanMachine.enable = lib.mkEnableOption "managed Podman virtual machine";
 
       scm = {
         enable = lib.mkEnableOption "source-control development environment";
@@ -371,9 +383,6 @@ in
         })
         (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
           homerow.enable = lib.mkDefault true;
-        })
-        (lib.mkIf (cfg.roles.developer.enable && config.host.isDarwin) {
-          podmanMachine.enable = lib.mkDefault true;
         })
       ];
     };

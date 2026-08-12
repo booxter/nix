@@ -7,11 +7,11 @@
 }:
 let
   inherit (osConfig.host) isDarwin isDesktop;
+  containersCfg = osConfig.host.userEnvironment.features.containers;
   developerToolsCfg = osConfig.host.userEnvironment.features.developerTools;
   firefoxCfg = osConfig.host.userEnvironment.features.firefox;
   localAiCfg = osConfig.host.userEnvironment.features.localAi;
   nvidiaDevelopmentCfg = osConfig.host.userEnvironment.features.nvidiaDevelopment;
-  podmanDesktopCfg = osConfig.host.userEnvironment.features.podmanDesktop;
   sshCfg = osConfig.host.userEnvironment.features.ssh;
   hmFull = hostSpec.hmFull or true;
   username = osConfig.host.username;
@@ -32,9 +32,11 @@ in
   ++ lib.optionals hmFull [
     ./_mixins/remote-control
     ./_mixins/agents
-    ./_mixins/podman
     ./_mixins/scm
     ./_mixins/security
+  ]
+  ++ lib.optionals containersCfg.enable [
+    ./_mixins/podman
   ]
   ++ lib.optionals (hmFull && developerToolsCfg.enable && developerToolsCfg.editor.enable) [
     ./_mixins/nixvim
@@ -78,7 +80,7 @@ in
 
   programs.home-manager.enable = true; # let it manage itself
   programs.podman-machine = {
-    enable = osConfig.host.userEnvironment.features.podmanMachine.enable;
+    enable = containersCfg.enable && containersCfg.machine.enable && isDarwin;
     provider = "libkrun";
     cpus = 4;
     memoryMiB = 8192;
@@ -97,7 +99,6 @@ in
       telegram-desktop
       wireshark
     ]
-    ++ lib.optional podmanDesktopCfg.enable podman-desktop
     ++ lib.optionals (localAiCfg.enable && localAiCfg.ramalama.enable) [
       ramalama
     ];
