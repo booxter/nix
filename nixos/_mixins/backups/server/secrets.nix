@@ -4,13 +4,14 @@
   ...
 }:
 let
-  cfg = config.host.backups.server;
-  cloudGroup = "restic-cloud";
-  enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.repositories;
-  credentialsEnabled = lib.any (client: client.cloud.backend != "local") (
-    builtins.attrValues enabledCloudClients
-  );
-  offloadUser = name: if name == cfg.localClient then cloudGroup else "restic-${name}-offload";
+  model = import ./model.nix { inherit config lib; };
+  inherit (model)
+    cfg
+    cloudGroup
+    credentialedOffloads
+    enabledOffloads
+    offloadUser
+    ;
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   applicationKeySecret = "backup/restic/cloud/b2/applicationKey";
@@ -36,9 +37,9 @@ in
               mode = "0400";
             };
           }
-        ]) (builtins.attrNames enabledCloudClients)
+        ]) (builtins.attrNames enabledOffloads)
       )
-      // lib.optionalAttrs credentialsEnabled {
+      // lib.optionalAttrs (credentialedOffloads != { }) {
         ${applicationKeyIdSecret} = {
           group = cloudGroup;
           mode = "0440";
