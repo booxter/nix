@@ -182,7 +182,7 @@ in
 
         url = lib.mkOption {
           type = lib.types.str;
-          default = "https://${config.networking.hostName}:${toString cfg.authority.api.port}";
+          default = "https://${config.networking.hostName}.${config.host.network.lanDomain}:${toString cfg.authority.api.port}";
           readOnly = true;
           internal = true;
           description = "Resolved certificate authority API URL.";

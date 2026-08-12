@@ -72,6 +72,17 @@ in
   };
 
   config = lib.mkIf enabled {
+    host.dashboard.entries.pki-root-ca = {
+      enable = true;
+      title = "PKI Root CA";
+      icon = "sh:smallstep";
+      section = "infrastructure";
+      endpoints.internal = {
+        url = "${cfg.api.url}${cfg.api.rootsPath}";
+        checkUrl = "${cfg.api.url}${cfg.api.rootsPath}";
+      };
+    };
+
     host.backups.sources.step-ca.paths = [ stateDir ];
 
     host.observability = {
