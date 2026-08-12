@@ -6,6 +6,7 @@
     ./loki
     ./node-exporter.nix
     ./prometheus-endpoints.nix
+    ./prometheus/server.nix
     ./systemd-expectations.nix
     ./unifi
   ];

@@ -15,12 +15,12 @@
 
   imports = [
     ./grafana
-    ./prometheus.nix
     ./monitoring
   ];
 
   host.observability = {
     loki.server.enable = true;
+    prometheus.server.enable = true;
     unifi.enable = true;
     nodeExporter = {
       listenAddress = "127.0.0.1";
