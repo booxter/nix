@@ -10,6 +10,5 @@
     ./nix
     ./nvidia
     ./scm
-    ./scm/push-disabled.nix
   ];
 }
