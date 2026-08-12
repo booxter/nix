@@ -1,6 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.host.userEnvironment;
+  hmUsers = config.home-manager.users.${config.host.username}.host.hm.user;
   emailCfg = cfg.features.apps.email;
   emailAccount = cfg.emailAccounts.${emailCfg.account} or null;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.repositories.requests));
@@ -8,19 +9,6 @@ let
     "oauth2"
     "password"
   ];
-  identityType = lib.types.submodule {
-    options = {
-      fullName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Full name associated with the identity.";
-      };
-
-      email = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Email address associated with the identity.";
-      };
-    };
-  };
   smtpTransportType = lib.types.submodule {
     options = {
       server = lib.mkOption {
@@ -117,12 +105,6 @@ in
   imports = [ ./presets.nix ];
 
   options.host.userEnvironment = {
-    identities = lib.mkOption {
-      type = lib.types.attrsOf identityType;
-      default = { };
-      description = "Named user identities available to user-environment features.";
-    };
-
     smtpTransports = lib.mkOption {
       type = lib.types.attrsOf smtpTransportType;
       default = { };
@@ -358,17 +340,6 @@ in
 
   config = {
     host.userEnvironment = {
-      identities = {
-        personal = {
-          fullName = "Ihar Hrachyshka";
-          email = "ihar.hrachyshka@gmail.com";
-        };
-        nvidia = {
-          fullName = "Ihar Hrachyshka";
-          email = "${config.host.username}@nvidia.com";
-        };
-      };
-
       smtpTransports = {
         gmail = {
           server = "smtp.gmail.com";
@@ -487,8 +458,8 @@ in
           !cfg.features.apps.enable
           || !emailCfg.enable
           || emailAccount == null
-          || builtins.hasAttr emailAccount.identity cfg.identities;
-        message = "selected email account must name a declared identity";
+          || builtins.hasAttr emailAccount.identity hmUsers;
+        message = "selected email account must name a declared Home Manager user identity";
       }
       {
         assertion =
@@ -502,8 +473,8 @@ in
         assertion =
           !cfg.features.dev.enable
           || !cfg.features.dev.scm.enable
-          || builtins.hasAttr cfg.features.dev.scm.identity cfg.identities;
-        message = "host.userEnvironment.features.dev.scm.identity must name a declared identity";
+          || builtins.hasAttr cfg.features.dev.scm.identity hmUsers;
+        message = "host.userEnvironment.features.dev.scm.identity must name a declared Home Manager user identity";
       }
       {
         assertion =

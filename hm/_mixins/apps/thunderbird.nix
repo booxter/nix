@@ -10,7 +10,7 @@ let
   userEnvironment = osConfig.host.userEnvironment;
   emailCfg = userEnvironment.features.apps.email;
   emailAccount = userEnvironment.emailAccounts.${emailCfg.account};
-  identity = userEnvironment.identities.${emailAccount.identity};
+  identity = config.host.hm.user.${emailAccount.identity};
   smtpTransport = userEnvironment.smtpTransports.${emailAccount.smtpTransport};
   authenticationMethod = {
     oauth2 = 10;

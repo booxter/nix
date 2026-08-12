@@ -11,8 +11,8 @@ let
   userEnvironment = osConfig.host.userEnvironment;
   devCfg = userEnvironment.features.dev;
   scmCfg = devCfg.scm;
-  identity = userEnvironment.identities.${scmCfg.identity};
-  personalIdentity = userEnvironment.identities.personal;
+  identity = config.host.hm.user.${scmCfg.identity};
+  personalIdentity = config.host.hm.user.personal;
   smtpTransport = userEnvironment.smtpTransports.${scmCfg.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
   inherit (identity) email fullName;
