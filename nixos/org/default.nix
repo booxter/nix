@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   ...
 }:
 let
@@ -26,11 +25,44 @@ in
     storageName = "orgvm";
   };
 
-  _module.args.orgPkgs = import ./pkgs pkgs;
-
-  imports = [
-    ./degoog.nix
-  ];
+  host.degoog = {
+    enable = true;
+    engines = [
+      "brave"
+      "brave-images"
+      "brave-news"
+      "duckduckgo"
+      "duckduckgo-images"
+      "duckduckgo-news"
+      "google"
+      "hacker-news"
+      "internet-archive"
+      "openstreetmap"
+      "reddit"
+      "stackexchange"
+      "wikipedia"
+    ];
+    features = [
+      "brave-autocomplete"
+      "definitions"
+      "duckduckgo-bangs"
+      "github-results"
+      "highlight-terms"
+      "local-history"
+      "math"
+      "openstreetmap-results"
+      "reddit-results"
+      "stocks"
+      "time"
+      "tmdb-results"
+      "weather"
+    ];
+    theme = "gruvbox";
+    integrations = {
+      jellyfin.host = "beast";
+      romm.host = "srvarr";
+    };
+  };
 
   host.paperless = {
     enable = true;

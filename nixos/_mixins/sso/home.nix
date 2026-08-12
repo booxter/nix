@@ -8,6 +8,10 @@ lib.mkIf (config.host.realm == "home") {
         bootstrapOwner = "ihar";
         bootstrapLanguage = "en";
       };
+      degoog = {
+        adminGroup = "infra-admins";
+        userGroup = "degoog-users";
+      };
       paperless = {
         adminGroup = "paperless-admins";
         userGroup = "paperless-users";

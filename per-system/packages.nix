@@ -18,7 +18,7 @@ let
       pkgs
       ;
   };
-  orgPackages = import ../nixos/org/pkgs pkgs;
+  degoogPackages = import ../nixos/_mixins/degoog/packages.nix { inherit pkgs; };
 in
 basePackages
 // {
@@ -34,14 +34,12 @@ basePackages
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   aurral = pkgs.callPackage ../nixos/_mixins/aurral/package { };
-  inherit (orgPackages)
-    degoog
-    degoog-devinside-extensions
-    degoog-georgvwt-extensions
-    degoog-official-extensions
-    degoog-stackexchange-engine
-    degoog-toolkit-extensions
-    ;
+  inherit (degoogPackages) degoog;
+  degoog-devinside-extensions = degoogPackages.devinsideExtensions;
+  degoog-georgvwt-extensions = degoogPackages.georgvwtExtensions;
+  degoog-official-extensions = degoogPackages.officialExtensions;
+  degoog-stackexchange-engine = degoogPackages.stackexchangeEngine;
+  degoog-toolkit-extensions = degoogPackages.toolkitExtensions;
   ebook-converter-cli = pkgs.callPackage ../nixos/srvarr/pkgs/ebook-converter-cli { };
   houndarr = pkgs.callPackage ../nixos/srvarr/pkgs/houndarr { };
 }
