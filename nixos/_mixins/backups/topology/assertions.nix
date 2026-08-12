@@ -1,39 +1,35 @@
 {
-  duplicateDestinationServers,
-  duplicateRepositoryPaths,
-  invalidB2Root,
+  backups,
+  client,
   lib,
-  localClients,
-  missingPublicKeys,
-  serverEnabled,
-  unknownServers,
+  server,
 }:
 {
   assertions = [
     {
-      assertion = unknownServers == [ ];
-      message = "backup destinations reference unknown or disabled servers: ${lib.concatStringsSep ", " unknownServers}";
+      assertion = client.errors.unknownServers == [ ];
+      message = "backup destinations reference unknown or disabled servers: ${lib.concatStringsSep ", " client.errors.unknownServers}";
     }
     {
-      assertion = missingPublicKeys == [ ];
-      message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " missingPublicKeys}";
+      assertion = client.errors.missingPublicKeys == [ ];
+      message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " client.errors.missingPublicKeys}";
     }
     {
-      assertion = duplicateDestinationServers == [ ];
-      message = "backup client may define only one destination per server: ${lib.concatStringsSep ", " duplicateDestinationServers}";
+      assertion = client.errors.duplicateServers == [ ];
+      message = "backup client may define only one destination per server: ${lib.concatStringsSep ", " client.errors.duplicateServers}";
     }
   ]
-  ++ lib.optionals serverEnabled [
+  ++ lib.optionals backups.server.enable [
     {
-      assertion = duplicateRepositoryPaths == [ ];
-      message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " duplicateRepositoryPaths}";
+      assertion = server.errors.duplicateRepositoryPaths == [ ];
+      message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " server.errors.duplicateRepositoryPaths}";
     }
     {
-      assertion = !invalidB2Root;
+      assertion = !server.errors.invalidB2Root;
       message = "B2 offsite repository root must contain its bucket name";
     }
     {
-      assertion = builtins.length localClients <= 1;
+      assertion = !server.errors.multipleLocalClients;
       message = "backup server may have at most one local client";
     }
   ];

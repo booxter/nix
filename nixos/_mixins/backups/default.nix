@@ -7,7 +7,7 @@
     ./metrics
     ./server
     ./server/secrets.nix
-    ./topology.nix
+    ./topology
   ];
 
 }
