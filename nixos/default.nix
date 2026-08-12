@@ -30,7 +30,7 @@ in
       ./_mixins/desktop
       ./_mixins/external-service.nix
       ./_mixins/hardware
-      ./_mixins/internal-https-service.nix
+      ./_mixins/internal-https-service
       ./_mixins/jellarr
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting

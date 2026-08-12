@@ -1,6 +1,7 @@
 { config, lib, ... }:
 let
-  enabledServices = lib.filterAttrs (_: service: service.enable) config.host.internalHttps.services;
+  model = import ./model.nix { inherit config lib; };
+  inherit (model) enabledServices;
   serviceServerNames =
     service: [ service.serverName ] ++ service.serverAliases ++ service.publicAliases;
   serverNames = builtins.concatMap serviceServerNames (builtins.attrValues enabledServices);
