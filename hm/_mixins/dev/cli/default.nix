@@ -9,7 +9,6 @@ let
   inherit (osConfig.host) isDarwin;
   cfg = osConfig.host.userEnvironment.features.dev;
   podmanCfg = config.host.hm.podman;
-  cliPkgs = import ./pkgs { inherit pkgs; };
   # On macOS, act connects through the forwarded host socket, but job
   # containers need the VM-internal socket with SELinux labeling disabled.
   actPodmanArgs = lib.optionalString isDarwin (
@@ -22,7 +21,6 @@ lib.mkIf (cfg.enable && cfg.cli.enable) {
     act
     delve
     devenv
-    cliPkgs.gh-restart-failed-jobs
     go
     (lima.override { withAdditionalGuestAgents = true; })
     pre-commit
