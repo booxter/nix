@@ -16,7 +16,6 @@ let
     inherit pkgs;
     codex = config.programs.codex.package;
   };
-  modelEffort = "high";
   mcpInstructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
     lib.filter (server: server.instructions != "") (builtins.attrValues osConfig.host.mcp.pool)
   );
@@ -58,10 +57,6 @@ let
     - These rules override generic PR-body conventions from publishing workflows.
   '';
   codexContext = agentContext + mcpInstructions;
-  codingAgentEnv = {
-    inherit (config.home.sessionVariables) SSH_ASKPASS;
-    SSH_ASKPASS_REQUIRE = "force";
-  };
 in
 {
   imports = [ ./codex-warmer.nix ];
@@ -72,7 +67,7 @@ in
 
     settings = {
       model = "gpt-5.6-sol";
-      model_reasoning_effort = modelEffort;
+      model_reasoning_effort = "high";
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
       desktop.keepRemoteControlAwakeWhilePluggedIn = true;
@@ -91,7 +86,10 @@ in
         "current-dir"
         "context-remaining"
       ];
-      shell_environment_policy.set = codingAgentEnv;
+      shell_environment_policy.set = {
+        inherit (config.home.sessionVariables) SSH_ASKPASS;
+        SSH_ASKPASS_REQUIRE = "force";
+      };
     };
   };
 
