@@ -6,7 +6,6 @@
 }:
 let
   cfg = config.host.observability.alertmanager;
-  catalog = import ../../../fana/monitoring/catalog.nix;
   validateAlertmanagerConfig = utils.escapeSystemdExecArgs [
     (lib.getExe' config.services.prometheus.alertmanager.package "amtool")
     "check-config"
@@ -38,7 +37,7 @@ in
       listenAddress = "127.0.0.1";
       port = cfg.port;
       checkConfig = false;
-      configText = builtins.readFile catalog.alertmanager.configFile;
+      configText = builtins.readFile ../policy/alertmanager/alertmanager.yml;
       environmentFile = config.sops.templates."alertmanager.env".path;
     };
 

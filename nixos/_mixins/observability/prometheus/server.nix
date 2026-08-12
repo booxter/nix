@@ -66,7 +66,7 @@ let
       ;
   };
   prometheusRetention = "${toString cfg.retentionDays}d";
-  monitoringPackage = pkgs.callPackage ../../../fana/monitoring/package.nix {
+  monitoringPackage = pkgs.callPackage ../policy/package.nix {
     capacityAlertPolicy = config.host.observability.alerts.capacity;
   };
 in

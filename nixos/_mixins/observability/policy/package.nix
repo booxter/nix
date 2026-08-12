@@ -8,9 +8,12 @@
   stdenvNoCC,
 }:
 let
-  catalog = import ./catalog.nix;
   sharePath = "share/fana-monitoring";
   yaml = formats.yaml { };
+  ruleDirectory = ./prometheus/rules;
+  staticRuleNames = builtins.filter (name: lib.hasSuffix ".rules.yml" name) (
+    builtins.attrNames (builtins.readDir ruleDirectory)
+  );
   generatedRuleDefinitions = {
     "availability.rules.yml" = import ./prometheus/rules/availability.nix {
       inherit lib;
@@ -80,9 +83,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   passthru = {
     prometheusRuleFiles =
       generatedRuleFiles finalAttrs.finalPackage
-      ++ map (
-        file: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${baseNameOf file}"
-      ) catalog.prometheus.ruleFiles;
+      ++ map (name: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${name}") staticRuleNames;
   };
 
   meta.description = "Fana Alertmanager configuration and Prometheus alert rules";
