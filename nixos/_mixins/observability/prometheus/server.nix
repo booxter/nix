@@ -31,7 +31,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  blackboxScrapes = import ./scrapes/blackbox.nix {
+  blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
       facts
@@ -101,6 +101,7 @@ in
         message = "Prometheus expects a single local Alertmanager target.";
       }
     ]
+    ++ blackboxScrapes.assertions
     ++ nodeScrapes.assertions
     ++ endpointScrapes.assertions;
 

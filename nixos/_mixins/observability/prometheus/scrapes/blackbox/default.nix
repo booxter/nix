@@ -7,13 +7,33 @@
   prometheusMtlsTlsConfig,
 }:
 let
-  lan = facts.site.lan;
-  nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
-  fleetServices = import ../../../../_lib/fleet-web-services.nix {
+  networkTargets = import ./network-targets.nix { inherit facts; };
+  inherit (networkTargets)
+    dnsProbeTargets
+    publicDnsProbeTargets
+    wanIcmpProbeTargets
+    wanTcpProbeTargets
+    ;
+  localHost = config.networking.hostName;
+  configurations = outputs.nixosConfigurations // {
+    ${localHost} = { inherit config; };
+  };
+  nixosConfigNames = builtins.attrNames configurations;
+  fleetServices = import ../../../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
-  beastHostConfig = outputs.nixosConfigurations.beast.config;
-  publicWanHost = beastHostConfig.host.externalService.ddns.hostname;
+  ingressConfigurations = lib.filterAttrs (
+    _: configuration:
+    configuration.config.host.realm == config.host.realm
+    && configuration.config.host.web.ingress.enable
+    && configuration.config.host.web.ingress.dynamicDns.enable
+  ) configurations;
+  ingressHosts = builtins.attrValues ingressConfigurations;
+  publicWanHost =
+    if ingressHosts == [ ] then
+      ""
+    else
+      (lib.head ingressHosts).config.host.web.ingress.dynamicDns.hostname;
   publicServiceCatalog = map (contribution: {
     inherit (contribution) id;
     inherit (contribution.value.presentation) title;
@@ -99,54 +119,6 @@ let
       }
     ]
     ++ manualTlsServiceCatalog;
-  dnsProbeTargets = [
-    {
-      resolver = "gateway";
-      resolver_title = "gateway ${lan.gateway.address}";
-      target = "${lan.gateway.address}:53";
-    }
-    {
-      resolver = "google";
-      resolver_title = "Google 8.8.8.8";
-      target = "8.8.8.8:53";
-    }
-  ];
-  publicDnsProbeTargets = [
-    {
-      resolver = "cloudflare";
-      resolver_title = "Cloudflare 1.1.1.1";
-      target = "1.1.1.1:53";
-    }
-    {
-      resolver = "google";
-      resolver_title = "Google 8.8.8.8";
-      target = "8.8.8.8:53";
-    }
-  ];
-  wanIcmpProbeTargets = [
-    {
-      probe = "gateway";
-      probe_title = "Gateway ${lan.gateway.address}";
-      target = lan.gateway.address;
-    }
-    {
-      probe = "cloudflare";
-      probe_title = "Cloudflare 1.1.1.1";
-      target = "1.1.1.1";
-    }
-  ];
-  wanTcpProbeTargets = [
-    {
-      probe = "gateway-dns";
-      probe_title = "Gateway DNS ${lan.gateway.address}:53";
-      target = "${lan.gateway.address}:53";
-    }
-    {
-      probe = "cloudflare-https";
-      probe_title = "Cloudflare 1.1.1.1:443";
-      target = "1.1.1.1:443";
-    }
-  ];
   publicDnsBlackboxModules = builtins.listToAttrs (
     map (service: {
       name = publicDnsModuleNameFor service;
@@ -175,14 +147,12 @@ let
       };
     };
   remoteBlackboxProbeSourceNames = builtins.filter (
-    name:
-    name != "fana"
-    && outputs.nixosConfigurations.${name}.config.host.observability.blackbox.remote.enable
+    name: name != localHost && configurations.${name}.config.host.observability.blackbox.remote.enable
   ) nixosConfigNames;
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
-      hostConfig = outputs.nixosConfigurations.${name}.config;
+      hostConfig = configurations.${name}.config;
       mtlsEndpoint = hostConfig.host.observability.prometheusEndpoints.blackbox;
     in
     {
@@ -318,6 +288,11 @@ in
 {
   inherit usesHttpMtls;
   modules = blackboxModules;
+
+  assertions = lib.optional (publicServiceCatalog != [ ]) {
+    assertion = builtins.length ingressHosts == 1;
+    message = "Public WAN probes require exactly one dynamic-DNS web ingress in the Prometheus realm.";
+  };
 
   scrapeConfigs = [
     (mkServiceHttpScrapeConfig "blackbox-services" serviceCatalog)
