@@ -8,7 +8,6 @@
   ...
 }:
 let
-  hostname = hostSpec.name;
   username = config.host.username;
 in
 (
@@ -78,21 +77,11 @@ in
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
     services.xserver.autoRepeatInterval = 30; # ms between repeats (macOS KeyRepeat=1)
 
-    networking.dhcpcd.extraConfig = ''
-      clientid ${hostname}
-    '';
-    # All current NFS use is v4-only. NixOS enables rpcbind automatically for
-    # NFS filesystems, but rpcbind is only needed for legacy NFSv3/RPC helpers.
-    services.rpcbind.enable = lib.mkOverride 75 false;
-
     # TODO: revisit hw sensor monitoring (sensord or alternative).
 
     environment.systemPackages = with pkgs; [
-      ethtool
-      pciutils
       procps
       psmisc
-      usbutils
     ];
 
   }

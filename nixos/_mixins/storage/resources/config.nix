@@ -89,6 +89,10 @@ in
 {
   config = lib.mkMerge [
     {
+      # All current NFS use is v4-only. NixOS enables rpcbind automatically
+      # for NFS filesystems, but it is only needed by legacy NFSv3 helpers.
+      services.rpcbind.enable = lib.mkOverride 75 false;
+
       host.autoUpgrade.claims.storage.exclusions = lib.mapAttrs (_: claim: {
         hosts = [ claim.provider ];
         minimumGapMinutes = 5;

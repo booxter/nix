@@ -46,12 +46,21 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    systemd.services = builtins.listToAttrs (
-      map (interface: {
-        name = "ethtool-${interface}-disable-pause";
-        value = mkService interface;
-      }) interfaces
-    );
-  };
+  config = lib.mkMerge [
+    {
+      networking.dhcpcd.extraConfig = ''
+        clientid ${config.networking.hostName}
+      '';
+      environment.systemPackages = [ pkgs.ethtool ];
+    }
+
+    (lib.mkIf cfg.enable {
+      systemd.services = builtins.listToAttrs (
+        map (interface: {
+          name = "ethtool-${interface}-disable-pause";
+          value = mkService interface;
+        }) interfaces
+      );
+    })
+  ];
 }

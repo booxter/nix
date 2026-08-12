@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 {
   imports = [
     ./disk-bays.nix
@@ -6,5 +7,10 @@
     ./hba.nix
     ./mdraid.nix
     ./smart.nix
+  ];
+
+  environment.systemPackages = with pkgs; [
+    pciutils
+    usbutils
   ];
 }
