@@ -45,5 +45,5 @@ in
     hostName = hostSpec.name;
   };
 
-  systemd.services = builtins.listToAttrs (builtins.map aliasService aliases);
+  systemd.services = builtins.listToAttrs (map aliasService aliases);
 }
