@@ -56,8 +56,6 @@
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
     services.xserver.autoRepeatInterval = 30; # ms between repeats (macOS KeyRepeat=1)
 
-    # TODO: revisit hw sensor monitoring (sensord or alternative).
-
     environment.systemPackages = with pkgs; [
       procps
       psmisc
