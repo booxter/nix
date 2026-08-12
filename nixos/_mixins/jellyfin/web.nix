@@ -37,6 +37,7 @@ in
         enable = true;
         path = "/web/";
       };
+      observability.importance = "important";
       presentation.dashboard = {
         enable = true;
         category = "user";

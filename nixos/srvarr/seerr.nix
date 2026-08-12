@@ -62,6 +62,7 @@ in
       enable = true;
       path = "/login";
     };
+    observability.importance = "important";
     presentation.dashboard = {
       enable = true;
       category = "user";

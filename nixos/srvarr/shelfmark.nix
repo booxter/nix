@@ -135,6 +135,7 @@ in
       enable = true;
       path = "/api/health";
     };
+    observability.importance = "important";
     presentation.dashboard = {
       enable = true;
       category = "user";
