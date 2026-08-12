@@ -156,11 +156,6 @@ in
           "if" = "test %{app-bundle-id} = com.spotify.client";
           run = [ "move-node-to-workspace s" ];
         }
-        # Jellyfin Desktop on same workspace as Spotify
-        {
-          "if" = "test %{app-bundle-id} = org.jellyfin.JellyfinDesktop";
-          run = [ "move-node-to-workspace s" ];
-        }
         # Email
         {
           "if" = "test %{app-bundle-id} = org.nixos.thunderbird";
