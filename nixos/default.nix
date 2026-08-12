@@ -25,6 +25,7 @@
       ./_mixins/degoog
       ./_mixins/dashboard
       ./_mixins/external-service.nix
+      ./_mixins/glance
       ./_mixins/hardware
       ./_mixins/hm
       ./_mixins/home-assistant
