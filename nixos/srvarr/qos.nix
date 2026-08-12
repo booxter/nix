@@ -81,12 +81,10 @@ in
   };
 
   host.observability.lanWan = {
-    # nft postrouting overcounts the WireGuard transport on this host, so use
-    # the shaped tc class as the authoritative WAN egress counter instead.
-    wanTransmitTcClass = config.host.qos.classIds.wan.wireguard-upload;
-    wanUdpSubclass = {
+    wanEgressOverride = {
       name = "wg";
-      port = wgEndpointPort;
+      udpDestinationPort = wgEndpointPort;
+      tcClass = config.host.qos.classIds.wan.wireguard-upload;
     };
   };
 

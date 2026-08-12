@@ -57,6 +57,15 @@ func Collect(counters CounterSource, classes ClassSource, configuration Config) 
 	if err != nil {
 		return Snapshot{}, fmt.Errorf("read nftables counters: %w", err)
 	}
+	requiredCounters := []string{"lan_in", "wan_in", "lan_out", "wan_out"}
+	if configuration.Subclass != "" {
+		requiredCounters = append(requiredCounters, configuration.Subclass+"_out", "wan_other_out")
+	}
+	for _, name := range requiredCounters {
+		if _, ok := values[name]; !ok {
+			return Snapshot{}, fmt.Errorf("required nftables counter %q is missing", name)
+		}
+	}
 	snapshot := Snapshot{
 		LANReceive:  values["lan_in"],
 		WANReceive:  values["wan_in"],
