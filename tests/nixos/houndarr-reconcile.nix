@@ -3,7 +3,8 @@ let
   arrAddress = "192.168.1.1";
   arrPort = 8686;
   apiKey = "integration-test-api-key";
-  houndarr = pkgs.callPackage ../../nixos/_mixins/houndarr/package { };
+  aiosqlitepool = pkgs.callPackage ../../pkgs/aiosqlitepool { };
+  houndarr = pkgs.callPackage ../../nixos/_mixins/houndarr/package { inherit aiosqlitepool; };
   houndarrTools = pkgs.callPackage ../../nixos/_mixins/houndarr/tools { inherit houndarr; };
   credential = pkgs.writeText "houndarr-test-lidarr.xml" ''
     <Config><ApiKey>${apiKey}</ApiKey></Config>

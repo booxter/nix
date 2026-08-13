@@ -41,5 +41,7 @@ basePackages
   degoog-stackexchange-engine = degoogPackages.stackexchangeEngine;
   degoog-toolkit-extensions = degoogPackages.toolkitExtensions;
   ebook-converter-cli = pkgs.callPackage ../nixos/_mixins/ebook-converter/package/cli { };
-  houndarr = pkgs.callPackage ../nixos/_mixins/houndarr/package { };
+  houndarr = pkgs.callPackage ../nixos/_mixins/houndarr/package {
+    inherit (basePackages) aiosqlitepool;
+  };
 }

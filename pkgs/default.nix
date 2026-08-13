@@ -11,6 +11,8 @@ let
   };
 in
 {
+  aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
+
   debugserver = pkgs.callPackage ./debugserver { };
 
   atomic-file-writes = atomicFileWrites;
