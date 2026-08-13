@@ -30,10 +30,6 @@ let
         type = lib.types.nonEmptyStr;
         description = "Attic cache hosted by this server.";
       };
-      substituter = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Nix substituter URL for this Attic cache.";
-      };
       trustedPublicKey = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "Nix signing public key for this Attic cache.";

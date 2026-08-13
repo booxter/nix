@@ -31,7 +31,6 @@ let
       endpoint
       trustedPublicKey
       ;
-    substituter = "${candidate.server.endpoint}/${candidate.server.cacheName}";
   }) realmCandidates;
 in
 {
