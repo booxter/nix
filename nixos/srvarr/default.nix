@@ -139,8 +139,9 @@ in
     };
   };
 
-  # Preserve the existing database cluster in place. PostgreSQL storage is a
-  # host concern rather than PinePods application state.
+  # TODO: Migrate this existing cluster to PostgreSQL's NixOS-managed default
+  # under /var/lib/postgresql, then remove this override and both tmpfiles
+  # rules. They exist only to preserve the legacy on-disk location safely.
   services.postgresql.dataDir = "/data/.state/nixarr/pinepods/postgresql";
   systemd.tmpfiles.rules = [
     "d /data/.state/nixarr/pinepods 0711 root root - -"
