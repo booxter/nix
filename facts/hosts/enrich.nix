@@ -39,19 +39,8 @@ let
         normalized.localDnsName
       ];
     };
-  darwin = lib.mapAttrs (_: normalizeHostSpec false) raw.darwin;
-  nixosSpecs = map normalizeNixosHostSpec raw.nixos;
-  nixosNames = map (spec: spec.name) nixosSpecs;
-  nixos =
-    assert lib.assertMsg (
-      builtins.length nixosNames == builtins.length (lib.unique nixosNames)
-    ) "NixOS host names must be unique";
-    builtins.listToAttrs (
-      map (spec: {
-        name = spec.name;
-        value = spec;
-      }) nixosSpecs
-    );
+  darwin = lib.mapAttrs (name: spec: normalizeHostSpec false (spec // { inherit name; })) raw.darwin;
+  nixos = lib.mapAttrs (name: spec: normalizeNixosHostSpec (spec // { inherit name; })) raw.nixos;
   hostSpecsByName = darwin // nixos;
   realmNames = lib.unique (map (spec: spec.realm) (builtins.attrValues hostSpecsByName));
 in

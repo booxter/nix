@@ -5,35 +5,36 @@
 let
   inherit (context) frame;
 
-  builderSpec =
-    idx:
-    let
-      idx' = toString idx;
-    in
-    {
-      isVM = true;
-      name = "builder${idx'}";
-      realm = "home";
-      memorySize = 64;
-      balloonSize = 48;
-      diskSize = 150;
-      cores = 24;
-    };
+  builderSpecs =
+    lib.genAttrs
+      (map (idx: "builder${toString idx}") [
+        1
+        2
+        3
+      ])
+      (_: {
+        isVM = true;
+        realm = "home";
+        memorySize = 64;
+        balloonSize = 48;
+        diskSize = 150;
+        cores = 24;
+      });
 
-  labProxmoxSpec =
-    { index }:
-    let
-      index' = toString index;
-      name = "prx${index'}-lab";
-    in
-    {
-      hostKind = "proxmox";
-      inherit name;
-      realm = "home";
-    };
+  labProxmoxSpecs =
+    lib.genAttrs
+      (map (index: "prx${toString index}-lab") [
+        1
+        2
+        3
+      ])
+      (_: {
+        hostKind = "proxmox";
+        realm = "home";
+      });
 in
 {
-  darwin = lib.mapAttrs (name: spec: spec // { inherit name; }) {
+  darwin = {
     mair = {
       realm = "home";
       availability = "intermittent";
@@ -50,94 +51,77 @@ in
     };
   };
 
-  nixos = [
-    {
+  nixos = {
+    ${frame} = {
       hostKind = "nixos";
-      name = frame;
       realm = "home";
       isDesktop = true;
       isOperatorSeat = true;
-    }
-    {
+    };
+    nvws = {
       hostKind = "proxmox";
-      name = "nvws";
       realm = "work";
-    }
-    {
+    };
+    beast = {
       hostKind = "nixos";
-      name = "beast";
       realm = "home";
-    }
-    (labProxmoxSpec { index = 1; })
-    (labProxmoxSpec { index = 2; })
-    (labProxmoxSpec { index = 3; })
-    {
+    };
+    nv = {
       isVM = true;
-      name = "nv";
       realm = "work";
       isOperatorSeat = true;
       cores = 64;
       memorySize = 128;
-    }
-    {
+    };
+    cache = {
       isVM = true;
-      name = "cache";
       realm = "home";
       cores = 16;
       memorySize = 16;
       diskSize = 50; # actual cache is on NFS
-    }
-    {
+    };
+    srvarr = {
       isVM = true;
-      name = "srvarr";
       realm = "home";
       cores = 16;
       memorySize = 32;
-    }
-    {
+    };
+    fana = {
       isVM = true;
-      name = "fana";
       realm = "home";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
-    }
-    {
+    };
+    gw = {
       isVM = true;
-      name = "gw";
       realm = "home";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
-    }
-    {
+    };
+    org = {
       isVM = true;
-      name = "org";
       realm = "home";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
-    }
-    {
+    };
+    pki = {
       isVM = true;
-      name = "pki";
       realm = "home";
       cores = 2;
       memorySize = 4;
       diskSize = 50;
-    }
-    {
+    };
+    home = {
       isVM = true;
-      name = "home";
       realm = "home";
       cores = 4;
       memorySize = 8;
       diskSize = 80;
-    }
-  ]
-  ++ map builderSpec [
-    1
-    2
-    3
-  ];
+    };
+  }
+  // labProxmoxSpecs
+  // builderSpecs;
 }
