@@ -38,6 +38,16 @@ in
     stateDir = "/data/.state/nixarr/bazarr";
   };
 
+  host.houndarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/houndarr";
+    instances = {
+      lidarr.api = "lidarr";
+      radarr.api = "radarr";
+      sonarr.api = "sonarr";
+    };
+  };
+
   host.lidarr = {
     enable = true;
     stateDir = "/data/.state/nixarr/lidarr";
@@ -74,7 +84,6 @@ in
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
-    ./houndarr.nix
     ./pinepods.nix
     ./romm.nix
     ./sabnzbd.nix
