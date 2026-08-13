@@ -21,6 +21,7 @@
       ./_mixins/audiobookshelf
       ./_mixins/aurral
       ./_mixins/backups
+      ./_mixins/bazarr
       ./_mixins/builder.nix
       ./_mixins/desktop
       ./_mixins/degoog
@@ -37,6 +38,7 @@
       ./_mixins/jellarr
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
+      ./_mixins/lidarr
       ./_mixins/lolek
       ./_mixins/luks
       ./_mixins/mailer
@@ -50,7 +52,9 @@
       ./_mixins/pinepods
       ./_mixins/pki
       ./_mixins/proxmox
+      ./_mixins/prowlarr
       ./_mixins/qos
+      ./_mixins/radarr
       ./_mixins/romm
       ./_mixins/sabnzbd
       ./_mixins/security
@@ -61,6 +65,7 @@
       ./_mixins/storage
       ./_mixins/transmission
       ./_mixins/site-ip
+      ./_mixins/sonarr
       ./_mixins/ups
       ./_mixins/user
       ./_mixins/vikunja
