@@ -139,9 +139,7 @@ assert lib.assertMsg (unknownSplitDnsServices == [ ]) (
     servicesByHost
     ;
   public = publicContributions;
-  dashboard = builtins.filter (
-    contribution: contribution.value.presentation.dashboard.enable
-  ) contributions;
+  dashboard = builtins.filter (contribution: contribution.value.dashboard.enable) contributions;
   frontendProbes = builtins.filter (
     contribution: contribution.value.health.frontend.enable
   ) contributions;

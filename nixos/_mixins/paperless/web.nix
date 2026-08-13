@@ -34,13 +34,11 @@ in
         enable = true;
         path = "/accounts/login/";
       };
-      presentation = {
-        title = "Paperless";
+      displayName = "Paperless";
+      dashboard = {
+        enable = true;
         icon = "sh:paperless-ngx";
-        dashboard = {
-          enable = true;
-          section = "infrastructure";
-        };
+        section = "infrastructure";
       };
       internal = {
         recommendedProxySettings = false;
@@ -76,13 +74,11 @@ in
           path = "/api/version";
         };
       };
-      presentation = {
-        title = "Paperless GPT";
+      displayName = "Paperless GPT";
+      dashboard = {
+        enable = true;
         icon = "sh:paperless-ngx";
-        dashboard = {
-          enable = true;
-          section = "infrastructure";
-        };
+        section = "infrastructure";
       };
       auth = lib.mkIf (ssoApplication != null) {
         mode = "oauth2-proxy";

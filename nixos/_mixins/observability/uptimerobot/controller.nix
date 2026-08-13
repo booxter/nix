@@ -20,13 +20,13 @@ let
     inherit (contribution) id owner;
     inherit (contribution.value.observability) importance;
     requirement = contribution.value.observability.externalProbe.requirement;
-    title = contribution.value.presentation.title;
+    title = contribution.value.displayName;
     url = "${contribution.value.public.url}${contribution.value.health.frontend.path}";
   };
   inventoryFile = (pkgs.formats.json { }).generate "uptimerobot-services.json" (
     map (contribution: {
       inherit (contribution) id;
-      title = contribution.value.presentation.title;
+      title = contribution.value.displayName;
       url = "${contribution.value.public.url}${contribution.value.health.frontend.path}";
     }) model.plan.selected
   );

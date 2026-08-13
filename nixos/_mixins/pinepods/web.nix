@@ -22,13 +22,11 @@ in
         };
       };
       observability.importance = "best-effort";
-      presentation = {
-        title = "PinePods";
+      displayName = "PinePods";
+      dashboard = {
+        enable = true;
         icon = "sh:pinepods";
-        dashboard = {
-          enable = true;
-          section = "user";
-        };
+        section = "user";
       };
       internal = {
         recommendedProxySettings = false;

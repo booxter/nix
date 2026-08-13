@@ -25,8 +25,8 @@ let
     in
     {
       inherit (contribution) id owner;
-      inherit (service.presentation) icon title;
-      inherit (service.presentation.dashboard) section;
+      title = service.displayName;
+      inherit (service.dashboard) icon section;
       endpoints = {
         internal = endpoint "internal";
         public = if service.public.enable then endpoint "public" else null;

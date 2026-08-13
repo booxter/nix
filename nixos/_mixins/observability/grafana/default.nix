@@ -354,7 +354,7 @@ in
         enable = true;
         path = "/login";
       };
-      presentation.dashboard = {
+      dashboard = {
         enable = true;
         section = "infrastructure";
       };

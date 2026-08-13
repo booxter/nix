@@ -55,9 +55,11 @@ in
         importance = "critical";
         externalProbe.requirement = "required";
       };
-      presentation = {
-        title = "Dashboard";
+      displayName = "Dashboard";
+      dashboard = {
+        enable = false;
         icon = "sh:glance";
+        section = null;
       };
     };
   };

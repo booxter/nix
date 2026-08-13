@@ -57,7 +57,7 @@
 
     integrations.ebookConverter.enable = lib.mkEnableOption "the ebook converter hook";
 
-    presentation.audiobookLibraryService = lib.mkOption {
+    links.audiobookLibraryService = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
       default = null;
       description = "Web service linked as the audiobook library from Shelfmark.";

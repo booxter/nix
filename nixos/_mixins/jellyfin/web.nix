@@ -38,7 +38,7 @@ in
         path = "/web/";
       };
       observability.importance = "important";
-      presentation.dashboard = {
+      dashboard = {
         enable = true;
         section = "user";
       };

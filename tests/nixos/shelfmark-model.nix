@@ -11,7 +11,7 @@ let
         torrent.route = "torrent-requests";
         usenet.route = "usenet-requests";
       };
-      presentation.audiobookLibraryService = "listener";
+      links.audiobookLibraryService = "listener";
       sso.application = "reader";
     };
     media.libraries = {

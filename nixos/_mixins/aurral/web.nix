@@ -50,7 +50,7 @@ in
             };
           };
           observability.importance = "important";
-          presentation.dashboard = {
+          dashboard = {
             enable = true;
             section = "user";
           };

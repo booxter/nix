@@ -59,10 +59,8 @@ in
           '';
         };
         health.frontend.enable = true;
-        presentation = {
-          title = "Proxmox ${config.networking.hostName}";
-          icon = "sh:proxmox";
-        };
+        displayName = "Proxmox ${config.networking.hostName}";
+        dashboard.icon = "sh:proxmox";
         metrics.default = {
           enable = true;
           endpointName = "pve";

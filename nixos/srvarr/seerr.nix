@@ -63,7 +63,7 @@ in
       path = "/login";
     };
     observability.importance = "important";
-    presentation.dashboard = {
+    dashboard = {
       enable = true;
       section = "user";
     };

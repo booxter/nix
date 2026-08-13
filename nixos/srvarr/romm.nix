@@ -658,12 +658,10 @@ in
       enable = true;
       path = "/api/heartbeat";
     };
-    presentation = {
-      title = "RomM";
-      dashboard = {
-        enable = true;
-        section = "user";
-      };
+    displayName = "RomM";
+    dashboard = {
+      enable = true;
+      section = "user";
     };
   };
 

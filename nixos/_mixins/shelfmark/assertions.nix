@@ -31,7 +31,7 @@ in
     }
     {
       assertion = model.audiobookLibraryService == null || model.audiobookLibraryService.public.enable;
-      message = "host.shelfmark.presentation.audiobookLibraryService must select a public web service";
+      message = "host.shelfmark.links.audiobookLibraryService must select a public web service";
     }
     {
       assertion = !cfg.integrations.ebookConverter.enable || config.host.ebookConverter.enable;

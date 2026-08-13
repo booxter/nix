@@ -16,12 +16,10 @@ in
           path = "/api/health";
         };
       };
-      presentation = {
+      dashboard = {
+        enable = true;
         icon = "sh:houndarr.png";
-        dashboard = {
-          enable = true;
-          section = "media-admin";
-        };
+        section = "media-admin";
       };
     };
   };

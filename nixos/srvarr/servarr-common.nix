@@ -41,7 +41,7 @@ in
             path = "/ping";
           };
         };
-        presentation.dashboard = {
+        dashboard = {
           enable = true;
           section = "media-admin";
         };

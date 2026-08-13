@@ -7,10 +7,7 @@ let
   clientId = "srvarr-admin-apps";
   oauth2ProxyCookieName = "_srvarr_admin_sso";
   protectedServices = lib.filterAttrs (
-    _: service:
-    service.enable
-    && service.presentation.dashboard.enable
-    && service.presentation.dashboard.section == "media-admin"
+    _: service: service.enable && service.dashboard.enable && service.dashboard.section == "media-admin"
   ) config.host.web.services;
   protectedServiceIds = builtins.attrNames protectedServices;
   gateServiceIds = builtins.filter (name: name != "houndarr") protectedServiceIds;

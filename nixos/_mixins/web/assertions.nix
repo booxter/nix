@@ -33,8 +33,7 @@ in
         message = "host.web.services.${serviceName} direct public ingress requires directUpstream";
       }
       {
-        assertion =
-          !service.presentation.dashboard.enable || service.presentation.dashboard.section != null;
+        assertion = !service.dashboard.enable || service.dashboard.section != null;
         message = "host.web.services.${serviceName} dashboard entries require a category";
       }
       {

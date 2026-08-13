@@ -238,10 +238,8 @@ in
         importance = "critical";
         externalProbe.requirement = "required";
       };
-      presentation = {
-        title = provider.displayName;
-        icon = "sh:kanidm";
-      };
+      displayName = provider.displayName;
+      dashboard.icon = "sh:kanidm";
       internal.locationExtraConfig = ''
         proxy_set_header Host ${idPublicHost};
         proxy_set_header X-Forwarded-Host ${idPublicHost};

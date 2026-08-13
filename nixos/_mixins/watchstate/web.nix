@@ -23,13 +23,11 @@ in
           path = "/v1/api/system/healthcheck";
         };
       };
-      presentation = {
-        title = "WatchState";
+      displayName = "WatchState";
+      dashboard = {
+        enable = true;
         icon = "sh:watchstate.png";
-        dashboard = {
-          enable = true;
-          section = "media-admin";
-        };
+        section = "media-admin";
       };
       internal.locationExtraConfig = ''
         proxy_read_timeout 300s;

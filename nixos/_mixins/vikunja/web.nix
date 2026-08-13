@@ -40,12 +40,10 @@ in
           };
         };
       };
-      presentation = {
-        title = "Vikunja";
-        dashboard = {
-          enable = true;
-          section = "user";
-        };
+      displayName = "Vikunja";
+      dashboard = {
+        enable = true;
+        section = "user";
       };
     };
   };

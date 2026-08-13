@@ -458,28 +458,27 @@ in
               };
             };
 
-            presentation = {
-              title = lib.mkOption {
-                type = lib.types.str;
-                default = lib.strings.toSentenceCase serviceName;
-                description = "Human-readable service title.";
+            displayName = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = lib.strings.toSentenceCase serviceName;
+              description = "Human-readable service name used by catalogs and monitoring.";
+            };
+
+            dashboard = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Whether to show ${serviceName} on the service dashboard.";
               };
               icon = lib.mkOption {
-                type = lib.types.str;
+                type = lib.types.nonEmptyStr;
                 default = "sh:${serviceName}";
                 description = "Dashboard icon identifier or URL.";
               };
-              dashboard = {
-                enable = lib.mkOption {
-                  type = lib.types.bool;
-                  default = false;
-                  description = "Whether to show ${serviceName} on the service dashboard.";
-                };
-                section = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  description = "Dashboard section containing the service.";
-                };
+              section = lib.mkOption {
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Dashboard section containing the service.";
               };
             };
           };

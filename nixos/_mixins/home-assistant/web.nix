@@ -36,13 +36,11 @@ in
         };
       };
       health.frontend.enable = true;
-      presentation = {
-        title = "Home Assistant";
+      displayName = "Home Assistant";
+      dashboard = {
+        enable = true;
         icon = "sh:home-assistant";
-        dashboard = {
-          enable = true;
-          section = "infrastructure";
-        };
+        section = "infrastructure";
       };
       internal.locationExtraConfig = ''
         proxy_buffering off;

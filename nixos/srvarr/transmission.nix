@@ -193,7 +193,7 @@ in
         module = "http_service_409";
       };
     };
-    presentation.dashboard = {
+    dashboard = {
       enable = true;
       section = "media-admin";
     };

@@ -49,13 +49,11 @@ in
         };
       };
       observability.importance = "best-effort";
-      presentation = {
-        title = "Degoog";
+      displayName = "Degoog";
+      dashboard = {
+        enable = true;
         icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
-        dashboard = {
-          enable = true;
-          section = "user";
-        };
+        section = "user";
       };
       auth = {
         mode = "oauth2-proxy";

@@ -5,7 +5,7 @@ let
   downloadModel = import ../downloads/model.nix { inherit config lib; };
   resolveLibrary = name: if name == null then null else mediaModel.resolved.${name} or null;
   resolveRoute = name: if name == null then null else downloadModel.routes.${name} or null;
-  audiobookLibraryServiceName = cfg.presentation.audiobookLibraryService;
+  audiobookLibraryServiceName = cfg.links.audiobookLibraryService;
 in
 {
   inherit cfg;

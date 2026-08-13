@@ -36,7 +36,7 @@ let
       (lib.head ingressHosts).config.host.web.ingress.dynamicDns.hostname;
   publicServiceCatalog = map (contribution: {
     inherit (contribution) id;
-    inherit (contribution.value.presentation) title;
+    title = contribution.value.displayName;
     publicHost = contribution.value.public.hostName;
     probePath = contribution.value.health.frontend.path;
     availability = contribution.value.observability.availability;
@@ -61,7 +61,7 @@ let
     in
     {
       inherit (contribution) id;
-      inherit (service.presentation) title;
+      title = service.displayName;
       blackboxModule =
         if usePublic then
           service.health.frontend.module
@@ -83,7 +83,7 @@ let
     in
     {
       inherit (contribution) id;
-      inherit (service.presentation) title;
+      title = service.displayName;
       blackboxModule = blackboxModuleFor service service.health.backend.module;
       backend_probe = "http";
       backend_probe_title = service.health.backend.title;
