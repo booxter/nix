@@ -1,22 +1,18 @@
 {
   context,
-  facts,
   lib,
 }:
 raw:
 let
   inherit (context) lanDomain;
-  realms = facts.realms;
-  realmFor =
-    spec:
-    let
-      realmName = spec.realm or (throw "host ${spec.name} does not declare a realm");
-    in
-    realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
   normalizeHostSpec =
     isLinux: spec:
     let
-      validated = builtins.seq (realmFor spec) spec;
+      validated =
+        assert lib.assertMsg (
+          spec ? realm && builtins.isString spec.realm && spec.realm != ""
+        ) "host ${spec.name} must declare a non-empty realm";
+        spec;
       lowercaseName = lib.toLower validated.name;
     in
     validated
@@ -57,6 +53,7 @@ let
       }) nixosSpecs
     );
   hostSpecsByName = darwin // nixos;
+  realmNames = lib.unique (map (spec: spec.realm) (builtins.attrValues hostSpecsByName));
 in
 raw
 // {
@@ -64,5 +61,6 @@ raw
     darwin
     hostSpecsByName
     nixos
+    realmNames
     ;
 }

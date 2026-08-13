@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   isLinux,
   lib,
@@ -11,7 +10,6 @@ let
   model = import ./model.nix {
     inherit
       config
-      facts
       hostSpec
       lib
       outputs
@@ -84,13 +82,20 @@ in
     ./assertions.nix
     ./community.nix
     ./build.nix
+    ./home.nix
     ./nixpkgs-review.nix
     ./ssh.nix
+    ./work.nix
   ];
 
   options.host.nix = {
     builder = {
       enable = lib.mkEnableOption "Nix builder participation";
+
+      sshIdentityFileName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH identity file name used to authenticate to builders in this realm.";
+      };
 
       hostName = lib.mkOption {
         type = lib.types.nonEmptyStr;

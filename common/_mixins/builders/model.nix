@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   outputs,
 }:
 let
   username = config.host.username;
-  identityFileName = facts.realms.${config.host.realm}.build.sshIdentityFile;
+  identityFileName = config.host.nix.builder.sshIdentityFileName;
   identityFile = "${config.users.users.${username}.home}/.ssh/${identityFileName}";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];

@@ -8,7 +8,7 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
-  allRealms = builtins.attrNames facts.realms;
+  allRealms = facts.hosts.realmNames;
   maasServer = name: {
     realms = [ "work" ];
     hosts = [ "JGWXHWDL4X" ];

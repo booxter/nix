@@ -6,7 +6,7 @@
   ...
 }:
 let
-  realmType = lib.types.enum (builtins.attrNames facts.realms);
+  realmType = lib.types.enum facts.hosts.realmNames;
   stdioType = lib.types.submodule {
     options = {
       command = lib.mkOption {

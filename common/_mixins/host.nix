@@ -1,5 +1,4 @@
 {
-  config,
   facts,
   hostSpec,
   isDarwin,
@@ -11,12 +10,16 @@
 }:
 let
   hostname = hostSpec.name;
-  realm = facts.realms.${config.host.realm};
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
 in
 {
-  imports = [ ./host/assertions.nix ] ++ lib.optional (builtins.pathExists hostModule) hostModule;
+  imports = [
+    ./host/assertions.nix
+    ./host/home.nix
+    ./host/work.nix
+  ]
+  ++ lib.optional (builtins.pathExists hostModule) hostModule;
 
   options.host = {
     platform = lib.mkOption {
@@ -86,19 +89,16 @@ in
     };
 
     realm = lib.mkOption {
-      type = lib.types.enum (builtins.attrNames facts.realms);
+      type = lib.types.enum facts.hosts.realmNames;
       default = hostSpec.realm;
       readOnly = true;
       internal = true;
-      description = "Infrastructure and trust realm declared by host facts.";
+      description = "Infrastructure and trust realm declared by the host inventory.";
     };
 
     management = {
       manageNetworkIdentity = lib.mkOption {
         type = lib.types.bool;
-        default = realm.management.manageNetworkIdentity;
-        readOnly = true;
-        internal = true;
         description = "Whether this host manages its network identity.";
       };
 
