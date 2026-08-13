@@ -32,6 +32,7 @@
       ./_mixins/hardware
       ./_mixins/hm
       ./_mixins/home-assistant
+      ./_mixins/houndarr
       ./_mixins/internal-https-service
       ./_mixins/jellarr
       ./_mixins/jellyfin

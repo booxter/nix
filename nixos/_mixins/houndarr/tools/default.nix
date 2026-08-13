@@ -1,4 +1,5 @@
 {
+  houndarr,
   lib,
   python3,
   ruff,
@@ -14,11 +15,14 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
-  dependencies = with pythonPackages; [
+  dependencies = [
+    houndarr
+  ]
+  ++ (with pythonPackages; [
     httpx
     prometheus-client
     pydantic
-  ];
+  ]);
 
   nativeCheckInputs = with pythonPackages; [
     mypy
@@ -36,7 +40,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "houndarr_tools" ];
 
   meta = {
-    description = "Readiness and status helpers for the srvarr Houndarr service";
+    description = "Reconciliation and status helpers for Houndarr";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };

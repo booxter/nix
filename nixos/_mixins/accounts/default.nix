@@ -51,6 +51,7 @@ in
       users = {
         audiobookshelf.uid = 156;
         ebook-converter.uid = 298;
+        houndarr.uid = 299;
         paperless = {
           uid = 315;
           group = "paperless";

@@ -13,6 +13,7 @@ let
     && service.presentation.dashboard.section == "media-admin"
   ) config.host.web.services;
   protectedServiceIds = builtins.attrNames protectedServices;
+  gateServiceIds = builtins.filter (name: name != "houndarr") protectedServiceIds;
   protectedServiceHosts = lib.unique (
     lib.concatMap (
       serviceName:
@@ -26,20 +27,10 @@ let
       ]
     ) protectedServiceIds
   );
-  houndarrManagedServiceNames = [
-    "lidarr"
-    "radarr"
-    "sonarr"
-  ];
-  srvarrAddress = config.host.network.ipAddress;
   backendPorts = {
     bazarr = config.services.bazarr.listenPort;
     houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;
-    lidarr = config.services.lidarr.settings.server.port;
-    prowlarr = config.services.prowlarr.settings.server.port;
-    radarr = config.services.radarr.settings.server.port;
     sabnzbd = config.services.sabnzbd.settings.misc.port;
-    sonarr = config.services.sonarr.settings.server.port;
     transmission = config.services.transmission.settings.rpc-port;
   };
   localBackendProxyHeaders = ''
@@ -72,28 +63,6 @@ let
       port = backendPorts.${serviceName};
     };
   };
-  # Houndarr rejects loopback instance URLs as an SSRF defense. Give it a
-  # routable HTTPS path to each local Arr API on the existing probe-only
-  # listener. Only this host may enter the lane, the normal UI remains absent,
-  # and the Arr applications still require their API keys.
-  houndarrApiVhosts = builtins.listToAttrs (
-    map (serviceName: {
-      name = "internal-https-${serviceName}-probe";
-      value.locations."/api/" = mkBackendProbeLocation {
-        port = backendPorts.${serviceName};
-        extraConfig = ''
-          allow ${srvarrAddress};
-          deny all;
-        '';
-      };
-    }) houndarrManagedServiceNames
-  );
-  servarrPingProbeLocations = lib.genAttrs [
-    "lidarr"
-    "prowlarr"
-    "radarr"
-    "sonarr"
-  ] (serviceName: mkBackendProbePathLocation serviceName "= /ping");
   # Bazarr has no reverse-proxy auth mode here: its config has `auth.type: null`,
   # but the UI still calls `POST /api/system/account` on logout. Bazarr returns
   # 500 for that state because its logout endpoint only accepts `form` or
@@ -113,7 +82,7 @@ let
       '';
     };
   };
-  backendProbeLocationsByName = servarrPingProbeLocations // {
+  backendProbeLocationsByName = {
     bazarr = mkBackendProbePathLocation "bazarr" "= /api/system/ping";
     houndarr = mkBackendProbePathLocation "houndarr" "= /api/health";
     sabnzbd."= /__probe/sabnzbd-version" = mkBackendProbeLocation {
@@ -142,8 +111,6 @@ let
   };
 in
 {
-  services.nginx.virtualHosts = houndarrApiVhosts;
-
   host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
@@ -153,7 +120,7 @@ in
     allowedGroups = [ "media-admins" ];
     groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
-    internalHttpsServiceNames = protectedServiceIds;
+    internalHttpsServiceNames = gateServiceIds;
     authCookieVariableName = "auth_cookie";
     clearAuthorizationHeader = false;
     authRequestHeaders = [

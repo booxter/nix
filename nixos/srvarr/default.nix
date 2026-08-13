@@ -115,6 +115,17 @@ in
     authProxy.adminGroups = [ "media-admins" ];
   };
 
+  host.houndarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/houndarr";
+    authProxy.gate = "srvarr-admin-apps";
+    instances = {
+      lidarr.api = "lidarr";
+      radarr.api = "radarr";
+      sonarr.api = "sonarr";
+    };
+  };
+
   host.slskd.instances.music = {
     enable = true;
     stateDir = "/var/lib/slskd";
@@ -133,7 +144,6 @@ in
   imports = [
     ./arr.nix
     ./glance.nix
-    ./houndarr.nix
     ./letterboxd-list-radarr.nix
     ./lidarr-cue-splitter.nix
     ./oauth2-proxy.nix
