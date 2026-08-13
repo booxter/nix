@@ -23,7 +23,7 @@
     programs.nixvim = {
       nixpkgs.useGlobalPackages = true;
 
-      env = lib.optionalAttrs osConfig.host.isDarwin {
+      env = lib.optionalAttrs osConfig.nixpkgs.hostPlatform.isDarwin {
         LLDB_DEBUGSERVER_PATH = lib.getExe pkgs.debugserver;
       };
 

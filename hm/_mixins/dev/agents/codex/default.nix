@@ -8,7 +8,7 @@
 let
   devCfg = osConfig.host.userEnvironment.features.dev;
   cfg = config.host.hm.dev.codex;
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   hasOauthHttpMcp = lib.any (server: server.http != null && server.http.auth == "oauth") (
     builtins.attrValues osConfig.host.mcp.pool
   );

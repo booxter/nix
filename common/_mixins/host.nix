@@ -1,43 +1,16 @@
 {
   hostName,
-  isDarwin,
-  isLinux,
   lib,
   system,
   ...
 }:
 {
   imports = [
-    ./host/assertions.nix
     ./host/home.nix
     ./host/work.nix
   ];
 
   options.host = {
-    platform = lib.mkOption {
-      type = lib.types.str;
-      default = system;
-      readOnly = true;
-      internal = true;
-      description = "Nix platform selected by the host configuration constructor.";
-    };
-
-    isDarwin = lib.mkOption {
-      type = lib.types.bool;
-      default = isDarwin;
-      readOnly = true;
-      internal = true;
-      description = "Whether the selected platform uses the Darwin kernel.";
-    };
-
-    isLinux = lib.mkOption {
-      type = lib.types.bool;
-      default = isLinux;
-      readOnly = true;
-      internal = true;
-      description = "Whether the selected platform uses the Linux kernel.";
-    };
-
     realm = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "home";

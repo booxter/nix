@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.thunderbird;
   authenticationMethod = {
     oauth2 = 10;

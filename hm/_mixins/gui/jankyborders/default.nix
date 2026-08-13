@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   desktopEnvironmentEnabled = osConfig.host.userEnvironment.features.gui.enable;
   inherit (config.lib.stylix) colors;
 in

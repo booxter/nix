@@ -23,7 +23,7 @@ in
       message = "host.ups.server.description is required when the UPS server is enabled";
     }
     {
-      assertion = !cfg.server.enable || config.host.isLinux;
+      assertion = !cfg.server.enable || config.nixpkgs.hostPlatform.isLinux;
       message = "only a NixOS host may provide a UPS server";
     }
     {

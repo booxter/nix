@@ -21,7 +21,7 @@ in
       message = "The fleet has multiple UptimeRobot controllers: ${lib.concatStringsSep ", " model.controllerHosts}";
     }
     {
-      assertion = !cfg.enable || config.host.isLinux;
+      assertion = !cfg.enable || config.nixpkgs.hostPlatform.isLinux;
       message = "The UptimeRobot controller requires NixOS.";
     }
     {

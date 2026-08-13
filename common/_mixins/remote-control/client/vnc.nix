@@ -14,7 +14,7 @@ let
     in
     {
       inherit name;
-      inherit (host) isLinux;
+      inherit (configuration.config.nixpkgs.hostPlatform) isLinux;
       inherit (host.hardware) displays;
       inherit (host.remote-control.server) vnc;
     }

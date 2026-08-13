@@ -25,7 +25,7 @@ builtins.mapAttrs (
     host = entry.value.config.host;
   in
   {
-    system = host.platform;
+    system = entry.value.config.nixpkgs.hostPlatform.system;
     inherit (entry) configuration;
     runtimeHost = entry.value.config.networking.hostName;
     inherit (host) realm;

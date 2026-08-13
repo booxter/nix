@@ -27,7 +27,7 @@ let
       };
       roles.workstation = {
         hm = {
-          numberedWorkspaces = if config.host.isDarwin then 4 else 6;
+          numberedWorkspaces = if config.nixpkgs.hostPlatform.isDarwin then 4 else 6;
           firefox = {
             enable = true;
             search.provider = "degoog";
@@ -36,7 +36,7 @@ let
             enable = true;
             warmer.enable = true;
           };
-          hyprland.enable = !config.host.isDarwin;
+          hyprland.enable = !config.nixpkgs.hostPlatform.isDarwin;
           kitty.enable = true;
           matrix.enable = true;
           obsidian.enable = true;

@@ -56,7 +56,7 @@ in
         templates."flakehub-netrc" = {
           owner = "root";
           # macOS names gid 0 "wheel"; there is no root group.
-          group = if config.host.isDarwin then "wheel" else "root";
+          group = if config.nixpkgs.hostPlatform.isDarwin then "wheel" else "root";
           mode = "0400";
           content = ''
             machine flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}

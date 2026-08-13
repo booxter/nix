@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.hm.sketchybar;
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   pkiRootCaPath = osConfig.host.pki.rootCaCertificate;
   theme = import ./theme.nix {
     inherit config pkgs;

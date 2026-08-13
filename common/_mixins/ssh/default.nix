@@ -1,11 +1,12 @@
 {
   config,
-  isDarwin,
   lib,
   outputs,
+  system,
   ...
 }:
 let
+  isDarwin = lib.hasSuffix "-darwin" system;
   localHost = config.networking.hostName;
   username = config.host.username;
   readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
@@ -102,7 +103,7 @@ let
         trustedCaPublicKeys
         ;
       enabled = tickets.enable;
-      kind = if host.isDarwin then "darwin" else "nixos";
+      kind = if configuration.config.nixpkgs.hostPlatform.isDarwin then "darwin" else "nixos";
       sshHost = name;
       aliases = [
         name
@@ -130,7 +131,7 @@ in
         lib.unique (
           [ localHost ]
           ++ lib.optional (lowercaseName != localHost) lowercaseName
-          ++ lib.optional config.host.isLinux "${localHost}.${config.host.network.lanDomain}"
+          ++ lib.optional config.nixpkgs.hostPlatform.isLinux "${localHost}.${config.host.network.lanDomain}"
           ++ [ config.host.network.localDnsName ]
           ++ lib.optional (lowercaseName != localHost) "${lowercaseName}.local"
         );
@@ -247,7 +248,7 @@ in
           message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
         }
         {
-          assertion = config.host.ssh.preBoot.alias == null || config.host.isDarwin;
+          assertion = config.host.ssh.preBoot.alias == null || config.nixpkgs.hostPlatform.isDarwin;
           message = "only Darwin hosts may publish a pre-boot SSH alias";
         }
         {

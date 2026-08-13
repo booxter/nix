@@ -16,7 +16,7 @@ in
 
   assertions = [
     {
-      assertion = config.host.sso.role != "provider" || config.host.isLinux;
+      assertion = config.host.sso.role != "provider" || config.nixpkgs.hostPlatform.isLinux;
       message = "The realm SSO provider role requires NixOS.";
     }
   ];

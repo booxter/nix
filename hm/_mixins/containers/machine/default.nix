@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   podmanCfg = config.host.hm.podman;
   cfg = config.programs.podman-machine;
   machineConfig = (pkgs.formats.toml { }).generate "podman-machine.conf" {

@@ -1,12 +1,13 @@
 {
   config,
-  isDarwin,
   lib,
   outputs,
   pkgs,
+  system,
   ...
 }:
 let
+  isDarwin = lib.hasSuffix "-darwin" system;
   secrets = config.host.security.secrets;
   operatorIdentity = secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
@@ -75,7 +76,8 @@ in
     {
       assertions = [
         {
-          assertion = !usesSecureEnclave || (config.host.isDarwin && config.host.hardware.hasTouchId);
+          assertion =
+            !usesSecureEnclave || (config.nixpkgs.hostPlatform.isDarwin && config.host.hardware.hasTouchId);
           message = "Secure Enclave age identities require a Darwin host with Touch ID.";
         }
         {

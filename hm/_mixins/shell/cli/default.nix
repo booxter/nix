@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   userEnvironment = osConfig.host.userEnvironment;
   repositoryCatalog = userEnvironment.repositories.catalog;
   requiredRepositories = userEnvironment.repositories.required;

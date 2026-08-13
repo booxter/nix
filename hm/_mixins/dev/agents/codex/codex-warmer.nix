@@ -15,7 +15,7 @@ let
     && codexCfg.enable
     && codexCfg.usage.account == "personal"
     && codexCfg.usage.warmer.enable;
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
 in
 {
   home.packages = lib.optionals codexWarmerEnabled [ codexWarmerPackage ];

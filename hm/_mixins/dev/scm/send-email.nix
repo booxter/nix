@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   userEnvironment = osConfig.host.userEnvironment;
   devCfg = userEnvironment.features.dev;
   scmCfg = devCfg.scm;

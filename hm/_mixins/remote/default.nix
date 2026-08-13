@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.programs.remote-control.client;
   remoteControlRunners = pkgs.callPackage ./pkgs { };
 in

@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.hm.dev.act;
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   # On macOS, act connects through the forwarded host socket, but job
   # containers need the VM-internal socket with SELinux labeling disabled.
   podmanArgs = lib.optionalString isDarwin (

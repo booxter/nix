@@ -1,9 +1,12 @@
 {
   config,
-  isDarwin,
   lib,
+  system,
   ...
 }:
+let
+  isDarwin = lib.hasSuffix "-darwin" system;
+in
 {
   imports =
     lib.optionals isDarwin [

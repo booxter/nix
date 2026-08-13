@@ -39,7 +39,7 @@ let
     in
     {
       inherit name;
-      platform = if hostConfig.host.isDarwin then "darwin" else "linux";
+      platform = if hostConfig.nixpkgs.hostPlatform.isDarwin then "darwin" else "linux";
       virtual = hostConfig.host.proxmox.guest.enable;
       builder = hostConfig.host.nix.builder.enable;
       hypervisor = hostConfig.host.proxmox.node.enable;

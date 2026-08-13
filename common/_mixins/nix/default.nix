@@ -45,7 +45,7 @@ in
       // lib.optionalAttrs hasBuildMachines {
         builders-use-substitutes = true;
       }
-      // lib.optionalAttrs config.host.isDarwin {
+      // lib.optionalAttrs config.nixpkgs.hostPlatform.isDarwin {
         sandbox = "relaxed";
       };
     };

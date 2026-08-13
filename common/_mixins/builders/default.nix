@@ -1,11 +1,12 @@
 {
   config,
-  isLinux,
   lib,
   outputs,
+  system,
   ...
 }:
 let
+  isLinux = lib.hasSuffix "-linux" system;
   model = import ./model.nix {
     inherit
       config

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.aerospace;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
 

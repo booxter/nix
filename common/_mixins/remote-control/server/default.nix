@@ -1,10 +1,13 @@
 {
   config,
-  isDarwin,
-  isLinux,
   lib,
+  system,
   ...
 }:
+let
+  isDarwin = lib.hasSuffix "-darwin" system;
+  isLinux = lib.hasSuffix "-linux" system;
+in
 {
   imports =
     lib.optionals isLinux [

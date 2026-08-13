@@ -1,12 +1,13 @@
 {
   config,
-  isDarwin,
-  isLinux,
   lib,
   pkgs,
+  system,
   ...
 }:
 let
+  isDarwin = lib.hasSuffix "-darwin" system;
+  isLinux = lib.hasSuffix "-linux" system;
   username = config.host.username;
   tickets = config.host.ssh.tickets;
   principal = "${username}@${config.networking.hostName}";

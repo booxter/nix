@@ -7,7 +7,7 @@
 
   assertions = [
     {
-      assertion = config.host.pki.role != "authority" || config.host.isLinux;
+      assertion = config.host.pki.role != "authority" || config.nixpkgs.hostPlatform.isLinux;
       message = "The realm PKI authority role requires NixOS.";
     }
   ];

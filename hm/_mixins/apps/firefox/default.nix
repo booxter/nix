@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.firefox;
   publicDomain = osConfig.host.network.publicDomain;
   searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};

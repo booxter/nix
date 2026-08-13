@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.podman;
   podmanMachine = config.programs.podman-machine;
   podmanPackage = if isDarwin then podmanMachine.package else pkgs.podman;

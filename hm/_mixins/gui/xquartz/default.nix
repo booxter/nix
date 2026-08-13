@@ -16,7 +16,7 @@ in
       {
         assertions = [
           {
-            assertion = osConfig.host.isDarwin;
+            assertion = osConfig.nixpkgs.hostPlatform.isDarwin;
             message = "host.hm.xquartz is only supported on Darwin.";
           }
         ];

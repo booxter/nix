@@ -1,10 +1,11 @@
 {
   config,
-  isDarwin,
   lib,
+  system,
   ...
 }:
 let
+  isDarwin = lib.hasSuffix "-darwin" system;
   cfg = config.host.remote-control.client.x11;
   username = config.host.username;
 in

@@ -29,7 +29,7 @@ let
       protocol = "ssh-ng";
       sshKey = identityFile;
       sshUser = username;
-      systems = [ host.platform ];
+      systems = [ configuration.config.nixpkgs.hostPlatform.system ];
     };
   candidates = lib.mapAttrs toBuilder otherConfigurations;
   realmBuilders = lib.filterAttrs (

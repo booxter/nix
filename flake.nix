@@ -76,9 +76,6 @@
           hostName,
           system,
         }:
-        let
-          hostPlatform = lib.systems.elaborate system;
-        in
         {
           inherit
             hostName
@@ -86,7 +83,6 @@
             outputs
             system
             ;
-          inherit (hostPlatform) isDarwin isLinux;
         };
       mkNixos =
         hostName: hostModule:

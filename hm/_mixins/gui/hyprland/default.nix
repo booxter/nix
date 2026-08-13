@@ -67,7 +67,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = !osConfig.host.isDarwin;
+        assertion = !osConfig.nixpkgs.hostPlatform.isDarwin;
         message = "host.hm.hyprland is only supported on Linux.";
       }
       {

@@ -6,7 +6,8 @@
 let
   hostName = config.networking.hostName;
   hostView = hostConfig: {
-    inherit (hostConfig.host) isLinux realm;
+    inherit (hostConfig.host) realm;
+    inherit (hostConfig.nixpkgs.hostPlatform) isLinux;
     name = hostConfig.networking.hostName;
     ups = {
       inherit (hostConfig.host.ups) credentialMode;

@@ -6,14 +6,14 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.firefox;
 in
 {
   options.host.hm.firefox.passkeys.enable = lib.mkOption {
     type = lib.types.bool;
     default = isDarwin && osConfig.host.hardware.hasTouchId;
-    defaultText = lib.literalExpression "osConfig.host.isDarwin && osConfig.host.hardware.hasTouchId";
+    defaultText = lib.literalExpression "osConfig.nixpkgs.hostPlatform.isDarwin && osConfig.host.hardware.hasTouchId";
     description = "Whether to use the signed upstream Firefox bundle for Touch ID-backed passkeys.";
   };
 

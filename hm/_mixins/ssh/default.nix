@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isLinux;
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
   enabled = osConfig.host.userEnvironment.features.ssh.enable;
   sshAskpass =
     if isDarwin then

@@ -240,7 +240,7 @@ in
           apps.enable = lib.mkDefault true;
           gui.enable = lib.mkDefault true;
         })
-        (lib.mkIf (cfg.roles.workstation.enable && config.host.isDarwin) {
+        (lib.mkIf (cfg.roles.workstation.enable && config.nixpkgs.hostPlatform.isDarwin) {
           apps.homerow.enable = lib.mkDefault true;
         })
       ];

@@ -1,13 +1,14 @@
 {
   config,
-  isDarwin,
-  isLinux,
   lib,
   outputs,
   pkgs,
+  system,
   ...
 }:
 let
+  isDarwin = lib.hasSuffix "-darwin" system;
+  isLinux = lib.hasSuffix "-linux" system;
   model = import ./model.nix {
     inherit
       config

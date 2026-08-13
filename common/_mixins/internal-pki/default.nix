@@ -140,7 +140,7 @@ let
       inherit (materialization) owner group mode;
       inherit key;
     }
-    // lib.optionalAttrs config.host.isLinux {
+    // lib.optionalAttrs config.nixpkgs.hostPlatform.isLinux {
       restartUnits = materialization.restartUnits;
     };
 in
