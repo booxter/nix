@@ -11,7 +11,7 @@ let
         torrent.route = "torrent-requests";
         usenet.route = "usenet-requests";
       };
-      links.audiobookLibraryService = "listener";
+      nav.audiobookshelf = "listener";
       sso.application = "reader";
     };
     media.libraries = {
@@ -82,7 +82,7 @@ assert model.audiobooks.path == "/srv/archive/catalog/spoken";
 assert model.torrent.path == "/srv/archive/incoming/torrent";
 assert model.usenet.path == "/srv/archive/incoming/usenet";
 assert model.ssoApplication.adminGroup == "reader-admins";
-assert model.audiobookLibraryService.public.url == "https://listen.example.test";
+assert model.audiobookshelfService.public.url == "https://listen.example.test";
 pkgs.runCommand "shelfmark-model-test" { } ''
   touch "$out"
 ''

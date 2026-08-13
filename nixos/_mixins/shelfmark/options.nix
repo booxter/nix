@@ -57,10 +57,10 @@
 
     integrations.ebookConverter.enable = lib.mkEnableOption "the ebook converter hook";
 
-    links.audiobookLibraryService = lib.mkOption {
+    nav.audiobookshelf = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
       default = null;
-      description = "Web service linked as the audiobook library from Shelfmark.";
+      description = "Public Audiobookshelf web service linked from Shelfmark navigation.";
     };
 
     sso.application = lib.mkOption {

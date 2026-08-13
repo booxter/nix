@@ -30,8 +30,10 @@ in
       message = "host.shelfmark.sso.application must select a realm SSO application";
     }
     {
-      assertion = model.audiobookLibraryService == null || model.audiobookLibraryService.public.enable;
-      message = "host.shelfmark.links.audiobookLibraryService must select a public web service";
+      assertion =
+        cfg.nav.audiobookshelf == null
+        || (model.audiobookshelfService != null && model.audiobookshelfService.public.enable);
+      message = "host.shelfmark.nav.audiobookshelf must select a public web service";
     }
     {
       assertion = !cfg.integrations.ebookConverter.enable || config.host.ebookConverter.enable;

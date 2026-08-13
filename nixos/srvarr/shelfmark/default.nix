@@ -34,6 +34,6 @@
       usenet.route = "shelfmark-usenet";
     };
     integrations.ebookConverter.enable = true;
-    links.audiobookLibraryService = "audiobookshelf";
+    nav.audiobookshelf = "audiobookshelf";
   };
 }

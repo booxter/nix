@@ -39,8 +39,8 @@ in
       // lib.optionalAttrs (model.audiobooks != null) {
         DESTINATION_AUDIOBOOK = model.audiobooks.path;
       }
-      // lib.optionalAttrs (model.audiobookLibraryService != null) {
-        AUDIOBOOK_LIBRARY_URL = model.audiobookLibraryService.public.url;
+      // lib.optionalAttrs (model.audiobookshelfService != null) {
+        AUDIOBOOK_LIBRARY_URL = model.audiobookshelfService.public.url;
       };
     };
 

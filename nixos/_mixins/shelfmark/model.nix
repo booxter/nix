@@ -5,7 +5,7 @@ let
   downloadModel = import ../downloads/model.nix { inherit config lib; };
   resolveLibrary = name: if name == null then null else mediaModel.resolved.${name} or null;
   resolveRoute = name: if name == null then null else downloadModel.routes.${name} or null;
-  audiobookLibraryServiceName = cfg.links.audiobookLibraryService;
+  audiobookshelfServiceName = cfg.nav.audiobookshelf;
 in
 {
   inherit cfg;
@@ -17,10 +17,10 @@ in
   shelfmarkService = config.host.web.services.shelfmark;
   oidcClient = config.host.sso.oidc.clients.shelfmark;
   oidcScopes = config.host.sso.oidc.baseScopes;
-  audiobookLibraryService =
-    if audiobookLibraryServiceName == null then
+  audiobookshelfService =
+    if audiobookshelfServiceName == null then
       null
     else
-      config.host.web.services.${audiobookLibraryServiceName} or null;
+      config.host.web.services.${audiobookshelfServiceName} or null;
   converter = config.host.ebookConverter;
 }
