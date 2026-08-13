@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isDesktop;
+  inherit (osConfig.host) isDarwin;
   cfg = config.programs.remote-control.client;
   remoteControlRunners = pkgs.callPackage ./pkgs { };
 in
@@ -19,8 +19,8 @@ in
   config = {
     assertions =
       lib.optional cfg.wayland.enable {
-        assertion = isDarwin && isDesktop;
-        message = "programs.remote-control.client.wayland requires a Darwin desktop host";
+        assertion = isDarwin && osConfig.host.userEnvironment.features.gui.enable;
+        message = "programs.remote-control.client.wayland requires a managed Darwin graphical environment";
       }
       ++ lib.optional (cfg.x11.enable && isDarwin) {
         assertion = config.host.hm.xquartz.enable;

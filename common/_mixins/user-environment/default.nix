@@ -251,14 +251,6 @@ in
 
     assertions = [
       {
-        assertion = !cfg.features.apps.enable || config.host.isDesktop;
-        message = "The graphical workstation application suite requires a desktop host.";
-      }
-      {
-        assertion = !cfg.features.gui.enable || config.host.isDesktop;
-        message = "The managed graphical desktop environment requires a desktop host.";
-      }
-      {
         assertion = lib.all (name: builtins.hasAttr name cfg.repositories.catalog) requiredRepositories;
         message = "host.userEnvironment.repositories.requests must name declared repositories";
       }

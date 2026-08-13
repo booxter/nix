@@ -12,8 +12,8 @@ in
   config = lib.mkIf cfg.enable ({
     assertions = [
       {
-        assertion = config.host.isDesktop;
-        message = "host.remote-control.client.x11 requires a desktop host";
+        assertion = config.host.userEnvironment.features.gui.enable;
+        message = "host.remote-control.client.x11 requires a managed graphical environment";
       }
     ];
 

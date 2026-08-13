@@ -19,8 +19,8 @@ in
         message = "host.hm.wireshark requires network diagnostics.";
       }
       {
-        assertion = !cfg.enable || osConfig.host.isDesktop;
-        message = "host.hm.wireshark requires a desktop host.";
+        assertion = !cfg.enable || osConfig.host.userEnvironment.features.gui.enable;
+        message = "host.hm.wireshark requires a managed graphical environment.";
       }
     ];
 

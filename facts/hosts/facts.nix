@@ -25,9 +25,7 @@ in
   };
 
   nixos = {
-    ${frame} = {
-      isDesktop = true;
-    };
+    ${frame} = { };
     nvws = { };
     beast = { };
     nv = { };

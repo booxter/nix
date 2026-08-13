@@ -1,7 +1,6 @@
 {
   hostSpec,
   isDarwin,
-  isDesktop,
   isLinux,
   lib,
   system,
@@ -43,14 +42,6 @@ in
       readOnly = true;
       internal = true;
       description = "Whether the selected platform uses the Linux kernel.";
-    };
-
-    isDesktop = lib.mkOption {
-      type = lib.types.bool;
-      default = isDesktop;
-      readOnly = true;
-      internal = true;
-      description = "Whether the host configuration includes a desktop environment.";
     };
 
     realm = lib.mkOption {
