@@ -17,8 +17,6 @@ in
               type = lib.types.enum [
                 "ebooks"
                 "audiobooks"
-                "movies"
-                "series"
               ];
               description = "Content stored in the ${name} media library.";
             };

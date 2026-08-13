@@ -32,7 +32,6 @@ in
     ];
 
     systemd.services.seerr.serviceConfig = {
-      EnvironmentFile = config.sops.templates."seerr-environment".path;
       Group = cfg.group;
       ReadWritePaths = [ cfg.stateDir ];
       StateDirectory = lib.mkForce null;
