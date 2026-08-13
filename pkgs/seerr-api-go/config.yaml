@@ -1,0 +1,10 @@
+package: seerrapi
+output: client.gen.go
+
+generate:
+  models: true
+  client: true
+
+output-options:
+  overlay:
+    path: seerr-api.overlay.yaml

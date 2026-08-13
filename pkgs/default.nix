@@ -42,6 +42,8 @@ in
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
+  seerr-api-go = pkgs.callPackage ./seerr-api-go { };
+
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;
   };

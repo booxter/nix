@@ -1,0 +1,82 @@
+overlay: 1.0.0
+info:
+  title: Complete Seerr settings API models
+  version: 1.0.0
+actions:
+  # TODO(seerr): report these fields missing from the upstream OpenAPI schema.
+  - target: $.components.schemas.MainSettings.properties
+    update:
+      mediaServerLogin:
+        type: boolean
+      cacheImages:
+        type: boolean
+      hideBlocklisted:
+        type: boolean
+      streamingRegion:
+        type: string
+      locale:
+        type: string
+  - target: $.components.schemas.JellyfinSettings.properties
+    update:
+      ip:
+        type: string
+      port:
+        type: number
+      useSsl:
+        type: boolean
+      urlBase:
+        type: string
+      apiKey:
+        type: string
+      serverId:
+        type: string
+        readOnly: true
+  - target: $.components.schemas.RadarrSettings.properties
+    update:
+      tags:
+        type: array
+        items:
+          type: number
+      tagRequests:
+        type: boolean
+      overrideRule:
+        type: array
+        items:
+          type: number
+  - target: $.components.schemas.SonarrSettings.properties
+    update:
+      tags:
+        type: array
+        items:
+          type: number
+      animeTags:
+        type: array
+        items:
+          type: number
+      tagRequests:
+        type: boolean
+      overrideRule:
+        type: array
+        items:
+          type: number
+      seriesType:
+        type: string
+        enum:
+          - standard
+          - daily
+          - anime
+      animeSeriesType:
+        type: string
+        enum:
+          - standard
+          - daily
+          - anime
+      monitorNewItems:
+        type: string
+        enum:
+          - all
+          - none
+  - target: $.components.schemas.TelegramSettings.properties
+    update:
+      embedPoster:
+        type: boolean
