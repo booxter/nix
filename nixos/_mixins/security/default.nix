@@ -11,6 +11,11 @@ let
   u2f = config.host.security.authentication.u2f;
 in
 {
+  imports = [
+    ./home.nix
+    ./work.nix
+  ];
+
   options.host.security.authentication.u2f = {
     enable = lib.mkEnableOption "PAM authentication with a registered U2F credential";
 
@@ -29,8 +34,6 @@ in
 
   config = lib.mkMerge [
     {
-      security.sudo.wheelNeedsPassword = lib.mkDefault config.host.security.sudo.wheelNeedsPassword;
-
       assertions = [
         {
           assertion = !u2f.enable || (u2f.appId != null && u2f.origin != null);

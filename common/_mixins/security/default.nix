@@ -11,17 +11,7 @@ let
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
 in
 {
-  imports = [
-    ./home.nix
-    ./work.nix
-  ];
-
   options.host.security = {
-    sudo.wheelNeedsPassword = lib.mkOption {
-      type = lib.types.bool;
-      description = "Whether members of the wheel group must enter a password for sudo.";
-    };
-
     secrets = {
       operator = {
         enable = lib.mkOption {
