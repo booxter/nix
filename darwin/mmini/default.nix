@@ -24,10 +24,16 @@ in
     server.vnc.enable = true;
   };
 
-  host.ssh.tickets.issuer = {
-    publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
-    keyName = "id_ed25519_sk_rk";
-    useAgent = false;
+  host.ssh = {
+    operator.authorizedKeys = [
+      (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
+      (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
+    ];
+    tickets.issuer = {
+      publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+      keyName = "id_ed25519_sk_rk";
+      useAgent = false;
+    };
   };
 
   host.ups.client.server = "frame";

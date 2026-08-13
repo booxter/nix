@@ -91,12 +91,18 @@ in
       wayland.enable = true;
       x11.enable = true;
     };
-    ssh.tickets = {
-      allowX11Forwarding = true;
-      issuer = {
-        publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
-        keyName = "id_ed25519_sk_rk";
-        useAgent = false;
+    ssh = {
+      operator.authorizedKeys = [
+        (readPublicKey ../../common/_mixins/ssh/public-keys/frame.pub)
+        (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
+      ];
+      tickets = {
+        allowX11Forwarding = true;
+        issuer = {
+          publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+          keyName = "id_ed25519_sk_rk";
+          useAgent = false;
+        };
       };
     };
     security = {

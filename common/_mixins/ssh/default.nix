@@ -9,7 +9,7 @@
 }:
 let
   username = config.host.username;
-  realmSsh = facts.realms.${config.host.realm}.trust.ssh;
+  realmSsh = facts.realms.${config.host.realm}.trust.ssh or { };
   readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
   hostDirectory = (if isDarwin then ../../../darwin else ../../../nixos) + "/${hostSpec.name}";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
@@ -23,6 +23,22 @@ let
     hostNames = spec.sshKnownHostNames;
     publicKey = publicHostKeyFor name;
   }) facts.hosts.hostSpecsByName;
+  operatorHostView = host: {
+    inherit (host) isOperatorSeat realm;
+    authorizedKeys = host.ssh.operator.authorizedKeys;
+  };
+  otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];
+  operatorHosts =
+    lib.mapAttrs (_: configuration: operatorHostView configuration.config.host) otherConfigurations
+    // {
+      ${hostSpec.name} = operatorHostView config.host;
+    };
+  realmOperatorHosts = lib.filterAttrs (
+    _: host: host.isOperatorSeat && host.realm == config.host.realm
+  ) operatorHosts;
+  realmAuthorizedKeys = lib.unique (
+    builtins.concatMap (host: host.authorizedKeys) (builtins.attrValues realmOperatorHosts)
+  );
   ticketIssuerType = lib.types.submodule {
     options = {
       publicKey = lib.mkOption {
@@ -102,11 +118,17 @@ in
     };
 
     authorizedKeys = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = realmSsh.authorizedKeys;
+      type = with lib.types; listOf nonEmptyStr;
+      default = realmAuthorizedKeys;
       readOnly = true;
       internal = true;
-      description = "Authorized SSH keys selected by the host realm.";
+      description = "Authorized SSH keys contributed by operator hosts in this realm.";
+    };
+
+    operator.authorizedKeys = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ ];
+      description = "SSH public keys controlled by this operator host and authorized across its realm.";
     };
 
     fleetBootHosts = lib.mkOption {
@@ -165,16 +187,27 @@ in
   };
 
   config = {
-    assertions = lib.optionals (issuer != null) [
-      {
-        assertion = config.host.ssh.tickets.enable;
-        message = "an SSH ticket issuer may only be configured on a ticket-enabled host";
-      }
-      {
-        assertion = lib.all (target: lib.elem issuer.publicKey target.trustedCaPublicKeys) issuerTargets;
-        message = "SSH ticket issuer for ${config.networking.hostName} is not trusted by every enabled target in its realm";
-      }
-    ];
+    assertions =
+      lib.optionals (issuer != null) [
+        {
+          assertion = config.host.ssh.tickets.enable;
+          message = "an SSH ticket issuer may only be configured on a ticket-enabled host";
+        }
+        {
+          assertion = lib.all (target: lib.elem issuer.publicKey target.trustedCaPublicKeys) issuerTargets;
+          message = "SSH ticket issuer for ${config.networking.hostName} is not trusted by every enabled target in its realm";
+        }
+      ]
+      ++ [
+        {
+          assertion = config.host.ssh.operator.authorizedKeys == [ ] || config.host.isOperatorSeat;
+          message = "only operator hosts may contribute realm SSH authorized keys";
+        }
+        {
+          assertion = config.host.ssh.authorizedKeys != [ ];
+          message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
+        }
+      ];
 
     services.openssh.enable = true;
 

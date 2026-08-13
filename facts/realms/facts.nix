@@ -13,13 +13,6 @@ in
       sudoWheelNeedsPassword = false;
     };
     trust.ssh = {
-      authorizedKeys = [
-        (sshPublicKey "mmini")
-        (sshPublicKey "mair")
-        (sshPublicKey "frame")
-        (sshPublicKey "yubikey")
-        (sshPublicKey "mair-secretive")
-      ];
       fleetBootHosts = true;
       tickets.trustedCaPublicKeys = [
         (sshPublicKey "fleet-user-ca")
@@ -36,9 +29,5 @@ in
       manageNetworkIdentity = false;
       sudoWheelNeedsPassword = true;
     };
-    trust.ssh.authorizedKeys = [
-      (sshPublicKey "jgwxhwdl4x")
-      (sshPublicKey "jgwxhwdl4x-nix-builder")
-    ];
   };
 }

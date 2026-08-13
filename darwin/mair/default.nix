@@ -40,10 +40,16 @@ in
       };
       server.vnc.enable = true;
     };
-    ssh.tickets.issuer = {
-      publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/fleet-user-ca.pub;
-      keyName = "fleet-user-ca.pub";
-      useAgent = true;
+    ssh = {
+      operator.authorizedKeys = [
+        (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
+        (readPublicKey ../../common/_mixins/ssh/public-keys/mair-secretive.pub)
+      ];
+      tickets.issuer = {
+        publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/fleet-user-ca.pub;
+        keyName = "fleet-user-ca.pub";
+        useAgent = true;
+      };
     };
     wireguard.client = {
       enable = true;
