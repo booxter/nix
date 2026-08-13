@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   hostSpec,
   inputs,
   lib,
@@ -45,7 +44,6 @@ in
   home-manager = {
     extraSpecialArgs = {
       inherit
-        facts
         hostSpec
         inputs
         ;

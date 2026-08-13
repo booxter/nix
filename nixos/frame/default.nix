@@ -91,6 +91,14 @@ in
       wayland.enable = true;
       x11.enable = true;
     };
+    ssh.tickets = {
+      allowX11Forwarding = true;
+      issuer = {
+        publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+        keyName = "id_ed25519_sk_rk";
+        useAgent = false;
+      };
+    };
     security = {
       authentication.u2f = {
         enable = true;

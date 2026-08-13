@@ -1,4 +1,7 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = 5;
 
@@ -19,6 +22,12 @@
   host.remote-control = {
     client.enable = true;
     server.vnc.enable = true;
+  };
+
+  host.ssh.tickets.issuer = {
+    publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+    keyName = "id_ed25519_sk_rk";
+    useAgent = false;
   };
 
   host.ups.client.server = "frame";

@@ -4,7 +4,6 @@ let
   context = {
     lanDomain = "home.arpa";
     frame = "frame";
-    mmini = "mmini";
   };
 in
 factsLib.loadModules {

@@ -57,7 +57,6 @@ in
       realm = "home";
       isDesktop = true;
       isOperatorSeat = true;
-      sshTicket.allowX11Forwarding = true;
     }
     {
       hostKind = "proxmox";
