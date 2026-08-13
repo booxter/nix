@@ -15,6 +15,7 @@ let
       (_: {
         isVM = true;
         realm = "home";
+        proxmox.cluster = "default";
         memorySize = 64;
         balloonSize = 48;
         diskSize = 150;
@@ -31,6 +32,7 @@ let
       (_: {
         hostKind = "proxmox";
         realm = "home";
+        proxmox.cluster = "default";
       });
 in
 {
@@ -61,6 +63,7 @@ in
     nvws = {
       hostKind = "proxmox";
       realm = "work";
+      proxmox.cluster = "default";
     };
     beast = {
       hostKind = "nixos";
@@ -69,6 +72,7 @@ in
     nv = {
       isVM = true;
       realm = "work";
+      proxmox.cluster = "default";
       isOperatorSeat = true;
       cores = 64;
       memorySize = 128;
@@ -76,6 +80,7 @@ in
     cache = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 16;
       memorySize = 16;
       diskSize = 50; # actual cache is on NFS
@@ -83,12 +88,14 @@ in
     srvarr = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 16;
       memorySize = 32;
     };
     fana = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -96,6 +103,7 @@ in
     gw = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -103,6 +111,7 @@ in
     org = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
@@ -110,6 +119,7 @@ in
     pki = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 2;
       memorySize = 4;
       diskSize = 50;
@@ -117,6 +127,7 @@ in
     home = {
       isVM = true;
       realm = "home";
+      proxmox.cluster = "default";
       cores = 4;
       memorySize = 8;
       diskSize = 80;

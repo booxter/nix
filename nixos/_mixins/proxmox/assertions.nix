@@ -18,9 +18,14 @@ let
   };
   clusterControllers =
     model.controllersByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
+  participates = config.host.isProxmox || config.host.isVM;
 in
 {
   config.assertions = [
+    {
+      assertion = participates == (config.host.proxmox.cluster != null);
+      message = "Proxmox nodes and guests must claim a cluster, and other hosts must not claim one";
+    }
     {
       assertion = !config.host.isProxmox || config.host.network.primaryInterface != null;
       message = "host.isProxmox requires host.network.primaryInterface";

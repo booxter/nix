@@ -12,9 +12,9 @@ in
     controller.enable = lib.mkEnableOption "cluster-wide Proxmox integrations";
 
     cluster = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "default";
-      description = "Proxmox cluster used when this host participates as a node or guest.";
+      type = with lib.types; nullOr nonEmptyStr;
+      default = (hostSpec.proxmox or { }).cluster or null;
+      description = "Proxmox cluster claimed by this node or guest.";
     };
 
     apiCertificate = {
