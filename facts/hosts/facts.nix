@@ -13,13 +13,16 @@ let
         3
       ])
       (_: {
-        isVM = true;
         realm = "home";
-        proxmox.cluster = "default";
-        memorySize = 64;
-        balloonSize = 48;
-        diskSize = 150;
-        cores = 24;
+        proxmox = {
+          cluster = "default";
+          guest = {
+            memoryGiB = 64;
+            balloonGiB = 48;
+            diskGiB = 150;
+            cores = 24;
+          };
+        };
       });
 
   labProxmoxSpecs =
@@ -70,67 +73,91 @@ in
       realm = "home";
     };
     nv = {
-      isVM = true;
       realm = "work";
-      proxmox.cluster = "default";
       isOperatorSeat = true;
-      cores = 64;
-      memorySize = 128;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 64;
+          memoryGiB = 128;
+        };
+      };
     };
     cache = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 16;
-      memorySize = 16;
-      diskSize = 50; # actual cache is on NFS
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 16;
+          memoryGiB = 16;
+          diskGiB = 50; # actual cache is on NFS
+        };
+      };
     };
     srvarr = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 16;
-      memorySize = 32;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 16;
+          memoryGiB = 32;
+        };
+      };
     };
     fana = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 8;
-      memorySize = 16;
-      diskSize = 300;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 8;
+          memoryGiB = 16;
+          diskGiB = 300;
+        };
+      };
     };
     gw = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 2;
-      memorySize = 8;
-      diskSize = 64;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 2;
+          memoryGiB = 8;
+          diskGiB = 64;
+        };
+      };
     };
     org = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 4;
-      memorySize = 16;
-      diskSize = 80;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 4;
+          memoryGiB = 16;
+          diskGiB = 80;
+        };
+      };
     };
     pki = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 2;
-      memorySize = 4;
-      diskSize = 50;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 2;
+          memoryGiB = 4;
+          diskGiB = 50;
+        };
+      };
     };
     home = {
-      isVM = true;
       realm = "home";
-      proxmox.cluster = "default";
-      cores = 4;
-      memorySize = 8;
-      diskSize = 80;
+      proxmox = {
+        cluster = "default";
+        guest = {
+          cores = 4;
+          memoryGiB = 8;
+          diskGiB = 80;
+        };
+      };
     };
   }
   // labProxmoxSpecs

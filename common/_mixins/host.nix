@@ -82,10 +82,10 @@ in
 
     isVM = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.isVM or false;
+      default = (hostSpec.proxmox or { }) ? guest;
       readOnly = true;
       internal = true;
-      description = "Whether this host is a virtual machine.";
+      description = "Whether this host is a declarative Proxmox guest.";
     };
 
     realm = lib.mkOption {

@@ -9,15 +9,13 @@
 }:
 let
   username = config.host.username;
-  isVM = hostSpec.isVM or false;
-  cores = hostSpec.cores or 4;
-  memorySize = hostSpec.memorySize or 8;
-  diskSize = hostSpec.diskSize or 100;
+  isVM = (hostSpec.proxmox or { }) ? guest;
+  guest = config.host.proxmox.guest;
   virtPlatform = hostSpec.virtPlatform or system;
   GiB = 1024 * 1024 * 1024;
   # VM disks can be much smaller than physical hosts. Start GC at 20%
   # free and target 40%, capped at the physical-host thresholds.
-  minFreeGiB = lib.min 40 (builtins.div diskSize 5);
+  minFreeGiB = lib.min 40 (builtins.div guest.diskGiB 5);
 in
 {
   imports = lib.optionals isVM [ (modulesPath + "/profiles/qemu-guest.nix") ];
@@ -35,9 +33,9 @@ in
       host.pkgs = inputs.nixpkgs.legacyPackages.${virtPlatform};
       graphics = false;
       # Limit cores to avoid overloading the local host.
-      cores = inputs.nixpkgs.lib.min cores 8;
-      memorySize = memorySize * 1024;
-      diskSize = diskSize * 1024;
+      cores = inputs.nixpkgs.lib.min guest.cores 8;
+      memorySize = guest.memoryGiB * 1024;
+      diskSize = guest.diskGiB * 1024;
     };
   };
 }

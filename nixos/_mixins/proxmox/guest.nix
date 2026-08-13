@@ -7,13 +7,10 @@
   ...
 }:
 let
-  isVM = hostSpec.isVM or false;
+  isGuest = (hostSpec.proxmox or { }) ? guest;
+  guest = config.host.proxmox.guest;
   bridgeName = "vmbr0";
   macAddress = config.host.network.macAddress;
-  cores = hostSpec.cores or 4;
-  memorySize = hostSpec.memorySize or 8;
-  balloonSize = hostSpec.balloonSize or null;
-  diskSize = hostSpec.diskSize or 100;
   model = import ./model.nix {
     inherit
       config
@@ -23,12 +20,12 @@ let
   };
 in
 {
-  imports = lib.optionals isVM [
+  imports = lib.optionals isGuest [
     inputs.proxmox-nixos.nixosModules.declarative-vms
     (import ../disko { device = "/dev/sda"; })
   ];
 
-  config = lib.optionalAttrs isVM {
+  config = lib.optionalAttrs isGuest {
     host.power.shutdown.before.proxmox-cluster = model.guestNodes.${hostSpec.name} or [ ];
 
     host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
@@ -36,11 +33,11 @@ in
     };
 
     virtualisation.proxmox = {
-      inherit cores;
+      inherit (guest) cores;
       name = hostSpec.name;
       autoInstall = true;
-      memory = memorySize * 1024;
-      balloon = if balloonSize == null then null else balloonSize * 1024;
+      memory = guest.memoryGiB * 1024;
+      balloon = if guest.balloonGiB == null then null else guest.balloonGiB * 1024;
       cpu.cputype = "host";
       agent = {
         enabled = true;
@@ -61,7 +58,7 @@ in
       ];
       scsi = [
         {
-          file = "local:${toString diskSize}";
+          file = "local:${toString guest.diskGiB}";
           discard = "on";
         }
       ];
