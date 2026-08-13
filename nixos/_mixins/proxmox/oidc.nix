@@ -2,6 +2,7 @@
   config,
   facts,
   lib,
+  outputs,
   pkgs,
   utils,
   ...
@@ -14,10 +15,13 @@ let
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  proxmoxLabHostSpecs = builtins.filter (spec: (spec.hostKind or null) == "proxmox") (
-    builtins.attrValues facts.hosts.nixos
+  proxmoxNodeNames = builtins.attrNames (
+    lib.filterAttrs (
+      _: configuration: configuration.config.host.proxmox.node.enable
+    ) outputs.nixosConfigurations
   );
-  proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxLabHostSpecs);
+  proxmoxNodeHostSpecs = map (name: facts.hosts.nixos.${name}) proxmoxNodeNames;
+  proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxNodeHostSpecs);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [
@@ -55,7 +59,7 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.isProxmox && config.host.proxmox.controller.enable
+        config.host.proxmox.node.enable && config.host.proxmox.controller.enable
       );
     }
     (lib.mkIf cfg.enable {

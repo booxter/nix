@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.luks;
-  isPhysicalHost = !config.host.isVM;
+  isPhysicalHost = !config.host.proxmox.guest.enable;
 in
 {
   imports = [ ./remote-unlock.nix ];

@@ -8,8 +8,8 @@ let
   hostView = hostConfig: {
     cluster = hostConfig.host.proxmox.cluster;
     controller = hostConfig.host.proxmox.controller.enable;
-    isGuest = hostConfig.host.isVM;
-    isNode = hostConfig.host.isProxmox;
+    isGuest = hostConfig.host.proxmox.guest.enable;
+    isNode = hostConfig.host.proxmox.node.enable;
     realm = hostConfig.host.realm;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];

@@ -18,7 +18,9 @@ let
   };
   clusterControllers =
     model.controllersByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
-  participates = config.host.isProxmox || config.host.isVM;
+  node = config.host.proxmox.node.enable;
+  guest = config.host.proxmox.guest.enable;
+  participates = node || guest;
 in
 {
   config.assertions = [
@@ -27,15 +29,19 @@ in
       message = "Proxmox nodes and guests must claim a cluster, and other hosts must not claim one";
     }
     {
-      assertion = !config.host.isProxmox || config.host.network.primaryInterface != null;
-      message = "host.isProxmox requires host.network.primaryInterface";
+      assertion = !(node && guest);
+      message = "a host cannot be both a Proxmox node and guest";
     }
     {
-      assertion = !config.host.proxmox.controller.enable || config.host.isProxmox;
-      message = "host.proxmox.controller requires host.isProxmox";
+      assertion = !node || config.host.network.primaryInterface != null;
+      message = "host.proxmox.node.enable requires host.network.primaryInterface";
     }
     {
-      assertion = !config.host.isProxmox || builtins.length clusterControllers == 1;
+      assertion = !config.host.proxmox.controller.enable || node;
+      message = "host.proxmox.controller requires host.proxmox.node.enable";
+    }
+    {
+      assertion = !node || builtins.length clusterControllers == 1;
       message = "Proxmox cluster '${config.host.proxmox.cluster}' in realm '${config.host.realm}' requires exactly one controller";
     }
     {
@@ -55,7 +61,7 @@ in
       message = "host.proxmox.prometheusExporter requires services.proxmox-ve.enable.";
     }
   ]
-  ++ lib.optionals config.host.isVM [
+  ++ lib.optionals guest [
     {
       assertion = model.guestNodes.${hostName} != [ ];
       message = "${hostName} references Proxmox cluster '${config.host.proxmox.cluster}' without any nodes in realm '${config.host.realm}'";

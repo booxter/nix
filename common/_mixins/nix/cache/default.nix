@@ -109,7 +109,7 @@ in
 
       proxmox = {
         enable =
-          config.host.isProxmox
+          config.host.proxmox.node.enable
           || config.host.nix.builder.enable
           || config.host.userEnvironment.roles.developer.enable;
         substituter = "https://cache.saumon.network/proxmox-nixos";

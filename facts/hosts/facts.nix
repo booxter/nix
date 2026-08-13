@@ -24,7 +24,6 @@ let
         3
       ])
       (_: {
-        hostKind = "proxmox";
         realm = "home";
       });
 in
@@ -43,16 +42,13 @@ in
 
   nixos = {
     ${frame} = {
-      hostKind = "nixos";
       realm = "home";
       isDesktop = true;
     };
     nvws = {
-      hostKind = "proxmox";
       realm = "work";
     };
     beast = {
-      hostKind = "nixos";
       realm = "home";
     };
     nv = {

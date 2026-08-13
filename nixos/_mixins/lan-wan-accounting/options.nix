@@ -60,6 +60,6 @@
 
   config.host.observability.lanWan = {
     enable = lib.mkDefault config.host.observability.enable;
-    mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
+    mode = lib.mkDefault (if config.host.proxmox.node.enable then "host-local" else "interface-path");
   };
 }

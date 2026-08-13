@@ -1,5 +1,4 @@
 {
-  config,
   facts,
   hostSpec,
   isDarwin,
@@ -47,27 +46,12 @@ in
       description = "Whether the selected platform uses the Linux kernel.";
     };
 
-    isProxmox = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      internal = true;
-      description = "Whether this host is a Proxmox VE node.";
-    };
-
     isDesktop = lib.mkOption {
       type = lib.types.bool;
       default = isDesktop;
       readOnly = true;
       internal = true;
       description = "Whether the host configuration includes a desktop environment.";
-    };
-
-    isVM = lib.mkOption {
-      type = lib.types.bool;
-      default = isLinux && config.host.proxmox.guest.enable;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host is a declarative Proxmox guest.";
     };
 
     realm = lib.mkOption {

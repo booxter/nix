@@ -75,11 +75,6 @@ pkgs.testers.runNixOSTest {
             default = null;
           };
 
-          isProxmox = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-          };
-
           realm = lib.mkOption {
             type = lib.types.str;
             default = "test";

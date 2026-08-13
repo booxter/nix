@@ -12,7 +12,7 @@ let
   primaryInterface = config.host.network.primaryInterface;
 in
 {
-  config = lib.mkIf config.host.isProxmox {
+  config = lib.mkIf config.host.proxmox.node.enable {
     host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
     host.autoUpgrade.claims.proxmox-node = {

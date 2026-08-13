@@ -7,16 +7,16 @@
 let
   hostname = config.networking.hostName;
   nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
-  mkNodeLabels = name: hostConfig: isProxmox: {
+  mkNodeLabels = name: hostConfig: isProxmoxNode: {
     availability = if hostConfig.host.hardware.isLaptop then "intermittent" else "always";
     component = "node";
     host_builder = lib.boolToString hostConfig.host.nix.builder.enable;
-    host_hypervisor = lib.boolToString isProxmox;
+    host_hypervisor = lib.boolToString isProxmoxNode;
     host_laptop = lib.boolToString hostConfig.host.hardware.isLaptop;
-    host_network_charts = lib.boolToString (!isProxmox);
-    host_network_source = if isProxmox then "classified" else "node";
-    host_class = if hostConfig.host.isVM then "virtual" else "hardware";
-    host_virtual = lib.boolToString hostConfig.host.isVM;
+    host_network_charts = lib.boolToString (!isProxmoxNode);
+    host_network_source = if isProxmoxNode then "classified" else "node";
+    host_class = if hostConfig.host.proxmox.guest.enable then "virtual" else "hardware";
+    host_virtual = lib.boolToString hostConfig.host.proxmox.guest.enable;
     instance = name;
     realm = hostConfig.host.realm;
     scrape_profile = "node";
@@ -27,7 +27,7 @@ let
       hostConfig = outputs.nixosConfigurations.${name}.config;
     in
     {
-      labels = mkNodeLabels name hostConfig hostConfig.host.isProxmox;
+      labels = mkNodeLabels name hostConfig hostConfig.host.proxmox.node.enable;
       targets = [ "${name}:9100" ];
     };
   nixosNodeExporterTargetNames = builtins.filter (
@@ -78,7 +78,7 @@ in
           targets = [
             "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
           ];
-          labels = mkNodeLabels hostname config config.host.isProxmox;
+          labels = mkNodeLabels hostname config config.host.proxmox.node.enable;
         }
       ];
     }

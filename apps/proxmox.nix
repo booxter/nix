@@ -8,8 +8,8 @@ let
   proxmoxPkgs = inputs.proxmox-nixos.packages.${system};
   hostViews = pkgs.lib.mapAttrs (_: configuration: {
     cluster = configuration.config.host.proxmox.cluster;
-    isGuest = configuration.config.host.isVM;
-    isNode = configuration.config.host.isProxmox;
+    isGuest = configuration.config.host.proxmox.guest.enable;
+    isNode = configuration.config.host.proxmox.node.enable;
     realm = configuration.config.host.realm;
   }) outputs.nixosConfigurations;
   proxmoxModel = (import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; }).build hostViews;

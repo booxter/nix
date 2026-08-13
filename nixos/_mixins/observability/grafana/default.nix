@@ -40,9 +40,9 @@ let
     {
       inherit name;
       platform = if hostConfig.host.isDarwin then "darwin" else "linux";
-      virtual = hostConfig.host.isVM;
+      virtual = hostConfig.host.proxmox.guest.enable;
       builder = hostConfig.host.nix.builder.enable;
-      hypervisor = hostConfig.host.isProxmox or false;
+      hypervisor = hostConfig.host.proxmox.node.enable;
       gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
       services = builtins.attrNames enabledServices;
       storage = {

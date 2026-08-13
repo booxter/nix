@@ -11,7 +11,7 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
-        config.host.isProxmox && config.host.observability.enable
+        config.host.proxmox.node.enable && config.host.observability.enable
       );
     }
     (lib.mkIf cfg.enable {

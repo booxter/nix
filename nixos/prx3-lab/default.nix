@@ -3,8 +3,10 @@
 
   hardware.cpu.amd.updateMicrocode = true;
 
-  host.isProxmox = true;
-  host.proxmox.cluster = "default";
+  host.proxmox = {
+    cluster = "default";
+    node.enable = true;
+  };
   host.network = {
     interfaces.enp5s0f0np0.kind = "ethernet";
     macAddress = "38:05:25:30:7d:69";
