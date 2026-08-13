@@ -22,6 +22,12 @@ in
     publicKey = readPublicKey ./restic.pub;
   };
 
+  host.storage.claims.media = {
+    provider = "beast";
+    resource = "media";
+    mountPoint = "/data/media";
+  };
+
   host.media.libraries = {
     books = {
       contentType = "ebooks";
@@ -56,7 +62,6 @@ in
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark
-    ./storage.nix
     ./tuning.nix
     ./transmission.nix
     ./vpn.nix
