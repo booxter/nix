@@ -49,20 +49,24 @@ in
 
   imports = [
     ./adaptive-upload-policy.nix
-    ./arr.nix
+    ./bazarr.nix
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
+    ./lidarr.nix
     ./lidarr-cue-splitter.nix
     ./oauth2-proxy.nix
     ./pinepods.nix
+    ./prowlarr.nix
+    ./radarr.nix
     ./romm.nix
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark
     ./transmission.nix
+    ./sonarr.nix
     ./vpn.nix
   ];
 }
