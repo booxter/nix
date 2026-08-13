@@ -42,15 +42,12 @@ in
   darwin = {
     mair = {
       realm = "home";
-      isOperatorSeat = true;
     };
     mmini = {
       realm = "home";
-      isOperatorSeat = true;
     };
     JGWXHWDL4X = {
       realm = "work";
-      isOperatorSeat = true;
     };
   };
 
@@ -59,7 +56,6 @@ in
       hostKind = "nixos";
       realm = "home";
       isDesktop = true;
-      isOperatorSeat = true;
     };
     nvws = {
       hostKind = "proxmox";
@@ -72,7 +68,6 @@ in
     };
     nv = {
       realm = "work";
-      isOperatorSeat = true;
       proxmox = {
         cluster = "default";
         guest = {

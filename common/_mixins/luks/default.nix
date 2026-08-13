@@ -35,7 +35,7 @@ in
     };
   };
 
-  config = lib.mkIf config.host.isOperatorSeat {
+  config = lib.mkIf config.host.security.secrets.operator.enable {
     programs.ssh = {
       knownHosts = lib.mapAttrs (name: server: {
         hostNames = [ name ];

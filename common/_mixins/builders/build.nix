@@ -17,7 +17,7 @@ let
     inherit (builder) protocol sshKey sshUser;
     hostName = name;
   };
-  enabled = config.host.isOperatorSeat && builders != { };
+  enabled = config.host.userEnvironment.roles.developer.enable && builders != { };
 in
 {
   config = lib.mkIf enabled {

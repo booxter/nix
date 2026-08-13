@@ -12,7 +12,7 @@ let
   '';
 in
 {
-  config = lib.mkIf (config.host.isOperatorSeat && builders != { }) {
+  config = lib.mkIf (config.host.userEnvironment.roles.developer.enable && builders != { }) {
     programs.ssh = {
       knownHosts = lib.mapAttrs' toKnownHost knownBuilders;
       extraConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList toSshConfig builders);

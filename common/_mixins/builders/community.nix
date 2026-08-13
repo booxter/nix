@@ -13,7 +13,7 @@ let
     "kvm"
     "nixos-test"
   ];
-  enabled = config.host.realm == "home" && config.host.isOperatorSeat;
+  enabled = config.host.realm == "home" && config.host.userEnvironment.roles.developer.enable;
 in
 {
   config = lib.mkIf enabled {

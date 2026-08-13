@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   builders =
-    if config.host.isOperatorSeat then
+    if config.host.userEnvironment.roles.developer.enable then
       lib.filterAttrs (_: builder: builtins.elem "nixpkgs" builder.uses) config.host.nix.builder-pool
     else
       { };

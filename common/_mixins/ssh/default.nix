@@ -23,7 +23,8 @@ let
     publicKey = publicHostKeyFor name;
   }) facts.hosts.hostSpecsByName;
   operatorHostView = host: {
-    inherit (host) isOperatorSeat realm;
+    inherit (host) realm;
+    operator = host.security.secrets.operator.enable;
     authorizedKeys = host.ssh.operator.authorizedKeys;
   };
   otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];
@@ -32,7 +33,7 @@ let
   };
   operatorHosts = lib.mapAttrs (_: operatorHostView) fleetHosts;
   realmOperatorHosts = lib.filterAttrs (
-    _: host: host.isOperatorSeat && host.realm == config.host.realm
+    _: host: host.operator && host.realm == config.host.realm
   ) operatorHosts;
   realmAuthorizedKeys = lib.unique (
     builtins.concatMap (host: host.authorizedKeys) (builtins.attrValues realmOperatorHosts)
@@ -227,7 +228,8 @@ in
       ]
       ++ [
         {
-          assertion = config.host.ssh.operator.authorizedKeys == [ ] || config.host.isOperatorSeat;
+          assertion =
+            config.host.ssh.operator.authorizedKeys == [ ] || config.host.security.secrets.operator.enable;
           message = "only operator hosts may contribute realm SSH authorized keys";
         }
         {

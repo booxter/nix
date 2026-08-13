@@ -61,14 +61,6 @@ in
       description = "Whether the host configuration includes a desktop environment.";
     };
 
-    isOperatorSeat = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isOperatorSeat or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this host is used interactively for fleet development and administration.";
-    };
-
     isVM = lib.mkOption {
       type = lib.types.bool;
       default = (hostSpec.proxmox or { }) ? guest;
