@@ -35,8 +35,13 @@ in
       }
     ]
     ++ map (library: {
-      assertion = library.media != null && library.media.contentType == "audiobooks";
-      message = "host.audiobookshelf.libraries.${library.name}.source must select an audiobook library";
+      assertion =
+        library.media != null
+        && builtins.elem library.media.contentType [
+          "audiobooks"
+          "ebooks"
+        ];
+      message = "host.audiobookshelf.libraries.${library.name}.source must select an audiobook or ebook library";
     }) libraries
   );
 }

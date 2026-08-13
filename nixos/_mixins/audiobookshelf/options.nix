@@ -21,14 +21,14 @@ let
 
         provider = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          default = "audible";
+          default = "google";
           description = "Audiobookshelf metadata provider for the library.";
         };
 
         icon = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-          default = null;
-          description = "Optional Audiobookshelf library icon.";
+          type = lib.types.nonEmptyStr;
+          default = "database";
+          description = "Audiobookshelf library icon.";
         };
 
         access = lib.mkOption {
@@ -45,7 +45,7 @@ let
 in
 {
   options.host.audiobookshelf = {
-    enable = lib.mkEnableOption "Audiobookshelf audiobook server";
+    enable = lib.mkEnableOption "Audiobookshelf audiobook and ebook server";
 
     package = lib.mkOption {
       type = lib.types.package;

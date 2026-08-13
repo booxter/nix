@@ -49,6 +49,7 @@ let
         name = library.displayName;
         path = library.media.path;
         mediaType = "book";
+        audiobooksOnly = library.media.contentType == "audiobooks";
         inherit (library) icon provider;
       }) validLibraries;
     }

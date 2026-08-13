@@ -48,7 +48,8 @@ class DesiredLibrary(BaseModel):
     path: str = Field(min_length=1)
     media_type: str = Field(alias="mediaType", pattern="^book$")
     provider: str = Field(min_length=1)
-    icon: str | None
+    icon: str = Field(min_length=1)
+    audiobooks_only: StrictBool = Field(alias="audiobooksOnly")
 
     def creation_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -56,16 +57,18 @@ class DesiredLibrary(BaseModel):
             "folders": [{"fullPath": self.path}],
             "mediaType": self.media_type,
             "provider": self.provider,
+            "icon": self.icon,
+            "settings": {"audiobooksOnly": self.audiobooks_only},
         }
-        if self.icon is not None:
-            payload["icon"] = self.icon
         return payload
 
     def safe_update_payload(self) -> dict[str, object]:
-        payload: dict[str, object] = {"name": self.name, "provider": self.provider}
-        if self.icon is not None:
-            payload["icon"] = self.icon
-        return payload
+        return {
+            "name": self.name,
+            "provider": self.provider,
+            "icon": self.icon,
+            "settings": {"audiobooksOnly": self.audiobooks_only},
+        }
 
 
 class ReconcileSettings(BaseModel):
@@ -86,6 +89,12 @@ class LibraryFolder(BaseModel):
     full_path: str = Field(validation_alias=AliasChoices("fullPath", "path"))
 
 
+class LibrarySettings(BaseModel):
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    audiobooks_only: StrictBool = Field(alias="audiobooksOnly")
+
+
 class CurrentLibrary(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -95,6 +104,7 @@ class CurrentLibrary(BaseModel):
     media_type: str = Field(alias="mediaType")
     provider: str | None = None
     icon: str | None = None
+    settings: LibrarySettings
 
 
 class CurrentLibraries(BaseModel):

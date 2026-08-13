@@ -122,7 +122,13 @@ def reconcile_libraries(api: AudiobookshelfApi, desired: tuple[DesiredLibrary, .
                 f"Audiobookshelf library at {library.path} has media type {existing.media_type!r}"
             )
         safe_payload = library.safe_update_payload()
-        if any(getattr(existing, key) != value for key, value in safe_payload.items()):
+        current_values: dict[str, object] = {
+            "name": existing.name,
+            "provider": existing.provider,
+            "icon": existing.icon,
+            "settings": {"audiobooksOnly": existing.settings.audiobooks_only},
+        }
+        if any(current_values[key] != value for key, value in safe_payload.items()):
             api.update_library(existing.id, safe_payload)
             changed += 1
     return changed

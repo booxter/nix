@@ -60,6 +60,7 @@ def desired_settings(*, backups: bool = True) -> dict[str, object]:
                 "mediaType": "book",
                 "provider": "audible",
                 "icon": "audiobookshelf",
+                "audiobooksOnly": True,
             }
         ],
     }
@@ -225,6 +226,7 @@ def current_library(**changes: object) -> dict[str, object]:
         "mediaType": "book",
         "provider": "audible",
         "icon": "audiobookshelf",
+        "settings": {"audiobooksOnly": True, "unmanaged": True},
     }
     result.update(changes)
     return result
@@ -245,7 +247,14 @@ def test_reconcile_updates_ordered_settings_and_creates_library(tmp_path: Path) 
         ("PATCH", "/api/settings"),
         ("POST", "/api/libraries"),
     ]
-    assert state.writes[-1][2]["folders"] == [{"fullPath": "/srv/media/spoken"}]
+    assert state.writes[-1][2] == {
+        "name": "Spoken books",
+        "folders": [{"fullPath": "/srv/media/spoken"}],
+        "mediaType": "book",
+        "provider": "audible",
+        "icon": "audiobookshelf",
+        "settings": {"audiobooksOnly": True},
+    }
     assert state.authorization_headers == {"Bearer automation-token"}
 
 
@@ -263,14 +272,26 @@ def test_reconcile_adopts_library_by_path_and_only_updates_safe_fields(tmp_path:
     state = ApiState(
         auth=current_auth(),
         settings={"backupSchedule": "15 4 * * *", "backupsToKeep": 2, "maxBackupSize": 1},
-        libraries=[current_library(name="Old name", provider="google", icon=None)],
+        libraries=[
+            current_library(
+                name="Old name",
+                provider="google",
+                icon="database",
+                settings={"audiobooksOnly": False},
+            )
+        ],
     )
     assert run_with_state(tmp_path, state) == (False, False, 1)
     assert state.writes == [
         (
             "PATCH",
             "/api/libraries/library-id",
-            {"name": "Spoken books", "provider": "audible", "icon": "audiobookshelf"},
+            {
+                "name": "Spoken books",
+                "provider": "audible",
+                "icon": "audiobookshelf",
+                "settings": {"audiobooksOnly": True},
+            },
         )
     ]
 
