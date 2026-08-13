@@ -2,6 +2,10 @@
 lib.mkIf (config.host.realm == "home") {
   host.sso = {
     applications = {
+      audiobookshelf = {
+        adminGroup = "media-admins";
+        userGroup = "media-users";
+      };
       "home-assistant" = {
         adminGroup = "home-admins";
         userGroup = "home-users";

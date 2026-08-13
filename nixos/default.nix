@@ -18,6 +18,7 @@
       ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade
+      ./_mixins/audiobookshelf
       ./_mixins/aurral
       ./_mixins/backups
       ./_mixins/builder.nix

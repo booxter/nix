@@ -49,6 +49,7 @@ in
       };
 
       users = {
+        audiobookshelf.uid = 156;
         ebook-converter.uid = 298;
         paperless = {
           uid = 315;

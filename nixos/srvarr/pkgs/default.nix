@@ -25,8 +25,6 @@ in
 
   seerr-tools = seerrTools.package;
 
-  audiobookshelf-tools = pkgs.callPackage ./audiobookshelf-tools { };
-
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
     atomicFileWrites = pkgs.atomic-file-writes;
   };

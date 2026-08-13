@@ -5,13 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "audiobookshelf-tools"
 version = "0.1.0"
-description = "Reconcile srvarr Audiobookshelf settings"
+description = "Reconcile Audiobookshelf settings and libraries"
 requires-python = ">=3.11"
 dependencies = ["httpx", "pydantic", "pystemd"]
 
 [project.scripts]
-audiobookshelf-backup-bootstrap = "audiobookshelf_tools.cli:backup_main"
-audiobookshelf-oidc-bootstrap = "audiobookshelf_tools.cli:oidc_main"
+audiobookshelf-reconcile = "audiobookshelf_tools.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
