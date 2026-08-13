@@ -5,10 +5,7 @@
 }:
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
-  beastNfsAddress = beastHostConfig.host.network.ipAddress;
   beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
-  beastNfsPort = beastHostConfig.services.nfs.settings.nfsd.port;
-  beastNfsRateMbit = 1500;
   wgEndpointPort = 1637;
   jellyfinClientName = "jellyfin-upload-policy";
   jellyfinClient = config.host.pki.clients.${jellyfinClientName};
@@ -52,14 +49,6 @@ in
   host.qos.interfaces.wan = {
     device = config.host.network.primaryInterface;
     limits = {
-      nfs = {
-        rateMbit = beastNfsRateMbit;
-        match = {
-          protocol = "tcp";
-          destinationAddress = beastNfsAddress;
-          destinationPort = beastNfsPort;
-        };
-      };
       wireguard-download = {
         direction = "ingress";
         rateMbit = 400;
