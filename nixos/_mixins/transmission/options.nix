@@ -98,6 +98,16 @@
       };
     };
 
+    uploadLimit = {
+      enable = lib.mkEnableOption "Transmission upload limiting";
+
+      initialKBytesPerSecond = lib.mkOption {
+        type = with lib.types; nullOr ints.positive;
+        default = null;
+        description = "Initial upload limit in kB/s before any runtime controller applies policy.";
+      };
+    };
+
     rpcUrl = lib.mkOption {
       type = lib.types.nonEmptyStr;
       readOnly = true;

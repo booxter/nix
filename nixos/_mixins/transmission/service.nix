@@ -37,6 +37,10 @@ in
         umask = "002";
         watch-dir = model.watchDir;
         watch-dir-enabled = true;
+      }
+      // lib.optionalAttrs cfg.uploadLimit.enable {
+        speed-limit-up = cfg.uploadLimit.initialKBytesPerSecond;
+        speed-limit-up-enabled = true;
       };
       user = cfg.user;
     };

@@ -23,6 +23,10 @@ in
         assertion = cfg.torrentCleaner.maximumAgeDays >= cfg.torrentCleaner.minimumAgeDays;
         message = "host.transmission cleaner maximum age must not be below its minimum age";
       }
+      {
+        assertion = !cfg.uploadLimit.enable || cfg.uploadLimit.initialKBytesPerSecond != null;
+        message = "host.transmission.uploadLimit requires an initial upload limit";
+      }
     ];
   };
 }

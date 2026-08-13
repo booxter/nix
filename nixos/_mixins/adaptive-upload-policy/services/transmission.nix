@@ -23,15 +23,15 @@ let
 in
 {
   config = lib.mkIf (cfg.enable && cfg.outputs.transmission.enable) {
-    services.transmission.settings = {
+    host.transmission.uploadLimit = {
+      enable = true;
       # Start at the safe fallback before the runtime controller has produced
       # its first policy decision.
-      speed-limit-up = lib.mkDefault (
+      initialKBytesPerSecond = lib.mkDefault (
         builtins.floor (
           (cfg.fallbackRateMbit * 1000.0 / 8.0) * (cfg.outputs.transmission.headroomPercent / 100.0)
         )
       );
-      speed-limit-up-enabled = lib.mkDefault true;
     };
 
     systemd.services.adaptive-upload-policy-transmission = {
