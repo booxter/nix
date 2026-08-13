@@ -22,6 +22,23 @@ in
     publicKey = readPublicKey ./restic.pub;
   };
 
+  host.media.libraries = {
+    books = {
+      contentType = "ebooks";
+      storage = {
+        claim = "media";
+        relativePath = "library/books";
+      };
+    };
+    audiobooks = {
+      contentType = "audiobooks";
+      storage = {
+        claim = "media";
+        relativePath = "library/audiobooks";
+      };
+    };
+  };
+
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
   imports = [
@@ -32,7 +49,6 @@ in
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
     ./lidarr-cue-splitter.nix
-    ./media.nix
     ./oauth2-proxy.nix
     ./pinepods.nix
     ./romm.nix
