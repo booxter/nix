@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -17,9 +16,12 @@ let
     paperlessService
     ;
   packages = import ./packages.nix { inherit pkgs; };
-  ociImages = import ../../_lib/oci-images.nix { inherit facts pkgs; };
-  image = ociImages.paperless-gpt.ref;
-  imageFile = ociImages.paperless-gpt.imageFile;
+  containerImage = import ../../_lib/oci-image.nix {
+    image = cfg.gpt.container;
+    inherit pkgs;
+  };
+  inherit (containerImage) imageFile;
+  image = containerImage.ref;
   containerUid = "10001";
   containerGid = "10001";
   autoTag = "paperless-gpt-auto";

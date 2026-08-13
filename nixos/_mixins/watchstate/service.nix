@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -9,7 +8,10 @@
 let
   cfg = config.host.watchstate;
   model = import ./model.nix { inherit config outputs; };
-  images = import ../../_lib/oci-images.nix { inherit facts pkgs; };
+  image = import ../../_lib/oci-image.nix {
+    image = cfg.container;
+    inherit pkgs;
+  };
   uid = 296;
 in
 {
@@ -31,8 +33,8 @@ in
     virtualisation.oci-containers = {
       backend = "podman";
       containers.watchstate = {
-        image = images.watchstate.ref;
-        imageFile = images.watchstate.imageFile;
+        image = image.ref;
+        imageFile = image.imageFile;
         pull = "never";
         user = "${toString uid}:${toString uid}";
         environment = {

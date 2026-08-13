@@ -1,10 +1,6 @@
 { pkgs, ... }:
 let
   inherit (pkgs) lib;
-  pin = (import ../../facts/oci-images/facts.nix).pinepods;
-  testFacts.oci-images.pinepods = pin // {
-    ref = "${pin.image}:${pin.tag}";
-  };
   testOutputs.nixosConfigurations = { };
   secretType =
     { name, ... }:
@@ -170,7 +166,6 @@ pkgs.testers.runNixOSTest {
       ];
 
       _module.args = {
-        facts = testFacts;
         outputs = testOutputs;
       };
 

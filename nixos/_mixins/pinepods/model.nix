@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -13,7 +12,10 @@ let
   bootstrapOwnerName = if ssoApplication == null then null else ssoApplication.bootstrapOwner;
   bootstrapOwner =
     if bootstrapOwnerName == null then null else config.host.sso.users.${bootstrapOwnerName} or null;
-  ociImages = import ../../_lib/oci-images.nix { inherit facts pkgs; };
+  containerImage = import ../../_lib/oci-image.nix {
+    image = cfg.container;
+    inherit pkgs;
+  };
 in
 {
   inherit
@@ -28,8 +30,8 @@ in
   service = config.host.web.services.pinepods;
   oidcClient = config.host.sso.oidc.clients.pinepods or null;
   oidcScopes = config.host.sso.oidc.baseScopes;
-  image = ociImages.pinepods.ref;
-  imageFile = ociImages.pinepods.imageFile;
+  image = containerImage.ref;
+  inherit (containerImage) imageFile;
   bootstrapReady =
     bootstrapOwner != null
     && bootstrapOwner.mailAddressSopsKey != null

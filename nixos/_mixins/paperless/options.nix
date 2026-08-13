@@ -1,4 +1,7 @@
 { lib, ... }:
+let
+  gptImagePin = import ./gpt-image-pin.nix;
+in
 {
   options.host.paperless = {
     enable = lib.mkEnableOption "Paperless document management";
@@ -29,6 +32,10 @@
 
     gpt = {
       enable = lib.mkEnableOption "Paperless GPT enrichment";
+      container = import ../../_lib/oci-image-options.nix {
+        inherit lib;
+        pin = gptImagePin;
+      };
       ollama.providerHost = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;

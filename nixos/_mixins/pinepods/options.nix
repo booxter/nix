@@ -1,4 +1,7 @@
 { lib, pkgs, ... }:
+let
+  imagePin = import ./image-pin.nix;
+in
 {
   options.host.pinepods = {
     enable = lib.mkEnableOption "PinePods podcast server";
@@ -7,6 +10,11 @@
       type = lib.types.package;
       default = pkgs.callPackage ./package { };
       description = "PinePods bootstrap helper package.";
+    };
+
+    container = import ../../_lib/oci-image-options.nix {
+      inherit lib;
+      pin = imagePin;
     };
 
     port = lib.mkOption {

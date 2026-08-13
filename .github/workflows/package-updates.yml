@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       oci_target:
-        description: Optional OCI image target from the oci-images facts.
+        description: Optional service-owned OCI image target.
         required: false
         type: string
   schedule:
@@ -85,7 +85,7 @@ jobs:
 
           if [[ "${run_oci_images}" -eq 1 ]]; then
             oci_targets="$(
-              nix run .#fact -- oci-images | jq -c --arg target "${OCI_TARGET}" '
+              nix eval --json --file apps/package-updates/oci-targets.nix | jq -c --arg target "${OCI_TARGET}" '
                 def branch_slug: gsub("[^A-Za-z0-9._-]"; "-");
                 [
                   to_entries[]
@@ -195,10 +195,13 @@ jobs:
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: ${{ secrets.CI_PR_TOKEN }}
-          commit-message: "oci-images: update ${{ matrix.target }}"
-          title: "oci-images: update ${{ matrix.target }}"
+          commit-message: "${{ matrix.target }}: update container image"
+          title: "${{ matrix.target }}: update container image"
           body: ${{ steps.update_oci_images.outputs.body }}
           branch: ci/oci-image-update-${{ matrix.branch }}
           delete-branch: true
           add-paths: |
-            facts/oci-images/facts.nix
+            nixos/_mixins/paperless/gpt-image-pin.nix
+            nixos/_mixins/pinepods/image-pin.nix
+            nixos/_mixins/romm/image-pin.nix
+            nixos/_mixins/watchstate/image-pin.nix

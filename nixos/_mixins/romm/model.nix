@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -29,7 +28,10 @@ let
       lib.filterAttrs (
         _: person: builtins.elem ssoApplication.adminGroup person.groups
       ) config.host.sso.users;
-  ociImages = import ../../_lib/oci-images.nix { inherit facts pkgs; };
+  containerImage = import ../../_lib/oci-image.nix {
+    image = cfg.container;
+    inherit pkgs;
+  };
   service = config.host.web.services.romm;
   oidcClient = config.host.sso.oidc.clients.romm or null;
   publicUrl = if service.public.url == null then "" else service.public.url;
@@ -43,8 +45,8 @@ let
     zipCacheModule = "${cfg.stateDir}/integration/utils/zip_cache.py";
     valkeyDir = "${cfg.stateDir}/valkey";
   };
-  image = ociImages.romm.ref;
-  imageFile = ociImages.romm.imageFile;
+  image = containerImage.ref;
+  inherit (containerImage) imageFile;
   uid = if account == null then null else account.uid;
   podmanSocket =
     if uid == null then null else "http+unix:///run/user/${toString uid}/podman/podman.sock";

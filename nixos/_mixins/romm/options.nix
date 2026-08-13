@@ -6,10 +6,16 @@
 }:
 let
   absolutePath = lib.types.strMatching "^/.*";
+  imagePin = import ./image-pin.nix;
 in
 {
   options.host.romm = {
     enable = lib.mkEnableOption "RomM game library";
+
+    container = import ../../_lib/oci-image-options.nix {
+      inherit lib;
+      pin = imagePin;
+    };
 
     publicHostName = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;

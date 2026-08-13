@@ -8,6 +8,7 @@ let
   cfg = config.host.watchstate;
   model = import ./model.nix { inherit config outputs; };
   absolutePath = lib.types.strMatching "^/.*";
+  imagePin = import ./image-pin.nix;
 in
 {
   imports = [
@@ -21,6 +22,11 @@ in
 
   options.host.watchstate = {
     enable = lib.mkEnableOption "WatchState media synchronization service";
+
+    container = import ../../_lib/oci-image-options.nix {
+      inherit lib;
+      pin = imagePin;
+    };
 
     jellyfin = {
       host = lib.mkOption {
