@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, cast
 
 from houndarr.bootstrap import bootstrap_non_web  # type: ignore[import-untyped]
+from houndarr.database import close_all_pools  # type: ignore[import-untyped]
 from houndarr.services.instance_validation import (  # type: ignore[import-untyped]
     check_connection,
     type_mismatch_message,
@@ -88,6 +89,12 @@ class Backend(Protocol):
     ) -> None: ...
 
 
+# Houndarr has no supported JSON API for instance CRUD. Its mutation routes
+# are browser-facing HTMX forms coupled to sessions and CSRF, so use the
+# pinned package's service layer instead of writing its SQLite schema directly.
+#
+# TODO: Request a versioned, API-key-authenticated instance CRUD API upstream
+# and replace this internal integration when one is available.
 class UpstreamBackend:
     async def list(self, master_key: bytes) -> Sequence[Instance]:
         return cast(Sequence[Instance], await list_instances(master_key=master_key))
@@ -147,3 +154,6 @@ class HoundarrStore:
 
     async def update(self, instance_id: int, fields: Mapping[str, Value]) -> None:
         await self.backend.update(instance_id, fields, self.master_key)
+
+    async def close(self) -> None:
+        await close_all_pools()

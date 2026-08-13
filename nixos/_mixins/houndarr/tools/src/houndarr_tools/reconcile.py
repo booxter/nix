@@ -35,6 +35,8 @@ class InstanceStore(Protocol):
 
     async def update(self, instance_id: int, fields: Mapping[str, Value]) -> None: ...
 
+    async def close(self) -> None: ...
+
 
 def read_api_key(credentials_directory: Path, desired: DesiredInstance) -> str:
     source = credentials_directory / desired.credential.name
@@ -138,43 +140,48 @@ async def reconcile_instances(
     delay: float = 2.0,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> int:
-    current = await store.list()
-    claimed_ids: set[int] = set()
-    changed = 0
-    for desired in desired_instances:
-        api_key = read_api_key(credentials_directory, desired)
-        await wait_until_verified(
-            store, desired, api_key, attempts=attempts, delay=delay, sleep=sleep
-        )
-        existing = find_existing(desired, current)
-        policy_fields = managed_fields(desired.interface, desired.policy)
-        if existing is None:
-            await store.create(desired, api_key, policy_fields)
-            changed += 1
-            continue
-        if existing.id in claimed_ids:
-            raise InstanceConflict(f"multiple declarations adopt Houndarr instance {existing.id}")
-        claimed_ids.add(existing.id)
-        wanted: dict[str, Value] = {
-            "name": desired.display_name,
-            "type": desired.interface.replace("-", "_"),
-            "url": desired.url,
-            "api_key": api_key,
-            "enabled": desired.enabled,
-            **policy_fields,
-        }
-        identity = {
-            "name": existing.name,
-            "type": existing.interface.replace("-", "_"),
-            "url": existing.url,
-            "api_key": existing.api_key,
-            "enabled": existing.enabled,
-            **existing.values,
-        }
-        updates = {key: value for key, value in wanted.items() if identity.get(key) != value}
-        if existing.url.rstrip("/") == desired.url.rstrip("/"):
-            updates.pop("url", None)
-        if updates:
-            await store.update(existing.id, updates)
-            changed += 1
-    return changed
+    try:
+        current = await store.list()
+        claimed_ids: set[int] = set()
+        changed = 0
+        for desired in desired_instances:
+            api_key = read_api_key(credentials_directory, desired)
+            await wait_until_verified(
+                store, desired, api_key, attempts=attempts, delay=delay, sleep=sleep
+            )
+            existing = find_existing(desired, current)
+            policy_fields = managed_fields(desired.interface, desired.policy)
+            if existing is None:
+                await store.create(desired, api_key, policy_fields)
+                changed += 1
+                continue
+            if existing.id in claimed_ids:
+                raise InstanceConflict(
+                    f"multiple declarations adopt Houndarr instance {existing.id}"
+                )
+            claimed_ids.add(existing.id)
+            wanted: dict[str, Value] = {
+                "name": desired.display_name,
+                "type": desired.interface.replace("-", "_"),
+                "url": desired.url,
+                "api_key": api_key,
+                "enabled": desired.enabled,
+                **policy_fields,
+            }
+            identity = {
+                "name": existing.name,
+                "type": existing.interface.replace("-", "_"),
+                "url": existing.url,
+                "api_key": existing.api_key,
+                "enabled": existing.enabled,
+                **existing.values,
+            }
+            updates = {key: value for key, value in wanted.items() if identity.get(key) != value}
+            if existing.url.rstrip("/") == desired.url.rstrip("/"):
+                updates.pop("url", None)
+            if updates:
+                await store.update(existing.id, updates)
+                changed += 1
+        return changed
+    finally:
+        await store.close()

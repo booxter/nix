@@ -133,6 +133,7 @@ class FakeStore:
     reachable: bool = True
     created: list[tuple[DesiredInstance, str, dict[str, Value]]] = field(default_factory=list)
     updated: list[tuple[int, dict[str, Value]]] = field(default_factory=list)
+    closed: bool = False
 
     async def list(self) -> tuple[CurrentInstance, ...]:
         return self.current
@@ -148,6 +149,9 @@ class FakeStore:
 
     async def update(self, instance_id: int, fields: Mapping[str, Value]) -> None:
         self.updated.append((instance_id, dict(fields)))
+
+    async def close(self) -> None:
+        self.closed = True
 
 
 def desired(*, policy: object = None) -> DesiredInstance:
@@ -180,6 +184,7 @@ def test_reconcile_creates_connection_without_claiming_policy(tmp_path: Path) ->
 
     assert run(store, desired(), tmp_path) == 1
     assert store.created[0][1:] == ("secret-key", {})
+    assert store.closed
 
 
 def test_reconcile_adopts_endpoint_and_updates_only_owned_fields(tmp_path: Path) -> None:
@@ -317,6 +322,7 @@ def test_store_converts_instances_and_delegates_writes() -> None:
         await store.create(item, "secret-key", {"batch_size": 25})
         created = (await store.list())[0]
         await store.update(created.id, {"name": "Music catalog"})
+        await store.close()
         return created
 
     created = asyncio.run(exercise())
