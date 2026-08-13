@@ -69,17 +69,6 @@ in
       description = "Whether this host is used interactively for fleet development and administration.";
     };
 
-    availability = lib.mkOption {
-      type = lib.types.enum [
-        "always"
-        "intermittent"
-      ];
-      default = hostSpec.availability or "always";
-      readOnly = true;
-      internal = true;
-      description = "Expected host availability for monitoring.";
-    };
-
     isVM = lib.mkOption {
       type = lib.types.bool;
       default = (hostSpec.proxmox or { }) ? guest;

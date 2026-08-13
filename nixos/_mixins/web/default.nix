@@ -422,7 +422,7 @@ in
                   "always"
                   "intermittent"
                 ];
-                default = rootConfig.host.availability;
+                default = if rootConfig.host.hardware.isLaptop then "intermittent" else "always";
                 description = "Availability policy inherited by this service's metrics and probes.";
               };
 

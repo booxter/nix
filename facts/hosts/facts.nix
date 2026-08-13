@@ -42,7 +42,6 @@ in
   darwin = {
     mair = {
       realm = "home";
-      availability = "intermittent";
       isOperatorSeat = true;
     };
     mmini = {
@@ -51,7 +50,6 @@ in
     };
     JGWXHWDL4X = {
       realm = "work";
-      availability = "intermittent";
       isOperatorSeat = true;
     };
   };

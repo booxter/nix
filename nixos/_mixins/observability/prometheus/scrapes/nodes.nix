@@ -8,7 +8,7 @@ let
   hostname = config.networking.hostName;
   nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
   mkNodeLabels = name: hostConfig: isProxmox: {
-    availability = hostConfig.host.availability;
+    availability = if hostConfig.host.hardware.isLaptop then "intermittent" else "always";
     component = "node";
     host_builder = lib.boolToString hostConfig.host.nix.builder.enable;
     host_hypervisor = lib.boolToString isProxmox;

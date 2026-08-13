@@ -110,7 +110,7 @@ in
                       "always"
                       "intermittent"
                     ];
-                    default = config.host.availability;
+                    default = if config.host.hardware.isLaptop then "intermittent" else "always";
                     description = "Availability policy for this scrape target.";
                   };
 
