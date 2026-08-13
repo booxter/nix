@@ -1,6 +1,12 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.host.seerr;
+  tools = pkgs.callPackage ./tools { };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -10,9 +16,7 @@ in
       configDir = cfg.stateDir;
     };
 
-    environment.systemPackages = lib.optional (
-      cfg.maintenanceToolsPackage != null
-    ) cfg.maintenanceToolsPackage;
+    environment.systemPackages = [ tools.package ];
 
     users.groups.${cfg.group} = { };
     users.users.${cfg.user} = {

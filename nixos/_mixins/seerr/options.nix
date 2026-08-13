@@ -89,12 +89,6 @@ in
       description = "Seerr settings reconciliation package.";
     };
 
-    maintenanceToolsPackage = lib.mkOption {
-      type = with lib.types; nullOr package;
-      default = null;
-      description = "Optional Seerr maintenance commands installed on the service host.";
-    };
-
     stateDir = lib.mkOption {
       type = absolutePath;
       default = "/var/lib/seerr";

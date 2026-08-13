@@ -4,7 +4,6 @@ let
   transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
   };
-  seerrTools = pkgs.callPackage ./seerr-tools { };
 in
 {
   bazarr-auth-config = pkgs.callPackage ./bazarr-auth-config {
@@ -18,8 +17,6 @@ in
   transmission-common = transmissionCommon;
 
   letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
-
-  seerr-tools = seerrTools.package;
 
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
     atomicFileWrites = pkgs.atomic-file-writes;

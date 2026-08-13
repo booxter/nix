@@ -1,6 +1,5 @@
 {
   config,
-  srvarrPkgs,
   ...
 }:
 {
@@ -8,8 +7,6 @@
     enable = true;
     stateDir = "/data/.state/nixarr/seerr";
     publicHostName = "js.${config.host.network.publicDomain}";
-    maintenanceToolsPackage = srvarrPkgs.seerr-tools;
-
     authentication.local.enable = true;
 
     requestPolicy = {
