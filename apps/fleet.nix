@@ -4,8 +4,8 @@
   pkgs,
 }:
 let
-  lan = facts.site.lan;
   fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
+  lan = fleetConfiguration.config.host.site.lan;
   wgHome = fleetConfiguration.config.host.wireguard.networks.home;
   appPackages = import ./packages.nix pkgs;
 
@@ -21,7 +21,7 @@ let
       sshHost = spec.name;
     }) facts.hosts.darwin;
     lanDnsServer = lan.gateway.address;
-    lanDomain = facts.site.lan.domain;
+    lanDomain = fleetConfiguration.config.host.network.lanDomain;
     nixos = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
       inherit (spec) realm;

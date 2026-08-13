@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   ...
@@ -8,12 +7,11 @@
 let
   cfg = config.host.network;
   hostName = config.networking.hostName;
-  lan = facts.site.lan;
+  lan = config.host.site.lan;
   ip = import ./lib.nix { inherit lib; };
   model = import ./model.nix {
     inherit
       config
-      facts
       lib
       outputs
       ;

@@ -1,11 +1,10 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
-  lan = facts.site.lan;
+  lan = config.host.site.lan;
   hostname = config.networking.hostName;
 in
 {

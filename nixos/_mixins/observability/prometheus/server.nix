@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  facts,
   outputs,
   pkgs,
   ...
@@ -34,7 +33,6 @@ let
   blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
-      facts
       lib
       outputs
       blackboxHttpMtlsTlsConfig

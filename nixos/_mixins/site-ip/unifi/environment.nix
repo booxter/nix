@@ -1,7 +1,7 @@
 {
   addressFor,
   baseUrl,
-  facts,
+  lan,
   lanDomain,
   reservations,
   site,
@@ -9,7 +9,6 @@
   webDnsRecords ? [ ],
 }:
 let
-  lan = facts.site.lan;
   netboot = lan.netboot;
 
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
@@ -36,7 +35,7 @@ let
       )
   );
 
-  mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
+  mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcp.ranges.main 0);
   mainDomainName = lanDomain;
   mainDomainSearchJson = builtins.toJSON [ lanDomain ];
   domainSearchOption =
@@ -52,12 +51,24 @@ let
 
   networkTftpServer = addressFor netboot.host;
 
-  networkBootfile = netboot.bootfile;
+  networkBootfile = netboot.bootFile;
   dnsRecordsByDomain = builtins.listToAttrs (
-    map (record: {
-      name = record.domain;
-      value = record;
-    }) (webDnsRecords ++ lan.dnsRecords)
+    map
+      (record: {
+        name = record.domain;
+        value = record;
+      })
+      (
+        webDnsRecords
+        ++ [
+          {
+            type = "A_RECORD";
+            ttlSeconds = 300;
+            domain = "unifi.${lanDomain}";
+            ipv4Address = lan.gateway.address;
+          }
+        ]
+      )
   );
   dnsRecordsJson = builtins.toJSON (builtins.attrValues dnsRecordsByDomain);
   renderedStaticRoutes = map (

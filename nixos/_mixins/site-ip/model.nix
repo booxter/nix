@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
 }:
@@ -43,7 +42,12 @@ let
     ip = network.reservation.address;
     identifiers = lib.optional (network.macAddress != null) network.macAddress;
   }) (lib.filterAttrs (_: network: network.reservation.enable) networksByHost);
-  reservations = managedReservations ++ facts.site.lan.reservations;
+  unmanagedReservations = lib.mapAttrsToList (hostname: reservation: {
+    inherit hostname;
+    inherit (reservation) identifiers;
+    ip = reservation.address;
+  }) config.host.site.lan.reservations;
+  reservations = managedReservations ++ unmanagedReservations;
 in
 {
   inherit
@@ -52,6 +56,7 @@ in
     managedReservations
     networksByHost
     reservations
+    unmanagedReservations
     ;
   reservationAddresses = map (reservation: reservation.ip) reservations;
   reservationHostnames = map (reservation: reservation.hostname) reservations;

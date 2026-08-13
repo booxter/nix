@@ -1,4 +1,4 @@
-{ facts, lib, ... }:
+{ config, lib, ... }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
@@ -22,16 +22,16 @@ in
     cidr = "10.83.0.0/24";
     address = "10.83.0.1";
     listenPort = 51820;
-    publicEndpoint = "wg.${facts.site.public.domain}";
+    publicEndpoint = "wg.${config.host.network.publicDomain}";
     publicKey = readPublicKey ./wireguard.pub;
     clientPolicy = {
       allowedIPs = [
         "10.83.0.0/24"
-        facts.site.lan.cidr
+        config.host.site.lan.cidr
       ];
       dns = [
-        facts.site.lan.gateway.address
-        facts.site.lan.domain
+        config.host.site.lan.gateway.address
+        config.host.network.lanDomain
       ];
       persistentKeepalive = 25;
     };

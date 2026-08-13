@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
@@ -19,7 +18,7 @@
 
     lanSubnets = lib.mkOption {
       type = with lib.types; listOf (strMatching "^[0-9./]+$");
-      default = [ facts.site.lan.cidr ];
+      default = [ config.host.site.lan.cidr ];
       description = "IPv4 subnets that should be treated as LAN traffic.";
     };
 

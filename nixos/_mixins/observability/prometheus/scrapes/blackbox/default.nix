@@ -1,13 +1,12 @@
 {
   config,
-  facts,
   lib,
   outputs,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
 let
-  networkTargets = import ./network-targets.nix { inherit facts; };
+  networkTargets = import ./network-targets.nix { inherit config; };
   inherit (networkTargets)
     dnsProbeTargets
     publicDnsProbeTargets

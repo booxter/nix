@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -25,13 +24,14 @@ let
     name = "wg-${name}";
   }) config.host.wireguard.networks;
   unifiSyncEnv = import ./environment.nix {
-    inherit facts webDnsRecords;
+    inherit webDnsRecords;
     addressFor = fleetNetwork.addressFor;
     baseUrl = controller.target.endpoint;
+    lan = config.host.site.lan;
     lanDomain = config.host.network.lanDomain;
     reservations = config.host.network.ipController.reservations;
     site = controller.target.site;
-    staticRoutes = (facts.site.lan.staticRoutes or [ ]) ++ wireguardStaticRoutes;
+    staticRoutes = config.host.site.lan.staticRoutes ++ wireguardStaticRoutes;
   };
 in
 {

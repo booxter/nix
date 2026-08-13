@@ -7,6 +7,9 @@ let
     cfg.uplink.uploadMbit
     cfg.policies.backups.maxUploadMbit
     cfg.policies.downloaders.maxDownloadMbit
+    cfg.lan.cidr
+    cfg.lan.gateway.host
+    cfg.lan.gateway.address
   ];
   configured = value: value != null;
 in
@@ -26,6 +29,10 @@ in
     {
       assertion = cfg.policies.downloaders.maxDownloadMbit <= cfg.uplink.downloadMbit;
       message = "site '${cfg.name}' downloader policy must not exceed its download capacity";
+    }
+    {
+      assertion = cfg.lan.dhcp.ranges != { };
+      message = "site '${cfg.name}' must declare at least one DHCP range";
     }
   ];
 }

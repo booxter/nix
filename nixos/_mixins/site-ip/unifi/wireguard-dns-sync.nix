@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -22,9 +21,10 @@ let
     addressFor = fleetNetwork.addressFor;
   };
   unifiSyncEnv = import ./environment.nix {
-    inherit facts lanDomain webDnsRecords;
+    inherit lanDomain webDnsRecords;
     addressFor = fleetNetwork.addressFor;
     baseUrl = controller.target.endpoint;
+    lan = config.host.site.lan;
     reservations = config.host.network.ipController.reservations;
     site = controller.target.site;
   };

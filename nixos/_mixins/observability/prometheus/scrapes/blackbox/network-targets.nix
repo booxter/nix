@@ -1,6 +1,6 @@
-{ facts }:
+{ config }:
 let
-  gatewayAddress = facts.site.lan.gateway.address;
+  gatewayAddress = config.host.site.lan.gateway.address;
 in
 {
   dnsProbeTargets = [

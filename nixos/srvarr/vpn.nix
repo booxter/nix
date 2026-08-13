@@ -1,7 +1,4 @@
-{
-  facts,
-  ...
-}:
+{ config, ... }:
 let
   namespace = "wg";
 in
@@ -9,7 +6,7 @@ in
   host.vpn.namespaces.${namespace} = {
     accessibleFrom = [
       "127.0.0.1"
-      facts.site.lan.cidr
+      config.host.site.lan.cidr
       "10.0.0.0/8"
     ];
     bridgeAddress = "192.168.50.5";

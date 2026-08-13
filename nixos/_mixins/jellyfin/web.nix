@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
@@ -26,7 +25,7 @@ in
             unlimitedCidrs = [
               "127.0.0.0/8"
               "::1"
-              facts.site.lan.cidr
+              config.host.site.lan.cidr
               "fe80::/10"
               "fc00::/7"
             ];
