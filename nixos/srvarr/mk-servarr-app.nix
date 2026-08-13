@@ -12,6 +12,17 @@ in
 lib.mkMerge [
   (servarrCommon.mkServarrService { inherit name; })
   {
+    host.web.api.${name} = {
+      service = name;
+      interface = name;
+      localUnit = "${name}.service";
+      allowedCidrs = [ "${config.host.network.ipAddress}/32" ];
+      authentication.apiKey = {
+        source = "${stateDir}/config.xml";
+        field = "ApiKey";
+      };
+    };
+
     host.storage.claims.media.attachments.${name}.unit = name;
 
     host.backups.sources.${name} = {

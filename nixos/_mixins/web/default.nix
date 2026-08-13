@@ -31,6 +31,7 @@ let
 in
 {
   imports = [
+    ./api.nix
     ./assertions.nix
     ./ingress
   ];

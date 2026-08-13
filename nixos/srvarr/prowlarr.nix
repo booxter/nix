@@ -13,6 +13,17 @@ in
 lib.mkMerge [
   (servarrCommon.mkServarrService { name = "prowlarr"; })
   {
+    host.web.api.prowlarr = {
+      service = "prowlarr";
+      interface = "prowlarr";
+      localUnit = "prowlarr.service";
+      allowedCidrs = [ "${config.host.network.ipAddress}/32" ];
+      authentication.apiKey = {
+        source = "${stateDir}/config.xml";
+        field = "ApiKey";
+      };
+    };
+
     host.backups.sources.prowlarr = {
       title = "Prowlarr";
       capture.type = "scheduled";
