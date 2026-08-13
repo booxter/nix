@@ -6,7 +6,7 @@
 }:
 let
   mediaDir = config.host.storage.claims.media.mountPoint;
-  sabnzbdCompleteDir = config.services.sabnzbd.settings.misc.complete_dir;
+  sabnzbdCompleteDir = config.host.sabnzbd.completeDir;
   lidarrStateDir = "/data/.state/nixarr/lidarr";
   stateDir = "/var/lib/lidarr-cue-splitter";
   workRoot = "${mediaDir}/.cue-splitter-work";

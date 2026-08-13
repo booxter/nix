@@ -52,6 +52,7 @@
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/romm
+      ./_mixins/sabnzbd
       ./_mixins/security
       ./_mixins/seerr
       ./_mixins/shelfmark
