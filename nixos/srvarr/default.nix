@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
@@ -45,8 +45,6 @@ in
     };
   };
 
-  _module.args.srvarrPkgs = import ./pkgs pkgs;
-
   imports = [
     ./adaptive-upload-policy.nix
     ./bazarr.nix
@@ -54,7 +52,6 @@ in
     ./aurral.nix
     ./glance.nix
     ./houndarr.nix
-    ./letterboxd-list-radarr.nix
     ./lidarr.nix
     ./pinepods.nix
     ./prowlarr.nix
