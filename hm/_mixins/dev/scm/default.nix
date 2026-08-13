@@ -5,7 +5,6 @@
     ./gitlab.nix
     ./mercurial.nix
     ./mergiraf.nix
-    ./push-disabled.nix
     ./send-email.nix
     ./tig.nix
   ];
