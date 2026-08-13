@@ -22,8 +22,6 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
-  romm-tools = pkgs.callPackage ./romm-tools { };
-
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {
     inherit transmissionCommon;
   };

@@ -44,7 +44,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "romm_tools" ];
 
   meta = {
-    description = "Host integration tools for the srvarr RomM service";
+    description = "Host integration tools for the RomM service";
     license = lib.licenses.mit;
     mainProgram = "romm-db-init";
     platforms = lib.platforms.linux;

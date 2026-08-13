@@ -1,17 +1,22 @@
 { config, lib, ... }:
-let
-  cfg = config.host.romm;
-in
 {
-  options.host.romm = {
-    enable = lib.mkEnableOption "RomM game library";
+  imports = [
+    ./account.nix
+    ./assertions.nix
+    ./assets.nix
+    ./auth.nix
+    ./backups.nix
+    ./cache.nix
+    ./containers.nix
+    ./database.nix
+    ./options.nix
+    ./secrets.nix
+    ./setup.nix
+    ./storage.nix
+    ./web.nix
+  ];
 
-    publicUrl = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = if cfg.enable then config.host.web.services.romm.public.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved public RomM URL.";
-    };
+  config = lib.mkIf config.host.romm.enable {
+    host.web.services.romm.enable = true;
   };
 }
