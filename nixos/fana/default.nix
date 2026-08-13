@@ -26,5 +26,15 @@
     };
   };
 
+  host.proxmox = {
+    cluster = "default";
+    guest = {
+      enable = true;
+      cores = 8;
+      memoryGiB = 16;
+      diskGiB = 300;
+    };
+  };
+
   host.ups.client.server = "prx1-lab";
 }

@@ -24,6 +24,16 @@ in
     trustedPublicKey = readPublicKey ./attic-signing.pub;
   };
 
+  host.proxmox = {
+    cluster = "default";
+    guest = {
+      enable = true;
+      cores = 16;
+      memoryGiB = 16;
+      diskGiB = 50; # actual cache is on NFS
+    };
+  };
+
   host.storage.claims.nixCache = {
     provider = "beast";
     mountPoint = "/cache";

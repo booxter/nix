@@ -13,6 +13,7 @@ in
       hostName = "nvws.local";
     };
     isProxmox = true;
+    proxmox.cluster = "default";
     network = {
       interfaces.enp3s0f0.kind = "ethernet";
       macAddress = "ac:b4:80:40:05:2e";

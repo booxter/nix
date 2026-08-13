@@ -15,6 +15,16 @@ in
     };
   };
 
+  host.proxmox = {
+    cluster = "default";
+    guest = {
+      enable = true;
+      cores = 2;
+      memoryGiB = 8;
+      diskGiB = 64;
+    };
+  };
+
   host.wireguard.server = {
     enable = true;
     network = "home";

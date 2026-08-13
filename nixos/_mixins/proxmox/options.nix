@@ -6,7 +6,6 @@
 }:
 let
   oidcCfg = config.host.proxmox.oidc;
-  guestSpec = (hostSpec.proxmox or { }).guest or null;
 in
 {
   options.host.proxmox = {
@@ -14,40 +13,38 @@ in
 
     cluster = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
-      default = (hostSpec.proxmox or { }).cluster or null;
+      default = null;
       description = "Proxmox cluster claimed by this node or guest.";
     };
 
     guest = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = guestSpec != null;
-        readOnly = true;
-        internal = true;
+        default = false;
         description = "Whether this host is managed as a declarative Proxmox guest.";
       };
 
       cores = lib.mkOption {
         type = lib.types.ints.positive;
-        default = if guestSpec == null then 4 else guestSpec.cores or 4;
+        default = 4;
         description = "Virtual CPU cores assigned to the Proxmox guest.";
       };
 
       memoryGiB = lib.mkOption {
         type = lib.types.ints.positive;
-        default = if guestSpec == null then 8 else guestSpec.memoryGiB or 8;
+        default = 8;
         description = "Memory assigned to the Proxmox guest, in GiB.";
       };
 
       balloonGiB = lib.mkOption {
         type = with lib.types; nullOr ints.positive;
-        default = if guestSpec == null then null else guestSpec.balloonGiB or null;
+        default = null;
         description = "Minimum ballooned memory for the Proxmox guest, in GiB.";
       };
 
       diskGiB = lib.mkOption {
         type = lib.types.ints.positive;
-        default = if guestSpec == null then 100 else guestSpec.diskGiB or 100;
+        default = 100;
         description = "Root disk size assigned to the Proxmox guest, in GiB.";
       };
     };

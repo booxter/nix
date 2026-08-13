@@ -21,6 +21,16 @@ in
     };
   };
 
+  host.proxmox = {
+    cluster = "default";
+    guest = {
+      enable = true;
+      cores = 2;
+      memoryGiB = 4;
+      diskGiB = 50;
+    };
+  };
+
   host.sso.role = "provider";
 
   host.observability.uptimeRobot.controller.enable = true;

@@ -1,4 +1,5 @@
 {
+  config,
   facts,
   hostSpec,
   isDarwin,
@@ -63,7 +64,7 @@ in
 
     isVM = lib.mkOption {
       type = lib.types.bool;
-      default = (hostSpec.proxmox or { }) ? guest;
+      default = isLinux && config.host.proxmox.guest.enable;
       readOnly = true;
       internal = true;
       description = "Whether this host is a declarative Proxmox guest.";
