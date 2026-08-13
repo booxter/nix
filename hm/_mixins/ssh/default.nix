@@ -13,6 +13,25 @@ let
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
+  preBootTargets = builtins.filter (
+    target: target.realm == osConfig.host.realm && target.hostName != osConfig.networking.hostName
+  ) osConfig.host.ssh.preBoot.targets;
+  preBootSettings = builtins.listToAttrs (
+    map (target: {
+      name = target.alias;
+      value = {
+        # FileVault's pre-boot SSH server requires a local account password
+        # before the normal host keys and ticket CA are available.
+        HostName = target.hostName;
+        HostKeyAlias = target.hostName;
+        User = config.home.username;
+        PreferredAuthentications = "password";
+        PasswordAuthentication = true;
+        KbdInteractiveAuthentication = false;
+        PubkeyAuthentication = false;
+      };
+    }) preBootTargets
+  );
 in
 {
   imports = [
@@ -50,19 +69,7 @@ in
           ForwardAgent = true;
         };
       }
-      // lib.optionalAttrs osConfig.host.ssh.fleetBootHosts {
-        mmini-boot = {
-          # FileVault's pre-boot SSH server requires a local account password
-          # before the normal host keys and ticket CA are available.
-          HostName = "mmini";
-          HostKeyAlias = "mmini";
-          User = config.home.username;
-          PreferredAuthentications = "password";
-          PasswordAuthentication = true;
-          KbdInteractiveAuthentication = false;
-          PubkeyAuthentication = false;
-        };
-      };
+      // preBootSettings;
 
       includes = [
         # local config

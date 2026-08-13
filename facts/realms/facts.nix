@@ -13,7 +13,6 @@ in
       sudoWheelNeedsPassword = false;
     };
     trust.ssh = {
-      fleetBootHosts = true;
       tickets.trustedCaPublicKeys = [
         (sshPublicKey "fleet-user-ca")
         (sshPublicKey "yubikey")

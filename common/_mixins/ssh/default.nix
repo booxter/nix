@@ -28,17 +28,29 @@ let
     authorizedKeys = host.ssh.operator.authorizedKeys;
   };
   otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];
-  operatorHosts =
-    lib.mapAttrs (_: configuration: operatorHostView configuration.config.host) otherConfigurations
-    // {
-      ${hostSpec.name} = operatorHostView config.host;
-    };
+  fleetHosts = lib.mapAttrs (_: configuration: configuration.config.host) otherConfigurations // {
+    ${hostSpec.name} = config.host;
+  };
+  operatorHosts = lib.mapAttrs (_: operatorHostView) fleetHosts;
   realmOperatorHosts = lib.filterAttrs (
     _: host: host.isOperatorSeat && host.realm == config.host.realm
   ) operatorHosts;
   realmAuthorizedKeys = lib.unique (
     builtins.concatMap (host: host.authorizedKeys) (builtins.attrValues realmOperatorHosts)
   );
+  preBootTargetType = lib.types.submodule {
+    options = {
+      alias = lib.mkOption { type = lib.types.nonEmptyStr; };
+      hostName = lib.mkOption { type = lib.types.nonEmptyStr; };
+      realm = lib.mkOption { type = lib.types.nonEmptyStr; };
+    };
+  };
+  preBootTargets = lib.mapAttrsToList (name: host: {
+    alias = host.ssh.preBoot.alias;
+    hostName = name;
+    inherit (host) realm;
+  }) (lib.filterAttrs (_: host: host.ssh.preBoot.alias != null) fleetHosts);
+  preBootAliases = map (target: target.alias) preBootTargets;
   ticketIssuerType = lib.types.submodule {
     options = {
       publicKey = lib.mkOption {
@@ -131,12 +143,20 @@ in
       description = "SSH public keys controlled by this operator host and authorized across its realm.";
     };
 
-    fleetBootHosts = lib.mkOption {
-      type = lib.types.bool;
-      default = realmSsh.fleetBootHosts or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether SSH clients should expose home fleet pre-boot aliases.";
+    preBoot = {
+      alias = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "SSH alias published for this host's pre-boot environment.";
+      };
+
+      targets = lib.mkOption {
+        type = lib.types.listOf preBootTargetType;
+        default = preBootTargets;
+        readOnly = true;
+        internal = true;
+        description = "Fleet pre-boot SSH targets derived from host claims.";
+      };
     };
 
     tickets = {
@@ -206,6 +226,18 @@ in
         {
           assertion = config.host.ssh.authorizedKeys != [ ];
           message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
+        }
+        {
+          assertion = config.host.ssh.preBoot.alias == null || config.host.isDarwin;
+          message = "only Darwin hosts may publish a pre-boot SSH alias";
+        }
+        {
+          assertion = config.host.ssh.preBoot.alias != config.networking.hostName;
+          message = "a pre-boot SSH alias must differ from the host's normal name";
+        }
+        {
+          assertion = builtins.length preBootAliases == builtins.length (lib.unique preBootAliases);
+          message = "fleet pre-boot SSH aliases must be unique";
         }
       ];
 
