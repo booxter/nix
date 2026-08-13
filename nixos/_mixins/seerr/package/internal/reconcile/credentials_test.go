@@ -1,6 +1,7 @@
 package reconcile
 
 import (
+	"encoding/xml"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,7 +10,14 @@ import (
 func TestSystemdCredentialsReadXMLField(t *testing.T) {
 	directory := t.TempDir()
 	path := filepath.Join(directory, "service-api")
-	if err := os.WriteFile(path, []byte("<Config><ApiKey>secret-value</ApiKey></Config>"), 0o600); err != nil {
+	payload, err := xml.Marshal(struct {
+		XMLName xml.Name `xml:"Config"`
+		APIKey  string   `xml:"ApiKey"`
+	}{APIKey: "secret-value"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	value, err := (SystemdCredentials{Directory: directory}).Read(Credential{
