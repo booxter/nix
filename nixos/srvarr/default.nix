@@ -56,7 +56,6 @@ in
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
     ./lidarr.nix
-    ./lidarr-cue-splitter.nix
     ./pinepods.nix
     ./prowlarr.nix
     ./radarr.nix
