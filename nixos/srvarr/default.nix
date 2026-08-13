@@ -28,7 +28,6 @@ in
     ./arr.nix
     ./audiobookshelf.nix
     ./aurral.nix
-    ./ebook-converter.nix
     ./glance.nix
     ./houndarr.nix
     ./letterboxd-list-radarr.nix
@@ -40,7 +39,7 @@ in
     ./qos.nix
     ./sabnzbd.nix
     ./seerr.nix
-    ./shelfmark.nix
+    ./shelfmark
     ./storage.nix
     ./tuning.nix
     ./transmission.nix

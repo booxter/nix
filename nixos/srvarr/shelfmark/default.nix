@@ -1,5 +1,7 @@
 { config, ... }:
 {
+  imports = [ ./ebook-converter.nix ];
+
   host.downloads.routes = {
     shelfmark-torrent = {
       client = "transmission";
