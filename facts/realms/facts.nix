@@ -1,8 +1,4 @@
-{ lib }:
-let
-  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
-  sshPublicKey = name: readPublicKey (../../common/_mixins/ssh/public-keys + "/${name}.pub");
-in
+{ }:
 {
   home = {
     build = {
@@ -11,12 +7,6 @@ in
     management = {
       manageNetworkIdentity = true;
       sudoWheelNeedsPassword = false;
-    };
-    trust.ssh = {
-      tickets.trustedCaPublicKeys = [
-        (sshPublicKey "fleet-user-ca")
-        (sshPublicKey "yubikey")
-      ];
     };
   };
 

@@ -9,7 +9,6 @@
 }:
 let
   username = config.host.username;
-  realmSsh = facts.realms.${config.host.realm}.trust.ssh or { };
   readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
   hostDirectory = (if isDarwin then ../../../darwin else ../../../nixos) + "/${hostSpec.name}";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
@@ -67,6 +66,12 @@ let
       };
     };
   };
+  realmTicketIssuerHosts = lib.filterAttrs (
+    _: host: host.realm == config.host.realm && host.ssh.tickets.issuer != null
+  ) fleetHosts;
+  realmTrustedCaPublicKeys = lib.unique (
+    map (host: host.ssh.tickets.issuer.publicKey) (builtins.attrValues realmTicketIssuerHosts)
+  );
   ticketTargetType = lib.types.submodule {
     options = {
       name = lib.mkOption { type = lib.types.nonEmptyStr; };
@@ -162,14 +167,16 @@ in
     tickets = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = realmSsh ? tickets;
+        default = realmTrustedCaPublicKeys != [ ];
         description = "Whether this host accepts SSH user certificates.";
       };
 
       trustedCaPublicKeys = lib.mkOption {
         type = lib.types.listOf lib.types.nonEmptyStr;
-        default = realmSsh.tickets.trustedCaPublicKeys or [ ];
-        description = "SSH user CA public keys trusted by this host.";
+        default = realmTrustedCaPublicKeys;
+        readOnly = true;
+        internal = true;
+        description = "SSH user CA public keys contributed by issuer hosts in this realm.";
       };
 
       allowX11Forwarding = lib.mkOption {
