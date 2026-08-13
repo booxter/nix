@@ -53,6 +53,7 @@
       ./_mixins/qos
       ./_mixins/romm
       ./_mixins/security
+      ./_mixins/seerr
       ./_mixins/shelfmark
       ./_mixins/slskd
       ./_mixins/sso

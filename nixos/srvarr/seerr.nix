@@ -1,71 +1,89 @@
 {
   config,
-  lib,
   srvarrPkgs,
   ...
 }:
-let
-  accounts = import ./accounts.nix { hostAccounts = config.host.accounts; };
-  stateDir = "/data/.state/nixarr/seerr";
-  user = "seerr";
-  group = "seerr";
-in
 {
-  host.backups.sources.seerr-database = {
-    title = "Seerr";
-    capture = {
-      type = "sqlite";
-      database = {
-        path = "${stateDir}/db/db.sqlite3";
-        destinationDir = "/data/.state/nixarr/seerr-backup/latest";
-        extraCopies = [
-          { source = "${stateDir}/settings.json"; }
+  host.seerr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/seerr";
+    publicHostName = "js.${config.host.network.publicDomain}";
+    maintenanceToolsPackage = srvarrPkgs.seerr-tools;
+
+    authentication.local.enable = true;
+
+    requestPolicy = {
+      defaultPermissions = [
+        "request"
+        "auto-approve"
+        "advanced-request"
+      ];
+      partialRequests = true;
+      specialEpisodes = true;
+    };
+
+    integrations = {
+      jellyfin = {
+        host = "beast";
+        authentication.enable = true;
+        libraries = [
+          "anime"
+          "attic"
+          "docu"
+          "family"
+          "fruit"
+          "movies"
+          "shows"
         ];
       };
+
+      radarr.main = {
+        api = "radarr";
+        displayName = "localhost";
+        library = "movies";
+        profile = "Default HD";
+        minimumAvailability = "released";
+        default = true;
+        availabilitySync = true;
+        searchRequests = true;
+        tagRequests = true;
+      };
+
+      sonarr.main = {
+        api = "sonarr";
+        displayName = "localhost";
+        library = "shows";
+        profile = "Default HD or Worse";
+        default = true;
+        availabilitySync = false;
+        searchRequests = true;
+        tagRequests = true;
+        seasonFolders = false;
+        monitorNewItems = "all";
+      };
     };
-  };
 
-  services.seerr = {
-    enable = true;
-    configDir = stateDir;
-  };
-
-  environment.systemPackages = [ srvarrPkgs.seerr-tools ];
-
-  systemd.tmpfiles.rules = [
-    "d '${stateDir}' 0700 ${user} root - -"
-  ];
-
-  systemd.services.seerr.serviceConfig = {
-    Group = group;
-    ReadWritePaths = [ stateDir ];
-    StateDirectory = lib.mkForce "seerr";
-    User = user;
-  };
-
-  users.groups.${group}.gid = accounts.gids.seerr;
-  users.users.${user} = {
-    group = group;
-    home = "/var/empty";
-    isSystemUser = true;
-    uid = accounts.uids.seerr;
-  };
-
-  host.web.services.seerr = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
-    public = {
-      enable = true;
-      hostName = "js.${config.host.network.publicDomain}";
+    metadata = {
+      series = "tvdb";
+      anime = "tmdb";
     };
-    health.frontend = {
+
+    notifications.telegram = {
       enable = true;
-      path = "/login";
-    };
-    observability.importance = "important";
-    dashboard = {
-      enable = true;
-      section = "user";
+      events = [
+        "request-pending"
+        "request-approved"
+        "request-available"
+        "request-failed"
+        "request-declined"
+        "request-auto-approved"
+        "issue-created"
+        "issue-commented"
+        "issue-resolved"
+        "issue-reopened"
+      ];
+      embedPoster = true;
+      sendSilently = true;
     };
   };
 }

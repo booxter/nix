@@ -43,6 +43,20 @@ in
         relativePath = "library/audiobooks";
       };
     };
+    movies = {
+      contentType = "movies";
+      storage = {
+        claim = "media";
+        relativePath = "library/movies";
+      };
+    };
+    shows = {
+      contentType = "series";
+      storage = {
+        claim = "media";
+        relativePath = "library/shows";
+      };
+    };
   };
 
   _module.args.srvarrPkgs = import ./pkgs pkgs;
