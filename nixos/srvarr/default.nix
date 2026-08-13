@@ -126,6 +126,27 @@ in
     };
   };
 
+  host.pinepods = {
+    enable = true;
+    publicHostName = "pod.${config.host.network.publicDomain}";
+    storage = {
+      claim = "media";
+      relativePath = "podcasts/pinepods";
+    };
+    integrations = {
+      searchApi.url = "https://search.pinepods.online/api/search";
+      podPeople.url = "https://people.pinepods.online";
+    };
+  };
+
+  # Preserve the existing database cluster in place. PostgreSQL storage is a
+  # host concern rather than PinePods application state.
+  services.postgresql.dataDir = "/data/.state/nixarr/pinepods/postgresql";
+  systemd.tmpfiles.rules = [
+    "d /data/.state/nixarr/pinepods 0711 root root - -"
+    "d /data/.state/nixarr/pinepods/postgresql 0700 postgres postgres - -"
+  ];
+
   host.slskd.instances.music = {
     enable = true;
     stateDir = "/var/lib/slskd";
@@ -148,7 +169,6 @@ in
     ./lidarr-cue-splitter.nix
     ./oauth2-proxy.nix
     ./storage.nix
-    ./pinepods.nix
     ./romm.nix
     ./qos.nix
     ./sabnzbd.nix

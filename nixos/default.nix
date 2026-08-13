@@ -47,6 +47,7 @@
       ./_mixins/observability
       ./_mixins/ollama
       ./_mixins/paperless
+      ./_mixins/pinepods
       ./_mixins/pki
       ./_mixins/proxmox
       ./_mixins/qos

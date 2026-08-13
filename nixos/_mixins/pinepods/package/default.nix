@@ -16,7 +16,6 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
   dependencies = with pythonPackages; [
     httpx
-    psycopg
     pydantic
   ];
 
@@ -36,7 +35,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "pinepods_tools" ];
 
   meta = {
-    description = "Bootstrap and back up the srvarr PinePods service";
+    description = "Bootstrap a PinePods service";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
