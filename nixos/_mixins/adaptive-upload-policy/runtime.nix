@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  outputs,
   pkgs,
   utils,
 }:
 let
-  model = import ./model.nix { inherit config; };
+  model = import ./model.nix { inherit config outputs; };
   inherit (model)
     cfg
     maxStateAgeSeconds

@@ -48,6 +48,7 @@ in
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
   imports = [
+    ./adaptive-upload-policy.nix
     ./arr.nix
     ./audiobookshelf.nix
     ./aurral.nix
@@ -58,7 +59,6 @@ in
     ./oauth2-proxy.nix
     ./pinepods.nix
     ./romm.nix
-    ./qos.nix
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark

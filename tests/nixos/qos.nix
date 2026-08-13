@@ -45,21 +45,13 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.qos.interfaces.wan = {
+        host.qos.interfaces.adaptive_upload = {
           device = "eth1";
           linkRateMbit = 100;
           limits = {
             cloud-backup = {
               rateMbit = 6;
               match.users = [ "qos-test" ];
-            };
-            cake-egress = {
-              rateMbit = 8;
-              queue = "cake";
-              match = {
-                protocol = "tcp";
-                destinationPort = 5208;
-              };
             };
             gateway-upload = {
               rateMbit = 9;
@@ -104,17 +96,20 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        services.adaptive-upload-policy = {
+        host.adaptiveUploadPolicy = {
           enable = true;
           fallbackRateMbit = 3;
           source.jellyfin.exporterUrl = "http://127.0.0.1:1/metrics";
-          outputs.qos = {
-            enable = true;
-            profile = "wan";
-            limit = "cake-egress";
+          destinations.qos.cake-egress = {
+            interface = "eth1";
+            match = {
+              protocol = "tcp";
+              remotePort = 5208;
+            };
           };
-          metrics.enable = false;
         };
+
+        host.qos.interfaces.adaptive_upload.limits.cake-egress.rateMbit = 8;
 
         systemd.services = {
           adaptive-upload-policy.wantedBy = lib.mkForce [ ];
@@ -123,9 +118,9 @@ pkgs.testers.runNixOSTest {
 
         environment = {
           etc."qos-test/classes.json".source = (pkgs.formats.json { }).generate "qos-test-classes.json" (
-            config.host.qos.classIds.wan
+            config.host.qos.classIds.adaptive_upload
           );
-          etc."qos-test/config.json".source = config.host.qos.configFiles.wan;
+          etc."qos-test/config.json".source = config.host.qos.configFiles.adaptive_upload;
           systemPackages = [
             pkgs.iperf3
             pkgs.iproute2
@@ -265,7 +260,7 @@ pkgs.testers.runNixOSTest {
 
 
     start_all()
-    shaper.wait_for_unit("qos-wan.service")
+    shaper.wait_for_unit("qos-adaptive_upload.service")
     shaper.wait_for_unit("multi-user.target")
     peer.wait_for_unit("multi-user.target")
     start_iperf_servers(peer, PEER_IPERF_PORTS)
@@ -279,7 +274,7 @@ pkgs.testers.runNixOSTest {
     }
 
     with subtest("service creates the complete topology"):
-        shaper.succeed(command(["nft", "list", "table", "inet", "qos_wan"]))
+        shaper.succeed(command(["nft", "list", "table", "inet", "qos_adaptive_upload"]))
         assert tc_object("qdisc", DEVICE, "kind", "htb")
         assert tc_object("qdisc", DEVICE, "kind", "ingress")
         for ifb in IFBS.values():
@@ -353,22 +348,22 @@ pkgs.testers.runNixOSTest {
         shaper.succeed("systemctl stop adaptive-upload-policy.service")
 
     with subtest("restart restores declarative topology"):
-        shaper.succeed("systemctl restart qos-wan.service")
+        shaper.succeed("systemctl restart qos-adaptive_upload.service")
         assert_limited("restored CAKE egress", iperf_rate(shaper, PEER, 5208), 8)
         for ifb in IFBS.values():
             shaper.succeed(command(["ip", "link", "show", "dev", ifb]))
-        shaper.succeed(command(["nft", "list", "table", "inet", "qos_wan"]))
+        shaper.succeed(command(["nft", "list", "table", "inet", "qos_adaptive_upload"]))
 
     with subtest("stop cleans up all owned kernel state"):
-        shaper.succeed("systemctl stop qos-wan.service")
+        shaper.succeed("systemctl stop qos-adaptive_upload.service")
         for ifb in IFBS.values():
             shaper.fail(command(["ip", "link", "show", "dev", ifb]))
-        shaper.fail(command(["nft", "list", "table", "inet", "qos_wan"]))
+        shaper.fail(command(["nft", "list", "table", "inet", "qos_adaptive_upload"]))
         assert not tc_objects("class", DEVICE)
         remaining_qdiscs = {item["kind"] for item in tc_objects("qdisc", DEVICE)}
         assert "htb" not in remaining_qdiscs, remaining_qdiscs
         assert "ingress" not in remaining_qdiscs, remaining_qdiscs
-        shaper.succeed("systemctl start qos-wan.service")
-        shaper.wait_for_unit("qos-wan.service")
+        shaper.succeed("systemctl start qos-adaptive_upload.service")
+        shaper.wait_for_unit("qos-adaptive_upload.service")
   '';
 }

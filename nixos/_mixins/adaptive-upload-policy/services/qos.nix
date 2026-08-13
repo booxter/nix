@@ -1,6 +1,9 @@
 {
   config,
   lib,
+  outputs ? {
+    nixosConfigurations = { };
+  },
   pkgs,
   utils,
   ...
@@ -10,6 +13,7 @@ let
     inherit
       config
       lib
+      outputs
       pkgs
       utils
       ;
