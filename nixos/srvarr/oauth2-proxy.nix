@@ -28,7 +28,7 @@ let
     bazarr = config.services.bazarr.listenPort;
     houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;
     sabnzbd = config.host.sabnzbd.port;
-    transmission = config.services.transmission.settings.rpc-port;
+    transmission = config.host.transmission.rpcPort;
   };
   localBackendProxyHeaders = ''
     proxy_set_header Host ${config.networking.hostName};

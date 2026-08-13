@@ -1,0 +1,31 @@
+{ config, lib, ... }:
+let
+  model = import ./model.nix { inherit config; };
+  inherit (model) cfg;
+in
+{
+  config = lib.mkIf (cfg.enable && model.vpnNamespace != null) {
+    host.vpn.clients.transmission = {
+      namespace = cfg.vpn.namespace;
+      bridgeTcpPorts = [ model.rpcPort ];
+      forwardedPorts.peer = {
+        port = cfg.vpn.peerPort;
+        protocol = "both";
+      };
+    };
+
+    services.nginx.virtualHosts."127.0.0.1:${toString model.rpcPort}" = {
+      listen = lib.mkForce [
+        {
+          addr = "127.0.0.1";
+          port = model.rpcPort;
+        }
+      ];
+      locations."/" = {
+        recommendedProxySettings = true;
+        proxyWebsockets = true;
+        proxyPass = lib.mkForce "http://${model.vpnNamespace.namespaceAddress}:${toString model.rpcPort}";
+      };
+    };
+  };
+}

@@ -62,7 +62,6 @@ in
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark
-    ./tuning.nix
     ./transmission.nix
     ./vpn.nix
   ];

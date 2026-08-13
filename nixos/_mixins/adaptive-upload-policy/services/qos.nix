@@ -23,28 +23,33 @@ let
     ;
 in
 {
-  config.systemd.services.adaptive-upload-policy-qos =
-    lib.mkIf (cfg.enable && cfg.outputs.qos.enable)
-      {
-        description = "Apply adaptive upload policy to a host.qos limit";
-        wantedBy = [ "multi-user.target" ];
-        wants = [
-          deciderUnit
-          qosService
+  config = lib.mkIf (cfg.enable && cfg.outputs.qos.enable) {
+    # Start the selected limit at the safe fallback before the runtime
+    # controller has produced its first policy decision.
+    host.qos.interfaces.${cfg.outputs.qos.profile}.limits.${cfg.outputs.qos.limit}.rateMbit =
+      lib.mkDefault cfg.fallbackRateMbit;
+
+    systemd.services.adaptive-upload-policy-qos = {
+      description = "Apply adaptive upload policy to a host.qos limit";
+      wantedBy = [ "multi-user.target" ];
+      wants = [
+        deciderUnit
+        qosService
+      ];
+      after = [
+        deciderUnit
+        qosService
+      ];
+      partOf = [ qosService ];
+      serviceConfig = commonServiceConfig // {
+        ExecStart = command "apply-qos";
+        AmbientCapabilities = [ "CAP_NET_ADMIN" ];
+        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+        RestrictAddressFamilies = [
+          "AF_UNIX"
+          "AF_NETLINK"
         ];
-        after = [
-          deciderUnit
-          qosService
-        ];
-        partOf = [ qosService ];
-        serviceConfig = commonServiceConfig // {
-          ExecStart = command "apply-qos";
-          AmbientCapabilities = [ "CAP_NET_ADMIN" ];
-          CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
-          RestrictAddressFamilies = [
-            "AF_UNIX"
-            "AF_NETLINK"
-          ];
-        };
       };
+    };
+  };
 }

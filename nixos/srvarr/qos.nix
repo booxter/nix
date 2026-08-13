@@ -4,7 +4,6 @@
   ...
 }:
 let
-  tuning = config.host.srvarrTuning;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastNfsAddress = beastHostConfig.host.network.ipAddress;
   beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
@@ -17,7 +16,7 @@ in
 {
   services.adaptive-upload-policy = {
     enable = true;
-    fallbackRateMbit = tuning.wgConservativeUploadRateMbit;
+    fallbackRateMbit = 8;
     source.jellyfin = {
       exporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       mtls = {
@@ -70,7 +69,6 @@ in
         };
       };
       wireguard-upload = {
-        rateMbit = tuning.wgConservativeUploadRateMbit;
         queue = "cake";
         match = {
           protocol = "udp";

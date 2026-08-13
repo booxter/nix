@@ -19,6 +19,10 @@ in
       message = "services.adaptive-upload-policy requires at least one enabled output";
     }
     {
+      assertion = !cfg.outputs.transmission.enable || cfg.outputs.transmission.rpcUrl != null;
+      message = "services.adaptive-upload-policy Transmission output requires an RPC URL";
+    }
+    {
       assertion = !mtls.enable || mtls.certificateFile != null;
       message = "services.adaptive-upload-policy requires an mTLS certificate file";
     }

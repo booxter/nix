@@ -12,9 +12,5 @@ in
   qosLimit = if qosProfile != null then qosProfile.limits.${cfg.outputs.qos.limit} or null else null;
   qosService = "qos-${cfg.outputs.qos.profile}.service";
   stateDir = dirOf cfg.stateFile;
-  transmissionRpcUrl =
-    if cfg.outputs.transmission.rpcUrl != null then
-      cfg.outputs.transmission.rpcUrl
-    else
-      "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc";
+  transmissionRpcUrl = cfg.outputs.transmission.rpcUrl;
 }

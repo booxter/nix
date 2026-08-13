@@ -22,28 +22,39 @@ let
     ;
 in
 {
-  config.systemd.services.adaptive-upload-policy-transmission =
-    lib.mkIf (cfg.enable && cfg.outputs.transmission.enable)
-      {
-        description = "Apply adaptive upload policy to Transmission";
-        wantedBy = [ "multi-user.target" ];
-        wants = [
-          "network-online.target"
-          deciderUnit
-          "transmission.service"
+  config = lib.mkIf (cfg.enable && cfg.outputs.transmission.enable) {
+    services.transmission.settings = {
+      # Start at the safe fallback before the runtime controller has produced
+      # its first policy decision.
+      speed-limit-up = lib.mkDefault (
+        builtins.floor (
+          (cfg.fallbackRateMbit * 1000.0 / 8.0) * (cfg.outputs.transmission.headroomPercent / 100.0)
+        )
+      );
+      speed-limit-up-enabled = lib.mkDefault true;
+    };
+
+    systemd.services.adaptive-upload-policy-transmission = {
+      description = "Apply adaptive upload policy to Transmission";
+      wantedBy = [ "multi-user.target" ];
+      wants = [
+        "network-online.target"
+        deciderUnit
+        "transmission.service"
+      ];
+      after = [
+        "network-online.target"
+        deciderUnit
+        "transmission.service"
+      ];
+      serviceConfig = commonServiceConfig // {
+        ExecStart = command "apply-transmission";
+        RestrictAddressFamilies = [
+          "AF_UNIX"
+          "AF_INET"
+          "AF_INET6"
         ];
-        after = [
-          "network-online.target"
-          deciderUnit
-          "transmission.service"
-        ];
-        serviceConfig = commonServiceConfig // {
-          ExecStart = command "apply-transmission";
-          RestrictAddressFamilies = [
-            "AF_UNIX"
-            "AF_INET"
-            "AF_INET6"
-          ];
-        };
       };
+    };
+  };
 }

@@ -59,6 +59,7 @@
       ./_mixins/slskd
       ./_mixins/sso
       ./_mixins/storage
+      ./_mixins/transmission
       ./_mixins/site-ip
       ./_mixins/ups
       ./_mixins/user

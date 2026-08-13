@@ -6,7 +6,7 @@
 }:
 let
   pkiRootCaPath = config.host.pki.rootCaCertificate;
-  transmissionCommon = pkgs.callPackage ../../srvarr/pkgs/transmission-common { };
+  transmissionCommon = pkgs.callPackage ../transmission/pkgs/common { };
   defaultPackage = pkgs.callPackage ./pkgs/controller {
     atomicFileWrites = pkgs.atomic-file-writes;
     inherit transmissionCommon;
@@ -142,8 +142,8 @@ in
 
       rpcUrl = lib.mkOption {
         type = with lib.types; nullOr str;
-        default = null;
-        description = "Transmission RPC URL, or null to use the local NixOS service.";
+        default = if config.host.transmission.enable then config.host.transmission.rpcUrl else null;
+        description = "Transmission RPC URL.";
       };
 
       requestTimeoutSeconds = lib.mkOption {
