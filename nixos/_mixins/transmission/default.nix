@@ -4,6 +4,7 @@
     ./assertions.nix
     ./backups.nix
     ./downloads.nix
+    ./dynamic-ip-updater.nix
     ./options.nix
     ./service.nix
     ./storage.nix

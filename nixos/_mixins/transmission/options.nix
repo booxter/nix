@@ -28,6 +28,23 @@
       };
     };
 
+    dynamicIpUpdater = {
+      enable = lib.mkEnableOption "MyAnonamouse dynamic seedbox IP updates";
+
+      package = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.callPackage ./pkgs/dynamic-ip-updater {
+          atomicFileWrites = pkgs.atomic-file-writes;
+        };
+        internal = true;
+      };
+
+      cookieJarFile = lib.mkOption {
+        type = lib.types.strMatching "^/.*";
+        description = "Netscape cookie jar used to authenticate dynamic IP updates.";
+      };
+    };
+
     vpn = {
       namespace = lib.mkOption {
         type = lib.types.nonEmptyStr;

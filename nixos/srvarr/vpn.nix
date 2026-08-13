@@ -1,25 +1,11 @@
 {
   facts,
-  lib,
-  srvarrPkgs,
-  utils,
   ...
 }:
 let
   namespace = "wg";
 in
 {
-  imports = [
-    (import ./update-dynamic-ip.nix {
-      inherit
-        lib
-        namespace
-        srvarrPkgs
-        utils
-        ;
-    })
-  ];
-
   host.vpn.namespaces.${namespace} = {
     accessibleFrom = [
       "127.0.0.1"
