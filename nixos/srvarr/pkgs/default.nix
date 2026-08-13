@@ -1,8 +1,4 @@
 pkgs: {
-  bazarr-auth-config = pkgs.callPackage ./bazarr-auth-config {
-    atomicFileWrites = pkgs.atomic-file-writes;
-  };
-
   dynamic-ip-updater = pkgs.callPackage ./dynamic-ip-updater {
     atomicFileWrites = pkgs.atomic-file-writes;
   };

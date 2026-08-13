@@ -327,6 +327,31 @@ in
                   default = "Backend HTTP";
                   description = "Human-readable backend probe name.";
                 };
+
+                upstreamPath = lib.mkOption {
+                  type = with lib.types; nullOr str;
+                  default = null;
+                  internal = true;
+                  description = "Backend path used when the public probe path is an alias.";
+                };
+
+                recommendedProxySettings = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  internal = true;
+                };
+
+                allowedMethods = lib.mkOption {
+                  type = with lib.types; listOf nonEmptyStr;
+                  default = [ ];
+                  internal = true;
+                };
+
+                locationExtraConfig = lib.mkOption {
+                  type = lib.types.lines;
+                  default = "";
+                  internal = true;
+                };
               };
             };
 
@@ -432,6 +457,18 @@ in
             };
 
             auth = {
+              policy = lib.mkOption {
+                type = with lib.types; nullOr (enum [ "media-admin" ]);
+                default = null;
+                description = "Named access policy protecting this web service.";
+              };
+
+              sessionClearPaths = lib.mkOption {
+                type = with lib.types; listOf (strMatching "^/.*");
+                default = [ ];
+                internal = true;
+                description = "Application logout paths that clear the proxy session.";
+              };
               mode = lib.mkOption {
                 type = lib.types.enum [
                   "none"

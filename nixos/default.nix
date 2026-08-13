@@ -43,6 +43,7 @@
       ./_mixins/luks
       ./_mixins/mailer
       ./_mixins/maintenance
+      ./_mixins/media-admin-sso
       ./_mixins/media-libraries
       ./_mixins/network
       ./_mixins/nix

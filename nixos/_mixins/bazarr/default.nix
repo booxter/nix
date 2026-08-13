@@ -34,7 +34,7 @@ in
 
     authConfigPackage = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../srvarr/pkgs/bazarr-auth-config {
+      default = pkgs.callPackage ./package {
         atomicFileWrites = pkgs.atomic-file-writes;
       };
       internal = true;
@@ -96,6 +96,10 @@ in
       dashboard = {
         enable = true;
         section = "media-admin";
+      };
+      auth = {
+        policy = "media-admin";
+        sessionClearPaths = [ "/api/system/account" ];
       };
     };
 
