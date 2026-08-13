@@ -7,28 +7,35 @@ let
   fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
   lan = fleetConfiguration.config.host.site.lan;
   wgHome = fleetConfiguration.config.host.wireguard.networks.home;
-  appPackages = import ./packages.nix pkgs;
+  mkFleetHost = system: name: configuration: {
+    displayName = name;
+    inherit system;
+    realm = configuration.config.host.realm;
+    runtimeHost = name;
+    sshHost = name;
+  };
+  darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
+  nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
+  fleetHosts = nixosHosts // darwinHosts;
+  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetHosts;
+  tokenHosts = pkgs.lib.mapAttrs (_: host: { inherit (host) realm system; }) fleetHosts;
+  appPackages = import ./packages.nix {
+    fleetHosts = tokenHosts;
+    inherit pkgs realmsByHost;
+  };
 
   fleetFacts = {
     aliases =
       pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos
       // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwin;
-    darwin = pkgs.lib.mapAttrs (_: spec: {
-      displayName = spec.name;
-      inherit (spec) realm;
-      platform = "aarch64-darwin";
-      runtimeHost = spec.name;
-      sshHost = spec.name;
-    }) facts.hosts.darwin;
+    darwin = pkgs.lib.mapAttrs (
+      _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
+    ) darwinHosts;
     lanDnsServer = lan.gateway.address;
     lanDomain = fleetConfiguration.config.host.network.lanDomain;
-    nixos = pkgs.lib.mapAttrs (_: spec: {
-      displayName = spec.name;
-      inherit (spec) realm;
-      platform = "x86_64-linux";
-      runtimeHost = spec.name;
-      sshHost = spec.name;
-    }) facts.hosts.nixos;
+    nixos = pkgs.lib.mapAttrs (
+      _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
+    ) nixosHosts;
   };
   wireguardHome = {
     subnet = wgHome.cidr;
@@ -92,7 +99,12 @@ let
   issueProxmoxExporterTokenPackage = appPackages.issue-proxmox-exporter-token;
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
-  pkiRotationPackage = pkgs.pki-rotation;
+  pkiRotationPackage = pkgs.callPackage ../pkgs/pki-rotation {
+    atomicFileWrites = pkgs.atomic-file-writes;
+    gitCommandRunner = pkgs.git-command-runner;
+    pkiCertificates = appPackages.issue-internal-service-cert;
+    sopsTools = appPackages.sops-tools;
+  };
   resetOidc = pkgs.callPackage ../nixos/_mixins/sso/provider/pkgs/kanidm-tools { };
   wgHomeClientConfig = fleetTools;
 in

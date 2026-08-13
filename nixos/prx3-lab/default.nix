@@ -3,8 +3,9 @@
 
   hardware.cpu.amd.updateMicrocode = true;
 
+  host.realm = "home";
   host.proxmox = {
-    cluster = "default";
+    cluster = "lab";
     node.enable = true;
   };
   host.network = {

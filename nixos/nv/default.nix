@@ -7,7 +7,7 @@ in
 
   host.network.macAddress = "bc:24:11:ed:30:d3";
   host.proxmox = {
-    cluster = "default";
+    cluster = "nvws";
     guest = {
       enable = true;
       cores = 64;

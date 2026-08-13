@@ -2,6 +2,7 @@
   config,
   facts,
   lib,
+  outputs,
   pkgs,
   ...
 }:
@@ -10,7 +11,11 @@ let
   ci = import ../../../../ci { inherit facts lib; };
   warmTargets = map (target: target.attr) (
     lib.filter (
-      target: facts.hosts.hostSpecsByName.${target.host}.realm == config.host.realm
+      target:
+      let
+        configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
+      in
+      configurations.${target.host}.config.host.realm == config.host.realm
     ) ci.buildTargets
   );
   atticCaches = lib.mapAttrsToList (

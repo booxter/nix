@@ -9,6 +9,7 @@
     ./oidc.nix
     ./options.nix
     ./prometheus-exporter.nix
+    ./realm.nix
     inputs.proxmox-nixos.nixosModules.declarative-vms
     inputs.proxmox-nixos.nixosModules.proxmox-ve
   ];

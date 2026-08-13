@@ -2,7 +2,7 @@
   host.nix.builder.enable = true;
   host.network.macAddress = "bc:24:11:49:bf:fc";
   host.proxmox = {
-    cluster = "default";
+    cluster = "lab";
     guest = {
       enable = true;
       cores = 24;

@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
@@ -8,7 +7,6 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username};
-  allRealms = facts.hosts.realmNames;
   maasServer = name: {
     realms = [ "work" ];
     hosts = [ "JGWXHWDL4X" ];
@@ -24,7 +22,6 @@ in
 {
   config.host.mcp.servers = {
     nixos = {
-      realms = allRealms;
       stdio.command = lib.getExe pkgs.mcp-nixos;
     };
 

@@ -10,6 +10,8 @@ in
 {
   system.stateVersion = 5;
 
+  host.realm = "work";
+
   host.hardware.isLaptop = true;
   host.network.interfaces = {
     en0.kind = "wireless";

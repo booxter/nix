@@ -1,12 +1,10 @@
 {
   config,
-  facts,
   hostSpec,
   lib,
   ...
 }:
 let
-  realmType = lib.types.enum facts.hosts.realmNames;
   stdioType = lib.types.submodule {
     options = {
       command = lib.mkOption {
@@ -62,8 +60,9 @@ let
   serverType = lib.types.submodule {
     options = {
       realms = lib.mkOption {
-        type = lib.types.nonEmptyListOf realmType;
-        description = "Realms where the MCP server is available.";
+        type = with lib.types; nullOr (nonEmptyListOf nonEmptyStr);
+        default = null;
+        description = "Realms where the MCP server is available, or all realms when unset.";
       };
       hosts = lib.mkOption {
         type = with lib.types; nullOr (nonEmptyListOf nonEmptyStr);

@@ -2,6 +2,7 @@
   config,
   isDarwin,
   lib,
+  outputs,
   pkgs,
   ...
 }:
@@ -9,6 +10,9 @@ let
   secrets = config.host.security.secrets;
   operatorIdentity = secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
+  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
+  realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
+  sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
 in
 {
   options.host.security = {
@@ -95,14 +99,12 @@ in
         ../../../secrets + "/${config.host.realm}/${config.networking.hostName}.yaml";
     }
     (lib.mkIf secrets.operator.enable {
-      environment.systemPackages =
-        with pkgs;
-        [
-          age
-          sops
-          sops-tools
-        ]
-        ++ lib.optional usesSecureEnclave age-plugin-se;
+      environment.systemPackages = [
+        pkgs.age
+        pkgs.sops
+        sopsTools
+      ]
+      ++ lib.optional usesSecureEnclave pkgs.age-plugin-se;
     })
   ];
 }

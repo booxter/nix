@@ -1,5 +1,4 @@
 {
-  facts,
   hostSpec,
   isDarwin,
   isDesktop,
@@ -55,11 +54,9 @@ in
     };
 
     realm = lib.mkOption {
-      type = lib.types.enum facts.hosts.realmNames;
-      default = hostSpec.realm;
-      readOnly = true;
-      internal = true;
-      description = "Infrastructure and trust realm declared by the host inventory.";
+      type = lib.types.nonEmptyStr;
+      default = "home";
+      description = "Infrastructure and trust realm containing this host.";
     };
 
     management = {

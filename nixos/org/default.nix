@@ -17,7 +17,7 @@ in
   };
 
   host.proxmox = {
-    cluster = "default";
+    cluster = "lab";
     guest = {
       enable = true;
       cores = 4;

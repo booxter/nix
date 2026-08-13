@@ -8,22 +8,17 @@ let
   normalizeHostSpec =
     isLinux: spec:
     let
-      validated =
-        assert lib.assertMsg (
-          spec ? realm && builtins.isString spec.realm && spec.realm != ""
-        ) "host ${spec.name} must declare a non-empty realm";
-        spec;
-      lowercaseName = lib.toLower validated.name;
+      lowercaseName = lib.toLower spec.name;
     in
-    validated
+    spec
     // {
-      localDnsName = "${validated.name}.local";
+      localDnsName = "${spec.name}.local";
       sshKnownHostNames = lib.unique (
-        [ validated.name ]
-        ++ lib.optional (lowercaseName != validated.name) lowercaseName
-        ++ lib.optional isLinux "${validated.name}.${lanDomain}"
-        ++ [ "${validated.name}.local" ]
-        ++ lib.optional (lowercaseName != validated.name) "${lowercaseName}.local"
+        [ spec.name ]
+        ++ lib.optional (lowercaseName != spec.name) lowercaseName
+        ++ lib.optional isLinux "${spec.name}.${lanDomain}"
+        ++ [ "${spec.name}.local" ]
+        ++ lib.optional (lowercaseName != spec.name) "${lowercaseName}.local"
       );
     };
   normalizeNixosHostSpec =
@@ -42,7 +37,6 @@ let
   darwin = lib.mapAttrs (name: spec: normalizeHostSpec false (spec // { inherit name; })) raw.darwin;
   nixos = lib.mapAttrs (name: spec: normalizeNixosHostSpec (spec // { inherit name; })) raw.nixos;
   hostSpecsByName = darwin // nixos;
-  realmNames = lib.unique (map (spec: spec.realm) (builtins.attrValues hostSpecsByName));
 in
 raw
 // {
@@ -50,6 +44,5 @@ raw
     darwin
     hostSpecsByName
     nixos
-    realmNames
     ;
 }

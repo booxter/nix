@@ -8,12 +8,13 @@ in
   hardware.cpu.intel.updateMicrocode = true;
 
   host = {
+    realm = "work";
     nix.builder = {
       enable = true;
       hostName = "nvws.local";
     };
     proxmox = {
-      cluster = "default";
+      cluster = "nvws";
       node.enable = true;
     };
     network = {

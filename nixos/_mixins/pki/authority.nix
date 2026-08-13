@@ -17,6 +17,15 @@ let
   statusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   rotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
+  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
+  realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
+  appPackages = import ../../../apps/packages.nix { inherit pkgs realmsByHost; };
+  pkiRotation = pkgs.callPackage ../../../pkgs/pki-rotation {
+    atomicFileWrites = pkgs.atomic-file-writes;
+    gitCommandRunner = pkgs.git-command-runner;
+    pkiCertificates = appPackages.issue-internal-service-cert;
+    sopsTools = appPackages.sops-tools;
+  };
   inventory = import ../../pki/inventory.nix {
     inherit config lib outputs;
   };
@@ -92,10 +101,10 @@ in
 
     networking.firewall.allowedTCPPorts = [ caPort ];
 
-    environment.systemPackages = with pkgs; [
-      pki-rotation
-      step-ca
-      step-cli
+    environment.systemPackages = [
+      pkiRotation
+      pkgs.step-ca
+      pkgs.step-cli
     ];
 
     users.users.step-ca = {
@@ -149,7 +158,7 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = ''
-            ${pkgs.pki-rotation}/bin/pki-rotation \
+            ${pkiRotation}/bin/pki-rotation \
               --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
               export-metrics \
               --inventory-manifest ${inventory} \
@@ -177,7 +186,7 @@ in
             "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
           ];
           ExecStart = ''
-            ${pkgs.pki-rotation}/bin/pki-rotation \
+            ${pkiRotation}/bin/pki-rotation \
               --rotation-window-days ${toString cfg.rotation.windowDays} \
               --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
               --sops-age-key-file /var/lib/sops-nix/key.txt \
