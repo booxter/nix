@@ -1,4 +1,8 @@
-{ lib, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
@@ -28,23 +32,54 @@ in
     mountPoint = "/data/media";
   };
 
+  # Arr stack
+  host.bazarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/bazarr";
+  };
+
+  host.lidarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/lidarr";
+    cueSplitter.enable = true;
+  };
+
+  host.prowlarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/prowlarr";
+  };
+
+  host.radarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/radarr";
+    letterboxdList.enable = true;
+  };
+
+  host.seerr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/seerr";
+    publicHostName = "js.${config.host.network.publicDomain}";
+    # TODO(seerr): revisit declarative settings reconciliation through Seerr's
+    # public API once it has a reliable bootstrap/readiness contract. Do not
+    # write its private database or inject Jellyfin API keys out of band.
+  };
+
+  host.sonarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/sonarr";
+  };
+
   imports = [
     ./adaptive-upload-policy.nix
-    ./bazarr.nix
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
     ./houndarr.nix
-    ./lidarr.nix
     ./pinepods.nix
-    ./prowlarr.nix
-    ./radarr.nix
     ./romm.nix
     ./sabnzbd.nix
-    ./seerr.nix
     ./shelfmark
     ./transmission.nix
-    ./sonarr.nix
     ./vpn.nix
   ];
 }
