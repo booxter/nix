@@ -5,7 +5,9 @@ in
 {
   imports = [
     ./assertions.nix
+    ./home.nix
     ./options.nix
+    ./work.nix
   ];
 
   config.host.power.shutdown.before.ups-server = lib.optional (

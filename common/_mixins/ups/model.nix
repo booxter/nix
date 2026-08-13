@@ -9,6 +9,7 @@ let
     inherit (hostConfig.host) isLinux realm;
     name = hostConfig.networking.hostName;
     ups = {
+      inherit (hostConfig.host.ups) credentialMode;
       clientServer = hostConfig.host.ups.client.server;
       server = {
         inherit (hostConfig.host.ups.server)

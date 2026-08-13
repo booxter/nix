@@ -1,12 +1,11 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
 let
   cfg = config.host.ups.server;
-  useLiteralPasswords = facts.realms.${config.host.realm}.services.ups.credentialMode == "literal";
+  useLiteralPasswords = config.host.ups.credentialMode == "literal";
   passwordFile =
     user:
     if useLiteralPasswords then

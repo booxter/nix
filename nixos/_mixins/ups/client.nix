@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   ...
@@ -16,9 +15,8 @@ let
   };
   server = if cfg.server == null then null else model.servers.${cfg.server} or null;
   fleetNetwork = import ../../_lib/fleet-host-network.nix { inherit config outputs; };
-  clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
-  serverCredentialMode =
-    if server == null then null else facts.realms.${server.realm}.services.ups.credentialMode;
+  clientCredentialMode = config.host.ups.credentialMode;
+  serverCredentialMode = if server == null then null else server.ups.credentialMode;
   monitorName = if cfg.server == null then "" else cfg.server;
   monitorSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =

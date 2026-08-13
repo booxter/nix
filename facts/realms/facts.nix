@@ -26,7 +26,6 @@ in
         (sshPublicKey "yubikey")
       ];
     };
-    services.ups.credentialMode = "sops";
   };
 
   work = {
@@ -37,7 +36,6 @@ in
       manageNetworkIdentity = false;
       sudoWheelNeedsPassword = true;
     };
-    services.ups.credentialMode = "literal";
     trust.ssh.authorizedKeys = [
       (sshPublicKey "jgwxhwdl4x")
       (sshPublicKey "jgwxhwdl4x-nix-builder")

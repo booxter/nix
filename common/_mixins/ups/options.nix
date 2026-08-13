@@ -1,6 +1,14 @@
 { config, lib, ... }:
 {
   options.host.ups = {
+    credentialMode = lib.mkOption {
+      type = lib.types.enum [
+        "literal"
+        "sops"
+      ];
+      description = "How UPS client and server passwords are provided in this realm.";
+    };
+
     server = {
       enable = lib.mkEnableOption "local UPS server";
 
