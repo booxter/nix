@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   ...
 }:
@@ -148,7 +147,7 @@ in
 
     prometheusEndpointSans = lib.mkOption {
       type = with lib.types; listOf str;
-      default = hostSpec.certificateDnsNames;
+      default = config.host.network.certificateDnsNames;
       description = "Default DNS SANs for host-level Prometheus mTLS server certificates.";
     };
   };

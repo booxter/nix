@@ -1,11 +1,11 @@
 {
   config,
-  hostSpec,
   lib,
 }:
 let
   available = _: server: server.realms == null || builtins.elem config.host.realm server.realms;
-  availableOnHost = _: server: server.hosts == null || builtins.elem hostSpec.name server.hosts;
+  availableOnHost =
+    _: server: server.hosts == null || builtins.elem config.networking.hostName server.hosts;
   rawPool = lib.filterAttrs (
     name: server: available name server && availableOnHost name server
   ) config.host.mcp.servers;

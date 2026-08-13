@@ -10,7 +10,7 @@ let
 in
 {
   options.services.unifi-sync = {
-    enable = lib.mkEnableOption "facts-backed UniFi network synchronization";
+    enable = lib.mkEnableOption "declarative UniFi network synchronization";
 
     package = lib.mkOption {
       type = lib.types.package;

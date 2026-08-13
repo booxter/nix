@@ -1,5 +1,4 @@
 {
-  facts,
   inputs,
   outputs,
   plainPkgs,
@@ -13,7 +12,6 @@ let
   ) (import ../pkgs pkgs);
   fleet = import ../apps/fleet.nix {
     inherit
-      facts
       outputs
       pkgs
       ;

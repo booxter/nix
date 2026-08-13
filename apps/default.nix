@@ -1,5 +1,4 @@
 {
-  facts,
   inputs,
   outputs,
   pkgs,
@@ -9,7 +8,6 @@ let
   inherit (pkgs) lib;
   commonArgs = {
     inherit
-      facts
       inputs
       outputs
       pkgs

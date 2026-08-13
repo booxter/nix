@@ -1,10 +1,9 @@
 {
-  facts,
   outputs,
   pkgs,
   ...
 }:
 {
-  package = (import ../fleet.nix { inherit facts outputs pkgs; }).packages.reset-oidc;
+  package = (import ../fleet.nix { inherit outputs pkgs; }).packages.reset-oidc;
   description = "Send a Kanidm OIDC credential reset email through the realm provider.";
 }

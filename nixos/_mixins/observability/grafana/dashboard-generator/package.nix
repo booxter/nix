@@ -23,7 +23,7 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Generate facts-driven Grafana dashboards";
+    description = "Generate Grafana dashboards from evaluated host configuration";
     license = lib.licenses.mit;
     mainProgram = "grafana-dashboards";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;

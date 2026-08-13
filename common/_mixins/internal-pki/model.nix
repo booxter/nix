@@ -1,11 +1,10 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
-  localHost = hostSpec.name;
+  localHost = config.networking.hostName;
   localAuthority = {
     hostName = localHost;
     inherit (config.host) realm;

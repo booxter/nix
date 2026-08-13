@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from sops_tools.errors import CommandError, ToolError
 from sops_tools.process import ProcessRunner
 
-from .models import ExporterConfig, FleetHosts, HostFacts
+from .models import ExporterConfig, FleetHosts, HostInfo
 
 
 _SIMPLE_NIX_ATTRIBUTE = re.compile(r"[A-Za-z_][A-Za-z0-9_'-]*")
@@ -81,7 +81,7 @@ class NixEvaluator:
             raise ToolError(f"nix returned invalid JSON for {attribute}: {error}") from error
 
 
-def host_facts(hosts: FleetHosts, host: str) -> HostFacts:
+def host_info(hosts: FleetHosts, host: str) -> HostInfo:
     try:
         return hosts.root[host]
     except KeyError as error:

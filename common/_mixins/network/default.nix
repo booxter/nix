@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   imports = [ ./assertions.nix ];
 
@@ -13,6 +13,24 @@
       type = lib.types.nonEmptyStr;
       default = "ihar.dev";
       description = "Public DNS domain used for internet-facing services.";
+    };
+
+    localDnsName = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "${config.networking.hostName}.local";
+      readOnly = true;
+      internal = true;
+      description = "Host-local multicast DNS name.";
+    };
+
+    certificateDnsNames = lib.mkOption {
+      type = with lib.types; nonEmptyListOf nonEmptyStr;
+      default = [
+        config.networking.hostName
+        "${config.networking.hostName}.${config.host.network.lanDomain}"
+        config.host.network.localDnsName
+      ];
+      description = "Default DNS identities included in host service certificates.";
     };
 
     interfaces = lib.mkOption {

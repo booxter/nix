@@ -1,4 +1,4 @@
-{ hostSpec, lib, ... }:
+{ lib, ... }:
 let
   ip = import ../../_lib/ipv4.nix { inherit lib; };
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
@@ -83,8 +83,7 @@ in
   options.host.site = {
     name = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
-      default = hostSpec.site or "home";
-      defaultText = lib.literalExpression ''hostSpec.site or "home"'';
+      default = "home";
       description = "Physical site containing this host, or null for hosts without a physical site.";
     };
 

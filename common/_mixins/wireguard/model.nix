@@ -1,12 +1,11 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
   ip = import ../../_lib/ipv4.nix { inherit lib; };
-  localHost = hostSpec.name;
+  localHost = config.networking.hostName;
   localCandidate = {
     hostName = localHost;
     inherit (config.host.wireguard) client server;

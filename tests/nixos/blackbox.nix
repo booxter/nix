@@ -123,16 +123,6 @@ pkgs.testers.runNixOSTest {
 
       config = {
         _module.args = {
-          facts = {
-            realms.test.services.observability = {
-              loki = {
-                writeUrl = null;
-                mtls = false;
-              };
-              nodeExporter.mtls = false;
-            };
-          };
-          hostSpec.certificateDnsNames = [ "blackbox" ];
           outputs.nixosConfigurations = { };
         };
 
@@ -145,7 +135,10 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.network.lanDomain = "example.invalid";
+        host.network = {
+          lanDomain = "example.invalid";
+          certificateDnsNames = [ "blackbox" ];
+        };
 
         host.observability = {
           enable = true;

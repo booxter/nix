@@ -1,13 +1,12 @@
 {
   config,
-  hostSpec,
   inputs,
   lib,
   pkgs,
   ...
 }:
 let
-  hostname = hostSpec.name;
+  hostname = config.networking.hostName;
   username = config.host.username;
 in
 {
@@ -42,12 +41,7 @@ in
   ];
 
   home-manager = {
-    extraSpecialArgs = {
-      inherit
-        hostSpec
-        inputs
-        ;
-    };
+    extraSpecialArgs = { inherit inputs; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

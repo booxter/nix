@@ -1,35 +1,29 @@
 {
   config,
-  facts,
-  hostSpec,
   isDarwin,
   lib,
   outputs,
   ...
 }:
 let
+  localHost = config.networking.hostName;
   username = config.host.username;
   readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
-  hostDirectory = (if isDarwin then ../../../darwin else ../../../nixos) + "/${hostSpec.name}";
+  hostDirectory = (if isDarwin then ../../../darwin else ../../../nixos) + "/${localHost}";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  publicHostKeyFor =
-    name:
-    if name == hostSpec.name then
-      config.host.ssh.publicHostKey
-    else
-      configurations.${name}.config.host.ssh.publicHostKey;
-  managedKnownHosts = lib.mapAttrs (name: spec: {
-    hostNames = spec.sshKnownHostNames;
-    publicKey = publicHostKeyFor name;
-  }) facts.hosts.hostSpecsByName;
+  hostConfigurationFor = name: if name == localHost then config else configurations.${name}.config;
+  managedKnownHosts = lib.mapAttrs (name: _: {
+    hostNames = (hostConfigurationFor name).host.ssh.knownHostNames;
+    publicKey = (hostConfigurationFor name).host.ssh.publicHostKey;
+  }) configurations;
   operatorHostView = host: {
     inherit (host) realm;
     operator = host.security.secrets.operator.enable;
     authorizedKeys = host.ssh.operator.authorizedKeys;
   };
-  otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];
+  otherConfigurations = builtins.removeAttrs configurations [ localHost ];
   fleetHosts = lib.mapAttrs (_: configuration: configuration.config.host) otherConfigurations // {
-    ${hostSpec.name} = config.host;
+    ${localHost} = config.host;
   };
   operatorHosts = lib.mapAttrs (_: operatorHostView) fleetHosts;
   realmOperatorHosts = lib.filterAttrs (
@@ -127,6 +121,22 @@ in
   imports = [ ./ticket-server.nix ];
 
   options.host.ssh = {
+    knownHostNames = lib.mkOption {
+      type = with lib.types; nonEmptyListOf nonEmptyStr;
+      default =
+        let
+          lowercaseName = lib.toLower localHost;
+        in
+        lib.unique (
+          [ localHost ]
+          ++ lib.optional (lowercaseName != localHost) lowercaseName
+          ++ lib.optional config.host.isLinux "${localHost}.${config.host.network.lanDomain}"
+          ++ [ config.host.network.localDnsName ]
+          ++ lib.optional (lowercaseName != localHost) "${lowercaseName}.local"
+        );
+      description = "Names associated with this host in managed SSH known-host entries.";
+    };
+
     publicHostKey = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = readPublicKey (hostDirectory + "/ssh_host_ed25519_key.pub");

@@ -1,5 +1,5 @@
 {
-  facts,
+  hosts,
   lib,
 }:
 let
@@ -26,11 +26,11 @@ let
       runner = runners.${system} or (throw "No CI runner configured for ${system}");
     };
   mkNixosTarget =
-    spec:
+    name: _module:
     mkTarget {
-      attr = "nixosConfigurations.${spec.name}.config.system.build.toplevel";
-      host = spec.name;
-      name = "${spec.name} (${nixosSystem})";
+      attr = "nixosConfigurations.${name}.config.system.build.toplevel";
+      host = name;
+      name = "${name} (${nixosSystem})";
       system = nixosSystem;
     };
   mkDarwinTarget =
@@ -44,8 +44,8 @@ let
 in
 {
   buildTargets =
-    lib.mapAttrsToList (_: mkNixosTarget) facts.hosts.nixos
-    ++ lib.mapAttrsToList mkDarwinTarget facts.hosts.darwin
+    lib.mapAttrsToList mkNixosTarget hosts.nixos
+    ++ lib.mapAttrsToList mkDarwinTarget hosts.darwin
     ++ [
       (mkTarget {
         attr = "nixosConfigurations.builder1.config.system.build.vm";

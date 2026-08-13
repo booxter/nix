@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
   ...
@@ -76,7 +75,6 @@ let
   model = import ./model.nix {
     inherit
       config
-      hostSpec
       lib
       outputs
       ;

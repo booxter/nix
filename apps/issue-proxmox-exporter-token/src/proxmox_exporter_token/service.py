@@ -18,7 +18,7 @@ from .models import (
     IssueSummary,
     RemoteTokenRequest,
 )
-from .repository import host_facts
+from .repository import host_info
 
 
 @dataclass(frozen=True)
@@ -92,7 +92,7 @@ class SopsTokenStore:
     hosts: FleetHosts
 
     def set(self, host: str, key: KeyPath, value: str) -> None:
-        realm = self.runtime.resolve_realm(host_facts(self.hosts, host).realm)
+        realm = self.runtime.resolve_realm(host_info(self.hosts, host).realm)
         repository = SecretRepository(self.runtime.repo_root, realm)
         secret = repository.require_secret(host)
         runner = self._runner(realm.name, realm.identity_file)
@@ -128,7 +128,7 @@ class TokenService:
 
         configs: dict[str, ExporterConfig] = {}
         for host in selected:
-            host_facts(self.hosts, host)
+            host_info(self.hosts, host)
             config = self.evaluator.exporter_config(host)
             if not config.enable:
                 raise ToolError(f"host {host} does not enable the Proxmox exporter")
@@ -144,7 +144,7 @@ class TokenService:
             configs[host] = config
 
         selected_issuer = issuer_host or selected[0]
-        host_facts(self.hosts, selected_issuer)
+        host_info(self.hosts, selected_issuer)
         value = token_value
         if value is None:
             value = self.issuer.issue(selected_issuer, request)
@@ -167,8 +167,8 @@ class TokenService:
 
     def _enabled_exporter_hosts(self) -> list[str]:
         selected: list[str] = []
-        for host, facts in sorted(self.hosts.root.items()):
-            if not facts.system.endswith("-linux"):
+        for host, info in sorted(self.hosts.root.items()):
+            if not info.system.endswith("-linux"):
                 continue
             config = self.evaluator.optional_exporter_config(host)
             if config is not None and config.enable:

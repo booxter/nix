@@ -1,5 +1,4 @@
 {
-  facts,
   outputs,
   pkgs,
 }:
@@ -24,10 +23,10 @@ let
     inherit pkgs realmsByHost;
   };
 
-  fleetFacts = {
+  fleetInventory = {
     aliases =
-      pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos
-      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwin;
+      pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations
+      // pkgs.lib.mapAttrs (name: _: name) outputs.darwinConfigurations;
     darwin = pkgs.lib.mapAttrs (
       _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
     ) darwinHosts;
@@ -45,9 +44,9 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wgHome.server.host;
   };
-  vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
+  vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetFacts vmTargets wireguardHome;
+    inherit fleetInventory vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {

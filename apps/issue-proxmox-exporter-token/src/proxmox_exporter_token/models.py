@@ -3,14 +3,14 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
-class HostFacts(BaseModel):
+class HostInfo(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     system: str
     realm: str
 
 
-class FleetHosts(RootModel[dict[str, HostFacts]]):
+class FleetHosts(RootModel[dict[str, HostInfo]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 

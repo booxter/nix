@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   isLinux,
   lib,
   outputs,
@@ -10,7 +9,6 @@ let
   model = import ./model.nix {
     inherit
       config
-      hostSpec
       lib
       outputs
       ;
@@ -99,7 +97,7 @@ in
 
       hostName = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = hostSpec.name;
+        default = config.networking.hostName;
         description = "SSH hostname advertised to builder clients.";
       };
 

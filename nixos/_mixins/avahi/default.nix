@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   ...
 }:
@@ -42,7 +41,7 @@ in
       userServices = true;
       addresses = true;
     };
-    hostName = hostSpec.name;
+    hostName = config.networking.hostName;
   };
 
   systemd.services = builtins.listToAttrs (map aliasService aliases);

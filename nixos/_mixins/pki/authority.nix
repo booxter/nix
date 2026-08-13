@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
   pkgs,
@@ -30,7 +29,7 @@ let
     inherit config lib outputs;
   };
   dnsNames = lib.unique (
-    hostSpec.certificateDnsNames
+    config.host.network.certificateDnsNames
     ++ [
       config.networking.hostName
       config.services.avahi.hostName

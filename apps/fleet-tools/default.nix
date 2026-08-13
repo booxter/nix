@@ -4,7 +4,7 @@
   curl,
   diffutils,
   dix,
-  fleetFacts,
+  fleetInventory,
   fzf,
   lib,
   makeWrapper,
@@ -49,7 +49,7 @@ rustPlatform.buildRustPackage {
   DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";
   DEPLOY_REPO_URL = "https://github.com/booxter/nix.git";
   DEPLOY_SSH = lib.getExe openssh;
-  FLEET_HOSTS_JSON = builtins.toJSON fleetFacts;
+  FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;
   WG_HOME_HELP = ''
     Examples:

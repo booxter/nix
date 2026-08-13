@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
@@ -9,7 +8,7 @@ let
   identityFileName = config.host.nix.builder.sshIdentityFileName;
   identityFile = "${config.users.users.${username}.home}/.ssh/${identityFileName}";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  otherConfigurations = builtins.removeAttrs configurations [ hostSpec.name ];
+  otherConfigurations = builtins.removeAttrs configurations [ config.networking.hostName ];
   toBuilder =
     _name: configuration:
     let

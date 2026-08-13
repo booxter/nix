@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   ...
 }:
@@ -95,7 +94,6 @@ let
   model = import ./pool.nix {
     inherit
       config
-      hostSpec
       lib
       ;
   };

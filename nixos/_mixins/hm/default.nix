@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   inputs,
   ...
 }:
@@ -11,12 +10,7 @@ in
   imports = [ inputs.home-manager.nixosModules.home-manager ];
 
   home-manager = {
-    extraSpecialArgs = {
-      inherit
-        hostSpec
-        inputs
-        ;
-    };
+    extraSpecialArgs = { inherit inputs; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {

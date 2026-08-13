@@ -1,11 +1,10 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
-  localHost = hostSpec.name;
+  localHost = config.networking.hostName;
   localCandidate = {
     inherit (config.host) realm;
     contributions = config.host.nix.cacheContributions;

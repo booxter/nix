@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   ...
 }:
@@ -23,7 +22,7 @@ in
       serverAliases = lib.mkOption {
         type = with lib.types; listOf str;
         default = lib.unique (
-          [ "${config.services.avahi.hostName}.local" ] ++ hostSpec.certificateDnsNames
+          [ "${config.services.avahi.hostName}.local" ] ++ config.host.network.certificateDnsNames
         );
         description = "Additional DNS names included in the Proxmox VE API certificate.";
       };

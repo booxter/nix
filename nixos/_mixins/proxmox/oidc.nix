@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -20,8 +19,13 @@ let
       _: configuration: configuration.config.host.proxmox.node.enable
     ) outputs.nixosConfigurations
   );
-  proxmoxNodeHostSpecs = map (name: facts.hosts.nixos.${name}) proxmoxNodeNames;
-  proxmoxLabHosts = lib.unique (lib.concatMap (spec: spec.certificateDnsNames) proxmoxNodeHostSpecs);
+  certificateDnsNamesFor =
+    name:
+    if name == config.networking.hostName then
+      config.host.network.certificateDnsNames
+    else
+      outputs.nixosConfigurations.${name}.config.host.network.certificateDnsNames;
+  proxmoxLabHosts = lib.unique (lib.concatMap certificateDnsNamesFor proxmoxNodeNames);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [

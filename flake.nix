@@ -69,42 +69,48 @@
     inputs@{ self, ... }:
     let
       inherit (self) outputs;
-      facts = import ./facts { lib = inputs.nixpkgs.lib; };
-      hostSpecialArgs =
+      lib = inputs.nixpkgs.lib;
+      hosts = import ./lib/hosts.nix { inherit lib; };
+      specialArgsForHost =
         {
-          spec,
+          hostName,
           system,
         }:
         let
-          hostPlatform = inputs.nixpkgs.lib.systems.elaborate system;
+          hostPlatform = lib.systems.elaborate system;
         in
         {
           inherit
+            hostName
             inputs
             outputs
-            facts
             system
             ;
           inherit (hostPlatform) isDarwin isLinux;
-          hostSpec = spec;
         };
       mkNixos =
-        spec:
+        hostName: hostModule:
         inputs.nixpkgs.lib.nixosSystem {
-          specialArgs = hostSpecialArgs {
-            inherit spec;
+          specialArgs = specialArgsForHost {
+            inherit hostName;
             system = "x86_64-linux";
           };
-          modules = [ ./nixos ];
+          modules = [
+            ./nixos
+            hostModule
+          ];
         };
       mkDarwin =
-        spec:
+        hostName: hostModule:
         inputs.nix-darwin.lib.darwinSystem {
-          specialArgs = hostSpecialArgs {
-            inherit spec;
+          specialArgs = specialArgsForHost {
+            inherit hostName;
             system = "aarch64-darwin";
           };
-          modules = [ ./darwin ];
+          modules = [
+            ./darwin
+            hostModule
+          ];
         };
       perSystem =
         inputs.nixpkgs.lib.genAttrs
@@ -116,7 +122,6 @@
             system:
             import ./per-system.nix {
               inherit
-                facts
                 inputs
                 outputs
                 system
@@ -127,17 +132,16 @@
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) facts.hosts.darwin;
+      darwinConfigurations = builtins.mapAttrs mkDarwin hosts.darwin;
 
-      nixosConfigurations = builtins.mapAttrs (_: mkNixos) facts.hosts.nixos;
+      nixosConfigurations = builtins.mapAttrs mkNixos hosts.nixos;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
 
-      lib.ciTargetFacts = import ./ci {
-        inherit facts;
-        lib = inputs.nixpkgs.lib;
+      lib.ciTargets = import ./ci {
+        inherit hosts lib;
       };
 
       overlays = import ./overlays { inherit inputs; };

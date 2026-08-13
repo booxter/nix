@@ -149,11 +149,6 @@ pkgs.testers.runNixOSTest {
       };
 
       config = {
-        _module.args.facts = {
-          servicesById.id.publicHost = "id.example.invalid";
-          toInternalHttpsServiceHosts = _: serviceName: [ "${serviceName}.example.invalid" ];
-        };
-
         host.network.lanDomain = "example.invalid";
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";

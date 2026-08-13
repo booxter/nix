@@ -1,11 +1,10 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
-  localHost = hostSpec.name;
+  localHost = config.networking.hostName;
   cfg = config.host.observability.uptimeRobot.controller;
   otherConfigurations = builtins.removeAttrs outputs.nixosConfigurations [ localHost ];
   controllerHosts = builtins.attrNames (

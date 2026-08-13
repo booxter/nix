@@ -1,23 +1,17 @@
 {
-  hostSpec,
+  hostName,
   isDarwin,
   isLinux,
   lib,
   system,
   ...
 }:
-let
-  hostname = hostSpec.name;
-  platformDirectory = if isDarwin then ../../darwin else ../../nixos;
-  hostModule = platformDirectory + "/${hostname}";
-in
 {
   imports = [
     ./host/assertions.nix
     ./host/home.nix
     ./host/work.nix
-  ]
-  ++ lib.optional (builtins.pathExists hostModule) hostModule;
+  ];
 
   options.host = {
     platform = lib.mkOption {
@@ -70,6 +64,6 @@ in
 
   config = {
     nixpkgs.hostPlatform = system;
-    networking.hostName = hostname;
+    networking.hostName = hostName;
   };
 }

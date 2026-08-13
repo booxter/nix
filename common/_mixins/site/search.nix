@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
   ...
@@ -63,7 +62,6 @@ let
   model = import ./search-model.nix {
     inherit
       config
-      hostSpec
       lib
       outputs
       ;
