@@ -21,15 +21,6 @@ in
         message = "host.houndarr.instances must select at least one application API";
       }
       {
-        assertion = cfg.authProxy.gate != null;
-        message = "host.houndarr.authProxy.gate must select an oauth2-proxy gate";
-      }
-      {
-        assertion =
-          cfg.authProxy.gate == null || builtins.hasAttr cfg.authProxy.gate config.host.sso.oauth2ProxyGates;
-        message = "host.houndarr.authProxy.gate must select a registered oauth2-proxy gate";
-      }
-      {
         assertion = builtins.length selectedApis == builtins.length (lib.unique selectedApis);
         message = "host.houndarr.instances cannot select the same application API twice";
       }

@@ -21,6 +21,7 @@ in
         icon = "sh:houndarr.png";
         section = "media-admin";
       };
+      auth.policy = "media-admin";
     };
   };
 }

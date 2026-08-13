@@ -57,7 +57,6 @@ in
     ./letterboxd-list-radarr.nix
     ./lidarr.nix
     ./lidarr-cue-splitter.nix
-    ./oauth2-proxy.nix
     ./pinepods.nix
     ./prowlarr.nix
     ./radarr.nix

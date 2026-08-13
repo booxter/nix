@@ -210,11 +210,6 @@ in
     };
 
     authProxy = {
-      gate = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Existing oauth2-proxy gate protecting Houndarr.";
-      };
       userHeader = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = "X-User";

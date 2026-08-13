@@ -83,6 +83,7 @@ in
         enable = true;
         section = "media-admin";
       };
+      auth.policy = "media-admin";
     };
 
     host.web.api.prowlarr = {
