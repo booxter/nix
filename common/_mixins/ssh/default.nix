@@ -72,12 +72,6 @@ let
     options = {
       name = lib.mkOption { type = lib.types.nonEmptyStr; };
       enabled = lib.mkOption { type = lib.types.bool; };
-      kind = lib.mkOption {
-        type = lib.types.enum [
-          "darwin"
-          "nixos"
-        ];
-      };
       sshHost = lib.mkOption { type = lib.types.nonEmptyStr; };
       aliases = lib.mkOption { type = lib.types.nonEmptyListOf lib.types.nonEmptyStr; };
       allowX11Forwarding = lib.mkOption { type = lib.types.bool; };
@@ -103,7 +97,6 @@ let
         trustedCaPublicKeys
         ;
       enabled = tickets.enable;
-      kind = if configuration.config.nixpkgs.hostPlatform.isDarwin then "darwin" else "nixos";
       sshHost = name;
       aliases = [
         name

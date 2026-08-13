@@ -12,7 +12,6 @@ class Target(BaseModel):
 
     name: str = Field(min_length=1)
     enabled: bool = False
-    kind: Literal["darwin", "nixos"] = "nixos"
     ssh_host: str = Field(default="", alias="sshHost")
     aliases: list[str] = Field(default_factory=list)
     allow_x11_forwarding: bool = Field(default=False, alias="allowX11Forwarding")
