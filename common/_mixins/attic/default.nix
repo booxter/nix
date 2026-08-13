@@ -127,8 +127,8 @@ in
           };
           priorities = {
             default = 30;
-            tunnelInactive = 10;
-            tunnelActive = 30;
+            lan = 10;
+            wan = 30;
           };
         };
   };

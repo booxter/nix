@@ -46,8 +46,8 @@ in
         substituter = cfg.url;
         trustedPublicKeys = flakehubCacheKeys;
         priorities = {
-          tunnelInactive = 30;
-          tunnelActive = 10;
+          lan = 30;
+          wan = 10;
         };
       };
 

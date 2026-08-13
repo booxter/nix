@@ -13,15 +13,15 @@ let
       default = null;
       description = "Default Nix substituter priority override.";
     };
-    tunnelInactive = lib.mkOption {
+    lan = lib.mkOption {
       type = priorityType;
       default = null;
-      description = "Nix substituter priority while the relevant WireGuard tunnel is inactive.";
+      description = "Nix substituter priority on the LAN.";
     };
-    tunnelActive = lib.mkOption {
+    wan = lib.mkOption {
       type = priorityType;
       default = null;
-      description = "Nix substituter priority while the relevant WireGuard tunnel is active.";
+      description = "Nix substituter priority on the WAN.";
     };
   };
   commonCacheOptions = {
