@@ -125,23 +125,20 @@
             }
           );
       selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
-
     in
     {
       darwinConfigurations = builtins.mapAttrs mkDarwin hosts.darwin;
-
       nixosConfigurations = builtins.mapAttrs mkNixos hosts.nixos;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
+      packages = selectPerSystem "packages";
+
+      overlays = import ./overlays { inherit inputs; };
 
       lib.ciTargets = import ./ci {
         inherit hosts lib;
       };
-
-      overlays = import ./overlays { inherit inputs; };
-      packages = selectPerSystem "packages";
-
     };
 }
