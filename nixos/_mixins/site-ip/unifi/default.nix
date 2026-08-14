@@ -31,7 +31,7 @@ let
     lanDomain = config.host.network.lanDomain;
     reservations = config.host.site.lan.reservations;
     site = controller.site;
-    staticRoutes = config.host.site.lan.staticRoutes ++ wireguardStaticRoutes;
+    staticRoutes = wireguardStaticRoutes;
   };
 in
 {

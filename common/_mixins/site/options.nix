@@ -28,56 +28,6 @@ let
       };
     };
   };
-  dhcpOptionType = lib.types.submodule {
-    options = {
-      code = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        description = "Numeric DHCP option code.";
-      };
-      name = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Controller-facing DHCP option name.";
-      };
-      type = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Controller-facing DHCP option value type.";
-      };
-      signed = lib.mkOption {
-        type = lib.types.bool;
-        description = "Whether the DHCP option value is signed.";
-      };
-      encoding = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Controller-facing DHCP option encoding.";
-      };
-    };
-  };
-  staticRouteType = lib.types.submodule {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Controller-facing route name.";
-      };
-      destination = lib.mkOption {
-        type = ipv4Cidr;
-        description = "Destination IPv4 subnet.";
-      };
-      nextHopHost = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Fleet host providing the route's next hop.";
-      };
-      distance = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 1;
-        description = "Administrative distance of the route.";
-      };
-      enabled = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to advertise the route through DHCP.";
-      };
-    };
-  };
   ipControllerType = lib.types.submodule {
     options = {
       endpoint = lib.mkOption {
@@ -135,10 +85,6 @@ in
       };
 
       gateway = {
-        host = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "Fleet hostname of the site gateway.";
-        };
         address = lib.mkOption {
           type = ipv4Address;
           description = "IPv4 address of the site gateway.";
@@ -172,17 +118,6 @@ in
         };
       };
 
-      customDhcpOptions = lib.mkOption {
-        type = lib.types.attrsOf dhcpOptionType;
-        default = { };
-        description = "Controller definitions for custom DHCP options.";
-      };
-
-      staticRoutes = lib.mkOption {
-        type = lib.types.listOf staticRouteType;
-        default = [ ];
-        description = "Static routes managed for the site.";
-      };
     };
   };
 }

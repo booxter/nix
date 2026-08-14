@@ -78,7 +78,6 @@ lib.mkIf (config.host.site.name == "home") {
         };
       };
       gateway = {
-        host = lib.mkDefault "gateway";
         address = lib.mkDefault "192.168.0.1";
       };
       ipController = lib.mkDefault {
@@ -94,22 +93,6 @@ lib.mkIf (config.host.site.name == "home") {
       netboot = {
         host = lib.mkDefault "prx1-lab";
         bootFile = lib.mkDefault "netboot.xyz.efi";
-      };
-      customDhcpOptions = lib.mkDefault {
-        domainSearch = {
-          code = 119;
-          name = "DomainSearch";
-          type = "text";
-          signed = false;
-          encoding = "text";
-        };
-        classlessStaticRoutes = {
-          code = 121;
-          name = "ClasslessStaticRoutes";
-          type = "text";
-          signed = false;
-          encoding = "text";
-        };
       };
     };
   };

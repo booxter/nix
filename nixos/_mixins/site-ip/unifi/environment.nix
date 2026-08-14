@@ -5,8 +5,8 @@
   lanDomain,
   reservations,
   site,
-  staticRoutes ? [ ],
-  webDnsRecords ? [ ],
+  staticRoutes,
+  webDnsRecords,
 }:
 let
   netboot = lan.netboot;
@@ -28,16 +28,20 @@ let
   mainDhcpRangeJson = builtins.toJSON lan.dhcp.range;
   mainDomainName = lanDomain;
   mainDomainSearchJson = builtins.toJSON [ lanDomain ];
-  domainSearchOption =
-    if lan ? customDhcpOptions && lan.customDhcpOptions ? domainSearch then
-      lan.customDhcpOptions.domainSearch
-    else
-      null;
-  classlessStaticRoutesOption =
-    if lan ? customDhcpOptions && lan.customDhcpOptions ? classlessStaticRoutes then
-      lan.customDhcpOptions.classlessStaticRoutes
-    else
-      null;
+  domainSearchOption = {
+    code = 119;
+    name = "DomainSearch";
+    type = "text";
+    signed = false;
+    encoding = "text";
+  };
+  classlessStaticRoutesOption = {
+    code = 121;
+    name = "ClasslessStaticRoutes";
+    type = "text";
+    signed = false;
+    encoding = "text";
+  };
 
   networkTftpServer = addressFor netboot.host;
 
@@ -70,7 +74,7 @@ let
   ) staticRoutes;
   staticRoutesJson = builtins.toJSON renderedStaticRoutes;
   classlessStaticRoutesJson = builtins.toJSON (
-    (builtins.filter (route: route.enabled or true) renderedStaticRoutes)
+    renderedStaticRoutes
     ++ [
       {
         name = "default";
@@ -103,11 +107,9 @@ in
     UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
     UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
     UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
-    UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON =
-      if domainSearchOption != null then builtins.toJSON domainSearchOption else "";
+    UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON = builtins.toJSON domainSearchOption;
     UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
-    UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON =
-      if classlessStaticRoutesOption != null then builtins.toJSON classlessStaticRoutesOption else "";
+    UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON = builtins.toJSON classlessStaticRoutesOption;
     UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
     UNIFI_NETWORK_BOOTFILE = networkBootfile;
     UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
