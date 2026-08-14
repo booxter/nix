@@ -22,11 +22,6 @@ in
 
   }
   // lib.optionalAttrs media {
-    storage.claim = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "media";
-    };
-
     user = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = name;
@@ -97,18 +92,12 @@ in
         };
       }
       (lib.optionalAttrs media {
-        assertions = [
-          {
-            assertion = builtins.hasAttr cfg.storage.claim config.host.storage.claims;
-            message = "host.${name}.storage.claim must select a known storage claim";
-          }
-        ];
         services.${name} = {
           user = cfg.user;
           group = cfg.group;
         };
 
-        host.storage.claims.${cfg.storage.claim}.attachments.${name}.unit = name;
+        host.storage.claims.media.attachments.${name}.unit = name;
 
         systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
 

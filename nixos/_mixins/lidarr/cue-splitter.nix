@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.lidarr;
-  mediaDir = config.host.storage.claims.${cfg.storage.claim}.mountPoint;
+  mediaDir = config.host.storage.claims.media.mountPoint;
   workRoot = "${mediaDir}/.cue-splitter-work";
   stateDir = "/var/lib/lidarr-cue-splitter";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
@@ -21,7 +21,7 @@ let
 in
 {
   config = lib.mkIf (cfg.enable && cfg.cueSplitter.enable) {
-    host.storage.claims.${cfg.storage.claim} = {
+    host.storage.claims.media = {
       directories.".cue-splitter-work".mode = "2775";
       attachments.lidarr-cue-splitter.unit = "lidarr-cue-splitter";
     };

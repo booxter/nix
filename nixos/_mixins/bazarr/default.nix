@@ -26,11 +26,6 @@ in
       default = "/var/lib/bazarr";
     };
 
-    storage.claim = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "media";
-    };
-
     authConfigPackage = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ./package {
@@ -53,13 +48,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = builtins.hasAttr cfg.storage.claim config.host.storage.claims;
-        message = "host.bazarr.storage.claim must select a known storage claim";
-      }
-    ];
-
     services.bazarr = {
       enable = true;
       dataDir = cfg.stateDir;
@@ -67,7 +55,7 @@ in
       user = cfg.user;
     };
 
-    host.storage.claims.${cfg.storage.claim}.attachments.bazarr.unit = "bazarr";
+    host.storage.claims.media.attachments.bazarr.unit = "bazarr";
 
     host.backups.sources.bazarr = {
       title = "Bazarr";
