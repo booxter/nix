@@ -1,20 +1,11 @@
 {
   config,
+  degoogModel,
   lib,
-  outputs,
-  pkgs,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      pkgs
-      ;
-  };
-  inherit (model) cfg pluginSettings secretNames;
+  inherit (degoogModel) cfg pluginSettings secretNames;
   serviceName = "degoog";
 in
 {

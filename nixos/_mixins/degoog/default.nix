@@ -1,4 +1,21 @@
 {
+  config,
+  lib,
+  outputs,
+  pkgs,
+  ...
+}:
+let
+  degoogModel = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      pkgs
+      ;
+  };
+in
+{
   imports = [
     ./assertions.nix
     ./backups.nix
@@ -7,4 +24,6 @@
     ./service.nix
     ./web.nix
   ];
+
+  _module.args = { inherit degoogModel; };
 }

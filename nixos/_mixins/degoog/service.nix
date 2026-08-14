@@ -1,21 +1,13 @@
 {
   config,
+  degoogModel,
   lib,
-  outputs,
   pkgs,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      pkgs
-      ;
-  };
-  inherit (model)
+  inherit (degoogModel)
     cfg
     extensionNames
     packages

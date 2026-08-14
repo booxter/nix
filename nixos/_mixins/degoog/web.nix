@@ -1,20 +1,11 @@
 {
   config,
+  degoogModel,
   lib,
-  outputs,
-  pkgs,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      pkgs
-      ;
-  };
-  inherit (model) cfg ssoApplication;
+  inherit (degoogModel) cfg ssoApplication;
   service = config.host.web.services.goo;
   upstream = "http://unix:/run/degoog/degoog.sock";
   oauth2ProxyPort = 4183;

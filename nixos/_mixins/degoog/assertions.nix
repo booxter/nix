@@ -1,20 +1,11 @@
 {
   config,
+  degoogModel,
   lib,
-  outputs,
-  pkgs,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      pkgs
-      ;
-  };
-  inherit (model)
+  inherit (degoogModel)
     adminUsers
     cfg
     duplicateExtensions
@@ -81,36 +72,38 @@ in
       message = "The Degoog SSO application has no settings administrators.";
     }
     {
-      assertion = !model.jellyfinSelected || jellyfinHost != null;
+      assertion = !degoogModel.jellyfinSelected || jellyfinHost != null;
       message = "host.degoog.integrations.jellyfin must name a known NixOS host.";
     }
     {
-      assertion = !model.jellyfinSelected || (jellyfin != null && jellyfin.enable);
+      assertion = !degoogModel.jellyfinSelected || (jellyfin != null && jellyfin.enable);
       message = "The selected Degoog Jellyfin integration host must enable Jellyfin.";
     }
     {
-      assertion = !model.jellyfinSelected || (jellyfin != null && jellyfin.publicUrl != null);
+      assertion = !degoogModel.jellyfinSelected || (jellyfin != null && jellyfin.publicUrl != null);
       message = "The selected Degoog Jellyfin integration requires a public Jellyfin URL.";
     }
     {
       assertion =
-        !model.jellyfinSelected || (jellyfinHost != null && jellyfinHost.host.realm == config.host.realm);
+        !degoogModel.jellyfinSelected
+        || (jellyfinHost != null && jellyfinHost.host.realm == config.host.realm);
       message = "Degoog and its Jellyfin integration must be in the same realm.";
     }
     {
-      assertion = !model.rommSelected || rommHost != null;
+      assertion = !degoogModel.rommSelected || rommHost != null;
       message = "host.degoog.integrations.romm must name a known NixOS host.";
     }
     {
-      assertion = !model.rommSelected || (romm != null && romm.enable);
+      assertion = !degoogModel.rommSelected || (romm != null && romm.enable);
       message = "The selected Degoog RomM integration host must enable RomM.";
     }
     {
-      assertion = !model.rommSelected || (romm != null && romm.publicUrl != null);
+      assertion = !degoogModel.rommSelected || (romm != null && romm.publicUrl != null);
       message = "The selected Degoog RomM integration requires a public RomM URL.";
     }
     {
-      assertion = !model.rommSelected || (rommHost != null && rommHost.host.realm == config.host.realm);
+      assertion =
+        !degoogModel.rommSelected || (rommHost != null && rommHost.host.realm == config.host.realm);
       message = "Degoog and its RomM integration must be in the same realm.";
     }
   ];
