@@ -48,27 +48,26 @@ lib.mkIf (config.host.realm == "home") {
       };
     };
 
-    groups = {
-      sso-admins.title = "SSO administrators";
-      infra-admins.title = "Infrastructure administrators";
-      grafana-admins.title = "Grafana administrators";
-      grafana-viewers.title = "Grafana viewers";
-      home-admins.title = "Home Assistant administrators";
-      home-users.title = "Home Assistant users";
-      paperless-admins.title = "Paperless administrators";
-      paperless-users.title = "Paperless users";
-      vikunja-users.title = "Vikunja users";
-      degoog-users.title = "Degoog users";
-      romm-admins.title = "RomM administrators";
-      romm-editors.title = "RomM editors";
-      romm-viewers.title = "RomM viewers";
-      media-admins.title = "Media administrators";
-      media-users.title = "Media users";
-    };
+    groups = [
+      "sso-admins"
+      "infra-admins"
+      "grafana-admins"
+      "grafana-viewers"
+      "home-admins"
+      "home-users"
+      "paperless-admins"
+      "paperless-users"
+      "vikunja-users"
+      "degoog-users"
+      "romm-admins"
+      "romm-editors"
+      "romm-viewers"
+      "media-admins"
+      "media-users"
+    ];
 
     users = {
       ihar = {
-        displayName = "ihar";
         mailAddressSopsKey = "kanidm/person_mail_addresses/ihar";
         groups = [
           "sso-admins"
@@ -86,7 +85,6 @@ lib.mkIf (config.host.realm == "home") {
         ];
       };
       kasia = {
-        displayName = "kasia";
         mailAddressSopsKey = "kanidm/person_mail_addresses/kasia";
         groups = [
           "paperless-users"
@@ -99,7 +97,6 @@ lib.mkIf (config.host.realm == "home") {
         ];
       };
       eugene = {
-        displayName = "eugene";
         mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
         groups = [
           "degoog-users"

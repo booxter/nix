@@ -23,7 +23,7 @@ let
     "--username"
     bootstrapOwnerName
     "--full-name"
-    bootstrapOwner.displayName
+    bootstrapOwnerName
     "--email-file"
     config.sops.secrets.${bootstrapOwner.mailAddressSopsKey}.path
     "--password-file"

@@ -30,7 +30,7 @@ let
       )
     ) (builtins.attrValues oidcClients)
   );
-  unknownOidcGroups = lib.subtractLists (builtins.attrNames sso.groups) referencedOidcGroups;
+  unknownOidcGroups = lib.subtractLists sso.groups referencedOidcGroups;
   kanidmProvisionClients =
     secretPathFor:
     lib.mapAttrs (_: client: {
@@ -66,15 +66,11 @@ let
   personMailProvisionService = "kanidm-person-mail-provision";
   personMailProvisionDir = "/run/${personMailProvisionService}";
   personMailProvisionFile = "${personMailProvisionDir}/persons.json";
-  kanidmProvisionGroups = lib.mapAttrs (_: _: { }) sso.groups;
-  kanidmProvisionPersons = lib.mapAttrs (
-    _: person:
-    {
-      displayName = person.displayName;
-      groups = person.groups;
-    }
-    // lib.optionalAttrs (person.legalName != null) { inherit (person) legalName; }
-  ) sso.users;
+  kanidmProvisionGroups = lib.genAttrs sso.groups (_: { });
+  kanidmProvisionPersons = lib.mapAttrs (name: person: {
+    displayName = name;
+    groups = person.groups;
+  }) sso.users;
   personMailProvision = ssoPkgs.kanidm-person-mail-provision;
   personMailProvisionArgs = [
     personMailProvisionFile

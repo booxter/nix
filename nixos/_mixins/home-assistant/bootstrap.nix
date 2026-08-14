@@ -7,7 +7,6 @@ let
   cfg = config.host.home-assistant;
   homeAssistantSso = config.host.sso.applications.home-assistant;
   bootstrapOwnerName = homeAssistantSso.bootstrapOwner;
-  bootstrapOwner = config.host.sso.users.${bootstrapOwnerName};
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
 in
 {
@@ -41,7 +40,7 @@ in
           "--client-id"
           "${cfg.localUrl}/"
           "--owner-display-name"
-          bootstrapOwner.displayName
+          bootstrapOwnerName
           "--owner-language"
           homeAssistantSso.bootstrapLanguage
           "--owner-username"

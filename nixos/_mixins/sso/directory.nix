@@ -1,23 +1,8 @@
 { config, lib, ... }:
 let
   cfg = config.host.sso;
-  groupType = lib.types.submodule {
-    options.title = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      description = "Human-readable SSO group title.";
-    };
-  };
   userType = lib.types.submodule {
     options = {
-      displayName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SSO display name.";
-      };
-      legalName = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Legal name provisioned to the identity provider, when declared.";
-      };
       mailAddressSopsKey = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;
@@ -67,14 +52,12 @@ let
       application.viewerGroup
     ];
   unknownUserGroups = lib.unique (
-    lib.concatMap (user: lib.subtractLists (builtins.attrNames cfg.groups) user.groups) (
-      builtins.attrValues cfg.users
-    )
+    lib.concatMap (user: lib.subtractLists cfg.groups user.groups) (builtins.attrValues cfg.users)
   );
   unknownApplicationGroups = lib.unique (
-    lib.concatMap (
-      application: lib.subtractLists (builtins.attrNames cfg.groups) (applicationGroups application)
-    ) (builtins.attrValues cfg.applications)
+    lib.concatMap (application: lib.subtractLists cfg.groups (applicationGroups application)) (
+      builtins.attrValues cfg.applications
+    )
   );
   unknownBootstrapOwners = lib.unique (
     builtins.filter (owner: owner != null && !builtins.hasAttr owner cfg.users) (
@@ -87,8 +70,8 @@ in
 
   options.host.sso = {
     groups = lib.mkOption {
-      type = lib.types.attrsOf groupType;
-      default = { };
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ ];
       description = "Groups in this host's SSO realm.";
     };
     users = lib.mkOption {
