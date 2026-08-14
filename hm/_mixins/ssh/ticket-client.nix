@@ -66,7 +66,7 @@ let
   );
   enabled =
     osConfig.host.userEnvironment.features.ssh.enable
-    && osConfig.host.ssh.tickets.enable
+    && osConfig.host.ssh.tickets.trustedCaPublicKeys != [ ]
     && issuer != null;
 in
 {

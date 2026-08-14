@@ -121,20 +121,16 @@ let
         maxTtl
         trustedCaPublicKeys
         ;
-      enabled = tickets.enable;
+      enabled = tickets.trustedCaPublicKeys != [ ];
       sshHost = name;
       aliases = [
         name
         "${name}.local"
       ];
-      caPublicKeyConfigured = tickets.enable && tickets.trustedCaPublicKeys != [ ];
+      caPublicKeyConfigured = tickets.trustedCaPublicKeys != [ ];
       inherit (host) realm;
     };
   ticketTargets = lib.mapAttrsToList ticketTargetFor configurations;
-  issuer = config.host.ssh.tickets.issuer;
-  issuerTargets = builtins.filter (
-    target: target.enabled && target.realm == config.host.realm
-  ) config.host.ssh.tickets.targets;
 in
 {
   imports = [
@@ -200,12 +196,6 @@ in
     };
 
     tickets = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = realmTrustedCaPublicKeys != [ ];
-        description = "Whether this host accepts SSH user certificates.";
-      };
-
       trustedCaPublicKeys = lib.mkOption {
         type = lib.types.listOf lib.types.nonEmptyStr;
         default = realmTrustedCaPublicKeys;
@@ -249,29 +239,18 @@ in
   };
 
   config = {
-    assertions =
-      lib.optionals (issuer != null) [
-        {
-          assertion = config.host.ssh.tickets.enable;
-          message = "an SSH ticket issuer may only be configured on a ticket-enabled host";
-        }
-        {
-          assertion = lib.all (target: lib.elem issuer.publicKey target.trustedCaPublicKeys) issuerTargets;
-          message = "SSH ticket issuer for ${config.networking.hostName} is not trusted by every enabled target in its realm";
-        }
-      ]
-      ++ [
-        {
-          assertion =
-            config.host.ssh.operator.authorizedKeys == [ ]
-            || config.host.security.secrets.operator.ageIdentity != null;
-          message = "only operator hosts may contribute realm SSH authorized keys";
-        }
-        {
-          assertion = config.host.ssh.authorizedKeys != [ ];
-          message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
-        }
-      ];
+    assertions = [
+      {
+        assertion =
+          config.host.ssh.operator.authorizedKeys == [ ]
+          || config.host.security.secrets.operator.ageIdentity != null;
+        message = "only operator hosts may contribute realm SSH authorized keys";
+      }
+      {
+        assertion = config.host.ssh.authorizedKeys != [ ];
+        message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
+      }
+    ];
 
     services.openssh.enable = true;
 

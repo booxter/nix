@@ -10,6 +10,7 @@ let
   isLinux = lib.hasSuffix "-linux" system;
   username = config.host.username;
   tickets = config.host.ssh.tickets;
+  enabled = tickets.trustedCaPublicKeys != [ ];
   principal = "${username}@${config.networking.hostName}";
   caPublicKeyTarget = "ssh/fleet-user-cas.pub";
   caPublicKeyPath = "/etc/${caPublicKeyTarget}";
@@ -23,7 +24,7 @@ in
 {
   config = lib.mkMerge [
     {
-      environment.etc.${caPublicKeyTarget} = lib.mkIf tickets.enable (
+      environment.etc.${caPublicKeyTarget} = lib.mkIf enabled (
         {
           source = caPublicKeyFile;
         }
@@ -35,20 +36,20 @@ in
       );
     }
     (lib.optionalAttrs isLinux {
-      services.openssh.settings.TrustedUserCAKeys = lib.mkIf tickets.enable caPublicKeyPath;
-      users.users.${username}.openssh.authorizedPrincipals = lib.mkIf tickets.enable [
+      services.openssh.settings.TrustedUserCAKeys = lib.mkIf enabled caPublicKeyPath;
+      users.users.${username}.openssh.authorizedPrincipals = lib.mkIf enabled [
         principal
       ];
     })
     (lib.optionalAttrs isDarwin {
-      environment.etc.${principalsTarget} = lib.mkIf tickets.enable {
+      environment.etc.${principalsTarget} = lib.mkIf enabled {
         source = principalsFile;
         mode = "0444";
         user = "root";
         group = "wheel";
       };
 
-      services.openssh.extraConfig = lib.mkIf tickets.enable ''
+      services.openssh.extraConfig = lib.mkIf enabled ''
         TrustedUserCAKeys ${caPublicKeyPath}
         AuthorizedPrincipalsFile ${principalsPath}
       '';
