@@ -1,7 +1,5 @@
 { config, lib, ... }:
 {
-  imports = [ ./assertions.nix ];
-
   options.host.network = {
     lanDomain = lib.mkOption {
       type = lib.types.nonEmptyStr;
@@ -56,4 +54,13 @@
     };
 
   };
+
+  config.assertions = [
+    {
+      assertion =
+        config.host.network.primaryInterface == null
+        || builtins.hasAttr config.host.network.primaryInterface config.host.network.interfaces;
+      message = "host.network.primaryInterface must reference a declared host.network.interfaces entry";
+    }
+  ];
 }
