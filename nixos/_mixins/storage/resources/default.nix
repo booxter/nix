@@ -136,20 +136,9 @@ in
                 description = "Directories requested from the resource provider.";
               };
               attachments = lib.mkOption {
-                type = lib.types.attrsOf (
-                  lib.types.submodule (
-                    { name, ... }:
-                    {
-                      options.unit = lib.mkOption {
-                        type = lib.types.nonEmptyStr;
-                        default = name;
-                        description = "Systemd service unit requiring this storage claim.";
-                      };
-                    }
-                  )
-                );
+                type = lib.types.attrsOf (lib.types.submodule { });
                 default = { };
-                description = "Systemd services attached to this mounted storage claim.";
+                description = "Systemd service units attached to this mounted storage claim.";
               };
             };
           }

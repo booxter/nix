@@ -111,7 +111,7 @@ in
 
     host.storage.claims = lib.mkMerge (
       map (claim: {
-        ${claim}.attachments.audiobookshelf.unit = "audiobookshelf";
+        ${claim}.attachments.audiobookshelf = { };
       }) claims
     );
 

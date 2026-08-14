@@ -64,12 +64,8 @@ let
   localAttachments = builtins.concatLists (
     lib.mapAttrsToList (
       claimName: claim:
-      lib.mapAttrsToList (name: attachment: {
-        inherit
-          claimName
-          name
-          ;
-        inherit (attachment) unit;
+      lib.mapAttrsToList (unit: _: {
+        inherit claimName unit;
         inherit (claim) mountPoint;
       }) claim.attachments
     ) localClaims

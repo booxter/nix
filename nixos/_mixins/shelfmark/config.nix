@@ -121,11 +121,11 @@ in
 
     host.storage.claims = lib.mkMerge (
       (map (claim: {
-        ${claim}.attachments.shelfmark.unit = "shelfmark";
+        ${claim}.attachments.shelfmark = { };
       }) storageClaims)
       ++ [
         {
-          ${ebookConverter.library.storage.claim}.attachments.ebook-converter.unit = "ebook-converter";
+          ${ebookConverter.library.storage.claim}.attachments.ebook-converter = { };
         }
       ]
     );

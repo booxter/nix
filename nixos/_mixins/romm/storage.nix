@@ -27,7 +27,7 @@ in
         // {
           ${cfg.storage.relativePath}.owner = cfg.user;
         };
-      attachments.romm-setup.unit = "romm-setup";
+      attachments.romm-setup = { };
     };
   };
 }

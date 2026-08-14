@@ -40,7 +40,7 @@ in
             mode = "0755";
           };
         };
-      attachments.sabnzbd.unit = "sabnzbd";
+      attachments.sabnzbd = { };
     };
   };
 }

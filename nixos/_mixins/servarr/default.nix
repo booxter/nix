@@ -97,7 +97,7 @@ in
           group = cfg.group;
         };
 
-        host.storage.claims.media.attachments.${name}.unit = name;
+        host.storage.claims.media.attachments.${name} = { };
 
         systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
 

@@ -71,7 +71,7 @@ in
         group = model.group;
         mode = "2775";
       };
-      attachments.aurral.unit = "aurral";
+      attachments.aurral = { };
     };
 
     host.backups.sources.aurral-database = {

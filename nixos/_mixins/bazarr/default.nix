@@ -39,7 +39,7 @@ in
       group = "media";
     };
 
-    host.storage.claims.media.attachments.bazarr.unit = "bazarr";
+    host.storage.claims.media.attachments.bazarr = { };
 
     host.backups.sources.bazarr = {
       title = "Bazarr";

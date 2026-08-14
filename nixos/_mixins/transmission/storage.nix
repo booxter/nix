@@ -42,7 +42,7 @@ in
             mode = "0755";
           };
         };
-      attachments.transmission.unit = "transmission";
+      attachments.transmission = { };
     };
   };
 }

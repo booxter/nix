@@ -23,7 +23,7 @@ in
         owner = cfg.user;
         mode = "0750";
       };
-      attachments.pinepods.unit = "podman-pinepods";
+      attachments.podman-pinepods = { };
     };
   };
 }

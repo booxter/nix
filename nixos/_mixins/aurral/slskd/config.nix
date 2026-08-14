@@ -32,7 +32,7 @@ in
             "${instance.storage.relativePath}/complete"
           ]
       );
-      attachments.slskd.unit = "slskd";
+      attachments.slskd = { };
     };
 
     host.vpn.clients.slskd = {

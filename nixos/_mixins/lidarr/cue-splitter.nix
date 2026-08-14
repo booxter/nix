@@ -27,7 +27,7 @@ in
   config = lib.mkIf cfg.enable {
     host.storage.claims.media = {
       directories.".cue-splitter-work".mode = "2775";
-      attachments.lidarr-cue-splitter.unit = "lidarr-cue-splitter";
+      attachments.lidarr-cue-splitter = { };
     };
 
     systemd.tmpfiles.rules = [
