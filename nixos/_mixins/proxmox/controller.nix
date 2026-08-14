@@ -1,9 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.host.proxmox;
-  api = cfg.apiCertificate;
-  portSuffix = lib.optionalString (api.publicPort != 443) ":${toString api.publicPort}";
-  url = "https://${api.serverName}${portSuffix}/";
+  url = "https://${cfg.node.apiServerName}/";
 in
 {
   config = lib.mkIf (cfg.node != null && cfg.node.controller) {

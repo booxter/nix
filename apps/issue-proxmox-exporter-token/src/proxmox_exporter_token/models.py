@@ -17,7 +17,6 @@ class FleetHosts(RootModel[dict[str, HostInfo]]):
 class ExporterConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
-    enable: bool = False
     api_user: str = Field(alias="apiUser")
     api_token_name: str = Field(alias="apiTokenName")
     api_token_value_secret: str = Field(alias="apiTokenValueSecret")

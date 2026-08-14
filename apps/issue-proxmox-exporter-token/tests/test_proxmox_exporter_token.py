@@ -87,10 +87,9 @@ def fleet_hosts() -> FleetHosts:
     )
 
 
-def exporter_config(*, enabled=True) -> ExporterConfig:
+def exporter_config() -> ExporterConfig:
     return ExporterConfig.model_validate(
         {
-            "enable": enabled,
             "apiUser": "prometheus@pve",
             "apiTokenName": "metrics",
             "apiTokenValueSecret": "proxmox/pve_exporter/token_value",
@@ -266,7 +265,6 @@ def test_service_discovers_enabled_non_work_hosts_and_accepts_existing_token():
         StaticEvaluator(
             {
                 "prx1-lab": exporter_config(),
-                "prx2-lab": exporter_config(enabled=False),
             }
         ),
         issuer,
@@ -344,9 +342,9 @@ def test_repository_boundaries_validate_inventory_and_nix_json(tmp_path: Path):
 
     runner = RecordingRunner(outputs=[json.dumps(exporter_config().model_dump(by_alias=True))])
     config = NixEvaluator(runner, tmp_path).exporter_config("prx1-lab")
-    assert config.enable
+    assert config.api_user == "prometheus@pve"
     assert runner.calls[0][0][-1].endswith(
-        "#nixosConfigurations.prx1-lab.config.host.proxmox.prometheusExporter"
+        "#nixosConfigurations.prx1-lab.config.host.proxmox.exporterToken"
     )
 
 

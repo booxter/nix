@@ -7,9 +7,23 @@
   ...
 }:
 let
-  cfg = config.host.proxmox.oidc;
+  node = config.host.proxmox.node;
+  enabled = node != null && node.controller && config.host.realm == "home";
+  realm = "kanidm";
+  clientId = "proxmox";
+  issuerUrl = "https://id.${config.host.network.publicDomain}/oauth2/openid/${clientId}";
+  clientSecretKey = "proxmox/oidc/client_secret";
+  usernameClaim = "username";
+  groupsClaim = "infra_groups";
+  scopes = [
+    "email"
+    "profile"
+    groupsClaim
+  ];
+  allowedGroup = "infra-admins";
+  role = "Administrator";
   oidcScopes = config.host.sso.oidc.baseScopes;
-  oidcMappedAdminGroup = "${cfg.allowedGroup}-${cfg.realm}";
+  oidcMappedAdminGroup = "${allowedGroup}-${realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
@@ -38,20 +52,18 @@ let
     inherit pveum;
     pmxcfs_directory = "/etc/pve";
     client_secret_file = config.sops.secrets.proxmoxOidcClientSecret.path;
-    realm = cfg.realm;
-    issuer_url = cfg.issuerUrl;
-    client_id = cfg.clientId;
-    autocreate_users = cfg.autocreateUsers;
-    groups_claim = cfg.groupsClaim;
-    autocreate_groups = cfg.autocreateGroups;
-    overwrite_groups = cfg.overwriteGroups;
-    scopes = cfg.scopes;
-    comment = cfg.comment;
-    username_claim = cfg.usernameClaim;
+    inherit realm scopes role;
+    issuer_url = issuerUrl;
+    client_id = clientId;
+    autocreate_users = true;
+    groups_claim = groupsClaim;
+    autocreate_groups = true;
+    overwrite_groups = true;
+    comment = "Kanidm SSO";
+    username_claim = usernameClaim;
     mapped_group = oidcMappedAdminGroup;
-    group_comment = "Kanidm ${cfg.allowedGroup} OIDC group";
-    acl_path = cfg.aclPath;
-    role = cfg.role;
+    group_comment = "Kanidm ${allowedGroup} OIDC group";
+    acl_path = "/";
   };
   oidcRealmCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' proxmoxHostTools "proxmox-configure-oidc")
@@ -60,60 +72,42 @@ let
   ];
 in
 {
-  config = lib.mkMerge [
-    {
-      host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.proxmox.node != null && config.host.proxmox.node.controller
-      );
-    }
-    (lib.mkIf cfg.enable {
-      assertions = [
-        {
-          assertion = config.services.proxmox-ve.enable;
-          message = "host.proxmox.oidc requires services.proxmox-ve.enable.";
-        }
-        {
-          assertion = cfg.scopes != [ ];
-          message = "host.proxmox.oidc.scopes must not be empty.";
-        }
-      ];
-
-      host.web.services."proxmox-${config.networking.hostName}".auth = {
-        mode = "oidc";
-        registrationName = "proxmox";
-        oidcRegistration = {
-          clientId = cfg.clientId;
-          displayName = "Proxmox VE";
-          originUrls = proxmoxOriginUrls;
-          originLanding = "https://${proxmoxCanonicalHost}/";
-          scopeMaps.${cfg.allowedGroup} = oidcScopes ++ [ cfg.groupsClaim ];
-          claimMaps.${cfg.groupsClaim}.valuesByGroup.${cfg.allowedGroup} = [
-            cfg.allowedGroup
-          ];
-          secret = {
-            sopsKey = cfg.clientSecretKey;
-            name = "proxmoxOidcClientSecret";
-            restartUnits = [ oidcRealmUnit ];
-          };
+  config = lib.mkIf enabled {
+    host.web.services."proxmox-${config.networking.hostName}".auth = {
+      mode = "oidc";
+      registrationName = "proxmox";
+      oidcRegistration = {
+        inherit clientId;
+        displayName = "Proxmox VE";
+        originUrls = proxmoxOriginUrls;
+        originLanding = "https://${proxmoxCanonicalHost}/";
+        scopeMaps.${allowedGroup} = oidcScopes ++ [ groupsClaim ];
+        claimMaps.${groupsClaim}.valuesByGroup.${allowedGroup} = [
+          allowedGroup
+        ];
+        secret = {
+          sopsKey = clientSecretKey;
+          name = "proxmoxOidcClientSecret";
+          restartUnits = [ oidcRealmUnit ];
         };
       };
+    };
 
-      systemd.services.proxmox-oidc-realm = {
-        description = "Configure Proxmox VE Kanidm OIDC realm";
-        wantedBy = [ "multi-user.target" ];
-        requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
-        after = [
-          "pve-cluster.service"
-          "corosync.service"
-        ]
-        ++ sopsInstallSecretsUnit;
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          UMask = "0077";
-          ExecStart = oidcRealmCommand;
-        };
+    systemd.services.proxmox-oidc-realm = {
+      description = "Configure Proxmox VE Kanidm OIDC realm";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
+      after = [
+        "pve-cluster.service"
+        "corosync.service"
+      ]
+      ++ sopsInstallSecretsUnit;
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        UMask = "0077";
+        ExecStart = oidcRealmCommand;
       };
-    })
-  ];
+    };
+  };
 }

@@ -130,8 +130,6 @@ class TokenService:
         for host in selected:
             host_info(self.hosts, host)
             config = self.evaluator.exporter_config(host)
-            if not config.enable:
-                raise ToolError(f"host {host} does not enable the Proxmox exporter")
             if config.api_user != request.user:
                 raise ToolError(
                     f"host {host} expects apiUser={config.api_user!r}, not {request.user!r}"
@@ -171,6 +169,6 @@ class TokenService:
             if not info.system.endswith("-linux"):
                 continue
             config = self.evaluator.optional_exporter_config(host)
-            if config is not None and config.enable:
+            if config is not None:
                 selected.append(host)
         return selected

@@ -18,8 +18,6 @@ in
       cluster = "nvws";
       controller = true;
     };
-    proxmox.apiCertificate.enable = false;
-    proxmox.oidc.enable = false;
     network = {
       interfaces.enp3s0f0.kind = "ethernet";
       primaryInterface = "enp3s0f0";
