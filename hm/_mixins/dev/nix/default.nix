@@ -11,7 +11,7 @@ let
     builders = osConfig.host.nix.nixpkgs-review.builders;
   };
 in
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   home.packages = with pkgs; [
     hydra-check
     nh

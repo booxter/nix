@@ -29,7 +29,7 @@ in
     description = "Per-user SSH known-host entries.";
   };
 
-  config = lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+  config = lib.mkIf (config.host.hm.env.preset != null) {
     home.file = lib.mapAttrs' (
       name: knownHost:
       lib.nameValuePair ".ssh/known_hosts.d/${name}" {

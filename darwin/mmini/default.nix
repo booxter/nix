@@ -12,7 +12,7 @@ in
 
   host.nix.cacheWarmer.enable = true;
 
-  home-manager.users.${config.host.username}.host.hm.userEnvironment.preset = "personal";
+  home-manager.users.${config.host.username}.host.hm.env.preset = "personal";
 
   host.network.interfaces.en0.kind = "ethernet";
 

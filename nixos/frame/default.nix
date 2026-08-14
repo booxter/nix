@@ -109,7 +109,7 @@ in
     };
   };
 
-  home-manager.users.${config.host.username}.host.hm.userEnvironment.preset = "personal";
+  home-manager.users.${config.host.username}.host.hm.env.preset = "personal";
 
   # It caused hangs on shutdown.
   security.lsm = lib.mkForce [

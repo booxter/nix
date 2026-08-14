@@ -17,7 +17,7 @@ in
   ];
 
   home-manager.users.${username}.host.hm = {
-    userEnvironment.preset = "personal";
+    env.preset = "personal";
     dev.codex.mcp.stdioServers.firefox-devtools = {
       instructions = ''
         Only use the Firefox DevTools MCP when the user explicitly requests browser

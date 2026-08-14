@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cfg = config.host.hm.userEnvironment;
+  cfg = config.host.hm.env;
   presetDefault = lib.mkOverride 900;
   graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
@@ -21,7 +21,7 @@ in
       }
       (lib.mkMerge [
         {
-          host.hm.userEnvironment = {
+          host.hm.env = {
             sendEmail.transport = presetDefault "gmail";
             repositories.requests.preset = presetDefault [ "dotfiles" ];
           };

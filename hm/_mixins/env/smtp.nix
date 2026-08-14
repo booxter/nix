@@ -4,7 +4,7 @@
   ...
 }:
 let
-  cfg = config.host.hm.userEnvironment;
+  cfg = config.host.hm.env;
   smtpTransportType = lib.types.submodule {
     options = {
       server = lib.mkOption {
@@ -45,7 +45,7 @@ let
   };
 in
 {
-  options.host.hm.userEnvironment = {
+  options.host.hm.env = {
     smtpTransports = lib.mkOption {
       type = lib.types.attrsOf smtpTransportType;
       default = { };
@@ -60,7 +60,7 @@ in
   };
 
   config = {
-    host.hm.userEnvironment.smtpTransports = {
+    host.hm.env.smtpTransports = {
       gmail = {
         server = "smtp.gmail.com";
         username = "ihar.hrachyshka@gmail.com";
@@ -75,7 +75,7 @@ in
     assertions = [
       {
         assertion = cfg.preset == null || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
-        message = "host.hm.userEnvironment.sendEmail.transport must name a declared SMTP transport";
+        message = "host.hm.env.sendEmail.transport must name a declared SMTP transport";
       }
     ];
   };

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cfg = config.host.hm.userEnvironment;
+  cfg = config.host.hm.env;
   presetDefault = lib.mkOverride 900;
   graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
@@ -21,7 +21,7 @@ in
       }
       (lib.mkMerge [
         {
-          host.hm.userEnvironment.sendEmail.transport = presetDefault "nvidia";
+          host.hm.env.sendEmail.transport = presetDefault "nvidia";
         }
         {
           host.hm = presetDefault {
@@ -43,7 +43,7 @@ in
       (lib.mkIf graphical (
         lib.mkMerge [
           {
-            host.hm.userEnvironment.homerow.enable = presetDefault false;
+            host.hm.env.homerow.enable = presetDefault false;
           }
           {
             host.hm = presetDefault {

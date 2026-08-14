@@ -12,7 +12,7 @@
     ./smtp.nix
   ];
 
-  options.host.hm.userEnvironment = {
+  options.host.hm.env = {
     preset = lib.mkOption {
       type = lib.types.nullOr (
         lib.types.enum [
@@ -21,7 +21,7 @@
         ]
       );
       default = null;
-      description = "Named policy providing user-environment defaults.";
+      description = "Named policy providing environment defaults.";
     };
 
     homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
@@ -29,8 +29,8 @@
 
   config = {
     host.hm = {
-      pass.enable = lib.mkDefault (config.host.hm.userEnvironment.preset != null);
-      userEnvironment.homerow.enable = lib.mkDefault pkgs.stdenv.hostPlatform.isDarwin;
+      pass.enable = lib.mkDefault (config.host.hm.env.preset != null);
+      env.homerow.enable = lib.mkDefault pkgs.stdenv.hostPlatform.isDarwin;
     };
   };
 }

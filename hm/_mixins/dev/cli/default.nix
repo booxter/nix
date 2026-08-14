@@ -4,7 +4,7 @@
   pkgs,
   ...
 }:
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   home.packages = with pkgs; [
     devenv
     dive

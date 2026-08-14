@@ -7,7 +7,7 @@
 let
   readPublicKey = import ../../../../common/_lib/read-public-key.nix { inherit lib; };
 in
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   host.hm.ssh.knownHosts."github.com" = {
     hostNames = [ "github.com" ];
     publicKeys = [

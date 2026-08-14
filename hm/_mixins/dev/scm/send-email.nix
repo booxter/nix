@@ -7,11 +7,11 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  userEnvironment = config.host.hm.userEnvironment;
-  smtpTransport = userEnvironment.smtpTransports.${userEnvironment.sendEmail.transport};
+  env = config.host.hm.env;
+  smtpTransport = env.smtpTransports.${env.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
 in
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   programs.git.settings.sendemail = {
     confirm = "auto";
     smtpServer = smtpTransport.server;

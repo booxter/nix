@@ -7,7 +7,7 @@
 let
   username = config.host.username;
   hmConfig = config.home-manager.users.${username}.host.hm;
-  userEnvironment = hmConfig.userEnvironment;
+  env = hmConfig.env;
   wiresharkEnabled = hmConfig.wireshark.enable;
 in
 {
@@ -45,7 +45,7 @@ in
     ++ lib.optionals wiresharkEnabled [
       "wireshark-chmodbpf"
     ]
-    ++ lib.optionals userEnvironment.homerow.enable [
+    ++ lib.optionals env.homerow.enable [
       "homerow"
     ];
   };

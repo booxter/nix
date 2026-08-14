@@ -6,7 +6,7 @@
 let
   inherit (config.host.hm) email fullName;
 in
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   programs.mercurial = {
     enable = true;
     userName = fullName;

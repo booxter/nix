@@ -35,7 +35,7 @@ in
   host.nix.cacheWarmer.enable = true;
 
   home-manager.users.${username}.host.hm = {
-    userEnvironment.preset = "nvidia";
+    env.preset = "nvidia";
     dev.codex.mcp.httpServers = {
       maas_gitlab = maasServer "maas_gitlab";
       maas_jira = maasServer "maas_jira";

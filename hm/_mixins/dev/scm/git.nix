@@ -9,7 +9,7 @@ let
   inherit (config.host.hm) email fullName;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
 in
-lib.mkIf (config.host.hm.userEnvironment.preset != null) {
+lib.mkIf (config.host.hm.env.preset != null) {
   home.shellAliases.g = "git";
 
   programs.git = {

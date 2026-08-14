@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  userEnvironment = config.home-manager.users.${config.host.username}.host.hm.userEnvironment;
+  env = config.home-manager.users.${config.host.username}.host.hm.env;
 in
 {
   imports = [
@@ -119,14 +119,12 @@ in
     };
   };
 
-  system.defaults.CustomUserPreferences."com.superultra.Homerow" =
-    lib.mkIf userEnvironment.homerow.enable
-      {
-        SUEnableAutomaticChecks = 1;
-        SUHasLaunchedBefore = 1;
-        "check-for-updates-automatically" = 1;
-        "include-beta-updates" = false;
-        "launch-at-login" = 1;
-      };
+  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf env.homerow.enable {
+    SUEnableAutomaticChecks = 1;
+    SUHasLaunchedBefore = 1;
+    "check-for-updates-automatically" = 1;
+    "include-beta-updates" = false;
+    "launch-at-login" = 1;
+  };
 
 }

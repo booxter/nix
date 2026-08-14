@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  cfg = config.host.hm.userEnvironment.repositories;
+  cfg = config.host.hm.env.repositories;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.requests));
   repositoryType = lib.types.submodule {
     options = {
@@ -27,11 +27,11 @@ let
   };
 in
 {
-  options.host.hm.userEnvironment.repositories = {
+  options.host.hm.env.repositories = {
     catalog = lib.mkOption {
       type = lib.types.attrsOf repositoryType;
       default = { };
-      description = "Repositories available to user-environment consumers.";
+      description = "Repositories available to environment consumers.";
     };
 
     requests = lib.mkOption {
@@ -45,12 +45,12 @@ in
       default = requiredRepositories;
       readOnly = true;
       internal = true;
-      description = "Unique repositories required by user-environment consumers.";
+      description = "Unique repositories required by environment consumers.";
     };
   };
 
   config = {
-    host.hm.userEnvironment.repositories = {
+    host.hm.env.repositories = {
       catalog = {
         dotfiles = {
           remote = "git@github.com:booxter/dotfiles.git";
@@ -84,7 +84,7 @@ in
     assertions = [
       {
         assertion = lib.all (name: builtins.hasAttr name cfg.catalog) requiredRepositories;
-        message = "host.hm.userEnvironment.repositories.requests must name declared repositories";
+        message = "host.hm.env.repositories.requests must name declared repositories";
       }
       {
         assertion = lib.all (
@@ -92,7 +92,7 @@ in
           !lib.hasPrefix "/" repository.destination.path
           && lib.all (component: component != "..") (lib.splitString "/" repository.destination.path)
         ) (builtins.attrValues cfg.catalog);
-        message = "user-environment repository destinations must be safe relative paths";
+        message = "environment repository destinations must be safe relative paths";
       }
     ];
   };
