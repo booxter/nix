@@ -10,9 +10,8 @@ let
   codexConfig = hmConfig.programs.codex;
   codexHome = hmConfig.home.sessionVariables.CODEX_HOME or "${hmConfig.home.homeDirectory}/.codex";
   codexConfigFile = lib.removePrefix "${hmConfig.home.homeDirectory}/" "${codexHome}/config.toml";
-  hasMcpSecrets = lib.any (server: server.secretNames != [ ]) (
-    builtins.attrValues config.host.mcp.pool
-  );
+  mcpSecrets = hmConfig.host.hm.dev.codex.mcp.requiredSecrets;
+  hasMcpSecrets = mcpSecrets != [ ];
   generatedCodexConfig = (pkgs.formats.toml { }).generate "codex-system-config" codexConfig.settings;
 in
 {
@@ -23,6 +22,7 @@ in
     };
 
     sops = lib.mkIf (codexConfig.enable && hasMcpSecrets) {
+      secrets = lib.genAttrs mcpSecrets (_: { });
       templates."codex-config.toml" = {
         owner = username;
         file = generatedCodexConfig;
