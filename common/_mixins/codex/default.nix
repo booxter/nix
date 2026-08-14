@@ -10,11 +10,10 @@ let
   codexConfig = hmConfig.programs.codex;
   codexHome = hmConfig.home.sessionVariables.CODEX_HOME or "${hmConfig.home.homeDirectory}/.codex";
   codexConfigFile = lib.removePrefix "${hmConfig.home.homeDirectory}/" "${codexHome}/config.toml";
-  tomlFormat = pkgs.formats.toml { };
   hasMcpSecrets = lib.any (server: server.secretNames != [ ]) (
     builtins.attrValues config.host.mcp.pool
   );
-  generatedCodexConfig = tomlFormat.generate "codex-system-config" codexConfig.settings;
+  generatedCodexConfig = (pkgs.formats.toml { }).generate "codex-system-config" codexConfig.settings;
 in
 {
   config = {
@@ -23,17 +22,17 @@ in
         if hasMcpSecrets then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
     };
 
-    sops = lib.mkIf hasMcpSecrets {
+    sops = lib.mkIf (codexConfig.enable && hasMcpSecrets) {
       templates."codex-config.toml" = {
         owner = username;
-        group = "staff";
-        mode = "0400";
-        content = builtins.readFile generatedCodexConfig;
+        file = generatedCodexConfig;
       };
     };
 
     # Keep Codex's user config writable. Declarative settings are loaded from the
     # lower-precedence system layer, while the app and CLI own the user layer.
-    home-manager.users.${username}.home.file.${codexConfigFile}.enable = lib.mkForce false;
+    home-manager.users.${username}.home.file.${codexConfigFile} = lib.mkIf codexConfig.enable {
+      enable = lib.mkForce false;
+    };
   };
 }
