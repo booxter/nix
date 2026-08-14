@@ -30,6 +30,10 @@ in
             builtins.attrValues cfg.nodeExporter.textfile.directories
           );
         };
+
+        systemd.tmpfiles.rules = map (directory: "d ${directory} 0755 root root - -") (
+          builtins.attrValues cfg.nodeExporter.textfile.directories
+        );
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets = {
