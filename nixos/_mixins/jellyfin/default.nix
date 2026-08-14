@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -89,6 +90,7 @@ let
 in
 {
   imports = [
+    inputs.jellarr.nixosModules.default
     ./assertions.nix
     ./backups.nix
     ./jellarr.nix

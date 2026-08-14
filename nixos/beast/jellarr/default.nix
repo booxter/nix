@@ -6,6 +6,4 @@
     ./server.nix
     ./users.nix
   ];
-
-  host.jellarr.enable = true;
 }

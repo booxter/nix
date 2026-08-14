@@ -32,7 +32,6 @@
       ./_mixins/hm
       ./_mixins/home-assistant
       ./_mixins/houndarr
-      ./_mixins/jellarr
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
       ./_mixins/lidarr
