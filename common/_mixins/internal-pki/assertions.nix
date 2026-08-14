@@ -2,7 +2,6 @@
   config,
   enabledClients,
   lib,
-  model,
 }:
 let
   managedCertificates = config.host.pki.managedCertificates;
@@ -15,16 +14,7 @@ let
 in
 [
   {
-    assertion = builtins.length model.authorityNames <= 1;
-    message = "realm '${config.host.realm}' has multiple internal PKI authorities: ${lib.concatStringsSep ", " model.authorityNames}";
-  }
-  {
-    assertion =
-      config.host.pki.role != "authority" || config.host.pki.authority.rootCaCertificate != null;
-    message = "internal PKI authority '${config.networking.hostName}' must declare its root CA certificate";
-  }
-  {
-    assertion = enabledClients == { } || model.realmAuthority != null;
+    assertion = enabledClients == { } || config.host.pki.authority != null;
     message =
       "realm '${config.host.realm}' has no internal PKI authority, but host '${config.networking.hostName}' enables clients: "
       + lib.concatStringsSep ", " (builtins.attrNames enabledClients);

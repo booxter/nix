@@ -64,7 +64,7 @@ in
 
       trustedCaCertificate = lib.mkOption {
         type = lib.types.path;
-        default = config.host.pki.rootCaCertificate;
+        default = config.host.pki.authority.rootCaCertificate;
         description = "CA bundle used to verify the Loki writer endpoint.";
       };
     };

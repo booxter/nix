@@ -18,7 +18,7 @@ let
       }
     else
       model.server;
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   enabledPkiClients = lib.filterAttrs (
     _: client: client.enable && client.category == "observability"
   ) config.host.pki.clients;

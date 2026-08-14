@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   lanDomain = config.host.network.lanDomain;
   localServerAliasesFor = aliases: aliases ++ map (alias: "${alias}.local") aliases;
 in

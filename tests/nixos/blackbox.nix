@@ -55,9 +55,11 @@ pkgs.testers.runNixOSTest {
 
       options = {
         host = {
-          pki.rootCaCertificate = lib.mkOption {
-            type = lib.types.path;
-            default = "${testPki}/ca.crt";
+          pki.authority = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = {
+              rootCaCertificate = "${testPki}/ca.crt";
+            };
           };
 
           pki.clients = lib.mkOption {

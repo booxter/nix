@@ -152,7 +152,7 @@ in
           ExcludedDomains = firefoxDohExcludedDomains;
         };
       }
-      // lib.optionalAttrs (isDarwin && osConfig.host.pki.rootCaCertificate != null) {
+      // lib.optionalAttrs (isDarwin && osConfig.host.pki.authority != null) {
         Certificates = {
           ImportEnterpriseRoots = true;
         };

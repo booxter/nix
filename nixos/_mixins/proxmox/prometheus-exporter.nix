@@ -2,7 +2,7 @@
 let
   cfg = config.host.proxmox.prometheusExporter;
   certInstallUnit = "proxmox-api-certificate.service";
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";

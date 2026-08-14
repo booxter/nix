@@ -11,7 +11,7 @@ let
       inherit value;
     }) flake.darwinConfigurations;
   configurations = builtins.listToAttrs (
-    builtins.filter (entry: entry.value.value.config.host.pki.realmAuthority != null) (
+    builtins.filter (entry: entry.value.value.config.host.pki.authority != null) (
       map (name: {
         inherit name;
         value = allConfigurations.${name};

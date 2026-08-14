@@ -10,11 +10,12 @@ let
   networkingName = dnsName;
   avahiName = configuredHost.services.avahi.hostName or dnsName;
   nodeExporterEnabled = configuredHost.host.observability.nodeExporter.mtls.enable or false;
-  realmAuthority = configuredHost.host.pki.realmAuthority;
+  realmAuthority = configuredHost.host.pki.authority;
 in
 {
   realm = configuredHost.host.realm;
-  realm_authority = realmAuthority;
+  realm_authority =
+    if realmAuthority == null then null else realmAuthority // { inherit (configuredHost.host) realm; };
   identity = {
     dns_name = dnsName;
     networking_name = networkingName;

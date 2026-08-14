@@ -51,7 +51,7 @@ in
         key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
         checkHost = ollamaServerName;
         sni = ollamaServerName;
-        CAFile = "${config.host.pki.rootCaCertificate}";
+        CAFile = "${config.host.pki.authority.rootCaCertificate}";
         verifyChain = true;
         OCSPaia = false;
       };

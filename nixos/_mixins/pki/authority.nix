@@ -8,9 +8,10 @@
 }:
 let
   cfg = config.host.pki.authority;
-  enabled = config.host.pki.role == "authority";
+  rotationCfg = config.host.pki.rotation;
+  enabled = cfg != null && cfg.hostName == config.networking.hostName;
   certLifetime = "${toString (cfg.leafLifetimeDays * 24)}h0m0s";
-  caPort = cfg.api.port;
+  caPort = cfg.port;
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
   statusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
@@ -39,7 +40,7 @@ let
   bootstrapConfig = (pkgs.formats.json { }).generate "step-ca-bootstrap.json" {
     stateDirectory = stateDir;
     name = cfg.displayName;
-    url = cfg.api.url;
+    url = cfg.url;
     inherit dnsNames;
     address = ":${toString caPort}";
     provisioner = cfg.provisioner;
@@ -54,77 +55,75 @@ let
   ];
 in
 {
-  options.host.pki.authority = {
-    rotation = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to rotate due realm leaf certificates through review PRs.";
-      };
-      windowDays = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 45;
-        description = "Remaining lifetime at which a leaf certificate becomes due for rotation.";
-      };
-      baseBranch = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "master";
-        description = "Repository branch targeted by certificate rotation PRs.";
-      };
-      githubTokenSopsKey = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "github/pki_rotation/token";
-        description = "SOPS key containing the GitHub token used by the rotation controller.";
-      };
+  options.host.pki.rotation = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to rotate due realm leaf certificates through review PRs.";
+    };
+    windowDays = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 45;
+      description = "Remaining lifetime at which a leaf certificate becomes due for rotation.";
+    };
+    baseBranch = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "master";
+      description = "Repository branch targeted by certificate rotation PRs.";
+    };
+    githubTokenSopsKey = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "github/pki_rotation/token";
+      description = "SOPS key containing the GitHub token used by the rotation controller.";
     };
   };
 
-  config = lib.mkIf enabled {
-    host.dashboard.entries.pki-root-ca = {
+  config = {
+    host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
       enable = true;
       title = "PKI Root CA";
       icon = "sh:smallstep";
       section = "infrastructure";
       endpoints.internal = {
-        url = "${cfg.api.url}${cfg.api.rootsPath}";
-        checkUrl = "${cfg.api.url}${cfg.api.rootsPath}";
+        url = "${cfg.url}${cfg.rootsPath}";
+        checkUrl = "${cfg.url}${cfg.rootsPath}";
       };
     };
 
-    host.backups.sources.step-ca.paths = [ stateDir ];
+    host.backups.sources.step-ca.paths = lib.mkIf enabled [ stateDir ];
 
-    host.observability = {
+    host.observability = lib.mkIf enabled {
       enable = true;
       nodeExporter.mtls.enable = true;
     };
 
-    networking.firewall.allowedTCPPorts = [ caPort ];
+    networking.firewall.allowedTCPPorts = lib.mkIf enabled [ caPort ];
 
-    environment.systemPackages = [
+    environment.systemPackages = lib.mkIf enabled [
       pkiRotation
       pkgs.step-ca
       pkgs.step-cli
     ];
 
-    users.users.step-ca = {
+    users.users.step-ca = lib.mkIf enabled {
       isSystemUser = true;
       group = "step-ca";
       home = stateDir;
       createHome = false;
     };
-    users.groups.step-ca = { };
+    users.groups.step-ca = lib.mkIf enabled { };
 
-    sops.secrets.pkiRotationGithubToken = lib.mkIf cfg.rotation.enable {
-      key = cfg.rotation.githubTokenSopsKey;
+    sops.secrets.pkiRotationGithubToken = lib.mkIf (enabled && rotationCfg.enable) {
+      key = rotationCfg.githubTokenSopsKey;
       mode = "0400";
       restartUnits = [ "pki-rotate.service" ];
     };
 
-    systemd.tmpfiles.rules = [
+    systemd.tmpfiles.rules = lib.mkIf enabled [
       "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -"
     ];
 
-    systemd.services = {
+    systemd.services = lib.mkIf enabled {
       step-ca = {
         description = "Smallstep certificate authority";
         wantedBy = [ "multi-user.target" ];
@@ -166,7 +165,7 @@ in
         };
       };
 
-      pki-rotate = lib.mkIf cfg.rotation.enable {
+      pki-rotate = lib.mkIf rotationCfg.enable {
         description = "Rotate due internal PKI leaf certs and open a review PR";
         wants = [
           "network-online.target"
@@ -186,11 +185,11 @@ in
           ];
           ExecStart = ''
             ${pkiRotation}/bin/pki-rotation \
-              --rotation-window-days ${toString cfg.rotation.windowDays} \
+              --rotation-window-days ${toString rotationCfg.windowDays} \
               --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
               --sops-age-key-file /var/lib/sops-nix/key.txt \
               rotate \
-              --base-branch ${lib.escapeShellArg cfg.rotation.baseBranch} \
+              --base-branch ${lib.escapeShellArg rotationCfg.baseBranch} \
               --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
               --metrics-output ${rotationMetricsPath}
           '';
@@ -198,7 +197,7 @@ in
       };
     };
 
-    systemd.timers = {
+    systemd.timers = lib.mkIf enabled {
       pki-status-export = {
         description = "Refresh internal PKI status metrics";
         wantedBy = [ "timers.target" ];
@@ -211,7 +210,7 @@ in
         };
       };
 
-      pki-rotate = lib.mkIf cfg.rotation.enable {
+      pki-rotate = lib.mkIf rotationCfg.enable {
         description = "Run the internal PKI rotation controller";
         wantedBy = [ "timers.target" ];
         timerConfig = {

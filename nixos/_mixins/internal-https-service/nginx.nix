@@ -6,7 +6,7 @@ let
     probeServices
     secretName
     ;
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
 
   tlsVhost = serviceName: service: port: {
     extraConfig = lib.optionalString service.mtls.enable ''

@@ -8,7 +8,7 @@
 let
   cfg = config.host.observability.prometheus.server;
   alertmanagerCfg = config.host.observability.alertmanager;
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   prometheusScrapeClient = config.host.pki.clients."prometheus-scrape-node";
   prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
   blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;

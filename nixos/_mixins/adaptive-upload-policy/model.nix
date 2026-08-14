@@ -74,7 +74,7 @@ let
       ];
       mtls = {
         enable = mtlsEnabled;
-        caFile = config.host.pki.rootCaCertificate or null;
+        caFile = config.host.pki.authority.rootCaCertificate or null;
         certificateFile =
           if !mtlsEnabled || pkiMaterialization == null then
             null

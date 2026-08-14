@@ -9,7 +9,7 @@ let
   unifiPkgs = import ./pkgs pkgs;
   controller = config.host.network.ipController;
   fleetWireguardEnabled = config.host.wireguard.networks != { };
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
   fleetServices = import ../../../_lib/fleet-web-services.nix {

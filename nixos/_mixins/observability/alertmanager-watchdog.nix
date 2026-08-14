@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.observability.alertmanagerWatchdog;
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
   watchdogClient = config.host.pki.clients.${watchdogName};
   watchdogPackage = pkgs.callPackage ./alertmanager-watchdog {

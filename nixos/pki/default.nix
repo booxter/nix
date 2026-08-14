@@ -13,14 +13,6 @@ in
     publicKey = readPublicKey ./restic.pub;
   };
 
-  host.pki = {
-    role = "authority";
-    authority = {
-      displayName = "Home Internal PKI";
-      rootCaCertificate = ./root-ca.crt;
-    };
-  };
-
   host.proxmox = {
     cluster = "lab";
     guest = {

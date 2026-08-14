@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.observability;
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
   inventoryEndpoints = lib.filterAttrs (
     name: _: !(name == "node_exporter" && cfg.nodeExporter.mtls.enable)

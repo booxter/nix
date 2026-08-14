@@ -105,9 +105,11 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
-          rootCaCertificate = lib.mkOption {
-            type = lib.types.path;
-            default = pkgs.writeText "oauth2-proxy-gate-test-root-ca.pem" "";
+          authority = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = {
+              rootCaCertificate = pkgs.writeText "oauth2-proxy-gate-test-root-ca.pem" "";
+            };
           };
         };
 

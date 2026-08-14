@@ -2,7 +2,7 @@
 let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
-  pkiRootCaPath = config.host.pki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   enabledMtlsClients = lib.filterAttrs (
     _: client: client.enable && client.category == "internal"
   ) config.host.pki.clients;

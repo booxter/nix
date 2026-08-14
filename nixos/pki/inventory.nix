@@ -4,7 +4,7 @@
   outputs,
 }:
 let
-  authority = config.host.pki.realmAuthority;
+  authority = config.host.pki.authority;
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   realmConfigurations = lib.filterAttrs (
     _: configuration: configuration.config.host.realm == config.host.realm

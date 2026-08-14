@@ -8,7 +8,7 @@
 let
   cfg = config.host.hm.sketchybar;
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  pkiRootCaPath = osConfig.host.pki.rootCaCertificate;
+  pkiRootCaPath = osConfig.host.pki.authority.rootCaCertificate;
   theme = import ./theme.nix {
     inherit config pkgs;
     height = cfg.height;
