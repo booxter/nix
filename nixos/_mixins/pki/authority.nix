@@ -14,7 +14,7 @@ let
   caPort = cfg.port;
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
-  statusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
+  statusMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-certs.prom";
   rotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
@@ -95,6 +95,25 @@ in
     host.observability = lib.mkIf enabled {
       enable = true;
       nodeExporter.mtls.enable = true;
+      nodeExporter.textfile.periodicProducers.pki-status-export = {
+        description = "Export internal PKI status metrics for node exporter";
+        command = [
+          (lib.getExe pkiRotation)
+          "--intermediate-cert-path"
+          "${stateDir}/certs/intermediate_ca.crt"
+          "export-metrics"
+          "--inventory-manifest"
+          inventory
+          "--output"
+          statusMetricsPath
+        ];
+        wants = [ "step-ca.service" ];
+        after = [ "step-ca.service" ];
+        onBootSec = "5m";
+        interval = "1h";
+        randomizedDelaySec = "5m";
+        persistent = true;
+      };
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf enabled [ caPort ];
@@ -149,22 +168,6 @@ in
         };
       };
 
-      pki-status-export = {
-        description = "Export internal PKI status metrics for node exporter";
-        wants = [ "step-ca.service" ];
-        after = [ "step-ca.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = ''
-            ${pkiRotation}/bin/pki-rotation \
-              --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
-              export-metrics \
-              --inventory-manifest ${inventory} \
-              --output ${statusMetricsPath}
-          '';
-        };
-      };
-
       pki-rotate = lib.mkIf rotationCfg.enable {
         description = "Rotate due internal PKI leaf certs and open a review PR";
         wants = [
@@ -198,18 +201,6 @@ in
     };
 
     systemd.timers = lib.mkIf enabled {
-      pki-status-export = {
-        description = "Refresh internal PKI status metrics";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "5m";
-          OnUnitActiveSec = "1h";
-          RandomizedDelaySec = "5m";
-          Persistent = true;
-          Unit = "pki-status-export.service";
-        };
-      };
-
       pki-rotate = lib.mkIf rotationCfg.enable {
         description = "Run the internal PKI rotation controller";
         wantedBy = [ "timers.target" ];

@@ -5,91 +5,7 @@
 }:
 let
   rootConfig = config;
-  cfg = config.host.pki;
-  enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
-  certificateType = lib.types.submodule {
-    options = {
-      category = lib.mkOption {
-        type = lib.types.enum [
-          "internal_https_server"
-          "internal_https_client"
-          "observability_endpoint_server"
-          "observability_client"
-        ];
-        description = "Certificate issuance and rotation category.";
-      };
-      name = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Certificate name within its host and category.";
-      };
-      secretPrefix = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SOPS key prefix containing the certificate.";
-      };
-      commonName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Certificate common name.";
-      };
-      sans = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        default = [ ];
-        apply = lib.unique;
-        description = "Certificate subject alternative names.";
-      };
-      port = lib.mkOption {
-        type = with lib.types; nullOr port;
-        default = null;
-        description = "Service port associated with this certificate, when applicable.";
-      };
-    };
-  };
-  authorityType = lib.types.submodule (
-    { config, ... }:
-    {
-      options = {
-        hostName = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "Host providing the realm's internal PKI authority.";
-        };
-        rootCaCertificate = lib.mkOption {
-          type = lib.types.path;
-          description = "Root CA certificate published by the realm authority.";
-        };
-        port = lib.mkOption {
-          type = lib.types.port;
-          default = 8443;
-          description = "HTTPS port of the realm authority API.";
-        };
-        rootsPath = lib.mkOption {
-          type = lib.types.str;
-          default = "/roots.pem";
-          description = "Realm authority API path serving the trusted root bundle.";
-        };
-        url = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "https://${config.hostName}.${rootConfig.host.network.lanDomain}:${toString config.port}";
-          readOnly = true;
-          internal = true;
-          description = "Resolved realm authority API URL.";
-        };
-        provisioner = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "bootstrap@${rootConfig.host.network.lanDomain}";
-          description = "Smallstep provisioner used for realm leaf issuance.";
-        };
-        leafLifetimeDays = lib.mkOption {
-          type = lib.types.ints.positive;
-          default = 180;
-          description = "Lifetime of leaf certificates issued by this authority.";
-        };
-        displayName = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "${rootConfig.host.realm} Internal PKI";
-          description = "Human-readable name for the realm certificate authority.";
-        };
-      };
-    }
-  );
+  enabledClients = lib.filterAttrs (_: client: client.enable) config.host.pki.clients;
   secretBaseName =
     clientName: materializationName:
     "internal-pki-client-${clientName}"
@@ -156,15 +72,13 @@ let
     };
 in
 {
-  imports = [ ./home.nix ];
+  imports = [
+    ./authority.nix
+    ./certificates.nix
+    ./home.nix
+  ];
 
   options.host.pki = {
-    authority = lib.mkOption {
-      type = with lib.types; nullOr authorityType;
-      default = null;
-      description = "Internal PKI authority policy for this host's realm.";
-    };
-
     clients = lib.mkOption {
       type =
         with lib.types;
@@ -220,12 +134,6 @@ in
       description = "Internal PKI client identities used by services on this host.";
     };
 
-    certificates = lib.mkOption {
-      type = lib.types.attrsOf certificateType;
-      default = { };
-      internal = true;
-      description = "Canonical certificate issuance and rotation registry for this host.";
-    };
   };
 
   config = {
@@ -253,10 +161,6 @@ in
         lib
         ;
     };
-
-    security.pki.certificateFiles = lib.optionals (cfg.authority != null) [
-      cfg.authority.rootCaCertificate
-    ];
 
     sops.secrets = lib.concatMapAttrs (
       clientName: client:

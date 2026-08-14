@@ -39,6 +39,18 @@ let
           description = "Timer scheduling accuracy, or the systemd default when unset.";
         };
 
+        randomizedDelaySec = lib.mkOption {
+          type = with lib.types; nullOr nonEmptyStr;
+          default = null;
+          description = "Random delay added to each metrics update.";
+        };
+
+        persistent = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether to catch up an update missed while the host was offline.";
+        };
+
         after = lib.mkOption {
           type = with lib.types; listOf nonEmptyStr;
           default = [ ];
@@ -91,9 +103,13 @@ let
     timerConfig = {
       OnBootSec = producer.onBootSec;
       OnUnitActiveSec = producer.interval;
+      Persistent = producer.persistent;
     }
     // lib.optionalAttrs (producer.accuracySec != null) {
       AccuracySec = producer.accuracySec;
+    }
+    // lib.optionalAttrs (producer.randomizedDelaySec != null) {
+      RandomizedDelaySec = producer.randomizedDelaySec;
     };
   };
 in
