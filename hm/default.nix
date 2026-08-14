@@ -6,7 +6,7 @@
     ./_mixins/gui
     ./_mixins/look
     ./_mixins/net
-    ./_mixins/remote
+    ./_mixins/remote-control
     ./_mixins/security
     ./_mixins/shell
     ./_mixins/ssh
