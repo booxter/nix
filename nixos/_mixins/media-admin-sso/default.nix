@@ -53,20 +53,7 @@ in
       allowedGroups = [ "media-admins" ];
       groupClaim = "media_groups";
       internalHttpsServiceNames = endpointNames;
-      authCookieVariableName = "auth_cookie";
       clearAuthorizationHeader = false;
-      authRequestHeaders = [
-        {
-          variableName = "user";
-          upstreamHeader = "x_auth_request_user";
-          proxyHeader = "X-User";
-        }
-        {
-          variableName = "email";
-          upstreamHeader = "x_auth_request_email";
-          proxyHeader = "X-Email";
-        }
-      ];
       extraLocationsByName = logoutLocations;
     };
   };

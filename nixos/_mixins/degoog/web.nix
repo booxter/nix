@@ -48,20 +48,13 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Degoog";
-          httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
+          port = oauth2ProxyPort;
           cookieName = "_goo_sso";
           allowedGroups = builtins.filter (group: group != null) [ ssoApplication.userGroup ];
           groupClaim = "degoog_groups";
           externalOrigin = service.public.url;
           internalHttpsServiceNames = [ "goo" ];
-          authCookieVariableName = "goo_auth_cookie";
-          authRequestHeaders = [
-            {
-              variableName = "goo_user";
-              upstreamHeader = "x_auth_request_preferred_username";
-              proxyHeader = "X-User";
-            }
-          ];
+          authRequestHeaders.X-User = "x_auth_request_preferred_username";
         };
       };
     };

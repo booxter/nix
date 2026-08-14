@@ -35,12 +35,12 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "WatchState";
-          httpAddress = "http://127.0.0.1:4182";
+          port = 4182;
           cookieName = "_watchstate_sso";
           allowedGroups = [ sso.adminGroup ];
           groupClaim = "media_groups";
           internalHttpsServiceNames = [ "watchstate" ];
-          authRequestHeaders = [ ];
+          authRequestHeaders = { };
           clearAuthorizationHeader = false;
         };
       };

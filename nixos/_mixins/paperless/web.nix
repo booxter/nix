@@ -81,12 +81,11 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Paperless GPT";
-          httpAddress = "http://127.0.0.1:${toString gptOauth2ProxyPort}";
+          port = gptOauth2ProxyPort;
           cookieName = "_paperless_gpt_sso";
           allowedGroups = [ ssoApplication.adminGroup ];
           groupClaim = "paperless_groups";
           internalHttpsServiceNames = [ "paperless-gpt" ];
-          authCookieVariableName = "paperless_gpt_auth_cookie";
         };
       };
     };

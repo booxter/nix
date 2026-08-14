@@ -6,7 +6,7 @@
 }:
 let
   gates = config.host.sso.oauth2ProxyGates;
-  httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues gates);
+  ports = map (gate: gate.port) (builtins.attrValues gates);
 in
 {
   assertions =
@@ -36,8 +36,8 @@ in
     )
     ++ [
       {
-        assertion = builtins.length httpAddresses == builtins.length (lib.unique httpAddresses);
-        message = "host.sso.oauth2ProxyGates must use unique httpAddress values.";
+        assertion = builtins.length ports == builtins.length (lib.unique ports);
+        message = "host.sso.oauth2ProxyGates must use unique ports.";
       }
     ];
 }

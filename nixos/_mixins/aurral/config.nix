@@ -110,29 +110,16 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Aurral";
-          httpAddress = "http://127.0.0.1:4181";
+          port = 4181;
           inherit allowedGroups;
           groupClaim = "media_groups";
           externalOrigin = browserOrigin;
           internalHttpsServiceNames = [ "aurral" ];
-          authCookieVariableName = "aurral_auth_cookie";
-          authRequestHeaders = [
-            {
-              variableName = "aurral_user";
-              upstreamHeader = "x_auth_request_preferred_username";
-              proxyHeader = "X-Forwarded-User";
-            }
-            {
-              variableName = "aurral_email";
-              upstreamHeader = "x_auth_request_email";
-              proxyHeader = "X-Forwarded-Email";
-            }
-            {
-              variableName = "aurral_groups";
-              upstreamHeader = "x_auth_request_groups";
-              proxyHeader = "X-Forwarded-Groups";
-            }
-          ];
+          authRequestHeaders = {
+            X-Forwarded-User = "x_auth_request_preferred_username";
+            X-Forwarded-Email = "x_auth_request_email";
+            X-Forwarded-Groups = "x_auth_request_groups";
+          };
           sessionRefresh = {
             intervalSeconds = 14 * 60;
             lifetimeSeconds = 8 * 60 * 60;

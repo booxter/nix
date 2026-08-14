@@ -23,10 +23,10 @@ let
           description = "Display name shown by the identity provider.";
         };
 
-        httpAddress = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:4180";
-          description = "Loopback HTTP address where oauth2-proxy listens.";
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 4180;
+          description = "Loopback port where oauth2-proxy listens.";
         };
 
         cookieName = lib.mkOption {
@@ -78,45 +78,12 @@ let
           description = "Browser-facing origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
         };
 
-        authCookieVariableName = lib.mkOption {
-          type = lib.types.str;
-          default = "${safeClientId}_auth_cookie";
-          description = "nginx variable name used to forward oauth2-proxy Set-Cookie headers.";
-        };
-
         authRequestHeaders = lib.mkOption {
-          type =
-            with lib.types;
-            listOf (submodule {
-              options = {
-                variableName = lib.mkOption {
-                  type = str;
-                  description = "nginx variable name assigned from the oauth2-proxy auth response.";
-                };
-
-                upstreamHeader = lib.mkOption {
-                  type = str;
-                  description = "Lowercase nginx upstream header variable suffix, for example x_auth_request_user.";
-                };
-
-                proxyHeader = lib.mkOption {
-                  type = str;
-                  description = "Request header forwarded to the protected upstream.";
-                };
-              };
-            });
-          default = [
-            {
-              variableName = "${safeClientId}_user";
-              upstreamHeader = "x_auth_request_user";
-              proxyHeader = "X-User";
-            }
-            {
-              variableName = "${safeClientId}_email";
-              upstreamHeader = "x_auth_request_email";
-              proxyHeader = "X-Email";
-            }
-          ];
+          type = with lib.types; attrsOf nonEmptyStr;
+          default = {
+            X-User = "x_auth_request_user";
+            X-Email = "x_auth_request_email";
+          };
           description = "Headers copied from oauth2-proxy auth responses into protected upstream requests.";
         };
 
@@ -144,6 +111,8 @@ let
   gates = cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
   serviceNameFor = gateName: "oauth2-proxy-${gateName}";
+  safeName = name: lib.replaceStrings [ "-" ] [ "_" ] (lib.toLower name);
+  httpAddressFor = gate: "http://127.0.0.1:${toString gate.port}";
   internalHttpsServiceHosts =
     endpointName:
     let
@@ -199,7 +168,7 @@ let
       (mkArg "cookie-secret-file" "%d/cookie-secret")
       (mkArg "cookie-secure" "true")
       (mkArg "email-domain" "*")
-      (mkArg "http-address" gate.httpAddress)
+      (mkArg "http-address" (httpAddressFor gate))
       (mkArg "oidc-groups-claim" gate.groupClaim)
       (mkArg "oidc-issuer-url" oidcClient.issuerUrl)
       (mkArg "pass-access-token" "false")
@@ -229,23 +198,30 @@ let
       "::1/128"
     ]
     ++ mkArgs "whitelist-domain" (whitelistDomainsFor gate);
-
+  authRequestVariable = gateName: proxyHeader: "${safeName gateName}_${safeName proxyHeader}";
   mkAuthRequestSet =
-    header: "auth_request_set $" + header.variableName + " $upstream_http_${header.upstreamHeader};";
-  mkProxyHeader = header: "proxy_set_header ${header.proxyHeader} $" + header.variableName + ";";
+    gateName: proxyHeader: upstreamHeader:
+    "auth_request_set $"
+    + authRequestVariable gateName proxyHeader
+    + " $upstream_http_${upstreamHeader};";
+  mkProxyHeader =
+    gateName: proxyHeader: _:
+    "proxy_set_header ${proxyHeader} $" + authRequestVariable gateName proxyHeader + ";";
   authRequestLocationConfig =
-    gate:
+    gateName: gate:
     let
-      authCookieVariable = "$" + gate.authCookieVariableName;
+      authCookieVariable = "$" + safeName gateName + "_auth_cookie";
     in
     ''
       auth_request /oauth2/auth;
       error_page 401 = $sso_oauth2_proxy_auth_failure_uri;
 
-      ${lib.concatMapStringsSep "\n" mkAuthRequestSet gate.authRequestHeaders}
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (mkAuthRequestSet gateName) gate.authRequestHeaders
+      )}
       auth_request_set ${authCookieVariable} $upstream_http_set_cookie;
 
-      ${lib.concatMapStringsSep "\n" mkProxyHeader gate.authRequestHeaders}
+      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (mkProxyHeader gateName) gate.authRequestHeaders)}
       ${lib.optionalString gate.clearAuthorizationHeader ''proxy_set_header Authorization "";''}
       proxy_hide_header X-SSO-Reauth;
       add_header Set-Cookie ${authCookieVariable};
@@ -258,7 +234,7 @@ let
     in
     {
       "/oauth2/" = {
-        proxyPass = gate.httpAddress;
+        proxyPass = httpAddressFor gate;
         recommendedProxySettings = true;
         extraConfig = ''
           auth_request off;
@@ -268,7 +244,7 @@ let
       };
 
       "= /oauth2/auth" = {
-        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        proxyPass = "${httpAddressFor gate}/oauth2/auth";
         recommendedProxySettings = true;
         extraConfig = ''
           internal;
@@ -280,7 +256,7 @@ let
       };
 
       "= /oauth2/session" = {
-        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        proxyPass = "${httpAddressFor gate}/oauth2/auth";
         recommendedProxySettings = true;
         extraConfig = ''
           auth_request off;
@@ -322,14 +298,14 @@ let
   # `= /oauth2/auth`, and protected app locations on `internal-https-search`
   # and on its public sibling `search.ihar.dev`.
   protectedInternalVhostsFor =
-    gate:
+    gateName: gate:
     builtins.listToAttrs (
       builtins.concatMap (
         endpointName:
         let
           service = webModel.internalEndpoints.${endpointName};
           locations = lib.recursiveUpdate (locationsFor gate endpointName) {
-            ${service.internal.path}.extraConfig = authRequestLocationConfig gate;
+            ${service.internal.path}.extraConfig = authRequestLocationConfig gateName gate;
           };
         in
         map (vhostName: {
@@ -383,9 +359,7 @@ in
       }
     ) gates;
 
-    services.nginx.virtualHosts = lib.mkMerge (
-      lib.mapAttrsToList (_: gate: protectedInternalVhostsFor gate) gates
-    );
+    services.nginx.virtualHosts = lib.mkMerge (lib.mapAttrsToList protectedInternalVhostsFor gates);
 
     services.nginx.appendHttpConfig = ''
       map $request_method $sso_oauth2_proxy_safe_method {
