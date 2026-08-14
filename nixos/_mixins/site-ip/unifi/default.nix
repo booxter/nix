@@ -8,7 +8,7 @@
 let
   unifiPkgs = import ./pkgs pkgs;
   cfg = config.services.unifi-sync;
-  controller = config.host.network.ipController;
+  controller = config.host.site.lan.ipController;
   fleetServices = import ../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
@@ -26,11 +26,11 @@ let
   unifiSyncEnv = import ./environment.nix {
     inherit webDnsRecords;
     addressFor = fleetNetwork.addressFor;
-    baseUrl = controller.target.endpoint;
+    baseUrl = controller.endpoint;
     lan = config.host.site.lan;
     lanDomain = config.host.network.lanDomain;
-    reservations = config.host.network.ipController.reservations;
-    site = controller.target.site;
+    reservations = config.host.network.ipReservations;
+    site = controller.site;
     staticRoutes = config.host.site.lan.staticRoutes ++ wireguardStaticRoutes;
   };
 in
@@ -40,7 +40,7 @@ in
     ./wireguard-dns-sync.nix
   ];
 
-  config = lib.mkIf (controller.enable && controller.flavor == "unifi") {
+  config = lib.mkIf (config.host.network.ipController == "unifi") {
     services.unifi-sync = {
       enable = true;
       package = unifiPkgs.unifi-sync;

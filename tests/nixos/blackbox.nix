@@ -72,7 +72,7 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
-          network.ipController.resolved = lib.mkOption {
+          site.lan.ipController = lib.mkOption {
             type = lib.types.nullOr lib.types.attrs;
             default = null;
           };

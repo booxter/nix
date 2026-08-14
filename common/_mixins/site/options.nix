@@ -78,6 +78,22 @@ let
       };
     };
   };
+  ipControllerType = lib.types.submodule {
+    options = {
+      flavor = lib.mkOption {
+        type = lib.types.enum [ "unifi" ];
+        description = "Site IP controller implementation.";
+      };
+      endpoint = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "API endpoint of the site IP controller.";
+      };
+      site = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Controller-local site identifier.";
+      };
+    };
+  };
 in
 {
   options.host.site = {
@@ -139,6 +155,12 @@ in
           default = null;
           description = "IPv4 address of the site gateway.";
         };
+      };
+
+      ipController = lib.mkOption {
+        type = with lib.types; nullOr ipControllerType;
+        default = null;
+        description = "IP controller serving the physical site.";
       };
 
       reservations = lib.mkOption {

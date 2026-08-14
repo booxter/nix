@@ -6,8 +6,7 @@
 }:
 let
   cfg = config.host.observability.unifi;
-  controller = config.host.network.ipController.resolved;
-  target = if controller == null then { } else controller.target;
+  controller = config.host.site.lan.ipController;
   metricsPort = 9130;
 in
 {
@@ -54,9 +53,9 @@ in
         dynamic = false
 
         [unifi.defaults]
-        url = "${toString (target.endpoint or null)}"
+        url = "${toString (controller.endpoint or null)}"
         api_key = "${config.sops.placeholder.unpollerUnifiApiKey}"
-        sites = ["${toString (target.site or null)}"]
+        sites = ["${toString (controller.site or null)}"]
         save_sites = true
         save_dpi = false
         save_ids = false

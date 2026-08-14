@@ -14,24 +14,6 @@ let
       outputs
       ;
   };
-  resolvedControllerType = lib.types.submodule {
-    options = {
-      provider = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-      };
-      flavor = lib.mkOption {
-        type = with lib.types; nullOr (enum [ "unifi" ]);
-      };
-      target = {
-        endpoint = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-        };
-        site = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-        };
-      };
-    };
-  };
 in
 {
   imports = [
@@ -73,43 +55,18 @@ in
       description = "Stable site IPv4 address derived from this host's reservation.";
     };
 
-    ipController = {
-      enable = lib.mkEnableOption "the site IP allocation controller";
+    ipController = lib.mkOption {
+      type = with lib.types; nullOr (enum [ "unifi" ]);
+      default = null;
+      description = "IP controller implementation reconciled by this host.";
+    };
 
-      flavor = lib.mkOption {
-        type = with lib.types; nullOr (enum [ "unifi" ]);
-        default = null;
-        description = "IP controller implementation used to reconcile site network state.";
-      };
-
-      target = {
-        endpoint = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-          default = null;
-          description = "API endpoint of the site network controller being reconciled.";
-        };
-
-        site = lib.mkOption {
-          type = with lib.types; nullOr nonEmptyStr;
-          default = null;
-          description = "Controller-local site identifier being reconciled.";
-        };
-      };
-
-      resolved = lib.mkOption {
-        type = with lib.types; nullOr resolvedControllerType;
-        default = model.controller;
-        readOnly = true;
-        internal = true;
-        description = "IP controller provider and target resolved for this physical site.";
-      };
-
-      reservations = lib.mkOption {
-        type = with lib.types; listOf attrs;
-        readOnly = true;
-        default = if cfg.ipController.enable then model.reservations else [ ];
-        description = "Validated managed and unmanaged site reservations.";
-      };
+    ipReservations = lib.mkOption {
+      type = with lib.types; listOf attrs;
+      readOnly = true;
+      default = if cfg.ipController == null then [ ] else model.reservations;
+      internal = true;
+      description = "Site reservations rendered for the local IP controller reconciler.";
     };
   };
 }

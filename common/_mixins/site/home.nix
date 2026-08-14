@@ -29,6 +29,11 @@ lib.mkIf (config.host.site.name == "home") {
         host = lib.mkDefault "gateway";
         address = lib.mkDefault "192.168.0.1";
       };
+      ipController = lib.mkDefault {
+        flavor = "unifi";
+        endpoint = "https://unifi";
+        site = "default";
+      };
       dhcp.ranges.main = lib.mkDefault [
         {
           # Keep the pool below 192.168.15.0/24 because that block is

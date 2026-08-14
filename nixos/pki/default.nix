@@ -33,14 +33,7 @@ in
     reservation = {
       address = "192.168.20.5";
     };
-    ipController = {
-      enable = true;
-      flavor = "unifi";
-      target = {
-        endpoint = "https://unifi";
-        site = "default";
-      };
-    };
+    ipController = "unifi";
   };
 
   host.ups.client.server = "prx1-lab";

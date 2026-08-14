@@ -39,23 +39,7 @@ in
         message = "${hostName} declares a site IP reservation without a stable-address requirement";
       }
     ]
-    ++ lib.optionals cfg.ipController.enable [
-      {
-        assertion = cfg.ipController.flavor != null;
-        message = "host.network.ipController.flavor must be set when the controller is enabled";
-      }
-      {
-        assertion = cfg.ipController.target.endpoint != null;
-        message = "host.network.ipController.target.endpoint must be set when the controller is enabled";
-      }
-      {
-        assertion = cfg.ipController.target.site != null;
-        message = "host.network.ipController.target.site must be set when the controller is enabled";
-      }
-      {
-        assertion = builtins.length (builtins.attrNames model.controllers) == 1;
-        message = "exactly one NixOS host per physical site must enable host.network.ipController";
-      }
+    ++ lib.optionals (cfg.ipController != null) [
       {
         assertion =
           builtins.length model.reservationHostnames

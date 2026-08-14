@@ -7,7 +7,7 @@
 }:
 let
   unifiPkgs = import ./pkgs pkgs;
-  controller = config.host.network.ipController;
+  controller = config.host.site.lan.ipController;
   fleetWireguardEnabled = config.host.wireguard.networks != { };
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
@@ -25,7 +25,7 @@ let
   }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
-lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEnabled) {
+lib.mkIf (config.host.network.ipController == "unifi" && fleetWireguardEnabled) {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
@@ -51,8 +51,8 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
       "sops-install-secrets.service"
     ];
     environment = {
-      UNIFI_BASE_URL = controller.target.endpoint;
-      UNIFI_SITE = controller.target.site;
+      UNIFI_BASE_URL = controller.endpoint;
+      UNIFI_SITE = controller.site;
     };
     serviceConfig = {
       Type = "oneshot";
