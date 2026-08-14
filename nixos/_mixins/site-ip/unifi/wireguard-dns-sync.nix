@@ -75,11 +75,7 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
       User = unifiSyncCfg.user;
       Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${pkiRootCaPath} --client-cert-file ${
-        config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
-      } --client-key-file ${
-        config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path
-      } --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
+      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${pkiRootCaPath} --client-cert-file ${wgHomeDnsSyncClient.materializations.default.certificatePath} --client-key-file ${wgHomeDnsSyncClient.materializations.default.keyPath} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

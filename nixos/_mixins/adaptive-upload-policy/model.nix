@@ -76,15 +76,8 @@ let
         enable = mtlsEnabled;
         caFile = config.host.pki.authority.rootCaCertificate or null;
         certificateFile =
-          if !mtlsEnabled || pkiMaterialization == null then
-            null
-          else
-            config.sops.secrets.${pkiMaterialization.certificateSecretName}.path;
-        keyFile =
-          if !mtlsEnabled || pkiMaterialization == null then
-            null
-          else
-            config.sops.secrets.${pkiMaterialization.keySecretName}.path;
+          if !mtlsEnabled || pkiMaterialization == null then null else pkiMaterialization.certificatePath;
+        keyFile = if !mtlsEnabled || pkiMaterialization == null then null else pkiMaterialization.keyPath;
         dependencyUnits = [ "sops-install-secrets.service" ];
       };
     };

@@ -47,8 +47,8 @@ in
       clients.paperless-ollama = {
         accept = "127.0.0.1:${toString ollamaTunnelPort}";
         connect = "${ollamaServerName}:443";
-        cert = config.sops.secrets.${ollamaClient.materializations.default.certificateSecretName}.path;
-        key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
+        cert = ollamaClient.materializations.default.certificatePath;
+        key = ollamaClient.materializations.default.keyPath;
         checkHost = ollamaServerName;
         sni = ollamaServerName;
         CAFile = "${config.host.pki.authority.rootCaCertificate}";

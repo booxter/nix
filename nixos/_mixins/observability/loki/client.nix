@@ -146,12 +146,8 @@ in
             wants = [ "sops-install-secrets.service" ];
             after = [ "sops-install-secrets.service" ];
             serviceConfig.LoadCredential = [
-              "loki-client.crt:${
-                config.sops.secrets.${lokiMtlsClient.materializations.default.certificateSecretName}.path
-              }"
-              "loki-client.key:${
-                config.sops.secrets.${lokiMtlsClient.materializations.default.keySecretName}.path
-              }"
+              "loki-client.crt:${lokiMtlsClient.materializations.default.certificatePath}"
+              "loki-client.key:${lokiMtlsClient.materializations.default.keyPath}"
             ];
           };
         })

@@ -48,10 +48,8 @@ let
   lokiTlsConfig = lib.optionalString cfg.loki.mtls.enable ''
     tls_config {
       ca_file = "${cfg.loki.mtls.trustedCaCertificate}"
-      cert_file = "${
-        config.sops.secrets.${lokiMtlsClient.materializations.default.certificateSecretName}.path
-      }"
-      key_file = "${config.sops.secrets.${lokiMtlsClient.materializations.default.keySecretName}.path}"
+      cert_file = "${lokiMtlsClient.materializations.default.certificatePath}"
+      key_file = "${lokiMtlsClient.materializations.default.keyPath}"
       server_name = "${cfg.loki.mtls.serverName}"
     }
   '';

@@ -31,14 +31,10 @@ let
         recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
         + lib.optionalString vhost.upstreamTls.enable ''
           proxy_ssl_certificate ${
-            config.sops.secrets.${
-              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.certificateSecretName
-            }.path
+            enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.certificatePath
           };
           proxy_ssl_certificate_key ${
-            config.sops.secrets.${
-              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.keySecretName
-            }.path
+            enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.keyPath
           };
           proxy_ssl_trusted_certificate ${vhost.upstreamTls.trustedCaCertificate};
           proxy_ssl_verify on;

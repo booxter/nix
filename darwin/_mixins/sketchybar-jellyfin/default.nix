@@ -26,8 +26,7 @@ in
     enable = true;
     metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${config.host.network.lanDomain}/d/fana-media-pipe";
-    clientCertificate =
-      config.sops.secrets.${client.materializations.default.certificateSecretName}.path;
-    clientKey = config.sops.secrets.${client.materializations.default.keySecretName}.path;
+    clientCertificate = client.materializations.default.certificatePath;
+    clientKey = client.materializations.default.keyPath;
   };
 }

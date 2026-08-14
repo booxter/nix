@@ -24,8 +24,7 @@ in
     enable = true;
     url = "https://alertmanager.${lanDomain}/api/v2/alerts";
     grafanaUrl = "https://grafana.${lanDomain}/alerting/groups";
-    clientCertificate =
-      config.sops.secrets.${client.materializations.default.certificateSecretName}.path;
-    clientKey = config.sops.secrets.${client.materializations.default.keySecretName}.path;
+    clientCertificate = client.materializations.default.certificatePath;
+    clientKey = client.materializations.default.keyPath;
   };
 }

@@ -66,12 +66,8 @@ in
         LoadCredential = [
           "telegram-bot-token:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken.path}"
           "telegram-chat-id:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramChatId.path}"
-          "mtls-client-crt:${
-            config.sops.secrets.${watchdogClient.materializations.default.certificateSecretName}.path
-          }"
-          "mtls-client-key:${
-            config.sops.secrets.${watchdogClient.materializations.default.keySecretName}.path
-          }"
+          "mtls-client-crt:${watchdogClient.materializations.default.certificatePath}"
+          "mtls-client-key:${watchdogClient.materializations.default.keyPath}"
         ];
         NoNewPrivileges = true;
         PrivateDevices = true;

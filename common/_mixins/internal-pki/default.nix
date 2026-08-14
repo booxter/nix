@@ -127,20 +127,20 @@ let
             description = "Units restarted when this client certificate changes.";
           };
 
-          certificateSecretName = lib.mkOption {
+          certificatePath = lib.mkOption {
             type = lib.types.str;
-            default = "${baseName}-crt";
+            default = rootConfig.sops.secrets."${baseName}-crt".path;
             readOnly = true;
             internal = true;
-            description = "SOPS secret attribute containing the materialized client certificate.";
+            description = "Path to the materialized client certificate.";
           };
 
-          keySecretName = lib.mkOption {
+          keyPath = lib.mkOption {
             type = lib.types.str;
-            default = "${baseName}-key";
+            default = rootConfig.sops.secrets."${baseName}-key".path;
             readOnly = true;
             internal = true;
-            description = "SOPS secret attribute containing the materialized client private key.";
+            description = "Path to the materialized client private key.";
           };
         };
       }

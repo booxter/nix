@@ -14,13 +14,13 @@ let
   blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;
   prometheusMtlsTlsConfig = {
     ca_file = "${pkiRootCaPath}";
-    cert_file = config.sops.secrets.${prometheusScrapeMaterialization.certificateSecretName}.path;
-    key_file = config.sops.secrets.${prometheusScrapeMaterialization.keySecretName}.path;
+    cert_file = prometheusScrapeMaterialization.certificatePath;
+    key_file = prometheusScrapeMaterialization.keyPath;
   };
   blackboxHttpMtlsTlsConfig = {
     ca_file = "${pkiRootCaPath}";
-    cert_file = config.sops.secrets.${blackboxScrapeMaterialization.certificateSecretName}.path;
-    key_file = config.sops.secrets.${blackboxScrapeMaterialization.keySecretName}.path;
+    cert_file = blackboxScrapeMaterialization.certificatePath;
+    key_file = blackboxScrapeMaterialization.keyPath;
   };
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
