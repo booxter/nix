@@ -1,4 +1,9 @@
-{ lib, ... }:
+{
+  config,
+  lib,
+  outputs,
+  ...
+}:
 let
   directoryModule = {
     options = {
@@ -147,5 +152,13 @@ in
       default = { };
       description = "Storage resources consumed by this host.";
     };
+  };
+
+  config._module.args.storageModel = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
   };
 }

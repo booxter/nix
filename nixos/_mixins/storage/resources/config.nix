@@ -1,18 +1,12 @@
 {
   config,
   lib,
-  outputs,
+  storageModel,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  model = storageModel;
   siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   remoteClaims = lib.filterAttrs (_: claim: !claim.local) model.localClaims;
   mountOptions = [

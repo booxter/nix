@@ -1,17 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  storageModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  model = storageModel;
   resources = config.host.storage.resources;
   claims = config.host.storage.claims;
   resourceFsids = map (resource: resource.nfs.fsid) (
