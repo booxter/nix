@@ -1,4 +1,11 @@
 {
+  imports = [
+    ./libraries.nix
+    ./plugins.nix
+    ./server.nix
+    ./users.nix
+  ];
+
   host.jellyfin = {
     media = {
       provider = "beast";

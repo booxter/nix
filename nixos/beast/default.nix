@@ -3,8 +3,7 @@
   system.stateVersion = "25.11";
 
   imports = [
-    ./jellarr
-    ./jellyfin.nix
+    ./jellyfin
     ./storage.nix
   ];
 
