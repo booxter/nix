@@ -4,7 +4,7 @@ let
   qsvAvailable = gpu.vendor == "intel" && gpu.renderDevice != null;
 in
 {
-  host.jellyfin.declarativeConfig = {
+  host.jellyfinDeclarativeConfig = {
     system = {
       serverName = "main";
       libraryScanFanoutConcurrency = 4;

@@ -7,7 +7,7 @@ let
   cfg = config.host.jellyfin;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.jellyfin = {
       upstream = cfg.localUrl;
       internal = null;

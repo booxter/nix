@@ -37,7 +37,7 @@ let
     };
 in
 {
-  host.jellyfin.declarativeConfig.library.virtualFolders = map (library: {
+  host.jellyfinDeclarativeConfig.library.virtualFolders = map (library: {
     inherit (library) name collectionType;
     libraryOptions = getLibraryOptions {
       inherit (library) path kind typeOptions;

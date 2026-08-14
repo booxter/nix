@@ -17,7 +17,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.maintenance.guardPlayback) {
+  config = lib.mkIf (cfg != null && cfg.maintenance.guardPlayback) {
     host.maintenance.guards.jellyfin-playback = {
       command = waitForIdle;
       before = [

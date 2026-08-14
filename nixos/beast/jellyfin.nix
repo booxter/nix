@@ -1,6 +1,5 @@
 {
   host.jellyfin = {
-    enable = true;
     media = {
       provider = "beast";
       resource = "media";

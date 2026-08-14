@@ -9,7 +9,7 @@ let
   exporter = pkgs.callPackage ./packages/exporter { };
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.observability.enable) {
+  config = lib.mkIf (cfg != null && cfg.observability.enable) {
     sops.templates."jellyfin-exporter.env" = {
       owner = "root";
       group = "root";

@@ -20,7 +20,7 @@ in
     local
     targetHost
     ;
-  jellyfinEnabled = jellyfin != null && jellyfin.enable;
+  jellyfinEnabled = jellyfin != null;
   libraryPath = if jellyfin == null then null else "${jellyfin.media.mountPoint}/library";
   webhookUrl =
     if local then

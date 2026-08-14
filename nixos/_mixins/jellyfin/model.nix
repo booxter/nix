@@ -11,7 +11,7 @@ let
       hostConfig:
       builtins.attrValues (
         builtins.mapAttrs (name: contribution: contribution // { inherit name; }) (
-          hostConfig.host.jellyfin.declarativeConfigContributions
+          hostConfig.host.jellyfinDeclarativeConfigContributions
         )
       )
     ) configurations

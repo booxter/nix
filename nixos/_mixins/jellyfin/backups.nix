@@ -26,7 +26,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null && cfg.backups.enable) {
     systemd.tmpfiles.rules = [
       "d ${cfg.backups.stagingDirectory} 0750 root restic-cloud - -"
     ];

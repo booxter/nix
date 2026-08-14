@@ -7,26 +7,22 @@
 let
   cfg = config.host.jellyfin;
   model = import ./model.nix { inherit config outputs; };
-  libraries = builtins.attrValues cfg.libraries;
+  libraries = if cfg == null then [ ] else builtins.attrValues cfg.libraries;
   libraryNames = map (library: library.name) libraries;
   libraryPaths = map (library: library.path) libraries;
 in
 {
-  assertions = [
+  assertions = lib.optionals (cfg != null) [
     {
-      assertion = !cfg.enable || cfg.libraries != { };
-      message = "host.jellyfin.libraries must not be empty when Jellyfin is enabled.";
+      assertion = cfg.libraries != { };
+      message = "host.jellyfin.libraries must not be empty.";
     }
     {
-      assertion = !cfg.enable || !cfg.backups.enable || cfg.backups.stagingDirectory != null;
+      assertion = !cfg.backups.enable || cfg.backups.stagingDirectory != null;
       message = "host.jellyfin.backups.stagingDirectory must be set when Jellyfin backups are enabled.";
     }
     {
-      assertion = !cfg.meilisearch.enable || cfg.enable;
-      message = "host.jellyfin.meilisearch.enable requires host.jellyfin.enable.";
-    }
-    {
-      assertion = !cfg.enable || !cfg.web.public.enable || config.host.web.ingress != null;
+      assertion = !cfg.web.public.enable || config.host.web.ingress != null;
       message = "Public Jellyfin requires this host to run realm ingress.";
     }
     {

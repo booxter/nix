@@ -7,6 +7,7 @@
 let
   cfg = config.host.jellyfin;
   absolutePath = lib.types.strMatching "^/.*";
+  openAttrs = lib.types.attrsOf lib.types.anything;
   libraryModule =
     { name, ... }:
     {
@@ -45,6 +46,46 @@ let
         };
       };
     };
+  declarativeConfigModule = {
+    freeformType = openAttrs;
+    options = {
+      system = lib.mkOption {
+        type = lib.types.submodule {
+          freeformType = openAttrs;
+          options.pluginRepositories = lib.mkOption {
+            type = lib.types.listOf openAttrs;
+            default = [ ];
+          };
+        };
+        default = { };
+      };
+      library.virtualFolders = lib.mkOption {
+        type = lib.types.listOf openAttrs;
+        default = [ ];
+      };
+      users = lib.mkOption {
+        type = lib.types.listOf openAttrs;
+        default = [ ];
+      };
+      plugins = lib.mkOption {
+        type = lib.types.listOf openAttrs;
+        default = [ ];
+      };
+    };
+  };
+  contributionModule = {
+    options = {
+      targetHost = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "NixOS host whose Jellyfin configuration receives this contribution.";
+      };
+      config = lib.mkOption {
+        type = lib.types.submodule declarativeConfigModule;
+        default = { };
+        description = "Declarative Jellyfin configuration contributed to the target host.";
+      };
+    };
+  };
 in
 {
   imports = [
@@ -59,124 +100,145 @@ in
     ./web.nix
   ];
 
-  options.host.jellyfin = {
-    enable = lib.mkEnableOption "Jellyfin media server";
+  options.host.jellyfin = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options = {
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = pkgs.jellyfin;
+            description = "Jellyfin package to run.";
+          };
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.jellyfin;
-      description = "Jellyfin package to run.";
-    };
+          localUrl = lib.mkOption {
+            type = lib.types.str;
+            default = "http://127.0.0.1:8096";
+            readOnly = true;
+            internal = true;
+            description = "Loopback Jellyfin API URL.";
+          };
 
-    localUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:8096";
-      readOnly = true;
-      internal = true;
-      description = "Loopback Jellyfin API URL.";
-    };
+          publicUrl = lib.mkOption {
+            type = with lib.types; nullOr str;
+            default = config.host.web.services.jellyfin.public.url;
+            readOnly = true;
+            internal = true;
+            description = "Resolved public Jellyfin URL.";
+          };
 
-    publicUrl = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = if cfg.enable then config.host.web.services.jellyfin.public.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved public Jellyfin URL.";
-    };
+          apiKeyFile = lib.mkOption {
+            type = with lib.types; nullOr absolutePath;
+            default = config.sops.secrets."jellyfin/apiKey".path;
+            readOnly = true;
+            internal = true;
+            description = "File containing the Jellyfin API key.";
+          };
 
-    apiKeyFile = lib.mkOption {
-      type = with lib.types; nullOr absolutePath;
-      default = if cfg.enable then config.sops.secrets."jellyfin/apiKey".path else null;
-      readOnly = true;
-      internal = true;
-      description = "File containing the Jellyfin API key.";
-    };
+          media = {
+            provider = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = config.networking.hostName;
+              description = "Host providing Jellyfin's media storage resource.";
+            };
 
-    media = {
-      provider = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = config.networking.hostName;
-        description = "Host providing Jellyfin's media storage resource.";
-      };
+            resource = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = "media";
+              description = "Storage resource containing Jellyfin's media tree.";
+            };
 
-      resource = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "media";
-        description = "Storage resource containing Jellyfin's media tree.";
-      };
+            mountPoint = lib.mkOption {
+              type = absolutePath;
+              default = "/media";
+              description = "Stable path presented to Jellyfin and its consumers.";
+            };
+          };
 
-      mountPoint = lib.mkOption {
-        type = absolutePath;
-        default = "/media";
-        description = "Stable path presented to Jellyfin and its consumers.";
-      };
-    };
+          libraries = lib.mkOption {
+            type = lib.types.attrsOf (lib.types.submodule libraryModule);
+            default = { };
+            description = "Media libraries consumed by this Jellyfin installation.";
+          };
 
-    libraries = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule libraryModule);
-      default = { };
-      description = "Media libraries consumed by this Jellyfin installation.";
-    };
+          meilisearch.enable = lib.mkEnableOption "Meilisearch-backed Jellyfin search";
 
-    meilisearch.enable = lib.mkEnableOption "Meilisearch-backed Jellyfin search";
+          web = {
+            public.enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to publish Jellyfin through realm ingress.";
+            };
 
-    web = {
-      public.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to publish Jellyfin through realm ingress.";
-      };
+            public.hostName = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = "jf.${config.host.network.publicDomain}";
+              description = "Public Jellyfin hostname.";
+            };
 
-      public.hostName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "jf.${config.host.network.publicDomain}";
-        description = "Public Jellyfin hostname.";
-      };
+          };
 
-    };
+          backups = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to capture Jellyfin's built-in backup archives.";
+            };
 
-    backups = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to capture Jellyfin's built-in backup archives.";
-      };
+            stagingDirectory = lib.mkOption {
+              type = with lib.types; nullOr absolutePath;
+              default = null;
+              description = "Directory where Jellyfin backup archives are staged for Restic.";
+            };
+          };
 
-      stagingDirectory = lib.mkOption {
-        type = with lib.types; nullOr absolutePath;
-        default = null;
-        description = "Directory where Jellyfin backup archives are staged for Restic.";
-      };
-    };
+          maintenance.guardPlayback = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether disruptive maintenance waits for Jellyfin playback to stop.";
+          };
 
-    maintenance.guardPlayback = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether disruptive maintenance waits for Jellyfin playback to stop.";
-    };
+          observability = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to run and scrape the Jellyfin exporter.";
+            };
 
-    observability = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to run and scrape the Jellyfin exporter.";
-      };
+            internalPort = lib.mkOption {
+              type = lib.types.port;
+              default = 19594;
+              description = "Loopback port where the Jellyfin exporter listens.";
+            };
 
-      internalPort = lib.mkOption {
-        type = lib.types.port;
-        default = 19594;
-        description = "Loopback port where the Jellyfin exporter listens.";
-      };
+            port = lib.mkOption {
+              type = lib.types.port;
+              default = 9594;
+              description = "mTLS port exposing Jellyfin metrics to Prometheus.";
+            };
+          };
 
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 9594;
-        description = "mTLS port exposing Jellyfin metrics to Prometheus.";
-      };
-    };
+        };
+      }
+    );
+    default = null;
+    description = "Jellyfin media server configuration.";
   };
 
-  config = lib.mkIf cfg.enable {
+  options.host.jellyfinDeclarativeConfig = lib.mkOption {
+    type = lib.types.submodule declarativeConfigModule;
+    default = { };
+    internal = true;
+    description = "Jellarr policy contributed by the Jellyfin host and its integrations.";
+  };
+
+  options.host.jellyfinDeclarativeConfigContributions = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.submodule contributionModule);
+    default = { };
+    internal = true;
+    description = "Declarative Jellyfin configuration addressed to fleet Jellyfin hosts.";
+  };
+
+  config = lib.mkIf (cfg != null) {
     host.autoUpgrade.claims.jellyfin.reboot = {
       cadence = "weekly";
       weekday = "Sat";

@@ -10,7 +10,7 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    host.jellyfin.declarativeConfigContributions.watchstate = {
+    host.jellyfinDeclarativeConfigContributions.watchstate = {
       targetHost = cfg.jellyfin.host;
       config.plugins = [
         {

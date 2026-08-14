@@ -17,7 +17,7 @@ let
   ) registry.repositories;
 in
 {
-  host.jellyfin.declarativeConfig = {
+  host.jellyfinDeclarativeConfig = {
     system.pluginRepositories = builtins.attrValues enabledRepositories;
     plugins = map (plugin: { inherit (plugin) name; }) (builtins.attrValues enabledPlugins);
   };

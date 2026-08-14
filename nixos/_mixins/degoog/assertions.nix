@@ -35,7 +35,7 @@ in
       message = "The Degoog SSO application has no settings administrators.";
     }
     {
-      assertion = !degoogModel.jellyfinSelected || (jellyfin != null && jellyfin.enable);
+      assertion = !degoogModel.jellyfinSelected || jellyfin != null;
       message = "The selected Degoog Jellyfin integration host must enable Jellyfin.";
     }
     {

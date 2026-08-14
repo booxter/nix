@@ -113,5 +113,5 @@ let
     };
 in
 {
-  host.jellyfin.declarativeConfig.users = map getUser definitions;
+  host.jellyfinDeclarativeConfig.users = map getUser definitions;
 }

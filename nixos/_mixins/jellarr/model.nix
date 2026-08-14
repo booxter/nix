@@ -15,13 +15,14 @@ let
 in
 {
   inherit exists;
-  jellyfinEnabled = jellyfin != null && jellyfin.enable;
+  jellyfinEnabled = jellyfin != null;
   url =
-    if jellyfin == null || !jellyfin.enable then
+    if jellyfin == null then
       null
     else if local then
       jellyfin.localUrl
     else
       jellyfin.publicUrl;
-  declarativeConfig = if jellyfin == null then { } else jellyfin.declarativeConfig;
+  declarativeConfig =
+    if targetConfig == null then { } else targetConfig.host.jellyfinDeclarativeConfig;
 }
