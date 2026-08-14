@@ -38,13 +38,11 @@ let
         allowInsecureClientDisablePkce
         claimMaps
         displayName
-        enableLocalhostRedirects
-        enableLegacyCrypto
         originLanding
-        preferShortUsername
         public
         scopeMaps
         ;
+      preferShortUsername = true;
       originUrl =
         if builtins.length client.originUrls == 1 then
           builtins.head client.originUrls

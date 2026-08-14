@@ -6,13 +6,20 @@
   realm,
 }:
 let
+  providerFor =
+    clientId: registration:
+    removeAttrs registration [ "secret" ]
+    // {
+      inherit clientId;
+      public = registration.secret == null;
+    };
   consumerConfigurations = lib.filterAttrs (_: host: host.config.host.realm == realm) (
     removeAttrs outputs.nixosConfigurations [ providerHost ]
   );
   localContributions = lib.mapAttrsToList (registrationName: registration: {
     hostName = providerHost;
     inherit registrationName;
-    provider = removeAttrs registration [ "secret" ];
+    provider = providerFor registrationName registration;
   }) localRegistrations;
   remoteContributions = lib.concatLists (
     lib.mapAttrsToList (
@@ -22,7 +29,7 @@ let
           hostName
           registrationName
           ;
-        provider = removeAttrs registration [ "secret" ];
+        provider = providerFor registrationName registration;
       }) host.config.host.sso.oidc.registrations
     ) consumerConfigurations
   );

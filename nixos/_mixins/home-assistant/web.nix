@@ -16,7 +16,6 @@ in
       auth = {
         oidcRegistration = {
           displayName = "Home Assistant";
-          public = true;
           originUrls = [
             "https://${hostName}/auth/oidc/welcome"
             "https://${hostName}/auth/oidc/callback"

@@ -71,21 +71,18 @@ let
 in
 {
   config = lib.mkIf enabled {
-    host.web.services."proxmox-${config.networking.hostName}".auth = {
-      oidcRegistration = {
-        inherit clientId;
-        displayName = "Proxmox VE";
-        originUrls = proxmoxOriginUrls;
-        originLanding = "https://${proxmoxCanonicalHost}/";
-        scopeMaps.${allowedGroup} = oidcScopes ++ [ groupsClaim ];
-        claimMaps.${groupsClaim}.valuesByGroup.${allowedGroup} = [
-          allowedGroup
-        ];
-        secret = {
-          sopsKey = clientSecretKey;
-          name = "proxmoxOidcClientSecret";
-          restartUnits = [ oidcRealmUnit ];
-        };
+    host.sso.oidc.registrations.proxmox = {
+      displayName = "Proxmox VE";
+      originUrls = proxmoxOriginUrls;
+      originLanding = "https://${proxmoxCanonicalHost}/";
+      scopeMaps.${allowedGroup} = oidcScopes ++ [ groupsClaim ];
+      claimMaps.${groupsClaim}.valuesByGroup.${allowedGroup} = [
+        allowedGroup
+      ];
+      secret = {
+        sopsKey = clientSecretKey;
+        name = "proxmoxOidcClientSecret";
+        restartUnits = [ oidcRealmUnit ];
       };
     };
 
