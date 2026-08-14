@@ -3,7 +3,7 @@
     ./_mixins/cli
     ./_mixins/codex
     ./_mixins/hardware
-    ./_mixins/host.nix
+    ./_mixins/host
     ./_mixins/internal-pki
     ./_mixins/luks
     ./_mixins/look

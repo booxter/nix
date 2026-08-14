@@ -6,8 +6,8 @@
 }:
 {
   imports = [
-    ./host/home.nix
-    ./host/work.nix
+    ./home.nix
+    ./work.nix
   ];
 
   options.host = {
