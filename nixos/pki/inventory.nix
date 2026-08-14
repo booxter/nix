@@ -34,9 +34,13 @@ let
     lib.optionals (builtins.pathExists secretPath) (
       map (
         certificate:
-        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix
-          certificate.certificateField
-      ) hostConfig.host.pki.managedCertificates
+        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix (
+          if lib.hasSuffix "_client" certificate.category then
+            "client_crt_unencrypted"
+          else
+            "server_crt_unencrypted"
+        )
+      ) (builtins.attrValues hostConfig.host.pki.certificates)
     );
   leafCertificates = lib.concatLists (lib.mapAttrsToList hostCertificates realmConfigurations);
 in

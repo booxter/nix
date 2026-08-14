@@ -114,9 +114,13 @@ class CertificateInventoryBuilder:
                 CertificateCategory(certificate.category),
                 certificate.name,
                 certificate.secret_prefix,
-                certificate.certificate_field,
+                (
+                    "client_crt_unencrypted"
+                    if certificate.category.endswith("_client")
+                    else "server_crt_unencrypted"
+                ),
             )
-            for certificate in config.managed_certificates
+            for certificate in config.certificates
         ]
 
 

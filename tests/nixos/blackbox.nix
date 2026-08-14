@@ -67,9 +67,9 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
-          pki.managedCertificates = lib.mkOption {
-            type = lib.types.listOf lib.types.anything;
-            default = [ ];
+          pki.certificates = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
           };
 
           network.ipController.resolved = lib.mkOption {

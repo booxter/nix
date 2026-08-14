@@ -46,12 +46,6 @@ def fleet_hosts() -> FleetHosts:
 
 
 def host_config() -> HostCertificateConfig:
-    client = {
-        "enable": True,
-        "commonName": "client.example.invalid",
-        "sans": [],
-        "secretPrefix": "clients/client",
-    }
     return HostCertificateConfig.model_validate(
         {
             "realm": "test-realm",
@@ -63,90 +57,55 @@ def host_config() -> HostCertificateConfig:
                 "leafLifetimeDays": 180,
                 "rootCaCertificate": "/repo/root-ca.crt",
             },
-            "identity": {
-                "dns_name": "host.example.invalid",
-                "networking_name": "host",
-                "avahi_name": "host",
-            },
-            "internal_services": {
-                "web": {
-                    "enable": True,
-                    "port": 443,
-                    "secretPrefix": "internal/web",
-                    "serverName": "web.example.invalid",
-                },
-                "proxmox": {
-                    "enable": True,
-                    "port": 8006,
-                    "secretPrefix": "internal/proxmox",
-                    "serverName": "proxmox.example.invalid",
-                },
-            },
-            "clients": {
-                "internal": client | {"category": "internal"},
-                "external": client | {"category": "internal", "secretPrefix": "clients/external"},
-                "loki": client | {"category": "observability", "secretPrefix": "prometheus/loki"},
-            },
-            "proxmox_api": {
-                "enable": True,
-                "port": 8006,
-                "secretPrefix": "internal/proxmox",
-                "serverName": "proxmox.example.invalid",
-            },
-            "observability_endpoints": {
-                "api": {
-                    "enable": True,
-                    "port": 9090,
-                    "secretPrefix": "prometheus/api",
-                }
-            },
-            "node_exporter": {
-                "enable": True,
-                "port": 9100,
-                "secretPrefix": "prometheus/node_exporter",
-            },
-            "managed_certificates": [
+            "certificates": [
                 {
                     "category": "internal_https_server",
                     "name": "web",
+                    "commonName": "web.example.invalid",
+                    "sans": ["web.example.invalid"],
                     "secretPrefix": "internal/web",
-                    "certificateField": "server_crt_unencrypted",
                 },
                 {
                     "category": "internal_https_server",
                     "name": "proxmox-api",
+                    "commonName": "proxmox.example.invalid",
+                    "sans": ["proxmox.example.invalid"],
                     "secretPrefix": "internal/proxmox",
-                    "certificateField": "server_crt_unencrypted",
                 },
                 {
                     "category": "internal_https_client",
                     "name": "internal",
+                    "commonName": "client.example.invalid",
+                    "sans": ["client.example.invalid"],
                     "secretPrefix": "clients/client",
-                    "certificateField": "client_crt_unencrypted",
                 },
                 {
                     "category": "internal_https_client",
                     "name": "external",
+                    "commonName": "client.example.invalid",
+                    "sans": ["client.example.invalid"],
                     "secretPrefix": "clients/external",
-                    "certificateField": "client_crt_unencrypted",
                 },
                 {
                     "category": "observability_client",
                     "name": "loki",
+                    "commonName": "client.example.invalid",
+                    "sans": [],
                     "secretPrefix": "prometheus/loki",
-                    "certificateField": "client_crt_unencrypted",
                 },
                 {
                     "category": "observability_endpoint_server",
                     "name": "api",
+                    "commonName": "prometheus-api.host",
+                    "sans": ["host"],
                     "secretPrefix": "prometheus/api",
-                    "certificateField": "server_crt_unencrypted",
                 },
                 {
                     "category": "observability_endpoint_server",
                     "name": "node_exporter",
+                    "commonName": "prometheus-node_exporter.host",
+                    "sans": ["host"],
                     "secretPrefix": "prometheus/node_exporter",
-                    "certificateField": "server_crt_unencrypted",
                 },
             ],
         }

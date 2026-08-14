@@ -4,13 +4,17 @@
   lib,
 }:
 let
-  managedCertificates = config.host.pki.managedCertificates;
-  managedCertificateKeys = map (
-    certificate: "${certificate.category}/${certificate.name}"
-  ) managedCertificates;
+  certificates = builtins.attrValues config.host.pki.certificates;
   managedCertificateSourceKeys = map (
-    certificate: "${certificate.secretPrefix}/${certificate.certificateField}"
-  ) managedCertificates;
+    certificate:
+    "${certificate.secretPrefix}/"
+    + (
+      if lib.hasSuffix "_client" certificate.category then
+        "client_crt_unencrypted"
+      else
+        "server_crt_unencrypted"
+    )
+  ) certificates;
 in
 [
   {
@@ -21,13 +25,8 @@ in
   }
   {
     assertion =
-      builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
-    message = "host.pki.managedCertificates must not duplicate a category/name pair";
-  }
-  {
-    assertion =
       builtins.length managedCertificateSourceKeys
       == builtins.length (lib.unique managedCertificateSourceKeys);
-    message = "host.pki.managedCertificates must not duplicate a SOPS certificate field";
+    message = "host.pki.certificates must not duplicate a SOPS certificate field";
   }
 ]

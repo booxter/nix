@@ -30,14 +30,13 @@ in
       host.proxmox.apiCertificate.enable = lib.mkDefault config.host.proxmox.node.enable;
     }
     (lib.mkIf cfg.enable {
-      host.pki.managedCertificates = [
-        {
-          category = "internal_https_server";
-          name = "proxmox-api";
-          inherit (cfg) secretPrefix;
-          certificateField = "server_crt_unencrypted";
-        }
-      ];
+      host.pki.certificates."internal_https_server/proxmox-api" = {
+        category = "internal_https_server";
+        name = "proxmox-api";
+        commonName = cfg.serverName;
+        sans = lib.unique ([ cfg.serverName ] ++ cfg.serverAliases);
+        inherit (cfg) port secretPrefix;
+      };
 
       # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
       # 8006 listener for Proxmox-native/root fallback access.

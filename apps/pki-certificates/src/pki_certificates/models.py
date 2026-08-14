@@ -4,7 +4,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-ClientCategory = Literal["internal", "observability"]
+CertificateCategory = Literal[
+    "internal_https_server",
+    "internal_https_client",
+    "observability_endpoint_server",
+    "observability_client",
+]
 
 
 class FleetHost(BaseModel):
@@ -20,58 +25,15 @@ class FleetHosts(RootModel[dict[str, FleetHost]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 
-class InternalServiceConfig(BaseModel):
-    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
-
-    enable: bool = False
-    port: int
-    secret_prefix: str = Field(alias="secretPrefix")
-    server_name: str = Field(alias="serverName")
-    server_aliases: list[str] = Field(default_factory=list, alias="serverAliases")
-    sans: list[str] = Field(default_factory=list)
-
-
-class CertificateClientConfig(BaseModel):
-    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
-
-    enable: bool = False
-    category: ClientCategory
-    common_name: str = Field(alias="commonName")
-    sans: list[str] = Field(default_factory=list)
-    secret_prefix: str = Field(alias="secretPrefix")
-
-
-class ObservabilityEndpointConfig(BaseModel):
-    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
-
-    enable: bool = False
-    port: int
-    sans: list[str] = Field(default_factory=list)
-    secret_prefix: str = Field(alias="secretPrefix")
-
-
-class ManagedCertificateConfig(BaseModel):
+class CertificateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
-    category: Literal[
-        "internal_https_server",
-        "internal_https_client",
-        "observability_endpoint_server",
-        "observability_client",
-    ]
+    category: CertificateCategory
     name: str
+    common_name: str = Field(alias="commonName")
+    sans: list[str]
     secret_prefix: str = Field(alias="secretPrefix")
-    certificate_field: Literal["client_crt_unencrypted", "server_crt_unencrypted"] = Field(
-        alias="certificateField"
-    )
-
-
-class HostIdentity(BaseModel):
-    model_config = ConfigDict(frozen=True, strict=True)
-
-    dns_name: str
-    networking_name: str
-    avahi_name: str
+    port: int | None = None
 
 
 class RealmAuthorityConfig(BaseModel):
@@ -90,13 +52,7 @@ class HostCertificateConfig(BaseModel):
 
     realm: str
     realm_authority: RealmAuthorityConfig | None
-    identity: HostIdentity
-    internal_services: dict[str, InternalServiceConfig]
-    clients: dict[str, CertificateClientConfig]
-    proxmox_api: InternalServiceConfig | None
-    observability_endpoints: dict[str, ObservabilityEndpointConfig]
-    node_exporter: ObservabilityEndpointConfig | None
-    managed_certificates: list[ManagedCertificateConfig]
+    certificates: list[CertificateConfig]
 
 
 class CertificateRequest(BaseModel):

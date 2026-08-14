@@ -65,14 +65,14 @@ in
   };
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
-    host.pki.managedCertificates = [
-      {
-        category = "observability_endpoint_server";
-        name = "node_exporter";
-        inherit (cfg.mtls) secretPrefix;
-        certificateField = "server_crt_unencrypted";
-      }
-    ];
+    host.pki.certificates."observability_endpoint_server/node_exporter" = {
+      category = "observability_endpoint_server";
+      name = "node_exporter";
+      commonName = "prometheus-node_exporter.${config.networking.hostName}";
+      sans = observabilityCfg.prometheusEndpointSans;
+      port = config.services.prometheus.exporters.node.port;
+      inherit (cfg.mtls) secretPrefix;
+    };
 
     sops.secrets = {
       prometheusNodeExporterServerCrt = {

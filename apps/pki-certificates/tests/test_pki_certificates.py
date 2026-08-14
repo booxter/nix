@@ -13,13 +13,10 @@ from sops_tools.secrets import UpdateResult
 from pki_certificates.cli import Application, run_internal, run_observability
 from pki_certificates.issuer import RemoteCertificateIssuer, StepCaIssuer
 from pki_certificates.models import (
-    CertificateClientConfig,
+    CertificateConfig,
     CertificateMaterial,
     CertificateRequest,
     FleetHosts,
-    HostIdentity,
-    InternalServiceConfig,
-    ObservabilityEndpointConfig,
     RealmAuthorityConfig,
 )
 from pki_certificates.repository import NixConfigSource
@@ -104,72 +101,59 @@ def realm_authority() -> RealmAuthorityConfig:
 
 @dataclass
 class StaticConfigSource:
-    service: InternalServiceConfig = field(
-        default_factory=lambda: InternalServiceConfig.model_validate(
-            {
-                "enable": True,
-                "port": 443,
-                "secretPrefix": "internal_https/web",
-                "serverName": "web.example.invalid",
-                "serverAliases": ["web", "web.local"],
-                "sans": [],
-            }
-        )
+    certificates: list[CertificateConfig] = field(
+        default_factory=lambda: [
+            CertificateConfig.model_validate(value)
+            for value in [
+                {
+                    "category": "internal_https_server",
+                    "name": "web",
+                    "commonName": "web.example.invalid",
+                    "sans": ["web", "web.example.invalid", "web.local"],
+                    "secretPrefix": "internal_https/web",
+                    "port": 443,
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "client",
+                    "commonName": "client.host",
+                    "sans": ["client.host", "client-alt"],
+                    "secretPrefix": "internal_https/clients/client",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "node",
+                    "commonName": "prometheus-node.host.example.invalid",
+                    "sans": ["host.example.invalid", "host", "host.local"],
+                    "secretPrefix": "prometheus/node",
+                    "port": 9100,
+                },
+                {
+                    "category": "observability_client",
+                    "name": "scraper",
+                    "commonName": "client.host",
+                    "sans": ["client-alt"],
+                    "secretPrefix": "internal_https/clients/client",
+                },
+            ]
+        ]
     )
-    client: CertificateClientConfig = field(
-        default_factory=lambda: CertificateClientConfig.model_validate(
-            {
-                "enable": True,
-                "category": "internal",
-                "commonName": "client.host",
-                "sans": ["client-alt"],
-                "secretPrefix": "internal_https/clients/client",
-            }
-        )
-    )
-    endpoint: ObservabilityEndpointConfig = field(
-        default_factory=lambda: ObservabilityEndpointConfig.model_validate(
-            {
-                "enable": True,
-                "port": 9100,
-                "sans": [],
-                "secretPrefix": "prometheus/node",
-            }
-        )
-    )
-
-    def internal_service_names(self, host):
-        return ["web"]
 
     def realm_authority(self, host):
         return realm_authority()
 
-    def internal_service(self, host, name):
-        return self.service
+    def certificate_names(self, host, category):
+        return sorted(
+            certificate.name
+            for certificate in self.certificates
+            if certificate.category == category
+        )
 
-    def internal_client_names(self, host):
-        return ["client"]
-
-    def internal_client(self, host, name):
-        return self.client
-
-    def observability_endpoint_names(self, host):
-        return ["node"]
-
-    def observability_endpoint(self, host, name):
-        return self.endpoint
-
-    def observability_client_names(self, host):
-        return ["scraper"]
-
-    def observability_client(self, host, name):
-        return self.client
-
-    def host_identity(self, host):
-        return HostIdentity(
-            dns_name="host.example.invalid",
-            networking_name="host",
-            avahi_name="host",
+    def certificate(self, host, category, name):
+        return next(
+            certificate
+            for certificate in self.certificates
+            if certificate.category == category and certificate.name == name
         )
 
 
@@ -304,97 +288,78 @@ def test_managed_service_issues_each_certificate_kind():
     assert len(issuer.calls) == 4
 
 
-def test_managed_service_rejects_disabled_configuration():
-    source = StaticConfigSource()
-    source.service = source.service.model_copy(update={"enable": False})
-    service = ManagedCertificateService(source, RecordingIssuer(), RecordingStore())
-
-    with pytest.raises(ToolError, match="is not enabled"):
-        service.issue_internal_service("host", "web", "authority-node")
-
-
 def test_nix_config_source_validates_and_combines_fleet_configuration():
     value = {
         "realm": "test-realm",
         "realm_authority": realm_authority().model_dump(by_alias=True),
-        "identity": {
-            "dns_name": "host.example.invalid",
-            "networking_name": "host",
-            "avahi_name": "host-avahi",
-        },
-        "internal_services": {
-            "web": {
-                "enable": True,
-                "port": 443,
-                "secretPrefix": "internal_https/web",
-                "serverName": "web.example.invalid",
-                "serverAliases": ["web"],
+        "certificates": [
+            {
+                "category": "internal_https_server",
+                "name": "web",
+                "commonName": "web.example.invalid",
                 "sans": ["web.example.invalid"],
-            },
-            "proxmox": {
-                "enable": True,
+                "secretPrefix": "internal_https/web",
                 "port": 443,
+            },
+            {
+                "category": "internal_https_server",
+                "name": "proxmox-api",
+                "commonName": "host",
+                "sans": ["host", "host.example.invalid"],
                 "secretPrefix": "proxmox/api",
-                "serverName": "host",
+                "port": 8006,
             },
-        },
-        "proxmox_api": {
-            "enable": True,
-            "port": 8006,
-            "secretPrefix": "proxmox/api",
-            "serverName": "host",
-            "serverAliases": ["host.example.invalid"],
-        },
-        "clients": {
-            "internal": {
-                "enable": True,
-                "category": "internal",
-                "commonName": "internal.host",
-                "secretPrefix": "internal/client",
-            },
-            "external": {
-                "enable": True,
-                "category": "internal",
+            {
+                "category": "internal_https_client",
+                "name": "external",
                 "commonName": "external.host",
+                "sans": ["external.host"],
                 "secretPrefix": "external/client",
             },
-            "scraper": {
-                "enable": True,
-                "category": "observability",
+            {
+                "category": "observability_endpoint_server",
+                "name": "node_exporter",
+                "commonName": "prometheus-node_exporter.host",
+                "sans": ["host", "host.local"],
+                "secretPrefix": "prometheus/node_exporter",
+                "port": 9100,
+            },
+            {
+                "category": "observability_endpoint_server",
+                "name": "metrics",
+                "commonName": "prometheus-metrics.host",
+                "sans": ["host"],
+                "secretPrefix": "prometheus/metrics",
+                "port": 9999,
+            },
+            {
+                "category": "observability_client",
+                "name": "scraper",
                 "commonName": "scraper.host",
+                "sans": [],
                 "secretPrefix": "prometheus/clients/scraper",
             },
-        },
-        "node_exporter": {
-            "enable": True,
-            "port": 9100,
-            "secretPrefix": "prometheus/node_exporter",
-            "sans": ["host", "host.local"],
-        },
-        "observability_endpoints": {
-            "metrics": {
-                "enable": True,
-                "port": 9999,
-                "secretPrefix": "prometheus/metrics",
-                "sans": ["host"],
-            }
-        },
-        "managed_certificates": [],
+        ],
     }
     runner = AttributeRunner(value)
     source = NixConfigSource(runner, Path("/repo"), fleet_hosts(), Path("/query.nix"))
 
-    assert source.internal_service_names("host") == ["web", "proxmox-api"]
-    assert source.internal_service("host", "proxmox-api").port == 8006
-    assert source.internal_client_names("host") == ["external", "internal"]
-    assert source.internal_client("host", "external").common_name == "external.host"
-    assert source.observability_endpoint_names("host") == ["node_exporter", "metrics"]
-    assert source.observability_endpoint("host", "node_exporter").port == 9100
-    assert source.observability_endpoint("host", "metrics").port == 9999
-    assert source.observability_client_names("host") == ["scraper"]
-    assert source.observability_client("host", "scraper").common_name == "scraper.host"
-    assert source.host_identity("host").avahi_name == "host-avahi"
-    assert source.certificate_config("host").identity.dns_name == "host.example.invalid"
+    assert source.certificate_names("host", "internal_https_server") == [
+        "proxmox-api",
+        "web",
+    ]
+    assert source.certificate("host", "internal_https_server", "proxmox-api").port == 8006
+    assert source.certificate_names("host", "internal_https_client") == ["external"]
+    assert (
+        source.certificate("host", "internal_https_client", "external").common_name
+        == "external.host"
+    )
+    assert source.certificate_names("host", "observability_endpoint_server") == [
+        "metrics",
+        "node_exporter",
+    ]
+    assert source.certificate_names("host", "observability_client") == ["scraper"]
+    assert len(source.certificate_config("host").certificates) == 6
     assert len(runner.calls) == 1
     assert runner.calls[0] == [
         "nix-instantiate",

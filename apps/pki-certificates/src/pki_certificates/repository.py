@@ -9,14 +9,11 @@ from sops_tools.errors import ToolError
 from sops_tools.process import ProcessRunner
 
 from .models import (
-    CertificateClientConfig,
-    ClientCategory,
+    CertificateCategory,
+    CertificateConfig,
     FleetHost,
     FleetHosts,
     HostCertificateConfig,
-    HostIdentity,
-    InternalServiceConfig,
-    ObservabilityEndpointConfig,
     RealmAuthorityConfig,
 )
 
@@ -83,86 +80,18 @@ class NixConfigSource:
     def certificate_config(self, host: str) -> HostCertificateConfig:
         return self._config(host)
 
-    def internal_service_names(self, host: str) -> list[str]:
-        config = self._config(host)
-        names = sorted(
-            name
-            for name, service in config.internal_services.items()
-            if service.enable
-            and not (
-                name == "proxmox"
-                and config.proxmox_api is not None
-                and service.secret_prefix == config.proxmox_api.secret_prefix
-            )
-        )
-        if config.proxmox_api is not None:
-            names.append("proxmox-api")
-        return names
-
-    def internal_service(self, host: str, name: str) -> InternalServiceConfig:
-        config = self._config(host)
-        if name == "proxmox-api":
-            if config.proxmox_api is None:
-                raise ToolError(f"internal HTTPS service {name} on host {host} is not enabled")
-            return config.proxmox_api
-        try:
-            return config.internal_services[name]
-        except KeyError as error:
-            raise ToolError(f"unknown internal HTTPS service {name} on host {host}") from error
-
-    def internal_client_names(self, host: str) -> list[str]:
-        return self._client_names(host, "internal")
-
-    def internal_client(self, host: str, name: str) -> CertificateClientConfig:
-        return self._client(host, name, "internal")
-
-    def observability_endpoint_names(self, host: str) -> list[str]:
-        config = self._config(host)
-        names = ["node_exporter"] if config.node_exporter is not None else []
-        names.extend(
-            sorted(
-                name
-                for name, endpoint in config.observability_endpoints.items()
-                if name != "node_exporter" and endpoint.enable
-            )
-        )
-        return names
-
-    def observability_endpoint(self, host: str, name: str) -> ObservabilityEndpointConfig:
-        config = self._config(host)
-        if name == "node_exporter":
-            if config.node_exporter is None:
-                raise ToolError(f"host {host} does not have node_exporter mTLS enabled")
-            return config.node_exporter
-        try:
-            return config.observability_endpoints[name]
-        except KeyError as error:
-            raise ToolError(f"unknown observability endpoint {name} on host {host}") from error
-
-    def observability_client_names(self, host: str) -> list[str]:
-        return self._client_names(host, "observability")
-
-    def observability_client(self, host: str, name: str) -> CertificateClientConfig:
-        return self._client(host, name, "observability")
-
-    def _client_names(self, host: str, category: ClientCategory) -> list[str]:
+    def certificate_names(self, host: str, category: CertificateCategory) -> list[str]:
         return sorted(
-            name
-            for name, client in self._config(host).clients.items()
-            if client.enable and client.category == category
+            certificate.name
+            for certificate in self._config(host).certificates
+            if certificate.category == category
         )
 
-    def _client(self, host: str, name: str, category: ClientCategory) -> CertificateClientConfig:
-        try:
-            client = self._config(host).clients[name]
-        except KeyError as error:
-            raise ToolError(f"unknown {category} client {name} on host {host}") from error
-        if client.category != category:
-            raise ToolError(f"client {name} on host {host} is not a {category} client")
-        return client
-
-    def host_identity(self, host: str) -> HostIdentity:
-        return self._config(host).identity
+    def certificate(self, host: str, category: CertificateCategory, name: str) -> CertificateConfig:
+        for certificate in self._config(host).certificates:
+            if certificate.category == category and certificate.name == name:
+                return certificate
+        raise ToolError(f"unknown {category} certificate {name} on host {host}")
 
     def _config(self, host: str) -> HostCertificateConfig:
         if host in self._cache:

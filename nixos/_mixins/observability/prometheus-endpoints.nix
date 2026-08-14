@@ -153,12 +153,15 @@ in
   };
 
   config = lib.mkIf (cfg.enable && enabledEndpoints != { }) {
-    host.pki.managedCertificates = lib.mapAttrsToList (name: endpoint: {
-      category = "observability_endpoint_server";
-      inherit name;
-      inherit (endpoint) secretPrefix;
-      certificateField = "server_crt_unencrypted";
-    }) inventoryEndpoints;
+    host.pki.certificates = lib.mapAttrs' (
+      name: endpoint:
+      lib.nameValuePair "observability_endpoint_server/${name}" {
+        category = "observability_endpoint_server";
+        inherit name;
+        commonName = "prometheus-${name}.${config.networking.hostName}";
+        inherit (endpoint) port sans secretPrefix;
+      }
+    ) inventoryEndpoints;
 
     assertions = [
       {

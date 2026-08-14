@@ -16,14 +16,19 @@ let
 in
 {
   config = lib.mkIf (enabledServices != { }) {
-    host.pki.managedCertificates = lib.mkAfter (
-      lib.mapAttrsToList (name: service: {
+    host.pki.certificates = lib.mapAttrs' (
+      name: service:
+      lib.nameValuePair "internal_https_server/${name}" {
         category = "internal_https_server";
         inherit name;
-        inherit (service) secretPrefix;
-        certificateField = "server_crt_unencrypted";
-      }) certificateServices
-    );
+        inherit (service)
+          port
+          sans
+          secretPrefix
+          ;
+        commonName = service.serverName;
+      }
+    ) certificateServices;
 
     sops.secrets = lib.concatMapAttrs (serviceName: service: {
       "${secretName serviceName}-server-crt" =

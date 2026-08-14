@@ -7,7 +7,7 @@ let
   rootConfig = config;
   cfg = config.host.pki;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
-  managedCertificateType = lib.types.submodule {
+  certificateType = lib.types.submodule {
     options = {
       category = lib.mkOption {
         type = lib.types.enum [
@@ -16,7 +16,7 @@ let
           "observability_endpoint_server"
           "observability_client"
         ];
-        description = "Managed certificate category used by rotation and monitoring.";
+        description = "Certificate issuance and rotation category.";
       };
       name = lib.mkOption {
         type = lib.types.nonEmptyStr;
@@ -26,12 +26,20 @@ let
         type = lib.types.nonEmptyStr;
         description = "SOPS key prefix containing the certificate.";
       };
-      certificateField = lib.mkOption {
-        type = lib.types.enum [
-          "client_crt_unencrypted"
-          "server_crt_unencrypted"
-        ];
-        description = "Certificate field below the SOPS key prefix.";
+      commonName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Certificate common name.";
+      };
+      sans = lib.mkOption {
+        type = with lib.types; listOf nonEmptyStr;
+        default = [ ];
+        apply = lib.unique;
+        description = "Certificate subject alternative names.";
+      };
+      port = lib.mkOption {
+        type = with lib.types; nullOr port;
+        default = null;
+        description = "Service port associated with this certificate, when applicable.";
       };
     };
   };
@@ -212,22 +220,31 @@ in
       description = "Internal PKI client identities used by services on this host.";
     };
 
-    managedCertificates = lib.mkOption {
-      type = lib.types.listOf managedCertificateType;
-      default = [ ];
+    certificates = lib.mkOption {
+      type = lib.types.attrsOf certificateType;
+      default = { };
       internal = true;
-      description = "Normalized repository-managed certificates owned by this host configuration.";
+      description = "Canonical certificate issuance and rotation registry for this host.";
     };
   };
 
   config = {
-    host.pki.managedCertificates = lib.mapAttrsToList (name: client: {
-      category =
-        if client.category == "observability" then "observability_client" else "internal_https_client";
-      inherit name;
-      inherit (client) secretPrefix;
-      certificateField = "client_crt_unencrypted";
-    }) enabledClients;
+    host.pki.certificates = lib.mapAttrs' (
+      name: client:
+      let
+        category =
+          if client.category == "observability" then "observability_client" else "internal_https_client";
+      in
+      lib.nameValuePair "${category}/${name}" {
+        inherit category name;
+        inherit (client) commonName secretPrefix;
+        sans =
+          if client.category == "observability" then
+            client.sans
+          else
+            lib.unique ([ client.commonName ] ++ client.sans);
+      }
+    ) enabledClients;
 
     assertions = import ./assertions.nix {
       inherit
