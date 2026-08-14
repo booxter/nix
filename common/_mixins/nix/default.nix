@@ -12,7 +12,7 @@ in
 {
   imports = [
     ./cache
-    ./flakehub-cache
+    ./flakehub
   ];
 
   config = {
