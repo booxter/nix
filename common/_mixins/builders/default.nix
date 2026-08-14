@@ -83,6 +83,8 @@ in
     builder = {
       enable = lib.mkEnableOption "Nix builder participation";
 
+      client.enable = lib.mkEnableOption "remote Nix builder consumption";
+
       sshIdentityFileName = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "SSH identity file name used to authenticate to builders in this realm.";

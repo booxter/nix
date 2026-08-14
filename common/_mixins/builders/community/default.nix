@@ -13,7 +13,7 @@ let
     "kvm"
     "nixos-test"
   ];
-  enabled = config.host.realm == "home" && config.host.userEnvironment.roles.developer.enable;
+  enabled = config.host.realm == "home" && config.host.nix.builder.client.enable;
 in
 {
   config = lib.mkIf enabled {

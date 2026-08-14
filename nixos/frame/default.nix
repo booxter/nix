@@ -25,6 +25,7 @@ in
     };
     desktop.hyprland.enable = true;
     nix.builder = {
+      client.enable = true;
       enable = true;
       speedFactor = 200;
     };

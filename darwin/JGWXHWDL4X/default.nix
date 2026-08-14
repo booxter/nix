@@ -23,6 +23,7 @@ in
     en0.kind = "wireless";
     en7.kind = "ethernet";
   };
+  host.nix.builder.client.enable = true;
   host.security.secrets.operator.ageIdentity = {
     backend = "secure-enclave";
     path = "/Users/${username}/Library/Application Support/sops/age/work.txt";

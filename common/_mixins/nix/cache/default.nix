@@ -45,7 +45,7 @@ in
     };
 
     host.nix.caches.proxmox = lib.mkIf (
-      config.host.nix.builder.enable || config.host.userEnvironment.roles.developer.enable
+      config.host.nix.builder.enable || config.host.nix.builder.client.enable
     ) proxmoxCache;
 
     nix.settings = {

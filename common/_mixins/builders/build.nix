@@ -19,7 +19,7 @@ let
   };
 in
 {
-  config = lib.mkIf config.host.userEnvironment.roles.developer.enable {
+  config = lib.mkIf config.host.nix.builder.client.enable {
     nix.buildMachines = lib.mapAttrsToList toBuildMachine builders;
   };
 }

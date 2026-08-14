@@ -12,7 +12,7 @@ let
   '';
 in
 {
-  config = lib.mkIf config.host.userEnvironment.roles.developer.enable {
+  config = lib.mkIf config.host.nix.builder.client.enable {
     programs.ssh = {
       knownHosts = lib.mapAttrs' toKnownHost externalBuilders;
       extraConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList toSshConfig builders);
