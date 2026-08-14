@@ -144,9 +144,26 @@ let
   };
 in
 {
-  imports = [ ./vnc/assertions.nix ];
-
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = config.host.hardware.drmCard != null;
+        message = "VNC remote control requires host.hardware.drmCard";
+      }
+      {
+        assertion = config.host.hardware.displayMode != null;
+        message = "VNC remote control requires host.hardware.displayMode";
+      }
+      {
+        assertion = config.host.hardware.scale != null;
+        message = "VNC remote control requires host.hardware.scale";
+      }
+      {
+        assertion = config.host.hardware.displays != [ ];
+        message = "VNC remote control requires at least one host.hardware.displays entry";
+      }
+    ];
+
     host.remote-control.inventory.vnc = {
       connection = "ssh-tunnel";
       displays = lib.imap0 (index: display: {
