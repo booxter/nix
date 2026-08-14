@@ -24,7 +24,7 @@ let
       };
     in
     {
-      inherit (contribution) id owner;
+      inherit (contribution) id;
       title = service.displayName;
       inherit (service.dashboard) icon section;
       endpoints = {
@@ -33,24 +33,45 @@ let
       };
     }
   ) web.dashboard;
-  directEntries = builtins.concatLists (
-    lib.mapAttrsToList (
-      owner: hostConfig:
-      lib.mapAttrsToList (id: entry: {
-        inherit id owner;
-        inherit (entry)
-          icon
-          section
-          title
-          ;
-        endpoints = {
-          internal = {
-            inherit (entry) checkUrl url;
-          };
-          public = null;
+  directEntries = builtins.concatMap (
+    hostConfig:
+    lib.mapAttrsToList (id: entry: {
+      inherit id;
+      inherit (entry)
+        icon
+        section
+        title
+        ;
+      endpoints = {
+        internal = {
+          inherit (entry) checkUrl url;
         };
-      }) hostConfig.host.dashboard.entries
-    ) hostConfigs
-  );
+        public = null;
+      };
+    }) hostConfig.host.dashboard.entries
+  ) (builtins.attrValues hostConfigs);
+  entries = webEntries ++ directEntries;
+  byIdLists = builtins.groupBy (entry: entry.id) entries;
+  duplicateIds = lib.filterAttrs (_: values: builtins.length values != 1) byIdLists;
+  forScope =
+    scope:
+    map (
+      entry:
+      entry
+      // {
+        endpoint =
+          if scope == "public" || entry.endpoints.public != null then
+            entry.endpoints.public
+          else
+            entry.endpoints.internal;
+      }
+    ) (builtins.filter (entry: scope != "public" || entry.endpoints.public != null) entries);
 in
-import ../_mixins/dashboard/model.nix { inherit directEntries lib webEntries; }
+assert lib.assertMsg (duplicateIds == { }) (
+  "dashboard entry IDs must be unique across the fleet: "
+  + lib.concatStringsSep ", " (builtins.attrNames duplicateIds)
+);
+{
+  internal = forScope "internal";
+  public = forScope "public";
+}
