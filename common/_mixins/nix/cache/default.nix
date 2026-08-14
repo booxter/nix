@@ -6,24 +6,6 @@
 }:
 let
   readPublicKey = import ../../../_lib/read-public-key.nix { inherit lib; };
-  priorityType = with lib.types; nullOr int;
-  priorityOptions = {
-    default = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Default Nix substituter priority override.";
-    };
-    lan = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Nix substituter priority on the LAN.";
-    };
-    wan = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Nix substituter priority on the WAN.";
-    };
-  };
   commonCacheOptions = {
     substituter = lib.mkOption {
       type = lib.types.nonEmptyStr;
@@ -34,21 +16,15 @@ let
       default = [ ];
       description = "Signing keys trusted for this cache.";
     };
-    priorities = priorityOptions;
-    reachability = {
-      kind = lib.mkOption {
-        type = lib.types.enum [
-          "public"
-          "internal"
-        ];
-        default = "public";
-        description = "Whether the cache is publicly reachable or requires a private network.";
-      };
-      network = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Private network required to reach an internal cache.";
-      };
+    priorities = lib.mkOption {
+      type = with lib.types; attrsOf int;
+      default = { };
+      description = "Substituter priority overrides keyed by network profile.";
+    };
+    requiredNetwork = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Private network required to reach this cache, or null for a public cache.";
     };
   };
   contributionType = lib.types.submodule {

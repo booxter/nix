@@ -8,9 +8,7 @@ let
   username = config.host.username;
   caches = builtins.attrValues config.host.nix.caches;
   internalNetworks = lib.unique (
-    map (cache: cache.reachability.network) (
-      builtins.filter (cache: cache.reachability.kind == "internal") caches
-    )
+    map (cache: cache.requiredNetwork) (builtins.filter (cache: cache.requiredNetwork != null) caches)
   );
   client = config.host.wireguard.client;
   enable =
