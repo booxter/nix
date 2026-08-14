@@ -77,11 +77,9 @@ in
     };
 
     host.observability.prometheusEndpoints.lolek = {
-      enable = true;
       port = cfg.metrics.port;
       upstream = "http://127.0.0.1:${toString cfg.metrics.internalPort}/metrics";
       scrape = {
-        enable = true;
         profile = "application";
         component = "lolek";
         service = "lolek";

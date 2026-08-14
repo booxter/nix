@@ -32,14 +32,12 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.observability.prometheusEndpoints.${metricsName} = {
-      enable = true;
       port = publicPort;
       path = "/metrics";
       upstream = "http://${internalAddress}:${toString internalPort}/metrics";
       serverName = "${config.networking.hostName}.${config.host.network.lanDomain}";
       secretPrefix = "prometheus/${metricsName}";
       scrape = {
-        enable = true;
         jobName = "wireguard";
         profile = "network";
         component = "wireguard";

@@ -6,12 +6,9 @@
 let
   cfg = config.host.observability;
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
-  enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
-  inventoryEndpoints = lib.filterAttrs (
-    name: _: !(name == "node_exporter" && cfg.nodeExporter.mtls.enable)
-  ) enabledEndpoints;
+  endpoints = cfg.prometheusEndpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
-  endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues enabledEndpoints);
+  endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues endpoints);
 in
 {
   options.host.observability = {
@@ -23,8 +20,6 @@ in
             { name, ... }:
             {
               options = {
-                enable = lib.mkEnableOption "mTLS-protected Prometheus scrape endpoint";
-
                 listenAddress = lib.mkOption {
                   type = str;
                   default = "0.0.0.0";
@@ -77,65 +72,69 @@ in
                   description = "Extra nginx location config for this endpoint.";
                 };
 
-                scrape = {
-                  enable = lib.mkEnableOption "central Prometheus discovery for this endpoint";
+                scrape = lib.mkOption {
+                  type = nullOr (submodule {
+                    options = {
+                      jobName = lib.mkOption {
+                        type = str;
+                        default = name;
+                        description = "Prometheus scrape job name.";
+                      };
 
-                  jobName = lib.mkOption {
-                    type = str;
-                    default = name;
-                    description = "Prometheus scrape job name.";
-                  };
+                      profile = lib.mkOption {
+                        type = str;
+                        default = "infrastructure";
+                        description = "Semantic scrape policy consumed by alerts and dashboards.";
+                      };
 
-                  profile = lib.mkOption {
-                    type = str;
-                    default = "infrastructure";
-                    description = "Semantic scrape policy consumed by alerts and dashboards.";
-                  };
+                      component = lib.mkOption {
+                        type = str;
+                        default = name;
+                        description = "Component producing the metrics.";
+                      };
 
-                  component = lib.mkOption {
-                    type = str;
-                    default = name;
-                    description = "Component producing the metrics.";
-                  };
+                      service = lib.mkOption {
+                        type = nullOr str;
+                        default = null;
+                        description = "Fleet web service represented by the endpoint, when applicable.";
+                      };
 
-                  service = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Fleet web service represented by the endpoint, when applicable.";
-                  };
+                      availability = lib.mkOption {
+                        type = enum [
+                          "always"
+                          "intermittent"
+                        ];
+                        default = if config.host.hardware.isLaptop then "intermittent" else "always";
+                        description = "Availability policy for this scrape target.";
+                      };
 
-                  availability = lib.mkOption {
-                    type = enum [
-                      "always"
-                      "intermittent"
-                    ];
-                    default = if config.host.hardware.isLaptop then "intermittent" else "always";
-                    description = "Availability policy for this scrape target.";
-                  };
+                      interval = lib.mkOption {
+                        type = nullOr str;
+                        default = null;
+                        description = "Optional Prometheus scrape interval.";
+                      };
 
-                  interval = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Optional Prometheus scrape interval.";
-                  };
+                      timeout = lib.mkOption {
+                        type = nullOr str;
+                        default = null;
+                        description = "Optional Prometheus scrape timeout.";
+                      };
 
-                  timeout = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Optional Prometheus scrape timeout.";
-                  };
+                      labels = lib.mkOption {
+                        type = attrsOf str;
+                        default = { };
+                        description = "Additional static labels attached to this target.";
+                      };
 
-                  labels = lib.mkOption {
-                    type = attrsOf str;
-                    default = { };
-                    description = "Additional static labels attached to this target.";
-                  };
-
-                  metricRelabelConfigs = lib.mkOption {
-                    type = listOf attrs;
-                    default = [ ];
-                    description = "Metric relabeling rules supplied by the endpoint owner.";
-                  };
+                      metricRelabelConfigs = lib.mkOption {
+                        type = listOf attrs;
+                        default = [ ];
+                        description = "Metric relabeling rules supplied by the endpoint owner.";
+                      };
+                    };
+                  });
+                  default = null;
+                  description = "Optional central Prometheus discovery policy for this endpoint.";
                 };
               };
             }
@@ -152,7 +151,7 @@ in
     };
   };
 
-  config = lib.mkIf (cfg.enable && enabledEndpoints != { }) {
+  config = lib.mkIf (cfg.enable && endpoints != { }) {
     host.pki.certificates = lib.mapAttrs' (
       name: endpoint:
       lib.nameValuePair "observability_endpoint_server/${name}" {
@@ -161,7 +160,7 @@ in
         commonName = "prometheus-${name}.${config.networking.hostName}";
         inherit (endpoint) port sans secretPrefix;
       }
-    ) inventoryEndpoints;
+    ) endpoints;
 
     assertions = [
       {
@@ -181,7 +180,7 @@ in
           mode = "0400";
           restartUnits = [ "nginx.service" ];
         }
-      ) enabledEndpoints
+      ) endpoints
       // lib.mapAttrs' (
         endpointName: endpoint:
         lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
@@ -191,7 +190,7 @@ in
           mode = "0400";
           restartUnits = [ "nginx.service" ];
         }
-      ) enabledEndpoints;
+      ) endpoints;
 
     services.nginx = {
       enable = true;
@@ -221,12 +220,12 @@ in
             extraConfig = endpoint.locationExtraConfig;
           };
         }
-      ) enabledEndpoints;
+      ) endpoints;
     };
 
     networking.firewall.allowedTCPPorts = lib.unique (
       builtins.concatMap (endpoint: lib.optional endpoint.openFirewall endpoint.port) (
-        builtins.attrValues enabledEndpoints
+        builtins.attrValues endpoints
       )
     );
 

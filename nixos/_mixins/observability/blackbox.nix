@@ -119,7 +119,6 @@ in
       host.observability = {
         blackbox.enable = true;
         prometheusEndpoints.blackbox = {
-          enable = true;
           listenAddress = cfg.remote.listenAddress;
           port = cfg.remote.port;
           path = "/probe";

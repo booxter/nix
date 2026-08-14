@@ -25,7 +25,7 @@ let
       })
       (
         lib.filterAttrs (
-          _: endpoint: endpoint.enable && endpoint.scrape.enable
+          _: endpoint: endpoint.scrape != null
         ) hostConfig.host.observability.prometheusEndpoints
       )
   ) (builtins.attrNames configurations);

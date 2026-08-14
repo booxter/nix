@@ -49,11 +49,9 @@ in
     };
 
     host.observability.prometheusEndpoints.smartctl = lib.mkIf observabilityEnabled {
-      enable = true;
       port = exporterPort;
       upstream = "http://127.0.0.1:${toString exporterInternalPort}/metrics";
       scrape = {
-        enable = true;
         profile = "hardware";
         component = "smartctl";
       };

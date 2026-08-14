@@ -575,22 +575,24 @@ in
 
     (lib.mkIf (enabledMetrics != { }) {
       host.observability.prometheusEndpoints = lib.mapAttrs (_: metric: {
-        enable = true;
         inherit (metric)
           openFirewall
           path
           port
           upstream
           ;
-        scrape = {
-          enable = metric.discover;
-          inherit (metric) jobName labels;
-          profile = "application";
-          component = metric.serviceName;
-          service = metric.serviceName;
-          availability = metric.serviceAvailability;
-          interval = metric.scrapeInterval;
-        };
+        scrape =
+          if metric.discover then
+            {
+              inherit (metric) jobName labels;
+              profile = "application";
+              component = metric.serviceName;
+              service = metric.serviceName;
+              availability = metric.serviceAvailability;
+              interval = metric.scrapeInterval;
+            }
+          else
+            null;
       }) enabledMetrics;
     })
 
