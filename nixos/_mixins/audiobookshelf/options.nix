@@ -4,11 +4,6 @@ let
     { name, ... }:
     {
       options = {
-        source = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "Registered media library exposed as ${name} in Audiobookshelf.";
-        };
-
         displayName = lib.mkOption {
           type = lib.types.nonEmptyStr;
           default = name;
@@ -51,8 +46,7 @@ let
       };
 
       libraries = lib.mkOption {
-        type = lib.types.attrsOf libraryType;
-        default = { };
+        type = lib.types.addCheck (lib.types.attrsOf libraryType) (libraries: libraries != { });
         description = "Registered media libraries managed by Audiobookshelf.";
       };
 

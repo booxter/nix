@@ -2,16 +2,15 @@
 let
   cfg = config.host.audiobookshelf;
   mediaModel = import ../media-libraries/model.nix { inherit config lib; };
-  resolveLibrary = name: library: {
-    inherit name;
+  resolveLibrary = source: library: {
+    inherit source;
     inherit (library)
       access
       displayName
       icon
       provider
-      source
       ;
-    media = mediaModel.resolved.${library.source} or null;
+    media = mediaModel.resolved.${source} or null;
   };
 in
 {
