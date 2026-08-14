@@ -8,25 +8,17 @@ let
   username = config.host.username;
   userHome = config.users.users.${username}.home;
   smartCard = config.host.security.smartCard;
-  sudo = config.host.security.sudo;
   sshCredentials = config.host.security.ssh.credentials;
   useSecretive = sshCredentials.backend == "secretive";
 in
 {
-  options.host.security = {
-    smartCard.enable = lib.mkEnableOption "macOS SmartCardServices authentication";
-
-    sudo.touchId.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.host.hardware.hasTouchId;
-      description = "Whether local sudo authentication uses Touch ID.";
-    };
-  };
+  options.host.security.smartCard.enable =
+    lib.mkEnableOption "macOS SmartCardServices authentication";
 
   config = lib.mkMerge [
     {
-      security.pam.services.sudo_local.touchIdAuth = lib.mkDefault sudo.touchId.enable;
-      security.pam.services.sudo_local.reattach = lib.mkDefault sudo.touchId.enable;
+      security.pam.services.sudo_local.touchIdAuth = lib.mkDefault config.host.hardware.hasTouchId;
+      security.pam.services.sudo_local.reattach = lib.mkDefault config.host.hardware.hasTouchId;
 
       security.sudo.extraConfig = ''
         Defaults    timestamp_timeout=30
