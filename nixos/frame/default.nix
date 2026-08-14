@@ -50,8 +50,8 @@ in
     luks = {
       enable = true;
       remoteUnlock = {
-        enable = true;
         kernelModules = [ "r8169" ];
+        hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
         authorizedKeys = [
           (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
           (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
