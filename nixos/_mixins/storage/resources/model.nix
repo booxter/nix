@@ -4,7 +4,7 @@
   outputs,
 }:
 let
-  accounts = config.host.accounts;
+  identities = config.host.storage.identities;
   hostName = config.networking.hostName;
   nodeConfig = nodeConfig: {
     inherit (nodeConfig.host.storage) claims resources volumes;
@@ -76,16 +76,16 @@ let
       ownerName = if directory.owner == null then defaults.owner else directory.owner;
       groupName = if directory.group == null then defaults.group else directory.group;
       group =
-        if groupName == "root" || builtins.hasAttr groupName accounts.groups then
+        if groupName == "root" || builtins.hasAttr groupName identities.groups then
           groupName
         else
           throw "storage resource ${resource.providerName}.${resource.resourceName} directory '${path}' references unknown group '${groupName}'";
-      ownerAccount = accounts.users.${ownerName} or null;
+      ownerIdentity = identities.users.${ownerName} or null;
       owner =
         if ownerName == "root" then
           "root"
-        else if ownerAccount != null then
-          toString ownerAccount.uid
+        else if ownerIdentity != null then
+          toString ownerIdentity.uid
         else
           throw "storage resource ${resource.providerName}.${resource.resourceName} directory '${path}' references unknown owner '${ownerName}'";
     in
@@ -121,20 +121,20 @@ let
   managedGroups = builtins.listToAttrs (
     map (name: {
       inherit name;
-      value.gid = accounts.groups.${name}.gid;
+      value.gid = identities.groups.${name};
     }) identityGroupNames
   );
   managedUsers = builtins.listToAttrs (
     map (
       name:
       let
-        account = accounts.users.${name};
+        identity = identities.users.${name};
       in
       {
         inherit name;
         value = {
           isSystemUser = true;
-          inherit (account) group uid;
+          inherit (identity) group uid;
           home =
             localResources.${
               lib.findFirst (

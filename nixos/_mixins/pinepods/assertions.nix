@@ -78,8 +78,8 @@ in
       message = "host.pinepods.integrations.podPeople.url must be set";
     }
     {
-      assertion = builtins.hasAttr cfg.user config.host.accounts.users;
-      message = "host.pinepods.user must select a registered host account";
+      assertion = builtins.hasAttr cfg.user config.host.storage.identities.users;
+      message = "host.pinepods.user must select a shared storage identity";
     }
   ];
 }

@@ -12,7 +12,7 @@ let
     else
       outputs.nixosConfigurations.${claim.provider}.config.host.storage.resources.${claim.resource}
         or null;
-  account = config.host.accounts.users.${cfg.user} or null;
+  identity = config.host.storage.identities.users.${cfg.user} or null;
   vpnNamespace = config.host.vpn.namespaces.${cfg.vpn.namespace} or null;
   baseDir = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
   downloadModel = import ../downloads/model.nix { inherit config lib; };
@@ -55,10 +55,10 @@ let
 in
 {
   inherit
-    account
     baseDir
     cfg
     claim
+    identity
     routeCategories
     routes
     vpnNamespace
@@ -68,5 +68,5 @@ in
   incompleteDir = if baseDir == null then null else "${baseDir}/.incomplete";
   storageGroup = if storageResource == null then null else storageResource.sharedGroup;
   servers = lib.mapAttrs renderServer cfg.servers;
-  ready = claim != null && account != null && vpnNamespace != null;
+  ready = claim != null && identity != null && vpnNamespace != null;
 }

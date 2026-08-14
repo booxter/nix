@@ -8,7 +8,7 @@ let
   cfg = config.host.romm;
   storage = import ../storage/resources/model.nix { inherit config lib outputs; };
   claim = storage.localClaims.${cfg.storage.claim} or null;
-  account = config.host.accounts.users.${cfg.user} or null;
+  identity = config.host.storage.identities.users.${cfg.user} or null;
   ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
   accessGroups =
     if ssoApplication == null then
@@ -47,7 +47,7 @@ let
   };
   image = containerImage.ref;
   inherit (containerImage) imageFile;
-  uid = if account == null then null else account.uid;
+  uid = if identity == null then null else identity.uid;
   podmanSocket =
     if uid == null then null else "http+unix:///run/user/${toString uid}/podman/podman.sock";
   commonEnvironment = {
@@ -118,7 +118,7 @@ let
   registrationReady =
     claim != null
     && storageGroup != null
-    && account != null
+    && identity != null
     && ssoApplication != null
     && ssoApplication.adminGroup != null
     && ssoApplication.editorGroup != null
@@ -130,7 +130,6 @@ in
 {
   inherit
     accessGroups
-    account
     admins
     authorizedUsers
     basePath
@@ -141,6 +140,7 @@ in
     groupsFor
     image
     imageFile
+    identity
     oidcClient
     podmanSocket
     publicUrl

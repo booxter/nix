@@ -1,22 +1,15 @@
 { config, lib, ... }:
 let
-  cfg = config.host.accounts;
-  uids = map (account: account.uid) (builtins.attrValues cfg.users);
-  gids = map (group: group.gid) (builtins.attrValues cfg.groups);
+  cfg = config.host.storage.identities;
+  uids = map (identity: identity.uid) (builtins.attrValues cfg.users);
+  gids = builtins.attrValues cfg.groups;
 in
 {
-  options.host.accounts = {
+  options.host.storage.identities = {
     groups = lib.mkOption {
-      type = lib.types.attrsOf (
-        lib.types.submodule {
-          options.gid = lib.mkOption {
-            type = lib.types.ints.positive;
-            description = "Numeric group ID shared across hosts.";
-          };
-        }
-      );
+      type = lib.types.attrsOf lib.types.ints.positive;
       default = { };
-      description = "Groups whose numeric identities are stable across hosts.";
+      description = "Groups whose numeric identities are shared across storage boundaries.";
     };
 
     users = lib.mkOption {
@@ -25,7 +18,7 @@ in
           options = {
             uid = lib.mkOption {
               type = lib.types.ints.positive;
-              description = "Numeric user ID shared across hosts.";
+              description = "Numeric user ID shared across storage boundaries.";
             };
 
             group = lib.mkOption {
@@ -37,15 +30,15 @@ in
         }
       );
       default = { };
-      description = "Users whose numeric identities are stable across hosts.";
+      description = "Users whose numeric identities are shared across storage boundaries.";
     };
   };
 
   config = {
-    host.accounts = {
+    host.storage.identities = {
       groups = {
-        media.gid = 169;
-        paperless.gid = 315;
+        media = 169;
+        paperless = 315;
       };
 
       users = {
@@ -64,16 +57,16 @@ in
     assertions = [
       {
         assertion = builtins.length uids == builtins.length (lib.unique uids);
-        message = "host.accounts user UIDs must be unique";
+        message = "host.storage.identities user UIDs must be unique";
       }
       {
         assertion = builtins.length gids == builtins.length (lib.unique gids);
-        message = "host.accounts group GIDs must be unique";
+        message = "host.storage.identities group GIDs must be unique";
       }
     ]
-    ++ lib.mapAttrsToList (name: account: {
-      assertion = account.group == null || builtins.hasAttr account.group cfg.groups;
-      message = "host.accounts.users.${name} references unknown group '${toString account.group}'";
+    ++ lib.mapAttrsToList (name: identity: {
+      assertion = identity.group == null || builtins.hasAttr identity.group cfg.groups;
+      message = "host.storage.identities.users.${name} references unknown group '${toString identity.group}'";
     }) cfg.users;
   };
 }

@@ -128,7 +128,7 @@ in
   config = lib.mkIf (model.resolved != { }) {
     users.users.${model.cfg.user} = {
       isSystemUser = true;
-      uid = config.host.accounts.users.${model.cfg.user}.uid;
+      uid = config.host.storage.identities.users.${model.cfg.user}.uid;
       inherit (model.cfg) group;
     };
 

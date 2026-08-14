@@ -32,8 +32,8 @@ in
         message = "The selected RomM storage claim must provide a shared group";
       }
       {
-        assertion = model.account != null;
-        message = "host.romm.user must select a registered host account";
+        assertion = model.identity != null;
+        message = "host.romm.user must select a shared storage identity";
       }
       {
         assertion = ssoApplication != null;

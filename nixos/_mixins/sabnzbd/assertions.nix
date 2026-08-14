@@ -24,8 +24,8 @@ in
         message = "The selected SABnzbd storage claim must use host.sabnzbd.group";
       }
       {
-        assertion = model.account != null;
-        message = "host.sabnzbd.user must select a registered host account";
+        assertion = model.identity != null;
+        message = "host.sabnzbd.user must select a shared storage identity";
       }
       {
         assertion = model.vpnNamespace != null;

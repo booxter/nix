@@ -6,12 +6,14 @@ in
 {
   assertions = [
     {
-      assertion = model.enabled == { } || builtins.hasAttr model.cfg.user config.host.accounts.users;
-      message = "host.slskd.user must reference a managed host account.";
+      assertion =
+        model.enabled == { } || builtins.hasAttr model.cfg.user config.host.storage.identities.users;
+      message = "host.slskd.user must reference a shared storage identity.";
     }
     {
-      assertion = model.enabled == { } || builtins.hasAttr model.cfg.group config.host.accounts.groups;
-      message = "host.slskd.group must reference a managed host group.";
+      assertion =
+        model.enabled == { } || builtins.hasAttr model.cfg.group config.host.storage.identities.groups;
+      message = "host.slskd.group must reference a shared storage identity.";
     }
     {
       assertion = unique model.apiBindings;

@@ -14,7 +14,6 @@
       inputs.sops-nix.nixosModules.sops
     ]
     ++ [
-      ./_mixins/accounts
       ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade

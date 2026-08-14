@@ -22,7 +22,7 @@ in
       isSystemUser = true;
       group = storageGroup;
       home = "/var/empty";
-      uid = config.host.accounts.users.${cfg.user}.uid;
+      uid = config.host.storage.identities.users.${cfg.user}.uid;
     };
   };
 }

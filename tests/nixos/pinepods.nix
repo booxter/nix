@@ -60,10 +60,6 @@ let
     {
       options = {
         host = {
-          accounts = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
           backups.sources = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };
@@ -93,6 +89,10 @@ let
             };
           };
           storage = {
+            identities = lib.mkOption {
+              type = lib.types.attrsOf lib.types.anything;
+              default = { };
+            };
             claims = lib.mkOption {
               type = lib.types.attrsOf lib.types.anything;
               default = { };
@@ -172,7 +172,7 @@ pkgs.testers.runNixOSTest {
       networking.hostName = "podcast-node";
 
       host = {
-        accounts.users.pinepods.uid = 911;
+        storage.identities.users.pinepods.uid = 911;
         pinepods = {
           enable = true;
           publicHostName = "podcasts.example.invalid";
