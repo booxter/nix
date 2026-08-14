@@ -25,14 +25,6 @@ in
       description = "Hosts that must remain available until this host shuts down.";
     };
 
-    stage = lib.mkOption {
-      type = with lib.types; nullOr ints.unsigned;
-      default = model.depths.${hostName};
-      readOnly = true;
-      internal = true;
-      description = "Derived shutdown stage, where larger values shut down earlier.";
-    };
-
     delaySeconds = lib.mkOption {
       type = with lib.types; nullOr ints.positive;
       default = model.delays.${hostName} or null;
