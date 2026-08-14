@@ -90,8 +90,6 @@ in
       };
     };
 
-    host.backups.sources.step-ca.paths = lib.mkIf enabled [ stateDir ];
-
     host.observability = lib.mkIf enabled {
       enable = true;
       nodeExporter.mtls.enable = true;
