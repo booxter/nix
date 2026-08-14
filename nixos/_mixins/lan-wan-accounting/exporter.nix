@@ -5,17 +5,15 @@
   ...
 }:
 let
-  cfg = config.host.observability.lanWan;
-  egressOverrideEnabled = cfg.wanEgressOverride != null;
+  override = config.host.observability.lanWan.wanEgressOverride;
   textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   exporter = pkgs.callPackage ./pkgs/lan-wan-exporter { };
-  override = cfg.wanEgressOverride;
   exportCommand = [
     (lib.getExe exporter)
     "--output"
     "${textfileDir}/lan-wan.prom"
   ]
-  ++ lib.optionals egressOverrideEnabled [
+  ++ lib.optionals (override != null) [
     "--wan-subclass"
     override.name
     "--interface"

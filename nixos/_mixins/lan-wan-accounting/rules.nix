@@ -4,10 +4,9 @@
   tableName,
 }:
 let
-  cfg = config.host.observability.lanWan;
   interfacePathMode = config.host.proxmox.node == null;
   interface = config.host.network.primaryInterface;
-  override = cfg.wanEgressOverride;
+  override = config.host.observability.lanWan.wanEgressOverride;
   overrideEnabled = override != null;
   inputChain = if interfacePathMode then "prerouting" else "input";
   outputChain = if interfacePathMode then "postrouting" else "output";
