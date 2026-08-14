@@ -18,7 +18,6 @@
   };
 
   host.audiobookshelf = {
-    enable = true;
     stateDir = "/data/.state/nixarr/audiobookshelf";
     publicHostName = "au.${config.host.network.publicDomain}";
     libraries = {

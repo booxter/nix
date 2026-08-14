@@ -69,7 +69,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets."audiobookshelf/bootstrap/api_token" = {
       key = cfg.automation.secret;
       mode = "0400";

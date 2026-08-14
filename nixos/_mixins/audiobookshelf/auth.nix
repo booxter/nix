@@ -17,7 +17,7 @@ let
     };
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.audiobookshelf.auth = {
       mode = "oidc";
       oidcRegistration = {

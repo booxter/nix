@@ -4,7 +4,7 @@ let
   inherit (model) cfg;
 in
 {
-  config.assertions = lib.optionals cfg.enable [
+  config.assertions = lib.optionals (cfg != null) [
     {
       assertion = cfg.publicHostName != null;
       message = "host.shelfmark.publicHostName must be set";

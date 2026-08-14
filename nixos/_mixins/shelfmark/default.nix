@@ -14,7 +14,7 @@ in
     ./web.nix
   ];
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.shelfmark.enable = true;
   };
 }

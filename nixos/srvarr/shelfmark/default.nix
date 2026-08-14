@@ -22,7 +22,6 @@
   };
 
   host.shelfmark = {
-    enable = true;
     stateDir = "/data/.state/nixarr/shelfmark";
     publicHostName = "shelf.${config.host.network.publicDomain}";
     libraries = {

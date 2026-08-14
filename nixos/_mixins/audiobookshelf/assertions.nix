@@ -7,7 +7,7 @@ let
   displayNames = map (library: library.displayName) libraries;
 in
 {
-  config.assertions = lib.optionals cfg.enable (
+  config.assertions = lib.optionals (cfg != null) (
     [
       {
         assertion = cfg.publicHostName != null;

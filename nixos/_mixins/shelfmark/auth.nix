@@ -11,7 +11,7 @@ let
   groupClaims = lib.genAttrs accessGroups (group: [ group ]);
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.shelfmark.auth = {
       mode = "oidc";
       oidcRegistration = {

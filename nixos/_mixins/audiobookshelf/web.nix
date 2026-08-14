@@ -4,7 +4,7 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.nginx.commonHttpConfig = ''
       map $http_x_forwarded_host $audiobookshelf_proxy_host {
           default $http_x_forwarded_host;

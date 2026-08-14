@@ -14,7 +14,7 @@ let
   );
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims = lib.mkMerge (
       map (claim: {
         ${claim}.attachments.shelfmark.unit = "shelfmark";

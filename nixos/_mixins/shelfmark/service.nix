@@ -14,7 +14,7 @@ let
   );
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.shelfmark = {
       enable = true;
       package = cfg.package;

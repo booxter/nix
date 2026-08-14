@@ -23,7 +23,7 @@ let
   sabnzbdSecret = if model.usenet == null then null else model.usenet.client.authentication.secret;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.shelfmark.environment = torrentEnvironment // usenetEnvironment // converterEnvironment;
 
     sops.templates."shelfmark.env" = {

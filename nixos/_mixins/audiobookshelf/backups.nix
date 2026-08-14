@@ -3,7 +3,7 @@ let
   cfg = config.host.audiobookshelf;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null && cfg.backups.enable) {
     host.backups.sources.audiobookshelf = {
       title = "Audiobookshelf";
       capture.type = "scheduled";

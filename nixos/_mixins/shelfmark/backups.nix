@@ -3,7 +3,7 @@ let
   cfg = config.host.shelfmark;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null && cfg.backups.enable) {
     host.backups.sources.shelfmark = {
       title = "Shelfmark";
       paths = [ "${cfg.stateDir}/plugins" ];

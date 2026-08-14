@@ -4,7 +4,7 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.shelfmark = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       public = {
