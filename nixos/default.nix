@@ -27,6 +27,7 @@
       ./_mixins/degoog
       ./_mixins/dashboard
       ./_mixins/downloads
+      ./_mixins/disko
       ./_mixins/ebook-converter
       ./_mixins/external-service.nix
       ./_mixins/glance

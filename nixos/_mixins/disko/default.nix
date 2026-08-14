@@ -1,47 +1,21 @@
+{ config, lib, ... }:
+let
+  layout = config.host.disko.layout;
+in
 {
-  device ? "/dev/nvme0n1",
-  ...
-}:
-{
-  disko.devices = {
-    disk = {
-      main = {
-        # When using disko-install, we will overwrite this value from the commandline
-        inherit device;
-        type = "disk";
-        content = {
-          type = "gpt";
-          partitions = {
-            MBR = {
-              type = "EF02"; # for grub MBR
-              size = "1M";
-              priority = 1; # Needs to be first partition
-            };
-            ESP = {
-              type = "EF00";
-              size = "1G";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-                mountOptions = [ "umask=0077" ];
-              };
-            };
-            root = {
-              size = "100%";
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
-              };
-            };
-          };
-        };
-      };
-    };
+  options.host.disko.layout = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.enum [
+        "plain"
+        "luks"
+      ]
+    );
+    default = null;
+    description = "Managed root disk layout, or null when disk layout is managed externally.";
   };
 
-  boot.loader.grub.enable = true;
-  boot.loader.grub.efiSupport = true;
-  boot.loader.grub.efiInstallAsRemovable = true;
+  config = lib.mkMerge [
+    (lib.mkIf (layout == "plain") (import ./plain.nix { }))
+    (lib.mkIf (layout == "luks") (import ./luks.nix { }))
+  ];
 }

@@ -18,7 +18,7 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf guest.enable (import ../disko { device = "/dev/sda"; }))
+    (lib.mkIf guest.enable (import ../disko/plain.nix { device = "/dev/sda"; }))
     (lib.mkIf guest.enable {
       host.power.shutdown.before.proxmox-cluster = model.guestNodes.${config.networking.hostName} or [ ];
 

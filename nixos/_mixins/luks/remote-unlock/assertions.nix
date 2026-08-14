@@ -5,8 +5,8 @@ in
 {
   assertions = [
     {
-      assertion = cfg == null || config.host.luks.enable;
-      message = "host.luks.remoteUnlock requires host.luks.enable";
+      assertion = cfg == null || config.host.disko.layout == "luks";
+      message = "host.luks.remoteUnlock requires the LUKS disk layout";
     }
   ];
 }

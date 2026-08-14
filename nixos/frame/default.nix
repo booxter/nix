@@ -15,6 +15,7 @@ in
   ];
 
   host = {
+    disko.layout = "luks";
     desktop.hyprland.enable = true;
     nix.builder = {
       enable = true;
@@ -48,7 +49,6 @@ in
       };
     };
     luks = {
-      enable = true;
       remoteUnlock = {
         kernelModules = [ "r8169" ];
         hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";

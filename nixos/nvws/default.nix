@@ -8,6 +8,7 @@ in
   hardware.cpu.intel.updateMicrocode = true;
 
   host = {
+    disko.layout = "plain";
     realm = "work";
     nix.builder = {
       enable = true;

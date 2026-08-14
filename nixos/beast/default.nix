@@ -11,6 +11,8 @@
   hardware.cpu.intel.updateMicrocode = true;
 
   host = {
+    disko.layout = "plain";
+
     hardware.gpu = {
       vendors = [ "intel" ];
       render.device = "/dev/dri/renderD128";
