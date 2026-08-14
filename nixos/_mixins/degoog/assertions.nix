@@ -58,7 +58,7 @@ in
     }
     {
       assertion = ssoApplication != null;
-      message = "host.degoog.sso.application must name a declared SSO application.";
+      message = "Degoog requires the degoog SSO application.";
     }
     {
       assertion = ssoApplication == null || ssoApplication.adminGroup != null;

@@ -35,7 +35,7 @@ in
       inherit upstream;
       public = {
         enable = true;
-        hostName = cfg.web.publicHostName;
+        hostName = "goo.${config.host.network.publicDomain}";
       };
       health = {
         frontend = {

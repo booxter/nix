@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ lib, ... }:
 let
-  cfg = config.host.degoog;
   extensionRegistration = lib.types.submodule {
     options = {
       extension = lib.mkOption {
@@ -34,26 +33,6 @@ in
 {
   options.host.degoog = {
     enable = lib.mkEnableOption "Degoog search aggregator";
-
-    publicUrl = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = if cfg.enable then config.host.web.services.goo.public.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved public Degoog URL.";
-    };
-
-    web.publicHostName = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "goo.${config.host.network.publicDomain}";
-      description = "Public Degoog hostname.";
-    };
-
-    sso.application = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "degoog";
-      description = "SSO application defining Degoog users and administrators.";
-    };
 
     catalog = {
       engines = lib.mkOption {

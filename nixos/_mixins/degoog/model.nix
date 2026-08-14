@@ -18,7 +18,7 @@ let
       null;
   jellyfinHost = resolveHost cfg.integrations.jellyfin.host;
   rommHost = resolveHost cfg.integrations.romm.host;
-  ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
+  ssoApplication = config.host.sso.applications.degoog or null;
   adminUsers =
     if ssoApplication == null || ssoApplication.adminGroup == null then
       { }
