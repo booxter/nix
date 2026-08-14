@@ -65,9 +65,23 @@ let
   };
 in
 {
-  imports = [ ./presets.nix ];
+  imports = [
+    ./nvidia.nix
+    ./personal.nix
+  ];
 
   options.host.userEnvironment = {
+    preset = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.enum [
+          "nvidia"
+          "personal"
+        ]
+      );
+      default = null;
+      description = "Named fleet policy providing overridable user-environment defaults.";
+    };
+
     smtpTransports = lib.mkOption {
       type = lib.types.attrsOf smtpTransportType;
       default = { };
