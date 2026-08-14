@@ -24,17 +24,6 @@
         description = "Human-readable description of the locally attached UPS.";
       };
 
-      baseDelaySeconds = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 900;
-        description = "Shutdown delay assigned to the UPS server before dependency stages are subtracted.";
-      };
-
-      separationSeconds = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 150;
-        description = "Seconds separating each shutdown dependency stage.";
-      };
     };
 
     client.server = lib.mkOption {

@@ -20,7 +20,7 @@ in
   config = lib.mkMerge [
     (lib.mkIf guest.enable (import ../disko/plain.nix { device = "/dev/sda"; }))
     (lib.mkIf guest.enable {
-      host.power.shutdown.before.proxmox-cluster = model.guestNodes.${config.networking.hostName} or [ ];
+      host.power.shutdown.leadSeconds.proxmox-guest = 150;
 
       host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
         hosts = model.guestNodes.${config.networking.hostName} or [ ];

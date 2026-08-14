@@ -21,6 +21,10 @@ let
   node = config.host.proxmox.node.enable;
   guest = config.host.proxmox.guest.enable;
   participates = node || guest;
+  guestUpsServer = model.hosts.${hostName}.upsServer;
+  mismatchedUpsNodes = builtins.filter (name: model.hosts.${name}.upsServer != guestUpsServer) (
+    model.guestNodes.${hostName} or [ ]
+  );
 in
 {
   config.assertions = [
@@ -65,6 +69,10 @@ in
     {
       assertion = model.guestNodes.${hostName} != [ ];
       message = "${hostName} references Proxmox cluster '${config.host.proxmox.cluster}' without any nodes in realm '${config.host.realm}'";
+    }
+    {
+      assertion = guestUpsServer == null || mismatchedUpsNodes == [ ];
+      message = "${hostName} and its Proxmox nodes must use the same UPS server; mismatched nodes: ${lib.concatStringsSep ", " mismatchedUpsNodes}";
     }
   ];
 }

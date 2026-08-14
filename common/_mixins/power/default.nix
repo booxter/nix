@@ -1,33 +1,28 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
-  hostName = config.networking.hostName;
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  cfg = config.host.power.shutdown;
+  participates = config.host.ups.server.enable || config.host.ups.client.server != null;
 in
 {
-  imports = [ ./assertions.nix ];
-
   options.host.power.shutdown = {
-    before = lib.mkOption {
-      type = with lib.types; attrsOf (listOf nonEmptyStr);
+    leadSeconds = lib.mkOption {
+      type = with lib.types; attrsOf ints.positive;
       default = { };
       internal = true;
-      description = "Hosts that must remain available until this host shuts down.";
+      description = "Shutdown lead-time contributions subtracted from the UPS base delay.";
     };
 
     delaySeconds = lib.mkOption {
       type = with lib.types; nullOr ints.positive;
-      default = model.delays.${hostName} or null;
+      default =
+        if participates then
+          900 - lib.foldl' builtins.add 0 (builtins.attrValues cfg.leadSeconds)
+        else
+          null;
       readOnly = true;
       internal = true;
       description = "Derived delay after an on-battery event before shutdown.";

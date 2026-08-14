@@ -10,7 +10,5 @@ in
     ./work.nix
   ];
 
-  config.host.power.shutdown.before.ups-server = lib.optional (
-    cfg.client.server != null
-  ) cfg.client.server;
+  config.host.power.shutdown.leadSeconds.ups-client = lib.mkIf (cfg.client.server != null) 150;
 }
