@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.host.desktop.hyprland.enable) {
+  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.host.desktop.enable) {
     enable = true;
 
     iconTheme = {

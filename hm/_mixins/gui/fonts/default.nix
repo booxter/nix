@@ -5,7 +5,7 @@
   ...
 }:
 let
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.hyprland.enable;
+  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   config = lib.mkIf graphical {

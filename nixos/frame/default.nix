@@ -23,7 +23,7 @@ in
         (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
       ];
     };
-    desktop.hyprland.enable = true;
+    desktop.enable = true;
     nix.builder = {
       client.enable = true;
       enable = true;

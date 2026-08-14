@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.hm.wireshark;
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.hyprland.enable;
+  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   options.host.hm.wireshark.enable = lib.mkEnableOption "Wireshark network protocol analyzer";

@@ -2,5 +2,5 @@
 {
   imports = [ ./hyprland.nix ];
 
-  options.host.desktop.hyprland.enable = lib.mkEnableOption "Hyprland desktop";
+  options.host.desktop.enable = lib.mkEnableOption "graphical desktop";
 }

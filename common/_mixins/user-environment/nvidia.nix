@@ -3,7 +3,7 @@ let
   cfg = config.host.userEnvironment;
   username = config.host.username;
   presetDefault = lib.mkOverride 900;
-  graphical = config.nixpkgs.hostPlatform.isDarwin || config.host.desktop.hyprland.enable;
+  graphical = config.nixpkgs.hostPlatform.isDarwin || config.host.desktop.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "nvidia") (
