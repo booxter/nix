@@ -21,11 +21,8 @@ let
   degoogExtensions = packages.officialExtensions.override {
     extensions = extensionNames;
     extraExtensionSources = lib.listToAttrs (
-      lib.filter (entry: entry.value != null) (
-        lib.imap0 (index: name: {
-          inherit name;
-          value = (builtins.elemAt selectedRegistrations index).source;
-        }) extensionNames
+      map (registration: lib.nameValuePair registration.extension registration.source) (
+        builtins.filter (registration: registration.source != null) selectedRegistrations
       )
     );
   };
