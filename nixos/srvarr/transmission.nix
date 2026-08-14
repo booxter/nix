@@ -3,10 +3,6 @@
   host.transmission = {
     enable = true;
     stateDir = "/data/.state/nixarr/transmission";
-    storage = {
-      claim = "media";
-      relativePath = "torrents";
-    };
     dynamicIpUpdater = {
       enable = true;
       cookieJarFile = "/data/.secret/mam.cookies";
@@ -15,18 +11,9 @@
       namespace = "wg";
       peerPort = 45486;
     };
-    trackerPolicy = {
-      enable = true;
-      nonPreferred = {
-        lowPriorityRatio = 3.0;
-        pauseRatio = 6.0;
-      };
-    };
+    trackerPolicy.enable = true;
     torrentCleaner = {
       enable = true;
-      minimumAgeDays = 30;
-      maximumAgeDays = 365;
-      schedule = "15m";
     };
   };
 }

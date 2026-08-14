@@ -38,7 +38,7 @@ in
       message = "host.adaptiveUploadPolicy requires at least one destination";
     }
     {
-      assertion = transmissionDestination == null || (transmission != null && transmission.enable);
+      assertion = transmissionDestination == null || transmission != null;
       message = "host.adaptiveUploadPolicy Transmission destination requires local Transmission";
     }
     {

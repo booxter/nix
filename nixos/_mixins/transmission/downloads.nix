@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  transmissionModel,
+  ...
+}:
 let
   cfg = config.host.transmission;
 in
@@ -7,7 +12,7 @@ in
     host.downloads.clients.transmission = {
       kind = "torrent";
       implementation = "transmission";
-      endpoint = cfg.rpcUrl;
+      endpoint = transmissionModel.rpcUrl;
       storageDefaults = {
         owner = cfg.user;
         group = cfg.group;

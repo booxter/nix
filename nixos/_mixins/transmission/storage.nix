@@ -10,16 +10,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    host.transmission = {
-      inherit (model)
-        completeDir
-        incompleteDir
-        rpcPort
-        rpcUrl
-        watchDir
-        ;
-    };
-
     host.storage.claims.${cfg.storage.claim} = {
       directories =
         builtins.listToAttrs (

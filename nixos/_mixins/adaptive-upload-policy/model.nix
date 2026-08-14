@@ -8,7 +8,11 @@ let
   cfg = config.host.adaptiveUploadPolicy;
   transmissionDestination = if cfg == null then null else cfg.destinations.transmission;
   qosDestination = if cfg == null then null else cfg.destinations.qos;
-  transmission = if transmissionDestination == null then null else config.host.transmission or null;
+  transmission =
+    if transmissionDestination == null then
+      null
+    else
+      config.host.downloads.clients.transmission or null;
   jellyfinHostName = if cfg == null then null else cfg.source.jellyfin.host;
   jellyfinHost =
     if jellyfinHostName == null then
@@ -96,10 +100,10 @@ in
       null
     else
       {
-        rpcUrl = if transmission == null then null else transmission.rpcUrl;
+        rpcUrl = if transmission == null then null else transmission.endpoint;
         requestTimeoutSeconds = 20;
         inherit (transmissionDestination) headroomPercent;
-        local = transmission != null && transmission.enable;
+        local = transmission != null;
       };
 
   qosOutput =

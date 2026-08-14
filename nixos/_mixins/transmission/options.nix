@@ -125,36 +125,6 @@
       };
     };
 
-    rpcUrl = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      readOnly = true;
-      internal = true;
-    };
-
-    rpcPort = lib.mkOption {
-      type = lib.types.port;
-      readOnly = true;
-      internal = true;
-    };
-
-    completeDir = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      readOnly = true;
-      internal = true;
-    };
-
-    incompleteDir = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      readOnly = true;
-      internal = true;
-    };
-
-    watchDir = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      readOnly = true;
-      internal = true;
-    };
-
     user = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "transmission";
