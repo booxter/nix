@@ -18,14 +18,6 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    host.maintenance.guards.jellyfin-playback = {
-      command = waitForIdle;
-      before = [
-        "upgrade"
-        "switch"
-        "reboot"
-      ];
-      waitIndefinitely = true;
-    };
+    host.maintenance.guards.jellyfin-playback = waitForIdle;
   };
 }

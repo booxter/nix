@@ -49,20 +49,7 @@ let
     "--output"
     "${textfileDir}/nixos-upgrade.prom"
   ];
-  guards = config.host.maintenance.guards;
-  guardsBefore =
-    operations:
-    builtins.attrValues (
-      lib.filterAttrs (
-        _: guard: lib.any (operation: builtins.elem operation guard.before) operations
-      ) guards
-    );
-  upgradeGuards = guardsBefore (
-    [ "upgrade" ] ++ lib.optional (model.plan.reboot.mode == "with-upgrade") "reboot"
-  );
-  rebootGuards = guardsBefore [ "reboot" ];
-  commands = selectedGuards: map (guard: guard.command) selectedGuards;
-  waitsIndefinitely = selectedGuards: lib.any (guard: guard.waitIndefinitely) selectedGuards;
+  maintenanceGuards = builtins.attrValues config.host.maintenance.guards;
 in
 {
   config = lib.mkMerge [
@@ -95,10 +82,10 @@ in
       };
     }
 
-    (lib.mkIf (upgradeGuards != [ ]) {
+    (lib.mkIf (maintenanceGuards != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig = {
-        ExecStartPre = commands upgradeGuards;
-        TimeoutStartSec = lib.mkIf (waitsIndefinitely upgradeGuards) "infinity";
+        ExecStartPre = maintenanceGuards;
+        TimeoutStartSec = "infinity";
       };
     })
 
@@ -108,8 +95,8 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = rebootIfNeeded;
-          ExecStartPre = commands rebootGuards;
-          TimeoutStartSec = lib.mkIf (waitsIndefinitely rebootGuards) "infinity";
+          ExecStartPre = maintenanceGuards;
+          TimeoutStartSec = lib.mkIf (maintenanceGuards != [ ]) "infinity";
         };
       };
 
