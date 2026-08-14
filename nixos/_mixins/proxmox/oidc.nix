@@ -67,6 +67,17 @@ in
       );
     }
     (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = config.services.proxmox-ve.enable;
+          message = "host.proxmox.oidc requires services.proxmox-ve.enable.";
+        }
+        {
+          assertion = cfg.scopes != [ ];
+          message = "host.proxmox.oidc.scopes must not be empty.";
+        }
+      ];
+
       host.web.services."proxmox-${config.networking.hostName}".auth = {
         mode = "oidc";
         registrationName = "proxmox";

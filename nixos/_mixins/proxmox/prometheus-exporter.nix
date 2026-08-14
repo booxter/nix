@@ -15,6 +15,13 @@ in
       );
     }
     (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = config.services.proxmox-ve.enable;
+          message = "host.proxmox.prometheusExporter requires services.proxmox-ve.enable.";
+        }
+      ];
+
       host.observability.inventory.proxmox = {
         cluster = config.host.proxmox.node.cluster;
         realm = config.host.realm;

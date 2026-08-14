@@ -2,6 +2,7 @@
   config,
   inputs,
   lib,
+  outputs,
   pkgs,
   system,
   ...
@@ -10,9 +11,23 @@ let
   bridgeName = "vmbr0";
   macAddress = config.host.network.macAddress;
   primaryInterface = config.host.network.primaryInterface;
+  model = import ./model.nix {
+    inherit config lib outputs;
+  };
 in
 {
   config = lib.mkIf (config.host.proxmox.node != null) {
+    assertions = [
+      {
+        assertion = primaryInterface != null;
+        message = "host.proxmox.node requires host.network.primaryInterface";
+      }
+      {
+        assertion = builtins.length model.controllerNames == 1;
+        message = "Proxmox cluster '${config.host.proxmox.node.cluster}' in realm '${config.host.realm}' requires exactly one controller";
+      }
+    ];
+
     host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
     host.autoUpgrade.claims.proxmox-node = {

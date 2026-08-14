@@ -15,15 +15,30 @@ let
       outputs
       ;
   };
+  guestUpsServer = model.hosts.${config.networking.hostName}.upsServer;
+  mismatchedUpsNodes = builtins.filter (
+    name: model.hosts.${name}.upsServer != guestUpsServer
+  ) model.nodeNames;
 in
 {
   config = lib.mkMerge [
     (lib.mkIf (guest != null) (import ../disko/plain.nix { device = "/dev/sda"; }))
     (lib.mkIf (guest != null) {
+      assertions = [
+        {
+          assertion = model.nodeNames != [ ];
+          message = "${config.networking.hostName} references Proxmox cluster '${guest.cluster}' without any nodes in realm '${config.host.realm}'";
+        }
+        {
+          assertion = guestUpsServer == null || mismatchedUpsNodes == [ ];
+          message = "${config.networking.hostName} and its Proxmox nodes must use the same UPS server; mismatched nodes: ${lib.concatStringsSep ", " mismatchedUpsNodes}";
+        }
+      ];
+
       host.power.shutdown.leadSeconds.proxmox-guest = 150;
 
       host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
-        hosts = model.guestNodes.${config.networking.hostName} or [ ];
+        hosts = model.nodeNames;
       };
 
       virtualisation.proxmox = {

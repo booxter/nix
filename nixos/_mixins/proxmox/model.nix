@@ -14,7 +14,6 @@ let
       else
         null;
     controller = hostConfig.host.proxmox.node != null && hostConfig.host.proxmox.node.controller;
-    isGuest = hostConfig.host.proxmox.guest != null;
     isNode = hostConfig.host.proxmox.node != null;
     realm = hostConfig.host.realm;
     upsServer = if hostConfig.host.ups.server != null then name else hostConfig.host.ups.client.server;
@@ -25,5 +24,13 @@ let
     // {
       ${hostName} = hostView hostName config;
     };
+  local = hosts.${hostName};
+  nodes = lib.filterAttrs (
+    _: host: host.isNode && host.realm == local.realm && host.cluster == local.cluster
+  ) hosts;
 in
-(import ./lib.nix { inherit lib; }).build hosts
+{
+  inherit hosts;
+  nodeNames = builtins.attrNames nodes;
+  controllerNames = builtins.attrNames (lib.filterAttrs (_: host: host.controller) nodes);
+}

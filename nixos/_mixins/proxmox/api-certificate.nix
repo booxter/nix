@@ -30,6 +30,13 @@ in
       host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.proxmox.node != null);
     }
     (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = config.services.proxmox-ve.enable;
+          message = "host.proxmox.apiCertificate requires services.proxmox-ve.enable.";
+        }
+      ];
+
       host.pki.certificates."internal_https_server/proxmox-api" = {
         category = "internal_https_server";
         name = "proxmox-api";

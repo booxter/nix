@@ -18,8 +18,7 @@ let
     isNode = configuration.config.host.proxmox.node != null;
     realm = configuration.config.host.realm;
   }) outputs.nixosConfigurations;
-  proxmoxModel = (import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; }).build hostViews;
-  vmNodes = proxmoxModel.guestNodes;
+  vmNodes = import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; } hostViews;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = proxmoxPkgs.nixmoxer;
     inherit vmNodes;

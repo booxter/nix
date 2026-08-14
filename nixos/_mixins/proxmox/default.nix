@@ -1,8 +1,7 @@
-{ inputs, ... }:
+{ config, inputs, ... }:
 {
   imports = [
     ./api-certificate.nix
-    ./assertions.nix
     ./controller.nix
     ./guest.nix
     ./node.nix
@@ -11,5 +10,12 @@
     ./prometheus-exporter.nix
     inputs.proxmox-nixos.nixosModules.declarative-vms
     inputs.proxmox-nixos.nixosModules.proxmox-ve
+  ];
+
+  assertions = [
+    {
+      assertion = config.host.proxmox.node == null || config.host.proxmox.guest == null;
+      message = "a host cannot be both a Proxmox node and guest";
+    }
   ];
 }
