@@ -9,17 +9,19 @@ let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
   certInstallUnit = "proxmox-api-certificate.service";
+  certificateSecret = "internal-https-proxmox-server-crt";
+  keySecret = "internal-https-proxmox-server-key";
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
   certInstallCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' proxmoxHostTools "proxmox-install-api-certificate")
     "--certificate-source"
-    config.sops.secrets.proxmoxApiServerCrt.path
+    config.sops.secrets.${certificateSecret}.path
     "--certificate-destination"
     cfg.certificatePath
     "--key-source"
-    config.sops.secrets.proxmoxApiServerKey.path
+    config.sops.secrets.${keySecret}.path
     "--key-destination"
     cfg.keyPath
   ];
@@ -36,14 +38,6 @@ in
           message = "host.proxmox.apiCertificate requires services.proxmox-ve.enable.";
         }
       ];
-
-      host.pki.certificates."internal_https_server/proxmox-api" = {
-        category = "internal_https_server";
-        name = "proxmox-api";
-        commonName = cfg.serverName;
-        sans = lib.unique ([ cfg.serverName ] ++ cfg.serverAliases);
-        inherit (cfg) port secretPrefix;
-      };
 
       # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
       # 8006 listener for Proxmox-native/root fallback access.
@@ -79,22 +73,14 @@ in
         };
       };
 
-      sops.secrets.proxmoxApiServerCrt = {
-        key = "${cfg.secretPrefix}/server_crt_unencrypted";
-        mode = "0400";
-        restartUnits = [
-          certInstallUnit
-          "pveproxy.service"
-        ];
-      };
-      sops.secrets.proxmoxApiServerKey = {
-        key = "${cfg.secretPrefix}/server_key";
-        mode = "0400";
-        restartUnits = [
-          certInstallUnit
-          "pveproxy.service"
-        ];
-      };
+      sops.secrets.${certificateSecret}.restartUnits = [
+        certInstallUnit
+        "pveproxy.service"
+      ];
+      sops.secrets.${keySecret}.restartUnits = [
+        certInstallUnit
+        "pveproxy.service"
+      ];
 
       systemd.services.proxmox-api-certificate = {
         description = "Install internal PKI certificate for Proxmox VE API";
