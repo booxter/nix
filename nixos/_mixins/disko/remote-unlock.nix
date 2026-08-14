@@ -4,8 +4,7 @@
   ...
 }:
 let
-  layout = config.host.disko.layout;
-  cfg = if builtins.isAttrs layout then layout.remoteUnlock else null;
+  cfg = config.host.disko.remoteUnlock;
   unlockKey =
     key:
     ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${key}'';

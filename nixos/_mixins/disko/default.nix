@@ -1,7 +1,6 @@
 { config, lib, ... }:
 let
   layout = config.host.disko.layout;
-  encrypted = builtins.isAttrs layout;
   remoteUnlockType = lib.types.submodule {
     options = {
       kernelModules = lib.mkOption {
@@ -27,28 +26,42 @@ let
       };
     };
   };
-  luksLayoutType = lib.types.submodule {
-    options.remoteUnlock = lib.mkOption {
+in
+{
+  imports = [ ./remote-unlock.nix ];
+
+  options.host.disko = {
+    layout = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (enum [
+          "luks"
+          "plain"
+        ]);
+      default = null;
+      description = "Managed root layout, or null when managed externally.";
+    };
+
+    remoteUnlock = lib.mkOption {
       type = lib.types.nullOr remoteUnlockType;
       default = null;
       description = "Remote LUKS unlock through initrd SSH.";
     };
   };
-in
-{
-  imports = [ ./remote-unlock.nix ];
-
-  options.host.disko.layout = lib.mkOption {
-    type = lib.types.nullOr (lib.types.either (lib.types.enum [ "plain" ]) luksLayoutType);
-    default = null;
-    description = "Plain or LUKS-encrypted managed root layout, or null when managed externally.";
-  };
 
   config = lib.mkMerge [
     (lib.mkIf (layout == "plain") (import ./plain.nix { }))
-    (lib.mkIf encrypted {
+    (lib.mkIf (layout == "luks") {
       host.autoUpgrade.claims.luks.reboot.cadence = "never";
     })
-    (lib.mkIf encrypted (import ./luks.nix { }))
+    (lib.mkIf (layout == "luks") (import ./luks.nix { }))
+    {
+      assertions = [
+        {
+          assertion = config.host.disko.remoteUnlock == null || layout == "luks";
+          message = "host.disko.remoteUnlock requires the LUKS layout";
+        }
+      ];
+    }
   ];
 }

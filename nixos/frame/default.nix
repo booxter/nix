@@ -15,13 +15,16 @@ in
   ];
 
   host = {
-    disko.layout.remoteUnlock = {
-      kernelModules = [ "r8169" ];
-      hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
-      authorizedKeys = [
-        (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
-        (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
-      ];
+    disko = {
+      layout = "luks";
+      remoteUnlock = {
+        kernelModules = [ "r8169" ];
+        hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
+        authorizedKeys = [
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
+        ];
+      };
     };
     desktop.enable = true;
     nix.builder = {
