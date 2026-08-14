@@ -1,8 +1,4 @@
-{
-  addUserToApiGroup ? true,
-  apiGroup,
-  name,
-}:
+{ name }:
 {
   config,
   lib,
@@ -114,10 +110,6 @@ in
 
     systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
 
-    users.groups.${apiGroup} = { };
-    users.users.${cfg.user} = {
-      isSystemUser = true;
-      extraGroups = lib.optional addUserToApiGroup apiGroup;
-    };
+    users.users.${cfg.user}.isSystemUser = true;
   };
 }

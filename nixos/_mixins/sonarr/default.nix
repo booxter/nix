@@ -1,8 +1,5 @@
 {
   imports = [
-    (import ../servarr {
-      name = "sonarr";
-      apiGroup = "sonarr-api";
-    })
+    (import ../servarr { name = "sonarr"; })
   ];
 }

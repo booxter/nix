@@ -6,11 +6,7 @@ let
 in
 {
   imports = [
-    (import ../servarr {
-      name = "lidarr";
-      apiGroup = "lidarr-api";
-      addUserToApiGroup = false;
-    })
+    (import ../servarr { name = "lidarr"; })
     ./cue-splitter.nix
   ];
 

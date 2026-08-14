@@ -106,15 +106,11 @@ in
       };
     };
 
-    users.groups = {
-      ${cfg.group} = { };
-      prowlarr-api = { };
-    };
+    users.groups.${cfg.group} = { };
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
       home = "/var/empty";
-      extraGroups = [ "prowlarr-api" ];
     };
   };
 }

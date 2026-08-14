@@ -1,10 +1,7 @@
 { lib, pkgs, ... }:
 {
   imports = [
-    (import ../servarr {
-      name = "radarr";
-      apiGroup = "radarr-api";
-    })
+    (import ../servarr { name = "radarr"; })
     ./letterboxd-list.nix
   ];
 
