@@ -15,7 +15,6 @@ let
       interval
       metricRelabelConfigs
       path
-      timeout
       ;
   };
   incompatibleJobs = builtins.attrNames (
@@ -39,7 +38,6 @@ let
       }) entries;
     }
     // lib.optionalAttrs (first.interval != null) { scrape_interval = first.interval; }
-    // lib.optionalAttrs (first.timeout != null) { scrape_timeout = first.timeout; }
     // lib.optionalAttrs (first.metricRelabelConfigs != [ ]) {
       metric_relabel_configs = first.metricRelabelConfigs;
     };

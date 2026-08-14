@@ -55,22 +55,10 @@ in
                   description = "Server name presented by the nginx vhost for this endpoint.";
                 };
 
-                sans = lib.mkOption {
-                  type = listOf str;
-                  default = cfg.prometheusEndpointSans;
-                  description = "DNS SANs to include when issuing this endpoint certificate.";
-                };
-
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/${name}";
                   description = "Secret prefix containing server_crt_unencrypted and server_key for this endpoint.";
-                };
-
-                locationExtraConfig = lib.mkOption {
-                  type = lines;
-                  default = "";
-                  description = "Extra nginx location config for this endpoint.";
                 };
 
                 scrape = lib.mkOption {
@@ -115,12 +103,6 @@ in
                         description = "Optional Prometheus scrape interval.";
                       };
 
-                      timeout = lib.mkOption {
-                        type = nullOr str;
-                        default = null;
-                        description = "Optional Prometheus scrape timeout.";
-                      };
-
                       labels = lib.mkOption {
                         type = attrsOf str;
                         default = { };
@@ -145,11 +127,6 @@ in
       description = "Nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
 
-    prometheusEndpointSans = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = config.host.network.certificateDnsNames;
-      description = "Default DNS SANs for host-level Prometheus mTLS server certificates.";
-    };
   };
 
   config = lib.mkIf (cfg.enable && endpoints != { }) {
@@ -159,7 +136,6 @@ in
         interval
         jobName
         metricRelabelConfigs
-        timeout
         ;
       target = "${config.networking.hostName}:${toString endpoint.port}";
       labels = {
@@ -180,7 +156,8 @@ in
         category = "observability_endpoint_server";
         inherit name;
         commonName = "prometheus-${name}.${config.networking.hostName}";
-        inherit (endpoint) port sans secretPrefix;
+        inherit (endpoint) port secretPrefix;
+        sans = config.host.network.certificateDnsNames;
       }
     ) endpoints;
 
@@ -237,10 +214,7 @@ in
             ssl_client_certificate ${pkiRootCaPath};
             ssl_verify_client on;
           '';
-          locations.${endpoint.path} = {
-            proxyPass = endpoint.upstream;
-            extraConfig = endpoint.locationExtraConfig;
-          };
+          locations.${endpoint.path}.proxyPass = endpoint.upstream;
         }
       ) endpoints;
     };

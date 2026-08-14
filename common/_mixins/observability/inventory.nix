@@ -50,7 +50,6 @@ let
       jobName = lib.mkOption { type = lib.types.nonEmptyStr; };
       path = lib.mkOption { type = lib.types.str; };
       interval = lib.mkOption { type = with lib.types; nullOr str; };
-      timeout = lib.mkOption { type = with lib.types; nullOr str; };
       metricRelabelConfigs = lib.mkOption { type = with lib.types; listOf attrs; };
       target = lib.mkOption { type = lib.types.nonEmptyStr; };
       labels = lib.mkOption { type = with lib.types; attrsOf str; };
