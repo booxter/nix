@@ -8,6 +8,40 @@
 let
   devCfg = osConfig.host.userEnvironment.features.dev;
   cfg = config.host.hm.dev.codex;
+  secretValueType = lib.types.either lib.types.nonEmptyStr (
+    lib.types.submodule {
+      options.secret = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SOPS secret containing the MCP configuration value.";
+      };
+    }
+  );
+  httpServerType = lib.types.submodule {
+    options = {
+      url = lib.mkOption {
+        type = secretValueType;
+        description = "Public URL or SOPS-backed URL for the HTTP MCP server.";
+      };
+      oauth = lib.mkOption {
+        type = lib.types.nullOr (
+          lib.types.submodule {
+            options.clientId = lib.mkOption {
+              type = lib.types.nullOr secretValueType;
+              default = null;
+              description = "Public or SOPS-backed OAuth client ID.";
+            };
+          }
+        );
+        default = null;
+        description = "OAuth configuration, or null for an unauthenticated HTTP server.";
+      };
+      instructions = lib.mkOption {
+        type = lib.types.lines;
+        default = "";
+        description = "Default agent instructions for using the MCP server.";
+      };
+    };
+  };
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   mcps = import ./mcp.nix {
     inherit
@@ -39,12 +73,19 @@ in
 {
   imports = [ ./codex-warmer.nix ];
 
-  options.host.hm.dev.codex.mcp.requiredSecrets = lib.mkOption {
-    type = with lib.types; listOf nonEmptyStr;
-    default = mcps.requiredSecrets;
-    readOnly = true;
-    internal = true;
-    description = "SOPS secrets required by configured Codex MCP servers.";
+  options.host.hm.dev.codex.mcp = {
+    httpServers = lib.mkOption {
+      type = lib.types.attrsOf httpServerType;
+      default = { };
+      description = "HTTP MCP servers contributed to Codex by this host.";
+    };
+    requiredSecrets = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = mcps.requiredSecrets;
+      readOnly = true;
+      internal = true;
+      description = "SOPS secrets required by configured Codex MCP servers.";
+    };
   };
 
   config = {

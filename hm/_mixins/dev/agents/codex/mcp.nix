@@ -6,15 +6,16 @@
 }:
 let
   homeRealm = osConfig.host.realm == "home";
-  workHost = osConfig.host.realm == "work" && osConfig.networking.hostName == "JGWXHWDL4X";
-  maasNames = [
-    "maas_gitlab"
-    "maas_jira"
-    "maas_nvbugs"
-    "maas_redmine"
-  ];
-  urlSecretFor = name: "codex/mcp/${name}/url";
-  clientIdSecretFor = name: "codex/mcp/${name}/oauth/client_id";
+  httpServers = config.host.hm.dev.codex.mcp.httpServers;
+  isSecretValue = builtins.isAttrs;
+  resolveValue =
+    value: if isSecretValue value then osConfig.sops.placeholder.${value.secret} else value;
+  secretsFor =
+    server:
+    lib.optional (isSecretValue server.url) server.url.secret
+    ++ lib.optionals (server.oauth != null && server.oauth.clientId != null) (
+      lib.optional (isSecretValue server.oauth.clientId) server.oauth.clientId.secret
+    );
   stdioServers = {
     nixos.command = lib.getExe pkgs.mcp-nixos;
   }
@@ -34,16 +35,6 @@ let
       ];
     };
   };
-  httpServers = lib.optionalAttrs workHost (
-    lib.genAttrs maasNames (name: {
-      url = osConfig.sops.placeholder.${urlSecretFor name};
-      oauth =
-        { }
-        // lib.optionalAttrs (name == "maas_nvbugs") {
-          clientId = osConfig.sops.placeholder.${clientIdSecretFor name};
-        };
-    })
-  );
   renderStdio =
     server:
     {
@@ -55,21 +46,25 @@ let
     server:
     {
       default_tools_approval_mode = "writes";
-      inherit (server) url;
+      url = resolveValue server.url;
+    }
+    // lib.optionalAttrs (server.oauth != null) {
       auth = "oauth";
     }
-    // lib.optionalAttrs (server.oauth ? clientId) { oauth.client_id = server.oauth.clientId; };
+    // lib.optionalAttrs (server.oauth != null && server.oauth.clientId != null) {
+      oauth.client_id = resolveValue server.oauth.clientId;
+    };
   instructions = lib.concatMapStringsSep "\n" (server: server.instructions) (
     lib.filter (server: (server.instructions or "") != "") (
       builtins.attrValues stdioServers ++ builtins.attrValues httpServers
     )
   );
-  requiredSecrets = lib.optionals workHost (
-    map urlSecretFor maasNames ++ [ (clientIdSecretFor "maas_nvbugs") ]
-  );
+  requiredSecrets = lib.unique (lib.concatMap secretsFor (builtins.attrValues httpServers));
 in
 {
   inherit instructions requiredSecrets;
-  oauthServerNames = builtins.attrNames httpServers;
+  oauthServerNames = builtins.attrNames (
+    lib.filterAttrs (_: server: server.oauth != null) httpServers
+  );
   settings = lib.mapAttrs (_: renderStdio) stdioServers // lib.mapAttrs (_: renderHttp) httpServers;
 }

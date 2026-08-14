@@ -6,6 +6,12 @@
 let
   username = config.host.username;
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+  maasServer = name: {
+    url.secret = "codex/mcp/${name}/url";
+    oauth = lib.optionalAttrs (name == "maas_nvbugs") {
+      clientId.secret = "codex/mcp/${name}/oauth/client_id";
+    };
+  };
 in
 {
   system.stateVersion = 5;
@@ -33,4 +39,11 @@ in
     };
   };
   host.nix.cacheWarmer.enable = true;
+
+  home-manager.users.${username}.host.hm.dev.codex.mcp.httpServers = {
+    maas_gitlab = maasServer "maas_gitlab";
+    maas_jira = maasServer "maas_jira";
+    maas_nvbugs = maasServer "maas_nvbugs";
+    maas_redmine = maasServer "maas_redmine";
+  };
 }
