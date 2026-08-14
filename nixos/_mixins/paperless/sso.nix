@@ -12,7 +12,6 @@ in
 {
   config = lib.mkIf (cfg.enable && ssoApplication != null) {
     host.web.services.paperless.auth = {
-      mode = "oidc";
       oidcRegistration = {
         displayName = "Paperless";
         originUrls = [ "${paperlessService.public.url}/accounts/oidc/sso/login/callback/" ];

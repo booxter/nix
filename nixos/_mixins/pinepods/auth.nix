@@ -18,7 +18,6 @@ in
 {
   config = lib.mkIf (cfg.enable && model.bootstrapReady) {
     host.web.services.pinepods.auth = {
-      mode = "oidc";
       oidcRegistration = {
         displayName = "PinePods";
         originUrls = [ "${service.public.url}/api/auth/callback" ];

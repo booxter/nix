@@ -158,7 +158,6 @@ in
         '';
       };
       auth = {
-        mode = "oidc";
         oidcRegistration = {
           displayName = "Audiobookshelf";
           originUrls = [

@@ -32,7 +32,6 @@ in
         proxy_send_timeout 300s;
       '';
       auth = {
-        mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "WatchState";
           port = 4182;

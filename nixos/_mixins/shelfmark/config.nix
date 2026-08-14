@@ -177,7 +177,6 @@ in
         '';
       };
       auth = {
-        mode = "oidc";
         oidcRegistration = {
           displayName = "Shelfmark";
           originUrls = [ "${model.shelfmarkService.public.url}/api/auth/oidc/callback" ];

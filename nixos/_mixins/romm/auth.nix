@@ -26,7 +26,6 @@ in
 {
   config = lib.mkIf (cfg.enable && model.registrationReady) {
     host.web.services.romm.auth = {
-      mode = "oidc";
       oidcRegistration = {
         displayName = "RomM";
         originUrls = [ "${model.publicUrl}/api/oauth/openid" ];

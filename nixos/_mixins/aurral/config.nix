@@ -107,7 +107,6 @@ in
         section = "user";
       };
       auth = {
-        mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Aurral";
           port = 4181;

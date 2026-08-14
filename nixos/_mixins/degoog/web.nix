@@ -45,7 +45,6 @@ in
         section = "user";
       };
       auth = {
-        mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Degoog";
           port = oauth2ProxyPort;

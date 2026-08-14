@@ -24,7 +24,6 @@ in
         upstream = "${cfg.localUrl}/api/v1/metrics";
       };
       auth = {
-        mode = "oidc";
         oidcRegistration = {
           displayName = "Vikunja";
           originUrls = [ "https://${cfg.publicHost}/auth/openid/sso" ];

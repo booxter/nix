@@ -14,8 +14,6 @@ in
     host.web.services.home = {
       upstream = cfg.localUrl;
       auth = {
-        mode = "oidc";
-        registrationName = "home-assistant";
         oidcRegistration = {
           displayName = "Home Assistant";
           public = true;

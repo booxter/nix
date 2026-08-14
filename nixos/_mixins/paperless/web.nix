@@ -78,7 +78,6 @@ in
         section = "infrastructure";
       };
       auth = lib.mkIf (ssoApplication != null) {
-        mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Paperless GPT";
           port = gptOauth2ProxyPort;

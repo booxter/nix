@@ -72,8 +72,6 @@ in
 {
   config = lib.mkIf enabled {
     host.web.services."proxmox-${config.networking.hostName}".auth = {
-      mode = "oidc";
-      registrationName = "proxmox";
       oidcRegistration = {
         inherit clientId;
         displayName = "Proxmox VE";

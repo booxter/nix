@@ -73,7 +73,6 @@ in
 
   config = lib.mkIf cfg.enable {
     host.web.services.grafana.auth = {
-      mode = "oidc";
       oidcRegistration = {
         displayName = "Grafana";
         originUrls = [ "https://${grafanaHost}/login/generic_oauth" ];

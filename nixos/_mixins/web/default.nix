@@ -25,8 +25,8 @@ let
       )
     ) (lib.filterAttrs (_: metric: metric.enable) service.metrics)
   ) services;
-  oidcServices = lib.filterAttrs (_: service: service.auth.mode == "oidc") services;
-  oauth2ProxyServices = lib.filterAttrs (_: service: service.auth.mode == "oauth2-proxy") services;
+  oidcServices = lib.filterAttrs (_: service: service.auth.oidcRegistration != null) services;
+  oauth2ProxyServices = lib.filterAttrs (_: service: service.auth.oauth2ProxyGate != null) services;
 in
 {
   imports = [
@@ -430,29 +430,15 @@ in
                 internal = true;
                 description = "Application logout paths that clear the proxy session.";
               };
-              mode = lib.mkOption {
-                type = lib.types.enum [
-                  "none"
-                  "oidc"
-                  "oauth2-proxy"
-                ];
-                default = "none";
-                description = "Authentication integration used by this service.";
-              };
-              registrationName = lib.mkOption {
-                type = lib.types.str;
-                default = serviceName;
-                description = "Name used for the compiled OIDC registration or oauth2-proxy gate.";
-              };
               oidcRegistration = lib.mkOption {
-                type = lib.types.attrsOf lib.types.anything;
-                default = { };
-                description = "OIDC registration contributed when auth.mode is oidc.";
+                type = with lib.types; nullOr (attrsOf anything);
+                default = null;
+                description = "OIDC registration contributed by this service.";
               };
               oauth2ProxyGate = lib.mkOption {
-                type = lib.types.attrsOf lib.types.anything;
-                default = { };
-                description = "oauth2-proxy gate contributed when auth.mode is oauth2-proxy.";
+                type = with lib.types; nullOr (attrsOf anything);
+                default = null;
+                description = "oauth2-proxy gate contributed by this service.";
               };
             };
 
@@ -533,13 +519,13 @@ in
 
     (lib.mkIf (oidcServices != { }) {
       host.sso.oidc.registrations = lib.mapAttrs' (
-        _: service: lib.nameValuePair service.auth.registrationName service.auth.oidcRegistration
+        serviceName: service: lib.nameValuePair serviceName service.auth.oidcRegistration
       ) oidcServices;
     })
 
     (lib.mkIf (oauth2ProxyServices != { }) {
       host.sso.oauth2ProxyGates = lib.mapAttrs' (
-        _: service: lib.nameValuePair service.auth.registrationName service.auth.oauth2ProxyGate
+        serviceName: service: lib.nameValuePair serviceName service.auth.oauth2ProxyGate
       ) oauth2ProxyServices;
     })
   ];
