@@ -1,38 +1,29 @@
 { config, lib }:
 let
   cfg = config.host.vpn;
-  enabledNamespaces = lib.filterAttrs (_: namespace: namespace.enable) cfg.namespaces;
-  enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
   unknownNamespaces = lib.filterAttrs (
     _: client: !builtins.hasAttr client.namespace cfg.namespaces
-  ) enabledClients;
-  disabledNamespaces = lib.filterAttrs (
-    _: client:
-    builtins.hasAttr client.namespace cfg.namespaces && !cfg.namespaces.${client.namespace}.enable
-  ) enabledClients;
+  ) cfg.clients;
   validClients = lib.filterAttrs (
-    _: client: builtins.hasAttr client.namespace enabledNamespaces
-  ) enabledClients;
+    _: client: builtins.hasAttr client.namespace cfg.namespaces
+  ) cfg.clients;
   clientsByNamespace = builtins.groupBy (client: client.namespace) (builtins.attrValues validClients);
   clientsFor = namespaceName: clientsByNamespace.${namespaceName} or [ ];
 in
 {
   inherit
     cfg
-    disabledNamespaces
-    enabledClients
-    enabledNamespaces
     unknownNamespaces
     validClients
     ;
-  active = enabledNamespaces != { } || enabledClients != { };
-  serviceNames = map (client: client.serviceName) (builtins.attrValues enabledClients);
+  active = cfg.namespaces != { } || cfg.clients != { };
+  serviceNames = map (client: client.serviceName) (builtins.attrValues cfg.clients);
   bridgeTcpPorts = lib.mapAttrs (
     namespaceName: _:
     lib.unique (lib.concatMap (client: client.bridgeTcpPorts) (clientsFor namespaceName))
-  ) enabledNamespaces;
+  ) cfg.namespaces;
   forwardedPorts = lib.mapAttrs (
     namespaceName: _:
     lib.concatMap (client: builtins.attrValues client.forwardedPorts) (clientsFor namespaceName)
-  ) enabledNamespaces;
+  ) cfg.namespaces;
 }

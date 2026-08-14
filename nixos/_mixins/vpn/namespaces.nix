@@ -12,10 +12,10 @@ in
       inherit (namespace)
         accessibleFrom
         bridgeAddress
-        enable
         namespaceAddress
         wireguardConfigFile
         ;
+      enable = true;
       openVPNPorts = model.forwardedPorts.${namespaceName} or [ ];
     }) model.cfg.namespaces;
   };

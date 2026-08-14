@@ -42,7 +42,7 @@ let
       };
     };
   services = lib.mapAttrs' serviceFor (
-    lib.filterAttrs (name: _: model.bridgeTcpPorts.${name} != [ ]) model.enabledNamespaces
+    lib.filterAttrs (name: _: model.bridgeTcpPorts.${name} != [ ]) model.cfg.namespaces
   );
 in
 {

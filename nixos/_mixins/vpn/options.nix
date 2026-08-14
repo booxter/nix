@@ -26,8 +26,6 @@ in
       type = lib.types.attrsOf (
         lib.types.submodule {
           options = {
-            enable = lib.mkEnableOption "VPN namespace";
-
             accessibleFrom = lib.mkOption {
               type = with lib.types; listOf str;
               default = [ ];
@@ -61,10 +59,6 @@ in
           { name, ... }:
           {
             options = {
-              enable = lib.mkEnableOption "VPN namespace client" // {
-                default = true;
-              };
-
               namespace = lib.mkOption {
                 type = lib.types.str;
                 description = "VPN namespace used by this service.";
