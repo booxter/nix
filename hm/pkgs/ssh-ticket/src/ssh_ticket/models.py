@@ -11,16 +11,10 @@ class Target(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True, strict=True)
 
     name: str = Field(min_length=1)
-    enabled: bool = False
-    ssh_host: str = Field(default="", alias="sshHost")
-    aliases: list[str] = Field(default_factory=list)
     allow_x11_forwarding: bool = Field(default=False, alias="allowX11Forwarding")
     principal: str = ""
     default_ttl: str = Field(default="30m", alias="defaultTtl")
     max_ttl: str = Field(default="2h", alias="maxTtl")
-    ca_public_key_configured: bool = Field(default=False, alias="caPublicKeyConfigured")
-    realm: str = ""
-    trusted_ca_public_keys: list[str] = Field(default_factory=list, alias="trustedCaPublicKeys")
 
     @model_validator(mode="after")
     def validate_ticket_lifetimes(self) -> Self:

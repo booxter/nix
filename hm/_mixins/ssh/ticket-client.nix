@@ -7,7 +7,6 @@
 }:
 let
   username = osConfig.host.username;
-  realm = osConfig.host.realm;
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
   issuer = osConfig.host.ssh.tickets.issuer;
@@ -16,20 +15,22 @@ let
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
   ticketTargets = map (
-    target: target // lib.optionalAttrs target.enabled { principal = "${username}@${target.name}"; }
-  ) (builtins.filter (target: target.realm == realm) osConfig.host.ssh.tickets.targets);
+    target: target // { principal = "${username}@${target.name}"; }
+  ) osConfig.host.ssh.tickets.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
-  enabledTicketTargets = builtins.filter (target: target.enabled) ticketTargets;
   ticketHostBlock =
     target:
     let
-      patterns = target.aliases;
+      patterns = [
+        target.name
+        "${target.name}.local"
+      ];
     in
     {
       name = "ssh-ticket-host-${target.name}";
       value = lib.hm.dag.entryBefore [ "*" ] {
         header = "Host ${lib.concatStringsSep " " patterns}";
-        HostName = target.sshHost;
+        HostName = target.name;
         HostKeyAlias = target.name;
         User = username;
         IdentitiesOnly = true;
@@ -48,7 +49,10 @@ let
   ticketEnsureBlock =
     target:
     let
-      patterns = target.aliases;
+      patterns = [
+        target.name
+        "${target.name}.local"
+      ];
       ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs} --cert-alias %n ${target.name}";
     in
     {
@@ -62,7 +66,7 @@ let
     builtins.concatMap (target: [
       (ticketHostBlock target)
       (ticketEnsureBlock target)
-    ]) enabledTicketTargets
+    ]) ticketTargets
   );
   enabled =
     osConfig.host.userEnvironment.features.ssh.enable

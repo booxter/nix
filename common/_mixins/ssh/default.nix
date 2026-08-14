@@ -96,15 +96,9 @@ let
   ticketTargetType = lib.types.submodule {
     options = {
       name = lib.mkOption { type = lib.types.nonEmptyStr; };
-      enabled = lib.mkOption { type = lib.types.bool; };
-      sshHost = lib.mkOption { type = lib.types.nonEmptyStr; };
-      aliases = lib.mkOption { type = lib.types.nonEmptyListOf lib.types.nonEmptyStr; };
       allowX11Forwarding = lib.mkOption { type = lib.types.bool; };
       defaultTtl = lib.mkOption { type = lib.types.nonEmptyStr; };
       maxTtl = lib.mkOption { type = lib.types.nonEmptyStr; };
-      caPublicKeyConfigured = lib.mkOption { type = lib.types.bool; };
-      realm = lib.mkOption { type = lib.types.nonEmptyStr; };
-      trustedCaPublicKeys = lib.mkOption { type = lib.types.listOf lib.types.nonEmptyStr; };
     };
   };
   ticketTargetFor =
@@ -119,18 +113,12 @@ let
         allowX11Forwarding
         defaultTtl
         maxTtl
-        trustedCaPublicKeys
         ;
-      enabled = tickets.trustedCaPublicKeys != [ ];
-      sshHost = name;
-      aliases = [
-        name
-        "${name}.local"
-      ];
-      caPublicKeyConfigured = tickets.trustedCaPublicKeys != [ ];
-      inherit (host) realm;
     };
-  ticketTargets = lib.mapAttrsToList ticketTargetFor configurations;
+  realmTicketConfigurations = lib.filterAttrs (
+    _: configuration: configuration.config.host.realm == config.host.realm
+  ) configurations;
+  ticketTargets = lib.mapAttrsToList ticketTargetFor realmTicketConfigurations;
 in
 {
   imports = [
