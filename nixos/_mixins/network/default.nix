@@ -32,6 +32,8 @@ let
   };
 in
 {
+  imports = [ ./dynamic-dns.nix ];
+
   networking.dhcpcd.extraConfig = ''
     clientid ${config.networking.hostName}
   '';

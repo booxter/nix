@@ -32,20 +32,24 @@ in
             description = "Whether to open public HTTP and HTTPS firewall ports.";
           };
 
-          dynamicDns = {
-            enable = lib.mkEnableOption "dynamic DNS for this ingress controller";
+          dynamicDns = lib.mkOption {
+            type = lib.types.nullOr (
+              lib.types.submodule {
+                options = {
+                  hostname = lib.mkOption {
+                    type = lib.types.nonEmptyStr;
+                    description = "Dynamic DNS hostname updated by the ingress controller.";
+                  };
 
-            hostname = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-              description = "Dynamic DNS hostname updated by the ingress controller.";
-            };
-
-            username = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-              description = "Dynamic DNS account username.";
-            };
+                  username = lib.mkOption {
+                    type = lib.types.nonEmptyStr;
+                    description = "Dynamic DNS account username.";
+                  };
+                };
+              }
+            );
+            default = null;
+            description = "Dynamic DNS policy for this ingress controller.";
           };
         };
       }
@@ -69,9 +73,6 @@ in
 
     host.externalService = {
       inherit (cfg) acmeEmail openFirewall;
-      ddns = {
-        inherit (cfg.dynamicDns) enable hostname username;
-      };
       virtualHosts = builtins.listToAttrs (
         map (contribution: {
           name = contribution.value.public.hostName;

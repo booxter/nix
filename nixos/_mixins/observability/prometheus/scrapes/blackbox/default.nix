@@ -23,7 +23,7 @@ let
     _: configuration:
     configuration.config.host.realm == config.host.realm
     && configuration.config.host.web.ingress != null
-    && configuration.config.host.web.ingress.dynamicDns.enable
+    && configuration.config.host.web.ingress.dynamicDns != null
   ) configurations;
   ingressHosts = builtins.attrValues ingressConfigurations;
   publicWanHost =

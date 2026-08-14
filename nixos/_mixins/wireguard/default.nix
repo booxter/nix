@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, ... }:
 let
   cfg = config.host.wireguard.server;
 in
@@ -9,20 +9,10 @@ in
     ./qos.nix
   ];
 
-  config = lib.mkMerge [
+  assertions = [
     {
-      assertions = [
-        {
-          assertion = cfg == null || config.host.network.primaryInterface != null;
-          message = "WireGuard server requires a primary network interface.";
-        }
-      ];
+      assertion = cfg == null || config.host.network.primaryInterface != null;
+      message = "WireGuard server requires a primary network interface.";
     }
-    (lib.mkIf (cfg != null && cfg.dynamicDns != null) {
-      host.externalService.ddns = {
-        enable = true;
-        inherit (cfg.dynamicDns) hostname username;
-      };
-    })
   ];
 }

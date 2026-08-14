@@ -6,34 +6,23 @@ let
   ) config.host.pki.clients;
 in
 {
-  assertions =
-    lib.optionals cfg.ddns.enable [
-      {
-        assertion = cfg.ddns.username != "";
-        message = "host.externalService.ddns.username must be set when DDNS is enabled.";
-      }
-      {
-        assertion = cfg.ddns.hostname != "";
-        message = "host.externalService.ddns.hostname must be set when DDNS is enabled.";
-      }
-    ]
-    ++ builtins.concatLists (
-      lib.mapAttrsToList (
-        hostName: vhost:
-        lib.optionals vhost.upstreamTls.enable [
-          {
-            assertion = vhost.upstreamTls.clientName != "";
-            message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must be set when upstream mTLS is enabled.";
-          }
-          {
-            assertion = vhost.upstreamTls.serverName != "";
-            message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
-          }
-          {
-            assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
-            message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.pki.clients entry.";
-          }
-        ]
-      ) cfg.virtualHosts
-    );
+  assertions = builtins.concatLists (
+    lib.mapAttrsToList (
+      hostName: vhost:
+      lib.optionals vhost.upstreamTls.enable [
+        {
+          assertion = vhost.upstreamTls.clientName != "";
+          message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must be set when upstream mTLS is enabled.";
+        }
+        {
+          assertion = vhost.upstreamTls.serverName != "";
+          message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
+        }
+        {
+          assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
+          message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.pki.clients entry.";
+        }
+      ]
+    ) cfg.virtualHosts
+  );
 }

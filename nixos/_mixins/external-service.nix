@@ -65,34 +65,6 @@ in
       description = "Whether to open TCP ports 80 and 443 for public ingress.";
     };
 
-    ddns = {
-      enable = lib.mkEnableOption "Dynu DDNS updates for public ingress";
-
-      username = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "Dynu username used by ddclient.";
-      };
-
-      hostname = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "Dynu hostname updated by ddclient.";
-      };
-
-      passwordSopsKey = lib.mkOption {
-        type = lib.types.str;
-        default = "ddns/dynu/password";
-        description = "SOPS key containing the Dynu password.";
-      };
-
-      interval = lib.mkOption {
-        type = lib.types.str;
-        default = "3min";
-        description = "ddclient update interval.";
-      };
-    };
-
     virtualHosts = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -159,54 +131,6 @@ in
     {
       host.network.stableAddress.requiredBy = lib.optional hasPublicVhosts "public ingress";
     }
-    (lib.mkIf cfg.ddns.enable {
-      # Keep ddclient on a stable system user instead of DynamicUser. During
-      # switch-to-configuration we observed transient startup failures where the
-      # generated preStart script ran before the dynamic runtime state was ready.
-      users.groups = {
-        ddclient = { };
-        ddclient-secrets = { };
-      };
-      users.users.ddclient = {
-        isSystemUser = true;
-        group = "ddclient";
-      };
-
-      sops = {
-        useSystemdActivation = lib.mkDefault true;
-        secrets.externalServiceDdnsPassword = {
-          key = cfg.ddns.passwordSopsKey;
-          group = "ddclient-secrets";
-          mode = "0440";
-        };
-      };
-
-      services.ddclient = {
-        enable = true;
-        interval = cfg.ddns.interval;
-        protocol = "dyndns2";
-        server = "api.dynu.com";
-        username = cfg.ddns.username;
-        passwordFile = config.sops.secrets.externalServiceDdnsPassword.path;
-        domains = [ cfg.ddns.hostname ];
-        ssl = true;
-        quiet = true;
-        usev4 = "webv4,webv4=checkip.dynu.com/,webv4-skip='IP Address'";
-        usev6 = "";
-      };
-
-      systemd.services.ddclient = {
-        wants = [ "sops-install-secrets.service" ];
-        after = [ "sops-install-secrets.service" ];
-        serviceConfig = {
-          DynamicUser = lib.mkForce false;
-          User = "ddclient";
-          Group = "ddclient";
-          SupplementaryGroups = [ "ddclient-secrets" ];
-        };
-      };
-    })
-
     (lib.mkIf hasPublicVhosts {
       host.pki.clients = lib.genAttrs nginxMtlsClientNames (_: {
         materializations.default = {
