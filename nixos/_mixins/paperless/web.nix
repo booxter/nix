@@ -15,7 +15,6 @@ let
     paperlessService
     ssoApplication
     ;
-  gptHost = "paperless-gpt.${config.host.network.lanDomain}";
 in
 {
   config = lib.mkIf cfg.enable {
@@ -82,12 +81,10 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Paperless GPT";
-          originLanding = "https://${gptHost}/";
           httpAddress = "http://127.0.0.1:${toString gptOauth2ProxyPort}";
           cookieName = "_paperless_gpt_sso";
           allowedGroups = [ ssoApplication.adminGroup ];
           groupClaim = "paperless_groups";
-          whitelistDomains = [ gptHost ];
           internalHttpsServiceNames = [ "paperless-gpt" ];
           authCookieVariableName = "paperless_gpt_auth_cookie";
         };

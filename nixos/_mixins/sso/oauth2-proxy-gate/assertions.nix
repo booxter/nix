@@ -24,11 +24,7 @@ in
             message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
           }
           {
-            assertion = gate.whitelistDomains != [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
-          }
-          {
-            assertion = unknownInternalEndpoints == [ ];
+            assertion = gate.internalHttpsServiceNames != [ ] && unknownInternalEndpoints == [ ];
             message = "host.sso.oauth2ProxyGates.${gateName}.internalHttpsServiceNames contains unknown internal web endpoints: ${lib.concatStringsSep ", " unknownInternalEndpoints}";
           }
         ]

@@ -5,7 +5,6 @@
 }:
 let
   cfg = config.host.watchstate;
-  hostName = "watchstate.${config.host.network.lanDomain}";
   sso = config.host.sso.applications.watchstate;
 in
 {
@@ -36,12 +35,10 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "WatchState";
-          originLanding = "https://${hostName}/";
           httpAddress = "http://127.0.0.1:4182";
           cookieName = "_watchstate_sso";
           allowedGroups = [ sso.adminGroup ];
           groupClaim = "media_groups";
-          whitelistDomains = [ hostName ];
           internalHttpsServiceNames = [ "watchstate" ];
           authRequestHeaders = [ ];
           clearAuthorizationHeader = false;

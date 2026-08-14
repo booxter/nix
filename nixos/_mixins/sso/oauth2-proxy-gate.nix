@@ -23,11 +23,6 @@ let
           description = "Display name shown by the identity provider.";
         };
 
-        originLanding = lib.mkOption {
-          type = lib.types.str;
-          description = "Landing page shown for the OIDC client.";
-        };
-
         httpAddress = lib.mkOption {
           type = lib.types.str;
           default = "http://127.0.0.1:4180";
@@ -75,12 +70,6 @@ let
         groupClaim = lib.mkOption {
           type = lib.types.str;
           description = "OIDC claim containing groups for oauth2-proxy authorization.";
-        };
-
-        whitelistDomains = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-          description = "Hostnames accepted as oauth2-proxy redirect targets.";
         };
 
         externalOrigin = lib.mkOption {
@@ -167,6 +156,21 @@ let
     ]
     ++ service.internal.serverAliases
     ++ service.internal.publicAliases;
+  browserOriginFor =
+    gate:
+    if gate.externalOrigin != null then
+      gate.externalOrigin
+    else
+      let
+        endpointName = builtins.head gate.internalHttpsServiceNames;
+      in
+      "https://${webModel.internalEndpoints.${endpointName}.internal.serverName}";
+  whitelistDomainsFor =
+    gate:
+    if gate.externalOrigin != null then
+      [ (lib.removePrefix "https://" gate.externalOrigin) ]
+    else
+      lib.unique (lib.concatMap internalHttpsServiceHosts gate.internalHttpsServiceNames);
   originUrlsFor =
     gate:
     if gate.externalOrigin != null then
@@ -224,7 +228,7 @@ let
       "127.0.0.1/32"
       "::1/128"
     ]
-    ++ mkArgs "whitelist-domain" gate.whitelistDomains;
+    ++ mkArgs "whitelist-domain" (whitelistDomainsFor gate);
 
   mkAuthRequestSet =
     header: "auth_request_set $" + header.variableName + " $upstream_http_${header.upstreamHeader};";
@@ -348,8 +352,8 @@ in
     host.sso.oidc.registrations = lib.mapAttrs (gateName: gate: {
       inherit (gate)
         displayName
-        originLanding
         ;
+      originLanding = "${browserOriginFor gate}/";
       originUrls = originUrlsFor gate;
       scopeMaps = lib.genAttrs gate.allowedGroups (_: oidcBaseScopes ++ [ gate.groupClaim ]);
       claimMaps.${gate.groupClaim}.valuesByGroup = lib.genAttrs gate.allowedGroups (group: [ group ]);

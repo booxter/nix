@@ -1,29 +1,17 @@
 {
-  config,
   lib,
+  webModel,
   ...
 }:
 let
   policyName = "media-admin";
   gateName = "srvarr-admin-apps";
   cookieName = "_srvarr_admin_sso";
-  services = lib.filterAttrs (_: service: service.auth.policy == policyName) config.host.web.services;
+  services = lib.filterAttrs (
+    _: service: service.auth.policy == policyName
+  ) webModel.normalizedInternalServices;
   serviceNames = builtins.attrNames services;
   endpointNames = map (name: services.${name}.internal.endpointName) serviceNames;
-  serviceHosts = lib.unique (
-    lib.concatMap (
-      name:
-      let
-        endpointName = services.${name}.internal.endpointName;
-      in
-      [
-        services.${name}.internal.serverName
-        endpointName
-        "${endpointName}.local"
-      ]
-    ) serviceNames
-  );
-  originService = if serviceNames == [ ] then null else services.${builtins.head serviceNames};
   clearCookieConfig =
     lib.concatMapStringsSep "\n"
       (
@@ -57,20 +45,13 @@ let
 in
 {
   config = lib.mkIf (services != { }) {
-    assertions = [
-      {
-        assertion = lib.all (name: services.${name}.internal != null) serviceNames;
-        message = "The media-admin access policy requires internal HTTPS services";
-      }
-    ];
-
+    # TODO: Split this shared gate into per-service gates after generating and
+    # encrypting independent OIDC client and cookie secrets for every service.
     host.sso.oauth2ProxyGates.${gateName} = {
       displayName = "Media administration";
-      originLanding = "https://${originService.internal.serverName}/";
       inherit cookieName;
       allowedGroups = [ "media-admins" ];
       groupClaim = "media_groups";
-      whitelistDomains = serviceHosts;
       internalHttpsServiceNames = endpointNames;
       authCookieVariableName = "auth_cookie";
       clearAuthorizationHeader = false;

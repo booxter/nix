@@ -110,11 +110,9 @@ in
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
           displayName = "Aurral";
-          originLanding = "${browserOrigin}/";
           httpAddress = "http://127.0.0.1:4181";
           inherit allowedGroups;
           groupClaim = "media_groups";
-          whitelistDomains = [ cfg.publicHostName ];
           externalOrigin = browserOrigin;
           internalHttpsServiceNames = [ "aurral" ];
           authCookieVariableName = "aurral_auth_cookie";
