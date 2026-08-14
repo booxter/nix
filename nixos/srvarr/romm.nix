@@ -17,14 +17,8 @@ in
     publicHostName = "game.${config.host.network.publicDomain}";
     stateDir = "/data/.state/nixarr/romm";
 
-    storage = {
-      claim = "media";
-      relativePath = "romm";
-    };
-
     database.dataDir = "/data/.state/nixarr/mysql";
     backups.stagingDir = "/data/.state/nixarr/romm-mariadb-backup/latest";
-    sso.application = "romm";
   };
 
   # Requiring every media user to have a RomM access tier is realm policy,

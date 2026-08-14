@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -21,14 +20,6 @@ in
       type = with lib.types; nullOr nonEmptyStr;
       default = null;
       description = "Public hostname published for RomM.";
-    };
-
-    publicUrl = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = if config.host.romm.enable then config.host.web.services.romm.public.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved public RomM URL.";
     };
 
     stateDir = lib.mkOption {
