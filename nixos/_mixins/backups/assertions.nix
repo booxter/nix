@@ -6,7 +6,8 @@
 }:
 let
   cfg = config.host.backups;
-  inherit (cfg) jobs;
+  clientModel = import ./client/model.nix { inherit backupTopology config lib; };
+  inherit (clientModel) job;
   server = if cfg.server == null then null else cfg.server // backupTopology.server;
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   preparationPaths =
@@ -15,24 +16,22 @@ let
 in
 {
   assertions =
-    lib.concatLists (
-      lib.mapAttrsToList (name: job: [
-        {
-          assertion = job.paths != [ ] || preparationPaths job != [ ];
-          message = "host.backups.jobs.${name} must include at least one path";
-        }
-        {
-          assertion =
-            job.repository.type != "sftp"
-            || (
-              job.repository.sftp.host != null
-              && job.repository.sftp.user != null
-              && job.repository.sftp.identityFile != null
-            );
-          message = "host.backups.jobs.${name} requires complete SFTP settings";
-        }
-      ]) jobs
-    )
+    lib.optionals (job != null) [
+      {
+        assertion = job.paths != [ ] || preparationPaths job != [ ];
+        message = "backup job ${job.name} must include at least one path";
+      }
+      {
+        assertion =
+          job.destination.transport != "sftp"
+          || (
+            job.destination.server != null
+            && job.destination.ingestUser != null
+            && job.destination.identityFile != null
+          );
+        message = "backup job ${job.name} requires complete SFTP settings";
+      }
+    ]
     ++ lib.concatLists (
       lib.mapAttrsToList (name: source: [
         {

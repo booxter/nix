@@ -142,14 +142,5 @@ in
           timerConfig = repository.cloud.pruneTimerConfig;
         }
       ) enabledOffloads;
-
-    host.observability.backupMetrics.jobs = lib.mapAttrs' (
-      name: _:
-      lib.nameValuePair (offloadService name) {
-        service = offloadService name;
-        title = "${name} Cloud Offload";
-        phase = "cloud";
-      }
-    ) enabledOffloads;
   };
 }

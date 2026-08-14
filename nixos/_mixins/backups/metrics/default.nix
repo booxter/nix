@@ -1,4 +1,5 @@
 {
+  backupTopology,
   config,
   lib,
   pkgs,
@@ -6,7 +7,40 @@
   ...
 }:
 let
-  cfg = config.host.observability.backupMetrics;
+  clientModel =
+    if config.host.backups ? sources then
+      import ../client/model.nix { inherit backupTopology config lib; }
+    else
+      null;
+  clientJob = if clientModel == null then null else clientModel.job;
+  localJobs = lib.optionalAttrs (clientJob != null) (
+    {
+      "restic-${clientJob.name}" = {
+        service = "restic-backups-${clientJob.name}";
+        title = clientJob.title;
+        phase = "local";
+      };
+    }
+    // builtins.mapAttrs (_: preparation: {
+      inherit (preparation) service title;
+      phase = "prep";
+    }) clientJob.preparations
+  );
+  cloudRepositories =
+    if !(config.host.backups ? server) || config.host.backups.server == null then
+      { }
+    else
+      lib.filterAttrs (_: repository: repository.cloud.enable) backupTopology.server.repositories;
+  cloudJobs = lib.mapAttrs' (
+    name: _:
+    lib.nameValuePair "restic-${name}-cloud-offload" {
+      service = "restic-${name}-cloud-offload";
+      title = "${name} Cloud Offload";
+      phase = "cloud";
+    }
+  ) cloudRepositories;
+  jobs = localJobs // cloudJobs;
+
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   stateDir = "/var/lib/host-observability-backup-metrics";
   sanitizeName =
@@ -32,7 +66,7 @@ let
       backup_title = job.title;
       phase = job.phase;
       unit = "${job.service}.service";
-    }) cfg.jobs;
+    }) jobs;
   };
   configureCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' package "backup-metrics-configure")
@@ -43,32 +77,7 @@ let
   ];
 in
 {
-  options.host.observability.backupMetrics.jobs = lib.mkOption {
-    type =
-      with lib.types;
-      attrsOf (submodule {
-        options = {
-          service = lib.mkOption {
-            type = str;
-            description = "Systemd service name, without the .service suffix.";
-          };
-
-          title = lib.mkOption {
-            type = str;
-            description = "Human-oriented backup job title.";
-          };
-
-          phase = lib.mkOption {
-            type = str;
-            description = "Backup phase label such as prep, local, or cloud.";
-          };
-        };
-      });
-    default = { };
-    description = "Backup-related systemd services whose last-run outcome should be exported through node_exporter textfiles.";
-  };
-
-  config = lib.mkIf (cfg.jobs != { }) {
+  config = lib.mkIf (jobs != { }) {
     systemd.tmpfiles.rules = [
       "d ${stateDir} 0755 root root - -"
       "d ${textfileDir} 0755 root root - -"
@@ -111,6 +120,6 @@ in
       lib.nameValuePair job.service {
         serviceConfig.ExecStopPost = lib.mkAfter [ "+${recordCommand}" ];
       }
-    ) cfg.jobs;
+    ) jobs;
   };
 }

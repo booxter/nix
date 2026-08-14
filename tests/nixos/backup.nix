@@ -112,9 +112,20 @@ pkgs.testers.runNixOSTest {
       in
       {
         imports = [
-          ../../nixos/_mixins/backups/jobs
+          ../../nixos/_mixins/backups/client/options.nix
+          ../../nixos/_mixins/backups/client/jobs.nix
           ../../nixos/_mixins/backups/metrics
         ];
+
+        _module.args.backupTopology.client.destination = {
+          transport = "sftp";
+          repositoryPath = "/srv/restic/test";
+          ingestUser = "restic-test";
+          user = "root";
+          passwordFile = "/etc/backup-test/password";
+          identityFile = "/etc/backup-test/id_ed25519";
+          dependencyUnits = [ ];
+        };
 
         environment.etc = {
           "backup-test/id_ed25519" = {
@@ -144,23 +155,13 @@ pkgs.testers.runNixOSTest {
           "d /var/lib/backup-test 0750 root root -"
         ];
 
-        host.backups.jobs.test = {
+        host.backups.destination.server = "server";
+        host.backups.sources.test = {
           title = "Backup Test";
-          repository = {
-            type = "sftp";
-            path = "/srv/restic/test";
-            passwordFile = "/etc/backup-test/password";
-            sftp = {
-              host = "server";
-              user = "restic-test";
-              identityFile = "/etc/backup-test/id_ed25519";
-            };
-          };
-          preparations.prepare-backup-test = {
-            title = "Prepare Backup Test";
+          preparation = {
+            service = "prepare-backup-test";
             paths = [ "/var/lib/backup-test/staged" ];
           };
-          timerConfig.OnCalendar = "2099-01-01";
         };
       };
   };
@@ -170,7 +171,7 @@ pkgs.testers.runNixOSTest {
 
 
     def snapshot_count():
-        return len(json.loads(client.succeed("restic-test snapshots --json")))
+        return len(json.loads(client.succeed("restic-server snapshots --json")))
 
 
     def cloud_snapshot_count():
@@ -194,18 +195,18 @@ pkgs.testers.runNixOSTest {
     client.succeed("printf 'first version\\n' > /var/lib/backup-test/source.txt")
 
     with subtest("only the complete pipeline has a timer"):
-        client.succeed("systemctl cat restic-backups-test.timer")
+        client.succeed("systemctl cat restic-backups-server.timer")
         client.fail("systemctl cat prepare-backup-test.timer")
         server.succeed("systemctl cat restic-test-cloud-offload.timer")
         server.succeed("systemctl cat restic-test-cloud-prune.timer")
         server.fail("systemctl cat restic-cloud-usage-export.timer")
 
     with subtest("pipeline prepares and snapshots once"):
-        client.succeed("systemctl start restic-backups-test.service")
+        client.succeed("systemctl start restic-backups-server.service")
         assert client.succeed("cat /var/lib/backup-test/preparation-count").strip() == "1"
         assert snapshot_count() == 1
         assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "1.0")
-        assert_metric(client, "restic-test.prom", "host_observability_backup_last_success", "1.0")
+        assert_metric(client, "restic-server.prom", "host_observability_backup_last_success", "1.0")
 
     with subtest("server offloads the repository"):
         server.succeed("systemctl start restic-test-cloud-offload.service")
@@ -223,17 +224,17 @@ pkgs.testers.runNixOSTest {
 
     with subtest("snapshot restores the prepared content"):
         client.succeed("rm -rf /tmp/restore")
-        client.succeed("restic-test restore latest --target /tmp/restore")
+        client.succeed("restic-server restore latest --target /tmp/restore")
         restored = client.succeed("cat /tmp/restore/var/lib/backup-test/staged/source.txt")
         assert restored.strip() == "first version", restored
 
     with subtest("failed preparation blocks a new snapshot"):
         client.succeed("touch /run/fail-backup-preparation")
-        client.fail("systemctl start restic-backups-test.service")
+        client.fail("systemctl start restic-backups-server.service")
         assert snapshot_count() == 1
         assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "0.0")
 
     with subtest("SFTP account cannot execute commands"):
-        client.fail("ssh restic-test@restic-backup-test true")
+        client.fail("ssh restic-test@restic-backup-server true")
   '';
 }
