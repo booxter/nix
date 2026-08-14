@@ -60,11 +60,9 @@ in
         };
         pinepods.uid = 296;
         prowlarr.uid = 293;
-        radarr.uid = 275;
         romm.uid = 295;
         sabnzbd.uid = 38;
         shelfmark.uid = 250;
-        sonarr.uid = 274;
         slskd.uid = 297;
         transmission.uid = 70;
       };

@@ -11,7 +11,6 @@
 let
   cfg = config.host.${name};
   serviceCfg = config.services.${name};
-  account = config.host.accounts.users.${cfg.user} or null;
 in
 {
   options.host.${name} = {
@@ -120,9 +119,6 @@ in
     users.users.${cfg.user} = {
       isSystemUser = true;
       extraGroups = lib.optional addUserToApiGroup apiGroup;
-    }
-    // lib.optionalAttrs (account != null) {
-      uid = account.uid;
     };
   };
 }
