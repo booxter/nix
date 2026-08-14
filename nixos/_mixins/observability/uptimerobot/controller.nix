@@ -7,14 +7,14 @@
 }:
 let
   cfg = config.host.observability.uptimeRobot.controller;
-  model = import ./model.nix {
-    inherit
-      config
-      fleetWebServices
-      lib
-      ;
-  };
   capacity = 10;
+  planner = import ../../../_lib/external-probe-planner.nix { inherit lib; };
+  plan = planner {
+    inherit capacity;
+    minimumImportance = "best-effort";
+    spreadByOwner = true;
+    candidates = fleetWebServices.public;
+  };
   apiKeySecret = "uptimerobot/api_key";
   package = pkgs.callPackage ./package { };
   describe = contribution: {
@@ -29,19 +29,22 @@ let
       inherit (contribution) id;
       title = contribution.value.displayName;
       url = "${contribution.value.public.url}${contribution.value.health.frontend.path}";
-    }) model.plan.selected
+    }) plan.selected
   );
   planFile = (pkgs.formats.json { }).generate "uptimerobot-plan.json" {
     inherit capacity;
-    selected = map describe model.plan.selected;
-    omitted = map describe model.plan.omitted;
+    selected = map describe plan.selected;
+    omitted = map describe plan.omitted;
   };
 in
 {
+  options.host.observability.uptimeRobot.controller.enable =
+    lib.mkEnableOption "authoritative UptimeRobot monitor reconciliation";
+
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = !model.plan.requiredOverflow;
+        assertion = !plan.requiredOverflow;
         message = "Required external probes exceed UptimeRobot capacity ${toString capacity}.";
       }
     ];

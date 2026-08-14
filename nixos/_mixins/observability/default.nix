@@ -13,7 +13,7 @@
     ./systemd-expectations.nix
     ./textfile-producers.nix
     ./unifi/service.nix
-    ./uptimerobot
+    ./uptimerobot/controller.nix
   ];
 
   options.host.observability.server = lib.mkOption {
