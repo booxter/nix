@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   system,
   ...
@@ -18,26 +17,11 @@ in
     ++ lib.optional isDarwin ./vnc-darwin.nix;
 
   options.host.remote-control.server = {
-    enable = lib.mkEnableOption "remote-control server functionality";
-
-    x11.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.host.remote-control.server.enable;
-      description = "Whether to enable X11 remote-control server functionality.";
-    };
-
-    wayland.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.host.remote-control.server.enable;
-      description = "Whether to enable Wayland remote-control server functionality.";
-    };
+    x11.enable = lib.mkEnableOption "X11 remote-control server functionality";
+    wayland.enable = lib.mkEnableOption "Wayland remote-control server functionality";
 
     vnc = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = config.host.remote-control.server.enable;
-        description = "Whether to enable VNC remote-control server functionality.";
-      };
+      enable = lib.mkEnableOption "VNC remote-control server functionality";
 
       basePort = lib.mkOption {
         type = lib.types.port;

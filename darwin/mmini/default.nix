@@ -20,7 +20,10 @@ in
   host.network.interfaces.en0.kind = "ethernet";
 
   host.remote-control = {
-    client.enable = true;
+    client = {
+      vnc.enable = true;
+      x11.enable = true;
+    };
     server.vnc.enable = true;
   };
 
