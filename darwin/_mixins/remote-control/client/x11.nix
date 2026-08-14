@@ -1,16 +1,14 @@
 {
   config,
   lib,
-  system,
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
   cfg = config.host.remote-control.client.x11;
   username = config.host.username;
 in
 {
-  config = lib.mkIf cfg.enable ({
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = config.host.userEnvironment.features.gui.enable;
@@ -20,9 +18,7 @@ in
 
     home-manager.users.${username} = {
       programs.remote-control.client.x11.enable = true;
-    }
-    // lib.optionalAttrs isDarwin {
       host.hm.xquartz.enable = true;
     };
-  });
+  };
 }

@@ -1,20 +1,10 @@
+{ lib, ... }:
 {
-  lib,
-  system,
-  ...
-}:
-let
-  isDarwin = lib.hasSuffix "-darwin" system;
-  isLinux = lib.hasSuffix "-linux" system;
-in
-{
-  imports =
-    lib.optionals isLinux [
-      ./vnc.nix
-      ./wayland.nix
-      ./x11.nix
-    ]
-    ++ lib.optional isDarwin ./vnc-darwin.nix;
+  imports = [
+    ./server/vnc.nix
+    ./server/wayland.nix
+    ./server/x11.nix
+  ];
 
   options.host.remote-control.server = {
     x11.enable = lib.mkEnableOption "X11 remote-control server functionality";

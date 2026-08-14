@@ -56,6 +56,7 @@
       ./_mixins/prowlarr
       ./_mixins/qos
       ./_mixins/radarr
+      ./_mixins/remote-control
       ./_mixins/romm
       ./_mixins/sabnzbd
       ./_mixins/security

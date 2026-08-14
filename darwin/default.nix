@@ -30,6 +30,7 @@ in
     ./_mixins/networking
     ./_mixins/nix
     ./_mixins/observability
+    ./_mixins/remote-control
     ./_mixins/security
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
