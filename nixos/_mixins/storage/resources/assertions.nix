@@ -15,14 +15,14 @@ let
   resources = config.host.storage.resources;
   claims = config.host.storage.claims;
   resourceFsids = map (resource: resource.nfs.fsid) (
-    builtins.attrValues (lib.filterAttrs (_: resource: resource.nfs.enable) resources)
+    builtins.attrValues (lib.filterAttrs (_: resource: resource.nfs != null) resources)
   );
   mountPoints = map (claim: claim.mountPoint) (builtins.attrValues claims);
   safeRelativePath = path: path != "" && !lib.hasPrefix "/" path && !(lib.hasInfix ".." path);
   directoryDefinitionsAgree = definitions: builtins.length (lib.unique definitions) == 1;
   anonymousIdentities = lib.unique (
     lib.filter (name: name != null) (
-      map (resource: resource.nfs.anonymousIdentity) (
+      map (resource: if resource.nfs == null then null else resource.nfs.anonymousIdentity) (
         builtins.attrValues model.localResources
         ++ map (claim: claim.resolvedResource) (builtins.attrValues model.localClaims)
       )
@@ -48,10 +48,6 @@ in
     assertion = safeRelativePath resource.relativePath || resource.relativePath == ".";
     message = "host.storage.resources.${name}.relativePath must be a safe relative path";
   }) resources
-  ++ lib.mapAttrsToList (name: resource: {
-    assertion = !resource.nfs.enable || resource.nfs.fsid != null;
-    message = "host.storage.resources.${name} must set nfs.fsid when NFS is enabled";
-  }) resources
   ++ lib.concatMap (
     resource:
     lib.mapAttrsToList (path: _: {
@@ -65,14 +61,6 @@ in
       {
         assertion = lib.hasPrefix "/" claim.mountPoint;
         message = "host.storage.claims.${claim.claimName}.mountPoint must be absolute";
-      }
-      {
-        assertion = claim.local || claim.resolvedResource.nfs.enable;
-        message = "remote storage claim ${model.hostName}.${claim.claimName} requires NFS on ${claim.provider}.${claim.resource}";
-      }
-      {
-        assertion = claim.local || claim.resolvedResource.nfs.fsid != null;
-        message = "remote storage claim ${model.hostName}.${claim.claimName} requires an NFS FSID";
       }
     ]
     ++ lib.mapAttrsToList (path: _: {

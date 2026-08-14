@@ -30,7 +30,6 @@
       };
       identities.groups = [ "media" ];
       nfs = {
-        enable = true;
         fsid = 10;
       };
     };
@@ -38,7 +37,6 @@
       volume = "bulk";
       relativePath = "nix-cache";
       nfs = {
-        enable = true;
         fsid = 11;
       };
     };
@@ -55,7 +53,6 @@
         users = [ "paperless" ];
       };
       nfs = {
-        enable = true;
         fsid = 12;
         anonymousIdentity = "paperless";
       };

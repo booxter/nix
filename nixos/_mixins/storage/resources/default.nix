@@ -85,16 +85,23 @@ in
                   default = [ ];
                 };
               };
-              nfs = {
-                enable = lib.mkEnableOption "NFS access to the ${name} resource";
-                fsid = lib.mkOption {
-                  type = with lib.types; nullOr ints.unsigned;
-                  default = null;
-                };
-                anonymousIdentity = lib.mkOption {
-                  type = with lib.types; nullOr nonEmptyStr;
-                  default = null;
-                };
+              nfs = lib.mkOption {
+                type = lib.types.nullOr (
+                  lib.types.submodule {
+                    options = {
+                      fsid = lib.mkOption {
+                        type = lib.types.ints.unsigned;
+                        description = "Stable NFS filesystem identifier.";
+                      };
+                      anonymousIdentity = lib.mkOption {
+                        type = with lib.types; nullOr nonEmptyStr;
+                        default = null;
+                      };
+                    };
+                  }
+                );
+                default = null;
+                description = "NFS export policy for the ${name} resource.";
               };
             };
           }

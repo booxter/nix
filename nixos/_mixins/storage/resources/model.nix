@@ -39,12 +39,22 @@ let
     };
   normalizeClaim =
     clientName: claimName: claim:
-    claim
-    // {
-      inherit claimName clientName;
-      resolvedResource = resolveResource claim.provider claim.resource;
+    let
       local = claim.provider == clientName;
-    };
+      resolvedResource = resolveResource claim.provider claim.resource;
+    in
+    if !local && resolvedResource.nfs == null then
+      throw "remote storage claim ${clientName}.${claimName} requires NFS on ${claim.provider}.${claim.resource}"
+    else
+      claim
+      // {
+        inherit
+          claimName
+          clientName
+          local
+          resolvedResource
+          ;
+      };
   allClaims = lib.concatLists (
     lib.mapAttrsToList (
       clientName: node: lib.mapAttrsToList (normalizeClaim clientName) node.claims
