@@ -5,7 +5,6 @@ let
   downloadModel = import ../downloads/model.nix { inherit config lib; };
   resolveLibrary = name: if name == null then null else mediaModel.resolved.${name} or null;
   resolveRoute = name: if name == null then null else downloadModel.routes.${name} or null;
-  audiobookshelfServiceName = cfg.nav.audiobookshelf;
 in
 {
   inherit cfg;
@@ -14,16 +13,13 @@ in
   group = "media";
   ebooks = resolveLibrary cfg.libraries.ebooks;
   audiobooks = resolveLibrary cfg.libraries.audiobooks;
-  torrent = resolveRoute cfg.downloaders.torrent.route;
-  usenet = resolveRoute cfg.downloaders.usenet.route;
+  torrent = resolveRoute cfg.downloads.torrent;
+  usenet = resolveRoute cfg.downloads.usenet;
   ssoApplication = config.host.sso.applications.shelfmark or null;
   shelfmarkService = config.host.web.services.shelfmark;
   oidcClient = config.host.sso.oidc.clients.shelfmark;
   oidcScopes = config.host.sso.oidc.baseScopes;
   audiobookshelfService =
-    if audiobookshelfServiceName == null then
-      null
-    else
-      config.host.web.services.${audiobookshelfServiceName} or null;
+    if config.host.audiobookshelf == null then null else config.host.web.services.audiobookshelf;
   converter.stateDir = "/var/lib/ebook-converter";
 }

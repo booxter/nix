@@ -26,10 +26,9 @@
       ebooks = "books";
       audiobooks = "audiobooks";
     };
-    downloaders = {
-      torrent.route = "shelfmark-torrent";
-      usenet.route = "shelfmark-usenet";
+    downloads = {
+      torrent = "shelfmark-torrent";
+      usenet = "shelfmark-usenet";
     };
-    nav.audiobookshelf = "audiobookshelf";
   };
 }

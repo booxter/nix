@@ -24,23 +24,17 @@ let
         };
       };
 
-      downloaders = {
-        torrent.route = lib.mkOption {
+      downloads = {
+        torrent = lib.mkOption {
           type = with lib.types; nullOr nonEmptyStr;
           default = null;
           description = "Selected torrent download route.";
         };
-        usenet.route = lib.mkOption {
+        usenet = lib.mkOption {
           type = with lib.types; nullOr nonEmptyStr;
           default = null;
           description = "Selected usenet download route.";
         };
-      };
-
-      nav.audiobookshelf = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Public Audiobookshelf web service linked from Shelfmark navigation.";
       };
 
     };

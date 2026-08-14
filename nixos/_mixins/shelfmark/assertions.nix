@@ -15,21 +15,15 @@ in
     }
     {
       assertion = model.torrent == null || model.torrent.client.kind == "torrent";
-      message = "host.shelfmark.downloaders.torrent.route must select a torrent route";
+      message = "host.shelfmark.downloads.torrent must select a torrent route";
     }
     {
       assertion = model.usenet == null || model.usenet.client.kind == "usenet";
-      message = "host.shelfmark.downloaders.usenet.route must select a usenet route";
+      message = "host.shelfmark.downloads.usenet must select a usenet route";
     }
     {
       assertion = model.ssoApplication != null;
       message = "Shelfmark requires its realm SSO application";
-    }
-    {
-      assertion =
-        cfg.nav.audiobookshelf == null
-        || (model.audiobookshelfService != null && model.audiobookshelfService.public.enable);
-      message = "host.shelfmark.nav.audiobookshelf must select a public web service";
     }
   ];
 }
