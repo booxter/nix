@@ -50,7 +50,17 @@ in
 
   options.host.attic = {
     server = {
-      enable = lib.mkEnableOption "an Attic binary cache server";
+      enable =
+        if isLinux then
+          lib.mkEnableOption "an Attic binary cache server"
+        else
+          lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            readOnly = true;
+            internal = true;
+            description = "Whether to run an Attic binary cache server.";
+          };
 
       endpoint = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
