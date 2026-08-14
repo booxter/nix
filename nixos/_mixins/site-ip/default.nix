@@ -5,39 +5,16 @@
 }:
 let
   cfg = config.host.network;
-  ip = import ./lib.nix { inherit lib; };
   reservation = config.host.site.lan.reservations.${config.networking.hostName} or null;
 in
 {
-  imports = [
-    ./assertions.nix
-    ./unifi
-  ];
+  imports = [ ./unifi ];
 
   options.host.network = {
     macAddress = lib.mkOption {
       type = with lib.types; nullOr (strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}");
       default = if reservation == null then null else reservation.macAddress;
       description = "MAC address of the host's primary site network interface.";
-    };
-
-    reservation = lib.mkOption {
-      type =
-        with lib.types;
-        nullOr (submodule {
-          options = {
-            address = lib.mkOption {
-              type = addCheck nonEmptyStr ip.validIpv4;
-            };
-            macAddress = lib.mkOption {
-              type = strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}";
-            };
-          };
-        });
-      default = reservation;
-      readOnly = true;
-      internal = true;
-      description = "This host's reservation from the authoritative site inventory.";
     };
 
     stableAddress.requiredBy = lib.mkOption {
@@ -50,7 +27,7 @@ in
     ipAddress = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
       readOnly = true;
-      default = if cfg.reservation == null then null else cfg.reservation.address;
+      default = if reservation == null then null else reservation.address;
       description = "Stable site IPv4 address derived from this host's reservation.";
     };
 
@@ -61,4 +38,15 @@ in
     };
 
   };
+
+  config.assertions = [
+    {
+      assertion = cfg.stableAddress.requiredBy == [ ] || reservation != null;
+      message = "${config.networking.hostName} requires a stable site address for: ${lib.concatStringsSep ", " (lib.unique cfg.stableAddress.requiredBy)}";
+    }
+    {
+      assertion = reservation == null || cfg.stableAddress.requiredBy != [ ];
+      message = "${config.networking.hostName} has a site IP reservation without a stable-address requirement";
+    }
+  ];
 }
