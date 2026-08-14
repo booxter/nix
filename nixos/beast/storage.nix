@@ -74,7 +74,7 @@
 
     smart.enable = true;
 
-    hba.backend = "storcli";
+    hba.enable = true;
 
     diskBays = {
       rows = 5;

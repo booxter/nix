@@ -21,18 +21,7 @@
       };
     };
 
-    hba = lib.mkOption {
-      type = lib.types.nullOr (
-        lib.types.submodule {
-          options.backend = lib.mkOption {
-            type = lib.types.enum [ "storcli" ];
-            description = "Management backend used by the storage controller.";
-          };
-        }
-      );
-      default = null;
-      description = "Host bus adapter exposed to storage monitoring.";
-    };
+    hba.enable = lib.mkEnableOption "StorCLI-managed host bus adapter";
 
     diskBays = lib.mkOption {
       type = lib.types.nullOr (

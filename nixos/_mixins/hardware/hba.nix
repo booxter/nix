@@ -17,7 +17,7 @@ let
       "/etc/disk-bay-map.json";
 in
 {
-  config = lib.mkIf (cfg != null) (
+  config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
         environment.systemPackages = [ pkgs.storcli ];
