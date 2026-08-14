@@ -6,8 +6,7 @@
   ...
 }:
 let
-  model = import ./model.nix { inherit config; };
-  inherit (model) cfg tableName;
+  tableName = "observability_lan_wan";
   # TODO: Migrate the fleet firewall backend to nftables, then let
   # networking.nftables.tables own this table instead of this service.
   rules = import ./rules.nix {
@@ -36,7 +35,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf config.host.observability.enable {
     systemd.services.observability-lan-wan-accounting = {
       description = "Own the nftables LAN/WAN accounting table";
       wantedBy = [ "multi-user.target" ];

@@ -5,19 +5,18 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  interfacePathMode = cfg.mode == "interface-path";
+  interfacePathMode = config.host.proxmox.node == null;
+  interface = config.host.network.primaryInterface;
   override = cfg.wanEgressOverride;
   overrideEnabled = override != null;
   inputChain = if interfacePathMode then "prerouting" else "input";
   outputChain = if interfacePathMode then "postrouting" else "output";
-  inputInterfaceFilter = lib.optionalString (cfg.interface != null) ''
-    iifname != "${cfg.interface}" return
+  inputInterfaceFilter = lib.optionalString (interface != null) ''
+    iifname != "${interface}" return
   '';
-  outputInterfaceFilter = lib.optionalString (cfg.interface != null) ''
-    oifname != "${cfg.interface}" return
+  outputInterfaceFilter = lib.optionalString (interface != null) ''
+    oifname != "${interface}" return
   '';
-  elements =
-    values: lib.optionalString (values != [ ]) "elements = { ${lib.concatStringsSep ", " values} }";
   overrideRules = lib.optionalString overrideEnabled (
     lib.concatStringsSep "\n    " [
       ''udp dport ${toString override.udpDestinationPort} counter name "${override.name}_out" counter name "wan_out" return''
@@ -34,13 +33,13 @@ in
     set lan_nets {
       type ipv4_addr
       flags interval
-      ${elements cfg.lanSubnets}
+      elements = { ${config.host.site.lan.cidr} }
     }
 
     set lan_nets6 {
       type ipv6_addr
       flags interval
-      ${elements cfg.lanSubnets6}
+      elements = { fe80::/10 }
     }
 
     counter lan_in {}

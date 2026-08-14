@@ -4,10 +4,10 @@ let
   override = cfg.wanEgressOverride;
 in
 {
-  assertions = lib.optionals cfg.enable [
+  assertions = lib.optionals config.host.observability.enable [
     {
-      assertion = override == null || cfg.interface != null;
-      message = "host.observability.lanWan.wanEgressOverride requires host.observability.lanWan.interface.";
+      assertion = override == null || config.host.network.primaryInterface != null;
+      message = "host.observability.lanWan.wanEgressOverride requires a primary network interface.";
     }
     {
       assertion =
