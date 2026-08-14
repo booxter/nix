@@ -63,14 +63,7 @@ in
       enableDefaultConfig = false;
 
       package = pkgs.openssh;
-
-      settings = {
-        "*" = {
-          # agent forwarding to remotes
-          ForwardAgent = true;
-        };
-      }
-      // preBootSettings;
+      settings = preBootSettings;
 
       includes = [
         # local config
