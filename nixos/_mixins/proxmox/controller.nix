@@ -9,10 +9,7 @@ in
       title = "Proxmox VE";
       icon = "sh:proxmox";
       section = "infrastructure";
-      endpoints.internal = {
-        inherit url;
-        checkUrl = url;
-      };
+      inherit url;
     };
   };
 }

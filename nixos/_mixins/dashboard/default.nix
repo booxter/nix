@@ -1,25 +1,9 @@
-{ config, lib, ... }:
-let
-  endpointType = lib.types.submodule {
-    options = {
-      url = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "URL opened from the dashboard.";
-      };
-
-      checkUrl = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Optional URL used to check entry availability.";
-      };
-    };
-  };
-in
+{ lib, ... }:
 {
   options.host.dashboard.entries = lib.mkOption {
     type = lib.types.attrsOf (
       lib.types.submodule (
-        { name, ... }:
+        { config, name, ... }:
         {
           options = {
             title = lib.mkOption {
@@ -39,29 +23,21 @@ in
               description = "Dashboard section containing this entry.";
             };
 
-            endpoints = {
-              internal = lib.mkOption {
-                type = with lib.types; nullOr endpointType;
-                default = null;
-                description = "Entry endpoint available from the trusted network.";
-              };
+            url = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              description = "URL opened from the dashboard.";
+            };
 
-              public = lib.mkOption {
-                type = with lib.types; nullOr endpointType;
-                default = null;
-                description = "Entry endpoint safe to publish on an external dashboard.";
-              };
+            checkUrl = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = config.url;
+              description = "URL used to check entry availability.";
             };
           };
         }
       )
     );
     default = { };
-    description = "Non-web resources contributed to the fleet dashboard catalog.";
+    description = "Internal non-web resources contributed to the fleet dashboard catalog.";
   };
-
-  config.assertions = lib.mapAttrsToList (name: entry: {
-    assertion = entry.endpoints.internal != null || entry.endpoints.public != null;
-    message = "host.dashboard.entries.${name} requires at least one endpoint";
-  }) config.host.dashboard.entries;
 }

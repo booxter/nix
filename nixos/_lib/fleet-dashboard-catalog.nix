@@ -39,11 +39,16 @@ let
       lib.mapAttrsToList (id: entry: {
         inherit id owner;
         inherit (entry)
-          endpoints
           icon
           section
           title
           ;
+        endpoints = {
+          internal = {
+            inherit (entry) checkUrl url;
+          };
+          public = null;
+        };
       }) hostConfig.host.dashboard.entries
     ) hostConfigs
   );

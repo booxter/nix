@@ -83,10 +83,7 @@ in
       title = "PKI Root CA";
       icon = "sh:smallstep";
       section = "infrastructure";
-      endpoints.internal = {
-        url = "${cfg.url}${cfg.rootsPath}";
-        checkUrl = "${cfg.url}${cfg.rootsPath}";
-      };
+      url = "${cfg.url}${cfg.rootsPath}";
     };
 
     host.observability = lib.mkIf enabled {
