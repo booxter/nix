@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.wireguard.server;
-  network = config.host.wireguard.networks.${cfg.network};
+  network = if cfg == null then null else config.host.wireguard.networks.${cfg.network} or null;
   internalAddress = "127.0.0.1";
   internalPort = 9587;
   publicPort = 9586;
@@ -30,7 +30,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg != null) {
+  config = lib.mkIf (cfg != null && network != null) {
     host.observability.prometheusEndpoints.${metricsName} = {
       port = publicPort;
       path = "/metrics";
