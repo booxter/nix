@@ -36,6 +36,10 @@ in
               nvidia.enable = true;
             };
             docker.enable = true;
+            podman = {
+              enable = false;
+              api.enable = false;
+            };
             sketchybar.attentionInbox.enable = true;
           };
         }

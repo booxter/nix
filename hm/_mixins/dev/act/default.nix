@@ -10,7 +10,7 @@ let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   # On macOS, act connects through the forwarded host socket, but job
   # containers need the VM-internal socket with SELinux labeling disabled.
-  podmanArgs = lib.optionalString isDarwin (
+  podmanArgs = lib.optionalString (isDarwin && config.programs.podman-machine.enable) (
     " --container-daemon-socket=unix:///run/user/$UID/podman/podman.sock"
     + " --container-options=--security-opt=label=disable"
   );
@@ -20,8 +20,8 @@ in
 
   config = lib.mkIf (config.host.hm.env.preset != null && cfg.enable) {
     host.hm.podman = {
-      enable = true;
-      api.enable = true;
+      enable = lib.mkDefault true;
+      api.enable = lib.mkDefault true;
     };
 
     home.packages = [ pkgs.act ];

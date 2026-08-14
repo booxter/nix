@@ -1,8 +1,8 @@
 {
   changelog = "https://github.com/arabcoders/watchstate/releases/tag/{tag}";
-  digest = "sha256:15a9ddee901f26446eae23dfcfa5bfe0a70adee02b760020a4c8a77c5fece65e";
-  hash = "sha256-aCCs4Uxos/PBswgAY4UR0hgyF0W8d7jnL9ySBzm3DzM=";
+  digest = "sha256:5dc9a6e719e7ea0632aa44cf4e911c70acb1c01807925c2b91b4e936ade55d6b";
+  hash = "sha256-gWgnLgk9QZksLZxkMws+/c3hzssjvZ8XkfX4UQU0xJU=";
   image = "ghcr.io/arabcoders/watchstate";
-  tag = "v1.10.1";
+  tag = "v1.10.2";
   tagRegex = "^v[0-9]+\\.[0-9]+\\.[0-9]+$";
 }

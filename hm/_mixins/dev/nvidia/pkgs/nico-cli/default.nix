@@ -6,13 +6,13 @@
 
 buildGoModule rec {
   pname = "nico-cli";
-  version = "2.1.0-rc.1";
+  version = "2.1.0-rc.3";
 
   src = fetchFromGitHub {
     owner = "NVIDIA";
     repo = "infra-controller";
     rev = "v${version}";
-    hash = "sha256-L7j4mHZpQW1ARIXjzBaLq7dSD9TdCsvFRK4MUvdoDWo=";
+    hash = "sha256-8Fu9uqKOWRcAO1C72HHZ/cyCX9z/oVvtAk6qFpYoRa8=";
   };
 
   modRoot = "./rest-api";
