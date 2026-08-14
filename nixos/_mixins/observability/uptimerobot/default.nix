@@ -1,7 +1,9 @@
+{ lib, ... }:
 {
   imports = [
-    ./options.nix
-    ./assertions.nix
     ./controller.nix
   ];
+
+  options.host.observability.uptimeRobot.controller.enable =
+    lib.mkEnableOption "authoritative UptimeRobot monitor reconciliation";
 }

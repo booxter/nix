@@ -14,6 +14,9 @@ let
       outputs
       ;
   };
+  capacity = 10;
+  apiKeySecret = "uptimerobot/api_key";
+  package = pkgs.callPackage ./package { };
   describe = contribution: {
     inherit (contribution) id owner;
     inherit (contribution.value.observability) importance;
@@ -29,20 +32,27 @@ let
     }) model.plan.selected
   );
   planFile = (pkgs.formats.json { }).generate "uptimerobot-plan.json" {
-    capacity = cfg.capacity;
+    inherit capacity;
     selected = map describe model.plan.selected;
     omitted = map describe model.plan.omitted;
   };
 in
 {
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = !model.plan.requiredOverflow;
+        message = "Required external probes exceed UptimeRobot capacity ${toString capacity}.";
+      }
+    ];
+
     users.users.uptimerobot-sync = {
       isSystemUser = true;
       group = "uptimerobot-sync";
     };
     users.groups.uptimerobot-sync = { };
 
-    sops.secrets.${cfg.apiKeySecret} = { };
+    sops.secrets.${apiKeySecret} = { };
 
     system.build.uptimeRobotPlan = planFile;
 
@@ -60,17 +70,17 @@ in
         Type = "oneshot";
         User = "uptimerobot-sync";
         Group = "uptimerobot-sync";
-        LoadCredential = "uptimerobot-api-key:${config.sops.secrets.${cfg.apiKeySecret}.path}";
-        ExecStart = "${lib.getExe cfg.package} ${
+        LoadCredential = "uptimerobot-api-key:${config.sops.secrets.${apiKeySecret}.path}";
+        ExecStart = "${lib.getExe package} ${
           lib.escapeShellArgs [
             "--api-url"
-            cfg.apiUrl
+            "https://api.uptimerobot.com/v3"
             "--api-key-file"
             "%d/uptimerobot-api-key"
             "--inventory-json-file"
             inventoryFile
             "--interval"
-            (toString cfg.monitorInterval)
+            "300"
           ]
         }";
         NoNewPrivileges = true;
@@ -93,9 +103,9 @@ in
       description = "Periodically reconcile capacity-planned UptimeRobot monitors";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = cfg.schedule.onBootSec;
-        OnUnitActiveSec = cfg.schedule.onUnitActiveSec;
-        RandomizedDelaySec = cfg.schedule.randomizedDelaySec;
+        OnBootSec = "5m";
+        OnUnitActiveSec = "1h";
+        RandomizedDelaySec = "10m";
         Persistent = true;
         Unit = "uptimerobot-sync.service";
       };

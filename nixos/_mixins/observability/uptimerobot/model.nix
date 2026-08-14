@@ -4,19 +4,7 @@
   outputs,
 }:
 let
-  localHost = config.networking.hostName;
   cfg = config.host.observability.uptimeRobot.controller;
-  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  controllerHosts = builtins.attrNames (
-    lib.filterAttrs (_: enabled: enabled) (
-      lib.mapAttrs (
-        _: configuration: configuration.config.host.observability.uptimeRobot.controller.enable
-      ) otherConfigurations
-      // {
-        ${localHost} = cfg.enable;
-      }
-    )
-  );
   fleetServices = import ../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
@@ -24,8 +12,9 @@ let
   plan =
     if cfg.enable then
       planner {
-        inherit (cfg) capacity;
-        inherit (cfg.planner) minimumImportance spreadByOwner;
+        capacity = 10;
+        minimumImportance = "best-effort";
+        spreadByOwner = true;
         candidates = fleetServices.public;
       }
     else
@@ -37,5 +26,5 @@ let
       };
 in
 {
-  inherit controllerHosts plan;
+  inherit plan;
 }
