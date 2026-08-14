@@ -1,3 +1,5 @@
+"""Required-reboot detection and scheduling."""
+
 from __future__ import annotations
 
 import os

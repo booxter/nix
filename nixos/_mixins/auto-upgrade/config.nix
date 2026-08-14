@@ -14,7 +14,7 @@ let
       outputs
       ;
   };
-  autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
+  autoUpgradeTools = pkgs.callPackage ./package {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   cfg = config.host.autoUpgrade;

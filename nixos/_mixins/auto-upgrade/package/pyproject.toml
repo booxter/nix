@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "auto-upgrade-tools"
 version = "0.1.0"
-description = "NixOS auto-upgrade hold, metric, and reboot helpers"
+description = "NixOS auto-upgrade hold, metrics, and reboot helpers"
 requires-python = ">=3.11"
 dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
 

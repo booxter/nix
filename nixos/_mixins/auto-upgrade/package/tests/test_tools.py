@@ -1,3 +1,5 @@
+"""Behavioral tests for the auto-upgrade helper commands."""
+
 from __future__ import annotations
 
 import io

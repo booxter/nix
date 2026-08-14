@@ -37,7 +37,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "auto_upgrade_tools" ];
 
   meta = {
-    description = "NixOS auto-upgrade hold, metric, and reboot helpers";
+    description = "NixOS auto-upgrade hold, metrics, and reboot helpers";
     license = lib.licenses.mit;
     mainProgram = "auto-upgrade-tools";
     platforms = lib.platforms.linux;

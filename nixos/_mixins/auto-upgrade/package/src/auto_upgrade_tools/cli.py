@@ -13,7 +13,7 @@ from .reboot import ShutdownCommand, schedule_reboot_if_needed
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage NixOS auto-upgrade lifecycle state.")
+    parser = argparse.ArgumentParser(description="Manage NixOS auto-upgrade state.")
     commands = parser.add_subparsers(dest="command", required=True)
 
     guard = commands.add_parser("guard", help="reject maintenance during an active hold")

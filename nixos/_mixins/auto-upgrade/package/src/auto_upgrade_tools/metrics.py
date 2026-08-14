@@ -1,3 +1,5 @@
+"""Prometheus metrics for NixOS auto-upgrades."""
+
 from __future__ import annotations
 
 import time
