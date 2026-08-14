@@ -14,6 +14,7 @@ let
     };
     searchProviders = config.host.site.search.availableProviders;
   };
+  unitNameFor = name: "glance-${name}";
   siteFor =
     entry:
     {
@@ -65,12 +66,12 @@ let
     ];
     requires = [ "nss-user-lookup.target" ];
     serviceConfig = {
-      ExecStart = "${lib.getExe cfg.package} --config ${
+      ExecStart = "${lib.getExe pkgs.glance} --config ${
         (pkgs.formats.yaml { }).generate "glance-${name}.yaml" (settingsFor instance)
       }";
       Restart = "on-failure";
-      WorkingDirectory = "/var/lib/${instance.unitName}";
-      StateDirectory = instance.unitName;
+      WorkingDirectory = "/var/lib/${unitNameFor name}";
+      StateDirectory = unitNameFor name;
       PrivateTmp = true;
       DynamicUser = true;
       DevicePolicy = "closed";
@@ -93,6 +94,6 @@ let
 in
 {
   config.systemd.services = lib.mapAttrs' (
-    name: instance: lib.nameValuePair instance.unitName (serviceFor name instance)
+    name: instance: lib.nameValuePair (unitNameFor name) (serviceFor name instance)
   ) model.resolved;
 }

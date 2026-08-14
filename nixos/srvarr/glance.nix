@@ -1,5 +1,7 @@
 { config, ... }:
 let
+  internalPort = 18080;
+  publicPort = 18081;
   dashboardSections = [
     {
       id = "user";
@@ -20,12 +22,12 @@ in
 
   host.glance.instances = {
     internal = {
-      port = 18080;
+      port = internalPort;
       sections = dashboardSections;
     };
 
     public = {
-      port = 18081;
+      port = publicPort;
       sections = builtins.filter (section: section.id == "user") dashboardSections;
     };
   };
@@ -33,13 +35,13 @@ in
   host.web.services = {
     glance = {
       enable = true;
-      upstream = config.host.glance.instances.internal.upstream;
+      upstream = "http://127.0.0.1:${toString internalPort}";
       internal.publicAliases = [ config.host.web.services.dash.public.hostName ];
     };
 
     dash = {
       enable = true;
-      upstream = config.host.glance.instances.public.upstream;
+      upstream = "http://127.0.0.1:${toString publicPort}";
       public = {
         enable = true;
         hostName = "dash.${config.host.network.publicDomain}";
