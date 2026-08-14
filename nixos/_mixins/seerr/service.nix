@@ -7,20 +7,21 @@
 let
   cfg = config.host.seerr;
   tools = pkgs.callPackage ./tools { };
+  user = "seerr";
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.seerr = {
       enable = true;
-      package = cfg.package;
+      package = pkgs.seerr;
       configDir = cfg.stateDir;
     };
 
     environment.systemPackages = [ tools.package ];
 
-    users.groups.${cfg.group} = { };
-    users.users.${cfg.user} = {
-      group = cfg.group;
+    users.groups.${user} = { };
+    users.users.${user} = {
+      group = user;
       home = "/var/empty";
       isSystemUser = true;
     };
@@ -28,15 +29,27 @@ in
     # TODO(seerr): migrate the legacy /data state tree to /var/lib/seerr so
     # the upstream module can own directory creation through StateDirectory.
     systemd.tmpfiles.rules = [
-      "d '${cfg.stateDir}' 0700 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.stateDir}' 0700 ${user} ${user} - -"
     ];
 
     systemd.services.seerr.serviceConfig = {
-      Group = cfg.group;
+      Group = user;
       ReadWritePaths = [ cfg.stateDir ];
       StateDirectory = lib.mkForce null;
-      User = cfg.user;
+      User = user;
       WorkingDirectory = cfg.stateDir;
+    };
+
+    host.backups.sources.seerr-database = {
+      title = "Seerr";
+      database = {
+        type = "sqlite";
+        path = "${cfg.stateDir}/db/db.sqlite3";
+        stagingDir = "${cfg.stateDir}-backup/latest";
+        extraCopies = [
+          { source = "${cfg.stateDir}/settings.json"; }
+        ];
+      };
     };
   };
 }
