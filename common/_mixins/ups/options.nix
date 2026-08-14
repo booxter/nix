@@ -28,6 +28,9 @@ in
         "literal"
         "sops"
       ];
+      default = if config.host.realm == "work" then "literal" else "sops";
+      readOnly = true;
+      internal = true;
       description = "How UPS client and server passwords are provided in this realm.";
     };
 
