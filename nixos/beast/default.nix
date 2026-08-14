@@ -19,10 +19,15 @@
     };
 
     network = {
-      ethernet.disablePauseFrames.enable = true;
       interfaces = {
-        enp6s0.kind = "ethernet";
-        enp7s0.kind = "ethernet";
+        enp6s0 = {
+          kind = "ethernet";
+          disablePauseFrames = true;
+        };
+        enp7s0 = {
+          kind = "ethernet";
+          disablePauseFrames = true;
+        };
       };
       macAddress = "bc:fc:e7:3b:fe:da";
       primaryInterface = "enp6s0";

@@ -36,12 +36,20 @@
     interfaces = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
-          options.kind = lib.mkOption {
-            type = lib.types.enum [
-              "ethernet"
-              "wireless"
-            ];
-            description = "Network interface kind.";
+          options = {
+            kind = lib.mkOption {
+              type = lib.types.enum [
+                "ethernet"
+                "wireless"
+              ];
+              description = "Network interface kind.";
+            };
+
+            disablePauseFrames = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether to disable Ethernet pause-frame negotiation.";
+            };
           };
         }
       );
