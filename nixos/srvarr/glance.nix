@@ -41,7 +41,6 @@ in
     dash = {
       upstream = "http://127.0.0.1:${toString publicPort}";
       public = {
-        enable = true;
         hostName = "dash.${config.host.network.publicDomain}";
         serveOnOwner = false;
         splitDnsHost = config.networking.hostName;

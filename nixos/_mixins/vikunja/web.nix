@@ -12,7 +12,6 @@ in
     host.web.services.vikunja = {
       upstream = cfg.localUrl;
       public = {
-        enable = true;
         hostName = cfg.publicHost;
       };
       health.frontend = {

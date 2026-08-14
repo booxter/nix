@@ -154,7 +154,6 @@ in
     host.web.services.shelfmark = {
       upstream = "http://127.0.0.1:${toString model.port}";
       public = {
-        enable = true;
         hostName = cfg.publicHostName;
       };
       health.frontend = {

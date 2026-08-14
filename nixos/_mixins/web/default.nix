@@ -7,7 +7,7 @@ let
   rootConfig = config;
   cfg = rootConfig.host.web;
   services = cfg.services;
-  internalServices = lib.filterAttrs (_: service: service.internal.enable) services;
+  internalServices = lib.filterAttrs (_: service: service.internal != null) services;
   metricEndpointName =
     serviceName: metricName:
     if metricName == "default" then serviceName else "${serviceName}-${metricName}";
@@ -40,6 +40,7 @@ in
         { name, config, ... }:
         let
           serviceName = name;
+          service = config;
         in
         {
           options = {
@@ -52,230 +53,238 @@ in
             };
 
             upstream = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Local application URL proxied by the internal HTTPS frontend.";
+              type = lib.types.nonEmptyStr;
+              description = "Local application URL exposed by this service.";
             };
 
-            internal = {
-              enable = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
-                description = "Whether to expose the service through internal HTTPS.";
-              };
-
-              serverName = lib.mkOption {
-                type = lib.types.str;
-                default = "${serviceName}.${rootConfig.host.network.lanDomain}";
-                description = "Canonical internal HTTPS server name.";
-              };
-
-              endpointName = lib.mkOption {
-                type = lib.types.str;
-                default = serviceName;
-                description = "Host-local internal HTTPS endpoint name.";
-              };
-
-              aliases = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ ];
-                description = "Additional internal HTTPS server aliases.";
-              };
-
-              publicAliases = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ ];
-                description = "Additional browser-facing sibling vhosts served locally.";
-              };
-
-              localAliases = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ serviceName ];
-                description = "Single-label and mDNS aliases for the service.";
-              };
-
-              listenAddress = lib.mkOption {
-                type = lib.types.str;
-                default = "0.0.0.0";
-                description = "Internal HTTPS listener address.";
-              };
-
-              port = lib.mkOption {
-                type = lib.types.port;
-                default = 443;
-                description = "Internal HTTPS listener port.";
-              };
-
-              path = lib.mkOption {
-                type = lib.types.str;
-                default = "/";
-                description = "URL path exposed through the internal reverse proxy.";
-              };
-
-              clientAuth = lib.mkOption {
-                type = lib.types.enum [
-                  "none"
-                  "mtls"
-                ];
-                default = if config.public.enable then "mtls" else "none";
-                description = "Client authentication required by the internal HTTPS frontend.";
-              };
-
-              openFirewall = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
-                description = "Whether to open the internal HTTPS listener in the firewall.";
-              };
-
-              proxyWebsockets = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
-                description = "Whether nginx should configure websocket proxy headers.";
-              };
-
-              recommendedProxySettings = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
-                description = "Whether nginx recommended proxy settings should be used.";
-              };
-
-              locationExtraConfig = lib.mkOption {
-                type = lib.types.lines;
-                default = "";
-                description = "Additional nginx location configuration.";
-              };
-
-              secretPrefix = lib.mkOption {
-                type = lib.types.str;
-                default = "internal_https/${serviceName}";
-                description = "SOPS key prefix for the internal HTTPS certificate and key.";
-              };
-
-              url = lib.mkOption {
-                type = lib.types.str;
-                default = "https://${config.internal.serverName}${
-                  lib.optionalString (config.internal.port != 443) ":${toString config.internal.port}"
-                }";
-                readOnly = true;
-                internal = true;
-                description = "Resolved canonical internal service URL.";
-              };
-            };
-
-            public = {
-              enable = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether to expose ${serviceName} through public ingress.";
-              };
-
-              hostName = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = null;
-                description = "Public DNS hostname served by the ingress host.";
-              };
-
-              ingressHost = lib.mkOption {
-                type = with lib.types; nullOr nonEmptyStr;
-                default = null;
-                description = "Explicit public ingress host, or null to use the realm controller.";
-              };
-
-              splitDnsHost = lib.mkOption {
-                type = with lib.types; nullOr nonEmptyStr;
-                default = null;
-                description = "Explicit split-DNS host, or null to use the resolved ingress host.";
-              };
-
-              transport = lib.mkOption {
-                type = lib.types.enum [
-                  "internal-mtls"
-                  "direct"
-                ];
-                default = "internal-mtls";
-                description = "Transport used by the public ingress host to reach the service.";
-              };
-
-              directUpstream = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = null;
-                description = "Ingress-local upstream URL used by direct public services.";
-              };
-
-              url = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = if config.public.hostName == null then null else "https://${config.public.hostName}";
-                readOnly = true;
-                internal = true;
-                description = "Resolved public service URL.";
-              };
-
-              locationExtraConfig = lib.mkOption {
-                type = lib.types.lines;
-                default = "";
-                description = "Additional public ingress nginx location configuration.";
-              };
-
-              routes = lib.mkOption {
-                type = lib.types.attrsOf (
-                  lib.types.submodule (
-                    { name, ... }:
-                    {
-                      options = {
-                        location = lib.mkOption {
-                          type = lib.types.nonEmptyStr;
-                          description = "nginx location expression for the ${name} public route.";
-                        };
-
-                        upstream = lib.mkOption {
-                          type = with lib.types; nullOr nonEmptyStr;
-                          default = null;
-                          description = "Route-specific upstream URL, or null to use the service public upstream.";
-                        };
-
-                        proxyWebsockets = lib.mkOption {
-                          type = lib.types.bool;
-                          default = false;
-                          description = "Whether the ${name} public route proxies WebSocket connections.";
-                        };
-
-                        bandwidthLimit = {
-                          enable = lib.mkEnableOption "shared egress bandwidth limiting for the ${name} route";
-
-                          listenPort = lib.mkOption {
-                            type = lib.types.port;
-                            description = "Ingress-local HAProxy port used for the ${name} route.";
-                          };
-
-                          bytesPerSecond = lib.mkOption {
-                            type = lib.types.ints.positive;
-                            description = "Aggregate external response bandwidth allowed for the ${name} route.";
-                          };
-
-                          unlimitedCidrs = lib.mkOption {
-                            type = with lib.types; listOf nonEmptyStr;
-                            default = [
-                              "127.0.0.0/8"
-                              "::1"
-                              "fe80::/10"
-                              "fc00::/7"
-                            ];
-                            description = "Client networks excluded from the ${name} route bandwidth limit.";
-                          };
-                        };
+            internal = lib.mkOption {
+              type = lib.types.nullOr (
+                lib.types.submodule (
+                  { config, ... }:
+                  {
+                    options = {
+                      serverName = lib.mkOption {
+                        type = lib.types.str;
+                        default = "${serviceName}.${rootConfig.host.network.lanDomain}";
+                        description = "Canonical internal HTTPS server name.";
                       };
-                    }
-                  )
-                );
-                default = { };
-                description = "Additional structured routes served by public ingress.";
-              };
 
-              serveOnOwner = lib.mkOption {
-                type = lib.types.bool;
-                default = true;
-                description = "Whether the owner host also serves the public hostname as a sibling vhost.";
-              };
+                      endpointName = lib.mkOption {
+                        type = lib.types.str;
+                        default = serviceName;
+                        description = "Host-local internal HTTPS endpoint name.";
+                      };
+
+                      aliases = lib.mkOption {
+                        type = lib.types.listOf lib.types.str;
+                        default = [ ];
+                        description = "Additional internal HTTPS server aliases.";
+                      };
+
+                      publicAliases = lib.mkOption {
+                        type = lib.types.listOf lib.types.str;
+                        default = [ ];
+                        description = "Additional browser-facing sibling vhosts served locally.";
+                      };
+
+                      localAliases = lib.mkOption {
+                        type = lib.types.listOf lib.types.str;
+                        default = [ serviceName ];
+                        description = "Single-label and mDNS aliases for the service.";
+                      };
+
+                      listenAddress = lib.mkOption {
+                        type = lib.types.str;
+                        default = "0.0.0.0";
+                        description = "Internal HTTPS listener address.";
+                      };
+
+                      port = lib.mkOption {
+                        type = lib.types.port;
+                        default = 443;
+                        description = "Internal HTTPS listener port.";
+                      };
+
+                      path = lib.mkOption {
+                        type = lib.types.str;
+                        default = "/";
+                        description = "URL path exposed through the internal reverse proxy.";
+                      };
+
+                      clientAuth = lib.mkOption {
+                        type = lib.types.enum [
+                          "none"
+                          "mtls"
+                        ];
+                        default = if service.public != null then "mtls" else "none";
+                        description = "Client authentication required by the internal HTTPS frontend.";
+                      };
+
+                      openFirewall = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether to open the internal HTTPS listener in the firewall.";
+                      };
+
+                      proxyWebsockets = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether nginx should configure websocket proxy headers.";
+                      };
+
+                      recommendedProxySettings = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether nginx recommended proxy settings should be used.";
+                      };
+
+                      locationExtraConfig = lib.mkOption {
+                        type = lib.types.lines;
+                        default = "";
+                        description = "Additional nginx location configuration.";
+                      };
+
+                      secretPrefix = lib.mkOption {
+                        type = lib.types.str;
+                        default = "internal_https/${serviceName}";
+                        description = "SOPS key prefix for the internal HTTPS certificate and key.";
+                      };
+
+                      url = lib.mkOption {
+                        type = lib.types.str;
+                        default = "https://${config.serverName}${
+                          lib.optionalString (config.port != 443) ":${toString config.port}"
+                        }";
+                        readOnly = true;
+                        internal = true;
+                        description = "Resolved canonical internal service URL.";
+                      };
+                    };
+                  }
+                )
+              );
+              default = { };
+              description = "Internal HTTPS exposure for this service.";
+            };
+
+            public = lib.mkOption {
+              type = lib.types.nullOr (
+                lib.types.submodule (
+                  { config, ... }:
+                  {
+                    options = {
+                      hostName = lib.mkOption {
+                        type = lib.types.nonEmptyStr;
+                        description = "Public DNS hostname served by the ingress host.";
+                      };
+
+                      ingressHost = lib.mkOption {
+                        type = with lib.types; nullOr nonEmptyStr;
+                        default = null;
+                        description = "Explicit public ingress host, or null to use the realm controller.";
+                      };
+
+                      splitDnsHost = lib.mkOption {
+                        type = with lib.types; nullOr nonEmptyStr;
+                        default = null;
+                        description = "Explicit split-DNS host, or null to use the resolved ingress host.";
+                      };
+
+                      transport = lib.mkOption {
+                        type = lib.types.enum [
+                          "internal-mtls"
+                          "direct"
+                        ];
+                        default = "internal-mtls";
+                        description = "Transport used by the public ingress host to reach the service.";
+                      };
+
+                      directUpstream = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Ingress-local upstream URL used by direct public services.";
+                      };
+
+                      url = lib.mkOption {
+                        type = lib.types.str;
+                        default = "https://${config.hostName}";
+                        readOnly = true;
+                        internal = true;
+                        description = "Resolved public service URL.";
+                      };
+
+                      locationExtraConfig = lib.mkOption {
+                        type = lib.types.lines;
+                        default = "";
+                        description = "Additional public ingress nginx location configuration.";
+                      };
+
+                      routes = lib.mkOption {
+                        type = lib.types.attrsOf (
+                          lib.types.submodule (
+                            { name, ... }:
+                            {
+                              options = {
+                                location = lib.mkOption {
+                                  type = lib.types.nonEmptyStr;
+                                  description = "nginx location expression for the ${name} public route.";
+                                };
+
+                                upstream = lib.mkOption {
+                                  type = with lib.types; nullOr nonEmptyStr;
+                                  default = null;
+                                  description = "Route-specific upstream URL, or null to use the service public upstream.";
+                                };
+
+                                proxyWebsockets = lib.mkOption {
+                                  type = lib.types.bool;
+                                  default = false;
+                                  description = "Whether the ${name} public route proxies WebSocket connections.";
+                                };
+
+                                bandwidthLimit = {
+                                  enable = lib.mkEnableOption "shared egress bandwidth limiting for the ${name} route";
+
+                                  listenPort = lib.mkOption {
+                                    type = lib.types.port;
+                                    description = "Ingress-local HAProxy port used for the ${name} route.";
+                                  };
+
+                                  bytesPerSecond = lib.mkOption {
+                                    type = lib.types.ints.positive;
+                                    description = "Aggregate external response bandwidth allowed for the ${name} route.";
+                                  };
+
+                                  unlimitedCidrs = lib.mkOption {
+                                    type = with lib.types; listOf nonEmptyStr;
+                                    default = [
+                                      "127.0.0.0/8"
+                                      "::1"
+                                      "fe80::/10"
+                                      "fc00::/7"
+                                    ];
+                                    description = "Client networks excluded from the ${name} route bandwidth limit.";
+                                  };
+                                };
+                              };
+                            }
+                          )
+                        );
+                        default = { };
+                        description = "Additional structured routes served by public ingress.";
+                      };
+
+                      serveOnOwner = lib.mkOption {
+                        type = lib.types.bool;
+                        default = true;
+                        description = "Whether the owner host also serves the public hostname as a sibling vhost.";
+                      };
+                    };
+                  }
+                )
+              );
+              default = null;
+              description = "Public HTTPS exposure for this service.";
             };
 
             health = {
@@ -436,7 +445,7 @@ in
               externalProbe = {
                 enable = lib.mkOption {
                   type = lib.types.bool;
-                  default = config.public.enable && config.health.frontend.enable;
+                  default = config.public != null && config.health.frontend.enable;
                   description = "Whether this public frontend is eligible for external probing.";
                 };
 
@@ -542,7 +551,6 @@ in
       host.internalHttps.services = lib.mapAttrs' (
         _: service:
         lib.nameValuePair service.internal.endpointName {
-          enable = service.internal.enable;
           inherit (service) upstream;
           inherit (service.internal)
             listenAddress
@@ -559,7 +567,7 @@ in
           serverAliases = service.internal.aliases;
           publicAliases =
             service.internal.publicAliases
-            ++ lib.optional (service.public.enable && service.public.serveOnOwner) service.public.hostName;
+            ++ lib.optional (service.public != null && service.public.serveOnOwner) service.public.hostName;
           mtls.enable = service.internal.clientAuth == "mtls";
           probe = {
             enable = service.health.backend.enable;

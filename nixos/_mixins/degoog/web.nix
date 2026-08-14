@@ -25,7 +25,6 @@ in
     host.web.services.goo = {
       inherit upstream;
       public = {
-        enable = true;
         hostName = "goo.${config.host.network.publicDomain}";
       };
       health = {

@@ -55,7 +55,7 @@ let
     contribution:
     let
       service = contribution.value;
-      usePublic = service.public.enable;
+      usePublic = service.public != null;
       baseUrl = if usePublic then service.public.url else service.internal.url;
     in
     {

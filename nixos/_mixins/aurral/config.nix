@@ -86,7 +86,6 @@ in
     host.web.services.aurral = {
       upstream = "http://127.0.0.1:${toString model.port}";
       public = {
-        enable = true;
         hostName = cfg.publicHostName;
         locationExtraConfig = ''
           proxy_set_header X-Forwarded-For $remote_addr;

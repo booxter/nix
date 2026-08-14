@@ -29,7 +29,7 @@ let
   );
   resolvePublicContribution =
     contribution:
-    if !contribution.value.public.enable then
+    if contribution.value.public == null then
       contribution
     else
       let
@@ -61,7 +61,7 @@ let
   contributionsById = builtins.groupBy (contribution: contribution.id) contributions;
   duplicateIds = lib.filterAttrs (_: entries: builtins.length entries != 1) contributionsById;
   publicContributions = builtins.filter (
-    contribution: contribution.value.public.enable
+    contribution: contribution.value.public != null
   ) contributions;
   contributionsByPublicHost = builtins.groupBy (
     contribution: contribution.value.public.hostName

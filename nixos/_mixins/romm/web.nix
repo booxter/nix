@@ -21,10 +21,7 @@ in
     host.web.services.romm = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal.path = "/api";
-      public = {
-        enable = cfg.publicHostName != null;
-        hostName = cfg.publicHostName;
-      };
+      public = if cfg.publicHostName == null then null else { hostName = cfg.publicHostName; };
       health.frontend = {
         enable = cfg.publicHostName != null;
         path = "/api/heartbeat";

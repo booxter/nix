@@ -225,7 +225,6 @@ in
     host.web.services.id = {
       upstream = "https://127.0.0.1:${toString kanidmPort}";
       public = {
-        enable = true;
         hostName = idPublicHost;
       };
       health.frontend = {

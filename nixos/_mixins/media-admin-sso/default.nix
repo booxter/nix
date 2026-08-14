@@ -89,7 +89,7 @@ in
   config = lib.mkIf (services != { }) {
     assertions = [
       {
-        assertion = lib.all (name: services.${name}.internal.enable) serviceNames;
+        assertion = lib.all (name: services.${name}.internal != null) serviceNames;
         message = "The media-admin access policy requires internal HTTPS services";
       }
     ];

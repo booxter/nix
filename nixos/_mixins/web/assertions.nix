@@ -3,28 +3,20 @@
   assertions = builtins.concatLists (
     lib.mapAttrsToList (serviceName: service: [
       {
-        assertion = !service.internal.enable || service.upstream != null;
-        message = "host.web.services.${serviceName}.upstream is required for internal HTTPS exposure";
-      }
-      {
-        assertion = !service.public.enable || service.public.hostName != null;
-        message = "host.web.services.${serviceName}.public.hostName is required for public exposure";
-      }
-      {
         assertion =
-          !service.public.enable || service.public.transport != "internal-mtls" || service.internal.enable;
+          service.public == null || service.public.transport != "internal-mtls" || service.internal != null;
         message = "host.web.services.${serviceName} public exposure requires internal HTTPS";
       }
       {
         assertion =
-          !service.public.enable
+          service.public == null
           || service.public.transport != "internal-mtls"
           || service.internal.clientAuth == "mtls";
         message = "host.web.services.${serviceName} public ingress requires an mTLS internal endpoint";
       }
       {
         assertion =
-          !service.public.enable
+          service.public == null
           || service.public.transport != "direct"
           || service.public.directUpstream != null;
         message = "host.web.services.${serviceName} direct public ingress requires directUpstream";
@@ -34,7 +26,7 @@
         message = "host.web.services.${serviceName} dashboard entries require a category";
       }
       {
-        assertion = !service.observability.externalProbe.enable || service.public.enable;
+        assertion = !service.observability.externalProbe.enable || service.public != null;
         message = "host.web.services.${serviceName} external probing requires public exposure";
       }
       {

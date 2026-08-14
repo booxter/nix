@@ -22,7 +22,6 @@ in
     host.web.services.paperless = {
       upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
       public = {
-        enable = true;
         hostName = "papers.${config.host.network.publicDomain}";
         locationExtraConfig = ''
           client_max_body_size 512m;

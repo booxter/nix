@@ -29,7 +29,7 @@ let
       inherit (service.dashboard) icon section;
       endpoints = {
         internal = endpoint "internal";
-        public = if service.public.enable then endpoint "public" else null;
+        public = if service.public == null then null else endpoint "public";
       };
     }
   ) web.dashboard;
