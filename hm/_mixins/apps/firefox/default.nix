@@ -10,11 +10,7 @@ let
   cfg = config.host.hm.firefox;
   publicDomain = osConfig.host.network.publicDomain;
   searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};
-  searchEndpoint =
-    if searchProvider.endpoints.public != null then
-      searchProvider.endpoints.public
-    else
-      searchProvider.endpoints.internal;
+  searchEndpoint = searchProvider.endpoint;
   firefoxDohExcludedDomains = [ publicDomain ];
 in
 {

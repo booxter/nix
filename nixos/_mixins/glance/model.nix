@@ -10,15 +10,7 @@ let
     name: instance:
     let
       provider = searchProviders.${instance.search.provider} or null;
-      searchEndpoint =
-        if provider == null then
-          null
-        else if instance.scope == "public" then
-          provider.endpoints.public
-        else if provider.endpoints.public != null then
-          provider.endpoints.public
-        else
-          provider.endpoints.internal;
+      searchEndpoint = if provider == null then null else provider.endpoint;
       entries = dashboardCatalog.${instance.scope};
     in
     instance

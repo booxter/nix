@@ -41,18 +41,9 @@ let
           description = "Optional browser keyword aliases for this provider.";
         };
 
-        endpoints = {
-          internal = lib.mkOption {
-            type = with lib.types; nullOr endpointType;
-            default = null;
-            description = "Search endpoint reachable from the trusted site network.";
-          };
-
-          public = lib.mkOption {
-            type = with lib.types; nullOr endpointType;
-            default = null;
-            description = "Search endpoint reachable outside the site network.";
-          };
+        endpoint = lib.mkOption {
+          type = endpointType;
+          description = "Search endpoint exposed by this provider.";
         };
       };
     }
@@ -74,7 +65,7 @@ in
     };
 
     availableProviders = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
+      type = lib.types.attrsOf providerType;
       default = model.byId;
       readOnly = true;
       internal = true;
@@ -82,8 +73,4 @@ in
     };
   };
 
-  config.assertions = lib.mapAttrsToList (name: provider: {
-    assertion = provider.endpoints.internal != null || provider.endpoints.public != null;
-    message = "host.site.search.providers.${name} requires at least one endpoint";
-  }) config.host.site.search.providers;
 }

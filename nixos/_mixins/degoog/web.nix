@@ -16,7 +16,7 @@ in
     host.site.search.providers.degoog = {
       title = "Degoog";
       aliases = [ "@goo" ];
-      endpoints.public = {
+      endpoint = {
         baseUrl = service.public.url;
         searchPath = "/search";
         queryParameter = "q";
