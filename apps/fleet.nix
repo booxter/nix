@@ -5,7 +5,7 @@
 let
   fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
   lan = fleetConfiguration.config.host.site.lan;
-  wgHome = fleetConfiguration.config.host.wireguard.networks.home;
+  wgHome = outputs.nixosConfigurations.gw.config.host.wireguard.networks.home;
   mkFleetHost = system: name: configuration: {
     displayName = name;
     inherit system;

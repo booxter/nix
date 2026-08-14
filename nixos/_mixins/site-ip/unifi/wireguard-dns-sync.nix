@@ -9,10 +9,9 @@ let
   unifiPkgs = import ./pkgs pkgs;
   serviceAccount = "unifi-sync";
   controller = config.host.site.lan.ipController;
-  fleetWireguardEnabled = config.host.wireguard.networks != { };
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   lanDomain = config.host.network.lanDomain;
-  wgHome = config.host.wireguard.networks.home;
+  wgHome = config.host.wireguard.networks.home or null;
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
   wgHomeEndpoint = wgHomeServerConfig.host.observability.prometheusEndpoints."wg-home";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
@@ -25,7 +24,7 @@ let
   }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
-lib.mkIf (config.host.network.ipController.enable && fleetWireguardEnabled) {
+lib.mkIf (config.host.network.ipController.enable && wgHome != null) {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
