@@ -5,7 +5,6 @@
   ...
 }:
 let
-  cfg = config.host.nix.flakehubCache;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key
@@ -22,49 +21,30 @@ let
     in
     lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
 in
-{
-  options.host.nix.flakehubCache = {
-    enable = lib.mkEnableOption "credentialed FlakeHub binary cache";
+lib.mkIf (config.host.realm == "home") {
+  nix.settings.netrc-file = config.sops.templates."flakehub-netrc".path;
 
-    url = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "https://cache.flakehub.com";
-      description = "FlakeHub binary cache URL.";
+  host.nix.caches.flakehub = {
+    substituter = "https://cache.flakehub.com";
+    trustedPublicKeys = flakehubCacheKeys;
+    priorities = {
+      lan = 30;
+      wan = 10;
     };
   };
 
-  config = lib.mkMerge [
-    {
-      host.nix.flakehubCache.enable = lib.mkDefault (config.host.realm == "home");
-    }
-    (lib.mkIf cfg.enable {
-      nix.settings = {
-        netrc-file = config.sops.templates."flakehub-netrc".path;
-      };
-
-      host.nix.caches.flakehub = {
-        substituter = cfg.url;
-        trustedPublicKeys = flakehubCacheKeys;
-        priorities = {
-          lan = 30;
-          wan = 10;
-        };
-      };
-
-      sops = {
-        secrets."flakehub/token" = { };
-        templates."flakehub-netrc" = {
-          owner = "root";
-          # macOS names gid 0 "wheel"; there is no root group.
-          group = if config.nixpkgs.hostPlatform.isDarwin then "wheel" else "root";
-          mode = "0400";
-          content = ''
-            machine flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-            machine api.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-            machine cache.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-          '';
-        };
-      };
-    })
-  ];
+  sops = {
+    secrets."flakehub/token" = { };
+    templates."flakehub-netrc" = {
+      owner = "root";
+      # macOS names gid 0 "wheel"; there is no root group.
+      group = if config.nixpkgs.hostPlatform.isDarwin then "wheel" else "root";
+      mode = "0400";
+      content = ''
+        machine flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
+        machine api.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
+        machine cache.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
+      '';
+    };
+  };
 }
