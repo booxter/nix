@@ -9,7 +9,7 @@
 let
   hostname = config.networking.hostName;
   cfg = config.host.autoUpgrade;
-  metricsCfg = config.host.observability.nixosUpgrade;
+  metricsEnabled = config.host.observability.enable;
   textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
     inherit hostname;
@@ -69,13 +69,13 @@ in
   };
 
   config = lib.mkMerge [
-    (lib.mkIf (cfg.enable && cfg.holds != [ ]) {
+    (lib.mkIf (cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf (cfg.holds != [ ] && cfg.reboot.mode == "scheduled" && cfg.enable) {
+    (lib.mkIf (cfg.holds != [ ] && cfg.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf metricsCfg.enable {
+    (lib.mkIf metricsEnabled {
       # Update immediately on switch so adding or removing a hold changes alert
       # suppression without waiting for the next hourly timer tick.
       system.activationScripts.nixosUpgradeHoldMetrics.text = writeHoldMetrics;

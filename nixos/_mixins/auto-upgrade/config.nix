@@ -32,7 +32,7 @@ in
   config = lib.mkMerge [
     {
       system.autoUpgrade = {
-        inherit (cfg) enable;
+        enable = true;
         flake = "github:booxter/nix#${config.networking.hostName}";
         flags = [
           "-L"
@@ -51,13 +51,13 @@ in
             null;
       };
     }
-    (lib.mkIf (cfg.enable && upgradeGuards != [ ]) {
+    (lib.mkIf (upgradeGuards != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig = {
         ExecStartPre = commands upgradeGuards;
         TimeoutStartSec = lib.mkIf (waitsIndefinitely upgradeGuards) "infinity";
       };
     })
-    (lib.mkIf (cfg.enable && cfg.reboot.mode == "scheduled") {
+    (lib.mkIf (cfg.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed = {
         description = "Reboot on schedule if the current NixOS profile needs it";
         serviceConfig = {

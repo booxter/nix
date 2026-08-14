@@ -156,12 +156,6 @@ in
   ];
 
   options.host.autoUpgrade = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to upgrade this host automatically.";
-    };
-
     policy = {
       allowedWindow = {
         start = lib.mkOption {
