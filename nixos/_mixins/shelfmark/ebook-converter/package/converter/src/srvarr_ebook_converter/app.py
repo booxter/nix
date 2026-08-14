@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterator, Protocol, TextIO, cast
+from typing import Callable, Iterator, Protocol, TextIO
 
 from atomic_file_writes import write_text_atomic
 from pydantic import ValidationError
@@ -151,10 +151,6 @@ def source_lock(source: Path, lock_root: Path) -> Iterator[None]:
         os.close(fd)
 
 
-def hidden_source_path(source: Path) -> Path:
-    return source.with_name(f".{source.stem}.ebook-converter-source{source.suffix.lower()}")
-
-
 def convert_path(
     source: Path,
     *,
@@ -178,12 +174,6 @@ def convert_path(
                 destination,
             )
             return destination
-
-        hidden_source = hidden_source_path(source)
-        if hidden_source.exists():
-            raise EbookConverterError(
-                f"stale hidden conversion source requires attention: {hidden_source}"
-            )
 
         temporary_epub = source.with_name(
             f".{source.stem}.{uuid.uuid4().hex}.ebook-converter-partial.epub"
@@ -272,77 +262,6 @@ def discover_sources(library_root: Path) -> list[Path]:
     return sorted(candidates, key=lambda path: str(path).casefold())
 
 
-def original_path_from_hidden(hidden: Path) -> Path | None:
-    suffix = hidden.suffix.lower()
-    if suffix not in SUPPORTED_SOURCE_SUFFIXES or not hidden.name.startswith("."):
-        return None
-    marker = f".ebook-converter-source{suffix}"
-    visible_name = hidden.name[1:]
-    if not visible_name.endswith(marker):
-        return None
-    original_stem = visible_name[: -len(marker)]
-    if not original_stem:
-        return None
-    return hidden.with_name(original_stem + suffix)
-
-
-def recover_stale_sources(library_root: Path, lock_root: Path) -> int:
-    recovered = 0
-    hidden_sources = sorted(
-        (
-            path
-            for path in library_root.rglob(".*")
-            if path.is_file() and original_path_from_hidden(path) is not None
-        ),
-        key=lambda path: str(path).casefold(),
-    )
-    for hidden in hidden_sources:
-        original = original_path_from_hidden(hidden)
-        if original is None:
-            continue
-        try:
-            with source_lock(original, lock_root):
-                destination = original.with_suffix(".epub")
-                if destination.exists():
-                    try:
-                        validate_epub(destination)
-                    except EbookConverterError:
-                        if not original.exists():
-                            os.replace(hidden, original)
-                            LOG.error(
-                                "restored source beside invalid published EPUB: %s",
-                                original,
-                            )
-                            recovered += 1
-                        continue
-                    else:
-                        hidden.unlink()
-                        LOG.warning(
-                            "cleaned stale conversion source after EPUB publication: %s",
-                            hidden,
-                        )
-                        recovered += 1
-                        continue
-                if original.exists():
-                    LOG.error(
-                        "hidden conversion source conflicts with visible source: %s",
-                        hidden,
-                    )
-                    continue
-                for partial in original.parent.glob(
-                    f".{original.stem}.*.ebook-converter-partial.epub"
-                ):
-                    partial.unlink(missing_ok=True)
-                os.replace(hidden, original)
-                LOG.warning("restored stale conversion source: %s", original)
-                recovered += 1
-        except ConversionBusy:
-            continue
-        except (EbookConverterError, OSError) as exc:
-            LOG.error("failed to recover hidden conversion source %s: %s", hidden, exc)
-    return recovered
-
-
 class StateStore:
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -391,7 +310,6 @@ class EbookConverterService:
 
     def iteration(self) -> None:
         now = self.now()
-        recover_stale_sources(self.library_root, self.lock_root)
         files = self.store.data.files
 
         for source in discover_sources(self.library_root):
@@ -497,15 +415,6 @@ def run_hook(
     return 0
 
 
-def hook_command(args: argparse.Namespace) -> int:
-    return run_hook(
-        library_root=Path(args.library_root),
-        lock_root=Path(args.lock_root),
-        stdin=sys.stdin,
-        runner=ConverterRunner(),
-    )
-
-
 def watch_command(args: argparse.Namespace) -> int:
     try:
         store = StateStore(Path(args.state_file))
@@ -552,28 +461,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    hook_parser = subparsers.add_parser(
-        "hook", help="process a Shelfmark post-transfer JSON payload"
-    )
-    hook_parser.add_argument("--library-root", required=True)
-    hook_parser.add_argument("--lock-root", required=True)
-    hook_parser.add_argument("target", help="target path supplied by Shelfmark")
-    hook_parser.set_defaults(handler=hook_command)
-
-    watch_parser = subparsers.add_parser(
-        "watch", help="poll a library root for stable MOBI/AZW3 files"
-    )
-    watch_parser.add_argument("--library-root", required=True)
-    watch_parser.add_argument("--lock-root", required=True)
-    watch_parser.add_argument("--state-file", required=True)
-    watch_parser.add_argument("--metrics-file", required=True)
-    watch_parser.add_argument("--interval-seconds", type=float, default=30.0)
-    watch_parser.add_argument("--settle-seconds", type=float, default=30.0)
-    watch_parser.add_argument("--max-attempts", type=int, default=3)
-    watch_parser.add_argument("--once", action="store_true")
-    watch_parser.set_defaults(handler=watch_command)
+    parser.add_argument("--library-root", required=True)
+    parser.add_argument("--lock-root", required=True)
+    parser.add_argument("--state-file", required=True)
+    parser.add_argument("--metrics-file", required=True)
+    parser.add_argument("--interval-seconds", type=float, default=30.0)
+    parser.add_argument("--settle-seconds", type=float, default=30.0)
+    parser.add_argument("--max-attempts", type=int, default=3)
+    parser.add_argument("--once", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -583,8 +478,7 @@ def main(argv: list[str] | None = None) -> int:
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    handler = cast(Callable[[argparse.Namespace], int], args.handler)
-    return handler(args)
+    return watch_command(args)
 
 
 def shelfmark_hook_main(

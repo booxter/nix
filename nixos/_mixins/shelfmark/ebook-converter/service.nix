@@ -35,7 +35,6 @@ in
       serviceConfig = {
         ExecStart = utils.escapeSystemdExecArgs [
           (lib.getExe package)
-          "watch"
           "--library-root"
           model.library.path
           "--lock-root"

@@ -58,7 +58,7 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Convert library MOBI and AZW3 files to EPUB";
     license = lib.licenses.mit;
-    mainProgram = "ebook-converter";
+    mainProgram = "srvarr-ebook-converter";
     platforms = lib.platforms.linux;
   };
 }

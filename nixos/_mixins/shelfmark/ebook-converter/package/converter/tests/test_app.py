@@ -16,7 +16,6 @@ from srvarr_ebook_converter.app import (
     convert_path,
     discover_sources,
     process_hook_payload,
-    recover_stale_sources,
     shelfmark_hook_main,
     validate_epub,
 )
@@ -458,41 +457,6 @@ class WatchServiceTests(unittest.TestCase):
             self.assertEqual(len(runner.calls), 2)
             self.assertTrue(source.exists())
             self.assertEqual(store.data.totals.failed, 2)
-
-    def test_stale_hidden_source_is_restored_after_interruption(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            root = Path(tmp_dir)
-            library = root / "library"
-            library.mkdir()
-            source = library / "book.mobi"
-            source.write_bytes(b"source")
-            hidden = library / ".book.ebook-converter-source.mobi"
-            os.replace(source, hidden)
-            partial = library / ".book.deadbeef.ebook-converter-partial.epub"
-            partial.write_bytes(b"partial")
-
-            recovered = recover_stale_sources(library, root / "locks")
-
-            self.assertEqual(recovered, 1)
-            self.assertEqual(source.read_bytes(), b"source")
-            self.assertFalse(hidden.exists())
-            self.assertFalse(partial.exists())
-
-    def test_stale_hidden_source_is_removed_after_publication(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            root = Path(tmp_dir)
-            library = root / "library"
-            library.mkdir()
-            hidden = library / ".book.ebook-converter-source.azw3"
-            hidden.write_bytes(b"source")
-            destination = library / "book.epub"
-            write_epub(destination)
-
-            recovered = recover_stale_sources(library, root / "locks")
-
-            self.assertEqual(recovered, 1)
-            self.assertFalse(hidden.exists())
-            validate_epub(destination)
 
     def test_discovery_ignores_hidden_conversion_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
