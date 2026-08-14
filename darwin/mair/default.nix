@@ -1,9 +1,12 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
+  username = config.host.username;
+  hmConfig = config.home-manager.users.${username};
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
 {
@@ -13,13 +16,28 @@ in
     ./opencode.nix
   ];
 
+  home-manager.users.${username}.host.hm.dev.codex.mcp.stdioServers.firefox-devtools = {
+    instructions = ''
+      Only use the Firefox DevTools MCP when the user explicitly requests browser
+      interaction or browser-based debugging.
+    '';
+    command = lib.getExe pkgs.firefox-devtools-mcp;
+    args = [
+      "--profile-path"
+      "${hmConfig.xdg.dataHome}/firefox-devtools-mcp"
+      "--accept-insecure-certs"
+      "--viewport"
+      "1440x1000"
+    ];
+  };
+
   host = {
     hardware.isLaptop = true;
     network.interfaces.en0.kind = "wireless";
     security = {
       secrets.operator.ageIdentity = {
         backend = "secure-enclave";
-        path = "/Users/${config.host.username}/.config/sops/age/mair-se.txt";
+        path = "/Users/${username}/.config/sops/age/mair-se.txt";
       };
       ssh.credentials = {
         backend = "secretive";

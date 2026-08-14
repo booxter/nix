@@ -16,6 +16,29 @@ let
       };
     }
   );
+  stdioServerType = lib.types.submodule {
+    options = {
+      command = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Executable used to start the stdio MCP server.";
+      };
+      args = lib.mkOption {
+        type = with lib.types; listOf str;
+        default = [ ];
+        description = "Arguments passed to the MCP server executable.";
+      };
+      env = lib.mkOption {
+        type = with lib.types; attrsOf str;
+        default = { };
+        description = "Environment variables passed to the MCP server.";
+      };
+      instructions = lib.mkOption {
+        type = lib.types.lines;
+        default = "";
+        description = "Default agent instructions for using the MCP server.";
+      };
+    };
+  };
   httpServerType = lib.types.submodule {
     options = {
       url = lib.mkOption {
@@ -51,10 +74,6 @@ let
       pkgs
       ;
   };
-  codexPkgs = import ./pkgs {
-    inherit pkgs;
-    codex = config.programs.codex.package;
-  };
   agentContext = ''
     This machine uses Nix. Use it to access tools that are not installed. Never
     install tools permanently. Use remote builders for other platforms.
@@ -74,6 +93,11 @@ in
   imports = [ ./codex-warmer.nix ];
 
   options.host.hm.dev.codex.mcp = {
+    stdioServers = lib.mkOption {
+      type = lib.types.attrsOf stdioServerType;
+      default = { };
+      description = "Stdio MCP servers contributed to Codex by this host.";
+    };
     httpServers = lib.mkOption {
       type = lib.types.attrsOf httpServerType;
       default = { };
@@ -131,9 +155,5 @@ in
         };
       };
     };
-
-    home.packages = lib.optionals (devCfg.enable && cfg.enable && mcps.oauthServerNames != [ ]) [
-      codexPkgs.codex-mcp-init
-    ];
   };
 }
