@@ -7,13 +7,27 @@
 }:
 let
   cfg = config.host.glance;
-  model = import ./model.nix {
-    inherit cfg lib;
-    dashboardCatalog = import ../../_lib/fleet-dashboard-catalog.nix {
-      inherit config lib outputs;
-    };
-    searchProviders = config.host.site.search.availableProviders;
+  dashboardCatalog = import ../../_lib/fleet-dashboard-catalog.nix {
+    inherit config lib outputs;
   };
+  searchEndpoint = config.host.site.search.availableProviders.${cfg.search.provider}.endpoint;
+  resolved = lib.mapAttrs (
+    name: instance:
+    let
+      entries = dashboardCatalog.${name};
+    in
+    instance
+    // {
+      inherit name searchEndpoint;
+      sections = map (
+        section:
+        section
+        // {
+          entries = builtins.filter (entry: entry.section == section.id) entries;
+        }
+      ) instance.sections;
+    }
+  ) cfg.instances;
   unitNameFor = name: "glance-${name}";
   siteFor =
     entry:
@@ -95,5 +109,5 @@ in
 {
   config.systemd.services = lib.mapAttrs' (
     name: instance: lib.nameValuePair (unitNameFor name) (serviceFor name instance)
-  ) model.resolved;
+  ) resolved;
 }
