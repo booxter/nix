@@ -14,15 +14,15 @@ let
       storageModel
       ;
   };
-  inherit (model) cfg storageGroup;
+  inherit (model) cfg storageGroup user;
 in
 {
-  config = lib.mkIf (cfg.enable && storageGroup != null) {
-    users.users.${cfg.user} = {
+  config = lib.mkIf (cfg != null && storageGroup != null) {
+    users.users.${user} = {
       isSystemUser = true;
       group = storageGroup;
       home = "/var/empty";
-      uid = storageIdentities.users.${cfg.user}.uid;
+      uid = storageIdentities.users.${user}.uid;
     };
   };
 }

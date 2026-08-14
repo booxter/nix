@@ -16,7 +16,7 @@ let
   inherit (model) cfg ssoApplication service;
 in
 {
-  config = lib.mkIf (cfg.enable && model.bootstrapReady) {
+  config = lib.mkIf (cfg != null && model.bootstrapReady) {
     host.web.services.pinepods.auth = {
       oidcRegistration = {
         displayName = "PinePods";

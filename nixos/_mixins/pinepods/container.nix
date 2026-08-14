@@ -16,19 +16,18 @@ let
   };
   inherit (model)
     cfg
+    cachePort
+    databaseName
     downloadsDir
     image
     imageFile
     oidcClient
+    port
     storageGroup
+    user
     ;
   complete =
-    model.bootstrapReady
-    && downloadsDir != null
-    && storageGroup != null
-    && oidcClient != null
-    && cfg.integrations.searchApi.url != null
-    && cfg.integrations.podPeople.url != null;
+    model.bootstrapReady && downloadsDir != null && storageGroup != null && oidcClient != null;
   dependencies = [
     "network-online.target"
     "pinepods-postgresql-password.service"
@@ -37,7 +36,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && complete) {
+  config = lib.mkIf (cfg != null && complete) {
     sops.templates."pinepods.env" = {
       owner = "root";
       group = "root";
@@ -61,25 +60,25 @@ in
             DB_TYPE = "postgresql";
             DB_HOST = "10.0.2.2";
             DB_PORT = "5432";
-            DB_USER = cfg.user;
-            DB_NAME = cfg.databaseName;
+            DB_USER = user;
+            DB_NAME = databaseName;
             VALKEY_HOST = "10.0.2.2";
-            VALKEY_PORT = toString cfg.cachePort;
+            VALKEY_PORT = toString cachePort;
             HOSTNAME = model.service.public.url;
             PINEPODS_PORT = "443";
             PROXY_PROTOCOL = "https";
             REVERSE_PROXY = "False";
-            SEARCH_API_URL = cfg.integrations.searchApi.url;
-            PEOPLE_API_URL = cfg.integrations.podPeople.url;
-            DEBUG_MODE = lib.boolToString cfg.consoleLogging.enable;
+            SEARCH_API_URL = "https://search.pinepods.online/api/search";
+            PEOPLE_API_URL = "https://people.pinepods.online";
+            DEBUG_MODE = "true";
             DEFAULT_LANGUAGE = "en";
             TZ = config.host.site.timeZone;
-            PUID = toString storageIdentities.users.${cfg.user}.uid;
+            PUID = toString storageIdentities.users.${user}.uid;
             PGID = toString config.users.groups.${storageGroup}.gid;
 
             # Native and gPodder-compatible clients authenticate with a
             # username and password even though browsers normally use SSO.
-            OIDC_DISABLE_STANDARD_LOGIN = lib.boolToString (!cfg.auth.standardLogin.enable);
+            OIDC_DISABLE_STANDARD_LOGIN = "false";
             OIDC_PROVIDER_NAME = "SSO";
             OIDC_CLIENT_ID = oidcClient.clientId;
             OIDC_AUTHORIZATION_URL = oidcClient.authorizationUrl;
@@ -97,7 +96,7 @@ in
             OIDC_ADMIN_ROLE = "admin";
           };
           environmentFiles = [ config.sops.templates."pinepods.env".path ];
-          ports = [ "127.0.0.1:${toString cfg.port}:8040" ];
+          ports = [ "127.0.0.1:${toString port}:8040" ];
           networks = [ "slirp4netns:allow_host_loopback=true" ];
           volumes = [ "${downloadsDir}:/opt/pinepods/downloads:rw" ];
           extraOptions = [
@@ -122,7 +121,7 @@ in
       wants = dependencies;
       after = dependencies;
       path = [ pkgs.slirp4netns ];
-      environment.PINEPODS_LISTEN_PORT = toString cfg.port;
+      environment.PINEPODS_LISTEN_PORT = toString port;
     };
   };
 }

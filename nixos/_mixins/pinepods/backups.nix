@@ -3,13 +3,13 @@ let
   cfg = config.host.pinepods;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null) {
     host.backups.sources.pinepods = {
       title = "PinePods";
       database = {
         type = "postgresql";
-        name = cfg.databaseName;
-        stagingDir = cfg.backups.stagingDir;
+        name = "pinepods";
+        stagingDir = "/var/lib/pinepods-backup/latest";
       };
     };
   };

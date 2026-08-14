@@ -2,15 +2,17 @@
 let
   cfg = config.host.pinepods;
   service = config.host.web.services.pinepods;
+  hostName = "pod.${config.host.network.publicDomain}";
+  port = 8040;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.pinepods = {
-      upstream = "http://127.0.0.1:${toString cfg.port}";
-      public = if cfg.publicHostName == null then null else { hostName = cfg.publicHostName; };
+      upstream = "http://127.0.0.1:${toString port}";
+      public = { inherit hostName; };
       health = {
         frontend = {
-          enable = cfg.publicHostName != null;
+          enable = true;
           path = "/api/health";
         };
         backend = {

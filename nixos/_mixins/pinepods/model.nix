@@ -5,13 +5,13 @@
 }:
 let
   cfg = config.host.pinepods;
-  claim = storageModel.localClaims.${cfg.storage.claim} or null;
-  ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
+  claim = storageModel.localClaims.media or null;
+  ssoApplication = config.host.sso.applications.pinepods or null;
   bootstrapOwnerName = if ssoApplication == null then null else ssoApplication.bootstrapOwner;
   bootstrapOwner =
     if bootstrapOwnerName == null then null else config.host.sso.users.${bootstrapOwnerName} or null;
   containerImage = import ../../_lib/oci-image.nix {
-    image = cfg.container;
+    image = import ./image-pin.nix;
     inherit pkgs;
   };
 in
@@ -23,7 +23,12 @@ in
     claim
     ssoApplication
     ;
-  downloadsDir = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
+  package = pkgs.callPackage ./package { };
+  user = "pinepods";
+  databaseName = "pinepods";
+  port = 8040;
+  cachePort = 6382;
+  downloadsDir = if claim == null then null else "${claim.mountPoint}/podcasts/pinepods";
   storageGroup =
     if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then
       null

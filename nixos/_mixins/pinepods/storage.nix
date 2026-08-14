@@ -13,13 +13,13 @@ let
       storageModel
       ;
   };
-  inherit (model) cfg;
+  inherit (model) cfg user;
 in
 {
-  config = lib.mkIf cfg.enable {
-    host.storage.claims.${cfg.storage.claim} = {
-      directories.${cfg.storage.relativePath} = {
-        owner = cfg.user;
+  config = lib.mkIf (cfg != null) {
+    host.storage.claims.media = {
+      directories."podcasts/pinepods" = {
+        owner = user;
         mode = "0750";
       };
       attachments.podman-pinepods = { };

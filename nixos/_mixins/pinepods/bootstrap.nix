@@ -14,12 +14,18 @@ let
       storageModel
       ;
   };
-  inherit (model) bootstrapOwner bootstrapOwnerName cfg;
+  inherit (model)
+    bootstrapOwner
+    bootstrapOwnerName
+    cfg
+    package
+    port
+    ;
   passwordSecret = "pinepods/bootstrap/password";
   command = utils.escapeSystemdExecArgs [
-    (lib.getExe' cfg.package "pinepods-bootstrap-admin")
+    (lib.getExe' package "pinepods-bootstrap-admin")
     "--url"
-    "http://127.0.0.1:${toString cfg.port}"
+    "http://127.0.0.1:${toString port}"
     "--username"
     bootstrapOwnerName
     "--full-name"
@@ -31,7 +37,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.bootstrapReady) {
+  config = lib.mkIf (cfg != null && model.bootstrapReady) {
     sops.secrets = {
       ${passwordSecret} = {
         mode = "0400";

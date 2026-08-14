@@ -7,19 +7,21 @@
 }:
 let
   cfg = config.host.pinepods;
+  databaseName = "pinepods";
+  user = "pinepods";
   passwordSecret = "pinepods/postgresql/password";
   setPasswordCommand = utils.escapeSystemdExecArgs [
     (lib.getExe pkgs.postgresql-role-password)
     "--database"
-    cfg.databaseName
+    databaseName
     "--role"
-    cfg.user
+    user
     "--password-file"
     config.sops.secrets.${passwordSecret}.path
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets.${passwordSecret} = {
       owner = "postgres";
       group = "postgres";
@@ -38,13 +40,13 @@ in
         password_encryption = "scram-sha-256";
       };
       authentication = lib.mkAfter ''
-        host postgres ${cfg.user} 127.0.0.1/32 scram-sha-256
-        host ${cfg.databaseName} ${cfg.user} 127.0.0.1/32 scram-sha-256
+        host postgres ${user} 127.0.0.1/32 scram-sha-256
+        host ${databaseName} ${user} 127.0.0.1/32 scram-sha-256
       '';
-      ensureDatabases = [ cfg.databaseName ];
+      ensureDatabases = [ databaseName ];
       ensureUsers = [
         {
-          name = cfg.user;
+          name = user;
           ensureDBOwnership = true;
         }
       ];

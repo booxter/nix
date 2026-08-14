@@ -1,17 +1,6 @@
-{ config, ... }:
+{ ... }:
 {
-  host.pinepods = {
-    enable = true;
-    publicHostName = "pod.${config.host.network.publicDomain}";
-    storage = {
-      claim = "media";
-      relativePath = "podcasts/pinepods";
-    };
-    integrations = {
-      searchApi.url = "https://search.pinepods.online/api/search";
-      podPeople.url = "https://people.pinepods.online";
-    };
-  };
+  host.pinepods = { };
 
   # TODO: Migrate this existing cluster to PostgreSQL's NixOS-managed default
   # under /var/lib/postgresql, then remove this override and both tmpfiles

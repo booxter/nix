@@ -68,6 +68,10 @@ let
             type = lib.types.str;
             default = "Etc/UTC";
           };
+          network.publicDomain = lib.mkOption {
+            type = lib.types.str;
+            default = "example.invalid";
+          };
           sso = {
             applications = lib.mkOption {
               type = lib.types.attrsOf lib.types.anything;
@@ -89,10 +93,6 @@ let
             };
           };
           storage = {
-            identities = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
             claims = lib.mkOption {
               type = lib.types.attrsOf lib.types.anything;
               default = { };
@@ -158,7 +158,7 @@ pkgs.testers.runNixOSTest {
   name = "pinepods";
 
   nodes.machine =
-    { ... }:
+    { config, ... }:
     {
       imports = [
         supportModule
@@ -167,32 +167,26 @@ pkgs.testers.runNixOSTest {
 
       _module.args = {
         outputs = testOutputs;
+        storageIdentities.users.pinepods = {
+          uid = 911;
+          group = null;
+        };
+        storageModel.localClaims.media = config.host.storage.claims.media // {
+          resolvedResource = config.host.storage.resources.media;
+        };
       };
 
       networking.hostName = "podcast-node";
 
       host = {
-        storage.identities.users.pinepods.uid = 911;
-        pinepods = {
-          enable = true;
-          publicHostName = "podcasts.example.invalid";
-          storage = {
-            claim = "podcasts";
-            relativePath = "downloads/pinepods";
-          };
-          sso.application = "podcast-listeners";
-          integrations = {
-            searchApi.url = "https://search.example.invalid/api/search";
-            podPeople.url = "https://people.example.invalid";
-          };
-        };
+        pinepods = { };
         storage = {
-          claims.podcasts = {
+          claims.media = {
             provider = "podcast-node";
-            resource = "podcasts";
+            resource = "media";
             mountPoint = "/srv/podcasts";
           };
-          resources.podcasts = {
+          resources.media = {
             volume = "durable";
             relativePath = ".";
             sharedGroup = "podcasts";
@@ -206,9 +200,11 @@ pkgs.testers.runNixOSTest {
           volumes.durable.mountPoint = "/srv/durable";
         };
         sso = {
-          applications.podcast-listeners = {
-            adminGroup = "podcast-admins";
-            userGroup = "podcast-users";
+          applications.pinepods = {
+            roles = {
+              admin = "podcast-admins";
+              user = "podcast-users";
+            };
             bootstrapOwner = "owner";
           };
           users.owner = {
@@ -234,7 +230,7 @@ pkgs.testers.runNixOSTest {
             };
           };
         };
-        web.services.pinepods.public.url = "https://podcasts.example.invalid";
+        web.services.pinepods.public.url = "https://pod.example.invalid";
       };
 
       sops.placeholder = {
@@ -246,7 +242,7 @@ pkgs.testers.runNixOSTest {
       users.groups.podcasts.gid = 911;
       systemd.tmpfiles.rules = [
         "d /srv/podcasts 0755 root root - -"
-        "d /srv/podcasts/downloads/pinepods 0750 pinepods podcasts - -"
+        "d /srv/podcasts/podcasts/pinepods 0750 pinepods podcasts - -"
       ];
     };
 
@@ -261,6 +257,6 @@ pkgs.testers.runNixOSTest {
         "curl -sf http://127.0.0.1:8040/api/data/self_service_status"
         " | ${lib.getExe pkgs.jq} -e '.first_admin_created == true'"
     )
-    machine.succeed("runuser -u pinepods -- test -w /srv/podcasts/downloads/pinepods")
+    machine.succeed("runuser -u pinepods -- test -w /srv/podcasts/podcasts/pinepods")
   '';
 }

@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  storageIdentities,
   storageModel,
   ...
 }:
@@ -19,25 +18,22 @@ let
     cfg
     claim
     ssoApplication
+    storageGroup
     ;
 in
 {
-  config.assertions = lib.optionals cfg.enable [
-    {
-      assertion = cfg.publicHostName != null;
-      message = "host.pinepods.publicHostName must be set";
-    }
+  config.assertions = lib.optionals (cfg != null) [
     {
       assertion = claim != null;
-      message = "host.pinepods.storage.claim must name a host storage claim";
+      message = "PinePods requires the host's 'media' storage claim";
     }
     {
-      assertion = model.storageGroup != null;
-      message = "host.pinepods.storage.claim must provide a non-root directory group";
+      assertion = storageGroup != null;
+      message = "the PinePods media claim must provide a non-root directory group";
     }
     {
       assertion = ssoApplication != null;
-      message = "host.pinepods.sso.application must select a realm SSO application";
+      message = "PinePods requires the realm's 'pinepods' SSO application";
     }
     {
       assertion = ssoApplication != null && ssoApplication.roles ? admin;
@@ -68,18 +64,6 @@ in
         && ssoApplication != null
         && builtins.elem ssoApplication.roles.user bootstrapOwner.groups;
       message = "the PinePods bootstrap owner must belong to its SSO user group";
-    }
-    {
-      assertion = cfg.integrations.searchApi.url != null;
-      message = "host.pinepods.integrations.searchApi.url must be set";
-    }
-    {
-      assertion = cfg.integrations.podPeople.url != null;
-      message = "host.pinepods.integrations.podPeople.url must be set";
-    }
-    {
-      assertion = builtins.hasAttr cfg.user storageIdentities.users;
-      message = "host.pinepods.user must select a shared storage identity";
     }
   ];
 }
