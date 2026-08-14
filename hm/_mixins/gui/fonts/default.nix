@@ -4,11 +4,8 @@
   pkgs,
   ...
 }:
-let
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
-in
 {
-  config = lib.mkIf graphical {
+  config = lib.mkIf osConfig.host.desktop.enable {
     fonts.fontconfig.enable = true;
     home.packages = with pkgs.nerd-fonts; [
       meslo-lg

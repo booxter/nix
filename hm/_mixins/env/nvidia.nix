@@ -2,13 +2,11 @@
   config,
   lib,
   osConfig,
-  pkgs,
   ...
 }:
 let
   cfg = config.host.hm.env;
   presetDefault = lib.mkOverride 900;
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "nvidia") (
@@ -44,7 +42,7 @@ in
           };
         }
       ])
-      (lib.mkIf graphical (
+      (lib.mkIf osConfig.host.desktop.enable (
         lib.mkMerge [
           {
             host.hm.env.homerow.enable = presetDefault false;

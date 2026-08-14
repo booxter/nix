@@ -7,7 +7,6 @@
 }:
 let
   cfg = config.host.hm.wireshark;
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   options.host.hm.wireshark.enable = lib.mkEnableOption "Wireshark network protocol analyzer";
@@ -15,7 +14,7 @@ in
   config = {
     assertions = [
       {
-        assertion = !cfg.enable || graphical;
+        assertion = !cfg.enable || osConfig.host.desktop.enable;
         message = "host.hm.wireshark requires a managed graphical environment.";
       }
     ];

@@ -8,7 +8,6 @@
 let
   cfg = config.host.hm.env;
   presetDefault = lib.mkOverride 900;
-  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "personal") (
@@ -41,7 +40,7 @@ in
           };
         }
       ])
-      (lib.mkIf graphical {
+      (lib.mkIf osConfig.host.desktop.enable {
         host.hm = presetDefault {
           numberedWorkspaces = if pkgs.stdenv.hostPlatform.isDarwin then 4 else 6;
           firefox = {
