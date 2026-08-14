@@ -6,7 +6,7 @@
 }:
 let
   username = config.host.username;
-  appsCfg = config.host.userEnvironment.features.apps;
+  userEnvironment = config.host.userEnvironment;
   wiresharkEnabled = config.home-manager.users.${username}.host.hm.wireshark.enable;
 in
 {
@@ -38,16 +38,16 @@ in
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks =
-      lib.optionals config.host.userEnvironment.roles.workstation.enable [
+      lib.optionals userEnvironment.roles.workstation.enable [
         "sf-symbols"
       ]
-      ++ lib.optionals (config.host.userEnvironment.roles.workstation.enable && appsCfg.chatgpt.enable) [
+      ++ lib.optionals userEnvironment.roles.workstation.enable [
         "chatgpt"
       ]
       ++ lib.optionals wiresharkEnabled [
         "wireshark-chmodbpf"
       ]
-      ++ lib.optionals (config.host.userEnvironment.roles.workstation.enable && appsCfg.homerow.enable) [
+      ++ lib.optionals (userEnvironment.roles.workstation.enable && userEnvironment.homerow.enable) [
         "homerow"
       ];
   };

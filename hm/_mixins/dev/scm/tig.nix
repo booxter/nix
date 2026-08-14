@@ -4,10 +4,7 @@
   pkgs,
   ...
 }:
-let
-  devCfg = osConfig.host.userEnvironment.features.dev;
-in
-lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && devCfg.scm.enable) {
+lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
   home.packages = [ pkgs.tig ];
   home.file.".tigrc".source = "${pkgs.tig.src}/contrib/vim.tigrc";
 }

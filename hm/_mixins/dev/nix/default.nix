@@ -5,13 +5,12 @@
   ...
 }:
 let
-  cfg = osConfig.host.userEnvironment.features.dev;
   nixPkgs = import ./pkgs { inherit pkgs; };
   nr = nixPkgs.nr.override {
     builders = osConfig.host.nix.nixpkgs-review.builders;
   };
 in
-lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.nix.enable) {
+lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
   home.packages = with pkgs; [
     hydra-check
     nh

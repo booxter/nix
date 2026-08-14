@@ -99,66 +99,13 @@ in
     roles.developer.enable = lib.mkEnableOption "interactive software development environment";
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
-    features = {
-      dev = {
-        cli.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide command-line development tools.";
-        };
-
-        nix.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide Nix development tools.";
-        };
-
-        editor.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the development editor environment.";
-        };
-
-        scm = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to provide the source-control development environment.";
-          };
-
-          sendEmail = {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = true;
-              description = "Whether to configure Git send-email.";
-            };
-
-            transport = lib.mkOption {
-              type = lib.types.nonEmptyStr;
-              default = "gmail";
-              description = "Named SMTP transport used by Git send-email.";
-            };
-          };
-        };
-      };
-
-      apps = {
-        chatgpt.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide the ChatGPT desktop client where supported.";
-        };
-
-        firefox.makeDefault = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to make Firefox the default browser where supported.";
-        };
-
-        homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
-      };
-
+    sendEmail.transport = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "gmail";
+      description = "Named SMTP transport used by Git send-email.";
     };
+
+    homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
   };
 
   config = {
@@ -208,11 +155,9 @@ in
         };
       };
 
-      features = lib.mkMerge [
-        (lib.mkIf (cfg.roles.workstation.enable && config.nixpkgs.hostPlatform.isDarwin) {
-          apps.homerow.enable = lib.mkDefault true;
-        })
-      ];
+      homerow.enable = lib.mkDefault (
+        cfg.roles.workstation.enable && config.nixpkgs.hostPlatform.isDarwin
+      );
     };
 
     home-manager.users.${config.host.username}.host.hm.pass.enable =
@@ -233,11 +178,8 @@ in
       }
       {
         assertion =
-          !cfg.roles.developer.enable
-          || !cfg.features.dev.scm.enable
-          || !cfg.features.dev.scm.sendEmail.enable
-          || builtins.hasAttr cfg.features.dev.scm.sendEmail.transport cfg.smtpTransports;
-        message = "host.userEnvironment.features.dev.scm.sendEmail.transport must name a declared SMTP transport";
+          !cfg.roles.developer.enable || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
+        message = "host.userEnvironment.sendEmail.transport must name a declared SMTP transport";
       }
     ];
   };

@@ -4,10 +4,7 @@
   pkgs,
   ...
 }:
-let
-  cfg = osConfig.host.userEnvironment.features.dev;
-in
-lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.cli.enable) {
+lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
   home.packages = with pkgs; [
     devenv
     dive

@@ -8,9 +8,7 @@ let
         email = "ihar.hrachyshka@gmail.com";
       };
       roles.developer = {
-        features = {
-          dev.scm.sendEmail.transport = "gmail";
-        };
+        sendEmail.transport = "gmail";
         hm = {
           dev.act.enable = true;
           dev.codex = {
@@ -69,7 +67,7 @@ let
         fullName = "Ihar Hrachyshka";
         email = "${config.host.username}@nvidia.com";
       };
-      roles.developer.features.dev.scm.sendEmail.transport = "nvidia";
+      roles.developer.sendEmail.transport = "nvidia";
       roles.developer.hm.dev = {
         act.enable = true;
         codex = {
@@ -83,7 +81,7 @@ let
       roles.developer.hm.sketchybar.attentionInbox.enable = true;
       roles.developer.hm.docker.enable = true;
       roles.workstation = {
-        features.apps.homerow.enable = false;
+        homerow.enable = false;
         hm = {
           kitty.enable = true;
           matrix.enable = true;

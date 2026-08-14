@@ -6,10 +6,8 @@
 }:
 let
   readPublicKey = import ../../../../common/_lib/read-public-key.nix { inherit lib; };
-  devCfg = osConfig.host.userEnvironment.features.dev;
-  scmCfg = devCfg.scm;
 in
-lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && scmCfg.enable) {
+lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
   host.hm.ssh.knownHosts."github.com" = {
     hostNames = [ "github.com" ];
     publicKeys = [
