@@ -52,7 +52,6 @@ in
   host.lidarr = {
     enable = true;
     stateDir = "/data/.state/nixarr/lidarr";
-    cueSplitter.enable = true;
   };
 
   host.prowlarr = {
@@ -63,7 +62,6 @@ in
   host.radarr = {
     enable = true;
     stateDir = "/data/.state/nixarr/radarr";
-    letterboxdList.enable = true;
   };
 
   host.seerr = {

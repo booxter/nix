@@ -10,7 +10,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.letterboxdList.enable) {
+  config = lib.mkIf cfg.enable {
     services.redis.servers.letterboxd-list-radarr = {
       enable = true;
       bind = "127.0.0.1";
