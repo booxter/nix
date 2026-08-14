@@ -5,8 +5,8 @@
   ...
 }:
 let
-  cfg = config.host.observability.logs;
   lokiClient = config.host.observability.loki.client;
+  enable = config.host.observability.enable;
   stateDir = "/var/lib/grafana-alloy";
   hostLabel = config.networking.hostName;
   fileGlobs = [
@@ -88,22 +88,16 @@ let
   '';
 in
 {
-  options.host.observability.logs.enable = lib.mkEnableOption "Darwin file log shipping to Loki";
-
   config = lib.mkMerge [
     {
-      host.observability.logs = {
-        enable = lib.mkDefault config.host.observability.enable;
-      };
-
       host.pki.clients.loki = {
-        enable = lib.mkDefault (cfg.enable && lokiClient != null);
+        enable = lib.mkDefault (enable && lokiClient != null);
         category = "observability";
         secretPrefix = "observability/clients/loki";
         materializations.default.group = "wheel";
       };
     }
-    (lib.mkIf (cfg.enable && lokiClient != null) {
+    (lib.mkIf (enable && lokiClient != null) {
       system.activationScripts.postActivation.text = lib.mkAfter ''
         mkdir -p ${stateDir}
         chmod 0755 ${stateDir}
