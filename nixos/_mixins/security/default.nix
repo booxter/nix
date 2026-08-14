@@ -9,24 +9,24 @@ let
   useYubiAgeIdentity = operatorAgeIdentity != null && operatorAgeIdentity.backend == "yubikey";
 in
 {
-  imports = [
-    ./home.nix
-    ./work.nix
+  config = lib.mkMerge [
+    {
+      security.sudo.wheelNeedsPassword = lib.mkDefault (config.host.realm != "home");
+    }
+    (lib.mkIf useYubiAgeIdentity {
+      services.pcscd.enable = true;
+      security.polkit = {
+        enable = true;
+        extraConfig = ''
+          polkit.addRule(function(action, subject) {
+            if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
+                 action.id == "org.debian.pcsc-lite.access_card") &&
+                subject.user == "${username}") {
+              return polkit.Result.YES;
+            }
+          });
+        '';
+      };
+    })
   ];
-
-  config = lib.mkIf useYubiAgeIdentity {
-    services.pcscd.enable = true;
-    security.polkit = {
-      enable = true;
-      extraConfig = ''
-        polkit.addRule(function(action, subject) {
-          if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
-               action.id == "org.debian.pcsc-lite.access_card") &&
-              subject.user == "${username}") {
-            return polkit.Result.YES;
-          }
-        });
-      '';
-    };
-  };
 }
