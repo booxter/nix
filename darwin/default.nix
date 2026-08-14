@@ -35,6 +35,7 @@ in
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sketchybar-network
+    ./_mixins/ssh
     ./_mixins/thermal-accounting
     ./_mixins/ups-client
     ./_mixins/xquartz

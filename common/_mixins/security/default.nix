@@ -3,11 +3,9 @@
   lib,
   outputs,
   pkgs,
-  system,
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
   operatorIdentity = config.host.security.secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
@@ -42,25 +40,6 @@ in
         };
       };
     };
-
-    ssh.credentials = {
-      backend = lib.mkOption {
-        type = lib.types.enum [
-          "files"
-          "secretive"
-          "yubikey"
-        ];
-        default = "files";
-        description = "Backend providing the operator's SSH authentication and signing identity.";
-      };
-
-      secretive.publicKey = lib.mkOption {
-        type = lib.types.nullOr lib.types.nonEmptyStr;
-        default = null;
-        description = "Public signing key managed by Secretive.";
-      };
-
-    };
   };
 
   config = lib.mkMerge [
@@ -70,16 +49,6 @@ in
           assertion =
             !usesSecureEnclave || (config.nixpkgs.hostPlatform.isDarwin && config.host.hardware.hasTouchId);
           message = "Secure Enclave age identities require a Darwin host with Touch ID.";
-        }
-        {
-          assertion = config.host.security.ssh.credentials.backend != "secretive" || isDarwin;
-          message = "Secretive SSH credentials require Darwin.";
-        }
-        {
-          assertion =
-            config.host.security.ssh.credentials.backend != "secretive"
-            || config.host.security.ssh.credentials.secretive.publicKey != null;
-          message = "Secretive SSH credentials require host.security.ssh.credentials.secretive.publicKey.";
         }
       ];
 

@@ -28,6 +28,7 @@ in
   };
 
   host.ssh = {
+    credentials.backend = "yubikey";
     operator.authorizedKeys = [
       (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
       (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
@@ -47,6 +48,5 @@ in
       backend = "yubikey";
       path = "/Users/${config.host.username}/.config/sops/age/yubi-nix.txt";
     };
-    ssh.credentials.backend = "yubikey";
   };
 }

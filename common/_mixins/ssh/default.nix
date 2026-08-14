@@ -143,6 +143,18 @@ in
   ];
 
   options.host.ssh = {
+    credentials.backend = lib.mkOption {
+      type = lib.types.enum (
+        [
+          "files"
+          "yubikey"
+        ]
+        ++ lib.optional isDarwin "secretive"
+      );
+      default = "files";
+      description = "Backend providing the operator's SSH authentication and signing identity.";
+    };
+
     knownHostNames = lib.mkOption {
       type = with lib.types; nonEmptyListOf nonEmptyStr;
       default =

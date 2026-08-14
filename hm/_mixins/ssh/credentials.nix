@@ -6,7 +6,7 @@
   ...
 }:
 let
-  backend = osConfig.host.security.ssh.credentials.backend;
+  backend = osConfig.host.ssh.credentials.backend;
   cfg = config.host.hm.ssh.credentials;
   enabled = osConfig.host.userEnvironment.features.ssh.enable;
   useSecretive = backend == "secretive";

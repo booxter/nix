@@ -39,10 +39,6 @@ in
         backend = "secure-enclave";
         path = "/Users/${username}/.config/sops/age/mair-se.txt";
       };
-      ssh.credentials = {
-        backend = "secretive";
-        secretive.publicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHMpzrKs1o9ek9+rZw3O8y7tzedq+iMObfvGA1xVS9uKX1cdSp7rnWyq83Y2hsfPI+J2quB42JFVUzCxn4NVfvM= ihar.hrachyshka@gmail.com";
-      };
     };
     userEnvironment = {
       preset = "personal";
@@ -60,6 +56,10 @@ in
       server.vnc.enable = true;
     };
     ssh = {
+      credentials = {
+        backend = "secretive";
+        secretive.publicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHMpzrKs1o9ek9+rZw3O8y7tzedq+iMObfvGA1xVS9uKX1cdSp7rnWyq83Y2hsfPI+J2quB42JFVUzCxn4NVfvM= ihar.hrachyshka@gmail.com";
+      };
       operator.authorizedKeys = [
         (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
         (readPublicKey ../../common/_mixins/ssh/public-keys/mair-secretive.pub)
