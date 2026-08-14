@@ -80,7 +80,6 @@ in
 
   config = {
     host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
-      enable = true;
       title = "PKI Root CA";
       icon = "sh:smallstep";
       section = "infrastructure";

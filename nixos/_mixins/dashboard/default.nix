@@ -14,7 +14,6 @@ let
       };
     };
   };
-  enabledEntries = lib.filterAttrs (_: entry: entry.enable) config.host.dashboard.entries;
 in
 {
   options.host.dashboard.entries = lib.mkOption {
@@ -23,8 +22,6 @@ in
         { name, ... }:
         {
           options = {
-            enable = lib.mkEnableOption "the ${name} dashboard entry";
-
             title = lib.mkOption {
               type = lib.types.nonEmptyStr;
               default = lib.strings.toSentenceCase name;
@@ -66,5 +63,5 @@ in
   config.assertions = lib.mapAttrsToList (name: entry: {
     assertion = entry.endpoints.internal != null || entry.endpoints.public != null;
     message = "host.dashboard.entries.${name} requires at least one endpoint";
-  }) enabledEntries;
+  }) config.host.dashboard.entries;
 }

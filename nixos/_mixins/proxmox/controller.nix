@@ -6,7 +6,6 @@ in
 {
   config = lib.mkIf (cfg.node != null && cfg.node.controller) {
     host.dashboard.entries."proxmox-${cfg.node.cluster}" = {
-      enable = true;
       title = "Proxmox VE";
       icon = "sh:proxmox";
       section = "infrastructure";

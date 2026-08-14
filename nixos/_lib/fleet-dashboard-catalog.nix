@@ -44,7 +44,7 @@ let
           section
           title
           ;
-      }) (lib.filterAttrs (_: entry: entry.enable) hostConfig.host.dashboard.entries)
+      }) hostConfig.host.dashboard.entries
     ) hostConfigs
   );
 in
