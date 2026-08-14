@@ -38,15 +38,6 @@ let
     healthProbeEndpointNames ++ apiProbeEndpointNames ++ gateProbeEndpointNames
   );
   probeServices = lib.genAttrs probeEndpointNames (name: endpoints.${name});
-  probePortConflicts = lib.filterAttrs (
-    _: service: service.health.backend.port == service.internal.port
-  ) probeServices;
-  firewallPortsFor =
-    service:
-    lib.optionals service.internal.openFirewall [
-      80
-      service.internal.port
-    ];
   tlsVhost = service: port: {
     extraConfig = lib.optionalString (service.internal.clientAuth == "mtls") ''
       ssl_client_certificate ${pkiRootCaPath};
@@ -54,7 +45,7 @@ let
     '';
     listen = [
       {
-        addr = service.internal.listenAddress;
+        addr = "0.0.0.0";
         inherit port;
         ssl = true;
       }
@@ -66,7 +57,7 @@ let
   };
   proxyVhost =
     service: serverName: serverAliases:
-    (tlsVhost service service.internal.port)
+    (tlsVhost service 443)
     // {
       inherit serverName serverAliases;
       forceSSL = true;
@@ -92,7 +83,7 @@ let
   probeVhosts = lib.mapAttrs' (
     _: service:
     lib.nameValuePair "${secretName service.internal.endpointName}-probe" (
-      (tlsVhost service service.health.backend.port)
+      (tlsVhost service 9443)
       // {
         serverName = service.internal.serverName;
         serverAliases = [ ];
@@ -119,10 +110,6 @@ in
         assertion = builtins.length serverNames == builtins.length (lib.unique serverNames);
         message = "host.web.services must not reuse internal server names or aliases on one host";
       }
-      {
-        assertion = probePortConflicts == { };
-        message = "Internal web probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames probePortConflicts)}";
-      }
     ];
 
     host.pki.certificates = lib.mapAttrs' (
@@ -131,11 +118,8 @@ in
         category = "internal_https_server";
         name = service.internal.endpointName;
         commonName = service.internal.serverName;
-        inherit (service.internal)
-          port
-          sans
-          secretPrefix
-          ;
+        port = 443;
+        inherit (service.internal) sans secretPrefix;
       }
     ) services;
 
@@ -162,11 +146,10 @@ in
       after = [ "sops-install-secrets.service" ];
     };
 
-    networking.firewall.allowedTCPPorts = lib.unique (
-      builtins.concatMap firewallPortsFor (builtins.attrValues services)
-      ++ builtins.concatMap (
-        service: lib.optional service.internal.openFirewall service.health.backend.port
-      ) (builtins.attrValues probeServices)
-    );
+    networking.firewall.allowedTCPPorts = [
+      80
+      443
+    ]
+    ++ lib.optional (probeServices != { }) 9443;
   };
 }

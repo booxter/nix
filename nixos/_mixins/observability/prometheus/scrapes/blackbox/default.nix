@@ -74,9 +74,6 @@ let
     contribution:
     let
       service = contribution.value;
-      portSuffix = lib.optionalString (
-        service.health.backend.port != 443
-      ) ":${toString service.health.backend.port}";
     in
     {
       inherit (contribution) id;
@@ -84,7 +81,7 @@ let
       blackboxModule = blackboxModuleFor service service.health.backend.module;
       backend_probe = "http";
       backend_probe_title = service.health.backend.title;
-      probeUrl = "https://${service.internal.serverName}${portSuffix}${service.health.backend.path}";
+      probeUrl = "https://${service.internal.serverName}:9443${service.health.backend.path}";
       scope = "backend";
       availability = service.observability.availability;
       url = "${service.internal.url}/";

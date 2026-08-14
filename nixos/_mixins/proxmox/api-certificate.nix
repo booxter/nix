@@ -13,7 +13,6 @@ let
     [ "${config.services.avahi.hostName}.local" ] ++ config.host.network.certificateDnsNames
   );
   port = 8006;
-  publicPort = 443;
   secretPrefix = "proxmox/api";
   certificatePath = "/etc/pve/local/pveproxy-ssl.pem";
   keyPath = "/etc/pve/local/pveproxy-ssl.key";
@@ -46,7 +45,6 @@ in
         inherit serverName secretPrefix;
         aliases = builtins.filter (alias: alias != serverName) serverAliases;
         localAliases = [ ];
-        port = publicPort;
         locationExtraConfig = ''
           proxy_ssl_name ${serverName};
           proxy_ssl_server_name on;

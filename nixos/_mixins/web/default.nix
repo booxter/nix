@@ -95,18 +95,6 @@ in
                         description = "Single-label and mDNS aliases for the service.";
                       };
 
-                      listenAddress = lib.mkOption {
-                        type = lib.types.str;
-                        default = "0.0.0.0";
-                        description = "Internal HTTPS listener address.";
-                      };
-
-                      port = lib.mkOption {
-                        type = lib.types.port;
-                        default = 443;
-                        description = "Internal HTTPS listener port.";
-                      };
-
                       path = lib.mkOption {
                         type = lib.types.str;
                         default = "/";
@@ -120,12 +108,6 @@ in
                         ];
                         default = if service.public != null then "mtls" else "none";
                         description = "Client authentication required by the internal HTTPS frontend.";
-                      };
-
-                      openFirewall = lib.mkOption {
-                        type = lib.types.bool;
-                        default = true;
-                        description = "Whether to open the internal HTTPS listener in the firewall.";
                       };
 
                       proxyWebsockets = lib.mkOption {
@@ -154,9 +136,7 @@ in
 
                       url = lib.mkOption {
                         type = lib.types.str;
-                        default = "https://${config.serverName}${
-                          lib.optionalString (config.port != 443) ":${toString config.port}"
-                        }";
+                        default = "https://${config.serverName}";
                         readOnly = true;
                         internal = true;
                         description = "Resolved canonical internal service URL.";
@@ -297,11 +277,6 @@ in
                   type = lib.types.str;
                   default = "/";
                   description = "Backend health probe path exposed on the probe-only listener.";
-                };
-                port = lib.mkOption {
-                  type = lib.types.port;
-                  default = 9443;
-                  description = "Probe-only HTTPS listener port.";
                 };
                 module = lib.mkOption {
                   type = lib.types.str;

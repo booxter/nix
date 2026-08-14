@@ -8,16 +8,9 @@
     api
     // {
       inherit name service;
-      url =
-        if service == null then
-          null
-        else
-          "https://${service.internal.serverName}:${toString service.health.backend.port}";
+      url = if service == null then null else "https://${service.internal.serverName}:9443";
       healthUrl =
-        if service == null then
-          null
-        else
-          "https://${service.internal.serverName}:${toString service.health.backend.port}${api.healthPath}";
+        if service == null then null else "https://${service.internal.serverName}:9443${api.healthPath}";
     }
   ) config.host.web.api;
 }
