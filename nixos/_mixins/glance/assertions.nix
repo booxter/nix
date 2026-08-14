@@ -20,7 +20,7 @@ in
     {
       assertion =
         builtins.length instances == builtins.length (lib.unique (map (instance: instance.port) instances));
-      message = "enabled host.glance.instances must use unique ports";
+      message = "host.glance.instances must use unique ports";
     }
   ]
   ++ builtins.concatLists (

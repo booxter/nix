@@ -8,19 +8,9 @@ let
     { config, name, ... }:
     {
       options = {
-        enable = lib.mkEnableOption "the ${name} Glance dashboard instance";
-
         port = lib.mkOption {
           type = lib.types.port;
           description = "Loopback HTTP port for this Glance instance.";
-        };
-
-        scope = lib.mkOption {
-          type = lib.types.enum [
-            "internal"
-            "public"
-          ];
-          description = "Dashboard catalog exposure scope rendered by this instance.";
         };
 
         search.provider = lib.mkOption {
@@ -78,7 +68,7 @@ in
     instances = lib.mkOption {
       type = lib.types.attrsOf instanceType;
       default = { };
-      description = "Named Glance dashboard instances.";
+      description = "Glance dashboard instances named by catalog exposure scope.";
     };
   };
 }

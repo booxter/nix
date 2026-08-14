@@ -5,13 +5,12 @@
   searchProviders,
 }:
 let
-  enabled = lib.filterAttrs (_: instance: instance.enable) cfg.instances;
   resolve =
     name: instance:
     let
       provider = searchProviders.${instance.search.provider} or null;
       searchEndpoint = if provider == null then null else provider.endpoint;
-      entries = dashboardCatalog.${instance.scope};
+      entries = dashboardCatalog.${name};
     in
     instance
     // {
@@ -31,6 +30,5 @@ let
     };
 in
 {
-  inherit enabled;
-  resolved = lib.mapAttrs resolve enabled;
+  resolved = lib.mapAttrs resolve cfg.instances;
 }

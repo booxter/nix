@@ -18,17 +18,13 @@ in
 {
   host.glance.instances = {
     internal = {
-      enable = true;
       port = 18080;
-      scope = "internal";
       search.provider = "degoog";
       sections = dashboardSections;
     };
 
     public = {
-      enable = true;
       port = 18081;
-      scope = "public";
       search.provider = "degoog";
       sections = builtins.filter (section: section.id == "user") dashboardSections;
     };
