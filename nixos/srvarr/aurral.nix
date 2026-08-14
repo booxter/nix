@@ -1,7 +1,6 @@
 { config, ... }:
 {
   host.aurral = {
-    enable = true;
     stateDir = "/data/.state/nixarr/aurral";
     flowDir = "${config.host.storage.claims.media.mountPoint}/library/flows";
     slskd = {

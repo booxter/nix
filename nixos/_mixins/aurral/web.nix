@@ -26,7 +26,7 @@ let
   };
 in
 {
-  config = lib.mkIf cfg.enable (
+  config = lib.mkIf (cfg != null) (
     lib.mkMerge [
       {
         host.web.services.aurral = {

@@ -6,7 +6,7 @@ let
 in
 {
   config.assertions =
-    lib.optionals cfg.enable [
+    lib.optionals (cfg != null) [
       {
         assertion = storageClaim != null;
         message = "host.aurral.storage.claim must name a host storage claim";
@@ -17,11 +17,7 @@ in
         message = "host.aurral.flowDir must match the selected storage claim and relative path";
       }
     ]
-    ++ lib.optionals cfg.slskd.enable [
-      {
-        assertion = cfg.enable;
-        message = "host.aurral.slskd.enable requires host.aurral.enable";
-      }
+    ++ lib.optionals (cfg != null && cfg.slskd.enable) [
       {
         assertion = cfg.slskd.instance != null;
         message = "host.aurral.slskd.instance must select a host-local slskd instance";

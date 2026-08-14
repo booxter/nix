@@ -7,7 +7,7 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg selected;
-  slskdEnabled = cfg.slskd.enable && selected != null;
+  slskdEnabled = cfg != null && cfg.slskd.enable && selected != null;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
       _: person: lib.any (group: builtins.elem group person.groups) cfg.authProxy.adminGroups
@@ -15,7 +15,7 @@ let
   );
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     fonts.packages = [ pkgs.dejavu_fonts ];
 
     users.groups.aurral = { };
