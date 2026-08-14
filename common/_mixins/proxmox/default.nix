@@ -1,16 +1,27 @@
-{ lib, ... }:
-{
-  options.host.proxmox = {
-    cluster = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = null;
-      description = "Proxmox cluster claimed by this node or guest.";
+{ config, lib, ... }:
+let
+  clusterOption = lib.mkOption {
+    type = lib.types.nonEmptyStr;
+    description = "Proxmox cluster containing this host.";
+  };
+  nodeType = lib.types.submodule {
+    options = {
+      cluster = clusterOption;
+      controller = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether this node owns cluster-wide integrations.";
+      };
+      apiServerName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = config.networking.hostName;
+        description = "Primary DNS name used for the Proxmox VE API.";
+      };
     };
-
-    node.enable = lib.mkEnableOption "Proxmox VE node";
-
-    guest = {
-      enable = lib.mkEnableOption "declarative Proxmox guest";
+  };
+  guestType = lib.types.submodule {
+    options = {
+      cluster = clusterOption;
 
       cores = lib.mkOption {
         type = lib.types.ints.positive;
@@ -35,6 +46,21 @@
         default = 100;
         description = "Root disk size assigned to the Proxmox guest, in GiB.";
       };
+    };
+  };
+in
+{
+  options.host.proxmox = {
+    node = lib.mkOption {
+      type = lib.types.nullOr nodeType;
+      default = null;
+      description = "Configuration for a Proxmox VE node.";
+    };
+
+    guest = lib.mkOption {
+      type = lib.types.nullOr guestType;
+      default = null;
+      description = "Configuration for a declarative Proxmox guest.";
     };
   };
 }

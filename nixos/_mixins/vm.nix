@@ -16,8 +16,8 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf guest.enable ((import (modulesPath + "/profiles/qemu-guest.nix")) { }))
-    (lib.mkIf guest.enable {
+    (lib.mkIf (guest != null) ((import (modulesPath + "/profiles/qemu-guest.nix")) { }))
+    (lib.mkIf (guest != null) {
       nix.settings = {
         min-free = minFreeGiB * GiB;
         max-free = 2 * minFreeGiB * GiB;

@@ -15,7 +15,11 @@ in
 
       serverName = lib.mkOption {
         type = lib.types.str;
-        default = config.networking.hostName;
+        default =
+          if config.host.proxmox.node == null then
+            config.networking.hostName
+          else
+            config.host.proxmox.node.apiServerName;
         description = "Primary DNS name used for the Proxmox VE API certificate.";
       };
 

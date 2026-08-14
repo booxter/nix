@@ -14,14 +14,11 @@ in
   };
   host.backups.sources.step-ca.paths = [ "/var/lib/step-ca" ];
 
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "lab";
-    guest = {
-      enable = true;
-      cores = 2;
-      memoryGiB = 4;
-      diskGiB = 50;
-    };
+    cores = 2;
+    memoryGiB = 4;
+    diskGiB = 50;
   };
 
   host.sso.role = "provider";

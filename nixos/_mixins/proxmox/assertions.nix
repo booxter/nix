@@ -17,10 +17,9 @@ let
       ;
   };
   clusterControllers =
-    model.controllersByRealmCluster.${config.host.realm}.${config.host.proxmox.cluster} or [ ];
-  node = config.host.proxmox.node.enable;
-  guest = config.host.proxmox.guest.enable;
-  participates = node || guest;
+    model.controllersByRealmCluster.${config.host.realm}.${config.host.proxmox.node.cluster} or [ ];
+  node = config.host.proxmox.node;
+  guest = config.host.proxmox.guest;
   guestUpsServer = model.hosts.${hostName}.upsServer;
   mismatchedUpsNodes = builtins.filter (name: model.hosts.${name}.upsServer != guestUpsServer) (
     model.guestNodes.${hostName} or [ ]
@@ -29,24 +28,18 @@ in
 {
   config.assertions = [
     {
-      assertion = participates == (config.host.proxmox.cluster != null);
-      message = "Proxmox nodes and guests must claim a cluster, and other hosts must not claim one";
-    }
-    {
-      assertion = !(node && guest);
+      assertion = node == null || guest == null;
       message = "a host cannot be both a Proxmox node and guest";
     }
     {
-      assertion = !node || config.host.network.primaryInterface != null;
-      message = "host.proxmox.node.enable requires host.network.primaryInterface";
+      assertion = node == null || config.host.network.primaryInterface != null;
+      message = "host.proxmox.node requires host.network.primaryInterface";
     }
     {
-      assertion = !config.host.proxmox.controller.enable || node;
-      message = "host.proxmox.controller requires host.proxmox.node.enable";
-    }
-    {
-      assertion = !node || builtins.length clusterControllers == 1;
-      message = "Proxmox cluster '${config.host.proxmox.cluster}' in realm '${config.host.realm}' requires exactly one controller";
+      assertion = node == null || builtins.length clusterControllers == 1;
+      message = "Proxmox cluster '${
+        if node == null then "" else node.cluster
+      }' in realm '${config.host.realm}' requires exactly one controller";
     }
     {
       assertion = !apiCertificateCfg.enable || config.services.proxmox-ve.enable;
@@ -65,10 +58,10 @@ in
       message = "host.proxmox.prometheusExporter requires services.proxmox-ve.enable.";
     }
   ]
-  ++ lib.optionals guest [
+  ++ lib.optionals (guest != null) [
     {
       assertion = model.guestNodes.${hostName} != [ ];
-      message = "${hostName} references Proxmox cluster '${config.host.proxmox.cluster}' without any nodes in realm '${config.host.realm}'";
+      message = "${hostName} references Proxmox cluster '${guest.cluster}' without any nodes in realm '${config.host.realm}'";
     }
     {
       assertion = guestUpsServer == null || mismatchedUpsNodes == [ ];

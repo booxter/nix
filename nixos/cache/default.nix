@@ -16,14 +16,11 @@ in
     trustedPublicKey = readPublicKey ./attic-signing.pub;
   };
 
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "lab";
-    guest = {
-      enable = true;
-      cores = 16;
-      memoryGiB = 16;
-      diskGiB = 50; # actual cache is on NFS
-    };
+    cores = 16;
+    memoryGiB = 16;
+    diskGiB = 50; # actual cache is on NFS
   };
 
   host.storage.claims.nixCache = {

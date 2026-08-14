@@ -10,14 +10,11 @@ in
     primaryInterface = "ens18";
   };
 
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "lab";
-    guest = {
-      enable = true;
-      cores = 2;
-      memoryGiB = 8;
-      diskGiB = 64;
-    };
+    cores = 2;
+    memoryGiB = 8;
+    diskGiB = 64;
   };
 
   host.wireguard.server = {

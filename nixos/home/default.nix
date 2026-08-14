@@ -5,14 +5,11 @@ in
 {
   system.stateVersion = "26.05";
 
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "lab";
-    guest = {
-      enable = true;
-      cores = 4;
-      memoryGiB = 8;
-      diskGiB = 80;
-    };
+    cores = 4;
+    memoryGiB = 8;
+    diskGiB = 80;
   };
 
   host.ups.client.server = "prx1-lab";

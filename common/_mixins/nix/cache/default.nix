@@ -46,7 +46,7 @@ in
     host.nix.caches.proxmox =
       lib.mkIf
         (
-          config.host.proxmox.node.enable
+          config.host.proxmox.node != null
           || config.host.nix.builder.enable
           || config.host.userEnvironment.roles.developer.enable
         )

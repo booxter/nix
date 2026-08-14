@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  config = lib.mkIf (!config.host.proxmox.guest.enable) {
+  config = lib.mkIf (config.host.proxmox.guest == null) {
     hardware.enableRedistributableFirmware = true;
 
     services.fwupd.enable = true;

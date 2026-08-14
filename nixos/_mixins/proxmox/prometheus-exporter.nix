@@ -11,12 +11,12 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
-        config.host.proxmox.node.enable && config.host.observability.enable
+        config.host.proxmox.node != null && config.host.observability.enable
       );
     }
     (lib.mkIf cfg.enable {
       host.observability.inventory.proxmox = {
-        inherit (config.host.proxmox) cluster;
+        cluster = config.host.proxmox.node.cluster;
         realm = config.host.realm;
         target = "${config.networking.hostName}:${toString config.host.observability.prometheusEndpoints.pve.port}";
         node = config.networking.hostName;

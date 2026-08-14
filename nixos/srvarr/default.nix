@@ -14,13 +14,10 @@ in
     primaryInterface = "ens18";
   };
 
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "lab";
-    guest = {
-      enable = true;
-      cores = 16;
-      memoryGiB = 32;
-    };
+    cores = 16;
+    memoryGiB = 32;
   };
 
   host.ups.client.server = "prx1-lab";

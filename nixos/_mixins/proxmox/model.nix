@@ -6,10 +6,16 @@
 let
   hostName = config.networking.hostName;
   hostView = name: hostConfig: {
-    cluster = hostConfig.host.proxmox.cluster;
-    controller = hostConfig.host.proxmox.controller.enable;
-    isGuest = hostConfig.host.proxmox.guest.enable;
-    isNode = hostConfig.host.proxmox.node.enable;
+    cluster =
+      if hostConfig.host.proxmox.node != null then
+        hostConfig.host.proxmox.node.cluster
+      else if hostConfig.host.proxmox.guest != null then
+        hostConfig.host.proxmox.guest.cluster
+      else
+        null;
+    controller = hostConfig.host.proxmox.node != null && hostConfig.host.proxmox.node.controller;
+    isGuest = hostConfig.host.proxmox.guest != null;
+    isNode = hostConfig.host.proxmox.node != null;
     realm = hostConfig.host.realm;
     upsServer = if hostConfig.host.ups.server != null then name else hostConfig.host.ups.client.server;
   };

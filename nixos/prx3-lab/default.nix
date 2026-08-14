@@ -5,9 +5,8 @@
 
   host.realm = "home";
   host.disko.layout = "plain";
-  host.proxmox = {
+  host.proxmox.node = {
     cluster = "lab";
-    node.enable = true;
   };
   host.network = {
     interfaces.enp5s0f0np0.kind = "ethernet";

@@ -16,7 +16,7 @@ let
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
   proxmoxNodeNames = builtins.attrNames (
     lib.filterAttrs (
-      _: configuration: configuration.config.host.proxmox.node.enable
+      _: configuration: configuration.config.host.proxmox.node != null
     ) outputs.nixosConfigurations
   );
   certificateDnsNamesFor =
@@ -63,7 +63,7 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.proxmox.node.enable && config.host.proxmox.controller.enable
+        config.host.proxmox.node != null && config.host.proxmox.node.controller
       );
     }
     (lib.mkIf cfg.enable {

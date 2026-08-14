@@ -27,7 +27,7 @@ in
 {
   config = lib.mkMerge [
     {
-      host.proxmox.apiCertificate.enable = lib.mkDefault config.host.proxmox.node.enable;
+      host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.proxmox.node != null);
     }
     (lib.mkIf cfg.enable {
       host.pki.certificates."internal_https_server/proxmox-api" = {

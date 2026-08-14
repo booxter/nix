@@ -18,8 +18,8 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf guest.enable (import ../disko/plain.nix { device = "/dev/sda"; }))
-    (lib.mkIf guest.enable {
+    (lib.mkIf (guest != null) (import ../disko/plain.nix { device = "/dev/sda"; }))
+    (lib.mkIf (guest != null) {
       host.power.shutdown.leadSeconds.proxmox-guest = 150;
 
       host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {

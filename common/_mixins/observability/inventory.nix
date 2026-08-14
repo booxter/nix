@@ -6,7 +6,7 @@
 let
   cfg = config.host.observability;
   hostName = config.networking.hostName;
-  isProxmoxNode = config.host.proxmox.node.enable;
+  isProxmoxNode = config.host.proxmox.node != null;
   enabledServices = lib.filterAttrs (_: service: service.enable) (config.host.web.services or { });
   gpuVendors = config.host.hardware.gpu.vendors or [ ];
   fileSystems = builtins.attrValues (config.fileSystems or { });
@@ -89,8 +89,8 @@ in
               host_laptop = lib.boolToString config.host.hardware.isLaptop;
               host_network_charts = lib.boolToString (!isProxmoxNode);
               host_network_source = if isProxmoxNode then "classified" else "node";
-              host_class = if config.host.proxmox.guest.enable then "virtual" else "hardware";
-              host_virtual = lib.boolToString config.host.proxmox.guest.enable;
+              host_class = if config.host.proxmox.guest != null then "virtual" else "hardware";
+              host_virtual = lib.boolToString (config.host.proxmox.guest != null);
               instance = hostName;
               realm = config.host.realm;
               scrape_profile = "node";
@@ -108,7 +108,7 @@ in
           {
             name = hostName;
             platform = if config.nixpkgs.hostPlatform.isDarwin then "darwin" else "linux";
-            virtual = config.host.proxmox.guest.enable;
+            virtual = config.host.proxmox.guest != null;
             builder = config.host.nix.builder.enable;
             hypervisor = isProxmoxNode;
             gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;

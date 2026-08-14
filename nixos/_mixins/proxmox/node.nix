@@ -12,14 +12,14 @@ let
   primaryInterface = config.host.network.primaryInterface;
 in
 {
-  config = lib.mkIf config.host.proxmox.node.enable {
+  config = lib.mkIf (config.host.proxmox.node != null) {
     host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 
     host.autoUpgrade.claims.proxmox-node = {
       switch.cadence = "weekly";
       reboot.cadence = "weekly";
       availabilityGroups = [
-        "proxmox:${config.host.realm}:${config.host.proxmox.cluster}"
+        "proxmox:${config.host.realm}:${config.host.proxmox.node.cluster}"
       ];
     };
 

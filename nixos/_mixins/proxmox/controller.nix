@@ -6,8 +6,8 @@ let
   url = "https://${api.serverName}${portSuffix}/";
 in
 {
-  config = lib.mkIf cfg.controller.enable {
-    host.dashboard.entries."proxmox-${cfg.cluster}" = {
+  config = lib.mkIf (cfg.node != null && cfg.node.controller) {
+    host.dashboard.entries."proxmox-${cfg.node.cluster}" = {
       enable = true;
       title = "Proxmox VE";
       icon = "sh:proxmox";

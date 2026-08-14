@@ -1,17 +1,14 @@
 { lib, outputs }:
 let
   nodeConfigurations = lib.filterAttrs (
-    _: configuration: configuration.config.host.proxmox.node.enable
+    _: configuration: configuration.config.host.proxmox.node != null
   ) outputs.nixosConfigurations;
   realmsByCluster = lib.foldl' (
     result: configuration:
     let
       host = configuration.config.host;
-      cluster = host.proxmox.cluster;
+      cluster = host.proxmox.node.cluster;
     in
-    assert lib.assertMsg (
-      cluster != null
-    ) "Proxmox node '${configuration.config.networking.hostName}' must claim a cluster";
     result
     // {
       ${cluster} = lib.unique ((result.${cluster} or [ ]) ++ [ host.realm ]);

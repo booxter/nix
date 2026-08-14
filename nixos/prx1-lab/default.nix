@@ -10,16 +10,15 @@
 
   host.realm = "home";
   host.disko.layout = "plain";
-  host.proxmox = {
+  host.proxmox.node = {
+    apiServerName = "proxmox.${config.host.network.lanDomain}";
     cluster = "lab";
-    node.enable = true;
+    controller = true;
   };
   host.network = {
     interfaces.enp5s0f0np0.kind = "ethernet";
     primaryInterface = "enp5s0f0np0";
   };
-  host.proxmox.apiCertificate.serverName = "proxmox.${config.host.network.lanDomain}";
-  host.proxmox.controller.enable = true;
   host.ups = {
     server = {
       description = "APC UPS 1500VA";

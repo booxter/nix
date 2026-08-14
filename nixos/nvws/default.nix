@@ -14,13 +14,12 @@ in
       enable = true;
       hostName = "nvws.local";
     };
-    proxmox = {
-      apiCertificate.enable = false;
+    proxmox.node = {
       cluster = "nvws";
-      controller.enable = true;
-      node.enable = true;
-      oidc.enable = false;
+      controller = true;
     };
+    proxmox.apiCertificate.enable = false;
+    proxmox.oidc.enable = false;
     network = {
       interfaces.enp3s0f0.kind = "ethernet";
       primaryInterface = "enp3s0f0";

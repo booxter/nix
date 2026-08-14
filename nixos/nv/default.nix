@@ -6,13 +6,10 @@ in
   system.stateVersion = "25.11";
 
   host.network.macAddress = "bc:24:11:ed:30:d3";
-  host.proxmox = {
+  host.proxmox.guest = {
     cluster = "nvws";
-    guest = {
-      enable = true;
-      cores = 64;
-      memoryGiB = 128;
-    };
+    cores = 64;
+    memoryGiB = 128;
   };
   host.ups.client.server = "nvws";
 
