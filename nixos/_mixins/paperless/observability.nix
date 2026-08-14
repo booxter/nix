@@ -11,7 +11,7 @@ let
   packages = import ./packages.nix { inherit pkgs; };
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     systemd.services.prometheus-paperless-exporter = {
       description = "Prometheus exporter for Paperless-ngx";
       wantedBy = [ "multi-user.target" ];

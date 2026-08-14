@@ -17,7 +17,7 @@ let
     ;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.paperless = {
       upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
       public = {
@@ -59,7 +59,7 @@ in
       };
     };
 
-    host.web.services.paperless-gpt = lib.mkIf cfg.gpt.enable {
+    host.web.services.paperless-gpt = lib.mkIf (cfg.gpt != null) {
       upstream = "http://127.0.0.1:${toString gptPort}";
       health = {
         frontend = {

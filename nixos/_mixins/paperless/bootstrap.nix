@@ -13,6 +13,7 @@ let
     bootstrapOwner
     cfg
     passwordSecretName
+    ssoApplication
     users
     ;
   packages = import ./packages.nix { inherit pkgs; };
@@ -26,7 +27,7 @@ let
       username = name;
       email = if name == bootstrapOwner then config.host.mailer.address else "";
       passwordFile = config.sops.secrets.${passwordSecretName name}.path;
-      isStaff = builtins.elem config.host.sso.applications.${cfg.sso.application}.roles.admin user.groups;
+      isStaff = builtins.elem ssoApplication.roles.admin user.groups;
       isSuperuser = name == bootstrapOwner;
     }) users;
   };
@@ -38,7 +39,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     systemd.services.paperless-bootstrap = {
       description = "Apply declarative Paperless users and API token";
       wantedBy = [ "multi-user.target" ];
@@ -50,7 +51,7 @@ in
         "paperless-scheduler.service"
         "sops-install-secrets.service"
       ];
-      before = lib.optionals cfg.gpt.enable [
+      before = lib.optionals (cfg.gpt != null) [
         "paperless-gpt-configure.service"
         "podman-paperless-gpt.service"
       ];

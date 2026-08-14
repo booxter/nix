@@ -9,10 +9,10 @@ let
   inherit (model) cfg gptStateDir storagePath;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims.paperless = {
-      provider = cfg.storage.provider;
-      resource = cfg.storage.resource;
+      provider = cfg.storageProvider;
+      resource = "paperless";
       mountPoint = storagePath;
       directories = {
         "." = { };
@@ -35,7 +35,7 @@ in
         };
       };
     }
-    // lib.optionalAttrs cfg.gpt.enable {
+    // lib.optionalAttrs (cfg.gpt != null) {
       paperless-gpt.paths = [ gptStateDir ];
     };
 

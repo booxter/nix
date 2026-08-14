@@ -64,11 +64,9 @@ in
   };
 
   host.paperless = {
-    enable = true;
-    storage.provider = "beast";
+    storageProvider = "beast";
     gpt = {
-      enable = true;
-      ollama.providerHost = "frame";
+      providerHost = "frame";
       textModel = "granite4:32b-a9b-h";
       visionModel = "qwen3-vl:8b-instruct";
     };

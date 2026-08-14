@@ -45,7 +45,7 @@ let
   ) users;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets = passwordSecrets // {
       "paperless/api/token" = {
         owner = "paperless";
@@ -55,7 +55,7 @@ in
           "paperless-bootstrap.service"
           "prometheus-paperless-exporter.service"
         ]
-        ++ lib.optionals cfg.gpt.enable [
+        ++ lib.optionals (cfg.gpt != null) [
           "paperless-gpt-configure.service"
           "podman-paperless-gpt.service"
         ];
@@ -76,7 +76,7 @@ in
       ];
     };
 
-    sops.templates."paperless-gpt.env" = lib.mkIf cfg.gpt.enable {
+    sops.templates."paperless-gpt.env" = lib.mkIf (cfg.gpt != null) {
       owner = "root";
       group = "root";
       mode = "0400";

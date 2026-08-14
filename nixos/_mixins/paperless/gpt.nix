@@ -17,7 +17,7 @@ let
     ;
   packages = import ./packages.nix { inherit pkgs; };
   containerImage = import ../../_lib/oci-image.nix {
-    image = cfg.gpt.container;
+    image = import ./gpt-image-pin.nix;
     inherit pkgs;
   };
   inherit (containerImage) imageFile;
@@ -31,7 +31,7 @@ let
   ollamaServerName = gptProvider.host.web.services.ollama.internal.serverName;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.gpt.enable) {
+  config = lib.mkIf (cfg != null && cfg.gpt != null) {
     host.pki.clients.paperless-ollama = {
       enable = true;
       category = "internal";

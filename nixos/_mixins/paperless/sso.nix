@@ -10,7 +10,7 @@ let
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  config = lib.mkIf (cfg.enable && ssoApplication != null) {
+  config = lib.mkIf (cfg != null && ssoApplication != null) {
     host.web.services.paperless.auth = {
       oidcRegistration = {
         displayName = "Paperless";

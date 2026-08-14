@@ -15,7 +15,7 @@ let
     ;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.paperless = {
       enable = true;
       address = "127.0.0.1";
