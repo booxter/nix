@@ -1,14 +1,14 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
+  paperlessPackages,
   pkgs,
   utils,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model)
+  inherit (paperlessModel)
     accessGroups
     bootstrapOwner
     cfg
@@ -16,7 +16,6 @@ let
     ssoApplication
     users
     ;
-  packages = import ./packages.nix { inherit pkgs; };
   bootstrapConfig = (pkgs.formats.json { }).generate "paperless-bootstrap.json" {
     groups = accessGroups;
     token = {
@@ -62,7 +61,7 @@ in
         Group = "paperless";
         Environment = [
           "PAPERLESS_BOOTSTRAP_CONFIG=${bootstrapConfig}"
-          "PYTHONPATH=${packages.bootstrap}/${packages.bootstrap.python.sitePackages}"
+          "PYTHONPATH=${paperlessPackages.bootstrap}/${paperlessPackages.bootstrap.python.sitePackages}"
         ];
         # The upstream NixOS module exposes administration through Django's
         # `shell -c` subcommand; this argument is Python, not a POSIX shell.

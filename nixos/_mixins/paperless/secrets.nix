@@ -1,12 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model) cfg passwordSecretName users;
+  inherit (paperlessModel) cfg passwordSecretName users;
   oidcClient = config.host.sso.oidc.clients.paperless;
   oidcProviderSecret = "__PAPERLESS_OIDC_CLIENT_SECRET__";
   oidcProvidersJson =
@@ -40,7 +39,7 @@ let
       restartUnits = [
         "paperless-bootstrap.service"
       ]
-      ++ lib.optional (name == model.bootstrapOwner) "paperless-scheduler.service";
+      ++ lib.optional (name == paperlessModel.bootstrapOwner) "paperless-scheduler.service";
     }
   ) users;
 in

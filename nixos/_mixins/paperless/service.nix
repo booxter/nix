@@ -1,12 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model)
+  inherit (paperlessModel)
     bootstrapOwner
     cfg
     paperlessService

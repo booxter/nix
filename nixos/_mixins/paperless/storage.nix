@@ -1,12 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model) cfg gptStateDir storagePath;
+  inherit (paperlessModel) cfg gptStateDir storagePath;
 in
 {
   config = lib.mkIf (cfg != null) {

@@ -1,14 +1,12 @@
 {
   config,
   lib,
-  outputs,
-  pkgs,
+  paperlessModel,
+  paperlessPackages,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model) cfg metricsInternalPort;
-  packages = import ./packages.nix { inherit pkgs; };
+  inherit (paperlessModel) cfg metricsInternalPort;
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -30,7 +28,7 @@ in
       serviceConfig = {
         User = "paperless";
         Group = "paperless";
-        ExecStart = "${lib.getExe packages.prometheusExporter} --collectors=status,statistics,document --web.disable-exporter-metrics --web.listen-address=127.0.0.1:${toString metricsInternalPort}";
+        ExecStart = "${lib.getExe paperlessPackages.prometheusExporter} --collectors=status,statistics,document --web.disable-exporter-metrics --web.listen-address=127.0.0.1:${toString metricsInternalPort}";
         Restart = "on-failure";
         RestartSec = "10s";
         NoNewPrivileges = true;

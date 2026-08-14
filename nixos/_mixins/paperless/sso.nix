@@ -1,12 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model) cfg paperlessService ssoApplication;
+  inherit (paperlessModel) cfg paperlessService ssoApplication;
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {

@@ -1,13 +1,13 @@
 {
   config,
   lib,
-  outputs,
+  paperlessModel,
+  paperlessPackages,
   pkgs,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model)
+  inherit (paperlessModel)
     cfg
     gptPort
     gptProvider
@@ -15,7 +15,6 @@ let
     ollamaTunnelPort
     paperlessService
     ;
-  packages = import ./packages.nix { inherit pkgs; };
   containerImage = import ../../_lib/oci-image.nix {
     image = import ./gpt-image-pin.nix;
     inherit pkgs;
@@ -90,7 +89,7 @@ in
           Type = "oneshot";
           User = "paperless";
           Group = "paperless";
-          ExecStart = lib.getExe packages.gptConfigure;
+          ExecStart = lib.getExe paperlessPackages.gptConfigure;
         };
       };
 
