@@ -97,11 +97,6 @@ in
       };
     };
     security = {
-      authentication.u2f = {
-        enable = true;
-        appId = "pam://frame";
-        origin = "pam://frame";
-      };
       secrets.operator.ageIdentity = {
         backend = "yubikey";
         path = "/home/${config.host.username}/.config/sops/age/yubi-nix.txt";
@@ -125,4 +120,14 @@ in
     "landlock"
     "yama"
   ];
+
+  security.pam.u2f = {
+    enable = true;
+    control = "sufficient";
+    settings = {
+      appid = "pam://frame";
+      origin = "pam://frame";
+      cue = true;
+    };
+  };
 }
