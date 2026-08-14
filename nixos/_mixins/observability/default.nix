@@ -1,3 +1,4 @@
+{ config, lib, ... }:
 {
   imports = [
     ../../../common/_mixins/observability
@@ -11,7 +12,17 @@
     ./prometheus/server.nix
     ./systemd-expectations.nix
     ./textfile-producers.nix
-    ./unifi
+    ./unifi/service.nix
     ./uptimerobot
   ];
+
+  options.host.observability.server = lib.mkOption {
+    type = lib.types.nullOr (lib.types.submodule { });
+    default = null;
+    description = "Central metrics, logs, dashboards, alerting, and network observability stack.";
+  };
+
+  config = lib.mkIf (config.host.observability.server != null) {
+    host.observability.nodeExporter.mtls.enable = false;
+  };
 }

@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.host.observability.alertmanager;
+  serverEnabled = config.host.observability.server != null;
   validateAlertmanagerConfig = utils.escapeSystemdExecArgs [
     (lib.getExe' config.services.prometheus.alertmanager.package "amtool")
     "check-config"
@@ -14,7 +15,6 @@ let
 in
 {
   options.host.observability.alertmanager = {
-    enable = lib.mkEnableOption "an Alertmanager server";
     port = lib.mkOption {
       type = lib.types.port;
       default = 9093;
@@ -24,7 +24,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf serverEnabled {
     services.prometheus.alertmanager = {
       enable = true;
       listenAddress = "127.0.0.1";

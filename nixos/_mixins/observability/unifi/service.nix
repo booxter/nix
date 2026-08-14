@@ -5,12 +5,12 @@
   ...
 }:
 let
-  cfg = config.host.observability.unifi;
+  serverEnabled = config.host.observability.server != null;
   controller = config.host.site.lan.ipController;
   metricsPort = 9130;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf serverEnabled {
     users.groups.unpoller = { };
     users.users.unpoller = {
       description = "UniFi metrics poller";

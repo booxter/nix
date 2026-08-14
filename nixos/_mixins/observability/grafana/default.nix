@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.host.observability.grafana;
+  serverEnabled = config.host.observability.server != null;
   grafanaHost = "grafana.${config.host.network.lanDomain}";
   oidcClient = config.host.sso.oidc.clients.grafana;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -61,7 +62,6 @@ let
 in
 {
   options.host.observability.grafana = {
-    enable = lib.mkEnableOption "a Grafana server";
     port = lib.mkOption {
       type = lib.types.port;
       default = 3000;
@@ -71,7 +71,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf serverEnabled {
     host.web.services.grafana.auth = {
       oidcRegistration = {
         displayName = "Grafana";

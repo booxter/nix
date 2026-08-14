@@ -1,11 +1,10 @@
 { config, lib, ... }:
 let
   cfg = config.host.observability.loki.server;
+  serverEnabled = config.host.observability.server != null;
 in
 {
   options.host.observability.loki.server = {
-    enable = lib.mkEnableOption "a Loki server";
-
     port = lib.mkOption {
       type = lib.types.port;
       default = 3100;
@@ -16,7 +15,7 @@ in
 
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf serverEnabled {
     host.web.services.loki = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal = {
