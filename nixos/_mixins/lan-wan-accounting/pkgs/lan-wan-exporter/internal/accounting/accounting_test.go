@@ -38,7 +38,7 @@ func TestCollectUsesTCClassForSubclassAndWANTotal(t *testing.T) {
 	snapshot, err := Collect(
 		fixedCounters{
 			"lan_in": 1, "wan_in": 2, "lan_out": 3, "wan_out": 999,
-			"wg_out": 888, "wan_other_out": 25,
+			"wan_subclass_out": 888, "wan_other_out": 25,
 		},
 		fixedClass{bytes: 100},
 		Config{
@@ -58,7 +58,7 @@ func TestCollectPropagatesClassFailure(t *testing.T) {
 	_, err := Collect(
 		fixedCounters{
 			"lan_in": 0, "wan_in": 0, "lan_out": 0, "wan_out": 0,
-			"wg_out": 0, "wan_other_out": 0,
+			"wan_subclass_out": 0, "wan_other_out": 0,
 		},
 		fixedClass{err: errors.New("netlink unavailable")},
 		Config{Table: "table", Subclass: "wg", Interface: "ens18", TCClass: "1:10"},

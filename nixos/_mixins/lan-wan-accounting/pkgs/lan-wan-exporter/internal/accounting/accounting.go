@@ -59,7 +59,7 @@ func Collect(counters CounterSource, classes ClassSource, configuration Config) 
 	}
 	requiredCounters := []string{"lan_in", "wan_in", "lan_out", "wan_out"}
 	if configuration.Subclass != "" {
-		requiredCounters = append(requiredCounters, configuration.Subclass+"_out", "wan_other_out")
+		requiredCounters = append(requiredCounters, "wan_subclass_out", "wan_other_out")
 	}
 	for _, name := range requiredCounters {
 		if _, ok := values[name]; !ok {
@@ -74,7 +74,7 @@ func Collect(counters CounterSource, classes ClassSource, configuration Config) 
 		Subclass:    configuration.Subclass,
 	}
 	if configuration.Subclass != "" {
-		snapshot.SubclassBytes = values[configuration.Subclass+"_out"]
+		snapshot.SubclassBytes = values["wan_subclass_out"]
 		snapshot.OtherWANBytes = values["wan_other_out"]
 	}
 	if configuration.TCClass != "" {

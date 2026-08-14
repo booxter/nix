@@ -19,7 +19,7 @@ let
   '';
   overrideRules = lib.optionalString overrideEnabled (
     lib.concatStringsSep "\n    " [
-      ''udp dport ${toString override.udpDestinationPort} counter name "${override.name}_out" counter name "wan_out" return''
+      ''udp dport ${toString override.udpDestinationPort} counter name "wan_subclass_out" counter name "wan_out" return''
       ''counter name "wan_other_out"''
     ]
   );
@@ -46,7 +46,7 @@ in
     counter wan_in {}
     counter lan_out {}
     counter wan_out {}
-    ${lib.optionalString overrideEnabled "counter ${override.name}_out {}"}
+    ${lib.optionalString overrideEnabled "counter wan_subclass_out {}"}
     ${lib.optionalString overrideEnabled "counter wan_other_out {}"}
 
     chain ${inputChain} {

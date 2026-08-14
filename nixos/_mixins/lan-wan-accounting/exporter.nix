@@ -22,7 +22,7 @@ let
     "--wan-subclass"
     override.name
     "--interface"
-    config.host.network.primaryInterface
+    override.interface
     "--wan-tc-class"
     override.tcClass
   ];

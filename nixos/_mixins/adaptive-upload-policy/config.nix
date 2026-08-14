@@ -237,6 +237,7 @@ in
         host.observability.lanWan.wanEgressOverride =
           lib.mkIf (qosDestination != null && qosDestination.accountingName != null)
             {
+              interface = qosDestination.interface;
               name = qosDestination.accountingName;
               udpDestinationPort = qosDestination.match.remotePort;
               tcClass = config.host.qos.classIds.${qosProfileName}.${qosDestination.limit};

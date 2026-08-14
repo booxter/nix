@@ -6,6 +6,10 @@
         with lib.types;
         nullOr (submodule {
           options = {
+            interface = lib.mkOption {
+              type = strMatching "^[A-Za-z0-9_.:-]+$";
+              description = "Interface containing the authoritative traffic-control class.";
+            };
             name = lib.mkOption {
               type = strMatching "^[A-Za-z_][A-Za-z0-9_]*$";
               description = "Metric label and nftables counter prefix for the overridden WAN class.";
