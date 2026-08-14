@@ -1,20 +1,12 @@
 {
   config,
   lib,
-  pkgs,
-  storageModel,
+  pinepodsModel,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      pkgs
-      storageModel
-      ;
-  };
-  inherit (model)
+  inherit (pinepodsModel)
     bootstrapOwner
     bootstrapOwnerName
     cfg
@@ -37,7 +29,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg != null && model.bootstrapReady) {
+  config = lib.mkIf (cfg != null && pinepodsModel.bootstrapReady) {
     sops.secrets = {
       ${passwordSecret} = {
         mode = "0400";

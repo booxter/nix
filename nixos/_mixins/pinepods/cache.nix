@@ -1,13 +1,12 @@
 {
   config,
   lib,
+  pinepodsModel,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.pinepods;
-  cachePort = 6382;
-  user = "pinepods";
+  inherit (pinepodsModel) cachePort cfg user;
   passwordSecret = "pinepods/valkey/password";
 in
 {

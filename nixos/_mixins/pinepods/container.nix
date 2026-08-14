@@ -1,20 +1,13 @@
 {
   config,
   lib,
+  pinepodsModel,
   pkgs,
   storageIdentities,
-  storageModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      pkgs
-      storageModel
-      ;
-  };
-  inherit (model)
+  inherit (pinepodsModel)
     cfg
     cachePort
     databaseName
@@ -27,7 +20,7 @@ let
     user
     ;
   complete =
-    model.bootstrapReady && downloadsDir != null && storageGroup != null && oidcClient != null;
+    pinepodsModel.bootstrapReady && downloadsDir != null && storageGroup != null && oidcClient != null;
   dependencies = [
     "network-online.target"
     "pinepods-postgresql-password.service"
@@ -64,7 +57,7 @@ in
             DB_NAME = databaseName;
             VALKEY_HOST = "10.0.2.2";
             VALKEY_PORT = toString cachePort;
-            HOSTNAME = model.service.public.url;
+            HOSTNAME = pinepodsModel.service.public.url;
             PINEPODS_PORT = "443";
             PROXY_PROTOCOL = "https";
             REVERSE_PROXY = "False";
@@ -85,7 +78,7 @@ in
             OIDC_TOKEN_URL = oidcClient.tokenUrl;
             OIDC_USER_INFO_URL = oidcClient.userinfoUrl;
             OIDC_BUTTON_TEXT = "Login with SSO";
-            OIDC_SCOPE = lib.concatStringsSep " " (model.oidcScopes ++ [ "pinepods_roles" ]);
+            OIDC_SCOPE = lib.concatStringsSep " " (pinepodsModel.oidcScopes ++ [ "pinepods_roles" ]);
             OIDC_BUTTON_COLOR = "#111827";
             OIDC_BUTTON_TEXT_COLOR = "#ffffff";
             OIDC_NAME_CLAIM = "name";

@@ -1,22 +1,21 @@
 {
-  config,
   lib,
-  pkgs,
-  storageModel,
+  pinepodsModel,
+  storageIdentities,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      pkgs
-      storageModel
-      ;
-  };
-  inherit (model) cfg user;
+  inherit (pinepodsModel) cfg storageGroup user;
 in
 {
   config = lib.mkIf (cfg != null) {
+    users.users.${user} = lib.mkIf (storageGroup != null) {
+      isSystemUser = true;
+      group = storageGroup;
+      home = "/var/empty";
+      uid = storageIdentities.users.${user}.uid;
+    };
+
     host.storage.claims.media = {
       directories."podcasts/pinepods" = {
         owner = user;

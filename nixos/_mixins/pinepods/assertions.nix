@@ -1,19 +1,10 @@
 {
-  config,
   lib,
-  pkgs,
-  storageModel,
+  pinepodsModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      pkgs
-      storageModel
-      ;
-  };
-  inherit (model)
+  inherit (pinepodsModel)
     bootstrapOwner
     cfg
     claim

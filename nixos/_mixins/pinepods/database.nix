@@ -1,14 +1,13 @@
 {
   config,
   lib,
+  pinepodsModel,
   pkgs,
   utils,
   ...
 }:
 let
-  cfg = config.host.pinepods;
-  databaseName = "pinepods";
-  user = "pinepods";
+  inherit (pinepodsModel) cfg databaseName user;
   passwordSecret = "pinepods/postgresql/password";
   setPasswordCommand = utils.escapeSystemdExecArgs [
     (lib.getExe pkgs.postgresql-role-password)
@@ -68,6 +67,15 @@ in
         User = "postgres";
         Group = "postgres";
         ExecStart = setPasswordCommand;
+      };
+    };
+
+    host.backups.sources.pinepods = {
+      title = "PinePods";
+      database = {
+        type = "postgresql";
+        name = databaseName;
+        stagingDir = "/var/lib/pinepods-backup/latest";
       };
     };
   };

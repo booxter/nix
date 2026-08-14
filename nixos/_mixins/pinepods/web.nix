@@ -1,9 +1,13 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pinepodsModel,
+  ...
+}:
 let
-  cfg = config.host.pinepods;
+  inherit (pinepodsModel) cfg port;
   service = config.host.web.services.pinepods;
   hostName = "pod.${config.host.network.publicDomain}";
-  port = 8040;
 in
 {
   config = lib.mkIf (cfg != null) {

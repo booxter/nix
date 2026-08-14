@@ -1,22 +1,13 @@
 {
-  config,
   lib,
-  pkgs,
-  storageModel,
+  pinepodsModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      pkgs
-      storageModel
-      ;
-  };
-  inherit (model) cfg ssoApplication service;
+  inherit (pinepodsModel) cfg ssoApplication service;
 in
 {
-  config = lib.mkIf (cfg != null && model.bootstrapReady) {
+  config = lib.mkIf (cfg != null && pinepodsModel.bootstrapReady) {
     host.web.services.pinepods.auth = {
       oidcRegistration = {
         displayName = "PinePods";
@@ -26,8 +17,8 @@ in
         # PinePods 0.9.0 explicitly requires a confidential client without it.
         allowInsecureClientDisablePkce = true;
         scopeMaps = {
-          ${ssoApplication.roles.admin} = model.oidcScopes ++ [ "pinepods_roles" ];
-          ${ssoApplication.roles.user} = model.oidcScopes ++ [ "pinepods_roles" ];
+          ${ssoApplication.roles.admin} = pinepodsModel.oidcScopes ++ [ "pinepods_roles" ];
+          ${ssoApplication.roles.user} = pinepodsModel.oidcScopes ++ [ "pinepods_roles" ];
         };
         claimMaps.pinepods_roles.valuesByGroup = {
           ${ssoApplication.roles.admin} = [ "admin" ];
