@@ -9,7 +9,7 @@
 }:
 let
   cfg = config.host.${name};
-  serviceCfg = config.services.${name};
+  port = config.services.${name}.settings.server.port;
 in
 {
   options.host.${name} = {
@@ -18,12 +18,6 @@ in
     stateDir = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "/var/lib/${name}";
-    };
-
-    port = lib.mkOption {
-      type = lib.types.port;
-      readOnly = true;
-      internal = true;
     };
 
   }
@@ -49,8 +43,6 @@ in
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
-        host.${name}.port = serviceCfg.settings.server.port;
-
         services.${name} = {
           enable = true;
           dataDir = cfg.stateDir;
@@ -70,7 +62,7 @@ in
 
         host.web.services.${name} = {
           enable = true;
-          upstream = "http://127.0.0.1:${toString cfg.port}";
+          upstream = "http://127.0.0.1:${toString port}";
           health = {
             frontend = {
               enable = true;

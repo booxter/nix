@@ -40,7 +40,7 @@ in
           [
             (lib.getExe cfg.cueSplitter.package)
             "--lidarr-url"
-            "http://127.0.0.1:${toString cfg.port}"
+            "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
             "--lidarr-config"
             "${cfg.stateDir}/config.xml"
           ]
