@@ -1,11 +1,10 @@
 {
   config,
   lib,
-  system,
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
+  isDarwin = config.nixpkgs.hostPlatform.isDarwin;
   cfg = config.host.wireguard.client;
   network = if cfg == null then null else config.host.wireguard.networks.${cfg.network} or null;
 in

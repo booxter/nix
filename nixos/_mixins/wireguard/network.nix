@@ -10,7 +10,7 @@ let
   peers = builtins.attrValues network.peers;
   mkPeer = peer: {
     inherit (peer) publicKey;
-    allowedIPs = [ "${peer.address}/32" ] ++ (peer.extraAllowedIPs or [ ]);
+    allowedIPs = [ "${peer.address}/32" ] ++ peer.extraAllowedIPs;
   };
 in
 {

@@ -19,7 +19,6 @@ in
 
   host.wireguard.server = {
     network = "home";
-    interface = "wg0";
     cidr = "10.83.0.0/24";
     address = "10.83.0.1";
     listenPort = 51820;
@@ -34,7 +33,6 @@ in
         config.host.site.lan.gateway.address
         config.host.network.lanDomain
       ];
-      persistentKeepalive = 25;
     };
     dynamicDns = {
       hostname = "ihrachyshka-gw.freeddns.org";
