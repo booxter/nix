@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  utils,
   ...
 }:
 let
@@ -28,40 +27,20 @@ in
   config = lib.mkIf (cfg != null) {
     environment.etc."disk-bay-map.json".text = builtins.toJSON jsonMapping;
 
-    systemd.services.disk-bay-exporter = lib.mkIf cfg.exporter.enable {
-      description = "Export physical disk-bay mappings for node exporter";
-      after = [ "local-fs.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = utils.escapeSystemdExecArgs [
+    host.observability.nodeExporter.textfile.periodicProducers = lib.mkIf cfg.exporter.enable {
+      disk-bay-exporter = {
+        description = "Export physical disk-bay mappings for node exporter";
+        after = [ "local-fs.target" ];
+        command = [
           (lib.getExe exporterPackage)
           "--bay-map"
           mapFile
           "--output-file"
           "${textfileDir}/disk-bays.prom"
         ];
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectHome = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [ textfileDir ];
-        RestrictAddressFamilies = [ "AF_UNIX" ];
-        RestrictRealtime = true;
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
+        interval = "1min";
+        onBootSec = "30s";
       };
     };
-
-    systemd.timers.disk-bay-exporter = lib.mkIf cfg.exporter.enable {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "30s";
-        OnUnitActiveSec = "1min";
-      };
-    };
-
-    systemd.tmpfiles.rules = lib.mkIf cfg.exporter.enable [
-      "d ${textfileDir} 0755 root root - -"
-    ];
   };
 }

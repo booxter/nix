@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  utils,
   ...
 }:
 let
@@ -29,38 +28,18 @@ in
       "--no-collector.mdadm"
     ];
 
-    systemd.services.mdraid-metrics = lib.mkIf observabilityEnabled {
-      description = "Export Linux MD status for node exporter";
-      after = [ "local-fs.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = utils.escapeSystemdExecArgs [
+    host.observability.nodeExporter.textfile.periodicProducers = lib.mkIf observabilityEnabled {
+      mdraid-metrics = {
+        description = "Export Linux MD status for node exporter";
+        after = [ "local-fs.target" ];
+        command = [
           (lib.getExe' pkgs.storage-observability "storage-md-metrics")
           "--output-file"
           "${textfileDir}/md-sync.prom"
         ];
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectHome = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [ textfileDir ];
-        RestrictAddressFamilies = [ "AF_UNIX" ];
-        RestrictRealtime = true;
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
+        interval = "1min";
+        onBootSec = "30s";
       };
     };
-
-    systemd.timers.mdraid-metrics = lib.mkIf observabilityEnabled {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "30s";
-        OnUnitActiveSec = "1min";
-      };
-    };
-
-    systemd.tmpfiles.rules = lib.mkIf observabilityEnabled [
-      "d ${textfileDir} 0755 root root - -"
-    ];
   };
 }

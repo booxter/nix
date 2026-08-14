@@ -30,10 +30,6 @@ in
     ]
     ++ lib.optionals cfg.exporter.enable [
       {
-        assertion = config.host.observability.enable;
-        message = "disk-bay metrics export requires host.observability.enable";
-      }
-      {
         assertion = cfg.mapping != [ ];
         message = "disk-bay metrics export requires a non-empty disk-bay mapping";
       }
