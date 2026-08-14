@@ -14,7 +14,7 @@ let
       ;
   };
   reboot = config.host.autoUpgrade.reboot;
-  policy = config.host.autoUpgrade.policy;
+  policy = model.policy;
   windowStart = maintenanceLib.clockMinutes policy.allowedWindow.start;
   windowEnd = maintenanceLib.clockMinutes policy.allowedWindow.end;
   latestStart = windowEnd - policy.slotDurationMinutes - policy.randomizedDelayMinutes;
@@ -48,10 +48,6 @@ in
             policy.deferredRebootAt
           ];
       message = "preferred auto-upgrade times must fit inside the allowed maintenance window.";
-    }
-    {
-      assertion = model.policyMismatches == [ ];
-      message = "hosts in one realm must use the same auto-upgrade policy; mismatches: ${lib.concatStringsSep ", " model.policyMismatches}";
     }
     {
       assertion = model.unknownExclusionHosts == [ ];

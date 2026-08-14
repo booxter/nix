@@ -11,10 +11,34 @@ let
     renderSchedule
     ;
   localHost = config.networking.hostName;
-  localPolicy = config.host.autoUpgrade.policy;
+  policy = {
+    allowedWindow = {
+      start = {
+        hour = 3;
+        minute = 30;
+      };
+      end = {
+        hour = 6;
+        minute = 30;
+      };
+    };
+    dailyAt = {
+      hour = 5;
+      minute = 15;
+    };
+    deferredRebootAt = {
+      hour = 4;
+      minute = 0;
+    };
+    preferredWeeklyDay = "Mon";
+    slotDurationMinutes = 30;
+    slotStepMinutes = 40;
+    randomizedDelayMinutes = 5;
+  };
+  localPolicy = policy;
   hostView = hostConfig: {
     inherit (hostConfig.host) realm;
-    inherit (hostConfig.host.autoUpgrade) claims policy;
+    inherit (hostConfig.host.autoUpgrade) claims;
   };
   configurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   hosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
@@ -30,10 +54,6 @@ let
     "Sat"
     "Sun"
   ];
-  policyHosts = lib.filterAttrs (_: host: host.realm == config.host.realm) hosts;
-  policyMismatches = builtins.attrNames (
-    lib.filterAttrs (_: host: host.policy != localPolicy) policyHosts
-  );
   claimsFor = hostName: builtins.attrValues hosts.${hostName}.claims;
   operationPolicy =
     hostName: operation:
@@ -284,7 +304,7 @@ let
 in
 {
   inherit
-    policyMismatches
+    policy
     unknownExclusionHosts
     weekdayConflicts
     ;

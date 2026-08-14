@@ -17,16 +17,6 @@ let
       outputs
       ;
   };
-  clockType = lib.types.submodule {
-    options = {
-      hour = lib.mkOption {
-        type = lib.types.ints.between 0 23;
-      };
-      minute = lib.mkOption {
-        type = lib.types.ints.between 0 59;
-      };
-    };
-  };
   cadenceType = lib.types.enum [
     "daily"
     "weekly"
@@ -156,56 +146,6 @@ in
   ];
 
   options.host.autoUpgrade = {
-    policy = {
-      allowedWindow = {
-        start = lib.mkOption {
-          type = clockType;
-          default = {
-            hour = 3;
-            minute = 30;
-          };
-        };
-        end = lib.mkOption {
-          type = clockType;
-          default = {
-            hour = 6;
-            minute = 30;
-          };
-        };
-      };
-      dailyAt = lib.mkOption {
-        type = clockType;
-        default = {
-          hour = 5;
-          minute = 15;
-        };
-      };
-      deferredRebootAt = lib.mkOption {
-        type = clockType;
-        default = {
-          hour = 4;
-          minute = 0;
-        };
-      };
-      preferredWeeklyDay = lib.mkOption {
-        type = weekdayType;
-        default = "Mon";
-        description = "Preferred weekday when the planner may choose any day for weekly maintenance.";
-      };
-      slotDurationMinutes = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 30;
-      };
-      slotStepMinutes = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 40;
-      };
-      randomizedDelayMinutes = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 5;
-      };
-    };
-
     claims = lib.mkOption {
       type = lib.types.attrsOf claimType;
       default = { };
@@ -231,7 +171,7 @@ in
 
       randomizedDelay = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = "${toString config.host.autoUpgrade.policy.randomizedDelayMinutes}min";
+        default = "${toString model.policy.randomizedDelayMinutes}min";
         readOnly = true;
         internal = true;
         description = "Random delay applied to the unattended upgrade schedule.";
@@ -261,7 +201,7 @@ in
 
       randomizedDelay = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = "${toString config.host.autoUpgrade.policy.randomizedDelayMinutes}min";
+        default = "${toString model.policy.randomizedDelayMinutes}min";
         readOnly = true;
         internal = true;
         description = "Random delay applied to separately scheduled reboots.";
@@ -270,9 +210,7 @@ in
       window = {
         lower = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          default = maintenanceLib.formatClock (
-            maintenanceLib.clockMinutes config.host.autoUpgrade.policy.allowedWindow.start
-          );
+          default = maintenanceLib.formatClock (maintenanceLib.clockMinutes model.policy.allowedWindow.start);
           readOnly = true;
           internal = true;
           description = "Start of the reboot window used by with-upgrade reboots.";
@@ -280,9 +218,7 @@ in
 
         upper = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          default = maintenanceLib.formatClock (
-            maintenanceLib.clockMinutes config.host.autoUpgrade.policy.allowedWindow.end
-          );
+          default = maintenanceLib.formatClock (maintenanceLib.clockMinutes model.policy.allowedWindow.end);
           readOnly = true;
           internal = true;
           description = "End of the reboot window used by with-upgrade reboots.";
