@@ -1,18 +1,19 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   servers = config.host.attic.realmServers;
   serverNames = builtins.attrNames servers;
-  serverConfig = lib.concatStringsSep "\n" (
-    lib.mapAttrsToList (name: server: ''
-      [servers."${name}"]
-      endpoint = "${server.endpoint}"
-      token = "${config.sops.placeholder."attic/token"}"
-    '') servers
-  );
+  clientConfig = (pkgs.formats.toml { }).generate "attic-client-config.toml" {
+    default-server = builtins.head serverNames;
+    servers = lib.mapAttrs (_: server: {
+      inherit (server) endpoint;
+      token = config.sops.placeholder."attic/token";
+    }) servers;
+  };
 in
 {
   config = lib.mkIf (servers != { }) {
@@ -22,10 +23,7 @@ in
         owner = "root";
         group = "root";
         mode = "0400";
-        content = ''
-          default-server = "${builtins.head serverNames}"
-          ${serverConfig}
-        '';
+        file = clientConfig;
       };
     };
   };
