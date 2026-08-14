@@ -10,12 +10,8 @@ in
   config.assertions = lib.optionals (cfg != null) (
     [
       {
-        assertion = cfg.publicHostName != null;
-        message = "host.audiobookshelf.publicHostName must be set";
-      }
-      {
         assertion = model.ssoApplication != null;
-        message = "host.audiobookshelf.sso.application must select a realm SSO application";
+        message = "Audiobookshelf requires its realm SSO application";
       }
       {
         assertion = cfg.libraries != { };

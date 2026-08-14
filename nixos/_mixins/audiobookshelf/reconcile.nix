@@ -9,6 +9,7 @@ let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg;
   oidc = model.oidcClient;
+  reconcilePackage = pkgs.callPackage ./package { };
   validLibraries = lib.filterAttrs (_: library: library.media != null) model.libraries;
   settingsFile = pkgs.writeText "audiobookshelf-reconcile.json" (
     builtins.toJSON {
@@ -36,15 +37,11 @@ let
         authOpenIDAdvancedPermsClaim = "";
         authOpenIDSubfolderForRedirectURLs = "";
       };
-      backups =
-        if cfg.backups.enable then
-          {
-            backupSchedule = cfg.backups.schedule;
-            backupsToKeep = cfg.backups.keep;
-            maxBackupSize = cfg.backups.maxSizeGiB;
-          }
-        else
-          null;
+      backups = {
+        backupSchedule = "15 4 * * *";
+        backupsToKeep = 2;
+        maxBackupSize = 1;
+      };
       libraries = lib.mapAttrsToList (_: library: {
         name = library.displayName;
         path = library.media.path;
@@ -55,9 +52,9 @@ let
     }
   );
   command = utils.escapeSystemdExecArgs [
-    (lib.getExe' cfg.reconcilePackage "audiobookshelf-reconcile")
+    (lib.getExe' reconcilePackage "audiobookshelf-reconcile")
     "--url"
-    "http://127.0.0.1:${toString cfg.port}"
+    "http://127.0.0.1:${toString model.port}"
     "--api-token-credential"
     "api-token"
     "--client-secret-credential"
@@ -71,7 +68,7 @@ in
 {
   config = lib.mkIf (cfg != null) {
     sops.secrets."audiobookshelf/bootstrap/api_token" = {
-      key = cfg.automation.secret;
+      key = "audiobookshelf/bootstrap/api_token";
       mode = "0400";
       restartUnits = [ "audiobookshelf-reconcile.service" ];
     };

@@ -27,8 +27,8 @@ in
     services.shelfmark.environment = torrentEnvironment // usenetEnvironment // converterEnvironment;
 
     sops.templates."shelfmark.env" = {
-      owner = cfg.user;
-      group = cfg.group;
+      owner = model.user;
+      group = model.group;
       mode = "0400";
       content = ''
         OIDC_CLIENT_SECRET=${model.oidcClient.secret.placeholder}

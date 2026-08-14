@@ -6,7 +6,7 @@ in
 {
   config = lib.mkIf (cfg != null) {
     host.web.services.shelfmark = {
-      upstream = "http://127.0.0.1:${toString cfg.port}";
+      upstream = "http://127.0.0.1:${toString model.port}";
       public = {
         enable = true;
         hostName = cfg.publicHostName;

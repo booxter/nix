@@ -17,7 +17,7 @@ in
     );
 
     systemd.tmpfiles.rules = [
-      "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
+      "d '${cfg.stateDir}' 0700 ${model.user} root - -"
     ];
   };
 }

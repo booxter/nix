@@ -6,10 +6,6 @@ in
 {
   config.assertions = lib.optionals (cfg != null) [
     {
-      assertion = cfg.publicHostName != null;
-      message = "host.shelfmark.publicHostName must be set";
-    }
-    {
       assertion = model.ebooks != null && model.ebooks.contentType == "ebooks";
       message = "host.shelfmark.libraries.ebooks must select a registered ebook library";
     }
@@ -27,7 +23,7 @@ in
     }
     {
       assertion = model.ssoApplication != null;
-      message = "host.shelfmark.sso.application must select a realm SSO application";
+      message = "Shelfmark requires its realm SSO application";
     }
     {
       assertion =

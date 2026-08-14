@@ -18,7 +18,7 @@ in
     '';
 
     host.web.services.audiobookshelf = {
-      upstream = "http://127.0.0.1:${toString cfg.port}";
+      upstream = "http://127.0.0.1:${toString model.port}";
       public = {
         enable = true;
         hostName = cfg.publicHostName;

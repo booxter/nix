@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg;
@@ -14,15 +19,13 @@ in
   config = lib.mkIf (cfg != null) {
     services.audiobookshelf = {
       enable = true;
-      package = cfg.package;
+      package = pkgs.audiobookshelf;
       dataDir = cfg.stateDir;
-      group = cfg.group;
-      port = cfg.port;
-      user = cfg.user;
+      inherit (model) group port user;
     };
 
-    users.users.${cfg.user} = {
-      group = cfg.group;
+    users.users.${model.user} = {
+      group = model.group;
       home = lib.mkForce "/var/empty";
       isSystemUser = true;
     };

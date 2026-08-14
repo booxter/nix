@@ -16,8 +16,11 @@ let
 in
 {
   inherit cfg;
+  port = 9292;
+  user = "audiobookshelf";
+  group = "media";
   libraries = lib.mapAttrs resolveLibrary cfg.libraries;
-  ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
+  ssoApplication = config.host.sso.applications.audiobookshelf or null;
   service = config.host.web.services.audiobookshelf;
   oidcClient = config.host.sso.oidc.clients.audiobookshelf;
   oidcScopes = config.host.sso.oidc.baseScopes;

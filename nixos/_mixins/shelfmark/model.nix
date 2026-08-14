@@ -9,11 +9,14 @@ let
 in
 {
   inherit cfg;
+  port = 8084;
+  user = "shelfmark";
+  group = "media";
   ebooks = resolveLibrary cfg.libraries.ebooks;
   audiobooks = resolveLibrary cfg.libraries.audiobooks;
   torrent = resolveRoute cfg.downloaders.torrent.route;
   usenet = resolveRoute cfg.downloaders.usenet.route;
-  ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
+  ssoApplication = config.host.sso.applications.shelfmark or null;
   shelfmarkService = config.host.web.services.shelfmark;
   oidcClient = config.host.sso.oidc.clients.shelfmark;
   oidcScopes = config.host.sso.oidc.baseScopes;
