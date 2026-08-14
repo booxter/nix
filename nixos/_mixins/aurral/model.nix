@@ -1,7 +1,7 @@
-{ config, lib }:
+{ config }:
 let
   cfg = config.host.aurral;
-  slskd = import ../slskd/model.nix { inherit config lib; };
+  slskd = import ./slskd/model.nix { inherit config; };
   storageClaim = if cfg == null then null else config.host.storage.claims.${cfg.storageClaim} or null;
 in
 {

@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  model = import ./model.nix { inherit config lib; };
+  model = import ./model.nix { inherit config; };
   instance = model.resolved;
   secretNames = [
     "${instance.secretPrefix}/soulseek/username"

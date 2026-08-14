@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config }:
 let
   cfg = config.host.aurral;
   slskd = if cfg == null then null else cfg.slskd;
