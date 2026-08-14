@@ -54,7 +54,7 @@ in
         }
       ];
       gpu = {
-        vendors = [ "amd" ];
+        vendor = "amd";
         compute = "rocm";
         collector.enable = true;
       };

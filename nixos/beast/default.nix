@@ -14,8 +14,8 @@
     disko.layout = "plain";
 
     hardware.gpu = {
-      vendors = [ "intel" ];
-      render.device = "/dev/dri/renderD128";
+      vendor = "intel";
+      renderDevice = "/dev/dri/renderD128";
     };
 
     network = {

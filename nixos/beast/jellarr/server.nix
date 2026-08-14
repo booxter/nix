@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
-  render = config.host.hardware.gpu.render;
-  qsvAvailable = render.vendor == "intel" && render.device != null;
+  gpu = config.host.hardware.gpu;
+  qsvAvailable = gpu.vendor == "intel" && gpu.renderDevice != null;
 in
 {
   host.jellyfin.declarativeConfig = {
@@ -34,7 +34,7 @@ in
     }
     // lib.optionalAttrs qsvAvailable {
       hardwareAccelerationType = "qsv";
-      qsvDevice = render.device;
+      qsvDevice = gpu.renderDevice;
     };
   };
 }

@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ lib, ... }:
 let
-  cfg = config.host.hardware.gpu;
   vendorType = lib.types.enum [
     "amd"
     "intel"
@@ -8,7 +7,6 @@ let
 in
 {
   imports = [
-    ./assertions.nix
     ./amd.nix
     ./collector.nix
     ./intel.nix
@@ -16,28 +14,16 @@ in
   ];
 
   options.host.hardware.gpu = {
-    vendors = lib.mkOption {
-      type = lib.types.listOf vendorType;
-      default = [ ];
-      description = "GPU vendors supported by this host.";
+    vendor = lib.mkOption {
+      type = lib.types.nullOr vendorType;
+      default = null;
+      description = "GPU vendor supported by this host.";
     };
 
-    render = {
-      device = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Preferred DRM render device for hardware-accelerated services.";
-      };
-
-      vendor = lib.mkOption {
-        type = with lib.types; nullOr vendorType;
-        default =
-          if cfg.render.device != null && builtins.length cfg.vendors == 1 then
-            builtins.head cfg.vendors
-          else
-            null;
-        description = "GPU vendor providing the preferred render device.";
-      };
+    renderDevice = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Preferred DRM render device for hardware-accelerated services.";
     };
 
     compute = lib.mkOption {

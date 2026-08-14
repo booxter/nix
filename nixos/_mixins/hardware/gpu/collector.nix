@@ -13,7 +13,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = builtins.elem "amd" config.host.hardware.gpu.vendors;
+        assertion = config.host.hardware.gpu.vendor == "amd";
         message = "host.hardware.gpu.collector requires an AMD GPU";
       }
     ];

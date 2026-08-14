@@ -8,7 +8,7 @@ let
   hostName = config.networking.hostName;
   machine = cfg.inventory.machine;
   enabledServices = lib.filterAttrs (_: service: service.enable) (config.host.web.services or { });
-  gpuVendors = config.host.hardware.gpu.vendors or [ ];
+  gpuVendor = config.host.hardware.gpu.vendor or null;
   fileSystems = builtins.attrValues (config.fileSystems or { });
   diskBays = config.host.hardware.storage.diskBays or null;
   dashboardType = lib.types.submodule {
@@ -124,7 +124,7 @@ in
             virtual = machine.virtual;
             builder = config.host.nix.builder.enable;
             hypervisor = machine.hypervisor;
-            gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
+            inherit gpuVendor;
             services = builtins.attrNames enabledServices;
             storage = {
               btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;

@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.lolek;
-  render = config.host.hardware.gpu.render;
+  gpu = config.host.hardware.gpu;
   galleryCookiesSecret = config.sops.secrets."lolek/galleryDlCookies";
 in
 {
@@ -61,9 +61,9 @@ in
         # TODO: Use a first-class upstream module option once lolek exposes one.
         LOLEK_YT_DLP_COOKIES_FILE = galleryCookiesSecret.path;
       };
-      hardwareAcceleration = lib.mkIf (render.vendor == "intel" && render.device != null) {
+      hardwareAcceleration = lib.mkIf (gpu.vendor == "intel" && gpu.renderDevice != null) {
         backend = "qsv";
-        device = render.device;
+        device = gpu.renderDevice;
       };
       metrics = {
         enable = true;
