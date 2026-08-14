@@ -9,10 +9,7 @@ let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg;
   app = model.ssoApplication;
-  accessGroups = builtins.filter (group: group != null) [
-    (if app == null then null else app.adminGroup)
-    (if app == null then null else app.userGroup)
-  ];
+  accessGroups = if app == null then [ ] else builtins.attrValues app.roles;
   groupScopes = lib.genAttrs accessGroups (_: model.oidcScopes ++ [ "shelfmark_groups" ]);
   groupClaims = lib.genAttrs accessGroups (group: [ group ]);
   torrentEnvironment = lib.optionalAttrs (model.torrent != null) {
@@ -78,7 +75,7 @@ in
         FLASK_PORT = model.port;
         HIDE_LOCAL_AUTH = "true";
         INGEST_DIR = model.ebooks.path;
-        OIDC_ADMIN_GROUP = model.ssoApplication.adminGroup;
+        OIDC_ADMIN_GROUP = model.ssoApplication.roles.admin;
         OIDC_AUTO_PROVISION = "true";
         OIDC_BUTTON_LABEL = "SSO";
         OIDC_CLIENT_ID = model.oidcClient.clientId;

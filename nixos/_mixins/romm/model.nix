@@ -10,23 +10,15 @@ let
   claim = storageModel.localClaims.${cfg.storage.claim} or null;
   identity = storageIdentities.users.${cfg.user} or null;
   ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
-  accessGroups =
-    if ssoApplication == null then
-      [ ]
-    else
-      builtins.filter (group: group != null) [
-        ssoApplication.adminGroup
-        ssoApplication.editorGroup
-        ssoApplication.viewerGroup
-      ];
+  accessGroups = if ssoApplication == null then [ ] else builtins.attrValues ssoApplication.roles;
   groupsFor = person: builtins.filter (group: builtins.elem group person.groups) accessGroups;
   authorizedUsers = lib.filterAttrs (_: person: groupsFor person != [ ]) config.host.sso.users;
   admins =
-    if ssoApplication == null || ssoApplication.adminGroup == null then
+    if ssoApplication == null then
       { }
     else
       lib.filterAttrs (
-        _: person: builtins.elem ssoApplication.adminGroup person.groups
+        _: person: builtins.elem ssoApplication.roles.admin person.groups
       ) config.host.sso.users;
   containerImage = import ../../_lib/oci-image.nix {
     image = cfg.container;
@@ -81,21 +73,9 @@ let
     OIDC_SERVER_APPLICATION_URL = if oidcClient == null then "" else oidcClient.issuerUrl;
     OIDC_SERVER_METADATA_URL = if oidcClient == null then "" else oidcClient.discoveryUrl;
     OIDC_CLAIM_ROLES = "romm_roles";
-    OIDC_ROLE_ADMIN =
-      if ssoApplication == null || ssoApplication.adminGroup == null then
-        ""
-      else
-        ssoApplication.adminGroup;
-    OIDC_ROLE_EDITOR =
-      if ssoApplication == null || ssoApplication.editorGroup == null then
-        ""
-      else
-        ssoApplication.editorGroup;
-    OIDC_ROLE_VIEWER =
-      if ssoApplication == null || ssoApplication.viewerGroup == null then
-        ""
-      else
-        ssoApplication.viewerGroup;
+    OIDC_ROLE_ADMIN = if ssoApplication == null then "" else ssoApplication.roles.admin;
+    OIDC_ROLE_EDITOR = if ssoApplication == null then "" else ssoApplication.roles.editor;
+    OIDC_ROLE_VIEWER = if ssoApplication == null then "" else ssoApplication.roles.viewer;
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
   containerMounts =
@@ -124,9 +104,9 @@ let
     && storageGroup != null
     && identity != null
     && ssoApplication != null
-    && ssoApplication.adminGroup != null
-    && ssoApplication.editorGroup != null
-    && ssoApplication.viewerGroup != null
+    && ssoApplication.roles ? admin
+    && ssoApplication.roles ? editor
+    && ssoApplication.roles ? viewer
     && ssoApplication.bootstrapOwner != null
     && cfg.publicHostName != null;
   ready = registrationReady && oidcClient != null;

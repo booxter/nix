@@ -23,13 +23,9 @@ let
     if jellyfinHost == null then null else jellyfinHost.host.web.services.jellyfin.public.url;
   romm = if rommHost == null then null else rommHost.host.romm;
   ssoApplication = config.host.sso.applications.degoog;
-  adminUsers =
-    if ssoApplication.adminGroup == null then
-      { }
-    else
-      lib.filterAttrs (
-        _: user: builtins.elem ssoApplication.adminGroup user.groups
-      ) config.host.sso.users;
+  adminUsers = lib.filterAttrs (
+    _: user: builtins.elem ssoApplication.roles.admin user.groups
+  ) config.host.sso.users;
   normalizeCatalog = lib.mapAttrs (
     _: registration:
     {

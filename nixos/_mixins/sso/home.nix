@@ -5,45 +5,60 @@ lib.mkIf (config.host.realm == "home") {
 
     applications = {
       audiobookshelf = {
-        adminGroup = "media-admins";
-        userGroup = "media-users";
+        roles = {
+          admin = "media-admins";
+          user = "media-users";
+        };
       };
       aurral = {
-        adminGroup = "media-admins";
-        userGroup = "media-users";
+        roles = {
+          admin = "media-admins";
+          user = "media-users";
+        };
       };
       "home-assistant" = {
-        adminGroup = "home-admins";
-        userGroup = "home-users";
+        roles = {
+          admin = "home-admins";
+          user = "home-users";
+        };
         bootstrapOwner = "ihar";
-        bootstrapLanguage = "en";
       };
       degoog = {
-        adminGroup = "infra-admins";
-        userGroup = "degoog-users";
+        roles = {
+          admin = "infra-admins";
+          user = "degoog-users";
+        };
       };
       paperless = {
-        adminGroup = "paperless-admins";
-        userGroup = "paperless-users";
+        roles = {
+          admin = "paperless-admins";
+          user = "paperless-users";
+        };
         bootstrapOwner = "ihar";
       };
       pinepods = {
-        adminGroup = "media-admins";
-        userGroup = "media-users";
+        roles = {
+          admin = "media-admins";
+          user = "media-users";
+        };
         bootstrapOwner = "ihar";
       };
       romm = {
-        adminGroup = "romm-admins";
-        editorGroup = "romm-editors";
-        viewerGroup = "romm-viewers";
+        roles = {
+          admin = "romm-admins";
+          editor = "romm-editors";
+          viewer = "romm-viewers";
+        };
         bootstrapOwner = "ihar";
       };
       shelfmark = {
-        adminGroup = "media-admins";
-        userGroup = "media-users";
+        roles = {
+          admin = "media-admins";
+          user = "media-users";
+        };
       };
       watchstate = {
-        adminGroup = "media-admins";
+        roles.admin = "media-admins";
         bootstrapOwner = "ihar";
       };
     };

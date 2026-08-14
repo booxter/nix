@@ -36,7 +36,7 @@ in
           displayName = "WatchState";
           port = 4182;
           cookieName = "_watchstate_sso";
-          allowedGroups = [ sso.adminGroup ];
+          allowedGroups = [ sso.roles.admin ];
           groupClaim = "media_groups";
           internalHttpsServiceNames = [ "watchstate" ];
           authRequestHeaders = { };

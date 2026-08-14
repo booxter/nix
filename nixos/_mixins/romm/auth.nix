@@ -33,9 +33,9 @@ in
         allowInsecureClientDisablePkce = true;
         scopeMaps = lib.genAttrs model.accessGroups (_: model.oidcScopes ++ [ "romm_roles" ]);
         claimMaps.romm_roles.valuesByGroup = {
-          ${ssoApplication.adminGroup} = [ ssoApplication.adminGroup ];
-          ${ssoApplication.editorGroup} = [ ssoApplication.editorGroup ];
-          ${ssoApplication.viewerGroup} = [ ssoApplication.viewerGroup ];
+          ${ssoApplication.roles.admin} = [ ssoApplication.roles.admin ];
+          ${ssoApplication.roles.editor} = [ ssoApplication.roles.editor ];
+          ${ssoApplication.roles.viewer} = [ ssoApplication.roles.viewer ];
         };
         secret = {
           sopsKey = "romm/oidc/clientSecret";

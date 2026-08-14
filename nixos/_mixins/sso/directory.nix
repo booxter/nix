@@ -17,45 +17,21 @@ let
   };
   applicationType = lib.types.submodule {
     options = {
-      adminGroup = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-      };
-      userGroup = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-      };
-      editorGroup = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-      };
-      viewerGroup = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
+      roles = lib.mkOption {
+        type = with lib.types; attrsOf nonEmptyStr;
+        default = { };
       };
       bootstrapOwner = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;
       };
-      bootstrapLanguage = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "en";
-      };
     };
   };
-  applicationGroups =
-    application:
-    builtins.filter (group: group != null) [
-      application.adminGroup
-      application.userGroup
-      application.editorGroup
-      application.viewerGroup
-    ];
   unknownUserGroups = lib.unique (
     lib.concatMap (user: lib.subtractLists cfg.groups user.groups) (builtins.attrValues cfg.users)
   );
   unknownApplicationGroups = lib.unique (
-    lib.concatMap (application: lib.subtractLists cfg.groups (applicationGroups application)) (
+    lib.concatMap (application: lib.subtractLists cfg.groups (builtins.attrValues application.roles)) (
       builtins.attrValues cfg.applications
     )
   );

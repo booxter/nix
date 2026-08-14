@@ -6,14 +6,7 @@
 let
   cfg = config.host.paperless;
   ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
-  accessGroups =
-    if ssoApplication == null then
-      [ ]
-    else
-      builtins.filter (group: group != null) [
-        ssoApplication.adminGroup
-        ssoApplication.userGroup
-      ];
+  accessGroups = if ssoApplication == null then [ ] else builtins.attrValues ssoApplication.roles;
   users = lib.filterAttrs (
     _: user: lib.any (group: builtins.elem group user.groups) accessGroups
   ) config.host.sso.users;

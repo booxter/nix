@@ -21,17 +21,14 @@ let
     )
   );
   app = model.ssoApplication;
-  accessGroups = builtins.filter (group: group != null) [
-    (if app == null then null else app.adminGroup)
-    (if app == null then null else app.userGroup)
-  ];
+  accessGroups = if app == null then [ ] else builtins.attrValues app.roles;
   groupScopes = lib.genAttrs accessGroups (_: model.oidcScopes ++ [ "abs_groups" ]);
   groupClaims =
-    lib.optionalAttrs (app != null && app.adminGroup != null) {
-      ${app.adminGroup} = [ "admin" ];
+    lib.optionalAttrs (app != null && app.roles ? admin) {
+      ${app.roles.admin} = [ "admin" ];
     }
-    // lib.optionalAttrs (app != null && app.userGroup != null) {
-      ${app.userGroup} = [ "user" ];
+    // lib.optionalAttrs (app != null && app.roles ? user) {
+      ${app.roles.user} = [ "user" ];
     };
   oidc = model.oidcClient;
   validLibraries = lib.filterAttrs (_: library: library.media != null) model.libraries;

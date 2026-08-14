@@ -12,11 +12,11 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = builtins.elem homeAssistantSso.adminGroup bootstrapOwner.groups;
+        assertion = builtins.elem homeAssistantSso.roles.admin bootstrapOwner.groups;
         message = "The Home Assistant bootstrap owner must belong to its SSO admin group.";
       }
       {
-        assertion = builtins.elem homeAssistantSso.userGroup bootstrapOwner.groups;
+        assertion = builtins.elem homeAssistantSso.roles.user bootstrapOwner.groups;
         message = "The Home Assistant bootstrap owner must belong to its SSO user group.";
       }
     ];

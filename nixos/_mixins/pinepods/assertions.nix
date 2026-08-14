@@ -40,11 +40,11 @@ in
       message = "host.pinepods.sso.application must select a realm SSO application";
     }
     {
-      assertion = ssoApplication != null && ssoApplication.adminGroup != null;
+      assertion = ssoApplication != null && ssoApplication.roles ? admin;
       message = "the PinePods SSO application must define an admin group";
     }
     {
-      assertion = ssoApplication != null && ssoApplication.userGroup != null;
+      assertion = ssoApplication != null && ssoApplication.roles ? user;
       message = "the PinePods SSO application must define a user group";
     }
     {
@@ -59,14 +59,14 @@ in
       assertion =
         bootstrapOwner != null
         && ssoApplication != null
-        && builtins.elem ssoApplication.adminGroup bootstrapOwner.groups;
+        && builtins.elem ssoApplication.roles.admin bootstrapOwner.groups;
       message = "the PinePods bootstrap owner must belong to its SSO admin group";
     }
     {
       assertion =
         bootstrapOwner != null
         && ssoApplication != null
-        && builtins.elem ssoApplication.userGroup bootstrapOwner.groups;
+        && builtins.elem ssoApplication.roles.user bootstrapOwner.groups;
       message = "the PinePods bootstrap owner must belong to its SSO user group";
     }
     {

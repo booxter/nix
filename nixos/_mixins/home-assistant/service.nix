@@ -52,8 +52,8 @@ in
             groups = "home_groups";
           };
           roles = {
-            admin = homeAssistantSso.adminGroup;
-            user = homeAssistantSso.userGroup;
+            admin = homeAssistantSso.roles.admin;
+            user = homeAssistantSso.roles.user;
           };
           features = {
             automatic_user_linking = true;

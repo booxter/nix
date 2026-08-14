@@ -42,9 +42,9 @@ in
       {
         assertion =
           ssoApplication != null
-          && ssoApplication.adminGroup != null
-          && ssoApplication.editorGroup != null
-          && ssoApplication.viewerGroup != null
+          && ssoApplication.roles ? admin
+          && ssoApplication.roles ? editor
+          && ssoApplication.roles ? viewer
           && ssoApplication.bootstrapOwner != null;
         message = "The RomM SSO application must define administrator, editor, viewer, and bootstrap-owner roles";
       }

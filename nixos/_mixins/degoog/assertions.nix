@@ -24,11 +24,11 @@ in
       message = "Degoog extensions contribute conflicting settings: ${lib.concatStringsSep ", " duplicateSettingNamespaces}";
     }
     {
-      assertion = ssoApplication.adminGroup != null;
+      assertion = ssoApplication.roles ? admin;
       message = "The Degoog SSO application must declare an administrator group.";
     }
     {
-      assertion = ssoApplication.userGroup != null;
+      assertion = ssoApplication.roles ? user;
       message = "The Degoog SSO application must declare a user group.";
     }
     {

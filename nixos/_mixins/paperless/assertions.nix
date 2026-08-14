@@ -32,11 +32,11 @@ in
       message = "host.paperless.sso.application must name a declared SSO application.";
     }
     {
-      assertion = ssoApplication == null || ssoApplication.adminGroup != null;
+      assertion = ssoApplication == null || ssoApplication.roles ? admin;
       message = "The Paperless SSO application must declare an administrator group.";
     }
     {
-      assertion = ssoApplication == null || ssoApplication.userGroup != null;
+      assertion = ssoApplication == null || ssoApplication.roles ? user;
       message = "The Paperless SSO application must declare a user group.";
     }
     {

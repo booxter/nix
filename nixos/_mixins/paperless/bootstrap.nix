@@ -26,7 +26,7 @@ let
       username = name;
       email = if name == bootstrapOwner then config.host.mailer.address else "";
       passwordFile = config.sops.secrets.${passwordSecretName name}.path;
-      isStaff = builtins.elem config.host.sso.applications.${cfg.sso.application}.adminGroup user.groups;
+      isStaff = builtins.elem config.host.sso.applications.${cfg.sso.application}.roles.admin user.groups;
       isSuperuser = name == bootstrapOwner;
     }) users;
   };

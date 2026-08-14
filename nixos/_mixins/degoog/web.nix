@@ -49,7 +49,7 @@ in
           displayName = "Degoog";
           port = oauth2ProxyPort;
           cookieName = "_goo_sso";
-          allowedGroups = builtins.filter (group: group != null) [ ssoApplication.userGroup ];
+          allowedGroups = [ ssoApplication.roles.user ];
           groupClaim = "degoog_groups";
           externalOrigin = service.public.url;
           internalHttpsServiceNames = [ "goo" ];

@@ -17,12 +17,12 @@ in
         originUrls = [ "${paperlessService.public.url}/accounts/oidc/sso/login/callback/" ];
         originLanding = "${paperlessService.public.url}/";
         scopeMaps = {
-          ${ssoApplication.adminGroup} = oidcScopes ++ [ "groups" ];
-          ${ssoApplication.userGroup} = oidcScopes ++ [ "groups" ];
+          ${ssoApplication.roles.admin} = oidcScopes ++ [ "groups" ];
+          ${ssoApplication.roles.user} = oidcScopes ++ [ "groups" ];
         };
         claimMaps.groups.valuesByGroup = {
-          ${ssoApplication.adminGroup} = [ ssoApplication.adminGroup ];
-          ${ssoApplication.userGroup} = [ ssoApplication.userGroup ];
+          ${ssoApplication.roles.admin} = [ ssoApplication.roles.admin ];
+          ${ssoApplication.roles.user} = [ ssoApplication.roles.user ];
         };
         secret = {
           sopsKey = "paperless/oidc/client_secret";

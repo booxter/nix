@@ -42,7 +42,7 @@ in
           "--owner-display-name"
           bootstrapOwnerName
           "--owner-language"
-          homeAssistantSso.bootstrapLanguage
+          "en"
           "--owner-username"
           bootstrapOwnerName
           "--password-file"

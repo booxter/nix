@@ -23,7 +23,7 @@ in
       message = "host.watchstate.backups.stagingDirectory must be set when WatchState backups are enabled.";
     }
     {
-      assertion = !cfg.enable || builtins.elem sso.adminGroup systemAccount.groups;
+      assertion = !cfg.enable || builtins.elem sso.roles.admin systemAccount.groups;
       message = "The WatchState bootstrap owner must belong to its SSO admin group.";
     }
     {

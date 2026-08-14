@@ -26,12 +26,12 @@ in
         # PinePods 0.9.0 explicitly requires a confidential client without it.
         allowInsecureClientDisablePkce = true;
         scopeMaps = {
-          ${ssoApplication.adminGroup} = model.oidcScopes ++ [ "pinepods_roles" ];
-          ${ssoApplication.userGroup} = model.oidcScopes ++ [ "pinepods_roles" ];
+          ${ssoApplication.roles.admin} = model.oidcScopes ++ [ "pinepods_roles" ];
+          ${ssoApplication.roles.user} = model.oidcScopes ++ [ "pinepods_roles" ];
         };
         claimMaps.pinepods_roles.valuesByGroup = {
-          ${ssoApplication.adminGroup} = [ "admin" ];
-          ${ssoApplication.userGroup} = [ "user" ];
+          ${ssoApplication.roles.admin} = [ "admin" ];
+          ${ssoApplication.roles.user} = [ "user" ];
         };
         secret = {
           sopsKey = "pinepods/oidc/client_secret";

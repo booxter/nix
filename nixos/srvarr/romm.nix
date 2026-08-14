@@ -2,9 +2,9 @@
 let
   rommSso = config.host.sso.applications.romm;
   accessGroups = [
-    rommSso.adminGroup
-    rommSso.editorGroup
-    rommSso.viewerGroup
+    rommSso.roles.admin
+    rommSso.roles.editor
+    rommSso.roles.viewer
   ];
   groupsFor = person: builtins.filter (group: builtins.elem group person.groups) accessGroups;
   mediaUsers = lib.filterAttrs (

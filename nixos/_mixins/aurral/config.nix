@@ -7,7 +7,7 @@
 let
   model = import ./model.nix { inherit config; };
   inherit (model) cfg selected;
-  adminGroup = if model.ssoApplication == null then null else model.ssoApplication.adminGroup;
+  adminGroup = if model.ssoApplication == null then null else model.ssoApplication.roles.admin;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
       _: person: adminGroup != null && builtins.elem adminGroup person.groups
@@ -15,13 +15,7 @@ let
   );
   browserOrigin = "https://${cfg.publicHostName}";
   allowedGroups =
-    if model.ssoApplication == null then
-      [ ]
-    else
-      builtins.filter (group: group != null) [
-        model.ssoApplication.adminGroup
-        model.ssoApplication.userGroup
-      ];
+    if model.ssoApplication == null then [ ] else builtins.attrValues model.ssoApplication.roles;
   cacheZone = "aurral_images";
   cacheLocation = {
     proxyPass = "http://127.0.0.1:${toString model.port}";

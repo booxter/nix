@@ -37,6 +37,6 @@ in
   bootstrapReady =
     bootstrapOwner != null
     && bootstrapOwner.mailAddressSopsKey != null
-    && ssoApplication.adminGroup != null
-    && ssoApplication.userGroup != null;
+    && ssoApplication.roles ? admin
+    && ssoApplication.roles ? user;
 }

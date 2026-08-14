@@ -23,12 +23,12 @@ in
           ];
           originLanding = "https://${hostName}/";
           scopeMaps = {
-            ${homeAssistantSso.adminGroup} = oidcScopes ++ [ "home_groups" ];
-            ${homeAssistantSso.userGroup} = oidcScopes ++ [ "home_groups" ];
+            ${homeAssistantSso.roles.admin} = oidcScopes ++ [ "home_groups" ];
+            ${homeAssistantSso.roles.user} = oidcScopes ++ [ "home_groups" ];
           };
           claimMaps.home_groups.valuesByGroup = {
-            ${homeAssistantSso.adminGroup} = [ homeAssistantSso.adminGroup ];
-            ${homeAssistantSso.userGroup} = [ homeAssistantSso.userGroup ];
+            ${homeAssistantSso.roles.admin} = [ homeAssistantSso.roles.admin ];
+            ${homeAssistantSso.roles.user} = [ homeAssistantSso.roles.user ];
           };
         };
       };
