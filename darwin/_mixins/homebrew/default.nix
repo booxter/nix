@@ -37,19 +37,16 @@ in
       extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
-    casks =
-      lib.optionals userEnvironment.roles.workstation.enable [
-        "sf-symbols"
-      ]
-      ++ lib.optionals userEnvironment.roles.workstation.enable [
-        "chatgpt"
-      ]
-      ++ lib.optionals wiresharkEnabled [
-        "wireshark-chmodbpf"
-      ]
-      ++ lib.optionals (userEnvironment.roles.workstation.enable && userEnvironment.homerow.enable) [
-        "homerow"
-      ];
+    casks = [
+      "sf-symbols"
+      "chatgpt"
+    ]
+    ++ lib.optionals wiresharkEnabled [
+      "wireshark-chmodbpf"
+    ]
+    ++ lib.optionals userEnvironment.homerow.enable [
+      "homerow"
+    ];
   };
 
   nix-homebrew = {

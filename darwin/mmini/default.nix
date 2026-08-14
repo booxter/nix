@@ -14,10 +14,7 @@ in
 
   host.userEnvironment = {
     preset = "personal";
-    roles = {
-      developer.enable = true;
-      workstation.enable = true;
-    };
+    roles.developer.enable = true;
   };
 
   host.network.interfaces.en0.kind = "ethernet";

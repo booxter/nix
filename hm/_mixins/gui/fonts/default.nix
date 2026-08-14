@@ -4,8 +4,11 @@
   pkgs,
   ...
 }:
+let
+  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.hyprland.enable;
+in
 {
-  config = lib.mkIf osConfig.host.userEnvironment.roles.workstation.enable {
+  config = lib.mkIf graphical {
     fonts.fontconfig.enable = true;
     home.packages = with pkgs.nerd-fonts; [
       meslo-lg

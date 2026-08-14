@@ -3,6 +3,7 @@ let
   cfg = config.host.userEnvironment;
   username = config.host.username;
   presetDefault = lib.mkOverride 900;
+  graphical = config.nixpkgs.hostPlatform.isDarwin || config.host.desktop.hyprland.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "nvidia") (
@@ -30,7 +31,7 @@ in
           sketchybar.attentionInbox.enable = true;
         };
       })
-      (lib.mkIf cfg.roles.workstation.enable {
+      (lib.mkIf graphical {
         host.userEnvironment.homerow.enable = presetDefault false;
         home-manager.users.${username}.host.hm = presetDefault {
           kitty.enable = true;

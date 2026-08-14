@@ -9,7 +9,7 @@ let
   firefoxEnabled = config.home-manager.users.${username}.host.hm.firefox.enable;
 in
 {
-  config = lib.mkIf (config.host.userEnvironment.roles.workstation.enable && firefoxEnabled) {
+  config = lib.mkIf firefoxEnabled {
     environment.systemPackages = with pkgs; [
       defaultbrowser
     ];

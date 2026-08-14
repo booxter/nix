@@ -6,11 +6,10 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  desktopEnvironmentEnabled = osConfig.host.userEnvironment.roles.workstation.enable;
   inherit (config.lib.stylix) colors;
 in
 {
-  services.jankyborders = lib.mkIf (desktopEnvironmentEnabled && isDarwin) {
+  services.jankyborders = lib.mkIf isDarwin {
     enable = true;
     settings = {
       active_color = "glow\\(0xff${colors.base0D}\\)";

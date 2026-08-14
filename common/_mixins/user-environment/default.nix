@@ -23,15 +23,12 @@ in
     };
 
     roles.developer.enable = lib.mkEnableOption "interactive software development environment";
-    roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
   };
 
   config = {
-    host.userEnvironment.homerow.enable = lib.mkDefault (
-      cfg.roles.workstation.enable && config.nixpkgs.hostPlatform.isDarwin
-    );
+    host.userEnvironment.homerow.enable = lib.mkDefault config.nixpkgs.hostPlatform.isDarwin;
 
     home-manager.users.${config.host.username}.host.hm.pass.enable =
       lib.mkDefault cfg.roles.developer.enable;

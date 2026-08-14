@@ -19,8 +19,8 @@ in
   config = {
     assertions =
       lib.optional cfg.wayland.enable {
-        assertion = isDarwin && osConfig.host.userEnvironment.roles.workstation.enable;
-        message = "programs.remote-control.client.wayland requires a managed Darwin graphical environment";
+        assertion = isDarwin;
+        message = "programs.remote-control.client.wayland requires Darwin";
       }
       ++ lib.optional (cfg.x11.enable && isDarwin) {
         assertion = config.host.hm.xquartz.enable;

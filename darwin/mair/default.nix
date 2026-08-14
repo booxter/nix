@@ -43,10 +43,7 @@ in
     };
     userEnvironment = {
       preset = "personal";
-      roles = {
-        developer.enable = true;
-        workstation.enable = true;
-      };
+      roles.developer.enable = true;
     };
     remote-control = {
       client = {

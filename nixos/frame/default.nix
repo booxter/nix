@@ -106,10 +106,7 @@ in
     };
     userEnvironment = {
       preset = "personal";
-      roles = {
-        developer.enable = true;
-        workstation.enable = true;
-      };
+      roles.developer.enable = true;
     };
     ups.server = {
       description = "APC UPS 1500VA";

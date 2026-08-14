@@ -6,7 +6,7 @@ in
 {
   options.host.sketchybar.network.enable = lib.mkOption {
     type = lib.types.bool;
-    default = config.host.userEnvironment.roles.workstation.enable;
+    default = true;
     description = "Whether SketchyBar should display LAN/WAN traffic rates.";
   };
 

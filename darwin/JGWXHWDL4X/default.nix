@@ -34,10 +34,7 @@ in
   ];
   host.userEnvironment = {
     preset = "nvidia";
-    roles = {
-      developer.enable = true;
-      workstation.enable = true;
-    };
+    roles.developer.enable = true;
   };
   host.nix.cacheWarmer.enable = true;
 

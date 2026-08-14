@@ -3,6 +3,7 @@ let
   cfg = config.host.userEnvironment;
   username = config.host.username;
   presetDefault = lib.mkOverride 900;
+  graphical = config.nixpkgs.hostPlatform.isDarwin || config.host.desktop.hyprland.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "personal") (
@@ -31,7 +32,7 @@ in
           ramalama.enable = true;
         };
       })
-      (lib.mkIf cfg.roles.workstation.enable {
+      (lib.mkIf graphical {
         home-manager.users.${username}.host.hm = presetDefault {
           numberedWorkspaces = if config.nixpkgs.hostPlatform.isDarwin then 4 else 6;
           firefox = {
