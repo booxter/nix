@@ -29,8 +29,6 @@ let
     { name, ... }:
     {
       options = {
-        enable = lib.mkEnableOption "the ${name} site search provider";
-
         title = lib.mkOption {
           type = lib.types.nonEmptyStr;
           default = lib.strings.toSentenceCase name;
@@ -66,7 +64,6 @@ let
       outputs
       ;
   };
-  enabled = lib.filterAttrs (_: provider: provider.enable) config.host.site.search.providers;
 in
 {
   options.host.site.search = {
@@ -88,5 +85,5 @@ in
   config.assertions = lib.mapAttrsToList (name: provider: {
     assertion = provider.endpoints.internal != null || provider.endpoints.public != null;
     message = "host.site.search.providers.${name} requires at least one endpoint";
-  }) enabled;
+  }) config.host.site.search.providers;
 }

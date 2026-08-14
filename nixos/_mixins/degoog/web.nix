@@ -14,7 +14,6 @@ in
 {
   config = lib.mkIf (cfg.enable && ssoApplication != null) {
     host.site.search.providers.degoog = {
-      enable = true;
       title = "Degoog";
       aliases = [ "@goo" ];
       endpoints.public = {

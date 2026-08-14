@@ -10,7 +10,7 @@ let
   ];
   hostView = hostConfig: {
     inherit (hostConfig.host.site) name;
-    providers = lib.filterAttrs (_: provider: provider.enable) hostConfig.host.site.search.providers;
+    inherit (hostConfig.host.site.search) providers;
   };
   hosts = lib.mapAttrs (_: configuration: hostView configuration.config) otherConfigurations // {
     ${localHost} = hostView config;
