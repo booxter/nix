@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   builders = config.host.nix.builder-pool;
-  knownBuilders = lib.filterAttrs (_: builder: builder.publicKey != null) builders;
+  externalBuilders = config.host.nix.external-builders;
   toKnownHost = _: builder: lib.nameValuePair builder.hostName { inherit (builder) publicKey; };
   toSshConfig = name: builder: ''
     Host ${name}
@@ -14,7 +14,7 @@ in
 {
   config = lib.mkIf (config.host.userEnvironment.roles.developer.enable && builders != { }) {
     programs.ssh = {
-      knownHosts = lib.mapAttrs' toKnownHost knownBuilders;
+      knownHosts = lib.mapAttrs' toKnownHost externalBuilders;
       extraConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList toSshConfig builders);
     };
   };

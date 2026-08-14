@@ -18,60 +18,56 @@ let
     "build"
     "nixpkgs"
   ];
+  builderOptions = {
+    uses = lib.mkOption {
+      type = lib.types.nonEmptyListOf useType;
+      description = "Consumers allowed to use the builder.";
+    };
+    hostName = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "Network hostname of the builder.";
+    };
+    protocol = lib.mkOption {
+      type = lib.types.enum [
+        "ssh"
+        "ssh-ng"
+      ];
+      default = "ssh";
+      description = "Nix store protocol used to reach the builder.";
+    };
+    sshKey = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "SSH identity file used to authenticate to the builder.";
+    };
+    sshUser = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "SSH user used to reach the builder.";
+    };
+    systems = lib.mkOption {
+      type = with lib.types; nonEmptyListOf nonEmptyStr;
+      description = "Nix systems supported by the builder.";
+    };
+    maxJobs = lib.mkOption {
+      type = lib.types.ints.positive;
+      description = "Maximum concurrent builds accepted by the builder.";
+    };
+    speedFactor = lib.mkOption {
+      type = lib.types.ints.positive;
+      description = "Relative scheduling preference for the builder.";
+    };
+    supportedFeatures = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      description = "Nix system features supported by the builder.";
+    };
+  };
   builderType = lib.types.submodule {
-    options = {
-      source = lib.mkOption {
-        type = lib.types.enum [
-          "external"
-          "fleet"
-        ];
-        default = "external";
-        description = "Whether the builder is managed by this flake.";
-      };
-      uses = lib.mkOption {
-        type = lib.types.nonEmptyListOf useType;
-        description = "Consumers allowed to use the builder.";
-      };
-      hostName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Network hostname of the builder.";
-      };
+    options = builderOptions;
+  };
+  externalBuilderType = lib.types.submodule {
+    options = builderOptions // {
       publicKey = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "SSH host public key of an external builder.";
-      };
-      protocol = lib.mkOption {
-        type = lib.types.enum [
-          "ssh"
-          "ssh-ng"
-        ];
-        default = "ssh";
-        description = "Nix store protocol used to reach the builder.";
-      };
-      sshKey = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        description = "SSH identity file used to authenticate to the builder.";
-      };
-      sshUser = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SSH user used to reach the builder.";
-      };
-      systems = lib.mkOption {
-        type = with lib.types; nonEmptyListOf nonEmptyStr;
-        description = "Nix systems supported by the builder.";
-      };
-      maxJobs = lib.mkOption {
-        type = lib.types.ints.positive;
-        description = "Maximum concurrent builds accepted by the builder.";
-      };
-      speedFactor = lib.mkOption {
-        type = lib.types.ints.positive;
-        description = "Relative scheduling preference for the builder.";
-      };
-      supportedFeatures = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        description = "Nix system features supported by the builder.";
+        description = "SSH host public key of the builder.";
       };
     };
   };
@@ -140,7 +136,7 @@ in
     };
 
     external-builders = lib.mkOption {
-      type = lib.types.attrsOf builderType;
+      type = lib.types.attrsOf externalBuilderType;
       default = { };
       description = "Builders not managed by this flake that are available to this host.";
     };

@@ -24,8 +24,6 @@ let
         supportedFeatures
         uses
         ;
-      source = "fleet";
-      publicKey = null;
       protocol = "ssh-ng";
       sshKey = identityFile;
       sshUser = username;
@@ -42,7 +40,9 @@ let
       "realm"
     ]
   ) realmBuilders;
-  externalBuilders = config.host.nix.external-builders;
+  externalBuilders = lib.mapAttrs (
+    _: builder: removeAttrs builder [ "publicKey" ]
+  ) config.host.nix.external-builders;
   collisions = lib.intersectLists (builtins.attrNames fleetBuilders) (
     builtins.attrNames externalBuilders
   );
