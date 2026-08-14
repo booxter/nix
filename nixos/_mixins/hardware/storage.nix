@@ -66,7 +66,6 @@
               default = [ ];
               description = "Static mapping from installed drives to physical bays.";
             };
-            exporter.enable = lib.mkEnableOption "disk-bay mapping metrics export";
           };
         }
       );

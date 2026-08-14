@@ -158,7 +158,6 @@
           model = "ST24000NM000C-3WD103";
         }
       ];
-      exporter.enable = true;
     };
   };
 }
