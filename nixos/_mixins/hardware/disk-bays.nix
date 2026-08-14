@@ -12,13 +12,15 @@ let
   exporterPackage = pkgs.callPackage ./disk-bay-exporter {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
-  jsonMapping = map (
-    mapping:
-    removeAttrs mapping [ "column" ]
-    // {
-      col = mapping.column;
-    }
-  ) cfg.mapping;
+  jsonMapping = map (mapping: {
+    inherit (mapping)
+      bay
+      model
+      row
+      serial
+      ;
+    col = mapping.column;
+  }) cfg.mapping;
 in
 {
   imports = [ ./disk-bays/assertions.nix ];
