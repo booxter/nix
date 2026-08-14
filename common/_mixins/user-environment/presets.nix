@@ -113,7 +113,7 @@ let
     };
   };
   applyPresetDefaults = lib.mapAttrsRecursive (_: value: lib.mkOverride 900 value);
-  userEnvironmentFragment = fragment: builtins.removeAttrs fragment [ "hm" ];
+  userEnvironmentFragment = fragment: removeAttrs fragment [ "hm" ];
   mkPresetConfig =
     name: definition:
     lib.mkIf (cfg.preset == name) (

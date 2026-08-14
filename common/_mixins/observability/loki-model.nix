@@ -6,7 +6,7 @@
 let
   localHost = config.networking.hostName;
   localServer = config.host.observability.loki.server or { enable = false; };
-  otherConfigurations = builtins.removeAttrs outputs.nixosConfigurations [ localHost ];
+  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   candidates =
     lib.mapAttrs (_: configuration: {
       inherit (configuration.config.host) realm;

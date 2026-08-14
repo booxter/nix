@@ -22,7 +22,7 @@ let
     operator = host.security.secrets.operator.enable;
     authorizedKeys = host.ssh.operator.authorizedKeys;
   };
-  otherConfigurations = builtins.removeAttrs configurations [ localHost ];
+  otherConfigurations = removeAttrs configurations [ localHost ];
   fleetHosts = lib.mapAttrs (_: configuration: configuration.config.host) otherConfigurations // {
     ${localHost} = config.host;
   };

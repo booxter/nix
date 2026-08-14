@@ -6,7 +6,7 @@
 let
   localHost = config.networking.hostName;
   cfg = config.host.observability.uptimeRobot.controller;
-  otherConfigurations = builtins.removeAttrs outputs.nixosConfigurations [ localHost ];
+  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   controllerHosts = builtins.attrNames (
     lib.filterAttrs (_: enabled: enabled) (
       lib.mapAttrs (

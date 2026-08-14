@@ -9,9 +9,9 @@ let
     inherit (config.host) realm;
     contributions = config.host.nix.cacheContributions;
   };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   candidates =
     lib.mapAttrs (_: configuration: {
       inherit (configuration.config.host) realm;

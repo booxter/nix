@@ -14,7 +14,7 @@ let
   };
   jsonMapping = map (
     mapping:
-    builtins.removeAttrs mapping [ "column" ]
+    removeAttrs mapping [ "column" ]
     // {
       col = mapping.column;
     }

@@ -5,9 +5,9 @@
 }:
 let
   localHost = config.networking.hostName;
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   hostView = hostConfig: {
     inherit (hostConfig.host.site) name;
     providers = lib.filterAttrs (_: provider: provider.enable) hostConfig.host.site.search.providers;

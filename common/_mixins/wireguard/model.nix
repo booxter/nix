@@ -10,9 +10,9 @@ let
     hostName = localHost;
     inherit (config.host.wireguard) client server;
   };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   candidates =
     lib.mapAttrs (_: configuration: {
       hostName = configuration.config.networking.hostName;

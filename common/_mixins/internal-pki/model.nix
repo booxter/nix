@@ -11,9 +11,9 @@ let
     inherit (config.host.pki) role;
     inherit (config.host.pki) authority;
   };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   otherAuthorities = lib.mapAttrs (_: configuration: {
     hostName = configuration.config.networking.hostName;
     inherit (configuration.config.host) realm;

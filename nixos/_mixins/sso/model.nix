@@ -10,7 +10,7 @@ let
     inherit (config.host) realm;
     inherit (config.host.sso) role provider;
   };
-  otherConfigurations = builtins.removeAttrs outputs.nixosConfigurations [ localHost ];
+  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   otherProviders = lib.mapAttrs (_: configuration: {
     hostName = configuration.config.networking.hostName;
     inherit (configuration.config.host) realm;

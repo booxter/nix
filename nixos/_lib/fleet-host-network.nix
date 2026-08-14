@@ -4,7 +4,7 @@
 }:
 let
   localHost = config.networking.hostName;
-  otherConfigurations = builtins.removeAttrs outputs.nixosConfigurations [ localHost ];
+  otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   byHost =
     builtins.mapAttrs (_: configuration: configuration.config.host.network) otherConfigurations
     // {
