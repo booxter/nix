@@ -12,22 +12,6 @@ let
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
-  fleetServices = import ../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
-  fleetNetwork = import ../../../_lib/fleet-host-network.nix { inherit config outputs; };
-  webDnsRecords = import ../../../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices;
-    addressFor = fleetNetwork.addressFor;
-  };
-  unifiSyncEnv = import ./environment.nix {
-    inherit lanDomain webDnsRecords;
-    addressFor = fleetNetwork.addressFor;
-    baseUrl = controller.target.endpoint;
-    lan = config.host.site.lan;
-    reservations = config.host.network.ipController.reservations;
-    site = controller.target.site;
-  };
   wgHome = config.host.wireguard.networks.home;
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
   wgHomeEndpoint = wgHomeServerConfig.host.observability.prometheusEndpoints."wg-home";
@@ -67,8 +51,8 @@ lib.mkIf (controller.enable && controller.flavor == "unifi" && fleetWireguardEna
       "sops-install-secrets.service"
     ];
     environment = {
-      UNIFI_BASE_URL = unifiSyncEnv.baseUrl;
-      UNIFI_SITE = unifiSyncEnv.site;
+      UNIFI_BASE_URL = controller.target.endpoint;
+      UNIFI_SITE = controller.target.site;
     };
     serviceConfig = {
       Type = "oneshot";
