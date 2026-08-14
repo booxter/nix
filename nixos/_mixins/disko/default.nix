@@ -1,6 +1,10 @@
 { config, lib, ... }:
 let
   layout = config.host.disko.layout;
+  remoteUnlock = config.host.disko.remoteUnlock;
+  unlockKey =
+    key:
+    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${key}'';
   remoteUnlockType = lib.types.submodule {
     options = {
       kernelModules = lib.mkOption {
@@ -28,8 +32,6 @@ let
   };
 in
 {
-  imports = [ ./remote-unlock.nix ];
-
   options.host.disko = {
     layout = lib.mkOption {
       type =
@@ -55,6 +57,27 @@ in
       host.autoUpgrade.claims.luks.reboot.cadence = "never";
     })
     (lib.mkIf (layout == "luks") (import ./luks.nix { }))
+    (lib.mkIf (remoteUnlock != null) {
+      boot.initrd = {
+        availableKernelModules = remoteUnlock.kernelModules;
+        network = {
+          enable = true;
+          ssh = {
+            enable = true;
+            hostKeys = [ remoteUnlock.hostKeyPath ];
+            authorizedKeys = map unlockKey remoteUnlock.authorizedKeys;
+          };
+        };
+        systemd.network = {
+          enable = true;
+          networks."10-${remoteUnlock.networkInterface}" = {
+            matchConfig.Name = remoteUnlock.networkInterface;
+            networkConfig.DHCP = "ipv4";
+            linkConfig.RequiredForOnline = "routable";
+          };
+        };
+      };
+    })
     {
       assertions = [
         {
