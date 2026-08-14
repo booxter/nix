@@ -10,7 +10,7 @@ in
   config = lib.mkIf cfg.enable {
     host.web.services.jellyfin = {
       upstream = cfg.localUrl;
-      internal = if cfg.web.transport == "internal-mtls" then { } else null;
+      internal = null;
       public =
         if cfg.web.public.enable then
           {

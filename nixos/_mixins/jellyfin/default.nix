@@ -133,14 +133,6 @@ in
         description = "Public Jellyfin hostname.";
       };
 
-      transport = lib.mkOption {
-        type = lib.types.enum [
-          "internal-mtls"
-          "direct"
-        ];
-        default = if config.host.web.ingress != null then "direct" else "internal-mtls";
-        description = "Transport used by realm ingress to reach Jellyfin.";
-      };
     };
 
     backups = {
