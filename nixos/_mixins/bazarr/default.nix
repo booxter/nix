@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.host.bazarr;
+  serviceCfg = config.services.bazarr;
   authConfigPackage = pkgs.callPackage ./package {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -15,9 +16,9 @@ let
     "--config"
     "${cfg.stateDir}/config/config.yaml"
     "--uid"
-    (toString config.users.users.${cfg.user}.uid)
+    (toString config.users.users.${serviceCfg.user}.uid)
     "--gid"
-    (toString config.users.groups.${cfg.group}.gid)
+    (toString config.users.groups.${serviceCfg.group}.gid)
   ];
 in
 {
@@ -29,25 +30,13 @@ in
       default = "/var/lib/bazarr";
     };
 
-    user = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "bazarr";
-      internal = true;
-    };
-
-    group = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "media";
-      internal = true;
-    };
   };
 
   config = lib.mkIf cfg.enable {
     services.bazarr = {
       enable = true;
       dataDir = cfg.stateDir;
-      group = cfg.group;
-      user = cfg.user;
+      group = "media";
     };
 
     host.storage.claims.media.attachments.bazarr.unit = "bazarr";
@@ -78,15 +67,6 @@ in
         policy = "media-admin";
         sessionClearPaths = [ "/api/system/account" ];
       };
-    };
-
-    systemd.tmpfiles.rules = [
-      "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
-    ];
-
-    users.users.${cfg.user} = {
-      home = lib.mkForce "/var/empty";
-      isSystemUser = true;
     };
 
     systemd.services.bazarr.serviceConfig = {
