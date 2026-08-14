@@ -4,6 +4,7 @@
     ./_mixins/builders
     ./_mixins/cli
     ./_mixins/codex
+    ./_mixins/desktop.nix
     ./_mixins/hardware
     ./_mixins/host
     ./_mixins/internal-pki
