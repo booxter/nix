@@ -35,8 +35,6 @@ in
       auth = {
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
-          enable = true;
-          clientId = "watchstate";
           displayName = "WatchState";
           originLanding = "https://${hostName}/";
           httpAddress = "http://127.0.0.1:4182";

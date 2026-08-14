@@ -81,8 +81,6 @@ in
       auth = lib.mkIf (ssoApplication != null) {
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
-          enable = true;
-          clientId = "paperless-gpt";
           displayName = "Paperless GPT";
           originLanding = "https://${gptHost}/";
           httpAddress = "http://127.0.0.1:${toString gptOauth2ProxyPort}";

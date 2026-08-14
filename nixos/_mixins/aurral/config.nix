@@ -109,8 +109,6 @@ in
       auth = {
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
-          enable = true;
-          clientId = "aurral";
           displayName = "Aurral";
           originLanding = "${browserOrigin}/";
           httpAddress = "http://127.0.0.1:4181";

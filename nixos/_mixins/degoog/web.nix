@@ -47,8 +47,6 @@ in
       auth = {
         mode = "oauth2-proxy";
         oauth2ProxyGate = {
-          enable = true;
-          clientId = "goo";
           displayName = "Degoog";
           originLanding = "${service.public.url}/";
           httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";

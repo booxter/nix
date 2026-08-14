@@ -65,8 +65,6 @@ in
     ];
 
     host.sso.oauth2ProxyGates.${gateName} = {
-      enable = true;
-      clientId = gateName;
       displayName = "Media administration";
       originLanding = "https://${originService.internal.serverName}/";
       inherit cookieName;

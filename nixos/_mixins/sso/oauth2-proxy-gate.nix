@@ -12,21 +12,12 @@ let
 
   gateSubmodule =
     gateName:
-    { config, ... }:
+    { ... }:
     let
-      safeClientId = lib.replaceStrings [ "-" ] [ "_" ] config.clientId;
+      safeClientId = lib.replaceStrings [ "-" ] [ "_" ] gateName;
     in
     {
       options = {
-        enable = lib.mkEnableOption "oauth2-proxy nginx auth_request gate";
-
-        package = lib.mkPackageOption pkgs "oauth2-proxy" { };
-
-        clientId = lib.mkOption {
-          type = lib.types.str;
-          description = "OIDC client ID used by oauth2-proxy.";
-        };
-
         displayName = lib.mkOption {
           type = lib.types.str;
           description = "Display name shown by the identity provider.";
@@ -41,24 +32,6 @@ let
           type = lib.types.str;
           default = "http://127.0.0.1:4180";
           description = "Loopback HTTP address where oauth2-proxy listens.";
-        };
-
-        serviceName = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy-${gateName}";
-          description = "Systemd service name for this oauth2-proxy instance.";
-        };
-
-        user = lib.mkOption {
-          type = lib.types.str;
-          default = config.serviceName;
-          description = "System user that runs this oauth2-proxy instance.";
-        };
-
-        group = lib.mkOption {
-          type = lib.types.str;
-          default = config.user;
-          description = "System group that runs this oauth2-proxy instance.";
         };
 
         cookieName = lib.mkOption {
@@ -93,30 +66,6 @@ let
           description = "Redis-backed oauth2-proxy session refresh configuration.";
         };
 
-        clientSecretSopsKey = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy/${config.clientId}/client_secret";
-          description = "SOPS key containing the oauth2-proxy OIDC client secret.";
-        };
-
-        cookieSecretSopsKey = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy/${config.clientId}/cookie_secret";
-          description = "SOPS key containing the oauth2-proxy cookie secret.";
-        };
-
-        secretOwner = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-          description = "Owner for generated oauth2-proxy SOPS secret files.";
-        };
-
-        secretGroup = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-          description = "Group for generated oauth2-proxy SOPS secret files.";
-        };
-
         allowedGroups = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
@@ -126,12 +75,6 @@ let
         groupClaim = lib.mkOption {
           type = lib.types.str;
           description = "OIDC claim containing groups for oauth2-proxy authorization.";
-        };
-
-        scope = lib.mkOption {
-          type = lib.types.str;
-          default = lib.concatStringsSep " " (oidcBaseScopes ++ [ config.groupClaim ]);
-          description = "OAuth scope requested by oauth2-proxy.";
         };
 
         whitelistDomains = lib.mkOption {
@@ -200,18 +143,6 @@ let
           description = "Internal web endpoint names protected by this gate.";
         };
 
-        externalHostNames = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-          description = "Public nginx hostnames protected by this gate.";
-        };
-
-        extraLocations = lib.mkOption {
-          type = with lib.types; attrsOf anything;
-          default = { };
-          description = "Extra nginx locations added to every protected vhost.";
-        };
-
         extraLocationsByName = lib.mkOption {
           type = with lib.types; attrsOf (attrsOf anything);
           default = { };
@@ -221,8 +152,9 @@ let
       };
     };
 
-  enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
+  gates = cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
+  serviceNameFor = gateName: "oauth2-proxy-${gateName}";
   internalHttpsServiceHosts =
     endpointName:
     let
@@ -241,8 +173,7 @@ let
       [ "${gate.externalOrigin}/oauth2/callback" ]
     else
       lib.unique (
-        map (host: "https://${host}/oauth2/callback") gate.externalHostNames
-        ++ map (host: "https://${host}/oauth2/callback") (
+        map (host: "https://${host}/oauth2/callback") (
           lib.concatMap internalHttpsServiceHosts gate.internalHttpsServiceNames
         )
       );
@@ -256,7 +187,7 @@ let
     in
     [
       (mkArg "approval-prompt" "auto")
-      (mkArg "client-id" gate.clientId)
+      (mkArg "client-id" gateName)
       (mkArg "client-secret-file" "%d/client-secret")
       (mkArg "code-challenge-method" "S256")
       (mkArg "cookie-httponly" "true")
@@ -274,7 +205,7 @@ let
       (mkArg "proxy-prefix" "/oauth2")
       (mkArg "request-logging" "true")
       (mkArg "reverse-proxy" "true")
-      (mkArg "scope" gate.scope)
+      (mkArg "scope" (lib.concatStringsSep " " (oidcBaseScopes ++ [ gate.groupClaim ])))
       (mkArg "set-xauthrequest" "true")
       (mkArg "skip-provider-button" "true")
       (mkArg "upstream" "static://202")
@@ -371,8 +302,7 @@ let
     };
 
   locationsFor =
-    gate: name:
-    (oauth2ProxyLocations gate) // gate.extraLocations // (gate.extraLocationsByName.${name} or { });
+    gate: name: (oauth2ProxyLocations gate) // (gate.extraLocationsByName.${name} or { });
   # Normal service surfaces that should receive OAuth locations. Example:
   # `search` expands to `internal-https-search` and `search.ihar.dev`.
   internalServiceVhostNames =
@@ -404,15 +334,6 @@ let
         }) (internalServiceVhostNames endpointName)
       ) gate.internalHttpsServiceNames
     );
-  # Public vhosts owned by the ingress renderer instead of the internal web renderer.
-  # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
-  protectedExternalVhostsFor =
-    gate:
-    lib.genAttrs gate.externalHostNames (hostName: {
-      locations = lib.recursiveUpdate (locationsFor gate hostName) {
-        "/".extraConfig = authRequestLocationConfig gate;
-      };
-    });
 in
 {
   imports = [ ./oauth2-proxy-gate/assertions.nix ];
@@ -423,10 +344,9 @@ in
     description = "Named oauth2-proxy nginx auth_request gates.";
   };
 
-  config = lib.mkIf (enabledGates != { }) {
+  config = lib.mkIf (gates != { }) {
     host.sso.oidc.registrations = lib.mapAttrs (gateName: gate: {
       inherit (gate)
-        clientId
         displayName
         originLanding
         ;
@@ -434,51 +354,33 @@ in
       scopeMaps = lib.genAttrs gate.allowedGroups (_: oidcBaseScopes ++ [ gate.groupClaim ]);
       claimMaps.${gate.groupClaim}.valuesByGroup = lib.genAttrs gate.allowedGroups (group: [ group ]);
       secret = {
-        sopsKey = gate.clientSecretSopsKey;
+        sopsKey = "oauth2-proxy/${gateName}/client_secret";
         name = secretNameFor gateName "client-secret";
-        owner = gate.secretOwner;
-        group = gate.secretGroup;
-        restartUnits = [ "${gate.serviceName}.service" ];
+        restartUnits = [ "${serviceNameFor gateName}.service" ];
       };
-    }) enabledGates;
+    }) gates;
 
-    users.groups = builtins.listToAttrs (
-      map (group: {
-        name = group;
-        value = { };
-      }) (lib.unique (map (gate: gate.group) (builtins.attrValues enabledGates)))
-    );
+    users.groups = lib.genAttrs (map serviceNameFor (builtins.attrNames gates)) (_: { });
 
-    users.users = builtins.listToAttrs (
-      map (user: {
-        name = user;
-        value = {
-          description = "OAuth2 Proxy";
-          isSystemUser = true;
-          group =
-            let
-              userGate = lib.findFirst (gate: gate.user == user) null (builtins.attrValues enabledGates);
-            in
-            userGate.group;
-        };
-      }) (lib.unique (map (gate: gate.user) (builtins.attrValues enabledGates)))
-    );
+    users.users = lib.genAttrs (map serviceNameFor (builtins.attrNames gates)) (user: {
+      description = "OAuth2 Proxy";
+      isSystemUser = true;
+      group = user;
+    });
 
     sops.secrets = lib.mapAttrs' (
-      gateName: gate:
+      gateName: _gate:
       lib.nameValuePair (secretNameFor gateName "cookie-secret") {
-        key = gate.cookieSecretSopsKey;
-        owner = gate.secretOwner;
-        group = gate.secretGroup;
+        key = "oauth2-proxy/${gateName}/cookie_secret";
+        owner = "root";
+        group = "root";
         mode = "0400";
-        restartUnits = [ "${gate.serviceName}.service" ];
+        restartUnits = [ "${serviceNameFor gateName}.service" ];
       }
-    ) enabledGates;
+    ) gates;
 
     services.nginx.virtualHosts = lib.mkMerge (
-      lib.mapAttrsToList (
-        _: gate: protectedInternalVhostsFor gate // protectedExternalVhostsFor gate
-      ) enabledGates
+      lib.mapAttrsToList (_: gate: protectedInternalVhostsFor gate) gates
     );
 
     services.nginx.appendHttpConfig = ''
@@ -527,9 +429,9 @@ in
           gateHelpers.redisServiceUnit gateName
         );
       in
-      lib.nameValuePair gate.serviceName {
+      lib.nameValuePair (serviceNameFor gateName) {
         description = "OAuth2 Proxy";
-        path = [ gate.package ];
+        path = [ pkgs.oauth2-proxy ];
         wantedBy = [ "multi-user.target" ];
         wants = [
           "network-online.target"
@@ -542,9 +444,9 @@ in
         ]
         ++ sessionStoreUnits;
         serviceConfig = {
-          User = gate.user;
-          Group = gate.group;
-          ExecStart = "${lib.getExe gate.package} ${lib.concatStringsSep " " (oauth2ProxyArgs gateName gate)}";
+          User = serviceNameFor gateName;
+          Group = serviceNameFor gateName;
+          ExecStart = "${lib.getExe pkgs.oauth2-proxy} ${lib.concatStringsSep " " (oauth2ProxyArgs gateName gate)}";
           LoadCredential = [
             "client-secret:${config.sops.secrets.${secretNameFor gateName "client-secret"}.path}"
             "cookie-secret:${config.sops.secrets.${secretNameFor gateName "cookie-secret"}.path}"
@@ -552,6 +454,6 @@ in
           Restart = "always";
         };
       }
-    ) enabledGates;
+    ) gates;
   };
 }

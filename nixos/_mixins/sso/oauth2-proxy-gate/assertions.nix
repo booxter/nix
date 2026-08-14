@@ -5,9 +5,8 @@
   ...
 }:
 let
-  enabledGates = lib.filterAttrs (_: gate: gate.enable) config.host.sso.oauth2ProxyGates;
-  serviceNames = map (gate: gate.serviceName) (builtins.attrValues enabledGates);
-  httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues enabledGates);
+  gates = config.host.sso.oauth2ProxyGates;
+  httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues gates);
 in
 {
   assertions =
@@ -37,13 +36,9 @@ in
           assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
           message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
         }
-      ) enabledGates
+      ) gates
     )
     ++ [
-      {
-        assertion = builtins.length serviceNames == builtins.length (lib.unique serviceNames);
-        message = "host.sso.oauth2ProxyGates must use unique serviceName values.";
-      }
       {
         assertion = builtins.length httpAddresses == builtins.length (lib.unique httpAddresses);
         message = "host.sso.oauth2ProxyGates must use unique httpAddress values.";
