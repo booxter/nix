@@ -62,7 +62,6 @@ in
     };
 
     host.web.services.paperless-gpt = lib.mkIf cfg.gpt.enable {
-      enable = true;
       upstream = "http://127.0.0.1:${toString gptPort}";
       health = {
         frontend = {

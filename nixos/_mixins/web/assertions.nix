@@ -1,7 +1,4 @@
 { config, lib, ... }:
-let
-  enabledServices = lib.filterAttrs (_: service: service.enable) config.host.web.services;
-in
 {
   assertions = builtins.concatLists (
     lib.mapAttrsToList (serviceName: service: [
@@ -44,6 +41,6 @@ in
         assertion = !service.observability.externalProbe.enable || service.health.frontend.enable;
         message = "host.web.services.${serviceName} external probing requires a frontend health probe";
       }
-    ]) enabledServices
+    ]) config.host.web.services
   );
 }

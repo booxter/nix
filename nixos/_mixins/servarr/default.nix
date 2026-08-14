@@ -56,7 +56,6 @@ in
         };
 
         host.web.services.${name} = {
-          enable = true;
           upstream = "http://127.0.0.1:${toString port}";
           health = {
             frontend = {

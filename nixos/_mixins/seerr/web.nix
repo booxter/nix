@@ -5,7 +5,6 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.web.services.seerr = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
       public = {
         enable = true;

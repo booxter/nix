@@ -1,4 +1,3 @@
-{ config, lib, ... }:
 {
   imports = [
     ./account.nix
@@ -15,8 +14,4 @@
     ./storage.nix
     ./web.nix
   ];
-
-  config = lib.mkIf config.host.romm.enable {
-    host.web.services.romm.enable = true;
-  };
 }

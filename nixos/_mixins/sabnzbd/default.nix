@@ -1,4 +1,3 @@
-{ config, lib, ... }:
 {
   imports = [
     ./account.nix
@@ -12,8 +11,4 @@
     ./vpn.nix
     ./web.nix
   ];
-
-  config = lib.mkIf config.host.sabnzbd.enable {
-    host.web.services.sabnzbd.enable = true;
-  };
 }

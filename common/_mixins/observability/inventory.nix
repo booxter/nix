@@ -7,7 +7,7 @@ let
   cfg = config.host.observability;
   hostName = config.networking.hostName;
   machine = cfg.inventory.machine;
-  enabledServices = lib.filterAttrs (_: service: service.enable) (config.host.web.services or { });
+  services = config.host.web.services or { };
   gpuVendor = config.host.hardware.gpu.vendor or null;
   fileSystems = builtins.attrValues (config.fileSystems or { });
   diskBays = config.host.hardware.storage.diskBays or null;
@@ -125,7 +125,7 @@ in
             builder = config.host.nix.builder.enable;
             hypervisor = machine.hypervisor;
             inherit gpuVendor;
-            services = builtins.attrNames enabledServices;
+            services = builtins.attrNames services;
             storage = {
               btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;
               diskBays =

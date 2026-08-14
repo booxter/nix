@@ -1,7 +1,3 @@
-{ config, lib, ... }:
-let
-  cfg = config.host.pinepods;
-in
 {
   imports = [
     ./account.nix
@@ -16,8 +12,4 @@ in
     ./storage.nix
     ./web.nix
   ];
-
-  config = lib.mkIf cfg.enable {
-    host.web.services.pinepods.enable = true;
-  };
 }

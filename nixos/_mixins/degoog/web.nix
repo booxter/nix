@@ -23,7 +23,6 @@ in
     };
 
     host.web.services.goo = {
-      enable = true;
       inherit upstream;
       public = {
         enable = true;

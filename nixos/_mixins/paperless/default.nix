@@ -1,7 +1,3 @@
-{ config, lib, ... }:
-let
-  cfg = config.host.paperless;
-in
 {
   imports = [
     ./assertions.nix
@@ -15,8 +11,4 @@ in
     ./storage.nix
     ./web.nix
   ];
-
-  config = lib.mkIf cfg.enable {
-    host.web.services.paperless.enable = true;
-  };
 }

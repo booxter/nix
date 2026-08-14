@@ -6,8 +6,8 @@
 let
   rootConfig = config;
   cfg = rootConfig.host.web;
-  enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
-  internalServices = lib.filterAttrs (_: service: service.internal.enable) enabledServices;
+  services = cfg.services;
+  internalServices = lib.filterAttrs (_: service: service.internal.enable) services;
   metricEndpointName =
     serviceName: metricName:
     if metricName == "default" then serviceName else "${serviceName}-${metricName}";
@@ -23,11 +23,9 @@ let
         }
       )
     ) (lib.filterAttrs (_: metric: metric.enable) service.metrics)
-  ) enabledServices;
-  oidcServices = lib.filterAttrs (_: service: service.auth.mode == "oidc") enabledServices;
-  oauth2ProxyServices = lib.filterAttrs (
-    _: service: service.auth.mode == "oauth2-proxy"
-  ) enabledServices;
+  ) services;
+  oidcServices = lib.filterAttrs (_: service: service.auth.mode == "oidc") services;
+  oauth2ProxyServices = lib.filterAttrs (_: service: service.auth.mode == "oauth2-proxy") services;
 in
 {
   imports = [
@@ -45,8 +43,6 @@ in
         in
         {
           options = {
-            enable = lib.mkEnableOption "${serviceName} web service";
-
             owner = lib.mkOption {
               type = lib.types.str;
               default = cfg.owner;

@@ -46,7 +46,6 @@ in
       host.observability.systemd.excludedUnits = [ "ollama-model-loader.service" ];
 
       host.web.services.ollama = {
-        enable = true;
         upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
         internal = {
           clientAuth = "mtls";

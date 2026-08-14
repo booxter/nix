@@ -7,9 +7,7 @@ let
   policyName = "media-admin";
   gateName = "srvarr-admin-apps";
   cookieName = "_srvarr_admin_sso";
-  services = lib.filterAttrs (
-    _: service: service.enable && service.auth.policy == policyName
-  ) config.host.web.services;
+  services = lib.filterAttrs (_: service: service.auth.policy == policyName) config.host.web.services;
   serviceNames = builtins.attrNames services;
   endpointNames = map (name: services.${name}.internal.endpointName) serviceNames;
   serviceHosts = lib.unique (

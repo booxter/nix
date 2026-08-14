@@ -7,12 +7,9 @@ let
   localHost = config.networking.hostName;
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ localHost ];
   servicesByHost =
-    lib.mapAttrs (
-      _: configuration:
-      lib.filterAttrs (_: service: service.enable) configuration.config.host.web.services
-    ) otherConfigurations
+    lib.mapAttrs (_: configuration: configuration.config.host.web.services) otherConfigurations
     // {
-      ${localHost} = lib.filterAttrs (_: service: service.enable) config.host.web.services;
+      ${localHost} = config.host.web.services;
     };
   hostConfigs = lib.mapAttrs (_: configuration: configuration.config) otherConfigurations // {
     ${localHost} = config;

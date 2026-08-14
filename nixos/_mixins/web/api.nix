@@ -1,11 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.host.web.api;
-  valid = lib.filterAttrs (
-    _: api:
-    builtins.hasAttr api.service config.host.web.services
-    && config.host.web.services.${api.service}.enable
-  ) cfg;
+  valid = lib.filterAttrs (_: api: builtins.hasAttr api.service config.host.web.services) cfg;
   allowConfig = api: lib.concatMapStringsSep "\n" (cidr: "allow ${cidr};") api.allowedCidrs;
 in
 {
@@ -77,10 +73,8 @@ in
   config = lib.mkMerge [
     {
       assertions = lib.mapAttrsToList (name: api: {
-        assertion =
-          builtins.hasAttr api.service config.host.web.services
-          && config.host.web.services.${api.service}.enable;
-        message = "host.web.api.${name}.service must select an enabled web service";
+        assertion = builtins.hasAttr api.service config.host.web.services;
+        message = "host.web.api.${name}.service must select a web service";
       }) cfg;
     }
     {

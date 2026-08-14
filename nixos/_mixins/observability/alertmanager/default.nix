@@ -35,7 +35,6 @@ in
     };
 
     host.web.services.alertmanager = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal = {
         path = "= /-/ready";

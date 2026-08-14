@@ -18,7 +18,6 @@ in
 
   config = lib.mkIf cfg.enable {
     host.web.services.loki = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal = {
         clientAuth = "mtls";

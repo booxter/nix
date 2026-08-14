@@ -34,13 +34,11 @@ in
 
   host.web.services = {
     glance = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString internalPort}";
       internal.publicAliases = [ config.host.web.services.dash.public.hostName ];
     };
 
     dash = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString publicPort}";
       public = {
         enable = true;

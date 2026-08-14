@@ -152,7 +152,6 @@ in
     };
 
     host.web.services.shelfmark = {
-      enable = true;
       upstream = "http://127.0.0.1:${toString model.port}";
       public = {
         enable = true;

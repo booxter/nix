@@ -40,7 +40,6 @@ in
     # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
     # 8006 listener for Proxmox-native/root fallback access.
     host.web.services."proxmox-${config.networking.hostName}" = {
-      enable = true;
       upstream = "https://127.0.0.1:${toString port}";
       internal = {
         endpointName = "proxmox";

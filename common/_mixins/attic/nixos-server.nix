@@ -17,7 +17,6 @@ in
     };
 
     host.web.services.atticd = {
-      enable = true;
       upstream = "http://${listenAddress}";
       internal = {
         serverName = "nix-cache.${config.host.network.lanDomain}";

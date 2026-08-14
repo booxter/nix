@@ -223,7 +223,6 @@ in
     };
 
     host.web.services.id = {
-      enable = true;
       upstream = "https://127.0.0.1:${toString kanidmPort}";
       public = {
         enable = true;

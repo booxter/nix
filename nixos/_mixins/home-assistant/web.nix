@@ -12,7 +12,6 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.web.services.home = {
-      enable = true;
       upstream = cfg.localUrl;
       auth = {
         mode = "oidc";

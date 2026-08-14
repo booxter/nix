@@ -11,7 +11,6 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.web.services.watchstate = {
-      enable = true;
       upstream = cfg.localUrl;
       health = {
         frontend = {

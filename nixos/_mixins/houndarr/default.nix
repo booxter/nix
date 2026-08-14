@@ -1,7 +1,3 @@
-{ config, lib, ... }:
-let
-  cfg = config.host.houndarr;
-in
 {
   imports = [
     ./assertions.nix
@@ -13,8 +9,4 @@ in
     ./service.nix
     ./web.nix
   ];
-
-  config = lib.mkIf cfg.enable {
-    host.web.services.houndarr.enable = true;
-  };
 }

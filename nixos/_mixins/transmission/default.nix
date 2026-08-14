@@ -1,4 +1,3 @@
-{ config, lib, ... }:
 {
   imports = [
     ./assertions.nix
@@ -13,8 +12,4 @@
     ./vpn.nix
     ./web.nix
   ];
-
-  config = lib.mkIf config.host.transmission.enable {
-    host.web.services.transmission.enable = true;
-  };
 }

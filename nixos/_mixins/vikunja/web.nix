@@ -10,7 +10,6 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.web.services.vikunja = {
-      enable = true;
       upstream = cfg.localUrl;
       public = {
         enable = true;
