@@ -8,7 +8,6 @@
 }:
 let
   cfg = config.host.pki.authority;
-  rotationCfg = config.host.pki.rotation;
   enabled = cfg != null && cfg.hostName == config.networking.hostName;
   certLifetime = "${toString (cfg.leafLifetimeDays * 24)}h0m0s";
   caPort = cfg.port;
@@ -55,29 +54,6 @@ let
   ];
 in
 {
-  options.host.pki.rotation = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to rotate due realm leaf certificates through review PRs.";
-    };
-    windowDays = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 45;
-      description = "Remaining lifetime at which a leaf certificate becomes due for rotation.";
-    };
-    baseBranch = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "master";
-      description = "Repository branch targeted by certificate rotation PRs.";
-    };
-    githubTokenSopsKey = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "github/pki_rotation/token";
-      description = "SOPS key containing the GitHub token used by the rotation controller.";
-    };
-  };
-
   config = {
     host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
       title = "PKI Root CA";
@@ -124,8 +100,8 @@ in
     };
     users.groups.step-ca = lib.mkIf enabled { };
 
-    sops.secrets.pkiRotationGithubToken = lib.mkIf (enabled && rotationCfg.enable) {
-      key = rotationCfg.githubTokenSopsKey;
+    sops.secrets.pkiRotationGithubToken = lib.mkIf enabled {
+      key = "github/pki_rotation/token";
       mode = "0400";
       restartUnits = [ "pki-rotate.service" ];
     };
@@ -160,7 +136,7 @@ in
         };
       };
 
-      pki-rotate = lib.mkIf rotationCfg.enable {
+      pki-rotate = {
         description = "Rotate due internal PKI leaf certs and open a review PR";
         wants = [
           "network-online.target"
@@ -180,11 +156,11 @@ in
           ];
           ExecStart = ''
             ${pkiRotation}/bin/pki-rotation \
-              --rotation-window-days ${toString rotationCfg.windowDays} \
+              --rotation-window-days 45 \
               --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
               --sops-age-key-file /var/lib/sops-nix/key.txt \
               rotate \
-              --base-branch ${lib.escapeShellArg rotationCfg.baseBranch} \
+              --base-branch master \
               --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
               --metrics-output ${rotationMetricsPath}
           '';
@@ -193,7 +169,7 @@ in
     };
 
     systemd.timers = lib.mkIf enabled {
-      pki-rotate = lib.mkIf rotationCfg.enable {
+      pki-rotate = {
         description = "Run the internal PKI rotation controller";
         wantedBy = [ "timers.target" ];
         timerConfig = {
