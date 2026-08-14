@@ -51,7 +51,6 @@ in
       enable = true;
       remoteUnlock = {
         enable = true;
-        publicKey = readPublicKey ./initrd_ssh_host_ed25519_key.pub;
         kernelModules = [ "r8169" ];
         authorizedKeys = [
           (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)

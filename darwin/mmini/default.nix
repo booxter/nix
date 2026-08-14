@@ -29,7 +29,6 @@ in
       (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
       (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
     ];
-    preBoot.alias = "mmini-boot";
     tickets.issuer = {
       publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
       keyName = "id_ed25519_sk_rk";

@@ -13,6 +13,8 @@ in
   imports = [ ./remote-unlock/assertions.nix ];
 
   options.host.luks.remoteUnlock = {
+    enable = lib.mkEnableOption "remote LUKS unlock through initrd SSH";
+
     kernelModules = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];

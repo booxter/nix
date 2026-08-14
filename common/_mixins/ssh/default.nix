@@ -33,19 +33,44 @@ let
   realmAuthorizedKeys = lib.unique (
     builtins.concatMap (host: host.authorizedKeys) (builtins.attrValues realmOperatorHosts)
   );
-  preBootTargetType = lib.types.submodule {
-    options = {
-      alias = lib.mkOption { type = lib.types.nonEmptyStr; };
-      hostName = lib.mkOption { type = lib.types.nonEmptyStr; };
-      realm = lib.mkOption { type = lib.types.nonEmptyStr; };
-    };
-  };
-  preBootTargets = lib.mapAttrsToList (name: host: {
-    alias = host.ssh.preBoot.alias;
-    hostName = name;
-    inherit (host) realm;
-  }) (lib.filterAttrs (_: host: host.ssh.preBoot.alias != null) fleetHosts);
-  preBootAliases = map (target: target.alias) preBootTargets;
+  preBootEndpointType = lib.types.submodule (
+    { name, ... }:
+    {
+      options = {
+        hostName = lib.mkOption { type = lib.types.nonEmptyStr; };
+        hostKeyAlias = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = name;
+        };
+        publicHostKey = lib.mkOption {
+          type = with lib.types; nullOr nonEmptyStr;
+          default = null;
+        };
+        user = lib.mkOption {
+          type = with lib.types; nullOr nonEmptyStr;
+          default = null;
+          description = "Remote user, or the local user when unset.";
+        };
+        authentication = lib.mkOption {
+          type = lib.types.enum [
+            "password"
+            "public-key"
+          ];
+        };
+        requestTTY = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+      };
+    }
+  );
+  preBootKnownHosts = lib.mapAttrs' (
+    _: endpoint:
+    lib.nameValuePair endpoint.hostKeyAlias {
+      hostNames = [ endpoint.hostKeyAlias ];
+      publicKey = endpoint.publicHostKey;
+    }
+  ) (lib.filterAttrs (_: endpoint: endpoint.publicHostKey != null) config.host.ssh.preBoot.endpoints);
   ticketIssuerType = lib.types.submodule {
     options = {
       publicKey = lib.mkOption {
@@ -112,7 +137,10 @@ let
   ) config.host.ssh.tickets.targets;
 in
 {
-  imports = [ ./ticket-server.nix ];
+  imports = [
+    ./home.nix
+    ./ticket-server.nix
+  ];
 
   options.host.ssh = {
     knownHostNames = lib.mkOption {
@@ -153,20 +181,10 @@ in
       description = "SSH public keys controlled by this operator host and authorized across its realm.";
     };
 
-    preBoot = {
-      alias = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "SSH alias published for this host's pre-boot environment.";
-      };
-
-      targets = lib.mkOption {
-        type = lib.types.listOf preBootTargetType;
-        default = preBootTargets;
-        readOnly = true;
-        internal = true;
-        description = "Fleet pre-boot SSH targets derived from host claims.";
-      };
+    preBoot.endpoints = lib.mkOption {
+      type = lib.types.attrsOf preBootEndpointType;
+      default = { };
+      description = "Pre-boot SSH endpoints available in this host's realm.";
     };
 
     tickets = {
@@ -240,23 +258,11 @@ in
           assertion = config.host.ssh.authorizedKeys != [ ];
           message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
         }
-        {
-          assertion = config.host.ssh.preBoot.alias == null || config.nixpkgs.hostPlatform.isDarwin;
-          message = "only Darwin hosts may publish a pre-boot SSH alias";
-        }
-        {
-          assertion = config.host.ssh.preBoot.alias != config.networking.hostName;
-          message = "a pre-boot SSH alias must differ from the host's normal name";
-        }
-        {
-          assertion = builtins.length preBootAliases == builtins.length (lib.unique preBootAliases);
-          message = "fleet pre-boot SSH aliases must be unique";
-        }
       ];
 
     services.openssh.enable = true;
 
-    programs.ssh.knownHosts = managedKnownHosts;
+    programs.ssh.knownHosts = managedKnownHosts // preBootKnownHosts;
 
     users.users.${username}.openssh.authorizedKeys.keys = config.host.ssh.authorizedKeys;
   };

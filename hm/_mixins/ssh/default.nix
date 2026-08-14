@@ -13,25 +13,26 @@ let
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
-  preBootTargets = builtins.filter (
-    target: target.realm == osConfig.host.realm && target.hostName != osConfig.networking.hostName
-  ) osConfig.host.ssh.preBoot.targets;
-  preBootSettings = builtins.listToAttrs (
-    map (target: {
-      name = target.alias;
-      value = {
-        # FileVault's pre-boot SSH server requires a local account password
-        # before the normal host keys and ticket CA are available.
-        HostName = target.hostName;
-        HostKeyAlias = target.hostName;
-        User = config.home.username;
-        PreferredAuthentications = "password";
-        PasswordAuthentication = true;
-        KbdInteractiveAuthentication = false;
-        PubkeyAuthentication = false;
-      };
-    }) preBootTargets
-  );
+  preBootEndpoints = lib.filterAttrs (
+    _: endpoint: endpoint.hostName != osConfig.networking.hostName
+  ) osConfig.host.ssh.preBoot.endpoints;
+  preBootSettings = lib.mapAttrs (
+    _: endpoint:
+    {
+      HostName = endpoint.hostName;
+      HostKeyAlias = endpoint.hostKeyAlias;
+      User = if endpoint.user == null then config.home.username else endpoint.user;
+      RequestTTY = if endpoint.requestTTY then "force" else "no";
+    }
+    // lib.optionalAttrs (endpoint.authentication == "password") {
+      # FileVault's pre-boot SSH server requires a local account password
+      # before the normal host keys and ticket CA are available.
+      PreferredAuthentications = "password";
+      PasswordAuthentication = true;
+      KbdInteractiveAuthentication = false;
+      PubkeyAuthentication = false;
+    }
+  ) preBootEndpoints;
 in
 {
   imports = [
