@@ -7,6 +7,7 @@
     ./hba.nix
     ./mdraid.nix
     ./smart.nix
+    ./storage.nix
   ];
 
   environment.systemPackages = with pkgs; [

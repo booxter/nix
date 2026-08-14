@@ -1,9 +1,6 @@
 { lib, ... }:
 {
-  imports = [
-    ./displays.nix
-    ./storage.nix
-  ];
+  imports = [ ./displays.nix ];
 
   options.host.hardware.isLaptop = lib.mkEnableOption "laptop hardware";
 }
