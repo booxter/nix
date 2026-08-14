@@ -7,10 +7,10 @@
 }:
 let
   unifiPkgs = import ./pkgs pkgs;
+  serviceAccount = "unifi-sync";
   controller = config.host.site.lan.ipController;
   fleetWireguardEnabled = config.host.wireguard.networks != { };
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
-  unifiSyncCfg = config.services.unifi-sync;
   lanDomain = config.host.network.lanDomain;
   wgHome = config.host.wireguard.networks.home;
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
@@ -34,8 +34,8 @@ lib.mkIf (config.host.network.ipController.enable && fleetWireguardEnabled) {
     category = "observability";
     secretPrefix = wgHomeDnsSyncClientSecretPrefix;
     materializations.default = {
-      owner = unifiSyncCfg.user;
-      group = unifiSyncCfg.group;
+      owner = serviceAccount;
+      group = serviceAccount;
       restartUnits = [ "wg-home-dns-sync.service" ];
     };
   };
@@ -56,8 +56,8 @@ lib.mkIf (config.host.network.ipController.enable && fleetWireguardEnabled) {
     };
     serviceConfig = {
       Type = "oneshot";
-      User = unifiSyncCfg.user;
-      Group = unifiSyncCfg.group;
+      User = serviceAccount;
+      Group = serviceAccount;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
       ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${pkiRootCaPath} --client-cert-file ${wgHomeDnsSyncClient.materializations.default.certificatePath} --client-key-file ${wgHomeDnsSyncClient.materializations.default.keyPath} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
       NoNewPrivileges = true;
