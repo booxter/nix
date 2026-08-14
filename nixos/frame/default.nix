@@ -65,8 +65,6 @@ in
       blackbox.remote = { };
     };
     ollama = {
-      enable = true;
-      enableMetrics = true;
       models = {
         "granite4:32b-a9b-h" = { };
         "qwen3-vl:8b-instruct".capabilities = [

@@ -56,7 +56,7 @@ in
       message = "Paperless GPT and its Ollama provider must be in the same realm.";
     }
     {
-      assertion = !cfg.gpt.enable || (gptProvider != null && gptProvider.host.ollama.enable);
+      assertion = !cfg.gpt.enable || (gptProvider != null && gptProvider.host.ollama != null);
       message = "The selected Paperless GPT provider must enable Ollama.";
     }
     {
