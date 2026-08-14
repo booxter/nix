@@ -7,6 +7,7 @@ in
     ./assertions.nix
     ./auth.nix
     ./backups.nix
+    ./ebook-converter
     ./integrations.nix
     ./options.nix
     ./service.nix

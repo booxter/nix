@@ -25,5 +25,5 @@ in
       null
     else
       config.host.web.services.${audiobookshelfServiceName} or null;
-  converter = config.host.ebookConverter;
+  converter.stateDir = "/var/lib/ebook-converter";
 }

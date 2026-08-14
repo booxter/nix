@@ -3,7 +3,7 @@ set -euo pipefail
 
 attr="${UPDATE_NIX_ATTR_PATH:-ebook-converter-cli}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
-package_file="nixos/_mixins/ebook-converter/package/cli/default.nix"
+package_file="nixos/_mixins/shelfmark/ebook-converter/package/cli/default.nix"
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"

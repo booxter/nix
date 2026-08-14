@@ -1,26 +1,28 @@
 {
   config,
   lib,
+  pkgs,
   utils,
   ...
 }:
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg;
+  package = import ./package { inherit pkgs; };
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims.${model.library.storage.claim}.attachments.ebook-converter.unit =
       "ebook-converter";
 
     systemd.tmpfiles.rules = [
-      "d '${cfg.stateDir}' 0770 ${cfg.user} ${cfg.group} - -"
-      "z '${cfg.stateDir}' 0770 ${cfg.user} ${cfg.group} - -"
-      "z ${model.metricsDir} 0775 root ${cfg.group} - -"
+      "d '${model.stateDir}' 0770 ${model.user} ${model.group} - -"
+      "z '${model.stateDir}' 0770 ${model.user} ${model.group} - -"
+      "z ${model.metricsDir} 0775 root ${model.group} - -"
     ];
 
-    users.users.${cfg.user} = {
-      group = cfg.group;
+    users.users.${model.user} = {
+      group = model.group;
       home = "/var/empty";
       isSystemUser = true;
     };
@@ -32,14 +34,14 @@ in
       after = [ "network-online.target" ];
       serviceConfig = {
         ExecStart = utils.escapeSystemdExecArgs [
-          (lib.getExe cfg.package)
+          (lib.getExe package)
           "watch"
           "--library-root"
           model.library.path
           "--lock-root"
-          cfg.stateDir
+          model.stateDir
           "--state-file"
-          "${cfg.stateDir}/state.json"
+          "${model.stateDir}/state.json"
           "--metrics-file"
           model.metricsFile
           "--interval-seconds"
@@ -49,9 +51,9 @@ in
           "--max-attempts"
           "3"
         ];
-        Environment = "XDG_CONFIG_HOME=${cfg.stateDir}";
-        User = cfg.user;
-        Group = cfg.group;
+        Environment = "XDG_CONFIG_HOME=${model.stateDir}";
+        User = model.user;
+        Group = model.group;
         UMask = "0002";
         Restart = "always";
         RestartSec = "10s";
@@ -82,7 +84,7 @@ in
         RemoveIPC = true;
         ReadWritePaths = [
           model.library.path
-          cfg.stateDir
+          model.stateDir
           model.metricsDir
         ];
       };

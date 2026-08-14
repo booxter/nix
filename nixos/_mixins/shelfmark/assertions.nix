@@ -31,15 +31,5 @@ in
         || (model.audiobookshelfService != null && model.audiobookshelfService.public.enable);
       message = "host.shelfmark.nav.audiobookshelf must select a public web service";
     }
-    {
-      assertion = !cfg.integrations.ebookConverter.enable || config.host.ebookConverter.enable;
-      message = "Shelfmark's ebook converter integration requires host.ebookConverter.enable";
-    }
-    {
-      assertion =
-        !cfg.integrations.ebookConverter.enable
-        || config.host.ebookConverter.library == cfg.libraries.ebooks;
-      message = "Shelfmark and the ebook converter must select the same ebook library";
-    }
   ];
 }

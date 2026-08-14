@@ -1,7 +1,13 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg;
+  converterPackage = import ./ebook-converter/package { inherit pkgs; };
   torrentEnvironment = lib.optionalAttrs (model.torrent != null) {
     PROWLARR_TORRENT_CLIENT = model.torrent.client.implementation;
     TRANSMISSION_URL = model.torrent.client.endpoint;
@@ -13,8 +19,8 @@ let
     SABNZBD_URL = model.usenet.client.endpoint;
     SABNZBD_CATEGORY = model.usenet.category;
   };
-  converterEnvironment = lib.optionalAttrs cfg.integrations.ebookConverter.enable {
-    CUSTOM_SCRIPT = "${model.converter.package}/bin/shelfmark-ebook-converter-hook";
+  converterEnvironment = {
+    CUSTOM_SCRIPT = "${converterPackage}/bin/shelfmark-ebook-converter-hook";
     CUSTOM_SCRIPT_JSON_PAYLOAD = "true";
     CUSTOM_SCRIPT_PATH_MODE = "absolute";
     EBOOK_CONVERTER_LIBRARY_ROOT = model.ebooks.path;

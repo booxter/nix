@@ -15,7 +15,7 @@ let
     ++ lib.optional (model.audiobooks != null) model.audiobooks.path
     ++ lib.optional (model.torrent != null) model.torrent.path
     ++ lib.optional (model.usenet != null) model.usenet.path
-    ++ lib.optional cfg.integrations.ebookConverter.enable model.converter.stateDir
+    ++ [ model.converter.stateDir ]
   );
 in
 {

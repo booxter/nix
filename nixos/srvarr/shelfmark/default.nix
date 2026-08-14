@@ -1,7 +1,5 @@
 { config, ... }:
 {
-  imports = [ ./ebook-converter.nix ];
-
   host.downloads.routes = {
     shelfmark-torrent = {
       client = "transmission";
@@ -32,7 +30,6 @@
       torrent.route = "shelfmark-torrent";
       usenet.route = "shelfmark-usenet";
     };
-    integrations.ebookConverter.enable = true;
     nav.audiobookshelf = "audiobookshelf";
   };
 }

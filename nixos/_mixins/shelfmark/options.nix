@@ -37,8 +37,6 @@ let
         };
       };
 
-      integrations.ebookConverter.enable = lib.mkEnableOption "the ebook converter hook";
-
       nav.audiobookshelf = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;
