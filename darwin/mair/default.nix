@@ -68,7 +68,6 @@ in
       };
     };
     wireguard.client = {
-      enable = true;
       network = "home";
       address = "10.83.0.10";
       publicKey = readPublicKey ./wireguard.pub;

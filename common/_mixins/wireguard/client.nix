@@ -7,10 +7,10 @@
 let
   isDarwin = lib.hasSuffix "-darwin" system;
   cfg = config.host.wireguard.client;
-  network = config.host.wireguard.networks.${cfg.network} or null;
+  network = if cfg == null then null else config.host.wireguard.networks.${cfg.network} or null;
 in
 {
-  config = lib.mkIf (cfg.enable && network != null) {
+  config = lib.mkIf (cfg != null && network != null) {
     sops.secrets.${cfg.privateKeySecret} = {
       owner = "root";
       group = if isDarwin then "wheel" else "root";

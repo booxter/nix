@@ -5,8 +5,8 @@ in
 {
   assertions = [
     {
-      assertion = !cfg.enable || config.host.network.primaryInterface != null;
-      message = "WireGuard server ${cfg.network} requires a primary network interface.";
+      assertion = cfg == null || config.host.network.primaryInterface != null;
+      message = "WireGuard server requires a primary network interface.";
     }
   ];
 }

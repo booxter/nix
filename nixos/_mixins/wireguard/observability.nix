@@ -30,7 +30,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.observability.prometheusEndpoints.${metricsName} = {
       port = publicPort;
       path = "/metrics";

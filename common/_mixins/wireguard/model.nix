@@ -23,7 +23,7 @@ let
     };
   serverEntries = builtins.concatMap (
     candidate:
-    lib.optional candidate.server.enable {
+    lib.optional (candidate.server != null) {
       name = candidate.server.network;
       value = candidate;
     }
@@ -35,7 +35,7 @@ let
     ) serverNames
   );
   servers = builtins.listToAttrs serverEntries;
-  clients = builtins.filter (candidate: candidate.client.enable) (builtins.attrValues candidates);
+  clients = builtins.filter (candidate: candidate.client != null) (builtins.attrValues candidates);
   unknownClientNetworks = lib.unique (
     map (candidate: candidate.client.network) (
       builtins.filter (candidate: !builtins.hasAttr candidate.client.network servers) clients
@@ -72,7 +72,6 @@ let
         removeAttrs server [
           "cidr"
           "clientPolicy"
-          "enable"
           "externalPeers"
           "network"
         ]

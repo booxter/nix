@@ -18,7 +18,6 @@ in
   };
 
   host.wireguard.server = {
-    enable = true;
     network = "home";
     interface = "wg0";
     cidr = "10.83.0.0/24";
@@ -38,7 +37,6 @@ in
       persistentKeepalive = 25;
     };
     dynamicDns = {
-      enable = true;
       hostname = "ihrachyshka-gw.freeddns.org";
       username = "ihrachyshka";
     };

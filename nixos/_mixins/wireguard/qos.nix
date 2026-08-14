@@ -7,7 +7,7 @@ let
   cfg = config.host.wireguard.server;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.qos.uploadLimitMbit != null) {
+  config = lib.mkIf (cfg != null && cfg.qos.uploadLimitMbit != null) {
     host.qos.interfaces.wan = {
       device = config.host.network.primaryInterface;
       limits.wireguard-upload = {
