@@ -12,6 +12,46 @@ let
   mtlsPublicServices = builtins.filter (
     contribution: contribution.value.internal != null
   ) publicServices;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
+  proxyHeaders = hostHeader: ''
+    proxy_set_header Host ${hostHeader};
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
+  publicVhost =
+    contribution:
+    let
+      service = contribution.value;
+      mtls = service.internal != null;
+      client = config.host.pki.clients.${contribution.id}.materializations.default;
+    in
+    {
+      forceSSL = true;
+      enableACME = true;
+      locations."/" = {
+        proxyPass = if mtls then service.internal.url else service.upstream;
+        proxyWebsockets = true;
+        recommendedProxySettings = false;
+        extraConfig =
+          proxyHeaders (if mtls then service.internal.serverName else "$host")
+          + lib.optionalString mtls ''
+            proxy_ssl_certificate ${client.certificatePath};
+            proxy_ssl_certificate_key ${client.keyPath};
+            proxy_ssl_trusted_certificate ${pkiRootCaPath};
+            proxy_ssl_verify on;
+            proxy_ssl_server_name on;
+            proxy_ssl_name ${service.internal.serverName};
+
+            # Backends may emit their internal canonical URL in absolute redirects.
+            proxy_redirect https://${service.internal.serverName}/ $scheme://$host/;
+            proxy_redirect http://${service.internal.serverName}/ $scheme://$host/;
+          ''
+          + service.public.locationExtraConfig;
+      };
+    };
 in
 {
   imports = [ ./bandwidth-limits.nix ];
@@ -19,38 +59,24 @@ in
   options.host.web.ingress = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
-        options = {
-          acmeEmail = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "ihar.hrachyshka@gmail.com";
-            description = "Email address used for public TLS certificate issuance.";
-          };
-
-          openFirewall = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to open public HTTP and HTTPS firewall ports.";
-          };
-
-          dynamicDns = lib.mkOption {
-            type = lib.types.nullOr (
-              lib.types.submodule {
-                options = {
-                  hostname = lib.mkOption {
-                    type = lib.types.nonEmptyStr;
-                    description = "Dynamic DNS hostname updated by the ingress controller.";
-                  };
-
-                  username = lib.mkOption {
-                    type = lib.types.nonEmptyStr;
-                    description = "Dynamic DNS account username.";
-                  };
+        options.dynamicDns = lib.mkOption {
+          type = lib.types.nullOr (
+            lib.types.submodule {
+              options = {
+                hostname = lib.mkOption {
+                  type = lib.types.nonEmptyStr;
+                  description = "Dynamic DNS hostname updated by the ingress controller.";
                 };
-              }
-            );
-            default = null;
-            description = "Dynamic DNS policy for this ingress controller.";
-          };
+
+                username = lib.mkOption {
+                  type = lib.types.nonEmptyStr;
+                  description = "Dynamic DNS account username.";
+                };
+              };
+            }
+          );
+          default = null;
+          description = "Dynamic DNS policy for this ingress controller.";
         };
       }
     );
@@ -59,7 +85,7 @@ in
   };
 
   config = lib.mkIf (cfg != null) {
-    services.nginx.enableReload = true;
+    host.network.stableAddress.requiredBy = lib.optional (publicServices != [ ]) "public ingress";
 
     host.pki.clients = builtins.listToAttrs (
       map (contribution: {
@@ -67,36 +93,44 @@ in
         value = {
           enable = true;
           category = "internal";
+          materializations.default = {
+            owner = config.services.nginx.user;
+            group = config.services.nginx.group;
+            mode = "0400";
+            restartUnits = [ "nginx.service" ];
+          };
         };
       }) mtlsPublicServices
     );
 
-    host.externalService = {
-      inherit (cfg) acmeEmail openFirewall;
-      virtualHosts = builtins.listToAttrs (
-        map (contribution: {
-          name = contribution.value.public.hostName;
-          value =
-            if contribution.value.internal != null then
-              let
-                service = contribution.value;
-              in
-              {
-                proxyPass = service.internal.url;
-                upstreamTls = {
-                  enable = true;
-                  clientName = contribution.id;
-                  serverName = service.internal.serverName;
-                };
-                inherit (service.public) locationExtraConfig;
-              }
-            else
-              {
-                proxyPass = contribution.value.upstream;
-                inherit (contribution.value.public) locationExtraConfig;
-              };
-        }) publicServices
-      );
+    security.acme = lib.mkIf (publicServices != [ ]) {
+      acceptTerms = true;
+      defaults.email = "ihar.hrachyshka@gmail.com";
     };
+
+    services.nginx = lib.mkMerge [
+      { enableReload = true; }
+      (lib.mkIf (publicServices != [ ]) {
+        enable = true;
+        recommendedProxySettings = true;
+        recommendedTlsSettings = true;
+        virtualHosts = builtins.listToAttrs (
+          map (contribution: {
+            name = contribution.value.public.hostName;
+            value = publicVhost contribution;
+          }) publicServices
+        );
+      })
+    ];
+
+    systemd.services.nginx = lib.mkIf (mtlsPublicServices != [ ]) {
+      wants = [ "sops-install-secrets.service" ];
+      after = [ "sops-install-secrets.service" ];
+    };
+
+    networking.firewall.allowedTCPPorts = lib.optionals (publicServices != [ ]) [
+      80
+      443
+    ];
   };
 }

@@ -204,7 +204,7 @@ let
         externalHostNames = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
-          description = "host.externalService public hostnames protected by this gate.";
+          description = "Public nginx hostnames protected by this gate.";
         };
 
         extraLocations = lib.mkOption {
@@ -410,12 +410,14 @@ let
         }) (internalServiceVhostNames endpointName)
       ) gate.internalHttpsServiceNames
     );
-  # Public vhosts owned by host.externalService instead of the internal web renderer.
+  # Public vhosts owned by the ingress renderer instead of the internal web renderer.
   # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
   protectedExternalVhostsFor =
     gate:
     lib.genAttrs gate.externalHostNames (hostName: {
-      locations = locationsFor gate hostName;
+      locations = lib.recursiveUpdate (locationsFor gate hostName) {
+        "/".extraConfig = authRequestLocationConfig gate;
+      };
     });
 in
 {
@@ -478,15 +480,6 @@ in
         restartUnits = [ "${gate.serviceName}.service" ];
       }
     ) enabledGates;
-
-    host.externalService.virtualHosts = lib.mkMerge (
-      map (
-        gate:
-        lib.genAttrs gate.externalHostNames (_: {
-          locationExtraConfig = authRequestLocationConfig gate;
-        })
-      ) (builtins.attrValues enabledGates)
-    );
 
     services.nginx.virtualHosts = lib.mkMerge (
       lib.mapAttrsToList (

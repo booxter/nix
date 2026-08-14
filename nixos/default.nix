@@ -27,7 +27,6 @@
       ./_mixins/dashboard
       ./_mixins/downloads
       ./_mixins/disko
-      ./_mixins/external-service.nix
       ./_mixins/glance
       ./_mixins/hardware
       ./_mixins/hm

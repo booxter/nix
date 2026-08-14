@@ -94,7 +94,6 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         ../../common/_mixins/network
-        ../../nixos/_mixins/external-service.nix
         ../../nixos/_mixins/sso
       ];
 
@@ -107,25 +106,6 @@ pkgs.testers.runNixOSTest {
         host.backups.sources = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
           default = { };
-        };
-
-        host.pki = {
-          clients = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-
-          authority = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = {
-              rootCaCertificate = pkgs.writeText "oauth2-proxy-gate-test-root-ca.pem" "";
-            };
-          };
-        };
-
-        host.network.stableAddress.requiredBy = lib.mkOption {
-          type = lib.types.listOf lib.types.nonEmptyStr;
-          default = [ ];
         };
 
         host.web.services = lib.mkOption {
@@ -186,13 +166,9 @@ pkgs.testers.runNixOSTest {
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 
-        host.externalService = {
-          openFirewall = false;
-          virtualHosts."test.example.invalid" = {
-            proxyPass = "http://127.0.0.1:9000";
-            forceSSL = false;
-            enableACME = false;
-          };
+        services.nginx = {
+          enable = true;
+          virtualHosts."test.example.invalid".locations."/".proxyPass = "http://127.0.0.1:9000";
         };
 
         host.sso.oauth2ProxyGates.test = {
