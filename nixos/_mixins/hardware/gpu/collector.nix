@@ -7,7 +7,7 @@
 let
   cfg = config.host.hardware.gpu.collector;
   metricsPackage = pkgs.callPackage ./amdgpu-metrics { };
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
 in
 {
   config = lib.mkIf cfg.enable {
