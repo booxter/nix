@@ -15,7 +15,14 @@ in
   ];
 
   host = {
-    disko.layout = "luks";
+    disko.layout.remoteUnlock = {
+      kernelModules = [ "r8169" ];
+      hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
+      authorizedKeys = [
+        (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
+        (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
+      ];
+    };
     desktop.hyprland.enable = true;
     nix.builder = {
       enable = true;
@@ -46,16 +53,6 @@ in
         vendors = [ "amd" ];
         compute = "rocm";
         collector.enable = true;
-      };
-    };
-    luks = {
-      remoteUnlock = {
-        kernelModules = [ "r8169" ];
-        hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
-        authorizedKeys = [
-          (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
-          (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
-        ];
       };
     };
     network = {

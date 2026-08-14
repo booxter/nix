@@ -41,7 +41,6 @@
       ./_mixins/lan-wan-accounting
       ./_mixins/lidarr
       ./_mixins/lolek
-      ./_mixins/luks
       ./_mixins/mailer
       ./_mixins/maintenance
       ./_mixins/media-admin-sso
