@@ -8,9 +8,10 @@ let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg selected;
   slskdEnabled = cfg != null;
+  adminGroup = if model.ssoApplication == null then null else model.ssoApplication.adminGroup;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
-      _: person: lib.any (group: builtins.elem group person.groups) cfg.authProxy.adminGroups
+      _: person: adminGroup != null && builtins.elem adminGroup person.groups
     ) config.host.sso.users
   );
 in
@@ -76,7 +77,7 @@ in
         AURRAL_SLSKD_STRICT_FORMAT = "false";
         AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
       }
-      // lib.optionalAttrs cfg.authProxy.enable {
+      // {
         AUTH_PROXY_ENABLED = "true";
         AUTH_PROXY_HEADER = "x-forwarded-user";
         AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;

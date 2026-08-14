@@ -9,5 +9,9 @@ in
       assertion = model.storageClaim != null;
       message = "host.aurral.storageClaim must name a host storage claim";
     }
+    {
+      assertion = model.ssoApplication != null;
+      message = "Aurral requires its realm SSO application";
+    }
   ];
 }

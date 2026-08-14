@@ -7,6 +7,7 @@ in
 {
   inherit cfg slskd storageClaim;
   selected = slskd.resolved;
+  ssoApplication = config.host.sso.applications.aurral or null;
   port = 3001;
   user = "aurral";
   group = "media";

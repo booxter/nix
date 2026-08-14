@@ -34,28 +34,6 @@ let
         description = "Public hostname published for Aurral.";
       };
 
-      authProxy = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether Aurral trusts authentication from its local reverse proxy.";
-        };
-
-        adminGroups = lib.mkOption {
-          type = lib.types.listOf lib.types.nonEmptyStr;
-          default = [ ];
-          description = "SSO groups whose members receive Aurral administrator access.";
-        };
-
-        allowedGroups = lib.mkOption {
-          type = lib.types.listOf lib.types.nonEmptyStr;
-          default = [
-            "media-admins"
-            "media-users"
-          ];
-          description = "SSO groups allowed to access Aurral.";
-        };
-      };
     };
   };
 in

@@ -6,6 +6,10 @@ lib.mkIf (config.host.realm == "home") {
         adminGroup = "media-admins";
         userGroup = "media-users";
       };
+      aurral = {
+        adminGroup = "media-admins";
+        userGroup = "media-users";
+      };
       "home-assistant" = {
         adminGroup = "home-admins";
         userGroup = "home-users";

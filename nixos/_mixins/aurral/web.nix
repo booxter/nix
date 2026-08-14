@@ -8,6 +8,14 @@ let
   model = import ./model.nix { inherit config lib; };
   browserHost = cfg.publicHostName;
   browserOrigin = "https://${browserHost}";
+  allowedGroups =
+    if model.ssoApplication == null then
+      [ ]
+    else
+      builtins.filter (group: group != null) [
+        model.ssoApplication.adminGroup
+        model.ssoApplication.userGroup
+      ];
   cacheZone = "aurral_images";
   cacheLocation = {
     proxyPass = "http://127.0.0.1:${toString model.port}";
@@ -53,7 +61,7 @@ in
             enable = true;
             section = "user";
           };
-          auth = lib.mkIf cfg.authProxy.enable {
+          auth = {
             mode = "oauth2-proxy";
             oauth2ProxyGate = {
               enable = true;
@@ -61,7 +69,7 @@ in
               displayName = "Aurral";
               originLanding = "${browserOrigin}/";
               httpAddress = "http://127.0.0.1:4181";
-              allowedGroups = cfg.authProxy.allowedGroups;
+              inherit allowedGroups;
               groupClaim = "media_groups";
               whitelistDomains = [ browserHost ];
               externalOrigin = browserOrigin;

@@ -8,6 +8,5 @@
       peerPort = 13869;
     };
     publicHostName = "mu.${config.host.network.publicDomain}";
-    authProxy.adminGroups = [ "media-admins" ];
   };
 }
