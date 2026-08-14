@@ -11,7 +11,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    host.observability.lanWan.enable = true;
     home-manager.users.${username}.host.hm.sketchybar.network.enable = true;
   };
 }
