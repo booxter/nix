@@ -1,7 +1,7 @@
 { config, lib }:
 let
   cfg = config.host.audiobookshelf;
-  mediaModel = import ../media-libraries/model.nix { inherit config lib; };
+  mediaLibraries = import ../media-libraries/model.nix { inherit config lib; };
   resolveLibrary = source: library: {
     inherit source;
     inherit (library)
@@ -10,7 +10,7 @@ let
       icon
       provider
       ;
-    media = mediaModel.resolved.${source} or null;
+    media = mediaLibraries.${source} or null;
   };
 in
 {

@@ -1,9 +1,9 @@
 { config, lib }:
 let
   cfg = config.host.shelfmark;
-  mediaModel = import ../media-libraries/model.nix { inherit config lib; };
+  mediaLibraries = import ../media-libraries/model.nix { inherit config lib; };
   downloadModel = import ../downloads/model.nix { inherit config lib; };
-  resolveLibrary = name: if name == null then null else mediaModel.resolved.${name} or null;
+  resolveLibrary = name: if name == null then null else mediaLibraries.${name} or null;
   resolveRoute = name: if name == null then null else downloadModel.routes.${name} or null;
 in
 {
