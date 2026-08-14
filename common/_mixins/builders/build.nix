@@ -17,10 +17,9 @@ let
     inherit (builder) protocol sshKey sshUser;
     hostName = name;
   };
-  enabled = config.host.userEnvironment.roles.developer.enable && builders != { };
 in
 {
-  config = lib.mkIf enabled {
+  config = lib.mkIf config.host.userEnvironment.roles.developer.enable {
     nix.buildMachines = lib.mapAttrsToList toBuildMachine builders;
   };
 }
