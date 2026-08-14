@@ -1,13 +1,7 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, ... }:
 let
   model = import ./model.nix { inherit config lib; };
   instance = model.resolved;
-  settingsFormat = pkgs.formats.yaml { };
   secretNames = [
     "${instance.secretPrefix}/soulseek/username"
     "${instance.secretPrefix}/soulseek/password"
@@ -16,36 +10,10 @@ let
     "${instance.secretPrefix}/web/apiKey"
   ];
   secret = suffix: config.sops.placeholder."${instance.secretPrefix}/${suffix}";
-  configuration = settingsFormat.generate "slskd.yml" (
-    lib.recursiveUpdate instance.settings {
-      remote_configuration = false;
-      headless = true;
-      flags.no_version_check = true;
-      logger.disk = false;
-      directories = {
-        incomplete = instance.incompleteDir;
-        downloads = instance.completedDir;
-      };
-      soulseek = {
-        listen_ip_address = "0.0.0.0";
-        listen_port = instance.vpn.peerPort;
-      };
-      web = {
-        ip_address = instance.namespace.namespaceAddress;
-        port = instance.api.port;
-        https.disabled = true;
-      };
-    }
-  );
-  shares = instance.settings.shares.directories or [ ];
 in
 {
   config = lib.mkIf (instance != null) {
-    users.users.${instance.user} = {
-      isSystemUser = true;
-      uid = config.host.storage.identities.users.${instance.user}.uid;
-      group = instance.group;
-    };
+    users.users.slskd.uid = config.host.storage.identities.users.slskd.uid;
 
     host.storage.claims.${instance.storage.claim} = {
       directories = builtins.listToAttrs (
@@ -98,48 +66,32 @@ in
       '';
     };
 
-    systemd.tmpfiles.rules = [
-      "d ${instance.stateDir} 0750 ${instance.user} ${instance.group} - -"
-    ];
-
-    systemd.services.slskd = {
-      description = "slskd Soulseek client";
-      after = [ "network.target" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        User = instance.user;
-        Group = instance.group;
-        Environment = [ "DOTNET_USE_POLLING_FILE_WATCHER=1" ];
-        EnvironmentFile = config.sops.templates."slskd.env".path;
-        ExecStart = "${lib.getExe instance.package} --app-dir ${instance.stateDir} --config ${configuration}";
-        Restart = "on-failure";
-        UMask = "0002";
-        ReadOnlyPaths = shares;
-        ReadWritePaths = [
-          instance.stateDir
-          instance.incompleteDir
-          instance.completedDir
-        ];
-        LockPersonality = true;
-        NoNewPrivileges = true;
-        PrivateDevices = true;
-        PrivateMounts = true;
-        PrivateTmp = true;
-        PrivateUsers = true;
-        ProtectClock = true;
-        ProtectControlGroups = true;
-        ProtectHome = true;
-        ProtectHostname = true;
-        ProtectKernelLogs = true;
-        ProtectKernelModules = true;
-        ProtectKernelTunables = true;
-        ProtectProc = "invisible";
-        ProtectSystem = "strict";
-        RemoveIPC = true;
-        RestrictNamespaces = true;
-        RestrictSUIDSGID = true;
+    services.slskd = {
+      enable = true;
+      inherit (instance) package;
+      user = instance.user;
+      group = instance.group;
+      domain = null;
+      environmentFile = config.sops.templates."slskd.env".path;
+      settings = lib.recursiveUpdate instance.settings {
+        headless = true;
+        directories = {
+          incomplete = instance.incompleteDir;
+          downloads = instance.completedDir;
+        };
+        shares.directories = instance.settings.shares.directories or [ ];
+        soulseek = {
+          listen_ip_address = "0.0.0.0";
+          listen_port = instance.vpn.peerPort;
+        };
+        web = {
+          ip_address = instance.namespace.namespaceAddress;
+          port = instance.api.port;
+          https.disabled = true;
+        };
       };
     };
+
+    systemd.services.slskd.serviceConfig.UMask = "0002";
   };
 }
