@@ -42,8 +42,8 @@ let
     lib.optionalString (paths != [ ]) ''
       ${lib.concatMapStringsSep " " quotePath paths} {
         daily
-        maxsize ${toString cfg.maxSizeMiB}M
-        rotate ${toString cfg.retainedArchives}
+        maxsize 10M
+        rotate 7
         compress
         copytruncate
         missingok
@@ -84,18 +84,6 @@ in
         default = { };
         description = "User LaunchAgents exempted from file logging, with rationales.";
       };
-    };
-
-    maxSizeMiB = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 10;
-      description = "Maximum launchd log size before early rotation.";
-    };
-
-    retainedArchives = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 7;
-      description = "Number of compressed launchd log archives to retain.";
     };
   };
 

@@ -91,12 +91,6 @@ in
       default = { };
       description = "Prometheus labels attached to expected system LaunchDaemons.";
     };
-
-    intervalSeconds = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 30;
-      description = "How often to collect native system launchd state.";
-    };
   };
 
   config = lib.mkIf config.host.observability.enable {
@@ -128,7 +122,7 @@ in
       ];
       serviceConfig = {
         RunAtLoad = true;
-        StartInterval = cfg.intervalSeconds;
+        StartInterval = 30;
         ProcessType = "Background";
         StandardOutPath = "/var/log/${exporterName}.log";
         StandardErrorPath = "/var/log/${exporterName}.log";

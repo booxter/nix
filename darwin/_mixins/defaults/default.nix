@@ -13,8 +13,6 @@ in
       autohide-delay = 0.0;
       autohide-time-modifier = 0.0;
       orientation = "right";
-      persistent-apps = [
-      ];
       tilesize = 32;
       show-recents = false;
       mru-spaces = false; # disable most recent apps affecting the dock items order
