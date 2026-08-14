@@ -153,7 +153,7 @@ in
           [ localHost ]
           ++ lib.optional (lowercaseName != localHost) lowercaseName
           ++ lib.optional config.nixpkgs.hostPlatform.isLinux "${localHost}.${config.host.network.lanDomain}"
-          ++ [ config.host.network.localDnsName ]
+          ++ [ "${localHost}.local" ]
           ++ lib.optional (lowercaseName != localHost) "${lowercaseName}.local"
         );
       description = "Names associated with this host in managed SSH known-host entries.";
