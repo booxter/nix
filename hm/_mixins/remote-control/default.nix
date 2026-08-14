@@ -19,7 +19,7 @@ in
   config = {
     assertions =
       lib.optional cfg.wayland.enable {
-        assertion = isDarwin && osConfig.host.userEnvironment.features.gui.enable;
+        assertion = isDarwin && osConfig.host.userEnvironment.roles.workstation.enable;
         message = "programs.remote-control.client.wayland requires a managed Darwin graphical environment";
       }
       ++ lib.optional (cfg.x11.enable && isDarwin) {

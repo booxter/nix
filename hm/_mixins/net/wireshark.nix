@@ -19,7 +19,7 @@ in
         message = "host.hm.wireshark requires network diagnostics.";
       }
       {
-        assertion = !cfg.enable || osConfig.host.userEnvironment.features.gui.enable;
+        assertion = !cfg.enable || osConfig.host.userEnvironment.roles.workstation.enable;
         message = "host.hm.wireshark requires a managed graphical environment.";
       }
     ];

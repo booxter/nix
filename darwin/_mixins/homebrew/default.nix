@@ -38,16 +38,18 @@ in
     };
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks =
-      lib.optionals config.host.userEnvironment.features.gui.enable [
+      lib.optionals config.host.userEnvironment.roles.workstation.enable [
         "sf-symbols"
       ]
-      ++ lib.optionals (appsCfg.enable && appsCfg.chatgpt.enable) [
+      ++ lib.optionals (config.host.userEnvironment.roles.workstation.enable && appsCfg.chatgpt.enable) [
         "chatgpt"
       ]
       ++ lib.optionals wiresharkEnabled [
         "wireshark-chmodbpf"
       ]
-      ++ lib.optionals (appsCfg.enable && appsCfg.homerow.enable) [ "homerow" ];
+      ++ lib.optionals (config.host.userEnvironment.roles.workstation.enable && appsCfg.homerow.enable) [
+        "homerow"
+      ];
   };
 
   nix-homebrew = {

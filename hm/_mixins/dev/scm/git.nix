@@ -12,7 +12,7 @@ let
   inherit (config.host.hm) email fullName;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
 in
-lib.mkIf (devCfg.enable && scmCfg.enable) {
+lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && scmCfg.enable) {
   home.shellAliases.g = "git";
 
   programs.git = {

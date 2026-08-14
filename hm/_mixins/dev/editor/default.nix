@@ -6,7 +6,7 @@
 let
   cfg = osConfig.host.userEnvironment.features.dev;
 in
-lib.mkIf (cfg.enable && cfg.editor.enable) {
+lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.editor.enable) {
   programs.nixvim = {
     enable = true;
     defaultEditor = true;

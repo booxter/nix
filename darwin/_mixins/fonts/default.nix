@@ -5,7 +5,7 @@
   ...
 }:
 {
-  fonts.packages = lib.optionals config.host.userEnvironment.features.gui.enable (
+  fonts.packages = lib.optionals config.host.userEnvironment.roles.workstation.enable (
     with pkgs.nerd-fonts;
     [
       meslo-lg

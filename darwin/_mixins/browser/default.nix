@@ -11,14 +11,16 @@ let
   firefoxEnabled = config.home-manager.users.${username}.host.hm.firefox.enable;
 in
 {
-  config = lib.mkIf (appsCfg.enable && firefoxEnabled && cfg.makeDefault) {
-    environment.systemPackages = with pkgs; [
-      defaultbrowser
-    ];
+  config =
+    lib.mkIf (config.host.userEnvironment.roles.workstation.enable && firefoxEnabled && cfg.makeDefault)
+      {
+        environment.systemPackages = with pkgs; [
+          defaultbrowser
+        ];
 
-    system.activationScripts.userActivation.text = ''
-      # Set default browser to firefox
-      ${lib.getExe pkgs.defaultbrowser} firefox
-    '';
-  };
+        system.activationScripts.userActivation.text = ''
+          # Set default browser to firefox
+          ${lib.getExe pkgs.defaultbrowser} firefox
+        '';
+      };
 }

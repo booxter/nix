@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config = lib.mkIf osConfig.host.userEnvironment.features.gui.enable {
+  config = lib.mkIf osConfig.host.userEnvironment.roles.workstation.enable {
     fonts.fontconfig.enable = true;
     home.packages = with pkgs.nerd-fonts; [
       meslo-lg

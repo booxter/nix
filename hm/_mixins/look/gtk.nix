@@ -6,7 +6,8 @@
 }:
 {
   config.gtk =
-    lib.mkIf (osConfig.host.userEnvironment.features.gui.enable && pkgs.stdenv.hostPlatform.isLinux)
+    lib.mkIf
+      (osConfig.host.userEnvironment.roles.workstation.enable && pkgs.stdenv.hostPlatform.isLinux)
       {
         enable = true;
 

@@ -8,10 +8,9 @@
 let
   codexWarmerPackage = (import ./pkgs { inherit pkgs; }).codex-warmer;
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
-  devCfg = osConfig.host.userEnvironment.features.dev;
   codexCfg = config.host.hm.dev.codex;
   codexWarmerEnabled =
-    devCfg.enable
+    osConfig.host.userEnvironment.roles.developer.enable
     && codexCfg.enable
     && codexCfg.usage.account == "personal"
     && codexCfg.usage.warmer.enable;

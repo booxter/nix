@@ -119,7 +119,7 @@
   system.defaults.CustomUserPreferences."com.superultra.Homerow" =
     lib.mkIf
       (
-        config.host.userEnvironment.features.apps.enable
+        config.host.userEnvironment.roles.workstation.enable
         && config.host.userEnvironment.features.apps.homerow.enable
       )
       {

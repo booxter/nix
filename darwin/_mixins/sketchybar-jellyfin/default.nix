@@ -10,7 +10,7 @@ let
   client = config.host.pki.clients.${clientName};
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
-  enable = config.host.userEnvironment.features.gui.enable && config.host.observability.enable;
+  enable = config.host.userEnvironment.roles.workstation.enable && config.host.observability.enable;
 in
 {
   host.pki.clients.${clientName} = {

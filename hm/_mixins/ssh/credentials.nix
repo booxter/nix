@@ -7,7 +7,7 @@
 }:
 let
   backend = osConfig.host.ssh.credentials.backend;
-  enabled = osConfig.host.userEnvironment.features.ssh.enable;
+  enabled = osConfig.host.userEnvironment.roles.developer.enable;
   useSecretive = backend == "secretive";
   useYubikey = backend == "yubikey";
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";

@@ -115,8 +115,6 @@ in
       };
 
       dev = {
-        enable = lib.mkEnableOption "development tool suite";
-
         cli.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -158,13 +156,7 @@ in
         };
       };
 
-      gui = {
-        enable = lib.mkEnableOption "managed graphical desktop environment";
-      };
-
       apps = {
-        enable = lib.mkEnableOption "graphical workstation application suite";
-
         chatgpt.enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -180,7 +172,6 @@ in
         homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
       };
 
-      ssh.enable = lib.mkEnableOption "SSH client environment";
     };
   };
 
@@ -232,14 +223,6 @@ in
       };
 
       features = lib.mkMerge [
-        (lib.mkIf cfg.roles.developer.enable {
-          dev.enable = lib.mkDefault true;
-          ssh.enable = lib.mkDefault true;
-        })
-        (lib.mkIf cfg.roles.workstation.enable {
-          apps.enable = lib.mkDefault true;
-          gui.enable = lib.mkDefault true;
-        })
         (lib.mkIf (cfg.roles.workstation.enable && config.nixpkgs.hostPlatform.isDarwin) {
           apps.homerow.enable = lib.mkDefault true;
         })
@@ -264,7 +247,7 @@ in
       }
       {
         assertion =
-          !cfg.features.dev.enable
+          !cfg.roles.developer.enable
           || !cfg.features.dev.scm.enable
           || !cfg.features.dev.scm.sendEmail.enable
           || builtins.hasAttr cfg.features.dev.scm.sendEmail.transport cfg.smtpTransports;

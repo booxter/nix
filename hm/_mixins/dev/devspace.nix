@@ -7,7 +7,7 @@
 let
   cfg = osConfig.host.userEnvironment.features.dev;
 in
-lib.mkIf (cfg.enable && cfg.cli.enable) {
+lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.cli.enable) {
   home.packages = [ pkgs.devspace ];
 
   programs.ssh = {

@@ -30,7 +30,7 @@ in
     description = "Per-user SSH known-host entries.";
   };
 
-  config = lib.mkIf osConfig.host.userEnvironment.features.ssh.enable {
+  config = lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
     home.file = lib.mapAttrs' (
       name: knownHost:
       lib.nameValuePair ".ssh/known_hosts.d/${name}" {

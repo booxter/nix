@@ -9,7 +9,7 @@ let
   devCfg = osConfig.host.userEnvironment.features.dev;
   scmCfg = devCfg.scm;
 in
-lib.mkIf (devCfg.enable && scmCfg.enable) {
+lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && scmCfg.enable) {
   host.hm.ssh.knownHosts."github.com" = {
     hostNames = [ "github.com" ];
     publicKeys = [

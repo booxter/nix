@@ -6,7 +6,6 @@
   ...
 }:
 let
-  devCfg = osConfig.host.userEnvironment.features.dev;
   cfg = config.host.hm.dev.codex;
   secretValueType = lib.types.either lib.types.nonEmptyStr (
     lib.types.submodule {
@@ -124,7 +123,7 @@ in
       }
     ];
 
-    programs.codex = lib.mkIf (devCfg.enable && cfg.enable) {
+    programs.codex = lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.enable) {
       enable = true;
       context = codexContext;
 

@@ -11,7 +11,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = config.host.userEnvironment.features.gui.enable;
+        assertion = config.host.userEnvironment.roles.workstation.enable;
         message = "host.remote-control.client.x11 requires a managed graphical environment";
       }
     ];

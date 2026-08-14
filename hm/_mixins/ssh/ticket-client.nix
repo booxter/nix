@@ -69,7 +69,7 @@ let
     ]) ticketTargets
   );
   enabled =
-    osConfig.host.userEnvironment.features.ssh.enable
+    osConfig.host.userEnvironment.roles.developer.enable
     && osConfig.host.ssh.tickets.trustedCaPublicKeys != [ ]
     && issuer != null;
 in
