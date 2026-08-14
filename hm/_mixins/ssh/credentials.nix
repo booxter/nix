@@ -7,7 +7,6 @@
 }:
 let
   backend = osConfig.host.ssh.credentials.backend;
-  cfg = config.host.hm.ssh.credentials;
   enabled = osConfig.host.userEnvironment.features.ssh.enable;
   useSecretive = backend == "secretive";
   useYubikey = backend == "yubikey";
@@ -17,8 +16,8 @@ let
       export SSH_AUTH_SOCK="${secretiveSocket}"
     fi
   '';
-  yubikeyIdentityFile = "${config.home.homeDirectory}/.ssh/${cfg.yubikey.identityFileName}";
-  remoteFallbackIdentityFile = "${config.home.homeDirectory}/.ssh/${cfg.yubikey.remoteFallbackIdentityFileName}";
+  yubikeyIdentityFile = "${config.home.homeDirectory}/.ssh/id_ed25519_sk_rk";
+  remoteFallbackIdentityFile = "${config.home.homeDirectory}/.ssh/id_ed25519";
   yubikeyIdentityConfig = ''
     Match exec "test -z \"$SSH_CONNECTION\""
       IdentityFile ${yubikeyIdentityFile}
@@ -46,20 +45,6 @@ let
   '';
 in
 {
-  options.host.hm.ssh.credentials.yubikey = {
-    identityFileName = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "id_ed25519_sk_rk";
-      description = "SSH identity filename for the resident YubiKey credential.";
-    };
-
-    remoteFallbackIdentityFileName = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "id_ed25519";
-      description = "SSH identity filename used from remote sessions.";
-    };
-  };
-
   config = lib.mkIf enabled (
     lib.mkMerge [
       {
