@@ -11,19 +11,15 @@ let
 
   requestsFrom =
     clientName: configuration:
-    lib.mapAttrsToList
-      (
-        destinationName: destination:
-        destination
-        // {
-          inherit clientName destinationName;
-        }
-      )
-      (
-        lib.filterAttrs (
-          _: destination: destination.enable && destination.server == hostName
-        ) configuration.config.host.backups.destinations
-      );
+    let
+      destination = configuration.config.host.backups.destination;
+    in
+    lib.optional (destination != null && destination.server == hostName) (
+      destination
+      // {
+        inherit clientName;
+      }
+    );
 
   requests = builtins.concatLists (lib.mapAttrsToList requestsFrom configurations);
 

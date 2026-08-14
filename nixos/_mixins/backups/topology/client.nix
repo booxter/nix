@@ -5,7 +5,7 @@
   lib,
 }:
 let
-  enabledDestinations = lib.filterAttrs (_: destination: destination.enable) backups.destinations;
+  destination = backups.destination;
 
   serverFor =
     destination:
@@ -14,16 +14,11 @@ let
     else
       null;
 
-  validDestinations = lib.filterAttrs (
-    _: destination:
-    let
-      server = serverFor destination;
-    in
-    server != null && server.enable
-  ) enabledDestinations;
+  server = if destination == null then null else serverFor destination;
+  valid = destination != null && server != null && server.enable;
 
   resolveDestination =
-    _: destination:
+    destination:
     let
       server = serverFor destination;
       local = destination.server == hostName;
@@ -35,36 +30,16 @@ let
       user = if local then "restic-cloud" else destination.user;
     };
 
-  duplicates =
-    values:
-    builtins.attrNames (
-      lib.filterAttrs (_: group: builtins.length group > 1) (lib.groupBy (value: value) values)
-    );
-
-  unknownDestinations = lib.filterAttrs (
-    _: destination:
-    let
-      server = serverFor destination;
-    in
-    server == null || !server.enable
-  ) enabledDestinations;
-
-  remoteDestinationsWithoutKeys = lib.filterAttrs (
-    _: destination: destination.server != hostName && destination.publicKey == null
-  ) enabledDestinations;
 in
 {
-  destinations = lib.mapAttrs resolveDestination validDestinations;
+  destination = if valid then resolveDestination destination else null;
 
   errors = {
-    duplicateServers = duplicates (
-      map (destination: destination.server) (builtins.attrValues enabledDestinations)
-    );
-    missingPublicKeys = lib.mapAttrsToList (
-      name: destination: "${hostName}.${name} -> ${destination.server}"
-    ) remoteDestinationsWithoutKeys;
-    unknownServers = lib.mapAttrsToList (
-      name: destination: "${hostName}.${name} -> ${destination.server}"
-    ) unknownDestinations;
+    missingPublicKeys = lib.optional (
+      destination != null && destination.server != hostName && destination.publicKey == null
+    ) "${hostName} -> ${destination.server}";
+    unknownServers = lib.optional (
+      destination != null && !valid
+    ) "${hostName} -> ${destination.server}";
   };
 }

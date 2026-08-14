@@ -2,28 +2,22 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model)
-    activeDestinations
+    destination
     excludesFor
     hostName
+    jobName
     jobNameFor
-    jobNameForDestination
     minimalPathsFor
     passwordSecretFor
     sourceEntries
     sources
-    sourcesByDestination
-    sshKeySecretFor
+    sshKeySecret
     ;
 in
 {
-  config = lib.mkIf (sources != { }) {
+  config = lib.mkIf (sources != { } && destination != null) {
     host.backups.jobs = lib.mkMerge (
-      lib.mapAttrsToList (
-        name: destination:
-        let
-          jobName = jobNameForDestination name destination;
-          destinationSources = sourcesByDestination.${name};
-        in
+      [
         {
           ${jobName} = {
             title =
@@ -37,22 +31,22 @@ in
               timerConfig
               user
               ;
-            paths = minimalPathsFor destinationSources;
-            exclude = excludesFor destinationSources;
+            paths = minimalPathsFor sourceEntries;
+            exclude = excludesFor sourceEntries;
             repository = {
               type = destination.transport;
               path = destination.repositoryPath;
-              passwordFile = config.sops.secrets.${passwordSecretFor name destination}.path;
+              passwordFile = config.sops.secrets.${passwordSecretFor destination}.path;
               dependencyUnits = [ "sops-install-secrets.service" ];
               sftp = lib.optionalAttrs (destination.transport == "sftp") {
                 host = destination.server;
                 user = destination.ingestUser;
-                identityFile = config.sops.secrets.${sshKeySecretFor name}.path;
+                identityFile = config.sops.secrets.${sshKeySecret}.path;
               };
             };
           };
         }
-      ) activeDestinations
+      ]
       ++ map (
         source:
         let

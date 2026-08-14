@@ -35,7 +35,7 @@ in
 {
   config = lib.mkMerge [
     {
-      host.backups.internal.destinations = client.destinations;
+      host.backups.internal.destination = client.destination;
 
       host.backups.server = lib.mkIf backups.server.enable {
         inherit (server) localClient repositories;

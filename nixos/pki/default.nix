@@ -8,7 +8,7 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.backups.destinations.primary = {
+  host.backups.destination = {
     server = "beast";
     publicKey = readPublicKey ./restic.pub;
   };

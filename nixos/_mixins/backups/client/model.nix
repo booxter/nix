@@ -8,26 +8,22 @@ rec {
 
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   sourceEntries = lib.mapAttrsToList (name: source: source // { inherit name; }) sources;
-  sourcesByDestination = lib.groupBy (source: source.destination) sourceEntries;
-  activeDestinations = lib.mapAttrs (name: resolved: cfg.destinations.${name} // resolved) (
-    lib.filterAttrs (name: _: builtins.hasAttr name sourcesByDestination) cfg.internal.destinations
-  );
+  destination =
+    if cfg.destination != null && cfg.internal.destination != null then
+      cfg.destination // cfg.internal.destination
+    else
+      null;
 
-  destinationFor =
-    source: cfg.destinations.${source.destination} // cfg.internal.destinations.${source.destination};
-  jobNameForDestination =
-    name: destination:
-    if name == "primary" then destination.server else "${destination.server}-${name}";
-  jobNameFor = source: jobNameForDestination source.destination (destinationFor source);
+  jobName = destination.server;
+  jobNameFor = _: jobName;
 
-  secretSuffix = name: lib.optionalString (name != "primary") "/${name}";
   passwordSecretFor =
-    name: destination:
+    destination:
     if destination.transport == "local" then
       "backup/restic/${hostName}/cloud/localPassword"
     else
-      "backup/restic/local/password${secretSuffix name}";
-  sshKeySecretFor = name: "backup/restic/local/ssh/privateKey${secretSuffix name}";
+      "backup/restic/local/password";
+  sshKeySecret = "backup/restic/local/ssh/privateKey";
 
   directPathsFor =
     source:
@@ -44,8 +40,5 @@ rec {
     builtins.filter (path: !builtins.any (root: root != path && pathCovers root path) paths) paths;
   excludesFor = selectedSources: lib.unique (lib.concatMap (source: source.exclude) selectedSources);
   outputCoveredByJob =
-    source: output:
-    builtins.any (root: pathCovers root output) (
-      livePathsFor sourcesByDestination.${source.destination}
-    );
+    _: output: builtins.any (root: pathCovers root output) (livePathsFor sourceEntries);
 }

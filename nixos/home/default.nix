@@ -14,7 +14,7 @@ in
 
   host.ups.client.server = "prx1-lab";
 
-  host.backups.destinations.primary = {
+  host.backups.destination = {
     server = "beast";
     publicKey = readPublicKey ./restic.pub;
   };

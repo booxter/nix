@@ -40,7 +40,7 @@
     };
 
     backups = {
-      destinations.primary.server = "beast";
+      destination.server = "beast";
       server = {
         enable = true;
         repositoryRoot = "/volume2/backups/restic-prod/hosts";

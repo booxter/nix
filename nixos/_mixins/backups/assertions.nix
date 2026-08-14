@@ -36,10 +36,8 @@ in
     ++ lib.concatLists (
       lib.mapAttrsToList (name: source: [
         {
-          assertion =
-            builtins.hasAttr source.destination cfg.destinations
-            && cfg.destinations.${source.destination}.enable;
-          message = "host.backups.sources.${name} references unknown destination '${source.destination}'";
+          assertion = cfg.destination != null;
+          message = "host.backups.sources.${name} requires host.backups.destination";
         }
         {
           assertion =

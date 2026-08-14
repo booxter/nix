@@ -14,10 +14,6 @@
       assertion = client.errors.missingPublicKeys == [ ];
       message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " client.errors.missingPublicKeys}";
     }
-    {
-      assertion = client.errors.duplicateServers == [ ];
-      message = "backup client may define only one destination per server: ${lib.concatStringsSep ", " client.errors.duplicateServers}";
-    }
   ]
   ++ lib.optionals backups.server.enable [
     {

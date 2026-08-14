@@ -47,32 +47,24 @@ let
     };
   };
 
-  destinationRequestModule =
-    {
-      name,
-      ...
-    }:
-    {
-      options = destinationPolicyOptions // {
-        enable = lib.mkEnableOption "the ${name} backup destination" // {
-          default = true;
-        };
-        server = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "Host providing the backup repository.";
-        };
-        storageName = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = hostName;
-          description = "Durable repository name on the backup server.";
-        };
-        publicKey = lib.mkOption {
-          type = with lib.types; nullOr str;
-          default = null;
-          description = "SSH public key accepted by the backup server for this client.";
-        };
+  destinationRequestModule = {
+    options = destinationPolicyOptions // {
+      server = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Host providing the backup repository.";
+      };
+      storageName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = hostName;
+        description = "Durable repository name on the backup server.";
+      };
+      publicKey = lib.mkOption {
+        type = with lib.types; nullOr str;
+        default = null;
+        description = "SSH public key accepted by the backup server for this client.";
       };
     };
+  };
 
   resolvedDestinationModule = {
     options = {
@@ -112,11 +104,6 @@ let
         title = lib.mkOption {
           type = lib.types.str;
           default = lib.strings.toSentenceCase name;
-        };
-        destination = lib.mkOption {
-          type = lib.types.str;
-          default = "primary";
-          description = "Named backup destination that receives this source.";
         };
         paths = lib.mkOption {
           type = with lib.types; listOf str;
@@ -200,15 +187,15 @@ let
 in
 {
   options.host.backups = {
-    destinations = lib.mkOption {
-      type = with lib.types; attrsOf (submodule destinationRequestModule);
-      default = { };
-      description = "Named backup repositories consumed by this host.";
+    destination = lib.mkOption {
+      type = with lib.types; nullOr (submodule destinationRequestModule);
+      default = null;
+      description = "Backup repository consumed by this host.";
     };
 
-    internal.destinations = lib.mkOption {
-      type = with lib.types; attrsOf (submodule resolvedDestinationModule);
-      default = { };
+    internal.destination = lib.mkOption {
+      type = with lib.types; nullOr (submodule resolvedDestinationModule);
+      default = null;
       internal = true;
       description = "Fleet-resolved runtime destination data.";
     };
