@@ -29,15 +29,14 @@ let
       ;
   };
 
-  qosEnabled =
-    backups.server.enable && backups.server.offsite.enable && backups.server.offsite.qos.enable;
+  qosEnabled = backups.server != null && backups.server.offsite != null && backups.server.offsite.qos;
 in
 {
   config = lib.mkMerge [
     {
       host.backups.internal.destination = client.destination;
 
-      host.backups.server = lib.mkIf backups.server.enable {
+      host.backups.internal.server = {
         inherit (server) localClient repositories;
       };
 

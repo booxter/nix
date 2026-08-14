@@ -15,14 +15,10 @@
       message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " client.errors.missingPublicKeys}";
     }
   ]
-  ++ lib.optionals backups.server.enable [
+  ++ lib.optionals (backups.server != null) [
     {
       assertion = server.errors.duplicateRepositoryPaths == [ ];
       message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " server.errors.duplicateRepositoryPaths}";
-    }
-    {
-      assertion = !server.errors.invalidB2Root;
-      message = "B2 offsite repository root must contain its bucket name";
     }
     {
       assertion = !server.errors.multipleLocalClients;

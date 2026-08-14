@@ -51,18 +51,17 @@ pkgs.testers.runNixOSTest {
       };
 
       host.backups.server = {
-        enable = true;
         repositoryRoot = "/srv/restic";
-        repositories.test = {
-          publicKey = clientPublicKey;
-          cloud = {
-            backend = "local";
-            enable = true;
-            repository = "/srv/cloud/test";
-            sourcePasswordFile = "/etc/backup-test/password";
-            passwordFile = "/etc/backup-test/password";
-            timerConfig.OnCalendar = "2099-01-01";
-          };
+      };
+      host.backups.internal.server.repositories.test = {
+        publicKey = clientPublicKey;
+        cloud = {
+          backend = "local";
+          enable = true;
+          repository = "/srv/cloud/test";
+          sourcePasswordFile = "/etc/backup-test/password";
+          passwordFile = "/etc/backup-test/password";
+          timerConfig.OnCalendar = "2099-01-01";
         };
       };
 

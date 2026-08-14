@@ -13,11 +13,12 @@ let
     ingestUser
     offloadUser
     repositoryPath
+    server
     sshRepositories
     ;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (server != null) {
     environment.systemPackages = [ pkgs.restic ];
 
     systemd.tmpfiles.rules = lib.mapAttrsToList (

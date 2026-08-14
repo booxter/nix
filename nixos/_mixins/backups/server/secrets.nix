@@ -6,18 +6,18 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model)
-    cfg
     cloudGroup
     credentialedOffloads
     enabledOffloads
     offloadUser
+    server
     ;
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   applicationKeySecret = "backup/restic/cloud/b2/applicationKey";
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (server != null) {
     sops.secrets =
       builtins.listToAttrs (
         lib.concatMap (name: [

@@ -23,26 +23,35 @@ let
 
   requests = builtins.concatLists (lib.mapAttrsToList requestsFrom configurations);
 
-  offsitePrefix =
+  joinPath =
+    components: lib.concatStringsSep "/" (builtins.filter (component: component != "") components);
+
+  offsiteRepository =
+    storageName:
     let
-      bucketName = cfg.offsite.bucketName;
-      parts =
-        if bucketName == null then [ ] else lib.splitString "/${bucketName}" cfg.offsite.repositoryRoot;
+      offsite = cfg.offsite;
+      path = joinPath [
+        offsite.prefix
+        storageName
+      ];
     in
-    if builtins.length parts == 2 then lib.removePrefix "/" (builtins.elemAt parts 1) else null;
+    if offsite.backend == "s3" && offsite.endpoint != null then
+      "s3:${offsite.endpoint}/${offsite.bucket}/${path}"
+    else if offsite.backend == "b2" then
+      "b2:${offsite.bucket}:${path}"
+    else
+      "";
 
   repositoryFor = request: {
     inherit (request) publicKey storageName;
-    cloud = lib.optionalAttrs cfg.offsite.enable {
+    cloud = lib.optionalAttrs (cfg.offsite != null) {
       inherit (cfg.offsite) backend storageProvider;
       enable = true;
-      prefix = lib.concatStringsSep "/" (
-        builtins.filter (component: component != "" && component != null) [
-          offsitePrefix
-          request.storageName
-        ]
-      );
-      repository = "${cfg.offsite.repositoryRoot}/${request.storageName}";
+      prefix = joinPath [
+        cfg.offsite.prefix
+        request.storageName
+      ];
+      repository = offsiteRepository request.storageName;
       sourcePasswordFile =
         config.sops.secrets."backup/restic/${request.clientName}/cloud/localPassword".path;
       passwordFile = config.sops.secrets."backup/restic/${request.clientName}/cloud/password".path;
@@ -76,8 +85,6 @@ in
 
   errors = {
     inherit duplicateRepositoryPaths;
-    invalidB2Root =
-      cfg.enable && cfg.offsite.enable && cfg.offsite.storageProvider == "b2" && offsitePrefix == null;
     multipleLocalClients = builtins.length localClients > 1;
   };
 }

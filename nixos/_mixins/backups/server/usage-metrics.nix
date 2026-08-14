@@ -15,20 +15,21 @@ let
     dependencyUnits
     offloadService
     requiredUnits
+    server
     ;
   enabled = b2Offloads != { };
   resticTools = pkgs.callPackage ./pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   usageConfig = (pkgs.formats.json { }).generate "restic-cloud-usage.json" {
-    buckets = [ cfg.offsite.bucketName ];
+    buckets = [ cfg.offsite.bucket ];
     b2ApplicationKeyIdFile = applicationKeyIdFile;
     b2ApplicationKeyFile = applicationKeyFile;
     repositories = lib.mapAttrsToList (name: repository: {
       inherit name;
       backupJob = offloadService name;
       backupTitle = "${name} Cloud Offload";
-      bucket = cfg.offsite.bucketName;
+      bucket = cfg.offsite.bucket;
       inherit (repository.cloud) prefix repository;
       passwordFile = repository.cloud.passwordFile;
     }) b2Offloads;
@@ -46,7 +47,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && enabled) {
+  config = lib.mkIf (server != null && enabled) {
     systemd.services.restic-cloud-usage-export = {
       description = "Export Restic cloud and B2 usage metrics";
       wants = dependencyUnits;

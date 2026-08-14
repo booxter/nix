@@ -42,14 +42,13 @@
     backups = {
       destination.server = "beast";
       server = {
-        enable = true;
         repositoryRoot = "/volume2/backups/restic-prod/hosts";
         offsite = {
-          enable = true;
           backend = "s3";
-          bucketName = "ihar-restic-prod";
-          qos.enable = true;
-          repositoryRoot = "s3:https://s3.us-east-005.backblazeb2.com/ihar-restic-prod/hosts";
+          endpoint = "https://s3.us-east-005.backblazeb2.com";
+          bucket = "ihar-restic-prod";
+          prefix = "hosts";
+          qos = true;
           storageProvider = "b2";
         };
       };

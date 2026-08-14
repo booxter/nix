@@ -1,16 +1,17 @@
 { config, lib }:
 let
-  cfg = config.host.backups.server;
+  server = config.host.backups.server;
+  cfg = if server == null then null else server // config.host.backups.internal.server;
 in
 rec {
-  inherit cfg;
+  inherit cfg server;
 
   cloudGroup = "restic-cloud";
   dependencyUnits = [
     "network-online.target"
     "sops-install-secrets.service"
   ];
-  requiredUnits = lib.optional (cfg.offsite.enable && cfg.offsite.qos.enable) "qos-wan.service";
+  requiredUnits = lib.optional (cfg.offsite != null && cfg.offsite.qos) "qos-wan.service";
 
   enabledOffloads = lib.filterAttrs (_: repository: repository.cloud.enable) cfg.repositories;
   credentialedOffloads = lib.filterAttrs (

@@ -1,7 +1,8 @@
 { config, lib, ... }:
 let
   cfg = config.host.backups;
-  inherit (cfg) jobs server;
+  inherit (cfg) jobs;
+  server = if cfg.server == null then null else cfg.server // cfg.internal.server;
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   preparationPaths =
     job: lib.concatMap (preparation: preparation.paths) (builtins.attrValues job.preparations);
@@ -47,22 +48,16 @@ in
         }
       ]) sources
     )
-    ++ lib.optionals server.enable (
+    ++ lib.optionals (server != null) (
       [
         {
           assertion = server.repositories != { };
           message = "host.backups.server.repositories must not be empty";
         }
         {
-          assertion = !server.offsite.enable || server.offsite.repositoryRoot != "";
-          message = "host.backups.server.offsite.repositoryRoot is required when offsite replication is enabled";
-        }
-        {
           assertion =
-            !server.offsite.enable
-            || server.offsite.storageProvider != "b2"
-            || server.offsite.bucketName != null;
-          message = "host.backups.server.offsite.bucketName is required for B2 usage metrics";
+            server.offsite == null || server.offsite.backend != "s3" || server.offsite.endpoint != null;
+          message = "host.backups.server.offsite.endpoint is required for S3 replication";
         }
         {
           assertion = server.localClient == null || builtins.hasAttr server.localClient server.repositories;
@@ -83,14 +78,12 @@ in
             client.cloud.repository != ""
             && client.cloud.sourcePasswordFile != ""
             && client.cloud.passwordFile != ""
-            && (
-              client.cloud.backend == "local" || (client.cloud.prefix != "" && server.offsite.bucketName != null)
-            )
+            && (client.cloud.backend == "local" || client.cloud.prefix != "")
           );
         message = "host.backups.server.repositories.${name}.cloud requires complete repository credentials";
       }) server.repositories
     )
-    ++ lib.optional (server.enable && server.offsite.enable && server.offsite.qos.enable) {
+    ++ lib.optional (server != null && server.offsite != null && server.offsite.qos) {
       assertion = config.host.network.primaryInterface != null;
       message = "backup cloud-offload policy requires host.network.primaryInterface";
     };

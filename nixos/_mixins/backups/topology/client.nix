@@ -15,7 +15,7 @@ let
       null;
 
   server = if destination == null then null else serverFor destination;
-  valid = destination != null && server != null && server.enable;
+  valid = destination != null && server != null;
 
   resolveDestination =
     destination:
