@@ -13,11 +13,6 @@ let
           description = "Loopback HTTP port for this Glance instance.";
         };
 
-        search.provider = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "Site search provider selected for this instance.";
-        };
-
         sections = lib.mkOption {
           type = lib.types.listOf (
             lib.types.submodule {
@@ -69,6 +64,11 @@ in
       type = lib.types.attrsOf instanceType;
       default = { };
       description = "Glance dashboard instances named by catalog exposure scope.";
+    };
+
+    search.provider = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      description = "Site search provider used by Glance dashboards.";
     };
   };
 }

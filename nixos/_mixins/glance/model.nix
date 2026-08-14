@@ -5,11 +5,11 @@
   searchProviders,
 }:
 let
+  provider = searchProviders.${cfg.search.provider} or null;
+  searchEndpoint = if provider == null then null else provider.endpoint;
   resolve =
     name: instance:
     let
-      provider = searchProviders.${instance.search.provider} or null;
-      searchEndpoint = if provider == null then null else provider.endpoint;
       entries = dashboardCatalog.${name};
     in
     instance

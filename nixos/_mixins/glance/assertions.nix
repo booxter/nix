@@ -22,17 +22,17 @@ in
         builtins.length instances == builtins.length (lib.unique (map (instance: instance.port) instances));
       message = "host.glance.instances must use unique ports";
     }
+    {
+      assertion = builtins.all (instance: instance.provider != null) instances;
+      message = "host.glance.search.provider must name a site search provider";
+    }
+    {
+      assertion = builtins.all (instance: instance.searchEndpoint != null) instances;
+      message = "host.glance.search.provider must expose a search endpoint";
+    }
   ]
   ++ builtins.concatLists (
     lib.mapAttrsToList (name: instance: [
-      {
-        assertion = instance.provider != null;
-        message = "host.glance.instances.${name}.search.provider must name a site search provider";
-      }
-      {
-        assertion = instance.searchEndpoint != null;
-        message = "host.glance.instances.${name} requires a search endpoint compatible with its scope";
-      }
       {
         assertion =
           builtins.length instance.sections

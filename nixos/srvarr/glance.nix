@@ -16,16 +16,16 @@ let
   ];
 in
 {
+  host.glance.search.provider = "degoog";
+
   host.glance.instances = {
     internal = {
       port = 18080;
-      search.provider = "degoog";
       sections = dashboardSections;
     };
 
     public = {
       port = 18081;
-      search.provider = "degoog";
       sections = builtins.filter (section: section.id == "user") dashboardSections;
     };
   };
