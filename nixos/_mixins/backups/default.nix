@@ -1,9 +1,9 @@
 {
   imports = [
-    ./artifacts
+    ./artifacts.nix
     ./assertions.nix
     ./client
-    ./metrics
+    ./metrics.nix
     ./server
     ./server/secrets.nix
     ./topology

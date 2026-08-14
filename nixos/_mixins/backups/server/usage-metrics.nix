@@ -19,7 +19,7 @@ let
     server
     ;
   enabled = b2Offloads != { };
-  resticTools = pkgs.callPackage ./pkgs/restic-tools {
+  resticTools = pkgs.callPackage ../pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   usageConfig = (pkgs.formats.json { }).generate "restic-cloud-usage.json" {

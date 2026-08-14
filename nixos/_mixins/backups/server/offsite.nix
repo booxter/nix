@@ -26,8 +26,8 @@ let
     sshRepositories
     ;
 
-  backupServerTools = pkgs.callPackage ./pkgs/backup-server-tools { };
-  resticTools = pkgs.callPackage ./pkgs/restic-tools {
+  backupServerTools = pkgs.callPackage ../pkgs/backup-server-tools { };
+  resticTools = pkgs.callPackage ../pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   command = executable: arguments: utils.escapeSystemdExecArgs ([ executable ] ++ arguments);

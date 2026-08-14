@@ -7,7 +7,7 @@
   ...
 }:
 let
-  model = import ../client/model.nix { inherit backupTopology config lib; };
+  model = import ./client/model.nix { inherit backupTopology config lib; };
   package = pkgs.callPackage ./pkgs/backup-artifact-tools { };
   databaseSources = builtins.filter (source: source.database != null) model.sourceEntries;
 

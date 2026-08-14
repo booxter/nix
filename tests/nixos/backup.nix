@@ -27,7 +27,7 @@ pkgs.testers.runNixOSTest {
   nodes = {
     server = {
       imports = [
-        ../../nixos/_mixins/backups/metrics
+        ../../nixos/_mixins/backups/metrics.nix
         ../../nixos/_mixins/backups/server
       ];
 
@@ -114,7 +114,7 @@ pkgs.testers.runNixOSTest {
         imports = [
           ../../nixos/_mixins/backups/client/options.nix
           ../../nixos/_mixins/backups/client/jobs.nix
-          ../../nixos/_mixins/backups/metrics
+          ../../nixos/_mixins/backups/metrics.nix
         ];
 
         _module.args.backupTopology.client.destination = {

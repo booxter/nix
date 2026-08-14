@@ -9,7 +9,7 @@
 let
   clientModel =
     if config.host.backups ? sources then
-      import ../client/model.nix { inherit backupTopology config lib; }
+      import ./client/model.nix { inherit backupTopology config lib; }
     else
       null;
   clientJob = if clientModel == null then null else clientModel.job;
