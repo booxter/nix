@@ -82,6 +82,19 @@ let
                                     background.border_width=0 \
                                     background.height=24
   '';
+  accountConfigs = {
+    personal = {
+      plugin = "codex";
+      executable = "codex-sketchybar";
+      script = personalScript;
+    };
+    corporate = {
+      plugin = "codex-corporate";
+      executable = "codex-work-sketchybar";
+      script = corporateScript;
+    };
+  };
+  accountConfig = accountConfigs.${codexCfg.usage.account};
 in
 {
   options.host.hm.sketchybar.codex = mkAppletOptions {
@@ -90,30 +103,22 @@ in
     defaultOrder = 300;
   };
 
-  config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = !cfg.enable || codexCfg.enable;
-          message = "host.hm.sketchybar.codex requires host.hm.dev.codex.";
-        }
-      ];
-    }
-    {
-      host.hm.sketchybar.internal.applets.codex = lib.mkIf cfg.enable {
-        inherit (cfg) position order;
-        plugins = [
-          (if codexCfg.usage.account == "personal" then "codex" else "codex-corporate")
-        ];
-        pluginPackages = {
-          ${if codexCfg.usage.account == "personal" then "codex" else "codex-corporate"} = {
-            package = codexTools;
-            executable =
-              if codexCfg.usage.account == "personal" then "codex-sketchybar" else "codex-work-sketchybar";
-          };
-        };
-        script = if codexCfg.usage.account == "personal" then personalScript else corporateScript;
+  config = {
+    assertions = [
+      {
+        assertion = !cfg.enable || codexCfg.enable;
+        message = "host.hm.sketchybar.codex requires host.hm.dev.codex.";
+      }
+    ];
+
+    host.hm.sketchybar.internal.applets.codex = lib.mkIf cfg.enable {
+      inherit (cfg) position order;
+      inherit (accountConfig) script;
+      plugins = [ accountConfig.plugin ];
+      pluginPackages.${accountConfig.plugin} = {
+        package = codexTools;
+        inherit (accountConfig) executable;
       };
-    }
-  ];
+    };
+  };
 }
