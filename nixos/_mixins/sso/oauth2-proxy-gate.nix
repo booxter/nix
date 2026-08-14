@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  webModel,
   ...
 }:
 let
@@ -197,7 +198,7 @@ let
         internalHttpsServiceNames = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
-          description = "host.internalHttps service names protected by this gate.";
+          description = "Internal web endpoint names protected by this gate.";
         };
 
         externalHostNames = lib.mkOption {
@@ -229,15 +230,17 @@ let
   enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
   internalHttpsServiceHosts =
-    serviceName:
+    endpointName:
     let
-      endpointName = config.host.web.services.${serviceName}.internal.endpointName;
+      service = webModel.internalEndpoints.${endpointName};
     in
     [
-      "${endpointName}.${config.host.network.lanDomain}"
+      service.internal.serverName
       endpointName
       "${endpointName}.local"
-    ];
+    ]
+    ++ service.internal.serverAliases
+    ++ service.internal.publicAliases;
   originUrlsFor =
     gate:
     if gate.externalOrigin != null then
@@ -379,14 +382,14 @@ let
   # Normal service surfaces that should receive OAuth locations. Example:
   # `search` expands to `internal-https-search` and `search.ihar.dev`.
   internalServiceVhostNames =
-    serviceName:
+    endpointName:
     let
-      service = config.host.internalHttps.services.${serviceName};
+      service = webModel.internalEndpoints.${endpointName};
     in
     [
-      "internal-https-${serviceName}"
+      "internal-https-${service.internal.endpointName}"
     ]
-    ++ service.publicAliases;
+    ++ service.internal.publicAliases;
   # OAuth-protected internal HTTPS vhosts. Example: this installs `/oauth2/`,
   # `= /oauth2/auth`, and protected app locations on `internal-https-search`
   # and on its public sibling `search.ihar.dev`.
@@ -394,14 +397,20 @@ let
     gate:
     builtins.listToAttrs (
       builtins.concatMap (
-        serviceName:
+        endpointName:
+        let
+          service = webModel.internalEndpoints.${endpointName};
+          locations = lib.recursiveUpdate (locationsFor gate endpointName) {
+            ${service.internal.path}.extraConfig = authRequestLocationConfig gate;
+          };
+        in
         map (vhostName: {
           name = vhostName;
-          value.locations = locationsFor gate serviceName;
-        }) (internalServiceVhostNames serviceName)
+          value = { inherit locations; };
+        }) (internalServiceVhostNames endpointName)
       ) gate.internalHttpsServiceNames
     );
-  # Public vhosts owned by host.externalService instead of host.internalHttps.
+  # Public vhosts owned by host.externalService instead of the internal web renderer.
   # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
   protectedExternalVhostsFor =
     gate:
@@ -469,21 +478,6 @@ in
         restartUnits = [ "${gate.serviceName}.service" ];
       }
     ) enabledGates;
-
-    host.internalHttps.services = lib.mkMerge (
-      builtins.concatLists (
-        map (gate: [
-          (lib.genAttrs gate.internalHttpsServiceNames (_: {
-            locationExtraConfig = authRequestLocationConfig gate;
-          }))
-          # Backend probe bypasses intentionally use a separate listener instead
-          # of the normal service vhost. Public ingress forwards to the internal
-          # service name, so attaching these locations to :443 would expose them
-          # through browser-facing hostnames such as search.ihar.dev.
-          (probeHelpers.enableAttrsFor gate)
-        ]) (builtins.attrValues enabledGates)
-      )
-    );
 
     host.externalService.virtualHosts = lib.mkMerge (
       map (

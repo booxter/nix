@@ -32,6 +32,7 @@ in
   imports = [
     ./api.nix
     ./assertions.nix
+    ./internal-https.nix
     ./ingress
   ];
 
@@ -524,39 +525,13 @@ in
       _module.args.fleetWebServices = import ../../_lib/fleet-web-services.nix {
         inherit config lib outputs;
       };
+      _module.args.webModel = import ./model.nix { inherit config lib; };
 
       host.network.stableAddress.requiredBy = lib.optional (
         internalServices != { }
       ) "internal web service DNS";
 
     }
-
-    (lib.mkIf (internalServices != { }) {
-      host.internalHttps.services = lib.mapAttrs' (
-        _: service:
-        lib.nameValuePair service.internal.endpointName {
-          inherit (service) upstream;
-          inherit (service.internal)
-            listenAddress
-            localAliases
-            locationExtraConfig
-            openFirewall
-            path
-            port
-            proxyWebsockets
-            recommendedProxySettings
-            secretPrefix
-            serverName
-            ;
-          serverAliases = service.internal.aliases;
-          publicAliases =
-            service.internal.publicAliases
-            ++ lib.optional (service.public != null && service.public.serveOnOwner) service.public.hostName;
-          mtls = if service.internal.clientAuth == "mtls" then { } else null;
-          probe = if service.health.backend.enable then { inherit (service.health.backend) port; } else null;
-        }
-      ) internalServices;
-    })
 
     (lib.mkIf (enabledMetrics != { }) {
       host.observability.prometheusEndpoints = lib.mapAttrs (_: metric: {

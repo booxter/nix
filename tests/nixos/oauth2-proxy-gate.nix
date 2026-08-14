@@ -113,11 +113,6 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.internalHttps.services = lib.mkOption {
-          type = lib.types.attrsOf lib.types.anything;
-          default = { };
-        };
-
         host.network.stableAddress.requiredBy = lib.mkOption {
           type = lib.types.listOf lib.types.nonEmptyStr;
           default = [ ];
@@ -151,6 +146,8 @@ pkgs.testers.runNixOSTest {
       };
 
       config = {
+        _module.args.webModel.internalEndpoints = { };
+
         host.network.lanDomain = "example.invalid";
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";

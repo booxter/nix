@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  webModel,
   ...
 }:
 let
   aliasAddress = config.host.network.ipAddress;
-  aliases = config.host.internalHttps.localAliases;
+  aliases = webModel.localAliases;
   aliasService = alias: {
     name = "avahi-alias-${alias}";
     value = {
