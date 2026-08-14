@@ -79,7 +79,7 @@ pkgs.testers.runNixOSTest {
 
           realm = lib.mkOption {
             type = lib.types.str;
-            default = "test";
+            default = "home";
           };
 
           observability.lanWan = {
@@ -143,10 +143,9 @@ pkgs.testers.runNixOSTest {
         };
 
         host.observability = {
-          enable = true;
           nodeExporter.mtls.enable = false;
           blackbox = {
-            remote.enable = true;
+            remote = { };
             modules.http_created = {
               http = {
                 preferred_ip_protocol = "ip4";
@@ -158,7 +157,13 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.pki.clients.loki.enable = false;
+        host.pki.clients.loki = {
+          enable = false;
+          materializations.default = {
+            certificatePath = "${testPki}/client.crt";
+            keyPath = "${testPki}/client.key";
+          };
+        };
 
         sops.secrets = {
           "prometheus-mtls-blackbox-server-crt".path = "${testPki}/server.crt";

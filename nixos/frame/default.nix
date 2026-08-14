@@ -62,7 +62,7 @@ in
     network.interfaces.enp191s0 = { };
     observability = {
       alertmanagerWatchdog.enable = true;
-      blackbox.remote.enable = true;
+      blackbox.remote = { };
     };
     ollama = {
       enable = true;

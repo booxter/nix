@@ -53,7 +53,7 @@
         username = "ihrachyshka";
       };
     };
-    observability.blackbox.remote.enable = true;
+    observability.blackbox.remote = { };
 
     lolek.enable = true;
     watchstate = {
