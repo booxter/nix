@@ -2,11 +2,9 @@
   config,
   lib,
   outputs,
-  system,
   ...
 }:
 let
-  isLinux = lib.hasSuffix "-linux" system;
   model = import ./model.nix {
     inherit
       config
@@ -118,7 +116,7 @@ in
           "kvm"
           "nixos-test"
         ]
-        ++ lib.optionals isLinux [
+        ++ lib.optionals config.nixpkgs.hostPlatform.isLinux [
           "devnet"
           "uid-range"
         ];
