@@ -1,5 +1,6 @@
 {
   config,
+  fleetWebServices,
   lib,
   outputs,
   pkgs,
@@ -45,6 +46,7 @@ let
   blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
+      fleetWebServices
       lib
       observabilityInventory
       outputs
