@@ -6,9 +6,9 @@
   ...
 }:
 let
-  pauseFrameInterfaces = builtins.attrNames (
-    lib.filterAttrs (_: interface: interface.disablePauseFrames) config.host.network.interfaces
-  );
+  pauseFrameInterfaces = lib.filterAttrs (
+    _: interface: interface.disablePauseFrames
+  ) config.host.network.interfaces;
   mkService = interface: {
     description = "Disable Ethernet pause frames on ${interface}";
     after = [ "network-pre.target" ];
@@ -38,10 +38,7 @@ in
     clientid ${config.networking.hostName}
   '';
 
-  systemd.services = builtins.listToAttrs (
-    map (interface: {
-      name = "ethtool-${interface}-disable-pause";
-      value = mkService interface;
-    }) pauseFrameInterfaces
-  );
+  systemd.services = lib.mapAttrs' (
+    interface: _: lib.nameValuePair "ethtool-${interface}-disable-pause" (mkService interface)
+  ) pauseFrameInterfaces;
 }
