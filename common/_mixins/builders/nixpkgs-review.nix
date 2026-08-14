@@ -8,9 +8,16 @@ let
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
   formatBuilder =
     name: builder:
-    "${builder.protocol}://${builder.sshUser}@${name} ${formatList builder.systems} "
-    + "${builder.sshKey} ${toString builder.maxJobs} ${toString builder.speedFactor} "
-    + "${formatList builder.supportedFeatures} - -";
+    lib.concatMapStringsSep " " toString [
+      "${builder.protocol}://${builder.sshUser}@${name}"
+      (formatList builder.systems)
+      builder.sshKey
+      builder.maxJobs
+      builder.speedFactor
+      (formatList builder.supportedFeatures)
+      "-"
+      "-"
+    ];
   builderString = lib.concatStringsSep " ; " (lib.mapAttrsToList formatBuilder builders);
 in
 {
