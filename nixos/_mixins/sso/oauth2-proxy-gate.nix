@@ -99,12 +99,6 @@ let
           description = "Internal web endpoint names protected by this gate.";
         };
 
-        extraLocationsByName = lib.mkOption {
-          type = with lib.types; attrsOf (attrsOf anything);
-          default = { };
-          description = "Extra nginx locations added to one protected internal service or external hostname.";
-        };
-
       };
     };
 
@@ -113,6 +107,7 @@ let
   serviceNameFor = gateName: "oauth2-proxy-${gateName}";
   safeName = name: lib.replaceStrings [ "-" ] [ "_" ] (lib.toLower name);
   httpAddressFor = gate: "http://127.0.0.1:${toString gate.port}";
+  logoutCompletePath = "/oauth2/logout-complete";
   internalHttpsServiceHosts =
     endpointName:
     let
@@ -281,8 +276,36 @@ let
       };
     };
 
+  sessionClearLocations =
+    gate: endpointName:
+    let
+      paths = webModel.internalEndpoints.${endpointName}.auth.sessionClearPaths;
+    in
+    lib.optionalAttrs (paths != [ ]) (
+      builtins.listToAttrs (
+        map (path: {
+          name = "= ${path}";
+          value = {
+            proxyPass = "${httpAddressFor gate}/oauth2/sign_out?rd=${logoutCompletePath}";
+            recommendedProxySettings = true;
+            extraConfig = ''
+              auth_request off;
+            '';
+          };
+        }) paths
+      )
+      // {
+        "= ${logoutCompletePath}" = {
+          return = "204";
+          extraConfig = ''
+            auth_request off;
+          '';
+        };
+      }
+    );
+
   locationsFor =
-    gate: name: (oauth2ProxyLocations gate) // (gate.extraLocationsByName.${name} or { });
+    gate: endpointName: (oauth2ProxyLocations gate) // (sessionClearLocations gate endpointName);
   # Normal service surfaces that should receive OAuth locations. Example:
   # `search` expands to `internal-https-search` and `search.ihar.dev`.
   internalServiceVhostNames =
