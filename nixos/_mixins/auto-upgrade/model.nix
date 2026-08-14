@@ -41,9 +41,10 @@ let
     inherit (hostConfig.host.autoUpgrade) claims;
   };
   configurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  hosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
+  allHosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
     ${localHost} = hostView config;
   };
+  hosts = lib.filterAttrs (_: host: host.realm == config.host.realm) allHosts;
   hostNames = builtins.attrNames hosts;
   allWeekdays = [
     "Mon"
