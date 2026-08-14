@@ -8,23 +8,23 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf (cfg.enable && model.vpnNamespace != null) {
+  config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     host.vpn.clients.sabnzbd = {
-      namespace = cfg.vpn.namespace;
-      bridgeTcpPorts = [ cfg.port ];
+      namespace = "wg";
+      bridgeTcpPorts = [ 6336 ];
     };
 
-    services.nginx.virtualHosts."127.0.0.1:${toString cfg.port}" = {
+    services.nginx.virtualHosts."127.0.0.1:6336" = {
       listen = lib.mkForce [
         {
           addr = "127.0.0.1";
-          port = cfg.port;
+          port = 6336;
         }
       ];
       locations."/" = {
         recommendedProxySettings = true;
         proxyWebsockets = true;
-        proxyPass = lib.mkForce "http://${model.vpnNamespace.namespaceAddress}:${toString cfg.port}";
+        proxyPass = lib.mkForce "http://${model.vpnNamespace.namespaceAddress}:6336";
       };
     };
   };

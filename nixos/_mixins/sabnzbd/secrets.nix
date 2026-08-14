@@ -22,23 +22,23 @@ let
   ) (builtins.attrNames cfg.servers);
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets = lib.genAttrs (
       [
-        cfg.secrets.apiKey
-        cfg.secrets.nzbKey
+        "sabnzbd/apiKey"
+        "sabnzbd/nzbKey"
       ]
       ++ serverSecretNames
     ) (_: { });
 
     sops.templates."sabnzbd-secret.ini" = {
-      owner = cfg.user;
-      group = cfg.group;
+      owner = "sabnzbd";
+      group = "media";
       mode = "0400";
       content = ''
         [misc]
-        api_key = ${builtins.getAttr cfg.secrets.apiKey config.sops.placeholder}
-        nzb_key = ${builtins.getAttr cfg.secrets.nzbKey config.sops.placeholder}
+        api_key = ${config.sops.placeholder."sabnzbd/apiKey"}
+        nzb_key = ${config.sops.placeholder."sabnzbd/nzbKey"}
 
         [servers]
         ${serverSecretIni}

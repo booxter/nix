@@ -7,7 +7,7 @@ let
   model = sabnzbdModel;
 in
 {
-  config = lib.mkIf (model.cfg.enable && model.identity != null) {
-    users.users.${model.cfg.user}.uid = model.identity.uid;
+  config = lib.mkIf (model.cfg != null && model.identity != null) {
+    users.users.sabnzbd.uid = model.identity.uid;
   };
 }

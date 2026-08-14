@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   sabnzbdModel,
   ...
 }:
@@ -15,24 +16,24 @@ let
       "sabnzbd.local"
     ];
     mediaDir = model.claim.mountPoint;
-    port = cfg.port;
+    port = 6336;
     vpnNamespaceAddress = model.vpnNamespace.namespaceAddress;
   };
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready && model.storageGroup == cfg.group) {
+  config = lib.mkIf (cfg != null && model.ready && model.storageGroup == "media") {
     services.sabnzbd = {
       enable = true;
-      package = cfg.package;
+      package = pkgs.sabnzbd;
       allowConfigWrite = false;
       configFile = null;
-      group = cfg.group;
+      group = "media";
       secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
       settings = baseSettings // {
         categories = baseSettings.categories // model.routeCategories;
         inherit (model) servers;
       };
-      user = cfg.user;
+      user = "sabnzbd";
     };
 
     systemd.services.sabnzbd.serviceConfig.Restart = "on-failure";

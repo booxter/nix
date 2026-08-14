@@ -6,11 +6,11 @@
 }:
 let
   cfg = config.host.sabnzbd;
-  claim = storageModel.localClaims.${cfg.storage.claim} or null;
+  claim = storageModel.localClaims.media or null;
   storageResource = if claim == null then null else claim.resolvedResource;
-  identity = storageIdentities.users.${cfg.user} or null;
-  vpnNamespace = config.host.vpn.namespaces.${cfg.vpn.namespace} or null;
-  baseDir = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
+  identity = storageIdentities.users.sabnzbd or null;
+  vpnNamespace = config.host.vpn.namespaces.wg or null;
+  baseDir = if claim == null then null else "${claim.mountPoint}/usenet";
   downloadModel = import ../downloads/model.nix { inherit config lib; };
   routes = lib.filterAttrs (_: route: route.clientName == "sabnzbd") downloadModel.routes;
   routeCategories = lib.mapAttrs' (

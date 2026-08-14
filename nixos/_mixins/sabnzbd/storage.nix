@@ -8,16 +8,15 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf cfg.enable {
-    host.sabnzbd.completeDir = model.completeDir;
-    host.storage.claims.${cfg.storage.claim} = {
+  config = lib.mkIf (cfg != null) {
+    host.storage.claims.media = {
       directories =
         builtins.listToAttrs (
           map
             (path: {
-              name = "${cfg.storage.relativePath}/${path}";
+              name = "usenet/${path}";
               value = {
-                owner = cfg.user;
+                owner = "sabnzbd";
                 mode = "0775";
               };
             })
@@ -30,12 +29,12 @@ in
             ]
         )
         // {
-          ${cfg.storage.relativePath} = {
-            owner = cfg.user;
+          usenet = {
+            owner = "sabnzbd";
             mode = "0755";
           };
-          "${cfg.storage.relativePath}/.incomplete" = {
-            owner = cfg.user;
+          "usenet/.incomplete" = {
+            owner = "sabnzbd";
             mode = "0755";
           };
         };

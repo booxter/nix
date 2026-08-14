@@ -4,14 +4,14 @@ let
   exporterPort = 19387;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.metrics.enable) {
+  config = lib.mkIf (cfg != null) {
     sops.templates."sabnzbd-exporter.apikey" = {
       owner = "root";
       group = "root";
       mode = "0400";
       restartUnits = [ "prometheus-sabnzbd-exporter.service" ];
       content = ''
-        ${builtins.getAttr cfg.secrets.apiKey config.sops.placeholder}
+        ${config.sops.placeholder."sabnzbd/apiKey"}
       '';
     };
 
@@ -26,7 +26,7 @@ in
       port = exporterPort;
       servers = [
         {
-          baseUrl = "http://127.0.0.1:${toString cfg.port}";
+          baseUrl = "http://127.0.0.1:6336";
           apiKeyFile = config.sops.templates."sabnzbd-exporter.apikey".path;
         }
       ];

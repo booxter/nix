@@ -1,16 +1,6 @@
 { ... }:
 {
   host.sabnzbd = {
-    enable = true;
-    port = 6336;
-
-    storage = {
-      claim = "media";
-      relativePath = "usenet";
-    };
-
-    vpn.namespace = "wg";
-
     servers = {
       "news.frugalusenet.com" = {
         connections = 75;

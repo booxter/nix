@@ -17,7 +17,7 @@ let
   allowedRoots = [
     "${mediaDir}/torrents"
   ]
-  ++ lib.optional config.host.sabnzbd.enable config.host.sabnzbd.completeDir;
+  ++ lib.optional (config.host.sabnzbd != null) "${mediaDir}/usenet/manual";
   serviceDeps = [
     "lidarr.service"
     "network-online.target"
