@@ -55,9 +55,9 @@ in
       postSourceCaption = true;
       postRequesterCaption = true;
       galleryDownloadEnabled = true;
+      maxGalleryMedia = 20;
       environment = {
         LOLEK_GALLERY_DL_COOKIES_FILE = galleryCookiesSecret.path;
-        LOLEK_MAX_GALLERY_MEDIA = "20";
         # TODO: Use a first-class upstream module option once lolek exposes one.
         LOLEK_YT_DLP_COOKIES_FILE = galleryCookiesSecret.path;
       };
