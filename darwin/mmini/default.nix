@@ -14,7 +14,7 @@ in
 
   home-manager.users.${config.host.username}.host.hm.env.preset = "personal";
 
-  host.network.interfaces.en0.kind = "ethernet";
+  host.network.interfaces.en0 = { };
 
   host.remote-control = {
     client = {

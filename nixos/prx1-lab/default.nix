@@ -15,10 +15,7 @@
     cluster = "lab";
     controller = true;
   };
-  host.network = {
-    interfaces.enp5s0f0np0.kind = "ethernet";
-    primaryInterface = "enp5s0f0np0";
-  };
+  host.network.interfaces.enp5s0f0np0 = { };
   host.ups = {
     server = {
       description = "APC UPS 1500VA";

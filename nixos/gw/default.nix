@@ -5,10 +5,7 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.network = {
-    interfaces.ens18.kind = "ethernet";
-    primaryInterface = "ens18";
-  };
+  host.network.interfaces.ens18 = { };
 
   host.proxmox.guest = {
     cluster = "lab";

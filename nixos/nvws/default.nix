@@ -18,10 +18,7 @@ in
       cluster = "nvws";
       controller = true;
     };
-    network = {
-      interfaces.enp3s0f0.kind = "ethernet";
-      primaryInterface = "enp3s0f0";
-    };
+    network.interfaces.enp3s0f0 = { };
   };
   host.ups = {
     server = {

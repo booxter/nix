@@ -32,6 +32,7 @@
                 "ethernet"
                 "wireless"
               ];
+              default = "ethernet";
               description = "Network interface kind.";
             };
 
@@ -49,7 +50,11 @@
 
     primaryInterface = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = null;
+      default =
+        let
+          interfaces = builtins.attrNames config.host.network.interfaces;
+        in
+        if builtins.length interfaces == 1 then builtins.head interfaces else null;
       description = "Declared interface used as the primary interface for host services.";
     };
 

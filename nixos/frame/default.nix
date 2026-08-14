@@ -59,10 +59,7 @@ in
         collector.enable = true;
       };
     };
-    network = {
-      interfaces.enp191s0.kind = "ethernet";
-      primaryInterface = "enp191s0";
-    };
+    network.interfaces.enp191s0 = { };
     observability = {
       alertmanagerWatchdog.enable = true;
       blackbox.remote.enable = true;

@@ -19,14 +19,8 @@
 
     network = {
       interfaces = {
-        enp6s0 = {
-          kind = "ethernet";
-          disablePauseFrames = true;
-        };
-        enp7s0 = {
-          kind = "ethernet";
-          disablePauseFrames = true;
-        };
+        enp6s0.disablePauseFrames = true;
+        enp7s0.disablePauseFrames = true;
       };
       primaryInterface = "enp6s0";
     };

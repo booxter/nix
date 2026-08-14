@@ -21,7 +21,7 @@ in
   host.hardware.isLaptop = true;
   host.network.interfaces = {
     en0.kind = "wireless";
-    en7.kind = "ethernet";
+    en7 = { };
   };
   host.nix.builder.client.enable = true;
   host.security.secrets.operator.ageIdentity = {
