@@ -53,15 +53,35 @@ pkgs.testers.runNixOSTest {
       host.backups.server = {
         repositoryRoot = "/srv/restic";
       };
-      host.backups.internal.server.repositories.test = {
-        publicKey = clientPublicKey;
-        cloud = {
-          backend = "local";
-          enable = true;
-          repository = "/srv/cloud/test";
-          sourcePasswordFile = "/etc/backup-test/password";
-          passwordFile = "/etc/backup-test/password";
-          timerConfig.OnCalendar = "2099-01-01";
+      _module.args.backupTopology.server = {
+        localClient = null;
+        repositories.test = {
+          storageName = "test";
+          publicKey = clientPublicKey;
+          cloud = {
+            backend = "local";
+            enable = true;
+            repository = "/srv/cloud/test";
+            sourcePasswordFile = "/etc/backup-test/password";
+            passwordFile = "/etc/backup-test/password";
+            storageProvider = null;
+            prefix = "";
+            pruneOpts = [
+              "--keep-daily=14"
+              "--keep-weekly=8"
+              "--keep-monthly=12"
+            ];
+            timerConfig = {
+              OnCalendar = "2099-01-01";
+              RandomizedDelaySec = "5m";
+              Persistent = true;
+            };
+            pruneTimerConfig = {
+              OnCalendar = "Sun *-*-* 07:00:00";
+              RandomizedDelaySec = "5m";
+              Persistent = true;
+            };
+          };
         };
       };
 

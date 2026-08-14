@@ -1,7 +1,11 @@
-{ config, lib }:
+{
+  backupTopology,
+  config,
+  lib,
+}:
 let
   server = config.host.backups.server;
-  cfg = if server == null then null else server // config.host.backups.internal.server;
+  cfg = if server == null then null else server // backupTopology.server;
 in
 rec {
   inherit cfg server;

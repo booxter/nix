@@ -1,6 +1,11 @@
-{ config, lib, ... }:
+{
+  backupTopology,
+  config,
+  lib,
+  ...
+}:
 let
-  model = import ./model.nix { inherit config lib; };
+  model = import ./model.nix { inherit backupTopology config lib; };
   inherit (model)
     jobNameFor
     outputCoveredByJob

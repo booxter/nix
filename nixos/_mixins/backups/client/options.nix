@@ -25,20 +25,6 @@ let
     };
   };
 
-  resolvedDestinationModule = {
-    options = {
-      transport = lib.mkOption {
-        type = lib.types.enum [
-          "local"
-          "sftp"
-        ];
-      };
-      repositoryPath = lib.mkOption { type = lib.types.str; };
-      ingestUser = lib.mkOption { type = lib.types.str; };
-      user = lib.mkOption { type = lib.types.str; };
-    };
-  };
-
   extraCopyModule = {
     options = {
       source = lib.mkOption { type = lib.types.str; };
@@ -150,13 +136,6 @@ in
       type = with lib.types; nullOr (submodule destinationRequestModule);
       default = null;
       description = "Backup repository consumed by this host.";
-    };
-
-    internal.destination = lib.mkOption {
-      type = with lib.types; nullOr (submodule resolvedDestinationModule);
-      default = null;
-      internal = true;
-      description = "Fleet-resolved runtime destination data.";
     };
 
     sources = lib.mkOption {

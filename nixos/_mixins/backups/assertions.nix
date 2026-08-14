@@ -1,8 +1,13 @@
-{ config, lib, ... }:
+{
+  backupTopology,
+  config,
+  lib,
+  ...
+}:
 let
   cfg = config.host.backups;
   inherit (cfg) jobs;
-  server = if cfg.server == null then null else cfg.server // cfg.internal.server;
+  server = if cfg.server == null then null else cfg.server // backupTopology.server;
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   preparationPaths =
     job: lib.concatMap (preparation: preparation.paths) (builtins.attrValues job.preparations);

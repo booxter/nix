@@ -1,4 +1,5 @@
 {
+  backupTopology,
   config,
   lib,
   pkgs,
@@ -6,7 +7,7 @@
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib; };
+  model = import ./model.nix { inherit backupTopology config lib; };
   inherit (model)
     applicationKeyFile
     applicationKeyIdFile

@@ -1,4 +1,8 @@
-{ config, lib }:
+{
+  backupTopology,
+  config,
+  lib,
+}:
 let
   hostName = config.networking.hostName;
   cfg = config.host.backups;
@@ -9,8 +13,8 @@ rec {
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   sourceEntries = lib.mapAttrsToList (name: source: source // { inherit name; }) sources;
   destination =
-    if cfg.destination != null && cfg.internal.destination != null then
-      cfg.destination // cfg.internal.destination
+    if cfg.destination != null && backupTopology.client.destination != null then
+      cfg.destination // backupTopology.client.destination
     else
       null;
 

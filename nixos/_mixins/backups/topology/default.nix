@@ -6,39 +6,15 @@
 }:
 let
   backups = config.host.backups;
-  hostName = config.networking.hostName;
-  configurations = outputs.nixosConfigurations // {
-    ${hostName}.config = config;
-  };
-
-  client = import ./client.nix {
-    inherit
-      backups
-      configurations
-      hostName
-      lib
-      ;
-  };
-  server = import ./server.nix {
-    inherit
-      backups
-      config
-      configurations
-      hostName
-      lib
-      ;
-  };
+  topology = import ./model.nix { inherit config lib outputs; };
+  inherit (topology) client server;
 
   qosEnabled = backups.server != null && backups.server.offsite != null && backups.server.offsite.qos;
 in
 {
   config = lib.mkMerge [
     {
-      host.backups.internal.destination = client.destination;
-
-      host.backups.internal.server = {
-        inherit (server) localClient repositories;
-      };
+      _module.args.backupTopology = topology;
 
       host.qos.interfaces.wan = lib.mkIf qosEnabled {
         device = config.host.network.primaryInterface;
