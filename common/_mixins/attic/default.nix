@@ -49,14 +49,6 @@ in
   ++ lib.optional isDarwin ./darwin-client.nix;
 
   options.host.attic = {
-    client = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = model.realmServers != { };
-        description = "Whether to upload new Nix store paths to the realm's Attic servers.";
-      };
-    };
-
     server = {
       enable = lib.mkEnableOption "an Attic binary cache server";
 
@@ -108,7 +100,7 @@ in
 
   config = {
     environment.systemPackages = lib.optional (
-      config.host.attic.client.enable || config.host.attic.server.enable
+      config.host.attic.realmServers != { } || config.host.attic.server.enable
     ) pkgs.attic-client;
 
     host.nix.cacheContributions.${config.networking.hostName} =

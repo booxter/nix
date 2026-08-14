@@ -9,9 +9,5 @@
       assertion = !config.host.attic.server.enable || config.host.attic.server.trustedPublicKey != null;
       message = "Attic server '${config.networking.hostName}' must declare its Nix signing public key";
     }
-    {
-      assertion = !config.host.attic.client.enable || config.host.attic.realmServers != { };
-      message = "realm '${config.host.realm}' has no Attic servers";
-    }
   ];
 }

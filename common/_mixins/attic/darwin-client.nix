@@ -10,7 +10,7 @@ let
   servers = config.host.attic.realmServers;
 in
 {
-  config = lib.mkIf config.host.attic.client.enable {
+  config = lib.mkIf (servers != { }) {
     launchd.daemons = lib.mapAttrs' (
       name: server:
       lib.nameValuePair "attic-watch-store-${name}" {

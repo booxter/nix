@@ -4,7 +4,6 @@
   ...
 }:
 let
-  cfg = config.host.attic.client;
   servers = config.host.attic.realmServers;
   serverNames = builtins.attrNames servers;
   serverConfig = lib.concatStringsSep "\n" (
@@ -16,7 +15,7 @@ let
   );
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (servers != { }) {
     sops = {
       secrets."attic/token" = { };
       templates."attic-client-config.toml" = {
