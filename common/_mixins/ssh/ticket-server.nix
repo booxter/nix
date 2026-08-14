@@ -6,8 +6,7 @@
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
-  isLinux = lib.hasSuffix "-linux" system;
+  inherit (lib.systems.elaborate system) isDarwin isLinux;
   username = config.host.username;
   tickets = config.host.ssh.tickets;
   enabled = tickets.trustedCaPublicKeys != [ ];
