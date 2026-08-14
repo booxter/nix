@@ -1,10 +1,14 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   cfg = config.host.lidarr;
+  package = pkgs.callPackage ./pkgs/lidarr-cue-splitter {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
   mediaDir = config.host.storage.claims.media.mountPoint;
   workRoot = "${mediaDir}/.cue-splitter-work";
   stateDir = "/var/lib/lidarr-cue-splitter";
@@ -38,7 +42,7 @@ in
       serviceConfig = {
         ExecStart = lib.escapeShellArgs (
           [
-            (lib.getExe cfg.cueSplitter.package)
+            (lib.getExe package)
             "--lidarr-url"
             "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
             "--lidarr-config"

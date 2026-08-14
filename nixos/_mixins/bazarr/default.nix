@@ -7,8 +7,11 @@
 }:
 let
   cfg = config.host.bazarr;
+  authConfigPackage = pkgs.callPackage ./package {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
   enforceAuthCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe cfg.authConfigPackage)
+    (lib.getExe authConfigPackage)
     "--config"
     "${cfg.stateDir}/config/config.yaml"
     "--uid"
@@ -24,14 +27,6 @@ in
     stateDir = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "/var/lib/bazarr";
-    };
-
-    authConfigPackage = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.callPackage ./package {
-        atomicFileWrites = pkgs.atomic-file-writes;
-      };
-      internal = true;
     };
 
     user = lib.mkOption {

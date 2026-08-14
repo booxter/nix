@@ -1,6 +1,12 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.host.radarr;
+  package = pkgs.callPackage ./pkgs/letterboxd-list-radarr { };
   port = 5000;
   redisPort = 6381;
   redisService = "redis-letterboxd-list-radarr.service";
@@ -35,7 +41,7 @@ in
         REDIS_URL = "redis://127.0.0.1:${toString redisPort}/0";
       };
       serviceConfig = {
-        ExecStart = lib.getExe cfg.letterboxdList.package;
+        ExecStart = lib.getExe package;
         DynamicUser = true;
         Restart = "on-failure";
         RestartSec = "5s";
