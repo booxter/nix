@@ -9,6 +9,11 @@ let
   lokiClient = config.host.observability.loki.client;
   stateDir = "/var/lib/grafana-alloy";
   hostLabel = config.networking.hostName;
+  fileGlobs = [
+    "/var/log/*.log"
+    "/var/log/nix-darwin/*.log"
+    "/private/var/lib/prometheus-node-exporter/*.log"
+  ];
   renderLabelMap =
     labels:
     "{ ${
@@ -16,15 +21,11 @@ let
         lib.mapAttrsToList (name: value: "${builtins.toJSON name} = ${builtins.toJSON value}") labels
       )
     } }";
-  logTargets = map (
-    path:
-    {
-      "__path__" = path;
-      job = cfg.jobName;
-      host = hostLabel;
-    }
-    // cfg.extraLabels
-  ) cfg.fileGlobs;
+  logTargets = map (path: {
+    "__path__" = path;
+    job = "darwin-file-log";
+    host = hostLabel;
+  }) fileGlobs;
   lokiTlsConfig = lib.optionalString (lokiClient != null) ''
     tls_config {
       ca_file = "${lokiClient.trustedCaCertificate}"
@@ -87,49 +88,7 @@ let
   '';
 in
 {
-  options.host.observability.logs = {
-    enable = lib.mkEnableOption "Darwin file log shipping to Loki";
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.grafana-alloy;
-      description = "Grafana Alloy package used to ship Darwin file logs.";
-    };
-
-    fileGlobs = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = [
-        "/var/log/*.log"
-        "/var/log/nix-darwin/*.log"
-        "/private/var/lib/prometheus-node-exporter/*.log"
-      ];
-      description = "Absolute file globs to tail and ship to Loki.";
-    };
-
-    jobName = lib.mkOption {
-      type = lib.types.str;
-      default = "darwin-file-log";
-      description = "Loki job label applied to Darwin file log entries.";
-    };
-
-    extraLabels = lib.mkOption {
-      type = with lib.types; attrsOf str;
-      default = { };
-      description = "Additional static Loki labels applied to Darwin file log entries.";
-    };
-
-    configFile = lib.mkOption {
-      type = lib.types.path;
-      default = alloyConfig;
-      description = "Generated Grafana Alloy configuration for Darwin file log shipping.";
-    };
-
-    httpListenAddress = lib.mkOption {
-      type = lib.types.str;
-      default = "127.0.0.1:12345";
-      description = "Grafana Alloy local HTTP listen address.";
-    };
-  };
+  options.host.observability.logs.enable = lib.mkEnableOption "Darwin file log shipping to Loki";
 
   config = lib.mkMerge [
     {
@@ -152,11 +111,11 @@ in
 
       launchd.daemons.grafana-alloy-logs = {
         command = lib.escapeShellArgs [
-          (lib.getExe cfg.package)
+          (lib.getExe pkgs.grafana-alloy)
           "run"
-          "--server.http.listen-addr=${cfg.httpListenAddress}"
+          "--server.http.listen-addr=127.0.0.1:12345"
           "--storage.path=${stateDir}"
-          cfg.configFile
+          alloyConfig
         ];
         serviceConfig = {
           RunAtLoad = true;
