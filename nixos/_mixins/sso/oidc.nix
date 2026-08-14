@@ -5,9 +5,14 @@
 }:
 let
   inherit (lib) mkOption types;
-  realmProvider = config.host.sso.realmProvider;
-  issuerBaseUrl = if realmProvider == null then null else realmProvider.publicUrl;
-  baseScopes = if realmProvider == null then [ ] else realmProvider.baseScopes;
+  providerHost = config.host.sso.providerHost;
+  issuerBaseUrl =
+    if providerHost == null then null else "https://id.${config.host.network.publicDomain}";
+  baseScopes = lib.optionals (providerHost != null) [
+    "openid"
+    "email"
+    "profile"
+  ];
   registrationType = types.submodule (
     { name, ... }:
     {

@@ -21,7 +21,7 @@ in
     diskGiB = 50;
   };
 
-  host.sso.role = "provider";
+  host.sso.provider.enable = true;
 
   host.observability.uptimeRobot.controller.enable = true;
 

@@ -1,6 +1,8 @@
 { config, lib, ... }:
 lib.mkIf (config.host.realm == "home") {
   host.sso = {
+    providerHost = "pki";
+
     applications = {
       audiobookshelf = {
         adminGroup = "media-admins";

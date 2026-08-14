@@ -9,9 +9,9 @@
 }:
 let
   sso = config.host.sso;
-  provider = sso.provider;
-  enabled = sso.role == "provider" && provider.backend == "kanidm";
-  idPublicHost = lib.removePrefix "https://" provider.publicUrl;
+  enabled = sso.provider.enable;
+  idPublicHost = "id.${config.host.network.publicDomain}";
+  publicUrl = "https://${idPublicHost}";
   oidcClients = import ./oidc-clients.nix {
     inherit lib outputs;
     inherit (config.host) realm;
@@ -86,8 +86,8 @@ let
   mailer = config.host.mailer;
   mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
     schedule = "*/30 * * * * * *";
-    instanceDisplayName = provider.displayName;
-    instanceUrl = provider.publicUrl;
+    instanceDisplayName = "SSO";
+    instanceUrl = publicUrl;
     mailFromAddress = mailer.address;
     mailReplyToAddress = mailer.address;
     mailRelay = mailer.relayHost;
@@ -120,7 +120,7 @@ in
 
     assertions = [
       {
-        assertion = !provider.mail.enable || mailer != null;
+        assertion = mailer != null;
         message = "Kanidm mail sender requires mailer policy for realm '${config.host.realm}'";
       }
       {
@@ -158,7 +158,7 @@ in
         mode = "0400";
         restartUnits = [ "kanidm.service" ];
       };
-      kanidmMailerPassword = lib.mkIf provider.mail.enable {
+      kanidmMailerPassword = {
         key = "kanidm/mailer/password";
         owner = mailSenderUser;
         group = mailSenderGroup;
@@ -235,7 +235,7 @@ in
         importance = "critical";
         externalProbe.requirement = "required";
       };
-      displayName = provider.displayName;
+      displayName = "SSO";
       dashboard.icon = "sh:kanidm";
       internal.locationExtraConfig = ''
         proxy_set_header Host ${idPublicHost};
@@ -250,14 +250,14 @@ in
 
     networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
 
-    users.users.${mailSenderUser} = lib.mkIf provider.mail.enable {
+    users.users.${mailSenderUser} = {
       isSystemUser = true;
       group = mailSenderGroup;
       home = mailSenderStateDir;
       createHome = false;
     };
 
-    users.groups.${mailSenderGroup} = lib.mkIf provider.mail.enable { };
+    users.groups.${mailSenderGroup} = { };
 
     systemd.services.kanidm = {
       requires = [ "${personMailProvisionService}.service" ];
@@ -291,7 +291,7 @@ in
       };
     };
 
-    systemd.services.kanidm-mail-sender-bootstrap = lib.mkIf provider.mail.enable {
+    systemd.services.kanidm-mail-sender-bootstrap = {
       description = "Bootstrap Kanidm mail sender service account";
       after = [
         "kanidm.service"
@@ -332,7 +332,7 @@ in
       };
     };
 
-    systemd.services.kanidm-mail-sender = lib.mkIf provider.mail.enable {
+    systemd.services.kanidm-mail-sender = {
       description = "Kanidm mail sender";
       wantedBy = [ "multi-user.target" ];
       restartTriggers = [

@@ -1,12 +1,15 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 let
   ssoPkgs = import ./pkgs {
     inherit pkgs;
-    providerInventory.${config.host.realm} = config.networking.hostName;
+    providerInventory = lib.optionalAttrs (config.host.sso.providerHost != null) {
+      ${config.host.realm} = config.host.sso.providerHost;
+    };
   };
 in
 {
@@ -16,8 +19,8 @@ in
 
   assertions = [
     {
-      assertion = config.host.sso.role != "provider" || config.nixpkgs.hostPlatform.isLinux;
-      message = "The realm SSO provider role requires NixOS.";
+      assertion = !config.host.sso.provider.enable || config.nixpkgs.hostPlatform.isLinux;
+      message = "The realm SSO provider requires NixOS.";
     }
   ];
 }
