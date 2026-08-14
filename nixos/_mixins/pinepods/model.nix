@@ -1,13 +1,11 @@
 {
   config,
-  lib,
-  outputs,
   pkgs,
+  storageModel,
 }:
 let
   cfg = config.host.pinepods;
-  storage = import ../storage/resources/model.nix { inherit config lib outputs; };
-  claim = storage.localClaims.${cfg.storage.claim} or null;
+  claim = storageModel.localClaims.${cfg.storage.claim} or null;
   ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
   bootstrapOwnerName = if ssoApplication == null then null else ssoApplication.bootstrapOwner;
   bootstrapOwner =
@@ -26,7 +24,11 @@ in
     ssoApplication
     ;
   downloadsDir = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
-  storageGroup = if claim == null then null else claim.resolvedResource.sharedGroup;
+  storageGroup =
+    if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then
+      null
+    else
+      claim.resolvedResource.directoryDefaults.group;
   service = config.host.web.services.pinepods;
   oidcClient = config.host.sso.oidc.clients.pinepods or null;
   oidcScopes = config.host.sso.oidc.baseScopes;

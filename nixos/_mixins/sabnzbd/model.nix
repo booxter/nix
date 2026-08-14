@@ -1,18 +1,14 @@
 {
   config,
   lib,
-  outputs,
+  storageIdentities ? import ../storage/identities.nix,
+  storageModel,
 }:
 let
   cfg = config.host.sabnzbd;
-  claim = config.host.storage.claims.${cfg.storage.claim} or null;
-  storageResource =
-    if claim == null then
-      null
-    else
-      outputs.nixosConfigurations.${claim.provider}.config.host.storage.resources.${claim.resource}
-        or null;
-  identity = config.host.storage.identities.users.${cfg.user} or null;
+  claim = storageModel.localClaims.${cfg.storage.claim} or null;
+  storageResource = if claim == null then null else claim.resolvedResource;
+  identity = storageIdentities.users.${cfg.user} or null;
   vpnNamespace = config.host.vpn.namespaces.${cfg.vpn.namespace} or null;
   baseDir = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
   downloadModel = import ../downloads/model.nix { inherit config lib; };
@@ -66,7 +62,11 @@ in
   completeDir = if baseDir == null then null else "${baseDir}/manual";
   watchDir = if baseDir == null then null else "${baseDir}/watch";
   incompleteDir = if baseDir == null then null else "${baseDir}/.incomplete";
-  storageGroup = if storageResource == null then null else storageResource.sharedGroup;
+  storageGroup =
+    if storageResource == null || storageResource.directoryDefaults.group == "root" then
+      null
+    else
+      storageResource.directoryDefaults.group;
   servers = lib.mapAttrs renderServer cfg.servers;
   ready = claim != null && identity != null && vpnNamespace != null;
 }

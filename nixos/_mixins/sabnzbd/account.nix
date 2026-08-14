@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  storageModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
+  model = import ./model.nix { inherit config lib storageModel; };
 in
 {
   config = lib.mkIf (model.cfg.enable && model.identity != null) {

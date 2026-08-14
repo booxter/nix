@@ -2,9 +2,10 @@
   config,
   lib,
   outputs,
+  storageIdentities,
 }:
 let
-  identities = config.host.storage.identities;
+  identities = storageIdentities;
   hostName = config.networking.hostName;
   nodeConfig = nodeConfig: {
     inherit (nodeConfig.host.storage) claims resources volumes;
@@ -96,7 +97,14 @@ let
           throw "storage resource ${resource.providerName}.${resource.resourceName} directory '${path}' references unknown owner '${ownerName}'";
     in
     {
-      inherit group owner path;
+      inherit
+        group
+        groupName
+        owner
+        ownerName
+        path
+        ;
+      inherit (resource) resourceName;
       mode = if directory.mode == null then defaults.mode else directory.mode;
       enforce = if directory.enforce == null then defaults.enforce else directory.enforce;
       absolutePath = if path == "." then resource.sourcePath else "${resource.sourcePath}/${path}";
@@ -109,6 +117,9 @@ let
   claimedDirectories = lib.concatMap (
     claim: lib.mapAttrsToList (normalizeDirectory claim.resolvedResource) claim.directories
   ) providedClaims;
+  localClaimDirectories = lib.concatMap (
+    claim: lib.mapAttrsToList (normalizeDirectory claim.resolvedResource) claim.directories
+  ) (builtins.attrValues localClaims);
   providedDirectories = resourceDirectories ++ claimedDirectories;
   directoriesByPath = lib.groupBy (directory: directory.absolutePath) providedDirectories;
   uniqueDirectories = map builtins.head (builtins.attrValues directoriesByPath);
@@ -116,13 +127,16 @@ let
     builtins.attrValues localResources
     ++ map (claim: claim.resolvedResource) (builtins.attrValues localClaims);
   identityGroupNames = lib.unique (
-    lib.concatMap (resource: resource.identities.groups) (builtins.attrValues localResources)
-    ++ lib.concatMap (
-      resource: lib.optional (resource.sharedGroup != null) resource.sharedGroup
-    ) participatingResources
+    builtins.filter (name: name != "root") (
+      map (resource: resource.directoryDefaults.group) participatingResources
+      ++ map (directory: directory.groupName) (providedDirectories ++ localClaimDirectories)
+    )
   );
   identityUserNames = lib.unique (
-    lib.concatMap (resource: resource.identities.users) (builtins.attrValues localResources)
+    builtins.filter (name: name != "root") (
+      map (resource: resource.directoryDefaults.owner) (builtins.attrValues localResources)
+      ++ map (directory: directory.ownerName) resourceDirectories
+    )
   );
   managedGroups = builtins.listToAttrs (
     map (name: {
@@ -135,18 +149,20 @@ let
       name:
       let
         identity = identities.users.${name};
+        resource = lib.findFirst (
+          candidate:
+          candidate.directoryDefaults.owner == name
+          || lib.any (
+            directory: directory.resourceName == candidate.resourceName && directory.ownerName == name
+          ) resourceDirectories
+        ) (throw "storage identity '${name}' has no owning resource") (builtins.attrValues localResources);
       in
       {
         inherit name;
         value = {
           isSystemUser = true;
           inherit (identity) group uid;
-          home =
-            localResources.${
-              lib.findFirst (
-                resourceName: builtins.elem name localResources.${resourceName}.identities.users
-              ) null (builtins.attrNames localResources)
-            }.sourcePath;
+          home = resource.sourcePath;
           createHome = false;
         };
       }

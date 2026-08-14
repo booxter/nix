@@ -16,7 +16,6 @@
     media = {
       volume = "bulk";
       relativePath = "Media";
-      sharedGroup = "media";
       directoryDefaults = {
         group = "media";
         mode = "2775";
@@ -28,7 +27,6 @@
         "library/books" = { };
         podcasts = { };
       };
-      identities.groups = [ "media" ];
       nfs = {
         fsid = 10;
       };
@@ -47,10 +45,6 @@
         owner = "paperless";
         group = "paperless";
         mode = "0750";
-      };
-      identities = {
-        groups = [ "paperless" ];
-        users = [ "paperless" ];
       };
       nfs = {
         fsid = 12;

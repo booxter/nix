@@ -1,8 +1,9 @@
 {
   imports = [
     ./btrfs
-    ./identities.nix
     ./resources
     ./volumes
   ];
+
+  _module.args.storageIdentities = import ./identities.nix;
 }

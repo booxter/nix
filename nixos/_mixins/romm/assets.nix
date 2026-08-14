@@ -1,8 +1,8 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageModel,
   utils,
   ...
 }:
@@ -11,8 +11,8 @@ let
     inherit
       config
       lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model) cfg;

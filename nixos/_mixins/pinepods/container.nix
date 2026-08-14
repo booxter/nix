@@ -1,17 +1,17 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageIdentities,
+  storageModel,
   ...
 }:
 let
   model = import ./model.nix {
     inherit
       config
-      lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model)
@@ -74,7 +74,7 @@ in
             DEBUG_MODE = lib.boolToString cfg.consoleLogging.enable;
             DEFAULT_LANGUAGE = "en";
             TZ = config.host.site.timeZone;
-            PUID = toString config.host.storage.identities.users.${cfg.user}.uid;
+            PUID = toString storageIdentities.users.${cfg.user}.uid;
             PGID = toString config.users.groups.${storageGroup}.gid;
 
             # Native and gPodder-compatible clients authenticate with a

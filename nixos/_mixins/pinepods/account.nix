@@ -1,17 +1,17 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageIdentities,
+  storageModel,
   ...
 }:
 let
   model = import ./model.nix {
     inherit
       config
-      lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model) cfg storageGroup;
@@ -22,7 +22,7 @@ in
       isSystemUser = true;
       group = storageGroup;
       home = "/var/empty";
-      uid = config.host.storage.identities.users.${cfg.user}.uid;
+      uid = storageIdentities.users.${cfg.user}.uid;
     };
   };
 }

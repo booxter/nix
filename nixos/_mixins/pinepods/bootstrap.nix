@@ -1,8 +1,8 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageModel,
   utils,
   ...
 }:
@@ -10,9 +10,8 @@ let
   model = import ./model.nix {
     inherit
       config
-      lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model) bootstrapOwner bootstrapOwnerName cfg;

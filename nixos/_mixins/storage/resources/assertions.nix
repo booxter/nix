@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  storageIdentities,
   storageModel,
   ...
 }:
@@ -69,7 +70,7 @@ in
   ++ lib.concatMap (
     name:
     let
-      expected = config.host.storage.identities.users.${name};
+      expected = storageIdentities.users.${name};
       user = config.users.users.${name} or null;
       group = config.users.groups.${expected.group} or null;
     in
@@ -79,7 +80,7 @@ in
         message = "NFS anonymous identity ${name} must use UID ${toString expected.uid}";
       }
       {
-        assertion = group != null && group.gid == config.host.storage.identities.groups.${expected.group};
+        assertion = group != null && group.gid == storageIdentities.groups.${expected.group};
         message = "NFS anonymous identity ${name} must use the shared ${expected.group} GID";
       }
     ]

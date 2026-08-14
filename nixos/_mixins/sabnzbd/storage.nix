@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  outputs,
+  storageModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
+  model = import ./model.nix { inherit config lib storageModel; };
   inherit (model) cfg;
 in
 {

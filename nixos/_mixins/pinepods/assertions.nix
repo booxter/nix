@@ -1,17 +1,17 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageIdentities,
+  storageModel,
   ...
 }:
 let
   model = import ./model.nix {
     inherit
       config
-      lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model)
@@ -33,7 +33,7 @@ in
     }
     {
       assertion = model.storageGroup != null;
-      message = "host.pinepods.storage.claim must provide a shared group";
+      message = "host.pinepods.storage.claim must provide a non-root directory group";
     }
     {
       assertion = ssoApplication != null;
@@ -78,7 +78,7 @@ in
       message = "host.pinepods.integrations.podPeople.url must be set";
     }
     {
-      assertion = builtins.hasAttr cfg.user config.host.storage.identities.users;
+      assertion = builtins.hasAttr cfg.user storageIdentities.users;
       message = "host.pinepods.user must select a shared storage identity";
     }
   ];

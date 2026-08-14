@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  storageIdentities,
+  ...
+}:
 let
   model = import ./model.nix { inherit config; };
   instance = model.resolved;
@@ -13,7 +18,7 @@ let
 in
 {
   config = lib.mkIf (instance != null) {
-    users.users.slskd.uid = config.host.storage.identities.users.slskd.uid;
+    users.users.slskd.uid = storageIdentities.users.slskd.uid;
 
     host.storage.claims.${instance.storage.claim} = {
       directories = builtins.listToAttrs (

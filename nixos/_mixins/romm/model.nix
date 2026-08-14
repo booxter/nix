@@ -1,14 +1,14 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageModel,
+  storageIdentities ? import ../storage/identities.nix,
 }:
 let
   cfg = config.host.romm;
-  storage = import ../storage/resources/model.nix { inherit config lib outputs; };
-  claim = storage.localClaims.${cfg.storage.claim} or null;
-  identity = config.host.storage.identities.users.${cfg.user} or null;
+  claim = storageModel.localClaims.${cfg.storage.claim} or null;
+  identity = storageIdentities.users.${cfg.user} or null;
   ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
   accessGroups =
     if ssoApplication == null then
@@ -35,7 +35,11 @@ let
   service = config.host.web.services.romm;
   oidcClient = config.host.sso.oidc.clients.romm or null;
   publicUrl = if service.public.url == null then "" else service.public.url;
-  storageGroup = if claim == null then null else claim.resolvedResource.sharedGroup;
+  storageGroup =
+    if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then
+      null
+    else
+      claim.resolvedResource.directoryDefaults.group;
   basePath = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
   state = {
     inherit (cfg) stateDir;

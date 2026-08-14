@@ -1,8 +1,8 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
+  storageModel,
   ...
 }:
 let
@@ -10,8 +10,8 @@ let
     inherit
       config
       lib
-      outputs
       pkgs
+      storageModel
       ;
   };
   inherit (model) cfg state;

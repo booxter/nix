@@ -2,6 +2,7 @@
   config,
   lib,
   outputs,
+  storageIdentities,
   ...
 }:
 let
@@ -52,11 +53,6 @@ in
                 default = name;
                 description = "Resource path relative to its volume mount point.";
               };
-              sharedGroup = lib.mkOption {
-                type = with lib.types; nullOr nonEmptyStr;
-                default = null;
-                description = "Shared numeric group required on providers and consumers.";
-              };
               directoryDefaults = {
                 owner = lib.mkOption {
                   type = lib.types.nonEmptyStr;
@@ -79,16 +75,6 @@ in
                 type = lib.types.attrsOf (lib.types.submodule directoryModule);
                 default = { };
                 description = "Provider-owned directories below the resource root.";
-              };
-              identities = {
-                groups = lib.mkOption {
-                  type = with lib.types; listOf nonEmptyStr;
-                  default = [ ];
-                };
-                users = lib.mkOption {
-                  type = with lib.types; listOf nonEmptyStr;
-                  default = [ ];
-                };
               };
               nfs = lib.mkOption {
                 type = lib.types.nullOr (
@@ -159,6 +145,7 @@ in
       config
       lib
       outputs
+      storageIdentities
       ;
   };
 }
