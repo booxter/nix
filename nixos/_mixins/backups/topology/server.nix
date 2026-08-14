@@ -65,10 +65,9 @@ let
     }) requests
   );
 
-  localClients = map (request: request.clientName) (
-    builtins.filter (request: request.clientName == hostName) requests
+  localClient = lib.findFirst (name: name == hostName) null (
+    map (request: request.clientName) requests
   );
-  localClient = if localClients == [ ] then null else builtins.head localClients;
 
   duplicateRepositoryPaths = builtins.attrNames (
     lib.filterAttrs (_: group: builtins.length group > 1) (
@@ -85,6 +84,5 @@ in
 
   errors = {
     inherit duplicateRepositoryPaths;
-    multipleLocalClients = builtins.length localClients > 1;
   };
 }

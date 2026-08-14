@@ -20,9 +20,5 @@
       assertion = server.errors.duplicateRepositoryPaths == [ ];
       message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " server.errors.duplicateRepositoryPaths}";
     }
-    {
-      assertion = !server.errors.multipleLocalClients;
-      message = "backup server may have at most one local client";
-    }
   ];
 }
