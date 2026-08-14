@@ -15,8 +15,6 @@ in
         if cfg.web.public.enable then
           {
             inherit (cfg.web.public) hostName;
-            inherit (cfg.web) transport;
-            directUpstream = lib.mkIf (cfg.web.transport == "direct") cfg.localUrl;
             routes.originalDownloads = {
               location = "~* ^/Items/[^/]+/Download/?$";
               bandwidthLimit = {

@@ -178,31 +178,10 @@ in
                         description = "Public DNS hostname served by the ingress host.";
                       };
 
-                      ingressHost = lib.mkOption {
-                        type = with lib.types; nullOr nonEmptyStr;
-                        default = null;
-                        description = "Explicit public ingress host, or null to use the realm controller.";
-                      };
-
                       splitDnsHost = lib.mkOption {
                         type = with lib.types; nullOr nonEmptyStr;
                         default = null;
                         description = "Explicit split-DNS host, or null to use the resolved ingress host.";
-                      };
-
-                      transport = lib.mkOption {
-                        type = lib.types.enum [
-                          "internal-mtls"
-                          "direct"
-                        ];
-                        default = "internal-mtls";
-                        description = "Transport used by the public ingress host to reach the service.";
-                      };
-
-                      directUpstream = lib.mkOption {
-                        type = lib.types.nullOr lib.types.str;
-                        default = null;
-                        description = "Ingress-local upstream URL used by direct public services.";
                       };
 
                       url = lib.mkOption {

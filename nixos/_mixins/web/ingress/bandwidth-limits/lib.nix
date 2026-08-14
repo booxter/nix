@@ -14,10 +14,10 @@
             upstream =
               if route.upstream != null then
                 route.upstream
-              else if contribution.value.public.transport == "direct" then
-                contribution.value.public.directUpstream
+              else if contribution.value.internal != null then
+                contribution.value.internal.url
               else
-                contribution.value.internal.url;
+                contribution.value.upstream;
           }
         ) (lib.filterAttrs (_: route: route.bandwidthLimit.enable) contribution.value.public.routes)
       ) publicServices

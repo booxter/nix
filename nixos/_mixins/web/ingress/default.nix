@@ -13,7 +13,7 @@ let
     contribution: contribution.value.public.ingressHost == config.networking.hostName
   ) fleetServices.public;
   mtlsPublicServices = builtins.filter (
-    contribution: contribution.value.public.transport == "internal-mtls"
+    contribution: contribution.value.internal != null
   ) publicServices;
 in
 {
@@ -73,7 +73,7 @@ in
         map (contribution: {
           name = contribution.value.public.hostName;
           value =
-            if contribution.value.public.transport == "internal-mtls" then
+            if contribution.value.internal != null then
               let
                 service = contribution.value;
               in
@@ -88,7 +88,7 @@ in
               }
             else
               {
-                proxyPass = contribution.value.public.directUpstream;
+                proxyPass = contribution.value.upstream;
                 inherit (contribution.value.public) locationExtraConfig;
               };
         }) publicServices

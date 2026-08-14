@@ -35,14 +35,8 @@ let
       let
         ownerRealm = hostConfigs.${contribution.owner}.host.realm;
         realmControllers = ingressControllersByRealm.${ownerRealm} or [ ];
-        explicitIngressHost = contribution.value.public.ingressHost;
         ingressHost =
-          if explicitIngressHost != null then
-            explicitIngressHost
-          else if builtins.length realmControllers == 1 then
-            builtins.head realmControllers
-          else
-            null;
+          if builtins.length realmControllers == 1 then builtins.head realmControllers else null;
         splitDnsHost =
           if contribution.value.public.splitDnsHost != null then
             contribution.value.public.splitDnsHost
@@ -73,12 +67,6 @@ let
     contribution:
     contribution.value.public.ingressHost == null
     || !builtins.hasAttr contribution.value.public.ingressHost outputs.nixosConfigurations
-  ) publicContributions;
-  disabledIngressServices = builtins.filter (
-    contribution:
-    contribution.value.public.ingressHost != null
-    && builtins.hasAttr contribution.value.public.ingressHost hostConfigs
-    && !hostConfigs.${contribution.value.public.ingressHost}.host.web.ingress.enable
   ) publicContributions;
   unknownSplitDnsServices = builtins.filter (
     contribution:
@@ -119,10 +107,6 @@ assert lib.assertMsg (duplicatePublicHosts == { }) (
 assert lib.assertMsg (unknownIngressServices == [ ]) (
   "web services require one realm ingress controller or an explicit known ingress host: "
   + lib.concatStringsSep ", " (map showContribution unknownIngressServices)
-);
-assert lib.assertMsg (disabledIngressServices == [ ]) (
-  "web services reference hosts without host.web.ingress.enable: "
-  + lib.concatStringsSep ", " (map showContribution disabledIngressServices)
 );
 assert lib.assertMsg (unknownSplitDnsServices == [ ]) (
   "web services reference unknown split-DNS hosts: "
