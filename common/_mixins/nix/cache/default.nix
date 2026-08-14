@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
@@ -27,69 +26,34 @@ let
       description = "Private network required to reach this cache, or null for a public cache.";
     };
   };
-  contributionType = lib.types.submodule {
-    options = commonCacheOptions // {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to contribute this cache.";
-      };
-      scope = lib.mkOption {
-        type = lib.types.enum [
-          "host"
-          "realm"
-        ];
-        default = "host";
-        description = "Hosts allowed to consume this cache contribution.";
-      };
-    };
-  };
   cacheType = lib.types.submodule { options = commonCacheOptions; };
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
   cacheLib = import ./lib.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
 in
 {
-  imports = [ ./assertions.nix ];
-
-  options.host.nix = {
-    cacheContributions = lib.mkOption {
-      type = lib.types.attrsOf contributionType;
-      default = { };
-      internal = true;
-      description = "Host-local contributions to the fleet Nix cache pool.";
-    };
-
-    caches = lib.mkOption {
-      type = lib.types.attrsOf cacheType;
-      default = model.caches;
-      readOnly = true;
-      description = "Nix caches available to this host.";
-    };
+  options.host.nix.caches = lib.mkOption {
+    type = lib.types.attrsOf cacheType;
+    default = { };
+    description = "Nix caches available to this host.";
   };
 
   config = {
-    host.nix.cacheContributions = {
-      nixos = {
-        substituter = "https://cache.nixos.org/";
-        trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
-      };
+    host.nix.caches.nixos = {
+      substituter = "https://cache.nixos.org/";
+      trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
+    };
 
-      proxmox = {
-        enable =
+    host.nix.caches.proxmox =
+      lib.mkIf
+        (
           config.host.proxmox.node.enable
           || config.host.nix.builder.enable
-          || config.host.userEnvironment.roles.developer.enable;
-        substituter = "https://cache.saumon.network/proxmox-nixos";
-        trustedPublicKeys = [ (readPublicKey ./public-keys/proxmox-nixos.pub) ];
-      };
-    };
+          || config.host.userEnvironment.roles.developer.enable
+        )
+        {
+          substituter = "https://cache.saumon.network/proxmox-nixos";
+          trustedPublicKeys = [ (readPublicKey ./public-keys/proxmox-nixos.pub) ];
+        };
 
     nix.settings = {
       substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);

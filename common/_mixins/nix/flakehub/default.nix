@@ -42,7 +42,7 @@ in
         netrc-file = config.sops.templates."flakehub-netrc".path;
       };
 
-      host.nix.cacheContributions.flakehub = {
+      host.nix.caches.flakehub = {
         substituter = cfg.url;
         trustedPublicKeys = flakehubCacheKeys;
         priorities = {

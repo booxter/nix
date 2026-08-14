@@ -113,18 +113,15 @@ in
       config.host.attic.realmServers != { } || config.host.attic.server.enable
     ) pkgs.attic-client;
 
-    host.nix.cacheContributions.${config.networking.hostName} =
-      lib.mkIf config.host.attic.server.enable
-        {
-          scope = "realm";
-          substituter = "${config.host.attic.server.endpoint}/${config.host.attic.server.cacheName}";
-          trustedPublicKeys = [ config.host.attic.server.trustedPublicKey ];
-          requiredNetwork = config.host.realm;
-          priorities = {
-            default = 30;
-            lan = 10;
-            wan = 30;
-          };
-        };
+    host.nix.caches = lib.mapAttrs (_: server: {
+      substituter = "${server.endpoint}/${server.cacheName}";
+      trustedPublicKeys = [ server.trustedPublicKey ];
+      requiredNetwork = config.host.realm;
+      priorities = {
+        default = 30;
+        lan = 10;
+        wan = 30;
+      };
+    }) config.host.attic.realmServers;
   };
 }
