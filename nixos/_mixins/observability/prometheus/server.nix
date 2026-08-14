@@ -63,17 +63,20 @@ let
       pkgs
       ;
   };
-  prometheusRetention = "${toString cfg.retentionDays}d";
   monitoringPackage = pkgs.callPackage ../policy/package.nix {
-    capacityAlertPolicy = config.host.observability.alerts.capacity;
+    capacityAlertPolicy = {
+      cpu = {
+        warningPercent = 80;
+        criticalPercent = 90;
+      };
+      memory = {
+        warningPercent = 80;
+        criticalPercent = 90;
+      };
+    };
   };
 in
 {
-  imports = [
-    ./rule-assertions.nix
-    ./rule-options.nix
-  ];
-
   options.host.observability.prometheus.server = {
     enable = lib.mkEnableOption "a Prometheus server";
 
@@ -85,11 +88,6 @@ in
       description = "Loopback Prometheus HTTP port.";
     };
 
-    retentionDays = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 365;
-      description = "Number of days to retain Prometheus metrics.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -155,7 +153,7 @@ in
       checkConfig = "syntax-only";
       listenAddress = "127.0.0.1";
       port = cfg.port;
-      retentionTime = prometheusRetention;
+      retentionTime = "365d";
       alertmanagers = lib.optional alertmanagerCfg.enable {
         static_configs = [
           {

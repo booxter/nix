@@ -22,13 +22,6 @@ in
       internal = true;
       description = "Loopback Alertmanager HTTP port.";
     };
-    endpoint = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if cfg.enable then config.host.web.services.alertmanager.internal.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved HTTPS endpoint published to Alertmanager clients.";
-    };
   };
 
   config = lib.mkIf cfg.enable {

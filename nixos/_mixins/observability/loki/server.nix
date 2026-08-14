@@ -1,7 +1,6 @@
 { config, lib, ... }:
 let
   cfg = config.host.observability.loki.server;
-  retentionHours = cfg.retentionDays * 24;
 in
 {
   options.host.observability.loki.server = {
@@ -13,12 +12,6 @@ in
       readOnly = true;
       internal = true;
       description = "Loopback Loki HTTP port.";
-    };
-
-    retentionDays = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 365;
-      description = "Number of days to retain Loki logs.";
     };
 
   };
@@ -62,7 +55,7 @@ in
           }
         ];
         storage_config.filesystem.directory = "/var/lib/loki/chunks";
-        limits_config.retention_period = "${toString retentionHours}h";
+        limits_config.retention_period = "8760h";
         compactor = {
           working_directory = "/var/lib/loki/retention";
           compaction_interval = "10m";

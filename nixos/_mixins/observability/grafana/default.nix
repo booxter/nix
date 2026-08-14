@@ -103,13 +103,6 @@ in
       internal = true;
       description = "Loopback Grafana HTTP port.";
     };
-    endpoint = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if cfg.enable then config.host.web.services.grafana.internal.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved HTTPS endpoint published to Grafana clients.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
