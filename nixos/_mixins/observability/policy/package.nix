@@ -1,6 +1,4 @@
 {
-  capacityAlertPolicy,
-  formats,
   gettext,
   lib,
   prometheus,
@@ -9,34 +7,10 @@
 }:
 let
   sharePath = "share/fana-monitoring";
-  yaml = formats.yaml { };
   ruleDirectory = ./prometheus/rules;
-  staticRuleNames = builtins.filter (name: lib.hasSuffix ".rules.yml" name) (
+  ruleNames = builtins.filter (name: lib.hasSuffix ".rules.yml" name) (
     builtins.attrNames (builtins.readDir ruleDirectory)
   );
-  generatedRuleDefinitions = {
-    "availability.rules.yml" = import ./prometheus/rules/availability.nix {
-      inherit lib;
-    };
-    "capacity.rules.yml" = import ./prometheus/rules/capacity.nix {
-      inherit lib;
-      policy = capacityAlertPolicy;
-    };
-    "launchd.rules.yml" = import ./prometheus/rules/launchd.nix { inherit lib; };
-    "service-scrapes.rules.yml" = import ./prometheus/rules/service-scrapes.nix { inherit lib; };
-    "systemd.rules.yml" = import ./prometheus/rules/systemd.nix { inherit lib; };
-  };
-  generatedRules = lib.mapAttrs (
-    name: definition: yaml.generate name definition
-  ) generatedRuleDefinitions;
-  generatedRuleFiles =
-    finalPackage:
-    map (name: "${finalPackage}/${sharePath}/prometheus/rules/${name}") (
-      builtins.attrNames generatedRules
-    );
-  installGeneratedRules = lib.concatMapStringsSep "\n" (
-    name: "cp ${generatedRules.${name}} prometheus/rules/${lib.escapeShellArg name}"
-  ) (builtins.attrNames generatedRules);
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "fana-monitoring";
@@ -49,7 +23,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     prometheus.cli
     prometheus-alertmanager
   ];
-  postPatch = installGeneratedRules;
   checkPhase = ''
     runHook preCheck
 
@@ -81,9 +54,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   passthru = {
-    prometheusRuleFiles =
-      generatedRuleFiles finalAttrs.finalPackage
-      ++ map (name: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${name}") staticRuleNames;
+    prometheusRuleFiles = map (
+      name: "${finalAttrs.finalPackage}/${sharePath}/prometheus/rules/${name}"
+    ) ruleNames;
   };
 
   meta.description = "Fana Alertmanager configuration and Prometheus alert rules";

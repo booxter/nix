@@ -76,18 +76,7 @@ let
       pkgs
       ;
   };
-  monitoringPackage = pkgs.callPackage ../policy/package.nix {
-    capacityAlertPolicy = {
-      cpu = {
-        warningPercent = 80;
-        criticalPercent = 90;
-      };
-      memory = {
-        warningPercent = 80;
-        criticalPercent = 90;
-      };
-    };
-  };
+  monitoringPackage = pkgs.callPackage ../policy/package.nix { };
 in
 {
   options.host.observability.prometheus.server = {
