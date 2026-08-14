@@ -1,12 +1,10 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.jellyfin;
-  model = import ./model.nix { inherit config outputs; };
   libraries = if cfg == null then [ ] else builtins.attrValues cfg.libraries;
   libraryNames = map (library: library.name) libraries;
   libraryPaths = map (library: library.path) libraries;
@@ -44,11 +42,6 @@ in
         library: library.metadataPolicy != "tmdb-first" || library.kind == "movies"
       ) libraries;
       message = "tmdb-first metadata policy is only defined for movie libraries.";
-    }
-    {
-      assertion =
-        builtins.length model.contributionNames == builtins.length (lib.unique model.contributionNames);
-      message = "Declarative Jellyfin contribution names must be unique per target host.";
     }
   ];
 }

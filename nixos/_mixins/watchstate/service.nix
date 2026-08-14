@@ -1,13 +1,11 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
   ...
 }:
 let
   cfg = config.host.watchstate;
-  model = import ./model.nix { inherit config outputs; };
   image = import ../../_lib/oci-image.nix {
     image = cfg.container;
     inherit pkgs;
@@ -15,11 +13,7 @@ let
   uid = 296;
 in
 {
-  config = lib.mkIf (cfg.enable && model.jellyfinEnabled) {
-    host.storage.claims.watchstate-media = lib.mkIf (!model.local) {
-      inherit (model.jellyfin.media) provider resource mountPoint;
-    };
-
+  config = lib.mkIf (cfg.enable && config.host.jellyfin != null) {
     users.groups.watchstate.gid = uid;
     users.users.watchstate = {
       description = "WatchState service user";

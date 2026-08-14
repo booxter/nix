@@ -1,11 +1,9 @@
 {
   config,
-  outputs,
   ...
 }:
 let
   cfg = config.host.watchstate;
-  model = import ./model.nix { inherit config outputs; };
   sso = config.host.sso.applications.watchstate;
   systemUser = sso.bootstrapOwner;
   systemAccount = config.host.sso.users.${systemUser};
@@ -13,12 +11,8 @@ in
 {
   assertions = [
     {
-      assertion = !cfg.enable || model.exists;
-      message = "host.watchstate.jellyfin.host must name a known NixOS host.";
-    }
-    {
-      assertion = !cfg.enable || model.jellyfinEnabled;
-      message = "host.watchstate.jellyfin.host must run Jellyfin.";
+      assertion = !cfg.enable || config.host.jellyfin != null;
+      message = "WatchState requires local Jellyfin.";
     }
     {
       assertion = !cfg.enable || cfg.library.source != null;

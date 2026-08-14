@@ -74,19 +74,6 @@ let
       };
     };
   };
-  contributionModule = {
-    options = {
-      targetHost = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "NixOS host whose Jellyfin configuration receives this contribution.";
-      };
-      config = lib.mkOption {
-        type = lib.types.submodule declarativeConfigModule;
-        default = { };
-        description = "Declarative Jellyfin configuration contributed to the target host.";
-      };
-    };
-  };
 in
 {
   imports = [
@@ -231,13 +218,6 @@ in
     default = { };
     internal = true;
     description = "Jellarr policy contributed by the Jellyfin host and its integrations.";
-  };
-
-  options.host.jellyfinDeclarativeConfigContributions = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.submodule contributionModule);
-    default = { };
-    internal = true;
-    description = "Declarative Jellyfin configuration addressed to fleet Jellyfin hosts.";
   };
 
   config = lib.mkIf (cfg != null) {

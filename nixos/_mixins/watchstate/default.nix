@@ -1,12 +1,12 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.watchstate;
-  model = import ./model.nix { inherit config outputs; };
+  jellyfin = config.host.jellyfin;
+  libraryPath = if jellyfin == null then null else "${jellyfin.media.mountPoint}/library";
   absolutePath = lib.types.strMatching "^/.*";
   imagePin = import ./image-pin.nix;
 in
@@ -26,14 +26,6 @@ in
     container = import ../../_lib/oci-image-options.nix {
       inherit lib;
       pin = imagePin;
-    };
-
-    jellyfin = {
-      host = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = config.networking.hostName;
-        description = "NixOS host running the Jellyfin instance synchronized by WatchState.";
-      };
     };
 
     port = lib.mkOption {
@@ -59,7 +51,7 @@ in
     library = {
       source = lib.mkOption {
         type = with lib.types; nullOr absolutePath;
-        default = model.libraryPath;
+        default = libraryPath;
         readOnly = true;
         internal = true;
         description = "Host media-library path exposed read-only to WatchState.";
@@ -67,7 +59,7 @@ in
 
       mountPoint = lib.mkOption {
         type = with lib.types; nullOr absolutePath;
-        default = model.libraryPath;
+        default = libraryPath;
         readOnly = true;
         internal = true;
         description = "WatchState container path matching Jellyfin's media library.";
