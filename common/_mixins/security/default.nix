@@ -8,8 +8,7 @@
 }:
 let
   isDarwin = lib.hasSuffix "-darwin" system;
-  secrets = config.host.security.secrets;
-  operatorIdentity = secrets.operator.ageIdentity;
+  operatorIdentity = config.host.security.secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
@@ -19,14 +18,6 @@ in
   options.host.security = {
     secrets = {
       operator = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = operatorIdentity != null;
-          readOnly = true;
-          internal = true;
-          description = "Whether this host manages repository secrets, derived from its operator identity.";
-        };
-
         ageIdentity = lib.mkOption {
           type = lib.types.nullOr (
             lib.types.submodule {
@@ -40,7 +31,7 @@ in
                 };
 
                 path = lib.mkOption {
-                  type = lib.types.nonEmptyStr;
+                  type = lib.types.strMatching "^/.+";
                   description = "Absolute path to the age identity file or hardware identity handle.";
                 };
               };
@@ -81,10 +72,6 @@ in
           message = "Secure Enclave age identities require a Darwin host with Touch ID.";
         }
         {
-          assertion = operatorIdentity == null || lib.hasPrefix "/" operatorIdentity.path;
-          message = "host.security.secrets.operator.ageIdentity.path must be absolute.";
-        }
-        {
           assertion = config.host.security.ssh.credentials.backend != "secretive" || isDarwin;
           message = "Secretive SSH credentials require Darwin.";
         }
@@ -100,7 +87,7 @@ in
       sops.defaultSopsFile =
         ../../../secrets + "/${config.host.realm}/${config.networking.hostName}.yaml";
     }
-    (lib.mkIf secrets.operator.enable {
+    (lib.mkIf (operatorIdentity != null) {
       environment.systemPackages = [
         pkgs.age
         pkgs.sops

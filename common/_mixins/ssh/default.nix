@@ -19,7 +19,7 @@ let
   }) configurations;
   operatorHostView = host: {
     inherit (host) realm;
-    operator = host.security.secrets.operator.enable;
+    operator = host.security.secrets.operator.ageIdentity != null;
     authorizedKeys = host.ssh.operator.authorizedKeys;
   };
   otherConfigurations = removeAttrs configurations [ localHost ];
@@ -251,7 +251,8 @@ in
       ++ [
         {
           assertion =
-            config.host.ssh.operator.authorizedKeys == [ ] || config.host.security.secrets.operator.enable;
+            config.host.ssh.operator.authorizedKeys == [ ]
+            || config.host.security.secrets.operator.ageIdentity != null;
           message = "only operator hosts may contribute realm SSH authorized keys";
         }
         {
