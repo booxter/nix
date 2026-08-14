@@ -24,7 +24,7 @@ func TestCollectUsesNativeCounterValues(t *testing.T) {
 	snapshot, err := Collect(
 		fixedCounters{"lan_in": 10, "wan_in": 20, "lan_out": 30, "wan_out": 40},
 		fixedClass{},
-		Config{Table: "observability_lan_wan"},
+		Config{},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func TestCollectUsesTCClassForSubclassAndWANTotal(t *testing.T) {
 		},
 		fixedClass{bytes: 100},
 		Config{
-			Table: "observability_lan_wan", Subclass: "wg",
+			Subclass:  "wg",
 			Interface: "ens18", TCClass: "1:10",
 		},
 	)
@@ -61,7 +61,7 @@ func TestCollectPropagatesClassFailure(t *testing.T) {
 			"wan_subclass_out": 0, "wan_other_out": 0,
 		},
 		fixedClass{err: errors.New("netlink unavailable")},
-		Config{Table: "table", Subclass: "wg", Interface: "ens18", TCClass: "1:10"},
+		Config{Subclass: "wg", Interface: "ens18", TCClass: "1:10"},
 	)
 	if err == nil {
 		t.Fatal("traffic-control failure unexpectedly accepted")
@@ -72,7 +72,7 @@ func TestCollectRejectsMissingCounter(t *testing.T) {
 	_, err := Collect(
 		fixedCounters{"lan_in": 1, "wan_in": 2, "lan_out": 3},
 		fixedClass{},
-		Config{Table: "table"},
+		Config{},
 	)
 	if err == nil {
 		t.Fatal("missing nftables counter unexpectedly accepted")

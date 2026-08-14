@@ -7,14 +7,11 @@
 let
   cfg = config.host.observability.lanWan;
   egressOverrideEnabled = cfg.wanEgressOverride != null;
-  tableName = "observability_lan_wan";
   textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   exporter = pkgs.callPackage ./pkgs/lan-wan-exporter { };
   override = cfg.wanEgressOverride;
   exportCommand = [
     (lib.getExe exporter)
-    "--table"
-    tableName
     "--output"
     "${textfileDir}/lan-wan.prom"
   ]

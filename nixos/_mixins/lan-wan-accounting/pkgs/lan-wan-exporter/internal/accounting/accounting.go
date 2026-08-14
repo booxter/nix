@@ -9,6 +9,7 @@ import (
 const (
 	networkMetricName  = "host_observability_network_bytes_total"
 	subclassMetricName = "host_observability_network_wan_subclass_bytes_total"
+	tableName          = "observability_lan_wan"
 )
 
 type CounterSource interface {
@@ -20,16 +21,12 @@ type ClassSource interface {
 }
 
 type Config struct {
-	Table     string
 	Subclass  string
 	Interface string
 	TCClass   string
 }
 
 func (c Config) validate() error {
-	if c.Table == "" {
-		return fmt.Errorf("nftables table is required")
-	}
 	if (c.Interface == "") != (c.TCClass == "") {
 		return fmt.Errorf("interface and tc class must be configured together")
 	}
@@ -53,7 +50,7 @@ func Collect(counters CounterSource, classes ClassSource, configuration Config) 
 	if err := configuration.validate(); err != nil {
 		return Snapshot{}, err
 	}
-	values, err := counters.Counters(configuration.Table)
+	values, err := counters.Counters(tableName)
 	if err != nil {
 		return Snapshot{}, fmt.Errorf("read nftables counters: %w", err)
 	}
