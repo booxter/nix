@@ -28,18 +28,16 @@ let
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  proxmoxNodeNames = builtins.attrNames (
-    lib.filterAttrs (
-      _: configuration: configuration.config.host.proxmox.node != null
-    ) outputs.nixosConfigurations
-  );
+  topology = import ./model.nix {
+    inherit config lib outputs;
+  };
   certificateDnsNamesFor =
     name:
     if name == config.networking.hostName then
       config.host.network.certificateDnsNames
     else
       outputs.nixosConfigurations.${name}.config.host.network.certificateDnsNames;
-  proxmoxLabHosts = lib.unique (lib.concatMap certificateDnsNamesFor proxmoxNodeNames);
+  proxmoxLabHosts = lib.unique (lib.concatMap certificateDnsNamesFor topology.nodeNames);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [
