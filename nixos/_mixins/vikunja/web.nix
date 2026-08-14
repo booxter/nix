@@ -1,18 +1,24 @@
 {
   config,
   lib,
+  vikunjaModel,
   ...
 }:
 let
-  cfg = config.host.vikunja;
+  inherit (vikunjaModel)
+    cfg
+    localUrl
+    metricsPort
+    publicHost
+    ;
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.vikunja = {
-      upstream = cfg.localUrl;
+      upstream = localUrl;
       public = {
-        hostName = cfg.publicHost;
+        hostName = publicHost;
       };
       health.frontend = {
         enable = true;
@@ -20,14 +26,14 @@ in
       };
       metrics.default = {
         enable = true;
-        port = cfg.metrics.port;
-        upstream = "${cfg.localUrl}/api/v1/metrics";
+        port = metricsPort;
+        upstream = "${localUrl}/api/v1/metrics";
       };
       auth = {
         oidcRegistration = {
           displayName = "Vikunja";
-          originUrls = [ "https://${cfg.publicHost}/auth/openid/sso" ];
-          originLanding = "https://${cfg.publicHost}/";
+          originUrls = [ "https://${publicHost}/auth/openid/sso" ];
+          originLanding = "https://${publicHost}/";
           allowInsecureClientDisablePkce = true;
           scopeMaps."vikunja-users" = oidcScopes;
           secret = {

@@ -1,10 +1,15 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  vikunjaModel,
+  ...
+}:
 let
-  cfg = config.host.vikunja;
+  inherit (vikunjaModel) cfg;
   oidcClient = config.host.sso.oidc.clients.vikunja;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets.vikunjaMailerPassword = {
       key = "vikunja/mailer/password";
       restartUnits = [ "vikunja.service" ];

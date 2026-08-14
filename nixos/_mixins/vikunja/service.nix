@@ -1,15 +1,16 @@
 {
   config,
   lib,
+  vikunjaModel,
   ...
 }:
 let
-  cfg = config.host.vikunja;
+  inherit (vikunjaModel) cfg port publicHost;
   mailer = config.host.mailer;
   oidcClient = config.host.sso.oidc.clients.vikunja;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     assertions = [
       {
         assertion = mailer != null;
@@ -21,8 +22,8 @@ in
       enable = true;
       environmentFiles = [ config.sops.templates."vikunja-secrets.env".path ];
       frontendScheme = "https";
-      frontendHostname = cfg.publicHost;
-      port = cfg.port;
+      frontendHostname = publicHost;
+      inherit port;
       settings = {
         defaultsettings = {
           timezone = config.host.site.timeZone;
@@ -54,6 +55,15 @@ in
             };
           };
         };
+      };
+    };
+
+    host.backups.sources.vikunja = {
+      paths = [ "/var/lib/vikunja/files" ];
+      database = {
+        type = "sqlite";
+        path = "/var/lib/vikunja/vikunja.db";
+        stagingDir = "/var/lib/vikunja-backup/latest";
       };
     };
   };

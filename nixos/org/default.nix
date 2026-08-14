@@ -72,5 +72,5 @@ in
     };
   };
 
-  host.vikunja.enable = true;
+  host.vikunja = { };
 }
