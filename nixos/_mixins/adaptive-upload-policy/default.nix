@@ -10,13 +10,8 @@ let
     atomicFileWrites = pkgs.atomic-file-writes;
     inherit transmissionCommon;
   };
-  downloadClientDestinationType = lib.types.submodule {
+  transmissionDestinationType = lib.types.submodule {
     options = {
-      client = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Registered host.downloads client receiving adaptive upload decisions.";
-      };
-
       headroomPercent = lib.mkOption {
         type = lib.types.ints.between 1 100;
         default = 95;
@@ -26,6 +21,11 @@ let
   };
   qosDestinationType = lib.types.submodule {
     options = {
+      limit = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Name of the host.qos limit managed by the policy.";
+      };
+
       interface = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = config.host.network.primaryInterface;
@@ -76,68 +76,74 @@ in
     ./config.nix
   ];
 
-  options.host.adaptiveUploadPolicy = {
-    enable = lib.mkEnableOption "Jellyfin-aware adaptive upload policy";
+  options.host.adaptiveUploadPolicy = lib.mkOption {
+    type =
+      with lib.types;
+      nullOr (submodule {
+        options = {
+          package = lib.mkOption {
+            type = package;
+            default = defaultPackage;
+            internal = true;
+          };
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = defaultPackage;
-      internal = true;
-    };
+          fallbackRateMbit = lib.mkOption {
+            type = ints.positive;
+            description = "Conservative upload rate used when policy state is unavailable.";
+          };
 
-    fallbackRateMbit = lib.mkOption {
-      type = lib.types.ints.positive;
-      description = "Conservative upload rate used when policy state is unavailable.";
-    };
+          source.jellyfin = {
+            host = lib.mkOption {
+              type = nullOr nonEmptyStr;
+              default = null;
+              description = "NixOS host exporting Jellyfin playback metrics.";
+            };
 
-    source.jellyfin = {
-      host = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "NixOS host exporting Jellyfin playback metrics.";
-      };
+            exporterUrl = lib.mkOption {
+              type = nullOr nonEmptyStr;
+              default = null;
+              internal = true;
+              description = "Direct Jellyfin exporter URL used by isolated module tests.";
+            };
+          };
 
-      exporterUrl = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        internal = true;
-        description = "Direct Jellyfin exporter URL used by isolated module tests.";
-      };
-    };
+          destinations = {
+            transmission = lib.mkOption {
+              type = nullOr transmissionDestinationType;
+              default = null;
+              description = "Local Transmission service receiving adaptive upload decisions.";
+            };
 
-    destinations = {
-      downloadClients = lib.mkOption {
-        type = lib.types.attrsOf downloadClientDestinationType;
-        default = { };
-        description = "Registered download clients receiving adaptive upload decisions.";
-      };
+            qos = lib.mkOption {
+              type = nullOr qosDestinationType;
+              default = null;
+              description = "Network traffic class receiving adaptive upload decisions.";
+            };
+          };
 
-      qos = lib.mkOption {
-        type = lib.types.attrsOf qosDestinationType;
-        default = { };
-        description = "Network traffic classes receiving adaptive upload decisions.";
-      };
-    };
+          user = lib.mkOption {
+            type = str;
+            default = "adaptive-upload-policy";
+            readOnly = true;
+            internal = true;
+          };
 
-    user = lib.mkOption {
-      type = lib.types.str;
-      default = "adaptive-upload-policy";
-      readOnly = true;
-      internal = true;
-    };
+          group = lib.mkOption {
+            type = str;
+            default = "adaptive-upload-policy";
+            readOnly = true;
+            internal = true;
+          };
 
-    group = lib.mkOption {
-      type = lib.types.str;
-      default = "adaptive-upload-policy";
-      readOnly = true;
-      internal = true;
-    };
-
-    stateFile = lib.mkOption {
-      type = lib.types.str;
-      default = "/run/adaptive-upload-policy/state.json";
-      readOnly = true;
-      internal = true;
-    };
+          stateFile = lib.mkOption {
+            type = str;
+            default = "/run/adaptive-upload-policy/state.json";
+            readOnly = true;
+            internal = true;
+          };
+        };
+      });
+    default = null;
+    description = "Jellyfin-aware adaptive upload policy.";
   };
 }

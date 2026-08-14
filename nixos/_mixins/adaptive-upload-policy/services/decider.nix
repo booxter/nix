@@ -27,7 +27,7 @@ let
     ;
 in
 {
-  config.systemd.services.adaptive-upload-policy = lib.mkIf cfg.enable {
+  config.systemd.services.adaptive-upload-policy = lib.mkIf (cfg != null) {
     description = "Decide adaptive upload policy from Jellyfin playback";
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ] ++ lib.optionals mtls.enable mtls.dependencyUnits;

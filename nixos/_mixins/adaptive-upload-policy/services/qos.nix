@@ -27,7 +27,7 @@ let
     ;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.outputs.qos.enable) {
+  config = lib.mkIf (cfg != null && cfg.outputs.qos.enable) {
     # Start the selected limit at the safe fallback before the runtime
     # controller has produced its first policy decision.
     host.qos.interfaces.${cfg.outputs.qos.profile}.limits.${cfg.outputs.qos.limit}.rateMbit =

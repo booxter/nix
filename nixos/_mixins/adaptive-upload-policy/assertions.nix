@@ -10,20 +10,19 @@ let
   model = import ./model.nix { inherit config outputs; };
   inherit (model)
     cfg
-    downloadClient
-    downloadClientDestinationNames
     exporterUrl
     jellyfinEndpoint
     jellyfinHost
     mtls
     qosDestination
-    qosDestinationNames
     qosLimit
     qosProfile
+    transmission
+    transmissionDestination
     ;
 in
 {
-  config.assertions = lib.optionals cfg.enable [
+  config.assertions = lib.optionals (cfg != null) [
     {
       assertion = cfg.source.jellyfin.host != null || cfg.source.jellyfin.exporterUrl != null;
       message = "host.adaptiveUploadPolicy requires a Jellyfin source host";
@@ -41,32 +40,12 @@ in
       message = "host.adaptiveUploadPolicy could not resolve the Jellyfin exporter URL";
     }
     {
-      assertion = builtins.length downloadClientDestinationNames <= 1;
-      message = "host.adaptiveUploadPolicy supports at most one download-client destination";
-    }
-    {
-      assertion = builtins.length qosDestinationNames <= 1;
-      message = "host.adaptiveUploadPolicy supports at most one QoS destination";
-    }
-    {
-      assertion = cfg.destinations.downloadClients != { } || cfg.destinations.qos != { };
+      assertion = transmissionDestination != null || qosDestination != null;
       message = "host.adaptiveUploadPolicy requires at least one destination";
     }
     {
-      assertion = cfg.destinations.downloadClients == { } || downloadClient != null;
-      message = "host.adaptiveUploadPolicy download-client destination must select a registered client";
-    }
-    {
-      assertion = downloadClient == null || downloadClient.kind == "torrent";
-      message = "host.adaptiveUploadPolicy download-client destination must select a torrent client";
-    }
-    {
-      assertion = downloadClient == null || downloadClient.implementation == "transmission";
-      message = "host.adaptiveUploadPolicy currently supports only Transmission download clients";
-    }
-    {
-      assertion = downloadClient == null || downloadClient.authentication.type == "none";
-      message = "host.adaptiveUploadPolicy does not support authenticated download clients";
+      assertion = transmissionDestination == null || (transmission != null && transmission.enable);
+      message = "host.adaptiveUploadPolicy Transmission destination requires local Transmission";
     }
     {
       assertion = !cfg.outputs.transmission.enable || cfg.outputs.transmission.rpcUrl != null;

@@ -97,11 +97,11 @@ pkgs.testers.runNixOSTest {
         };
 
         host.adaptiveUploadPolicy = {
-          enable = true;
           fallbackRateMbit = 3;
           source.jellyfin.exporterUrl = "http://127.0.0.1:1/metrics";
-          destinations.qos.cake-egress = {
+          destinations.qos = {
             interface = "eth1";
+            limit = "cake-egress";
             match = {
               protocol = "tcp";
               remotePort = 5208;

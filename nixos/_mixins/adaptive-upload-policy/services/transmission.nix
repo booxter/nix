@@ -29,7 +29,7 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf (cfg.enable && cfg.outputs.transmission.enable) {
+    (lib.mkIf (cfg != null && cfg.outputs.transmission.enable) {
       systemd.services.adaptive-upload-policy-transmission = {
         description = "Apply adaptive upload policy to Transmission";
         wantedBy = [ "multi-user.target" ];
@@ -55,7 +55,7 @@ in
     })
     (lib.optionalAttrs hasHostTransmission {
       host.transmission.uploadLimit =
-        lib.mkIf (cfg.enable && cfg.outputs.transmission.enable && cfg.outputs.transmission.local)
+        lib.mkIf (cfg != null && cfg.outputs.transmission.enable && cfg.outputs.transmission.local)
           {
             enable = true;
             # Start at the safe fallback before the runtime controller has produced
