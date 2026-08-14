@@ -36,10 +36,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    host.observability.uptimeRobot.controller.plan = {
-      omittedServiceIds = map (contribution: contribution.id) model.plan.omitted;
-    };
-
     users.users.uptimerobot-sync = {
       isSystemUser = true;
       group = "uptimerobot-sync";

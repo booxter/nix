@@ -79,13 +79,5 @@
       };
     };
 
-    plan = {
-      omittedServiceIds = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        readOnly = true;
-        internal = true;
-        description = "Eligible service IDs omitted because controller capacity was exhausted.";
-      };
-    };
   };
 }
