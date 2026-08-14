@@ -78,9 +78,6 @@
     virtualisation.containers.enable = true;
     time.timeZone = config.host.site.timeZone;
 
-    services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
-    services.xserver.autoRepeatInterval = 30; # ms between repeats (macOS KeyRepeat=1)
-
     environment.systemPackages = with pkgs; [
       procps
       psmisc
