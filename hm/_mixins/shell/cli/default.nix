@@ -43,7 +43,7 @@ let
     '';
   };
 in
-lib.mkIf userEnvironment.features.shell.enable {
+{
   programs.bash.enable = true;
 
   home.shellAliases = {

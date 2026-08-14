@@ -1,10 +1,8 @@
 {
-  lib,
-  osConfig,
   pkgs,
   ...
 }:
-lib.mkIf osConfig.host.userEnvironment.features.shell.enable {
+{
   # fzf-tmux-url package assumes system-wide fzf
   home.packages = with pkgs; [
     fzf

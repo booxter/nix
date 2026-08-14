@@ -100,20 +100,6 @@ in
     roles.workstation.enable = lib.mkEnableOption "graphical workstation user environment";
 
     features = {
-      shell.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to provide the command-line power-user environment.";
-      };
-
-      net = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to provide network diagnostic tools.";
-        };
-      };
-
       dev = {
         cli.enable = lib.mkOption {
           type = lib.types.bool;
