@@ -1,5 +1,6 @@
 {
   config,
+  fleetWebServices,
   lib,
   outputs,
   pkgs,
@@ -8,7 +9,12 @@
 let
   cfg = config.host.glance;
   dashboardCatalog = import ../../_lib/fleet-dashboard-catalog.nix {
-    inherit config lib outputs;
+    inherit
+      config
+      fleetWebServices
+      lib
+      outputs
+      ;
   };
   searchEndpoint = config.host.site.search.availableProviders.${cfg.search.provider}.endpoint;
   resolved = lib.mapAttrs (

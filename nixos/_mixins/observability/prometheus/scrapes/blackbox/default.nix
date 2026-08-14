@@ -1,5 +1,6 @@
 {
   config,
+  fleetWebServices,
   lib,
   observabilityInventory,
   outputs,
@@ -17,9 +18,6 @@ let
   localHost = config.networking.hostName;
   configurations = outputs.nixosConfigurations // {
     ${localHost} = { inherit config; };
-  };
-  fleetServices = import ../../../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
   };
   ingressConfigurations = lib.filterAttrs (
     _: configuration:
@@ -39,7 +37,7 @@ let
     publicHost = contribution.value.public.hostName;
     probePath = contribution.value.health.frontend.path;
     availability = contribution.value.observability.availability;
-  }) fleetServices.public;
+  }) fleetWebServices.public;
   publicWanProbeUrlFor = service: "https://${publicWanHost}${service.probePath}";
   publicDnsModuleNameFor = service: "dns_public_${service.id}";
   publicDnsCnameRegexpFor =
@@ -71,7 +69,7 @@ let
       availability = service.observability.availability;
       url = "${baseUrl}/";
     }
-  ) fleetServices.frontendProbes;
+  ) fleetWebServices.frontendProbes;
   backendProbeCatalog = map (
     contribution:
     let
@@ -91,7 +89,7 @@ let
       availability = service.observability.availability;
       url = "${service.internal.url}/";
     }
-  ) fleetServices.backendProbes;
+  ) fleetWebServices.backendProbes;
   serviceHttpProbeCatalog = frontendProbeCatalog ++ backendProbeCatalog;
   usesHttpMtls = builtins.any (service: (service.blackboxModule or null) == "http_service_mtls") (
     serviceHttpProbeCatalog

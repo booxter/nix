@@ -1,5 +1,6 @@
 {
   config,
+  fleetWebServices,
   lib,
   outputs,
 }:
@@ -9,7 +10,6 @@ let
   hostConfigs = lib.mapAttrs (_: configuration: configuration.config) otherConfigurations // {
     ${localHost} = config;
   };
-  web = import ./fleet-web-services.nix { inherit config lib outputs; };
   webEntries = map (
     contribution:
     let
@@ -32,7 +32,7 @@ let
         public = if service.public == null then null else endpoint "public";
       };
     }
-  ) web.dashboard;
+  ) fleetWebServices.dashboard;
   directEntries = builtins.concatMap (
     hostConfig:
     lib.mapAttrsToList (id: entry: {

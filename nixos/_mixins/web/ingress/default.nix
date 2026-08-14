@@ -1,17 +1,14 @@
 {
   config,
+  fleetWebServices,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.web.ingress;
-  fleetServices = import ../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
   publicServices = builtins.filter (
     contribution: contribution.value.public.ingressHost == config.networking.hostName
-  ) fleetServices.public;
+  ) fleetWebServices.public;
   mtlsPublicServices = builtins.filter (
     contribution: contribution.value.internal != null
   ) publicServices;

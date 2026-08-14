@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  outputs,
   ...
 }:
 let
@@ -520,6 +521,10 @@ in
 
   config = lib.mkMerge [
     {
+      _module.args.fleetWebServices = import ../../_lib/fleet-web-services.nix {
+        inherit config lib outputs;
+      };
+
       host.network.stableAddress.requiredBy = lib.optional (
         internalServices != { }
       ) "internal web service DNS";

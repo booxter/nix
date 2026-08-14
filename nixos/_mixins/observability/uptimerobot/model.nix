@@ -1,13 +1,10 @@
 {
   config,
+  fleetWebServices,
   lib,
-  outputs,
 }:
 let
   cfg = config.host.observability.uptimeRobot.controller;
-  fleetServices = import ../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
   planner = import ../../../_lib/external-probe-planner.nix { inherit lib; };
   plan =
     if cfg.enable then
@@ -15,7 +12,7 @@ let
         capacity = 10;
         minimumImportance = "best-effort";
         spreadByOwner = true;
-        candidates = fleetServices.public;
+        candidates = fleetWebServices.public;
       }
     else
       {

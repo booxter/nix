@@ -1,7 +1,7 @@
 {
   config,
+  fleetWebServices,
   lib,
-  outputs,
   pkgs,
   ...
 }:
@@ -9,12 +9,9 @@ let
   unifiPkgs = import ./pkgs pkgs;
   serviceAccount = "unifi-sync";
   controller = config.host.site.lan.ipController;
-  fleetServices = import ../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
   siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   webDnsRecords = import ../../../_lib/fleet-web-dns-records.nix {
-    inherit fleetServices;
+    fleetServices = fleetWebServices;
     addressFor = siteNetwork.addressFor;
   };
   wireguardStaticRoutes = lib.mapAttrsToList (name: network: {
