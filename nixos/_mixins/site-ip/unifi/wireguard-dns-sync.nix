@@ -25,7 +25,7 @@ let
   }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
-lib.mkIf (config.host.network.ipController == "unifi" && fleetWireguardEnabled) {
+lib.mkIf (config.host.network.ipController.enable && fleetWireguardEnabled) {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 

@@ -82,7 +82,6 @@ lib.mkIf (config.host.site.name == "home") {
         address = lib.mkDefault "192.168.0.1";
       };
       ipController = lib.mkDefault {
-        flavor = "unifi";
         endpoint = "https://unifi";
         site = "default";
       };

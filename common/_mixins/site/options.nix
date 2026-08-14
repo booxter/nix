@@ -80,10 +80,6 @@ let
   };
   ipControllerType = lib.types.submodule {
     options = {
-      flavor = lib.mkOption {
-        type = lib.types.enum [ "unifi" ];
-        description = "Site IP controller implementation.";
-      };
       endpoint = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "API endpoint of the site IP controller.";
@@ -151,7 +147,7 @@ in
 
       ipController = lib.mkOption {
         type = ipControllerType;
-        description = "IP controller serving the physical site.";
+        description = "UniFi IP controller serving the physical site.";
       };
 
       reservations = lib.mkOption {

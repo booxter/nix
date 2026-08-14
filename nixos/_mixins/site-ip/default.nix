@@ -31,11 +31,7 @@ in
       description = "Stable site IPv4 address derived from this host's reservation.";
     };
 
-    ipController = lib.mkOption {
-      type = with lib.types; nullOr (enum [ "unifi" ]);
-      default = null;
-      description = "IP controller implementation reconciled by this host.";
-    };
+    ipController.enable = lib.mkEnableOption "site UniFi IP controller reconciliation";
 
   };
 

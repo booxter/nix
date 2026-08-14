@@ -40,7 +40,7 @@ in
     ./wireguard-dns-sync.nix
   ];
 
-  config = lib.mkIf (config.host.network.ipController == "unifi") {
+  config = lib.mkIf config.host.network.ipController.enable {
     services.unifi-sync = {
       enable = true;
       package = unifiPkgs.unifi-sync;
