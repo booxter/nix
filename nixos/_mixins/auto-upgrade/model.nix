@@ -79,8 +79,12 @@ let
     {
       weekdays = requestedWeekdays;
       inherit cadence weekday;
-      availabilityGroups = lib.unique (builtins.concatMap (claim: claim.availabilityGroups) claims);
-      exclusions = builtins.concatMap (claim: builtins.attrValues claim.exclusions) claims;
+      availabilityGroups = lib.unique (
+        builtins.concatMap (
+          claim: lib.optional (claim.availabilityGroup != null) claim.availabilityGroup
+        ) claims
+      );
+      exclusions = builtins.concatMap (claim: claim.exclusions) claims;
     };
   policies = lib.genAttrs hostNames (hostName: {
     switch = operationPolicy hostName "switch";
@@ -124,9 +128,7 @@ let
     left: right: operation:
     let
       matching = builtins.filter (
-        exclusion:
-        builtins.elem operation exclusion.operations
-        && (builtins.elem right exclusion.hosts || builtins.elem left exclusion.hosts)
+        exclusion: builtins.elem right exclusion.hosts || builtins.elem left exclusion.hosts
       ) (policies.${left}.${operation}.exclusions ++ policies.${right}.${operation}.exclusions);
     in
     {

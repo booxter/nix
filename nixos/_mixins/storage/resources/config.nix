@@ -91,10 +91,10 @@ in
       # for NFS filesystems, but it is only needed by legacy NFSv3 helpers.
       services.rpcbind.enable = lib.mkOverride 75 false;
 
-      host.autoUpgrade.claims.storage.exclusions = lib.mapAttrs (_: claim: {
+      host.autoUpgrade.claims.storage.exclusions = map (claim: {
         hosts = [ claim.provider ];
         minimumGapMinutes = 5;
-      }) remoteClaims;
+      }) (builtins.attrValues remoteClaims);
 
       host.network.stableAddress.requiredBy =
         lib.optional (model.providedRemoteClaims != [ ]) "NFS provider"

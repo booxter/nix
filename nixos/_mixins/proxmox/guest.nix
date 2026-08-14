@@ -37,9 +37,11 @@ in
 
       host.power.shutdown.leadSeconds.proxmox-guest = 150;
 
-      host.autoUpgrade.claims.proxmox-guest.exclusions.cluster-nodes = {
-        hosts = model.nodeNames;
-      };
+      host.autoUpgrade.claims.proxmox-guest.exclusions = [
+        {
+          hosts = model.nodeNames;
+        }
+      ];
 
       virtualisation.proxmox = {
         inherit (guest) cores;

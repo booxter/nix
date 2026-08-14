@@ -36,9 +36,7 @@ in
     host.autoUpgrade.claims.proxmox-node = {
       switch.cadence = "weekly";
       reboot.cadence = "weekly";
-      availabilityGroups = [
-        "proxmox:${config.host.realm}:${config.host.proxmox.node.cluster}"
-      ];
+      availabilityGroup = "proxmox:${config.host.realm}:${config.host.proxmox.node.cluster}";
     };
 
     nixpkgs.overlays = [

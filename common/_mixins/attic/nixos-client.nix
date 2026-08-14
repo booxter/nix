@@ -19,10 +19,10 @@ let
 in
 {
   config = lib.mkIf (servers != { }) {
-    host.autoUpgrade.claims.attic-client.exclusions = lib.mapAttrs (_: server: {
+    host.autoUpgrade.claims.attic-client.exclusions = map (server: {
       hosts = [ server.hostName ];
       minimumGapMinutes = 5;
-    }) servers;
+    }) (builtins.attrValues servers);
 
     systemd.services = lib.mapAttrs' (
       name: server:

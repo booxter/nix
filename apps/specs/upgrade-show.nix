@@ -20,8 +20,8 @@ let
         && (
           claim.switch.cadence != null
           || claim.reboot.cadence != null
-          || claim.availabilityGroups != [ ]
-          || claim.exclusions != { }
+          || claim.availabilityGroup != null
+          || claim.exclusions != [ ]
         )
       ) autoUpgrade.claims;
       reboot =

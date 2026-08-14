@@ -4,7 +4,7 @@
     host.autoUpgrade.claims.builder = {
       switch.cadence = "weekly";
       reboot.cadence = "weekly";
-      availabilityGroups = [ "builders:${config.host.realm}" ];
+      availabilityGroup = "builders:${config.host.realm}";
     };
 
     nix.settings = {

@@ -51,18 +51,6 @@ let
         type = with lib.types; listOf nonEmptyStr;
         description = "Hosts whose maintenance must not overlap this claim.";
       };
-      operations = lib.mkOption {
-        type = lib.types.listOf (
-          lib.types.enum [
-            "switch"
-            "reboot"
-          ]
-        );
-        default = [
-          "switch"
-          "reboot"
-        ];
-      };
       minimumGapMinutes = lib.mkOption {
         type = lib.types.ints.unsigned;
         default = 0;
@@ -79,14 +67,14 @@ let
         type = operationClaimType;
         default = { };
       };
-      availabilityGroups = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        default = [ ];
-        description = "Groups whose members must receive distinct maintenance slots.";
+      availabilityGroup = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Group whose members must receive distinct maintenance slots.";
       };
       exclusions = lib.mkOption {
-        type = lib.types.attrsOf exclusionType;
-        default = { };
+        type = lib.types.listOf exclusionType;
+        default = [ ];
         description = "Cross-host maintenance exclusions requested by this role.";
       };
     };
