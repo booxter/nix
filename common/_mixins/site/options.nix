@@ -10,9 +10,9 @@ let
         type = ipv4Address;
         description = "Reserved IPv4 address.";
       };
-      identifiers = lib.mkOption {
-        type = with lib.types; nonEmptyListOf nonEmptyStr;
-        description = "Client identifiers, normally MAC addresses, matching this reservation.";
+      macAddress = lib.mkOption {
+        type = lib.types.strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}";
+        description = "MAC address matching this reservation.";
       };
     };
   };
@@ -166,7 +166,7 @@ in
       reservations = lib.mkOption {
         type = lib.types.attrsOf reservationType;
         default = { };
-        description = "Reservations for site devices not represented by managed hosts.";
+        description = "Authoritative IPv4 reservation inventory for the site.";
       };
 
       dhcp.ranges = lib.mkOption {

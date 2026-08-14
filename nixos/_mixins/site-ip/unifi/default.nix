@@ -12,10 +12,10 @@ let
   fleetServices = import ../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
-  fleetNetwork = import ../../../_lib/fleet-host-network.nix { inherit config outputs; };
+  siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   webDnsRecords = import ../../../_lib/fleet-web-dns-records.nix {
     inherit fleetServices;
-    addressFor = fleetNetwork.addressFor;
+    addressFor = siteNetwork.addressFor;
   };
   wireguardStaticRoutes = lib.mapAttrsToList (name: network: {
     destination = network.cidr;
@@ -25,11 +25,11 @@ let
   }) config.host.wireguard.networks;
   unifiSyncEnv = import ./environment.nix {
     inherit webDnsRecords;
-    addressFor = fleetNetwork.addressFor;
+    addressFor = siteNetwork.addressFor;
     baseUrl = controller.endpoint;
     lan = config.host.site.lan;
     lanDomain = config.host.network.lanDomain;
-    reservations = config.host.network.ipReservations;
+    reservations = config.host.site.lan.reservations;
     site = controller.site;
     staticRoutes = config.host.site.lan.staticRoutes ++ wireguardStaticRoutes;
   };

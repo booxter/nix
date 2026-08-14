@@ -29,10 +29,6 @@ in
   host.observability.uptimeRobot.controller.enable = true;
 
   host.network = {
-    macAddress = "bc:24:11:c6:ab:fc";
-    reservation = {
-      address = "192.168.20.5";
-    };
     ipController = "unifi";
   };
 

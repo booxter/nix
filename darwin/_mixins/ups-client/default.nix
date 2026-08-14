@@ -16,7 +16,7 @@ let
       ;
   };
   server = if serverName == null then null else model.servers.${serverName} or null;
-  fleetNetwork = import ../../../nixos/_lib/fleet-host-network.nix { inherit config outputs; };
+  siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
   clientCredentialMode = config.host.ups.credentialMode;
   serverCredentialMode = if server == null then null else server.ups.credentialMode;
   monitorName = if serverName == null then "" else serverName;
@@ -49,7 +49,7 @@ in
       mode = "0400";
       content = ''
         MINSUPPLIES 1
-        MONITOR ${server.ups.server.name}@${fleetNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
+        MONITOR ${server.ups.server.name}@${siteNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
         NOTIFYCMD ${pkgs.nut}/bin/upssched
         NOTIFYFLAG ONBATT SYSLOG+EXEC
         NOTIFYFLAG ONLINE SYSLOG+EXEC

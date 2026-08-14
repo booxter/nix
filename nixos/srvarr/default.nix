@@ -11,11 +11,7 @@ in
 
   host.network = {
     interfaces.ens18.kind = "ethernet";
-    macAddress = "bc:24:11:19:4d:d1";
     primaryInterface = "ens18";
-    reservation = {
-      address = "192.168.20.2";
-    };
   };
 
   host.proxmox = {

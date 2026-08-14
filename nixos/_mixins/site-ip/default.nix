@@ -1,19 +1,12 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.network;
   ip = import ./lib.nix { inherit lib; };
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  reservation = config.host.site.lan.reservations.${config.networking.hostName} or null;
 in
 {
   imports = [
@@ -24,7 +17,7 @@ in
   options.host.network = {
     macAddress = lib.mkOption {
       type = with lib.types; nullOr (strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}");
-      default = null;
+      default = if reservation == null then null else reservation.macAddress;
       description = "MAC address of the host's primary site network interface.";
     };
 
@@ -32,13 +25,19 @@ in
       type =
         with lib.types;
         nullOr (submodule {
-          options.address = lib.mkOption {
-            type = addCheck nonEmptyStr ip.validIpv4;
-            description = "IPv4 address requested from the site IP controller.";
+          options = {
+            address = lib.mkOption {
+              type = addCheck nonEmptyStr ip.validIpv4;
+            };
+            macAddress = lib.mkOption {
+              type = strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}";
+            };
           };
         });
-      default = null;
-      description = "Optional site IPv4 address reservation.";
+      default = reservation;
+      readOnly = true;
+      internal = true;
+      description = "This host's reservation from the authoritative site inventory.";
     };
 
     stableAddress.requiredBy = lib.mkOption {
@@ -61,12 +60,5 @@ in
       description = "IP controller implementation reconciled by this host.";
     };
 
-    ipReservations = lib.mkOption {
-      type = with lib.types; listOf attrs;
-      readOnly = true;
-      default = if cfg.ipController == null then [ ] else model.reservations;
-      internal = true;
-      description = "Site reservations rendered for the local IP controller reconciler.";
-    };
   };
 }

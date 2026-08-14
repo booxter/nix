@@ -11,28 +11,18 @@
 let
   netboot = lan.netboot;
 
-  isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
-
-  reservationIdentifiers =
-    reservation:
-    if reservation ? identifiers then
-      reservation.identifiers
-    else if reservation ? match then
-      [ reservation.match ]
-    else
-      [ ];
-
   reservationInventoryJson = builtins.toJSON (
-    map
-      (reservation: {
-        inherit (reservation) hostname ip;
-        mac = builtins.head (builtins.filter isMacAddress (reservationIdentifiers reservation));
-      })
-      (
-        builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
-          reservations
-        )
-      )
+    map (
+      hostname:
+      let
+        reservation = reservations.${hostname};
+      in
+      {
+        inherit hostname;
+        ip = reservation.address;
+        mac = reservation.macAddress;
+      }
+    ) (builtins.attrNames reservations)
   );
 
   mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcp.ranges.main 0);

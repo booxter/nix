@@ -8,13 +8,6 @@ in
 {
   system.stateVersion = "25.11";
 
-  host.network = {
-    macAddress = "bc:24:11:fd:eb:9c";
-    reservation = {
-      address = "192.168.20.4";
-    };
-  };
-
   host.proxmox = {
     cluster = "lab";
     guest = {

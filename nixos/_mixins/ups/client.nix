@@ -14,7 +14,7 @@ let
       ;
   };
   server = if cfg.server == null then null else model.servers.${cfg.server} or null;
-  fleetNetwork = import ../../_lib/fleet-host-network.nix { inherit config outputs; };
+  siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
   clientCredentialMode = config.host.ups.credentialMode;
   serverCredentialMode = if server == null then null else server.ups.credentialMode;
   monitorName = if cfg.server == null then "" else cfg.server;
@@ -40,7 +40,7 @@ in
       enable = true;
       mode = "netclient";
       upsmon.monitor.${monitorName} = {
-        system = "${server.ups.server.name}@${fleetNetwork.addressFor cfg.server}";
+        system = "${server.ups.server.name}@${siteNetwork.addressFor cfg.server}";
         user = "upsslave";
         inherit passwordFile;
         type = "slave";

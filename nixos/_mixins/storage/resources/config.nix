@@ -13,7 +13,7 @@ let
       outputs
       ;
   };
-  fleetNetwork = import ../../../_lib/fleet-host-network.nix { inherit config outputs; };
+  siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   remoteClaims = lib.filterAttrs (_: claim: !claim.local) model.localClaims;
   mountOptions = [
     "nfsvers=4"
@@ -42,7 +42,7 @@ let
         }
       else
         {
-          device = "${fleetNetwork.addressFor claim.provider}:${claim.resolvedResource.sourcePath}";
+          device = "${siteNetwork.addressFor claim.provider}:${claim.resolvedResource.sourcePath}";
           fsType = "nfs";
           options = mountOptions;
         }
@@ -69,7 +69,7 @@ let
     );
   renderedExports = lib.concatMapStringsSep "\n" (
     claim:
-    "${claim.resolvedResource.sourcePath} ${fleetNetwork.addressFor claim.clientName}(${lib.concatStringsSep "," (exportOptions claim.resolvedResource)})"
+    "${claim.resolvedResource.sourcePath} ${siteNetwork.addressFor claim.clientName}(${lib.concatStringsSep "," (exportOptions claim.resolvedResource)})"
   ) model.providedRemoteClaims;
   directoryRules = map (
     directory:
