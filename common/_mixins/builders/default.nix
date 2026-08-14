@@ -73,7 +73,7 @@ in
 {
   imports = [
     ./assertions.nix
-    ./community.nix
+    ./community
     ./build.nix
     ./home.nix
     ./nixpkgs-review.nix

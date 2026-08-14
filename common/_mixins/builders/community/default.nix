@@ -4,7 +4,7 @@
   ...
 }:
 let
-  readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
+  readPublicKey = import ../../../_lib/read-public-key.nix { inherit lib; };
   username = config.host.username;
   identityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
   linuxFeatures = [
@@ -21,7 +21,7 @@ in
       darwin-builder = {
         uses = [ "nixpkgs" ];
         hostName = "darwin-build-box.nix-community.org";
-        publicKey = readPublicKey ./public-keys/darwin-build-box.pub;
+        publicKey = readPublicKey ./keys/darwin.pub;
         sshKey = identityFile;
         sshUser = "booxter";
         systems = [ "aarch64-darwin" ];
@@ -32,7 +32,7 @@ in
       remote-linux-builder = {
         uses = [ "nixpkgs" ];
         hostName = "aarch64-build-box.nix-community.org";
-        publicKey = readPublicKey ./public-keys/aarch64-build-box.pub;
+        publicKey = readPublicKey ./keys/linux-arm.pub;
         sshKey = identityFile;
         sshUser = "booxter";
         systems = [ "aarch64-linux" ];
@@ -43,7 +43,7 @@ in
       remote-linux-x86-builder = {
         uses = [ "nixpkgs" ];
         hostName = "build-box.nix-community.org";
-        publicKey = readPublicKey ./public-keys/build-box.pub;
+        publicKey = readPublicKey ./keys/linux-x86.pub;
         sshKey = identityFile;
         sshUser = "booxter";
         systems = [ "x86_64-linux" ];
