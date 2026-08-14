@@ -80,12 +80,6 @@
     };
 
     plan = {
-      selectedServiceIds = lib.mkOption {
-        type = with lib.types; listOf nonEmptyStr;
-        readOnly = true;
-        internal = true;
-        description = "Service IDs selected by the external-probe planner.";
-      };
       omittedServiceIds = lib.mkOption {
         type = with lib.types; listOf nonEmptyStr;
         readOnly = true;

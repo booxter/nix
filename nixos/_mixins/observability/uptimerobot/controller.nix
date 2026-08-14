@@ -37,7 +37,6 @@ in
 {
   config = lib.mkIf cfg.enable {
     host.observability.uptimeRobot.controller.plan = {
-      selectedServiceIds = model.plan.selectedIds;
       omittedServiceIds = map (contribution: contribution.id) model.plan.omitted;
     };
 
