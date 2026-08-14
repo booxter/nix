@@ -1,11 +1,12 @@
 {
+  config,
   lib,
   osConfig,
   pkgs,
   ...
 }:
 let
-  cfg = osConfig.host.userEnvironment;
+  cfg = config.host.hm.userEnvironment;
   presetDefault = lib.mkOverride 900;
   graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
@@ -18,30 +19,28 @@ in
           email = "ihar.hrachyshka@gmail.com";
         };
       }
-      (lib.mkIf cfg.roles.developer.enable (
-        lib.mkMerge [
-          {
-            host.hm.userEnvironment = {
-              sendEmail.transport = presetDefault "gmail";
-              repositories.requests.preset = presetDefault [ "dotfiles" ];
-            };
-          }
-          {
-            host.hm = presetDefault {
-              dev = {
-                act.enable = true;
-                codex = {
-                  enable = true;
-                  usage.warmer.enable = true;
-                };
-                go.enable = true;
+      (lib.mkMerge [
+        {
+          host.hm.userEnvironment = {
+            sendEmail.transport = presetDefault "gmail";
+            repositories.requests.preset = presetDefault [ "dotfiles" ];
+          };
+        }
+        {
+          host.hm = presetDefault {
+            dev = {
+              act.enable = true;
+              codex = {
+                enable = true;
+                usage.warmer.enable = true;
               };
-              podman.enable = true;
-              ramalama.enable = true;
+              go.enable = true;
             };
-          }
-        ]
-      ))
+            podman.enable = true;
+            ramalama.enable = true;
+          };
+        }
+      ])
       (lib.mkIf graphical {
         host.hm = presetDefault {
           numberedWorkspaces = if pkgs.stdenv.hostPlatform.isDarwin then 4 else 6;

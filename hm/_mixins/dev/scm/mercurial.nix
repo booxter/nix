@@ -1,13 +1,12 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
   inherit (config.host.hm) email fullName;
 in
-lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
+lib.mkIf (config.host.hm.userEnvironment.preset != null) {
   programs.mercurial = {
     enable = true;
     userName = fullName;

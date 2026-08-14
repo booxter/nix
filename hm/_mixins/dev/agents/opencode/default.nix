@@ -6,8 +6,7 @@
 }:
 {
   programs.opencode =
-    lib.mkIf
-      (osConfig.host.userEnvironment.roles.developer.enable && config.host.hm.dev.opencode.enable)
+    lib.mkIf (config.host.hm.userEnvironment.preset != null && config.host.hm.dev.opencode.enable)
       {
         enable = true;
         settings = {

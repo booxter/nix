@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
@@ -75,9 +74,7 @@ in
 
     assertions = [
       {
-        assertion =
-          !osConfig.host.userEnvironment.roles.developer.enable
-          || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
+        assertion = cfg.preset == null || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
         message = "host.hm.userEnvironment.sendEmail.transport must name a declared SMTP transport";
       }
     ];

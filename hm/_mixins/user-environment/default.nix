@@ -1,6 +1,6 @@
 {
+  config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
@@ -12,11 +12,24 @@
     ./smtp.nix
   ];
 
-  options.host.hm.userEnvironment.homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
+  options.host.hm.userEnvironment = {
+    preset = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.enum [
+          "nvidia"
+          "personal"
+        ]
+      );
+      default = null;
+      description = "Named policy providing user-environment defaults.";
+    };
+
+    homerow.enable = lib.mkEnableOption "Homerow keyboard navigation";
+  };
 
   config = {
     host.hm = {
-      pass.enable = lib.mkDefault osConfig.host.userEnvironment.roles.developer.enable;
+      pass.enable = lib.mkDefault (config.host.hm.userEnvironment.preset != null);
       userEnvironment.homerow.enable = lib.mkDefault pkgs.stdenv.hostPlatform.isDarwin;
     };
   };

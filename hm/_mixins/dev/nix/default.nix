@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   pkgs,
@@ -10,7 +11,7 @@ let
     builders = osConfig.host.nix.nixpkgs-review.builders;
   };
 in
-lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
+lib.mkIf (config.host.hm.userEnvironment.preset != null) {
   home.packages = with pkgs; [
     hydra-check
     nh

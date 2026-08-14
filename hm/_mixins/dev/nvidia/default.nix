@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
@@ -13,7 +12,7 @@ in
 {
   options.host.hm.dev.nvidia.enable = lib.mkEnableOption "NVIDIA development environment";
 
-  config = lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.enable) {
+  config = lib.mkIf (config.host.hm.userEnvironment.preset != null && cfg.enable) {
     home.sessionPath = [
       "$HOME/src/ngn2-ssh-utils"
       "$HOME/src/nvpn"

@@ -104,14 +104,12 @@ in
         path = "/home/${config.host.username}/.config/sops/age/yubi-nix.txt";
       };
     };
-    userEnvironment = {
-      preset = "personal";
-      roles.developer.enable = true;
-    };
     ups.server = {
       description = "APC UPS 1500VA";
     };
   };
+
+  home-manager.users.${config.host.username}.host.hm.userEnvironment.preset = "personal";
 
   # It caused hangs on shutdown.
   security.lsm = lib.mkForce [

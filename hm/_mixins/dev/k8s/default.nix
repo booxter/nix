@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
@@ -11,7 +10,7 @@ in
 {
   options.host.hm.dev.k8s.enable = lib.mkEnableOption "Kubernetes development tools";
 
-  config = lib.mkIf (osConfig.host.userEnvironment.roles.developer.enable && cfg.enable) {
+  config = lib.mkIf (config.host.hm.userEnvironment.preset != null && cfg.enable) {
     home.shellAliases.k = "kubectl";
 
     home.packages = with pkgs; [

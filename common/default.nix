@@ -18,7 +18,6 @@
     ./_mixins/stylix
     ./_mixins/terminfo
     ./_mixins/ups
-    ./_mixins/user-environment
     ./_mixins/wireguard
   ];
 }

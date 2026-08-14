@@ -15,10 +15,7 @@ in
   };
   host.ups.client.server = "nvws";
 
-  host.userEnvironment = {
-    preset = "nvidia";
-    roles.developer.enable = true;
-  };
+  home-manager.users.${username}.host.hm.userEnvironment.preset = "nvidia";
   host.user.passwords.sops.enable = false;
 
   # Work machines do not use sops-managed login passwords; this VM does not

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cfg = osConfig.host.userEnvironment;
+  cfg = config.host.hm.userEnvironment;
   presetDefault = lib.mkOverride 900;
   graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
@@ -19,29 +19,27 @@ in
           email = "${config.home.username}@nvidia.com";
         };
       }
-      (lib.mkIf cfg.roles.developer.enable (
-        lib.mkMerge [
-          {
-            host.hm.userEnvironment.sendEmail.transport = presetDefault "nvidia";
-          }
-          {
-            host.hm = presetDefault {
-              dev = {
-                act.enable = true;
-                codex = {
-                  enable = true;
-                  usage.account = "corporate";
-                };
-                go.enable = true;
-                k8s.enable = true;
-                nvidia.enable = true;
+      (lib.mkMerge [
+        {
+          host.hm.userEnvironment.sendEmail.transport = presetDefault "nvidia";
+        }
+        {
+          host.hm = presetDefault {
+            dev = {
+              act.enable = true;
+              codex = {
+                enable = true;
+                usage.account = "corporate";
               };
-              docker.enable = true;
-              sketchybar.attentionInbox.enable = true;
+              go.enable = true;
+              k8s.enable = true;
+              nvidia.enable = true;
             };
-          }
-        ]
-      ))
+            docker.enable = true;
+            sketchybar.attentionInbox.enable = true;
+          };
+        }
+      ])
       (lib.mkIf graphical (
         lib.mkMerge [
           {

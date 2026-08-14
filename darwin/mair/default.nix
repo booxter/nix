@@ -16,19 +16,22 @@ in
     ./opencode.nix
   ];
 
-  home-manager.users.${username}.host.hm.dev.codex.mcp.stdioServers.firefox-devtools = {
-    instructions = ''
-      Only use the Firefox DevTools MCP when the user explicitly requests browser
-      interaction or browser-based debugging.
-    '';
-    command = lib.getExe pkgs.firefox-devtools-mcp;
-    args = [
-      "--profile-path"
-      "${hmConfig.xdg.dataHome}/firefox-devtools-mcp"
-      "--accept-insecure-certs"
-      "--viewport"
-      "1440x1000"
-    ];
+  home-manager.users.${username}.host.hm = {
+    userEnvironment.preset = "personal";
+    dev.codex.mcp.stdioServers.firefox-devtools = {
+      instructions = ''
+        Only use the Firefox DevTools MCP when the user explicitly requests browser
+        interaction or browser-based debugging.
+      '';
+      command = lib.getExe pkgs.firefox-devtools-mcp;
+      args = [
+        "--profile-path"
+        "${hmConfig.xdg.dataHome}/firefox-devtools-mcp"
+        "--accept-insecure-certs"
+        "--viewport"
+        "1440x1000"
+      ];
+    };
   };
 
   host = {
@@ -40,10 +43,6 @@ in
         backend = "secure-enclave";
         path = "/Users/${username}/.config/sops/age/mair-se.txt";
       };
-    };
-    userEnvironment = {
-      preset = "personal";
-      roles.developer.enable = true;
     };
     remote-control = {
       client = {

@@ -32,16 +32,15 @@ in
     (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x.pub)
     (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x-nix-builder.pub)
   ];
-  host.userEnvironment = {
-    preset = "nvidia";
-    roles.developer.enable = true;
-  };
   host.nix.cacheWarmer.enable = true;
 
-  home-manager.users.${username}.host.hm.dev.codex.mcp.httpServers = {
-    maas_gitlab = maasServer "maas_gitlab";
-    maas_jira = maasServer "maas_jira";
-    maas_nvbugs = maasServer "maas_nvbugs";
-    maas_redmine = maasServer "maas_redmine";
+  home-manager.users.${username}.host.hm = {
+    userEnvironment.preset = "nvidia";
+    dev.codex.mcp.httpServers = {
+      maas_gitlab = maasServer "maas_gitlab";
+      maas_jira = maasServer "maas_jira";
+      maas_nvbugs = maasServer "maas_nvbugs";
+      maas_redmine = maasServer "maas_redmine";
+    };
   };
 }

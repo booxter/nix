@@ -1,13 +1,13 @@
 {
+  config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
 let
   readPublicKey = import ../../../../common/_lib/read-public-key.nix { inherit lib; };
 in
-lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
+lib.mkIf (config.host.hm.userEnvironment.preset != null) {
   host.hm.ssh.knownHosts."github.com" = {
     hostNames = [ "github.com" ];
     publicKeys = [

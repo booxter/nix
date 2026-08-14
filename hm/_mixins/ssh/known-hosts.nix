@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
@@ -30,7 +29,7 @@ in
     description = "Per-user SSH known-host entries.";
   };
 
-  config = lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
+  config = lib.mkIf (config.host.hm.userEnvironment.preset != null) {
     home.file = lib.mapAttrs' (
       name: knownHost:
       lib.nameValuePair ".ssh/known_hosts.d/${name}" {

@@ -1,9 +1,9 @@
 {
+  config,
   lib,
-  osConfig,
   ...
 }:
-lib.mkIf osConfig.host.userEnvironment.roles.developer.enable {
+lib.mkIf (config.host.hm.userEnvironment.preset != null) {
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
