@@ -25,7 +25,7 @@ let
     ) (builtins.attrNames reservations)
   );
 
-  mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcp.ranges.main 0);
+  mainDhcpRangeJson = builtins.toJSON lan.dhcp.range;
   mainDomainName = lanDomain;
   mainDomainSearchJson = builtins.toJSON [ lanDomain ];
   domainSearchOption =

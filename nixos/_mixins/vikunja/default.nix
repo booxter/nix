@@ -8,7 +8,6 @@ let
 in
 {
   imports = [
-    ./assertions.nix
     ./backups.nix
     ./secrets.nix
     ./service.nix
