@@ -25,12 +25,17 @@ in
                 "${lib.strings.toSentenceCase hostName} Local Restic"
               else
                 "Restic To ${lib.strings.toSentenceCase destination.server}";
-            inherit (destination)
-              check
-              retention
-              timerConfig
-              user
-              ;
+            user = destination.user;
+            timerConfig = {
+              OnCalendar = "04:45";
+              RandomizedDelaySec = "5m";
+              Persistent = true;
+            };
+            retention = {
+              daily = 7;
+              weekly = 8;
+              monthly = 6;
+            };
             paths = minimalPathsFor sourceEntries;
             exclude = excludesFor sourceEntries;
             repository = {

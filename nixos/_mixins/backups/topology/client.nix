@@ -27,7 +27,7 @@ let
       ingestUser = "restic-${hostName}";
       repositoryPath = "${server.repositoryRoot}/${destination.storageName}";
       transport = if local then "local" else "sftp";
-      user = if local then "restic-cloud" else destination.user;
+      user = if local then "restic-cloud" else "root";
     };
 
 in

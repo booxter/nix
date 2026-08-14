@@ -1,54 +1,13 @@
 {
   config,
   lib,
-  utils,
   ...
 }:
 let
   hostName = config.networking.hostName;
-  inherit (utils.systemdUtils.unitOptions) unitOption;
-  positiveInt = lib.types.addCheck lib.types.int (value: value > 0);
-
-  destinationPolicyOptions = {
-    user = lib.mkOption {
-      type = lib.types.str;
-      default = "root";
-      description = "User running the local Restic pipeline.";
-    };
-    timerConfig = lib.mkOption {
-      type = with lib.types; nullOr (attrsOf unitOption);
-      default = {
-        OnCalendar = "04:45";
-        RandomizedDelaySec = "5m";
-        Persistent = true;
-      };
-      description = "Timer configuration for the complete local backup pipeline.";
-    };
-    retention = {
-      daily = lib.mkOption {
-        type = positiveInt;
-        default = 7;
-      };
-      weekly = lib.mkOption {
-        type = positiveInt;
-        default = 8;
-      };
-      monthly = lib.mkOption {
-        type = positiveInt;
-        default = 6;
-      };
-    };
-    check = {
-      enable = lib.mkEnableOption "Restic repository checks after backup";
-      options = lib.mkOption {
-        type = with lib.types; listOf str;
-        default = [ ];
-      };
-    };
-  };
 
   destinationRequestModule = {
-    options = destinationPolicyOptions // {
+    options = {
       server = lib.mkOption {
         type = lib.types.nonEmptyStr;
         description = "Host providing the backup repository.";
