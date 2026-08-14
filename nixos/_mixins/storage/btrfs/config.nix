@@ -13,8 +13,7 @@ let
   btrfs = lib.getExe pkgs.btrfs-progs;
   btrfsMounts = helpers.btrfsMounts config.fileSystems;
   scrubMountPoints = map (mount: mount.mountPoint) btrfsMounts;
-  scrubEnabled = cfg.scrub.enable && scrubMountPoints != [ ];
-  enabledSnapshots = lib.filterAttrs (_: snapshot: snapshot.enable) cfg.snapshots;
+  snapshots = cfg.snapshots;
   command =
     arguments:
     utils.escapeSystemdExecArgs (
@@ -33,15 +32,15 @@ let
       mountPoint
     ];
   snapshotUnit = mountPoint: "${helpers.snapshotName mountPoint}-snapshots-dir";
-  snapshotUnits = map snapshotUnit (builtins.attrNames enabledSnapshots);
+  snapshotUnits = map snapshotUnit (builtins.attrNames snapshots);
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf scrubEnabled {
+    (lib.mkIf (scrubMountPoints != [ ]) {
       services.btrfs.autoScrub = {
         enable = true;
         fileSystems = scrubMountPoints;
-        interval = cfg.scrub.interval;
+        interval = "monthly";
       };
 
       systemd.services = lib.mkMerge (
@@ -89,7 +88,7 @@ in
       );
     })
 
-    (lib.mkIf (enabledSnapshots != { }) {
+    (lib.mkIf (snapshots != { }) {
       services.snapper.configs = lib.mapAttrs' (
         mountPoint: snapshot:
         lib.nameValuePair (helpers.snapshotName mountPoint) {
@@ -102,7 +101,7 @@ in
           TIMELINE_LIMIT_MONTHLY = toString snapshot.retention.monthly;
           TIMELINE_LIMIT_YEARLY = toString snapshot.retention.yearly;
         }
-      ) enabledSnapshots;
+      ) snapshots;
 
       systemd.services = lib.mkMerge [
         (lib.mapAttrs' (
@@ -128,7 +127,7 @@ in
               ];
             };
           }
-        ) enabledSnapshots)
+        ) snapshots)
         {
           snapper-timeline = {
             after = map (unit: "${unit}.service") snapshotUnits;

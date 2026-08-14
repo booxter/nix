@@ -7,10 +7,7 @@
 let
   cfg = config.host.storage.btrfs;
   helpers = import ./lib.nix { inherit lib utils; };
-  enabledSnapshots = lib.filterAttrs (_: snapshot: snapshot.enable) cfg.snapshots;
-  snapshotNames = lib.mapAttrsToList (
-    mountPoint: _: helpers.snapshotName mountPoint
-  ) enabledSnapshots;
+  snapshotNames = lib.mapAttrsToList (mountPoint: _: helpers.snapshotName mountPoint) cfg.snapshots;
 in
 {
   config.assertions =
@@ -29,7 +26,7 @@ in
           message = "Btrfs snapshots require '${mountPoint}' to use fsType = \"btrfs\"";
         }
       ]
-    ) (builtins.attrNames enabledSnapshots)
+    ) (builtins.attrNames cfg.snapshots)
     ++ [
       {
         assertion = builtins.length snapshotNames == builtins.length (lib.unique snapshotNames);

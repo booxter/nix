@@ -2,17 +2,14 @@
   host.storage.volumes.bulk = {
     # Keep /volume2 as the durable path published to existing NFS clients.
     mountPoint = "/volume2";
-    fileSystem = {
-      device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
-      fsType = "btrfs";
-      options = [
-        "compress=zstd"
-        "noatime"
-      ];
-    };
-    activation.slow = true;
-    requiredAtBoot = true;
-    btrfs.snapshots.enable = true;
+    device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
+    fsType = "btrfs";
+    mountOptions = [
+      "compress=zstd"
+      "noatime"
+    ];
+    slowActivation = true;
+    snapshots = true;
   };
 
   host.storage.resources = {
