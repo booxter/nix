@@ -1,28 +1,30 @@
 {
-  config,
   lib,
-  pkgs,
   utils,
+  watchstateModel,
   ...
 }:
 let
-  cfg = config.host.watchstate;
-  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
-  tools = pkgs.callPackage ./packages/tools { inherit atomicFileWrites; };
+  inherit (watchstateModel)
+    backupStagingDirectory
+    cfg
+    dataDirectory
+    tools
+    ;
   backup = utils.escapeSystemdExecArgs [
     (lib.getExe' tools "watchstate-native-backup")
     "--data-dir"
-    cfg.dataDirectory
+    dataDirectory
     "--staging-dir"
-    cfg.backups.stagingDirectory
+    backupStagingDirectory
     "--keep"
     "7"
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null) {
     systemd.tmpfiles.rules = [
-      "d ${cfg.backups.stagingDirectory} 0750 root restic-cloud - -"
+      "d ${backupStagingDirectory} 0750 root restic-cloud - -"
     ];
 
     systemd.services.watchstate-native-backup = {
@@ -37,7 +39,7 @@ in
         "podman-watchstate.service"
         "podman.socket"
       ];
-      unitConfig.RequiresMountsFor = [ cfg.backups.stagingDirectory ];
+      unitConfig.RequiresMountsFor = [ backupStagingDirectory ];
       serviceConfig = {
         Type = "oneshot";
         User = "root";
@@ -52,7 +54,7 @@ in
       title = "WatchState";
       preparation = {
         service = "watchstate-native-backup";
-        paths = [ cfg.backups.stagingDirectory ];
+        paths = [ backupStagingDirectory ];
       };
     };
   };

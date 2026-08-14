@@ -2,25 +2,32 @@
   config,
   lib,
   pkgs,
+  watchstateModel,
   ...
 }:
 let
-  cfg = config.host.watchstate;
+  inherit (watchstateModel)
+    cfg
+    dataDirectory
+    jellyfin
+    libraryPath
+    port
+    ;
   image = import ../../_lib/oci-image.nix {
-    image = cfg.container;
+    image = import ./image-pin.nix;
     inherit pkgs;
   };
   uid = 296;
 in
 {
-  config = lib.mkIf (cfg.enable && config.host.jellyfin != null) {
+  config = lib.mkIf (cfg != null && jellyfin != null) {
     users.groups.watchstate.gid = uid;
     users.users.watchstate = {
       description = "WatchState service user";
       isSystemUser = true;
       group = "watchstate";
       inherit uid;
-      home = cfg.dataDirectory;
+      home = dataDirectory;
       createHome = false;
     };
 
@@ -50,16 +57,16 @@ in
           "--no-healthcheck"
           "--security-opt=no-new-privileges"
         ];
-        ports = [ "127.0.0.1:${toString cfg.port}:${toString cfg.port}" ];
+        ports = [ "127.0.0.1:${toString port}:${toString port}" ];
         volumes = [
-          "${cfg.dataDirectory}:/config:rw"
-          "${cfg.library.source}:${cfg.library.mountPoint}:ro"
+          "${dataDirectory}:/config:rw"
+          "${libraryPath}:${libraryPath}:ro"
         ];
       };
     };
 
     systemd.tmpfiles.rules = [
-      "d ${cfg.dataDirectory} 0700 watchstate watchstate - -"
+      "d ${dataDirectory} 0700 watchstate watchstate - -"
     ];
 
     systemd.services.podman-watchstate = {
@@ -70,8 +77,8 @@ in
         "watchstate-password-env.service"
       ];
       unitConfig.RequiresMountsFor = [
-        cfg.dataDirectory
-        cfg.library.source
+        dataDirectory
+        libraryPath
       ];
     };
   };

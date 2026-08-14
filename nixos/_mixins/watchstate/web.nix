@@ -1,16 +1,17 @@
 {
   config,
   lib,
+  watchstateModel,
   ...
 }:
 let
-  cfg = config.host.watchstate;
+  inherit (watchstateModel) cfg localUrl;
   sso = config.host.sso.applications.watchstate;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.watchstate = {
-      upstream = cfg.localUrl;
+      upstream = localUrl;
       health = {
         frontend = {
           enable = true;

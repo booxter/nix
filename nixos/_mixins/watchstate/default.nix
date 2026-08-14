@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -8,7 +9,7 @@ let
   jellyfin = config.host.jellyfin;
   libraryPath = if jellyfin == null then null else "${jellyfin.media.mountPoint}/library";
   absolutePath = lib.types.strMatching "^/.*";
-  imagePin = import ./image-pin.nix;
+  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
 in
 {
   imports = [
@@ -20,64 +21,25 @@ in
     ./web.nix
   ];
 
-  options.host.watchstate = {
-    enable = lib.mkEnableOption "WatchState media synchronization service";
+  options.host.watchstate = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options.backupStagingDirectory = lib.mkOption {
+          type = absolutePath;
+          description = "Directory where WatchState archives are staged for Restic.";
+        };
+      }
+    );
+    default = null;
+    description = "WatchState media synchronization service configuration.";
+  };
 
-    container = import ../../_lib/oci-image-options.nix {
-      inherit lib;
-      pin = imagePin;
-    };
-
-    port = lib.mkOption {
-      type = lib.types.port;
-      default = 8080;
-      description = "Loopback port where WatchState listens.";
-    };
-
-    localUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:${toString cfg.port}";
-      readOnly = true;
-      internal = true;
-      description = "Loopback WatchState API URL.";
-    };
-
-    dataDirectory = lib.mkOption {
-      type = absolutePath;
-      default = "/var/lib/watchstate";
-      description = "Persistent WatchState state directory.";
-    };
-
-    library = {
-      source = lib.mkOption {
-        type = with lib.types; nullOr absolutePath;
-        default = libraryPath;
-        readOnly = true;
-        internal = true;
-        description = "Host media-library path exposed read-only to WatchState.";
-      };
-
-      mountPoint = lib.mkOption {
-        type = with lib.types; nullOr absolutePath;
-        default = libraryPath;
-        readOnly = true;
-        internal = true;
-        description = "WatchState container path matching Jellyfin's media library.";
-      };
-    };
-
-    backups = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to capture native WatchState backup archives.";
-      };
-
-      stagingDirectory = lib.mkOption {
-        type = with lib.types; nullOr absolutePath;
-        default = null;
-        description = "Directory where WatchState archives are staged for Restic.";
-      };
-    };
+  config._module.args.watchstateModel = {
+    inherit cfg jellyfin libraryPath;
+    backupStagingDirectory = if cfg == null then null else cfg.backupStagingDirectory;
+    dataDirectory = "/var/lib/watchstate";
+    localUrl = "http://127.0.0.1:8080";
+    port = 8080;
+    tools = pkgs.callPackage ./packages/tools { inherit atomicFileWrites; };
   };
 }

@@ -57,8 +57,7 @@
 
     lolek.enable = true;
     watchstate = {
-      enable = true;
-      backups.stagingDirectory = "/volume2/backups/staging/watchstate";
+      backupStagingDirectory = "/volume2/backups/staging/watchstate";
     };
   };
 
