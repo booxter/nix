@@ -53,7 +53,11 @@ let
         destinationRepository = repository.cloud.repository;
         destinationPasswordFile = repository.cloud.passwordFile;
         packSizeMib = 16;
-        pruneOptions = repository.cloud.pruneOpts;
+        pruneOptions = [
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
+        ];
       }
       // lib.optionalAttrs (builtins.hasAttr name credentialedOffloads) {
         inherit applicationKeyFile applicationKeyIdFile;
@@ -129,17 +133,25 @@ in
 
     systemd.timers =
       lib.mapAttrs' (
-        name: repository:
+        name: _:
         lib.nameValuePair (offloadService name) {
           wantedBy = [ "timers.target" ];
-          timerConfig = repository.cloud.timerConfig;
+          timerConfig = {
+            OnCalendar = "06:00";
+            RandomizedDelaySec = "5m";
+            Persistent = true;
+          };
         }
       ) enabledOffloads
       // lib.mapAttrs' (
-        name: repository:
+        name: _:
         lib.nameValuePair (pruneService name) {
           wantedBy = [ "timers.target" ];
-          timerConfig = repository.cloud.pruneTimerConfig;
+          timerConfig = {
+            OnCalendar = "Sun *-*-* 07:00:00";
+            RandomizedDelaySec = "5m";
+            Persistent = true;
+          };
         }
       ) enabledOffloads;
   };
