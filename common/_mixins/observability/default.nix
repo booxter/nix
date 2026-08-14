@@ -5,6 +5,7 @@
 }:
 {
   imports = [
+    ./inventory.nix
     ./node-exporter.nix
   ];
 

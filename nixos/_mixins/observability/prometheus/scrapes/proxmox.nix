@@ -1,49 +1,30 @@
 {
-  config,
   lib,
-  outputs,
+  observabilityInventory,
   prometheusMtlsTlsConfig,
 }:
 let
-  localHost = config.networking.hostName;
-  model = import ../../../proxmox/model.nix {
-    inherit config lib outputs;
-  };
-  hostConfigFor =
-    name: if name == localHost then config else outputs.nixosConfigurations.${name}.config;
-  exporterEnabled = name: (hostConfigFor name).host.proxmox.prometheusExporter.enable;
-  proxmoxNodeNames = builtins.filter (name: exporterEnabled name) (builtins.attrNames model.nodes);
-  clusterRepresentativeNames = builtins.concatLists (
-    lib.mapAttrsToList (
-      _: clusters:
-      lib.concatMap (
-        nodeNames:
-        let
-          exporterNodeNames = builtins.filter exporterEnabled nodeNames;
-        in
-        lib.optional (exporterNodeNames != [ ]) (builtins.head exporterNodeNames)
-      ) (builtins.attrValues clusters)
-    ) model.nodesByRealmCluster
+  exporters = lib.filter (exporter: exporter != null) (
+    map (inventory: inventory.proxmox) (builtins.attrValues observabilityInventory.nixos)
   );
-  mkProxmoxPveTargetConfig =
-    name:
-    let
-      hostConfig = hostConfigFor name;
-      endpoint = hostConfig.host.observability.prometheusEndpoints.pve;
-    in
-    {
-      labels = {
-        component = "proxmox";
-        instance = name;
-        proxmox_node = hostConfig.networking.hostName;
-        pve_target = hostConfig.host.proxmox.apiCertificate.serverName;
-        scrape_profile = "hypervisor";
-      };
-      targets = [ "${name}:${toString endpoint.port}" ];
+  exportersByRealm = lib.groupBy (exporter: exporter.realm) exporters;
+  clusterRepresentatives = builtins.concatLists (
+    map (
+      realmExporters:
+      map lib.head (builtins.attrValues (lib.groupBy (exporter: exporter.cluster) realmExporters))
+    ) (builtins.attrValues exportersByRealm)
+  );
+  mkTarget = exporter: {
+    labels = {
+      component = "proxmox";
+      instance = exporter.node;
+      proxmox_node = exporter.node;
+      pve_target = exporter.pveTarget;
+      scrape_profile = "hypervisor";
     };
-  proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxNodeNames;
-  proxmoxClusterTargetConfigs = map mkProxmoxPveTargetConfig clusterRepresentativeNames;
-  proxmoxPveRelabelConfigs = [
+    targets = [ exporter.target ];
+  };
+  relabelConfigs = [
     {
       source_labels = [ "pve_target" ];
       target_label = "__param_target";
@@ -62,8 +43,8 @@ in
         cluster = [ "1" ];
         node = [ "0" ];
       };
-      static_configs = proxmoxClusterTargetConfigs;
-      relabel_configs = proxmoxPveRelabelConfigs;
+      static_configs = map mkTarget clusterRepresentatives;
+      relabel_configs = relabelConfigs;
     }
     {
       job_name = "proxmox-pve-node";
@@ -75,14 +56,14 @@ in
         cluster = [ "0" ];
         node = [ "1" ];
       };
-      static_configs = proxmoxPveTargetConfigs;
-      relabel_configs = proxmoxPveRelabelConfigs;
+      static_configs = map mkTarget exporters;
+      relabel_configs = relabelConfigs;
     }
     {
       job_name = "proxmox-pve-exporter";
       scheme = "https";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = proxmoxPveTargetConfigs;
+      static_configs = map mkTarget exporters;
     }
   ];
 }

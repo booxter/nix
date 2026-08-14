@@ -118,6 +118,11 @@ in
     (lib.mkIf cfg.remote.enable {
       host.observability = {
         blackbox.enable = true;
+        inventory.blackbox = {
+          exporter = "${config.networking.hostName}:${toString cfg.remote.port}";
+          scheme = "https";
+          source = config.services.avahi.hostName;
+        };
         prometheusEndpoints.blackbox = {
           listenAddress = cfg.remote.listenAddress;
           port = cfg.remote.port;

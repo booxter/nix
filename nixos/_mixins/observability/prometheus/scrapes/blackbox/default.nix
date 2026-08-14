@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  observabilityInventory,
   outputs,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
@@ -17,7 +18,6 @@ let
   configurations = outputs.nixosConfigurations // {
     ${localHost} = { inherit config; };
   };
-  nixosConfigNames = builtins.attrNames configurations;
   fleetServices = import ../../../../../_lib/fleet-web-services.nix {
     inherit config lib outputs;
   };
@@ -145,21 +145,11 @@ let
         };
       };
     };
-  remoteBlackboxProbeSourceNames = builtins.filter (
-    name: name != localHost && configurations.${name}.config.host.observability.blackbox.remote.enable
-  ) nixosConfigNames;
-  mkRemoteBlackboxProbeSourceConfig =
-    name:
-    let
-      hostConfig = configurations.${name}.config;
-      mtlsEndpoint = hostConfig.host.observability.prometheusEndpoints.blackbox;
-    in
-    {
-      exporter = "${name}:${toString mtlsEndpoint.port}";
-      scheme = "https";
-      source = hostConfig.services.avahi.hostName;
-    };
-  remoteBlackboxProbeSourceConfigs = map mkRemoteBlackboxProbeSourceConfig remoteBlackboxProbeSourceNames;
+  remoteBlackboxProbeSourceConfigs = lib.filter (source: source != null) (
+    map (inventory: inventory.blackbox) (
+      builtins.attrValues (removeAttrs observabilityInventory.nixos [ localHost ])
+    )
+  );
   blackboxProbeSourceConfigs = [
     {
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";

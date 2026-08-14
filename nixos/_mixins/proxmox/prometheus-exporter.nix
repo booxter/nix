@@ -15,6 +15,14 @@ in
       );
     }
     (lib.mkIf cfg.enable {
+      host.observability.inventory.proxmox = {
+        inherit (config.host.proxmox) cluster;
+        realm = config.host.realm;
+        target = "${config.networking.hostName}:${toString config.host.observability.prometheusEndpoints.pve.port}";
+        node = config.networking.hostName;
+        pveTarget = config.host.proxmox.apiCertificate.serverName;
+      };
+
       sops.secrets.proxmoxPveExporterTokenValue = {
         key = cfg.apiTokenValueSecret;
         owner = pveExporterUser;

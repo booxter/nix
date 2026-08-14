@@ -1,72 +1,28 @@
 {
   config,
   lib,
-  outputs,
+  observabilityInventory,
   prometheusMtlsTlsConfig,
 }:
 let
-  hostname = config.networking.hostName;
-  nixosConfigNames = builtins.attrNames outputs.nixosConfigurations;
-  mkNodeLabels = name: hostConfig: isProxmoxNode: {
-    availability = if hostConfig.host.hardware.isLaptop then "intermittent" else "always";
-    component = "node";
-    host_builder = lib.boolToString hostConfig.host.nix.builder.enable;
-    host_hypervisor = lib.boolToString isProxmoxNode;
-    host_laptop = lib.boolToString hostConfig.host.hardware.isLaptop;
-    host_network_charts = lib.boolToString (!isProxmoxNode);
-    host_network_source = if isProxmoxNode then "classified" else "node";
-    host_class = if hostConfig.host.proxmox.guest.enable then "virtual" else "hardware";
-    host_virtual = lib.boolToString hostConfig.host.proxmox.guest.enable;
-    instance = name;
-    realm = hostConfig.host.realm;
-    scrape_profile = "node";
-  };
-  mkRemoteNixosNodeTargetConfig =
-    name:
-    let
-      hostConfig = outputs.nixosConfigurations.${name}.config;
-    in
-    {
-      labels = mkNodeLabels name hostConfig hostConfig.host.proxmox.node.enable;
-      targets = [ "${name}:9100" ];
-    };
-  nixosNodeExporterTargetNames = builtins.filter (
-    name:
-    name != hostname && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
-  ) nixosConfigNames;
-  remoteNixosNonMtlsNodeTargetNames = builtins.filter (
-    name:
-    !(outputs.nixosConfigurations.${name}.config.host.observability.nodeExporter.mtls.enable or false)
-  ) nixosNodeExporterTargetNames;
-  remoteNixosNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig nixosNodeExporterTargetNames;
-  mkRemoteDarwinNodeTargetConfig =
-    name:
-    let
-      hostConfig = outputs.darwinConfigurations.${name}.config;
-    in
-    {
-      labels = mkNodeLabels name hostConfig false;
-      targets = [ "${hostConfig.networking.hostName}:9100" ];
-    };
-  darwinNodeExporterTargetNames = builtins.filter (
-    name: (outputs.darwinConfigurations.${name}.config.host.observability.enable or false)
-  ) (builtins.attrNames outputs.darwinConfigurations);
-  remoteDarwinNonMtlsNodeTargetNames = builtins.filter (
-    name:
-    !(outputs.darwinConfigurations.${name}.config.host.observability.nodeExporter.mtls.enable or false)
-  ) darwinNodeExporterTargetNames;
-  remoteDarwinNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig darwinNodeExporterTargetNames;
-  remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  hostName = config.networking.hostName;
+  remoteNodes = lib.filter (node: node != null) (
+    map (inventory: inventory.node) (
+      builtins.attrValues (removeAttrs observabilityInventory.all [ hostName ])
+    )
+  );
+  nonMtlsNodes = map (node: node.labels.instance) (builtins.filter (node: !node.mtls) remoteNodes);
+  remoteNodeTargetConfigs = map (node: {
+    targets = [ node.target ];
+    inherit (node) labels;
+  }) remoteNodes;
+  localNode = config.host.observability.inventory.node;
 in
 {
   assertions = [
     {
-      assertion = remoteNixosNonMtlsNodeTargetNames == [ ];
-      message = "All non-local NixOS Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " remoteNixosNonMtlsNodeTargetNames}";
-    }
-    {
-      assertion = remoteDarwinNonMtlsNodeTargetNames == [ ];
-      message = "All Darwin Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " remoteDarwinNonMtlsNodeTargetNames}";
+      assertion = nonMtlsNodes == [ ];
+      message = "All remote Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " nonMtlsNodes}";
     }
   ];
 
@@ -78,7 +34,7 @@ in
           targets = [
             "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
           ];
-          labels = mkNodeLabels hostname config config.host.proxmox.node.enable;
+          inherit (localNode) labels;
         }
       ];
     }

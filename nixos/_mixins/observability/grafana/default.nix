@@ -21,46 +21,12 @@ let
     ${localHost} = { inherit config; };
   };
   fleetConfigurations = nixosConfigurations // outputs.darwinConfigurations;
-  observableConfigurations = lib.filterAttrs (
-    _: configuration:
-    configuration.config.host.realm == config.host.realm
-    && configuration.config.host.observability.enable
+  inventories = lib.mapAttrs (
+    _: configuration: configuration.config.host.observability.inventory
   ) fleetConfigurations;
-  dashboardHost =
-    name: configuration:
-    let
-      hostConfig = configuration.config;
-      enabledServices = lib.filterAttrs (_: service: service.enable) (
-        hostConfig.host.web.services or { }
-      );
-      gpuVendors = hostConfig.host.hardware.gpu.vendors or [ ];
-      fileSystems = builtins.attrValues (hostConfig.fileSystems or { });
-      diskBays = hostConfig.host.hardware.storage.diskBays or null;
-    in
-    {
-      inherit name;
-      platform = if hostConfig.nixpkgs.hostPlatform.isDarwin then "darwin" else "linux";
-      virtual = hostConfig.host.proxmox.guest.enable;
-      builder = hostConfig.host.nix.builder.enable;
-      hypervisor = hostConfig.host.proxmox.node.enable;
-      gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
-      services = builtins.attrNames enabledServices;
-      storage = {
-        btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;
-        diskBays =
-          if diskBays == null then
-            null
-          else
-            {
-              inherit (diskBays) columns rows;
-            };
-        nvme = false;
-      };
-      backups = {
-        client = (hostConfig.host.backups.jobs or { }) != { };
-        server = hostConfig.host.backups.server.enable or false;
-      };
-    };
+  observableInventories = lib.filterAttrs (
+    _: inventory: inventory.realm == config.host.realm && inventory.dashboard != null
+  ) inventories;
   dashboardManifest = {
     dataSources = {
       prometheus = {
@@ -72,7 +38,7 @@ let
         uid = grafanaLokiUid;
       };
     };
-    hosts = lib.mapAttrsToList dashboardHost observableConfigurations;
+    hosts = map (inventory: inventory.dashboard) (builtins.attrValues observableInventories);
     network.internet = {
       ingress = {
         capacityMbit = config.host.site.uplink.downloadMbit;

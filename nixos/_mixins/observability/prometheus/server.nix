@@ -22,11 +22,23 @@ let
     cert_file = blackboxScrapeMaterialization.certificatePath;
     key_file = blackboxScrapeMaterialization.keyPath;
   };
+  localHost = config.networking.hostName;
+  nixosConfigurations = outputs.nixosConfigurations // {
+    ${localHost} = { inherit config; };
+  };
+  observabilityInventory = {
+    nixos = lib.mapAttrs (
+      _: configuration: configuration.config.host.observability.inventory
+    ) nixosConfigurations;
+    all = lib.mapAttrs (_: configuration: configuration.config.host.observability.inventory) (
+      nixosConfigurations // outputs.darwinConfigurations
+    );
+  };
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
       lib
-      outputs
+      observabilityInventory
       prometheusMtlsTlsConfig
       ;
   };
@@ -34,6 +46,7 @@ let
     inherit
       config
       lib
+      observabilityInventory
       outputs
       blackboxHttpMtlsTlsConfig
       prometheusMtlsTlsConfig
@@ -41,17 +54,15 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
-      config
       lib
-      outputs
+      observabilityInventory
       prometheusMtlsTlsConfig
       ;
   };
   endpointScrapes = import ./scrapes/endpoints.nix {
     inherit
-      config
       lib
-      outputs
+      observabilityInventory
       prometheusMtlsTlsConfig
       ;
   };

@@ -7,6 +7,7 @@ let
   cfg = config.host.observability;
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   endpoints = cfg.prometheusEndpoints;
+  discoveredEndpoints = lib.filterAttrs (_: endpoint: endpoint.scrape != null) endpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
   endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues endpoints);
 in
@@ -152,6 +153,27 @@ in
   };
 
   config = lib.mkIf (cfg.enable && endpoints != { }) {
+    host.observability.inventory.endpoints = lib.mapAttrs (_name: endpoint: {
+      inherit (endpoint) path;
+      inherit (endpoint.scrape)
+        interval
+        jobName
+        metricRelabelConfigs
+        timeout
+        ;
+      target = "${config.networking.hostName}:${toString endpoint.port}";
+      labels = {
+        inherit (endpoint.scrape) availability component;
+        instance = config.networking.hostName;
+        realm = config.host.realm;
+        scrape_profile = endpoint.scrape.profile;
+      }
+      // lib.optionalAttrs (endpoint.scrape.service != null) {
+        service = endpoint.scrape.service;
+      }
+      // endpoint.scrape.labels;
+    }) discoveredEndpoints;
+
     host.pki.certificates = lib.mapAttrs' (
       name: endpoint:
       lib.nameValuePair "observability_endpoint_server/${name}" {
