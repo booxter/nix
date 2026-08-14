@@ -10,6 +10,7 @@
     ./prometheus-endpoints.nix
     ./prometheus/server.nix
     ./systemd-expectations.nix
+    ./textfile-producers.nix
     ./unifi
     ./uptimerobot
   ];
