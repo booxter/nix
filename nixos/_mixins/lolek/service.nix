@@ -23,17 +23,8 @@ in
         mode = "0400";
       };
 
-      "lolek/telegramBotApi/apiId" = {
-        owner = "lolek";
-        group = "lolek";
-        mode = "0400";
-      };
-
-      "lolek/telegramBotApi/apiHash" = {
-        owner = "lolek";
-        group = "lolek";
-        mode = "0400";
-      };
+      "lolek/telegramBotApi/apiId" = { };
+      "lolek/telegramBotApi/apiHash" = { };
     };
 
     sops.templates."lolek-telegram-bot-api.env" = {
