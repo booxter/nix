@@ -47,17 +47,14 @@ in
   };
 
   host.lidarr = {
-    enable = true;
     stateDir = "/data/.state/nixarr/lidarr";
   };
 
   host.prowlarr = {
-    enable = true;
     stateDir = "/data/.state/nixarr/prowlarr";
   };
 
   host.radarr = {
-    enable = true;
     stateDir = "/data/.state/nixarr/radarr";
   };
 
@@ -71,7 +68,6 @@ in
   };
 
   host.sonarr = {
-    enable = true;
     stateDir = "/data/.state/nixarr/sonarr";
   };
 

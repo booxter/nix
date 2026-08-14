@@ -12,30 +12,35 @@ let
   port = config.services.${name}.settings.server.port;
 in
 {
-  options.host.${name} = {
-    enable = lib.mkEnableOption "${name} service";
+  options.host.${name} = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options = {
+          stateDir = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = "/var/lib/${name}";
+          };
+        }
+        // lib.optionalAttrs media {
+          user = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = name;
+            internal = true;
+          };
 
-    stateDir = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "/var/lib/${name}";
-    };
-
-  }
-  // lib.optionalAttrs media {
-    user = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = name;
-      internal = true;
-    };
-
-    group = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "media";
-      internal = true;
-    };
+          group = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = "media";
+            internal = true;
+          };
+        };
+      }
+    );
+    default = null;
+    description = "${name} service configuration.";
   };
 
-  config = lib.mkIf cfg.enable (
+  config = lib.mkIf (cfg != null) (
     lib.mkMerge [
       {
         services.${name} = {

@@ -24,7 +24,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims.media = {
       directories.".cue-splitter-work".mode = "2775";
       attachments.lidarr-cue-splitter = { };
