@@ -41,7 +41,7 @@ let
     hostname = name;
     ip = network.reservation.address;
     identifiers = lib.optional (network.macAddress != null) network.macAddress;
-  }) (lib.filterAttrs (_: network: network.reservation.enable) networksByHost);
+  }) (lib.filterAttrs (_: network: network.reservation != null) networksByHost);
   unmanagedReservations = lib.mapAttrsToList (hostname: reservation: {
     inherit hostname;
     inherit (reservation) identifiers;

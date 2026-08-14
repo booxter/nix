@@ -19,31 +19,23 @@ let
 in
 {
   config.assertions =
-    lib.optionals cfg.reservation.enable [
-      {
-        assertion = cfg.reservation.address != null;
-        message = "host.network.reservation.address must be set when the reservation is enabled";
-      }
+    lib.optionals (cfg.reservation != null) [
       {
         assertion = cfg.macAddress != null;
-        message = "host.network.macAddress must be set when the reservation is enabled";
+        message = "host.network.macAddress must be set with host.network.reservation";
       }
       {
-        assertion = cfg.reservation.address != null && ip.validIpv4 cfg.reservation.address;
-        message = "host.network.reservation.address must be a valid IPv4 address";
-      }
-      {
-        assertion = cfg.reservation.address != null && ip.inCidr lan.cidr cfg.reservation.address;
+        assertion = ip.inCidr lan.cidr cfg.reservation.address;
         message = "host.network.reservation.address must belong to the site LAN ${lan.cidr}";
       }
     ]
     ++ [
       {
-        assertion = cfg.stableAddress.requiredBy == [ ] || cfg.reservation.enable;
+        assertion = cfg.stableAddress.requiredBy == [ ] || cfg.reservation != null;
         message = "${hostName} requires a stable site address for: ${lib.concatStringsSep ", " (lib.unique cfg.stableAddress.requiredBy)}";
       }
       {
-        assertion = !cfg.reservation.enable || cfg.stableAddress.requiredBy != [ ];
+        assertion = cfg.reservation == null || cfg.stableAddress.requiredBy != [ ];
         message = "${hostName} declares a site IP reservation without a stable-address requirement";
       }
     ]

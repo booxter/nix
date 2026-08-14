@@ -8,7 +8,6 @@ in
   host.network = {
     macAddress = "02:48:4f:4d:45:01";
     reservation = {
-      enable = true;
       address = "192.168.20.6";
     };
   };

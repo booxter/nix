@@ -14,7 +14,6 @@
     macAddress = "38:05:25:30:7d:69";
     primaryInterface = "enp5s0f0np0";
     reservation = {
-      enable = true;
       address = "192.168.15.12";
     };
   };

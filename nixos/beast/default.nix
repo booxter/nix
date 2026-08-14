@@ -32,7 +32,6 @@
       macAddress = "bc:fc:e7:3b:fe:da";
       primaryInterface = "enp6s0";
       reservation = {
-        enable = true;
         address = "192.168.16.3";
       };
     };
