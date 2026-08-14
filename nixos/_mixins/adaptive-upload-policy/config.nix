@@ -2,16 +2,25 @@
   config,
   lib,
   options,
+  outputs ? {
+    nixosConfigurations = { };
+  },
   ...
 }:
 let
   hasLanWanAccounting = options.host.observability.lanWan.wanEgressOverride or null != null;
   hasPkiClients = options.host.pki.clients or null != null;
-  cfg = config.host.adaptiveUploadPolicy;
-  pkiClientName = "jellyfin-upload-policy";
-  qosDestination = if cfg == null then null else cfg.destinations.qos;
-  qosProfileName = "adaptive_upload";
-  stateDir = if cfg == null then null else dirOf cfg.stateFile;
+  model = import ./model.nix { inherit config outputs; };
+  inherit (model)
+    cfg
+    group
+    metricsDirectory
+    pkiClientName
+    qosDestination
+    qosProfileName
+    stateDir
+    user
+    ;
 in
 {
   imports = [
@@ -46,16 +55,16 @@ in
           };
         };
 
-        users.groups.${cfg.group} = { };
-        users.users.${cfg.user} = {
+        users.groups.${group} = { };
+        users.users.${user} = {
           description = "Adaptive upload policy controller";
           isSystemUser = true;
-          group = cfg.group;
+          inherit group;
         };
 
         systemd.tmpfiles.rules = [
-          "d ${stateDir} 0750 ${cfg.user} ${cfg.group} -"
-          "z /var/lib/prometheus-node-exporter-textfile 0775 root ${cfg.group} - -"
+          "d ${stateDir} 0750 ${user} ${group} -"
+          "z ${metricsDirectory} 0775 root ${group} - -"
         ];
       }
       (lib.optionalAttrs hasPkiClients {
@@ -64,8 +73,8 @@ in
           category = "internal";
           secretPrefix = "prometheus/clients/${pkiClientName}";
           materializations.default = {
-            owner = cfg.user;
-            group = cfg.group;
+            owner = user;
+            inherit group;
             restartUnits = [ "adaptive-upload-policy.service" ];
           };
         };

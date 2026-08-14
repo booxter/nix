@@ -1,15 +1,9 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
-  transmissionCommon = pkgs.callPackage ../transmission/pkgs/common { };
-  defaultPackage = pkgs.callPackage ./pkgs/controller {
-    atomicFileWrites = pkgs.atomic-file-writes;
-    inherit transmissionCommon;
-  };
   transmissionDestinationType = lib.types.submodule {
     options = {
       headroomPercent = lib.mkOption {
@@ -81,12 +75,6 @@ in
       with lib.types;
       nullOr (submodule {
         options = {
-          package = lib.mkOption {
-            type = package;
-            default = defaultPackage;
-            internal = true;
-          };
-
           fallbackRateMbit = lib.mkOption {
             type = ints.positive;
             description = "Conservative upload rate used when policy state is unavailable.";
@@ -121,26 +109,6 @@ in
             };
           };
 
-          user = lib.mkOption {
-            type = str;
-            default = "adaptive-upload-policy";
-            readOnly = true;
-            internal = true;
-          };
-
-          group = lib.mkOption {
-            type = str;
-            default = "adaptive-upload-policy";
-            readOnly = true;
-            internal = true;
-          };
-
-          stateFile = lib.mkOption {
-            type = str;
-            default = "/run/adaptive-upload-policy/state.json";
-            readOnly = true;
-            internal = true;
-          };
         };
       });
     default = null;

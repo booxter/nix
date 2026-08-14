@@ -19,6 +19,7 @@ let
     qosProfile
     transmission
     transmissionDestination
+    transmissionOutput
     ;
 in
 {
@@ -48,23 +49,23 @@ in
       message = "host.adaptiveUploadPolicy Transmission destination requires local Transmission";
     }
     {
-      assertion = !cfg.outputs.transmission.enable || cfg.outputs.transmission.rpcUrl != null;
+      assertion = transmissionOutput == null || transmissionOutput.rpcUrl != null;
       message = "host.adaptiveUploadPolicy Transmission destination requires an RPC URL";
     }
     {
-      assertion = !mtls.enable || mtls.certificateFile != null;
+      assertion = mtls == null || mtls.certificateFile != null;
       message = "host.adaptiveUploadPolicy could not materialize its mTLS certificate";
     }
     {
-      assertion = !mtls.enable || mtls.keyFile != null;
+      assertion = mtls == null || mtls.keyFile != null;
       message = "host.adaptiveUploadPolicy could not materialize its mTLS private key";
     }
     {
-      assertion = !cfg.outputs.qos.enable || qosProfile != null;
+      assertion = qosDestination == null || qosProfile != null;
       message = "host.adaptiveUploadPolicy could not configure its QoS profile";
     }
     {
-      assertion = !cfg.outputs.qos.enable || qosLimit != null;
+      assertion = qosDestination == null || qosLimit != null;
       message = "host.adaptiveUploadPolicy could not configure its uplink QoS limit";
     }
     {

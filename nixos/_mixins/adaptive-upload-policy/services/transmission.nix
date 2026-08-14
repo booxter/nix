@@ -25,11 +25,12 @@ let
     command
     commonServiceConfig
     deciderUnit
+    transmissionOutput
     ;
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf (cfg != null && cfg.outputs.transmission.enable) {
+    (lib.mkIf (cfg != null && transmissionOutput != null) {
       systemd.services.adaptive-upload-policy-transmission = {
         description = "Apply adaptive upload policy to Transmission";
         wantedBy = [ "multi-user.target" ];
@@ -37,12 +38,12 @@ in
           "network-online.target"
           deciderUnit
         ]
-        ++ lib.optional cfg.outputs.transmission.local "transmission.service";
+        ++ lib.optional transmissionOutput.local "transmission.service";
         after = [
           "network-online.target"
           deciderUnit
         ]
-        ++ lib.optional cfg.outputs.transmission.local "transmission.service";
+        ++ lib.optional transmissionOutput.local "transmission.service";
         serviceConfig = commonServiceConfig // {
           ExecStart = command "apply-transmission";
           RestrictAddressFamilies = [
@@ -55,14 +56,14 @@ in
     })
     (lib.optionalAttrs hasHostTransmission {
       host.transmission.uploadLimit =
-        lib.mkIf (cfg != null && cfg.outputs.transmission.enable && cfg.outputs.transmission.local)
+        lib.mkIf (cfg != null && transmissionOutput != null && transmissionOutput.local)
           {
             enable = true;
             # Start at the safe fallback before the runtime controller has produced
             # its first policy decision.
             initialKBytesPerSecond = lib.mkDefault (
               builtins.floor (
-                (cfg.fallbackRateMbit * 1000.0 / 8.0) * (cfg.outputs.transmission.headroomPercent / 100.0)
+                (cfg.fallbackRateMbit * 1000.0 / 8.0) * (transmissionOutput.headroomPercent / 100.0)
               )
             );
           };

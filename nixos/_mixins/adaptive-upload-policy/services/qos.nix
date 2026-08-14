@@ -23,14 +23,15 @@ let
     command
     commonServiceConfig
     deciderUnit
+    qosOutput
     qosService
     ;
 in
 {
-  config = lib.mkIf (cfg != null && cfg.outputs.qos.enable) {
+  config = lib.mkIf (cfg != null && qosOutput != null) {
     # Start the selected limit at the safe fallback before the runtime
     # controller has produced its first policy decision.
-    host.qos.interfaces.${cfg.outputs.qos.profile}.limits.${cfg.outputs.qos.limit}.rateMbit =
+    host.qos.interfaces.${qosOutput.profile}.limits.${qosOutput.limit}.rateMbit =
       lib.mkDefault cfg.fallbackRateMbit;
 
     systemd.services.adaptive-upload-policy-qos = {
