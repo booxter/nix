@@ -86,8 +86,7 @@ in
 
     host.backups.sources.prowlarr = {
       title = "Prowlarr";
-      capture.type = "scheduled";
-      capture.scheduled.outputPaths = [ "${cfg.stateDir}/Backups" ];
+      paths = [ "${cfg.stateDir}/Backups" ];
     };
 
     systemd.tmpfiles.rules = [

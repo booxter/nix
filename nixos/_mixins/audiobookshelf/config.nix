@@ -117,8 +117,7 @@ in
 
     host.backups.sources.audiobookshelf = {
       title = "Audiobookshelf";
-      capture.type = "scheduled";
-      capture.scheduled.outputPaths = [ "${cfg.stateDir}/backups" ];
+      paths = [ "${cfg.stateDir}/backups" ];
     };
 
     services.nginx.commonHttpConfig = ''

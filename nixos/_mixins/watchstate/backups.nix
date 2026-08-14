@@ -50,12 +50,9 @@ in
 
     host.backups.sources.watchstate = {
       title = "WatchState";
-      capture = {
-        type = "unit";
-        unit = {
-          service = "watchstate-native-backup";
-          outputPaths = [ cfg.backups.stagingDirectory ];
-        };
+      preparation = {
+        service = "watchstate-native-backup";
+        paths = [ cfg.backups.stagingDirectory ];
       };
     };
   };

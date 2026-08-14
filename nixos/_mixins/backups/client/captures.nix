@@ -15,25 +15,27 @@ in
         source:
         let
           name = source.name;
-          database = source.capture.database;
+          database = source.database;
           common = {
             job = jobNameFor source;
             displayName = source.title;
-            destinationDir = database.destinationDir;
-            includeInJob = !outputCoveredByJob source database.destinationDir;
+            destinationDir = database.stagingDir;
+            includeInJob = !outputCoveredByJob source database.stagingDir;
             inherit (database) requiresMountsFor;
           };
         in
-        if source.capture.type == "sqlite" then
+        if database == null then
+          { }
+        else if database.type == "sqlite" then
           {
             sqlite.${name} = common // {
               databasePath = database.path;
               inherit (database) conditionPathExists extraCopies;
             };
           }
-        else if source.capture.type == "postgresql" then
+        else if database.type == "postgresql" then
           { postgresql.${database.name} = common; }
-        else if source.capture.type == "mariadb" then
+        else if database.type == "mariadb" then
           {
             mariadb.${database.name} = common // {
               inherit (database) after requires;

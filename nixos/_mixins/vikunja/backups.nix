@@ -6,12 +6,10 @@ in
   config = lib.mkIf (cfg.enable && cfg.backups.enable) {
     host.backups.sources.vikunja = {
       paths = [ "/var/lib/vikunja/files" ];
-      capture = {
+      database = {
         type = "sqlite";
-        database = {
-          path = "/var/lib/vikunja/vikunja.db";
-          destinationDir = "/var/lib/vikunja-backup/latest";
-        };
+        path = "/var/lib/vikunja/vikunja.db";
+        stagingDir = "/var/lib/vikunja-backup/latest";
       };
     };
   };

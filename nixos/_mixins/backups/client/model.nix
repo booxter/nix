@@ -26,10 +26,7 @@ rec {
   sshKeySecret = "backup/restic/local/ssh/privateKey";
 
   directPathsFor =
-    source:
-    source.paths
-    ++ lib.optionals (source.capture.type == "unit") source.capture.unit.outputPaths
-    ++ lib.optionals (source.capture.type == "scheduled") source.capture.scheduled.outputPaths;
+    source: source.paths ++ lib.optionals (source.preparation != null) source.preparation.paths;
   pathCovers = root: path: path == root || lib.hasPrefix "${lib.removeSuffix "/" root}/" path;
   livePathsFor = selectedSources: lib.concatMap directPathsFor selectedSources;
   minimalPathsFor =

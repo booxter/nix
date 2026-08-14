@@ -5,13 +5,7 @@ let
   sources = lib.filterAttrs (_: source: source.enable) cfg.sources;
   preparationPaths =
     job: lib.concatMap (preparation: preparation.paths) (builtins.attrValues job.preparations);
-  databaseCapture =
-    source:
-    builtins.elem source.capture.type [
-      "sqlite"
-      "postgresql"
-      "mariadb"
-    ];
+  databaseCapture = source: source.database != null;
 in
 {
   assertions =
@@ -42,22 +36,13 @@ in
         {
           assertion =
             source.paths != [ ]
-            || (source.capture.type == "unit" && source.capture.unit.outputPaths != [ ])
-            || (source.capture.type == "scheduled" && source.capture.scheduled.outputPaths != [ ])
+            || (source.preparation != null && source.preparation.paths != [ ])
             || databaseCapture source;
           message = "host.backups.sources.${name} must contribute a path or database capture";
         }
         {
-          assertion = source.capture.type != "unit" || source.capture.unit.service != null;
-          message = "host.backups.sources.${name} unit capture requires a service";
-        }
-        {
           assertion =
-            !databaseCapture source
-            || (
-              source.capture.database.destinationDir != null
-              && (source.capture.type != "sqlite" || source.capture.database.path != null)
-            );
+            !databaseCapture source || source.database.type != "sqlite" || source.database.path != null;
           message = "host.backups.sources.${name} database capture is incomplete";
         }
       ]) sources

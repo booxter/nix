@@ -56,13 +56,13 @@ in
         source:
         let
           jobName = jobNameFor source;
-          unitName = source.capture.unit.service;
+          preparation = source.preparation;
         in
         {
           ${jobName} = {
-            preparations = lib.optionalAttrs (source.capture.type == "unit") {
-              ${unitName} = {
-                service = unitName;
+            preparations = lib.optionalAttrs (preparation != null) {
+              ${preparation.service} = {
+                service = preparation.service;
                 title = "${source.title} Capture";
                 # Source output paths are aggregated into the job above. Keep
                 # the preparation concerned only with service ordering.

@@ -109,8 +109,7 @@ in
 
     host.backups.sources.${name} = {
       title = lib.strings.toSentenceCase name;
-      capture.type = "scheduled";
-      capture.scheduled.outputPaths = [ "${cfg.stateDir}/Backups" ];
+      paths = [ "${cfg.stateDir}/Backups" ];
     };
 
     systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";

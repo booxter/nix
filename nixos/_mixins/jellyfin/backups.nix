@@ -58,12 +58,9 @@ in
 
     host.backups.sources.jellyfin = {
       title = "Jellyfin";
-      capture = {
-        type = "unit";
-        unit = {
-          service = "jellyfin-built-in-backup";
-          outputPaths = [ cfg.backups.stagingDirectory ];
-        };
+      preparation = {
+        service = "jellyfin-built-in-backup";
+        paths = [ cfg.backups.stagingDirectory ];
       };
     };
   };

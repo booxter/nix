@@ -28,10 +28,10 @@ in
           config.services.paperless.dataDir
           storagePath
         ];
-        capture = {
+        database = {
           type = "postgresql";
-          database.destinationDir = "/var/lib/paperless-backup/latest";
-          database.requiresMountsFor = [ config.services.paperless.dataDir ];
+          stagingDir = "/var/lib/paperless-backup/latest";
+          requiresMountsFor = [ config.services.paperless.dataDir ];
         };
       };
     }

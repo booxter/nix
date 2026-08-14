@@ -71,8 +71,7 @@ in
 
     host.backups.sources.bazarr = {
       title = "Bazarr";
-      capture.type = "scheduled";
-      capture.scheduled.outputPaths = [ "${cfg.stateDir}/backup" ];
+      paths = [ "${cfg.stateDir}/backup" ];
     };
 
     host.web.services.bazarr = {

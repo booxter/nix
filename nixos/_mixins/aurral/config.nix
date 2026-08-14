@@ -76,12 +76,10 @@ in
 
     host.backups.sources.aurral-database = {
       title = "Aurral";
-      capture = {
+      database = {
         type = "sqlite";
-        database = {
-          path = "${cfg.stateDir}/aurral.db";
-          destinationDir = "${cfg.stateDir}-backup/latest";
-        };
+        path = "${cfg.stateDir}/aurral.db";
+        stagingDir = "${cfg.stateDir}-backup/latest";
       };
     };
 

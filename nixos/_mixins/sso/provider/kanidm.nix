@@ -115,8 +115,7 @@ in
     ];
 
     host.backups.sources.kanidm = {
-      capture.type = "scheduled";
-      capture.scheduled.outputPaths = [ "/var/lib/kanidm/backups" ];
+      paths = [ "/var/lib/kanidm/backups" ];
     };
 
     assertions = [

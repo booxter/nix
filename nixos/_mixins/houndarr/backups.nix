@@ -6,19 +6,17 @@ in
   config = lib.mkIf (cfg.enable && cfg.backups.enable) {
     host.backups.sources.houndarr-database = {
       title = "Houndarr";
-      capture = {
+      database = {
         type = "sqlite";
-        database = {
-          path = "${cfg.stateDir}/houndarr.db";
-          destinationDir = "${cfg.stateDir}-backup/latest";
-          extraCopies = [
-            {
-              source = "${cfg.stateDir}/houndarr.masterkey";
-              mode = "0600";
-              optional = false;
-            }
-          ];
-        };
+        path = "${cfg.stateDir}/houndarr.db";
+        stagingDir = "${cfg.stateDir}-backup/latest";
+        extraCopies = [
+          {
+            source = "${cfg.stateDir}/houndarr.masterkey";
+            mode = "0600";
+            optional = false;
+          }
+        ];
       };
     };
   };

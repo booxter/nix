@@ -55,10 +55,7 @@ in
         "${stateDir}/tts"
         "${stateDir}/tts/**"
       ];
-      capture = {
-        type = "unit";
-        unit.service = "home-assistant-native-backup";
-      };
+      preparation.service = "home-assistant-native-backup";
     };
   };
 }

@@ -74,72 +74,72 @@ let
           default = [ ];
           description = "Restic exclusions scoped to this source's paths.";
         };
-        capture = {
-          type = lib.mkOption {
-            type = lib.types.enum [
-              "live"
-              "unit"
-              "scheduled"
-              "sqlite"
-              "postgresql"
-              "mariadb"
-            ];
-            default = "live";
-            description = "Consistency strategy used before Restic reads this source.";
-          };
-          unit = {
-            service = lib.mkOption {
-              type = with lib.types; nullOr str;
-              default = null;
-              description = "On-demand systemd service run before Restic.";
-            };
-            outputPaths = lib.mkOption {
-              type = with lib.types; listOf str;
-              default = [ ];
-              description = "Paths produced by the on-demand service.";
-            };
-          };
-          scheduled.outputPaths = lib.mkOption {
-            type = with lib.types; listOf str;
-            default = [ ];
-            description = "Paths maintained by an application-managed backup schedule.";
-          };
-          database = {
-            name = lib.mkOption {
-              type = lib.types.str;
-              default = name;
-            };
-            path = lib.mkOption {
-              type = with lib.types; nullOr str;
-              default = null;
-              description = "SQLite database path.";
-            };
-            destinationDir = lib.mkOption {
-              type = with lib.types; nullOr str;
-              default = null;
-              description = "Directory where the consistent database artifact is staged.";
-            };
-            extraCopies = lib.mkOption {
-              type = with lib.types; listOf (submodule extraCopyModule);
-              default = [ ];
-            };
-            conditionPathExists = lib.mkOption {
-              type = with lib.types; nullOr str;
-              default = null;
-            };
-            requiresMountsFor = lib.mkOption {
-              type = with lib.types; listOf str;
-              default = [ ];
-            };
-            after = lib.mkOption {
-              type = with lib.types; listOf str;
-              default = [ ];
-            };
-            requires = lib.mkOption {
-              type = with lib.types; listOf str;
-              default = [ ];
-            };
-          };
+        preparation = lib.mkOption {
+          type =
+            with lib.types;
+            nullOr (submodule {
+              options = {
+                service = lib.mkOption {
+                  type = nonEmptyStr;
+                  description = "On-demand systemd service run before Restic.";
+                };
+                paths = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                  description = "Paths produced by the on-demand service.";
+                };
+              };
+            });
+          default = null;
+        };
+        database = lib.mkOption {
+          type =
+            with lib.types;
+            nullOr (submodule {
+              options = {
+                type = lib.mkOption {
+                  type = enum [
+                    "sqlite"
+                    "postgresql"
+                    "mariadb"
+                  ];
+                };
+                name = lib.mkOption {
+                  type = str;
+                  default = name;
+                };
+                path = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                  description = "SQLite database path.";
+                };
+                stagingDir = lib.mkOption {
+                  type = nonEmptyStr;
+                  description = "Directory where the consistent database artifact is staged.";
+                };
+                extraCopies = lib.mkOption {
+                  type = listOf (submodule extraCopyModule);
+                  default = [ ];
+                };
+                conditionPathExists = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                };
+                requiresMountsFor = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+                after = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+                requires = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+              };
+            });
+          default = null;
         };
       };
     };

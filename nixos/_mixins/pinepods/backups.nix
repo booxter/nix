@@ -6,12 +6,10 @@ in
   config = lib.mkIf (cfg.enable && cfg.backups.enable) {
     host.backups.sources.pinepods = {
       title = "PinePods";
-      capture = {
+      database = {
         type = "postgresql";
-        database = {
-          name = cfg.databaseName;
-          destinationDir = cfg.backups.stagingDir;
-        };
+        name = cfg.databaseName;
+        stagingDir = cfg.backups.stagingDir;
       };
     };
   };
