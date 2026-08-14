@@ -99,6 +99,16 @@ pkgs.testers.runNixOSTest {
       ];
 
       options = {
+        host.realm = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "test";
+        };
+
+        host.backups.sources = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
+        };
+
         host.pki = {
           clients = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
@@ -116,6 +126,11 @@ pkgs.testers.runNixOSTest {
         host.network.stableAddress.requiredBy = lib.mkOption {
           type = lib.types.listOf lib.types.nonEmptyStr;
           default = [ ];
+        };
+
+        host.web.services = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
         };
 
         sops.secrets = lib.mkOption {
@@ -146,6 +161,25 @@ pkgs.testers.runNixOSTest {
       };
 
       config = {
+        _module.args.outputs.nixosConfigurations.provider.config = {
+          networking.hostName = "provider";
+          host = {
+            realm = "test";
+            sso = {
+              role = "provider";
+              provider = {
+                backend = "kanidm";
+                displayName = "Test SSO";
+                publicUrl = "https://id.example.invalid";
+                oidc.baseScopes = [
+                  "openid"
+                  "email"
+                  "profile"
+                ];
+              };
+            };
+          };
+        };
         _module.args.webModel.internalEndpoints = { };
 
         host.network.lanDomain = "example.invalid";
