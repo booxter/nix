@@ -4,7 +4,6 @@ let
   vendorType = lib.types.enum [
     "amd"
     "intel"
-    "nvidia"
   ];
 in
 {
@@ -20,21 +19,6 @@ in
     vendors = lib.mkOption {
       type = lib.types.listOf vendorType;
       default = [ ];
-      apply =
-        vendors:
-        let
-          unsupported = builtins.filter (
-            vendor:
-            !builtins.elem vendor [
-              "amd"
-              "intel"
-            ]
-          ) vendors;
-        in
-        if unsupported == [ ] then
-          vendors
-        else
-          throw "GPU support is not implemented for: ${lib.concatStringsSep ", " unsupported}";
       description = "GPU vendors supported by this host.";
     };
 
