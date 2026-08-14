@@ -6,8 +6,9 @@
 }:
 let
   username = config.host.username;
-  userEnvironment = config.host.userEnvironment;
-  wiresharkEnabled = config.home-manager.users.${username}.host.hm.wireshark.enable;
+  hmConfig = config.home-manager.users.${username}.host.hm;
+  userEnvironment = hmConfig.userEnvironment;
+  wiresharkEnabled = hmConfig.wireshark.enable;
 in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''

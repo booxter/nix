@@ -1,6 +1,11 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  osConfig,
+  ...
+}:
 let
-  cfg = config.host.userEnvironment;
+  cfg = config.host.hm.userEnvironment;
   smtpTransportType = lib.types.submodule {
     options = {
       server = lib.mkOption {
@@ -41,7 +46,7 @@ let
   };
 in
 {
-  options.host.userEnvironment = {
+  options.host.hm.userEnvironment = {
     smtpTransports = lib.mkOption {
       type = lib.types.attrsOf smtpTransportType;
       default = { };
@@ -56,7 +61,7 @@ in
   };
 
   config = {
-    host.userEnvironment.smtpTransports = {
+    host.hm.userEnvironment.smtpTransports = {
       gmail = {
         server = "smtp.gmail.com";
         username = "ihar.hrachyshka@gmail.com";
@@ -64,15 +69,16 @@ in
       };
       nvidia = {
         server = "mail.nvidia.com";
-        username = "${config.host.username}@nvidia.com";
+        username = "${config.home.username}@nvidia.com";
       };
     };
 
     assertions = [
       {
         assertion =
-          !cfg.roles.developer.enable || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
-        message = "host.userEnvironment.sendEmail.transport must name a declared SMTP transport";
+          !osConfig.host.userEnvironment.roles.developer.enable
+          || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
+        message = "host.hm.userEnvironment.sendEmail.transport must name a declared SMTP transport";
       }
     ];
   };

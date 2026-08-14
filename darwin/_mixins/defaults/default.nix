@@ -1,4 +1,7 @@
 { config, lib, ... }:
+let
+  userEnvironment = config.home-manager.users.${config.host.username}.host.hm.userEnvironment;
+in
 {
   imports = [
     ./terminal.nix
@@ -117,7 +120,7 @@
   };
 
   system.defaults.CustomUserPreferences."com.superultra.Homerow" =
-    lib.mkIf config.host.userEnvironment.homerow.enable
+    lib.mkIf userEnvironment.homerow.enable
       {
         SUEnableAutomaticChecks = 1;
         SUHasLaunchedBefore = 1;

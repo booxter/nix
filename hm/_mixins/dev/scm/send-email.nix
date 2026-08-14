@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   pkgs,
@@ -6,7 +7,7 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  userEnvironment = osConfig.host.userEnvironment;
+  userEnvironment = config.host.hm.userEnvironment;
   smtpTransport = userEnvironment.smtpTransports.${userEnvironment.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
 in

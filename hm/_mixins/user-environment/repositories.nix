@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  cfg = config.host.userEnvironment.repositories;
+  cfg = config.host.hm.userEnvironment.repositories;
   requiredRepositories = lib.unique (lib.concatLists (builtins.attrValues cfg.requests));
   repositoryType = lib.types.submodule {
     options = {
@@ -27,7 +27,7 @@ let
   };
 in
 {
-  options.host.userEnvironment.repositories = {
+  options.host.hm.userEnvironment.repositories = {
     catalog = lib.mkOption {
       type = lib.types.attrsOf repositoryType;
       default = { };
@@ -50,7 +50,7 @@ in
   };
 
   config = {
-    host.userEnvironment.repositories = {
+    host.hm.userEnvironment.repositories = {
       catalog = {
         dotfiles = {
           remote = "git@github.com:booxter/dotfiles.git";
@@ -76,17 +76,15 @@ in
       };
 
       requests = {
-        gmailctl =
-          lib.optional config.home-manager.users.${config.host.username}.host.hm.gmailctl.enable
-            "gmailctl";
-        pass = lib.optional config.home-manager.users.${config.host.username}.host.hm.pass.enable "pass";
+        gmailctl = lib.optional config.host.hm.gmailctl.enable "gmailctl";
+        pass = lib.optional config.host.hm.pass.enable "pass";
       };
     };
 
     assertions = [
       {
         assertion = lib.all (name: builtins.hasAttr name cfg.catalog) requiredRepositories;
-        message = "host.userEnvironment.repositories.requests must name declared repositories";
+        message = "host.hm.userEnvironment.repositories.requests must name declared repositories";
       }
       {
         assertion = lib.all (
@@ -94,7 +92,7 @@ in
           !lib.hasPrefix "/" repository.destination.path
           && lib.all (component: component != "..") (lib.splitString "/" repository.destination.path)
         ) (builtins.attrValues cfg.catalog);
-        message = "host.userEnvironment repository destinations must be safe relative paths";
+        message = "user-environment repository destinations must be safe relative paths";
       }
     ];
   };

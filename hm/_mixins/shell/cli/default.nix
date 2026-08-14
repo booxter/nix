@@ -7,7 +7,7 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
-  userEnvironment = osConfig.host.userEnvironment;
+  userEnvironment = config.host.hm.userEnvironment;
   repositoryCatalog = userEnvironment.repositories.catalog;
   requiredRepositories = userEnvironment.repositories.required;
   homeManagerPkgs = import ../../../pkgs pkgs;

@@ -1,40 +1,50 @@
-{ config, lib, ... }:
+{
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}:
 let
-  cfg = config.host.userEnvironment;
-  username = config.host.username;
+  cfg = osConfig.host.userEnvironment;
   presetDefault = lib.mkOverride 900;
-  graphical = config.nixpkgs.hostPlatform.isDarwin || config.host.desktop.enable;
+  graphical = pkgs.stdenv.hostPlatform.isDarwin || osConfig.host.desktop.enable;
 in
 {
   config = lib.mkIf (cfg.preset == "personal") (
     lib.mkMerge [
       {
-        home-manager.users.${username}.host.hm = presetDefault {
+        host.hm = presetDefault {
           fullName = "Ihar Hrachyshka";
           email = "ihar.hrachyshka@gmail.com";
         };
       }
-      (lib.mkIf cfg.roles.developer.enable {
-        host.userEnvironment = {
-          sendEmail.transport = presetDefault "gmail";
-          repositories.requests.preset = presetDefault [ "dotfiles" ];
-        };
-        home-manager.users.${username}.host.hm = presetDefault {
-          dev = {
-            act.enable = true;
-            codex = {
-              enable = true;
-              usage.warmer.enable = true;
+      (lib.mkIf cfg.roles.developer.enable (
+        lib.mkMerge [
+          {
+            host.hm.userEnvironment = {
+              sendEmail.transport = presetDefault "gmail";
+              repositories.requests.preset = presetDefault [ "dotfiles" ];
             };
-            go.enable = true;
-          };
-          podman.enable = true;
-          ramalama.enable = true;
-        };
-      })
+          }
+          {
+            host.hm = presetDefault {
+              dev = {
+                act.enable = true;
+                codex = {
+                  enable = true;
+                  usage.warmer.enable = true;
+                };
+                go.enable = true;
+              };
+              podman.enable = true;
+              ramalama.enable = true;
+            };
+          }
+        ]
+      ))
       (lib.mkIf graphical {
-        home-manager.users.${username}.host.hm = presetDefault {
-          numberedWorkspaces = if config.nixpkgs.hostPlatform.isDarwin then 4 else 6;
+        host.hm = presetDefault {
+          numberedWorkspaces = if pkgs.stdenv.hostPlatform.isDarwin then 4 else 6;
           firefox = {
             enable = true;
             search.provider = "degoog";
@@ -43,7 +53,7 @@ in
             enable = true;
             warmer.enable = true;
           };
-          hyprland.enable = !config.nixpkgs.hostPlatform.isDarwin;
+          hyprland.enable = pkgs.stdenv.hostPlatform.isLinux;
           kitty.enable = true;
           matrix.enable = true;
           obsidian.enable = true;

@@ -11,6 +11,7 @@
     ./_mixins/shell
     ./_mixins/ssh
     ./_mixins/user
+    ./_mixins/user-environment
     ./_mixins/vim
   ];
 
