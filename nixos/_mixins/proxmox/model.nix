@@ -11,7 +11,7 @@ let
     isGuest = hostConfig.host.proxmox.guest.enable;
     isNode = hostConfig.host.proxmox.node.enable;
     realm = hostConfig.host.realm;
-    upsServer = if hostConfig.host.ups.server.enable then name else hostConfig.host.ups.client.server;
+    upsServer = if hostConfig.host.ups.server != null then name else hostConfig.host.ups.client.server;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];
   hosts =

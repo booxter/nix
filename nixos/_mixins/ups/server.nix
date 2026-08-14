@@ -14,7 +14,7 @@ let
       config.sops.secrets."nut/users/${user}/password".path;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.network.stableAddress.requiredBy = [ "UPS server" ];
 
     environment.etc = lib.mkIf useLiteralPasswords {

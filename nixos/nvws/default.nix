@@ -28,10 +28,9 @@ in
   };
   host.ups = {
     server = {
-      enable = true;
       description = "APC UPS 1500VA";
+      waitForLowBattery = true;
     };
-    shutdown.waitForLowBattery = true;
   };
   host.user.passwords.sops.enable = false;
 

@@ -34,10 +34,9 @@
 
     ups = {
       server = {
-        enable = true;
         description = "APC Back-UPS RS 1500MS2";
+        waitForLowBattery = true;
       };
-      shutdown.waitForLowBattery = true;
     };
 
     backups = {

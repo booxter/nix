@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.power.shutdown;
-  participates = config.host.ups.server.enable || config.host.ups.client.server != null;
+  participates = config.host.ups.server != null || config.host.ups.client.server != null;
 in
 {
   options.host.power.shutdown = {

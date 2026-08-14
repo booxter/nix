@@ -19,19 +19,11 @@ in
 {
   config.assertions = [
     {
-      assertion = !cfg.server.enable || cfg.server.description != null;
-      message = "host.ups.server.description is required when the UPS server is enabled";
-    }
-    {
-      assertion = !cfg.server.enable || config.nixpkgs.hostPlatform.isLinux;
+      assertion = cfg.server == null || config.nixpkgs.hostPlatform.isLinux;
       message = "only a NixOS host may provide a UPS server";
     }
     {
-      assertion = !cfg.shutdown.waitForLowBattery || cfg.server.enable;
-      message = "only a UPS server may wait for a low-battery event";
-    }
-    {
-      assertion = !cfg.server.enable || serverName == null;
+      assertion = cfg.server == null || serverName == null;
       message = "a host cannot be both a UPS server and a UPS client";
     }
   ]
@@ -41,7 +33,7 @@ in
       message = "host.ups.client.server must name a managed host";
     }
     {
-      assertion = server != null && server.ups.server.enable;
+      assertion = server != null && server.ups.server != null;
       message = "host.ups.client.server must reference an enabled UPS server";
     }
   ];

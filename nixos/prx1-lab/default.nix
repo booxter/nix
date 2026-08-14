@@ -22,9 +22,8 @@
   host.proxmox.controller.enable = true;
   host.ups = {
     server = {
-      enable = true;
       description = "APC UPS 1500VA";
+      waitForLowBattery = true;
     };
-    shutdown.waitForLowBattery = true;
   };
 }

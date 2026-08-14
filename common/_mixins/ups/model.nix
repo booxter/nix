@@ -12,13 +12,7 @@ let
     ups = {
       inherit (hostConfig.host.ups) credentialMode;
       clientServer = hostConfig.host.ups.client.server;
-      server = {
-        inherit (hostConfig.host.ups.server)
-          description
-          enable
-          name
-          ;
-      };
+      server = hostConfig.host.ups.server;
     };
   };
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
@@ -26,7 +20,7 @@ let
   hosts = lib.mapAttrs (_: configuration: hostView configuration.config) otherConfigurations // {
     ${hostName} = hostView config;
   };
-  servers = lib.filterAttrs (_: host: host.ups.server.enable) hosts;
+  servers = lib.filterAttrs (_: host: host.ups.server != null) hosts;
 in
 {
   inherit hosts servers;

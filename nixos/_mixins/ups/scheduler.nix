@@ -55,7 +55,7 @@ in
         PIPEFN /run/nut/upssched.pipe
         LOCKFN /run/nut/upssched.lock
         ${
-          if upsCfg.shutdown.waitForLowBattery then
+          if upsCfg.server != null && upsCfg.server.waitForLowBattery then
             ""
           else
             ''
