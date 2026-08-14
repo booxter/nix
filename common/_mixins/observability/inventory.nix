@@ -6,7 +6,7 @@
 let
   cfg = config.host.observability;
   hostName = config.networking.hostName;
-  isProxmoxNode = config.host.proxmox.node != null;
+  machine = cfg.inventory.machine;
   enabledServices = lib.filterAttrs (_: service: service.enable) (config.host.web.services or { });
   gpuVendors = config.host.hardware.gpu.vendors or [ ];
   fileSystems = builtins.attrValues (config.fileSystems or { });
@@ -59,6 +59,19 @@ let
 in
 {
   options.host.observability.inventory = {
+    machine = {
+      hypervisor = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        internal = true;
+      };
+      virtual = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        internal = true;
+      };
+    };
+
     realm = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = config.host.realm;
@@ -85,12 +98,12 @@ in
               availability = if config.host.hardware.isLaptop then "intermittent" else "always";
               component = "node";
               host_builder = lib.boolToString config.host.nix.builder.enable;
-              host_hypervisor = lib.boolToString isProxmoxNode;
+              host_hypervisor = lib.boolToString machine.hypervisor;
               host_laptop = lib.boolToString config.host.hardware.isLaptop;
-              host_network_charts = lib.boolToString (!isProxmoxNode);
-              host_network_source = if isProxmoxNode then "classified" else "node";
-              host_class = if config.host.proxmox.guest != null then "virtual" else "hardware";
-              host_virtual = lib.boolToString (config.host.proxmox.guest != null);
+              host_network_charts = lib.boolToString (!machine.hypervisor);
+              host_network_source = if machine.hypervisor then "classified" else "node";
+              host_class = if machine.virtual then "virtual" else "hardware";
+              host_virtual = lib.boolToString machine.virtual;
               instance = hostName;
               realm = config.host.realm;
               scrape_profile = "node";
@@ -108,9 +121,9 @@ in
           {
             name = hostName;
             platform = if config.nixpkgs.hostPlatform.isDarwin then "darwin" else "linux";
-            virtual = config.host.proxmox.guest != null;
+            virtual = machine.virtual;
             builder = config.host.nix.builder.enable;
-            hypervisor = isProxmoxNode;
+            hypervisor = machine.hypervisor;
             gpuVendor = if gpuVendors == [ ] then null else lib.head gpuVendors;
             services = builtins.attrNames enabledServices;
             storage = {

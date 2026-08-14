@@ -11,7 +11,6 @@
     ./_mixins/nix
     ./_mixins/nixpkgs
     ./_mixins/power
-    ./_mixins/proxmox
     ./_mixins/remote-control
     ./_mixins/security
     ./_mixins/site

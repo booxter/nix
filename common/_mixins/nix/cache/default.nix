@@ -28,6 +28,7 @@ let
   };
   cacheType = lib.types.submodule { options = commonCacheOptions; };
   cacheLib = import ./lib.nix { inherit lib; };
+  proxmoxCache = import ./proxmox.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
 in
 {
@@ -43,17 +44,9 @@ in
       trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
     };
 
-    host.nix.caches.proxmox =
-      lib.mkIf
-        (
-          config.host.proxmox.node != null
-          || config.host.nix.builder.enable
-          || config.host.userEnvironment.roles.developer.enable
-        )
-        {
-          substituter = "https://cache.saumon.network/proxmox-nixos";
-          trustedPublicKeys = [ (readPublicKey ./public-keys/proxmox-nixos.pub) ];
-        };
+    host.nix.caches.proxmox = lib.mkIf (
+      config.host.nix.builder.enable || config.host.userEnvironment.roles.developer.enable
+    ) proxmoxCache;
 
     nix.settings = {
       substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);

@@ -11,6 +11,7 @@ let
   bridgeName = "vmbr0";
   macAddress = config.host.network.macAddress;
   primaryInterface = config.host.network.primaryInterface;
+  proxmoxCache = import ../../../common/_mixins/nix/cache/proxmox.nix { inherit lib; };
   model = import ./model.nix {
     inherit config lib outputs;
   };
@@ -27,6 +28,8 @@ in
         message = "Proxmox cluster '${config.host.proxmox.node.cluster}' in realm '${config.host.realm}' requires exactly one controller";
       }
     ];
+
+    host.nix.caches.proxmox = lib.mkDefault proxmoxCache;
 
     host.network.stableAddress.requiredBy = [ "Proxmox VE node" ];
 

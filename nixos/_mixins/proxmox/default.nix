@@ -6,6 +6,7 @@
     ./guest.nix
     ./node.nix
     ./oidc.nix
+    ./options.nix
     ./prometheus-exporter.nix
     inputs.proxmox-nixos.nixosModules.declarative-vms
     inputs.proxmox-nixos.nixosModules.proxmox-ve
@@ -17,4 +18,9 @@
       message = "a host cannot be both a Proxmox node and guest";
     }
   ];
+
+  host.observability.inventory.machine = {
+    hypervisor = config.host.proxmox.node != null;
+    virtual = config.host.proxmox.guest != null;
+  };
 }
