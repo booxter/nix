@@ -10,23 +10,20 @@ let
   model = import ./model.nix { inherit config outputs; };
   inherit (model)
     cfg
-    exporterUrl
     jellyfinEndpoint
     jellyfinHost
     mtls
     qosDestination
-    qosLimit
     qosProfile
     transmission
     transmissionDestination
-    transmissionOutput
     ;
 in
 {
   config.assertions = lib.optionals (cfg != null) [
     {
       assertion = cfg.source.jellyfin.host != null || cfg.source.jellyfin.exporterUrl != null;
-      message = "host.adaptiveUploadPolicy requires a Jellyfin source host";
+      message = "host.adaptiveUploadPolicy requires a Jellyfin metrics source";
     }
     {
       assertion = cfg.source.jellyfin.host == null || jellyfinHost != null;
@@ -37,20 +34,12 @@ in
       message = "host.adaptiveUploadPolicy Jellyfin source must export playback metrics";
     }
     {
-      assertion = exporterUrl != null;
-      message = "host.adaptiveUploadPolicy could not resolve the Jellyfin exporter URL";
-    }
-    {
       assertion = transmissionDestination != null || qosDestination != null;
       message = "host.adaptiveUploadPolicy requires at least one destination";
     }
     {
       assertion = transmissionDestination == null || (transmission != null && transmission.enable);
       message = "host.adaptiveUploadPolicy Transmission destination requires local Transmission";
-    }
-    {
-      assertion = transmissionOutput == null || transmissionOutput.rpcUrl != null;
-      message = "host.adaptiveUploadPolicy Transmission destination requires an RPC URL";
     }
     {
       assertion = mtls == null || mtls.certificateFile != null;
@@ -61,19 +50,7 @@ in
       message = "host.adaptiveUploadPolicy could not materialize its mTLS private key";
     }
     {
-      assertion = qosDestination == null || qosProfile != null;
-      message = "host.adaptiveUploadPolicy could not configure its QoS profile";
-    }
-    {
-      assertion = qosDestination == null || qosLimit != null;
-      message = "host.adaptiveUploadPolicy could not configure its uplink QoS limit";
-    }
-    {
-      assertion = qosLimit == null || qosLimit.direction == "egress";
-      message = "host.adaptiveUploadPolicy can update only egress host.qos limits";
-    }
-    {
-      assertion = qosProfile == null || cfg.fallbackRateMbit <= qosProfile.linkRateMbit;
+      assertion = qosDestination == null || cfg.fallbackRateMbit <= qosProfile.linkRateMbit;
       message = "host.adaptiveUploadPolicy fallback rate must not exceed the QoS profile link rate";
     }
     {

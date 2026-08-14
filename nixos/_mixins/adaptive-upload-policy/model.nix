@@ -111,10 +111,5 @@ in
         limit = qosLimitName;
       };
 
-  qosLimit =
-    if qosProfile == null || qosLimitName == null then
-      null
-    else
-      qosProfile.limits.${qosLimitName} or null;
   qosService = "qos-${qosProfileName}.service";
 }
