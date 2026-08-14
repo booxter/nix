@@ -229,78 +229,32 @@ in
         };
         alerting.rules.settings = {
           apiVersion = 1;
-          deleteRules = [
-            {
-              orgId = 1;
-              uid = "dns_upstream_failures";
-            }
-            {
-              orgId = 1;
-              uid = "dns_probe_down";
-            }
-            {
-              orgId = 1;
-              uid = "ups_exporter_down";
-            }
-            {
-              orgId = 1;
-              uid = "ups_on_battery";
-            }
-            {
-              orgId = 1;
-              uid = "ups_low_battery";
-            }
-            {
-              orgId = 1;
-              uid = "internal_pki_cert_missing";
-            }
-            {
-              orgId = 1;
-              uid = "internal_pki_cert_expiry_warning";
-            }
-            {
-              orgId = 1;
-              uid = "internal_pki_cert_expiry_critical";
-            }
-            {
-              orgId = 1;
-              uid = "public_tls_cert_expiry_warning";
-            }
-            {
-              orgId = 1;
-              uid = "public_tls_cert_expiry_critical";
-            }
-            {
-              orgId = 1;
-              uid = "pki_rotation_controller_failed";
-            }
-            {
-              orgId = 1;
-              uid = "pki_rotation_controller_stale";
-            }
-            {
-              orgId = 1;
-              uid = "thermal_cpu_hot";
-            }
-            {
-              orgId = 1;
-              uid = "thermal_storage_hot";
-            }
-            {
-              orgId = 1;
-              uid = "thermal_hba_export_failed";
-            }
-            {
-              orgId = 1;
-              uid = "thermal_hdd_hot";
-            }
-            {
-              orgId = 1;
-              uid = "darwin_ismc_export_failed";
-            }
-          ];
-          groups = [
-          ];
+          deleteRules =
+            map
+              (uid: {
+                inherit uid;
+                orgId = 1;
+              })
+              [
+                "dns_upstream_failures"
+                "dns_probe_down"
+                "ups_exporter_down"
+                "ups_on_battery"
+                "ups_low_battery"
+                "internal_pki_cert_missing"
+                "internal_pki_cert_expiry_warning"
+                "internal_pki_cert_expiry_critical"
+                "public_tls_cert_expiry_warning"
+                "public_tls_cert_expiry_critical"
+                "pki_rotation_controller_failed"
+                "pki_rotation_controller_stale"
+                "thermal_cpu_hot"
+                "thermal_storage_hot"
+                "thermal_hba_export_failed"
+                "thermal_hdd_hot"
+                "darwin_ismc_export_failed"
+              ];
+          groups = [ ];
         };
       };
     };
