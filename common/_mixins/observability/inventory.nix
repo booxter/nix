@@ -9,7 +9,6 @@ let
   machine = cfg.inventory.machine;
   services = config.host.web.services or { };
   gpuVendor = config.host.hardware.gpu.vendor or null;
-  fileSystems = builtins.attrValues (config.fileSystems or { });
   diskBays = config.host.hardware.storage.diskBays or null;
   dashboardType = lib.types.submodule {
     options = {
@@ -25,24 +24,17 @@ let
       hypervisor = lib.mkOption { type = lib.types.bool; };
       gpuVendor = lib.mkOption { type = with lib.types; nullOr nonEmptyStr; };
       services = lib.mkOption { type = with lib.types; listOf nonEmptyStr; };
-      storage = {
-        btrfs = lib.mkOption { type = lib.types.bool; };
-        diskBays = lib.mkOption {
-          type =
-            with lib.types;
-            nullOr (submodule {
-              options = {
-                columns = lib.mkOption { type = ints.positive; };
-                rows = lib.mkOption { type = ints.positive; };
-              };
-            });
-        };
-        nvme = lib.mkOption { type = lib.types.bool; };
+      diskBays = lib.mkOption {
+        type =
+          with lib.types;
+          nullOr (submodule {
+            options = {
+              columns = lib.mkOption { type = ints.positive; };
+              rows = lib.mkOption { type = ints.positive; };
+            };
+          });
       };
-      backups = {
-        client = lib.mkOption { type = lib.types.bool; };
-        server = lib.mkOption { type = lib.types.bool; };
-      };
+      backupServer = lib.mkOption { type = lib.types.bool; };
     };
   };
   endpointType = lib.types.submodule {
@@ -99,10 +91,8 @@ in
               host_builder = lib.boolToString config.host.nix.builder.enable;
               host_hypervisor = lib.boolToString machine.hypervisor;
               host_laptop = lib.boolToString config.host.hardware.isLaptop;
-              host_network_charts = lib.boolToString (!machine.hypervisor);
               host_network_source = if machine.hypervisor then "classified" else "node";
               host_class = if machine.virtual then "virtual" else "hardware";
-              host_virtual = lib.boolToString machine.virtual;
               instance = hostName;
               realm = config.host.realm;
               scrape_profile = "node";
@@ -125,21 +115,14 @@ in
             hypervisor = machine.hypervisor;
             inherit gpuVendor;
             services = builtins.attrNames services;
-            storage = {
-              btrfs = builtins.any (fileSystem: (fileSystem.fsType or null) == "btrfs") fileSystems;
-              diskBays =
-                if diskBays == null then
-                  null
-                else
-                  {
-                    inherit (diskBays) columns rows;
-                  };
-              nvme = false;
-            };
-            backups = {
-              client = (config.host.backups.jobs or { }) != { };
-              server = config.host.backups.server.enable or false;
-            };
+            diskBays =
+              if diskBays == null then
+                null
+              else
+                {
+                  inherit (diskBays) columns rows;
+                };
+            backupServer = (config.host.backups.server or null) != null;
           }
         else
           null;

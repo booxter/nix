@@ -20,8 +20,8 @@ var testConfig = Config{
 	Hosts: []Host{
 		{
 			Name: "frame", Platform: "linux",
-			Builder: true, Backups: HostBackups{Server: true},
-			Storage: HostStorage{DiskBays: &DiskBayLayout{Rows: 5, Columns: 3}},
+			Builder: true, BackupServer: true,
+			DiskBays: &DiskBayLayout{Rows: 5, Columns: 3},
 			Services: []string{
 				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
 				"sabnzbd", "transmission",

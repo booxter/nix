@@ -26,8 +26,8 @@ func TestDecodeConfig(t *testing.T) {
       "platform": "linux",
       "gpuVendor": null,
       "services": [],
-      "storage": {},
-      "backups": {},
+      "diskBays": null,
+      "backupServer": false,
       "virtual": false,
       "builder": true,
       "hypervisor": false
@@ -66,8 +66,8 @@ func TestDecodeConfigRejectsMissingPrometheusUID(t *testing.T) {
       "platform": "linux",
       "gpuVendor": null,
       "services": [],
-      "storage": {},
-      "backups": {},
+      "diskBays": null,
+      "backupServer": false,
       "virtual": false,
       "builder": true,
       "hypervisor": false

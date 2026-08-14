@@ -81,7 +81,7 @@ func StorageOverview(config Config) (dashboard.Dashboard, error) {
 		}))
 	}
 
-	bayLayout := storageHost.Storage.DiskBays
+	bayLayout := storageHost.DiskBays
 	if bayLayout == nil {
 		return dashboard.Dashboard{}, fmt.Errorf("storage host %q lacks a disk-bay layout", storageHost.Name)
 	}

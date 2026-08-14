@@ -32,7 +32,7 @@ func (config Config) serviceHost(service string) (string, error) {
 func (config Config) backupServer() (string, error) {
 	hosts := make([]string, 0, 1)
 	for _, host := range config.Hosts {
-		if host.Backups.Server {
+		if host.BackupServer {
 			hosts = append(hosts, host.Name)
 		}
 	}
@@ -45,7 +45,7 @@ func (config Config) backupServer() (string, error) {
 func (config Config) diskBayHost() (Host, error) {
 	hosts := make([]Host, 0, 1)
 	for _, host := range config.Hosts {
-		if host.Storage.DiskBays != nil {
+		if host.DiskBays != nil {
 			hosts = append(hosts, host)
 		}
 	}
@@ -87,32 +87,21 @@ type LinkDirection struct {
 	TargetMbit   float64 `json:"targetMbit"`
 }
 
-type HostStorage struct {
-	Btrfs    bool           `json:"btrfs"`
-	DiskBays *DiskBayLayout `json:"diskBays"`
-	NVMe     bool           `json:"nvme"`
-}
-
 type DiskBayLayout struct {
 	Rows    int `json:"rows"`
 	Columns int `json:"columns"`
 }
 
-type HostBackups struct {
-	Client bool `json:"client"`
-	Server bool `json:"server"`
-}
-
 type Host struct {
-	Name       string      `json:"name"`
-	Platform   string      `json:"platform"`
-	GPUVendor  *string     `json:"gpuVendor"`
-	Services   []string    `json:"services"`
-	Storage    HostStorage `json:"storage"`
-	Backups    HostBackups `json:"backups"`
-	Virtual    bool        `json:"virtual"`
-	Builder    bool        `json:"builder"`
-	Hypervisor bool        `json:"hypervisor"`
+	Name         string         `json:"name"`
+	Platform     string         `json:"platform"`
+	GPUVendor    *string        `json:"gpuVendor"`
+	Services     []string       `json:"services"`
+	DiskBays     *DiskBayLayout `json:"diskBays"`
+	BackupServer bool           `json:"backupServer"`
+	Virtual      bool           `json:"virtual"`
+	Builder      bool           `json:"builder"`
+	Hypervisor   bool           `json:"hypervisor"`
 }
 
 var hostNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
@@ -160,8 +149,8 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 		if host.Platform != "linux" && host.Platform != "darwin" {
 			return Config{}, fmt.Errorf("host %q has invalid platform %q", host.Name, host.Platform)
 		}
-		if host.Storage.DiskBays != nil {
-			layout := host.Storage.DiskBays
+		if host.DiskBays != nil {
+			layout := host.DiskBays
 			if layout.Rows <= 0 || layout.Columns <= 0 || 12%layout.Columns != 0 {
 				return Config{}, fmt.Errorf(
 					"host %q has invalid disk-bay grid %dx%d", host.Name, layout.Columns, layout.Rows,
