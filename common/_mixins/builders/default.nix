@@ -75,10 +75,8 @@ in
     ./assertions.nix
     ./community
     ./build.nix
-    ./home.nix
     ./nixpkgs-review.nix
     ./ssh.nix
-    ./work.nix
   ];
 
   options.host.nix = {
@@ -147,4 +145,13 @@ in
       description = "Normalized builders available to this host, excluding the host itself.";
     };
   };
+
+  config = lib.mkMerge [
+    (lib.mkIf (config.host.realm == "home") {
+      host.nix.builder.sshIdentityFileName = lib.mkDefault "id_ed25519";
+    })
+    (lib.mkIf (config.host.realm == "work") {
+      host.nix.builder.sshIdentityFileName = lib.mkDefault "jgwxhwdl4x-nix-builder";
+    })
+  ];
 }
