@@ -58,8 +58,8 @@ in
     ];
     theme = "gruvbox";
     integrations = {
-      jellyfin.host = "beast";
-      romm.host = "srvarr";
+      jellyfin = "beast";
+      romm = "srvarr";
     };
   };
 

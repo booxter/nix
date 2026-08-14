@@ -16,8 +16,8 @@ let
       outputs.nixosConfigurations.${hostName}.config
     else
       null;
-  jellyfinHost = resolveHost cfg.integrations.jellyfin.host;
-  rommHost = resolveHost cfg.integrations.romm.host;
+  jellyfinHost = resolveHost cfg.integrations.jellyfin;
+  rommHost = resolveHost cfg.integrations.romm;
   ssoApplication = config.host.sso.applications.degoog or null;
   adminUsers =
     if ssoApplication == null || ssoApplication.adminGroup == null then
@@ -27,8 +27,8 @@ let
         _: user: builtins.elem ssoApplication.adminGroup user.groups
       ) config.host.sso.users;
   integrationFeatures =
-    lib.optional (cfg.integrations.jellyfin.host != null) "jellyfin"
-    ++ lib.optional (cfg.integrations.romm.host != null) "romm";
+    lib.optional (cfg.integrations.jellyfin != null) "jellyfin"
+    ++ lib.optional (cfg.integrations.romm != null) "romm";
   selectedFeatureNames = lib.unique ([ "settings-access" ] ++ cfg.features ++ integrationFeatures);
   select =
     catalog: names:
@@ -56,8 +56,8 @@ in
     ;
   jellyfin = if jellyfinHost == null then null else jellyfinHost.host.jellyfin;
   romm = if rommHost == null then null else rommHost.host.romm;
-  jellyfinSelected = cfg.integrations.jellyfin.host != null;
-  rommSelected = cfg.integrations.romm.host != null;
+  jellyfinSelected = cfg.integrations.jellyfin != null;
+  rommSelected = cfg.integrations.romm != null;
   unknownEngines = lib.subtractLists (builtins.attrNames cfg.catalog.engines) cfg.engines;
   unknownFeatures = lib.subtractLists (builtins.attrNames cfg.catalog.features) selectedFeatureNames;
   unknownTheme = cfg.theme != null && !builtins.hasAttr cfg.theme cfg.catalog.themes;

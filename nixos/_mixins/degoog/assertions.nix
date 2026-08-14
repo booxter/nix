@@ -74,7 +74,7 @@ in
     }
     {
       assertion = !model.jellyfinSelected || jellyfinHost != null;
-      message = "host.degoog.integrations.jellyfin.host must name a known NixOS host.";
+      message = "host.degoog.integrations.jellyfin must name a known NixOS host.";
     }
     {
       assertion = !model.jellyfinSelected || (jellyfin != null && jellyfin.enable);
@@ -91,7 +91,7 @@ in
     }
     {
       assertion = !model.rommSelected || rommHost != null;
-      message = "host.degoog.integrations.romm.host must name a known NixOS host.";
+      message = "host.degoog.integrations.romm must name a known NixOS host.";
     }
     {
       assertion = !model.rommSelected || (romm != null && romm.enable);

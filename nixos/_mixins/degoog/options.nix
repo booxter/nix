@@ -74,13 +74,13 @@ in
     };
 
     integrations = {
-      jellyfin.host = lib.mkOption {
+      jellyfin = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;
         description = "NixOS host providing Jellyfin to its Degoog extension.";
       };
 
-      romm.host = lib.mkOption {
+      romm = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
         default = null;
         description = "NixOS host providing RomM to its Degoog extension.";
