@@ -6,7 +6,7 @@
     ./_mixins/host
     ./_mixins/internal-pki
     ./_mixins/luks
-    ./_mixins/look
+    ./_mixins/stylix
     ./_mixins/mcp
     ./_mixins/network
     ./_mixins/nix
