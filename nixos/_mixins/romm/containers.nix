@@ -2,18 +2,11 @@
   config,
   lib,
   pkgs,
-  storageModel,
+  rommModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      pkgs
-      storageModel
-      ;
-  };
+  model = rommModel;
   inherit (model) cfg;
   volumes = map (
     mount: "${mount.source}:${mount.target}:${if mount.readOnly then "ro" else "rw"}"

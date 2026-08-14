@@ -1,10 +1,11 @@
 {
   config,
   lib,
+  transmissionModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config; };
+  model = transmissionModel;
   inherit (model) cfg;
 in
 {

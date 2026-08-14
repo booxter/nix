@@ -1,4 +1,9 @@
-{ inputs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  ...
+}:
 {
   imports = [
     ./assertions.nix
@@ -8,4 +13,6 @@
     ./options.nix
     inputs.vpnconfinement.nixosModules.default
   ];
+
+  config._module.args.vpnModel = import ./model.nix { inherit config lib; };
 }

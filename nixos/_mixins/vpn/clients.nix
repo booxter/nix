@@ -1,6 +1,10 @@
-{ config, lib, ... }:
+{
+  lib,
+  vpnModel,
+  ...
+}:
 let
-  model = import ./model.nix { inherit config lib; };
+  model = vpnModel;
   services = lib.mapAttrs' (
     _: client:
     let

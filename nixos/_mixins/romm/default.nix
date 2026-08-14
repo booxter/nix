@@ -1,4 +1,11 @@
 {
+  config,
+  lib,
+  pkgs,
+  storageModel,
+  ...
+}:
+{
   imports = [
     ./account.nix
     ./assertions.nix
@@ -14,4 +21,13 @@
     ./storage.nix
     ./web.nix
   ];
+
+  config._module.args.rommModel = import ./model.nix {
+    inherit
+      config
+      lib
+      pkgs
+      storageModel
+      ;
+  };
 }

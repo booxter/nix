@@ -2,19 +2,12 @@
   config,
   lib,
   pkgs,
-  storageModel,
+  rommModel,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      pkgs
-      storageModel
-      ;
-  };
+  model = rommModel;
   inherit (model) cfg;
   baseUnits = [
     "user-runtime-dir@${toString model.uid}.service"

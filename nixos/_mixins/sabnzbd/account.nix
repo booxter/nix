@@ -1,11 +1,10 @@
 {
-  config,
   lib,
-  storageModel,
+  sabnzbdModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib storageModel; };
+  model = sabnzbdModel;
 in
 {
   config = lib.mkIf (model.cfg.enable && model.identity != null) {

@@ -1,12 +1,12 @@
 {
-  config,
   lib,
+  vpnModel,
   pkgs,
   utils,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib; };
+  model = vpnModel;
   bridgeAccessPackage = pkgs.callPackage ./pkgs/bridge-access { };
   serviceFor =
     namespaceName: namespace:

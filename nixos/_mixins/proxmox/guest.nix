@@ -1,20 +1,14 @@
 {
   config,
   lib,
-  outputs,
+  proxmoxModel,
   ...
 }:
 let
   guest = config.host.proxmox.guest;
   bridgeName = "vmbr0";
   macAddress = config.host.network.macAddress;
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  model = proxmoxModel;
   guestUpsServer = model.hosts.${config.networking.hostName}.upsServer;
   mismatchedUpsNodes = builtins.filter (
     name: model.hosts.${name}.upsServer != guestUpsServer

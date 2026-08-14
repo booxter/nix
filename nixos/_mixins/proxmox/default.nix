@@ -1,4 +1,10 @@
-{ config, inputs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  outputs,
+  ...
+}:
 {
   imports = [
     ./api-certificate.nix
@@ -23,4 +29,6 @@
     hypervisor = config.host.proxmox.node != null;
     virtual = config.host.proxmox.guest != null;
   };
+
+  _module.args.proxmoxModel = import ./model.nix { inherit config lib outputs; };
 }

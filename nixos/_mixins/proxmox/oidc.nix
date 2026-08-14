@@ -3,6 +3,7 @@
   lib,
   outputs,
   pkgs,
+  proxmoxModel,
   utils,
   ...
 }:
@@ -28,9 +29,7 @@ let
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  topology = import ./model.nix {
-    inherit config lib outputs;
-  };
+  topology = proxmoxModel;
   certificateDnsNamesFor =
     name:
     if name == config.networking.hostName then

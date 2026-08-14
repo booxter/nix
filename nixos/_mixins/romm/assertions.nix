@@ -1,19 +1,10 @@
 {
-  config,
   lib,
-  pkgs,
-  storageModel,
+  rommModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      pkgs
-      storageModel
-      ;
-  };
+  model = rommModel;
   inherit (model) cfg ssoApplication;
 in
 {

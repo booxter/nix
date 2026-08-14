@@ -1,11 +1,11 @@
 {
-  config,
   lib,
+  transmissionModel,
   utils,
   ...
 }:
 let
-  model = import ./model.nix { inherit config; };
+  model = transmissionModel;
   inherit (model) cfg;
   updater = cfg.dynamicIpUpdater;
   serviceName = "update-dynamic-ip";

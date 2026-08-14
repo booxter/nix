@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  storageModel,
+  sabnzbdModel,
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib storageModel; };
+  model = sabnzbdModel;
   inherit (model) cfg;
   baseSettings = import ./settings.nix {
     hostWhitelist = [

@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   imports = [
     ./assertions.nix
@@ -12,4 +13,6 @@
     ./vpn.nix
     ./web.nix
   ];
+
+  config._module.args.transmissionModel = import ./model.nix { inherit config; };
 }

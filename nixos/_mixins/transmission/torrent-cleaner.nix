@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  transmissionModel,
   pkgs,
   ...
 }:
 let
-  model = import ./model.nix { inherit config; };
+  model = transmissionModel;
   inherit (model) cfg;
   package = (import ./pkgs pkgs).torrentCleaner;
 in

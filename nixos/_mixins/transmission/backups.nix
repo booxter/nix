@@ -1,6 +1,11 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  transmissionModel,
+  ...
+}:
 let
-  model = import ./model.nix { inherit config; };
+  model = transmissionModel;
 in
 {
   config = lib.mkIf config.host.transmission.enable {

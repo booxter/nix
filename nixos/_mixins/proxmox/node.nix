@@ -2,8 +2,8 @@
   config,
   inputs,
   lib,
-  outputs,
   pkgs,
+  proxmoxModel,
   system,
   ...
 }:
@@ -12,9 +12,7 @@ let
   macAddress = config.host.network.macAddress;
   primaryInterface = config.host.network.primaryInterface;
   proxmoxCache = import ../../../common/_mixins/nix/cache/proxmox.nix { inherit lib; };
-  model = import ./model.nix {
-    inherit config lib outputs;
-  };
+  model = proxmoxModel;
 in
 {
   config = lib.mkIf (config.host.proxmox.node != null) {
