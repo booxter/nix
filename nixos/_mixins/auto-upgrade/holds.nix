@@ -1,4 +1,5 @@
 {
+  autoUpgradeModel,
   autoUpgradeTools,
   config,
   lib,
@@ -72,7 +73,7 @@ in
     (lib.mkIf (cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf (cfg.holds != [ ] && cfg.reboot.mode == "scheduled") {
+    (lib.mkIf (cfg.holds != [ ] && autoUpgradeModel.plan.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
     (lib.mkIf metricsEnabled {

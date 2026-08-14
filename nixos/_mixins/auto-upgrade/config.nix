@@ -1,4 +1,5 @@
 {
+  autoUpgradeModel,
   autoUpgradeTools,
   config,
   lib,
@@ -6,7 +7,8 @@
   ...
 }:
 let
-  cfg = config.host.autoUpgrade;
+  maintenanceLib = import ./lib.nix { inherit lib; };
+  inherit (autoUpgradeModel) plan policy;
   guards = config.host.maintenance.guards;
   rebootIfNeeded = utils.escapeSystemdExecArgs [
     (lib.getExe autoUpgradeTools)
@@ -22,7 +24,7 @@ let
       ) guards
     );
   upgradeGuards = guardsBefore (
-    [ "upgrade" ] ++ lib.optional (cfg.reboot.mode == "with-upgrade") "reboot"
+    [ "upgrade" ] ++ lib.optional (plan.reboot.mode == "with-upgrade") "reboot"
   );
   rebootGuards = guardsBefore [ "reboot" ];
   commands = selectedGuards: map (guard: guard.command) selectedGuards;
@@ -38,14 +40,15 @@ in
           "-L"
           "--show-trace"
         ];
-        dates = cfg.schedule.calendar;
-        randomizedDelaySec = cfg.schedule.randomizedDelay;
+        dates = plan.switch.calendar;
+        randomizedDelaySec = "${toString policy.randomizedDelayMinutes}min";
         persistent = false;
-        allowReboot = cfg.reboot.mode == "with-upgrade";
+        allowReboot = plan.reboot.mode == "with-upgrade";
         rebootWindow =
-          if cfg.reboot.mode == "with-upgrade" then
+          if plan.reboot.mode == "with-upgrade" then
             {
-              inherit (cfg.reboot.window) lower upper;
+              lower = maintenanceLib.formatClock (maintenanceLib.clockMinutes policy.allowedWindow.start);
+              upper = maintenanceLib.formatClock (maintenanceLib.clockMinutes policy.allowedWindow.end);
             }
           else
             null;
@@ -57,7 +60,7 @@ in
         TimeoutStartSec = lib.mkIf (waitsIndefinitely upgradeGuards) "infinity";
       };
     })
-    (lib.mkIf (cfg.reboot.mode == "scheduled") {
+    (lib.mkIf (plan.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed = {
         description = "Reboot on schedule if the current NixOS profile needs it";
         serviceConfig = {
@@ -71,8 +74,8 @@ in
       systemd.timers.nixos-reboot-if-needed = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnCalendar = cfg.reboot.calendar;
-          RandomizedDelaySec = cfg.reboot.randomizedDelay;
+          OnCalendar = plan.reboot.scheduledCalendar;
+          RandomizedDelaySec = "${toString policy.randomizedDelayMinutes}min";
           Persistent = false;
           Unit = "nixos-reboot-if-needed.service";
         };

@@ -13,7 +13,7 @@ let
       outputs
       ;
   };
-  reboot = config.host.autoUpgrade.reboot;
+  reboot = model.plan.reboot;
   policy = model.policy;
   windowStart = maintenanceLib.clockMinutes policy.allowedWindow.start;
   windowEnd = maintenanceLib.clockMinutes policy.allowedWindow.end;
