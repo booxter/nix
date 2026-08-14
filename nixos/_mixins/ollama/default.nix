@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.ollama;
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   ollamaMetrics = pkgs.callPackage ./metrics { };
 in
 {
@@ -69,41 +69,26 @@ in
       };
     })
     (lib.mkIf cfg.enableMetrics {
-      systemd.services.ollama-metrics = {
+      host.observability.nodeExporter.textfile.periodicProducers.ollama-metrics = {
         description = "Collect Ollama state metrics for Prometheus";
         wants = [ "ollama.service" ];
         after = [ "ollama.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe ollamaMetrics} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/ollama.prom";
-          NoNewPrivileges = true;
-          PrivateTmp = true;
-          ProtectHome = true;
-          ProtectSystem = "strict";
-          ReadWritePaths = [ nodeExporterTextfileDir ];
-          RestrictAddressFamilies = [
-            "AF_UNIX"
-            "AF_INET"
-            "AF_INET6"
-          ];
-          RestrictRealtime = true;
-          LockPersonality = true;
-          MemoryDenyWriteExecute = true;
-        };
+        command = [
+          (lib.getExe ollamaMetrics)
+          "--base-url"
+          "http://127.0.0.1:${toString config.services.ollama.port}"
+          "--output"
+          "${textfileDir}/ollama.prom"
+        ];
+        interval = "1m";
+        onBootSec = "2m";
+        accuracySec = "10s";
+        addressFamilies = [
+          "AF_UNIX"
+          "AF_INET"
+          "AF_INET6"
+        ];
       };
-
-      systemd.timers.ollama-metrics = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "2m";
-          OnUnitActiveSec = "1m";
-          AccuracySec = "10s";
-        };
-      };
-
-      systemd.tmpfiles.rules = [
-        "d ${nodeExporterTextfileDir} 0755 root root - -"
-      ];
     })
   ];
 }
