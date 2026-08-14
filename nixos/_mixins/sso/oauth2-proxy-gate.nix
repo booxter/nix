@@ -8,7 +8,6 @@
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
-  probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
   gateHelpers = import ./oauth2-proxy-gate-lib.nix { };
 
   gateSubmodule =
@@ -219,11 +218,6 @@ let
           description = "Extra nginx locations added to one protected internal service or external hostname.";
         };
 
-        probeLocationsByName = lib.mkOption {
-          type = with lib.types; attrsOf (attrsOf anything);
-          default = { };
-          description = "Extra nginx locations added only to one protected internal service's probe-only HTTPS listener.";
-        };
       };
     };
 
@@ -483,8 +477,7 @@ in
 
     services.nginx.virtualHosts = lib.mkMerge (
       lib.mapAttrsToList (
-        _: gate:
-        protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
+        _: gate: protectedInternalVhostsFor gate // protectedExternalVhostsFor gate
       ) enabledGates
     );
 

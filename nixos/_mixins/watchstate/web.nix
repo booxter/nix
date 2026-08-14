@@ -47,13 +47,6 @@ in
           internalHttpsServiceNames = [ "watchstate" ];
           authRequestHeaders = [ ];
           clearAuthorizationHeader = false;
-          probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
-            proxyPass = cfg.localUrl;
-            recommendedProxySettings = true;
-            extraConfig = ''
-              auth_request off;
-            '';
-          };
         };
       };
     };

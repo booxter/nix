@@ -6,7 +6,6 @@
 }:
 let
   enabledGates = lib.filterAttrs (_: gate: gate.enable) config.host.sso.oauth2ProxyGates;
-  probeHelpers = import ../oauth2-proxy-gate-probes.nix { inherit lib; };
   serviceNames = map (gate: gate.serviceName) (builtins.attrValues enabledGates);
   httpAddresses = map (gate: gate.httpAddress) (builtins.attrValues enabledGates);
 in
@@ -38,7 +37,6 @@ in
           assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
           message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
         }
-        ++ probeHelpers.assertionsFor gateName gate
       ) enabledGates
     )
     ++ [

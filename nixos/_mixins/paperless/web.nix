@@ -92,13 +92,6 @@ in
           whitelistDomains = [ gptHost ];
           internalHttpsServiceNames = [ "paperless-gpt" ];
           authCookieVariableName = "paperless_gpt_auth_cookie";
-          probeLocationsByName.paperless-gpt."= /api/version" = {
-            proxyPass = "http://127.0.0.1:${toString gptPort}";
-            recommendedProxySettings = true;
-            extraConfig = ''
-              auth_request off;
-            '';
-          };
         };
       };
     };

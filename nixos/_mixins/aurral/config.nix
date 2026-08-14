@@ -141,13 +141,6 @@ in
             intervalSeconds = 14 * 60;
             lifetimeSeconds = 8 * 60 * 60;
           };
-          probeLocationsByName.aurral."= /api/health/live" = {
-            proxyPass = "http://127.0.0.1:${toString model.port}";
-            recommendedProxySettings = true;
-            extraConfig = ''
-              auth_request off;
-            '';
-          };
         };
       };
     };

@@ -66,13 +66,6 @@ in
               proxyHeader = "X-User";
             }
           ];
-          probeLocationsByName.goo."= /readyz" = {
-            proxyPass = upstream;
-            recommendedProxySettings = true;
-            extraConfig = ''
-              auth_request off;
-            '';
-          };
         };
       };
     };

@@ -29,14 +29,7 @@ let
       lib.filterAttrs (_: api: builtins.hasAttr api.service services) config.host.web.api
     )
   );
-  gateProbeEndpointNames = lib.unique (
-    builtins.concatMap (gate: builtins.attrNames gate.probeLocationsByName) (
-      builtins.attrValues (lib.filterAttrs (_: gate: gate.enable) config.host.sso.oauth2ProxyGates)
-    )
-  );
-  probeEndpointNames = lib.unique (
-    healthProbeEndpointNames ++ apiProbeEndpointNames ++ gateProbeEndpointNames
-  );
+  probeEndpointNames = lib.unique (healthProbeEndpointNames ++ apiProbeEndpointNames);
   probeServices = lib.genAttrs probeEndpointNames (name: endpoints.${name});
   tlsVhost = service: port: {
     extraConfig = lib.optionalString (service.internal.clientAuth == "mtls") ''
@@ -80,6 +73,30 @@ let
     _: service:
     lib.genAttrs service.internal.publicAliases (publicAlias: proxyVhost service publicAlias [ ])
   ) services;
+  healthProbeLocation =
+    service:
+    let
+      health = service.health.backend;
+      proxyPass =
+        if health.upstreamPath == null then
+          service.upstream
+        else
+          "${service.upstream}${health.upstreamPath}";
+      methodRestriction = lib.optionalString (health.allowedMethods != [ ]) ''
+        limit_except ${lib.concatStringsSep " " health.allowedMethods} {
+          deny all;
+        }
+      '';
+    in
+    {
+      inherit proxyPass;
+      inherit (health) recommendedProxySettings;
+      extraConfig = ''
+        auth_request off;
+        ${methodRestriction}
+        ${health.locationExtraConfig}
+      '';
+    };
   probeVhosts = lib.mapAttrs' (
     _: service:
     lib.nameValuePair "${secretName service.internal.endpointName}-probe" (
@@ -89,11 +106,16 @@ let
         serverAliases = [ ];
         addSSL = true;
         forceSSL = false;
-        locations."/" = {
-          return = "404";
-          extraConfig = ''
-            auth_request off;
-          '';
+        locations = {
+          "/" = {
+            return = "404";
+            extraConfig = ''
+              auth_request off;
+            '';
+          };
+        }
+        // lib.optionalAttrs service.health.backend.enable {
+          "= ${service.health.backend.path}" = healthProbeLocation service;
         };
       }
     )

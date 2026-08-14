@@ -24,36 +24,6 @@ let
     ) serviceNames
   );
   originService = if serviceNames == [ ] then null else services.${builtins.head serviceNames};
-  probeLocation =
-    service:
-    let
-      health = service.health.backend;
-      proxyPass =
-        if health.upstreamPath == null then
-          service.upstream
-        else
-          "${service.upstream}${health.upstreamPath}";
-      methodRestriction = lib.optionalString (health.allowedMethods != [ ]) ''
-        limit_except ${lib.concatStringsSep " " health.allowedMethods} {
-          deny all;
-        }
-      '';
-    in
-    {
-      inherit proxyPass;
-      inherit (health) recommendedProxySettings;
-      extraConfig = ''
-        auth_request off;
-        ${methodRestriction}
-        ${health.locationExtraConfig}
-      '';
-    };
-  probeLocations = lib.mapAttrs' (
-    _name: service:
-    lib.nameValuePair service.internal.endpointName {
-      "= ${service.health.backend.path}" = probeLocation service;
-    }
-  ) (lib.filterAttrs (_: service: service.health.backend.enable) services);
   clearCookieConfig =
     lib.concatMapStringsSep "\n"
       (
@@ -119,7 +89,6 @@ in
         }
       ];
       extraLocationsByName = logoutLocations;
-      probeLocationsByName = probeLocations;
     };
   };
 }
