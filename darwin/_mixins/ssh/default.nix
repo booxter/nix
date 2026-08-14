@@ -5,8 +5,6 @@
   ...
 }:
 let
-  username = config.host.username;
-  userHome = config.users.users.${username}.home;
   credentials = config.host.ssh.credentials;
   useSecretive = credentials.backend == "secretive";
 in
@@ -43,10 +41,5 @@ in
       ${lib.getExe pkgs.rsync} "''${rsyncFlags[@]}" \
         ${pkgs.secretive}/Applications/Secretive.app/ /Applications/Secretive.app
     '';
-
-    home-manager.users.${username} = {
-      home.file.".ssh/secretive.pub".text = credentials.secretive.publicKey + "\n";
-      programs.git.settings.user.signingKey = "${userHome}/.ssh/secretive.pub";
-    };
   };
 }

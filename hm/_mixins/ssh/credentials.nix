@@ -51,6 +51,8 @@ in
         programs.ssh.settings."*".AddKeysToAgent = if useSecretive then "no" else "yes";
       }
       (lib.mkIf useSecretive {
+        home.file.".ssh/secretive.pub".text = osConfig.host.ssh.credentials.secretive.publicKey + "\n";
+        programs.git.settings.user.signingKey = "${config.home.homeDirectory}/.ssh/secretive.pub";
         programs.bash = {
           profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
           initExtra = lib.mkOrder 900 secretiveAuthSockInit;
