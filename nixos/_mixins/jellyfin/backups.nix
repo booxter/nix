@@ -12,9 +12,9 @@ let
   backupCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' tools "jellyfin-built-in-backup")
     "--url"
-    cfg.localUrl
+    "http://127.0.0.1:8096"
     "--api-key-file"
-    cfg.apiKeyFile
+    config.sops.secrets."jellyfin/apiKey".path
     "--source-dir"
     sourceDirectory
     "--staging-dir"
@@ -26,7 +26,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg != null && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null && cfg.backups.stagingDirectory != null) {
     systemd.tmpfiles.rules = [
       "d ${cfg.backups.stagingDirectory} 0750 root restic-cloud - -"
     ];

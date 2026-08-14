@@ -19,6 +19,8 @@ let
   jellyfinHost = resolveHost cfg.integrations.jellyfin;
   rommHost = resolveHost cfg.integrations.romm;
   jellyfin = if jellyfinHost == null then null else jellyfinHost.host.jellyfin;
+  jellyfinUrl =
+    if jellyfinHost == null then null else jellyfinHost.host.web.services.jellyfin.public.url;
   romm = if rommHost == null then null else rommHost.host.romm;
   ssoApplication = config.host.sso.applications.degoog;
   adminUsers =
@@ -119,7 +121,7 @@ let
         settings.degoog-org-official-extensions-jellyfin-command = {
           apiKey = config.sops.placeholder."degoog/jellyfin_api_key";
           headerName = "X-Emby-Token";
-          url = if jellyfin == null then null else jellyfin.publicUrl;
+          url = jellyfinUrl;
         };
       };
       romm = {
@@ -163,6 +165,7 @@ in
     extensionNames
     jellyfin
     jellyfinHost
+    jellyfinUrl
     packages
     romm
     rommHost

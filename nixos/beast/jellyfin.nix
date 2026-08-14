@@ -4,7 +4,6 @@
       provider = "beast";
       resource = "media";
     };
-    meilisearch.enable = true;
     libraries = {
       movies = {
         name = "Movies";

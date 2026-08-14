@@ -11,6 +11,7 @@ let
     duplicateSettingNamespaces
     jellyfin
     jellyfinHost
+    jellyfinUrl
     romm
     rommHost
     ssoApplication
@@ -39,7 +40,7 @@ in
       message = "The selected Degoog Jellyfin integration host must enable Jellyfin.";
     }
     {
-      assertion = !degoogModel.jellyfinSelected || (jellyfin != null && jellyfin.publicUrl != null);
+      assertion = !degoogModel.jellyfinSelected || jellyfinUrl != null;
       message = "The selected Degoog Jellyfin integration requires a public Jellyfin URL.";
     }
     {

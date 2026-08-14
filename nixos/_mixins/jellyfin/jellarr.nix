@@ -42,7 +42,7 @@ in
       environmentFile = config.sops.templates."jellarr.env".path;
       config = declarativeConfig // {
         version = 1;
-        base_url = cfg.localUrl;
+        base_url = "http://127.0.0.1:8096";
         users = jellarrUsers;
       };
     };

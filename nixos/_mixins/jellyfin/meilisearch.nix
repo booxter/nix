@@ -10,7 +10,7 @@ let
   masterKeySecret = "meilisearch/masterKey";
 in
 {
-  config = lib.mkIf (jellyfin != null && jellyfin.meilisearch.enable) {
+  config = lib.mkIf (jellyfin != null) {
     sops = {
       secrets.${masterKeySecret} = {
         restartUnits = [

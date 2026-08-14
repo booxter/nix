@@ -16,11 +16,7 @@ in
       message = "host.jellyfin.libraries must not be empty.";
     }
     {
-      assertion = !cfg.backups.enable || cfg.backups.stagingDirectory != null;
-      message = "host.jellyfin.backups.stagingDirectory must be set when Jellyfin backups are enabled.";
-    }
-    {
-      assertion = !cfg.web.public.enable || config.host.web.ingress != null;
+      assertion = config.host.web.ingress != null;
       message = "Public Jellyfin requires this host to run realm ingress.";
     }
     {
