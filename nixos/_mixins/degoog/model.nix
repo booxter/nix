@@ -14,17 +14,15 @@ let
       null
     else if hostName == localHost then
       config
-    else if builtins.hasAttr hostName outputs.nixosConfigurations then
-      outputs.nixosConfigurations.${hostName}.config
     else
-      null;
+      outputs.nixosConfigurations.${hostName}.config;
   jellyfinHost = resolveHost cfg.integrations.jellyfin;
   rommHost = resolveHost cfg.integrations.romm;
   jellyfin = if jellyfinHost == null then null else jellyfinHost.host.jellyfin;
   romm = if rommHost == null then null else rommHost.host.romm;
-  ssoApplication = config.host.sso.applications.degoog or null;
+  ssoApplication = config.host.sso.applications.degoog;
   adminUsers =
-    if ssoApplication == null || ssoApplication.adminGroup == null then
+    if ssoApplication.adminGroup == null then
       { }
     else
       lib.filterAttrs (
@@ -146,15 +144,11 @@ let
     lib.optional (cfg.integrations.jellyfin != null) "jellyfin"
     ++ lib.optional (cfg.integrations.romm != null) "romm";
   selectedFeatureNames = lib.unique ([ "settings-access" ] ++ cfg.features ++ integrationFeatures);
-  select =
-    registrations: names:
-    map (name: registrations.${name}) (
-      builtins.filter (name: builtins.hasAttr name registrations) names
-    );
+  select = registrations: names: map (name: registrations.${name}) names;
   selectedRegistrations =
     select catalog.engines cfg.engines
     ++ select catalog.features selectedFeatureNames
-    ++ lib.optionals (cfg.theme != null && builtins.hasAttr cfg.theme catalog.themes) [
+    ++ lib.optionals (cfg.theme != null) [
       catalog.themes.${cfg.theme}
     ];
   extensionNames = map (registration: registration.extension) selectedRegistrations;
@@ -177,23 +171,6 @@ in
     ;
   jellyfinSelected = cfg.integrations.jellyfin != null;
   rommSelected = cfg.integrations.romm != null;
-  unknownEngines = lib.subtractLists (builtins.attrNames catalog.engines) cfg.engines;
-  unknownFeatures = lib.subtractLists (builtins.attrNames catalog.features) selectedFeatureNames;
-  unknownTheme = cfg.theme != null && !builtins.hasAttr cfg.theme catalog.themes;
-  invalidExtensions = builtins.filter (
-    extension:
-    builtins.match "^(autocomplete|engines|plugins|shortcuts|themes|transports)/[a-z0-9][a-z0-9._+-]*$" extension
-    == null
-  ) (map (registration: registration.extension) (builtins.concatMap builtins.attrValues [
-    catalog.engines
-    catalog.features
-    catalog.themes
-  ]));
-  duplicateExtensions = lib.unique (
-    builtins.filter (
-      extension: lib.count (candidate: candidate == extension) extensionNames > 1
-    ) extensionNames
-  );
   duplicateSettingNamespaces = lib.unique (
     builtins.filter (
       namespace: lib.count (candidate: candidate == namespace) settingNamespaces > 1
