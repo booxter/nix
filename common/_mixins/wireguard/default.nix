@@ -5,6 +5,7 @@
   ...
 }:
 let
+  dynamicDnsPolicy = import ../../_lib/dynamic-dns-policy.nix { inherit lib; };
   ip = import ../../_lib/ipv4.nix { inherit lib; };
   ipv4Address = lib.types.addCheck lib.types.nonEmptyStr ip.validIpv4;
   ipv4Cidr = lib.types.addCheck lib.types.nonEmptyStr ip.validCidr;
@@ -88,18 +89,7 @@ in
               };
             };
             dynamicDns = lib.mkOption {
-              type = nullOr (submodule {
-                options = {
-                  hostname = lib.mkOption {
-                    type = nonEmptyStr;
-                    description = "Dynamic DNS hostname updated by the server.";
-                  };
-                  username = lib.mkOption {
-                    type = nonEmptyStr;
-                    description = "Dynamic DNS account used by the server.";
-                  };
-                };
-              });
+              type = nullOr dynamicDnsPolicy;
               default = null;
               description = "Dynamic DNS policy for the public WireGuard endpoint.";
             };

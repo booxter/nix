@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.host.web.ingress;
+  dynamicDnsPolicy = import ../../../../common/_lib/dynamic-dns-policy.nix { inherit lib; };
   publicServices = builtins.filter (
     contribution: contribution.value.public.ingressHost == config.networking.hostName
   ) fleetWebServices.public;
@@ -60,21 +61,7 @@ in
     type = lib.types.nullOr (
       lib.types.submodule {
         options.dynamicDns = lib.mkOption {
-          type = lib.types.nullOr (
-            lib.types.submodule {
-              options = {
-                hostname = lib.mkOption {
-                  type = lib.types.nonEmptyStr;
-                  description = "Dynamic DNS hostname updated by the ingress controller.";
-                };
-
-                username = lib.mkOption {
-                  type = lib.types.nonEmptyStr;
-                  description = "Dynamic DNS account username.";
-                };
-              };
-            }
-          );
+          type = lib.types.nullOr dynamicDnsPolicy;
           default = null;
           description = "Dynamic DNS policy for this ingress controller.";
         };
