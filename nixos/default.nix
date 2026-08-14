@@ -22,7 +22,7 @@
       ./_mixins/backups
       ./_mixins/bazarr
       ./_mixins/builder.nix
-      ./_mixins/desktop
+      ./_mixins/desktop.nix
       ./_mixins/degoog
       ./_mixins/dashboard
       ./_mixins/downloads
