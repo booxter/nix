@@ -7,7 +7,7 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model) cfg selected;
-  slskdEnabled = cfg != null && cfg.slskd.enable && selected != null;
+  slskdEnabled = cfg != null;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
       _: person: lib.any (group: builtins.elem group person.groups) cfg.authProxy.adminGroups

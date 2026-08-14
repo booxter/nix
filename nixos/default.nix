@@ -60,7 +60,6 @@
       ./_mixins/security
       ./_mixins/seerr
       ./_mixins/shelfmark
-      ./_mixins/slskd
       ./_mixins/sso
       ./_mixins/storage
       ./_mixins/transmission

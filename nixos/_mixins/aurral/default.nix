@@ -54,12 +54,54 @@ let
         };
 
         slskd = {
-          enable = lib.mkEnableOption "a host-local slskd integration";
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = pkgs.slskd;
+            description = "slskd package to run.";
+          };
 
-          instance = lib.mkOption {
-            type = with lib.types; nullOr nonEmptyStr;
-            default = null;
-            description = "Name of the host-local slskd instance used by Aurral.";
+          stateDir = lib.mkOption {
+            type = absolutePath;
+            default = "/var/lib/slskd";
+            description = "Persistent slskd state directory.";
+          };
+
+          secretPrefix = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = "slskd";
+            description = "SOPS key prefix containing slskd credentials.";
+          };
+
+          storage = {
+            claim = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = "media";
+              description = "Storage claim containing slskd downloads.";
+            };
+
+            relativePath = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              default = "slskd";
+              description = "Directory below the storage claim used by slskd.";
+            };
+          };
+
+          api.port = lib.mkOption {
+            type = lib.types.port;
+            default = 5030;
+            description = "HTTP API port inside the VPN namespace.";
+          };
+
+          vpn = {
+            namespace = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              description = "VPN namespace containing slskd.";
+            };
+
+            peerPort = lib.mkOption {
+              type = lib.types.port;
+              description = "VPN-provider port forwarded to the Soulseek listener.";
+            };
           };
 
           priority = lib.mkOption {
@@ -87,6 +129,12 @@ let
             type = lib.types.bool;
             default = true;
             description = "Whether Aurral removes slskd downloads after processing them.";
+          };
+
+          settings = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+            description = "Additional slskd configuration merged into the generated settings.";
           };
         };
 
@@ -130,6 +178,8 @@ let
 in
 {
   imports = [
+    ../slskd/assertions.nix
+    ../slskd/service.nix
     ./assertions.nix
     ./backups.nix
     ./service.nix
