@@ -7,7 +7,7 @@ let
   cfg = config.host.aurral;
 in
 {
-  config = lib.mkIf (cfg != null && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null) {
     host.backups.sources.aurral-database = {
       title = "Aurral";
       capture = {

@@ -5,13 +5,12 @@
 }:
 let
   cfg = config.host.aurral;
-  aurralService = config.host.web.services.aurral;
-  browserHost =
-    if cfg.publicHostName == null then aurralService.internal.serverName else cfg.publicHostName;
+  model = import ./model.nix { inherit config lib; };
+  browserHost = cfg.publicHostName;
   browserOrigin = "https://${browserHost}";
   cacheZone = "aurral_images";
   cacheLocation = {
-    proxyPass = "http://127.0.0.1:${toString cfg.port}";
+    proxyPass = "http://127.0.0.1:${toString model.port}";
     recommendedProxySettings = true;
     extraConfig = ''
       proxy_cache ${cacheZone};
@@ -31,9 +30,9 @@ in
       {
         host.web.services.aurral = {
           enable = true;
-          upstream = "http://127.0.0.1:${toString cfg.port}";
+          upstream = "http://127.0.0.1:${toString model.port}";
           public = {
-            enable = cfg.publicHostName != null;
+            enable = true;
             hostName = cfg.publicHostName;
             locationExtraConfig = ''
               proxy_set_header X-Forwarded-For $remote_addr;
@@ -41,7 +40,7 @@ in
           };
           health = {
             frontend = {
-              enable = cfg.publicHostName != null;
+              enable = true;
               path = "/oauth2/sign_in";
             };
             backend = {
@@ -65,7 +64,7 @@ in
               allowedGroups = cfg.authProxy.allowedGroups;
               groupClaim = "media_groups";
               whitelistDomains = [ browserHost ];
-              externalOrigin = if cfg.publicHostName == null then null else browserOrigin;
+              externalOrigin = browserOrigin;
               internalHttpsServiceNames = [ "aurral" ];
               authCookieVariableName = "aurral_auth_cookie";
               authRequestHeaders = [
@@ -90,7 +89,7 @@ in
                 lifetimeSeconds = 8 * 60 * 60;
               };
               probeLocationsByName.aurral."= /api/health/live" = {
-                proxyPass = "http://127.0.0.1:${toString cfg.port}";
+                proxyPass = "http://127.0.0.1:${toString model.port}";
                 recommendedProxySettings = true;
                 extraConfig = ''
                   auth_request off;
@@ -115,9 +114,7 @@ in
         services.nginx.virtualHosts."internal-https-aurral".locations = imageLocations;
 
       }
-      (lib.mkIf (cfg.publicHostName != null) {
-        services.nginx.virtualHosts.${cfg.publicHostName}.locations = imageLocations;
-      })
+      { services.nginx.virtualHosts.${cfg.publicHostName}.locations = imageLocations; }
     ]
   );
 }

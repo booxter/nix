@@ -18,16 +18,16 @@ in
   config = lib.mkIf (cfg != null) {
     fonts.packages = [ pkgs.dejavu_fonts ];
 
-    users.groups.aurral = { };
-    users.users.aurral = {
+    users.groups.${model.user} = { };
+    users.users.${model.user} = {
       isSystemUser = true;
-      group = "aurral";
-      extraGroups = lib.unique ([ cfg.storage.group ] ++ lib.optionals slskdEnabled [ selected.group ]);
+      group = model.user;
+      extraGroups = lib.unique ([ model.group ] ++ lib.optionals slskdEnabled [ selected.group ]);
     };
 
     sops.templates."aurral-slskd.env" = lib.mkIf slskdEnabled {
-      owner = "aurral";
-      group = "aurral";
+      owner = model.user;
+      group = model.user;
       mode = "0400";
       restartUnits = [ "aurral.service" ];
       content = ''
@@ -36,13 +36,13 @@ in
     };
 
     systemd.tmpfiles.rules = [
-      "d ${cfg.stateDir} 0750 aurral aurral - -"
-      "z ${cfg.stateDir} 0750 aurral aurral - -"
+      "d ${cfg.stateDir} 0750 ${model.user} ${model.user} - -"
+      "z ${cfg.stateDir} 0750 ${model.user} ${model.user} - -"
     ];
 
-    host.storage.claims.${cfg.storage.claim} = {
-      directories.${cfg.storage.relativePath} = {
-        group = cfg.storage.group;
+    host.storage.claims.${cfg.storageClaim} = {
+      directories.${model.flowRelativePath} = {
+        group = model.group;
         mode = "2775";
       };
       attachments.aurral.unit = "aurral";
@@ -63,18 +63,18 @@ in
       ];
       environment = {
         AURRAL_DATA_DIR = cfg.stateDir;
-        DOWNLOAD_FOLDER = cfg.flowDir;
-        WEEKLY_FLOW_FOLDER = cfg.flowDir;
-        PORT = toString cfg.port;
+        DOWNLOAD_FOLDER = model.flowDir;
+        WEEKLY_FLOW_FOLDER = model.flowDir;
+        PORT = toString model.port;
         TRUST_PROXY = "2";
       }
       // lib.optionalAttrs slskdEnabled {
         AURRAL_SLSKD_MANAGED = "true";
         AURRAL_SLSKD_URL = selected.apiUrl;
-        AURRAL_SLSKD_PRIORITY = toString cfg.slskd.priority;
-        AURRAL_SLSKD_PREFERRED_FORMAT = cfg.slskd.preferredFormat;
-        AURRAL_SLSKD_STRICT_FORMAT = lib.boolToString cfg.slskd.strictFormat;
-        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = lib.boolToString cfg.slskd.cleanupAfterRuns;
+        AURRAL_SLSKD_PRIORITY = "10";
+        AURRAL_SLSKD_PREFERRED_FORMAT = "flac";
+        AURRAL_SLSKD_STRICT_FORMAT = "false";
+        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
       }
       // lib.optionalAttrs cfg.authProxy.enable {
         AUTH_PROXY_ENABLED = "true";
@@ -85,10 +85,10 @@ in
         DISABLE_LOCAL_AUTH = "true";
       };
       serviceConfig = {
-        ExecStart = lib.getExe cfg.package;
+        ExecStart = lib.getExe (pkgs.callPackage ./package { });
         EnvironmentFile = lib.optional slskdEnabled config.sops.templates."aurral-slskd.env".path;
-        User = "aurral";
-        Group = "aurral";
+        User = model.user;
+        Group = model.user;
         WorkingDirectory = cfg.stateDir;
         UMask = "0007";
         Restart = "on-failure";
@@ -100,7 +100,7 @@ in
         ProtectSystem = "strict";
         ReadWritePaths = [
           cfg.stateDir
-          cfg.flowDir
+          model.flowDir
         ]
         ++ lib.optional slskdEnabled selected.completedDir;
         ProtectHome = true;

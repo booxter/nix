@@ -68,18 +68,17 @@ in
 
     services.slskd = {
       enable = true;
-      inherit (instance) package;
       user = instance.user;
       group = instance.group;
       domain = null;
       environmentFile = config.sops.templates."slskd.env".path;
-      settings = lib.recursiveUpdate instance.settings {
+      settings = {
         headless = true;
         directories = {
           incomplete = instance.incompleteDir;
           downloads = instance.completedDir;
         };
-        shares.directories = instance.settings.shares.directories or [ ];
+        shares.directories = [ ];
         soulseek = {
           listen_ip_address = "0.0.0.0";
           listen_port = instance.vpn.peerPort;
