@@ -24,7 +24,7 @@ let
   ingressConfigurations = lib.filterAttrs (
     _: configuration:
     configuration.config.host.realm == config.host.realm
-    && configuration.config.host.web.ingress.enable
+    && configuration.config.host.web.ingress != null
     && configuration.config.host.web.ingress.dynamicDns.enable
   ) configurations;
   ingressHosts = builtins.attrValues ingressConfigurations;

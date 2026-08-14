@@ -19,39 +19,45 @@ in
 {
   imports = [ ./bandwidth-limits.nix ];
 
-  options.host.web.ingress = {
-    enable = lib.mkEnableOption "public HTTPS ingress controller";
+  options.host.web.ingress = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options = {
+          acmeEmail = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            default = "ihar.hrachyshka@gmail.com";
+            description = "Email address used for public TLS certificate issuance.";
+          };
 
-    acmeEmail = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "ihar.hrachyshka@gmail.com";
-      description = "Email address used for public TLS certificate issuance.";
-    };
+          openFirewall = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to open public HTTP and HTTPS firewall ports.";
+          };
 
-    openFirewall = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to open public HTTP and HTTPS firewall ports.";
-    };
+          dynamicDns = {
+            enable = lib.mkEnableOption "dynamic DNS for this ingress controller";
 
-    dynamicDns = {
-      enable = lib.mkEnableOption "dynamic DNS for this ingress controller";
+            hostname = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "Dynamic DNS hostname updated by the ingress controller.";
+            };
 
-      hostname = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "Dynamic DNS hostname updated by the ingress controller.";
-      };
-
-      username = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "Dynamic DNS account username.";
-      };
-    };
+            username = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "Dynamic DNS account username.";
+            };
+          };
+        };
+      }
+    );
+    default = null;
+    description = "Public HTTPS ingress controller policy.";
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     services.nginx.enableReload = true;
 
     host.pki.clients = builtins.listToAttrs (

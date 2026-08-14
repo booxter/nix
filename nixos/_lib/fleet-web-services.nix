@@ -15,7 +15,9 @@ let
     ${localHost} = config;
   };
   ingressControllersByRealm = builtins.groupBy (hostName: hostConfigs.${hostName}.host.realm) (
-    builtins.attrNames (lib.filterAttrs (_: hostConfig: hostConfig.host.web.ingress.enable) hostConfigs)
+    builtins.attrNames (
+      lib.filterAttrs (_: hostConfig: hostConfig.host.web.ingress != null) hostConfigs
+    )
   );
   rawContributions = builtins.concatLists (
     lib.mapAttrsToList (

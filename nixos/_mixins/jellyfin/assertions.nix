@@ -26,7 +26,7 @@ in
       message = "host.jellyfin.meilisearch.enable requires host.jellyfin.enable.";
     }
     {
-      assertion = !cfg.enable || cfg.web.transport != "direct" || config.host.web.ingress.enable;
+      assertion = !cfg.enable || cfg.web.transport != "direct" || config.host.web.ingress != null;
       message = "host.jellyfin.web.transport `direct` requires this host to run realm ingress.";
     }
     {

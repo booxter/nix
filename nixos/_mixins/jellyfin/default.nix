@@ -138,7 +138,7 @@ in
           "internal-mtls"
           "direct"
         ];
-        default = if config.host.web.ingress.enable then "direct" else "internal-mtls";
+        default = if config.host.web.ingress != null then "direct" else "internal-mtls";
         description = "Transport used by realm ingress to reach Jellyfin.";
       };
     };

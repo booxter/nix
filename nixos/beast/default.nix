@@ -55,7 +55,6 @@
     };
 
     web.ingress = {
-      enable = true;
       dynamicDns = {
         enable = true;
         hostname = "ihrachyshka-beast.freeddns.org";
