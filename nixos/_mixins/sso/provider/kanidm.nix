@@ -88,10 +88,10 @@ let
     schedule = "*/30 * * * * * *";
     instanceDisplayName = provider.displayName;
     instanceUrl = provider.publicUrl;
-    mailFromAddress = mailer.fromAddress;
-    mailReplyToAddress = mailer.replyToAddress;
-    mailRelay = mailer.smtp.host;
-    mailUsername = mailer.smtp.username;
+    mailFromAddress = mailer.address;
+    mailReplyToAddress = mailer.address;
+    mailRelay = mailer.relayHost;
+    mailUsername = mailer.address;
     mailConnectTimeoutSeconds = 15;
   };
   writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [

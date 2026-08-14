@@ -27,7 +27,7 @@ in
       passwordFile = config.sops.secrets.${passwordSecretName bootstrapOwner}.path;
       settings = {
         PAPERLESS_ADMIN_USER = bootstrapOwner;
-        PAPERLESS_ADMIN_MAIL = config.host.mailer.fromAddress;
+        PAPERLESS_ADMIN_MAIL = config.host.mailer.address;
         PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
         PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
         PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [

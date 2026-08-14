@@ -31,10 +31,10 @@ in
         metrics.enabled = true;
         mailer = {
           enabled = true;
-          host = mailer.smtp.host;
-          port = mailer.smtp.port;
-          username = mailer.smtp.username;
-          fromemail = mailer.fromAddress;
+          host = mailer.relayHost;
+          port = mailer.relayPort;
+          username = mailer.address;
+          fromemail = mailer.address;
         };
         service = {
           timezone = config.host.site.timeZone;

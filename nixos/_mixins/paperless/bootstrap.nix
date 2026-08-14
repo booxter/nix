@@ -24,7 +24,7 @@ let
     };
     users = lib.mapAttrsToList (name: user: {
       username = name;
-      email = if name == bootstrapOwner then config.host.mailer.fromAddress else "";
+      email = if name == bootstrapOwner then config.host.mailer.address else "";
       passwordFile = config.sops.secrets.${passwordSecretName name}.path;
       isStaff = builtins.elem config.host.sso.applications.${cfg.sso.application}.adminGroup user.groups;
       isSuperuser = name == bootstrapOwner;
