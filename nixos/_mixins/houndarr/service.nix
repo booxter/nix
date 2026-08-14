@@ -24,7 +24,6 @@ in
       isSystemUser = true;
       group = cfg.group;
       home = "/var/empty";
-      uid = config.host.accounts.users.${cfg.user}.uid;
     };
 
     systemd.tmpfiles.rules = [

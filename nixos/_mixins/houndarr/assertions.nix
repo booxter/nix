@@ -24,10 +24,6 @@ in
         assertion = builtins.length selectedApis == builtins.length (lib.unique selectedApis);
         message = "host.houndarr.instances cannot select the same application API twice";
       }
-      {
-        assertion = builtins.hasAttr cfg.user config.host.accounts.users;
-        message = "host.houndarr.user must select a registered host account";
-      }
     ]
     ++ map (instance: {
       assertion = instance.apiRegistration != null;

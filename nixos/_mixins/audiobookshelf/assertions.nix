@@ -22,10 +22,6 @@ in
         message = "host.audiobookshelf.libraries must select at least one media library";
       }
       {
-        assertion = builtins.hasAttr cfg.user config.host.accounts.users;
-        message = "host.audiobookshelf.user must select a registered host account";
-      }
-      {
         assertion = builtins.length sources == builtins.length (lib.unique sources);
         message = "host.audiobookshelf.libraries cannot select the same media library twice";
       }

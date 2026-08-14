@@ -81,6 +81,7 @@ in
   };
 
   imports = [
+    ./accounts.nix
     ./adaptive-upload-policy.nix
     ./audiobookshelf.nix
     ./aurral.nix

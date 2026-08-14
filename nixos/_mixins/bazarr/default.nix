@@ -7,13 +7,12 @@
 }:
 let
   cfg = config.host.bazarr;
-  account = config.host.accounts.users.${cfg.user} or null;
   enforceAuthCommand = utils.escapeSystemdExecArgs [
     (lib.getExe cfg.authConfigPackage)
     "--config"
     "${cfg.stateDir}/config/config.yaml"
     "--uid"
-    (toString account.uid)
+    (toString config.users.users.${cfg.user}.uid)
     "--gid"
     (toString config.users.groups.${cfg.group}.gid)
   ];
@@ -55,10 +54,6 @@ in
 
   config = lib.mkIf cfg.enable {
     assertions = [
-      {
-        assertion = account != null;
-        message = "host.bazarr.user must select a registered host account";
-      }
       {
         assertion = builtins.hasAttr cfg.storage.claim config.host.storage.claims;
         message = "host.bazarr.storage.claim must select a known storage claim";
@@ -110,7 +105,6 @@ in
     users.users.${cfg.user} = {
       home = lib.mkForce "/var/empty";
       isSystemUser = true;
-      uid = account.uid;
     };
 
     systemd.services.bazarr.serviceConfig = {

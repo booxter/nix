@@ -23,7 +23,6 @@ in
       group = cfg.group;
       home = "/var/empty";
       isSystemUser = true;
-      uid = config.host.accounts.users.${cfg.user}.uid;
     };
 
     systemd.services.ebook-converter = {

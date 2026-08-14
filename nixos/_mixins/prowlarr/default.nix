@@ -5,8 +5,6 @@
 }:
 let
   cfg = config.host.prowlarr;
-  account = config.host.accounts.users.${cfg.user} or null;
-  accountGroup = config.host.accounts.groups.${cfg.group} or null;
 in
 {
   options.host.prowlarr = {
@@ -37,17 +35,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = account != null;
-        message = "host.prowlarr.user must select a registered host account";
-      }
-      {
-        assertion = accountGroup != null;
-        message = "host.prowlarr.group must select a registered host group";
-      }
-    ];
-
     host.prowlarr.port = config.services.prowlarr.settings.server.port;
 
     services.prowlarr = {
@@ -121,14 +108,13 @@ in
     };
 
     users.groups = {
-      ${cfg.group}.gid = accountGroup.gid;
+      ${cfg.group} = { };
       prowlarr-api = { };
     };
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
       home = "/var/empty";
-      uid = account.uid;
       extraGroups = [ "prowlarr-api" ];
     };
   };

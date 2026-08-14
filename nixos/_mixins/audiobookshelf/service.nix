@@ -25,7 +25,6 @@ in
       group = cfg.group;
       home = lib.mkForce "/var/empty";
       isSystemUser = true;
-      uid = config.host.accounts.users.${cfg.user}.uid;
     };
 
     # Upstream assumes dataDir lives under /var/lib. An absolute
