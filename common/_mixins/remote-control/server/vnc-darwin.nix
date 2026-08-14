@@ -10,6 +10,11 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    host.remote-control.inventory.vnc = {
+      connection = "direct";
+      displays = [ ];
+    };
+
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "Configuring Apple Remote Management for ${username}."
 

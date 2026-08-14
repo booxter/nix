@@ -7,25 +7,18 @@
 }:
 let
   configurations = outputs.darwinConfigurations // outputs.nixosConfigurations;
-  remoteControlHosts = lib.mapAttrsToList (
-    name: configuration:
-    let
-      host = configuration.config.host;
-    in
-    {
+  vncHosts = builtins.filter (host: host.vnc != null) (
+    lib.mapAttrsToList (name: configuration: {
       inherit name;
-      inherit (configuration.config.nixpkgs.hostPlatform) isLinux;
-      inherit (host.hardware) displays;
-      inherit (host.remote-control.server) vnc;
-    }
-  ) configurations;
-  vncHosts = builtins.filter (host: host.vnc.enable) remoteControlHosts;
-  directHosts = builtins.filter (host: !host.isLinux) vncHosts;
-  tunneledHosts = builtins.filter (host: host.isLinux) vncHosts;
+      vnc = configuration.config.host.remote-control.inventory.vnc;
+    }) configurations
+  );
+  directHosts = builtins.filter (host: host.vnc.connection == "direct") vncHosts;
+  tunneledHosts = builtins.filter (host: host.vnc.connection == "ssh-tunnel") vncHosts;
 
   hostNames = lib.sort builtins.lessThan (map (host: host.name) vncHosts);
   displayNames = lib.unique (
-    lib.concatMap (host: map (display: display.position) host.displays) tunneledHosts
+    lib.concatMap (host: map (display: display.name) host.vnc.displays) tunneledHosts
   );
 
   directHostPatterns = lib.concatStringsSep "|" (
@@ -44,21 +37,17 @@ let
   mkTunneledHostCase =
     host:
     let
-      displays = host.displays;
-      defaultDisplay = lib.findFirst (
-        display: display.primary or false
-      ) (builtins.head displays) displays;
-      displayCases = lib.concatStringsSep "\n" (
-        lib.imap0 (index: display: ''
-          ${lib.escapeShellArg display.position})
-            remote_port=${toString (host.vnc.basePort + index)}
-            ;;
-        '') displays
-      );
+      displays = host.vnc.displays;
+      defaultDisplay = lib.findFirst (display: display.primary) (builtins.head displays) displays;
+      displayCases = lib.concatMapStringsSep "\n" (display: ''
+        ${lib.escapeShellArg display.name})
+          remote_port=${toString display.port}
+          ;;
+      '') displays;
     in
     ''
       ${lib.escapeShellArg host.name})
-        selected_display="''${requested_display:-${defaultDisplay.position}}"
+        selected_display="''${requested_display:-${defaultDisplay.name}}"
         case "$selected_display" in
       ${displayCases}
           *)

@@ -147,6 +147,15 @@ in
   imports = [ ./vnc/assertions.nix ];
 
   config = lib.mkIf cfg.enable {
+    host.remote-control.inventory.vnc = {
+      connection = "ssh-tunnel";
+      displays = lib.imap0 (index: display: {
+        inherit (display) name;
+        port = cfg.basePort + index;
+        inherit (display) primary;
+      }) displays;
+    };
+
     # The KVM removes the monitors' EDIDs when it selects another computer. Use
     # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
     # (monitor identity and timing data, not executable code). NixOS puts it in
