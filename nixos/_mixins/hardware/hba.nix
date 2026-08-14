@@ -17,48 +17,43 @@ let
       "/etc/disk-bay-map.json";
 in
 {
-  config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        environment.systemPackages = [ pkgs.storcli ];
-      }
-      (lib.mkIf observabilityEnabled {
-        systemd.services.hba-metrics = {
-          description = "Export storage-controller metrics for node exporter";
-          after = [ "local-fs.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = utils.escapeSystemdExecArgs [
-              (lib.getExe pkgs.storage-observability)
-              "--bay-map"
-              bayMapFile
-              "--output-file"
-              "${textfileDir}/hba.prom"
-            ];
-            NoNewPrivileges = true;
-            PrivateTmp = true;
-            ProtectHome = true;
-            ProtectSystem = "strict";
-            ReadWritePaths = [ textfileDir ];
-            RestrictAddressFamilies = [ "AF_UNIX" ];
-            RestrictRealtime = true;
-            LockPersonality = true;
-            MemoryDenyWriteExecute = true;
-          };
-        };
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.storcli ];
 
-        systemd.timers.hba-metrics = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "45s";
-            OnUnitActiveSec = "1min";
-          };
-        };
-
-        systemd.tmpfiles.rules = [
-          "d ${textfileDir} 0755 root root - -"
+    systemd.services.hba-metrics = lib.mkIf observabilityEnabled {
+      description = "Export storage-controller metrics for node exporter";
+      after = [ "local-fs.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = utils.escapeSystemdExecArgs [
+          (lib.getExe pkgs.storage-observability)
+          "--bay-map"
+          bayMapFile
+          "--output-file"
+          "${textfileDir}/hba.prom"
         ];
-      })
-    ]
-  );
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
+        ReadWritePaths = [ textfileDir ];
+        RestrictAddressFamilies = [ "AF_UNIX" ];
+        RestrictRealtime = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+      };
+    };
+
+    systemd.timers.hba-metrics = lib.mkIf observabilityEnabled {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "45s";
+        OnUnitActiveSec = "1min";
+      };
+    };
+
+    systemd.tmpfiles.rules = lib.mkIf observabilityEnabled [
+      "d ${textfileDir} 0755 root root - -"
+    ];
+  };
 }
