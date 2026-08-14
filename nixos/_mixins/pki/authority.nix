@@ -91,8 +91,6 @@ in
     };
 
     host.observability = lib.mkIf enabled {
-      enable = true;
-      nodeExporter.mtls.enable = true;
       nodeExporter.textfile.periodicProducers.pki-status-export = {
         description = "Export internal PKI status metrics for node exporter";
         command = [

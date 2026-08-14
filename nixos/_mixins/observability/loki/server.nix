@@ -21,29 +21,6 @@ in
       description = "Number of days to retain Loki logs.";
     };
 
-    endpoint = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if cfg.enable then config.host.web.services.loki.internal.url else null;
-      readOnly = true;
-      internal = true;
-      description = "Resolved HTTPS endpoint published to Loki clients.";
-    };
-
-    writeUrl = lib.mkOption {
-      type = with lib.types; nullOr nonEmptyStr;
-      default = if cfg.endpoint == null then null else "${cfg.endpoint}/loki/api/v1/push";
-      readOnly = true;
-      internal = true;
-      description = "Resolved Loki push endpoint published to log shippers.";
-    };
-
-    mtls = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      readOnly = true;
-      internal = true;
-      description = "Whether Loki clients authenticate with mTLS.";
-    };
   };
 
   config = lib.mkIf cfg.enable {

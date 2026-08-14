@@ -144,8 +144,6 @@ pkgs.testers.runNixOSTest {
 
         host.observability = {
           enable = true;
-          loki.writeUrl = null;
-          loki.mtls.enable = false;
           nodeExporter.mtls.enable = false;
           blackbox = {
             remote.enable = true;
