@@ -22,8 +22,6 @@ in
               config.serverAliases = lib.mkBefore (localServerAliasesFor config.localAliases);
 
               options = {
-                enable = lib.mkEnableOption "internal HTTPS service";
-
                 serverName = lib.mkOption {
                   type = str;
                   default = "${name}.${lanDomain}";
@@ -114,24 +112,28 @@ in
                   description = "Extra nginx location config for this service.";
                 };
 
-                mtls = {
-                  enable = lib.mkEnableOption "client certificate authentication for this internal HTTPS service";
-
-                  trustedCaCertificate = lib.mkOption {
-                    type = path;
-                    default = pkiRootCaPath;
-                    description = "CA certificate bundle trusted for inbound client certificate verification.";
-                  };
+                mtls = lib.mkOption {
+                  type = nullOr (submodule {
+                    options.trustedCaCertificate = lib.mkOption {
+                      type = path;
+                      default = pkiRootCaPath;
+                      description = "CA certificate bundle trusted for inbound client certificate verification.";
+                    };
+                  });
+                  default = null;
+                  description = "Client certificate authentication policy for this service.";
                 };
 
-                probe = {
-                  enable = lib.mkEnableOption "probe-only internal HTTPS listener";
-
-                  port = lib.mkOption {
-                    type = port;
-                    default = 9443;
-                    description = "HTTPS port for exact backend probe locations; no catch-all upstream is exposed on this listener.";
-                  };
+                probe = lib.mkOption {
+                  type = nullOr (submodule {
+                    options.port = lib.mkOption {
+                      type = port;
+                      default = 9443;
+                      description = "HTTPS port for exact backend probe locations; no catch-all upstream is exposed on this listener.";
+                    };
+                  });
+                  default = null;
+                  description = "Probe-only internal HTTPS listener policy.";
                 };
               };
             }

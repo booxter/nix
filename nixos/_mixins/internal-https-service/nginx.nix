@@ -2,14 +2,14 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model)
-    enabledServices
     probeServices
+    services
     secretName
     ;
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
 
   tlsVhost = serviceName: service: port: {
-    extraConfig = lib.optionalString service.mtls.enable ''
+    extraConfig = lib.optionalString (service.mtls != null) ''
       ssl_client_certificate ${service.mtls.trustedCaCertificate};
       ssl_verify_client on;
     '';
@@ -44,12 +44,12 @@ let
     lib.nameValuePair (secretName serviceName) (
       proxyVhost serviceName service service.serverName service.serverAliases
     )
-  ) enabledServices;
+  ) services;
 
   publicVhosts = lib.concatMapAttrs (
     serviceName: service:
     lib.genAttrs service.publicAliases (publicAlias: proxyVhost serviceName service publicAlias [ ])
-  ) enabledServices;
+  ) services;
 
   probeVhosts = lib.mapAttrs' (
     serviceName: service:
@@ -73,7 +73,7 @@ let
   ) probeServices;
 in
 {
-  config = lib.mkIf (enabledServices != { }) {
+  config = lib.mkIf (services != { }) {
     services.nginx = {
       enable = true;
       recommendedProxySettings = true;

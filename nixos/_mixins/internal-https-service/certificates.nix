@@ -2,8 +2,7 @@
 let
   model = import ./model.nix { inherit config lib; };
   inherit (model)
-    certificateServices
-    enabledServices
+    services
     secretName
     ;
   nginxSecret = key: {
@@ -15,7 +14,7 @@ let
   };
 in
 {
-  config = lib.mkIf (enabledServices != { }) {
+  config = lib.mkIf (services != { }) {
     host.pki.certificates = lib.mapAttrs' (
       name: service:
       lib.nameValuePair "internal_https_server/${name}" {
@@ -28,12 +27,12 @@ in
           ;
         commonName = service.serverName;
       }
-    ) certificateServices;
+    ) services;
 
     sops.secrets = lib.concatMapAttrs (serviceName: service: {
       "${secretName serviceName}-server-crt" =
         nginxSecret "${service.secretPrefix}/server_crt_unencrypted";
       "${secretName serviceName}-server-key" = nginxSecret "${service.secretPrefix}/server_key";
-    }) enabledServices;
+    }) services;
   };
 }

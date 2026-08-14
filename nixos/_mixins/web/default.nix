@@ -552,11 +552,8 @@ in
           publicAliases =
             service.internal.publicAliases
             ++ lib.optional (service.public != null && service.public.serveOnOwner) service.public.hostName;
-          mtls.enable = service.internal.clientAuth == "mtls";
-          probe = {
-            enable = service.health.backend.enable;
-            inherit (service.health.backend) port;
-          };
+          mtls = if service.internal.clientAuth == "mtls" then { } else null;
+          probe = if service.health.backend.enable then { inherit (service.health.backend) port; } else null;
         }
       ) internalServices;
     })

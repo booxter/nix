@@ -43,7 +43,7 @@ in
   enableAttrsFor =
     gate:
     lib.genAttrs (serviceNamesFor gate) (_: {
-      probe.enable = true;
+      probe = { };
     });
 
   assertionsFor =

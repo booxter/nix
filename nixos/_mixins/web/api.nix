@@ -79,7 +79,7 @@ in
     }
     {
       host.internalHttps.services = lib.mkMerge (
-        lib.mapAttrsToList (_: api: { ${api.service}.probe.enable = true; }) valid
+        lib.mapAttrsToList (_: api: { ${api.service}.probe = { }; }) valid
       );
 
       services.nginx.virtualHosts = lib.mkMerge (
