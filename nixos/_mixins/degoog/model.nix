@@ -2,9 +2,11 @@
   config,
   lib,
   outputs,
+  pkgs,
 }:
 let
   cfg = config.host.degoog;
+  packages = import ./packages.nix { inherit pkgs; };
   localHost = config.networking.hostName;
   resolveHost =
     hostName:
@@ -18,6 +20,8 @@ let
       null;
   jellyfinHost = resolveHost cfg.integrations.jellyfin;
   rommHost = resolveHost cfg.integrations.romm;
+  jellyfin = if jellyfinHost == null then null else jellyfinHost.host.jellyfin;
+  romm = if rommHost == null then null else rommHost.host.romm;
   ssoApplication = config.host.sso.applications.degoog or null;
   adminUsers =
     if ssoApplication == null || ssoApplication.adminGroup == null then
@@ -26,18 +30,132 @@ let
       lib.filterAttrs (
         _: user: builtins.elem ssoApplication.adminGroup user.groups
       ) config.host.sso.users;
+  normalizeCatalog = lib.mapAttrs (
+    _: registration:
+    {
+      source = null;
+      settings = { };
+      secretNames = [ ];
+    }
+    // registration
+  );
+  catalog = {
+    engines = normalizeCatalog {
+      brave.extension = "engines/brave";
+      brave-images.extension = "engines/brave-images";
+      brave-news.extension = "engines/brave-news";
+      openstreetmap = {
+        extension = "engines/devinside-devinside-degoog-osmapp-maps";
+        source = "${packages.devinsideExtensions}/engines/osmapp-maps";
+      };
+      duckduckgo.extension = "engines/duckduckgo";
+      duckduckgo-images.extension = "engines/duckduckgo-images";
+      duckduckgo-news.extension = "engines/duckduckgo-news";
+      google.extension = "engines/google-cse";
+      hacker-news.extension = "engines/hacker-news";
+      internet-archive.extension = "engines/internet-archive";
+      stackexchange = {
+        extension = "engines/pross-degoog-stackexchange-engine-stackexchange";
+        source = packages.stackexchangeEngine;
+        secretNames = [ "stackexchange_api_key" ];
+        settings.pross-degoog-stackexchange-engine-stackexchange-engine.apiKey =
+          config.sops.placeholder."degoog/stackexchange_api_key";
+      };
+      reddit = {
+        extension = "engines/reddit";
+        settings.degoog-org-official-extensions-reddit-engine.includeNsfw = "true";
+      };
+      wikipedia.extension = "engines/wikipedia";
+    };
+
+    features = normalizeCatalog {
+      brave-autocomplete.extension = "autocomplete/brave";
+      duckduckgo-bangs.extension = "plugins/ddg-bang";
+      definitions.extension = "plugins/define";
+      local-history = {
+        extension = "plugins/devinside-devinside-degoog-local-history";
+        source = "${packages.devinsideExtensions}/plugins/local-history";
+      };
+      openstreetmap-results = {
+        extension = "plugins/georgvwt-georgvwt-degoog-stuff-osm-slot";
+        source = "${packages.georgvwtExtensions}/plugins/osm-slot";
+      };
+      reddit-results = {
+        extension = "plugins/georgvwt-georgvwt-degoog-stuff-reddit-slot";
+        source = "${packages.georgvwtExtensions}/plugins/reddit-slot";
+        settings.georgvwt-georgvwt-degoog-stuff-reddit-slot.filterNsfw = false;
+      };
+      github-results = {
+        extension = "plugins/github-slot";
+        secretNames = [ "github_api_token" ];
+        settings.degoog-org-official-extensions-github-slot.apiToken =
+          config.sops.placeholder."degoog/github_api_token";
+      };
+      highlight-terms.extension = "plugins/highlight-terms";
+      math.extension = "plugins/math-slot";
+      stocks = {
+        extension = "plugins/sopat712-degoog-toolkit-stocks";
+        source = "${packages.toolkitExtensions}/plugins/stocks";
+      };
+      time.extension = "plugins/time";
+      tmdb-results = {
+        extension = "plugins/tmdb-slot";
+        secretNames = [ "tmdb_api_key" ];
+        settings.degoog-org-official-extensions-tmdb-slot.apiKey =
+          config.sops.placeholder."degoog/tmdb_api_key";
+      };
+      settings-access = {
+        extension = "plugins/trusted-header-settings-auth";
+        source = packages.trustedHeaderSettingsAuth;
+        settings = {
+          middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
+          trusted-header-settings-auth-middleware.allowedUsers = lib.concatStringsSep "," (
+            builtins.attrNames adminUsers
+          );
+        };
+      };
+      weather.extension = "plugins/weather";
+      jellyfin = {
+        extension = "plugins/jellyfin";
+        secretNames = [ "jellyfin_api_key" ];
+        settings.degoog-org-official-extensions-jellyfin-command = {
+          apiKey = config.sops.placeholder."degoog/jellyfin_api_key";
+          headerName = "X-Emby-Token";
+          url = if jellyfin == null then null else jellyfin.publicUrl;
+        };
+      };
+      romm = {
+        extension = "plugins/romm";
+        secretNames = [ "romm_api_token" ];
+        settings.degoog-org-official-extensions-romm-command = {
+          apiToken = config.sops.placeholder."degoog/romm_api_token";
+          url = if romm == null then null else romm.publicUrl;
+        };
+      };
+    };
+
+    themes = normalizeCatalog {
+      gruvbox = {
+        extension = "themes/georgvwt-georgvwt-degoog-stuff-gruvbox-theme";
+        source = "${packages.georgvwtExtensions}/themes/gruvbox";
+        settings.theme.active = "georgvwt-georgvwt-degoog-stuff-gruvbox-theme";
+      };
+    };
+  };
   integrationFeatures =
     lib.optional (cfg.integrations.jellyfin != null) "jellyfin"
     ++ lib.optional (cfg.integrations.romm != null) "romm";
   selectedFeatureNames = lib.unique ([ "settings-access" ] ++ cfg.features ++ integrationFeatures);
   select =
-    catalog: names:
-    map (name: catalog.${name}) (builtins.filter (name: builtins.hasAttr name catalog) names);
+    registrations: names:
+    map (name: registrations.${name}) (
+      builtins.filter (name: builtins.hasAttr name registrations) names
+    );
   selectedRegistrations =
-    select cfg.catalog.engines cfg.engines
-    ++ select cfg.catalog.features selectedFeatureNames
-    ++ lib.optionals (cfg.theme != null && builtins.hasAttr cfg.theme cfg.catalog.themes) [
-      cfg.catalog.themes.${cfg.theme}
+    select catalog.engines cfg.engines
+    ++ select catalog.features selectedFeatureNames
+    ++ lib.optionals (cfg.theme != null && builtins.hasAttr cfg.theme catalog.themes) [
+      catalog.themes.${cfg.theme}
     ];
   extensionNames = map (registration: registration.extension) selectedRegistrations;
   settingNamespaces = lib.concatMap (
@@ -49,32 +167,28 @@ in
     adminUsers
     cfg
     extensionNames
+    jellyfin
     jellyfinHost
+    packages
+    romm
     rommHost
     selectedRegistrations
     ssoApplication
     ;
-  jellyfin = if jellyfinHost == null then null else jellyfinHost.host.jellyfin;
-  romm = if rommHost == null then null else rommHost.host.romm;
   jellyfinSelected = cfg.integrations.jellyfin != null;
   rommSelected = cfg.integrations.romm != null;
-  unknownEngines = lib.subtractLists (builtins.attrNames cfg.catalog.engines) cfg.engines;
-  unknownFeatures = lib.subtractLists (builtins.attrNames cfg.catalog.features) selectedFeatureNames;
-  unknownTheme = cfg.theme != null && !builtins.hasAttr cfg.theme cfg.catalog.themes;
-  invalidExtensions =
-    builtins.filter
-      (
-        extension:
-        builtins.match "^(autocomplete|engines|plugins|shortcuts|themes|transports)/[a-z0-9][a-z0-9._+-]*$" extension
-        == null
-      )
-      (
-        map (registration: registration.extension) (
-          builtins.attrValues cfg.catalog.engines
-          ++ builtins.attrValues cfg.catalog.features
-          ++ builtins.attrValues cfg.catalog.themes
-        )
-      );
+  unknownEngines = lib.subtractLists (builtins.attrNames catalog.engines) cfg.engines;
+  unknownFeatures = lib.subtractLists (builtins.attrNames catalog.features) selectedFeatureNames;
+  unknownTheme = cfg.theme != null && !builtins.hasAttr cfg.theme catalog.themes;
+  invalidExtensions = builtins.filter (
+    extension:
+    builtins.match "^(autocomplete|engines|plugins|shortcuts|themes|transports)/[a-z0-9][a-z0-9._+-]*$" extension
+    == null
+  ) (map (registration: registration.extension) (builtins.concatMap builtins.attrValues [
+    catalog.engines
+    catalog.features
+    catalog.themes
+  ]));
   duplicateExtensions = lib.unique (
     builtins.filter (
       extension: lib.count (candidate: candidate == extension) extensionNames > 1

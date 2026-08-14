@@ -7,9 +7,20 @@
   ...
 }:
 let
-  model = import ./model.nix { inherit config lib outputs; };
-  inherit (model) cfg extensionNames selectedRegistrations;
-  packages = import ./packages.nix { inherit pkgs; };
+  model = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      pkgs
+      ;
+  };
+  inherit (model)
+    cfg
+    extensionNames
+    packages
+    selectedRegistrations
+    ;
   serviceName = "degoog";
   stateDir = "/var/lib/${serviceName}";
   runtimeDir = "/run/${serviceName}";
