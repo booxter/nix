@@ -126,7 +126,7 @@ let
         secretNames = [ "romm_api_token" ];
         settings.degoog-org-official-extensions-romm-command = {
           apiToken = config.sops.placeholder."degoog/romm_api_token";
-          url = if romm == null then null else romm.publicUrl;
+          url = rommUrl;
         };
       };
     };
