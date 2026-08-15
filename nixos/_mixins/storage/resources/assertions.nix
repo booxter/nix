@@ -13,7 +13,13 @@ let
     builtins.attrValues (lib.filterAttrs (_: resource: resource.nfs != null) resources)
   );
   mountPoints = map (claim: claim.mountPoint) (builtins.attrValues claims);
-  safeRelativePath = path: path != "" && !lib.hasPrefix "/" path && !(lib.hasInfix ".." path);
+  safeRelativePath =
+    path:
+    path != ""
+    && !lib.hasPrefix "/" path
+    && lib.all (component: component != "" && component != "." && component != "..") (
+      lib.splitString "/" path
+    );
   directoryDefinitionsAgree = definitions: builtins.length (lib.unique definitions) == 1;
   anonymousIdentities = lib.unique (
     lib.filter (name: name != null) (
