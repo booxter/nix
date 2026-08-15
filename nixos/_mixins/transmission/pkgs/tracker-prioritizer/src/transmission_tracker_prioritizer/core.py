@@ -481,21 +481,6 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
             "Current aggregate upload rate for preferred torrents.",
             state.preferred_upload_bytes_per_second,
         ),
-        (
-            "host_observability_transmission_reserved_private_upload_bytes_per_second",
-            "Reserved upload capacity; retained as zero for dashboard compatibility.",
-            0,
-        ),
-        (
-            "host_observability_transmission_public_group_upload_limit_bytes_per_second",
-            "Managed public upload cap; retained as zero for dashboard compatibility.",
-            0,
-        ),
-        (
-            "host_observability_transmission_observed_public_group_upload_limit_bytes_per_second",
-            "Observed public upload cap; retained as zero for dashboard compatibility.",
-            0,
-        ),
     )
     for name, documentation, value in scalar_metrics:
         _gauge(registry, name, documentation).set(value)

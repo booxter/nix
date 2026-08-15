@@ -272,6 +272,8 @@ def test_success_metrics_use_native_prometheus_registry(tmp_path: Path) -> None:
     assert samples[("host_observability_transmission_torrent_count", (("class", "high"),))] == 1
     assert samples[("host_observability_transmission_preferred_upload_active", ())] == 1
     assert samples[("host_observability_transmission_exporter_ok", ())] == 1
+    assert not any("public_group_upload_limit" in name for name, _labels in samples)
+    assert not any("reserved_private_upload" in name for name, _labels in samples)
     assert (
         samples[("host_observability_transmission_exporter_last_success_timestamp_seconds", ())]
         == 123.0
