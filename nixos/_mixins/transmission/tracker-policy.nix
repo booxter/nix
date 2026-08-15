@@ -10,7 +10,7 @@ let
   model = transmissionModel;
   inherit (model) cfg;
   packages = import ./pkgs pkgs;
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/transmission-collector";
   metricsFile = "${nodeExporterTextfileDir}/transmission-collector.prom";
   serviceDeps = [
     "network-online.target"
@@ -54,6 +54,9 @@ let
 in
 {
   config = lib.mkIf (cfg != null && cfg.trackerPolicy != null) {
+    host.observability.nodeExporter.textfile.directories.transmission-collector =
+      nodeExporterTextfileDir;
+
     sops.secrets.transmissionTrackerHosts = {
       key = "transmission/private_tracker_hosts";
       owner = model.user;
@@ -62,7 +65,7 @@ in
     };
 
     systemd.tmpfiles.rules = [
-      "z ${nodeExporterTextfileDir} 0775 root ${model.group} - -"
+      "d ${nodeExporterTextfileDir} 0755 ${model.user} ${model.group} - -"
     ];
 
     systemd.services = {

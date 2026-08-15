@@ -27,9 +27,9 @@ in
           );
         };
 
-        systemd.tmpfiles.rules = map (directory: "d ${directory} 0755 root root - -") (
-          builtins.attrValues cfg.nodeExporter.textfile.directories
-        );
+        systemd.tmpfiles.rules = [
+          "d ${cfg.nodeExporter.textfile.directories.default} 0755 root root - -"
+        ];
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets = {

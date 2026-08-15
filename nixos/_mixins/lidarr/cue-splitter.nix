@@ -12,7 +12,7 @@ let
   mediaDir = config.host.storage.claims.media.mountPoint;
   workRoot = "${mediaDir}/.cue-splitter-work";
   stateDir = "/var/lib/lidarr-cue-splitter";
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter";
   metricsFile = "${nodeExporterTextfileDir}/lidarr-cue-splitter.prom";
   allowedRoots = [
     "${mediaDir}/torrents"
@@ -25,13 +25,15 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
+    host.observability.nodeExporter.textfile.directories.lidarr-cue-splitter = nodeExporterTextfileDir;
+
     host.storage.claims.media = {
       directories.".cue-splitter-work".mode = "2775";
       attachments.lidarr-cue-splitter = { };
     };
 
     systemd.tmpfiles.rules = [
-      "z ${nodeExporterTextfileDir} 0775 root media - -"
+      "d ${nodeExporterTextfileDir} 0755 lidarr media - -"
     ];
 
     systemd.services.lidarr-cue-splitter = {
