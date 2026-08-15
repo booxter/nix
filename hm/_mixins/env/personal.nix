@@ -40,7 +40,7 @@ in
           };
         }
       ])
-      (lib.mkIf osConfig.host.desktop.enable {
+      (lib.mkIf (osConfig.host.desktop != null) {
         host.hm = presetDefault {
           numberedWorkspaces = if pkgs.stdenv.hostPlatform.isDarwin then 4 else 6;
           firefox = {

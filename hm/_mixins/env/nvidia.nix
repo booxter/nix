@@ -42,7 +42,7 @@ in
           };
         }
       ])
-      (lib.mkIf osConfig.host.desktop.enable (
+      (lib.mkIf (osConfig.host.desktop != null) (
         lib.mkMerge [
           {
             host.hm.env.homerow.enable = presetDefault false;

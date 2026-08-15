@@ -14,7 +14,7 @@ in
   config = {
     assertions = [
       {
-        assertion = !cfg.enable || osConfig.host.desktop.enable;
+        assertion = !cfg.enable || osConfig.host.desktop != null;
         message = "host.hm.wireshark requires a managed graphical environment.";
       }
     ];

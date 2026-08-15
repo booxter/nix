@@ -4,7 +4,7 @@
   ...
 }:
 {
-  config = lib.mkIf config.host.desktop.enable {
+  config = lib.mkIf (config.host.desktop != null) {
     services.displayManager = {
       gdm.enable = true;
       defaultSession = "hyprland";

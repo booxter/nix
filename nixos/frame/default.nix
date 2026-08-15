@@ -26,7 +26,7 @@ in
         ];
       };
     };
-    desktop.enable = true;
+    desktop = { };
     nix = {
       builder.speedFactor = 200;
       builderClient = { };

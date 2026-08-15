@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.host.desktop.enable) {
+  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.host.desktop != null) {
     enable = true;
 
     iconTheme = {
