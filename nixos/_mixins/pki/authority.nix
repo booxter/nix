@@ -7,10 +7,10 @@
   ...
 }:
 let
-  cfg = config.host.pki.authority;
-  enabled = cfg != null && cfg.hostName == config.networking.hostName;
-  certLifetime = "${toString (cfg.leafLifetimeDays * 24)}h0m0s";
-  caPort = cfg.port;
+  authority = config.host.pki.authority;
+  enabled = config.host.pki.server != null;
+  certLifetime = "${toString (authority.leafLifetimeDays * 24)}h0m0s";
+  caPort = authority.port;
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
   statusMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-certs.prom";
@@ -38,11 +38,11 @@ let
   );
   bootstrapConfig = (pkgs.formats.json { }).generate "step-ca-bootstrap.json" {
     stateDirectory = stateDir;
-    name = cfg.displayName;
-    url = cfg.url;
+    name = authority.displayName;
+    url = authority.url;
     inherit dnsNames;
     address = ":${toString caPort}";
-    provisioner = cfg.provisioner;
+    provisioner = authority.provisioner;
     certificateLifetime = certLifetime;
   };
   bootstrapCommand = utils.escapeSystemdExecArgs [
@@ -55,11 +55,24 @@ let
 in
 {
   config = {
+    assertions = [
+      {
+        assertion = !enabled || authority != null;
+        message = "host.pki.server requires a realm PKI authority";
+      }
+      {
+        assertion = !enabled || authority.hostName == config.networking.hostName;
+        message = "host.pki.server must run on the realm PKI authority host";
+      }
+    ];
+
+    host.backups.sources.step-ca.paths = lib.mkIf enabled [ stateDir ];
+
     host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
       title = "PKI Root CA";
       icon = "sh:smallstep";
       section = "infrastructure";
-      url = "${cfg.url}${cfg.rootsPath}";
+      url = "${authority.url}${authority.rootsPath}";
     };
 
     host.observability = lib.mkIf enabled {

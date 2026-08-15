@@ -12,7 +12,8 @@ in
     server = "beast";
     publicKey = readPublicKey ./restic.pub;
   };
-  host.backups.sources.step-ca.paths = [ "/var/lib/step-ca" ];
+
+  host.pki.server = { };
 
   host.proxmox.guest = {
     cluster = "lab";
