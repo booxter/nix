@@ -1,5 +1,4 @@
 {
-  cfg,
   jobsByDomain,
   lib,
 }:
@@ -18,7 +17,6 @@ let
   assertionsFor =
     domain: jobs:
     let
-      exclusions = cfg.exclusions.${domain};
       optionPath = optionPaths.${domain};
       managedJobs = lib.filterAttrs (_: isManaged) jobs;
       loggingAssertions = lib.mapAttrsToList (
@@ -26,11 +24,10 @@ let
         let
           stdout = job.serviceConfig.StandardOutPath;
           stderr = job.serviceConfig.StandardErrorPath;
-          excluded = builtins.hasAttr name exclusions;
         in
         {
-          assertion = excluded || (stdout != null && stderr != null);
-          message = "${optionPath}.${name} must define both StandardOutPath and StandardErrorPath or have a documented host.launchd.logging.exclusions.${domain} entry";
+          assertion = stdout != null && stderr != null;
+          message = "${optionPath}.${name} must define both StandardOutPath and StandardErrorPath";
         }
       ) managedJobs;
       pathAssertions = lib.concatMap (
@@ -48,11 +45,7 @@ let
             "StandardErrorPath"
           ]
       ) (builtins.attrNames managedJobs);
-      exclusionAssertions = lib.mapAttrsToList (name: _: {
-        assertion = builtins.hasAttr name managedJobs;
-        message = "host.launchd.logging.exclusions.${domain}.${name} must name an enabled launchd job with a program";
-      }) exclusions;
     in
-    loggingAssertions ++ pathAssertions ++ exclusionAssertions;
+    loggingAssertions ++ pathAssertions;
 in
 lib.concatLists (lib.mapAttrsToList assertionsFor jobsByDomain)

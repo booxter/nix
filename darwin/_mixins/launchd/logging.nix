@@ -5,7 +5,6 @@
   ...
 }:
 let
-  cfg = config.host.launchd.logging;
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
@@ -65,31 +64,9 @@ let
   );
 in
 {
-  options.host.launchd.logging = {
-    exclusions = {
-      daemons = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "System LaunchDaemons exempted from file logging, with rationales.";
-      };
-
-      agents = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "System LaunchAgents exempted from file logging, with rationales.";
-      };
-
-      userAgents = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "User LaunchAgents exempted from file logging, with rationales.";
-      };
-    };
-  };
-
   config = {
     assertions = import ./logging/assertions.nix {
-      inherit cfg jobsByDomain lib;
+      inherit jobsByDomain lib;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''
