@@ -40,6 +40,7 @@ func StorageOverview(config Config) (dashboard.Dashboard, error) {
 		legend     string
 		unit       string
 		thresholds *dashboard.ThresholdsConfigBuilder
+		textMode   common.BigValueTextMode
 	}{
 		{
 			title: "RAID Missing Members", expression: "max(" + node("host_observability_md_degraded") + ") or vector(0)",
@@ -47,10 +48,12 @@ func StorageOverview(config Config) (dashboard.Dashboard, error) {
 		},
 		{
 			title: "RAID Action", expression: node("host_observability_md_sync_action_info"),
-			legend: "{{device}} / {{action_title}}", unit: units.Short,
+			legend: "{{device}} / {{action_title}}", unit: units.Short, textMode: common.BigValueTextModeName,
 		},
 		{
-			title: "RAID Progress", expression: "max(" + node("host_observability_md_sync_progress_percent") + ") or vector(100)",
+			title: "RAID Progress",
+			expression: "min(" + node("host_observability_md_sync_progress_percent") +
+				" + 100 * (1 - " + node("host_observability_md_sync_active") + ")) or vector(100)",
 			legend: "progress", unit: units.Percent,
 			thresholds: absoluteThresholds(
 				dashboard.Threshold{Color: "orange", Value: nil},
@@ -77,7 +80,7 @@ func StorageOverview(config Config) (dashboard.Dashboard, error) {
 		builder.WithPanel(valueStat(ValueStatOptions{
 			ID: placement.ID, Grid: placement.Grid, Title: definition.title,
 			Expression: definition.expression, Legend: definition.legend, Unit: definition.unit,
-			DataSource: datasource, Thresholds: definition.thresholds,
+			DataSource: datasource, Thresholds: definition.thresholds, TextMode: definition.textMode,
 		}))
 	}
 

@@ -5,6 +5,10 @@ import (
 	"io/fs"
 	"path/filepath"
 	"testing"
+
+	"github.com/grafana/grafana-foundation-sdk/go/common"
+	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
+	"github.com/grafana/grafana-foundation-sdk/go/stat"
 )
 
 type memoryWriter struct {
@@ -83,6 +87,37 @@ func TestStorageDashboardPreservesPhysicalBayGrid(t *testing.T) {
 	}
 	if len(panels) != 30 {
 		t.Errorf("physical bay grid has %d slot panels, want 30", len(panels))
+	}
+}
+
+func TestStorageDashboardDisplaysRAIDActionName(t *testing.T) {
+	model, err := StorageOverview(testConfig)
+	if err != nil {
+		t.Fatalf("StorageOverview() error = %v", err)
+	}
+	panel := findPanel(t, model, "RAID Action")
+	options, ok := panel.Options.(*stat.Options)
+	if !ok {
+		t.Fatalf("RAID action stat options type = %T, want *stat.Options", panel.Options)
+	}
+	if options.TextMode != common.BigValueTextModeName {
+		t.Errorf("RAID action stat text mode = %q, want name", options.TextMode)
+	}
+}
+
+func TestStorageDashboardTreatsIdleRAIDAsComplete(t *testing.T) {
+	model, err := StorageOverview(testConfig)
+	if err != nil {
+		t.Fatalf("StorageOverview() error = %v", err)
+	}
+	panel := findPanel(t, model, "RAID Progress")
+	target, ok := panel.Targets[0].(prometheus.Dataquery)
+	if !ok {
+		t.Fatalf("RAID progress target type = %T, want prometheus.Dataquery", panel.Targets[0])
+	}
+	want := `min(host_observability_md_sync_progress_percent{scrape_profile="node",instance="frame"} + 100 * (1 - host_observability_md_sync_active{scrape_profile="node",instance="frame"})) or vector(100)`
+	if target.Expr != want {
+		t.Errorf("RAID progress expression = %q, want %q", target.Expr, want)
 	}
 }
 

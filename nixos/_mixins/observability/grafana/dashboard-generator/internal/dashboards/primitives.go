@@ -186,16 +186,21 @@ type ValueStatOptions struct {
 	Background bool
 	Thresholds *dashboard.ThresholdsConfigBuilder
 	Targets    []PrometheusTarget
+	TextMode   common.BigValueTextMode
 }
 
 func valueStat(options ValueStatOptions) *stat.PanelBuilder {
+	textMode := options.TextMode
+	if textMode == "" {
+		textMode = common.BigValueTextModeAuto
+	}
 	panel := stat.NewPanelBuilder().
 		Id(options.ID).
 		Title(options.Title).
 		Datasource(options.DataSource).
 		GridPos(options.Grid).
 		Unit(options.Unit).
-		TextMode(common.BigValueTextModeAuto).
+		TextMode(textMode).
 		Orientation(common.VizOrientationAuto).
 		ReduceOptions(common.NewReduceDataOptionsBuilder().
 			Values(false).
