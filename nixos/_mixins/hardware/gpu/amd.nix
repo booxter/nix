@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config = lib.mkIf (builtins.elem "amd" config.host.hardware.gpu.vendors) {
+  config = lib.mkIf (config.host.hardware.gpu.vendor == "amd") {
     environment.systemPackages = with pkgs; [
       amdgpu_top
       clinfo

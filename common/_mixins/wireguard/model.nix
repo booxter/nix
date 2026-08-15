@@ -1,19 +1,18 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
-  ip = import ../../lib/ipv4.nix { inherit lib; };
-  localHost = hostSpec.name;
+  ip = import ../../_lib/ipv4.nix { inherit lib; };
+  localHost = config.networking.hostName;
   localCandidate = {
     hostName = localHost;
     inherit (config.host.wireguard) client server;
   };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   candidates =
     lib.mapAttrs (_: configuration: {
       hostName = configuration.config.networking.hostName;
@@ -24,7 +23,7 @@ let
     };
   serverEntries = builtins.concatMap (
     candidate:
-    lib.optional candidate.server.enable {
+    lib.optional (candidate.server != null) {
       name = candidate.server.network;
       value = candidate;
     }
@@ -36,12 +35,7 @@ let
     ) serverNames
   );
   servers = builtins.listToAttrs serverEntries;
-  clients = builtins.filter (candidate: candidate.client.enable) (builtins.attrValues candidates);
-  unknownClientNetworks = lib.unique (
-    map (candidate: candidate.client.network) (
-      builtins.filter (candidate: !builtins.hasAttr candidate.client.network servers) clients
-    )
-  );
+  clients = builtins.filter (candidate: candidate.client != null) (builtins.attrValues candidates);
   topologyFor =
     networkName: candidate:
     let
@@ -59,7 +53,14 @@ let
           };
         }) (builtins.filter (candidate: candidate.client.network == networkName) clients)
       );
-      externalPeers = lib.mapAttrs (_: peer: peer // { host = null; }) server.externalPeers;
+      externalPeers = lib.mapAttrs (_: peer: {
+        host = null;
+        inherit (peer)
+          address
+          extraAllowedIPs
+          publicKey
+          ;
+      }) server.externalPeers;
       duplicatePeerNames = lib.intersectLists (builtins.attrNames managedPeers) (
         builtins.attrNames externalPeers
       );
@@ -69,17 +70,15 @@ let
       cidr = server.cidr;
       clientPolicy = server.clientPolicy;
       peers = externalPeers // managedPeers;
-      server =
-        removeAttrs server [
-          "cidr"
-          "clientPolicy"
-          "enable"
-          "externalPeers"
-          "network"
-        ]
-        // {
-          host = candidate.hostName;
-        };
+      server = {
+        host = candidate.hostName;
+        inherit (server)
+          address
+          listenPort
+          publicEndpoint
+          publicKey
+          ;
+      };
     };
   networksWithMetadata = lib.mapAttrs topologyFor servers;
   duplicatePeerNames = lib.unique (
@@ -88,44 +87,39 @@ let
   networks = lib.mapAttrs (
     _: network: removeAttrs network [ "duplicatePeerNames" ]
   ) networksWithMetadata;
-  hasDuplicatePeerField =
+  hasDuplicateNodeField =
     field: network:
     let
-      values = map (peer: peer.${field}) (builtins.attrValues network.peers);
+      values = [
+        network.server.${field}
+      ]
+      ++ map (peer: peer.${field}) (builtins.attrValues network.peers);
     in
     builtins.length values != builtins.length (lib.unique values);
-  duplicatePeerAddressNetworks = builtins.attrNames (
-    lib.filterAttrs (_: hasDuplicatePeerField "address") networks
+  duplicateAddressNetworks = builtins.attrNames (
+    lib.filterAttrs (_: hasDuplicateNodeField "address") networks
   );
-  duplicatePeerPublicKeyNetworks = builtins.attrNames (
-    lib.filterAttrs (_: hasDuplicatePeerField "publicKey") networks
+  duplicatePublicKeyNetworks = builtins.attrNames (
+    lib.filterAttrs (_: hasDuplicateNodeField "publicKey") networks
   );
   peerAddressesOutsideCidrNetworks = builtins.attrNames (
     lib.filterAttrs (
       _: network:
-      builtins.any (
-        peer: peer.address != null && network.cidr != null && !ip.inCidr network.cidr peer.address
-      ) (builtins.attrValues network.peers)
+      builtins.any (peer: !ip.inCidr network.cidr peer.address) (builtins.attrValues network.peers)
     ) networks
   );
   serverAddressesOutsideCidrNetworks = builtins.attrNames (
-    lib.filterAttrs (
-      _: network:
-      network.server.address != null
-      && network.cidr != null
-      && !ip.inCidr network.cidr network.server.address
-    ) networks
+    lib.filterAttrs (_: network: !ip.inCidr network.cidr network.server.address) networks
   );
 in
 {
   inherit
-    duplicatePeerAddressNetworks
+    duplicateAddressNetworks
     duplicatePeerNames
-    duplicatePeerPublicKeyNetworks
+    duplicatePublicKeyNetworks
     duplicateServerNames
     networks
     peerAddressesOutsideCidrNetworks
     serverAddressesOutsideCidrNetworks
-    unknownClientNetworks
     ;
 }

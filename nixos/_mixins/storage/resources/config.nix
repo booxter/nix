@@ -1,21 +1,13 @@
 {
   config,
-  facts,
   lib,
-  outputs,
+  storageModel,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      facts
-      lib
-      outputs
-      ;
-  };
-  fleetNetwork = import ../../../_lib/fleet-host-network.nix { inherit config outputs; };
+  model = storageModel;
+  siteNetwork = import ../../../../common/_lib/site-network.nix { inherit config; };
   remoteClaims = lib.filterAttrs (_: claim: !claim.local) model.localClaims;
   mountOptions = [
     "nfsvers=4"
@@ -44,7 +36,7 @@ let
         }
       else
         {
-          device = "${fleetNetwork.addressFor claim.provider}:${claim.resolvedResource.sourcePath}";
+          device = "${siteNetwork.addressFor claim.provider}:${claim.resolvedResource.sourcePath}";
           fsType = "nfs";
           options = mountOptions;
         }
@@ -71,7 +63,7 @@ let
     );
   renderedExports = lib.concatMapStringsSep "\n" (
     claim:
-    "${claim.resolvedResource.sourcePath} ${fleetNetwork.addressFor claim.clientName}(${lib.concatStringsSep "," (exportOptions claim.resolvedResource)})"
+    "${claim.resolvedResource.sourcePath} ${siteNetwork.addressFor claim.clientName}(${lib.concatStringsSep "," (exportOptions claim.resolvedResource)})"
   ) model.providedRemoteClaims;
   directoryRules = map (
     directory:
@@ -89,10 +81,14 @@ in
 {
   config = lib.mkMerge [
     {
-      host.autoUpgrade.claims.storage.exclusions = lib.mapAttrs (_: claim: {
+      # All current NFS use is v4-only. NixOS enables rpcbind automatically
+      # for NFS filesystems, but it is only needed by legacy NFSv3 helpers.
+      services.rpcbind.enable = lib.mkOverride 75 false;
+
+      host.autoUpgrade.claims.storage.exclusions = map (claim: {
         hosts = [ claim.provider ];
         minimumGapMinutes = 5;
-      }) remoteClaims;
+      }) (builtins.attrValues remoteClaims);
 
       host.network.stableAddress.requiredBy =
         lib.optional (model.providedRemoteClaims != [ ]) "NFS provider"
@@ -112,6 +108,14 @@ in
     (lib.mkIf (remoteClaims != { }) {
       boot.supportedFilesystems = [ "nfs" ];
     })
+
+    {
+      systemd.services = lib.mkMerge (
+        map (attachment: {
+          ${attachment.unit}.unitConfig.RequiresMountsFor = [ attachment.mountPoint ];
+        }) model.localAttachments
+      );
+    }
 
     (lib.mkIf (model.providedRemoteClaims != [ ]) {
       services.nfs = {

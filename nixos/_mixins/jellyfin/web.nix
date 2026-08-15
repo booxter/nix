@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   ...
 }:
@@ -8,25 +7,21 @@ let
   cfg = config.host.jellyfin;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.jellyfin = {
-      enable = true;
-      upstream = cfg.localUrl;
-      internal.enable = cfg.web.transport == "internal-mtls";
+      upstream = "http://127.0.0.1:8096";
+      internal = null;
       public = {
-        inherit (cfg.web.public) enable hostName;
-        inherit (cfg.web) transport;
-        directUpstream = lib.mkIf (cfg.web.transport == "direct") cfg.localUrl;
+        hostName = "jf.${config.host.network.publicDomain}";
         routes.originalDownloads = {
           location = "~* ^/Items/[^/]+/Download/?$";
           bandwidthLimit = {
-            enable = true;
             listenPort = 18096;
             bytesPerSecond = 5 * 1000 * 1000 / 8;
             unlimitedCidrs = [
               "127.0.0.0/8"
               "::1"
-              facts.site.lan.cidr
+              config.host.site.lan.cidr
               "fe80::/10"
               "fc00::/7"
             ];
@@ -34,12 +29,11 @@ in
         };
       };
       health.frontend = {
-        enable = true;
         path = "/web/";
       };
-      presentation.dashboard = {
-        enable = true;
-        category = "user";
+      observability.importance = "important";
+      dashboard = {
+        section = "user";
       };
     };
   };

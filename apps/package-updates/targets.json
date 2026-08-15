@@ -1,6 +1,11 @@
 {
   "targets": [
     {
+      "attr": "aiosqlitepool",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "aurral",
       "nixUpdateArgs": [
         "--src-only",

@@ -7,6 +7,7 @@
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.nodeExporter;
+  secretPrefix = "prometheus/node_exporter";
   certificateSecret = config.sops.secrets.prometheusNodeExporterServerCrt;
   keySecret = config.sops.secrets.prometheusNodeExporterServerKey;
   webConfig = (pkgs.formats.yaml { }).generate "node-exporter-web-config.yaml" {
@@ -14,7 +15,7 @@ let
       cert_file = certificateSecret.path;
       key_file = keySecret.path;
       client_auth_type = "RequireAndVerifyClientCert";
-      client_ca_file = cfg.mtls.trustedCaCertificate;
+      client_ca_file = config.host.pki.authority.rootCaCertificate;
     };
   };
 in
@@ -47,43 +48,27 @@ in
       description = "Directories containing metrics for the node exporter textfile collector.";
     };
 
-    mtls = {
-      enable = lib.mkEnableOption "mTLS protection for the Prometheus node exporter";
-
-      secretPrefix = lib.mkOption {
-        type = lib.types.str;
-        default = "prometheus/node_exporter";
-        description = "Secret prefix containing the node exporter server certificate and key.";
-      };
-
-      trustedCaCertificate = lib.mkOption {
-        type = lib.types.path;
-        default = config.host.internalPki.rootCaCertificate;
-        description = "CA bundle used to authenticate node exporter clients.";
-      };
-    };
+    mtls.enable = lib.mkEnableOption "mTLS protection for the Prometheus node exporter";
   };
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
-    host.internalPki.managedCertificates = [
-      {
-        category = "observability_endpoint_server";
-        name = "node_exporter";
-        inherit (cfg.mtls) secretPrefix;
-        certificateField = "server_crt_unencrypted";
-      }
-    ];
+    host.pki.certificates."observability_endpoint_server/node_exporter" = {
+      commonName = "prometheus-node_exporter.${config.networking.hostName}";
+      sans = config.host.network.certificateDnsNames;
+      port = config.services.prometheus.exporters.node.port;
+      inherit secretPrefix;
+    };
 
     sops.secrets = {
       prometheusNodeExporterServerCrt = {
-        key = "${cfg.mtls.secretPrefix}/server_crt_unencrypted";
+        key = "${secretPrefix}/server_crt_unencrypted";
         owner = cfg.serviceUser;
         group = cfg.serviceGroup;
         mode = "0400";
       };
 
       prometheusNodeExporterServerKey = {
-        key = "${cfg.mtls.secretPrefix}/server_key";
+        key = "${secretPrefix}/server_key";
         owner = cfg.serviceUser;
         group = cfg.serviceGroup;
         mode = "0400";

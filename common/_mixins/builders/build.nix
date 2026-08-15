@@ -17,10 +17,9 @@ let
     inherit (builder) protocol sshKey sshUser;
     hostName = name;
   };
-  enabled = config.host.isOperatorSeat && builders != { };
 in
 {
-  config = lib.mkIf enabled {
+  config = lib.mkIf (config.host.nix.builderClient != null) {
     nix.buildMachines = lib.mapAttrsToList toBuildMachine builders;
   };
 }

@@ -6,13 +6,12 @@
 let
   username = config.host.username;
   clientName = "sketchybar-alertmanager";
-  client = config.host.internalPki.clients.${clientName};
+  client = config.host.pki.clients.${clientName};
   lanDomain = config.host.network.lanDomain;
-  enable = config.host.isDesktop && config.host.observability.enable;
+  enable = config.host.observability.enable;
 in
-{
-  host.internalPki.clients.${clientName} = {
-    inherit enable;
+lib.mkIf enable {
+  host.pki.clients.${clientName} = {
     category = "internal";
     materializations.default = {
       owner = username;
@@ -20,12 +19,11 @@ in
     };
   };
 
-  home-manager.users.${username}.programs.sketchybarAlertmanager = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.alertmanager = {
     enable = true;
-    alertmanagerUrl = "https://alertmanager.${lanDomain}/api/v2/alerts";
+    url = "https://alertmanager.${lanDomain}/api/v2/alerts";
     grafanaUrl = "https://grafana.${lanDomain}/alerting/groups";
-    clientCertificate =
-      config.sops.secrets.${client.materializations.default.certificateSecretName}.path;
-    clientKey = config.sops.secrets.${client.materializations.default.keySecretName}.path;
+    clientCertificate = client.materializations.default.certificatePath;
+    clientKey = client.materializations.default.keyPath;
   };
 }

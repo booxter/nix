@@ -1,7 +1,6 @@
 {
   age-plugin-se,
   atomicFileWrites,
-  facts,
   lib,
   makeWrapper,
   nix,
@@ -14,36 +13,6 @@
 }:
 let
   pythonPackages = python3.pkgs;
-  systemsByHost =
-    lib.mapAttrs (_: _: "x86_64-linux") facts.hosts.nixos
-    // lib.mapAttrs (_: _: "aarch64-darwin") facts.hosts.darwin;
-  hostsFile = builtins.toFile "pki-certificate-hosts.json" (
-    builtins.toJSON (
-      lib.mapAttrs (
-        name: system:
-        let
-          isLinux = lib.hasSuffix "-linux" system;
-          spec = facts.hosts.hostSpecsByName.${name};
-        in
-        {
-          inherit system;
-          configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
-          runtimeHost = spec.name;
-          inherit (spec) realm;
-        }
-      ) systemsByHost
-    )
-  );
-  unifiDefaultsFile = builtins.toFile "pki-unifi-defaults.json" (
-    builtins.toJSON {
-      commonName = "unifi.${facts.site.lan.domain}";
-      sans = [
-        "unifi.${facts.site.lan.domain}"
-        "unifi"
-      ];
-      gatewayIp = facts.site.lan.gateway.address;
-    }
-  );
   runtimePath = lib.makeBinPath [
     age-plugin-se
     nix
@@ -83,17 +52,14 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "pki_certificates" ];
 
   passthru = {
-    inherit hostsFile unifiDefaultsFile;
-    queryFile = ./query.nix;
+    inventoryQueryFile = ./inventory-query.nix;
   };
 
   postFixup = ''
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set PKI_CERTIFICATE_HOSTS_FILE ${hostsFile} \
-        --set PKI_CERTIFICATE_QUERY_FILE ${./query.nix} \
-        --set PKI_UNIFI_DEFAULTS_FILE ${unifiDefaultsFile}
+        --set PKI_CERTIFICATE_INVENTORY_QUERY_FILE ${./inventory-query.nix}
     done
   '';
 

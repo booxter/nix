@@ -1,4 +1,7 @@
 { config, lib, ... }:
+let
+  env = config.home-manager.users.${config.host.username}.host.hm.env;
+in
 {
   imports = [
     ./terminal.nix
@@ -10,8 +13,6 @@
       autohide-delay = 0.0;
       autohide-time-modifier = 0.0;
       orientation = "right";
-      persistent-apps = [
-      ];
       tilesize = 32;
       show-recents = false;
       mru-spaces = false; # disable most recent apps affecting the dock items order
@@ -116,14 +117,12 @@
     };
   };
 
-  system.defaults.CustomUserPreferences."com.superultra.Homerow" =
-    lib.mkIf config.host.userEnvironment.features.homerow.enable
-      {
-        SUEnableAutomaticChecks = 1;
-        SUHasLaunchedBefore = 1;
-        "check-for-updates-automatically" = 1;
-        "include-beta-updates" = false;
-        "launch-at-login" = 1;
-      };
+  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf env.homerow.enable {
+    SUEnableAutomaticChecks = 1;
+    SUHasLaunchedBefore = 1;
+    "check-for-updates-automatically" = 1;
+    "include-beta-updates" = false;
+    "launch-at-login" = 1;
+  };
 
 }

@@ -1,47 +1,64 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  outputs ? {
+    nixosConfigurations = { };
+  },
+  ...
+}:
 let
-  model = import ./model.nix { inherit config; };
+  model = import ./model.nix { inherit config outputs; };
   inherit (model)
     cfg
+    jellyfinEndpoint
+    jellyfinHost
     mtls
-    qosLimit
+    qosDestination
     qosProfile
+    transmission
+    transmissionDestination
     ;
 in
 {
-  config.assertions = lib.optionals cfg.enable [
+  config.assertions = lib.optionals (cfg != null) [
     {
-      assertion = cfg.policy.minimumRateMbit <= cfg.policy.idleRateMbit;
-      message = "services.adaptive-upload-policy.policy.minimumRateMbit must not exceed idleRateMbit";
+      assertion = cfg.source.jellyfin.host != null || cfg.source.jellyfin.exporterUrl != null;
+      message = "host.adaptiveUploadPolicy requires a Jellyfin metrics source";
     }
     {
-      assertion = cfg.outputs.transmission.enable || cfg.outputs.qos.enable;
-      message = "services.adaptive-upload-policy requires at least one enabled output";
+      assertion = cfg.source.jellyfin.host == null || jellyfinHost != null;
+      message = "host.adaptiveUploadPolicy.source.jellyfin.host must select a NixOS host";
     }
     {
-      assertion = !mtls.enable || mtls.certificateFile != null;
-      message = "services.adaptive-upload-policy requires an mTLS certificate file";
+      assertion = cfg.source.jellyfin.host == null || jellyfinEndpoint != null;
+      message = "host.adaptiveUploadPolicy Jellyfin source must export playback metrics";
     }
     {
-      assertion = !mtls.enable || mtls.keyFile != null;
-      message = "services.adaptive-upload-policy requires an mTLS private key file";
+      assertion = transmissionDestination != null || qosDestination != null;
+      message = "host.adaptiveUploadPolicy requires at least one destination";
     }
     {
-      assertion = !cfg.outputs.qos.enable || qosProfile != null;
-      message = "services.adaptive-upload-policy.outputs.qos.profile must reference a host.qos profile";
+      assertion = transmissionDestination == null || transmission != null;
+      message = "host.adaptiveUploadPolicy Transmission destination requires local Transmission";
     }
     {
-      assertion = !cfg.outputs.qos.enable || qosLimit != null;
-      message = "services.adaptive-upload-policy.outputs.qos.limit must reference a host.qos limit";
+      assertion = mtls == null || mtls.certificateFile != null;
+      message = "host.adaptiveUploadPolicy could not materialize its mTLS certificate";
     }
     {
-      assertion = !cfg.outputs.qos.enable || qosLimit == null || qosLimit.direction == "egress";
-      message = "services.adaptive-upload-policy can update only egress host.qos limits";
+      assertion = mtls == null || mtls.keyFile != null;
+      message = "host.adaptiveUploadPolicy could not materialize its mTLS private key";
+    }
+    {
+      assertion = qosDestination == null || cfg.fallbackRateMbit <= qosProfile.linkRateMbit;
+      message = "host.adaptiveUploadPolicy fallback rate must not exceed the QoS profile link rate";
     }
     {
       assertion =
-        !cfg.outputs.qos.enable || qosProfile == null || cfg.fallbackRateMbit <= qosProfile.linkRateMbit;
-      message = "services.adaptive-upload-policy fallback rate must not exceed the QoS profile link rate";
+        qosDestination == null
+        || qosDestination.accountingName == null
+        || qosDestination.match.protocol == "udp";
+      message = "host.adaptiveUploadPolicy QoS accounting requires UDP traffic";
     }
   ];
 }

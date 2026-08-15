@@ -6,9 +6,6 @@
 let
   inherit (pkgs) lib;
   hostNames = builtins.attrNames outputs.nixosConfigurations;
-  formatOperation =
-    operation:
-    if operation.cadence == "never" then "never" else "${operation.cadence} ${operation.calendar}";
   rowFor =
     name:
     let
@@ -20,17 +17,18 @@ let
         && (
           claim.switch.cadence != null
           || claim.reboot.cadence != null
-          || claim.availabilityGroups != [ ]
-          || claim.exclusions != { }
+          || claim.availabilityGroup != null
+          || claim.exclusions != [ ]
         )
       ) autoUpgrade.claims;
+      rebootTimer = config.systemd.timers.nixos-reboot-if-needed or null;
       reboot =
-        if autoUpgrade.plan.reboot.mode == "never" then
+        if config.system.autoUpgrade.allowReboot then
+          "with switch"
+        else if rebootTimer == null then
           "never"
-        else if autoUpgrade.plan.reboot.mode == "with-upgrade" then
-          "${autoUpgrade.plan.reboot.cadence} with switch"
         else
-          formatOperation autoUpgrade.plan.reboot;
+          rebootTimer.timerConfig.OnCalendar;
     in
     {
       inherit name reboot;
@@ -40,7 +38,7 @@ let
           "baseline"
         else
           lib.concatStringsSep "," (builtins.attrNames activeClaims);
-      switch = formatOperation autoUpgrade.plan.switch;
+      switch = config.system.autoUpgrade.dates;
     };
   rows = map rowFor hostNames;
   columns = [

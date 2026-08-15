@@ -7,45 +7,27 @@
 let
   cfg = config.host.hardware.gpu.collector;
   metricsPackage = pkgs.callPackage ./amdgpu-metrics { };
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
 in
 {
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = builtins.elem "amd" config.host.hardware.gpu.vendors;
+        assertion = config.host.hardware.gpu.vendor == "amd";
         message = "host.hardware.gpu.collector requires an AMD GPU";
       }
     ];
 
-    systemd.services.amdgpu-metrics = {
+    host.observability.nodeExporter.textfile.periodicProducers.amdgpu-metrics = {
       description = "Collect AMD GPU metrics for Prometheus";
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${lib.getExe metricsPackage} --output ${textfileDir}/amdgpu.prom";
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectHome = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [ textfileDir ];
-        RestrictAddressFamilies = [ "AF_UNIX" ];
-        RestrictRealtime = true;
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-      };
+      command = [
+        (lib.getExe metricsPackage)
+        "--output"
+        "${textfileDir}/amdgpu.prom"
+      ];
+      interval = "30s";
+      onBootSec = "2m";
+      accuracySec = "5s";
     };
-
-    systemd.timers.amdgpu-metrics = {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "2m";
-        OnUnitActiveSec = "30s";
-        AccuracySec = "5s";
-      };
-    };
-
-    systemd.tmpfiles.rules = [
-      "d ${textfileDir} 0755 root root - -"
-    ];
   };
 }

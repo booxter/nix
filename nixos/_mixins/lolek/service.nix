@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.lolek;
-  render = config.host.hardware.gpu.render;
+  gpu = config.host.hardware.gpu;
   galleryCookiesSecret = config.sops.secrets."lolek/galleryDlCookies";
 in
 {
@@ -23,17 +23,8 @@ in
         mode = "0400";
       };
 
-      "lolek/telegramBotApi/apiId" = {
-        owner = "lolek";
-        group = "lolek";
-        mode = "0400";
-      };
-
-      "lolek/telegramBotApi/apiHash" = {
-        owner = "lolek";
-        group = "lolek";
-        mode = "0400";
-      };
+      "lolek/telegramBotApi/apiId" = { };
+      "lolek/telegramBotApi/apiHash" = { };
     };
 
     sops.templates."lolek-telegram-bot-api.env" = {
@@ -55,15 +46,15 @@ in
       postSourceCaption = true;
       postRequesterCaption = true;
       galleryDownloadEnabled = true;
+      maxGalleryMedia = 20;
       environment = {
         LOLEK_GALLERY_DL_COOKIES_FILE = galleryCookiesSecret.path;
-        LOLEK_MAX_GALLERY_MEDIA = "20";
         # TODO: Use a first-class upstream module option once lolek exposes one.
         LOLEK_YT_DLP_COOKIES_FILE = galleryCookiesSecret.path;
       };
-      hardwareAcceleration = lib.mkIf (render.vendor == "intel" && render.device != null) {
+      hardwareAcceleration = lib.mkIf (gpu.vendor == "intel" && gpu.renderDevice != null) {
         backend = "qsv";
-        device = render.device;
+        device = gpu.renderDevice;
       };
       metrics = {
         enable = true;
@@ -77,11 +68,9 @@ in
     };
 
     host.observability.prometheusEndpoints.lolek = {
-      enable = true;
       port = cfg.metrics.port;
       upstream = "http://127.0.0.1:${toString cfg.metrics.internalPort}/metrics";
       scrape = {
-        enable = true;
         profile = "application";
         component = "lolek";
         service = "lolek";

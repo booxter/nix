@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config = lib.mkIf (builtins.elem "intel" config.host.hardware.gpu.vendors) {
+  config = lib.mkIf (config.host.hardware.gpu.vendor == "intel") {
     environment.systemPackages = with pkgs; [
       intel-gpu-tools
       libva-utils

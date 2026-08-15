@@ -215,16 +215,16 @@ def test_pull_request_body_obeys_terse_repository_style() -> None:
 class RecordingManagedService:
     calls: list[tuple[str, str]] = field(default_factory=list)
 
-    def issue_internal_service(self, host: str, name: str, ca_host: str) -> None:
+    def issue_internal_service(self, host: str, name: str) -> None:
         self.calls.append(("service", name))
 
-    def issue_internal_client(self, host: str, name: str, ca_host: str) -> None:
+    def issue_internal_client(self, host: str, name: str) -> None:
         self.calls.append(("client", name))
 
-    def issue_observability_endpoint(self, host: str, name: str, ca_host: str) -> None:
+    def issue_observability_endpoint(self, host: str, name: str) -> None:
         self.calls.append(("endpoint", name))
 
-    def issue_observability_client(self, host: str, name: str, ca_host: str) -> None:
+    def issue_observability_client(self, host: str, name: str) -> None:
         self.calls.append(("observability-client", name))
 
 

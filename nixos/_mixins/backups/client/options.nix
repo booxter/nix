@@ -1,0 +1,147 @@
+{
+  config,
+  lib,
+  ...
+}:
+let
+  hostName = config.networking.hostName;
+
+  destinationRequestModule = {
+    options = {
+      server = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Host providing the backup repository.";
+      };
+      storageName = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = hostName;
+        description = "Durable repository name on the backup server.";
+      };
+      publicKey = lib.mkOption {
+        type = with lib.types; nullOr str;
+        default = null;
+        description = "SSH public key accepted by the backup server for this client.";
+      };
+    };
+  };
+
+  extraCopyModule = {
+    options = {
+      source = lib.mkOption { type = lib.types.str; };
+      mode = lib.mkOption {
+        type = lib.types.strMatching "^0[0-7]{3}$";
+        default = "0640";
+      };
+      optional = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+      };
+    };
+  };
+
+  sourceModule =
+    { name, ... }:
+    {
+      options = {
+        enable = lib.mkEnableOption "the ${name} backup source" // {
+          default = true;
+        };
+        title = lib.mkOption {
+          type = lib.types.str;
+          default = lib.strings.toSentenceCase name;
+        };
+        paths = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = "Live paths included directly in Restic.";
+        };
+        exclude = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = "Restic exclusions scoped to this source's paths.";
+        };
+        preparation = lib.mkOption {
+          type =
+            with lib.types;
+            nullOr (submodule {
+              options = {
+                service = lib.mkOption {
+                  type = nonEmptyStr;
+                  description = "On-demand systemd service run before Restic.";
+                };
+                paths = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                  description = "Paths produced by the on-demand service.";
+                };
+              };
+            });
+          default = null;
+        };
+        database = lib.mkOption {
+          type =
+            with lib.types;
+            nullOr (submodule {
+              options = {
+                type = lib.mkOption {
+                  type = enum [
+                    "sqlite"
+                    "postgresql"
+                    "mariadb"
+                  ];
+                };
+                name = lib.mkOption {
+                  type = str;
+                  default = name;
+                };
+                path = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                  description = "SQLite database path.";
+                };
+                stagingDir = lib.mkOption {
+                  type = nonEmptyStr;
+                  description = "Directory where the consistent database artifact is staged.";
+                };
+                extraCopies = lib.mkOption {
+                  type = listOf (submodule extraCopyModule);
+                  default = [ ];
+                };
+                conditionPathExists = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                };
+                requiresMountsFor = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+                after = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+                requires = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                };
+              };
+            });
+          default = null;
+        };
+      };
+    };
+in
+{
+  options.host.backups = {
+    destination = lib.mkOption {
+      type = with lib.types; nullOr (submodule destinationRequestModule);
+      default = null;
+      description = "Backup repository consumed by this host.";
+    };
+
+    sources = lib.mkOption {
+      type = with lib.types; attrsOf (submodule sourceModule);
+      default = { };
+      description = "Service-owned data sources and consistency strategies.";
+    };
+  };
+}

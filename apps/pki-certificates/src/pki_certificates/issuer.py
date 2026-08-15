@@ -15,11 +15,12 @@ from .models import (
     CertificateMaterial,
     CertificateRequest,
     FleetHosts,
+    RealmAuthorityConfig,
 )
 
 
 class CertificateAuthoritySource(Protocol):
-    def ca_url(self, host: str) -> str | None: ...
+    def realm_authority(self, host: str) -> RealmAuthorityConfig: ...
 
 
 class CertificateIssuer(Protocol):
@@ -50,7 +51,7 @@ class StepCaIssuer:
             arguments.extend(
                 [
                     "--provisioner",
-                    "bootstrap@home.arpa",
+                    request.provisioner,
                     "--provisioner-password-file",
                     "/var/lib/step-ca/provisioner-password.txt",
                     "--ca-url",
@@ -79,13 +80,14 @@ class RemoteCertificateIssuer:
     remote_program: Path
 
     def issue(self, ca_host: str, common_name: str, sans: tuple[str, ...]) -> CertificateMaterial:
-        ca_url = self.authorities.ca_url(ca_host)
-        if ca_url is None:
-            raise ToolError(f"host {ca_host} is not configured as a certificate authority")
+        authority = self.authorities.realm_authority(ca_host)
+        if authority.host_name != ca_host:
+            raise ToolError(f"host {ca_host} is not the authority for realm {authority.realm}")
         request = CertificateRequest(
             common_name=common_name,
             sans=sans,
-            ca_url=ca_url,
+            ca_url=authority.url,
+            provisioner=authority.provisioner,
         )
         if self.local_ca:
             output = self.runner.run(

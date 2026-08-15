@@ -1,4 +1,10 @@
-{ lib, ... }:
+{
+  config,
+  lib,
+  outputs,
+  storageIdentities,
+  ...
+}:
 let
   directoryModule = {
     options = {
@@ -47,11 +53,6 @@ in
                 default = name;
                 description = "Resource path relative to its volume mount point.";
               };
-              sharedGroup = lib.mkOption {
-                type = with lib.types; nullOr nonEmptyStr;
-                default = null;
-                description = "Shared numeric group required on providers and consumers.";
-              };
               directoryDefaults = {
                 owner = lib.mkOption {
                   type = lib.types.nonEmptyStr;
@@ -75,26 +76,23 @@ in
                 default = { };
                 description = "Provider-owned directories below the resource root.";
               };
-              identities = {
-                groups = lib.mkOption {
-                  type = with lib.types; listOf nonEmptyStr;
-                  default = [ ];
-                };
-                users = lib.mkOption {
-                  type = with lib.types; listOf nonEmptyStr;
-                  default = [ ];
-                };
-              };
-              nfs = {
-                enable = lib.mkEnableOption "NFS access to the ${name} resource";
-                fsid = lib.mkOption {
-                  type = with lib.types; nullOr ints.unsigned;
-                  default = null;
-                };
-                anonymousIdentity = lib.mkOption {
-                  type = with lib.types; nullOr nonEmptyStr;
-                  default = null;
-                };
+              nfs = lib.mkOption {
+                type = lib.types.nullOr (
+                  lib.types.submodule {
+                    options = {
+                      fsid = lib.mkOption {
+                        type = lib.types.ints.unsigned;
+                        description = "Stable NFS filesystem identifier.";
+                      };
+                      anonymousIdentity = lib.mkOption {
+                        type = with lib.types; nullOr nonEmptyStr;
+                        default = null;
+                      };
+                    };
+                  }
+                );
+                default = null;
+                description = "NFS export policy for the ${name} resource.";
               };
             };
           }
@@ -128,6 +126,11 @@ in
                 default = { };
                 description = "Directories requested from the resource provider.";
               };
+              attachments = lib.mkOption {
+                type = lib.types.attrsOf (lib.types.submodule { });
+                default = { };
+                description = "Systemd service units attached to this mounted storage claim.";
+              };
             };
           }
         )
@@ -135,5 +138,14 @@ in
       default = { };
       description = "Storage resources consumed by this host.";
     };
+  };
+
+  config._module.args.storageModel = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      storageIdentities
+      ;
   };
 }

@@ -1,0 +1,19 @@
+{
+  imports = [
+    ./aerospace.nix
+    ./alertmanager.nix
+    ./attention-inbox.nix
+    ./battery.nix
+    ./clock.nix
+    ./codex.nix
+    ./disk.nix
+    ./front-app.nix
+    ./github-status.nix
+    ./ip-address.nix
+    ./jellyfin.nix
+    ./network.nix
+    ./spotify.nix
+    ./stock.nix
+    ./volume.nix
+  ];
+}

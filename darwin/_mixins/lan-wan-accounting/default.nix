@@ -1,114 +1,49 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.observability.lanWan;
   declaredInterfaces = builtins.attrNames config.host.network.interfaces;
-  textfileDir = "${stateDir}/textfile";
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   textfilePath = "${textfileDir}/lan-wan.prom";
   stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
-  darwinPkgs = import ../../pkgs pkgs;
   # macOS exposes /dev/bpf* as root:access_bpf 0660. Make this the service
   # account's primary group instead of running the capture daemon as root.
   accessBpfGroup = "access_bpf";
   accessBpfGid = 101;
   serviceUid = 536;
-  lanWanPackage = darwinPkgs.darwin-lan-wan-bpf;
+  lanWanPackage = pkgs.callPackage ./pkgs/darwin-lan-wan-bpf { };
   programArguments = [
-    (lib.getExe cfg.package)
+    (lib.getExe lanWanPackage)
   ]
   ++ lib.concatMap (interface: [
     "-i"
     interface
-  ]) cfg.interfaces
+  ]) declaredInterfaces
   ++ [
     "-p"
-    (toString cfg.intervalSeconds)
-  ]
-  ++ lib.concatMap (cidr: [
+    "15"
     "-l"
-    cidr
-  ]) cfg.lanSubnets
-  ++ lib.concatMap (cidr: [
+    config.host.site.lan.cidr
     "-6"
-    cidr
-  ]) cfg.lanSubnets6
-  ++ lib.optionals cfg.exportToNodeExporter [
+    "fe80::/10"
     "--textfile"
     textfilePath
   ];
   command = lib.escapeShellArgs programArguments;
 in
 {
-  options.host.observability.lanWan = {
-    enable = lib.mkEnableOption "LAN/WAN traffic accounting on Darwin";
-
-    exportToNodeExporter = lib.mkOption {
-      type = lib.types.bool;
-      default = config.host.observability.enable;
-      description = "Whether to expose LAN/WAN accounting through node exporter's textfile collector.";
-    };
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = lanWanPackage;
-      description = "Package providing the Darwin LAN/WAN BPF accounting daemon.";
-    };
-
-    lanSubnets = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = [ facts.site.lan.cidr ];
-      description = "IPv4 subnets that should be treated as LAN traffic.";
-    };
-
-    lanSubnets6 = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = [ "fe80::/10" ];
-      description = "IPv6 subnets that should be treated as LAN traffic.";
-    };
-
-    interfaces = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = declaredInterfaces;
-      defaultText = lib.literalExpression "builtins.attrNames config.host.network.interfaces";
-      example = [
-        "en0"
-        "en1"
-      ];
-      description = "Network interfaces to classify traffic on.";
-    };
-
-    intervalSeconds = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 15;
-      description = "How often to refresh the node-exporter textfile metrics.";
-    };
-  };
-
   config = lib.mkMerge [
     {
       assertions = [
         {
-          assertion = !cfg.enable || cfg.interfaces != [ ];
-          message = "host.observability.lanWan requires at least one interface";
-        }
-        {
-          assertion = lib.all (
-            interface: builtins.hasAttr interface config.host.network.interfaces
-          ) cfg.interfaces;
-          message = "host.observability.lanWan.interfaces must reference declared host.network.interfaces";
+          assertion = declaredInterfaces != [ ];
+          message = "Darwin LAN/WAN accounting requires at least one declared network interface";
         }
       ];
-    }
-    (lib.mkIf cfg.enable {
-      environment.systemPackages = [ cfg.package ];
-
-      host.observability.nodeExporter.textfile.directories.lanWan = textfileDir;
 
       ids.uids.${serviceUser} = serviceUid;
 
@@ -154,6 +89,9 @@ in
           StandardErrorPath = "${stateDir}/lan-wan.log";
         };
       };
+    }
+    (lib.mkIf config.host.observability.enable {
+      host.observability.nodeExporter.textfile.directories.lanWan = textfileDir;
     })
   ];
 }

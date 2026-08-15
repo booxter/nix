@@ -6,12 +6,16 @@ in
   system.stateVersion = "25.11";
 
   host.network.macAddress = "bc:24:11:ed:30:d3";
+  host.realm = "work";
+  host.nix.builderClient = { };
+  host.proxmox.guest = {
+    cluster = "nvws";
+    cores = 64;
+    memoryGiB = 128;
+  };
   host.ups.client.server = "nvws";
 
-  host.userEnvironment = {
-    preset = "nvidia";
-    roles.developer.enable = true;
-  };
+  home-manager.users.${username}.host.hm.env.tier = "developer";
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

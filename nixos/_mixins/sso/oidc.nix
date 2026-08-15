@@ -5,8 +5,10 @@
 }:
 let
   inherit (lib) mkOption types;
-  issuerBaseUrl = "https://id.${config.host.network.publicDomain}";
-  baseScopes = [
+  providerHost = config.host.sso.providerHost;
+  issuerBaseUrl =
+    if providerHost == null then null else "https://id.${config.host.network.publicDomain}";
+  baseScopes = lib.optionals (providerHost != null) [
     "openid"
     "email"
     "profile"
@@ -15,12 +17,6 @@ let
     { name, ... }:
     {
       options = {
-        clientId = mkOption {
-          type = types.str;
-          default = name;
-          description = "OIDC client identifier registered with Kanidm.";
-        };
-
         displayName = mkOption {
           type = types.str;
           description = "Display name shown by the identity provider.";
@@ -36,34 +32,10 @@ let
           description = "Landing page for the OIDC client.";
         };
 
-        public = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether the client authenticates without a client secret.";
-        };
-
         allowInsecureClientDisablePkce = mkOption {
           type = types.bool;
           default = false;
           description = "Whether Kanidm may disable PKCE for this client.";
-        };
-
-        enableLocalhostRedirects = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether Kanidm permits localhost redirects.";
-        };
-
-        enableLegacyCrypto = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether Kanidm permits legacy cryptography.";
-        };
-
-        preferShortUsername = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Whether Kanidm should emit short preferred usernames.";
         };
 
         scopeMaps = mkOption {
@@ -87,46 +59,47 @@ let
         };
 
         secret = mkOption {
-          type = types.submodule {
-            options = {
-              sopsKey = mkOption {
-                type = types.nullOr types.str;
-                default = null;
-                description = "SOPS key containing the local copy of the client secret.";
-              };
+          type = types.nullOr (
+            types.submodule {
+              options = {
+                sopsKey = mkOption {
+                  type = types.str;
+                  description = "SOPS key containing the local copy of the client secret.";
+                };
 
-              name = mkOption {
-                type = types.str;
-                default = "oidc-${name}-client-secret";
-                description = "Local sops-nix secret name.";
-              };
+                name = mkOption {
+                  type = types.str;
+                  default = "oidc-${name}-client-secret";
+                  description = "Local sops-nix secret name.";
+                };
 
-              owner = mkOption {
-                type = types.str;
-                default = "root";
-                description = "Owner of the materialized client secret.";
-              };
+                owner = mkOption {
+                  type = types.str;
+                  default = "root";
+                  description = "Owner of the materialized client secret.";
+                };
 
-              group = mkOption {
-                type = types.str;
-                default = "root";
-                description = "Group of the materialized client secret.";
-              };
+                group = mkOption {
+                  type = types.str;
+                  default = "root";
+                  description = "Group of the materialized client secret.";
+                };
 
-              mode = mkOption {
-                type = types.str;
-                default = "0400";
-                description = "Mode of the materialized client secret.";
-              };
+                mode = mkOption {
+                  type = types.str;
+                  default = "0400";
+                  description = "Mode of the materialized client secret.";
+                };
 
-              restartUnits = mkOption {
-                type = types.listOf types.str;
-                default = [ ];
-                description = "Units restarted when the client secret changes.";
+                restartUnits = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Units restarted when the client secret changes.";
+                };
               };
-            };
-          };
-          default = { };
+            }
+          );
+          default = null;
           description = "Local materialization of a confidential client secret.";
         };
       };
@@ -134,30 +107,39 @@ let
   );
   registrations = config.host.sso.oidc.registrations;
   clients = lib.mapAttrs (
-    _: registration:
+    clientId: registration:
     let
-      openidBaseUrl = "${issuerBaseUrl}/oauth2/openid/${registration.clientId}";
+      providerUrl =
+        assert issuerBaseUrl != null;
+        issuerBaseUrl;
+      openidBaseUrl = "${providerUrl}/oauth2/openid/${clientId}";
       secret = registration.secret;
     in
     registration
     // {
-      inherit
-        baseScopes
-        issuerBaseUrl
-        ;
-      authorizationUrl = "${issuerBaseUrl}/ui/oauth2";
+      inherit baseScopes clientId;
+      public = secret == null;
+      issuerBaseUrl = providerUrl;
+      authorizationUrl = "${providerUrl}/ui/oauth2";
       discoveryUrl = "${openidBaseUrl}/.well-known/openid-configuration";
       issuerUrl = openidBaseUrl;
       jwksUrl = "${openidBaseUrl}/public_key.jwk";
-      tokenUrl = "${issuerBaseUrl}/oauth2/token";
+      tokenUrl = "${providerUrl}/oauth2/token";
       userinfoUrl = "${openidBaseUrl}/userinfo";
-      secret = secret // {
-        path = if registration.public then null else config.sops.secrets.${secret.name}.path;
-        placeholder = if registration.public then null else config.sops.placeholder.${secret.name};
-      };
+      secret =
+        if secret == null then
+          null
+        else
+          secret
+          // {
+            path = config.sops.secrets.${secret.name}.path;
+            placeholder = config.sops.placeholder.${secret.name};
+          };
     }
   ) registrations;
-  confidentialRegistrations = lib.filterAttrs (_: registration: !registration.public) registrations;
+  confidentialRegistrations = lib.filterAttrs (
+    _: registration: registration.secret != null
+  ) registrations;
 in
 {
   imports = [ ./oidc/assertions.nix ];

@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from sops_tools.errors import CommandError, ToolError
 from sops_tools.process import ProcessRunner
 
-from .models import ExporterConfig, FleetHosts, HostFacts
+from .models import ExporterConfig, FleetHosts, HostInfo
 
 
 _SIMPLE_NIX_ATTRIBUTE = re.compile(r"[A-Za-z_][A-Za-z0-9_'-]*")
@@ -52,24 +52,29 @@ class NixEvaluator:
     repo_root: Path
 
     def exporter_config(self, host: str) -> ExporterConfig:
-        value = self._json(
-            "nixosConfigurations",
-            host,
-            "config",
-            "host",
-            "proxmox",
-            "prometheusExporter",
-        )
+        config = self.optional_exporter_config(host)
+        if config is None:
+            raise ToolError(f"host {host} does not enable the Proxmox exporter")
+        return config
+
+    def optional_exporter_config(self, host: str) -> ExporterConfig | None:
+        try:
+            value = self._json(
+                "nixosConfigurations",
+                host,
+                "config",
+                "host",
+                "proxmox",
+                "exporterToken",
+            )
+        except CommandError:
+            return None
+        if value is None:
+            return None
         try:
             return ExporterConfig.model_validate(value)
         except ValidationError as error:
             raise ToolError(f"invalid Proxmox exporter config for {host}: {error}") from error
-
-    def optional_exporter_config(self, host: str) -> ExporterConfig | None:
-        try:
-            return self.exporter_config(host)
-        except CommandError:
-            return None
 
     def _json(self, *segments: str) -> object:
         attribute = ".".join(nix_attribute(segment) for segment in segments)
@@ -81,7 +86,7 @@ class NixEvaluator:
             raise ToolError(f"nix returned invalid JSON for {attribute}: {error}") from error
 
 
-def host_facts(hosts: FleetHosts, host: str) -> HostFacts:
+def host_info(hosts: FleetHosts, host: str) -> HostInfo:
     try:
         return hosts.root[host]
     except KeyError as error:

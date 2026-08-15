@@ -1,0 +1,148 @@
+groups:
+  - name: custom-jobs
+    interval: 30s
+    rules:
+      - alert: TransmissionCollectorFailed
+        expr: host_observability_transmission_exporter_ok{instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Transmission collector failed on srvarr"
+          description: "The Transmission metrics collector on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: TransmissionCollectorStale
+        expr: (time() - host_observability_transmission_exporter_last_success_timestamp_seconds{instance="srvarr"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Transmission collector stale on srvarr"
+          description: "The Transmission metrics collector on srvarr has not completed a successful iteration for more than 10 minutes."
+      - alert: AdaptiveUploadPolicyExporterFailed
+        expr: host_observability_adaptive_upload_exporter_ok{instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Adaptive upload controller exporter failed on srvarr"
+          description: "The adaptive upload controller on srvarr has been unable to fetch Jellyfin exporter state successfully for 10 minutes."
+      - alert: AdaptiveUploadPolicyMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Adaptive upload metrics stale on srvarr"
+          description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
+      - alert: LidarrCueSplitterServiceDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="lidarr-cue-splitter.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter service down on srvarr"
+          description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
+      - alert: HoundarrStatusCollectorTimerDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="houndarr-status-collector.timer",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status collector timer down on srvarr"
+          description: "The Houndarr operational status collector timer on srvarr has not been active for 5 minutes."
+      - alert: HoundarrStatusCollectionFailed
+        expr: host_observability_houndarr_status_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status collection failed on srvarr"
+          description: "The Houndarr operational status endpoint has been unavailable or invalid for 5 minutes."
+      - alert: HoundarrStatusMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status metrics stale on srvarr"
+          description: "The Houndarr operational status metrics on srvarr have not been refreshed for more than 10 minutes."
+      - alert: HoundarrInstanceActiveError
+        expr: host_observability_houndarr_active_error_instances{job="node-mtls",instance="srvarr"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr has failing Arr instances on srvarr"
+          description: "At least one enabled Houndarr Arr instance has reported an active scheduler error for 10 minutes."
+      - alert: LidarrCueSplitterIterationFailed
+        expr: host_observability_lidarr_cue_splitter_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter failing on srvarr"
+          description: "The Lidarr CUE splitter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: LidarrCueSplitterMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter metrics stale on srvarr"
+          description: "The Lidarr CUE splitter metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: LidarrCueSplitterJobNeedsAttention
+        expr: host_observability_lidarr_cue_splitter_jobs{job="node-mtls",instance="srvarr",state=~"failed|automation_failed"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE split job needs attention on srvarr"
+          description: "At least one Lidarr CUE split job on srvarr has remained failed or its automated resolution failed for 15 minutes."
+      - alert: EbookConverterIterationFailed
+        expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook converter failing on srvarr"
+          description: "The ebook converter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: EbookConverterMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook converter metrics stale on srvarr"
+          description: "The ebook converter metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: EbookConverterFileNeedsAttention
+        expr: host_observability_ebook_converter_files{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook conversion needs attention on srvarr"
+          description: "At least one ebook conversion on srvarr has remained in need of attention for 15 minutes."
+      - alert: PaperlessComponentUnhealthy
+        expr: max by (instance, job, component) (label_replace(paperless_status_celery_status{job="paperless"} < 1, "component", "celery", "__name__", ".*") or label_replace(paperless_status_classifier_status{job="paperless"} < 1, "component", "classifier", "__name__", ".*") or label_replace(paperless_status_database_status{job="paperless"} < 1, "component", "database", "__name__", ".*") or label_replace(paperless_status_index_status{job="paperless"} < 1, "component", "index", "__name__", ".*") or label_replace(paperless_status_redis_status{job="paperless"} < 1, "component", "redis", "__name__", ".*") or label_replace(paperless_status_sanity_check_status{job="paperless"} < 1, "component", "sanity check", "__name__", ".*"))
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Paperless component unhealthy: {{ $labels.component }} on {{ $labels.instance }}"
+          description: "Paperless has reported the {{ $labels.component }} component unhealthy for 10 minutes."

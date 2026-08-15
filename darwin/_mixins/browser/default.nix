@@ -5,10 +5,11 @@
   ...
 }:
 let
-  cfg = config.host.userEnvironment.features.firefox;
+  username = config.host.username;
+  firefoxEnabled = config.home-manager.users.${username}.host.hm.firefox.enable;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.makeDefault) {
+  config = lib.mkIf firefoxEnabled {
     environment.systemPackages = with pkgs; [
       defaultbrowser
     ];

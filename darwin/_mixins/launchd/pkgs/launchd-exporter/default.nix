@@ -33,7 +33,6 @@ swiftPackages.stdenv.mkDerivation {
   meta = {
     description = "Export native launchd job state as Prometheus metrics";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "observability-launchd-export";
     platforms = lib.platforms.darwin;
   };

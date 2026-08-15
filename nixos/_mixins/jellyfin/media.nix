@@ -5,11 +5,11 @@ let
     map (library: {
       name = "library/${library.path}";
       value = { };
-    }) (builtins.attrValues cfg.libraries)
+    }) (if cfg == null then [ ] else builtins.attrValues cfg.libraries)
   );
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims.jellyfin-media = {
       inherit (cfg.media) provider resource mountPoint;
       directories = {

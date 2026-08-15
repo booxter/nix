@@ -1,48 +1,18 @@
-{
-  config,
-  hostSpec,
-  lib,
-  outputs,
-}:
+{ config }:
 let
-  localHost = hostSpec.name;
-  localAuthority = {
-    hostName = localHost;
-    inherit (config.host) realm;
-    inherit (config.host.internalPki) authority;
-  };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
-  otherAuthorities = lib.mapAttrs (_: configuration: {
-    hostName = configuration.config.networking.hostName;
-    inherit (configuration.config.host) realm;
-    inherit (configuration.config.host.internalPki) authority;
-  }) otherConfigurations;
-  candidates = otherAuthorities // {
-    ${localHost} = localAuthority;
-  };
-  realmAuthorities = lib.filterAttrs (
-    _: candidate: candidate.realm == config.host.realm && candidate.authority.enable
-  ) candidates;
-  authorityNames = builtins.attrNames realmAuthorities;
-  realmAuthority =
-    if builtins.length authorityNames == 1 then
-      let
-        candidate = realmAuthorities.${builtins.head authorityNames};
-      in
-      {
-        inherit (candidate) hostName;
-        inherit (candidate.authority)
-          port
-          rootCaCertificate
-          rootsPath
-          url
-          ;
-      }
-    else
-      null;
+  authority = config.host.pki.authority;
 in
-{
-  inherit authorityNames realmAuthority;
-}
+if authority == null then
+  null
+else
+  authority
+  // {
+    port = 8443;
+    rootsPath = "/roots.pem";
+    url = "https://${authority.hostName}.${config.host.network.lanDomain}:8443";
+    provisioner = "bootstrap@${config.host.network.lanDomain}";
+    leafLifetimeDays = 180;
+    certificateLifetime = "4320h0m0s";
+    displayName =
+      if config.host.realm == "home" then "Home Internal PKI" else "${config.host.realm} Internal PKI";
+  }

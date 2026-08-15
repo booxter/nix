@@ -1,54 +1,83 @@
 {
-  config,
-  pkgs,
+  lib,
   ...
 }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "25.11";
 
-  host.network = {
-    interfaces.ens18.kind = "ethernet";
-    macAddress = "bc:24:11:19:4d:d1";
-    primaryInterface = "ens18";
-    reservation = {
-      enable = true;
-      address = "192.168.20.2";
-    };
+  host.network.interfaces.ens18 = { };
+
+  host.proxmox.guest = {
+    cluster = "lab";
+    cores = 16;
+    memoryGiB = 32;
   };
 
   host.ups.client.server = "prx1-lab";
 
-  _module.args.srvarrPkgs = import ./pkgs pkgs;
+  host.backups.destination = {
+    server = "beast";
+    publicKey = readPublicKey ./restic.pub;
+  };
 
-  host.aurral = {
+  host.storage.claims.media = {
+    provider = "beast";
+    resource = "media";
+    mountPoint = "/data/media";
+  };
+
+  # Arr stack
+  host.bazarr = {
     enable = true;
-    stateDir = "${config.host.srvarrPaths.stateDir}/aurral";
-    flowDir = "${config.host.srvarrPaths.mediaDir}/library/flows";
-    extraWritePaths = [ "${config.host.srvarrPaths.mediaDir}/slskd/complete" ];
-    extraGroups = [ "media" ];
-    publicHostName = "mu.${config.host.network.publicDomain}";
-    authProxy.adminGroups = [ "media-admins" ];
+    stateDir = "/data/.state/nixarr/bazarr";
+  };
+
+  host.houndarr = {
+    enable = true;
+    stateDir = "/data/.state/nixarr/houndarr";
+    instances = {
+      lidarr.api = "lidarr";
+      radarr.api = "radarr";
+      sonarr.api = "sonarr";
+    };
+  };
+
+  host.lidarr = {
+    stateDir = "/data/.state/nixarr/lidarr";
+  };
+
+  host.prowlarr = {
+    stateDir = "/data/.state/nixarr/prowlarr";
+  };
+
+  host.radarr = {
+    stateDir = "/data/.state/nixarr/radarr";
+  };
+
+  host.seerr = {
+    stateDir = "/data/.state/nixarr/seerr";
+    # TODO(seerr): revisit declarative settings reconciliation through Seerr's
+    # public API once it has a reliable bootstrap/readiness contract. Do not
+    # write its private database or inject Jellyfin API keys out of band.
+  };
+
+  host.sonarr = {
+    stateDir = "/data/.state/nixarr/sonarr";
   };
 
   imports = [
-    ./arr.nix
+    ./accounts.nix
+    ./adaptive-upload-policy.nix
     ./audiobookshelf.nix
-    ./ebook-converter.nix
+    ./aurral.nix
     ./glance.nix
-    ./houndarr.nix
-    ./letterboxd-list-radarr.nix
-    ./lidarr-cue-splitter.nix
-    ./nfs.nix
-    ./oauth2-proxy.nix
-    ./paths.nix
     ./pinepods.nix
     ./romm.nix
-    ./qos.nix
     ./sabnzbd.nix
-    ./seerr.nix
-    ./shelfmark.nix
-    ./slskd.nix
-    ./tuning.nix
+    ./shelfmark
     ./transmission.nix
     ./vpn.nix
   ];

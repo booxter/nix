@@ -1,5 +1,4 @@
 {
-  facts,
   inputs,
   outputs,
   system,
@@ -17,7 +16,6 @@ let
   };
   appSet = import ./apps {
     inherit
-      facts
       inputs
       outputs
       pkgs
@@ -27,7 +25,6 @@ let
   commonArgs = {
     inherit
       appSet
-      facts
       inputs
       outputs
       pkgs

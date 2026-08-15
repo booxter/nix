@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   osConfig,
   pkgs,
@@ -8,30 +7,30 @@
 }:
 let
   username = osConfig.host.username;
-  hostname = osConfig.networking.hostName;
-  realm = osConfig.host.realm;
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
-  issuer = facts.ssh-ticket.issuers.${hostname} or null;
+  issuer = osConfig.host.ssh.tickets.issuer;
   ticketStateDir = "${config.xdg.stateHome}/ssh-ticket";
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
   ticketTargets = map (
-    target: target // lib.optionalAttrs target.enabled { principal = "${username}@${target.name}"; }
-  ) (builtins.filter (target: target.realm == realm) facts.ssh-ticket.targets);
+    target: target // { principal = "${username}@${target.name}"; }
+  ) osConfig.host.ssh.tickets.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
-  enabledTicketTargets = builtins.filter (target: target.enabled) ticketTargets;
   ticketHostBlock =
     target:
     let
-      patterns = target.aliases;
+      patterns = [
+        target.name
+        "${target.name}.local"
+      ];
     in
     {
       name = "ssh-ticket-host-${target.name}";
       value = lib.hm.dag.entryBefore [ "*" ] {
         header = "Host ${lib.concatStringsSep " " patterns}";
-        HostName = target.sshHost;
+        HostName = target.name;
         HostKeyAlias = target.name;
         User = username;
         IdentitiesOnly = true;
@@ -50,7 +49,10 @@ let
   ticketEnsureBlock =
     target:
     let
-      patterns = target.aliases;
+      patterns = [
+        target.name
+        "${target.name}.local"
+      ];
       ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --ca-key ${caKeyPath} ${caSigningArgs} --cert-alias %n ${target.name}";
     in
     {
@@ -64,11 +66,15 @@ let
     builtins.concatMap (target: [
       (ticketHostBlock target)
       (ticketEnsureBlock target)
-    ]) enabledTicketTargets
+    ]) ticketTargets
   );
+  enabled =
+    config.host.hm.env.roles.developer
+    && osConfig.host.ssh.tickets.trustedCaPublicKeys != [ ]
+    && issuer != null;
 in
 {
-  config = lib.mkIf (osConfig.host.ssh.tickets.enable && issuer != null) {
+  config = lib.mkIf enabled {
     home.packages = [ ticketPackage ];
 
     home.sessionVariables = {
@@ -80,13 +86,6 @@ in
     home.file.".ssh/fleet-user-ca.pub" = lib.mkIf issuer.useAgent {
       text = "${issuer.publicKey}\n";
     };
-
-    assertions = [
-      {
-        assertion = lib.elem issuer.publicKey facts.ssh-ticket.trustedCaPublicKeysByRealm.${realm};
-        message = "SSH ticket issuer for ${hostname} is not trusted by ticket servers";
-      }
-    ];
 
     programs.ssh.settings = ticketKnownHostSettings;
   };

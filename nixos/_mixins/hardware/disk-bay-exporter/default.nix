@@ -4,7 +4,7 @@
   makeWrapper,
   python3,
   ruff,
-  utillinux,
+  util-linux,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -41,7 +41,7 @@ pythonPackages.buildPythonApplication {
 
   postFixup = ''
     wrapProgram "$out/bin/disk-bay-metrics" \
-      --prefix PATH : ${lib.makeBinPath [ utillinux ]}
+      --prefix PATH : ${lib.makeBinPath [ util-linux ]}
   '';
 
   meta = {

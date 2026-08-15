@@ -1,18 +1,12 @@
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-{
   imports = [
     ./artifacts.nix
-    ./jobs.nix
-    ./metrics
-    ./server.nix
+    ./assertions.nix
+    ./client
+    ./metrics.nix
+    ./server
+    ./server/secrets.nix
+    ./topology
   ];
 
-  environment.systemPackages = lib.optional (
-    config.host.backups.jobs != { } || config.host.backups.server.enable
-  ) pkgs.restic;
 }

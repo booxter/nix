@@ -5,7 +5,7 @@
   ...
 }:
 let
-  maintenanceLib = import ./lib.nix { inherit lib; };
+  isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
   model = import ./model.nix {
     inherit
       config
@@ -13,49 +13,12 @@ let
       outputs
       ;
   };
-  reboot = config.host.autoUpgrade.reboot;
-  policy = config.host.autoUpgrade.policy;
-  windowStart = maintenanceLib.clockMinutes policy.allowedWindow.start;
-  windowEnd = maintenanceLib.clockMinutes policy.allowedWindow.end;
-  latestStart = windowEnd - policy.slotDurationMinutes - policy.randomizedDelayMinutes;
 in
 {
   assertions = [
     {
-      assertion = reboot.mode != "scheduled" || reboot.calendar != null;
-      message = "host.autoUpgrade.reboot.calendar must be set when reboot.mode is `scheduled`.";
-    }
-    {
-      assertion = windowStart < windowEnd;
-      message = "host.autoUpgrade.policy.allowedWindow must end after it starts.";
-    }
-    {
-      assertion = latestStart >= windowStart;
-      message = "host.autoUpgrade policy slot duration must fit inside the allowed window.";
-    }
-    {
-      assertion =
-        lib.all
-          (
-            clock:
-            let
-              minutes = maintenanceLib.clockMinutes clock;
-            in
-            minutes >= windowStart && minutes <= latestStart
-          )
-          [
-            policy.dailyAt
-            policy.deferredRebootAt
-          ];
-      message = "preferred auto-upgrade times must fit inside the allowed maintenance window.";
-    }
-    {
-      assertion = model.policyMismatches == [ ];
-      message = "hosts in one realm must use the same auto-upgrade policy; mismatches: ${lib.concatStringsSep ", " model.policyMismatches}";
-    }
-    {
       assertion = model.unknownExclusionHosts == [ ];
-      message = "auto-upgrade exclusions name unknown hosts: ${lib.concatStringsSep ", " model.unknownExclusionHosts}";
+      message = "auto-upgrade exclusions name unknown or out-of-realm hosts: ${lib.concatStringsSep ", " model.unknownExclusionHosts}";
     }
     {
       assertion = model.weekdayConflicts == [ ];
@@ -65,5 +28,19 @@ in
       assertion = model.failures == [ ];
       message = lib.concatStringsSep "; " model.failures;
     }
-  ];
+  ]
+  ++ lib.concatMap (hold: [
+    {
+      assertion = builtins.match isoDatePattern hold.startDate != null;
+      message = "host.autoUpgrade.holds startDate `${hold.startDate}` must use YYYY-MM-DD.";
+    }
+    {
+      assertion = builtins.match isoDatePattern hold.stopDate != null;
+      message = "host.autoUpgrade.holds stopDate `${hold.stopDate}` must use YYYY-MM-DD.";
+    }
+    {
+      assertion = hold.startDate <= hold.stopDate;
+      message = "host.autoUpgrade.holds range `${hold.startDate}..${hold.stopDate}` must not end before it starts.";
+    }
+  ]) config.host.autoUpgrade.holds;
 }

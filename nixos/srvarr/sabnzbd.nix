@@ -1,167 +1,37 @@
+{ ... }:
 {
-  config,
-  facts,
-  lib,
-  ...
-}:
-let
-  accounts = import ./accounts.nix { sharedAccounts = facts.accounts; };
-  mediaDir = config.host.srvarrPaths.mediaDir;
-  port = 6336;
-  user = "sabnzbd";
-  vpnNamespace = config.host.vpn.namespaces.wg;
-  sabnzbdServerNames = [
-    "news.frugalusenet.com"
-    "news.newshosting.com"
-    "eunews.frugalusenet.com"
-    "bonus.frugalusenet.com"
-    "usnews.blocknews.net"
-    "reader.easyusenet.nl"
-  ];
-  mkSabnzbdServerSecretName = server: field: "sabnzbd/servers/${server}/${field}";
-  sabnzbdSecretNames = [
-    "sabnzbd/apiKey"
-    "sabnzbd/nzbKey"
-  ]
-  ++ lib.concatMap (
-    server:
-    map (field: mkSabnzbdServerSecretName server field) [
-      "username"
-      "password"
-    ]
-  ) sabnzbdServerNames;
-  sabnzbdServerSecretIni = lib.concatMapStringsSep "\n\n" (server: ''
-    [[${server}]]
-    username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
-    password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
-  '') sabnzbdServerNames;
-  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${user} media - -";
-  usenetDirRules = [
-    {
-      mode = "0755";
-      suffix = "";
-    }
-    {
-      mode = "0755";
-      suffix = "/.incomplete";
-    }
-    {
-      mode = "0775";
-      suffix = "/watch";
-    }
-    {
-      mode = "0775";
-      suffix = "/manual";
-    }
-    {
-      mode = "0775";
-      suffix = "/lidarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/radarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/sonarr";
-    }
-    {
-      mode = "0775";
-      suffix = "/shelfmark";
-    }
-  ];
-in
-{
-  imports = [
-    ./sabnzbd-exporter.nix
-  ];
-
-  sops.secrets = lib.genAttrs sabnzbdSecretNames (_: { });
-
-  sops.templates."sabnzbd-secret.ini" = {
-    owner = user;
-    group = "media";
-    mode = "0400";
-    content = ''
-      [misc]
-      api_key = ${config.sops.placeholder."sabnzbd/apiKey"}
-      nzb_key = ${config.sops.placeholder."sabnzbd/nzbKey"}
-
-      [servers]
-      ${sabnzbdServerSecretIni}
-    '';
-  };
-
-  services.sabnzbd = {
-    enable = true;
-    allowConfigWrite = false;
-    configFile = null;
-    group = "media";
-    secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
-    settings = import ./sabnzbd-settings.nix {
-      hostWhitelist = [
-        config.networking.hostName
-        "sabnzbd.${config.host.network.lanDomain}"
-        "sabnzbd"
-        "sabnzbd.local"
-      ];
-      inherit mediaDir;
-      port = port;
-      vpnNamespaceAddress = vpnNamespace.namespaceAddress;
-    };
-    user = user;
-  };
-
-  systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.suffix) usenetDirRules;
-
-  systemd.services.sabnzbd = {
-    serviceConfig = {
-      Restart = "on-failure";
-    };
-  };
-
-  users.users.${user} = {
-    uid = accounts.uids.sabnzbd;
-  };
-
-  host.vpn.clients.sabnzbd = {
-    namespace = "wg";
-    bridgeTcpPorts = [ port ];
-  };
-
-  services.nginx.virtualHosts."127.0.0.1:${toString port}" = {
-    listen = lib.mkForce [
-      {
-        addr = "127.0.0.1";
-        port = port;
-      }
-    ];
-    locations."/" = {
-      recommendedProxySettings = true;
-      proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${vpnNamespace.namespaceAddress}:${toString port}";
-    };
-  };
-
-  host.web.services.sabnzbd = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString port}";
-    health = {
-      frontend = {
-        enable = true;
-        path = "/oauth2/sign_in";
+  host.sabnzbd = {
+    servers = {
+      "news.frugalusenet.com" = {
+        connections = 75;
+        required = true;
+        priority = 1;
       };
-      backend = {
-        enable = true;
-        path = "/__probe/sabnzbd-version";
+      "news.newshosting.com" = {
+        connections = 75;
+        required = true;
+        priority = 1;
       };
-    };
-    presentation = {
-      title = "SABNZB";
-      icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-      dashboard = {
-        enable = true;
-        category = "media-admin";
+      "eunews.frugalusenet.com" = {
+        timeout = 120;
+        connections = 10;
+        enable = false;
+        priority = 7;
+      };
+      "bonus.frugalusenet.com" = {
+        connections = 10;
+        priority = 20;
+      };
+      "usnews.blocknews.net" = {
+        connections = 20;
+        enable = false;
+        priority = 25;
+      };
+      "reader.easyusenet.nl" = {
+        connections = 75;
+        tlsVerification = "allow injection";
+        required = true;
+        priority = 1;
       };
     };
   };

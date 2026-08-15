@@ -6,11 +6,9 @@
   ...
 }:
 let
-  cfg = config.host.network.ethernet.disablePauseFrames;
-  declaredEthernetInterfaces = builtins.attrNames (
-    lib.filterAttrs (_: interface: interface.kind == "ethernet") config.host.network.interfaces
-  );
-  interfaces = lib.unique cfg.interfaces;
+  pauseFrameInterfaces = lib.filterAttrs (
+    _: interface: interface.disablePauseFrames
+  ) config.host.network.interfaces;
   mkService = interface: {
     description = "Disable Ethernet pause frames on ${interface}";
     after = [ "network-pre.target" ];
@@ -34,24 +32,13 @@ let
   };
 in
 {
-  imports = [ ./assertions.nix ];
+  imports = [ ./dynamic-dns.nix ];
 
-  options.host.network.ethernet.disablePauseFrames = {
-    enable = lib.mkEnableOption "disabling Ethernet pause frames";
+  networking.dhcpcd.extraConfig = ''
+    clientid ${config.networking.hostName}
+  '';
 
-    interfaces = lib.mkOption {
-      type = with lib.types; listOf nonEmptyStr;
-      default = declaredEthernetInterfaces;
-      description = "Declared Ethernet interfaces on which pause frames should be disabled.";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    systemd.services = builtins.listToAttrs (
-      map (interface: {
-        name = "ethtool-${interface}-disable-pause";
-        value = mkService interface;
-      }) interfaces
-    );
-  };
+  systemd.services = lib.mapAttrs' (
+    interface: _: lib.nameValuePair "ethtool-${interface}-disable-pause" (mkService interface)
+  ) pauseFrameInterfaces;
 }

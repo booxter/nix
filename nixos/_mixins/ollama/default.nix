@@ -6,93 +6,81 @@
 }:
 let
   cfg = config.host.ollama;
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   ollamaMetrics = pkgs.callPackage ./metrics { };
 in
 {
-  options.host.ollama = {
-    enable = lib.mkEnableOption "Ollama server";
-    enableMetrics = lib.mkEnableOption "Ollama Prometheus metrics collector";
+  options.host.ollama = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options.models = lib.mkOption {
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              options.capabilities = lib.mkOption {
+                type = lib.types.listOf (
+                  lib.types.enum [
+                    "text"
+                    "vision"
+                  ]
+                );
+                default = [ "text" ];
+                description = "LLM capabilities advertised by this model.";
+              };
+            }
+          );
+          default = { };
+          description = "Ollama models served by this host.";
+        };
+      }
+    );
+    default = null;
+    description = "Ollama server configuration.";
   };
 
-  config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = !cfg.enableMetrics || cfg.enable;
-          message = "host.ollama.enableMetrics requires host.ollama.enable";
-        }
+  config = lib.mkIf (cfg != null) {
+    host.observability.systemd.excludedUnits = [ "ollama-model-loader.service" ];
+
+    host.web.services.ollama = {
+      upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
+      internal = {
+        clientAuth = "mtls";
+        localAliases = [ "ollama" ];
+        locationExtraConfig = ''
+          proxy_read_timeout 600s;
+          proxy_send_timeout 600s;
+        '';
+      };
+    };
+
+    services.ollama = {
+      enable = true;
+      package = pkgs.ollama-rocm;
+      host = "127.0.0.1";
+      port = 11434;
+      loadModels = builtins.attrNames cfg.models;
+      syncModels = true;
+      environmentVariables.OLLAMA_KEEP_ALIVE = "30m";
+    };
+
+    host.observability.nodeExporter.textfile.periodicProducers.ollama-metrics = {
+      description = "Collect Ollama state metrics for Prometheus";
+      wants = [ "ollama.service" ];
+      after = [ "ollama.service" ];
+      command = [
+        (lib.getExe ollamaMetrics)
+        "--base-url"
+        "http://127.0.0.1:${toString config.services.ollama.port}"
+        "--output"
+        "${textfileDir}/ollama.prom"
       ];
-    }
-    (lib.mkIf cfg.enable {
-      host.observability.systemd.excludedUnits = [ "ollama-model-loader.service" ];
-
-      host.web.services.ollama = {
-        enable = true;
-        upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
-        internal = {
-          clientAuth = "mtls";
-          localAliases = [ "ollama" ];
-          locationExtraConfig = ''
-            proxy_read_timeout 600s;
-            proxy_send_timeout 600s;
-          '';
-        };
-      };
-
-      services.ollama = {
-        enable = true;
-        package = pkgs.ollama-rocm;
-        host = "127.0.0.1";
-        port = 11434;
-        loadModels = [
-          "gemma4:31b"
-          "granite4:32b-a9b-h"
-          "nemotron-cascade-2:30b"
-          "nomic-embed-text"
-          "qwen3-next:80b"
-          "qwen3-vl:8b-instruct"
-        ];
-        syncModels = true;
-        environmentVariables.OLLAMA_KEEP_ALIVE = "30m";
-      };
-    })
-    (lib.mkIf cfg.enableMetrics {
-      systemd.services.ollama-metrics = {
-        description = "Collect Ollama state metrics for Prometheus";
-        wants = [ "ollama.service" ];
-        after = [ "ollama.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe ollamaMetrics} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/ollama.prom";
-          NoNewPrivileges = true;
-          PrivateTmp = true;
-          ProtectHome = true;
-          ProtectSystem = "strict";
-          ReadWritePaths = [ nodeExporterTextfileDir ];
-          RestrictAddressFamilies = [
-            "AF_UNIX"
-            "AF_INET"
-            "AF_INET6"
-          ];
-          RestrictRealtime = true;
-          LockPersonality = true;
-          MemoryDenyWriteExecute = true;
-        };
-      };
-
-      systemd.timers.ollama-metrics = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "2m";
-          OnUnitActiveSec = "1m";
-          AccuracySec = "10s";
-        };
-      };
-
-      systemd.tmpfiles.rules = [
-        "d ${nodeExporterTextfileDir} 0755 root root - -"
+      interval = "1m";
+      onBootSec = "2m";
+      accuracySec = "10s";
+      addressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+        "AF_INET6"
       ];
-    })
-  ];
+    };
+  };
 }

@@ -1,22 +1,23 @@
 import pytest
 
-from unifi_sync import cli as unifi_sync
+from unifi_sync import arguments, models, parsing, planning
+from unifi_sync.errors import UnifiError
 
 
 def test_tls_verification_is_default():
-    args = unifi_sync.build_parser().parse_args([])
+    args = arguments.build_parser().parse_args([])
 
     assert args.insecure_tls is False
 
 
 def test_insecure_tls_requires_explicit_option():
-    args = unifi_sync.build_parser().parse_args(["--insecure-tls"])
+    args = arguments.build_parser().parse_args(["--insecure-tls"])
 
     assert args.insecure_tls is True
 
 
 def test_render_classless_static_routes_option():
-    routes = unifi_sync.parse_classless_static_routes(
+    routes = parsing.parse_classless_static_routes(
         """
         [
           {"destination": "10.0.0.0/8", "nextHop": "192.0.2.1"},
@@ -25,13 +26,13 @@ def test_render_classless_static_routes_option():
         """
     )
 
-    value = unifi_sync.render_classless_static_routes_option(routes)
+    value = parsing.render_classless_static_routes_option(routes)
 
     assert value == "10.0.0.0/8,192.0.2.1,0.0.0.0/0,192.0.2.254"
 
 
 def test_parse_classless_static_routes_skips_disabled_entries():
-    routes = unifi_sync.parse_classless_static_routes(
+    routes = parsing.parse_classless_static_routes(
         """
         [
           {"destination": "10.0.0.0/8", "nextHop": "192.0.2.1", "enabled": false},
@@ -46,10 +47,10 @@ def test_parse_classless_static_routes_skips_disabled_entries():
 
 def test_classless_static_routes_option_rejects_hex_encoding():
     with pytest.raises(
-        unifi_sync.UnifiError,
+        UnifiError,
         match="classless-static-routes option encoding must be text",
     ):
-        unifi_sync.parse_classless_static_routes_option_json(
+        parsing.parse_classless_static_routes_option_json(
             """
             {
               "code": 121,
@@ -64,10 +65,10 @@ def test_classless_static_routes_option_rejects_hex_encoding():
 
 def test_domain_search_option_rejects_hex_encoding():
     with pytest.raises(
-        unifi_sync.UnifiError,
+        UnifiError,
         match="domain-search option encoding must be text",
     ):
-        unifi_sync.parse_domain_search_option_json(
+        parsing.parse_domain_search_option_json(
             """
             {
               "code": 119,
@@ -81,18 +82,18 @@ def test_domain_search_option_rejects_hex_encoding():
 
 
 def test_build_network_update_payload_writes_custom_option_fields():
-    settings = unifi_sync.NetworkDhcpSettingsSpec(
+    settings = models.NetworkDhcpSettingsSpec(
         dhcp_range=None,
         domain_name=None,
         domain_search=("example.test",),
-        domain_search_option=unifi_sync.DhcpCustomOptionSpec(
+        domain_search_option=models.DhcpCustomOptionSpec(
             code=119,
             name="DomainSearch",
             option_type="text",
             signed=False,
             encoding="text",
         ),
-        classless_static_routes=unifi_sync.parse_classless_static_routes(
+        classless_static_routes=parsing.parse_classless_static_routes(
             """
             [
               {"destination": "10.0.0.0/8", "nextHop": "192.0.2.1"},
@@ -100,7 +101,7 @@ def test_build_network_update_payload_writes_custom_option_fields():
             ]
             """
         ),
-        classless_static_routes_option=unifi_sync.DhcpCustomOptionSpec(
+        classless_static_routes_option=models.DhcpCustomOptionSpec(
             code=121,
             name="ClasslessStaticRoutes",
             option_type="text",
@@ -111,7 +112,7 @@ def test_build_network_update_payload_writes_custom_option_fields():
         bootfile=None,
     )
 
-    payload, changes = unifi_sync.build_network_update_payload(
+    payload, changes = planning.build_network_update_payload(
         settings,
         current_network={
             "dhcpd_user_option_domain": "",

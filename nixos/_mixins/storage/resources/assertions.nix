@@ -1,30 +1,29 @@
 {
   config,
-  facts,
   lib,
-  outputs,
+  storageIdentities,
+  storageModel,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      facts
-      lib
-      outputs
-      ;
-  };
+  model = storageModel;
   resources = config.host.storage.resources;
   claims = config.host.storage.claims;
   resourceFsids = map (resource: resource.nfs.fsid) (
-    builtins.attrValues (lib.filterAttrs (_: resource: resource.nfs.enable) resources)
+    builtins.attrValues (lib.filterAttrs (_: resource: resource.nfs != null) resources)
   );
   mountPoints = map (claim: claim.mountPoint) (builtins.attrValues claims);
-  safeRelativePath = path: path != "" && !lib.hasPrefix "/" path && !(lib.hasInfix ".." path);
+  safeRelativePath =
+    path:
+    path != ""
+    && !lib.hasPrefix "/" path
+    && lib.all (component: component != "" && component != "." && component != "..") (
+      lib.splitString "/" path
+    );
   directoryDefinitionsAgree = definitions: builtins.length (lib.unique definitions) == 1;
   anonymousIdentities = lib.unique (
     lib.filter (name: name != null) (
-      map (resource: resource.nfs.anonymousIdentity) (
+      map (resource: if resource.nfs == null then null else resource.nfs.anonymousIdentity) (
         builtins.attrValues model.localResources
         ++ map (claim: claim.resolvedResource) (builtins.attrValues model.localClaims)
       )
@@ -50,10 +49,6 @@ in
     assertion = safeRelativePath resource.relativePath || resource.relativePath == ".";
     message = "host.storage.resources.${name}.relativePath must be a safe relative path";
   }) resources
-  ++ lib.mapAttrsToList (name: resource: {
-    assertion = !resource.nfs.enable || resource.nfs.fsid != null;
-    message = "host.storage.resources.${name} must set nfs.fsid when NFS is enabled";
-  }) resources
   ++ lib.concatMap (
     resource:
     lib.mapAttrsToList (path: _: {
@@ -68,14 +63,6 @@ in
         assertion = lib.hasPrefix "/" claim.mountPoint;
         message = "host.storage.claims.${claim.claimName}.mountPoint must be absolute";
       }
-      {
-        assertion = claim.local || claim.resolvedResource.nfs.enable;
-        message = "remote storage claim ${model.hostName}.${claim.claimName} requires NFS on ${claim.provider}.${claim.resource}";
-      }
-      {
-        assertion = claim.local || claim.resolvedResource.nfs.fsid != null;
-        message = "remote storage claim ${model.hostName}.${claim.claimName} requires an NFS FSID";
-      }
     ]
     ++ lib.mapAttrsToList (path: _: {
       assertion = safeRelativePath path || path == ".";
@@ -89,7 +76,7 @@ in
   ++ lib.concatMap (
     name:
     let
-      expected = facts.accounts.users.${name};
+      expected = storageIdentities.users.${name};
       user = config.users.users.${name} or null;
       group = config.users.groups.${expected.group} or null;
     in
@@ -99,7 +86,7 @@ in
         message = "NFS anonymous identity ${name} must use UID ${toString expected.uid}";
       }
       {
-        assertion = group != null && group.gid == facts.accounts.groups.${expected.group}.gid;
+        assertion = group != null && group.gid == storageIdentities.groups.${expected.group};
         message = "NFS anonymous identity ${name} must use the shared ${expected.group} GID";
       }
     ]

@@ -13,16 +13,13 @@ from sops_tools.secrets import UpdateResult
 from pki_certificates.cli import Application, run_internal, run_observability
 from pki_certificates.issuer import RemoteCertificateIssuer, StepCaIssuer
 from pki_certificates.models import (
-    CertificateClientConfig,
+    CertificateConfig,
     CertificateMaterial,
     CertificateRequest,
     FleetHosts,
-    HostIdentity,
-    InternalServiceConfig,
-    ObservabilityEndpointConfig,
-    UnifiDefaults,
+    RealmAuthorityConfig,
 )
-from pki_certificates.repository import NixConfigSource
+from pki_certificates.repository import InventoryConfigSource, NixInventorySource
 from pki_certificates.secrets import SopsCertificateStore
 from pki_certificates.services import ManagedCertificateService
 from pki_certificates.unifi import UnifiCertificateService, validate_basename
@@ -70,13 +67,13 @@ def fleet_hosts() -> FleetHosts:
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
                 "runtimeHost": "host-runtime",
-                "realm": "home",
+                "realm": "test-realm",
             },
-            "pki": {
+            "authority-node": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
-                "runtimeHost": "pki-runtime",
-                "realm": "home",
+                "runtimeHost": "authority-runtime",
+                "realm": "test-realm",
             },
         }
     )
@@ -89,71 +86,74 @@ def material() -> CertificateMaterial:
     )
 
 
+def realm_authority() -> RealmAuthorityConfig:
+    return RealmAuthorityConfig.model_validate(
+        {
+            "hostName": "authority-node",
+            "realm": "test-realm",
+            "url": "https://ca.example.invalid:8443",
+            "provisioner": "bootstrap@example.invalid",
+            "leafLifetimeDays": 180,
+            "rootCaCertificate": "/repo/root-ca.crt",
+        }
+    )
+
+
 @dataclass
 class StaticConfigSource:
-    service: InternalServiceConfig = field(
-        default_factory=lambda: InternalServiceConfig.model_validate(
-            {
-                "enable": True,
-                "port": 443,
-                "secretPrefix": "internal_https/web",
-                "serverName": "web.home.arpa",
-                "serverAliases": ["web", "web.local"],
-                "sans": [],
-            }
-        )
+    certificates: list[CertificateConfig] = field(
+        default_factory=lambda: [
+            CertificateConfig.model_validate(value)
+            for value in [
+                {
+                    "category": "internal_https_server",
+                    "name": "web",
+                    "commonName": "web.example.invalid",
+                    "sans": ["web", "web.example.invalid", "web.local"],
+                    "secretPrefix": "internal_https/web",
+                    "port": 443,
+                },
+                {
+                    "category": "internal_https_client",
+                    "name": "client",
+                    "commonName": "client.host",
+                    "sans": ["client.host", "client-alt"],
+                    "secretPrefix": "internal_https/clients/client",
+                },
+                {
+                    "category": "observability_endpoint_server",
+                    "name": "node",
+                    "commonName": "prometheus-node.host.example.invalid",
+                    "sans": ["host.example.invalid", "host", "host.local"],
+                    "secretPrefix": "prometheus/node",
+                    "port": 9100,
+                },
+                {
+                    "category": "observability_client",
+                    "name": "scraper",
+                    "commonName": "client.host",
+                    "sans": ["client-alt"],
+                    "secretPrefix": "internal_https/clients/client",
+                },
+            ]
+        ]
     )
-    client: CertificateClientConfig = field(
-        default_factory=lambda: CertificateClientConfig.model_validate(
-            {
-                "enable": True,
-                "category": "internal",
-                "commonName": "client.host",
-                "sans": ["client-alt"],
-                "secretPrefix": "internal_https/clients/client",
-            }
+
+    def realm_authority(self, host):
+        return realm_authority()
+
+    def certificate_names(self, host, category):
+        return sorted(
+            certificate.name
+            for certificate in self.certificates
+            if certificate.category == category
         )
-    )
-    endpoint: ObservabilityEndpointConfig = field(
-        default_factory=lambda: ObservabilityEndpointConfig.model_validate(
-            {
-                "enable": True,
-                "port": 9100,
-                "sans": [],
-                "secretPrefix": "prometheus/node",
-            }
-        )
-    )
 
-    def internal_service_names(self, host):
-        return ["web"]
-
-    def internal_service(self, host, name):
-        return self.service
-
-    def internal_client_names(self, host):
-        return ["client"]
-
-    def internal_client(self, host, name):
-        return self.client
-
-    def observability_endpoint_names(self, host):
-        return ["node"]
-
-    def observability_endpoint(self, host, name):
-        return self.endpoint
-
-    def observability_client_names(self, host):
-        return ["scraper"]
-
-    def observability_client(self, host, name):
-        return self.client
-
-    def host_identity(self, host):
-        return HostIdentity(
-            dns_name="host.home.arpa",
-            networking_name="host",
-            avahi_name="host",
+    def certificate(self, host, category, name):
+        return next(
+            certificate
+            for certificate in self.certificates
+            if certificate.category == category and certificate.name == name
         )
 
 
@@ -168,18 +168,16 @@ class RecordingIssuer:
 
 @dataclass
 class RecordingStore:
-    calls: list[tuple[str, str, CertificateMaterial, bool]] = field(default_factory=list)
+    calls: list[tuple[str, str, CertificateMaterial, str, str]] = field(default_factory=list)
 
-    def write(self, host, secret_prefix, certificate, *, client):
-        self.calls.append((host, secret_prefix, certificate, client))
+    def write(self, host, secret_prefix, certificate, *, certificate_field, key_field):
+        self.calls.append((host, secret_prefix, certificate, certificate_field, key_field))
 
 
 @dataclass(frozen=True)
 class StaticAuthoritySource:
-    url: str | None = "https://pki.home.arpa:8443"
-
-    def ca_url(self, host: str) -> str | None:
-        return self.url
+    def realm_authority(self, host: str) -> RealmAuthorityConfig:
+        return realm_authority()
 
 
 def managed_service():
@@ -191,18 +189,19 @@ def managed_service():
 def test_step_ca_issuer_uses_native_temporary_files_and_argument_list():
     runner = StepRunner()
     request = CertificateRequest(
-        common_name="web.home.arpa",
-        sans=("web", "web.home.arpa"),
-        ca_url="https://pki.home.arpa:8443",
+        common_name="web.example.invalid",
+        sans=("web", "web.example.invalid"),
+        ca_url="https://ca.example.invalid:8443",
+        provisioner="bootstrap@example.invalid",
     )
 
     result = StepCaIssuer(runner).issue(request)
 
     assert result == material()
     command = runner.calls[0][0]
-    assert command[:4] == ["step", "ca", "certificate", "web.home.arpa"]
-    assert command[6:10] == ["--san", "web", "--san", "web.home.arpa"]
-    assert command[-2:] == ["--ca-url", "https://pki.home.arpa:8443"]
+    assert command[:4] == ["step", "ca", "certificate", "web.example.invalid"]
+    assert command[6:10] == ["--san", "web", "--san", "web.example.invalid"]
+    assert command[-2:] == ["--ca-url", "https://ca.example.invalid:8443"]
 
 
 def test_remote_issuer_copies_source_and_builds_on_ca_target():
@@ -223,7 +222,7 @@ def test_remote_issuer_copies_source_and_builds_on_ca_target():
         Path("/unused"),
     )
 
-    result = issuer.issue("pki", "web.home.arpa", ("web",))
+    result = issuer.issue("authority-node", "web.example.invalid", ("web",))
 
     assert result == material()
     assert runner.calls[0][0] == [
@@ -237,17 +236,17 @@ def test_remote_issuer_copies_source_and_builds_on_ca_target():
         "nix",
         "copy",
         "--to",
-        "ssh-ng://pki",
+        "ssh-ng://authority-node",
         source,
     ]
     assert runner.calls[2][0] == [
         "ssh",
-        "pki",
+        "authority-node",
         "sudo -n -H -u step-ca nix shell -L --show-trace "
         "'path:/nix/store/certificate-source#pki-certificates' --command "
         "pki-issue-certificate-remote",
     ]
-    assert json.loads(runner.calls[2][1])["common_name"] == "web.home.arpa"
+    assert json.loads(runner.calls[2][1])["common_name"] == "web.example.invalid"
 
 
 def test_remote_issuer_local_mode_uses_installed_helper():
@@ -261,7 +260,7 @@ def test_remote_issuer_local_mode_uses_installed_helper():
         Path("/nix/store/helper/bin/pki-issue-certificate-remote"),
     )
 
-    assert issuer.issue("pki", "client", ()) == material()
+    assert issuer.issue("authority-node", "client", ()) == material()
     assert runner.calls[0][0] == [
         "sudo",
         "-n",
@@ -275,111 +274,130 @@ def test_remote_issuer_local_mode_uses_installed_helper():
 def test_managed_service_issues_each_certificate_kind():
     service, issuer, store = managed_service()
 
-    internal = service.issue_internal_service("host", "web", "pki")
-    client = service.issue_internal_client("host", "client", "pki")
-    endpoint = service.issue_observability_endpoint("host", "node", "pki")
-    observer = service.issue_observability_client("host", "scraper", "pki")
+    internal = service.issue_internal_service("host", "web", "authority-node")
+    client = service.issue_internal_client("host", "client", "authority-node")
+    endpoint = service.issue_observability_endpoint("host", "node", "authority-node")
+    observer = service.issue_observability_client("host", "scraper", "authority-node")
 
-    assert internal.sans == ("web", "web.home.arpa", "web.local")
+    assert internal.sans == ("web", "web.example.invalid", "web.local")
     assert client.sans == ("client.host", "client-alt")
-    assert endpoint.common_name == "prometheus-node.host.home.arpa"
-    assert endpoint.sans == ("host.home.arpa", "host", "host.local")
+    assert endpoint.common_name == "prometheus-node.host.example.invalid"
+    assert endpoint.sans == ("host.example.invalid", "host", "host.local")
     assert observer.sans == ("client-alt",)
-    assert [call[3] for call in store.calls] == [False, True, False, True]
+    assert [call[3:] for call in store.calls] == [
+        ("server_crt_unencrypted", "server_key"),
+        ("client_crt_unencrypted", "client_key"),
+        ("server_crt_unencrypted", "server_key"),
+        ("client_crt_unencrypted", "client_key"),
+    ]
     assert len(issuer.calls) == 4
 
 
-def test_managed_service_rejects_disabled_configuration():
-    source = StaticConfigSource()
-    source.service = source.service.model_copy(update={"enable": False})
-    service = ManagedCertificateService(source, RecordingIssuer(), RecordingStore())
-
-    with pytest.raises(ToolError, match="is not enabled"):
-        service.issue_internal_service("host", "web", "pki")
-
-
-def test_nix_config_source_validates_and_combines_fleet_configuration():
+def test_nix_inventory_source_evaluates_once_and_provides_certificates():
     value = {
-        "ca_url": None,
-        "identity": {
-            "dns_name": "host.home.arpa",
-            "networking_name": "host",
-            "avahi_name": "host-avahi",
-        },
-        "internal_services": {
-            "web": {
-                "enable": True,
-                "port": 443,
+        "authority": realm_authority().model_dump(by_alias=True),
+        "hosts": fleet_hosts().model_dump(by_alias=True),
+        "repoRoot": "/repo",
+        "certificates": [
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "internal_https_server",
+                "name": "web",
+                "commonName": "web.example.invalid",
+                "sans": ["web.example.invalid"],
                 "secretPrefix": "internal_https/web",
-                "serverName": "web.home.arpa",
-                "serverAliases": ["web"],
-                "sans": ["web.home.arpa"],
-            },
-            "proxmox": {
-                "enable": True,
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
                 "port": 443,
+            },
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "internal_https_server",
+                "name": "proxmox-api",
+                "commonName": "host",
+                "sans": ["host", "host.example.invalid"],
                 "secretPrefix": "proxmox/api",
-                "serverName": "host",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
+                "port": 8006,
             },
-        },
-        "proxmox_api": {
-            "enable": True,
-            "port": 8006,
-            "secretPrefix": "proxmox/api",
-            "serverName": "host",
-            "serverAliases": ["host.home.arpa"],
-        },
-        "clients": {
-            "internal": {
-                "enable": True,
-                "category": "internal",
-                "commonName": "internal.host",
-                "secretPrefix": "internal/client",
-            },
-            "external": {
-                "enable": True,
-                "category": "internal",
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "internal_https_client",
+                "name": "external",
                 "commonName": "external.host",
+                "sans": ["external.host"],
                 "secretPrefix": "external/client",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "client_crt_unencrypted",
+                "keyField": "client_key",
             },
-            "scraper": {
-                "enable": True,
-                "category": "observability",
-                "commonName": "scraper.host",
-                "secretPrefix": "prometheus/clients/scraper",
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "observability_endpoint_server",
+                "name": "node_exporter",
+                "commonName": "prometheus-node_exporter.host",
+                "sans": ["host", "host.local"],
+                "secretPrefix": "prometheus/node_exporter",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
+                "port": 9100,
             },
-        },
-        "node_exporter": {
-            "enable": True,
-            "port": 9100,
-            "secretPrefix": "prometheus/node_exporter",
-            "sans": ["host", "host.local"],
-        },
-        "observability_endpoints": {
-            "metrics": {
-                "enable": True,
-                "port": 9999,
-                "secretPrefix": "prometheus/metrics",
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "observability_endpoint_server",
+                "name": "metrics",
+                "commonName": "prometheus-metrics.host",
                 "sans": ["host"],
-            }
-        },
-        "managed_certificates": [],
+                "secretPrefix": "prometheus/metrics",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
+                "port": 9999,
+            },
+            {
+                "host": "host",
+                "realm": "test-realm",
+                "category": "observability_client",
+                "name": "scraper",
+                "commonName": "scraper.host",
+                "sans": [],
+                "secretPrefix": "prometheus/clients/scraper",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "client_crt_unencrypted",
+                "keyField": "client_key",
+            },
+        ],
     }
     runner = AttributeRunner(value)
-    source = NixConfigSource(runner, Path("/repo"), fleet_hosts(), Path("/query.nix"))
+    inventories = NixInventorySource(runner, Path("/query.nix"))
+    inventory = inventories.inventory(Path("/repo"))
+    source = InventoryConfigSource(inventory)
 
-    assert source.internal_service_names("host") == ["web", "proxmox-api"]
-    assert source.internal_service("host", "proxmox-api").port == 8006
-    assert source.internal_client_names("host") == ["external", "internal"]
-    assert source.internal_client("host", "external").common_name == "external.host"
-    assert source.observability_endpoint_names("host") == ["node_exporter", "metrics"]
-    assert source.observability_endpoint("host", "node_exporter").port == 9100
-    assert source.observability_endpoint("host", "metrics").port == 9999
-    assert source.observability_client_names("host") == ["scraper"]
-    assert source.observability_client("host", "scraper").common_name == "scraper.host"
-    assert source.host_identity("host").avahi_name == "host-avahi"
-    assert source.ca_url("host") is None
-    assert source.certificate_config("host").identity.dns_name == "host.home.arpa"
+    assert source.certificate_names("host", "internal_https_server") == [
+        "proxmox-api",
+        "web",
+    ]
+    assert source.certificate("host", "internal_https_server", "proxmox-api").port == 8006
+    assert source.certificate_names("host", "internal_https_client") == ["external"]
+    assert (
+        source.certificate("host", "internal_https_client", "external").common_name
+        == "external.host"
+    )
+    assert source.certificate_names("host", "observability_endpoint_server") == [
+        "metrics",
+        "node_exporter",
+    ]
+    assert source.certificate_names("host", "observability_client") == ["scraper"]
+    assert inventories.inventory(Path("/repo")) is inventory
     assert len(runner.calls) == 1
     assert runner.calls[0] == [
         "nix-instantiate",
@@ -390,12 +408,6 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
         "--argstr",
         "repo",
         "/repo",
-        "--argstr",
-        "configuration",
-        "nixosConfigurations",
-        "--argstr",
-        "host",
-        "host",
     ]
 
 
@@ -423,6 +435,9 @@ class RecordingSecretFactory:
 
 
 def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path):
+    identity = tmp_path / "sops/age/test-realm.txt"
+    identity.parent.mkdir(parents=True)
+    identity.write_text("fictional test identity")
     runtime = RuntimeEnvironment(
         repo_root=tmp_path,
         home=tmp_path,
@@ -435,9 +450,15 @@ def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path)
     factory = RecordingSecretFactory(writer)
     store = SopsCertificateStore(runtime, fleet_hosts(), factory)
 
-    store.write("host", "prometheus/client", material(), client=True)
+    store.write(
+        "host",
+        "prometheus/client",
+        material(),
+        certificate_field="client_crt_unencrypted",
+        key_field="client_key",
+    )
 
-    assert factory.realms == ["home"]
+    assert factory.realms == ["test-realm"]
     assert writer.calls == [
         ("update", "host", False),
         (
@@ -451,31 +472,22 @@ def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path)
 
 def test_unifi_service_writes_secure_import_files(tmp_path: Path):
     issuer = RecordingIssuer()
-    service = UnifiCertificateService(
-        issuer,
-        UnifiDefaults.model_validate(
-            {
-                "commonName": "unifi.home.arpa",
-                "sans": ["unifi.home.arpa", "unifi"],
-                "gatewayIp": "192.0.2.1",
-            }
-        ),
-    )
+    service = UnifiCertificateService(issuer)
 
     result = service.issue(
-        ca_host="pki",
+        ca_host="authority-node",
         output_dir=tmp_path,
-        common_name=None,
-        additional_sans=["unifi", "console.home.arpa"],
-        include_gateway_ip=True,
+        common_name="unifi.example.invalid",
+        additional_sans=["unifi", "console.example.invalid"],
+        gateway_ip="192.0.2.1",
         basename="console",
         force=False,
     )
 
     assert result.sans == (
-        "unifi.home.arpa",
+        "unifi.example.invalid",
         "unifi",
-        "console.home.arpa",
+        "console.example.invalid",
         "192.0.2.1",
     )
     assert (tmp_path / "console.crt").read_text() == "certificate\n"
@@ -483,11 +495,11 @@ def test_unifi_service_writes_secure_import_files(tmp_path: Path):
     assert os.stat(tmp_path / "console.key").st_mode & 0o777 == 0o600
     with pytest.raises(ToolError, match="refusing to overwrite"):
         service.issue(
-            ca_host="pki",
+            ca_host="authority-node",
             output_dir=tmp_path,
-            common_name=None,
+            common_name="unifi.example.invalid",
             additional_sans=[],
-            include_gateway_ip=False,
+            gateway_ip=None,
             basename="console",
             force=False,
         )
@@ -499,16 +511,7 @@ def test_cli_routes_internal_and_observability_modes(capsys):
     managed, _, _ = managed_service()
     application = Application(
         managed,
-        UnifiCertificateService(
-            RecordingIssuer(),
-            UnifiDefaults.model_validate(
-                {
-                    "commonName": "unifi.home.arpa",
-                    "sans": ["unifi"],
-                    "gatewayIp": "192.0.2.1",
-                }
-            ),
-        ),
+        UnifiCertificateService(RecordingIssuer()),
     )
 
     assert run_internal(["--host", "host", "--service", "web"], application=application) == 0

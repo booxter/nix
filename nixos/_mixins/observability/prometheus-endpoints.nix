@@ -1,18 +1,15 @@
 {
   config,
-  hostSpec,
   lib,
   ...
 }:
 let
   cfg = config.host.observability;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
-  inventoryEndpoints = lib.filterAttrs (
-    name: _: !(name == "node_exporter" && cfg.nodeExporter.mtls.enable)
-  ) enabledEndpoints;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
+  endpoints = cfg.prometheusEndpoints;
+  discoveredEndpoints = lib.filterAttrs (_: endpoint: endpoint.scrape != null) endpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
-  endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues enabledEndpoints);
+  endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues endpoints);
 in
 {
   options.host.observability = {
@@ -24,8 +21,6 @@ in
             { name, ... }:
             {
               options = {
-                enable = lib.mkEnableOption "mTLS-protected Prometheus scrape endpoint";
-
                 listenAddress = lib.mkOption {
                   type = str;
                   default = "0.0.0.0";
@@ -60,77 +55,69 @@ in
                   description = "Server name presented by the nginx vhost for this endpoint.";
                 };
 
-                sans = lib.mkOption {
-                  type = listOf str;
-                  default = cfg.prometheusEndpointSans;
-                  description = "DNS SANs to include when issuing this endpoint certificate.";
-                };
-
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/${name}";
                   description = "Secret prefix containing server_crt_unencrypted and server_key for this endpoint.";
                 };
 
-                locationExtraConfig = lib.mkOption {
-                  type = lines;
-                  default = "";
-                  description = "Extra nginx location config for this endpoint.";
-                };
+                scrape = lib.mkOption {
+                  type = nullOr (submodule {
+                    options = {
+                      jobName = lib.mkOption {
+                        type = str;
+                        default = name;
+                        description = "Prometheus scrape job name.";
+                      };
 
-                scrape = {
-                  enable = lib.mkEnableOption "central Prometheus discovery for this endpoint";
+                      profile = lib.mkOption {
+                        type = str;
+                        default = "infrastructure";
+                        description = "Semantic scrape policy consumed by alerts and dashboards.";
+                      };
 
-                  jobName = lib.mkOption {
-                    type = str;
-                    default = name;
-                    description = "Prometheus scrape job name.";
-                  };
+                      component = lib.mkOption {
+                        type = str;
+                        default = name;
+                        description = "Component producing the metrics.";
+                      };
 
-                  profile = lib.mkOption {
-                    type = str;
-                    default = "infrastructure";
-                    description = "Semantic scrape policy consumed by alerts and dashboards.";
-                  };
+                      service = lib.mkOption {
+                        type = nullOr str;
+                        default = null;
+                        description = "Fleet web service represented by the endpoint, when applicable.";
+                      };
 
-                  component = lib.mkOption {
-                    type = str;
-                    default = name;
-                    description = "Component producing the metrics.";
-                  };
+                      availability = lib.mkOption {
+                        type = enum [
+                          "always"
+                          "intermittent"
+                        ];
+                        default = if config.host.hardware.isLaptop then "intermittent" else "always";
+                        description = "Availability policy for this scrape target.";
+                      };
 
-                  service = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Fleet web service represented by the endpoint, when applicable.";
-                  };
+                      interval = lib.mkOption {
+                        type = nullOr str;
+                        default = null;
+                        description = "Optional Prometheus scrape interval.";
+                      };
 
-                  availability = lib.mkOption {
-                    type = enum [
-                      "always"
-                      "intermittent"
-                    ];
-                    default = config.host.availability;
-                    description = "Availability policy for this scrape target.";
-                  };
+                      labels = lib.mkOption {
+                        type = attrsOf str;
+                        default = { };
+                        description = "Additional static labels attached to this target.";
+                      };
 
-                  interval = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Optional Prometheus scrape interval.";
-                  };
-
-                  timeout = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = "Optional Prometheus scrape timeout.";
-                  };
-
-                  labels = lib.mkOption {
-                    type = attrsOf str;
-                    default = { };
-                    description = "Additional static labels attached to this target.";
-                  };
+                      metricRelabelConfigs = lib.mkOption {
+                        type = listOf attrs;
+                        default = [ ];
+                        description = "Metric relabeling rules supplied by the endpoint owner.";
+                      };
+                    };
+                  });
+                  default = null;
+                  description = "Optional central Prometheus discovery policy for this endpoint.";
                 };
               };
             }
@@ -140,20 +127,37 @@ in
       description = "Nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
 
-    prometheusEndpointSans = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = hostSpec.certificateDnsNames;
-      description = "Default DNS SANs for host-level Prometheus mTLS server certificates.";
-    };
   };
 
-  config = lib.mkIf (cfg.enable && enabledEndpoints != { }) {
-    host.internalPki.managedCertificates = lib.mapAttrsToList (name: endpoint: {
-      category = "observability_endpoint_server";
-      inherit name;
-      inherit (endpoint) secretPrefix;
-      certificateField = "server_crt_unencrypted";
-    }) inventoryEndpoints;
+  config = lib.mkIf (cfg.enable && endpoints != { }) {
+    host.observability.inventory.endpoints = lib.mapAttrs (_name: endpoint: {
+      inherit (endpoint) path;
+      inherit (endpoint.scrape)
+        interval
+        jobName
+        metricRelabelConfigs
+        ;
+      target = "${config.networking.hostName}:${toString endpoint.port}";
+      labels = {
+        inherit (endpoint.scrape) availability component;
+        instance = config.networking.hostName;
+        realm = config.host.realm;
+        scrape_profile = endpoint.scrape.profile;
+      }
+      // lib.optionalAttrs (endpoint.scrape.service != null) {
+        service = endpoint.scrape.service;
+      }
+      // endpoint.scrape.labels;
+    }) discoveredEndpoints;
+
+    host.pki.certificates = lib.mapAttrs' (
+      name: endpoint:
+      lib.nameValuePair "observability_endpoint_server/${name}" {
+        commonName = "prometheus-${name}.${config.networking.hostName}";
+        inherit (endpoint) port secretPrefix;
+        sans = config.host.network.certificateDnsNames;
+      }
+    ) endpoints;
 
     assertions = [
       {
@@ -173,7 +177,7 @@ in
           mode = "0400";
           restartUnits = [ "nginx.service" ];
         }
-      ) enabledEndpoints
+      ) endpoints
       // lib.mapAttrs' (
         endpointName: endpoint:
         lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
@@ -183,7 +187,7 @@ in
           mode = "0400";
           restartUnits = [ "nginx.service" ];
         }
-      ) enabledEndpoints;
+      ) endpoints;
 
     services.nginx = {
       enable = true;
@@ -203,22 +207,19 @@ in
           ];
           sslCertificate = config.sops.secrets."${endpointSecretAttrName endpointName}-server-crt".path;
           sslCertificateKey = config.sops.secrets."${endpointSecretAttrName endpointName}-server-key".path;
-          sslTrustedCertificate = internalPkiRootCaPath;
+          sslTrustedCertificate = pkiRootCaPath;
           extraConfig = ''
-            ssl_client_certificate ${internalPkiRootCaPath};
+            ssl_client_certificate ${pkiRootCaPath};
             ssl_verify_client on;
           '';
-          locations.${endpoint.path} = {
-            proxyPass = endpoint.upstream;
-            extraConfig = endpoint.locationExtraConfig;
-          };
+          locations.${endpoint.path}.proxyPass = endpoint.upstream;
         }
-      ) enabledEndpoints;
+      ) endpoints;
     };
 
     networking.firewall.allowedTCPPorts = lib.unique (
       builtins.concatMap (endpoint: lib.optional endpoint.openFirewall endpoint.port) (
-        builtins.attrValues enabledEndpoints
+        builtins.attrValues endpoints
       )
     );
 

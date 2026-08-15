@@ -1,14 +1,9 @@
 { config, lib, ... }:
 let
   cfg = config.host.observability;
+  serverEnabled = cfg.server != null;
 in
 {
-  options.host.observability.nodeExporter.openFirewall = lib.mkOption {
-    type = lib.types.bool;
-    default = true;
-    description = "Whether to open the firewall for the Prometheus node exporter.";
-  };
-
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
@@ -20,7 +15,8 @@ in
 
         services.prometheus.exporters.node = {
           enable = true;
-          inherit (cfg.nodeExporter) listenAddress openFirewall;
+          listenAddress = if serverEnabled then "127.0.0.1" else cfg.nodeExporter.listenAddress;
+          openFirewall = !serverEnabled;
           enabledCollectors = [
             "processes"
             "systemd"
@@ -30,6 +26,10 @@ in
             builtins.attrValues cfg.nodeExporter.textfile.directories
           );
         };
+
+        systemd.tmpfiles.rules = [
+          "d ${cfg.nodeExporter.textfile.directories.default} 0755 root root - -"
+        ];
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets = {

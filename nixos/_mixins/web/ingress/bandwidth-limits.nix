@@ -1,16 +1,13 @@
 {
   config,
+  fleetWebServices,
   lib,
-  outputs,
   ...
 }:
 let
-  fleetServices = import ../../../_lib/fleet-web-services.nix {
-    inherit config lib outputs;
-  };
   publicServices = builtins.filter (
     contribution: contribution.value.public.ingressHost == config.networking.hostName
-  ) fleetServices.public;
+  ) fleetWebServices.public;
   helpers = import ./bandwidth-limits/lib.nix { inherit lib; };
   routes = helpers.collect publicServices;
   proxyHeaders = ''

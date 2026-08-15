@@ -1,12 +1,12 @@
 {
   config,
-  hostSpec,
   lib,
+  webModel,
   ...
 }:
 let
   aliasAddress = config.host.network.ipAddress;
-  aliases = config.host.internalHttps.localAliases;
+  aliases = webModel.localAliases;
   aliasService = alias: {
     name = "avahi-alias-${alias}";
     value = {
@@ -42,8 +42,8 @@ in
       userServices = true;
       addresses = true;
     };
-    hostName = hostSpec.name;
+    hostName = config.networking.hostName;
   };
 
-  systemd.services = builtins.listToAttrs (builtins.map aliasService aliases);
+  systemd.services = builtins.listToAttrs (map aliasService aliases);
 }

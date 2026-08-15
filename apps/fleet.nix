@@ -1,34 +1,40 @@
 {
-  facts,
   outputs,
   pkgs,
 }:
 let
-  lan = facts.site.lan;
   fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
-  wgHome = fleetConfiguration.config.host.wireguard.networks.home;
-  appPackages = import ./packages.nix pkgs;
+  lan = fleetConfiguration.config.host.site.lan;
+  wgHome = outputs.nixosConfigurations.gw.config.host.wireguard.networks.home;
+  mkFleetHost = system: name: configuration: {
+    displayName = name;
+    inherit system;
+    realm = configuration.config.host.realm;
+    runtimeHost = name;
+    sshHost = name;
+  };
+  darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
+  nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
+  fleetHosts = nixosHosts // darwinHosts;
+  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetHosts;
+  tokenHosts = pkgs.lib.mapAttrs (_: host: { inherit (host) realm system; }) fleetHosts;
+  appPackages = import ./packages.nix {
+    fleetHosts = tokenHosts;
+    inherit pkgs realmsByHost;
+  };
 
-  fleetFacts = {
+  fleetInventory = {
     aliases =
-      pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos
-      // pkgs.lib.mapAttrs (name: _: name) facts.hosts.darwin;
-    darwin = pkgs.lib.mapAttrs (_: spec: {
-      displayName = spec.name;
-      inherit (spec) realm;
-      platform = "aarch64-darwin";
-      runtimeHost = spec.name;
-      sshHost = spec.name;
-    }) facts.hosts.darwin;
+      pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations
+      // pkgs.lib.mapAttrs (name: _: name) outputs.darwinConfigurations;
+    darwin = pkgs.lib.mapAttrs (
+      _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
+    ) darwinHosts;
     lanDnsServer = lan.gateway.address;
-    lanDomain = facts.site.lan.domain;
-    nixos = pkgs.lib.mapAttrs (_: spec: {
-      displayName = spec.name;
-      inherit (spec) realm;
-      platform = "x86_64-linux";
-      runtimeHost = spec.name;
-      sshHost = spec.name;
-    }) facts.hosts.nixos;
+    lanDomain = fleetConfiguration.config.host.network.lanDomain;
+    nixos = pkgs.lib.mapAttrs (
+      _: host: (removeAttrs host [ "system" ]) // { platform = host.system; }
+    ) nixosHosts;
   };
   wireguardHome = {
     subnet = wgHome.cidr;
@@ -38,9 +44,9 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wgHome.server.host;
   };
-  vmTargets = pkgs.lib.mapAttrs (name: _: name) facts.hosts.nixos;
+  vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetFacts vmTargets wireguardHome;
+    inherit fleetInventory vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -92,8 +98,13 @@ let
   issueProxmoxExporterTokenPackage = appPackages.issue-proxmox-exporter-token;
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
-  pkiRotationPackage = pkgs.pki-rotation;
-  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
+  pkiRotationPackage = pkgs.callPackage ../pkgs/pki-rotation {
+    atomicFileWrites = pkgs.atomic-file-writes;
+    gitCommandRunner = pkgs.git-command-runner;
+    pkiCertificates = appPackages.issue-internal-service-cert;
+    sopsTools = appPackages.sops-tools;
+  };
+  resetOidc = pkgs.callPackage ../nixos/_mixins/sso/provider/pkgs/kanidm-tools { };
   wgHomeClientConfig = fleetTools;
 in
 {

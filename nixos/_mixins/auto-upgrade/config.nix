@@ -1,82 +1,155 @@
 {
-  autoUpgradeTools,
   config,
   lib,
+  outputs,
+  pkgs,
   utils,
   ...
 }:
 let
+  model = import ./model.nix {
+    inherit
+      config
+      lib
+      outputs
+      ;
+  };
+  autoUpgradeTools = pkgs.callPackage ./package {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
   cfg = config.host.autoUpgrade;
-  guards = config.host.maintenance.guards;
-  rebootIfNeeded = utils.escapeSystemdExecArgs [
-    (lib.getExe autoUpgradeTools)
+  hostname = config.networking.hostName;
+  metricsEnabled = config.host.observability.enable;
+  textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
+  toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
+    inherit hostname;
+    inherit (cfg) holds;
+  };
+  toolCommand =
+    arguments: utils.escapeSystemdExecArgs ([ (lib.getExe autoUpgradeTools) ] ++ arguments);
+  rebootIfNeeded = toolCommand [
     "reboot-if-needed"
     "--shutdown-executable"
     "${config.systemd.package}/bin/shutdown"
   ];
-  guardsBefore =
-    operations:
-    builtins.attrValues (
-      lib.filterAttrs (
-        _: guard: lib.any (operation: builtins.elem operation guard.before) operations
-      ) guards
-    );
-  upgradeGuards = guardsBefore (
-    [ "upgrade" ] ++ lib.optional (cfg.reboot.mode == "with-upgrade") "reboot"
-  );
-  rebootGuards = guardsBefore [ "reboot" ];
-  commands = selectedGuards: map (guard: guard.command) selectedGuards;
-  waitsIndefinitely = selectedGuards: lib.any (guard: guard.waitIndefinitely) selectedGuards;
+  upgradeHoldGuard = toolCommand [
+    "guard"
+    "--config"
+    toolsConfig
+  ];
+  writeHoldMetrics = toolCommand [
+    "write-hold-metrics"
+    "--config"
+    toolsConfig
+    "--output"
+    "${textfileDir}/nixos-upgrade-hold.prom"
+  ];
+  writeSuccessMetric = toolCommand [
+    "write-success-metric"
+    "--output"
+    "${textfileDir}/nixos-upgrade.prom"
+  ];
+  maintenanceGuards = builtins.attrValues config.host.maintenance.guards;
 in
 {
   config = lib.mkMerge [
     {
+      host.autoUpgrade = {
+        claims.baseline = {
+          switch.cadence = "daily";
+          reboot.cadence = "daily";
+        };
+        holds = [
+          {
+            startDate = "2026-06-08";
+            stopDate = "2026-06-28";
+          }
+        ];
+      };
+
       system.autoUpgrade = {
-        inherit (cfg) enable;
-        flake = "github:booxter/nix#${config.networking.hostName}";
+        enable = true;
+        flake = "github:booxter/nix#${hostname}";
         flags = [
           "-L"
           "--show-trace"
         ];
-        dates = cfg.schedule.calendar;
-        randomizedDelaySec = cfg.schedule.randomizedDelay;
+        dates = model.plan.switch.calendar;
+        randomizedDelaySec = model.randomizedDelay;
         persistent = false;
-        allowReboot = cfg.reboot.mode == "with-upgrade";
-        rebootWindow =
-          if cfg.reboot.mode == "with-upgrade" then
-            {
-              inherit (cfg.reboot.window) lower upper;
-            }
-          else
-            null;
+        allowReboot = model.plan.reboot.mode == "with-upgrade";
+        rebootWindow = if model.plan.reboot.mode == "with-upgrade" then model.rebootWindow else null;
       };
     }
-    (lib.mkIf (cfg.enable && upgradeGuards != [ ]) {
+
+    (lib.mkIf (maintenanceGuards != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig = {
-        ExecStartPre = commands upgradeGuards;
-        TimeoutStartSec = lib.mkIf (waitsIndefinitely upgradeGuards) "infinity";
+        ExecStartPre = maintenanceGuards;
+        TimeoutStartSec = "infinity";
       };
     })
-    (lib.mkIf (cfg.enable && cfg.reboot.mode == "scheduled") {
+
+    (lib.mkIf (model.plan.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed = {
         description = "Reboot on schedule if the current NixOS profile needs it";
         serviceConfig = {
           Type = "oneshot";
           ExecStart = rebootIfNeeded;
-          ExecStartPre = commands rebootGuards;
-          TimeoutStartSec = lib.mkIf (waitsIndefinitely rebootGuards) "infinity";
+          ExecStartPre = maintenanceGuards;
+          TimeoutStartSec = lib.mkIf (maintenanceGuards != [ ]) "infinity";
         };
       };
 
       systemd.timers.nixos-reboot-if-needed = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnCalendar = cfg.reboot.calendar;
-          RandomizedDelaySec = cfg.reboot.randomizedDelay;
+          OnCalendar = model.plan.reboot.scheduledCalendar;
+          RandomizedDelaySec = model.randomizedDelay;
           Persistent = false;
           Unit = "nixos-reboot-if-needed.service";
         };
       };
+    })
+
+    (lib.mkIf (cfg.holds != [ ]) {
+      systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
+    })
+
+    (lib.mkIf (cfg.holds != [ ] && model.plan.reboot.mode == "scheduled") {
+      systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
+    })
+
+    (lib.mkIf metricsEnabled {
+      # Update immediately on switch so adding or removing a hold changes alert
+      # suppression without waiting for the next hourly timer tick.
+      system.activationScripts.nixosUpgradeHoldMetrics.text = writeHoldMetrics;
+
+      systemd.services = {
+        nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
+        nixos-upgrade-hold-metrics = {
+          description = "Write NixOS auto-upgrade hold metrics";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = writeHoldMetrics;
+          };
+        };
+      };
+
+      systemd.timers.nixos-upgrade-hold-metrics = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "5min";
+          OnCalendar = "hourly";
+          Persistent = true;
+          RandomizedDelaySec = "1min";
+          Unit = "nixos-upgrade-hold-metrics.service";
+        };
+      };
+
+      systemd.tmpfiles.rules = [
+        "d ${textfileDir} 0755 root root - -"
+        "z ${textfileDir}/nixos-upgrade.prom 0644 root root - -"
+      ];
     })
   ];
 }

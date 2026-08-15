@@ -1,30 +1,10 @@
 {
   config,
-  facts,
-  hostSpec,
   lib,
-  outputs,
   ...
 }:
 let
-  priorityType = with lib.types; nullOr int;
-  priorityOptions = {
-    default = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Default Nix substituter priority override.";
-    };
-    tunnelInactive = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Nix substituter priority while the relevant WireGuard tunnel is inactive.";
-    };
-    tunnelActive = lib.mkOption {
-      type = priorityType;
-      default = null;
-      description = "Nix substituter priority while the relevant WireGuard tunnel is active.";
-    };
-  };
+  readPublicKey = import ../../../_lib/read-public-key.nix { inherit lib; };
   commonCacheOptions = {
     substituter = lib.mkOption {
       type = lib.types.nonEmptyStr;
@@ -35,84 +15,38 @@ let
       default = [ ];
       description = "Signing keys trusted for this cache.";
     };
-    priorities = priorityOptions;
-    reachability = {
-      kind = lib.mkOption {
-        type = lib.types.enum [
-          "public"
-          "internal"
-        ];
-        default = "public";
-        description = "Whether the cache is publicly reachable or requires a private network.";
-      };
-      network = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Private network required to reach an internal cache.";
-      };
+    priorities = lib.mkOption {
+      type = with lib.types; attrsOf int;
+      default = { };
+      description = "Substituter priority overrides keyed by network profile.";
     };
-  };
-  contributionType = lib.types.submodule {
-    options = commonCacheOptions // {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to contribute this cache.";
-      };
-      scope = lib.mkOption {
-        type = lib.types.enum [
-          "host"
-          "realm"
-        ];
-        default = "host";
-        description = "Hosts allowed to consume this cache contribution.";
-      };
+    requiredNetwork = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Private network required to reach this cache, or null for a public cache.";
     };
   };
   cacheType = lib.types.submodule { options = commonCacheOptions; };
-  model = import ./model.nix {
-    inherit
-      config
-      hostSpec
-      lib
-      outputs
-      ;
-  };
   cacheLib = import ./lib.nix { inherit lib; };
+  proxmoxCache = import ./proxmox.nix { inherit lib; };
   caches = builtins.attrValues config.host.nix.caches;
 in
 {
-  imports = [ ./assertions.nix ];
-
-  options.host.nix = {
-    cacheContributions = lib.mkOption {
-      type = lib.types.attrsOf contributionType;
-      default = { };
-      internal = true;
-      description = "Host-local contributions to the fleet Nix cache pool.";
-    };
-
-    caches = lib.mkOption {
-      type = lib.types.attrsOf cacheType;
-      default = model.caches;
-      readOnly = true;
-      description = "Nix caches available to this host.";
-    };
+  options.host.nix.caches = lib.mkOption {
+    type = lib.types.attrsOf cacheType;
+    default = { };
+    description = "Nix caches available to this host.";
   };
 
   config = {
-    host.nix.cacheContributions = {
-      nixos = {
-        substituter = "https://cache.nixos.org/";
-        trustedPublicKeys = [ facts.public-keys.nix-cache.nixos ];
-      };
-
-      proxmox = {
-        enable = config.host.isProxmox || config.host.nix.builder.enable || config.host.isOperatorSeat;
-        substituter = "https://cache.saumon.network/proxmox-nixos";
-        trustedPublicKeys = [ facts.public-keys.nix-cache.proxmox-nixos ];
-      };
+    host.nix.caches.nixos = {
+      substituter = "https://cache.nixos.org/";
+      trustedPublicKeys = [ (readPublicKey ./public-keys/nixos.pub) ];
     };
+
+    host.nix.caches.proxmox = lib.mkIf (
+      config.host.nix.builder != null || config.host.nix.builderClient != null
+    ) proxmoxCache;
 
     nix.settings = {
       substituters = lib.mkForce (map (cacheLib.substituterFor "default") caches);

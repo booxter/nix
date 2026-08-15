@@ -10,7 +10,7 @@ from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService, UpdateResult
 
 from .models import CertificateMaterial, FleetHosts
-from .repository import host_facts
+from .repository import fleet_host
 
 
 class CertificateStore(Protocol):
@@ -20,7 +20,8 @@ class CertificateStore(Protocol):
         secret_prefix: str,
         material: CertificateMaterial,
         *,
-        client: bool,
+        certificate_field: str,
+        key_field: str,
     ) -> None: ...
 
 
@@ -59,15 +60,14 @@ class SopsCertificateStore:
         secret_prefix: str,
         material: CertificateMaterial,
         *,
-        client: bool,
+        certificate_field: str,
+        key_field: str,
     ) -> None:
-        facts = host_facts(self.hosts, host)
-        realm = self.runtime.resolve_realm(facts.realm)
+        host_entry = fleet_host(self.hosts, host)
+        realm = self.runtime.resolve_realm(host_entry.realm)
         service = self.factory.create(self.runtime, realm)
         service.update(host)
         prefix = KeyPath.parse(secret_prefix)
-        certificate_field = "client_crt_unencrypted" if client else "server_crt_unencrypted"
-        key_field = "client_key" if client else "server_key"
         service.set_text(
             host,
             prefix.child(certificate_field),

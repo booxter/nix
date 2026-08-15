@@ -1,9 +1,10 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  ...
+}:
 {
   environment.systemPackages = with pkgs; [
-    bind.dnsutils
     coreutils
-    dig
     file
     findutils
     gawk
@@ -13,21 +14,15 @@
     gnused
     gzip
     htop
-    iftop
-    ipcalc
-    iperf3
     jq
     lsof
     man-pages
     moreutils
-    ngrep
     pstree
     python3
     rclone
     ripgrep
-    speedtest-cli
     sqlite
-    tcpdump
     tmux
     tree
     unzip
@@ -36,7 +31,15 @@
     watch
     yq
     zip
+    bind.dnsutils
+    dig
+    iftop
+    ipcalc
+    iperf3
     ipmitool
+    ngrep
+    speedtest-cli
+    tcpdump
   ];
 
   programs.zsh.enable = true;

@@ -1,40 +1,31 @@
 {
   config,
-  facts,
-  outputs,
+  lib,
+  watchstateModel,
   ...
 }:
 let
-  cfg = config.host.watchstate;
-  model = import ./model.nix { inherit config outputs; };
-  sso = facts.sso.applications.watchstate;
+  inherit (watchstateModel) cfg jellyfin libraryPath;
+  sso = config.host.sso.applications.watchstate;
   systemUser = sso.bootstrapOwner;
-  systemAccount = facts.sso.users.${systemUser};
+  systemAccount = config.host.sso.users.${systemUser};
 in
 {
-  assertions = [
+  assertions = lib.optionals (cfg != null) [
     {
-      assertion = !cfg.enable || model.exists;
-      message = "host.watchstate.jellyfin.host must name a known NixOS host.";
+      assertion = jellyfin != null;
+      message = "WatchState requires local Jellyfin.";
     }
     {
-      assertion = !cfg.enable || model.jellyfinEnabled;
-      message = "host.watchstate.jellyfin.host must run Jellyfin.";
-    }
-    {
-      assertion = !cfg.enable || cfg.library.source != null;
+      assertion = libraryPath != null;
       message = "WatchState requires a Jellyfin media-library source.";
     }
     {
-      assertion = !cfg.enable || !cfg.backups.enable || cfg.backups.stagingDirectory != null;
-      message = "host.watchstate.backups.stagingDirectory must be set when WatchState backups are enabled.";
-    }
-    {
-      assertion = !cfg.enable || builtins.elem sso.adminGroup systemAccount.groups;
+      assertion = builtins.elem sso.roles.admin systemAccount.groups;
       message = "The WatchState bootstrap owner must belong to its SSO admin group.";
     }
     {
-      assertion = !cfg.enable || builtins.match "[a-z0-9_]+" systemUser != null;
+      assertion = builtins.match "[a-z0-9_]+" systemUser != null;
       message = "The WatchState bootstrap owner must be a valid WatchState username.";
     }
   ];

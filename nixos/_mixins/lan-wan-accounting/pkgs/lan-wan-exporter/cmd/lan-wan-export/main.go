@@ -19,7 +19,6 @@ func main() {
 func run(arguments []string) error {
 	flags := flag.NewFlagSet("lan-wan-export", flag.ContinueOnError)
 	configuration := accounting.Config{}
-	flags.StringVar(&configuration.Table, "table", "observability_lan_wan", "nftables table name")
 	flags.StringVar(&configuration.Subclass, "wan-subclass", "", "optional WAN subclass counter prefix")
 	flags.StringVar(&configuration.Interface, "interface", "", "interface containing the authoritative tc class")
 	flags.StringVar(&configuration.TCClass, "wan-tc-class", "", "authoritative WAN transmit tc class")

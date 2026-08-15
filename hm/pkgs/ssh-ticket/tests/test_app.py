@@ -44,8 +44,6 @@ def runtime(commands=None, *, timestamp=1_710_000_000):
 def target(name="srvarr", **overrides):
     values = {
         "name": name,
-        "enabled": True,
-        "ssh_host": name,
         "principal": f"ihrachyshka@{name}",
     }
     values.update(overrides)
@@ -124,8 +122,8 @@ def test_load_targets_reads_env_file(tmp_path, monkeypatch):
     targets_file.write_text(
         """
         [
-          {"name": "srvarr", "enabled": true},
-          {"name": "beast", "enabled": true}
+          {"name": "srvarr"},
+          {"name": "beast"}
         ]
         """,
         encoding="utf-8",
@@ -155,32 +153,13 @@ def test_load_targets_rejects_invalid_models(tmp_path, payload):
         ssh_ticket.load_targets_from_file(targets_file)
 
 
-def test_resolve_target_accepts_unique_alias():
-    targets = [target(aliases=["srvarr"])]
-    assert ssh_ticket.resolve_target(targets, "srvarr").name == "srvarr"
-
-
 def test_resolve_target_accepts_local_alias():
-    targets = [target(aliases=["srvarr", "srvarr.local"])]
+    targets = [target()]
     assert ssh_ticket.resolve_target(targets, "srvarr.local").name == "srvarr"
 
 
-def test_resolve_target_rejects_ambiguous_alias():
-    targets = [
-        target("beast", aliases=["beast-alias"]),
-        target("beast-alt", aliases=["beast-alias"]),
-    ]
-    with pytest.raises(ssh_ticket.Error):
-        ssh_ticket.resolve_target(targets, "beast-alias")
-
-
-def test_resolve_target_rejects_disabled_target():
-    with pytest.raises(ssh_ticket.Error, match="ticket target srvarr is disabled"):
-        ssh_ticket.resolve_target([target(enabled=False)], "srvarr")
-
-
-def test_resolve_target_reports_enabled_targets_for_unknown_name():
-    with pytest.raises(ssh_ticket.Error, match="enabled targets: srvarr"):
+def test_resolve_target_reports_targets_for_unknown_name():
+    with pytest.raises(ssh_ticket.Error, match="targets: srvarr"):
         ssh_ticket.resolve_target([target()], "missing")
 
 
@@ -382,15 +361,15 @@ def test_write_ticket_alias_copies_cert_material(tmp_path):
     assert alias_paths.metadata.read_text(encoding="utf-8") == '{"target":"org"}\n'
 
 
-def test_targets_command_emits_only_enabled_targets_by_default(tmp_path, capsys):
+def test_targets_command_emits_targets(tmp_path, capsys):
     targets_file = tmp_path / "targets.json"
-    write_targets_file(targets_file, [target("beast", enabled=False), target()])
+    write_targets_file(targets_file, [target("beast"), target()])
 
     result = ssh_ticket.main(["targets", "--targets-file", str(targets_file), "--json"], runtime())
 
     assert result == 0
     payload = json.loads(capsys.readouterr().out)
-    assert [item["name"] for item in payload] == ["srvarr"]
+    assert [item["name"] for item in payload] == ["beast", "srvarr"]
 
 
 def test_status_command_reports_expired_ticket(tmp_path, capsys):

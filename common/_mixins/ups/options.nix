@@ -1,9 +1,7 @@
 { config, lib, ... }:
-{
-  options.host.ups = {
-    server = {
-      enable = lib.mkEnableOption "local UPS server";
-
+let
+  serverType = lib.types.submodule {
+    options = {
       name = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = "${lib.strings.toUpper config.networking.hostName}-UPS";
@@ -11,34 +9,30 @@
       };
 
       description = lib.mkOption {
-        type = lib.types.nullOr lib.types.nonEmptyStr;
-        default = null;
+        type = lib.types.nonEmptyStr;
         description = "Human-readable description of the locally attached UPS.";
       };
 
-      baseDelaySeconds = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 900;
-        description = "Shutdown delay assigned to the UPS server before dependency stages are subtracted.";
+      waitForLowBattery = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to wait for low battery instead of using a shutdown timer.";
       };
-
-      separationSeconds = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 150;
-        description = "Seconds separating each shutdown dependency stage.";
-      };
+    };
+  };
+in
+{
+  options.host.ups = {
+    server = lib.mkOption {
+      type = lib.types.nullOr serverType;
+      default = null;
+      description = "Configuration for a locally attached UPS.";
     };
 
     client.server = lib.mkOption {
       type = lib.types.nullOr lib.types.nonEmptyStr;
       default = null;
       description = "Host providing the UPS service monitored by this host.";
-    };
-
-    shutdown.waitForLowBattery = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether to wait for low battery instead of using a shutdown timer.";
     };
   };
 }

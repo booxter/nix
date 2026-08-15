@@ -1,10 +1,11 @@
-{ facts, pkgs }:
+{
+  pkgs,
+  realmsByHost ? { },
+}:
 let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
-  realmsByHostFile = pkgs.writeText "realms-by-host.json" (
-    builtins.toJSON (pkgs.lib.mapAttrs (_: spec: spec.realm) facts.hosts.hostSpecsByName)
-  );
+  realmsByHostFile = pkgs.writeText "realms-by-host.json" (builtins.toJSON realmsByHost);
   source = pkgs.lib.fileset.toSource {
     root = ../..;
     fileset = pkgs.lib.fileset.unions [

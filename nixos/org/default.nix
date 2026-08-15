@@ -1,143 +1,76 @@
 {
-  config,
-  facts,
   lib,
-  pkgs,
   ...
 }:
 let
-  vikunjaPublicHost = "vi.${facts.site.public.domain}";
-  vikunjaMetricsMtlsPort = 9345;
-  oidcClient = config.host.sso.oidc.clients.vikunja;
-  oidcScopes = config.host.sso.oidc.baseScopes;
-  vikunjaOidcProviderKey = "sso";
-  vikunjaPort = 3456;
-  # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
-  vikunjaTimezone = "America/New_York";
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
 in
 {
   system.stateVersion = "25.11";
 
-  host.network = {
-    macAddress = "bc:24:11:fd:eb:9c";
-    reservation = {
-      enable = true;
-      address = "192.168.20.4";
-    };
+  host.proxmox.guest = {
+    cluster = "lab";
+    cores = 4;
+    memoryGiB = 16;
+    diskGiB = 80;
   };
 
   host.ups.client.server = "prx1-lab";
 
-  _module.args.orgPkgs = import ./pkgs pkgs;
-
-  imports = [
-    ./degoog.nix
-    ./paperless.nix
-  ];
-
-  host.backups.sources.vikunja = {
-    paths = [ "/var/lib/vikunja/files" ];
-    capture = {
-      type = "sqlite";
-      database = {
-        path = "/var/lib/vikunja/vikunja.db";
-        destinationDir = "/var/lib/vikunja-backup/latest";
-      };
-    };
+  host.backups.destination = {
+    server = "beast";
+    publicKey = readPublicKey ./restic.pub;
+    # Preserve the existing repository namespace and snapshot history.
+    storageName = "orgvm";
   };
 
-  sops.secrets = {
-    vikunjaMailerPassword = {
-      key = "vikunja/mailer/password";
-      restartUnits = [ "vikunja.service" ];
-    };
-  };
-
-  sops.templates."vikunja-secrets.env" = {
-    content = ''
-      VIKUNJA_MAILER_PASSWORD=${config.sops.placeholder.vikunjaMailerPassword}
-      VIKUNJA_AUTH_OPENID_PROVIDERS_${vikunjaOidcProviderKey}_CLIENTSECRET=${oidcClient.secret.placeholder}
-    '';
-    restartUnits = [ "vikunja.service" ];
-  };
-
-  services.vikunja = {
+  host.degoog = {
     enable = true;
-    environmentFiles = [ config.sops.templates."vikunja-secrets.env".path ];
-    frontendScheme = "https";
-    frontendHostname = vikunjaPublicHost;
-    port = vikunjaPort;
-    settings = {
-      defaultsettings = {
-        timezone = vikunjaTimezone;
-        week_start = 1;
-      };
-      metrics.enabled = true;
-      mailer = {
-        enabled = true;
-        host = "smtp.gmail.com";
-        port = 587;
-        username = "ihar.hrachyshka@gmail.com";
-        fromemail = "ihar.hrachyshka@gmail.com";
-      };
-      service = {
-        timezone = vikunjaTimezone;
-        enableregistration = false;
-      };
-      auth = {
-        local.enabled = false;
-        openid = {
-          enabled = true;
-          providers.${vikunjaOidcProviderKey} = {
-            name = "SSO";
-            authurl = oidcClient.issuerUrl;
-            clientid = oidcClient.clientId;
-            clientsecret = "";
-            scope = lib.concatStringsSep " " oidcClient.baseScopes;
-            emailfallback = true;
-          };
-        };
-      };
+    engines = [
+      "brave"
+      "brave-images"
+      "brave-news"
+      "duckduckgo"
+      "duckduckgo-images"
+      "duckduckgo-news"
+      "google"
+      "hacker-news"
+      "internet-archive"
+      "openstreetmap"
+      "reddit"
+      "stackexchange"
+      "wikipedia"
+    ];
+    features = [
+      "brave-autocomplete"
+      "definitions"
+      "duckduckgo-bangs"
+      "github-results"
+      "highlight-terms"
+      "local-history"
+      "math"
+      "openstreetmap-results"
+      "reddit-results"
+      "stocks"
+      "time"
+      "tmdb-results"
+      "weather"
+    ];
+    theme = "gruvbox";
+    integrations = {
+      jellyfin = "beast";
+      romm = "srvarr";
     };
   };
 
-  host.web.services.vikunja = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString vikunjaPort}";
-    public = {
-      enable = true;
-      hostName = vikunjaPublicHost;
-    };
-    health.frontend = {
-      enable = true;
-      path = "";
-    };
-    metrics.default = {
-      enable = true;
-      port = vikunjaMetricsMtlsPort;
-      upstream = "http://127.0.0.1:${toString vikunjaPort}/api/v1/metrics";
-    };
-    auth = {
-      mode = "oidc";
-      oidcRegistration = {
-        displayName = "Vikunja";
-        originUrls = [ "https://${vikunjaPublicHost}/auth/openid/sso" ];
-        originLanding = "https://${vikunjaPublicHost}/";
-        allowInsecureClientDisablePkce = true;
-        scopeMaps."vikunja-users" = oidcScopes;
-        secret = {
-          sopsKey = "vikunja/oidc/client_secret";
-          name = "vikunjaOidcClientSecret";
-          restartUnits = [ "vikunja.service" ];
-        };
-      };
-    };
-    presentation = {
-      title = "Vikunja";
-      dashboard = {
-        enable = true;
-        category = "user";
-      };
+  host.paperless = {
+    storageProvider = "beast";
+    gpt = {
+      providerHost = "frame";
+      textModel = "granite4:32b-a9b-h";
+      visionModel = "qwen3-vl:8b-instruct";
     };
   };
+
+  host.vikunja = { };
 }

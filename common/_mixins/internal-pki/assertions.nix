@@ -1,48 +1,25 @@
 {
   config,
-  enabledClients,
   lib,
-  model,
 }:
 let
-  managedCertificates = config.host.internalPki.managedCertificates;
-  managedCertificateKeys = map (
-    certificate: "${certificate.category}/${certificate.name}"
-  ) managedCertificates;
+  categories = import ./categories.nix;
+  certificates = builtins.attrValues config.host.pki.certificates;
   managedCertificateSourceKeys = map (
-    certificate: "${certificate.secretPrefix}/${certificate.certificateField}"
-  ) managedCertificates;
+    certificate: "${certificate.secretPrefix}/${categories.${certificate.category}.certificateField}"
+  ) certificates;
 in
 [
   {
-    assertion = builtins.length model.authorityNames <= 1;
-    message = "realm '${config.host.realm}' has multiple internal PKI authorities: ${lib.concatStringsSep ", " model.authorityNames}";
-  }
-  {
-    assertion =
-      !config.host.internalPki.authority.enable
-      || config.host.internalPki.authority.rootCaCertificate != null;
-    message = "internal PKI authority '${config.networking.hostName}' must declare its root CA certificate";
-  }
-  {
-    assertion = enabledClients == { } || model.realmAuthority != null;
+    assertion = config.host.pki.certificates == { } || config.host.pki.authority != null;
     message =
-      "realm '${config.host.realm}' has no internal PKI authority, but host '${config.networking.hostName}' enables clients: "
-      + lib.concatStringsSep ", " (builtins.attrNames enabledClients);
-  }
-  {
-    assertion = !config.host.internalPki.enable || model.realmAuthority != null;
-    message = "realm '${config.host.realm}' has no internal PKI authority";
-  }
-  {
-    assertion =
-      builtins.length managedCertificateKeys == builtins.length (lib.unique managedCertificateKeys);
-    message = "host.internalPki.managedCertificates must not duplicate a category/name pair";
+      "realm '${config.host.realm}' has no internal PKI authority, but host '${config.networking.hostName}' registers certificates: "
+      + lib.concatStringsSep ", " (builtins.attrNames config.host.pki.certificates);
   }
   {
     assertion =
       builtins.length managedCertificateSourceKeys
       == builtins.length (lib.unique managedCertificateSourceKeys);
-    message = "host.internalPki.managedCertificates must not duplicate a SOPS certificate field";
+    message = "host.pki.certificates must not duplicate a SOPS certificate field";
   }
 ]

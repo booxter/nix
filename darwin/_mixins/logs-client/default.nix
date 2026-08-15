@@ -1,32 +1,19 @@
 {
   config,
-  facts,
   lib,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.observability.logs;
-  realmObservability = facts.realms.${config.host.realm}.services.observability or null;
-  realmLoki =
-    if realmObservability == null then
-      {
-        writeUrl = null;
-        mtls = false;
-      }
-    else
-      realmObservability.loki;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  enabledPkiClients = lib.filterAttrs (
-    _: client: client.enable && client.category == "observability"
-  ) config.host.internalPki.clients;
-  lokiMtlsClient =
-    if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledPkiClients then
-      enabledPkiClients.${cfg.loki.mtls.clientName}
-    else
-      null;
+  lokiClient = config.host.observability.loki.client;
+  enable = config.host.observability.enable;
   stateDir = "/var/lib/grafana-alloy";
   hostLabel = config.networking.hostName;
+  fileGlobs = [
+    "/var/log/*.log"
+    "/var/log/nix-darwin/*.log"
+    "/private/var/lib/prometheus-node-exporter/*.log"
+  ];
   renderLabelMap =
     labels:
     "{ ${
@@ -34,29 +21,23 @@ let
         lib.mapAttrsToList (name: value: "${builtins.toJSON name} = ${builtins.toJSON value}") labels
       )
     } }";
-  logTargets = map (
-    path:
-    {
-      "__path__" = path;
-      job = cfg.jobName;
-      host = hostLabel;
-    }
-    // cfg.extraLabels
-  ) cfg.fileGlobs;
-  lokiTlsConfig = lib.optionalString cfg.loki.mtls.enable ''
+  logTargets = map (path: {
+    "__path__" = path;
+    job = "darwin-file-log";
+    host = hostLabel;
+  }) fileGlobs;
+  lokiTlsConfig = lib.optionalString (lokiClient != null) ''
     tls_config {
-      ca_file = "${cfg.loki.mtls.trustedCaCertificate}"
-      cert_file = "${
-        config.sops.secrets.${lokiMtlsClient.materializations.default.certificateSecretName}.path
-      }"
-      key_file = "${config.sops.secrets.${lokiMtlsClient.materializations.default.keySecretName}.path}"
-      server_name = "${cfg.loki.mtls.serverName}"
+      ca_file = "${lokiClient.trustedCaCertificate}"
+      cert_file = "${config.host.pki.clients.loki.materializations.default.certificatePath}"
+      key_file = "${config.host.pki.clients.loki.materializations.default.keyPath}"
+      server_name = "${lokiClient.serverName}"
     }
   '';
   alloyConfig = pkgs.writeText "darwin-file-logs.alloy" ''
     loki.write "default" {
       endpoint {
-        url = "${cfg.lokiWriteUrl}"
+        url = "${if lokiClient == null then "" else lokiClient.writeUrl}"
     ${lokiTlsConfig}
       }
     }
@@ -107,131 +88,37 @@ let
   '';
 in
 {
-  options.host.observability.logs = {
-    enable = lib.mkEnableOption "Darwin file log shipping to Loki";
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.grafana-alloy;
-      description = "Grafana Alloy package used to ship Darwin file logs.";
+  config = lib.mkIf (enable && lokiClient != null) {
+    host.pki.clients.loki = {
+      category = "observability";
+      secretPrefix = "observability/clients/loki";
+      materializations.default.group = "wheel";
     };
 
-    lokiWriteUrl = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = null;
-      description = "Loki push endpoint URL for Darwin file log shipping.";
-    };
+    system.activationScripts.postActivation.text = lib.mkAfter ''
+      mkdir -p ${stateDir}
+      chmod 0755 ${stateDir}
+    '';
 
-    loki.mtls = {
-      enable = lib.mkEnableOption "mTLS authentication for Loki log shipping";
-
-      clientName = lib.mkOption {
-        type = lib.types.str;
-        default = "loki";
-        description = "Name of the host.internalPki.clients entry used for Loki writes.";
-      };
-
-      serverName = lib.mkOption {
-        type = lib.types.str;
-        default = "loki.${config.host.network.lanDomain}";
-        description = "TLS server name used for Loki writes.";
-      };
-
-      trustedCaCertificate = lib.mkOption {
-        type = lib.types.path;
-        default = internalPkiRootCaPath;
-        description = "CA bundle used to verify the Loki writer endpoint.";
-      };
-    };
-
-    fileGlobs = lib.mkOption {
-      type = with lib.types; listOf str;
-      default = [
-        "/var/log/*.log"
-        "/var/log/nix-darwin/*.log"
-        "/private/var/lib/prometheus-node-exporter/*.log"
+    launchd.daemons.grafana-alloy-logs = {
+      command = lib.escapeShellArgs [
+        (lib.getExe pkgs.grafana-alloy)
+        "run"
+        "--server.http.listen-addr=127.0.0.1:12345"
+        "--storage.path=${stateDir}"
+        alloyConfig
       ];
-      description = "Absolute file globs to tail and ship to Loki.";
-    };
-
-    jobName = lib.mkOption {
-      type = lib.types.str;
-      default = "darwin-file-log";
-      description = "Loki job label applied to Darwin file log entries.";
-    };
-
-    extraLabels = lib.mkOption {
-      type = with lib.types; attrsOf str;
-      default = { };
-      description = "Additional static Loki labels applied to Darwin file log entries.";
-    };
-
-    configFile = lib.mkOption {
-      type = lib.types.path;
-      default = alloyConfig;
-      description = "Generated Grafana Alloy configuration for Darwin file log shipping.";
-    };
-
-    httpListenAddress = lib.mkOption {
-      type = lib.types.str;
-      default = "127.0.0.1:12345";
-      description = "Grafana Alloy local HTTP listen address.";
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = true;
+        WorkingDirectory = stateDir;
+        EnvironmentVariables = {
+          HOME = "/var/root";
+        };
+        ProcessType = "Background";
+        StandardOutPath = "/var/log/grafana-alloy.log";
+        StandardErrorPath = "/var/log/grafana-alloy.log";
+      };
     };
   };
-
-  config = lib.mkMerge [
-    {
-      host.observability.logs = {
-        enable = lib.mkDefault config.host.observability.enable;
-        lokiWriteUrl = lib.mkDefault realmLoki.writeUrl;
-        loki.mtls.enable = lib.mkDefault realmLoki.mtls;
-      };
-
-      host.internalPki.clients.loki = {
-        enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null && cfg.loki.mtls.enable);
-        category = "observability";
-        secretPrefix = "observability/clients/loki";
-        materializations.default.group = "wheel";
-      };
-    }
-    (lib.mkIf (cfg.enable && cfg.lokiWriteUrl != null) (
-      lib.mkMerge [
-        {
-          system.activationScripts.postActivation.text = lib.mkAfter ''
-            mkdir -p ${stateDir}
-            chmod 0755 ${stateDir}
-          '';
-
-          launchd.daemons.grafana-alloy-logs = {
-            command = lib.escapeShellArgs [
-              (lib.getExe cfg.package)
-              "run"
-              "--server.http.listen-addr=${cfg.httpListenAddress}"
-              "--storage.path=${stateDir}"
-              cfg.configFile
-            ];
-            serviceConfig = {
-              RunAtLoad = true;
-              KeepAlive = true;
-              WorkingDirectory = stateDir;
-              EnvironmentVariables = {
-                HOME = "/var/root";
-              };
-              ProcessType = "Background";
-              StandardOutPath = "/var/log/grafana-alloy.log";
-              StandardErrorPath = "/var/log/grafana-alloy.log";
-            };
-          };
-        }
-        (lib.mkIf cfg.loki.mtls.enable {
-          assertions = [
-            {
-              assertion = lokiMtlsClient != null;
-              message = "host.observability.logs.loki.mtls.clientName must reference an enabled observability-category host.internalPki.clients entry.";
-            }
-          ];
-        })
-      ]
-    ))
-  ];
 }

@@ -3,49 +3,62 @@
   system.stateVersion = "25.11";
 
   imports = [
-    ./jellarr
-    ./jellyfin.nix
+    ./jellyfin
     ./storage.nix
   ];
 
-  host.observability.blackbox.remote.enable = true;
-  host.web.ingress = {
-    enable = true;
-    dynamicDns = {
-      enable = true;
-      hostname = "ihrachyshka-beast.freeddns.org";
-      username = "ihrachyshka";
+  hardware.cpu.intel.updateMicrocode = true;
+
+  host = {
+    disko.layout = "plain";
+
+    hardware.gpu = {
+      vendor = "intel";
+      renderDevice = "/dev/dri/renderD128";
     };
-  };
-  host.backups.server.enable = true;
-  host.hardware.gpu = {
-    vendors = [ "intel" ];
-    render.device = "/dev/dri/renderD128";
-  };
-  host.lolek.enable = true;
-  host.network = {
-    ethernet.disablePauseFrames.enable = true;
-    interfaces = {
-      enp6s0.kind = "ethernet";
-      enp7s0.kind = "ethernet";
+
+    network = {
+      interfaces = {
+        enp6s0.disablePauseFrames = true;
+        enp7s0.disablePauseFrames = true;
+      };
+      primaryInterface = "enp6s0";
     };
-    macAddress = "bc:fc:e7:3b:fe:da";
-    primaryInterface = "enp6s0";
-    reservation = {
-      enable = true;
-      address = "192.168.16.3";
+
+    ups = {
+      server = {
+        description = "APC Back-UPS RS 1500MS2";
+        waitForLowBattery = true;
+      };
     };
-  };
-  host.ups = {
-    server = {
-      enable = true;
-      description = "APC Back-UPS RS 1500MS2";
+
+    backups = {
+      destination.server = "beast";
+      server = {
+        repositoryRoot = "/volume2/backups/restic-prod/hosts";
+        offsite = {
+          backend = "s3";
+          endpoint = "https://s3.us-east-005.backblazeb2.com";
+          bucket = "ihar-restic-prod";
+          prefix = "hosts";
+          qos = true;
+          storageProvider = "b2";
+        };
+      };
     };
-    shutdown.waitForLowBattery = true;
-  };
-  host.watchstate = {
-    enable = true;
-    backups.stagingDirectory = "/volume2/backups/staging/watchstate";
+
+    web.ingress = {
+      dynamicDns = {
+        hostname = "ihrachyshka-beast.freeddns.org";
+        username = "ihrachyshka";
+      };
+    };
+    observability.blackbox.remote = { };
+
+    lolek.enable = true;
+    watchstate = {
+      backupStagingDirectory = "/volume2/backups/staging/watchstate";
+    };
   };
 
   environment.systemPackages = [ pkgs.join-media-parts ];

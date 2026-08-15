@@ -15,7 +15,7 @@ in
     message = "host.storage.volumes.${name}.mountPoint must be absolute";
   }) volumes
   ++ lib.mapAttrsToList (name: volume: {
-    assertion = !volume.btrfs.snapshots.enable || volume.fileSystem.fsType == "btrfs";
+    assertion = !volume.snapshots || volume.fsType == "btrfs";
     message = "host.storage.volumes.${name} must use Btrfs when snapshots are enabled";
   }) volumes;
 }

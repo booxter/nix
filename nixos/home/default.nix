@@ -1,21 +1,23 @@
-{ pkgs, ... }:
+{ lib, ... }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "26.05";
 
-  host.network = {
-    macAddress = "02:48:4f:4d:45:01";
-    reservation = {
-      enable = true;
-      address = "192.168.20.6";
-    };
+  host.proxmox.guest = {
+    cluster = "lab";
+    cores = 4;
+    memoryGiB = 8;
+    diskGiB = 80;
   };
 
   host.ups.client.server = "prx1-lab";
 
-  _module.args.homeAssistantTools = pkgs.callPackage ./pkgs/home-assistant-tools { };
+  host.backups.destination = {
+    server = "beast";
+    publicKey = readPublicKey ./restic.pub;
+  };
 
-  imports = [
-    ./backup.nix
-    ./home-assistant.nix
-  ];
+  host.home-assistant.enable = true;
 }

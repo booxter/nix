@@ -1,0 +1,29 @@
+groups:
+  - name: systemd
+    interval: 30s
+    rules:
+      - alert: ExpectedSystemdUnitInactive
+        expr: |
+          (
+            nixos_systemd_unit_expected_active{scrape_profile="node"} == 1
+            unless on(instance, name)
+            node_systemd_unit_state{scrape_profile="node",state="active"} == 1
+          )
+          and on(instance)
+          up{scrape_profile="node"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          category: systemd
+        annotations:
+          summary: "Systemd unit inactive: {{ $labels.name }} on {{ $labels.instance }}"
+          description: "NixOS expects {{ $labels.name }} to remain active on {{ $labels.instance }}, but systemd has not reported it active for 5 minutes."
+      - alert: SystemdUnitFailed
+        expr: node_systemd_unit_state{scrape_profile="node",state="failed"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          category: systemd
+        annotations:
+          summary: "Systemd unit failed: {{ $labels.name }} on {{ $labels.instance }}"
+          description: "The systemd unit {{ $labels.name }} on {{ $labels.instance }} has remained failed for 5 minutes."

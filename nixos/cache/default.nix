@@ -1,28 +1,26 @@
 {
   config,
-  facts,
-  pkgs,
+  lib,
   ...
 }:
 let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   nfsPath = config.host.storage.claims.nixCache.mountPoint;
 in
 {
   system.stateVersion = "25.11";
 
-  host.network = {
-    macAddress = "bc:24:11:0d:85:41";
-    reservation = {
-      enable = true;
-      address = "192.168.20.7";
-    };
-  };
-
   host.attic.server = {
     enable = true;
-    endpoint = config.host.web.services.atticd.internal.url;
     storagePath = nfsPath;
-    trustedPublicKey = facts.public-keys.nix-cache.home;
+    trustedPublicKey = readPublicKey ./attic-signing.pub;
+  };
+
+  host.proxmox.guest = {
+    cluster = "lab";
+    cores = 16;
+    memoryGiB = 16;
+    diskGiB = 50; # actual cache is on NFS
   };
 
   host.storage.claims.nixCache = {
@@ -31,24 +29,4 @@ in
   };
 
   host.ups.client.server = "prx1-lab";
-
-  environment.systemPackages = with pkgs; [
-    attic-client
-  ];
-
-  host.web.services.atticd = {
-    enable = true;
-    upstream = "http://127.0.0.1:8080";
-    internal = {
-      serverName = "nix-cache.${config.host.network.lanDomain}";
-      localAliases = [ "nix-cache" ];
-      locationExtraConfig = ''
-        client_max_body_size 0;
-        proxy_request_buffering off;
-        proxy_buffering off;
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-      '';
-    };
-  };
 }

@@ -6,9 +6,9 @@
 }:
 let
   cfg = config.host.observability.alertmanagerWatchdog;
-  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
-  watchdogClient = config.host.internalPki.clients.${watchdogName};
+  watchdogClient = config.host.pki.clients.${watchdogName};
   watchdogPackage = pkgs.callPackage ./alertmanager-watchdog {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -19,8 +19,7 @@ in
     lib.mkEnableOption "independent Alertmanager readiness watchdog";
 
   config = lib.mkIf cfg.enable {
-    host.internalPki.clients.${watchdogName} = {
-      enable = true;
+    host.pki.clients.${watchdogName} = {
       category = "internal";
       materializations.default.restartUnits = [ "${watchdogName}.service" ];
     };
@@ -57,7 +56,7 @@ in
           "--url"
           alertmanagerReadyUrl
           "--ca-file"
-          "${internalPkiRootCaPath}"
+          "${pkiRootCaPath}"
         ];
         TimeoutStartSec = "45s";
         DynamicUser = true;
@@ -66,12 +65,8 @@ in
         LoadCredential = [
           "telegram-bot-token:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken.path}"
           "telegram-chat-id:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramChatId.path}"
-          "mtls-client-crt:${
-            config.sops.secrets.${watchdogClient.materializations.default.certificateSecretName}.path
-          }"
-          "mtls-client-key:${
-            config.sops.secrets.${watchdogClient.materializations.default.keySecretName}.path
-          }"
+          "mtls-client-crt:${watchdogClient.materializations.default.certificatePath}"
+          "mtls-client-key:${watchdogClient.materializations.default.keyPath}"
         ];
         NoNewPrivileges = true;
         PrivateDevices = true;

@@ -7,13 +7,18 @@
 let
   proxmoxPkgs = inputs.proxmox-nixos.packages.${system};
   hostViews = pkgs.lib.mapAttrs (_: configuration: {
-    cluster = configuration.config.host.proxmox.cluster;
-    isGuest = configuration.config.host.isVM;
-    isNode = configuration.config.host.isProxmox;
+    cluster =
+      if configuration.config.host.proxmox.node != null then
+        configuration.config.host.proxmox.node.cluster
+      else if configuration.config.host.proxmox.guest != null then
+        configuration.config.host.proxmox.guest.cluster
+      else
+        null;
+    isGuest = configuration.config.host.proxmox.guest != null;
+    isNode = configuration.config.host.proxmox.node != null;
     realm = configuration.config.host.realm;
   }) outputs.nixosConfigurations;
-  proxmoxModel = (import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; }).build hostViews;
-  vmNodes = proxmoxModel.guestNodes;
+  vmNodes = import ../nixos/_mixins/proxmox/lib.nix { lib = pkgs.lib; } hostViews;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = proxmoxPkgs.nixmoxer;
     inherit vmNodes;

@@ -2,32 +2,32 @@
   host.storage.volumes.bulk = {
     # Keep /volume2 as the durable path published to existing NFS clients.
     mountPoint = "/volume2";
-    fileSystem = {
-      device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
-      fsType = "btrfs";
-      options = [
-        "compress=zstd"
-        "noatime"
-      ];
-    };
-    activation.slow = true;
-    requiredAtBoot = true;
-    btrfs.snapshots.enable = true;
+    device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
+    fsType = "btrfs";
+    mountOptions = [
+      "compress=zstd"
+      "noatime"
+    ];
+    slowActivation = true;
+    snapshots = true;
   };
 
   host.storage.resources = {
     media = {
       volume = "bulk";
       relativePath = "Media";
-      sharedGroup = "media";
       directoryDefaults = {
         group = "media";
         mode = "2775";
         enforce = true;
       };
-      identities.groups = [ "media" ];
+      directories = {
+        library = { };
+        "library/audiobooks" = { };
+        "library/books" = { };
+        podcasts = { };
+      };
       nfs = {
-        enable = true;
         fsid = 10;
       };
     };
@@ -35,7 +35,6 @@
       volume = "bulk";
       relativePath = "nix-cache";
       nfs = {
-        enable = true;
         fsid = 11;
       };
     };
@@ -47,12 +46,7 @@
         group = "paperless";
         mode = "0750";
       };
-      identities = {
-        groups = [ "paperless" ];
-        users = [ "paperless" ];
-      };
       nfs = {
-        enable = true;
         fsid = 12;
         anonymousIdentity = "paperless";
       };
@@ -68,7 +62,7 @@
 
     smart.enable = true;
 
-    hba.backend = "storcli";
+    hba.enable = true;
 
     diskBays = {
       rows = 5;
@@ -152,7 +146,6 @@
           model = "ST24000NM000C-3WD103";
         }
       ];
-      exporter.enable = true;
     };
   };
 }

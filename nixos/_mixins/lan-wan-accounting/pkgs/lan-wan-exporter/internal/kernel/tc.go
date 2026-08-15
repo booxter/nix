@@ -33,7 +33,11 @@ func (TCClasses) Bytes(interfaceName, classID string) (uint64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("list classes on %s: %w", interfaceName, err)
 	}
-	return classBytes(classes, handle), nil
+	bytes, found := classBytes(classes, handle)
+	if !found {
+		return 0, fmt.Errorf("traffic-control class %s is missing on %s", classID, interfaceName)
+	}
+	return bytes, nil
 }
 
 func parseClassID(classID string) (uint32, error) {
@@ -52,15 +56,15 @@ func parseClassID(classID string) (uint32, error) {
 	return uint32(major<<16 | minor), nil
 }
 
-func classBytes(classes []tc.Object, handle uint32) uint64 {
+func classBytes(classes []tc.Object, handle uint32) (uint64, bool) {
 	for _, class := range classes {
 		if class.Handle != handle {
 			continue
 		}
 		if class.Stats != nil {
-			return class.Stats.Bytes
+			return class.Stats.Bytes, true
 		}
-		return 0
+		return 0, false
 	}
-	return 0
+	return 0, false
 }

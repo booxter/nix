@@ -7,14 +7,13 @@
 let
   username = config.host.username;
   clientName = "sketchybar-jellyfin";
-  client = config.host.internalPki.clients.${clientName};
+  client = config.host.pki.clients.${clientName};
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
-  enable = config.host.isDesktop && config.host.observability.enable;
+  enable = config.host.observability.enable;
 in
-{
-  host.internalPki.clients.${clientName} = {
-    inherit enable;
+lib.mkIf enable {
+  host.pki.clients.${clientName} = {
     category = "observability";
     materializations.default = {
       owner = username;
@@ -22,12 +21,11 @@ in
     };
   };
 
-  home-manager.users.${username}.programs.sketchybarJellyfin = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.jellyfin = {
     enable = true;
     metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${config.host.network.lanDomain}/d/fana-media-pipe";
-    clientCertificate =
-      config.sops.secrets.${client.materializations.default.certificateSecretName}.path;
-    clientKey = config.sops.secrets.${client.materializations.default.keySecretName}.path;
+    clientCertificate = client.materializations.default.certificatePath;
+    clientKey = client.materializations.default.keyPath;
   };
 }

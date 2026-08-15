@@ -6,22 +6,20 @@
     ./netboot.nix
   ];
 
-  host.isProxmox = true;
-  host.network = {
-    interfaces.enp5s0f0np0.kind = "ethernet";
-    macAddress = "38:05:25:30:7d:89";
-    primaryInterface = "enp5s0f0np0";
-    reservation = {
-      enable = true;
-      address = "192.168.15.10";
-    };
+  hardware.cpu.amd.updateMicrocode = true;
+
+  host.realm = "home";
+  host.disko.layout = "plain";
+  host.proxmox.node = {
+    apiServerName = "proxmox.${config.host.network.lanDomain}";
+    cluster = "lab";
+    controller = { };
   };
-  host.proxmox.apiCertificate.serverName = "proxmox.${config.host.network.lanDomain}";
+  host.network.interfaces.enp5s0f0np0 = { };
   host.ups = {
     server = {
-      enable = true;
       description = "APC UPS 1500VA";
+      waitForLowBattery = true;
     };
-    shutdown.waitForLowBattery = true;
   };
 }

@@ -1,16 +1,13 @@
 {
   config,
-  facts,
   lib,
-  pkgs,
   utils,
+  watchstateModel,
   ...
 }:
 let
-  cfg = config.host.watchstate;
-  systemUser = facts.sso.applications.watchstate.bootstrapOwner;
-  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
-  tools = pkgs.callPackage ./packages/tools { inherit atomicFileWrites; };
+  inherit (watchstateModel) cfg tools;
+  systemUser = config.host.sso.applications.watchstate.bootstrapOwner;
   renderAuth = utils.escapeSystemdExecArgs [
     (lib.getExe' tools "watchstate-render-auth")
     "--system-user"
@@ -22,7 +19,7 @@ let
   ];
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     sops.secrets."watchstate/system/password" = {
       owner = "root";
       group = "root";

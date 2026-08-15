@@ -26,9 +26,9 @@ from package_updates.common import (
 )
 from package_updates.models import (
     ImageConfig,
-    OciFactPins,
     OciPin,
     OciPins,
+    OciTargets,
     PrefetchedImage,
     SkopeoTags,
 )
@@ -50,13 +50,13 @@ works with the managed service.
 """
 SOURCE_LABEL = "org.opencontainers.image.source"
 REVISION_LABEL = "org.opencontainers.image.revision"
-PINS_PATH = Path("facts/oci-images/facts.nix")
+TARGETS_PATH = Path("apps/package-updates/oci-targets.nix")
 RENDER_EXPRESSION = """
 let
   flake = builtins.getFlake (builtins.getEnv "OCI_IMAGE_REPO_ROOT");
-  pins = builtins.fromJSON (builtins.readFile (builtins.getEnv "OCI_IMAGE_PINS_JSON"));
+  pin = builtins.fromJSON (builtins.readFile (builtins.getEnv "OCI_IMAGE_PIN_JSON"));
 in
-flake.inputs.nixpkgs.lib.generators.toPretty { } pins
+flake.inputs.nixpkgs.lib.generators.toPretty { } pin
 """
 
 
@@ -71,26 +71,32 @@ class OciBackend(Protocol):
 class OciPinStore(Protocol):
     def load(self) -> OciPins: ...
 
-    def save(self, pins: OciPins) -> None: ...
+    def save(self, name: str, pin: OciPin) -> None: ...
 
 
-class NixFactOciPinStore:
+class NixModuleOciPinStore:
     def __init__(self, repo_root: Path, nix: str, runner: Runner) -> None:
         self.repo_root = repo_root
         self.nix = nix
         self.runner = runner
+        self.paths: dict[str, Path] = {}
 
     def load(self) -> OciPins:
         output = checked(
             self.runner.run(
-                [self.nix, "run", ".#fact", "--", "oci-images"],
+                [self.nix, "eval", "--json", "--file", str(TARGETS_PATH)],
                 cwd=self.repo_root,
             ),
-            "OCI image fact lookup",
+            "OCI image target lookup",
         )
-        return OciFactPins.model_validate_json(output).editable()
+        targets = OciTargets.model_validate_json(output)
+        self.paths = {name: Path(target.path) for name, target in targets.root.items()}
+        return targets.editable()
 
-    def save(self, pins: OciPins) -> None:
+    def save(self, name: str, pin: OciPin) -> None:
+        path = self.paths.get(name)
+        if path is None:
+            raise UpdateError(f"OCI image target has no module path: {name}")
         with NamedTemporaryFile(
             mode="w",
             prefix="oci-image-pins-",
@@ -98,7 +104,7 @@ class NixFactOciPinStore:
             encoding="utf-8",
             delete=False,
         ) as temporary:
-            json.dump(pins.model_dump(mode="json", by_alias=True), temporary)
+            json.dump(pin.model_dump(mode="json", by_alias=True), temporary)
             temporary_path = Path(temporary.name)
         try:
             output = checked(
@@ -113,16 +119,16 @@ class NixFactOciPinStore:
                     ],
                     cwd=self.repo_root,
                     environment={
-                        "OCI_IMAGE_PINS_JSON": str(temporary_path),
+                        "OCI_IMAGE_PIN_JSON": str(temporary_path),
                         "OCI_IMAGE_REPO_ROOT": str(self.repo_root),
                     },
                 ),
-                "OCI image fact rendering",
+                "OCI image module rendering",
             )
         finally:
             temporary_path.unlink()
         write_text_atomic(
-            self.repo_root / PINS_PATH,
+            self.repo_root / path,
             output.rstrip() + "\n",
             create_mode=0o644,
         )
@@ -282,7 +288,7 @@ def update_oci_images(
             current.digest = prefetched.image_digest
             current.hash = prefetched.hash
             if current.model_dump() != old.model_dump():
-                pin_store.save(pins)
+                pin_store.save(name, current)
             print("::endgroup::", file=stdout)
             summary.write(
                 summary_row(
@@ -328,7 +334,7 @@ def run(
     command_stderr = stderr or sys.stderr
     try:
         repo_root = find_repo_root(cwd or Path.cwd())
-        pin_store = NixFactOciPinStore(repo_root, command_tools.nix, command_runner)
+        pin_store = NixModuleOciPinStore(repo_root, command_tools.nix, command_runner)
         pins = pin_store.load()
         if arguments.list_targets:
             for name, pin in pins.root.items():

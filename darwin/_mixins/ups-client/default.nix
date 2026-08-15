@@ -1,6 +1,5 @@
 {
   config,
-  facts,
   lib,
   outputs,
   pkgs,
@@ -17,14 +16,15 @@ let
       ;
   };
   server = if serverName == null then null else model.servers.${serverName} or null;
-  fleetNetwork = import ../../../nixos/_lib/fleet-host-network.nix { inherit config outputs; };
-  clientCredentialMode = facts.realms.${config.host.realm}.services.ups.credentialMode;
-  serverCredentialMode =
-    if server == null then null else facts.realms.${server.realm}.services.ups.credentialMode;
+  siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
   monitorName = if serverName == null then "" else serverName;
   monitorPasswordSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
-    server != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
+    server != null
+    && import ../../../common/_mixins/ups/uses-literal-credentials.nix {
+      clientRealm = config.host.realm;
+      serverRealm = server.realm;
+    };
   monitorPassword =
     if useLiteralPassword then "upsslave123" else config.sops.placeholder.${monitorPasswordSecret};
   shutdownDelay = config.host.power.shutdown.delaySeconds;
@@ -51,7 +51,7 @@ in
       mode = "0400";
       content = ''
         MINSUPPLIES 1
-        MONITOR ${server.ups.server.name}@${fleetNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
+        MONITOR ${server.ups.server.name}@${siteNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
         NOTIFYCMD ${pkgs.nut}/bin/upssched
         NOTIFYFLAG ONBATT SYSLOG+EXEC
         NOTIFYFLAG ONLINE SYSLOG+EXEC
@@ -68,7 +68,7 @@ in
       LOCKFN /var/lib/nut/upssched.lock
 
       ${
-        if cfg.shutdown.waitForLowBattery || shutdownDelay == null then
+        if shutdownDelay == null then
           ""
         else
           ''

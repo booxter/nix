@@ -92,9 +92,6 @@ nix run .#sops-copy -- mair prx1-lab flakehub
 Run `sops-update` when a host secret should receive missing template keys.
 `sops-edit` only opens the selected secret for editing.
 
-`srvarr`'s adaptive upload policy and tracker prioritization are documented in
-[nixos/srvarr/upload-policy.md](nixos/srvarr/upload-policy.md).
-
 ## Tests
 
 Run Bats checks:

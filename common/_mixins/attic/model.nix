@@ -1,19 +1,18 @@
 {
   config,
-  hostSpec,
   lib,
   outputs,
 }:
 let
-  localHost = hostSpec.name;
+  localHost = config.networking.hostName;
   localCandidate = {
     hostName = localHost;
     inherit (config.host) realm;
     server = config.host.attic.server;
   };
-  otherConfigurations = builtins.removeAttrs (
-    outputs.nixosConfigurations // outputs.darwinConfigurations
-  ) [ localHost ];
+  otherConfigurations = removeAttrs (outputs.nixosConfigurations // outputs.darwinConfigurations) [
+    localHost
+  ];
   otherCandidates = lib.mapAttrs (_: configuration: {
     hostName = configuration.config.networking.hostName;
     inherit (configuration.config.host) realm;
@@ -32,7 +31,6 @@ let
       endpoint
       trustedPublicKey
       ;
-    substituter = "${candidate.server.endpoint}/${candidate.server.cacheName}";
   }) realmCandidates;
 in
 {

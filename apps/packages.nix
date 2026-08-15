@@ -1,18 +1,23 @@
-pkgs:
+{
+  pkgs,
+  fleetHosts ? { },
+  realmsByHost ? { },
+}:
 let
   atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes { };
-  facts = import ../facts { inherit (pkgs) lib; };
-  sopsTools = import ./sops/package.nix { inherit facts pkgs; };
+  sopsTools = import ./sops/package.nix { inherit pkgs realmsByHost; };
   certificateTools = pkgs.callPackage ./pki-certificates {
-    inherit atomicFileWrites facts sopsTools;
+    inherit atomicFileWrites sopsTools;
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
-    inherit facts sopsTools;
+    inherit fleetHosts sopsTools;
   };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
-  seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
+  seerrTools = pkgs.callPackage ../nixos/_mixins/seerr/tools { };
 in
 {
+  sops-tools = sopsTools;
+
   get-ff-cookie = getFfCookie;
 
   issue-internal-service-cert = certificateTools;

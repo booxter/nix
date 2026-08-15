@@ -2,69 +2,28 @@
   config,
   lib,
   pkgs,
+  utils,
+  webModel,
   ...
 }:
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
-  probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
   gateHelpers = import ./oauth2-proxy-gate-lib.nix { };
 
   gateSubmodule =
-    gateName:
-    { config, ... }:
-    let
-      safeClientId = lib.replaceStrings [ "-" ] [ "_" ] config.clientId;
-    in
+    { ... }:
     {
       options = {
-        enable = lib.mkEnableOption "oauth2-proxy nginx auth_request gate";
-
-        package = lib.mkPackageOption pkgs "oauth2-proxy" { };
-
-        clientId = lib.mkOption {
-          type = lib.types.str;
-          description = "OIDC client ID used by oauth2-proxy.";
-        };
-
         displayName = lib.mkOption {
           type = lib.types.str;
           description = "Display name shown by the identity provider.";
         };
 
-        originLanding = lib.mkOption {
-          type = lib.types.str;
-          description = "Landing page shown for the OIDC client.";
-        };
-
-        httpAddress = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:4180";
-          description = "Loopback HTTP address where oauth2-proxy listens.";
-        };
-
-        serviceName = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy-${gateName}";
-          description = "Systemd service name for this oauth2-proxy instance.";
-        };
-
-        user = lib.mkOption {
-          type = lib.types.str;
-          default = config.serviceName;
-          description = "System user that runs this oauth2-proxy instance.";
-        };
-
-        group = lib.mkOption {
-          type = lib.types.str;
-          default = config.user;
-          description = "System group that runs this oauth2-proxy instance.";
-        };
-
-        cookieName = lib.mkOption {
-          type = lib.types.str;
-          default = "_${safeClientId}_sso";
-          description = "Session cookie name used by oauth2-proxy.";
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 4180;
+          description = "Loopback port where oauth2-proxy listens.";
         };
 
         sessionRefresh = lib.mkOption {
@@ -93,30 +52,6 @@ let
           description = "Redis-backed oauth2-proxy session refresh configuration.";
         };
 
-        clientSecretSopsKey = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy/${config.clientId}/client_secret";
-          description = "SOPS key containing the oauth2-proxy OIDC client secret.";
-        };
-
-        cookieSecretSopsKey = lib.mkOption {
-          type = lib.types.str;
-          default = "oauth2-proxy/${config.clientId}/cookie_secret";
-          description = "SOPS key containing the oauth2-proxy cookie secret.";
-        };
-
-        secretOwner = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-          description = "Owner for generated oauth2-proxy SOPS secret files.";
-        };
-
-        secretGroup = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-          description = "Group for generated oauth2-proxy SOPS secret files.";
-        };
-
         allowedGroups = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
@@ -128,63 +63,18 @@ let
           description = "OIDC claim containing groups for oauth2-proxy authorization.";
         };
 
-        scope = lib.mkOption {
-          type = lib.types.str;
-          default = lib.concatStringsSep " " (oidcBaseScopes ++ [ config.groupClaim ]);
-          description = "OAuth scope requested by oauth2-proxy.";
-        };
-
-        whitelistDomains = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-          description = "Hostnames accepted as oauth2-proxy redirect targets.";
-        };
-
         externalOrigin = lib.mkOption {
-          type = with lib.types; nullOr str;
+          type = with lib.types; nullOr (strMatching "^https://[^/?#]+$");
           default = null;
-          description = "Browser-facing origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
-        };
-
-        authCookieVariableName = lib.mkOption {
-          type = lib.types.str;
-          default = "${safeClientId}_auth_cookie";
-          description = "nginx variable name used to forward oauth2-proxy Set-Cookie headers.";
+          description = "Pathless HTTPS origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
         };
 
         authRequestHeaders = lib.mkOption {
-          type =
-            with lib.types;
-            listOf (submodule {
-              options = {
-                variableName = lib.mkOption {
-                  type = str;
-                  description = "nginx variable name assigned from the oauth2-proxy auth response.";
-                };
-
-                upstreamHeader = lib.mkOption {
-                  type = str;
-                  description = "Lowercase nginx upstream header variable suffix, for example x_auth_request_user.";
-                };
-
-                proxyHeader = lib.mkOption {
-                  type = str;
-                  description = "Request header forwarded to the protected upstream.";
-                };
-              };
-            });
-          default = [
-            {
-              variableName = "${safeClientId}_user";
-              upstreamHeader = "x_auth_request_user";
-              proxyHeader = "X-User";
-            }
-            {
-              variableName = "${safeClientId}_email";
-              upstreamHeader = "x_auth_request_email";
-              proxyHeader = "X-Email";
-            }
-          ];
+          type = with lib.types; attrsOf nonEmptyStr;
+          default = {
+            X-User = "x_auth_request_user";
+            X-Email = "x_auth_request_email";
+          };
           description = "Headers copied from oauth2-proxy auth responses into protected upstream requests.";
         };
 
@@ -197,60 +87,60 @@ let
         internalHttpsServiceNames = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
-          description = "host.internalHttps service names protected by this gate.";
+          description = "Internal web endpoint names protected by this gate.";
         };
 
-        externalHostNames = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-          description = "host.externalService public hostnames protected by this gate.";
-        };
-
-        extraLocations = lib.mkOption {
-          type = with lib.types; attrsOf anything;
-          default = { };
-          description = "Extra nginx locations added to every protected vhost.";
-        };
-
-        extraLocationsByName = lib.mkOption {
-          type = with lib.types; attrsOf (attrsOf anything);
-          default = { };
-          description = "Extra nginx locations added to one protected internal service or external hostname.";
-        };
-
-        probeLocationsByName = lib.mkOption {
-          type = with lib.types; attrsOf (attrsOf anything);
-          default = { };
-          description = "Extra nginx locations added only to one protected internal service's probe-only HTTPS listener.";
-        };
       };
     };
 
-  enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
+  gates = cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
+  serviceNameFor = gateName: "oauth2-proxy-${gateName}";
+  credentialDirectoryPlaceholder = "@oauth2-proxy-credentials@";
+  credentialPath = name: "${credentialDirectoryPlaceholder}/${name}";
+  safeName = name: lib.replaceStrings [ "-" ] [ "_" ] (lib.toLower name);
+  cookieNameFor = gateName: "_${lib.replaceStrings [ "-" ] [ "_" ] gateName}_sso";
+  httpAddressFor = gate: "http://127.0.0.1:${toString gate.port}";
+  logoutCompletePath = "/oauth2/logout-complete";
   internalHttpsServiceHosts =
-    serviceName:
+    endpointName:
     let
-      endpointName = config.host.web.services.${serviceName}.internal.endpointName;
+      service = webModel.internalEndpoints.${endpointName};
     in
     [
-      "${endpointName}.${config.host.network.lanDomain}"
+      service.internal.serverName
       endpointName
       "${endpointName}.local"
-    ];
+    ]
+    ++ service.internal.serverAliases
+    ++ service.internal.publicAliases;
+  browserOriginFor =
+    gate:
+    if gate.externalOrigin != null then
+      gate.externalOrigin
+    else
+      let
+        endpointName = builtins.head gate.internalHttpsServiceNames;
+      in
+      "https://${webModel.internalEndpoints.${endpointName}.internal.serverName}";
+  whitelistDomainsFor =
+    gate:
+    if gate.externalOrigin != null then
+      [ (lib.removePrefix "https://" gate.externalOrigin) ]
+    else
+      lib.unique (lib.concatMap internalHttpsServiceHosts gate.internalHttpsServiceNames);
   originUrlsFor =
     gate:
     if gate.externalOrigin != null then
       [ "${gate.externalOrigin}/oauth2/callback" ]
     else
       lib.unique (
-        map (host: "https://${host}/oauth2/callback") gate.externalHostNames
-        ++ map (host: "https://${host}/oauth2/callback") (
+        map (host: "https://${host}/oauth2/callback") (
           lib.concatMap internalHttpsServiceHosts gate.internalHttpsServiceNames
         )
       );
 
-  mkArg = name: value: "--${name}=${lib.escapeShellArg (toString value)}";
+  mkArg = name: value: "--${name}=${toString value}";
   mkArgs = name: values: map (mkArg name) values;
   oauth2ProxyArgs =
     gateName: gate:
@@ -259,15 +149,15 @@ let
     in
     [
       (mkArg "approval-prompt" "auto")
-      (mkArg "client-id" gate.clientId)
-      (mkArg "client-secret-file" "%d/client-secret")
+      (mkArg "client-id" gateName)
+      (mkArg "client-secret-file" (credentialPath "client-secret"))
       (mkArg "code-challenge-method" "S256")
       (mkArg "cookie-httponly" "true")
-      (mkArg "cookie-name" gate.cookieName)
-      (mkArg "cookie-secret-file" "%d/cookie-secret")
+      (mkArg "cookie-name" (cookieNameFor gateName))
+      (mkArg "cookie-secret-file" (credentialPath "cookie-secret"))
       (mkArg "cookie-secure" "true")
       (mkArg "email-domain" "*")
-      (mkArg "http-address" gate.httpAddress)
+      (mkArg "http-address" (httpAddressFor gate))
       (mkArg "oidc-groups-claim" gate.groupClaim)
       (mkArg "oidc-issuer-url" oidcClient.issuerUrl)
       (mkArg "pass-access-token" "false")
@@ -277,7 +167,7 @@ let
       (mkArg "proxy-prefix" "/oauth2")
       (mkArg "request-logging" "true")
       (mkArg "reverse-proxy" "true")
-      (mkArg "scope" gate.scope)
+      (mkArg "scope" (lib.concatStringsSep " " (oidcBaseScopes ++ [ gate.groupClaim ])))
       (mkArg "set-xauthrequest" "true")
       (mkArg "skip-provider-button" "true")
       (mkArg "upstream" "static://202")
@@ -296,24 +186,31 @@ let
       "127.0.0.1/32"
       "::1/128"
     ]
-    ++ mkArgs "whitelist-domain" gate.whitelistDomains;
-
+    ++ mkArgs "whitelist-domain" (whitelistDomainsFor gate);
+  authRequestVariable = gateName: proxyHeader: "${safeName gateName}_${safeName proxyHeader}";
   mkAuthRequestSet =
-    header: "auth_request_set $" + header.variableName + " $upstream_http_${header.upstreamHeader};";
-  mkProxyHeader = header: "proxy_set_header ${header.proxyHeader} $" + header.variableName + ";";
+    gateName: proxyHeader: upstreamHeader:
+    "auth_request_set $"
+    + authRequestVariable gateName proxyHeader
+    + " $upstream_http_${upstreamHeader};";
+  mkProxyHeader =
+    gateName: proxyHeader: _:
+    "proxy_set_header ${proxyHeader} $" + authRequestVariable gateName proxyHeader + ";";
   authRequestLocationConfig =
-    gate:
+    gateName: gate:
     let
-      authCookieVariable = "$" + gate.authCookieVariableName;
+      authCookieVariable = "$" + safeName gateName + "_auth_cookie";
     in
     ''
       auth_request /oauth2/auth;
       error_page 401 = $sso_oauth2_proxy_auth_failure_uri;
 
-      ${lib.concatMapStringsSep "\n" mkAuthRequestSet gate.authRequestHeaders}
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (mkAuthRequestSet gateName) gate.authRequestHeaders
+      )}
       auth_request_set ${authCookieVariable} $upstream_http_set_cookie;
 
-      ${lib.concatMapStringsSep "\n" mkProxyHeader gate.authRequestHeaders}
+      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (mkProxyHeader gateName) gate.authRequestHeaders)}
       ${lib.optionalString gate.clearAuthorizationHeader ''proxy_set_header Authorization "";''}
       proxy_hide_header X-SSO-Reauth;
       add_header Set-Cookie ${authCookieVariable};
@@ -326,7 +223,7 @@ let
     in
     {
       "/oauth2/" = {
-        proxyPass = gate.httpAddress;
+        proxyPass = httpAddressFor gate;
         recommendedProxySettings = true;
         extraConfig = ''
           auth_request off;
@@ -336,7 +233,7 @@ let
       };
 
       "= /oauth2/auth" = {
-        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        proxyPass = "${httpAddressFor gate}/oauth2/auth";
         recommendedProxySettings = true;
         extraConfig = ''
           internal;
@@ -348,7 +245,7 @@ let
       };
 
       "= /oauth2/session" = {
-        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        proxyPass = "${httpAddressFor gate}/oauth2/auth";
         recommendedProxySettings = true;
         extraConfig = ''
           auth_request off;
@@ -373,133 +270,113 @@ let
       };
     };
 
+  sessionClearLocations =
+    gate: endpointName:
+    let
+      paths = webModel.internalEndpoints.${endpointName}.auth.sessionClearPaths;
+    in
+    lib.optionalAttrs (paths != [ ]) (
+      builtins.listToAttrs (
+        map (path: {
+          name = "= ${path}";
+          value = {
+            proxyPass = "${httpAddressFor gate}/oauth2/sign_out?rd=${logoutCompletePath}";
+            recommendedProxySettings = true;
+            extraConfig = ''
+              auth_request off;
+            '';
+          };
+        }) paths
+      )
+      // {
+        "= ${logoutCompletePath}" = {
+          return = "204";
+          extraConfig = ''
+            auth_request off;
+          '';
+        };
+      }
+    );
+
   locationsFor =
-    gate: name:
-    (oauth2ProxyLocations gate) // gate.extraLocations // (gate.extraLocationsByName.${name} or { });
+    gate: endpointName: (oauth2ProxyLocations gate) // (sessionClearLocations gate endpointName);
   # Normal service surfaces that should receive OAuth locations. Example:
   # `search` expands to `internal-https-search` and `search.ihar.dev`.
   internalServiceVhostNames =
-    serviceName:
+    endpointName:
     let
-      service = config.host.internalHttps.services.${serviceName};
+      service = webModel.internalEndpoints.${endpointName};
     in
     [
-      "internal-https-${serviceName}"
+      "internal-https-${service.internal.endpointName}"
     ]
-    ++ service.publicAliases;
+    ++ service.internal.publicAliases;
   # OAuth-protected internal HTTPS vhosts. Example: this installs `/oauth2/`,
   # `= /oauth2/auth`, and protected app locations on `internal-https-search`
   # and on its public sibling `search.ihar.dev`.
   protectedInternalVhostsFor =
-    gate:
+    gateName: gate:
     builtins.listToAttrs (
       builtins.concatMap (
-        serviceName:
+        endpointName:
+        let
+          service = webModel.internalEndpoints.${endpointName};
+          locations = lib.recursiveUpdate (locationsFor gate endpointName) {
+            ${service.internal.path}.extraConfig = authRequestLocationConfig gateName gate;
+          };
+        in
         map (vhostName: {
           name = vhostName;
-          value.locations = locationsFor gate serviceName;
-        }) (internalServiceVhostNames serviceName)
+          value = { inherit locations; };
+        }) (internalServiceVhostNames endpointName)
       ) gate.internalHttpsServiceNames
     );
-  # Public vhosts owned by host.externalService instead of host.internalHttps.
-  # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
-  protectedExternalVhostsFor =
-    gate:
-    lib.genAttrs gate.externalHostNames (hostName: {
-      locations = locationsFor gate hostName;
-    });
 in
 {
   imports = [ ./oauth2-proxy-gate/assertions.nix ];
 
   options.host.sso.oauth2ProxyGates = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.submodule ({ name, ... }@args: gateSubmodule name args));
+    type = lib.types.attrsOf (lib.types.submodule gateSubmodule);
     default = { };
     description = "Named oauth2-proxy nginx auth_request gates.";
   };
 
-  config = lib.mkIf (enabledGates != { }) {
+  config = lib.mkIf (gates != { }) {
     host.sso.oidc.registrations = lib.mapAttrs (gateName: gate: {
       inherit (gate)
-        clientId
         displayName
-        originLanding
         ;
+      originLanding = "${browserOriginFor gate}/";
       originUrls = originUrlsFor gate;
       scopeMaps = lib.genAttrs gate.allowedGroups (_: oidcBaseScopes ++ [ gate.groupClaim ]);
       claimMaps.${gate.groupClaim}.valuesByGroup = lib.genAttrs gate.allowedGroups (group: [ group ]);
       secret = {
-        sopsKey = gate.clientSecretSopsKey;
+        sopsKey = "oauth2-proxy/${gateName}/client_secret";
         name = secretNameFor gateName "client-secret";
-        owner = gate.secretOwner;
-        group = gate.secretGroup;
-        restartUnits = [ "${gate.serviceName}.service" ];
+        restartUnits = [ "${serviceNameFor gateName}.service" ];
       };
-    }) enabledGates;
+    }) gates;
 
-    users.groups = builtins.listToAttrs (
-      map (group: {
-        name = group;
-        value = { };
-      }) (lib.unique (map (gate: gate.group) (builtins.attrValues enabledGates)))
-    );
+    users.groups = lib.genAttrs (map serviceNameFor (builtins.attrNames gates)) (_: { });
 
-    users.users = builtins.listToAttrs (
-      map (user: {
-        name = user;
-        value = {
-          description = "OAuth2 Proxy";
-          isSystemUser = true;
-          group =
-            let
-              userGate = lib.findFirst (gate: gate.user == user) null (builtins.attrValues enabledGates);
-            in
-            userGate.group;
-        };
-      }) (lib.unique (map (gate: gate.user) (builtins.attrValues enabledGates)))
-    );
+    users.users = lib.genAttrs (map serviceNameFor (builtins.attrNames gates)) (user: {
+      description = "OAuth2 Proxy";
+      isSystemUser = true;
+      group = user;
+    });
 
     sops.secrets = lib.mapAttrs' (
-      gateName: gate:
+      gateName: _gate:
       lib.nameValuePair (secretNameFor gateName "cookie-secret") {
-        key = gate.cookieSecretSopsKey;
-        owner = gate.secretOwner;
-        group = gate.secretGroup;
+        key = "oauth2-proxy/${gateName}/cookie_secret";
+        owner = "root";
+        group = "root";
         mode = "0400";
-        restartUnits = [ "${gate.serviceName}.service" ];
+        restartUnits = [ "${serviceNameFor gateName}.service" ];
       }
-    ) enabledGates;
+    ) gates;
 
-    host.internalHttps.services = lib.mkMerge (
-      builtins.concatLists (
-        map (gate: [
-          (lib.genAttrs gate.internalHttpsServiceNames (_: {
-            locationExtraConfig = authRequestLocationConfig gate;
-          }))
-          # Backend probe bypasses intentionally use a separate listener instead
-          # of the normal service vhost. Public ingress forwards to the internal
-          # service name, so attaching these locations to :443 would expose them
-          # through browser-facing hostnames such as search.ihar.dev.
-          (probeHelpers.enableAttrsFor gate)
-        ]) (builtins.attrValues enabledGates)
-      )
-    );
-
-    host.externalService.virtualHosts = lib.mkMerge (
-      map (
-        gate:
-        lib.genAttrs gate.externalHostNames (_: {
-          locationExtraConfig = authRequestLocationConfig gate;
-        })
-      ) (builtins.attrValues enabledGates)
-    );
-
-    services.nginx.virtualHosts = lib.mkMerge (
-      lib.mapAttrsToList (
-        _: gate:
-        protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
-      ) enabledGates
-    );
+    services.nginx.virtualHosts = lib.mkMerge (lib.mapAttrsToList protectedInternalVhostsFor gates);
 
     services.nginx.appendHttpConfig = ''
       map $request_method $sso_oauth2_proxy_safe_method {
@@ -547,9 +424,9 @@ in
           gateHelpers.redisServiceUnit gateName
         );
       in
-      lib.nameValuePair gate.serviceName {
+      lib.nameValuePair (serviceNameFor gateName) {
         description = "OAuth2 Proxy";
-        path = [ gate.package ];
+        path = [ pkgs.oauth2-proxy ];
         wantedBy = [ "multi-user.target" ];
         wants = [
           "network-online.target"
@@ -562,9 +439,11 @@ in
         ]
         ++ sessionStoreUnits;
         serviceConfig = {
-          User = gate.user;
-          Group = gate.group;
-          ExecStart = "${lib.getExe gate.package} ${lib.concatStringsSep " " (oauth2ProxyArgs gateName gate)}";
+          User = serviceNameFor gateName;
+          Group = serviceNameFor gateName;
+          ExecStart = lib.replaceStrings [ credentialDirectoryPlaceholder ] [ "%d" ] (
+            utils.escapeSystemdExecArgs ([ (lib.getExe pkgs.oauth2-proxy) ] ++ oauth2ProxyArgs gateName gate)
+          );
           LoadCredential = [
             "client-secret:${config.sops.secrets.${secretNameFor gateName "client-secret"}.path}"
             "cookie-secret:${config.sops.secrets.${secretNameFor gateName "cookie-secret"}.path}"
@@ -572,6 +451,6 @@ in
           Restart = "always";
         };
       }
-    ) enabledGates;
+    ) gates;
   };
 }

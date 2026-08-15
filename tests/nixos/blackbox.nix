@@ -55,29 +55,31 @@ pkgs.testers.runNixOSTest {
 
       options = {
         host = {
-          internalPki.rootCaCertificate = lib.mkOption {
-            type = lib.types.path;
-            default = "${testPki}/ca.crt";
+          pki.authority = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = {
+              rootCaCertificate = "${testPki}/ca.crt";
+            };
           };
 
-          internalPki.clients = lib.mkOption {
+          pki.clients = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };
           };
 
-          internalPki.managedCertificates = lib.mkOption {
-            type = lib.types.listOf lib.types.anything;
-            default = [ ];
+          pki.certificates = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
           };
 
-          isProxmox = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
+          site.lan.ipController = lib.mkOption {
+            type = lib.types.nullOr lib.types.attrs;
+            default = null;
           };
 
           realm = lib.mkOption {
             type = lib.types.str;
-            default = "test";
+            default = "home";
           };
 
           observability.lanWan = {
@@ -89,6 +91,11 @@ pkgs.testers.runNixOSTest {
               ];
               default = "interface-path";
             };
+          };
+
+          web.services = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
           };
         };
 
@@ -109,21 +116,16 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
+          templates = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+          };
         };
       };
 
       config = {
         _module.args = {
-          facts = {
-            realms.test.services.observability = {
-              loki = {
-                writeUrl = null;
-                mtls = false;
-              };
-              nodeExporter.mtls = false;
-            };
-          };
-          hostSpec.certificateDnsNames = [ "blackbox" ];
+          outputs.nixosConfigurations = { };
         };
 
         networking = {
@@ -135,15 +137,15 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.network.lanDomain = "example.invalid";
+        host.network = {
+          lanDomain = "example.invalid";
+          certificateDnsNames = [ "blackbox" ];
+        };
 
         host.observability = {
-          enable = true;
-          loki.writeUrl = null;
-          loki.mtls.enable = false;
           nodeExporter.mtls.enable = false;
           blackbox = {
-            remote.enable = true;
+            remote = { };
             modules.http_created = {
               http = {
                 preferred_ip_protocol = "ip4";
@@ -155,7 +157,12 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.internalPki.clients.loki.enable = false;
+        host.pki.clients.loki = {
+          materializations.default = {
+            certificatePath = "${testPki}/client.crt";
+            keyPath = "${testPki}/client.key";
+          };
+        };
 
         sops.secrets = {
           "prometheus-mtls-blackbox-server-crt".path = "${testPki}/server.crt";

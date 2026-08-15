@@ -6,24 +6,42 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isLinux;
-  useSecretive = osConfig.host.security.ssh.credentials.backend == "secretive";
-  secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
+  inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
+  enabled = config.host.hm.env.roles.developer;
   sshAskpass =
     if isDarwin then
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
     else
       pkgs.callPackage ./pkgs/ssh-askpass-linux { };
-  secretiveAuthSockInit = ''
-    if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
-      export SSH_AUTH_SOCK="${secretiveSocket}"
-    fi
-  '';
+  preBootEndpoints = lib.filterAttrs (
+    _: endpoint: endpoint.hostName != osConfig.networking.hostName
+  ) osConfig.host.ssh.preBoot.endpoints;
+  preBootSettings = lib.mapAttrs (
+    _: endpoint:
+    {
+      HostName = endpoint.hostName;
+      HostKeyAlias = endpoint.hostKeyAlias;
+      User = if endpoint.user == null then config.home.username else endpoint.user;
+      RequestTTY = if endpoint.requestTTY then "force" else "no";
+    }
+    // lib.optionalAttrs (endpoint.authentication == "password") {
+      # FileVault's pre-boot SSH server requires a local account password
+      # before the normal host keys and ticket CA are available.
+      PreferredAuthentications = "password";
+      PasswordAuthentication = true;
+      KbdInteractiveAuthentication = false;
+      PubkeyAuthentication = false;
+    }
+  ) preBootEndpoints;
 in
 {
-  imports = [ ./ticket-client.nix ];
+  imports = [
+    ./credentials.nix
+    ./known-hosts.nix
+    ./ticket-client.nix
+  ];
 
-  config = {
+  config = lib.mkIf enabled {
     home.sessionVariables = {
       SSH_ASKPASS = lib.getExe sshAskpass;
       SSH_ASKPASS_REQUIRE = "prefer";
@@ -40,39 +58,12 @@ in
       SuccessExitStatus = 2;
     };
 
-    programs.bash = lib.mkIf useSecretive {
-      profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
-      initExtra = lib.mkOrder 900 secretiveAuthSockInit;
-    };
-
-    programs.zsh.envExtra = lib.mkIf useSecretive (lib.mkOrder 900 secretiveAuthSockInit);
-
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
 
       package = pkgs.openssh;
-
-      settings = {
-        "*" = {
-          # agent forwarding to remotes
-          ForwardAgent = true;
-          AddKeysToAgent = if useSecretive then "no" else "yes";
-        };
-      }
-      // lib.optionalAttrs osConfig.host.ssh.fleetBootHosts {
-        mmini-boot = {
-          # FileVault's pre-boot SSH server requires a local account password
-          # before the normal host keys and ticket CA are available.
-          HostName = "mmini";
-          HostKeyAlias = "mmini";
-          User = config.home.username;
-          PreferredAuthentications = "password";
-          PasswordAuthentication = true;
-          KbdInteractiveAuthentication = false;
-          PubkeyAuthentication = false;
-        };
-      };
+      settings = preBootSettings;
 
       includes = [
         # local config

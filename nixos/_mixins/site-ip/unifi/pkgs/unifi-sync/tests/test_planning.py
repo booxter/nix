@@ -2,7 +2,7 @@ import ipaddress
 
 import pytest
 
-from unifi_sync import cli, dns
+from unifi_sync import dns, models, parsing, planning
 
 
 def a_record(address="192.168.1.1", ttl=60):
@@ -15,7 +15,7 @@ def a_record(address="192.168.1.1", ttl=60):
 
 
 def static_route(next_hop="192.168.1.1", distance=1):
-    return cli.StaticRouteSpec(
+    return models.StaticRouteSpec(
         name="private",
         destination=ipaddress.IPv4Network("10.0.0.0/8"),
         next_hop=ipaddress.IPv4Address(next_hop),
@@ -60,15 +60,15 @@ def test_dns_policy_update_plan_covers_create_noop_and_update():
 
 def test_static_route_update_plan_covers_create_noop_and_update():
     route = static_route()
-    action, payload, changes = cli.build_static_route_update_plan(None, route)
+    action, payload, changes = planning.build_static_route_update_plan(None, route)
     assert action == "create"
     assert payload["static-route_network"] == "10.0.0.0/8"
     assert changes["static-route_nexthop"]["current"] is None
 
     existing = payload | {"_id": "route-1"}
-    assert cli.build_static_route_update_plan(existing, route) == ("noop", {}, {})
+    assert planning.build_static_route_update_plan(existing, route) == ("noop", {}, {})
 
-    action, payload, changes = cli.build_static_route_update_plan(
+    action, payload, changes = planning.build_static_route_update_plan(
         existing, static_route(next_hop="192.168.1.254", distance=5)
     )
     assert action == "update"
@@ -80,7 +80,7 @@ def test_static_route_update_plan_covers_create_noop_and_update():
 
 
 def test_client_update_plan_only_changes_drifted_fields():
-    payload, changes = cli.build_client_update_plan(
+    payload, changes = planning.build_client_update_plan(
         existing_client={
             "use_fixedip": True,
             "network_id": "lan",
@@ -101,7 +101,7 @@ def test_client_update_plan_only_changes_drifted_fields():
 
 
 def test_build_clients_by_mac_normalizes_and_skips_bad_records():
-    clients = cli.build_clients_by_mac(
+    clients = parsing.build_clients_by_mac(
         [
             {"_id": "good", "mac": "AA-BB-CC-DD-EE-FF"},
             {"_id": "invalid", "mac": "not-a-mac"},
@@ -123,7 +123,7 @@ def test_build_dns_policies_by_key_rejects_duplicates():
 
 
 def test_choose_existing_dhcp_option_prefers_exact_definition():
-    desired = cli.DhcpCustomOptionSpec(
+    desired = models.DhcpCustomOptionSpec(
         code=119,
         name="DomainSearch",
         option_type="text",
@@ -150,7 +150,7 @@ def test_choose_existing_dhcp_option_prefers_exact_definition():
         ]
     }
 
-    assert cli.choose_existing_dhcp_option(options, desired) is exact
+    assert planning.choose_existing_dhcp_option(options, desired) is exact
 
 
 class FakeDhcpOptionClient:
@@ -167,7 +167,7 @@ class FakeDhcpOptionClient:
 
 
 def test_ensure_dhcp_custom_option_reports_dry_run_without_mutation():
-    desired = cli.DhcpCustomOptionSpec(
+    desired = models.DhcpCustomOptionSpec(
         code=121,
         name="ClasslessStaticRoutes",
         option_type="text",
@@ -176,7 +176,9 @@ def test_ensure_dhcp_custom_option_reports_dry_run_without_mutation():
     )
     client = FakeDhcpOptionClient([])
 
-    field_name, result = cli.ensure_dhcp_custom_option(client, desired, dry_run=True)
+    field_name, result = planning.ensure_dhcp_custom_option(
+        client, desired, dry_run=True
+    )
 
     assert field_name is None
     assert result["would_create"] is True
@@ -184,7 +186,7 @@ def test_ensure_dhcp_custom_option_reports_dry_run_without_mutation():
 
 
 def test_ensure_dhcp_custom_option_creates_missing_definition():
-    desired = cli.DhcpCustomOptionSpec(
+    desired = models.DhcpCustomOptionSpec(
         code=121,
         name="ClasslessStaticRoutes",
         option_type="text",
@@ -193,7 +195,9 @@ def test_ensure_dhcp_custom_option_creates_missing_definition():
     )
     client = FakeDhcpOptionClient([])
 
-    field_name, result = cli.ensure_dhcp_custom_option(client, desired, dry_run=False)
+    field_name, result = planning.ensure_dhcp_custom_option(
+        client, desired, dry_run=False
+    )
 
     assert field_name == "dhcpd_user_option_new-option"
     assert result["created"] is True
@@ -208,8 +212,8 @@ def test_ensure_dhcp_custom_option_creates_missing_definition():
 
 
 def test_network_update_payload_covers_dhcp_domain_and_netboot():
-    settings = cli.NetworkDhcpSettingsSpec(
-        dhcp_range=cli.DhcpRangeSpec(
+    settings = models.NetworkDhcpSettingsSpec(
+        dhcp_range=models.DhcpRangeSpec(
             start=ipaddress.IPv4Address("192.168.1.100"),
             end=ipaddress.IPv4Address("192.168.1.200"),
         ),
@@ -222,7 +226,7 @@ def test_network_update_payload_covers_dhcp_domain_and_netboot():
         bootfile="netboot.xyz.efi",
     )
 
-    payload, changes = cli.build_network_update_payload(
+    payload, changes = planning.build_network_update_payload(
         settings,
         current_network={
             "dhcpd_enabled": False,

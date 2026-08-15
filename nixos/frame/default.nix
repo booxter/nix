@@ -1,10 +1,12 @@
 {
   config,
-  facts,
   inputs,
   lib,
   ...
 }:
+let
+  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
+in
 {
   system.stateVersion = "25.11";
 
@@ -13,10 +15,21 @@
   ];
 
   host = {
-    desktop.hyprland.enable = true;
-    nix.builder = {
-      enable = true;
-      speedFactor = 200;
+    disko = {
+      layout = "luks";
+      remoteUnlock = {
+        kernelModules = [ "r8169" ];
+        hostKeyPath = "/etc/secrets/initrd/ssh_host_ed25519_key";
+        authorizedKeys = [
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mair.pub)
+          (readPublicKey ../../common/_mixins/ssh/public-keys/mmini.pub)
+        ];
+      };
+    };
+    desktop = { };
+    nix = {
+      builder.speedFactor = 200;
+      builderClient = { };
     };
     hardware = {
       drmCard = "card1";
@@ -40,68 +53,54 @@
         }
       ];
       gpu = {
-        vendors = [ "amd" ];
+        vendor = "amd";
         compute = "rocm";
         collector.enable = true;
       };
     };
-    luks = {
-      enable = true;
-      remoteUnlock = {
-        enable = true;
-        kernelModules = [ "r8169" ];
-        authorizedKeys = [
-          facts.public-keys.users.mair
-          facts.public-keys.users.mmini
+    network.interfaces.enp191s0 = { };
+    observability = {
+      alertmanagerWatchdog.enable = true;
+      blackbox.remote = { };
+    };
+    ollama = {
+      models = {
+        "granite4:32b-a9b-h" = { };
+        "qwen3-vl:8b-instruct".capabilities = [
+          "text"
+          "vision"
         ];
       };
     };
-    network = {
-      interfaces.enp191s0.kind = "ethernet";
-      macAddress = "9c:bf:0d:00:fa:0a";
-      primaryInterface = "enp191s0";
-      reservation = {
-        enable = true;
-        address = "192.168.11.228";
-      };
-    };
-    observability = {
-      alertmanagerWatchdog.enable = true;
-      blackbox.remote.enable = true;
-    };
-    ollama = {
-      enable = true;
-      enableMetrics = true;
-    };
     remote-control.server = {
       vnc = {
-        enable = true;
         basePort = 5933;
       };
-      wayland.enable = true;
-      x11.enable = true;
+      wayland = { };
+      x11 = { };
+    };
+    ssh = {
+      credentials.backend = "yubikey";
+      operator.authorizedKeys = [
+        (readPublicKey ../../common/_mixins/ssh/public-keys/frame.pub)
+        (readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub)
+      ];
+      tickets = {
+        allowX11Forwarding = true;
+        issuer = {
+          publicKey = readPublicKey ../../common/_mixins/ssh/public-keys/yubikey.pub;
+          keyName = "id_ed25519_sk_rk";
+          useAgent = false;
+        };
+      };
     };
     security = {
-      authentication.u2f = {
-        enable = true;
-        appId = "pam://frame";
-        origin = "pam://frame";
-      };
       secrets.operator.ageIdentity = {
         backend = "yubikey";
-        path = "/home/${config.host.username}/.config/sops/age/${facts.yubi.ageIdentity.identityFileName}";
-      };
-      ssh.credentials.backend = "yubikey";
-    };
-    userEnvironment = {
-      preset = "personal";
-      roles = {
-        developer.enable = true;
-        workstation.enable = true;
+        path = "/home/${config.host.username}/.config/sops/age/yubi-nix.txt";
       };
     };
     ups.server = {
-      enable = true;
       description = "APC UPS 1500VA";
     };
   };
@@ -111,4 +110,14 @@
     "landlock"
     "yama"
   ];
+
+  security.pam.u2f = {
+    enable = true;
+    control = "sufficient";
+    settings = {
+      appid = "pam://frame";
+      origin = "pam://frame";
+      cue = true;
+    };
+  };
 }

@@ -9,25 +9,20 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from pydantic import ValidationError
 from sops_tools.errors import ToolError
 from sops_tools.process import SubprocessRunner
 from sops_tools.repository import RuntimeEnvironment
 
 from .issuer import RemoteCertificateIssuer
-from .models import UnifiDefaults
 from .repository import (
-    NixConfigSource,
+    InventoryConfigSource,
+    NixInventorySource,
     configured_file,
     discover_repo_root,
-    load_fleet_hosts,
 )
 from .secrets import SopsCertificateStore
 from .services import ManagedCertificateService
 from .unifi import UnifiCertificateService
-
-
-DEFAULT_CA_HOST = "pki"
 
 
 @dataclass(frozen=True)
@@ -39,20 +34,16 @@ class Application:
     def discover(cls) -> Application:
         environment = dict(os.environ)
         root = discover_repo_root(Path.cwd(), environment.get("PKI_TOOLS_REPO_ROOT"))
-        hosts = load_fleet_hosts(configured_file(environment, "PKI_CERTIFICATE_HOSTS_FILE"))
-        query = configured_file(environment, "PKI_CERTIFICATE_QUERY_FILE")
-        defaults_path = configured_file(environment, "PKI_UNIFI_DEFAULTS_FILE")
-        try:
-            defaults = UnifiDefaults.model_validate_json(defaults_path.read_bytes())
-        except (OSError, ValidationError) as error:
-            raise ToolError(
-                f"invalid UniFi certificate defaults {defaults_path}: {error}"
-            ) from error
+        runner = SubprocessRunner()
+        inventory = NixInventorySource(
+            runner,
+            configured_file(environment, "PKI_CERTIFICATE_INVENTORY_QUERY_FILE"),
+        ).inventory(root)
+        hosts = inventory.hosts
         remote_program_name = shutil.which("pki-issue-certificate-remote")
         if remote_program_name is None:
             raise ToolError("pki-issue-certificate-remote is not available on PATH")
-        runner = SubprocessRunner()
-        configs = NixConfigSource(runner, root, hosts, query)
+        configs = InventoryConfigSource(inventory)
         issuer = RemoteCertificateIssuer(
             runner=runner,
             repo_root=root,
@@ -75,7 +66,7 @@ class Application:
             issuer,
             SopsCertificateStore(runtime, hosts),
         )
-        return cls(managed, UnifiCertificateService(issuer, defaults))
+        return cls(managed, UnifiCertificateService(issuer))
 
 
 def internal_parser() -> argparse.ArgumentParser:
@@ -93,14 +84,10 @@ def internal_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", type=Path, help="UniFi output directory")
     parser.add_argument("--common-name", help="UniFi certificate common name")
     parser.add_argument("--san", action="append", default=[], help="additional UniFi SAN")
-    parser.add_argument(
-        "--include-gateway-ip",
-        action="store_true",
-        help="include the inventory gateway IP in the UniFi certificate",
-    )
+    parser.add_argument("--gateway-ip", help="UniFi gateway IP SAN")
     parser.add_argument("--basename", help="UniFi output filename basename")
     parser.add_argument("--force", action="store_true", help="overwrite UniFi output files")
-    parser.add_argument("--ca-host", default=DEFAULT_CA_HOST, help="host running step-ca")
+    parser.add_argument("--ca-host", help="override the authority discovered for the target realm")
     return parser
 
 
@@ -112,7 +99,7 @@ def observability_parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--endpoint", help="Prometheus mTLS endpoint name")
     mode.add_argument("--client", help="observability mTLS client identity")
-    parser.add_argument("--ca-host", default=DEFAULT_CA_HOST, help="host running step-ca")
+    parser.add_argument("--ca-host", help="override the authority discovered for the target realm")
     return parser
 
 
@@ -127,12 +114,16 @@ def run_internal(
             parser.error("--unifi cannot be combined with --host")
         if arguments.output_dir is None:
             parser.error("--output-dir is required with --unifi")
+        if arguments.ca_host is None:
+            parser.error("--ca-host is required with --unifi")
+        if arguments.common_name is None:
+            parser.error("--common-name is required with --unifi")
         unifi_result = current.unifi.issue(
             ca_host=str(arguments.ca_host),
             output_dir=arguments.output_dir,
-            common_name=arguments.common_name,
+            common_name=str(arguments.common_name),
             additional_sans=[str(value) for value in arguments.san],
-            include_gateway_ip=bool(arguments.include_gateway_ip),
+            gateway_ip=str(arguments.gateway_ip) if arguments.gateway_ip is not None else None,
             basename=arguments.basename,
             force=bool(arguments.force),
         )
@@ -143,7 +134,7 @@ def run_internal(
         arguments.output_dir is not None
         or arguments.common_name is not None
         or bool(arguments.san)
-        or arguments.include_gateway_ip
+        or arguments.gateway_ip is not None
         or arguments.basename is not None
         or arguments.force
     )
@@ -152,7 +143,7 @@ def run_internal(
     if arguments.host is None:
         parser.error("--host is required unless --unifi is used")
     host = str(arguments.host)
-    ca_host = str(arguments.ca_host)
+    ca_host = str(arguments.ca_host) if arguments.ca_host is not None else None
     if arguments.client is not None:
         results = [current.managed.issue_internal_client(host, str(arguments.client), ca_host)]
     else:
@@ -175,7 +166,7 @@ def run_observability(
     arguments = observability_parser().parse_args(argv)
     current = application or Application.discover()
     host = str(arguments.host)
-    ca_host = str(arguments.ca_host)
+    ca_host = str(arguments.ca_host) if arguments.ca_host is not None else None
     if arguments.endpoint is not None:
         results = [
             current.managed.issue_observability_endpoint(host, str(arguments.endpoint), ca_host)

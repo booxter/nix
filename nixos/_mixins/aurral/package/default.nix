@@ -66,8 +66,11 @@ stdenv.mkDerivation {
     # hard refresh.
     ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
-    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile rejects by default.
+    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile
+    # rejects by default.
     ./aurral-allow-hidden-image-cache-path.patch
+    # TODO: Submit managed slskd settings as an upstream feature request.
+    ./managed-slskd-settings.patch
   ];
 
   postPatch = ''
@@ -184,6 +187,39 @@ stdenv.mkDerivation {
       process.env.DISABLE_LOCAL_AUTH = "true";
       if (isLocalAuthEnabled()) {
         throw new Error("local authentication was not disabled");
+      }
+      const {
+        applyManagedSlskdSettings,
+        preserveStoredSlskdSettings,
+      } = await import("./backend/config/managedSlskd.js");
+      const managedEnvironment = {
+        AURRAL_SLSKD_MANAGED: "true",
+        AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
+        AURRAL_SLSKD_API_KEY: "test-api-key",
+        AURRAL_SLSKD_PRIORITY: "20",
+        AURRAL_SLSKD_PREFERRED_FORMAT: "flac",
+        AURRAL_SLSKD_STRICT_FORMAT: "true",
+        AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
+      };
+      const managed = applyManagedSlskdSettings(
+        { slskd: { apiKey: "stored-api-key" }, ytdlp: { enabled: true } },
+        managedEnvironment,
+      );
+      if (
+        managed.slskd.apiKey !== "test-api-key" ||
+        managed.slskd.priority !== 20 ||
+        managed.slskd.preferredFormatStrict !== true ||
+        managed.ytdlp.enabled !== true
+      ) {
+        throw new Error("managed slskd settings were not applied");
+      }
+      const preserved = preserveStoredSlskdSettings(
+        managed,
+        { slskd: { apiKey: "stored-api-key" } },
+        managedEnvironment,
+      );
+      if (preserved.slskd.apiKey !== "stored-api-key") {
+        throw new Error("managed slskd settings would be persisted");
       }
     '
     popd

@@ -7,6 +7,8 @@
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
+  remoteEnabled = cfg.remote != null;
+  remotePort = 9115;
   httpService = {
     http = {
       follow_redirects = true;
@@ -45,26 +47,10 @@ in
       description = "Built-in blackbox probe modules available to derived module definitions.";
     };
 
-    remote = {
-      enable = lib.mkEnableOption "mTLS-protected remote access to the blackbox exporter";
-
-      listenAddress = lib.mkOption {
-        type = lib.types.str;
-        default = "0.0.0.0";
-        description = "Address for the remote mTLS endpoint to bind.";
-      };
-
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 9115;
-        description = "LAN-visible port for the mTLS-protected blackbox exporter endpoint.";
-      };
-
-      openFirewall = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to open the firewall for the remote mTLS endpoint.";
-      };
+    remote = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+      description = "Whether this host provides an mTLS-protected remote blackbox exporter.";
     };
   };
 
@@ -115,16 +101,18 @@ in
         };
       };
     })
-    (lib.mkIf cfg.remote.enable {
+    (lib.mkIf remoteEnabled {
       host.observability = {
         blackbox.enable = true;
+        inventory.blackbox = {
+          exporter = "${config.networking.hostName}:${toString remotePort}";
+          scheme = "https";
+          source = config.services.avahi.hostName;
+        };
         prometheusEndpoints.blackbox = {
-          enable = true;
-          listenAddress = cfg.remote.listenAddress;
-          port = cfg.remote.port;
+          port = remotePort;
           path = "/probe";
           upstream = "http://${cfg.listenAddress}:${toString cfg.port}/probe";
-          openFirewall = cfg.remote.openFirewall;
         };
       };
     })

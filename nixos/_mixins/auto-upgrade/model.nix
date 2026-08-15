@@ -4,27 +4,71 @@
   outputs,
 }:
 let
-  maintenanceLib = import ./lib.nix { inherit lib; };
-  inherit (maintenanceLib)
-    clockMinutes
-    moreRestrictiveCadence
-    renderSchedule
-    ;
+  clockMinutes = clock: clock.hour * 60 + clock.minute;
+  formatClock =
+    value:
+    let
+      hour = builtins.div value 60;
+      minute = lib.mod value 60;
+      pad = part: if part < 10 then "0${toString part}" else toString part;
+    in
+    "${pad hour}:${pad minute}";
+  renderSchedule =
+    schedule:
+    lib.optionalString (schedule.cadence == "weekly") "${schedule.weekday} "
+    + formatClock schedule.start;
+  cadenceRank = {
+    daily = 0;
+    weekly = 1;
+    never = 2;
+  };
+  moreRestrictiveCadence =
+    left: right: if cadenceRank.${left} >= cadenceRank.${right} then left else right;
   localHost = config.networking.hostName;
-  localPolicy = config.host.autoUpgrade.policy;
+  policy = {
+    allowedWindow = {
+      start = {
+        hour = 3;
+        minute = 30;
+      };
+      end = {
+        hour = 6;
+        minute = 30;
+      };
+    };
+    dailyAt = {
+      hour = 5;
+      minute = 15;
+    };
+    deferredRebootAt = {
+      hour = 4;
+      minute = 0;
+    };
+    preferredWeeklyDay = "Mon";
+    slotDurationMinutes = 30;
+    slotStepMinutes = 40;
+    randomizedDelayMinutes = 5;
+  };
+  localPolicy = policy;
   hostView = hostConfig: {
     inherit (hostConfig.host) realm;
-    inherit (hostConfig.host.autoUpgrade) claims policy;
+    inherit (hostConfig.host.autoUpgrade) claims;
   };
   configurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  hosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
+  allHosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
     ${localHost} = hostView config;
   };
+  hosts = lib.filterAttrs (_: host: host.realm == config.host.realm) allHosts;
   hostNames = builtins.attrNames hosts;
-  policyHosts = lib.filterAttrs (_: host: host.realm == config.host.realm) hosts;
-  policyMismatches = builtins.attrNames (
-    lib.filterAttrs (_: host: host.policy != localPolicy) policyHosts
-  );
+  allWeekdays = [
+    "Mon"
+    "Tue"
+    "Wed"
+    "Thu"
+    "Fri"
+    "Sat"
+    "Sun"
+  ];
   claimsFor = hostName: builtins.attrValues hosts.${hostName}.claims;
   operationPolicy =
     hostName: operation:
@@ -33,7 +77,7 @@ let
       cadences = map (claim: claim.${operation}.cadence) (
         builtins.filter (claim: claim.${operation}.cadence != null) claims
       );
-      weekdays = lib.unique (
+      requestedWeekdays = lib.unique (
         map (claim: claim.${operation}.weekday) (
           builtins.filter (claim: claim.${operation}.weekday != null) claims
         )
@@ -42,15 +86,20 @@ let
       weekday =
         if cadence != "weekly" then
           null
-        else if weekdays == [ ] then
-          localPolicy.weeklyDay
+        else if requestedWeekdays != [ ] then
+          builtins.head requestedWeekdays
         else
-          builtins.head weekdays;
+          null;
     in
     {
-      inherit cadence weekday weekdays;
-      availabilityGroups = lib.unique (builtins.concatMap (claim: claim.availabilityGroups) claims);
-      exclusions = builtins.concatMap (claim: builtins.attrValues claim.exclusions) claims;
+      weekdays = requestedWeekdays;
+      inherit cadence weekday;
+      availabilityGroups = lib.unique (
+        builtins.concatMap (
+          claim: lib.optional (claim.availabilityGroup != null) claim.availabilityGroup
+        ) claims
+      );
+      exclusions = builtins.concatMap (claim: claim.exclusions) claims;
     };
   policies = lib.genAttrs hostNames (hostName: {
     switch = operationPolicy hostName "switch";
@@ -94,9 +143,7 @@ let
     left: right: operation:
     let
       matching = builtins.filter (
-        exclusion:
-        builtins.elem operation exclusion.operations
-        && (builtins.elem right exclusion.hosts || builtins.elem left exclusion.hosts)
+        exclusion: builtins.elem right exclusion.hosts || builtins.elem left exclusion.hosts
       ) (policies.${left}.${operation}.exclusions ++ policies.${right}.${operation}.exclusions);
     in
     {
@@ -130,20 +177,20 @@ let
     lib.range 0 slotCount
   );
   preferredStart =
-    operation: operationConfig:
+    operation: operationConfig: weekday:
     if operationConfig.cadence == "daily" then
       clockMinutes localPolicy.dailyAt
-    else if operation == "reboot" && operationConfig.weekday != localPolicy.weeklyDay then
+    else if operation == "reboot" && weekday != localPolicy.preferredWeeklyDay then
       clockMinutes localPolicy.deferredRebootAt
     else
       windowStart;
-  orderedCandidates =
-    operation: operationConfig:
-    if operationConfig.cadence == "weekly" && operationConfig.weekday == localPolicy.weeklyDay then
+  orderedStarts =
+    operation: operationConfig: weekday:
+    if operationConfig.cadence == "weekly" && weekday == localPolicy.preferredWeeklyDay then
       candidateStarts
     else
       let
-        preferred = preferredStart operation operationConfig;
+        preferred = preferredStart operation operationConfig weekday;
         distance = value: if value < preferred then preferred - value else value - preferred;
         candidates = lib.unique (
           candidateStarts ++ lib.optional (preferred >= windowStart && preferred <= latestStart) preferred
@@ -152,6 +199,24 @@ let
       builtins.sort (
         left: right: distance left < distance right || (distance left == distance right && left < right)
       ) candidates;
+  candidateWeekdays =
+    operationConfig:
+    if operationConfig.cadence != "weekly" then
+      [ null ]
+    else if operationConfig.weekday != null then
+      [ operationConfig.weekday ]
+    else
+      [ localPolicy.preferredWeeklyDay ]
+      ++ builtins.filter (weekday: weekday != localPolicy.preferredWeeklyDay) allWeekdays;
+  scheduleCandidates =
+    operation: operationConfig:
+    builtins.concatMap (
+      weekday:
+      map (start: {
+        inherit (operationConfig) cadence;
+        inherit start weekday;
+      }) (orderedStarts operation operationConfig weekday)
+    ) (candidateWeekdays operationConfig);
   allocateOperation =
     operation: initialAssignments: remainingHosts:
     let
@@ -164,13 +229,7 @@ let
             hostName = builtins.head remaining;
             operationConfig = policies.${hostName}.${operation};
             candidate = lib.findFirst (
-              start:
-              let
-                schedule = {
-                  inherit (operationConfig) cadence weekday;
-                  inherit start;
-                };
-              in
+              schedule:
               lib.all (
                 assignedHost:
                 let
@@ -180,12 +239,17 @@ let
                 !conflicts hostName assignedHost operation
                 || !schedulesOverlap schedule assigned exclusion.minimumGapMinutes
               ) (builtins.attrNames assignments)
-            ) null (orderedCandidates operation operationConfig);
-            fallback = preferredStart operation operationConfig;
-            schedule = {
-              inherit (operationConfig) cadence weekday;
-              start = if candidate == null then fallback else candidate;
-            };
+            ) null (scheduleCandidates operation operationConfig);
+            fallbackWeekday = builtins.head (candidateWeekdays operationConfig);
+            schedule =
+              if candidate != null then
+                candidate
+              else
+                {
+                  inherit (operationConfig) cadence;
+                  weekday = fallbackWeekday;
+                  start = preferredStart operation operationConfig fallbackWeekday;
+                };
           in
           if operationConfig.cadence == "never" then
             allocate (builtins.tail remaining) (
@@ -257,11 +321,16 @@ let
 in
 {
   inherit
-    policyMismatches
+    policy
     unknownExclusionHosts
     weekdayConflicts
     ;
   failures = switchAllocation.failures ++ rebootAllocation.failures;
   plan = planFor localHost;
   plans = lib.genAttrs hostNames planFor;
+  randomizedDelay = "${toString policy.randomizedDelayMinutes}min";
+  rebootWindow = {
+    lower = formatClock (clockMinutes policy.allowedWindow.start);
+    upper = formatClock (clockMinutes policy.allowedWindow.end);
+  };
 }

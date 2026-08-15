@@ -35,15 +35,15 @@ class OciPins(RootModel[dict[str, OciPin]]):
     pass
 
 
-class OciFactPin(OciPin):
-    ref: str = Field(min_length=1)
+class OciTarget(OciPin):
+    path: str = Field(min_length=1)
 
 
-class OciFactPins(RootModel[dict[str, OciFactPin]]):
+class OciTargets(RootModel[dict[str, OciTarget]]):
     def editable(self) -> OciPins:
         return OciPins(
             {
-                name: OciPin.model_validate(pin.model_dump(exclude={"ref"}))
+                name: OciPin.model_validate(pin.model_dump(exclude={"path"}))
                 for name, pin in self.root.items()
             }
         )

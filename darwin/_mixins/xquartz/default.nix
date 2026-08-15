@@ -5,16 +5,12 @@
   ...
 }:
 let
-  cfg = config.host.xquartz;
   xquartz = pkgs.xquartz;
   username = config.host.username;
+  cfg = config.home-manager.users.${username}.host.hm.xquartz;
   userLogDirectory = "${config.users.users.${username}.home}/Library/Logs/nix-darwin";
 in
 {
-  options.host.xquartz = {
-    enable = lib.mkEnableOption "XQuartz launchd integration";
-  };
-
   config = lib.mkIf cfg.enable {
     # XQuartz itself is installed by Home Manager. The launchd jobs still need
     # package-internal helpers under libexec and etc/X11, which Home Manager's

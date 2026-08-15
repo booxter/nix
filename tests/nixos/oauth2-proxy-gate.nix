@@ -94,31 +94,23 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         ../../common/_mixins/network
-        ../../nixos/_mixins/external-service.nix
         ../../nixos/_mixins/sso
       ];
 
       options = {
-        host.internalPki = {
-          clients = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-
-          rootCaCertificate = lib.mkOption {
-            type = lib.types.path;
-            default = pkgs.writeText "oauth2-proxy-gate-test-root-ca.pem" "";
-          };
+        host.realm = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "test";
         };
 
-        host.internalHttps.services = lib.mkOption {
+        host.backups.sources = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
           default = { };
         };
 
-        host.network.stableAddress.requiredBy = lib.mkOption {
-          type = lib.types.listOf lib.types.nonEmptyStr;
-          default = [ ];
+        host.web.services = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
         };
 
         sops.secrets = lib.mkOption {
@@ -149,40 +141,45 @@ pkgs.testers.runNixOSTest {
       };
 
       config = {
-        _module.args.facts = {
-          servicesById.id.publicHost = "id.example.invalid";
-          toInternalHttpsServiceHosts = _: serviceName: [ "${serviceName}.example.invalid" ];
+        _module.args.outputs.nixosConfigurations.provider.config = {
+          networking.hostName = "provider";
+          host.realm = "test";
+        };
+        _module.args.webModel.internalEndpoints.test = {
+          internal = {
+            endpointName = "test";
+            serverName = "test.example.invalid";
+            serverAliases = [ ];
+            publicAliases = [ ];
+            path = "/";
+          };
+          auth.sessionClearPaths = [ ];
         };
 
         host.network.lanDomain = "example.invalid";
+        host.sso.providerHost = "provider";
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 
-        host.externalService = {
-          openFirewall = false;
-          virtualHosts."test.example.invalid" = {
-            proxyPass = "http://127.0.0.1:9000";
-            forceSSL = false;
-            enableACME = false;
+        services.nginx = {
+          enable = true;
+          virtualHosts."internal-https-test" = {
+            serverAliases = [ "test.example.invalid" ];
+            locations."/".proxyPass = "http://127.0.0.1:9000";
           };
         };
 
         host.sso.oauth2ProxyGates.test = {
-          enable = true;
-          clientId = "test";
           displayName = "Test";
-          originLanding = "https://test.example.invalid/";
-          httpAddress = "http://127.0.0.1:4180";
-          serviceName = "oauth2-proxy-gate-test";
+          externalOrigin = "https://test.example.invalid";
           groupClaim = "groups";
           allowedGroups = [ "test-users" ];
-          whitelistDomains = [ "test.example.invalid" ];
-          externalHostNames = [ "test.example.invalid" ];
+          internalHttpsServiceNames = [ "test" ];
         };
 
         # The test supplies a deterministic fake auth endpoint instead of
         # starting oauth2-proxy and provisioning its credentials.
-        systemd.services.oauth2-proxy-gate-test.wantedBy = lib.mkForce [ ];
+        systemd.services.oauth2-proxy-test.wantedBy = lib.mkForce [ ];
 
         systemd.services.fake-oauth2-proxy = {
           wantedBy = [ "multi-user.target" ];
@@ -285,7 +282,7 @@ pkgs.testers.runNixOSTest {
         oauth_log, backend_log = logs()
         assert "GET /oauth2/start body=0 " in oauth_log, oauth_log
         assert (
-            "redirect=http://test.example.invalid/library?sort=new" in oauth_log
+            "redirect=https://test.example.invalid/library?sort=new" in oauth_log
         ), oauth_log
         assert backend_log == "", backend_log
 

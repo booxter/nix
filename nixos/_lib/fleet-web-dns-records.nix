@@ -15,7 +15,7 @@ let
       (
         builtins.filter (
           contribution:
-          contribution.value.internal.enable
+          contribution.value.internal != null
           && builtins.match ".*[.].*" contribution.value.internal.serverName != null
         ) fleetServices.contributions
       );

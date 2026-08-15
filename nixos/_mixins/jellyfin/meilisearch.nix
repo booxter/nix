@@ -4,13 +4,13 @@
   ...
 }:
 let
-  cfg = config.host.jellyfin.meilisearch;
+  jellyfin = config.host.jellyfin;
   port = 7700;
   url = "http://127.0.0.1:${toString port}";
   masterKeySecret = "meilisearch/masterKey";
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (jellyfin != null) {
     sops = {
       secrets.${masterKeySecret} = {
         restartUnits = [
@@ -30,7 +30,7 @@ in
       };
     };
 
-    host.jellyfin.declarativeConfig = {
+    host.jellyfinDeclarativeConfig = {
       system.pluginRepositories = [
         {
           name = "Meilisearch";

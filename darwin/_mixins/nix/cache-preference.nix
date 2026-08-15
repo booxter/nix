@@ -8,25 +8,23 @@ let
   username = config.host.username;
   caches = builtins.attrValues config.host.nix.caches;
   internalNetworks = lib.unique (
-    map (cache: cache.reachability.network) (
-      builtins.filter (cache: cache.reachability.kind == "internal") caches
-    )
+    map (cache: cache.requiredNetwork) (builtins.filter (cache: cache.requiredNetwork != null) caches)
   );
   client = config.host.wireguard.client;
   enable =
-    config.host.hardware.isLaptop && client.enable && builtins.elem client.network internalNetworks;
+    config.host.hardware.isLaptop && client != null && builtins.elem client.network internalNetworks;
   cacheLib = import ../../../common/_mixins/nix/cache/lib.nix { inherit lib; };
   substitutersFor = profile: map (cacheLib.substituterFor profile) caches;
-  tunnelInactiveSubstituters = lib.concatStringsSep " " (substitutersFor "tunnelInactive");
-  tunnelActiveSubstituters = lib.concatStringsSep " " (substitutersFor "tunnelActive");
+  lanSubstituters = lib.concatStringsSep " " (substitutersFor "lan");
+  wanSubstituters = lib.concatStringsSep " " (substitutersFor "wan");
   tunnelActiveCheck = "[ -e ${lib.escapeShellArg "/var/run/wireguard/${client.interface}.name"} ]";
   wrapper = pkgs.writeShellApplication {
     name = "nix";
     text = ''
       if ${tunnelActiveCheck}; then
-        substituters=${lib.escapeShellArg tunnelActiveSubstituters}
+        substituters=${lib.escapeShellArg wanSubstituters}
       else
-        substituters=${lib.escapeShellArg tunnelInactiveSubstituters}
+        substituters=${lib.escapeShellArg lanSubstituters}
       fi
 
       # Keep wrapper options out of argv so NIX_GET_COMPLETIONS indexes from

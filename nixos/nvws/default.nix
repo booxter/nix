@@ -5,28 +5,25 @@ in
 {
   system.stateVersion = "25.11";
 
+  hardware.cpu.intel.updateMicrocode = true;
+
   host = {
+    disko.layout = "plain";
+    realm = "work";
     nix.builder = {
-      enable = true;
       hostName = "nvws.local";
     };
-    isProxmox = true;
-    network = {
-      interfaces.enp3s0f0.kind = "ethernet";
-      macAddress = "ac:b4:80:40:05:2e";
-      primaryInterface = "enp3s0f0";
-      reservation = {
-        enable = true;
-        address = "192.168.15.100";
-      };
+    proxmox.node = {
+      cluster = "nvws";
+      controller = { };
     };
+    network.interfaces.enp3s0f0 = { };
   };
   host.ups = {
     server = {
-      enable = true;
       description = "APC UPS 1500VA";
+      waitForLowBattery = true;
     };
-    shutdown.waitForLowBattery = true;
   };
 
   # Work machines do not use sops-managed login passwords.

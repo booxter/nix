@@ -3,21 +3,20 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
-class HostFacts(BaseModel):
+class HostInfo(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     system: str
     realm: str
 
 
-class FleetHosts(RootModel[dict[str, HostFacts]]):
+class FleetHosts(RootModel[dict[str, HostInfo]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 
 class ExporterConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
-    enable: bool = False
     api_user: str = Field(alias="apiUser")
     api_token_name: str = Field(alias="apiTokenName")
     api_token_value_secret: str = Field(alias="apiTokenValueSecret")

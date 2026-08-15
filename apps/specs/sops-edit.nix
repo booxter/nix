@@ -1,5 +1,5 @@
-{ facts, pkgs, ... }:
+{ outputs, pkgs, ... }:
 {
-  package = (import ../sops { inherit facts pkgs; }).packages.sops-tools;
+  package = (import ../sops { inherit outputs pkgs; }).packages.sops-tools;
   description = "Edit a host secret.";
 }

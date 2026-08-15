@@ -1,14 +1,12 @@
 {
   config,
-  facts,
-  hostSpec,
   inputs,
   lib,
   pkgs,
   ...
 }:
 let
-  hostname = hostSpec.name;
+  hostname = config.networking.hostName;
   username = config.host.username;
 in
 {
@@ -33,10 +31,12 @@ in
     ./_mixins/networking
     ./_mixins/nix
     ./_mixins/observability
+    ./_mixins/remote-control
     ./_mixins/security
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sketchybar-network
+    ./_mixins/ssh
     ./_mixins/thermal-accounting
     ./_mixins/ups-client
     ./_mixins/xquartz
@@ -44,13 +44,7 @@ in
   ];
 
   home-manager = {
-    extraSpecialArgs = {
-      inherit
-        facts
-        hostSpec
-        inputs
-        ;
-    };
+    extraSpecialArgs = { inherit inputs; };
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {
@@ -73,15 +67,13 @@ in
     ServerDescription = hostname;
   };
 
-  system = {
-    activationScripts.postActivation.text = ''
-      echo "Do not idle sleep or hibernate when on AC power."
-      pmset -c sleep 0 disksleep 0 standby 0 powernap 0 hibernatemode 0
+  system.activationScripts.postActivation.text = ''
+    echo "Do not idle sleep or hibernate when on AC power."
+    pmset -c sleep 0 disksleep 0 standby 0 powernap 0 hibernatemode 0
 
-      echo "Prefer network over sleep."
-      pmset networkoversleep 1
-    '';
-  };
+    echo "Prefer network over sleep."
+    pmset networkoversleep 1
+  '';
 
   launchd.daemons.prevent-ac-sleep = {
     command = "/usr/bin/caffeinate -s";

@@ -5,14 +5,13 @@
   ...
 }:
 let
-  cfg = config.host.userEnvironment.features.dockerDesktop;
   jsonFormat = pkgs.formats.json { };
   registry = jsonFormat.generate "docker-desktop-registry.json" {
     allowedOrgs = [ "nvidia" ];
   };
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (config.host.realm == "work") {
     homebrew.casks = [ "docker-desktop" ];
 
     system.activationScripts.preActivation.text = ''

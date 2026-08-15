@@ -1,42 +1,20 @@
 {
   config,
-  facts,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.network;
-  model = import ./model.nix {
-    inherit
-      config
-      facts
-      lib
-      outputs
-      ;
-  };
+  reservation = config.host.site.lan.reservations.${config.networking.hostName} or null;
 in
 {
-  imports = [
-    ./assertions.nix
-    ./unifi
-  ];
+  imports = [ ./unifi ];
 
   options.host.network = {
     macAddress = lib.mkOption {
       type = with lib.types; nullOr (strMatching "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}");
-      default = null;
+      default = if reservation == null then null else reservation.macAddress;
       description = "MAC address of the host's primary site network interface.";
-    };
-
-    reservation = {
-      enable = lib.mkEnableOption "a site IPv4 address reservation";
-
-      address = lib.mkOption {
-        type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "IPv4 address requested from the site IP controller.";
-      };
     };
 
     stableAddress.requiredBy = lib.mkOption {
@@ -49,25 +27,25 @@ in
     ipAddress = lib.mkOption {
       type = with lib.types; nullOr nonEmptyStr;
       readOnly = true;
-      default = if cfg.reservation.enable then cfg.reservation.address else null;
+      default = if reservation == null then null else reservation.address;
       description = "Stable site IPv4 address derived from this host's reservation.";
     };
 
-    ipController = {
-      enable = lib.mkEnableOption "the site IP allocation controller";
-
-      flavor = lib.mkOption {
-        type = with lib.types; nullOr (enum [ "unifi" ]);
-        default = null;
-        description = "IP controller implementation used to reconcile site network state.";
-      };
-
-      reservations = lib.mkOption {
-        type = with lib.types; listOf attrs;
-        readOnly = true;
-        default = if cfg.ipController.enable then model.reservations else [ ];
-        description = "Validated managed and unmanaged site reservations.";
-      };
+    ipController = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+      description = "Make this host reconcile the site UniFi IP controller.";
     };
   };
+
+  config.assertions = [
+    {
+      assertion = cfg.stableAddress.requiredBy == [ ] || reservation != null;
+      message = "${config.networking.hostName} requires a stable site address for: ${lib.concatStringsSep ", " (lib.unique cfg.stableAddress.requiredBy)}";
+    }
+    {
+      assertion = reservation == null || cfg.stableAddress.requiredBy != [ ];
+      message = "${config.networking.hostName} has a site IP reservation without a stable-address requirement";
+    }
+  ];
 }

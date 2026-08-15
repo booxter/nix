@@ -2,7 +2,8 @@ import ipaddress
 
 import pytest
 
-from unifi_sync import cli, dns
+from unifi_sync import dns, models, parsing
+from unifi_sync.errors import UnifiError
 
 
 @pytest.mark.parametrize(
@@ -14,13 +15,13 @@ from unifi_sync import cli, dns
     ],
 )
 def test_normalize_mac(value, expected):
-    assert cli.normalize_mac(value) == expected
+    assert parsing.normalize_mac(value) == expected
 
 
 @pytest.mark.parametrize("value", ["", "aa:bb:cc", "not-a-mac"])
 def test_normalize_mac_rejects_invalid_values(value):
-    with pytest.raises(cli.UnifiError, match="invalid MAC address"):
-        cli.normalize_mac(value)
+    with pytest.raises(UnifiError, match="invalid MAC address"):
+        parsing.normalize_mac(value)
 
 
 def test_choose_network_by_ip_prefers_most_specific_subnet():
@@ -30,7 +31,9 @@ def test_choose_network_by_ip_prefers_most_specific_subnet():
         {"_id": "broken", "ip_subnet": "invalid"},
     ]
 
-    selected = cli.choose_network_by_ip(networks, ipaddress.IPv4Address("192.168.1.20"))
+    selected = parsing.choose_network_by_ip(
+        networks, ipaddress.IPv4Address("192.168.1.20")
+    )
 
     assert selected["_id"] == "lan"
 
@@ -41,17 +44,17 @@ def test_choose_network_by_ip_rejects_ambiguous_subnets():
         {"_id": "two", "name": "Two", "ip_subnet": "192.168.1.1/24"},
     ]
 
-    with pytest.raises(cli.UnifiError, match="multiple networkconf entries"):
-        cli.choose_network_by_ip(networks, ipaddress.IPv4Address("192.168.1.20"))
+    with pytest.raises(UnifiError, match="multiple networkconf entries"):
+        parsing.choose_network_by_ip(networks, ipaddress.IPv4Address("192.168.1.20"))
 
 
 def test_parse_inventory_reservations_normalizes_values():
-    reservations = cli.parse_inventory_reservations(
+    reservations = parsing.parse_inventory_reservations(
         '[{"hostname":" printer ","mac":"AA-BB-CC-DD-EE-FF","ip":"192.168.1.20"}]'
     )
 
     assert reservations == [
-        cli.ReservationSpec(
+        models.ReservationSpec(
             hostname="printer",
             mac="aa:bb:cc:dd:ee:ff",
             fixed_ip=ipaddress.IPv4Address("192.168.1.20"),
@@ -60,15 +63,17 @@ def test_parse_inventory_reservations_normalizes_values():
 
 
 def test_parse_dhcp_range_validates_order():
-    dhcp_range = cli.parse_dhcp_range('{"start":"192.168.1.100","end":"192.168.1.200"}')
+    dhcp_range = parsing.parse_dhcp_range(
+        '{"start":"192.168.1.100","end":"192.168.1.200"}'
+    )
 
-    assert dhcp_range == cli.DhcpRangeSpec(
+    assert dhcp_range == models.DhcpRangeSpec(
         start=ipaddress.IPv4Address("192.168.1.100"),
         end=ipaddress.IPv4Address("192.168.1.200"),
     )
 
-    with pytest.raises(cli.UnifiError, match="is after"):
-        cli.parse_dhcp_range('{"start":"192.168.1.200","end":"192.168.1.100"}')
+    with pytest.raises(UnifiError, match="is after"):
+        parsing.parse_dhcp_range('{"start":"192.168.1.200","end":"192.168.1.100"}')
 
 
 @pytest.mark.parametrize(
@@ -80,12 +85,12 @@ def test_parse_dhcp_range_validates_order():
     ],
 )
 def test_parse_domain_search_normalizes_json_and_plain_text(raw, expected):
-    assert cli.parse_domain_search(raw) == expected
+    assert parsing.parse_domain_search(raw) == expected
 
 
 def test_parse_domain_search_rejects_empty_labels():
-    with pytest.raises(cli.UnifiError, match="empty label"):
-        cli.parse_domain_search('"bad..example"')
+    with pytest.raises(UnifiError, match="empty label"):
+        parsing.parse_domain_search('"bad..example"')
 
 
 def test_parse_dns_records_supports_a_and_cname_records():
@@ -132,12 +137,12 @@ def test_parse_dns_records_rejects_unsupported_types():
 
 
 def test_parse_static_routes_normalizes_destination_and_defaults():
-    routes = cli.parse_static_routes(
+    routes = parsing.parse_static_routes(
         '[{"name":" private ","destination":"10.1.2.3/8","nextHop":"192.168.1.1"}]'
     )
 
     assert routes == [
-        cli.StaticRouteSpec(
+        models.StaticRouteSpec(
             name="private",
             destination=ipaddress.IPv4Network("10.0.0.0/8"),
             next_hop=ipaddress.IPv4Address("192.168.1.1"),
@@ -147,8 +152,8 @@ def test_parse_static_routes_normalizes_destination_and_defaults():
 
 
 def test_parse_static_routes_rejects_invalid_distance():
-    with pytest.raises(cli.UnifiError, match="between 1 and 255"):
-        cli.parse_static_routes(
+    with pytest.raises(UnifiError, match="between 1 and 255"):
+        parsing.parse_static_routes(
             '[{"name":"private","destination":"10.0.0.0/8",'
             '"nextHop":"192.168.1.1","distance":0}]'
         )
@@ -162,7 +167,7 @@ def test_parse_static_routes_rejects_invalid_distance():
     ],
 )
 def test_normalize_tftp_server(value, expected):
-    assert cli.normalize_tftp_server(value) == expected
+    assert parsing.normalize_tftp_server(value) == expected
 
 
 def test_choose_site_matches_any_supported_identifier():

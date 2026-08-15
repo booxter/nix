@@ -6,7 +6,7 @@
 let
   helpers = import ../../oauth2-proxy-gate-lib.nix { };
   enabledGates = lib.filterAttrs (
-    _: gate: gate.enable && gate.sessionRefresh != null
+    _: gate: gate.sessionRefresh != null
   ) config.host.sso.oauth2ProxyGates;
 in
 {

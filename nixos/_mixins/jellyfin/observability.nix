@@ -9,13 +9,13 @@ let
   exporter = pkgs.callPackage ./packages/exporter { };
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.observability.enable) {
+  config = lib.mkIf (cfg != null) {
     sops.templates."jellyfin-exporter.env" = {
       owner = "root";
       group = "root";
       mode = "0400";
       content = ''
-        JELLYFIN_ADDRESS=${cfg.localUrl}
+        JELLYFIN_ADDRESS=http://127.0.0.1:8096
         JELLYFIN_TOKEN=${config.sops.placeholder."jellyfin/apiKey"}
       '';
     };
@@ -37,7 +37,7 @@ in
         EnvironmentFile = config.sops.templates."jellyfin-exporter.env".path;
         ExecStart = lib.concatStringsSep " " [
           (lib.getExe exporter)
-          "--web.listen-address=127.0.0.1:${toString cfg.observability.internalPort}"
+          "--web.listen-address=127.0.0.1:19594"
           "--collector.transcoding"
         ];
         DynamicUser = true;
@@ -51,10 +51,9 @@ in
     };
 
     host.web.services.jellyfin.metrics.default = {
-      enable = true;
       scrapeInterval = "5s";
-      port = cfg.observability.port;
-      upstream = "http://127.0.0.1:${toString cfg.observability.internalPort}/metrics";
+      port = 9594;
+      upstream = "http://127.0.0.1:19594/metrics";
     };
   };
 }

@@ -11,21 +11,13 @@ let
   waitForIdle = utils.escapeSystemdExecArgs [
     (lib.getExe' tools "wait-for-jellyfin-idle")
     "--url"
-    cfg.localUrl
+    "http://127.0.0.1:8096"
     "--api-key-file"
-    cfg.apiKeyFile
+    config.sops.secrets."jellyfin/apiKey".path
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.maintenance.guardPlayback) {
-    host.maintenance.guards.jellyfin-playback = {
-      command = waitForIdle;
-      before = [
-        "upgrade"
-        "switch"
-        "reboot"
-      ];
-      waitIndefinitely = true;
-    };
+  config = lib.mkIf (cfg != null) {
+    host.maintenance.guards.jellyfin-playback = waitForIdle;
   };
 }

@@ -1,33 +1,23 @@
 {
   config,
   lib,
-  outputs,
   ...
 }:
 let
   cfg = config.host.jellyfin;
-  model = import ./model.nix { inherit config outputs; };
-  libraries = builtins.attrValues cfg.libraries;
+  libraries = if cfg == null then [ ] else builtins.attrValues cfg.libraries;
   libraryNames = map (library: library.name) libraries;
   libraryPaths = map (library: library.path) libraries;
 in
 {
-  assertions = [
+  assertions = lib.optionals (cfg != null) [
     {
-      assertion = !cfg.enable || cfg.libraries != { };
-      message = "host.jellyfin.libraries must not be empty when Jellyfin is enabled.";
+      assertion = cfg.libraries != { };
+      message = "host.jellyfin.libraries must not be empty.";
     }
     {
-      assertion = !cfg.enable || !cfg.backups.enable || cfg.backups.stagingDirectory != null;
-      message = "host.jellyfin.backups.stagingDirectory must be set when Jellyfin backups are enabled.";
-    }
-    {
-      assertion = !cfg.meilisearch.enable || cfg.enable;
-      message = "host.jellyfin.meilisearch.enable requires host.jellyfin.enable.";
-    }
-    {
-      assertion = !cfg.enable || cfg.web.transport != "direct" || config.host.web.ingress.enable;
-      message = "host.jellyfin.web.transport `direct` requires this host to run realm ingress.";
+      assertion = config.host.web.ingress != null;
+      message = "Public Jellyfin requires this host to run realm ingress.";
     }
     {
       assertion = builtins.length libraryNames == builtins.length (lib.unique libraryNames);
@@ -48,11 +38,6 @@ in
         library: library.metadataPolicy != "tmdb-first" || library.kind == "movies"
       ) libraries;
       message = "tmdb-first metadata policy is only defined for movie libraries.";
-    }
-    {
-      assertion =
-        builtins.length model.contributionNames == builtins.length (lib.unique model.contributionNames);
-      message = "Declarative Jellyfin contribution names must be unique per target host.";
     }
   ];
 }

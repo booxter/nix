@@ -1,61 +1,68 @@
 {
   addressFor,
-  facts,
+  baseUrl,
+  lan,
   lanDomain,
   reservations,
-  staticRoutes ? [ ],
-  webDnsRecords ? [ ],
+  site,
+  staticRoutes,
+  webDnsRecords,
 }:
 let
-  lan = facts.site.lan;
   netboot = lan.netboot;
 
-  isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
-
-  reservationIdentifiers =
-    reservation:
-    if reservation ? identifiers then
-      reservation.identifiers
-    else if reservation ? match then
-      [ reservation.match ]
-    else
-      [ ];
-
   reservationInventoryJson = builtins.toJSON (
-    map
-      (reservation: {
-        inherit (reservation) hostname ip;
-        mac = builtins.head (builtins.filter isMacAddress (reservationIdentifiers reservation));
-      })
-      (
-        builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
-          reservations
-        )
-      )
+    map (
+      hostname:
+      let
+        reservation = reservations.${hostname};
+      in
+      {
+        inherit hostname;
+        ip = reservation.address;
+        mac = reservation.macAddress;
+      }
+    ) (builtins.attrNames reservations)
   );
 
-  mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
+  mainDhcpRangeJson = builtins.toJSON lan.dhcp.range;
   mainDomainName = lanDomain;
   mainDomainSearchJson = builtins.toJSON [ lanDomain ];
-  domainSearchOption =
-    if lan ? customDhcpOptions && lan.customDhcpOptions ? domainSearch then
-      lan.customDhcpOptions.domainSearch
-    else
-      null;
-  classlessStaticRoutesOption =
-    if lan ? customDhcpOptions && lan.customDhcpOptions ? classlessStaticRoutes then
-      lan.customDhcpOptions.classlessStaticRoutes
-    else
-      null;
+  domainSearchOption = {
+    code = 119;
+    name = "DomainSearch";
+    type = "text";
+    signed = false;
+    encoding = "text";
+  };
+  classlessStaticRoutesOption = {
+    code = 121;
+    name = "ClasslessStaticRoutes";
+    type = "text";
+    signed = false;
+    encoding = "text";
+  };
 
   networkTftpServer = addressFor netboot.host;
 
-  networkBootfile = netboot.bootfile;
+  networkBootfile = netboot.bootFile;
   dnsRecordsByDomain = builtins.listToAttrs (
-    map (record: {
-      name = record.domain;
-      value = record;
-    }) (webDnsRecords ++ lan.dnsRecords)
+    map
+      (record: {
+        name = record.domain;
+        value = record;
+      })
+      (
+        webDnsRecords
+        ++ [
+          {
+            type = "A_RECORD";
+            ttlSeconds = 300;
+            domain = "unifi.${lanDomain}";
+            ipv4Address = lan.gateway.address;
+          }
+        ]
+      )
   );
   dnsRecordsJson = builtins.toJSON (builtins.attrValues dnsRecordsByDomain);
   renderedStaticRoutes = map (
@@ -67,7 +74,7 @@ let
   ) staticRoutes;
   staticRoutesJson = builtins.toJSON renderedStaticRoutes;
   classlessStaticRoutesJson = builtins.toJSON (
-    (builtins.filter (route: route.enabled or true) renderedStaticRoutes)
+    renderedStaticRoutes
     ++ [
       {
         name = "default";
@@ -77,39 +84,19 @@ let
     ]
   );
 
-  baseUrl = "https://unifi";
-  site = "default";
 in
 {
-  inherit
-    baseUrl
-    site
-    reservationInventoryJson
-    mainDhcpRangeJson
-    mainDomainName
-    mainDomainSearchJson
-    networkTftpServer
-    networkBootfile
-    dnsRecordsJson
-    staticRoutesJson
-    classlessStaticRoutesJson
-    ;
-
-  environment = {
-    UNIFI_BASE_URL = baseUrl;
-    UNIFI_SITE = site;
-    UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
-    UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
-    UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
-    UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
-    UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON =
-      if domainSearchOption != null then builtins.toJSON domainSearchOption else "";
-    UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
-    UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON =
-      if classlessStaticRoutesOption != null then builtins.toJSON classlessStaticRoutesOption else "";
-    UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
-    UNIFI_NETWORK_BOOTFILE = networkBootfile;
-    UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
-    UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
-  };
+  UNIFI_BASE_URL = baseUrl;
+  UNIFI_SITE = site;
+  UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
+  UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
+  UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
+  UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
+  UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON = builtins.toJSON domainSearchOption;
+  UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
+  UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON = builtins.toJSON classlessStaticRoutesOption;
+  UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
+  UNIFI_NETWORK_BOOTFILE = networkBootfile;
+  UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+  UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
 }

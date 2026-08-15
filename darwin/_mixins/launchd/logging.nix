@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.host.launchd.logging;
+  launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
@@ -15,7 +15,6 @@ let
     agents = config.launchd.agents;
     userAgents = config.launchd.user.agents;
   };
-  enabledJobs = lib.filterAttrs (_: job: job.serviceConfig.Disabled != true);
   pathsFor =
     jobs:
     builtins.sort builtins.lessThan (
@@ -30,9 +29,10 @@ let
       )
     );
   systemLogPaths = lib.unique (
-    pathsFor (enabledJobs jobsByDomain.daemons) ++ pathsFor (enabledJobs jobsByDomain.agents)
+    pathsFor (launchdLib.enabledJobs jobsByDomain.daemons)
+    ++ pathsFor (launchdLib.enabledJobs jobsByDomain.agents)
   );
-  userLogPaths = pathsFor (enabledJobs jobsByDomain.userAgents);
+  userLogPaths = pathsFor (launchdLib.enabledJobs jobsByDomain.userAgents);
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
@@ -42,8 +42,8 @@ let
     lib.optionalString (paths != [ ]) ''
       ${lib.concatMapStringsSep " " quotePath paths} {
         daily
-        maxsize ${toString cfg.maxSizeMiB}M
-        rotate ${toString cfg.retainedArchives}
+        maxsize 10M
+        rotate 7
         compress
         copytruncate
         missingok
@@ -65,43 +65,9 @@ let
   );
 in
 {
-  options.host.launchd.logging = {
-    exclusions = {
-      daemons = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "System LaunchDaemons exempted from file logging, with rationales.";
-      };
-
-      agents = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "System LaunchAgents exempted from file logging, with rationales.";
-      };
-
-      userAgents = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.strMatching ".+");
-        default = { };
-        description = "User LaunchAgents exempted from file logging, with rationales.";
-      };
-    };
-
-    maxSizeMiB = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 10;
-      description = "Maximum launchd log size before early rotation.";
-    };
-
-    retainedArchives = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 7;
-      description = "Number of compressed launchd log archives to retain.";
-    };
-  };
-
   config = {
     assertions = import ./logging/assertions.nix {
-      inherit cfg jobsByDomain lib;
+      inherit jobsByDomain launchdLib lib;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''

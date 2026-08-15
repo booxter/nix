@@ -1,30 +1,24 @@
 {
-  bucketNames,
-  clients,
-  cloudQosEnabled,
-  config,
-  hostName,
+  backups,
+  client,
   lib,
-  localClients,
-  providedLinks,
-  provider,
+  server,
 }:
-lib.optional cloudQosEnabled {
-  assertion = config.host.network.primaryInterface != null;
-  message = "backup cloud-offload policy requires host.network.primaryInterface";
+{
+  assertions = [
+    {
+      assertion = client.errors.unknownServers == [ ];
+      message = "backup destinations reference unknown or disabled servers: ${lib.concatStringsSep ", " client.errors.unknownServers}";
+    }
+    {
+      assertion = client.errors.missingPublicKeys == [ ];
+      message = "remote backup destinations require client public keys: ${lib.concatStringsSep ", " client.errors.missingPublicKeys}";
+    }
+  ]
+  ++ lib.optionals (backups.server != null) [
+    {
+      assertion = server.errors.duplicateRepositoryPaths == [ ];
+      message = "backup destinations resolve to duplicate repository paths: ${lib.concatStringsSep ", " server.errors.duplicateRepositoryPaths}";
+    }
+  ];
 }
-++ lib.optionals (provider != null) [
-  {
-    assertion = builtins.length localClients <= 1;
-    message = "backup provider ${hostName} may have at most one local client";
-  }
-  {
-    assertion = builtins.length bucketNames == 1;
-    message = "backup provider ${hostName} currently requires one shared cloud bucket";
-  }
-  {
-    assertion =
-      builtins.length (builtins.attrNames clients) == builtins.length (builtins.attrNames providedLinks);
-    message = "backup provider ${hostName} may have only one link per client";
-  }
-]

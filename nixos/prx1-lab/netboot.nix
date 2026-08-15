@@ -1,11 +1,10 @@
 {
   config,
-  facts,
   pkgs,
   ...
 }:
 let
-  netboot = facts.site.lan.netboot;
+  netboot = config.host.site.lan.netboot;
 in
 {
   services.atftpd = {
@@ -22,6 +21,6 @@ in
   ];
 
   systemd.tmpfiles.rules = [
-    "L+ /var/lib/tftp/${netboot.bootfile} - - - - ${pkgs.netbootxyz-efi}"
+    "L+ /var/lib/tftp/${netboot.bootFile} - - - - ${pkgs.netbootxyz-efi}"
   ];
 }

@@ -110,31 +110,13 @@ def load_targets(targets_file: str | None = None) -> list[Target]:
     return load_targets_from_file(targets_path)
 
 
-def resolve_target(
-    targets: Sequence[Target], requested: str, *, allow_disabled: bool = False
-) -> Target:
+def resolve_target(targets: Sequence[Target], requested: str) -> Target:
     exact = {target.name: target for target in targets}
-    if requested in exact:
-        target = exact[requested]
-    else:
-        matches = []
-        for target in targets:
-            if requested in target.aliases:
-                matches.append(target)
-        unique = {match.name: match for match in matches}
-        if len(unique) > 1:
-            names = ", ".join(sorted(unique))
-            raise Error(f"ambiguous ticket target {requested!r}; matches: {names}")
-        if not unique:
-            known = ", ".join(target.name for target in targets if target.enabled)
-            raise Error(
-                f"unknown ticket target {requested!r}; enabled targets: {known or '<none>'}"
-            )
-        target = next(iter(unique.values()))
-
-    if not target.enabled and not allow_disabled:
-        raise Error(f"ticket target {target.name} is disabled")
-    return target
+    aliases = {f"{target.name}.local": target for target in targets}
+    if target := exact.get(requested) or aliases.get(requested):
+        return target
+    known = ", ".join(target.name for target in targets)
+    raise Error(f"unknown ticket target {requested!r}; targets: {known or '<none>'}")
 
 
 def target_paths(target_name: str, state_dir: pathlib.Path) -> TicketPaths:
@@ -287,7 +269,7 @@ def issue_ticket(
     now = runtime.clock.now()
     metadata = TicketMetadata(
         target=target.name,
-        ssh_host=target.ssh_host,
+        ssh_host=target.name,
         principal=target.principal,
         identity=identity,
         valid_after=now - 300,
@@ -334,8 +316,6 @@ def write_ticket_alias(paths: TicketPaths, alias: str, state_dir: pathlib.Path) 
 
 def cmd_targets(args: argparse.Namespace, _runtime: Runtime) -> int:
     targets = load_targets(args.targets_file)
-    if not args.all:
-        targets = [target for target in targets if target.enabled]
     if args.json:
         print(
             json.dumps(
@@ -351,16 +331,14 @@ def cmd_targets(args: argparse.Namespace, _runtime: Runtime) -> int:
     rows = [
         (
             target.name,
-            "yes" if target.enabled else "no",
             target.principal,
-            ",".join(target.aliases),
+            f"{target.name},{target.name}.local",
             target.default_ttl,
             target.max_ttl,
-            "yes" if target.ca_public_key_configured else "no",
         )
         for target in targets
     ]
-    headers = ("target", "enabled", "principal", "aliases", "default", "max", "ca")
+    headers = ("target", "principal", "aliases", "default", "max")
     widths = [len(header) for header in headers]
     for row in rows:
         widths = [max(width, len(value)) for width, value in zip(widths, row, strict=True)]
@@ -375,9 +353,7 @@ def cmd_status(args: argparse.Namespace, runtime: Runtime) -> int:
     targets = load_targets(args.targets_file)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     if args.target:
-        targets = [resolve_target(targets, args.target, allow_disabled=args.all)]
-    elif not args.all:
-        targets = [target for target in targets if target.enabled]
+        targets = [resolve_target(targets, args.target)]
     statuses = [ticket_status(target, state_dir, runtime) for target in targets]
     if args.json:
         print(
@@ -401,7 +377,7 @@ def cmd_status(args: argparse.Namespace, runtime: Runtime) -> int:
 
 def cmd_issue(args: argparse.Namespace, runtime: Runtime) -> int:
     targets = load_targets(args.targets_file)
-    target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
+    target = resolve_target(targets, args.target)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     paths = issue_ticket(args, target, state_dir, expand_path(args.key), runtime)
     print(str(paths.cert))
@@ -410,7 +386,7 @@ def cmd_issue(args: argparse.Namespace, runtime: Runtime) -> int:
 
 def cmd_ensure(args: argparse.Namespace, runtime: Runtime) -> int:
     targets = load_targets(args.targets_file)
-    target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
+    target = resolve_target(targets, args.target)
     state_dir = state_dir_arg(args)
     paths = ensure_ticket(args, target, runtime)
     cert_alias = args.cert_alias or args.target
@@ -428,7 +404,7 @@ def cmd_init_key(args: argparse.Namespace, runtime: Runtime) -> int:
 
 def cmd_ssht(args: argparse.Namespace, runtime: Runtime) -> NoReturn:
     targets = load_targets(args.targets_file)
-    target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
+    target = resolve_target(targets, args.target)
     paths = ensure_ticket(args, target, runtime)
     cmd = ssht_ssh_command(args, target, paths)
     runtime.commands.exec(cmd)
@@ -454,7 +430,7 @@ def ssht_ssh_command(args: argparse.Namespace, target: Target, paths: TicketPath
         "ControlMaster=no",
         "-o",
         "ControlPath=none",
-        target.ssh_host,
+        target.name,
     ] + ssh_args
 
 
@@ -494,11 +470,6 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.set_defaults(ca_agent=env_flag("SSHT_CA_AGENT"))
     parser.add_argument("--ttl", help="ticket lifetime, e.g. 30m, 2h, 1h30m")
     parser.add_argument("--force", action="store_true", help="ignore an existing valid ticket")
-    parser.add_argument(
-        "--allow-disabled",
-        action="store_true",
-        help="allow issuing for a disabled ticket target",
-    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -507,7 +478,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     targets = subparsers.add_parser("targets", help="list configured SSH ticket targets")
     add_target_source_options(targets)
-    targets.add_argument("--all", action="store_true", help="include disabled targets")
     targets.add_argument("--json", action="store_true", help="emit JSON")
     targets.set_defaults(func=cmd_targets)
 
@@ -515,7 +485,6 @@ def build_parser() -> argparse.ArgumentParser:
     status.add_argument("target", nargs="?", help="target or alias")
     add_target_source_options(status)
     status.add_argument("--state-dir", help="directory for per-host certificates and metadata")
-    status.add_argument("--all", action="store_true", help="include disabled targets")
     status.add_argument("--json", action="store_true", help="emit JSON")
     status.set_defaults(func=cmd_status)
 

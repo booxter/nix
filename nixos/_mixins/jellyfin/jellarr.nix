@@ -1,70 +1,55 @@
 {
   config,
+  inputs,
   lib,
-  outputs,
+  pkgs,
   ...
 }:
 let
-  openAttrs = lib.types.attrsOf lib.types.anything;
-  declarativeConfigModule = {
-    freeformType = openAttrs;
-    options = {
-      system = lib.mkOption {
-        type = lib.types.submodule {
-          freeformType = openAttrs;
-          options.pluginRepositories = lib.mkOption {
-            type = lib.types.listOf openAttrs;
-            default = [ ];
-          };
-        };
-        default = { };
-      };
-      library.virtualFolders = lib.mkOption {
-        type = lib.types.listOf openAttrs;
-        default = [ ];
-      };
-      users = lib.mkOption {
-        type = lib.types.listOf openAttrs;
-        default = [ ];
-      };
-      plugins = lib.mkOption {
-        type = lib.types.listOf openAttrs;
-        default = [ ];
-      };
-    };
-  };
-  contributionModule = {
-    options = {
-      targetHost = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "NixOS host whose Jellyfin configuration receives this contribution.";
-      };
-      config = lib.mkOption {
-        type = lib.types.submodule declarativeConfigModule;
-        default = { };
-        description = "Declarative Jellyfin configuration contributed to the target host.";
-      };
-    };
-  };
-  model = import ./model.nix { inherit config outputs; };
+  cfg = config.host.jellyfin;
+  declarativeConfig = config.host.jellyfinDeclarativeConfig;
+  configuredUsers = declarativeConfig.users or [ ];
+  passwordSecrets = lib.genAttrs (map (user: user.passwordSecret) configuredUsers) (_: {
+    owner = "jellarr";
+    group = "jellarr";
+    mode = "0400";
+  });
+  jellarrUsers = map (
+    user:
+    removeAttrs user [ "passwordSecret" ]
+    // {
+      passwordFile = config.sops.secrets.${user.passwordSecret}.path;
+    }
+  ) configuredUsers;
 in
 {
-  options.host.jellyfin = {
-    declarativeConfig = lib.mkOption {
-      type = lib.types.submodule declarativeConfigModule;
-      default = { };
-      description = "Jellarr policy contributed by the Jellyfin host and its integrations.";
+  config = lib.mkIf (cfg != null) {
+    sops = {
+      secrets = passwordSecrets;
+      templates."jellarr.env" = {
+        owner = "jellarr";
+        group = "jellarr";
+        mode = "0400";
+        content = ''
+          JELLARR_API_KEY=${config.sops.placeholder."jellyfin/apiKey"}
+        '';
+      };
     };
 
-    declarativeConfigContributions = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule contributionModule);
-      default = { };
-      internal = true;
-      description = "Declarative Jellyfin configuration addressed to fleet Jellyfin hosts.";
+    services.jellarr = {
+      enable = true;
+      package = pkgs.callPackage ./packages/jellarr { src = inputs.jellarr; };
+      environmentFile = config.sops.templates."jellarr.env".path;
+      config = declarativeConfig // {
+        version = 1;
+        base_url = "http://127.0.0.1:8096";
+        users = jellarrUsers;
+      };
+    };
+
+    systemd.services.jellarr = {
+      wants = [ "sops-install-secrets.service" ];
+      after = [ "sops-install-secrets.service" ];
     };
   };
-
-  config.host.jellyfin.declarativeConfig = lib.mkMerge (
-    map (contribution: contribution.config) model.targetedContributions
-  );
 }

@@ -21,6 +21,7 @@
       Minute = 15;
     }
   ];
+  nix.settings.sandbox = "relaxed";
 
   system.activationScripts.postActivation.text = lib.mkAfter ''
     if [ -d /nix/store ]; then

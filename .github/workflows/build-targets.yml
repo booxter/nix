@@ -47,22 +47,22 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve CI target facts
-        id: ci_target_facts
+      - name: Resolve CI targets
+        id: ci_targets
         shell: bash
         run: |
-          target_facts="$(nix eval --json .#lib.ciTargetFacts)"
-          printf 'facts=%s\n' "${target_facts}" >>"${GITHUB_OUTPUT}"
+          targets="$(nix eval --json .#lib.ciTargets)"
+          printf 'targets=%s\n' "${targets}" >>"${GITHUB_OUTPUT}"
 
       - name: Compute build matrix
         id: build_matrix
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          CI_TARGET_FACTS: ${{ steps.ci_target_facts.outputs.facts }}
+          CI_TARGETS: ${{ steps.ci_targets.outputs.targets }}
         with:
           script: |
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const buildTargets = JSON.parse(process.env.CI_TARGET_FACTS).buildTargets;
+            const buildTargets = JSON.parse(process.env.CI_TARGETS).buildTargets;
             const matrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
