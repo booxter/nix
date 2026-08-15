@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  utils,
   ...
 }:
 let
@@ -52,15 +51,6 @@ let
       ]
     )
   );
-  ebookConverter = {
-    package = converterPackage;
-    library = model.ebooks;
-    stateDir = model.converter.stateDir;
-    user = "ebook-converter";
-    group = "media";
-    metricsDir = "/var/lib/prometheus-node-exporter-textfile";
-    metricsFile = "/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom";
-  };
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -96,35 +86,20 @@ in
       // converterEnvironment;
     };
 
-    users.users = {
-      ${model.user} = {
-        group = model.group;
-        home = "/var/empty";
-        isSystemUser = true;
-      };
-      ${ebookConverter.user} = {
-        group = ebookConverter.group;
-        home = "/var/empty";
-        isSystemUser = true;
-      };
+    users.users.${model.user} = {
+      group = model.group;
+      home = "/var/empty";
+      isSystemUser = true;
     };
 
     systemd.tmpfiles.rules = [
       "d '${cfg.stateDir}' 0700 ${model.user} root - -"
-      "d '${ebookConverter.stateDir}' 0770 ${ebookConverter.user} ${ebookConverter.group} - -"
-      "z '${ebookConverter.stateDir}' 0770 ${ebookConverter.user} ${ebookConverter.group} - -"
-      "z ${ebookConverter.metricsDir} 0775 root ${ebookConverter.group} - -"
     ];
 
     host.storage.claims = lib.mkMerge (
-      (map (claim: {
+      map (claim: {
         ${claim}.attachments.shelfmark = { };
-      }) storageClaims)
-      ++ [
-        {
-          ${ebookConverter.library.storage.claim}.attachments.ebook-converter = { };
-        }
-      ]
+      }) storageClaims
     );
 
     host.backups.sources.shelfmark = {
@@ -200,80 +175,16 @@ in
       restartUnits = [ "shelfmark.service" ];
     };
 
-    systemd.services = {
-      shelfmark = {
-        wants = [ "sops-install-secrets.service" ];
-        after = [ "sops-install-secrets.service" ];
-        serviceConfig = {
-          EnvironmentFile = config.sops.templates."shelfmark.env".path;
-          Group = model.group;
-          ReadWritePaths = writablePaths;
-          StateDirectory = lib.mkForce "";
-          UMask = lib.mkForce "0002";
-          User = model.user;
-        };
-      };
-
-      ebook-converter = {
-        description = "Convert library MOBI and AZW3 files to EPUB";
-        wantedBy = [ "multi-user.target" ];
-        wants = [ "network-online.target" ];
-        after = [ "network-online.target" ];
-        serviceConfig = {
-          ExecStart = utils.escapeSystemdExecArgs [
-            (lib.getExe ebookConverter.package)
-            "--library-root"
-            ebookConverter.library.path
-            "--lock-root"
-            ebookConverter.stateDir
-            "--state-file"
-            "${ebookConverter.stateDir}/state.json"
-            "--metrics-file"
-            ebookConverter.metricsFile
-            "--interval-seconds"
-            "30"
-            "--settle-seconds"
-            "30"
-            "--max-attempts"
-            "3"
-          ];
-          Environment = "XDG_CONFIG_HOME=${ebookConverter.stateDir}";
-          User = ebookConverter.user;
-          Group = ebookConverter.group;
-          UMask = "0002";
-          Restart = "always";
-          RestartSec = "10s";
-          Nice = 10;
-          IOSchedulingClass = "idle";
-          CPUQuota = "200%";
-          NoNewPrivileges = true;
-          PrivateTmp = true;
-          PrivateDevices = true;
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          ProtectHostname = true;
-          ProtectClock = true;
-          ProtectControlGroups = true;
-          ProtectKernelLogs = true;
-          ProtectKernelModules = true;
-          ProtectKernelTunables = true;
-          ProtectProc = "invisible";
-          ProcSubset = "pid";
-          LockPersonality = true;
-          CapabilityBoundingSet = "";
-          AmbientCapabilities = "";
-          RestrictAddressFamilies = [ "AF_UNIX" ];
-          RestrictNamespaces = true;
-          RestrictRealtime = true;
-          RestrictSUIDSGID = true;
-          SystemCallArchitectures = "native";
-          RemoveIPC = true;
-          ReadWritePaths = [
-            ebookConverter.library.path
-            ebookConverter.stateDir
-            ebookConverter.metricsDir
-          ];
-        };
+    systemd.services.shelfmark = {
+      wants = [ "sops-install-secrets.service" ];
+      after = [ "sops-install-secrets.service" ];
+      serviceConfig = {
+        EnvironmentFile = config.sops.templates."shelfmark.env".path;
+        Group = model.group;
+        ReadWritePaths = writablePaths;
+        StateDirectory = lib.mkForce "";
+        UMask = lib.mkForce "0002";
+        User = model.user;
       };
     };
   };

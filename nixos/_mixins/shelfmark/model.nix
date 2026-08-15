@@ -21,5 +21,11 @@ in
   oidcScopes = config.host.sso.oidc.baseScopes;
   audiobookshelfService =
     if config.host.audiobookshelf == null then null else config.host.web.services.audiobookshelf;
-  converter.stateDir = "/var/lib/ebook-converter";
+  converter = {
+    stateDir = "/var/lib/ebook-converter";
+    user = "ebook-converter";
+    group = "media";
+    metricsDir = "/var/lib/prometheus-node-exporter-textfile";
+    metricsFile = "/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom";
+  };
 }
