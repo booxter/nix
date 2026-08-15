@@ -32,7 +32,6 @@ in
 {
   config = lib.mkIf (cfg != null && cfg.gpt != null) {
     host.pki.clients.paperless-ollama = {
-      enable = true;
       category = "internal";
       commonName = "paperless-gpt.${config.networking.hostName}";
       materializations.default.restartUnits = [ "stunnel.service" ];

@@ -20,7 +20,6 @@ in
 
   config = lib.mkIf cfg.enable {
     host.pki.clients.${watchdogName} = {
-      enable = true;
       category = "internal";
       materializations.default.restartUnits = [ "${watchdogName}.service" ];
     };

@@ -158,7 +158,6 @@ pkgs.testers.runNixOSTest {
         };
 
         host.pki.clients.loki = {
-          enable = false;
           materializations.default = {
             certificatePath = "${testPki}/client.crt";
             keyPath = "${testPki}/client.key";

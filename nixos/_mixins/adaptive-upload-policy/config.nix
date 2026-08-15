@@ -220,9 +220,8 @@ in
           };
         };
       }
-      (lib.optionalAttrs hasPkiClients {
+      (lib.mkIf (hasPkiClients && cfg.source.jellyfin.host != null) {
         host.pki.clients.${pkiClientName} = {
-          enable = cfg.source.jellyfin.host != null;
           category = "internal";
           secretPrefix = "prometheus/clients/${pkiClientName}";
           materializations.default = {

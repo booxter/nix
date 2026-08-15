@@ -5,7 +5,7 @@
 }:
 let
   rootConfig = config;
-  enabledClients = lib.filterAttrs (_: client: client.enable) config.host.pki.clients;
+  clients = config.host.pki.clients;
   secretBaseName =
     clientName: materializationName:
     "internal-pki-client-${clientName}"
@@ -87,8 +87,6 @@ in
             { name, config, ... }:
             {
               options = {
-                enable = lib.mkEnableOption "internal PKI client identity";
-
                 category = lib.mkOption {
                   type = enum [
                     "internal"
@@ -152,14 +150,10 @@ in
           else
             lib.unique ([ client.commonName ] ++ client.sans);
       }
-    ) enabledClients;
+    ) clients;
 
     assertions = import ./assertions.nix {
-      inherit
-        config
-        enabledClients
-        lib
-        ;
+      inherit config lib;
     };
 
     sops.secrets = lib.concatMapAttrs (
@@ -174,6 +168,6 @@ in
           "${baseName}-key" = mkClientSecret materialization "${client.secretPrefix}/client_key";
         }
       ) client.materializations
-    ) enabledClients;
+    ) clients;
   };
 }

@@ -88,41 +88,37 @@ let
   '';
 in
 {
-  config = lib.mkMerge [
-    {
-      host.pki.clients.loki = {
-        enable = lib.mkDefault (enable && lokiClient != null);
-        category = "observability";
-        secretPrefix = "observability/clients/loki";
-        materializations.default.group = "wheel";
-      };
-    }
-    (lib.mkIf (enable && lokiClient != null) {
-      system.activationScripts.postActivation.text = lib.mkAfter ''
-        mkdir -p ${stateDir}
-        chmod 0755 ${stateDir}
-      '';
+  config = lib.mkIf (enable && lokiClient != null) {
+    host.pki.clients.loki = {
+      category = "observability";
+      secretPrefix = "observability/clients/loki";
+      materializations.default.group = "wheel";
+    };
 
-      launchd.daemons.grafana-alloy-logs = {
-        command = lib.escapeShellArgs [
-          (lib.getExe pkgs.grafana-alloy)
-          "run"
-          "--server.http.listen-addr=127.0.0.1:12345"
-          "--storage.path=${stateDir}"
-          alloyConfig
-        ];
-        serviceConfig = {
-          RunAtLoad = true;
-          KeepAlive = true;
-          WorkingDirectory = stateDir;
-          EnvironmentVariables = {
-            HOME = "/var/root";
-          };
-          ProcessType = "Background";
-          StandardOutPath = "/var/log/grafana-alloy.log";
-          StandardErrorPath = "/var/log/grafana-alloy.log";
+    system.activationScripts.postActivation.text = lib.mkAfter ''
+      mkdir -p ${stateDir}
+      chmod 0755 ${stateDir}
+    '';
+
+    launchd.daemons.grafana-alloy-logs = {
+      command = lib.escapeShellArgs [
+        (lib.getExe pkgs.grafana-alloy)
+        "run"
+        "--server.http.listen-addr=127.0.0.1:12345"
+        "--storage.path=${stateDir}"
+        alloyConfig
+      ];
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = true;
+        WorkingDirectory = stateDir;
+        EnvironmentVariables = {
+          HOME = "/var/root";
         };
+        ProcessType = "Background";
+        StandardOutPath = "/var/log/grafana-alloy.log";
+        StandardErrorPath = "/var/log/grafana-alloy.log";
       };
-    })
-  ];
+    };
+  };
 }

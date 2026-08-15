@@ -29,7 +29,6 @@ lib.mkIf (config.host.network.ipController.enable && wgHome != null) {
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
   host.pki.clients."wg-home-dns-sync" = {
-    enable = true;
     category = "observability";
     secretPrefix = wgHomeDnsSyncClientSecretPrefix;
     materializations.default = {

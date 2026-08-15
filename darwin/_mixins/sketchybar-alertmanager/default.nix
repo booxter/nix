@@ -10,9 +10,8 @@ let
   lanDomain = config.host.network.lanDomain;
   enable = config.host.observability.enable;
 in
-{
+lib.mkIf enable {
   host.pki.clients.${clientName} = {
-    inherit enable;
     category = "internal";
     materializations.default = {
       owner = username;
@@ -20,7 +19,7 @@ in
     };
   };
 
-  home-manager.users.${username}.host.hm.sketchybar.alertmanager = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.alertmanager = {
     enable = true;
     url = "https://alertmanager.${lanDomain}/api/v2/alerts";
     grafanaUrl = "https://grafana.${lanDomain}/alerting/groups";

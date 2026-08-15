@@ -78,7 +78,6 @@ in
       map (contribution: {
         name = contribution.id;
         value = {
-          enable = true;
           category = "internal";
           materializations.default = {
             owner = config.services.nginx.user;

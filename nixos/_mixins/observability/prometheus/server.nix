@@ -101,7 +101,6 @@ in
     };
 
     host.pki.clients."prometheus-scrape-node" = {
-      enable = true;
       category = "observability";
       secretPrefix = "prometheus/scrape_node";
       commonName = "prometheus-node-scraper";

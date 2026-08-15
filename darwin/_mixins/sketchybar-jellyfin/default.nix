@@ -12,9 +12,8 @@ let
   endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
   enable = config.host.observability.enable;
 in
-{
+lib.mkIf enable {
   host.pki.clients.${clientName} = {
-    inherit enable;
     category = "observability";
     materializations.default = {
       owner = username;
@@ -22,7 +21,7 @@ in
     };
   };
 
-  home-manager.users.${username}.host.hm.sketchybar.jellyfin = lib.mkIf enable {
+  home-manager.users.${username}.host.hm.sketchybar.jellyfin = {
     enable = true;
     metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${config.host.network.lanDomain}/d/fana-media-pipe";
