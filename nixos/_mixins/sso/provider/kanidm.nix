@@ -1,106 +1,26 @@
 {
   config,
+  kanidmModel,
   lib,
-  outputs,
-  ssoPkgs,
   pkgs,
-  utils,
+  ssoPkgs,
   ...
 }:
 let
-  sso = config.host.sso;
-  enabled = sso.provider != null;
-  idPublicHost = "id.${config.host.network.publicDomain}";
-  publicUrl = "https://${idPublicHost}";
-  oidcClients = import ./oidc-clients.nix {
-    inherit lib outputs;
-    inherit (config.host) realm;
-    localRegistrations = sso.oidc.registrations;
-    providerHost = config.networking.hostName;
-  };
-  kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
-  kanidmOAuthSecretKey = clientId: "kanidm/oauth2/${clientId}/client_secret";
-  confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidcClients;
-  referencedOidcGroups = lib.unique (
-    lib.concatMap (
-      client:
-      builtins.attrNames client.scopeMaps
-      ++ lib.concatMap (claimMap: builtins.attrNames claimMap.valuesByGroup) (
-        builtins.attrValues client.claimMaps
-      )
-    ) (builtins.attrValues oidcClients)
-  );
-  unknownOidcGroups = lib.subtractLists sso.groups referencedOidcGroups;
-  kanidmProvisionClients =
-    secretPathFor:
-    lib.mapAttrs (_: client: {
-      inherit (client)
-        allowInsecureClientDisablePkce
-        claimMaps
-        displayName
-        originLanding
-        public
-        scopeMaps
-        ;
-      preferShortUsername = true;
-      originUrl =
-        if builtins.length client.originUrls == 1 then
-          builtins.head client.originUrls
-        else
-          client.originUrls;
-      basicSecretFile = if client.public then null else secretPathFor client.clientId;
-    }) oidcClients;
-  kanidmPort = 18085;
-  kanidmLocalHost = "id";
-  kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
-  mailSenderUser = "kanidm-mail-sender";
-  mailSenderGroup = mailSenderUser;
-  mailSenderStateDir = "/var/lib/kanidm-mail-sender";
-  mailSenderTokenFile = "${mailSenderStateDir}/token";
-  mailSenderRuntimeDir = "/run/kanidm-mail-sender";
-  mailSenderConfigFile = "${mailSenderRuntimeDir}/mail-sender.toml";
-  personMailUsers = lib.filterAttrs (_: person: person.mailAddressSopsKey != null) sso.users;
-  personMailSecretName = name: "kanidm-person-mail-address-${name}";
-  personMailProvisionService = "kanidm-person-mail-provision";
-  personMailProvisionDir = "/run/${personMailProvisionService}";
-  personMailProvisionFile = "${personMailProvisionDir}/persons.json";
-  kanidmProvisionGroups = lib.genAttrs sso.groups (_: { });
-  kanidmProvisionPersons = lib.mapAttrs (name: person: {
-    displayName = name;
-    groups = person.groups;
-  }) sso.users;
-  personMailProvision = ssoPkgs.kanidm-person-mail-provision;
-  personMailProvisionArgs = [
-    personMailProvisionFile
-  ]
-  ++ lib.concatMap (name: [
-    name
-    config.sops.secrets.${personMailSecretName name}.path
-  ]) (builtins.attrNames personMailUsers);
-  mailer = config.host.mailer;
-  mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
-    schedule = "*/30 * * * * * *";
-    instanceDisplayName = "SSO";
-    instanceUrl = publicUrl;
-    mailFromAddress = mailer.address;
-    mailReplyToAddress = mailer.address;
-    mailRelay = mailer.relayHost;
-    mailUsername = mailer.address;
-    mailConnectTimeoutSeconds = 15;
-  };
-  writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' ssoPkgs.kanidm-mail-sender-bootstrap "kanidm-mail-sender-write-config")
-    "--template"
-    mailSenderTemplate
-    "--token-file"
-    mailSenderTokenFile
-    "--password-file"
-    config.sops.secrets.kanidmMailerPassword.path
-    "--output"
-    mailSenderConfigFile
-    "--output-group"
-    mailSenderGroup
-  ];
+  inherit (kanidmModel)
+    confidentialOidcClients
+    enabled
+    idPublicHost
+    kanidmLocalHost
+    kanidmLocalUrl
+    kanidmOAuthSecretAttrName
+    kanidmOAuthSecretKey
+    kanidmPort
+    kanidmProvisionClients
+    kanidmProvisionGroups
+    kanidmProvisionPersons
+    unknownOidcGroups
+    ;
 in
 {
   config = lib.mkIf enabled {
@@ -108,15 +28,9 @@ in
       "d /var/lib/kanidm/backups 0700 kanidm kanidm - -"
     ];
 
-    host.backups.sources.kanidm = {
-      paths = [ "/var/lib/kanidm/backups" ];
-    };
+    host.backups.sources.kanidm.paths = [ "/var/lib/kanidm/backups" ];
 
     assertions = [
-      {
-        assertion = mailer != null;
-        message = "Kanidm mail sender requires mailer policy for realm '${config.host.realm}'";
-      }
       {
         assertion = unknownOidcGroups == [ ];
         message = "OIDC registrations reference unknown Kanidm groups: ${lib.concatStringsSep ", " unknownOidcGroups}";
@@ -152,27 +66,7 @@ in
         mode = "0400";
         restartUnits = [ "kanidm.service" ];
       };
-      kanidmMailerPassword = {
-        key = "kanidm/mailer/password";
-        owner = mailSenderUser;
-        group = mailSenderGroup;
-        mode = "0400";
-        restartUnits = [ "kanidm-mail-sender.service" ];
-      };
     }
-    // lib.mapAttrs' (
-      name: person:
-      lib.nameValuePair (personMailSecretName name) {
-        key = person.mailAddressSopsKey;
-        owner = "kanidm";
-        group = "kanidm";
-        mode = "0400";
-        restartUnits = [
-          "${personMailProvisionService}.service"
-          "kanidm.service"
-        ];
-      }
-    ) personMailUsers
     // lib.mapAttrs' (
       _: client:
       lib.nameValuePair (kanidmOAuthSecretAttrName client.clientId) {
@@ -206,24 +100,19 @@ in
         enable = true;
         adminPasswordFile = config.sops.secrets.kanidmAdminPassword.path;
         idmAdminPasswordFile = config.sops.secrets.kanidmIdmAdminPassword.path;
-        extraJsonFile = personMailProvisionFile;
         instanceUrl = "https://localhost:${toString kanidmPort}";
         groups = kanidmProvisionGroups;
         persons = kanidmProvisionPersons;
         systems.oauth2 = kanidmProvisionClients (
-          clientId: config.sops.secrets."${kanidmOAuthSecretAttrName clientId}".path
+          clientId: config.sops.secrets.${kanidmOAuthSecretAttrName clientId}.path
         );
       };
     };
 
     host.web.services.id = {
       upstream = "https://127.0.0.1:${toString kanidmPort}";
-      public = {
-        hostName = idPublicHost;
-      };
-      health.frontend = {
-        path = "/status";
-      };
+      public.hostName = idPublicHost;
+      health.frontend.path = "/status";
       observability = {
         importance = "critical";
         externalProbe.requirement = "required";
@@ -242,136 +131,9 @@ in
 
     networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
 
-    users.users.${mailSenderUser} = {
-      isSystemUser = true;
-      group = mailSenderGroup;
-      home = mailSenderStateDir;
-      createHome = false;
-    };
-
-    users.groups.${mailSenderGroup} = { };
-
     systemd.services.kanidm = {
-      requires = [ "${personMailProvisionService}.service" ];
-      wants = [ "sops-install-secrets.service" ];
-      after = [
-        "sops-install-secrets.service"
-        "${personMailProvisionService}.service"
-      ];
-    };
-
-    systemd.services.${personMailProvisionService} = {
-      description = "Render Kanidm person email provisioning data";
       wants = [ "sops-install-secrets.service" ];
       after = [ "sops-install-secrets.service" ];
-      before = [ "kanidm.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = "kanidm";
-        Group = "kanidm";
-        RuntimeDirectory = personMailProvisionService;
-        RuntimeDirectoryMode = "0700";
-        UMask = "0077";
-        ExecStart = "${lib.getExe personMailProvision} ${lib.escapeShellArgs personMailProvisionArgs}";
-        NoNewPrivileges = true;
-        PrivateDevices = true;
-        PrivateTmp = true;
-        ProtectHome = true;
-        ProtectSystem = "strict";
-        RestrictAddressFamilies = [ "AF_UNIX" ];
-      };
-    };
-
-    systemd.services.kanidm-mail-sender-bootstrap = {
-      description = "Bootstrap Kanidm mail sender service account";
-      after = [
-        "kanidm.service"
-        "sops-install-secrets.service"
-      ];
-      requires = [
-        "kanidm.service"
-        "sops-install-secrets.service"
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        UMask = "0077";
-        StateDirectory = "kanidm-mail-sender";
-        StateDirectoryMode = "0700";
-        ExecStart = "${lib.getExe' ssoPkgs.kanidm-mail-sender-bootstrap "kanidm-mail-sender-bootstrap"} ${
-          lib.escapeShellArgs [
-            "--url"
-            kanidmLocalUrl
-            "--idm-admin-password-file"
-            config.sops.secrets.kanidmIdmAdminPassword.path
-            "--token-file"
-            mailSenderTokenFile
-            "--token-owner"
-            mailSenderUser
-            "--token-group"
-            mailSenderGroup
-          ]
-        }";
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [ mailSenderStateDir ];
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-      };
-    };
-
-    systemd.services.kanidm-mail-sender = {
-      description = "Kanidm mail sender";
-      wantedBy = [ "multi-user.target" ];
-      restartTriggers = [
-        config.environment.etc."kanidm/config".source
-        mailSenderTemplate
-        ssoPkgs.kanidm-mail-sender-bootstrap
-      ];
-      wants = [
-        "network-online.target"
-        "sops-install-secrets.service"
-      ];
-      requires = [
-        "kanidm.service"
-        "kanidm-mail-sender-bootstrap.service"
-      ];
-      after = [
-        "network-online.target"
-        "kanidm.service"
-        "kanidm-mail-sender-bootstrap.service"
-        "sops-install-secrets.service"
-      ];
-      serviceConfig = {
-        User = mailSenderUser;
-        Group = mailSenderGroup;
-        UMask = "0077";
-        RuntimeDirectory = "kanidm-mail-sender";
-        RuntimeDirectoryMode = "0700";
-        StateDirectory = "kanidm-mail-sender";
-        StateDirectoryMode = "0700";
-        ExecStartPre = "+${writeMailSenderConfigCommand}";
-        ExecStart = "${config.services.kanidm.package}/bin/kanidm-mail-sender -c /etc/kanidm/config -m ${mailSenderConfigFile}";
-        Restart = "on-failure";
-        RestartSec = "10s";
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [
-          mailSenderRuntimeDir
-          mailSenderStateDir
-        ];
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-      };
-      environment.RUST_LOG = "kanidm_client=warn,kanidm_mail_sender=info";
     };
   };
 }

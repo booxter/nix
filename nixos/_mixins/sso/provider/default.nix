@@ -1,10 +1,14 @@
 {
   config,
   lib,
+  outputs,
   pkgs,
   ...
 }:
 let
+  kanidmModel = import ./kanidm-model.nix {
+    inherit config lib outputs;
+  };
   ssoPkgs = import ./pkgs {
     inherit pkgs;
     providerInventory = lib.optionalAttrs (config.host.sso.providerHost != null) {
@@ -13,9 +17,15 @@ let
   };
 in
 {
-  imports = [ ./kanidm.nix ];
+  imports = [
+    ./kanidm.nix
+    ./kanidm-mail-sender.nix
+    ./kanidm-person-mail.nix
+  ];
 
-  _module.args = { inherit ssoPkgs; };
+  _module.args = {
+    inherit kanidmModel ssoPkgs;
+  };
 
   assertions = [
     {

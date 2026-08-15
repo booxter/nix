@@ -12,6 +12,7 @@ mod atomic;
 mod client;
 pub mod mail_sender;
 pub mod mail_sender_config;
+pub mod person_mail;
 
 const PROTOCOL_VERSION: u8 = 1;
 const TTL_SECONDS: u64 = 86_400;
