@@ -105,7 +105,7 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 		Unit: units.BitsPerSecondSI, DataSource: datasource, Min: ptr(0.0),
 		SoftMax: ptr(egress.CapacityMbit * 1_000_000), Stacking: "media-wan", Fill: &fill,
 		ShowThresholds: true,
-		Thresholds:     warningCriticalThresholds(egress.TargetMbit*1_000_000, egress.CapacityMbit*1_000_000),
+		Thresholds:     warningCriticalThresholds(30_000_000, egress.CapacityMbit*1_000_000),
 		Targets: []PrometheusTarget{{
 			RefID: "A", Legend: "{{instance}}",
 			Expression: `sum by(instance) (rate(` + nodeMetric("host_observability_network_bytes_total",
