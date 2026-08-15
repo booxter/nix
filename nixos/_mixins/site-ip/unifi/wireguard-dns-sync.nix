@@ -3,6 +3,7 @@
   lib,
   outputs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -14,7 +15,6 @@ let
   wgHome = config.host.wireguard.networks.home or null;
   wgHomeServerConfig = outputs.nixosConfigurations.${wgHome.server.host}.config;
   wgHomeEndpoint = wgHomeServerConfig.host.observability.prometheusEndpoints."wg-home";
-  wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
   wgHomeDnsSyncClient = config.host.pki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
@@ -24,13 +24,12 @@ let
   }) (lib.filterAttrs (_name: peer: peer.host != null) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
-lib.mkIf (config.host.network.ipController.enable && wgHome != null) {
+lib.mkIf (config.host.network.ipController != null && wgHome != null) {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
   host.pki.clients."wg-home-dns-sync" = {
     category = "observability";
-    secretPrefix = wgHomeDnsSyncClientSecretPrefix;
     materializations.default = {
       owner = serviceAccount;
       group = serviceAccount;
@@ -57,7 +56,21 @@ lib.mkIf (config.host.network.ipController.enable && wgHome != null) {
       User = serviceAccount;
       Group = serviceAccount;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe unifiPkgs.wg-home-dns-sync} --status-url https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path} --ca-file ${pkiRootCaPath} --client-cert-file ${wgHomeDnsSyncClient.materializations.default.certificatePath} --client-key-file ${wgHomeDnsSyncClient.materializations.default.keyPath} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
+      ExecStart = utils.escapeSystemdExecArgs [
+        (lib.getExe unifiPkgs.wg-home-dns-sync)
+        "--status-url"
+        "https://${wgHomeEndpoint.serverName}:${toString wgHomeEndpoint.port}${wgHomeEndpoint.path}"
+        "--ca-file"
+        pkiRootCaPath
+        "--client-cert-file"
+        wgHomeDnsSyncClient.materializations.default.certificatePath
+        "--client-key-file"
+        wgHomeDnsSyncClient.materializations.default.keyPath
+        "--handshake-max-age-seconds"
+        "180"
+        "--peers-json-file"
+        wgHomeDnsPeersFile
+      ];
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

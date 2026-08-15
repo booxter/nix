@@ -20,7 +20,7 @@ let
     distance = 1;
     name = "wg-${name}";
   }) config.host.wireguard.networks;
-  unifiSyncEnv = import ./environment.nix {
+  environment = import ./environment.nix {
     inherit webDnsRecords;
     addressFor = siteNetwork.addressFor;
     baseUrl = controller.endpoint;
@@ -30,13 +30,12 @@ let
     site = controller.site;
     staticRoutes = wireguardStaticRoutes;
   };
-  environment = unifiSyncEnv.environment;
   payloadHash = builtins.hashString "sha256" (builtins.toJSON environment);
 in
 {
   imports = [ ./wireguard-dns-sync.nix ];
 
-  config = lib.mkIf config.host.network.ipController.enable {
+  config = lib.mkIf (config.host.network.ipController != null) {
     users.users.${serviceAccount} = {
       isSystemUser = true;
       group = serviceAccount;

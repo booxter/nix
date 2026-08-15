@@ -26,7 +26,7 @@ in
 
   host.observability.uptimeRobot.controller.enable = true;
 
-  host.network.ipController.enable = true;
+  host.network.ipController = { };
 
   host.ups.client.server = "prx1-lab";
 

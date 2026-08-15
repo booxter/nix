@@ -86,33 +86,17 @@ let
 
 in
 {
-  inherit
-    baseUrl
-    site
-    reservationInventoryJson
-    mainDhcpRangeJson
-    mainDomainName
-    mainDomainSearchJson
-    networkTftpServer
-    networkBootfile
-    dnsRecordsJson
-    staticRoutesJson
-    classlessStaticRoutesJson
-    ;
-
-  environment = {
-    UNIFI_BASE_URL = baseUrl;
-    UNIFI_SITE = site;
-    UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
-    UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
-    UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
-    UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
-    UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON = builtins.toJSON domainSearchOption;
-    UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
-    UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON = builtins.toJSON classlessStaticRoutesOption;
-    UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
-    UNIFI_NETWORK_BOOTFILE = networkBootfile;
-    UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
-    UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
-  };
+  UNIFI_BASE_URL = baseUrl;
+  UNIFI_SITE = site;
+  UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
+  UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
+  UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
+  UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
+  UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON = builtins.toJSON domainSearchOption;
+  UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
+  UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON = builtins.toJSON classlessStaticRoutesOption;
+  UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
+  UNIFI_NETWORK_BOOTFILE = networkBootfile;
+  UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+  UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
 }
