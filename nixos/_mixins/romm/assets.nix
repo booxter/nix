@@ -29,7 +29,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     systemd.services.romm-web-assets = {
       description = "Prepare RomM integration assets from upstream OCI image";
       wantedBy = [ "multi-user.target" ];

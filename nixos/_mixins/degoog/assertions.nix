@@ -14,6 +14,7 @@ let
     jellyfinUrl
     romm
     rommHost
+    rommUrl
     ssoApplication
     ;
 in
@@ -48,11 +49,11 @@ in
       message = "Degoog and its Jellyfin integration must be in the same realm.";
     }
     {
-      assertion = !degoogModel.rommSelected || (romm != null && romm.enable);
+      assertion = !degoogModel.rommSelected || romm != null;
       message = "The selected Degoog RomM integration host must enable RomM.";
     }
     {
-      assertion = !degoogModel.rommSelected || (romm != null && romm.publicUrl != null);
+      assertion = !degoogModel.rommSelected || rommUrl != null;
       message = "The selected Degoog RomM integration requires a public RomM URL.";
     }
     {

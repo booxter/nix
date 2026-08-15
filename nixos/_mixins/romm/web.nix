@@ -9,7 +9,7 @@ let
   inherit (model) cfg state;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.romm = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal.path = "/api";

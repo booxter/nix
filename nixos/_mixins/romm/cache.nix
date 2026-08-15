@@ -9,7 +9,7 @@ let
   inherit (model) cfg state;
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     systemd.services.romm-valkey = {
       description = "RomM Valkey cache and queue";
       wantedBy = [ "multi-user.target" ];

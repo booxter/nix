@@ -15,7 +15,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.registrationReady) {
+  config = lib.mkIf (cfg != null && model.registrationReady) {
     host.web.services.romm.auth = {
       oidcRegistration = {
         displayName = "RomM";

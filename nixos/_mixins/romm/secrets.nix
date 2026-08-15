@@ -17,7 +17,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     sops.secrets = {
       "romm/authSecretKey" = { };
       "romm/dbPassword" = { };

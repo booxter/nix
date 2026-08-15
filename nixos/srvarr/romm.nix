@@ -13,7 +13,6 @@ let
 in
 {
   host.romm = {
-    enable = true;
     publicHostName = "game.${config.host.network.publicDomain}";
     stateDir = "/data/.state/nixarr/romm";
 

@@ -21,7 +21,7 @@ let
     "romm-valkey.service"
     "sops-install-secrets.service"
   ]
-  ++ lib.optional cfg.backups.enable "romm-backup.service";
+  ++ [ "romm-backup.service" ];
   setupConfig = pkgs.writeText "romm-setup.json" (
     builtins.toJSON {
       image = model.image;
@@ -44,12 +44,15 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     systemd.services.romm-setup = {
       description = "Run RomM database migrations and startup tasks";
       wantedBy = [ "multi-user.target" ];
       wants = baseUnits ++ setupBefore;
-      requires = [ "romm-web-assets.service" ] ++ lib.optional cfg.backups.enable "romm-backup.service";
+      requires = [
+        "romm-web-assets.service"
+        "romm-backup.service"
+      ];
       after =
         baseUnits
         ++ setupBefore

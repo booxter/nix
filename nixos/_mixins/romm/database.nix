@@ -20,7 +20,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     services.mysql = {
       enable = true;
       package = pkgs.mariadb;

@@ -33,7 +33,7 @@ let
     "romm-valkey.service"
     "sops-install-secrets.service"
   ]
-  ++ lib.optional cfg.backups.enable "romm-backup.service";
+  ++ [ "romm-backup.service" ];
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
   userUnits = [
     "user-runtime-dir@${toString model.uid}.service"
@@ -53,7 +53,7 @@ let
   };
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     virtualisation = {
       podman.extraPackages = [ pkgs.slirp4netns ];
       oci-containers = {

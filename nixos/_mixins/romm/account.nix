@@ -9,7 +9,7 @@ let
   inherit (model) cfg state storageGroup;
 in
 {
-  config = lib.mkIf (cfg.enable && model.ready) {
+  config = lib.mkIf (cfg != null && model.ready) {
     users.users = {
       ${cfg.user} = {
         isSystemUser = true;

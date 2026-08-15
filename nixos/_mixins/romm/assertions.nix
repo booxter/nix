@@ -8,7 +8,7 @@ let
   inherit (model) cfg ssoApplication;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     assertions = [
       {
         assertion = cfg.publicHostName != null;

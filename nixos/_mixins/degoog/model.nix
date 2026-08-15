@@ -22,6 +22,7 @@ let
   jellyfinUrl =
     if jellyfinHost == null then null else jellyfinHost.host.web.services.jellyfin.public.url;
   romm = if rommHost == null then null else rommHost.host.romm;
+  rommUrl = if rommHost == null then null else rommHost.host.web.services.romm.public.url;
   ssoApplication = config.host.sso.applications.degoog;
   adminUsers = lib.filterAttrs (
     _: user: builtins.elem ssoApplication.roles.admin user.groups
@@ -165,6 +166,7 @@ in
     packages
     romm
     rommHost
+    rommUrl
     selectedRegistrations
     ssoApplication
     ;

@@ -3,7 +3,7 @@ let
   cfg = config.host.romm;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.backups.enable) {
+  config = lib.mkIf (cfg != null) {
     host.backups.sources.romm-database = {
       title = "RomM";
       database = {
