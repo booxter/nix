@@ -12,7 +12,7 @@ let
   '';
 in
 {
-  config = lib.mkIf config.host.nix.builder.client.enable {
+  config = lib.mkIf (config.host.nix.builderClient != null) {
     programs.ssh = {
       knownHosts = lib.mapAttrs' toKnownHost externalBuilders;
       extraConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList toSshConfig builders);

@@ -3,7 +3,7 @@ let
   builder = config.host.nix.builder;
   hostNames =
     map (entry: entry.hostName) (builtins.attrValues config.host.nix.builder-pool)
-    ++ lib.optional builder.enable builder.hostName;
+    ++ lib.optional (builder != null) builder.hostName;
 in
 {
   config.assertions = [

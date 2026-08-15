@@ -11,7 +11,6 @@ in
     disko.layout = "plain";
     realm = "work";
     nix.builder = {
-      enable = true;
       hostName = "nvws.local";
     };
     proxmox.node = {

@@ -61,35 +61,8 @@ let
   builderType = lib.types.submodule {
     options = builderOptions;
   };
-  externalBuilderType = lib.types.submodule {
-    options = builderOptions // {
-      publicKey = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SSH host public key of the builder.";
-      };
-    };
-  };
-in
-{
-  imports = [
-    ./assertions.nix
-    ./community
-    ./build.nix
-    ./nixpkgs-review.nix
-    ./ssh.nix
-  ];
-
-  options.host.nix = {
-    builder = {
-      enable = lib.mkEnableOption "Nix builder participation";
-
-      client.enable = lib.mkEnableOption "remote Nix builder consumption";
-
-      sshIdentityFileName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "SSH identity file name used to authenticate to builders in this realm.";
-      };
-
+  providerType = lib.types.submodule {
+    options = {
       hostName = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = config.networking.hostName;
@@ -132,6 +105,44 @@ in
         description = "Consumers allowed to use this builder.";
       };
     };
+  };
+  clientType = lib.types.submodule {
+    options.sshIdentityFileName = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = if config.host.realm == "home" then "id_ed25519" else "jgwxhwdl4x-nix-builder";
+      description = "SSH identity file name used to authenticate to builders in this realm.";
+    };
+  };
+  externalBuilderType = lib.types.submodule {
+    options = builderOptions // {
+      publicKey = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "SSH host public key of the builder.";
+      };
+    };
+  };
+in
+{
+  imports = [
+    ./assertions.nix
+    ./community
+    ./build.nix
+    ./nixpkgs-review.nix
+    ./ssh.nix
+  ];
+
+  options.host.nix = {
+    builder = lib.mkOption {
+      type = with lib.types; nullOr providerType;
+      default = null;
+      description = "Nix builder advertised to other hosts in this realm.";
+    };
+
+    builderClient = lib.mkOption {
+      type = with lib.types; nullOr clientType;
+      default = null;
+      description = "Remote Nix builder consumption policy.";
+    };
 
     external-builders = lib.mkOption {
       type = lib.types.attrsOf externalBuilderType;
@@ -141,19 +152,11 @@ in
 
     builder-pool = lib.mkOption {
       type = lib.types.attrsOf builderType;
-      default = model.builderPool;
+      default = if config.host.nix.builderClient == null then { } else model.builderPool;
       readOnly = true;
       internal = true;
       description = "Normalized builders available to this host, excluding the host itself.";
     };
   };
 
-  config = lib.mkMerge [
-    (lib.mkIf (config.host.realm == "home") {
-      host.nix.builder.sshIdentityFileName = lib.mkDefault "id_ed25519";
-    })
-    (lib.mkIf (config.host.realm == "work") {
-      host.nix.builder.sshIdentityFileName = lib.mkDefault "jgwxhwdl4x-nix-builder";
-    })
-  ];
 }

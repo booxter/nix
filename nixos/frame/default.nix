@@ -27,10 +27,9 @@ in
       };
     };
     desktop.enable = true;
-    nix.builder = {
-      client.enable = true;
-      enable = true;
-      speedFactor = 200;
+    nix = {
+      builder.speedFactor = 200;
+      builderClient = { };
     };
     hardware = {
       drmCard = "card1";

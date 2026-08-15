@@ -21,7 +21,6 @@
       ./_mixins/aurral
       ./_mixins/backups
       ./_mixins/bazarr
-      ./_mixins/builder.nix
       ./_mixins/desktop.nix
       ./_mixins/degoog
       ./_mixins/dashboard

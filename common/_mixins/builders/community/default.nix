@@ -13,7 +13,7 @@ let
     "kvm"
     "nixos-test"
   ];
-  enabled = config.host.realm == "home" && config.host.nix.builder.client.enable;
+  enabled = config.host.realm == "home" && config.host.nix.builderClient != null;
 in
 {
   config = lib.mkIf enabled {

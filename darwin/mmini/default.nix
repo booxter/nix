@@ -5,10 +5,8 @@ in
 {
   system.stateVersion = 5;
 
-  host.nix.builder = {
-    client.enable = true;
-    enable = true;
-  };
+  host.nix.builder = { };
+  host.nix.builderClient = { };
 
   host.nix.cacheWarmer.enable = true;
 

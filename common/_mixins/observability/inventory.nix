@@ -88,7 +88,7 @@ in
             labels = {
               availability = if config.host.hardware.isLaptop then "intermittent" else "always";
               component = "node";
-              host_builder = lib.boolToString config.host.nix.builder.enable;
+              host_builder = lib.boolToString (config.host.nix.builder != null);
               host_hypervisor = lib.boolToString machine.hypervisor;
               host_laptop = lib.boolToString config.host.hardware.isLaptop;
               host_network_source = if machine.hypervisor then "classified" else "node";
@@ -111,7 +111,7 @@ in
             name = hostName;
             platform = if config.nixpkgs.hostPlatform.isDarwin then "darwin" else "linux";
             virtual = machine.virtual;
-            builder = config.host.nix.builder.enable;
+            builder = config.host.nix.builder != null;
             hypervisor = machine.hypervisor;
             inherit gpuVendor;
             services = builtins.attrNames services;

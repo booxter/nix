@@ -36,7 +36,7 @@ in
 
   host = {
     hardware.isLaptop = true;
-    nix.builder.client.enable = true;
+    nix.builderClient = { };
     network.interfaces.en0.kind = "wireless";
     security = {
       secrets.operator.ageIdentity = {

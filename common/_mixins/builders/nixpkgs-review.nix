@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   builders =
-    if config.host.nix.builder.client.enable then
+    if config.host.nix.builderClient != null then
       lib.filterAttrs (_: builder: builtins.elem "nixpkgs" builder.uses) config.host.nix.builder-pool
     else
       { };

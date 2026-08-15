@@ -1,5 +1,5 @@
 {
-  host.nix.builder.enable = true;
+  host.nix.builder = { };
   host.network.macAddress = "bc:24:11:49:bf:fc";
   host.proxmox.guest = {
     cluster = "lab";

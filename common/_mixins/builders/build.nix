@@ -19,7 +19,7 @@ let
   };
 in
 {
-  config = lib.mkIf config.host.nix.builder.client.enable {
+  config = lib.mkIf (config.host.nix.builderClient != null) {
     nix.buildMachines = lib.mapAttrsToList toBuildMachine builders;
   };
 }
