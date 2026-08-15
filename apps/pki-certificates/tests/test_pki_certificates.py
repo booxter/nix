@@ -19,7 +19,7 @@ from pki_certificates.models import (
     FleetHosts,
     RealmAuthorityConfig,
 )
-from pki_certificates.repository import NixConfigSource
+from pki_certificates.repository import InventoryConfigSource, NixInventorySource
 from pki_certificates.secrets import SopsCertificateStore
 from pki_certificates.services import ManagedCertificateService
 from pki_certificates.unifi import UnifiCertificateService, validate_basename
@@ -293,61 +293,94 @@ def test_managed_service_issues_each_certificate_kind():
     assert len(issuer.calls) == 4
 
 
-def test_nix_config_source_validates_and_combines_fleet_configuration():
+def test_nix_inventory_source_evaluates_once_and_provides_certificates():
     value = {
-        "realm": "test-realm",
-        "realm_authority": realm_authority().model_dump(by_alias=True),
+        "authority": realm_authority().model_dump(by_alias=True),
+        "hosts": fleet_hosts().model_dump(by_alias=True),
+        "repoRoot": "/repo",
         "certificates": [
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "internal_https_server",
                 "name": "web",
                 "commonName": "web.example.invalid",
                 "sans": ["web.example.invalid"],
                 "secretPrefix": "internal_https/web",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
                 "port": 443,
             },
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "internal_https_server",
                 "name": "proxmox-api",
                 "commonName": "host",
                 "sans": ["host", "host.example.invalid"],
                 "secretPrefix": "proxmox/api",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
                 "port": 8006,
             },
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "internal_https_client",
                 "name": "external",
                 "commonName": "external.host",
                 "sans": ["external.host"],
                 "secretPrefix": "external/client",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "client_crt_unencrypted",
+                "keyField": "client_key",
             },
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "observability_endpoint_server",
                 "name": "node_exporter",
                 "commonName": "prometheus-node_exporter.host",
                 "sans": ["host", "host.local"],
                 "secretPrefix": "prometheus/node_exporter",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
                 "port": 9100,
             },
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "observability_endpoint_server",
                 "name": "metrics",
                 "commonName": "prometheus-metrics.host",
                 "sans": ["host"],
                 "secretPrefix": "prometheus/metrics",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "server_crt_unencrypted",
+                "keyField": "server_key",
                 "port": 9999,
             },
             {
+                "host": "host",
+                "realm": "test-realm",
                 "category": "observability_client",
                 "name": "scraper",
                 "commonName": "scraper.host",
                 "sans": [],
                 "secretPrefix": "prometheus/clients/scraper",
+                "secretPath": "secrets/test-realm/host.yaml",
+                "certificateField": "client_crt_unencrypted",
+                "keyField": "client_key",
             },
         ],
     }
     runner = AttributeRunner(value)
-    source = NixConfigSource(runner, Path("/repo"), fleet_hosts(), Path("/query.nix"))
+    inventories = NixInventorySource(runner, Path("/query.nix"))
+    inventory = inventories.inventory(Path("/repo"))
+    source = InventoryConfigSource(inventory)
 
     assert source.certificate_names("host", "internal_https_server") == [
         "proxmox-api",
@@ -364,7 +397,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
         "node_exporter",
     ]
     assert source.certificate_names("host", "observability_client") == ["scraper"]
-    assert len(source.certificate_config("host").certificates) == 6
+    assert inventories.inventory(Path("/repo")) is inventory
     assert len(runner.calls) == 1
     assert runner.calls[0] == [
         "nix-instantiate",
@@ -375,12 +408,6 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
         "--argstr",
         "repo",
         "/repo",
-        "--argstr",
-        "configuration",
-        "nixosConfigurations",
-        "--argstr",
-        "host",
-        "host",
     ]
 
 

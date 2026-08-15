@@ -63,8 +63,7 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set PKI_ROTATION_HOSTS_QUERY_FILE ${pkiCertificates.hostsQueryFile} \
-        --set PKI_ROTATION_QUERY_FILE ${pkiCertificates.queryFile} \
+        --set PKI_ROTATION_INVENTORY_QUERY_FILE ${pkiCertificates.inventoryQueryFile} \
         --set PKI_ROTATION_CERTIFICATE_HELPER ${pkiCertificates}/bin/pki-issue-certificate-remote \
         --set PKI_ROTATION_GIT_ASKPASS "$out/bin/pki-rotation-git-askpass"
     done

@@ -15,10 +15,10 @@ from sops_tools.repository import RuntimeEnvironment
 
 from .issuer import RemoteCertificateIssuer
 from .repository import (
-    NixConfigSource,
+    InventoryConfigSource,
+    NixInventorySource,
     configured_file,
     discover_repo_root,
-    query_fleet_hosts,
 )
 from .secrets import SopsCertificateStore
 from .services import ManagedCertificateService
@@ -35,16 +35,15 @@ class Application:
         environment = dict(os.environ)
         root = discover_repo_root(Path.cwd(), environment.get("PKI_TOOLS_REPO_ROOT"))
         runner = SubprocessRunner()
-        hosts = query_fleet_hosts(
+        inventory = NixInventorySource(
             runner,
-            root,
-            configured_file(environment, "PKI_CERTIFICATE_HOSTS_QUERY_FILE"),
-        )
-        query = configured_file(environment, "PKI_CERTIFICATE_QUERY_FILE")
+            configured_file(environment, "PKI_CERTIFICATE_INVENTORY_QUERY_FILE"),
+        ).inventory(root)
+        hosts = inventory.hosts
         remote_program_name = shutil.which("pki-issue-certificate-remote")
         if remote_program_name is None:
             raise ToolError("pki-issue-certificate-remote is not available on PATH")
-        configs = NixConfigSource(runner, root, hosts, query)
+        configs = InventoryConfigSource(inventory)
         issuer = RemoteCertificateIssuer(
             runner=runner,
             repo_root=root,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Protocol
 
 from pydantic import ValidationError
 from sops_tools.errors import ToolError
@@ -13,7 +14,7 @@ from .models import (
     CertificateConfig,
     FleetHost,
     FleetHosts,
-    HostCertificateConfig,
+    PkiInventory,
     RealmAuthorityConfig,
 )
 
@@ -37,25 +38,6 @@ def configured_file(environment: Mapping[str, str], variable: str) -> Path:
     return Path(value)
 
 
-def query_fleet_hosts(runner: ProcessRunner, repo_root: Path, query: Path) -> FleetHosts:
-    output = runner.run(
-        [
-            "nix-instantiate",
-            "--eval",
-            "--strict",
-            "--json",
-            str(query),
-            "--argstr",
-            "repo",
-            str(repo_root),
-        ]
-    )
-    try:
-        return FleetHosts.model_validate_json(output)
-    except ValidationError as error:
-        raise ToolError(f"invalid evaluated PKI certificate host inventory: {error}") from error
-
-
 def fleet_host(hosts: FleetHosts, host: str) -> FleetHost:
     try:
         return hosts.root[host]
@@ -63,40 +45,20 @@ def fleet_host(hosts: FleetHosts, host: str) -> FleetHost:
         raise ToolError(f"unknown host: {host}") from error
 
 
+class InventorySource(Protocol):
+    def inventory(self, repo_root: Path) -> PkiInventory: ...
+
+
 @dataclass
-class NixConfigSource:
+class NixInventorySource:
     runner: ProcessRunner
-    repo_root: Path
-    hosts: FleetHosts
     query: Path
-    _cache: dict[str, HostCertificateConfig] = field(default_factory=dict)
+    _cache: dict[Path, PkiInventory] = field(default_factory=dict)
 
-    def realm_authority(self, host: str) -> RealmAuthorityConfig:
-        authority = self._config(host).realm_authority
-        if authority is None:
-            raise ToolError(f"host {host} belongs to a realm without a PKI authority")
-        return authority
-
-    def certificate_config(self, host: str) -> HostCertificateConfig:
-        return self._config(host)
-
-    def certificate_names(self, host: str, category: CertificateCategory) -> list[str]:
-        return sorted(
-            certificate.name
-            for certificate in self._config(host).certificates
-            if certificate.category == category
-        )
-
-    def certificate(self, host: str, category: CertificateCategory, name: str) -> CertificateConfig:
-        for certificate in self._config(host).certificates:
-            if certificate.category == category and certificate.name == name:
-                return certificate
-        raise ToolError(f"unknown {category} certificate {name} on host {host}")
-
-    def _config(self, host: str) -> HostCertificateConfig:
-        if host in self._cache:
-            return self._cache[host]
-        host_entry = fleet_host(self.hosts, host)
+    def inventory(self, repo_root: Path) -> PkiInventory:
+        root = repo_root.resolve()
+        if root in self._cache:
+            return self._cache[root]
         output = self.runner.run(
             [
                 "nix-instantiate",
@@ -106,18 +68,43 @@ class NixConfigSource:
                 str(self.query),
                 "--argstr",
                 "repo",
-                str(self.repo_root),
-                "--argstr",
-                "configuration",
-                host_entry.configuration,
-                "--argstr",
-                "host",
-                host,
+                str(root),
             ]
         )
         try:
-            config = HostCertificateConfig.model_validate_json(output)
+            inventory = PkiInventory.model_validate_json(output)
         except ValidationError as error:
-            raise ToolError(f"invalid certificate configuration for {host}: {error}") from error
-        self._cache[host] = config
-        return config
+            raise ToolError(f"invalid evaluated PKI certificate inventory: {error}") from error
+        self._cache[root] = inventory
+        return inventory
+
+
+@dataclass(frozen=True)
+class InventoryConfigSource:
+    inventory: PkiInventory
+
+    def realm_authority(self, host: str) -> RealmAuthorityConfig:
+        host_entry = fleet_host(self.inventory.hosts, host)
+        authority = self.inventory.authority
+        if host_entry.realm != authority.realm:
+            raise ToolError(f"host {host} belongs to a realm without a PKI authority")
+        return authority
+
+    def certificate_names(self, host: str, category: CertificateCategory) -> list[str]:
+        fleet_host(self.inventory.hosts, host)
+        return sorted(
+            certificate.name
+            for certificate in self.inventory.certificates
+            if certificate.host == host and certificate.category == category
+        )
+
+    def certificate(self, host: str, category: CertificateCategory, name: str) -> CertificateConfig:
+        fleet_host(self.inventory.hosts, host)
+        for certificate in self.inventory.certificates:
+            if (
+                certificate.host == host
+                and certificate.category == category
+                and certificate.name == name
+            ):
+                return certificate
+        raise ToolError(f"unknown {category} certificate {name} on host {host}")

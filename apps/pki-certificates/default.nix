@@ -52,16 +52,14 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "pki_certificates" ];
 
   passthru = {
-    hostsQueryFile = ./hosts-query.nix;
-    queryFile = ./query.nix;
+    inventoryQueryFile = ./inventory-query.nix;
   };
 
   postFixup = ''
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set PKI_CERTIFICATE_HOSTS_QUERY_FILE ${./hosts-query.nix} \
-        --set PKI_CERTIFICATE_QUERY_FILE ${./query.nix}
+        --set PKI_CERTIFICATE_INVENTORY_QUERY_FILE ${./inventory-query.nix}
     done
   '';
 

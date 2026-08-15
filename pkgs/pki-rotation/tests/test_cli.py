@@ -159,7 +159,27 @@ def flake_root(tmp_path: Path) -> Path:
 def inventory_manifest(tmp_path: Path) -> Path:
     manifest = tmp_path / "inventory.json"
     manifest.write_text(
-        '{"authority_host":"authority-node","realm":"test-realm","certificates":[]}'
+        json.dumps(
+            {
+                "authority": {
+                    "hostName": "authority-node",
+                    "realm": "test-realm",
+                    "url": "https://ca.example.invalid:8443",
+                    "provisioner": "bootstrap@example.invalid",
+                    "rootCaCertificate": str(tmp_path / "root-ca.crt"),
+                },
+                "hosts": {
+                    "authority-node": {
+                        "system": "x86_64-linux",
+                        "configuration": "nixosConfigurations",
+                        "runtimeHost": "authority-node",
+                        "realm": "test-realm",
+                    }
+                },
+                "repoRoot": str(tmp_path),
+                "certificates": [],
+            }
+        )
     )
     return manifest
 

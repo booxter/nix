@@ -10,8 +10,7 @@ from pathlib import Path
 from typing import Protocol
 
 from pki_certificates.issuer import RemoteCertificateIssuer
-from pki_certificates.models import FleetHosts
-from pki_certificates.repository import NixConfigSource
+from pki_certificates.repository import InventoryConfigSource, InventorySource
 from pki_certificates.secrets import SopsCertificateStore
 from pki_certificates.services import ManagedCertificateService
 from sops_tools.process import SubprocessRunner
@@ -61,8 +60,7 @@ class ManagedServiceFactory(Protocol):
 
 @dataclass(frozen=True)
 class PkiManagedServiceFactory:
-    hosts: FleetHosts
-    query: Path
+    inventories: InventorySource
     remote_program: Path
 
     def create(
@@ -82,18 +80,20 @@ class PkiManagedServiceFactory:
             hostname=socket.gethostname().split(".", maxsplit=1)[0],
             values=values,
         )
-        configs = NixConfigSource(runner, repo_root, self.hosts, self.query)
+        inventory = self.inventories.inventory(repo_root)
+        hosts = inventory.hosts
+        configs = InventoryConfigSource(inventory)
         return ManagedCertificateService(
             configs,
             RemoteCertificateIssuer(
                 runner,
                 repo_root,
-                self.hosts,
+                hosts,
                 configs,
                 True,
                 self.remote_program,
             ),
-            SopsCertificateStore(runtime, self.hosts),
+            SopsCertificateStore(runtime, hosts),
         )
 
 

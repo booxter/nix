@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -10,12 +10,11 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from pki_certificates.models import FleetHosts, HostCertificateConfig
+from pki_certificates.models import PkiInventory
 
 from pki_rotation.inventory import (
-    CertificateInventoryBuilder,
-    ManifestCertificateSpecSource,
-    load_certificate_manifest,
+    InventoryCertificateSpecSource,
+    load_inventory,
 )
 from pki_rotation.models import (
     CertificateCategory,
@@ -26,9 +25,35 @@ from pki_rotation.models import (
 from pki_rotation.scanner import CertificateScanner, parse_certificate
 
 
-def fleet_hosts() -> FleetHosts:
-    return FleetHosts.model_validate(
-        {
+def inventory_value(repo_root: Path) -> dict[str, object]:
+    secret_fields = {
+        "internal_https_server": ("server_crt_unencrypted", "server_key"),
+        "internal_https_client": ("client_crt_unencrypted", "client_key"),
+        "observability_endpoint_server": ("server_crt_unencrypted", "server_key"),
+        "observability_client": ("client_crt_unencrypted", "client_key"),
+    }
+    certificates = [
+        ("internal_https_server", "web", "internal/web"),
+        ("internal_https_server", "proxmox-api", "internal/proxmox"),
+        ("internal_https_client", "internal", "clients/client"),
+        ("internal_https_client", "external", "clients/external"),
+        ("observability_client", "loki", "prometheus/loki"),
+        ("observability_endpoint_server", "api", "prometheus/api"),
+        (
+            "observability_endpoint_server",
+            "node_exporter",
+            "prometheus/node_exporter",
+        ),
+    ]
+    return {
+        "authority": {
+            "hostName": "authority-node",
+            "realm": "test-realm",
+            "url": "https://ca.example.invalid:8443",
+            "provisioner": "bootstrap@example.invalid",
+            "rootCaCertificate": str(repo_root / "root-ca.crt"),
+        },
+        "hosts": {
             "authority-node": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
@@ -41,99 +66,30 @@ def fleet_hosts() -> FleetHosts:
                 "runtimeHost": "service-runtime",
                 "realm": "test-realm",
             },
-        }
-    )
-
-
-def host_config() -> HostCertificateConfig:
-    return HostCertificateConfig.model_validate(
-        {
-            "realm": "test-realm",
-            "realm_authority": {
-                "hostName": "authority-node",
+        },
+        "repoRoot": str(repo_root),
+        "certificates": [
+            {
+                "host": "service-node",
                 "realm": "test-realm",
-                "url": "https://ca.example.invalid:8443",
-                "provisioner": "bootstrap@example.invalid",
-                "leafLifetimeDays": 180,
-                "rootCaCertificate": "/repo/root-ca.crt",
-            },
-            "certificates": [
-                {
-                    "category": "internal_https_server",
-                    "name": "web",
-                    "commonName": "web.example.invalid",
-                    "sans": ["web.example.invalid"],
-                    "secretPrefix": "internal/web",
-                },
-                {
-                    "category": "internal_https_server",
-                    "name": "proxmox-api",
-                    "commonName": "proxmox.example.invalid",
-                    "sans": ["proxmox.example.invalid"],
-                    "secretPrefix": "internal/proxmox",
-                },
-                {
-                    "category": "internal_https_client",
-                    "name": "internal",
-                    "commonName": "client.example.invalid",
-                    "sans": ["client.example.invalid"],
-                    "secretPrefix": "clients/client",
-                },
-                {
-                    "category": "internal_https_client",
-                    "name": "external",
-                    "commonName": "client.example.invalid",
-                    "sans": ["client.example.invalid"],
-                    "secretPrefix": "clients/external",
-                },
-                {
-                    "category": "observability_client",
-                    "name": "loki",
-                    "commonName": "client.example.invalid",
-                    "sans": [],
-                    "secretPrefix": "prometheus/loki",
-                },
-                {
-                    "category": "observability_endpoint_server",
-                    "name": "api",
-                    "commonName": "prometheus-api.host",
-                    "sans": ["host"],
-                    "secretPrefix": "prometheus/api",
-                },
-                {
-                    "category": "observability_endpoint_server",
-                    "name": "node_exporter",
-                    "commonName": "prometheus-node_exporter.host",
-                    "sans": ["host"],
-                    "secretPrefix": "prometheus/node_exporter",
-                },
-            ],
-        }
-    )
-
-
-@dataclass
-class StaticConfigs:
-    value: HostCertificateConfig
-    requested: list[str] = field(default_factory=list)
-
-    def certificate_config(self, host: str) -> HostCertificateConfig:
-        self.requested.append(host)
-        return self.value
+                "category": category,
+                "name": name,
+                "commonName": f"{name}.example.invalid",
+                "sans": [],
+                "secretPrefix": prefix,
+                "secretPath": "secrets/test-realm/service-node.yaml",
+                "certificateField": secret_fields[category][0],
+                "keyField": secret_fields[category][1],
+                "port": None,
+            }
+            for category, name, prefix in certificates
+        ],
+    }
 
 
 def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> None:
-    secret = tmp_path / "secrets" / "test-realm" / "service-node.yaml"
-    secret.parent.mkdir(parents=True)
-    secret.write_text("{}")
-    configs = StaticConfigs(host_config())
-
-    specs = CertificateInventoryBuilder(
-        tmp_path,
-        fleet_hosts(),
-        configs,
-        Path("/intermediate.crt"),
-    ).specs()
+    inventory = PkiInventory.model_validate_json(json.dumps(inventory_value(tmp_path)))
+    specs = InventoryCertificateSpecSource(inventory).specs(tmp_path, Path("/intermediate.crt"))
 
     leaves = {
         (spec.category, spec.name) for spec in specs if spec.category is not CertificateCategory.CA
@@ -147,13 +103,9 @@ def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> Non
         (CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER, "node_exporter"),
         (CertificateCategory.OBSERVABILITY_CLIENT, "loki"),
     }
-    assert configs.requested == ["authority-node", "service-node"]
     secret_paths = {spec.secret.path for spec in specs if spec.secret is not None}
-    assert secret_paths == {
-        tmp_path / "secrets" / "test-realm" / "authority-node.yaml",
-        secret,
-    }
-    assert specs[0].host == "authority-runtime"
+    assert secret_paths == {tmp_path / "secrets" / "test-realm" / "service-node.yaml"}
+    assert specs[0].host == "authority-node"
 
 
 def certificate_pem(not_before: datetime, not_after: datetime) -> str:
@@ -275,51 +227,23 @@ def test_parse_certificate_rejects_non_pem_text() -> None:
         raise AssertionError("invalid certificate was accepted")
 
 
-def test_manifest_source_adds_runtime_intermediate_certificate(tmp_path: Path) -> None:
-    root = tmp_path / "root.crt"
-    secret = tmp_path / "host.yaml"
+def test_inventory_source_adds_runtime_intermediate_certificate(tmp_path: Path) -> None:
     manifest_path = tmp_path / "inventory.json"
-    manifest_path.write_text(
-        json.dumps(
-            {
-                "authority_host": "authority-node",
-                "realm": "test-realm",
-                "certificates": [
-                    {
-                        "host": "authority-node",
-                        "category": "ca",
-                        "name": "root",
-                        "source_kind": "repo_file",
-                        "file_path": str(root),
-                        "secret": None,
-                    },
-                    {
-                        "host": "host",
-                        "category": "internal_https_server",
-                        "name": "web",
-                        "source_kind": "repo_secret",
-                        "file_path": None,
-                        "secret": {
-                            "host": "host",
-                            "path": str(secret),
-                            "prefix": "internal/web",
-                            "certificate_field": "server_crt_unencrypted",
-                        },
-                    },
-                ],
-            }
-        )
-    )
+    value = inventory_value(tmp_path)
+    certificates = value["certificates"]
+    assert isinstance(certificates, list)
+    value["certificates"] = certificates[:1]
+    manifest_path.write_text(json.dumps(value))
 
-    source = ManifestCertificateSpecSource(load_certificate_manifest(manifest_path))
-    specs = source.specs(Path("/unused"), Path("/intermediate.crt"))
+    source = InventoryCertificateSpecSource(load_inventory(manifest_path))
+    specs = source.specs(tmp_path, Path("/intermediate.crt"))
 
     assert [
         (spec.name, spec.file_path) for spec in specs if spec.category is CertificateCategory.CA
     ] == [
         ("intermediate", Path("/intermediate.crt")),
-        ("root", root),
+        ("root", tmp_path / "root-ca.crt"),
     ]
     leaf = next(spec for spec in specs if spec.category is not CertificateCategory.CA)
     assert leaf.secret is not None
-    assert leaf.secret.path == secret
+    assert leaf.secret.path == tmp_path / "secrets/test-realm/service-node.yaml"

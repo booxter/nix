@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class CertificateCategory(StrEnum):
@@ -42,64 +42,6 @@ class CertificateSpec:
     def __post_init__(self) -> None:
         if (self.file_path is None) == (self.secret is None):
             raise ValueError("certificate source must have exactly one location")
-
-
-class ManifestSecretLocation(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-    host: str
-    path: Path
-    prefix: str
-    certificate_field: str
-
-    def location(self) -> SecretLocation:
-        return SecretLocation(
-            host=self.host,
-            path=self.path,
-            prefix=self.prefix,
-            certificate_field=self.certificate_field,
-        )
-
-
-class ManifestCertificateSpec(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-    host: str
-    realm: str | None = None
-    category: CertificateCategory
-    name: str
-    source_kind: SourceKind
-    file_path: Path | None = None
-    secret: ManifestSecretLocation | None = None
-
-    @model_validator(mode="after")
-    def validate_location(self) -> ManifestCertificateSpec:
-        if (self.file_path is None) == (self.secret is None):
-            raise ValueError("certificate source must have exactly one location")
-        if self.source_kind is SourceKind.REPOSITORY_SECRET and self.secret is None:
-            raise ValueError("repository secret source requires a secret location")
-        if self.source_kind is not SourceKind.REPOSITORY_SECRET and self.file_path is None:
-            raise ValueError("file source requires a file path")
-        return self
-
-    def spec(self) -> CertificateSpec:
-        return CertificateSpec(
-            host=self.host,
-            realm=self.realm,
-            category=self.category,
-            name=self.name,
-            source_kind=self.source_kind,
-            file_path=self.file_path,
-            secret=self.secret.location() if self.secret else None,
-        )
-
-
-class CertificateManifest(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-
-    authority_host: str
-    realm: str
-    certificates: tuple[ManifestCertificateSpec, ...]
 
 
 @dataclass(frozen=True)

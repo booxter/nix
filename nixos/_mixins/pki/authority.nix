@@ -24,9 +24,24 @@ let
     pkiCertificates = appPackages.issue-internal-service-cert;
     sopsTools = appPackages.sops-tools;
   };
-  inventory = import ../../pki/inventory.nix {
-    inherit config lib outputs;
-  };
+  inventory =
+    let
+      taggedConfigurations =
+        lib.mapAttrs (_: value: {
+          configuration = "nixosConfigurations";
+          inherit value;
+        }) outputs.nixosConfigurations
+        // lib.mapAttrs (_: value: {
+          configuration = "darwinConfigurations";
+          inherit value;
+        }) outputs.darwinConfigurations;
+      value = import ../../../common/_mixins/internal-pki/inventory.nix {
+        configurations = taggedConfigurations;
+        inherit lib;
+        repoRoot = ../../..;
+      };
+    in
+    builtins.toFile "pki-certificate-inventory.json" (builtins.toJSON value);
   dnsNames = lib.unique (
     config.host.network.certificateDnsNames
     ++ [

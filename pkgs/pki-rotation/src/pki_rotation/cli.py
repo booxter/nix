@@ -9,17 +9,16 @@ from pathlib import Path
 from typing import TextIO, cast
 
 from atomic_file_writes import write_text_atomic
-from pki_certificates.models import FleetHosts
-from pki_certificates.repository import configured_file, discover_repo_root, query_fleet_hosts
+from pki_certificates.repository import NixInventorySource, configured_file, discover_repo_root
 from sops_tools.errors import ToolError
 from sops_tools.process import SubprocessRunner
 
 from .errors import RotationError
 from .github import GitHubPullRequestFactory, PullRequestFactory
 from .inventory import (
-    ManifestCertificateSpecSource,
+    InventoryCertificateSpecSource,
     NixCertificateSpecSource,
-    load_certificate_manifest,
+    load_inventory,
 )
 from .metrics import certificate_metrics, rotation_metrics
 from .models import CertificateInventory, RotationRequest, RotationSummary
@@ -52,19 +51,14 @@ class Application:
 
     @classmethod
     def discover(cls, environment: Mapping[str, str]) -> Application:
-        hosts_query = configured_file(environment, "PKI_ROTATION_HOSTS_QUERY_FILE")
-        query = configured_file(environment, "PKI_ROTATION_QUERY_FILE")
+        query = configured_file(environment, "PKI_ROTATION_INVENTORY_QUERY_FILE")
         remote_program = configured_file(environment, "PKI_ROTATION_CERTIFICATE_HELPER")
         runner = SubprocessRunner()
-        repo_root = discover_repo_root(
-            Path.cwd(),
-            environment.get("PKI_ROTATION_REPO_ROOT"),
-        )
-        hosts: FleetHosts = query_fleet_hosts(runner, repo_root, hosts_query)
+        inventories = NixInventorySource(runner, query)
         return cls(
-            scanner=CertificateScanner(NixCertificateSpecSource(runner, hosts, query)),
+            scanner=CertificateScanner(NixCertificateSpecSource(inventories)),
             rotator=ManagedCertificateRotator(
-                PkiManagedServiceFactory(hosts, query, remote_program)
+                PkiManagedServiceFactory(inventories, remote_program)
             ),
             clock=SystemClock(),
             environment=dict(environment),
@@ -98,12 +92,10 @@ class Application:
         intermediate_certificate: Path,
         rotation_window_days: int,
     ) -> str:
-        scanner = CertificateScanner(
-            ManifestCertificateSpecSource(load_certificate_manifest(inventory_manifest)),
-            self.clock,
-        )
+        inventory = load_inventory(inventory_manifest)
+        scanner = CertificateScanner(InventoryCertificateSpecSource(inventory), self.clock)
         return certificate_metrics(
-            scanner.scan(Path("/"), intermediate_certificate, rotation_window_days)
+            scanner.scan(inventory.repo_root, intermediate_certificate, rotation_window_days)
         )
 
     def dry_run(self, repo_root: Path, request: RotationRequest) -> RotationSummary:

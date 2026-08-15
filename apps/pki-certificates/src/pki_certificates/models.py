@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
@@ -36,6 +37,14 @@ class CertificateConfig(BaseModel):
     port: int | None = None
 
 
+class ManagedCertificateConfig(CertificateConfig):
+    host: str
+    realm: str
+    secret_path: Path = Field(alias="secretPath")
+    certificate_field: str = Field(alias="certificateField")
+    key_field: str = Field(alias="keyField")
+
+
 class RealmAuthorityConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
@@ -46,12 +55,13 @@ class RealmAuthorityConfig(BaseModel):
     root_ca_certificate: str = Field(alias="rootCaCertificate")
 
 
-class HostCertificateConfig(BaseModel):
+class PkiInventory(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
-    realm: str
-    realm_authority: RealmAuthorityConfig | None
-    certificates: list[CertificateConfig]
+    authority: RealmAuthorityConfig
+    hosts: FleetHosts
+    repo_root: Path = Field(alias="repoRoot")
+    certificates: tuple[ManagedCertificateConfig, ...]
 
 
 class CertificateRequest(BaseModel):
