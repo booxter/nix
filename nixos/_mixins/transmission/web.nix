@@ -4,7 +4,7 @@ let
   rpcPort = config.services.transmission.settings.rpc-port;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.web.services.transmission = {
       upstream = "http://127.0.0.1:${toString rpcPort}";
       health = {

@@ -9,7 +9,7 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf (cfg.enable && model.vpnNamespace != null) {
+  config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     services.transmission = {
       enable = true;
       package = cfg.package;
@@ -39,7 +39,7 @@ in
         watch-dir = model.watchDir;
         watch-dir-enabled = true;
       }
-      // lib.optionalAttrs cfg.uploadLimit.enable {
+      // lib.optionalAttrs (cfg.uploadLimit != null) {
         speed-limit-up = cfg.uploadLimit.initialKBytesPerSecond;
         speed-limit-up-enabled = true;
       };

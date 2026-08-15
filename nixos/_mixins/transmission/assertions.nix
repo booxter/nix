@@ -8,7 +8,7 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     assertions = [
       {
         assertion = model.vpnNamespace != null;
@@ -16,20 +16,19 @@ in
       }
       {
         assertion =
-          cfg.trackerPolicy.nonPreferred.lowPriorityRatio < cfg.trackerPolicy.nonPreferred.pauseRatio;
+          cfg.trackerPolicy == null
+          || cfg.trackerPolicy.nonPreferred.lowPriorityRatio < cfg.trackerPolicy.nonPreferred.pauseRatio;
         message = "host.transmission tracker low-priority ratio must be below its pause ratio";
       }
       {
-        assertion = !cfg.torrentCleaner.enable || cfg.trackerPolicy.enable;
+        assertion = cfg.torrentCleaner == null || cfg.trackerPolicy != null;
         message = "host.transmission.torrentCleaner requires trackerPolicy";
       }
       {
-        assertion = cfg.torrentCleaner.maximumAgeDays >= cfg.torrentCleaner.minimumAgeDays;
+        assertion =
+          cfg.torrentCleaner == null
+          || cfg.torrentCleaner.maximumAgeDays >= cfg.torrentCleaner.minimumAgeDays;
         message = "host.transmission cleaner maximum age must not be below its minimum age";
-      }
-      {
-        assertion = !cfg.uploadLimit.enable || cfg.uploadLimit.initialKBytesPerSecond != null;
-        message = "host.transmission.uploadLimit requires an initial upload limit";
       }
     ];
   };

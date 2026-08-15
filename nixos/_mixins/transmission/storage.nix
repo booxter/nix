@@ -9,7 +9,7 @@ let
   relativePath = cfg.storage.relativePath;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.storage.claims.${cfg.storage.claim} = {
       directories =
         builtins.listToAttrs (

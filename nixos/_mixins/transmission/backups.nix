@@ -8,7 +8,7 @@ let
   model = transmissionModel;
 in
 {
-  config = lib.mkIf config.host.transmission.enable {
+  config = lib.mkIf (config.host.transmission != null) {
     host.backups.sources.transmission = {
       title = "Transmission";
       paths = [ model.stateDir ];

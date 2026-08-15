@@ -51,7 +51,7 @@ let
     };
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.trackerPolicy.enable) {
+  config = lib.mkIf (cfg != null && cfg.trackerPolicy != null) {
     sops.secrets.transmissionTrackerHosts = {
       key = cfg.trackerPolicy.secret.key;
       owner = cfg.user;

@@ -10,7 +10,6 @@
   ...
 }:
 let
-  hasHostTransmission = options.host.transmission.uploadLimit or null != null;
   hasLanWanAccounting = options.host.observability.lanWan.wanEgressOverride or null != null;
   hasPkiClients = options.host.pki.clients or null != null;
   model = import ./model.nix { inherit config outputs; };
@@ -242,16 +241,6 @@ in
               udpDestinationPort = qosDestination.match.remotePort;
               tcClass = config.host.qos.classIds.${qosProfileName}.${qosDestination.limit};
             };
-      })
-      (lib.optionalAttrs hasHostTransmission {
-        host.transmission.uploadLimit = lib.mkIf (transmissionOutput != null && transmissionOutput.local) {
-          enable = true;
-          initialKBytesPerSecond = lib.mkDefault (
-            builtins.floor (
-              (cfg.fallbackRateMbit * 1000.0 / 8.0) * (transmissionOutput.headroomPercent / 100.0)
-            )
-          );
-        };
       })
     ]
   );

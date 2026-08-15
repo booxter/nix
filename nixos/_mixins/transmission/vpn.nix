@@ -8,7 +8,7 @@ let
   inherit (model) cfg;
 in
 {
-  config = lib.mkIf (cfg.enable && model.vpnNamespace != null) {
+  config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     host.vpn.clients.transmission = {
       namespace = cfg.vpn.namespace;
       bridgeTcpPorts = [ model.rpcPort ];

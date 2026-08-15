@@ -11,7 +11,7 @@ let
   package = (import ./pkgs pkgs).torrentCleaner;
 in
 {
-  config = lib.mkIf (cfg.enable && cfg.torrentCleaner.enable) {
+  config = lib.mkIf (cfg != null && cfg.torrentCleaner != null) {
     systemd.services.transmission-torrent-cleaner = {
       description = "Cleanup for old public Transmission torrents";
       after = [

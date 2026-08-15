@@ -16,7 +16,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (cfg.enable && updater.enable && model.vpnNamespace != null) {
+  config = lib.mkIf (cfg != null && updater != null && model.vpnNamespace != null) {
     host.vpn.clients.${serviceName}.namespace = cfg.vpn.namespace;
 
     systemd.services.${serviceName} = {
