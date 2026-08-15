@@ -13,16 +13,19 @@ let
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
   statusMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-certs.prom";
-  rotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
+  rotationMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
-  appPackages = import ../../../apps/packages.nix { inherit pkgs realmsByHost; };
+  sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
+  pkiCertificates = pkgs.callPackage ../../../apps/pki-certificates {
+    atomicFileWrites = pkgs.atomic-file-writes;
+    inherit sopsTools;
+  };
   pkiRotation = pkgs.callPackage ../../../pkgs/pki-rotation {
     atomicFileWrites = pkgs.atomic-file-writes;
     gitCommandRunner = pkgs.git-command-runner;
-    pkiCertificates = appPackages.issue-internal-service-cert;
-    sopsTools = appPackages.sops-tools;
+    inherit pkiCertificates sopsTools;
   };
   inventory =
     let
@@ -94,8 +97,6 @@ in
         description = "Export internal PKI status metrics for node exporter";
         command = [
           (lib.getExe pkiRotation)
-          "--intermediate-cert-path"
-          "${stateDir}/certs/intermediate_ca.crt"
           "export-metrics"
           "--inventory-manifest"
           inventory
@@ -132,10 +133,6 @@ in
       mode = "0400";
       restartUnits = [ "pki-rotate.service" ];
     };
-
-    systemd.tmpfiles.rules = lib.mkIf enabled [
-      "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -"
-    ];
 
     systemd.services = lib.mkIf enabled {
       step-ca = {
@@ -177,20 +174,15 @@ in
         ];
         serviceConfig = {
           Type = "oneshot";
-          Environment = [
-            "HOME=/root"
-            "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
+          Environment = [ "HOME=/root" ];
+          ExecStart = utils.escapeSystemdExecArgs [
+            (lib.getExe pkiRotation)
+            "rotate"
+            "--github-token-file"
+            config.sops.secrets.pkiRotationGithubToken.path
+            "--metrics-output"
+            rotationMetricsPath
           ];
-          ExecStart = ''
-            ${pkiRotation}/bin/pki-rotation \
-              --rotation-window-days 45 \
-              --intermediate-cert-path ${stateDir}/certs/intermediate_ca.crt \
-              --sops-age-key-file /var/lib/sops-nix/key.txt \
-              rotate \
-              --base-branch master \
-              --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
-              --metrics-output ${rotationMetricsPath}
-          '';
         };
       };
     };

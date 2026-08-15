@@ -150,7 +150,7 @@ def pull_request_body(
     )
     return (
         f"- Rotated {len(rotated)} managed internal PKI leaf certificate(s).\n"
-        f"- Rotation window: {rotation_window_days} days; leaf lifetime: 180 days.\n"
+        f"- Rotation window: {rotation_window_days} days.\n"
         f"- Certificates: {descriptions}.\n"
     )
 
