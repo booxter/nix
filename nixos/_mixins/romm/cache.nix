@@ -19,8 +19,8 @@ in
       ];
       unitConfig.RequiresMountsFor = builtins.dirOf cfg.stateDir;
       serviceConfig = {
-        ExecStart = "${pkgs.valkey}/bin/valkey-server --bind 127.0.0.1 --port ${toString cfg.cache.port} --dir ${state.valkeyDir} --appendonly yes --save 60 1";
-        User = cfg.user;
+        ExecStart = "${pkgs.valkey}/bin/valkey-server --bind 127.0.0.1 --port ${toString model.cachePort} --dir ${state.valkeyDir} --appendonly yes --save 60 1";
+        User = model.user;
         Group = model.storageGroup;
         WorkingDirectory = state.valkeyDir;
         UMask = "0007";

@@ -11,12 +11,8 @@ in
   config = lib.mkIf (cfg != null) {
     assertions = [
       {
-        assertion = cfg.publicHostName != null;
-        message = "host.romm.publicHostName must be set";
-      }
-      {
         assertion = model.claim != null;
-        message = "host.romm.storage.claim must select a known storage claim";
+        message = "RomM requires the media storage claim";
       }
       {
         assertion = model.storageGroup != null;
@@ -24,11 +20,11 @@ in
       }
       {
         assertion = model.identity != null;
-        message = "host.romm.user must select a shared storage identity";
+        message = "RomM requires its shared storage identity";
       }
       {
         assertion = ssoApplication != null;
-        message = "host.romm.sso.application must select a realm SSO application";
+        message = "RomM requires its realm SSO application";
       }
       {
         assertion =

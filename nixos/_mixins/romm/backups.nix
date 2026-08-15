@@ -1,6 +1,11 @@
-{ config, lib, ... }:
+{
+  lib,
+  rommModel,
+  ...
+}:
 let
-  cfg = config.host.romm;
+  model = rommModel;
+  inherit (model) cfg;
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -8,7 +13,7 @@ in
       title = "RomM";
       database = {
         type = "mariadb";
-        name = cfg.database.name;
+        name = model.databaseName;
         stagingDir = cfg.backups.stagingDir;
         requiresMountsFor = [ (builtins.dirOf cfg.database.dataDir) ];
         after = [ "romm-db-init.service" ];

@@ -6,13 +6,7 @@
 let
   model = rommModel;
   inherit (model) cfg ssoApplication;
-  restartUnits = [
-    "romm-setup.service"
-    "podman-romm-api.service"
-    "podman-romm-scheduler.service"
-    "podman-romm-worker.service"
-    "podman-romm-watcher.service"
-  ];
+  restartUnits = [ "romm-setup.service" ] ++ model.units.containers;
 in
 {
   config = lib.mkIf (cfg != null && model.registrationReady) {
@@ -31,7 +25,7 @@ in
         secret = {
           sopsKey = "romm/oidc/clientSecret";
           name = "romm/oidc/clientSecret";
-          owner = cfg.user;
+          owner = model.user;
           group = model.storageGroup;
           inherit restartUnits;
         };

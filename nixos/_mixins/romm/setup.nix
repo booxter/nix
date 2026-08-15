@@ -9,19 +9,7 @@
 let
   model = rommModel;
   inherit (model) cfg;
-  baseUnits = [
-    "user-runtime-dir@${toString model.uid}.service"
-    "user@${toString model.uid}.service"
-    "network-online.target"
-  ];
-  setupBefore = [
-    "romm-web-assets.service"
-    "mysql.service"
-    "romm-db-init.service"
-    "romm-valkey.service"
-    "sops-install-secrets.service"
-  ]
-  ++ [ "romm-backup.service" ];
+  baseUnits = model.units.user ++ [ "network-online.target" ];
   setupConfig = pkgs.writeText "romm-setup.json" (
     builtins.toJSON {
       image = model.image;
@@ -34,7 +22,7 @@ let
     }
   );
   command = utils.escapeSystemdExecArgs [
-    (lib.getExe' cfg.toolsPackage "romm-run-setup")
+    (lib.getExe' model.toolsPackage "romm-run-setup")
     "--socket-url"
     model.podmanSocket
     "--config"
@@ -48,26 +36,17 @@ in
     systemd.services.romm-setup = {
       description = "Run RomM database migrations and startup tasks";
       wantedBy = [ "multi-user.target" ];
-      wants = baseUnits ++ setupBefore;
+      wants = baseUnits ++ model.units.setupBefore;
       requires = [
         "romm-web-assets.service"
         "romm-backup.service"
       ];
-      after =
-        baseUnits
-        ++ setupBefore
-        ++ [
-          "systemd-tmpfiles-setup.service"
-          "systemd-tmpfiles-resetup.service"
-        ];
+      after = baseUnits ++ model.units.setupBefore ++ model.units.tmpfiles;
       unitConfig.RequiresMountsFor = [ cfg.stateDir ];
-      environment = {
-        HOME = cfg.stateDir;
-        XDG_RUNTIME_DIR = "/run/user/${toString model.uid}";
-      };
+      environment = model.runtimeEnvironment;
       serviceConfig = {
         Type = "oneshot";
-        User = cfg.user;
+        User = model.user;
         Group = model.storageGroup;
         WorkingDirectory = cfg.stateDir;
         RemainAfterExit = true;

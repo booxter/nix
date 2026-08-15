@@ -1,16 +1,21 @@
-{ config, lib, ... }:
+{
+  lib,
+  rommModel,
+  ...
+}:
 let
-  cfg = config.host.romm;
+  model = rommModel;
+  inherit (model) cfg;
 in
 {
   config = lib.mkIf (cfg != null) {
-    host.storage.claims.${cfg.storage.claim} = {
+    host.storage.claims.${model.storageClaim} = {
       directories =
         builtins.listToAttrs (
           map
             (path: {
-              name = "${cfg.storage.relativePath}/${path}";
-              value.owner = cfg.user;
+              name = "${model.storageRelativePath}/${path}";
+              value.owner = model.user;
             })
             [
               "assets"
@@ -25,7 +30,7 @@ in
             ]
         )
         // {
-          ${cfg.storage.relativePath}.owner = cfg.user;
+          ${model.storageRelativePath}.owner = model.user;
         };
       attachments.romm-setup = { };
     };

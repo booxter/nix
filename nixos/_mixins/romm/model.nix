@@ -7,9 +7,16 @@
 }:
 let
   cfg = config.host.romm;
-  claim = storageModel.localClaims.${cfg.storage.claim} or null;
-  identity = storageIdentities.users.${cfg.user} or null;
-  ssoApplication = config.host.sso.applications.${cfg.sso.application} or null;
+  port = 5081;
+  databaseName = "romm";
+  cachePort = 6380;
+  toolsPackage = pkgs.callPackage ./package { };
+  user = "romm";
+  storageClaim = "media";
+  storageRelativePath = "romm";
+  claim = storageModel.localClaims.${storageClaim} or null;
+  identity = storageIdentities.users.${user} or null;
+  ssoApplication = config.host.sso.applications.romm or null;
   accessGroups = if ssoApplication == null then [ ] else builtins.attrValues ssoApplication.roles;
   groupsFor = person: builtins.filter (group: builtins.elem group person.groups) accessGroups;
   authorizedUsers = lib.filterAttrs (_: person: groupsFor person != [ ]) config.host.sso.users;
@@ -26,13 +33,13 @@ let
   };
   service = config.host.web.services.romm;
   oidcClient = config.host.sso.oidc.clients.romm or null;
-  publicUrl = if service.public.url == null then "" else service.public.url;
+  publicUrl = service.public.url;
   storageGroup =
     if claim == null || claim.resolvedResource.directoryDefaults.group == "root" then
       null
     else
       claim.resolvedResource.directoryDefaults.group;
-  basePath = if claim == null then null else "${claim.mountPoint}/${cfg.storage.relativePath}";
+  basePath = if claim == null then null else "${claim.mountPoint}/${storageRelativePath}";
   state = {
     inherit (cfg) stateDir;
     webDir = "${cfg.stateDir}/web";
@@ -54,12 +61,12 @@ let
     ROMM_BASE_URL = publicUrl;
     ROMM_SESSION_SECURE_COOKIE = "true";
     DB_HOST = "localhost";
-    DB_USER = cfg.database.name;
+    DB_USER = databaseName;
     DB_QUERY_JSON = builtins.toJSON {
       unix_socket = "/run/mysqld/mysqld.sock";
     };
     REDIS_HOST = "10.0.2.2";
-    REDIS_PORT = toString cfg.cache.port;
+    REDIS_PORT = toString cachePort;
     ENABLE_RESCAN_ON_FILESYSTEM_CHANGE = "true";
     LAUNCHBOX_API_ENABLED = "true";
     ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
@@ -68,14 +75,14 @@ let
     OIDC_ENABLED = "true";
     OIDC_AUTOLOGIN = "false";
     OIDC_PROVIDER = "SSO";
-    OIDC_CLIENT_ID = if oidcClient == null then "" else oidcClient.clientId;
+    OIDC_CLIENT_ID = oidcClient.clientId;
     OIDC_REDIRECT_URI = "${publicUrl}/api/oauth/openid";
-    OIDC_SERVER_APPLICATION_URL = if oidcClient == null then "" else oidcClient.issuerUrl;
-    OIDC_SERVER_METADATA_URL = if oidcClient == null then "" else oidcClient.discoveryUrl;
+    OIDC_SERVER_APPLICATION_URL = oidcClient.issuerUrl;
+    OIDC_SERVER_METADATA_URL = oidcClient.discoveryUrl;
     OIDC_CLAIM_ROLES = "romm_roles";
-    OIDC_ROLE_ADMIN = if ssoApplication == null then "" else ssoApplication.roles.admin;
-    OIDC_ROLE_EDITOR = if ssoApplication == null then "" else ssoApplication.roles.editor;
-    OIDC_ROLE_VIEWER = if ssoApplication == null then "" else ssoApplication.roles.viewer;
+    OIDC_ROLE_ADMIN = ssoApplication.roles.admin;
+    OIDC_ROLE_EDITOR = ssoApplication.roles.editor;
+    OIDC_ROLE_VIEWER = ssoApplication.roles.viewer;
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
   containerMounts =
@@ -107,9 +114,36 @@ let
     && ssoApplication.roles ? admin
     && ssoApplication.roles ? editor
     && ssoApplication.roles ? viewer
-    && ssoApplication.bootstrapOwner != null
-    && cfg.publicHostName != null;
+    && ssoApplication.bootstrapOwner != null;
   ready = registrationReady && oidcClient != null;
+  units = {
+    containers = [
+      "podman-romm-api.service"
+      "podman-romm-scheduler.service"
+      "podman-romm-worker.service"
+      "podman-romm-watcher.service"
+    ];
+    user = [
+      "user-runtime-dir@${toString uid}.service"
+      "user@${toString uid}.service"
+    ];
+    tmpfiles = [
+      "systemd-tmpfiles-setup.service"
+      "systemd-tmpfiles-resetup.service"
+    ];
+    setupBefore = [
+      "romm-web-assets.service"
+      "mysql.service"
+      "romm-db-init.service"
+      "romm-valkey.service"
+      "sops-install-secrets.service"
+      "romm-backup.service"
+    ];
+  };
+  runtimeEnvironment = {
+    HOME = cfg.stateDir;
+    XDG_RUNTIME_DIR = "/run/user/${toString uid}";
+  };
 in
 {
   inherit
@@ -117,24 +151,33 @@ in
     admins
     authorizedUsers
     basePath
+    cachePort
     cfg
     claim
     commonEnvironment
     containerMounts
+    databaseName
     groupsFor
     image
     imageFile
     identity
     oidcClient
+    port
     podmanSocket
     publicUrl
     registrationReady
+    runtimeEnvironment
     ready
     service
     ssoApplication
     state
     storageGroup
+    storageClaim
+    storageRelativePath
+    toolsPackage
     uid
+    units
+    user
     ;
   oidcScopes = config.host.sso.oidc.baseScopes;
 }

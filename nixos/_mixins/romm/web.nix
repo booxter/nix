@@ -11,9 +11,9 @@ in
 {
   config = lib.mkIf (cfg != null) {
     host.web.services.romm = {
-      upstream = "http://127.0.0.1:${toString cfg.port}";
+      upstream = "http://127.0.0.1:${toString model.port}";
       internal.path = "/api";
-      public = if cfg.publicHostName == null then null else { hostName = cfg.publicHostName; };
+      public.hostName = cfg.publicHostName;
       health.frontend = {
         path = "/api/heartbeat";
       };
@@ -93,7 +93,7 @@ in
               '';
             };
           "= /_romm_auth" = {
-            proxyPass = "http://127.0.0.1:${toString cfg.port}/api/users/me";
+            proxyPass = "http://127.0.0.1:${toString model.port}/api/users/me";
             extraConfig = ''
               internal;
               proxy_set_header Content-Length "";
@@ -109,7 +109,7 @@ in
             proxy_read_timeout 300s;
           '';
           "~ ^/(ws|netplay)" = {
-            proxyPass = "http://127.0.0.1:${toString cfg.port}";
+            proxyPass = "http://127.0.0.1:${toString model.port}";
             proxyWebsockets = true;
           };
           "/library/".extraConfig = ''

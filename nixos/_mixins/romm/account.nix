@@ -11,7 +11,7 @@ in
 {
   config = lib.mkIf (cfg != null && model.ready) {
     users.users = {
-      ${cfg.user} = {
+      ${model.user} = {
         isSystemUser = true;
         group = storageGroup;
         home = cfg.stateDir;
@@ -22,7 +22,7 @@ in
       ${config.services.nginx.user}.extraGroups = [ storageGroup ];
     };
 
-    systemd.tmpfiles.rules = map (path: "d '${path}' 0750 ${cfg.user} ${storageGroup} - -") [
+    systemd.tmpfiles.rules = map (path: "d '${path}' 0750 ${model.user} ${storageGroup} - -") [
       cfg.stateDir
       state.webDir
       state.nginxDir

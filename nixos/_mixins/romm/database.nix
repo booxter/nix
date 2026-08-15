@@ -9,12 +9,8 @@
 let
   model = rommModel;
   inherit (model) cfg;
-  tmpfilesUnits = [
-    "systemd-tmpfiles-setup.service"
-    "systemd-tmpfiles-resetup.service"
-  ];
   initCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' cfg.toolsPackage "romm-db-init")
+    (lib.getExe' model.toolsPackage "romm-db-init")
     "--socket"
     "/run/mysqld/mysqld.sock"
   ];
@@ -29,7 +25,7 @@ in
     };
 
     systemd.services = {
-      mysql.after = tmpfilesUnits;
+      mysql.after = model.units.tmpfiles;
       romm-db-init = {
         description = "Initialize RomM MariaDB database";
         wants = [
@@ -40,7 +36,7 @@ in
           "mysql.service"
           "sops-install-secrets.service"
         ]
-        ++ tmpfilesUnits;
+        ++ model.units.tmpfiles;
         unitConfig.RequiresMountsFor = builtins.dirOf cfg.database.dataDir;
         serviceConfig = {
           Type = "oneshot";

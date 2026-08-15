@@ -15,7 +15,7 @@ let
     image = model.image;
     imageFile = model.imageFile;
     pull = "never";
-    podman.user = cfg.user;
+    podman.user = model.user;
     environment = model.commonEnvironment;
     environmentFiles = [ config.sops.templates."romm.env".path ];
     inherit volumes;
@@ -26,30 +26,14 @@ let
       "--security-opt=no-new-privileges"
     ];
   };
-  setupBefore = [
-    "romm-web-assets.service"
-    "mysql.service"
-    "romm-db-init.service"
-    "romm-valkey.service"
-    "sops-install-secrets.service"
-  ]
-  ++ [ "romm-backup.service" ];
-  runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
-  userUnits = [
-    "user-runtime-dir@${toString model.uid}.service"
-    "user@${toString model.uid}.service"
-  ];
-  runtimeUnits = userUnits ++ [ "network-online.target" ] ++ runtimeAfter;
-  runtimeEnvironment = {
-    HOME = cfg.stateDir;
-    XDG_RUNTIME_DIR = "/run/user/${toString model.uid}";
-  };
+  runtimeAfter = model.units.setupBefore ++ [ "romm-setup.service" ];
+  runtimeUnits = model.units.user ++ [ "network-online.target" ] ++ runtimeAfter;
   serviceOverride = {
     path = [ pkgs.slirp4netns ];
     requires = runtimeAfter;
     wants = lib.mkForce runtimeUnits;
     after = lib.mkForce runtimeUnits;
-    environment = runtimeEnvironment;
+    environment = model.runtimeEnvironment;
   };
 in
 {
@@ -60,11 +44,11 @@ in
         backend = "podman";
         containers = {
           romm-api = commonContainer // {
-            ports = [ "127.0.0.1:${toString cfg.port}:${toString cfg.port}" ];
+            ports = [ "127.0.0.1:${toString model.port}:${toString model.port}" ];
             entrypoint = "/src/.venv/bin/gunicorn";
             cmd = [
               "--bind"
-              "0.0.0.0:${toString cfg.port}"
+              "0.0.0.0:${toString model.port}"
               "--forwarded-allow-ips"
               "*"
               "--worker-class"
@@ -93,7 +77,7 @@ in
               "--path"
               "/backend"
               "--url"
-              "redis://10.0.2.2:${toString cfg.cache.port}/0"
+              "redis://10.0.2.2:${toString model.cachePort}/0"
               "--results-ttl"
               "86400"
               "--logging_level"
@@ -106,7 +90,7 @@ in
           romm-scheduler = commonContainer // {
             environment = model.commonEnvironment // {
               RQ_REDIS_HOST = "10.0.2.2";
-              RQ_REDIS_PORT = toString cfg.cache.port;
+              RQ_REDIS_PORT = toString model.cachePort;
               RQ_REDIS_DB = "0";
               RQ_REDIS_SSL = "0";
             };

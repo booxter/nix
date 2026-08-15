@@ -10,11 +10,8 @@ let
   restartUnits = [
     "romm-db-init.service"
     "romm-setup.service"
-    "podman-romm-api.service"
-    "podman-romm-scheduler.service"
-    "podman-romm-worker.service"
-    "podman-romm-watcher.service"
-  ];
+  ]
+  ++ model.units.containers;
 in
 {
   config = lib.mkIf (cfg != null && model.ready) {
@@ -24,7 +21,7 @@ in
     };
 
     sops.templates."romm.env" = {
-      owner = cfg.user;
+      owner = model.user;
       group = model.storageGroup;
       mode = "0400";
       content = ''

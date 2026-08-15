@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   ...
 }:
 let
@@ -18,8 +17,7 @@ in
           };
 
           publicHostName = lib.mkOption {
-            type = with lib.types; nullOr nonEmptyStr;
-            default = null;
+            type = lib.types.nonEmptyStr;
             description = "Public hostname published for RomM.";
           };
 
@@ -28,65 +26,15 @@ in
             default = "/var/lib/romm";
           };
 
-          port = lib.mkOption {
-            type = lib.types.port;
-            default = 5081;
-            internal = true;
-          };
-
-          storage = {
-            claim = lib.mkOption {
-              type = lib.types.nonEmptyStr;
-              default = "media";
-              description = "Storage claim containing the RomM library.";
-            };
-            relativePath = lib.mkOption {
-              type = lib.types.nonEmptyStr;
-              default = "romm";
-              description = "RomM data root below the selected storage claim.";
-            };
-          };
-
-          database = {
-            name = lib.mkOption {
-              type = lib.types.nonEmptyStr;
-              default = "romm";
-              internal = true;
-            };
-            dataDir = lib.mkOption {
-              type = absolutePath;
-              default = "/var/lib/mysql";
-              description = "MariaDB data directory used by the host-local RomM database.";
-            };
-          };
-
-          cache.port = lib.mkOption {
-            type = lib.types.port;
-            default = 6380;
-            internal = true;
+          database.dataDir = lib.mkOption {
+            type = absolutePath;
+            default = "/var/lib/mysql";
+            description = "MariaDB data directory used by the host-local RomM database.";
           };
 
           backups.stagingDir = lib.mkOption {
             type = absolutePath;
             default = "/var/lib/romm-backup/latest";
-          };
-
-          sso.application = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "romm";
-            description = "Realm SSO application controlling RomM access tiers.";
-          };
-
-          toolsPackage = lib.mkOption {
-            type = lib.types.package;
-            default = pkgs.callPackage ./package { };
-            internal = true;
-          };
-
-          user = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "romm";
-            internal = true;
           };
         };
       }
