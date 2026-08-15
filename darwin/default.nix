@@ -67,15 +67,13 @@ in
     ServerDescription = hostname;
   };
 
-  system = {
-    activationScripts.postActivation.text = ''
-      echo "Do not idle sleep or hibernate when on AC power."
-      pmset -c sleep 0 disksleep 0 standby 0 powernap 0 hibernatemode 0
+  system.activationScripts.postActivation.text = ''
+    echo "Do not idle sleep or hibernate when on AC power."
+    pmset -c sleep 0 disksleep 0 standby 0 powernap 0 hibernatemode 0
 
-      echo "Prefer network over sleep."
-      pmset networkoversleep 1
-    '';
-  };
+    echo "Prefer network over sleep."
+    pmset networkoversleep 1
+  '';
 
   launchd.daemons.prevent-ac-sleep = {
     command = "/usr/bin/caffeinate -s";
