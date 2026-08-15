@@ -43,7 +43,6 @@ class RealmAuthorityConfig(BaseModel):
     realm: str
     url: str
     provisioner: str
-    leaf_lifetime_days: int = Field(alias="leafLifetimeDays")
     root_ca_certificate: str = Field(alias="rootCaCertificate")
 
 

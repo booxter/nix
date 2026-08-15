@@ -7,9 +7,8 @@
   ...
 }:
 let
-  authority = config.host.pki.authority;
+  authority = import ../../../common/_mixins/internal-pki/model.nix { inherit config; };
   enabled = config.host.pki.server != null;
-  certLifetime = "${toString (authority.leafLifetimeDays * 24)}h0m0s";
   caPort = authority.port;
   stateDir = "/var/lib/step-ca";
   passwordFile = "${stateDir}/password.txt";
@@ -43,7 +42,7 @@ let
     inherit dnsNames;
     address = ":${toString caPort}";
     provisioner = authority.provisioner;
-    certificateLifetime = certLifetime;
+    inherit (authority) certificateLifetime;
   };
   bootstrapCommand = utils.escapeSystemdExecArgs [
     (lib.getExe bootstrap)
