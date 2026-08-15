@@ -6,12 +6,22 @@
     nixosConfigurations = { };
   },
   pkgs,
+  qosModel,
   utils,
   ...
 }:
 let
-  hasLanWanAccounting = options.host.observability.lanWan.wanEgressOverride or null != null;
-  hasPkiClients = options.host.pki.clients or null != null;
+  hasLanWanAccounting = lib.hasAttrByPath [
+    "host"
+    "observability"
+    "lanWan"
+    "wanEgressOverride"
+  ] options;
+  hasPkiClients = lib.hasAttrByPath [
+    "host"
+    "pki"
+    "clients"
+  ] options;
   model = import ./model.nix { inherit config outputs; };
   inherit (model)
     cfg
@@ -72,8 +82,8 @@ let
         null
       else
         {
-          executable = lib.getExe config.host.qos.package;
-          config_file = config.host.qos.configFiles.${qosOutput.profile};
+          executable = lib.getExe qosModel.package;
+          config_file = qosModel.configFiles.${qosOutput.profile};
           limit = qosOutput.limit;
         };
   };
@@ -220,8 +230,8 @@ in
           };
         };
       }
-      (lib.mkIf (hasPkiClients && cfg.source.jellyfin.host != null) {
-        host.pki.clients.${pkiClientName} = {
+      (lib.optionalAttrs hasPkiClients {
+        host.pki.clients.${pkiClientName} = lib.mkIf (cfg.source.jellyfin.host != null) {
           category = "internal";
           secretPrefix = "prometheus/clients/${pkiClientName}";
           materializations.default = {
@@ -238,7 +248,7 @@ in
               interface = qosDestination.interface;
               name = qosDestination.accountingName;
               udpDestinationPort = qosDestination.match.remotePort;
-              tcClass = config.host.qos.classIds.${qosProfileName}.${qosDestination.limit};
+              tcClass = qosModel.classIds.${qosProfileName}.${qosDestination.limit};
             };
       })
     ]

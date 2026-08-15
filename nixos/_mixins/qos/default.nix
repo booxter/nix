@@ -6,10 +6,9 @@
   ...
 }:
 let
-  cfg = config.host.qos;
-  package = pkgs.callPackage ./pkgs/qosctl { };
+  model = import ./model.nix { inherit config lib pkgs; };
+  inherit (model) package profileData profileNames;
   positiveNumber = lib.types.addCheck lib.types.number (value: value > 0);
-  rateBits = rateMbit: builtins.floor (rateMbit * 1000 * 1000);
   limitType = lib.types.submodule {
     options = {
       direction = lib.mkOption {
@@ -102,78 +101,6 @@ let
       };
     };
   };
-  profileNames = builtins.attrNames cfg.interfaces;
-  profileIndexes = builtins.listToAttrs (
-    lib.imap0 (index: name: {
-      inherit name;
-      value = index;
-    }) profileNames
-  );
-  profileData = builtins.mapAttrs (
-    profileName: profile:
-    let
-      limitNames = builtins.attrNames profile.limits;
-      egressNames = builtins.filter (name: profile.limits.${name}.direction == "egress") limitNames;
-      ingressNames = builtins.filter (name: profile.limits.${name}.direction == "ingress") limitNames;
-      classMinors = builtins.listToAttrs (
-        lib.imap0 (index: name: {
-          inherit name;
-          value = 16 + index;
-        }) egressNames
-      );
-      ifbInterfaces = builtins.listToAttrs (
-        lib.imap0 (index: name: {
-          inherit name;
-          value = "ifb-q${toString profileIndexes.${profileName}}-${toString index}";
-        }) ingressNames
-      );
-      limits = map (
-        name:
-        let
-          limit = profile.limits.${name};
-        in
-        {
-          inherit name;
-          inherit (limit) direction;
-          rateBits = rateBits limit.rateMbit;
-          queue =
-            if limit.queue != null then
-              limit.queue
-            else if limit.direction == "ingress" then
-              "cake"
-            else
-              "fq_codel";
-          classMinor = classMinors.${name} or 0;
-          ifbInterface = ifbInterfaces.${name} or "";
-          match = {
-            inherit (limit.match)
-              family
-              protocol
-              sourceAddress
-              destinationAddress
-              sourcePort
-              destinationPort
-              users
-              ;
-          };
-        }
-      ) limitNames;
-      configFile = (pkgs.formats.json { }).generate "qos-${profileName}.json" {
-        profile = profileName;
-        interface = profile.device;
-        nftTable = "qos_${profileName}";
-        linkRateBits = rateBits profile.linkRateMbit;
-        inherit limits;
-      };
-    in
-    {
-      inherit
-        classMinors
-        configFile
-        ifbInterfaces
-        ;
-    }
-  ) cfg.interfaces;
   command =
     profileName: action:
     utils.escapeSystemdExecArgs [
@@ -182,48 +109,20 @@ let
       profileData.${profileName}.configFile
       action
     ];
-  hasIngress = lib.any (profileName: profileData.${profileName}.ifbInterfaces != { }) profileNames;
 in
 {
   imports = [ ./assertions.nix ];
 
-  options.host.qos = {
-    interfaces = lib.mkOption {
-      type = lib.types.attrsOf interfaceType;
-      default = { };
-      description = "Traffic limits grouped by owned network interface.";
-    };
-
-    classIds = lib.mkOption {
-      type = with lib.types; attrsOf (attrsOf str);
-      readOnly = true;
-      internal = true;
-      description = "Derived tc class IDs for egress limits.";
-    };
-
-    configFiles = lib.mkOption {
-      type = with lib.types; attrsOf path;
-      readOnly = true;
-      internal = true;
-      description = "Generated runtime configurations for QoS profiles.";
-    };
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      internal = true;
-      description = "QoS control package shared with runtime rate controllers.";
-    };
+  options.host.qos.interfaces = lib.mkOption {
+    type = lib.types.attrsOf interfaceType;
+    default = { };
+    description = "Traffic limits grouped by owned network interface.";
   };
 
   config = {
-    host.qos.classIds = builtins.mapAttrs (
-      _: data: builtins.mapAttrs (_: minor: "1:${lib.toLower (lib.toHexString minor)}") data.classMinors
-    ) profileData;
-    host.qos.configFiles = builtins.mapAttrs (_: data: data.configFile) profileData;
-    host.qos.package = package;
+    _module.args.qosModel = model;
 
-    boot.kernelModules = lib.optional hasIngress "ifb";
+    boot.kernelModules = lib.optional model.hasIngress "ifb";
 
     systemd.services = builtins.listToAttrs (
       map (profileName: {

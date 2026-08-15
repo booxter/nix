@@ -20,9 +20,9 @@ pkgs.testers.runNixOSTest {
   nodes = {
     shaper =
       {
-        config,
         lib,
         pkgs,
+        qosModel,
         ...
       }:
       {
@@ -118,9 +118,9 @@ pkgs.testers.runNixOSTest {
 
         environment = {
           etc."qos-test/classes.json".source = (pkgs.formats.json { }).generate "qos-test-classes.json" (
-            config.host.qos.classIds.adaptive_upload
+            qosModel.classIds.adaptive_upload
           );
-          etc."qos-test/config.json".source = config.host.qos.configFiles.adaptive_upload;
+          etc."qos-test/config.json".source = qosModel.configFiles.adaptive_upload;
           systemPackages = [
             pkgs.iperf3
             pkgs.iproute2
