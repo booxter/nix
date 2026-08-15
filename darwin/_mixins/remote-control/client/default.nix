@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   ...
 }:
@@ -6,7 +7,6 @@
   imports = [
     ./vnc.nix
     ./wayland.nix
-    ./x11.nix
   ];
 
   options.host.remote-control.client = {
@@ -21,6 +21,13 @@
     wayland = lib.mkOption {
       type = lib.types.nullOr (lib.types.submodule { });
       default = null;
+    };
+  };
+
+  config = lib.mkIf (config.host.remote-control.client.x11 != null) {
+    home-manager.users.${config.host.username} = {
+      programs.remote-control.client.x11 = { };
+      host.hm.xquartz.enable = true;
     };
   };
 }

@@ -69,5 +69,5 @@ pkgs.writeShellApplication {
   ];
   text = lib.replaceStrings (map (name: "@${name}@") (
     builtins.attrNames replacements
-  )) (builtins.attrValues replacements) (builtins.readFile ./vnc-open.sh);
+  )) (builtins.attrValues replacements) (builtins.readFile ./vnc-open.sh.in);
 }
