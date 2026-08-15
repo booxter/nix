@@ -10,7 +10,6 @@ let
   storageResource = if claim == null then null else claim.resolvedResource;
   identity = storageIdentities.users.sabnzbd or null;
   vpnNamespace = config.host.vpn.namespaces.wg or null;
-  baseDir = if claim == null then null else "${claim.mountPoint}/usenet";
   downloadModel = import ../downloads/model.nix { inherit config lib; };
   routes = lib.filterAttrs (_: route: route.clientName == "sabnzbd") downloadModel.routes;
   routeCategories = lib.mapAttrs' (
@@ -27,41 +26,27 @@ let
   ) routes;
   renderServer = name: server: {
     inherit name;
-    displayname = server.displayName;
+    displayname = name;
+    host = name;
     inherit (server)
       connections
       enable
-      host
-      port
       priority
       required
       timeout
       ;
-    ssl = server.tls.enable;
-    ssl_verify = server.tls.verify;
-    ssl_ciphers = "";
-    optional = false;
-    pipelining_requests = 1;
-    retention = 0;
-    expire_date = "";
-    quota = "";
-    usage_at_start = 0;
-    notes = "";
+    ssl_verify = server.tlsVerification;
   };
 in
 {
   inherit
-    baseDir
     cfg
     claim
     identity
     routeCategories
-    routes
     vpnNamespace
     ;
-  completeDir = if baseDir == null then null else "${baseDir}/manual";
-  watchDir = if baseDir == null then null else "${baseDir}/watch";
-  incompleteDir = if baseDir == null then null else "${baseDir}/.incomplete";
+  port = 6336;
   storageGroup =
     if storageResource == null || storageResource.directoryDefaults.group == "root" then
       null

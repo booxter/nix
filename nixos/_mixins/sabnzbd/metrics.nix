@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  sabnzbdModel,
+  ...
+}:
 let
   cfg = config.host.sabnzbd;
   exporterPort = 19387;
@@ -26,7 +31,7 @@ in
       port = exporterPort;
       servers = [
         {
-          baseUrl = "http://127.0.0.1:6336";
+          baseUrl = "http://127.0.0.1:${toString sabnzbdModel.port}";
           apiKeyFile = config.sops.templates."sabnzbd-exporter.apikey".path;
         }
       ];

@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  sabnzbdModel,
+  ...
+}:
 let
   cfg = config.host.sabnzbd;
 in
@@ -7,7 +12,7 @@ in
     host.downloads.clients.sabnzbd = {
       kind = "usenet";
       implementation = "sabnzbd";
-      endpoint = "http://127.0.0.1:6336";
+      endpoint = "http://127.0.0.1:${toString sabnzbdModel.port}";
       authentication = {
         type = "api-key";
         secret = "sabnzbd/apiKey";

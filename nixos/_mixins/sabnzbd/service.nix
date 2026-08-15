@@ -16,7 +16,7 @@ let
       "sabnzbd.local"
     ];
     mediaDir = model.claim.mountPoint;
-    port = 6336;
+    inherit (model) port;
     vpnNamespaceAddress = model.vpnNamespace.namespaceAddress;
   };
 in

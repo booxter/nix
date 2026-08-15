@@ -1,25 +1,19 @@
 { config, lib, ... }:
 let
   cfg = config.host.sabnzbd;
-  credentialName = server: field: "${server.credentialsSecretPrefix}/${field}";
+  credentialName = name: field: "sabnzbd/servers/${name}/${field}";
   serverSecretNames = lib.concatMap (
-    server:
-    map (credentialName server) [
+    name:
+    map (credentialName name) [
       "username"
       "password"
     ]
-  ) (builtins.attrValues cfg.servers);
-  serverSecretIni = lib.concatMapStringsSep "\n\n" (
-    name:
-    let
-      server = cfg.servers.${name};
-    in
-    ''
-      [[${name}]]
-      username = ${builtins.getAttr (credentialName server "username") config.sops.placeholder}
-      password = ${builtins.getAttr (credentialName server "password") config.sops.placeholder}
-    ''
   ) (builtins.attrNames cfg.servers);
+  serverSecretIni = lib.concatMapStringsSep "\n\n" (name: ''
+    [[${name}]]
+    username = ${builtins.getAttr (credentialName name "username") config.sops.placeholder}
+    password = ${builtins.getAttr (credentialName name "password") config.sops.placeholder}
+  '') (builtins.attrNames cfg.servers);
 in
 {
   config = lib.mkIf (cfg != null) {

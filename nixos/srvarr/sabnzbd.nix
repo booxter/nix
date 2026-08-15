@@ -29,7 +29,7 @@
       };
       "reader.easyusenet.nl" = {
         connections = 75;
-        tls.verify = 2;
+        tlsVerification = "allow injection";
         required = true;
         priority = 1;
       };

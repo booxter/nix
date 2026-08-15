@@ -11,20 +11,20 @@ in
   config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     host.vpn.clients.sabnzbd = {
       namespace = "wg";
-      bridgeTcpPorts = [ 6336 ];
+      bridgeTcpPorts = [ model.port ];
     };
 
-    services.nginx.virtualHosts."127.0.0.1:6336" = {
+    services.nginx.virtualHosts."127.0.0.1:${toString model.port}" = {
       listen = lib.mkForce [
         {
           addr = "127.0.0.1";
-          port = 6336;
+          port = model.port;
         }
       ];
       locations."/" = {
         recommendedProxySettings = true;
         proxyWebsockets = true;
-        proxyPass = lib.mkForce "http://${model.vpnNamespace.namespaceAddress}:6336";
+        proxyPass = lib.mkForce "http://${model.vpnNamespace.namespaceAddress}:${toString model.port}";
       };
     };
   };

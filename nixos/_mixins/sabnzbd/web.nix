@@ -1,11 +1,16 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  sabnzbdModel,
+  ...
+}:
 let
   cfg = config.host.sabnzbd;
 in
 {
   config = lib.mkIf (cfg != null) {
     host.web.services.sabnzbd = {
-      upstream = "http://127.0.0.1:6336";
+      upstream = "http://127.0.0.1:${toString sabnzbdModel.port}";
       health = {
         frontend = {
           path = "/oauth2/sign_in";
