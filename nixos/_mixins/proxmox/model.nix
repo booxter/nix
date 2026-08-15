@@ -13,7 +13,8 @@ let
         hostConfig.host.proxmox.guest.cluster
       else
         null;
-    controller = hostConfig.host.proxmox.node != null && hostConfig.host.proxmox.node.controller;
+    controller =
+      hostConfig.host.proxmox.node != null && hostConfig.host.proxmox.node.controller != null;
     isNode = hostConfig.host.proxmox.node != null;
     realm = hostConfig.host.realm;
     upsServer = if hostConfig.host.ups.server != null then name else hostConfig.host.ups.client.server;

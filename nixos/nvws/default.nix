@@ -16,7 +16,7 @@ in
     };
     proxmox.node = {
       cluster = "nvws";
-      controller = true;
+      controller = { };
     };
     network.interfaces.enp3s0f0 = { };
   };

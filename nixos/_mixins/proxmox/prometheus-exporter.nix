@@ -4,7 +4,9 @@ let
   enabled = node != null && config.host.observability.enable;
   internalPort = 19221;
   publicPort = 9221;
-  token = config.host.proxmox.exporterToken;
+  apiUser = "prometheus@pve";
+  apiTokenName = "metrics";
+  apiTokenValueSecret = "proxmox/pve_exporter/token_value";
   certInstallUnit = "proxmox-api-certificate.service";
   pkiRootCaPath = config.host.pki.authority.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
@@ -12,30 +14,6 @@ let
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
 in
 {
-  options.host.proxmox.exporterToken = lib.mkOption {
-    type =
-      with lib.types;
-      nullOr (submodule {
-        options = {
-          apiUser = lib.mkOption { type = nonEmptyStr; };
-          apiTokenName = lib.mkOption { type = nonEmptyStr; };
-          apiTokenValueSecret = lib.mkOption { type = nonEmptyStr; };
-        };
-      });
-    default =
-      if enabled then
-        {
-          apiUser = "prometheus@pve";
-          apiTokenName = "metrics";
-          apiTokenValueSecret = "proxmox/pve_exporter/token_value";
-        }
-      else
-        null;
-    readOnly = true;
-    internal = true;
-    description = "Token provisioning record for the Proxmox Prometheus exporter.";
-  };
-
   config = lib.mkIf enabled {
     host.web.services."proxmox-${config.networking.hostName}".metrics.default = {
       endpointName = "pve";
@@ -56,7 +34,7 @@ in
     };
 
     sops.secrets.proxmoxPveExporterTokenValue = {
-      key = token.apiTokenValueSecret;
+      key = apiTokenValueSecret;
       owner = pveExporterUser;
       group = pveExporterGroup;
       mode = "0400";
@@ -68,8 +46,8 @@ in
       group = pveExporterGroup;
       mode = "0400";
       content = ''
-        PVE_USER=${token.apiUser}
-        PVE_TOKEN_NAME=${token.apiTokenName}
+        PVE_USER=${apiUser}
+        PVE_TOKEN_NAME=${apiTokenName}
         PVE_TOKEN_VALUE=${config.sops.placeholder.proxmoxPveExporterTokenValue}
         PVE_VERIFY_SSL=true
       '';

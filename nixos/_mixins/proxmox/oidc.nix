@@ -9,18 +9,14 @@
 }:
 let
   node = config.host.proxmox.node;
-  enabled = node != null && node.controller && config.host.realm == "home";
+  enabled = node != null && node.controller != null && config.host.realm == "home";
   realm = "kanidm";
   clientId = "proxmox";
   issuerUrl = "https://id.${config.host.network.publicDomain}/oauth2/openid/${clientId}";
   clientSecretKey = "proxmox/oidc/client_secret";
   usernameClaim = "username";
   groupsClaim = "infra_groups";
-  scopes = [
-    "email"
-    "profile"
-    groupsClaim
-  ];
+  scopes = config.host.sso.oidc.baseScopes ++ [ groupsClaim ];
   allowedGroup = "infra-admins";
   role = "Administrator";
   oidcScopes = config.host.sso.oidc.baseScopes;

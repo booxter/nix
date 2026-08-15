@@ -8,7 +8,7 @@
 let
   node = config.host.proxmox.node;
   enabled = node != null && config.host.realm == "home";
-  serverName = if node == null then config.networking.hostName else node.apiServerName;
+  serverName = node.apiServerName;
   serverAliases = lib.unique (
     [ "${config.services.avahi.hostName}.local" ] ++ config.host.network.certificateDnsNames
   );

@@ -8,9 +8,9 @@ let
     options = {
       cluster = clusterOption;
       controller = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Whether this node owns cluster-wide integrations.";
+        type = with lib.types; nullOr (submodule { });
+        default = null;
+        description = "This node's role as owner of cluster-wide integrations.";
       };
       apiServerName = lib.mkOption {
         type = lib.types.nonEmptyStr;
