@@ -16,8 +16,6 @@ in
     unknownNamespaces
     validClients
     ;
-  active = cfg.namespaces != { } || cfg.clients != { };
-  serviceNames = map (client: client.serviceName) (builtins.attrValues cfg.clients);
   bridgeTcpPorts = lib.mapAttrs (
     namespaceName: _:
     lib.unique (lib.concatMap (client: client.bridgeTcpPorts) (clientsFor namespaceName))

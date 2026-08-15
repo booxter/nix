@@ -46,7 +46,5 @@ let
   );
 in
 {
-  config = lib.mkIf model.active {
-    systemd.services = services;
-  };
+  systemd.services = services;
 }

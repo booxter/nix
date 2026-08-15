@@ -6,11 +6,11 @@
 let
   model = vpnModel;
   services = lib.mapAttrs' (
-    _: client:
+    name: client:
     let
       namespaceUnit = "${client.namespace}.service";
     in
-    lib.nameValuePair client.serviceName {
+    lib.nameValuePair name {
       unitConfig = {
         After = [ namespaceUnit ];
         BindsTo = [ namespaceUnit ];
@@ -24,7 +24,5 @@ let
   ) model.validClients;
 in
 {
-  config = lib.mkIf model.active {
-    systemd.services = services;
-  };
+  systemd.services = services;
 }

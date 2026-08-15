@@ -42,7 +42,6 @@ in
 
     host.vpn.clients.slskd = {
       inherit (instance.vpn) namespace;
-      serviceName = "slskd";
       bridgeTcpPorts = [ instance.api.port ];
       forwardedPorts.peer = {
         port = instance.vpn.peerPort;
