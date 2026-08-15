@@ -83,6 +83,8 @@ in
           _: api:
           let
             service = config.host.web.services.${api.service};
+            healthOwnsLocation =
+              service.health.backend != null && service.health.backend.path == api.healthPath;
           in
           {
             "internal-https-${service.internal.endpointName}-probe" = {
@@ -90,7 +92,7 @@ in
                 proxyPass = service.upstream;
                 recommendedProxySettings = true;
                 extraConfig = ''
-                  auth_request off;
+                  ${lib.optionalString (!healthOwnsLocation) "auth_request off;"}
                   ${allowConfig api}
                   deny all;
                 '';
