@@ -10,8 +10,17 @@
   ];
 
   options.host.remote-control.client = {
-    vnc.enable = lib.mkEnableOption "VNC remote-control client functionality";
-    x11.enable = lib.mkEnableOption "X11 remote-control client functionality";
-    wayland.enable = lib.mkEnableOption "Wayland remote-control client functionality";
+    vnc = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+    };
+    x11 = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+    };
+    wayland = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+    };
   };
 }

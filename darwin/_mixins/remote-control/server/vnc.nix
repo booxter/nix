@@ -9,7 +9,7 @@ let
   kickstart = "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart";
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     host.remote-control.inventory.vnc = {
       connection = "direct";
       displays = [ ];

@@ -18,10 +18,10 @@ in
 
   host.remote-control = {
     client = {
-      vnc.enable = true;
-      x11.enable = true;
+      vnc = { };
+      x11 = { };
     };
-    server.vnc.enable = true;
+    server.vnc = { };
   };
 
   host.ssh = {

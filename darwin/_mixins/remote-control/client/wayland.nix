@@ -9,7 +9,7 @@ let
   username = config.host.username;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     homebrew.brews = [
       "cocoa-way"
       "waypipe-darwin"
@@ -36,6 +36,6 @@ in
       ThrottleInterval = 10;
     };
 
-    home-manager.users.${username}.programs.remote-control.client.wayland.enable = true;
+    home-manager.users.${username}.programs.remote-control.client.wayland = { };
   };
 }

@@ -8,9 +8,9 @@ let
   username = config.host.username;
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     home-manager.users.${username} = {
-      programs.remote-control.client.x11.enable = true;
+      programs.remote-control.client.x11 = { };
       host.hm.xquartz.enable = true;
     };
   };

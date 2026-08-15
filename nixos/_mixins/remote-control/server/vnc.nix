@@ -144,7 +144,7 @@ let
   };
 in
 {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     assertions = [
       {
         assertion = config.host.hardware.drmCard != null;

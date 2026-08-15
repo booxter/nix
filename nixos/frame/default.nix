@@ -75,11 +75,10 @@ in
     };
     remote-control.server = {
       vnc = {
-        enable = true;
         basePort = 5933;
       };
-      wayland.enable = true;
-      x11.enable = true;
+      wayland = { };
+      x11 = { };
     };
     ssh = {
       credentials.backend = "yubikey";

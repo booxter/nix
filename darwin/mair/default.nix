@@ -46,11 +46,11 @@ in
     };
     remote-control = {
       client = {
-        vnc.enable = true;
-        wayland.enable = true;
-        x11.enable = true;
+        vnc = { };
+        wayland = { };
+        x11 = { };
       };
-      server.vnc.enable = true;
+      server.vnc = { };
     };
     ssh = {
       credentials = {

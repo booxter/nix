@@ -7,17 +7,25 @@
   ];
 
   options.host.remote-control.server = {
-    x11.enable = lib.mkEnableOption "X11 remote-control server functionality";
-    wayland.enable = lib.mkEnableOption "Wayland remote-control server functionality";
-
-    vnc = {
-      enable = lib.mkEnableOption "VNC remote-control server functionality";
-
-      basePort = lib.mkOption {
-        type = lib.types.port;
-        default = 5900;
-        description = "First TCP port allocated to a VNC display.";
-      };
+    x11 = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+    };
+    wayland = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule { });
+      default = null;
+    };
+    vnc = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options.basePort = lib.mkOption {
+            type = lib.types.port;
+            default = 5900;
+            description = "First TCP port allocated to a VNC display.";
+          };
+        }
+      );
+      default = null;
     };
   };
 }
