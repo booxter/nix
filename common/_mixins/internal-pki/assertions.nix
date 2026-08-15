@@ -11,10 +11,10 @@ let
 in
 [
   {
-    assertion = config.host.pki.clients == { } || config.host.pki.authority != null;
+    assertion = config.host.pki.certificates == { } || config.host.pki.authority != null;
     message =
-      "realm '${config.host.realm}' has no internal PKI authority, but host '${config.networking.hostName}' enables clients: "
-      + lib.concatStringsSep ", " (builtins.attrNames config.host.pki.clients);
+      "realm '${config.host.realm}' has no internal PKI authority, but host '${config.networking.hostName}' registers certificates: "
+      + lib.concatStringsSep ", " (builtins.attrNames config.host.pki.certificates);
   }
   {
     assertion =
