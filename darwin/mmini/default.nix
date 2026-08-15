@@ -38,7 +38,7 @@ in
   host.ups.client.server = "frame";
 
   host.security = {
-    smartCard.enable = true;
+    smartCard = { };
     secrets.operator.ageIdentity = {
       backend = "yubikey";
       path = "/Users/${config.host.username}/.config/sops/age/yubi-nix.txt";
