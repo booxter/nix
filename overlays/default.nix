@@ -6,11 +6,12 @@
     _: prev:
     let
       inherit (prev) lib;
+      system = prev.stdenv.hostPlatform.system;
 
       getPkgs =
         np:
         import np {
-          inherit (prev) system;
+          inherit system;
           config = {
             allowUnfree = true;
           };
@@ -90,7 +91,7 @@
 
       lolek =
         let
-          lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
+          lolekPackage = inputs.lolek.packages.${system}.lolek;
           lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
               ../patches/yt-dlp-twitter-only-own-status-media.patch
