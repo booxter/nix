@@ -163,7 +163,10 @@ pkgs.testers.runNixOSTest {
 
         services.nginx = {
           enable = true;
-          virtualHosts."test.example.invalid".locations."/".proxyPass = "http://127.0.0.1:9000";
+          virtualHosts."internal-https-test" = {
+            serverAliases = [ "test.example.invalid" ];
+            locations."/".proxyPass = "http://127.0.0.1:9000";
+          };
         };
 
         host.sso.oauth2ProxyGates.test = {
@@ -279,7 +282,7 @@ pkgs.testers.runNixOSTest {
         oauth_log, backend_log = logs()
         assert "GET /oauth2/start body=0 " in oauth_log, oauth_log
         assert (
-            "redirect=http://test.example.invalid/library?sort=new" in oauth_log
+            "redirect=https://test.example.invalid/library?sort=new" in oauth_log
         ), oauth_log
         assert backend_log == "", backend_log
 
