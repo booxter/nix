@@ -7,7 +7,7 @@
 let
   cfg = config.host.home-assistant;
   homeAssistantSso = config.host.sso.applications.home-assistant;
-  oidcClient = config.host.sso.oidc.clients.home-assistant;
+  oidcClient = config.host.sso.oidc.clients.home;
 in
 {
   config = lib.mkIf cfg.enable {
