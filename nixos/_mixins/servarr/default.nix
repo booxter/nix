@@ -64,16 +64,13 @@ in
           upstream = "http://127.0.0.1:${toString port}";
           health = {
             frontend = {
-              enable = true;
               path = "/oauth2/sign_in";
             };
             backend = {
-              enable = true;
               path = "/ping";
             };
           };
           dashboard = {
-            enable = true;
             section = "media-admin";
           };
           auth.policy = "media-admin";

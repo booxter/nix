@@ -87,17 +87,14 @@ in
       };
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/api/health/live";
         };
       };
       observability.importance = "important";
       dashboard = {
-        enable = true;
         section = "user";
       };
       auth = {

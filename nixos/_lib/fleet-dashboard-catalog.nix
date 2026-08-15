@@ -17,7 +17,7 @@ let
       endpoint = exposure: {
         url = service.${exposure}.url;
         checkUrl =
-          if service.health.frontend.enable then
+          if service.health.frontend != null then
             "${service.${exposure}.url}${service.health.frontend.path}"
           else
             null;

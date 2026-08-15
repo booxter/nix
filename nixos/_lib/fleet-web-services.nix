@@ -93,7 +93,7 @@ let
         serviceId = contribution.id;
         owner = contribution.owner;
         value = metric;
-      }) (lib.filterAttrs (_: metric: metric.enable) contribution.value.metrics)
+      }) contribution.value.metrics
     ) contributions
   );
   showContribution = contribution: "${contribution.owner}:${contribution.id}";
@@ -122,11 +122,11 @@ assert lib.assertMsg (unknownSplitDnsServices == [ ]) (
     servicesByHost
     ;
   public = publicContributions;
-  dashboard = builtins.filter (contribution: contribution.value.dashboard.enable) contributions;
+  dashboard = builtins.filter (contribution: contribution.value.dashboard != null) contributions;
   frontendProbes = builtins.filter (
-    contribution: contribution.value.health.frontend.enable
+    contribution: contribution.value.health.frontend != null
   ) contributions;
   backendProbes = builtins.filter (
-    contribution: contribution.value.health.backend.enable
+    contribution: contribution.value.health.backend != null
   ) contributions;
 }

@@ -262,11 +262,9 @@ in
     host.web.services.grafana = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       health.frontend = {
-        enable = true;
         path = "/login";
       };
       dashboard = {
-        enable = true;
         section = "infrastructure";
       };
     };

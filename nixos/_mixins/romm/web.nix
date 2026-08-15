@@ -15,12 +15,10 @@ in
       internal.path = "/api";
       public = if cfg.publicHostName == null then null else { hostName = cfg.publicHostName; };
       health.frontend = {
-        enable = cfg.publicHostName != null;
         path = "/api/heartbeat";
       };
       displayName = "RomM";
       dashboard = {
-        enable = true;
         section = "user";
       };
     };

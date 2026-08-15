@@ -29,18 +29,15 @@ in
       };
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/readyz";
         };
       };
       observability.importance = "best-effort";
       displayName = "Degoog";
       dashboard = {
-        enable = true;
         icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
         section = "user";
       };

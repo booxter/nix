@@ -50,16 +50,13 @@ in
       upstream = "http://127.0.0.1:${toString config.services.bazarr.listenPort}";
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/api/system/ping";
         };
       };
       dashboard = {
-        enable = true;
         section = "media-admin";
       };
       auth = {

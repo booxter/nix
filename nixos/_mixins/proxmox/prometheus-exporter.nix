@@ -38,7 +38,6 @@ in
 
   config = lib.mkIf enabled {
     host.web.services."proxmox-${config.networking.hostName}".metrics.default = {
-      enable = true;
       endpointName = "pve";
       discover = false;
       jobName = "pve";

@@ -222,7 +222,6 @@ in
         hostName = idPublicHost;
       };
       health.frontend = {
-        enable = true;
         path = "/status";
       };
       observability = {
@@ -230,7 +229,6 @@ in
         externalProbe.requirement = "required";
       };
       displayName = "SSO";
-      dashboard.icon = "sh:kanidm";
       internal.locationExtraConfig = ''
         proxy_set_header Host ${idPublicHost};
         proxy_set_header X-Forwarded-Host ${idPublicHost};

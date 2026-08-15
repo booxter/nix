@@ -135,12 +135,10 @@ in
         hostName = cfg.publicHostName;
       };
       health.frontend = {
-        enable = true;
         path = "";
       };
       observability.importance = "important";
       dashboard = {
-        enable = true;
         section = "user";
       };
       internal = {

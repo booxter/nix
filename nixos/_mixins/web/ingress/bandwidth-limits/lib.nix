@@ -19,7 +19,7 @@
               else
                 contribution.value.upstream;
           }
-        ) (lib.filterAttrs (_: route: route.bandwidthLimit.enable) contribution.value.public.routes)
+        ) (lib.filterAttrs (_: route: route.bandwidthLimit != null) contribution.value.public.routes)
       ) publicServices
     );
 }

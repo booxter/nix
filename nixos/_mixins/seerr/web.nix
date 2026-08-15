@@ -10,12 +10,10 @@ in
         hostName = "js.${config.host.network.publicDomain}";
       };
       health.frontend = {
-        enable = true;
         path = "/login";
       };
       observability.importance = "important";
       dashboard = {
-        enable = true;
         section = "user";
       };
     };

@@ -8,11 +8,9 @@ in
       upstream = "http://127.0.0.1:6336";
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/__probe/sabnzbd-version";
           upstreamPath = "/api?mode=version&output=json";
           recommendedProxySettings = false;
@@ -28,7 +26,6 @@ in
       };
       displayName = "SABnzbd";
       dashboard = {
-        enable = true;
         section = "media-admin";
       };
       auth.policy = "media-admin";

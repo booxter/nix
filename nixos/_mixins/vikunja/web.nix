@@ -21,11 +21,9 @@ in
         hostName = publicHost;
       };
       health.frontend = {
-        enable = true;
         path = "";
       };
       metrics.default = {
-        enable = true;
         port = metricsPort;
         upstream = "${localUrl}/api/v1/metrics";
       };
@@ -45,7 +43,6 @@ in
       };
       displayName = "Vikunja";
       dashboard = {
-        enable = true;
         section = "user";
       };
     };

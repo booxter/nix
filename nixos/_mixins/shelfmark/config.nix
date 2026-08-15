@@ -154,12 +154,10 @@ in
         hostName = cfg.publicHostName;
       };
       health.frontend = {
-        enable = true;
         path = "/api/health";
       };
       observability.importance = "important";
       dashboard = {
-        enable = true;
         section = "user";
       };
       internal = {

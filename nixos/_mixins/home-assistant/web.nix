@@ -31,10 +31,9 @@ in
           };
         };
       };
-      health.frontend.enable = true;
+      health.frontend = { };
       displayName = "Home Assistant";
       dashboard = {
-        enable = true;
         icon = "sh:home-assistant";
         section = "infrastructure";
       };
@@ -43,7 +42,6 @@ in
         proxy_read_timeout 3600s;
       '';
       metrics.default = {
-        enable = true;
         endpointName = "home-assistant";
         jobName = "home-assistant";
         port = cfg.metrics.port;

@@ -16,18 +16,15 @@ in
       public = { inherit hostName; };
       health = {
         frontend = {
-          enable = true;
           path = "/api/health";
         };
         backend = {
-          enable = true;
           path = "/api/health";
         };
       };
       observability.importance = "best-effort";
       displayName = "PinePods";
       dashboard = {
-        enable = true;
         icon = "sh:pinepods";
         section = "user";
       };

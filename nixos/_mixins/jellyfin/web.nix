@@ -16,7 +16,6 @@ in
         routes.originalDownloads = {
           location = "~* ^/Items/[^/]+/Download/?$";
           bandwidthLimit = {
-            enable = true;
             listenPort = 18096;
             bytesPerSecond = 5 * 1000 * 1000 / 8;
             unlimitedCidrs = [
@@ -30,12 +29,10 @@ in
         };
       };
       health.frontend = {
-        enable = true;
         path = "/web/";
       };
       observability.importance = "important";
       dashboard = {
-        enable = true;
         section = "user";
       };
     };

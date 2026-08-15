@@ -51,9 +51,7 @@ in
 let
   enabled = builtins.filter (
     candidate:
-    candidate.value.observability.externalProbe.enable
-    && candidate.value.observability.externalProbe.requirement != "disabled"
-    && (
+    (
       candidate.value.observability.externalProbe.requirement == "required"
       ||
         importanceRanks.${candidate.value.observability.importance} >= importanceRanks.${minimumImportance}

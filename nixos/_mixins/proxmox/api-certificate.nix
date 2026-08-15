@@ -52,9 +52,8 @@ in
           proxy_ssl_verify on;
         '';
       };
-      health.frontend.enable = true;
+      health.frontend = { };
       displayName = "Proxmox ${config.networking.hostName}";
-      dashboard.icon = "sh:proxmox";
     };
 
     sops.secrets.${certificateSecret}.restartUnits = [

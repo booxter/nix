@@ -9,11 +9,9 @@ in
       upstream = "http://127.0.0.1:${toString rpcPort}";
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/__probe/transmission-rpc";
           module = "http_service_409";
           upstreamPath = "/transmission/rpc";
@@ -31,7 +29,6 @@ in
       };
       displayName = "Transmission";
       dashboard = {
-        enable = true;
         section = "media-admin";
       };
       auth.policy = "media-admin";

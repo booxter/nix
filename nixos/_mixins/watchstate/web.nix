@@ -14,17 +14,14 @@ in
       upstream = localUrl;
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/v1/api/system/healthcheck";
         };
       };
       displayName = "WatchState";
       dashboard = {
-        enable = true;
         icon = "sh:watchstate.png";
         section = "media-admin";
       };

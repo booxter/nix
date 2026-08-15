@@ -22,7 +22,7 @@ let
     restartUnits = [ "nginx.service" ];
   };
   healthProbeEndpointNames = map (service: service.internal.endpointName) (
-    builtins.attrValues (lib.filterAttrs (_: service: service.health.backend.enable) services)
+    builtins.attrValues (lib.filterAttrs (_: service: service.health.backend != null) services)
   );
   apiProbeEndpointNames = map (api: services.${api.service}.internal.endpointName) (
     builtins.attrValues (
@@ -114,7 +114,7 @@ let
             '';
           };
         }
-        // lib.optionalAttrs service.health.backend.enable {
+        // lib.optionalAttrs (service.health.backend != null) {
           "= ${service.health.backend.path}" = healthProbeLocation service;
         };
       }

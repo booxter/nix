@@ -28,12 +28,10 @@ in
         '';
       };
       health.frontend = {
-        enable = true;
         path = "/accounts/login/";
       };
       displayName = "Paperless";
       dashboard = {
-        enable = true;
         icon = "sh:paperless-ngx";
         section = "infrastructure";
       };
@@ -52,7 +50,6 @@ in
         '';
       };
       metrics.default = {
-        enable = true;
         port = metricsMtlsPort;
         upstream = "http://127.0.0.1:${toString metricsInternalPort}/metrics";
       };
@@ -62,17 +59,14 @@ in
       upstream = "http://127.0.0.1:${toString gptPort}";
       health = {
         frontend = {
-          enable = true;
           path = "/oauth2/sign_in";
         };
         backend = {
-          enable = true;
           path = "/api/version";
         };
       };
       displayName = "Paperless GPT";
       dashboard = {
-        enable = true;
         icon = "sh:paperless-ngx";
         section = "infrastructure";
       };

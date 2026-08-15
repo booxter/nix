@@ -13,7 +13,9 @@ let
     inherit capacity;
     minimumImportance = "best-effort";
     spreadByOwner = true;
-    candidates = fleetWebServices.public;
+    candidates = builtins.filter (
+      contribution: contribution.value.health.frontend != null
+    ) fleetWebServices.public;
   };
   apiKeySecret = "uptimerobot/api_key";
   package = pkgs.callPackage ./package { };

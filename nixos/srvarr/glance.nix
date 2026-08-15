@@ -45,17 +45,12 @@ in
         serveOnOwner = false;
         splitDnsHost = config.networking.hostName;
       };
-      health.frontend.enable = true;
+      health.frontend = { };
       observability = {
         importance = "critical";
         externalProbe.requirement = "required";
       };
       displayName = "Dashboard";
-      dashboard = {
-        enable = false;
-        icon = "sh:glance";
-        section = null;
-      };
     };
   };
 }
