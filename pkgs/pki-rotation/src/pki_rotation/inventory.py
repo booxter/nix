@@ -7,6 +7,7 @@ from typing import Protocol
 from pydantic import ValidationError
 from pki_certificates.models import FleetHosts, HostCertificateConfig
 from pki_certificates.repository import NixConfigSource
+from pki_certificates.services import SECRET_FIELDS
 from sops_tools.errors import ToolError
 from sops_tools.process import ProcessRunner
 
@@ -76,8 +77,6 @@ class CertificateInventoryBuilder:
             )
         for host, host_entry in sorted(self.hosts.root.items()):
             secret_path = self.repo_root / "secrets" / host_entry.realm / f"{host}.yaml"
-            if not secret_path.is_file():
-                continue
             specs.extend(self._host_specs(host, secret_path, configs[host]))
         return tuple(sorted(specs, key=lambda spec: (spec.category.value, spec.host, spec.name)))
 
@@ -114,11 +113,7 @@ class CertificateInventoryBuilder:
                 CertificateCategory(certificate.category),
                 certificate.name,
                 certificate.secret_prefix,
-                (
-                    "client_crt_unencrypted"
-                    if certificate.category.endswith("_client")
-                    else "server_crt_unencrypted"
-                ),
+                SECRET_FIELDS[certificate.category][0],
             )
             for certificate in config.certificates
         ]

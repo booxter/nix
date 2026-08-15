@@ -30,15 +30,13 @@ let
     let
       hostConfig = configuration.config;
       realm = hostConfig.host.realm;
-      secretPath = ../../secrets + "/${realm}/${host}.yaml";
+      secretPath = "${../..}/secrets/${realm}/${host}.yaml";
     in
-    lib.optionals (builtins.pathExists secretPath) (
-      map (
-        certificate:
-        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix
-          categories.${certificate.category}.certificateField
-      ) (builtins.attrValues hostConfig.host.pki.certificates)
-    );
+    map (
+      certificate:
+      secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix
+        categories.${certificate.category}.certificateField
+    ) (builtins.attrValues hostConfig.host.pki.certificates);
   leafCertificates = lib.concatLists (lib.mapAttrsToList hostCertificates realmConfigurations);
 in
 assert authority != null;

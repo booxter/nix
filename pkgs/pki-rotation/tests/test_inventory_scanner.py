@@ -148,7 +148,11 @@ def test_inventory_uses_realms_and_all_managed_categories(tmp_path: Path) -> Non
         (CertificateCategory.OBSERVABILITY_CLIENT, "loki"),
     }
     assert configs.requested == ["authority-node", "service-node"]
-    assert all(spec.secret is None or spec.secret.path == secret for spec in specs)
+    secret_paths = {spec.secret.path for spec in specs if spec.secret is not None}
+    assert secret_paths == {
+        tmp_path / "secrets" / "test-realm" / "authority-node.yaml",
+        secret,
+    }
     assert specs[0].host == "authority-runtime"
 
 
@@ -229,6 +233,35 @@ def test_scanner_parses_files_and_treats_encrypted_values_as_missing(tmp_path: P
     assert parsed.rotation_due
     assert parsed.common_name == "web.example.invalid"
     assert parsed.days_remaining == 10
+    assert not missing.parse_success
+    assert missing.rotation_due
+
+
+def test_scanner_treats_missing_secret_file_as_missing(tmp_path: Path) -> None:
+    source = StaticSpecs(
+        (
+            CertificateSpec(
+                "host",
+                CertificateCategory.INTERNAL_HTTPS_SERVER,
+                "web",
+                SourceKind.REPOSITORY_SECRET,
+                secret=SecretLocation(
+                    "host",
+                    tmp_path / "missing.yaml",
+                    "internal/web",
+                    "server_crt_unencrypted",
+                ),
+            ),
+        )
+    )
+
+    inventory = CertificateScanner(source, FixedClock(datetime(2026, 1, 1, tzinfo=UTC))).scan(
+        tmp_path,
+        Path("/unused"),
+        45,
+    )
+
+    (missing,) = inventory.root
     assert not missing.parse_success
     assert missing.rotation_due
 

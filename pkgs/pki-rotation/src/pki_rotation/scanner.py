@@ -124,6 +124,8 @@ class CertificateScanner:
                 return None
             return spec.file_path.read_text()
         assert spec.secret is not None
+        if not spec.secret.path.is_file():
+            return None
         if spec.secret.path not in documents:
             documents[spec.secret.path] = load_yaml(spec.secret.path)
         path = KeyPath.parse(spec.secret.prefix).child(spec.secret.certificate_field)
