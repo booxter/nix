@@ -20,7 +20,8 @@ class CertificateStore(Protocol):
         secret_prefix: str,
         material: CertificateMaterial,
         *,
-        client: bool,
+        certificate_field: str,
+        key_field: str,
     ) -> None: ...
 
 
@@ -59,15 +60,14 @@ class SopsCertificateStore:
         secret_prefix: str,
         material: CertificateMaterial,
         *,
-        client: bool,
+        certificate_field: str,
+        key_field: str,
     ) -> None:
         host_entry = fleet_host(self.hosts, host)
         realm = self.runtime.resolve_realm(host_entry.realm)
         service = self.factory.create(self.runtime, realm)
         service.update(host)
         prefix = KeyPath.parse(secret_prefix)
-        certificate_field = "client_crt_unencrypted" if client else "server_crt_unencrypted"
-        key_field = "client_key" if client else "server_key"
         service.set_text(
             host,
             prefix.child(certificate_field),

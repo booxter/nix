@@ -53,8 +53,6 @@ in
 
   config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
     host.pki.certificates."observability_endpoint_server/node_exporter" = {
-      category = "observability_endpoint_server";
-      name = "node_exporter";
       commonName = "prometheus-node_exporter.${config.networking.hostName}";
       sans = config.host.network.certificateDnsNames;
       port = config.services.prometheus.exporters.node.port;

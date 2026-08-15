@@ -5,6 +5,7 @@
 }:
 let
   authority = config.host.pki.authority;
+  categories = import ../../common/_mixins/internal-pki/categories.nix;
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   realmConfigurations = lib.filterAttrs (
     _: configuration: configuration.config.host.realm == config.host.realm
@@ -34,12 +35,8 @@ let
     lib.optionals (builtins.pathExists secretPath) (
       map (
         certificate:
-        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix (
-          if lib.hasSuffix "_client" certificate.category then
-            "client_crt_unencrypted"
-          else
-            "server_crt_unencrypted"
-        )
+        secretSpec host realm secretPath certificate.category certificate.name certificate.secretPrefix
+          categories.${certificate.category}.certificateField
       ) (builtins.attrValues hostConfig.host.pki.certificates)
     );
   leafCertificates = lib.concatLists (lib.mapAttrsToList hostCertificates realmConfigurations);

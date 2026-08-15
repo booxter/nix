@@ -168,10 +168,10 @@ class RecordingIssuer:
 
 @dataclass
 class RecordingStore:
-    calls: list[tuple[str, str, CertificateMaterial, bool]] = field(default_factory=list)
+    calls: list[tuple[str, str, CertificateMaterial, str, str]] = field(default_factory=list)
 
-    def write(self, host, secret_prefix, certificate, *, client):
-        self.calls.append((host, secret_prefix, certificate, client))
+    def write(self, host, secret_prefix, certificate, *, certificate_field, key_field):
+        self.calls.append((host, secret_prefix, certificate, certificate_field, key_field))
 
 
 @dataclass(frozen=True)
@@ -284,7 +284,12 @@ def test_managed_service_issues_each_certificate_kind():
     assert endpoint.common_name == "prometheus-node.host.example.invalid"
     assert endpoint.sans == ("host.example.invalid", "host", "host.local")
     assert observer.sans == ("client-alt",)
-    assert [call[3] for call in store.calls] == [False, True, False, True]
+    assert [call[3:] for call in store.calls] == [
+        ("server_crt_unencrypted", "server_key"),
+        ("client_crt_unencrypted", "client_key"),
+        ("server_crt_unencrypted", "server_key"),
+        ("client_crt_unencrypted", "client_key"),
+    ]
     assert len(issuer.calls) == 4
 
 
@@ -418,7 +423,13 @@ def test_sops_store_updates_template_and_structured_secret_paths(tmp_path: Path)
     factory = RecordingSecretFactory(writer)
     store = SopsCertificateStore(runtime, fleet_hosts(), factory)
 
-    store.write("host", "prometheus/client", material(), client=True)
+    store.write(
+        "host",
+        "prometheus/client",
+        material(),
+        certificate_field="client_crt_unencrypted",
+        key_field="client_key",
+    )
 
     assert factory.realms == ["test-realm"]
     assert writer.calls == [

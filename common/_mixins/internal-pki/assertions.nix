@@ -3,16 +3,10 @@
   lib,
 }:
 let
+  categories = import ./categories.nix;
   certificates = builtins.attrValues config.host.pki.certificates;
   managedCertificateSourceKeys = map (
-    certificate:
-    "${certificate.secretPrefix}/"
-    + (
-      if lib.hasSuffix "_client" certificate.category then
-        "client_crt_unencrypted"
-      else
-        "server_crt_unencrypted"
-    )
+    certificate: "${certificate.secretPrefix}/${categories.${certificate.category}.certificateField}"
   ) certificates;
 in
 [

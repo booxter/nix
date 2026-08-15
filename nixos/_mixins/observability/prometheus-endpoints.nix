@@ -153,8 +153,6 @@ in
     host.pki.certificates = lib.mapAttrs' (
       name: endpoint:
       lib.nameValuePair "observability_endpoint_server/${name}" {
-        category = "observability_endpoint_server";
-        inherit name;
         commonName = "prometheus-${name}.${config.networking.hostName}";
         inherit (endpoint) port secretPrefix;
         sans = config.host.network.certificateDnsNames;

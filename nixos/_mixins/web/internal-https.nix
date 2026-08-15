@@ -137,8 +137,6 @@ in
     host.pki.certificates = lib.mapAttrs' (
       _: service:
       lib.nameValuePair "internal_https_server/${service.internal.endpointName}" {
-        category = "internal_https_server";
-        name = service.internal.endpointName;
         commonName = service.internal.serverName;
         port = 443;
         inherit (service.internal) sans secretPrefix;

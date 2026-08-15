@@ -142,7 +142,6 @@ in
           if client.category == "observability" then "observability_client" else "internal_https_client";
       in
       lib.nameValuePair "${category}/${name}" {
-        inherit category name;
         inherit (client) commonName secretPrefix;
         sans =
           if client.category == "observability" then
