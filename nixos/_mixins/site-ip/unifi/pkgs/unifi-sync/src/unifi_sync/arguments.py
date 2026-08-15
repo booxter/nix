@@ -3,8 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 
-from .models import Arguments
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
