@@ -5,17 +5,11 @@
   ...
 }:
 let
+  launchdLib = import ./lib.nix { inherit lib; };
   exporterName = "observability-launchd-export";
   textfileDir = "/var/lib/observability-launchd/textfile";
   exporter = pkgs.callPackage ./pkgs/launchd-exporter { };
-  hasProgram =
-    job:
-    job.command != ""
-    || job.serviceConfig.Program != null
-    || job.serviceConfig.ProgramArguments != null;
-  jobs = lib.filterAttrs (
-    name: job: name != exporterName && hasProgram job && job.serviceConfig.Disabled != true
-  ) config.launchd.daemons;
+  jobs = launchdLib.managedJobs (removeAttrs config.launchd.daemons [ exporterName ]);
   inferMode =
     job:
     if job.serviceConfig.KeepAlive == true then

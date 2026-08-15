@@ -5,6 +5,7 @@
   ...
 }:
 let
+  launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
@@ -14,7 +15,6 @@ let
     agents = config.launchd.agents;
     userAgents = config.launchd.user.agents;
   };
-  enabledJobs = lib.filterAttrs (_: job: job.serviceConfig.Disabled != true);
   pathsFor =
     jobs:
     builtins.sort builtins.lessThan (
@@ -29,9 +29,10 @@ let
       )
     );
   systemLogPaths = lib.unique (
-    pathsFor (enabledJobs jobsByDomain.daemons) ++ pathsFor (enabledJobs jobsByDomain.agents)
+    pathsFor (launchdLib.enabledJobs jobsByDomain.daemons)
+    ++ pathsFor (launchdLib.enabledJobs jobsByDomain.agents)
   );
-  userLogPaths = pathsFor (enabledJobs jobsByDomain.userAgents);
+  userLogPaths = pathsFor (launchdLib.enabledJobs jobsByDomain.userAgents);
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
@@ -66,7 +67,7 @@ in
 {
   config = {
     assertions = import ./logging/assertions.nix {
-      inherit jobsByDomain lib;
+      inherit jobsByDomain launchdLib lib;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''

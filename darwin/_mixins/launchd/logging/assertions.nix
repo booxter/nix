@@ -1,24 +1,14 @@
 {
   jobsByDomain,
+  launchdLib,
   lib,
 }:
 let
-  hasProgram =
-    job:
-    job.command != ""
-    || job.serviceConfig.Program != null
-    || job.serviceConfig.ProgramArguments != null;
-  isManaged = job: job.serviceConfig.Disabled != true && hasProgram job;
-  optionPaths = {
-    daemons = "launchd.daemons";
-    agents = "launchd.agents";
-    userAgents = "launchd.user.agents";
-  };
   assertionsFor =
     domain: jobs:
     let
-      optionPath = optionPaths.${domain};
-      managedJobs = lib.filterAttrs (_: isManaged) jobs;
+      optionPath = launchdLib.optionPaths.${domain};
+      managedJobs = launchdLib.managedJobs jobs;
       loggingAssertions = lib.mapAttrsToList (
         name: job:
         let
