@@ -9,7 +9,7 @@
 }:
 let
   sso = config.host.sso;
-  enabled = sso.provider.enable;
+  enabled = sso.provider != null;
   idPublicHost = "id.${config.host.network.publicDomain}";
   publicUrl = "https://${idPublicHost}";
   oidcClients = import ./oidc-clients.nix {

@@ -1,7 +1,7 @@
 { repo }:
 let
   flake = builtins.getFlake "path:${repo}";
-  providers = builtins.filter (entry: entry.value.config.host.sso.provider.enable) (
+  providers = builtins.filter (entry: entry.value.config.host.sso.provider != null) (
     map (name: {
       inherit name;
       value = flake.nixosConfigurations.${name};

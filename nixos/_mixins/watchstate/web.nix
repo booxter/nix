@@ -33,7 +33,6 @@ in
         oauth2ProxyGate = {
           displayName = "WatchState";
           port = 4182;
-          cookieName = "_watchstate_sso";
           allowedGroups = [ sso.roles.admin ];
           groupClaim = "media_groups";
           internalHttpsServiceNames = [ "watchstate" ];

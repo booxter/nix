@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  utils,
   webModel,
   ...
 }:
@@ -11,11 +12,7 @@ let
   gateHelpers = import ./oauth2-proxy-gate-lib.nix { };
 
   gateSubmodule =
-    gateName:
     { ... }:
-    let
-      safeClientId = lib.replaceStrings [ "-" ] [ "_" ] gateName;
-    in
     {
       options = {
         displayName = lib.mkOption {
@@ -27,12 +24,6 @@ let
           type = lib.types.port;
           default = 4180;
           description = "Loopback port where oauth2-proxy listens.";
-        };
-
-        cookieName = lib.mkOption {
-          type = lib.types.str;
-          default = "_${safeClientId}_sso";
-          description = "Session cookie name used by oauth2-proxy.";
         };
 
         sessionRefresh = lib.mkOption {
@@ -73,9 +64,9 @@ let
         };
 
         externalOrigin = lib.mkOption {
-          type = with lib.types; nullOr str;
+          type = with lib.types; nullOr (strMatching "^https://[^/?#]+$");
           default = null;
-          description = "Browser-facing origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
+          description = "Pathless HTTPS origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
         };
 
         authRequestHeaders = lib.mkOption {
@@ -106,6 +97,7 @@ let
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
   serviceNameFor = gateName: "oauth2-proxy-${gateName}";
   safeName = name: lib.replaceStrings [ "-" ] [ "_" ] (lib.toLower name);
+  cookieNameFor = gateName: "_${lib.replaceStrings [ "-" ] [ "_" ] gateName}_sso";
   httpAddressFor = gate: "http://127.0.0.1:${toString gate.port}";
   logoutCompletePath = "/oauth2/logout-complete";
   internalHttpsServiceHosts =
@@ -146,7 +138,7 @@ let
         )
       );
 
-  mkArg = name: value: "--${name}=${lib.escapeShellArg (toString value)}";
+  mkArg = name: value: "--${name}=${toString value}";
   mkArgs = name: values: map (mkArg name) values;
   oauth2ProxyArgs =
     gateName: gate:
@@ -159,7 +151,7 @@ let
       (mkArg "client-secret-file" "%d/client-secret")
       (mkArg "code-challenge-method" "S256")
       (mkArg "cookie-httponly" "true")
-      (mkArg "cookie-name" gate.cookieName)
+      (mkArg "cookie-name" (cookieNameFor gateName))
       (mkArg "cookie-secret-file" "%d/cookie-secret")
       (mkArg "cookie-secure" "true")
       (mkArg "email-domain" "*")
@@ -342,7 +334,7 @@ in
   imports = [ ./oauth2-proxy-gate/assertions.nix ];
 
   options.host.sso.oauth2ProxyGates = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.submodule ({ name, ... }@args: gateSubmodule name args));
+    type = lib.types.attrsOf (lib.types.submodule gateSubmodule);
     default = { };
     description = "Named oauth2-proxy nginx auth_request gates.";
   };
@@ -447,7 +439,9 @@ in
         serviceConfig = {
           User = serviceNameFor gateName;
           Group = serviceNameFor gateName;
-          ExecStart = "${lib.getExe pkgs.oauth2-proxy} ${lib.concatStringsSep " " (oauth2ProxyArgs gateName gate)}";
+          ExecStart = utils.escapeSystemdExecArgs (
+            [ (lib.getExe pkgs.oauth2-proxy) ] ++ oauth2ProxyArgs gateName gate
+          );
           LoadCredential = [
             "client-secret:${config.sops.secrets.${secretNameFor gateName "client-secret"}.path}"
             "cookie-secret:${config.sops.secrets.${secretNameFor gateName "cookie-secret"}.path}"

@@ -143,26 +143,21 @@ pkgs.testers.runNixOSTest {
       config = {
         _module.args.outputs.nixosConfigurations.provider.config = {
           networking.hostName = "provider";
-          host = {
-            realm = "test";
-            sso = {
-              role = "provider";
-              provider = {
-                backend = "kanidm";
-                displayName = "Test SSO";
-                publicUrl = "https://id.example.invalid";
-                oidc.baseScopes = [
-                  "openid"
-                  "email"
-                  "profile"
-                ];
-              };
-            };
-          };
+          host.realm = "test";
         };
-        _module.args.webModel.internalEndpoints = { };
+        _module.args.webModel.internalEndpoints.test = {
+          internal = {
+            endpointName = "test";
+            serverName = "test.example.invalid";
+            serverAliases = [ ];
+            publicAliases = [ ];
+            path = "/";
+          };
+          auth.sessionClearPaths = [ ];
+        };
 
         host.network.lanDomain = "example.invalid";
+        host.sso.providerHost = "provider";
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 
@@ -172,21 +167,16 @@ pkgs.testers.runNixOSTest {
         };
 
         host.sso.oauth2ProxyGates.test = {
-          enable = true;
-          clientId = "test";
           displayName = "Test";
-          originLanding = "https://test.example.invalid/";
-          httpAddress = "http://127.0.0.1:4180";
-          serviceName = "oauth2-proxy-gate-test";
+          externalOrigin = "https://test.example.invalid";
           groupClaim = "groups";
           allowedGroups = [ "test-users" ];
-          whitelistDomains = [ "test.example.invalid" ];
-          externalHostNames = [ "test.example.invalid" ];
+          internalHttpsServiceNames = [ "test" ];
         };
 
         # The test supplies a deterministic fake auth endpoint instead of
         # starting oauth2-proxy and provisioning its credentials.
-        systemd.services.oauth2-proxy-gate-test.wantedBy = lib.mkForce [ ];
+        systemd.services.oauth2-proxy-test.wantedBy = lib.mkForce [ ];
 
         systemd.services.fake-oauth2-proxy = {
           wantedBy = [ "multi-user.target" ];

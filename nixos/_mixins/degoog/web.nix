@@ -45,7 +45,6 @@ in
         oauth2ProxyGate = {
           displayName = "Degoog";
           port = oauth2ProxyPort;
-          cookieName = "_goo_sso";
           allowedGroups = [ ssoApplication.roles.user ];
           groupClaim = "degoog_groups";
           externalOrigin = service.public.url;

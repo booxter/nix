@@ -19,7 +19,7 @@ in
 
   assertions = [
     {
-      assertion = !config.host.sso.provider.enable || config.nixpkgs.hostPlatform.isLinux;
+      assertion = config.host.sso.provider == null || config.nixpkgs.hostPlatform.isLinux;
       message = "The realm SSO provider requires NixOS.";
     }
   ];

@@ -74,7 +74,6 @@ in
         oauth2ProxyGate = {
           displayName = "Paperless GPT";
           port = gptOauth2ProxyPort;
-          cookieName = "_paperless_gpt_sso";
           allowedGroups = [ ssoApplication.roles.admin ];
           groupClaim = "paperless_groups";
           internalHttpsServiceNames = [ "paperless-gpt" ];
