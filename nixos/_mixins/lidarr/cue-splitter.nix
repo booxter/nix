@@ -31,7 +31,7 @@ in
     };
 
     systemd.tmpfiles.rules = [
-      "z ${nodeExporterTextfileDir} 0775 root ${cfg.group} - -"
+      "z ${nodeExporterTextfileDir} 0775 root media - -"
     ];
 
     systemd.services.lidarr-cue-splitter = {
@@ -69,8 +69,8 @@ in
             "900"
           ]
         );
-        User = cfg.user;
-        Group = cfg.group;
+        User = "lidarr";
+        Group = "media";
         UMask = "0002";
         StateDirectory = "lidarr-cue-splitter";
         StateDirectoryMode = "0750";

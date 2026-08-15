@@ -15,24 +15,9 @@ in
   options.host.${name} = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
-        options = {
-          stateDir = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "/var/lib/${name}";
-          };
-        }
-        // lib.optionalAttrs media {
-          user = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = name;
-            internal = true;
-          };
-
-          group = lib.mkOption {
-            type = lib.types.nonEmptyStr;
-            default = "media";
-            internal = true;
-          };
+        options.stateDir = lib.mkOption {
+          type = lib.types.strMatching "^/.+";
+          default = "/var/lib/${name}";
         };
       }
     );
@@ -94,15 +79,15 @@ in
       }
       (lib.optionalAttrs media {
         services.${name} = {
-          user = cfg.user;
-          group = cfg.group;
+          user = name;
+          group = "media";
         };
 
         host.storage.claims.media.attachments.${name} = { };
 
         systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
 
-        users.users.${cfg.user}.isSystemUser = true;
+        users.users.${name}.isSystemUser = true;
       })
     ]
   );
