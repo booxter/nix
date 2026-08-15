@@ -83,7 +83,9 @@ in
       }
     ];
 
-    host.backups.sources.step-ca.paths = lib.mkIf enabled [ stateDir ];
+    host.backups.sources = lib.mkIf enabled {
+      step-ca.paths = [ stateDir ];
+    };
 
     host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
       title = "PKI Root CA";
