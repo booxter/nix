@@ -10,6 +10,7 @@ let
   libraryPath = if jellyfin == null then null else "${jellyfin.media.mountPoint}/library";
   absolutePath = lib.types.strMatching "^/.*";
   atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
+  port = 8080;
 in
 {
   imports = [
@@ -38,8 +39,8 @@ in
     inherit cfg jellyfin libraryPath;
     backupStagingDirectory = if cfg == null then null else cfg.backupStagingDirectory;
     dataDirectory = "/var/lib/watchstate";
-    localUrl = "http://127.0.0.1:8080";
-    port = 8080;
+    localUrl = "http://127.0.0.1:${toString port}";
+    inherit port;
     tools = pkgs.callPackage ./packages/tools { inherit atomicFileWrites; };
   };
 }
