@@ -5,6 +5,7 @@
 }:
 let
   cfg = config.host.vikunja;
+  port = 3456;
 in
 {
   imports = [
@@ -20,9 +21,8 @@ in
   };
 
   config._module.args.vikunjaModel = {
-    inherit cfg;
-    port = 3456;
-    localUrl = "http://127.0.0.1:3456";
+    inherit cfg port;
+    localUrl = "http://127.0.0.1:${toString port}";
     publicHost = "vi.${config.host.network.publicDomain}";
     metricsPort = 9345;
   };
