@@ -4,7 +4,6 @@ use std::process::{Command, Stdio};
 use anyhow::{bail, Context, Result};
 
 const CHECK_NIX: &str = env!("CHECK_NIX");
-const CHECK_NOM: &str = env!("CHECK_NOM");
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CheckTargetOptions {
@@ -44,12 +43,12 @@ impl Backend for SystemBackend {
     }
 
     fn build(&mut self, attribute: &str) -> Result<i32> {
-        let mut command = Command::new(CHECK_NOM);
+        let mut command = Command::new(CHECK_NIX);
         command.arg("build");
         let status = command
             .args([attribute, "-L", "--show-trace"])
             .status()
-            .with_context(|| format!("failed to run nom build for {attribute}"))?;
+            .with_context(|| format!("failed to run nix build for {attribute}"))?;
         Ok(status.code().unwrap_or(1))
     }
 }

@@ -60,7 +60,6 @@ rustPlatform.buildRustPackage {
   '';
   WG_HOME_SSH = lib.getExe openssh;
   CHECK_NIX = lib.getExe nix;
-  CHECK_NOM = lib.getExe nix-output-monitor;
   CHECK_SYSTEM = stdenv.hostPlatform.system;
   VM_NIX = lib.getExe nix;
   VM_RUNNER_NIX = ./vm-runner.nix;
