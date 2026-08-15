@@ -23,17 +23,6 @@ let
 in
 {
   options.host.ups = {
-    credentialMode = lib.mkOption {
-      type = lib.types.enum [
-        "literal"
-        "sops"
-      ];
-      default = if config.host.realm == "work" then "literal" else "sops";
-      readOnly = true;
-      internal = true;
-      description = "How UPS client and server passwords are provided in this realm.";
-    };
-
     server = lib.mkOption {
       type = lib.types.nullOr serverType;
       default = null;

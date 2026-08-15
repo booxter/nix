@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.host.ups.server;
-  useLiteralPasswords = config.host.ups.credentialMode == "literal";
+  useLiteralPasswords = config.host.realm == "work";
   passwordFile =
     user:
     if useLiteralPasswords then

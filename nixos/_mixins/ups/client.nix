@@ -15,12 +15,14 @@ let
   };
   server = if cfg.server == null then null else model.servers.${cfg.server} or null;
   siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
-  clientCredentialMode = config.host.ups.credentialMode;
-  serverCredentialMode = if server == null then null else server.ups.credentialMode;
   monitorName = if cfg.server == null then "" else cfg.server;
   monitorSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
-    server != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
+    server != null
+    && import ../../../common/_mixins/ups/uses-literal-credentials.nix {
+      clientRealm = config.host.realm;
+      serverRealm = server.realm;
+    };
   passwordFile =
     if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
 in

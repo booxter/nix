@@ -17,12 +17,14 @@ let
   };
   server = if serverName == null then null else model.servers.${serverName} or null;
   siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
-  clientCredentialMode = config.host.ups.credentialMode;
-  serverCredentialMode = if server == null then null else server.ups.credentialMode;
   monitorName = if serverName == null then "" else serverName;
   monitorPasswordSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
-    server != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
+    server != null
+    && import ../../../common/_mixins/ups/uses-literal-credentials.nix {
+      clientRealm = config.host.realm;
+      serverRealm = server.realm;
+    };
   monitorPassword =
     if useLiteralPassword then "upsslave123" else config.sops.placeholder.${monitorPasswordSecret};
   shutdownDelay = config.host.power.shutdown.delaySeconds;

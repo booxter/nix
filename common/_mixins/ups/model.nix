@@ -10,7 +10,6 @@ let
     inherit (hostConfig.nixpkgs.hostPlatform) isLinux;
     name = hostConfig.networking.hostName;
     ups = {
-      inherit (hostConfig.host.ups) credentialMode;
       clientServer = hostConfig.host.ups.client.server;
       server = hostConfig.host.ups.server;
     };
