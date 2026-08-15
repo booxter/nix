@@ -69,7 +69,7 @@ let
     ]) ticketTargets
   );
   enabled =
-    config.host.hm.env.preset != null
+    config.host.hm.env.roles.developer
     && osConfig.host.ssh.tickets.trustedCaPublicKeys != [ ]
     && issuer != null;
 in

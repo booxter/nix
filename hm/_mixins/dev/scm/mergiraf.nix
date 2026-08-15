@@ -4,7 +4,7 @@
   pkgs,
   ...
 }:
-lib.mkIf (config.host.hm.env.preset != null) {
+lib.mkIf config.host.hm.env.roles.developer {
   programs.git.settings = {
     merge.mergiraf = {
       name = "mergiraf";

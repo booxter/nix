@@ -1,11 +1,11 @@
 {
+  config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
 {
-  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.host.desktop != null) {
+  config.gtk = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && config.host.hm.env.roles.workstation) {
     enable = true;
 
     iconTheme = {

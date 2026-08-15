@@ -11,7 +11,7 @@ let
   smtpTransport = env.smtpTransports.${env.sendEmail.transport};
   scmPkgs = import ./pkgs { inherit pkgs; };
 in
-lib.mkIf (config.host.hm.env.preset != null) {
+lib.mkIf config.host.hm.env.roles.developer {
   programs.git.settings.sendemail = {
     confirm = "auto";
     smtpServer = smtpTransport.server;

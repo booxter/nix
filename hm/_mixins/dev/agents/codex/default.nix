@@ -123,7 +123,7 @@ in
       }
     ];
 
-    programs.codex = lib.mkIf (config.host.hm.env.preset != null && cfg.enable) {
+    programs.codex = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
       enable = true;
       context = codexContext;
 

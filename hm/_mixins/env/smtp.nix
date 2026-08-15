@@ -74,7 +74,7 @@ in
 
     assertions = [
       {
-        assertion = cfg.preset == null || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
+        assertion = !cfg.roles.developer || builtins.hasAttr cfg.sendEmail.transport cfg.smtpTransports;
         message = "host.hm.env.sendEmail.transport must name a declared SMTP transport";
       }
     ];

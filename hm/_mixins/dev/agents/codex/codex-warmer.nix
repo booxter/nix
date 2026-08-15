@@ -10,7 +10,7 @@ let
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
   codexCfg = config.host.hm.dev.codex;
   codexWarmerEnabled =
-    config.host.hm.env.preset != null
+    config.host.hm.env.roles.developer
     && codexCfg.enable
     && codexCfg.usage.account == "personal"
     && codexCfg.usage.warmer.enable;

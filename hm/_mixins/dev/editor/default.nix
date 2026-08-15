@@ -3,7 +3,7 @@
   lib,
   ...
 }:
-lib.mkIf (config.host.hm.env.preset != null) {
+lib.mkIf config.host.hm.env.roles.developer {
   programs.nixvim = {
     enable = true;
     defaultEditor = true;

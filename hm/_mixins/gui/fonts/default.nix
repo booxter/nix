@@ -1,11 +1,11 @@
 {
+  config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
 {
-  config = lib.mkIf (osConfig.host.desktop != null) {
+  config = lib.mkIf config.host.hm.env.roles.workstation {
     fonts.fontconfig.enable = true;
     home.packages = with pkgs.nerd-fonts; [
       meslo-lg

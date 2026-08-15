@@ -18,7 +18,7 @@ in
 {
   options.host.hm.dev.act.enable = lib.mkEnableOption "Act GitHub Actions runner";
 
-  config = lib.mkIf (config.host.hm.env.preset != null && cfg.enable) {
+  config = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
     host.hm.podman = {
       enable = lib.mkDefault true;
       api.enable = lib.mkDefault true;

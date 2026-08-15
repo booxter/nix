@@ -7,7 +7,7 @@
 }:
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin isLinux;
-  enabled = config.host.hm.env.preset != null;
+  enabled = config.host.hm.env.roles.developer;
   sshAskpass =
     if isDarwin then
       pkgs.callPackage ./pkgs/ssh-askpass-macos { }
