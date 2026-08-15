@@ -36,17 +36,16 @@ let
   desktopHeight = builtins.floor (maxLogicalExtent "y" "height" * displayScale);
   monitorPosition = position: display: builtins.floor (display.logical.${position} * displayScale);
 
+  reframeDisplays = lib.imap0 (
+    index: display:
+    display
+    // {
+      # Keep the VNC listeners stable while deriving one port per display.
+      port = cfg.basePort + index;
+    }
+  ) displays;
   reframeInstances = lib.listToAttrs (
-    lib.imap0 (
-      index: display:
-      lib.nameValuePair display.name (
-        display
-        // {
-          # Keep the VNC listeners stable while deriving one port per display.
-          port = cfg.basePort + index;
-        }
-      )
-    ) displays
+    map (display: lib.nameValuePair display.name display) reframeDisplays
   );
 
   # nixpkgs' edid-generator ships this generic 3840x2160@60 EDID, built from
@@ -166,11 +165,10 @@ in
 
     host.remote-control.inventory.vnc = {
       connection = "ssh-tunnel";
-      displays = lib.imap0 (index: display: {
-        inherit (display) name;
-        port = cfg.basePort + index;
+      displays = map (display: {
+        inherit (display) name port;
         inherit (display) primary;
-      }) displays;
+      }) reframeDisplays;
     };
 
     # The KVM removes the monitors' EDIDs when it selects another computer. Use

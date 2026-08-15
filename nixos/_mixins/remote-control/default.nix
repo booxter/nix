@@ -1,10 +1,11 @@
-{ lib, ... }:
 {
-  imports = [
-    ./server/vnc.nix
-    ./server/wayland.nix
-    ./server/x11.nix
-  ];
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
+  imports = [ ./server/vnc.nix ];
 
   options.host.remote-control.server = {
     x11 = lib.mkOption {
@@ -28,4 +29,13 @@
       default = null;
     };
   };
+
+  config = lib.mkMerge [
+    (lib.mkIf (config.host.remote-control.server.x11 != null) {
+      services.openssh.settings.X11Forwarding = true;
+    })
+    (lib.mkIf (config.host.remote-control.server.wayland != null) {
+      environment.systemPackages = [ pkgs.waypipe ];
+    })
+  ];
 }
