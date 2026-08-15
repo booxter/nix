@@ -2,6 +2,14 @@
 let
   cfg = config.host.transmission;
   rpcPort = config.services.transmission.settings.rpc-port;
+  proxyHeaders = ''
+    proxy_set_header Host ${config.networking.hostName};
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -17,14 +25,7 @@ in
           upstreamPath = "/transmission/rpc";
           recommendedProxySettings = false;
           allowedMethods = [ "GET" ];
-          locationExtraConfig = ''
-            proxy_set_header Host ${config.networking.hostName};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Server $hostname;
-          '';
+          locationExtraConfig = proxyHeaders;
         };
       };
       displayName = "Transmission";
@@ -34,14 +35,7 @@ in
       auth.policy = "media-admin";
       internal = {
         recommendedProxySettings = false;
-        locationExtraConfig = ''
-          proxy_set_header Host ${config.networking.hostName};
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-          proxy_set_header X-Forwarded-Host $host;
-          proxy_set_header X-Forwarded-Server $hostname;
-        '';
+        locationExtraConfig = proxyHeaders;
       };
     };
   };

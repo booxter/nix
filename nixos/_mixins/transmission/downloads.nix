@@ -14,8 +14,8 @@ in
       implementation = "transmission";
       endpoint = transmissionModel.rpcUrl;
       storageDefaults = {
-        owner = cfg.user;
-        group = cfg.group;
+        owner = transmissionModel.user;
+        group = transmissionModel.group;
         mode = "0755";
       };
     };

@@ -3,6 +3,7 @@
   lib,
   transmissionModel,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -16,19 +17,20 @@ let
     "nginx.service"
     "transmission.service"
   ];
-  commonExecStart = [
+  policy = model.trackerPolicy;
+  commonArgs = [
     "--rpc-url"
     model.rpcUrl
     "--trackers-file"
     config.sops.secrets.transmissionTrackerHosts.path
     "--non-preferred-low-priority-ratio"
-    (toString cfg.trackerPolicy.nonPreferred.lowPriorityRatio)
+    (toString policy.lowPriorityRatio)
     "--non-preferred-pause-ratio"
-    (toString cfg.trackerPolicy.nonPreferred.pauseRatio)
+    (toString policy.pauseRatio)
     "--interval-seconds"
-    (toString cfg.trackerPolicy.intervalSeconds)
+    (toString policy.intervalSeconds)
     "--request-timeout-seconds"
-    (toString cfg.trackerPolicy.requestTimeoutSeconds)
+    (toString policy.requestTimeoutSeconds)
   ];
   mkTrackerService =
     {
@@ -42,25 +44,25 @@ let
       after = serviceDeps;
       wants = serviceDeps;
       serviceConfig = {
-        ExecStart = lib.concatStringsSep " " ([ (lib.getExe package) ] ++ commonExecStart ++ extraArgs);
+        ExecStart = utils.escapeSystemdExecArgs ([ (lib.getExe package) ] ++ commonArgs ++ extraArgs);
         Restart = "always";
         RestartSec = "10s";
-        User = cfg.user;
-        Group = cfg.group;
+        User = model.user;
+        Group = model.group;
       };
     };
 in
 {
   config = lib.mkIf (cfg != null && cfg.trackerPolicy != null) {
     sops.secrets.transmissionTrackerHosts = {
-      key = cfg.trackerPolicy.secret.key;
-      owner = cfg.user;
-      group = cfg.group;
+      key = "transmission/private_tracker_hosts";
+      owner = model.user;
+      group = model.group;
       mode = "0400";
     };
 
     systemd.tmpfiles.rules = [
-      "z ${nodeExporterTextfileDir} 0775 root ${cfg.group} - -"
+      "z ${nodeExporterTextfileDir} 0775 root ${model.group} - -"
     ];
 
     systemd.services = {

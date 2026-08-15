@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   transmissionModel,
   ...
 }:
@@ -12,8 +13,8 @@ in
   config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     services.transmission = {
       enable = true;
-      package = cfg.package;
-      group = cfg.group;
+      package = pkgs.transmission_4;
+      group = model.group;
       home = cfg.stateDir;
       openPeerPorts = true;
       settings = {
@@ -43,7 +44,7 @@ in
         speed-limit-up = cfg.uploadLimit.initialKBytesPerSecond;
         speed-limit-up-enabled = true;
       };
-      user = cfg.user;
+      user = model.user;
     };
 
     systemd.services.transmission.serviceConfig = {

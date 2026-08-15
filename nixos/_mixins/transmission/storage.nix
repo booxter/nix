@@ -17,7 +17,7 @@ in
             (path: {
               name = "${relativePath}/${path}";
               value = {
-                owner = cfg.user;
+                owner = model.user;
                 mode = "0755";
               };
             })
@@ -32,7 +32,7 @@ in
         )
         // {
           ${relativePath} = {
-            owner = cfg.user;
+            owner = model.user;
             mode = "0755";
           };
         };

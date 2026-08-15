@@ -10,7 +10,7 @@ in
 {
   config = lib.mkIf (cfg != null && model.vpnNamespace != null) {
     host.vpn.clients.transmission = {
-      namespace = cfg.vpn.namespace;
+      namespace = model.vpnNamespaceName;
       bridgeTcpPorts = [ model.rpcPort ];
       forwardedPorts.peer = {
         port = cfg.vpn.peerPort;

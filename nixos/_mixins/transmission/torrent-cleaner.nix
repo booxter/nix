@@ -3,12 +3,32 @@
   lib,
   transmissionModel,
   pkgs,
+  utils,
   ...
 }:
 let
   model = transmissionModel;
   inherit (model) cfg;
   package = (import ./pkgs pkgs).torrentCleaner;
+  policy = model.torrentCleaner;
+  command = utils.escapeSystemdExecArgs (
+    [
+      (lib.getExe package)
+      "--rpc-url"
+      model.rpcUrl
+      "--trackers-file"
+      config.sops.secrets.transmissionTrackerHosts.path
+      "--minimum-age-days"
+      (toString policy.minimumAgeDays)
+      "--minimum-ratio"
+      (toString policy.minimumRatio)
+      "--maximum-age-days"
+      (toString policy.maximumAgeDays)
+      "--request-timeout-seconds"
+      (toString model.trackerPolicy.requestTimeoutSeconds)
+    ]
+    ++ lib.optional policy.delete "--delete"
+  );
 in
 {
   config = lib.mkIf (cfg != null && cfg.torrentCleaner != null) {
@@ -28,26 +48,9 @@ in
       ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = lib.concatStringsSep " " (
-          [
-            (lib.getExe package)
-            "--rpc-url"
-            model.rpcUrl
-            "--trackers-file"
-            config.sops.secrets.transmissionTrackerHosts.path
-            "--minimum-age-days"
-            (toString cfg.torrentCleaner.minimumAgeDays)
-            "--minimum-ratio"
-            (toString model.minimumCleanerRatio)
-            "--maximum-age-days"
-            (toString cfg.torrentCleaner.maximumAgeDays)
-            "--request-timeout-seconds"
-            (toString cfg.trackerPolicy.requestTimeoutSeconds)
-          ]
-          ++ lib.optional cfg.torrentCleaner.delete "--delete"
-        );
-        User = cfg.user;
-        Group = cfg.group;
+        ExecStart = command;
+        User = model.user;
+        Group = model.group;
       };
     };
 
@@ -55,8 +58,8 @@ in
       description = "Periodic cleanup scan for old public Transmission torrents";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = cfg.torrentCleaner.schedule;
-        OnUnitActiveSec = cfg.torrentCleaner.schedule;
+        OnBootSec = policy.schedule;
+        OnUnitActiveSec = policy.schedule;
         Persistent = true;
         Unit = "transmission-torrent-cleaner.service";
       };

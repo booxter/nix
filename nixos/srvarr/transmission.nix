@@ -6,7 +6,6 @@
       cookieJarFile = "/data/.secret/mam.cookies";
     };
     vpn = {
-      namespace = "wg";
       peerPort = 45486;
     };
     trackerPolicy = { };
