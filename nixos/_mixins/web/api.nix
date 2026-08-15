@@ -88,14 +88,16 @@ in
           in
           {
             "internal-https-${service.internal.endpointName}-probe" = {
-              locations."= ${api.healthPath}" = {
-                proxyPass = service.upstream;
-                recommendedProxySettings = true;
-                extraConfig = ''
-                  ${lib.optionalString (!healthOwnsLocation) "auth_request off;"}
-                  ${allowConfig api}
-                  deny all;
-                '';
+              locations = lib.optionalAttrs (!healthOwnsLocation) {
+                "= ${api.healthPath}" = {
+                  proxyPass = service.upstream;
+                  recommendedProxySettings = true;
+                  extraConfig = ''
+                    auth_request off;
+                    ${allowConfig api}
+                    deny all;
+                  '';
+                };
               };
             };
           }
