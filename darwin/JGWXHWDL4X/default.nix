@@ -32,7 +32,7 @@ in
     (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x.pub)
     (readPublicKey ../../common/_mixins/ssh/public-keys/jgwxhwdl4x-nix-builder.pub)
   ];
-  host.nix.cacheWarmer.enable = true;
+  host.nix.cacheWarmer = { };
 
   home-manager.users.${username}.host.hm = {
     env.preset = "nvidia";

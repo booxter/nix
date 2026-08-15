@@ -8,7 +8,7 @@ in
   host.nix.builder = { };
   host.nix.builderClient = { };
 
-  host.nix.cacheWarmer.enable = true;
+  host.nix.cacheWarmer = { };
 
   home-manager.users.${config.host.username}.host.hm.env.preset = "personal";
 

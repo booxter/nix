@@ -8,13 +8,10 @@
 let
   cfg = config.host.nix.cacheWarmer;
   pushToAttic = config.host.attic.realmServers != { };
+  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   warmTargets = map (target: target.attr) (
     lib.filter (
-      target:
-      let
-        configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-      in
-      configurations.${target.host}.config.host.realm == config.host.realm
+      target: configurations.${target.host}.config.host.realm == config.host.realm
     ) outputs.lib.ciTargets.buildTargets
   );
   atticCaches = lib.mapAttrsToList (
@@ -25,9 +22,13 @@ let
   };
 in
 {
-  options.host.nix.cacheWarmer.enable = lib.mkEnableOption "scheduled fleet cache warming";
+  options.host.nix.cacheWarmer = lib.mkOption {
+    type = lib.types.nullOr (lib.types.submodule { });
+    default = null;
+    description = "Scheduled fleet cache warming policy.";
+  };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg != null) {
     launchd.daemons.fleet-cache-warmer = {
       command = lib.escapeShellArgs [ (lib.getExe warmerPackage) ];
       serviceConfig = {
