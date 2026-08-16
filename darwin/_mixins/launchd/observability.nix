@@ -80,6 +80,10 @@ let
     );
   expectationsFile = pkgs.writeText "darwin-launchd-expectations.prom" (
     ''
+      # HELP nix_darwin_launchd_domain_expected Whether launchd monitoring is configured for a domain.
+      # TYPE nix_darwin_launchd_domain_expected gauge
+      nix_darwin_launchd_domain_expected{domain="system"} 1
+      nix_darwin_launchd_domain_expected{domain="user"} 1
       # HELP nix_darwin_launchd_job_expected Whether the evaluated configuration expects a launchd job to be loaded.
       # TYPE nix_darwin_launchd_job_expected gauge
     ''

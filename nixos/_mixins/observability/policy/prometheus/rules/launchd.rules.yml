@@ -5,14 +5,32 @@ groups:
       - alert: DarwinLaunchdExporterUnhealthy
         expr: |
           (
-            host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 0
-            or
-            time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} > 120
+            (
+              (
+                host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 0
+                or
+                time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} > 120
+              )
+              and on(instance, domain)
+              host_observability_darwin_launchd_domain_active{scrape_profile="node"} == 1
+            )
             or
             (
-              node_uname_info{scrape_profile="node",sysname="Darwin"} == 1
-              unless on(instance)
-              host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"}
+              (
+                nix_darwin_launchd_domain_expected{scrape_profile="node",domain="system"} == 1
+                or
+                (
+                  nix_darwin_launchd_domain_expected{scrape_profile="node",domain="user"} == 1
+                  and on(instance, domain)
+                  host_observability_darwin_launchd_domain_active{scrape_profile="node",domain="user"} == 1
+                  and on(instance)
+                  host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
+                  and on(instance)
+                  time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+                )
+              )
+              unless on(instance, domain)
+              host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"}
             )
           )
           and on(instance)
@@ -22,19 +40,33 @@ groups:
           severity: warning
           category: launchd
         annotations:
-          summary: "Launchd state export unhealthy on {{ $labels.instance }}"
-          description: "Native launchd state collection on {{ $labels.instance }} has failed, gone stale, or disappeared for 5 minutes."
+          summary: "Launchd {{ $labels.domain }} state export unhealthy on {{ $labels.instance }}"
+          description: "Native {{ $labels.domain }} launchd state collection on {{ $labels.instance }} has failed, gone stale, or disappeared for 5 minutes."
       - alert: ExpectedLaunchdJobMissing
         expr: |
           (
-            nix_darwin_launchd_job_expected{scrape_profile="node",domain="system"} == 1
+            nix_darwin_launchd_job_expected{scrape_profile="node"} == 1
             unless on(instance, domain, name)
-            host_observability_darwin_launchd_job_loaded{scrape_profile="node",domain="system"} == 1
+            host_observability_darwin_launchd_job_loaded{scrape_profile="node"} == 1
           )
-          and on(instance)
-          host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
-          and on(instance)
-          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+          and on(instance, domain)
+          host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 1
+          and on(instance, domain)
+          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} <= 120
+          and on(instance, domain)
+          (
+            nix_darwin_launchd_domain_expected{scrape_profile="node",domain="system"} == 1
+            or
+            (
+              nix_darwin_launchd_domain_expected{scrape_profile="node",domain="user"} == 1
+              and on(instance, domain)
+              host_observability_darwin_launchd_domain_active{scrape_profile="node",domain="user"} == 1
+              and on(instance)
+              host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
+              and on(instance)
+              time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+            )
+          )
           and on(instance)
           up{scrape_profile="node"} == 1
         for: 5m
@@ -48,17 +80,31 @@ groups:
         expr: |
           (
             (
-              nix_darwin_launchd_job_expected{scrape_profile="node",domain="system",mode="continuous"} == 1
+              nix_darwin_launchd_job_expected{scrape_profile="node",mode="continuous"} == 1
               and on(instance, domain, name)
-              host_observability_darwin_launchd_job_loaded{scrape_profile="node",domain="system"} == 1
+              host_observability_darwin_launchd_job_loaded{scrape_profile="node"} == 1
             )
             unless on(instance, domain, name)
-            host_observability_darwin_launchd_job_running{scrape_profile="node",domain="system"} == 1
+            host_observability_darwin_launchd_job_running{scrape_profile="node"} == 1
           )
-          and on(instance)
-          host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
-          and on(instance)
-          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+          and on(instance, domain)
+          host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 1
+          and on(instance, domain)
+          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} <= 120
+          and on(instance, domain)
+          (
+            nix_darwin_launchd_domain_expected{scrape_profile="node",domain="system"} == 1
+            or
+            (
+              nix_darwin_launchd_domain_expected{scrape_profile="node",domain="user"} == 1
+              and on(instance, domain)
+              host_observability_darwin_launchd_domain_active{scrape_profile="node",domain="user"} == 1
+              and on(instance)
+              host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
+              and on(instance)
+              time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+            )
+          )
           and on(instance)
           up{scrape_profile="node"} == 1
         for: 5m
@@ -72,17 +118,31 @@ groups:
         expr: |
           (
             (
-              nix_darwin_launchd_job_expected{scrape_profile="node",domain="system"} == 1
+              nix_darwin_launchd_job_expected{scrape_profile="node"} == 1
               and on(instance, domain, name)
-              host_observability_darwin_launchd_job_last_exit_code{scrape_profile="node",domain="system"} != 0
+              host_observability_darwin_launchd_job_last_exit_code{scrape_profile="node"} != 0
             )
             unless on(instance, domain, name)
-            host_observability_darwin_launchd_job_running{scrape_profile="node",domain="system"} == 1
+            host_observability_darwin_launchd_job_running{scrape_profile="node"} == 1
           )
-          and on(instance)
-          host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
-          and on(instance)
-          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+          and on(instance, domain)
+          host_observability_darwin_launchd_collect_success{scrape_profile="node"} == 1
+          and on(instance, domain)
+          time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node"} <= 120
+          and on(instance, domain)
+          (
+            nix_darwin_launchd_domain_expected{scrape_profile="node",domain="system"} == 1
+            or
+            (
+              nix_darwin_launchd_domain_expected{scrape_profile="node",domain="user"} == 1
+              and on(instance, domain)
+              host_observability_darwin_launchd_domain_active{scrape_profile="node",domain="user"} == 1
+              and on(instance)
+              host_observability_darwin_launchd_collect_success{scrape_profile="node",domain="system"} == 1
+              and on(instance)
+              time() - host_observability_darwin_launchd_sample_timestamp_seconds{scrape_profile="node",domain="system"} <= 120
+            )
+          )
           and on(instance)
           up{scrape_profile="node"} == 1
         for: 5m
