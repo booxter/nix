@@ -116,8 +116,8 @@ in
           HOME = "/var/root";
         };
         ProcessType = "Background";
-        StandardOutPath = "/var/log/grafana-alloy.log";
-        StandardErrorPath = "/var/log/grafana-alloy.log";
+        StandardOutPath = "/var/log/nix-darwin/grafana-alloy.log";
+        StandardErrorPath = "/var/log/nix-darwin/grafana-alloy.log";
       };
     };
   };

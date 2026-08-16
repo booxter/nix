@@ -129,8 +129,8 @@ in
         RunAtLoad = true;
         StartInterval = 30;
         ProcessType = "Background";
-        StandardOutPath = "/var/log/${exporterName}.log";
-        StandardErrorPath = "/var/log/${exporterName}.log";
+        StandardOutPath = "/var/log/nix-darwin/${exporterName}.log";
+        StandardErrorPath = "/var/log/nix-darwin/${exporterName}.log";
       };
     };
 

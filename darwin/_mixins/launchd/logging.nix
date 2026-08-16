@@ -73,7 +73,47 @@ let
   );
 in
 {
+  options.host.launchd.logging.locations = lib.mkOption {
+    type = lib.types.attrsOf (
+      lib.types.submodule {
+        options = {
+          directory = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            description = "Directory containing launchd log files.";
+          };
+          collect = lib.mkOption {
+            type = lib.types.bool;
+            description = "Whether Grafana Alloy should collect log files from this directory.";
+          };
+          scope = lib.mkOption {
+            type = lib.types.enum [
+              "system"
+              "user"
+            ];
+            description = "Launchd service scope allowed to use this directory.";
+          };
+        };
+      }
+    );
+    default = { };
+    internal = true;
+    description = "Registered directories for launchd service logs.";
+  };
+
   config = {
+    host.launchd.logging.locations = {
+      system = {
+        directory = logDirectory;
+        collect = true;
+        scope = "system";
+      };
+      system-private = {
+        directory = privateLogDirectory;
+        collect = false;
+        scope = "system";
+      };
+    };
+
     assertions = import ./logging/assertions.nix {
       inherit
         jobsByDomain
@@ -82,6 +122,7 @@ in
         managedHomeManagerUserAgents
         ;
       homeManagerUsername = config.host.username;
+      logLocations = config.host.launchd.logging.locations;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''

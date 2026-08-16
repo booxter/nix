@@ -23,6 +23,11 @@ in
       serviceUser = config.launchd.daemons.prometheus-node-exporter.serviceConfig.UserName;
       serviceGroup = config.launchd.daemons.prometheus-node-exporter.serviceConfig.GroupName;
     };
+    host.launchd.logging.locations.prometheus-node-exporter = {
+      directory = "/var/lib/prometheus-node-exporter";
+      collect = true;
+      scope = "system";
+    };
 
     services.prometheus.exporters.node = {
       enable = true;

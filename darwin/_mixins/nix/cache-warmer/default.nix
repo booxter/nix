@@ -53,8 +53,8 @@ in
           SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };
         ProcessType = "Background";
-        StandardOutPath = "/var/log/fleet-cache-warmer.log";
-        StandardErrorPath = "/var/log/fleet-cache-warmer.log";
+        StandardOutPath = "/var/log/nix-darwin/fleet-cache-warmer.log";
+        StandardErrorPath = "/var/log/nix-darwin/fleet-cache-warmer.log";
       };
     };
   };
