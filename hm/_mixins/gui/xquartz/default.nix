@@ -7,6 +7,8 @@
 }:
 let
   cfg = config.host.hm.xquartz;
+  xquartz = pkgs.xquartz;
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/xquartz-startx.log";
 in
 {
   options.host.hm.xquartz.enable = lib.mkEnableOption "XQuartz desktop integration";
@@ -30,6 +32,26 @@ in
           xterm
           xwininfo
         ];
+
+        launchd.agents.xquartz-startx = {
+          enable = true;
+          config = {
+            Label = "org.nixos.xquartz.startx";
+            ProgramArguments = [
+              "${xquartz}/libexec/launchd_startx"
+              "${xquartz}/bin/startx"
+              "--"
+              "${xquartz}/bin/Xquartz"
+            ];
+            # XQuartz expects launchd to allocate DISPLAY as this socket name; X11.bin
+            # derives the org.nixos.xquartz prefix from the bundle identifier.
+            Sockets."org.nixos.xquartz:0".SecureSocketWithKey = "DISPLAY";
+            ServiceIPC = true;
+            EnableTransactions = true;
+            StandardOutPath = logPath;
+            StandardErrorPath = logPath;
+          };
+        };
       }
       {
         programs.ssh.extraConfig = lib.mkAfter ''

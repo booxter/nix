@@ -15,24 +15,33 @@ let
     agents = config.launchd.agents;
     userAgents = config.launchd.user.agents;
   };
+  homeManagerUserAgents = lib.filterAttrs (
+    _: job: job.enable
+  ) config.home-manager.users.${config.host.username}.launchd.agents;
   pathsFor =
-    jobs:
+    serviceConfigFor: jobs:
     builtins.sort builtins.lessThan (
       lib.unique (
         lib.concatMap (
           job:
+          let
+            serviceConfig = serviceConfigFor job;
+          in
           builtins.filter (path: path != null) [
-            job.serviceConfig.StandardOutPath
-            job.serviceConfig.StandardErrorPath
+            serviceConfig.StandardOutPath
+            serviceConfig.StandardErrorPath
           ]
         ) (builtins.attrValues jobs)
       )
     );
   systemLogPaths = lib.unique (
-    pathsFor (launchdLib.enabledJobs jobsByDomain.daemons)
-    ++ pathsFor (launchdLib.enabledJobs jobsByDomain.agents)
+    pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.daemons)
+    ++ pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.agents)
   );
-  userLogPaths = pathsFor (launchdLib.enabledJobs jobsByDomain.userAgents);
+  userLogPaths = lib.unique (
+    pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.userAgents)
+    ++ pathsFor (job: job.config) homeManagerUserAgents
+  );
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
