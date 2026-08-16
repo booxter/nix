@@ -1,5 +1,6 @@
 import Foundation
 import ServiceManagement
+import SystemConfiguration
 
 public struct ExpectedJob: Codable, Equatable, Sendable {
   public let name: String
@@ -9,11 +10,20 @@ public struct ExpectedJob: Codable, Equatable, Sendable {
   }
 }
 
-public struct ExportConfiguration: Codable, Equatable, Sendable {
-  public let jobs: [ExpectedJob]
+public enum LaunchdDomain: String, Codable, Equatable, Sendable {
+  case system
+  case user
+}
 
-  public init(jobs: [ExpectedJob]) {
+public struct ExportConfiguration: Codable, Equatable, Sendable {
+  public let domain: LaunchdDomain
+  public let jobs: [ExpectedJob]
+  public let monitoredUser: String?
+
+  public init(domain: LaunchdDomain, jobs: [ExpectedJob], monitoredUser: String? = nil) {
+    self.domain = domain
     self.jobs = jobs
+    self.monitoredUser = monitoredUser
   }
 }
 
@@ -38,17 +48,29 @@ public func decodeWaitStatus(_ status: Int) -> Int {
 }
 
 public protocol LaunchdJobLoading: Sendable {
-  func systemJobs(named names: Set<String>) throws -> [LaunchdJob]
+  func jobs(in domain: LaunchdDomain, named names: Set<String>) throws -> [LaunchdJob]
+}
+
+public protocol ConsoleUserLoading: Sendable {
+  func consoleUser() -> String?
+}
+
+public struct SystemConfigurationConsoleUserLoader: ConsoleUserLoading {
+  public init() {}
+
+  public func consoleUser() -> String? {
+    SCDynamicStoreCopyConsoleUser(nil, nil, nil) as String?
+  }
 }
 
 public enum LaunchdJobLoaderError: Error, CustomStringConvertible {
-  case unavailable
+  case unavailable(LaunchdDomain)
   case missingLastExitStatus(String)
 
   public var description: String {
     switch self {
-    case .unavailable:
-      return "ServiceManagement did not return system launchd jobs"
+    case let .unavailable(domain):
+      return "ServiceManagement did not return \(domain.rawValue) launchd jobs"
     case let .missingLastExitStatus(name):
       return "ServiceManagement omitted LastExitStatus for \(name)"
     }
@@ -58,9 +80,13 @@ public enum LaunchdJobLoaderError: Error, CustomStringConvertible {
 public struct ServiceManagementJobLoader: LaunchdJobLoading {
   public init() {}
 
-  public func systemJobs(named names: Set<String>) throws -> [LaunchdJob] {
-    guard let result = SMCopyAllJobDictionaries(kSMDomainSystemLaunchd) else {
-      throw LaunchdJobLoaderError.unavailable
+  public func jobs(in domain: LaunchdDomain, named names: Set<String>) throws -> [LaunchdJob] {
+    let nativeDomain = switch domain {
+    case .system: kSMDomainSystemLaunchd
+    case .user: kSMDomainUserLaunchd
+    }
+    guard let result = SMCopyAllJobDictionaries(nativeDomain) else {
+      throw LaunchdJobLoaderError.unavailable(domain)
     }
     let dictionaries = result.takeRetainedValue() as NSArray
     return try dictionaries.compactMap { value in
@@ -100,17 +126,20 @@ public struct LaunchdExportService: Sendable {
   public let configurationURL: URL
   public let outputURL: URL
   public let loader: any LaunchdJobLoading
+  public let consoleUserLoader: any ConsoleUserLoading
   public let now: @Sendable () -> Date
 
   public init(
     configurationURL: URL,
     outputURL: URL,
     loader: any LaunchdJobLoading = ServiceManagementJobLoader(),
+    consoleUserLoader: any ConsoleUserLoading = SystemConfigurationConsoleUserLoader(),
     now: @escaping @Sendable () -> Date = { Date() }
   ) {
     self.configurationURL = configurationURL
     self.outputURL = outputURL
     self.loader = loader
+    self.consoleUserLoader = consoleUserLoader
     self.now = now
   }
 
@@ -126,17 +155,36 @@ public struct LaunchdExportService: Sendable {
     }
 
     let timestamp = now().timeIntervalSince1970
+    let domainActivity = configuration.monitoredUser.map { monitoredUser in
+      [LaunchdDomain.system: true, LaunchdDomain.user: consoleUserLoader.consoleUser() == monitoredUser]
+    } ?? [:]
     do {
-      let jobs = try loader.systemJobs(named: names)
+      let jobs = try loader.jobs(in: configuration.domain, named: names)
       let jobsByName = Dictionary(grouping: jobs, by: \.name)
       if let duplicate = jobsByName.first(where: { $0.value.count > 1 }) {
         throw ExportServiceError.duplicateNativeJob(duplicate.key)
       }
       try write(
-        renderMetrics(expected: configuration.jobs, actual: jobs, timestamp: timestamp, success: true)
+        renderMetrics(
+          domain: configuration.domain,
+          expected: configuration.jobs,
+          actual: jobs,
+          timestamp: timestamp,
+          success: true,
+          domainActivity: domainActivity
+        )
       )
     } catch {
-      try write(renderMetrics(expected: [], actual: [], timestamp: timestamp, success: false))
+      try write(
+        renderMetrics(
+          domain: configuration.domain,
+          expected: [],
+          actual: [],
+          timestamp: timestamp,
+          success: false,
+          domainActivity: domainActivity
+        )
+      )
       throw error
     }
   }
@@ -152,25 +200,36 @@ public struct LaunchdExportService: Sendable {
 }
 
 public func renderMetrics(
+  domain: LaunchdDomain,
   expected: [ExpectedJob],
   actual: [LaunchdJob],
   timestamp: TimeInterval,
-  success: Bool
+  success: Bool,
+  domainActivity: [LaunchdDomain: Bool] = [:]
 ) -> String {
   let prefix = "host_observability_darwin_launchd_"
   var lines = [
     "# HELP \(prefix)collect_success Whether native launchd state collection succeeded.",
     "# TYPE \(prefix)collect_success gauge",
-    "\(prefix)collect_success \(success ? 1 : 0)",
+    "\(prefix)collect_success{domain=\"\(domain.rawValue)\"} \(success ? 1 : 0)",
     "# HELP \(prefix)sample_timestamp_seconds Unix timestamp of the latest launchd collection attempt.",
     "# TYPE \(prefix)sample_timestamp_seconds gauge",
-    "\(prefix)sample_timestamp_seconds \(timestamp)",
+    "\(prefix)sample_timestamp_seconds{domain=\"\(domain.rawValue)\"} \(timestamp)",
+    "# HELP \(prefix)domain_active Whether the configured launchd domain should currently be monitored.",
+    "# TYPE \(prefix)domain_active gauge",
+  ]
+  for activeDomain in [LaunchdDomain.system, LaunchdDomain.user] {
+    if let active = domainActivity[activeDomain] {
+      lines.append("\(prefix)domain_active{domain=\"\(activeDomain.rawValue)\"} \(active ? 1 : 0)")
+    }
+  }
+  lines += [
     "# HELP \(prefix)job_loaded Whether an expected launchd job is loaded.",
     "# TYPE \(prefix)job_loaded gauge",
   ]
   let actualByName = Dictionary(actual.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
   for job in expected.sorted(by: { $0.name < $1.name }) {
-    let labels = #"{domain="system",name="\#(escapeLabel(job.name))"}"#
+    let labels = #"{domain="\#(domain.rawValue)",name="\#(escapeLabel(job.name))"}"#
     lines.append("\(prefix)job_loaded\(labels) \(actualByName[job.name] == nil ? 0 : 1)")
   }
   lines += [
@@ -178,7 +237,7 @@ public func renderMetrics(
     "# TYPE \(prefix)job_running gauge",
   ]
   for job in actual.sorted(by: { $0.name < $1.name }) {
-    let labels = #"{domain="system",name="\#(escapeLabel(job.name))"}"#
+    let labels = #"{domain="\#(domain.rawValue)",name="\#(escapeLabel(job.name))"}"#
     lines.append("\(prefix)job_running\(labels) \(job.running ? 1 : 0)")
   }
   lines += [
@@ -186,7 +245,7 @@ public func renderMetrics(
     "# TYPE \(prefix)job_last_exit_code gauge",
   ]
   for job in actual.sorted(by: { $0.name < $1.name }) {
-    let labels = #"{domain="system",name="\#(escapeLabel(job.name))"}"#
+    let labels = #"{domain="\#(domain.rawValue)",name="\#(escapeLabel(job.name))"}"#
     lines.append("\(prefix)job_last_exit_code\(labels) \(job.lastExitCode)")
   }
   return lines.joined(separator: "\n") + "\n"

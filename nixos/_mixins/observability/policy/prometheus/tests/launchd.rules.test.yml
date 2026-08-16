@@ -14,15 +14,215 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.node",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="user",name="org.nix-community.home.sketchybar",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="user",name="org.nix-community.home.sketchybar",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="user",scrape_profile="node"}'
+        values: "-1000x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="user",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DarwinLaunchdExporterUnhealthy
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="user",name="org.nix-community.home.sketchybar",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="user",name="org.nix-community.home.sketchybar",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="user",name="org.nix-community.home.sketchybar",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="user",name="org.nix-community.home.sketchybar",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="user",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DarwinLaunchdExporterUnhealthy
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobMissing
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="user",name="org.nix-community.home.missing",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="user",name="org.nix-community.home.missing",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="user",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
         alertname: ExpectedLaunchdJobMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedLaunchdJobMissing
+              category: launchd
+              domain: user
+              instance: mair
+              mode: continuous
+              name: org.nix-community.home.missing
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job missing: org.nix-community.home.missing on mair"
+              description: "Nix expects org.nix-community.home.missing in the user launchd domain on mair, but it has not been loaded for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="user",name="org.nix-community.home.stopped",mode="continuous",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="user",name="org.nix-community.home.stopped",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="user",name="org.nix-community.home.stopped",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="user",name="org.nix-community.home.stopped",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'nix_darwin_launchd_job_expected{instance="mair",domain="user",name="org.nix-community.home.scheduled",mode="scheduled",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="user",name="org.nix-community.home.scheduled",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_job_running{instance="mair",domain="user",name="org.nix-community.home.scheduled",scrape_profile="node"}'
+        values: "0x12"
+      - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="user",name="org.nix-community.home.scheduled",scrape_profile="node"}'
+        values: "78x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="user",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ExpectedLaunchdJobNotRunning
+        exp_alerts:
+          - exp_labels:
+              alertname: ExpectedLaunchdJobNotRunning
+              category: launchd
+              domain: user
+              instance: mair
+              mode: continuous
+              name: org.nix-community.home.stopped
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job stopped: org.nix-community.home.stopped on mair"
+              description: "The continuous launchd job org.nix-community.home.stopped on mair has been loaded but not running for 5 minutes."
+      - eval_time: 5m
+        alertname: LaunchdJobFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: LaunchdJobFailed
+              category: launchd
+              domain: user
+              instance: mair
+              mode: scheduled
+              name: org.nix-community.home.scheduled
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd job failed: org.nix-community.home.scheduled on mair"
+              description: "The last invocation of org.nix-community.home.scheduled on mair failed and the job has not been running for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="user",scrape_profile="node"}'
+        values: "-1000x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="user",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
+        values: "0+30x12"
+      - series: 'up{instance="mair",scrape_profile="node"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DarwinLaunchdExporterUnhealthy
+        exp_alerts:
+          - exp_labels:
+              alertname: DarwinLaunchdExporterUnhealthy
+              category: launchd
+              domain: user
+              instance: mair
+              scrape_profile: node
+              severity: warning
+            exp_annotations:
+              summary: "Launchd user state export unhealthy on mair"
+              description: "Native user launchd state collection on mair has failed, gone stale, or disappeared for 5 minutes."
       - eval_time: 5m
         alertname: ExpectedLaunchdJobNotRunning
       - eval_time: 5m
@@ -34,10 +234,14 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
@@ -69,10 +273,14 @@ tests:
         values: "0x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.stopped",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
@@ -102,10 +310,14 @@ tests:
         values: "0x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.scheduled",scrape_profile="node"}'
         values: "78x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
@@ -137,10 +349,14 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.running",scrape_profile="node"}'
         values: "78x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
@@ -153,10 +369,14 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "-1000x12"
+      - series: 'nix_darwin_launchd_domain_expected{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
+      - series: 'host_observability_darwin_launchd_domain_active{instance="mair",domain="system",scrape_profile="node"}'
+        values: "1x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
     alert_rule_test:
@@ -166,11 +386,12 @@ tests:
           - exp_labels:
               alertname: DarwinLaunchdExporterUnhealthy
               category: launchd
+              domain: system
               instance: mair
               scrape_profile: node
               severity: warning
             exp_annotations:
-              summary: "Launchd state export unhealthy on mair"
-              description: "Native launchd state collection on mair has failed, gone stale, or disappeared for 5 minutes."
+              summary: "Launchd system state export unhealthy on mair"
+              description: "Native system launchd state collection on mair has failed, gone stale, or disappeared for 5 minutes."
       - eval_time: 5m
         alertname: ExpectedLaunchdJobMissing

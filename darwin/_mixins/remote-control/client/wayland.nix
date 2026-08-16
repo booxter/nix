@@ -22,20 +22,25 @@ in
       ];
     };
 
-    launchd.user.agents.cocoa-way.serviceConfig = {
-      Label = "org.nixos.cocoa-way";
-      ProgramArguments = [ "/opt/homebrew/bin/cocoa-way" ];
-      EnvironmentVariables = {
-        COCOA_WAY_PRESENTATION = "rootless";
-        PATH = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+    home-manager.users.${username} = {
+      launchd.agents.cocoa-way = {
+        enable = true;
+        config = {
+          Label = "org.nixos.cocoa-way";
+          ProgramArguments = [ "/opt/homebrew/bin/cocoa-way" ];
+          EnvironmentVariables = {
+            COCOA_WAY_PRESENTATION = "rootless";
+            PATH = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+          };
+          LimitLoadToSessionType = "Aqua";
+          ProcessType = "Interactive";
+          StandardOutPath = "/Users/${username}/Library/Logs/cocoa-way.log";
+          StandardErrorPath = "/Users/${username}/Library/Logs/cocoa-way.log";
+          ThrottleInterval = 10;
+        };
       };
-      LimitLoadToSessionType = "Aqua";
-      ProcessType = "Interactive";
-      StandardOutPath = "/Users/${username}/Library/Logs/cocoa-way.log";
-      StandardErrorPath = "/Users/${username}/Library/Logs/cocoa-way.log";
-      ThrottleInterval = 10;
-    };
 
-    home-manager.users.${username}.programs.remote-control.client.wayland = { };
+      programs.remote-control.client.wayland = { };
+    };
   };
 }

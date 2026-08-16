@@ -29,5 +29,12 @@ in
       enableZshIntegration = true;
       pinentry.package = pkgs.pinentry-tty;
     };
+
+    # Home Manager's Darwin socket activation is broken; see
+    # https://github.com/nix-community/home-manager/pull/5901. GnuPG starts
+    # gpg-agent on demand when pass or another client first needs it. Linux
+    # likely does not need its systemd unit either, but keep Home Manager's
+    # default there until that path is validated separately.
+    launchd.agents.gpg-agent.enable = lib.mkForce false;
   };
 }

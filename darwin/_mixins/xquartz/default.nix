@@ -15,25 +15,6 @@ in
     # XQuartz itself is installed by Home Manager. The launchd jobs still need
     # package-internal helpers under libexec and etc/X11, which Home Manager's
     # profile symlink farm does not expose, so point launchd at the store path.
-    launchd.user.agents.xquartz-startx = {
-      command = lib.escapeShellArgs [
-        "${xquartz}/libexec/launchd_startx"
-        "${xquartz}/bin/startx"
-        "--"
-        "${xquartz}/bin/Xquartz"
-      ];
-      serviceConfig = {
-        Label = "org.nixos.xquartz.startx";
-        # XQuartz expects launchd to allocate DISPLAY as this socket name; X11.bin
-        # derives the org.nixos.xquartz prefix from the bundle identifier.
-        Sockets."org.nixos.xquartz:0".SecureSocketWithKey = "DISPLAY";
-        ServiceIPC = true;
-        EnableTransactions = true;
-        StandardOutPath = "${userLogDirectory}/xquartz-startx.log";
-        StandardErrorPath = "${userLogDirectory}/xquartz-startx.log";
-      };
-    };
-
     launchd.daemons.xquartz-privileged-startx = {
       command = lib.escapeShellArgs [
         "${xquartz}/libexec/privileged_startx"

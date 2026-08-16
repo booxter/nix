@@ -1,5 +1,6 @@
 { config, lib, ... }:
 let
+  launchdLib = import ./lib.nix { inherit lib; };
   storePrefix = "${builtins.storeDir}/";
   usesNixStore = job: lib.hasInfix storePrefix (builtins.toJSON job.serviceConfig);
   usesWait4Path =
@@ -22,10 +23,18 @@ let
       assertion = !usesNixStore job || usesWait4Path job;
       message = "${optionPath}.${name} references the Nix store without waiting for it; use the command option instead of serviceConfig.Program or serviceConfig.ProgramArguments";
     }) jobs;
+  managedUserAgentNames = builtins.attrNames (launchdLib.managedJobs config.launchd.user.agents);
 in
 {
-  assertions =
-    assertionsFor "launchd.daemons" config.launchd.daemons
-    ++ assertionsFor "launchd.agents" config.launchd.agents
-    ++ assertionsFor "launchd.user.agents" config.launchd.user.agents;
+  assertions = [
+    {
+      # nix-darwin loads changed user agents through the primary user's launchd
+      # domain, which aborts remote activation when no GUI session exists.
+      # TODO: Report and fix this upstream, then remove this assertion.
+      assertion = managedUserAgentNames == [ ];
+      message = "launchd.user.agents is unsafe for headless remote activation; use home-manager.users.<name>.launchd.agents instead: ${lib.concatStringsSep ", " managedUserAgentNames}";
+    }
+  ]
+  ++ assertionsFor "launchd.daemons" config.launchd.daemons
+  ++ assertionsFor "launchd.agents" config.launchd.agents;
 }
