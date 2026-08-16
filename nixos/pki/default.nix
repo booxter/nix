@@ -18,7 +18,7 @@ in
   host.proxmox.guest = {
     cluster = "lab";
     cores = 2;
-    memoryGiB = 4;
+    memoryGiB = 8;
     diskGiB = 50;
   };
 
