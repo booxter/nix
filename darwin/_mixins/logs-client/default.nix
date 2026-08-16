@@ -9,11 +9,10 @@ let
   enable = config.host.observability.enable;
   stateDir = "/var/lib/grafana-alloy";
   hostLabel = config.networking.hostName;
-  fileGlobs = [
-    "/var/log/*.log"
-    "/var/log/nix-darwin/*.log"
-    "/private/var/lib/prometheus-node-exporter/*.log"
-  ];
+  registeredFileGlobs = lib.mapAttrsToList (_: location: "${location.directory}/*.log") (
+    lib.filterAttrs (_: location: location.collect) config.host.launchd.logging.locations
+  );
+  fileGlobs = [ "/var/log/*.log" ] ++ registeredFileGlobs;
   renderLabelMap =
     labels:
     "{ ${
