@@ -2,7 +2,7 @@ diff --git a/backend/routes/discovery/handlers/artwork.js b/backend/routes/disco
 index 9a5db0d..895a748 100644
 --- a/backend/routes/discovery/handlers/artwork.js
 +++ b/backend/routes/discovery/handlers/artwork.js
-@@ -1,22 +1,25 @@
+@@ -1,22 +1,26 @@
 +import path from "node:path";
  import { verifyTokenAuth } from "../../../middleware/auth.js";
  import { ensureDiscoverArtworkForPreset } from "../../../services/discovery/playlistArtworkBuilder.js";
@@ -23,36 +23,10 @@ index 9a5db0d..895a748 100644
 -      res.sendFile(artwork.safePath);
 +      res.sendFile(path.basename(artwork.safePath), {
 +        root: path.dirname(artwork.safePath),
++        dotfiles: "allow",
 +      });
      } catch (error) {
        res.status(500).json({ error: "Failed to load artwork", message: error.message });
      }
    });
  }
-diff --git a/backend/services/imageProxyService.js b/backend/services/imageProxyService.js
-index 28b0fb8..08ea303 100644
---- a/backend/services/imageProxyService.js
-+++ b/backend/services/imageProxyService.js
-@@ -741,21 +741,21 @@ export const handleImageProxyRequest = async (req, res) => {
-   }
-   try {
-     cached = await normalizeCachedEntryIfNeeded(cached);
-   } catch {
-     return res.status(404).json({ error: "Image not found" });
-   }
-
-   res.set("Content-Type", cached.meta.contentType || "image/jpeg");
-   res.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
-   touchCacheEntry(cached.imagePath);
--  return res.sendFile(cached.imagePath);
-+  return res.sendFile(path.basename(cached.imagePath), { root: IMAGE_PROXY_DIR });
- };
-
- export const handleLegacyImageProxyRequest = async (req, res) => {
-   const rawSourceUrl = typeof req.query.src === "string" ? req.query.src.trim() : "";
-   if (!rawSourceUrl) {
-     return res.status(404).json({ error: "Image not found" });
-   }
-
-   try {
-     const cached = await warmImageProxy(rawSourceUrl);

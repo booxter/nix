@@ -2,7 +2,6 @@
   lib,
   stdenv,
   fetchFromGitHub,
-  fetchpatch,
   fetchNpmDeps,
   buildPackages,
   nodejs_22,
@@ -15,13 +14,13 @@ let
   nodejs = nodejs_22;
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
-  version = "2.0.3";
-  npmDepsHash = "sha256-QQmXYQ+mFS4gfM2KNCssvN3QdzTG2jAtW710Qgcoc10=";
+  version = "2.4.0";
+  npmDepsHash = "sha256-Gk14mWB40JFhCpiZfFQ47CVu8gtLqJNonqr8kR3+XKQ=";
   src = fetchFromGitHub {
     owner = "lklynet";
     repo = "aurral";
     tag = "v${version}";
-    sha256 = "sha256-pfDRixnBEk6+ZsAhRipccnNjmn4aiFjrffdnxQmInXg=";
+    sha256 = "sha256-zHzj/OSVvgd8v5B7IW2eQm+4+nU7/eIrIkILvG2gZ2w=";
   };
   npmDeps = fetchNpmDeps {
     name = "${pname}-${version}-npm-deps";
@@ -53,21 +52,9 @@ stdenv.mkDerivation {
   };
 
   patches = [
-    # Fix expired reverse-proxy sessions leaving the SPA stuck until a hard
-    # refresh. Keep this unconditional so a future release containing the fix
-    # fails patch application and prompts removal of the backport.
-    (fetchpatch {
-      url = "https://github.com/lklynet/aurral/commit/23f0cc4fbfe0dba43ee065e370dd8c6362aee262.patch";
-      hash = "sha256-zHrYYbR/Eo/pDJFZKhlg8FspH1rkpT15nnUPsxiRS3A=";
-    })
-    # Tabs still running the release's precached frontend use this route to
-    # escape an expired proxy session. Keep the bounce during the backport so
-    # those clients can migrate to the fixed service worker without a manual
-    # hard refresh.
-    ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
-    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile
-    # rejects by default.
+    # Discovery artwork may live below a hidden AURRAL_DATA_DIR, which sendFile
+    # rejects by default. The image proxy handles this upstream.
     ./aurral-allow-hidden-image-cache-path.patch
     # TODO: Submit managed slskd settings as an upstream feature request.
     ./managed-slskd-settings.patch
@@ -197,8 +184,6 @@ stdenv.mkDerivation {
         AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
         AURRAL_SLSKD_API_KEY: "test-api-key",
         AURRAL_SLSKD_PRIORITY: "20",
-        AURRAL_SLSKD_PREFERRED_FORMAT: "flac",
-        AURRAL_SLSKD_STRICT_FORMAT: "true",
         AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
       };
       const managed = applyManagedSlskdSettings(
@@ -208,7 +193,7 @@ stdenv.mkDerivation {
       if (
         managed.slskd.apiKey !== "test-api-key" ||
         managed.slskd.priority !== 20 ||
-        managed.slskd.preferredFormatStrict !== true ||
+        managed.slskd.cleanupAfterRuns !== true ||
         managed.ytdlp.enabled !== true
       ) {
         throw new Error("managed slskd settings were not applied");

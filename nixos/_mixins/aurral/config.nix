@@ -32,7 +32,10 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    fonts.packages = [ pkgs.dejavu_fonts ];
+    fonts.packages = [
+      pkgs.dejavu_fonts
+      pkgs.noto-fonts-color-emoji
+    ];
 
     users.groups.${model.user} = { };
     users.users.${model.user} = {
@@ -157,8 +160,6 @@ in
         AURRAL_SLSKD_MANAGED = "true";
         AURRAL_SLSKD_URL = selected.apiUrl;
         AURRAL_SLSKD_PRIORITY = "10";
-        AURRAL_SLSKD_PREFERRED_FORMAT = "flac";
-        AURRAL_SLSKD_STRICT_FORMAT = "false";
         AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
         AUTH_PROXY_ENABLED = "true";
         AUTH_PROXY_HEADER = "x-forwarded-user";
