@@ -2,40 +2,62 @@
   jobsByDomain,
   launchdLib,
   lib,
+  managedHomeManagerUserAgents,
+  homeManagerUsername,
 }:
 let
   assertionsFor =
-    domain: jobs:
+    {
+      jobs,
+      optionPath,
+      serviceConfigName,
+      serviceConfigFor,
+    }:
     let
-      optionPath = launchdLib.optionPaths.${domain};
-      managedJobs = launchdLib.managedJobs jobs;
       loggingAssertions = lib.mapAttrsToList (
         name: job:
         let
-          stdout = job.serviceConfig.StandardOutPath;
-          stderr = job.serviceConfig.StandardErrorPath;
+          serviceConfig = serviceConfigFor job;
+          stdout = serviceConfig.StandardOutPath;
+          stderr = serviceConfig.StandardErrorPath;
         in
         {
           assertion = stdout != null && stderr != null;
           message = "${optionPath}.${name} must define both StandardOutPath and StandardErrorPath";
         }
-      ) managedJobs;
+      ) jobs;
       pathAssertions = lib.concatMap (
         name:
         let
-          job = managedJobs.${name};
+          serviceConfig = serviceConfigFor jobs.${name};
         in
         map
           (field: {
-            assertion = job.serviceConfig.${field} == null || lib.hasPrefix "/" job.serviceConfig.${field};
-            message = "${optionPath}.${name}.serviceConfig.${field} must be an absolute path";
+            assertion = serviceConfig.${field} == null || lib.hasPrefix "/" serviceConfig.${field};
+            message = "${optionPath}.${name}.${serviceConfigName}.${field} must be an absolute path";
           })
           [
             "StandardOutPath"
             "StandardErrorPath"
           ]
-      ) (builtins.attrNames managedJobs);
+      ) (builtins.attrNames jobs);
     in
     loggingAssertions ++ pathAssertions;
 in
-lib.concatLists (lib.mapAttrsToList assertionsFor jobsByDomain)
+lib.concatLists (
+  lib.mapAttrsToList (
+    domain: jobs:
+    assertionsFor {
+      jobs = launchdLib.managedJobs jobs;
+      optionPath = launchdLib.optionPaths.${domain};
+      serviceConfigName = "serviceConfig";
+      serviceConfigFor = job: job.serviceConfig;
+    }
+  ) jobsByDomain
+)
+++ assertionsFor {
+  jobs = managedHomeManagerUserAgents;
+  optionPath = "home-manager.users.${homeManagerUsername}.launchd.agents";
+  serviceConfigName = "config";
+  serviceConfigFor = job: job.config;
+}

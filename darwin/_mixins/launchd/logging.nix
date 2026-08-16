@@ -17,6 +17,9 @@ let
   homeManagerUserAgents = lib.filterAttrs (
     _: job: job.enable
   ) config.home-manager.users.${config.host.username}.launchd.agents;
+  managedHomeManagerUserAgents = lib.filterAttrs (
+    _: job: launchdLib.hasProgramConfig job.config
+  ) homeManagerUserAgents;
   pathsFor =
     serviceConfigFor: jobs:
     builtins.sort builtins.lessThan (
@@ -72,7 +75,13 @@ in
 {
   config = {
     assertions = import ./logging/assertions.nix {
-      inherit jobsByDomain launchdLib lib;
+      inherit
+        jobsByDomain
+        launchdLib
+        lib
+        managedHomeManagerUserAgents
+        ;
+      homeManagerUsername = config.host.username;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''
