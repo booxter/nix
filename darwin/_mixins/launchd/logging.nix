@@ -8,6 +8,8 @@ let
   launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
+  userLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin";
+  privateUserLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
   rotationJobName = "launchd-logrotate";
   jobsByDomain = {
@@ -17,6 +19,9 @@ let
   homeManagerUserAgents = lib.filterAttrs (
     _: job: job.enable
   ) config.home-manager.users.${config.host.username}.launchd.agents;
+  managedHomeManagerUserAgents = lib.filterAttrs (
+    _: job: launchdLib.hasProgramConfig job.config
+  ) homeManagerUserAgents;
   pathsFor =
     serviceConfigFor: jobs:
     builtins.sort builtins.lessThan (
@@ -70,14 +75,73 @@ let
   );
 in
 {
+  options.host.launchd.logging.locations = lib.mkOption {
+    type = lib.types.attrsOf (
+      lib.types.submodule {
+        options = {
+          directory = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            description = "Directory containing launchd log files.";
+          };
+          collect = lib.mkOption {
+            type = lib.types.bool;
+            description = "Whether Grafana Alloy should collect log files from this directory.";
+          };
+          scope = lib.mkOption {
+            type = lib.types.enum [
+              "system"
+              "user"
+            ];
+            description = "Launchd service scope allowed to use this directory.";
+          };
+        };
+      }
+    );
+    default = { };
+    internal = true;
+    description = "Registered directories for launchd service logs.";
+  };
+
   config = {
+    host.launchd.logging.locations = {
+      system = {
+        directory = logDirectory;
+        collect = true;
+        scope = "system";
+      };
+      system-private = {
+        directory = privateLogDirectory;
+        collect = false;
+        scope = "system";
+      };
+      user = {
+        directory = userLogDirectory;
+        collect = true;
+        scope = "user";
+      };
+      user-private = {
+        directory = privateUserLogDirectory;
+        collect = false;
+        scope = "user";
+      };
+    };
+
     assertions = import ./logging/assertions.nix {
-      inherit jobsByDomain launchdLib lib;
+      inherit
+        jobsByDomain
+        launchdLib
+        lib
+        managedHomeManagerUserAgents
+        ;
+      homeManagerUsername = config.host.username;
+      logLocations = config.host.launchd.logging.locations;
     };
 
     system.activationScripts.launchd.text = lib.mkBefore ''
       install -d -m 0755 -o root -g wheel ${logDirectory}
       install -d -m 0700 -o root -g wheel ${privateLogDirectory}
+      install -d -m 0755 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg userLogDirectory}
+      install -d -m 0700 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg privateUserLogDirectory}
       install -d -m 0700 -o root -g wheel ${stateDirectory}
 
       if [[ ! -e ${privateLogDirectory}/sops-install-secrets.log ]]; then

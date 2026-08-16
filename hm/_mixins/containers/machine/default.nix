@@ -9,6 +9,7 @@ let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   podmanCfg = config.host.hm.podman;
   cfg = config.programs.podman-machine;
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/podman-machine.log";
   machineConfig = (pkgs.formats.toml { }).generate "podman-machine.conf" {
     machine = {
       cpus = cfg.cpus;
@@ -110,8 +111,8 @@ in
           RunAtLoad = true;
           AbandonProcessGroup = true;
           ProcessType = "Background";
-          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/podman-machine.log";
-          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/podman-machine.log";
+          StandardOutPath = logPath;
+          StandardErrorPath = logPath;
         };
       };
     })

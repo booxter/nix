@@ -81,8 +81,8 @@ in
       RunAtLoad = true;
       KeepAlive = true;
       ProcessType = "Background";
-      StandardOutPath = "/var/log/prevent-ac-sleep.log";
-      StandardErrorPath = "/var/log/prevent-ac-sleep.log";
+      StandardOutPath = "/var/log/nix-darwin/prevent-ac-sleep.log";
+      StandardErrorPath = "/var/log/nix-darwin/prevent-ac-sleep.log";
     };
   };
 

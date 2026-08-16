@@ -32,8 +32,8 @@ in
       serviceConfig = {
         RunAtLoad = true;
         StartInterval = 30;
-        StandardOutPath = "/var/log/observability-thermal-export.log";
-        StandardErrorPath = "/var/log/observability-thermal-export.log";
+        StandardOutPath = "/var/log/nix-darwin/observability-thermal-export.log";
+        StandardErrorPath = "/var/log/nix-darwin/observability-thermal-export.log";
       };
     };
   };

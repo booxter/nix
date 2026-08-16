@@ -119,8 +119,8 @@ in
           NUT_STATEPATH = "/var/lib/nut";
           NUT_QUIET_INIT_UPSNOTIFY = "true";
         };
-        StandardOutPath = "/var/log/upsmon.log";
-        StandardErrorPath = "/var/log/upsmon.log";
+        StandardOutPath = "/var/log/nix-darwin/upsmon.log";
+        StandardErrorPath = "/var/log/nix-darwin/upsmon.log";
       };
     };
   };

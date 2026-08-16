@@ -34,8 +34,8 @@ in
           };
           LimitLoadToSessionType = "Aqua";
           ProcessType = "Interactive";
-          StandardOutPath = "/Users/${username}/Library/Logs/cocoa-way.log";
-          StandardErrorPath = "/Users/${username}/Library/Logs/cocoa-way.log";
+          StandardOutPath = "/Users/${username}/Library/Logs/nix-darwin/cocoa-way.log";
+          StandardErrorPath = "/Users/${username}/Library/Logs/nix-darwin/cocoa-way.log";
           ThrottleInterval = 10;
         };
       };

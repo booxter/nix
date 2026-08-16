@@ -56,6 +56,12 @@ in
       };
       users.knownUsers = [ serviceUser ];
 
+      host.launchd.logging.locations.observability-lan-wan = {
+        directory = stateDir;
+        collect = true;
+        scope = "system";
+      };
+
       system.activationScripts.launchd.text = lib.mkAfter ''
         access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
         if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then

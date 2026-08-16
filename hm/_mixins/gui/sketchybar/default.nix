@@ -8,6 +8,7 @@
 let
   cfg = config.host.hm.sketchybar;
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/sketchybar.log";
   pkiRootCaPath = osConfig.host.pki.authority.rootCaCertificate;
   theme = import ./theme.nix {
     inherit config pkgs;
@@ -139,6 +140,11 @@ in
           curl
           jq
         ]);
+    };
+
+    launchd.agents.sketchybar.config = {
+      StandardOutPath = lib.mkForce logPath;
+      StandardErrorPath = lib.mkForce logPath;
     };
   };
 }

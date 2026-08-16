@@ -29,8 +29,8 @@ in
             SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           };
           ProcessType = "Background";
-          StandardOutPath = "/var/log/attic-watch-store.log";
-          StandardErrorPath = "/var/log/attic-watch-store.log";
+          StandardOutPath = "/var/log/nix-darwin/attic-watch-store.log";
+          StandardErrorPath = "/var/log/nix-darwin/attic-watch-store.log";
         };
       }
     ) servers;
