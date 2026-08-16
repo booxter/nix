@@ -10,22 +10,10 @@ let
   textfileDir = "/var/lib/observability-launchd/textfile";
   exporter = pkgs.callPackage ./pkgs/launchd-exporter { };
   jobs = launchdLib.managedJobs (removeAttrs config.launchd.daemons [ exporterName ]);
-  inferMode =
-    job:
-    if job.serviceConfig.KeepAlive == true then
-      "continuous"
-    else if
-      job.serviceConfig.StartInterval != null || job.serviceConfig.StartCalendarInterval != null
-    then
-      "scheduled"
-    else if job.serviceConfig.RunAtLoad == true then
-      "oneshot"
-    else
-      "on-demand";
   expectedJobs = lib.mapAttrsToList (name: job: {
     inherit name;
     label = job.serviceConfig.Label;
-    mode = inferMode job;
+    mode = launchdLib.inferMode job.serviceConfig;
   }) jobs;
   sortedJobs = builtins.sort (left: right: left.name < right.name) expectedJobs;
   configurationFile = pkgs.writeText "darwin-launchd-export.json" (
