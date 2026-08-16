@@ -21,7 +21,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-wqe6mr0e2tLijyBULreIZ3CiP5+GiONYuzMWVbRB0J4=";
+  cargoHash = "sha256-uThTTxpXHn6q+BDw1IR0wOeUIVU2+r18T1hp49VqfOI=";
 
   RESET_OIDC_SSH = lib.getExe openssh;
 
@@ -31,11 +31,16 @@ rustPlatform.buildRustPackage {
   ];
   nativeBuildInputs = [ makeWrapper ];
 
+  cargoBuildFlags = [ "--ignore-rust-version" ];
+
   preCheck = ''
     cargo fmt --check
-    cargo clippy --all-targets -- -D warnings
+    cargo clippy --all-targets --ignore-rust-version -- -D warnings
   '';
-  cargoTestFlags = [ "--all-targets" ];
+  cargoTestFlags = [
+    "--all-targets"
+    "--ignore-rust-version"
+  ];
 
   postFixup = ''
     wrapProgram "$out/bin/reset-oidc" \
