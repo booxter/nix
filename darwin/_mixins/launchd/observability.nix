@@ -26,7 +26,7 @@ let
     }) (launchdLib.managedJobs jobs);
   homeManagerJobs = lib.filterAttrs (
     _: job: job.enable && job.config.Disabled != true && launchdLib.hasProgramConfig job.config
-  ) homeManagerConfig.launchd.agents;
+  ) (removeAttrs homeManagerConfig.launchd.agents [ userExporterName ]);
   expectedFromHomeManager = lib.mapAttrsToList (_: job: {
     domain = "user";
     label = job.config.Label;
@@ -92,15 +92,17 @@ let
     '') allJobs
   );
 
-  exporterCommand =
+  exporterArguments =
     configurationFile: output:
-    lib.escapeShellArgs [
+    map toString [
       (lib.getExe exporter)
       "--config"
       configurationFile
       "--output"
       output
     ];
+  exporterCommand =
+    configurationFile: output: lib.escapeShellArgs (exporterArguments configurationFile output);
 in
 {
   config = lib.mkIf config.host.observability.enable {
@@ -135,9 +137,11 @@ in
       };
     };
 
-    launchd.user.agents.${userExporterName} = {
-      command = exporterCommand userConfigurationFile "${userTextfileDir}/launchd-state.prom";
-      serviceConfig = {
+    home-manager.users.${username}.launchd.agents.${userExporterName} = {
+      enable = true;
+      config = {
+        Label = "org.nixos.${userExporterName}";
+        ProgramArguments = exporterArguments userConfigurationFile "${userTextfileDir}/launchd-state.prom";
         RunAtLoad = true;
         StartInterval = 30;
         ProcessType = "Background";
