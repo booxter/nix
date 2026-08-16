@@ -25,6 +25,12 @@ struct FakeLoader: LaunchdJobLoading {
   }
 }
 
+struct FakeConsoleUserLoader: ConsoleUserLoading {
+  let user: String?
+
+  func consoleUser() -> String? { user }
+}
+
 func testWaitStatusDecoding() throws {
   try expect(decodeWaitStatus(0) == 0, "zero exit")
   try expect(decodeWaitStatus(1 << 8) == 1, "nonzero exit")
@@ -91,10 +97,49 @@ func testServicePublishesFailureHealth() throws {
   )
 }
 
+func testServicePublishesDomainActivity() throws {
+  let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+  defer { try? FileManager.default.removeItem(at: root) }
+  try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+  let configuration = root.appendingPathComponent("config.json")
+  try JSONEncoder().encode(
+    ExportConfiguration(domain: .system, jobs: [], monitoredUser: "primary")
+  ).write(to: configuration)
+  let output = root.appendingPathComponent("launchd-state.prom")
+  try LaunchdExportService(
+    configurationURL: configuration,
+    outputURL: output,
+    loader: FakeLoader(jobs: [], error: nil),
+    consoleUserLoader: FakeConsoleUserLoader(user: "primary")
+  ).run()
+  let metrics = try String(contentsOf: output, encoding: .utf8)
+  try expect(
+    metrics.contains(#"launchd_domain_active{domain="system"} 1"#),
+    "system domain activity"
+  )
+  try expect(
+    metrics.contains(#"launchd_domain_active{domain="user"} 1"#),
+    "user domain activity"
+  )
+
+  try LaunchdExportService(
+    configurationURL: configuration,
+    outputURL: output,
+    loader: FakeLoader(jobs: [], error: nil),
+    consoleUserLoader: FakeConsoleUserLoader(user: nil)
+  ).run()
+  let loggedOutMetrics = try String(contentsOf: output, encoding: .utf8)
+  try expect(
+    loggedOutMetrics.contains(#"launchd_domain_active{domain="user"} 0"#),
+    "logged-out user domain activity"
+  )
+}
+
 do {
   try testWaitStatusDecoding()
   try testMetricsDescribeExpectedJobs()
   try testServicePublishesFailureHealth()
+  try testServicePublishesDomainActivity()
 } catch {
   FileHandle.standardError.write(Data("LaunchdExporterChecks: \(error)\n".utf8))
   exit(1)

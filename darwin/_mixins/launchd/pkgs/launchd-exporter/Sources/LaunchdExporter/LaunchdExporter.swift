@@ -1,5 +1,6 @@
 import Foundation
 import ServiceManagement
+import SystemConfiguration
 
 public struct ExpectedJob: Codable, Equatable, Sendable {
   public let name: String
@@ -17,10 +18,12 @@ public enum LaunchdDomain: String, Codable, Equatable, Sendable {
 public struct ExportConfiguration: Codable, Equatable, Sendable {
   public let domain: LaunchdDomain
   public let jobs: [ExpectedJob]
+  public let monitoredUser: String?
 
-  public init(domain: LaunchdDomain, jobs: [ExpectedJob]) {
+  public init(domain: LaunchdDomain, jobs: [ExpectedJob], monitoredUser: String? = nil) {
     self.domain = domain
     self.jobs = jobs
+    self.monitoredUser = monitoredUser
   }
 }
 
@@ -46,6 +49,18 @@ public func decodeWaitStatus(_ status: Int) -> Int {
 
 public protocol LaunchdJobLoading: Sendable {
   func jobs(in domain: LaunchdDomain, named names: Set<String>) throws -> [LaunchdJob]
+}
+
+public protocol ConsoleUserLoading: Sendable {
+  func consoleUser() -> String?
+}
+
+public struct SystemConfigurationConsoleUserLoader: ConsoleUserLoading {
+  public init() {}
+
+  public func consoleUser() -> String? {
+    SCDynamicStoreCopyConsoleUser(nil, nil, nil) as String?
+  }
 }
 
 public enum LaunchdJobLoaderError: Error, CustomStringConvertible {
@@ -111,17 +126,20 @@ public struct LaunchdExportService: Sendable {
   public let configurationURL: URL
   public let outputURL: URL
   public let loader: any LaunchdJobLoading
+  public let consoleUserLoader: any ConsoleUserLoading
   public let now: @Sendable () -> Date
 
   public init(
     configurationURL: URL,
     outputURL: URL,
     loader: any LaunchdJobLoading = ServiceManagementJobLoader(),
+    consoleUserLoader: any ConsoleUserLoading = SystemConfigurationConsoleUserLoader(),
     now: @escaping @Sendable () -> Date = { Date() }
   ) {
     self.configurationURL = configurationURL
     self.outputURL = outputURL
     self.loader = loader
+    self.consoleUserLoader = consoleUserLoader
     self.now = now
   }
 
@@ -137,6 +155,9 @@ public struct LaunchdExportService: Sendable {
     }
 
     let timestamp = now().timeIntervalSince1970
+    let domainActivity = configuration.monitoredUser.map { monitoredUser in
+      [LaunchdDomain.system: true, LaunchdDomain.user: consoleUserLoader.consoleUser() == monitoredUser]
+    } ?? [:]
     do {
       let jobs = try loader.jobs(in: configuration.domain, named: names)
       let jobsByName = Dictionary(grouping: jobs, by: \.name)
@@ -149,7 +170,8 @@ public struct LaunchdExportService: Sendable {
           expected: configuration.jobs,
           actual: jobs,
           timestamp: timestamp,
-          success: true
+          success: true,
+          domainActivity: domainActivity
         )
       )
     } catch {
@@ -159,7 +181,8 @@ public struct LaunchdExportService: Sendable {
           expected: [],
           actual: [],
           timestamp: timestamp,
-          success: false
+          success: false,
+          domainActivity: domainActivity
         )
       )
       throw error
@@ -181,7 +204,8 @@ public func renderMetrics(
   expected: [ExpectedJob],
   actual: [LaunchdJob],
   timestamp: TimeInterval,
-  success: Bool
+  success: Bool,
+  domainActivity: [LaunchdDomain: Bool] = [:]
 ) -> String {
   let prefix = "host_observability_darwin_launchd_"
   var lines = [
@@ -191,6 +215,15 @@ public func renderMetrics(
     "# HELP \(prefix)sample_timestamp_seconds Unix timestamp of the latest launchd collection attempt.",
     "# TYPE \(prefix)sample_timestamp_seconds gauge",
     "\(prefix)sample_timestamp_seconds{domain=\"\(domain.rawValue)\"} \(timestamp)",
+    "# HELP \(prefix)domain_active Whether the configured launchd domain should currently be monitored.",
+    "# TYPE \(prefix)domain_active gauge",
+  ]
+  for activeDomain in [LaunchdDomain.system, LaunchdDomain.user] {
+    if let active = domainActivity[activeDomain] {
+      lines.append("\(prefix)domain_active{domain=\"\(activeDomain.rawValue)\"} \(active ? 1 : 0)")
+    }
+  }
+  lines += [
     "# HELP \(prefix)job_loaded Whether an expected launchd job is loaded.",
     "# TYPE \(prefix)job_loaded gauge",
   ]
