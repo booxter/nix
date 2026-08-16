@@ -212,5 +212,12 @@
           ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
         ];
       });
+    }
+    // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      darwin = prev.darwin.overrideScope (
+        _: _: {
+          inherit (pkgsNixpkgsUnstable.darwin) linux-builder-vz;
+        }
+      );
     };
 }

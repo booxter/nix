@@ -6,6 +6,7 @@
   imports = [
     ./cache-preference.nix
     ./cache-warmer
+    ./linux-builder.nix
     ./nixpkgs-review.nix
   ];
 
