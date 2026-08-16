@@ -53,8 +53,8 @@ stdenv.mkDerivation {
 
   patches = [
     ./disable-local-auth.patch
-    # AURRAL_DATA_DIR may live below a hidden state directory, which sendFile
-    # rejects by default.
+    # Discovery artwork may live below a hidden AURRAL_DATA_DIR, which sendFile
+    # rejects by default. The image proxy handles this upstream.
     ./aurral-allow-hidden-image-cache-path.patch
     # TODO: Submit managed slskd settings as an upstream feature request.
     ./managed-slskd-settings.patch
