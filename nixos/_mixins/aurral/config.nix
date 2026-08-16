@@ -32,7 +32,10 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    fonts.packages = [ pkgs.dejavu_fonts ];
+    fonts.packages = [
+      pkgs.dejavu_fonts
+      pkgs.noto-fonts-color-emoji
+    ];
 
     users.groups.${model.user} = { };
     users.users.${model.user} = {
