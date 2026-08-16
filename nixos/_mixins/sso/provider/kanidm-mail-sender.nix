@@ -26,7 +26,7 @@ let
     instanceUrl = publicUrl;
     mailFromAddress = mailer.address;
     mailReplyToAddress = mailer.address;
-    mailRelay = mailer.relayHost;
+    mailRelay = "smtp://${mailer.relayHost}";
     mailUsername = mailer.address;
     mailConnectTimeoutSeconds = 15;
   };

@@ -139,7 +139,7 @@ mod tests {
             instance_url: "https://id.example.test".to_owned(),
             mail_from_address: "sender@example.test".to_owned(),
             mail_reply_to_address: "reply@example.test".to_owned(),
-            mail_relay: "smtp.example.test".to_owned(),
+            mail_relay: "smtp://smtp.example.test".to_owned(),
             mail_username: "sender@example.test".to_owned(),
             mail_connect_timeout_seconds: 15,
         }
@@ -155,6 +155,10 @@ mod tests {
         assert_eq!(
             parsed["instance_url"].as_str(),
             Some("https://id.example.test")
+        );
+        assert_eq!(
+            parsed["mail_relay"].as_str(),
+            Some("smtp://smtp.example.test")
         );
         assert_eq!(
             parsed["mail_connect_timeout_seconds"].as_integer(),
