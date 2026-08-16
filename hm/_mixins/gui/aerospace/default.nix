@@ -8,6 +8,7 @@
 let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   cfg = config.host.hm.aerospace;
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/aerospace.log";
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   aerospaceConfigPath =
     if config.xdg.enable then
@@ -274,6 +275,11 @@ in
             "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
           ];
         };
+      };
+
+      launchd.agents.aerospace.config = {
+        StandardOutPath = lib.mkForce logPath;
+        StandardErrorPath = lib.mkForce logPath;
       };
     })
   ];

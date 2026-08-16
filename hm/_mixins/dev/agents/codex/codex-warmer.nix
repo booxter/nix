@@ -8,6 +8,7 @@
 let
   codexWarmerPackage = (import ./pkgs { inherit pkgs; }).codex-warmer;
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/codex-warmer.log";
   codexCfg = config.host.hm.dev.codex;
   codexWarmerEnabled =
     config.host.hm.env.roles.developer
@@ -27,8 +28,8 @@ in
       RunAtLoad = true;
       StartInterval = 300;
       ThrottleInterval = 60;
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/codex-warmer.log";
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/codex-warmer.log";
+      StandardErrorPath = logPath;
+      StandardOutPath = logPath;
     };
   };
 

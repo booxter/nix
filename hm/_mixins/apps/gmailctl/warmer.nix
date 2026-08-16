@@ -7,6 +7,7 @@
 let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   cfg = config.host.hm.gmailctl;
+  logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/gmailctl-warmer.log";
   gmailctlConfigDir = "${config.home.homeDirectory}/.gmailctl";
   gmailctlExe = lib.getExe' pkgs.gmailctl "gmailctl";
   gmailctlWarmerCommand = [
@@ -30,8 +31,8 @@ lib.mkIf (cfg.enable && cfg.warmer.enable) {
         Hour = 10;
         Minute = 0;
       };
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/gmailctl-warmer.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/gmailctl-warmer.log";
+      StandardOutPath = logPath;
+      StandardErrorPath = logPath;
     };
   };
 

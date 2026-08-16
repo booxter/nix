@@ -115,6 +115,7 @@ in
 ++ assertionsFor {
   jobs = managedHomeManagerUserAgents;
   optionPath = "home-manager.users.${homeManagerUsername}.launchd.agents";
+  scope = "user";
   serviceConfigName = "config";
   serviceConfigFor = job: job.config;
 }

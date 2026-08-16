@@ -119,7 +119,6 @@ in
       install -d -m 0755 -o root -g wheel ${stateDir}
       install -d -m 0755 -o root -g wheel ${textfileDir}
       install -d -m 0755 -o ${lib.escapeShellArg username} -g staff ${userTextfileDir}
-      install -d -m 0755 -o ${lib.escapeShellArg username} -g staff ${lib.escapeShellArg userLogDir}
       ln -sfn ${expectationsFile} ${textfileDir}/launchd-expectations.prom
     '';
 

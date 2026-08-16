@@ -8,6 +8,8 @@ let
   launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
+  userLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin";
+  privateUserLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
   rotationJobName = "launchd-logrotate";
   jobsByDomain = {
@@ -112,6 +114,16 @@ in
         collect = false;
         scope = "system";
       };
+      user = {
+        directory = userLogDirectory;
+        collect = true;
+        scope = "user";
+      };
+      user-private = {
+        directory = privateUserLogDirectory;
+        collect = false;
+        scope = "user";
+      };
     };
 
     assertions = import ./logging/assertions.nix {
@@ -128,6 +140,8 @@ in
     system.activationScripts.launchd.text = lib.mkBefore ''
       install -d -m 0755 -o root -g wheel ${logDirectory}
       install -d -m 0700 -o root -g wheel ${privateLogDirectory}
+      install -d -m 0755 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg userLogDirectory}
+      install -d -m 0700 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg privateUserLogDirectory}
       install -d -m 0700 -o root -g wheel ${stateDirectory}
 
       if [[ ! -e ${privateLogDirectory}/sops-install-secrets.log ]]; then
