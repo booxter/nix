@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -22,7 +23,9 @@ in
     };
     distributedBuilds = hasBuildMachines;
     optimise.automatic = true;
-    package = lib.mkForce pkgs.nixVersions.latest;
+    package =
+      lib.mkForce
+        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nixVersions.latest;
     settings = {
       experimental-features = "nix-command flakes";
       warn-dirty = false;
