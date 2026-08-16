@@ -33,6 +33,7 @@ in
         "kvm"
         "nixos-test"
       ];
+      config.virtualisation.memorySize = lib.mkForce 8192;
       config.virtualisation.vz.nestedVirtualization = true;
     };
 
