@@ -24,7 +24,7 @@
       nixpkgs.useGlobalPackages = true;
 
       env = lib.optionalAttrs osConfig.nixpkgs.hostPlatform.isDarwin {
-        LLDB_DEBUGSERVER_PATH = lib.getExe pkgs.debugserver;
+        LLDB_DEBUGSERVER_PATH = "/Library/Developer/CommandLineTools/Library/PrivateFrameworks/LLDB.framework/Versions/A/Resources/debugserver";
       };
 
       # copy to system clipboard

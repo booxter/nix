@@ -8,8 +8,6 @@ in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
 
-  debugserver = pkgs.callPackage ./debugserver { };
-
   atomic-file-writes = atomicFileWrites;
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
