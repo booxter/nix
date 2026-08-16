@@ -43,8 +43,10 @@ in
 
     system.activationScripts.preActivation.text = lib.mkIf cfg.acceptLicense (
       lib.mkBefore ''
-        echo "Installing Rosetta and accepting its license if needed."
-        /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+        if ! /usr/sbin/pkgutil --pkg-info com.apple.pkg.RosettaUpdateAuto >/dev/null 2>&1; then
+          echo "Installing Rosetta and accepting its license."
+          /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+        fi
       ''
     );
   };
