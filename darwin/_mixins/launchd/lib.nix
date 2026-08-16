@@ -24,6 +24,5 @@ in
   optionPaths = {
     daemons = "launchd.daemons";
     agents = "launchd.agents";
-    userAgents = "launchd.user.agents";
   };
 }

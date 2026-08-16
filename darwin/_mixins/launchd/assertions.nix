@@ -36,6 +36,5 @@ in
     }
   ]
   ++ assertionsFor "launchd.daemons" config.launchd.daemons
-  ++ assertionsFor "launchd.agents" config.launchd.agents
-  ++ assertionsFor "launchd.user.agents" config.launchd.user.agents;
+  ++ assertionsFor "launchd.agents" config.launchd.agents;
 }

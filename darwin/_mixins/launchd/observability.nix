@@ -34,10 +34,7 @@ let
   }) (lib.optionalAttrs homeManagerConfig.launchd.enable homeManagerJobs);
 
   systemJobs = expectedFromNixDarwin "system" (removeAttrs config.launchd.daemons [ exporterName ]);
-  userJobs =
-    expectedFromNixDarwin "user" config.launchd.agents
-    ++ expectedFromNixDarwin "user" (removeAttrs config.launchd.user.agents [ userExporterName ])
-    ++ expectedFromHomeManager;
+  userJobs = expectedFromNixDarwin "user" config.launchd.agents ++ expectedFromHomeManager;
   sortJobs = builtins.sort (left: right: left.label < right.label);
   sortedSystemJobs = sortJobs systemJobs;
   sortedUserJobs = sortJobs userJobs;

@@ -13,7 +13,6 @@ let
   jobsByDomain = {
     daemons = config.launchd.daemons;
     agents = config.launchd.agents;
-    userAgents = config.launchd.user.agents;
   };
   homeManagerUserAgents = lib.filterAttrs (
     _: job: job.enable
@@ -38,10 +37,7 @@ let
     pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.daemons)
     ++ pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.agents)
   );
-  userLogPaths = lib.unique (
-    pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.userAgents)
-    ++ pathsFor (job: job.config) homeManagerUserAgents
-  );
+  userLogPaths = pathsFor (job: job.config) homeManagerUserAgents;
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
