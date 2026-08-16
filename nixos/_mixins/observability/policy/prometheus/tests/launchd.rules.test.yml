@@ -14,9 +14,9 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.node",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -34,9 +34,9 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -69,9 +69,9 @@ tests:
         values: "0x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.stopped",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -102,9 +102,9 @@ tests:
         values: "0x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.scheduled",scrape_profile="node"}'
         values: "78x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -137,9 +137,9 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_last_exit_code{instance="mair",domain="system",name="org.nixos.running",scrape_profile="node"}'
         values: "78x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "0+30x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -153,9 +153,9 @@ tests:
         values: "1x12"
       - series: 'host_observability_darwin_launchd_job_loaded{instance="mair",domain="system",name="org.nixos.missing",scrape_profile="node"}'
         values: "0x12"
-      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_collect_success{instance="mair",domain="system",scrape_profile="node"}'
         values: "1x12"
-      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",scrape_profile="node"}'
+      - series: 'host_observability_darwin_launchd_sample_timestamp_seconds{instance="mair",domain="system",scrape_profile="node"}'
         values: "-1000x12"
       - series: 'up{instance="mair",scrape_profile="node"}'
         values: "1x12"
@@ -166,6 +166,7 @@ tests:
           - exp_labels:
               alertname: DarwinLaunchdExporterUnhealthy
               category: launchd
+              domain: system
               instance: mair
               scrape_profile: node
               severity: warning

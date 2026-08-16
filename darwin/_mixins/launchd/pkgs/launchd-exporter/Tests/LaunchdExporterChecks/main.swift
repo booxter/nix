@@ -19,7 +19,7 @@ struct FakeLoader: LaunchdJobLoading {
   let jobs: [LaunchdJob]
   let error: CheckFailure?
 
-  func systemJobs(named names: Set<String>) throws -> [LaunchdJob] {
+  func jobs(in domain: LaunchdDomain, named names: Set<String>) throws -> [LaunchdJob] {
     if let error { throw error }
     return jobs.filter { names.contains($0.name) }
   }
@@ -34,13 +34,17 @@ func testWaitStatusDecoding() throws {
 
 func testMetricsDescribeExpectedJobs() throws {
   let metrics = renderMetrics(
+    domain: .system,
     expected: [ExpectedJob(name: "org.nixos.running"), ExpectedJob(name: "org.nixos.missing")],
     actual: [LaunchdJob(name: "org.nixos.running", pid: 42, rawLastExitStatus: 1 << 8)],
     timestamp: 1234,
     success: true
   )
-  try expect(metrics.contains("launchd_collect_success 1"), "collection success")
-  try expect(metrics.contains("launchd_sample_timestamp_seconds 1234.0"), "sample timestamp")
+  try expect(metrics.contains(#"launchd_collect_success{domain="system"} 1"#), "collection success")
+  try expect(
+    metrics.contains(#"launchd_sample_timestamp_seconds{domain="system"} 1234.0"#),
+    "sample timestamp"
+  )
   try expect(
     metrics.contains(#"launchd_job_loaded{domain="system",name="org.nixos.missing"} 0"#),
     "missing job"
@@ -61,7 +65,7 @@ func testServicePublishesFailureHealth() throws {
   try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
   let configuration = root.appendingPathComponent("config.json")
   try JSONEncoder().encode(
-    ExportConfiguration(jobs: [ExpectedJob(name: "org.nixos.example")])
+    ExportConfiguration(domain: .user, jobs: [ExpectedJob(name: "org.nixos.example")])
   ).write(to: configuration)
   let output = root.appendingPathComponent("textfiles/launchd-state.prom")
   let service = LaunchdExportService(
@@ -77,8 +81,14 @@ func testServicePublishesFailureHealth() throws {
     try expect(message == "native API failed", "unexpected propagated failure")
   }
   let metrics = try String(contentsOf: output, encoding: .utf8)
-  try expect(metrics.contains("launchd_collect_success 0"), "failure health metric")
-  try expect(metrics.contains("launchd_sample_timestamp_seconds 100.0"), "failure timestamp")
+  try expect(
+    metrics.contains(#"launchd_collect_success{domain="user"} 0"#),
+    "failure health metric"
+  )
+  try expect(
+    metrics.contains(#"launchd_sample_timestamp_seconds{domain="user"} 100.0"#),
+    "failure timestamp"
+  )
 }
 
 do {

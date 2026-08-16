@@ -18,6 +18,7 @@ let
   sortedJobs = builtins.sort (left: right: left.name < right.name) expectedJobs;
   configurationFile = pkgs.writeText "darwin-launchd-export.json" (
     builtins.toJSON {
+      domain = "system";
       jobs = map (job: { name = job.label; }) sortedJobs;
     }
   );
