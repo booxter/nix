@@ -184,8 +184,6 @@ stdenv.mkDerivation {
         AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
         AURRAL_SLSKD_API_KEY: "test-api-key",
         AURRAL_SLSKD_PRIORITY: "20",
-        AURRAL_SLSKD_PREFERRED_FORMAT: "flac",
-        AURRAL_SLSKD_STRICT_FORMAT: "true",
         AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
       };
       const managed = applyManagedSlskdSettings(
@@ -195,7 +193,7 @@ stdenv.mkDerivation {
       if (
         managed.slskd.apiKey !== "test-api-key" ||
         managed.slskd.priority !== 20 ||
-        managed.slskd.preferredFormatStrict !== true ||
+        managed.slskd.cleanupAfterRuns !== true ||
         managed.ytdlp.enabled !== true
       ) {
         throw new Error("managed slskd settings were not applied");
