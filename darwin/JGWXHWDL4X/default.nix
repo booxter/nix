@@ -8,9 +8,15 @@ let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   maasServer = name: {
     url.secret = "codex/mcp/${name}/url";
-    oauth = lib.optionalAttrs (name == "maas_nvbugs") {
-      clientId.secret = "codex/mcp/${name}/oauth/client_id";
-    };
+    oauth =
+      lib.optionalAttrs
+        (lib.elem name [
+          "maas_nvbugs"
+          "maas_outlook"
+        ])
+        {
+          clientId.secret = "codex/mcp/maas/oauth/client_id";
+        };
   };
 in
 {
@@ -36,10 +42,17 @@ in
 
   home-manager.users.${username}.host.hm = {
     dev.codex.mcp.httpServers = {
+      maas_artifactory = maasServer "maas_artifactory";
+      maas_confluence = maasServer "maas_confluence";
       maas_gitlab = maasServer "maas_gitlab";
+      maas_glean = maasServer "maas_glean";
       maas_jira = maasServer "maas_jira";
       maas_nvbugs = maasServer "maas_nvbugs";
+      maas_nvinfo = maasServer "maas_nvinfo";
+      maas_outlook = maasServer "maas_outlook";
+      maas_ovnk = maasServer "maas_ovnk";
       maas_redmine = maasServer "maas_redmine";
+      maas_teams = maasServer "maas_teams";
     };
   };
 }
