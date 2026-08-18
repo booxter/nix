@@ -27,6 +27,10 @@ let
     gitCommandRunner = pkgs.git-command-runner;
     inherit pkiCertificates sopsTools;
   };
+  repoSource = builtins.path {
+    path = ../../..;
+    name = "pki-inventory-source";
+  };
   inventory =
     let
       taggedConfigurations =
@@ -41,10 +45,18 @@ let
       value = import ../../../common/_mixins/internal-pki/inventory.nix {
         configurations = taggedConfigurations;
         inherit lib;
-        repoRoot = ../../..;
+        repoRoot = repoSource;
       };
     in
-    builtins.toFile "pki-certificate-inventory.json" (builtins.toJSON value);
+    pkgs.runCommand "pki-certificate-inventory.json"
+      {
+        inherit repoSource;
+        json = builtins.toJSON value;
+        passAsFile = [ "json" ];
+      }
+      ''
+        cp "$jsonPath" "$out"
+      '';
   dnsNames = lib.unique (
     config.host.network.certificateDnsNames
     ++ [
@@ -101,7 +113,7 @@ in
           (lib.getExe pkiRotation)
           "export-metrics"
           "--inventory-manifest"
-          inventory
+          "${inventory}"
           "--output"
           statusMetricsPath
         ];
