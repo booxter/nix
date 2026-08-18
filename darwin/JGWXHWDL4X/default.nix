@@ -13,6 +13,7 @@ let
         (lib.elem name [
           "maas_nvbugs"
           "maas_outlook"
+          "maas_teams"
         ])
         {
           clientId.secret = "codex/mcp/maas/oauth/client_id";
