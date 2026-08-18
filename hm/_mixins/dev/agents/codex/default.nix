@@ -57,6 +57,11 @@ let
         default = null;
         description = "OAuth configuration, or null for an unauthenticated HTTP server.";
       };
+      startupTimeoutSec = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.positive;
+        default = null;
+        description = "Seconds to wait for the MCP server to initialize.";
+      };
       instructions = lib.mkOption {
         type = lib.types.lines;
         default = "";
