@@ -32,6 +32,9 @@ let
       default_tools_approval_mode = "writes";
       url = resolveValue server.url;
     }
+    // lib.optionalAttrs (server.startupTimeoutSec != null) {
+      startup_timeout_sec = server.startupTimeoutSec;
+    }
     // lib.optionalAttrs (server.oauth != null) {
       auth = "oauth";
     }

@@ -8,6 +8,7 @@ let
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   maasServer = name: {
     url.secret = "codex/mcp/${name}/url";
+    startupTimeoutSec = 60;
     oauth =
       lib.optionalAttrs
         (lib.elem name [
