@@ -28,7 +28,11 @@ in
 
     home.shellAliases = {
       # remove once https://github.com/nektos/act/issues/2329 is fixed
-      act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04${podmanArgs}";
+      act =
+        "act"
+        + " -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04"
+        + " -P ubuntu-24.04-arm=ghcr.io/catthehacker/ubuntu:act-24.04"
+        + podmanArgs;
     };
   };
 }
