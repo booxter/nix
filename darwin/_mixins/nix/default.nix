@@ -1,7 +1,11 @@
 {
+  config,
   lib,
   ...
 }:
+let
+  hasAttic = config.host.attic.realmServers != { };
+in
 {
   imports = [
     ./cache-preference.nix
@@ -11,10 +15,13 @@
   ];
 
   nix.gc.interval = [
-    {
-      Hour = 3;
-      Minute = 15;
-    }
+    (
+      {
+        Hour = 3;
+        Minute = 15;
+      }
+      // lib.optionalAttrs (!hasAttic) { Weekday = 6; }
+    )
   ];
   nix.optimise.interval = [
     {
