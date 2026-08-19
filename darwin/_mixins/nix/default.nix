@@ -12,6 +12,7 @@ in
     ./cache-warmer
     ./linux-builder.nix
     ./nixpkgs-review.nix
+    ./open.nix
   ];
 
   nix.gc.interval = [
