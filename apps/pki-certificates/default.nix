@@ -13,6 +13,11 @@
 }:
 let
   pythonPackages = python3.pkgs;
+  inventoryQuerySource = builtins.path {
+    path = ../..;
+    name = "pki-inventory-query-source";
+  };
+  inventoryQueryFile = "${inventoryQuerySource}/apps/pki-certificates/inventory-query.nix";
   runtimePath = lib.makeBinPath [
     age-plugin-se
     nix
@@ -52,14 +57,14 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "pki_certificates" ];
 
   passthru = {
-    inventoryQueryFile = ./inventory-query.nix;
+    inherit inventoryQueryFile;
   };
 
   postFixup = ''
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set PKI_CERTIFICATE_INVENTORY_QUERY_FILE ${./inventory-query.nix}
+        --set PKI_CERTIFICATE_INVENTORY_QUERY_FILE ${inventoryQueryFile}
     done
   '';
 
