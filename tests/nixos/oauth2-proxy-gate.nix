@@ -96,15 +96,8 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         inputs.sops-nix.nixosModules.sops
-        ../../common/_mixins/hardware
-        ../../common/_mixins/host/options.nix
-        ../../common/_mixins/internal-pki
-        ../../common/_mixins/network
         ../../nixos/_mixins/sso/oauth2-proxy-gate
-        ../../nixos/_mixins/web/api.nix
-        ../../nixos/_mixins/web/internal-https.nix
-        ../../nixos/_mixins/web/local-model.nix
-        ../../nixos/_mixins/web/options.nix
+        ../../nixos/_mixins/web/internal-https
         ./lib/sops.nix
       ];
 
