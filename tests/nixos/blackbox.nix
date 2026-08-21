@@ -1,43 +1,10 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
-  testPki = pkgs.runCommand "blackbox-test-pki" { nativeBuildInputs = [ pkgs.openssl ]; } ''
-    mkdir "$out"
-
-    openssl req -x509 -newkey rsa:2048 -nodes \
-      -subj /CN=blackbox-test-ca \
-      -keyout "$out/ca.key" \
-      -out "$out/ca.crt" \
-      -days 36500
-
-    openssl req -new -newkey rsa:2048 -nodes \
-      -subj /CN=blackbox \
-      -addext "subjectAltName=DNS:blackbox" \
-      -addext "extendedKeyUsage=serverAuth" \
-      -keyout "$out/server.key" \
-      -out "$out/server.csr"
-    openssl x509 -req \
-      -in "$out/server.csr" \
-      -CA "$out/ca.crt" \
-      -CAkey "$out/ca.key" \
-      -CAcreateserial \
-      -copy_extensions copy \
-      -out "$out/server.crt" \
-      -days 36500
-
-    openssl req -new -newkey rsa:2048 -nodes \
-      -subj /CN=prometheus-test \
-      -addext "extendedKeyUsage=clientAuth" \
-      -keyout "$out/client.key" \
-      -out "$out/client.csr"
-    openssl x509 -req \
-      -in "$out/client.csr" \
-      -CA "$out/ca.crt" \
-      -CAkey "$out/ca.key" \
-      -CAcreateserial \
-      -copy_extensions copy \
-      -out "$out/client.crt" \
-      -days 36500
-  '';
+  testPki = import ./lib/tls-pki.nix {
+    clientName = "prometheus-test";
+    inherit pkgs;
+    serverName = "blackbox";
+  };
   localExporter = "http://127.0.0.1:19115";
   targetHttpPort = 18080;
   targetDnsPort = 1053;
@@ -49,83 +16,15 @@ pkgs.testers.runNixOSTest {
     { lib, ... }:
     {
       imports = [
-        ../../common/_mixins/network
-        ../../nixos/_mixins/observability
+        inputs.sops-nix.nixosModules.sops
+        ../../nixos/_mixins/observability/blackbox
+        ./lib/sops.nix
       ];
 
-      options = {
-        host = {
-          pki.authority = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = {
-              rootCaCertificate = "${testPki}/ca.crt";
-            };
-          };
-
-          pki.clients = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-
-          pki.certificates = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-
-          site.lan.ipController = lib.mkOption {
-            type = lib.types.nullOr lib.types.attrs;
-            default = null;
-          };
-
-          realm = lib.mkOption {
-            type = lib.types.str;
-            default = "home";
-          };
-
-          observability.lanWan = {
-            enable = lib.mkEnableOption "test LAN/WAN accounting";
-            mode = lib.mkOption {
-              type = lib.types.enum [
-                "host-local"
-                "interface-path"
-              ];
-              default = "interface-path";
-            };
-          };
-
-          web.services = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-        };
-
-        sops = {
-          secrets = lib.mkOption {
-            type = lib.types.attrsOf (
-              lib.types.submodule (
-                { name, ... }:
-                {
-                  freeformType = lib.types.attrsOf lib.types.anything;
-                  options.path = lib.mkOption {
-                    type = lib.types.str;
-                    default = "/run/secrets/${name}";
-                  };
-                }
-              )
-            );
-            default = { };
-          };
-
-          templates = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-        };
-      };
-
       config = {
-        _module.args = {
-          outputs.nixosConfigurations = { };
+        host.pki.authority = lib.mkForce {
+          hostName = "test-authority";
+          rootCaCertificate = "${testPki}/ca.crt";
         };
 
         networking = {
@@ -143,7 +42,6 @@ pkgs.testers.runNixOSTest {
         };
 
         host.observability = {
-          nodeExporter.mtls.enable = false;
           blackbox = {
             remote = { };
             modules.http_created = {
@@ -157,16 +55,9 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.pki.clients.loki = {
-          materializations.default = {
-            certificatePath = "${testPki}/client.crt";
-            keyPath = "${testPki}/client.key";
-          };
-        };
-
-        sops.secrets = {
-          "prometheus-mtls-blackbox-server-crt".path = "${testPki}/server.crt";
-          "prometheus-mtls-blackbox-server-key".path = "${testPki}/server.key";
+        testSupport.sops.sources = {
+          prometheus-mtls-blackbox-server-crt = "${testPki}/server.crt";
+          prometheus-mtls-blackbox-server-key = "${testPki}/server.key";
         };
 
         services = {
