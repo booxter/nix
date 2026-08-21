@@ -1,12 +1,12 @@
 {
+  backupConfigurations,
   config,
   lib,
-  outputs,
 }:
 let
   backups = config.host.backups;
   hostName = config.networking.hostName;
-  configurations = outputs.nixosConfigurations // {
+  configurations = backupConfigurations // {
     ${hostName}.config = config;
   };
 in

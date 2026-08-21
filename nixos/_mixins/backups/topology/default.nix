@@ -1,4 +1,5 @@
 {
+  backupConfigurations ? outputs.nixosConfigurations,
   config,
   lib,
   outputs,
@@ -6,7 +7,9 @@
 }:
 let
   backups = config.host.backups;
-  topology = import ./model.nix { inherit config lib outputs; };
+  topology = import ./model.nix {
+    inherit backupConfigurations config lib;
+  };
   inherit (topology) client server;
 
   qosEnabled = backups.server != null && backups.server.offsite != null && backups.server.offsite.qos;
