@@ -1,8 +1,7 @@
 { inputs, pkgs, ... }:
 let
   fixtures = ./backup;
-  secret = name: value: pkgs.writeText "backup-test-${name}" "${value}\n";
-  password = secret "password" "test-password";
+  password = "test-password";
   clientPrivateKey = pkgs.writeText "backup-test-client-key" (
     builtins.readFile (fixtures + "/client-key")
   );
@@ -73,11 +72,11 @@ pkgs.testers.runNixOSTest {
         };
       };
 
-      testSupport.sops.sources = {
+      testSupport.sops.values = {
         "backup/restic/client/cloud/localPassword" = password;
         "backup/restic/client/cloud/password" = password;
-        "backup/restic/cloud/b2/applicationKeyId" = secret "s3-access-key" s3AccessKey;
-        "backup/restic/cloud/b2/applicationKey" = secret "s3-secret-key" s3SecretKey;
+        "backup/restic/cloud/b2/applicationKeyId" = s3AccessKey;
+        "backup/restic/cloud/b2/applicationKey" = s3SecretKey;
       };
     };
 
@@ -133,9 +132,9 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        testSupport.sops.sources = {
-          "backup/restic/local/password" = password;
-          "backup/restic/local/ssh/privateKey" = clientPrivateKey;
+        testSupport.sops = {
+          values."backup/restic/local/password" = password;
+          sources."backup/restic/local/ssh/privateKey" = clientPrivateKey;
         };
       };
   };

@@ -2,7 +2,6 @@
 let
   fixtures = ./pinepods;
   inherit (pkgs) lib;
-  secret = name: value: pkgs.writeText "pinepods-test-${name}" "${value}\n";
 in
 pkgs.testers.runNixOSTest {
   name = "pinepods";
@@ -75,12 +74,12 @@ pkgs.testers.runNixOSTest {
       "pinepods/oidc/client_secret" = "oidc-secret";
     };
 
-    testSupport.sops.sources = {
-      "pinepods/postgresql/password" = secret "database-password" "database-password";
-      "pinepods/valkey/password" = secret "cache-password" "cache-password";
-      "pinepods/bootstrap/password" = secret "bootstrap-password" "test-password";
-      "directory/users/owner/mail" = secret "owner-mail" "owner@example.invalid";
-      "pinepods/oidc/client_secret" = secret "oidc-secret" "oidc-secret";
+    testSupport.sops.values = {
+      "pinepods/postgresql/password" = "database-password";
+      "pinepods/valkey/password" = "cache-password";
+      "pinepods/bootstrap/password" = "test-password";
+      "directory/users/owner/mail" = "owner@example.invalid";
+      "pinepods/oidc/client_secret" = "oidc-secret";
     };
 
     # The VM provides the storage claim as an already-mounted test fixture.

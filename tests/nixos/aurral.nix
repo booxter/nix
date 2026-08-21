@@ -3,7 +3,6 @@ let
   fixtures = ./aurral;
   inherit (pkgs) lib;
   lidarrApiKey = "lidarr-test-api-key";
-  secret = name: value: pkgs.writeText "aurral-test-${name}" "${value}\n";
   slskdApiKey = "slskd-test-api-key";
   wireguardConfig = pkgs.writeText "aurral-test-wireguard.conf" ''
     [Interface]
@@ -122,12 +121,12 @@ pkgs.testers.runNixOSTest {
       "slskd/web/apiKey" = slskdApiKey;
     };
 
-    testSupport.sops.sources = {
-      "slskd/soulseek/username" = secret "soulseek-username" "test-user";
-      "slskd/soulseek/password" = secret "soulseek-password" "test-password";
-      "slskd/web/username" = secret "web-username" "test-admin";
-      "slskd/web/password" = secret "web-password" "test-password";
-      "slskd/web/apiKey" = secret "web-api-key" slskdApiKey;
+    testSupport.sops.values = {
+      "slskd/soulseek/username" = "test-user";
+      "slskd/soulseek/password" = "test-password";
+      "slskd/web/username" = "test-admin";
+      "slskd/web/password" = "test-password";
+      "slskd/web/apiKey" = slskdApiKey;
     };
 
     systemd.services.fake-lidarr = {
