@@ -82,6 +82,8 @@
           system,
         }:
         {
+          backupConfigurations = outputs.nixosConfigurations;
+          storageConfigurations = outputs.nixosConfigurations;
           inherit
             hostName
             inputs
