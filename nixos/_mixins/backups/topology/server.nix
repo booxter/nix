@@ -12,7 +12,7 @@ let
   requestsFrom =
     clientName: configuration:
     let
-      destination = configuration.config.host.backups.destination;
+      destination = (configuration.config or configuration).host.backups.destination;
     in
     lib.optional (destination != null && destination.server == hostName) (
       destination

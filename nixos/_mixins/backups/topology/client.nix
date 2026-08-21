@@ -10,7 +10,8 @@ let
   serverFor =
     destination:
     if builtins.hasAttr destination.server configurations then
-      configurations.${destination.server}.config.host.backups.server
+      (configurations.${destination.server}.config or configurations.${destination.server})
+      .host.backups.server
     else
       null;
 

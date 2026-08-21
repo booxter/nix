@@ -76,15 +76,26 @@ stdenv.mkDerivation {
 
     npm run build --workspace frontend
 
-    npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root
-
-    rm -rf frontend/node_modules
-
     runHook postBuild
+  '';
+
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+
+    export LD_LIBRARY_PATH=${lib.makeLibraryPath [ sqlite ]}
+    node --test \
+      .tests/auth/local-auth.test.js \
+      .tests/settings/managed-slskd.test.js
+
+    runHook postCheck
   '';
 
   installPhase = ''
     runHook preInstall
+
+    npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root
+    rm -rf frontend/node_modules
 
     mkdir -p "$out/bin" "$out/lib/${pname}/backend" "$out/lib/${pname}/frontend" "$out/lib/${pname}/lib"
 
@@ -165,47 +176,6 @@ stdenv.mkDerivation {
       const honkerDatabase = honker.open(`''${process.env.AURRAL_DATA_DIR}/honker-smoke.db`);
       honkerDatabase.query("SELECT 1");
       honkerDatabase.close();
-      await import("./backend/db/helpers/index.js");
-      const { isLocalAuthEnabled } = await import("./backend/middleware/auth.js");
-      delete process.env.DISABLE_LOCAL_AUTH;
-      if (!isLocalAuthEnabled()) {
-        throw new Error("local authentication was not enabled by default");
-      }
-      process.env.DISABLE_LOCAL_AUTH = "true";
-      if (isLocalAuthEnabled()) {
-        throw new Error("local authentication was not disabled");
-      }
-      const {
-        applyManagedSlskdSettings,
-        preserveStoredSlskdSettings,
-      } = await import("./backend/config/managedSlskd.js");
-      const managedEnvironment = {
-        AURRAL_SLSKD_MANAGED: "true",
-        AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
-        AURRAL_SLSKD_API_KEY: "test-api-key",
-        AURRAL_SLSKD_PRIORITY: "20",
-        AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
-      };
-      const managed = applyManagedSlskdSettings(
-        { slskd: { apiKey: "stored-api-key" }, ytdlp: { enabled: true } },
-        managedEnvironment,
-      );
-      if (
-        managed.slskd.apiKey !== "test-api-key" ||
-        managed.slskd.priority !== 20 ||
-        managed.slskd.cleanupAfterRuns !== true ||
-        managed.ytdlp.enabled !== true
-      ) {
-        throw new Error("managed slskd settings were not applied");
-      }
-      const preserved = preserveStoredSlskdSettings(
-        managed,
-        { slskd: { apiKey: "stored-api-key" } },
-        managedEnvironment,
-      );
-      if (preserved.slskd.apiKey !== "stored-api-key") {
-        throw new Error("managed slskd settings would be persisted");
-      }
     '
     popd
 

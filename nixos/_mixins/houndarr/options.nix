@@ -9,6 +9,7 @@ let
   optionalBool = optional lib.types.bool;
   optionalUnsigned = optional lib.types.ints.unsigned;
   optionalPositive = optional lib.types.ints.positive;
+  optionalAtLeastSeven = optional (lib.types.addCheck lib.types.ints.positive (value: value >= 7));
   passPolicyType = lib.types.submodule {
     options = {
       enable = lib.mkOption {
@@ -96,7 +97,7 @@ let
               default = null;
             };
             cooldownDays = lib.mkOption {
-              type = optional (lib.types.ints.between 7 lib.types.ints.maxValue);
+              type = optionalAtLeastSeven;
               default = null;
             };
             hourlyCap = lib.mkOption {

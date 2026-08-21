@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  outputs,
+  storageConfigurations,
   storageIdentities,
   ...
 }:
@@ -144,7 +144,7 @@ in
     inherit
       config
       lib
-      outputs
+      storageConfigurations
       storageIdentities
       ;
   };

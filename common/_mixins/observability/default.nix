@@ -5,19 +5,13 @@
 }:
 {
   imports = [
+    ./inventory-endpoints.nix
     ./inventory.nix
     ./node-exporter.nix
+    ./policy.nix
   ];
 
   options.host.observability = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.host.realm == "home";
-      readOnly = true;
-      internal = true;
-      description = "Whether realm policy enables host-side observability services.";
-    };
-
     loki.client = lib.mkOption {
       type =
         with lib.types;

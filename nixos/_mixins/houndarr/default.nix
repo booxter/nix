@@ -1,11 +1,9 @@
 {
   imports = [
-    ./assertions.nix
     ./backups.nix
     ./integrations.nix
     ./observability.nix
-    ./options.nix
-    ./reconcile.nix
+    ./reconciliation.nix
     ./service.nix
     ./web.nix
   ];

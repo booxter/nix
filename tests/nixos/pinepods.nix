@@ -1,262 +1,95 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
+  fixtures = ./pinepods;
   inherit (pkgs) lib;
-  testOutputs.nixosConfigurations = { };
-  secretType =
-    { name, ... }:
-    {
-      options = {
-        path = lib.mkOption {
-          type = lib.types.str;
-          default = "/run/secrets/${name}";
-        };
-        owner = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-        };
-        group = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-        };
-        mode = lib.mkOption {
-          type = lib.types.str;
-          default = "0400";
-        };
-        restartUnits = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-        };
-      };
-    };
-  templateType =
-    { name, ... }:
-    {
-      options = {
-        path = lib.mkOption {
-          type = lib.types.str;
-          default = "/run/secrets-rendered/${name}";
-        };
-        content = lib.mkOption { type = lib.types.lines; };
-        owner = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-        };
-        group = lib.mkOption {
-          type = lib.types.str;
-          default = "root";
-        };
-        mode = lib.mkOption {
-          type = lib.types.str;
-          default = "0400";
-        };
-        restartUnits = lib.mkOption {
-          type = with lib.types; listOf str;
-          default = [ ];
-        };
-      };
-    };
-  supportModule =
-    { config, lib, ... }:
-    {
-      options = {
-        host = {
-          backups.sources = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-          site.timeZone = lib.mkOption {
-            type = lib.types.str;
-            default = "Etc/UTC";
-          };
-          network.publicDomain = lib.mkOption {
-            type = lib.types.str;
-            default = "example.invalid";
-          };
-          sso = {
-            applications = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
-            users = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
-            oidc = {
-              baseScopes = lib.mkOption {
-                type = with lib.types; listOf str;
-                default = [ ];
-              };
-              clients = lib.mkOption {
-                type = lib.types.attrsOf lib.types.anything;
-                default = { };
-              };
-            };
-          };
-          storage = {
-            claims = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
-            resources = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
-            volumes = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-            };
-          };
-          web.services = lib.mkOption {
-            type = lib.types.attrsOf lib.types.anything;
-            default = { };
-          };
-        };
-        sops = {
-          secrets = lib.mkOption {
-            type = with lib.types; attrsOf (submodule secretType);
-            default = { };
-          };
-          templates = lib.mkOption {
-            type = with lib.types; attrsOf (submodule templateType);
-            default = { };
-          };
-          placeholder = lib.mkOption {
-            type = lib.types.attrsOf lib.types.str;
-            default = { };
-          };
-        };
-      };
-
-      config = {
-        systemd.services.sops-install-secrets = {
-          description = "Install PinePods integration-test secrets";
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig.Type = "oneshot";
-          script = ''
-            ${lib.concatMapStringsSep "\n" (secret: ''
-              install -D -m ${secret.mode} -o ${secret.owner} -g ${secret.group} /dev/null ${lib.escapeShellArg secret.path}
-            '') (builtins.attrValues config.sops.secrets)}
-            printf '%s\n' 'database-password' > ${config.sops.secrets."pinepods/postgresql/password".path}
-            printf '%s\n' 'cache-password' > ${config.sops.secrets."pinepods/valkey/password".path}
-            printf '%s\n' 'test-password' > ${config.sops.secrets."pinepods/bootstrap/password".path}
-            printf '%s\n' 'owner@example.invalid' > ${config.sops.secrets."directory/users/owner/mail".path}
-            printf '%s\n' 'oidc-secret' > ${config.sops.secrets."pinepods/oidc/client_secret".path}
-            ${lib.concatMapStringsSep "\n" (name: ''
-              install -D -m ${config.sops.templates.${name}.mode} -o ${config.sops.templates.${name}.owner} -g ${
-                config.sops.templates.${name}.group
-              } /dev/null ${lib.escapeShellArg config.sops.templates.${name}.path}
-              cat > ${config.sops.templates.${name}.path} <<'EOF'
-              ${config.sops.templates.${name}.content}
-              EOF
-            '') (builtins.attrNames config.sops.templates)}
-          '';
-        };
-      };
-    };
 in
 pkgs.testers.runNixOSTest {
   name = "pinepods";
 
-  nodes.machine =
-    { config, ... }:
-    {
-      imports = [
-        supportModule
-        ../../nixos/_mixins/pinepods
-      ];
+  nodes.machine = {
+    imports = [
+      inputs.sops-nix.nixosModules.sops
+      ../../nixos/_mixins/pinepods/composition.nix
+      ./lib/sops.nix
+    ];
 
-      _module.args = {
-        outputs = testOutputs;
-        storageIdentities.users.pinepods = {
-          uid = 911;
-          group = null;
+    _module.args.storageConfigurations = { };
+
+    networking.hostName = "podcast-node";
+
+    host = {
+      realm = "test";
+      pinepods = { };
+      network.publicDomain = "example.invalid";
+      site.timeZone = "Etc/UTC";
+      storage = {
+        claims.media = {
+          provider = "podcast-node";
+          resource = "media";
+          mountPoint = "/srv/podcasts";
         };
-        storageModel.localClaims.media = config.host.storage.claims.media // {
-          resolvedResource = config.host.storage.resources.media;
+        resources.media = {
+          volume = "durable";
+          relativePath = ".";
+          directoryDefaults = {
+            owner = "root";
+            group = "media";
+            mode = "0755";
+            enforce = false;
+          };
+        };
+        volumes.durable = {
+          mountPoint = "/srv/durable";
+          device = "none";
+          fsType = "tmpfs";
         };
       };
-
-      networking.hostName = "podcast-node";
-
-      host = {
-        pinepods = { };
-        storage = {
-          claims.media = {
-            provider = "podcast-node";
-            resource = "media";
-            mountPoint = "/srv/podcasts";
+      sso = {
+        providerHost = "identity";
+        groups = [
+          "podcast-admins"
+          "podcast-users"
+        ];
+        applications.pinepods = {
+          roles = {
+            admin = "podcast-admins";
+            user = "podcast-users";
           };
-          resources.media = {
-            volume = "durable";
-            relativePath = ".";
-            sharedGroup = "podcasts";
-            directoryDefaults = {
-              owner = "root";
-              group = "podcasts";
-              mode = "0755";
-              enforce = false;
-            };
-          };
-          volumes.durable.mountPoint = "/srv/durable";
+          bootstrapOwner = "owner";
         };
-        sso = {
-          applications.pinepods = {
-            roles = {
-              admin = "podcast-admins";
-              user = "podcast-users";
-            };
-            bootstrapOwner = "owner";
-          };
-          users.owner = {
-            displayName = "Test Owner";
-            mailAddressSopsKey = "directory/users/owner/mail";
-            groups = [
-              "podcast-admins"
-              "podcast-users"
-            ];
-          };
-          oidc = {
-            baseScopes = [
-              "openid"
-              "email"
-              "profile"
-            ];
-            clients.pinepods = {
-              clientId = "pinepods";
-              authorizationUrl = "https://login.example.invalid/ui/oauth2";
-              tokenUrl = "https://login.example.invalid/oauth2/token";
-              userinfoUrl = "https://login.example.invalid/oauth2/openid/pinepods/userinfo";
-              secret.placeholder = "oidc-secret";
-            };
-          };
+        users.owner = {
+          mailAddressSopsKey = "directory/users/owner/mail";
+          groups = [
+            "podcast-admins"
+            "podcast-users"
+          ];
         };
-        web.services.pinepods.public.url = "https://pod.example.invalid";
       };
-
-      sops.placeholder = {
-        "pinepods/postgresql/password" = "database-password";
-        "pinepods/valkey/password" = "cache-password";
-      };
-      sops.secrets."pinepods/oidc/client_secret" = { };
-
-      users.groups.podcasts.gid = 911;
-      systemd.tmpfiles.rules = [
-        "d /srv/podcasts 0755 root root - -"
-        "d /srv/podcasts/podcasts/pinepods 0750 pinepods podcasts - -"
-      ];
+      web.services.pinepods.public.hostName = "pod.example.invalid";
     };
 
+    sops.placeholder = {
+      "pinepods/postgresql/password" = "database-password";
+      "pinepods/valkey/password" = "cache-password";
+      "pinepods/oidc/client_secret" = "oidc-secret";
+    };
+
+    testSupport.sops.values = {
+      "pinepods/postgresql/password" = "database-password";
+      "pinepods/valkey/password" = "cache-password";
+      "pinepods/bootstrap/password" = "test-password";
+      "directory/users/owner/mail" = "owner@example.invalid";
+      "pinepods/oidc/client_secret" = "oidc-secret";
+    };
+
+    # The VM provides the storage claim as an already-mounted test fixture.
+    systemd.tmpfiles.rules = [
+      "d /srv/podcasts/podcasts/pinepods 0750 pinepods media - -"
+    ];
+  };
+
   testScript = ''
-    start_all()
-    machine.wait_for_unit("postgresql.service")
-    machine.wait_for_unit("pinepods-valkey.service")
-    machine.wait_for_unit("podman-pinepods.service")
-    machine.wait_until_succeeds("curl -sf http://127.0.0.1:8040/api/health | ${lib.getExe pkgs.jq} -e '.database and .redis'")
-    machine.wait_for_unit("pinepods-bootstrap-admin.service")
-    machine.succeed(
-        "curl -sf http://127.0.0.1:8040/api/data/self_service_status"
-        " | ${lib.getExe pkgs.jq} -e '.first_admin_created == true'"
-    )
-    machine.succeed("runuser -u pinepods -- test -w /srv/podcasts/podcasts/pinepods")
-  '';
+    JQ = ${builtins.toJSON (lib.getExe pkgs.jq)}
+  ''
+  + builtins.readFile "${fixtures}/test.py";
 }
