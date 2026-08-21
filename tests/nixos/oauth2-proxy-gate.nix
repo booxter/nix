@@ -1,5 +1,7 @@
 { inputs, pkgs, ... }:
 let
+  serverName = "test.example.invalid";
+  testPki = import ./lib/tls-pki.nix { inherit pkgs serverName; };
   fakeOauth2Proxy = pkgs.writeText "fake-oauth2-proxy.py" ''
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -94,43 +96,22 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         inputs.sops-nix.nixosModules.sops
+        ../../common/_mixins/hardware
+        ../../common/_mixins/host/options.nix
+        ../../common/_mixins/internal-pki
         ../../common/_mixins/network
-        ../../nixos/_mixins/sso
+        ../../nixos/_mixins/sso/oauth2-proxy-gate
+        ../../nixos/_mixins/web/api.nix
+        ../../nixos/_mixins/web/internal-https.nix
+        ../../nixos/_mixins/web/local-model.nix
+        ../../nixos/_mixins/web/options.nix
         ./lib/sops.nix
       ];
 
-      options = {
-        host.realm = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          default = "test";
-        };
-
-        host.backups.sources = lib.mkOption {
-          type = lib.types.attrsOf lib.types.anything;
-          default = { };
-        };
-
-        host.web.services = lib.mkOption {
-          type = lib.types.attrsOf lib.types.anything;
-          default = { };
-        };
-
-      };
-
       config = {
-        _module.args.outputs.nixosConfigurations.provider.config = {
-          networking.hostName = "provider";
-          host.realm = "test";
-        };
-        _module.args.webModel.internalEndpoints.test = {
-          internal = {
-            endpointName = "test";
-            serverName = "test.example.invalid";
-            serverAliases = [ ];
-            publicAliases = [ ];
-            path = "/";
-          };
-          auth.sessionClearPaths = [ ];
+        host.pki.authority = lib.mkForce {
+          hostName = "test-authority";
+          rootCaCertificate = "${testPki}/ca.crt";
         };
 
         host.network.lanDomain = "example.invalid";
@@ -138,11 +119,11 @@ pkgs.testers.runNixOSTest {
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 
-        services.nginx = {
-          enable = true;
-          virtualHosts."internal-https-test" = {
-            serverAliases = [ "test.example.invalid" ];
-            locations."/".proxyPass = "http://127.0.0.1:9000";
+        host.web.services.test = {
+          upstream = "http://127.0.0.1:9000";
+          internal = {
+            inherit serverName;
+            clientAuth = "none";
           };
         };
 
@@ -152,6 +133,11 @@ pkgs.testers.runNixOSTest {
           groupClaim = "groups";
           allowedGroups = [ "test-users" ];
           internalHttpsServiceNames = [ "test" ];
+        };
+
+        testSupport.sops.sources = {
+          internal-https-test-server-crt = "${testPki}/server.crt";
+          internal-https-test-server-key = "${testPki}/server.key";
         };
 
         # The test supplies a deterministic fake auth endpoint instead of
@@ -178,6 +164,10 @@ pkgs.testers.runNixOSTest {
     import shlex
 
 
+    SERVER_NAME = ${builtins.toJSON serverName}
+    TEST_PKI = ${builtins.toJSON "${testPki}"}
+
+
     def request(path, method="GET", headers=None, data=None):
         headers = headers or {}
         args = [
@@ -187,13 +177,14 @@ pkgs.testers.runNixOSTest {
             "-D", "/tmp/response-headers",
             "-w", "%{http_code}",
             "-X", method,
-            "-H", "Host: test.example.invalid",
+            "--cacert", f"{TEST_PKI}/ca.crt",
+            "--resolve", f"{SERVER_NAME}:443:127.0.0.1",
         ]
         for name, value in headers.items():
             args += ["-H", f"{name}: {value}"]
         if data is not None:
             args += ["--data-binary", data]
-        args.append(f"http://127.0.0.1{path}")
+        args.append(f"https://{SERVER_NAME}{path}")
         status = machine.succeed(" ".join(shlex.quote(arg) for arg in args)).strip()
         raw_headers = machine.succeed("cat /tmp/response-headers")
         body = machine.succeed("cat /tmp/response-body")
@@ -233,7 +224,7 @@ pkgs.testers.runNixOSTest {
 
     start_all()
     machine.wait_for_unit("nginx.service")
-    machine.wait_for_open_port(80)
+    machine.wait_for_open_port(443)
     machine.wait_for_open_port(4180)
     machine.wait_for_open_port(9000)
 
