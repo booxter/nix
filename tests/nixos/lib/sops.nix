@@ -5,7 +5,14 @@
   ...
 }:
 let
-  sources = config.testSupport.sops.sources;
+  sourceFiles = config.testSupport.sops.sources;
+  values = config.testSupport.sops.values;
+  valueSources = lib.mapAttrs (
+    name: value:
+    pkgs.writeText "test-sops-value-${lib.replaceStrings [ "/" ] [ "-" ] name}" "${value}\n"
+  ) values;
+  sources = sourceFiles // valueSources;
+  duplicateSources = lib.intersectLists (builtins.attrNames sourceFiles) (builtins.attrNames values);
   templateSources = lib.mapAttrs (
     name: template: pkgs.writeText "test-sops-template-${name}" template.content
   ) config.sops.templates;
@@ -55,17 +62,29 @@ let
   };
 in
 {
-  options.testSupport.sops.sources = lib.mkOption {
-    type = with lib.types; attrsOf path;
-    default = { };
-    description = "Plaintext source files installed for declared sops-nix secrets in a NixOS test.";
+  options.testSupport.sops = {
+    sources = lib.mkOption {
+      type = with lib.types; attrsOf path;
+      default = { };
+      description = "Plaintext source files installed for declared sops-nix secrets in a NixOS test.";
+    };
+
+    values = lib.mkOption {
+      type = with lib.types; attrsOf str;
+      default = { };
+      description = "Plaintext values installed for declared sops-nix secrets in a NixOS test.";
+    };
   };
 
   config = {
     assertions = [
       {
         assertion = lib.all (name: builtins.hasAttr name config.sops.secrets) (builtins.attrNames sources);
-        message = "testSupport.sops.sources contains a source for an undeclared sops-nix secret.";
+        message = "testSupport.sops contains a fixture for an undeclared sops-nix secret.";
+      }
+      {
+        assertion = duplicateSources == [ ];
+        message = "testSupport.sops values and sources define the same secret: ${lib.concatStringsSep ", " duplicateSources}";
       }
     ];
 
