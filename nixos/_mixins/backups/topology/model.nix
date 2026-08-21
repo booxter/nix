@@ -7,7 +7,7 @@ let
   backups = config.host.backups;
   hostName = config.networking.hostName;
   configurations = backupConfigurations // {
-    ${hostName}.config = config;
+    ${hostName} = config;
   };
 in
 {
