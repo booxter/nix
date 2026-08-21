@@ -379,6 +379,27 @@
         "type": "github"
       }
     },
+    "motion-captcha-bot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "telegym": "telegym_2"
+      },
+      "locked": {
+        "lastModified": 1787274219,
+        "narHash": "sha256-+4de2lNPrjIh/moh9AOX+7BI/7sFmUIsMGVU1d5zS6c=",
+        "owner": "FrostBy",
+        "repo": "motion-captcha-bot",
+        "rev": "4915ca9be50052340716e966228ffdea57e65333",
+        "type": "github"
+      },
+      "original": {
+        "owner": "FrostBy",
+        "repo": "motion-captcha-bot",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -420,7 +441,7 @@
     },
     "nixos-hardware": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1786867632,
@@ -534,6 +555,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1787261707,
+        "narHash": "sha256-/8bk8YV9ih1/dI723eQks6a8L4bdDiMxh3bkPiHNVno=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "d7ddb26e62a258b802b4fa853be68a37259641a5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "release-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1767892417,
         "narHash": "sha256-8bW3q88CEg2u4hSP66Vf4lpbLonHz7hqDNBMcCY7E9U=",
         "rev": "3497aa5c9457a9d88d71fa93a4a8368816fbeeba",
@@ -545,7 +582,7 @@
         "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1786711500,
         "narHash": "sha256-QvnceIGTBeDvDd9oCn+GvdsnkquliuwbVgpiRH68qaQ=",
@@ -662,10 +699,11 @@
         "homebrew-core": "homebrew-core",
         "jellarr": "jellarr",
         "lolek": "lolek",
+        "motion-captcha-bot": "motion-captcha-bot",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_4",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
@@ -835,6 +873,25 @@
         "owner": "booxter",
         "repo": "telegym",
         "rev": "74f7ab5ffb2e530e7a5d36ea575f4cad3e1c6a64",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "lolek-missing-features",
+        "repo": "telegym",
+        "type": "github"
+      }
+    },
+    "telegym_2": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1787265683,
+        "narHash": "sha256-KpRAq5nOFM59nCNyGJZIadCUUBQeS8d9oMNLuw6qvEw=",
+        "owner": "booxter",
+        "repo": "telegym",
+        "rev": "25d3da8e9271e95006e6cf682921dd4945d27d23",
         "type": "github"
       },
       "original": {

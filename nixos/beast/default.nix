@@ -56,6 +56,7 @@
     observability.blackbox.remote = { };
 
     lolek.enable = true;
+    motion-captcha-bot.enable = true;
     watchstate = {
       backupStagingDirectory = "/volume2/backups/staging/watchstate";
     };
