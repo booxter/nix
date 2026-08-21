@@ -1,4 +1,5 @@
 {
+  clientName ? null,
   pkgs,
   serverName,
 }:
@@ -25,4 +26,20 @@ pkgs.runCommand "nixos-test-tls-pki" { nativeBuildInputs = [ pkgs.openssl ]; } '
     -copy_extensions copy \
     -out "$out/server.crt" \
     -days 36500
+
+  ${pkgs.lib.optionalString (clientName != null) ''
+    openssl req -new -newkey rsa:2048 -nodes \
+      -subj /CN=${clientName} \
+      -addext "extendedKeyUsage=clientAuth" \
+      -keyout "$out/client.key" \
+      -out "$out/client.csr"
+    openssl x509 -req \
+      -in "$out/client.csr" \
+      -CA "$out/ca.crt" \
+      -CAkey "$out/ca.key" \
+      -CAcreateserial \
+      -copy_extensions copy \
+      -out "$out/client.crt" \
+      -days 36500
+  ''}
 ''
