@@ -4,5 +4,6 @@
     ./config.nix
     ./ingress
     ./internal-https
+    ./sso.nix
   ];
 }

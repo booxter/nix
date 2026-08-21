@@ -20,8 +20,6 @@ let
       )
     ) service.metrics
   ) services;
-  oidcServices = lib.filterAttrs (_: service: service.auth.oidcRegistration != null) services;
-  oauth2ProxyServices = lib.filterAttrs (_: service: service.auth.oauth2ProxyGate != null) services;
 in
 {
   config = lib.mkMerge [
@@ -58,16 +56,5 @@ in
       }) metrics;
     })
 
-    (lib.mkIf (oidcServices != { }) {
-      host.sso.oidc.registrations = lib.mapAttrs' (
-        serviceName: service: lib.nameValuePair serviceName service.auth.oidcRegistration
-      ) oidcServices;
-    })
-
-    (lib.mkIf (oauth2ProxyServices != { }) {
-      host.sso.oauth2ProxyGates = lib.mapAttrs' (
-        serviceName: service: lib.nameValuePair serviceName service.auth.oauth2ProxyGate
-      ) oauth2ProxyServices;
-    })
   ];
 }

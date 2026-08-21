@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  outputs,
+  storageConfigurations,
   storageIdentities,
 }:
 let
@@ -12,7 +12,7 @@ let
   };
   nodes =
     lib.mapAttrs (_: configuration: nodeConfig configuration.config) (
-      removeAttrs outputs.nixosConfigurations [ hostName ]
+      removeAttrs storageConfigurations [ hostName ]
     )
     // {
       ${hostName} = nodeConfig config;

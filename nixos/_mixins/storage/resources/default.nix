@@ -1,7 +1,8 @@
 {
   config,
   lib,
-  outputs,
+  outputs ? null,
+  storageConfigurations ? outputs.nixosConfigurations,
   storageIdentities,
   ...
 }:
@@ -144,7 +145,7 @@ in
     inherit
       config
       lib
-      outputs
+      storageConfigurations
       storageIdentities
       ;
   };
