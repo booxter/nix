@@ -1,6 +1,7 @@
 {
   appSet,
+  inputs,
   pkgs,
   ...
 }:
-appSet.packages // import ../tests { inherit pkgs; }
+appSet.packages // import ../tests { inherit inputs pkgs; }

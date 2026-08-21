@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
   fakeOauth2Proxy = pkgs.writeText "fake-oauth2-proxy.py" ''
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -93,8 +93,10 @@ pkgs.testers.runNixOSTest {
     { lib, ... }:
     {
       imports = [
+        inputs.sops-nix.nixosModules.sops
         ../../common/_mixins/network
         ../../nixos/_mixins/sso
+        ./lib/sops.nix
       ];
 
       options = {
@@ -113,31 +115,6 @@ pkgs.testers.runNixOSTest {
           default = { };
         };
 
-        sops.secrets = lib.mkOption {
-          type = lib.types.attrsOf (
-            lib.types.submodule (
-              { name, ... }:
-              {
-                freeformType = lib.types.attrsOf lib.types.anything;
-                options.path = lib.mkOption {
-                  type = lib.types.str;
-                  default = "/run/secrets/${name}";
-                };
-              }
-            )
-          );
-          default = { };
-        };
-
-        sops.useSystemdActivation = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-
-        sops.placeholder = lib.mkOption {
-          type = lib.types.attrsOf lib.types.str;
-          default = { };
-        };
       };
 
       config = {

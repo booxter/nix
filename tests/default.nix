@@ -1,4 +1,4 @@
-{ pkgs }:
+{ inputs, pkgs }:
 let
   inherit (pkgs) lib;
   testPaths =
@@ -11,5 +11,5 @@ let
       );
 in
 lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux (
-  lib.mapAttrs (_: path: import path { inherit pkgs; }) testPaths
+  lib.mapAttrs (_: path: import path { inherit inputs pkgs; }) testPaths
 )
