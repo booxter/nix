@@ -29,7 +29,6 @@ in
       _module.args.fleetWebServices = import ../../_lib/fleet-web-services.nix {
         inherit config lib outputs;
       };
-      _module.args.webModel = import ./model.nix { inherit config lib; };
 
       host.network.stableAddress.requiredBy = lib.optional (
         internalServices != { }
