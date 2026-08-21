@@ -8,6 +8,8 @@
     ../backups/client/options.nix
     ../site-ip/options.nix
     ../sso/directory.nix
+    ../sso/oidc.nix
+    ../sso/provider-options.nix
     ../storage/resources
     ../storage/volumes/options.nix
     ../vpn
