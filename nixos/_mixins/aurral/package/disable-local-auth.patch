@@ -53,3 +53,41 @@ diff --git a/backend/routes/auth.js b/backend/routes/auth.js
        .toLowerCase();
      const password = String(req.body?.password || "");
      if (!username || !password) {
+diff --git a/.tests/auth/local-auth.test.js b/.tests/auth/local-auth.test.js
+new file mode 100644
+--- /dev/null
++++ b/.tests/auth/local-auth.test.js
+@@ -0,0 +1,33 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { isLocalAuthEnabled } from "../../backend/middleware/auth.js";
++
++const originalValue = process.env.DISABLE_LOCAL_AUTH;
++
++test.afterEach(() => {
++  if (originalValue === undefined) {
++    delete process.env.DISABLE_LOCAL_AUTH;
++  } else {
++    process.env.DISABLE_LOCAL_AUTH = originalValue;
++  }
++});
++
++test("local authentication is enabled by default", () => {
++  delete process.env.DISABLE_LOCAL_AUTH;
++  assert.equal(isLocalAuthEnabled(), true);
++});
++
++for (const value of ["true", "1", "yes", " TRUE ", "Yes"]) {
++  test(`local authentication is disabled by ${JSON.stringify(value)}`, () => {
++    process.env.DISABLE_LOCAL_AUTH = value;
++    assert.equal(isLocalAuthEnabled(), false);
++  });
++}
++
++for (const value of ["false", "0", "no", "unexpected"]) {
++  test(`local authentication remains enabled by ${JSON.stringify(value)}`, () => {
++    process.env.DISABLE_LOCAL_AUTH = value;
++    assert.equal(isLocalAuthEnabled(), true);
++  });
++}

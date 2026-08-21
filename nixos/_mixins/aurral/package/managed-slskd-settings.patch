@@ -185,3 +185,122 @@ index 4d21780..6ebcda1 100644
            </SettingsModalSection>
          </SettingsIntegrationModal>
        )}
+diff --git a/.tests/settings/managed-slskd.test.js b/.tests/settings/managed-slskd.test.js
+new file mode 100644
+--- /dev/null
++++ b/.tests/settings/managed-slskd.test.js
+@@ -0,0 +1,114 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  applyManagedSlskdSettings,
++  getManagedSlskdSettings,
++  preserveStoredSlskdSettings,
++} from "../../backend/config/managedSlskd.js";
++
++const managedEnvironment = {
++  AURRAL_SLSKD_MANAGED: "true",
++  AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
++  AURRAL_SLSKD_API_KEY: "test-api-key",
++  AURRAL_SLSKD_PRIORITY: "20",
++  AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
++};
++
++test("managed slskd settings are disabled by default", () => {
++  assert.equal(getManagedSlskdSettings({}), null);
++});
++
++test("managed slskd settings require a URL", () => {
++  assert.throws(
++    () =>
++      getManagedSlskdSettings({
++        AURRAL_SLSKD_MANAGED: "true",
++        AURRAL_SLSKD_API_KEY: "test-api-key",
++      }),
++    /AURRAL_SLSKD_URL is required/,
++  );
++});
++
++test("managed slskd settings require an API key", () => {
++  assert.throws(
++    () =>
++      getManagedSlskdSettings({
++        AURRAL_SLSKD_MANAGED: "true",
++        AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
++      }),
++    /AURRAL_SLSKD_API_KEY is required/,
++  );
++});
++
++for (const priority of ["0", "1001", "invalid"]) {
++  test(`managed slskd rejects priority ${priority}`, () => {
++    assert.throws(
++      () =>
++        getManagedSlskdSettings({
++          ...managedEnvironment,
++          AURRAL_SLSKD_PRIORITY: priority,
++        }),
++      /AURRAL_SLSKD_PRIORITY must be between 1 and 1000/,
++    );
++  });
++}
++
++test("managed slskd settings replace only the slskd integration", () => {
++  const result = applyManagedSlskdSettings(
++    {
++      slskd: { apiKey: "stored-api-key" },
++      ytdlp: { enabled: true },
++    },
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, {
++    slskd: {
++      enabled: true,
++      url: "http://127.0.0.2:5030",
++      apiKey: "test-api-key",
++      priority: 20,
++      cleanupAfterRuns: true,
++      managed: true,
++    },
++    ytdlp: { enabled: true },
++  });
++});
++
++test("stored slskd settings are preserved when saving managed settings", () => {
++  const result = preserveStoredSlskdSettings(
++    {
++      slskd: { apiKey: "managed-api-key" },
++      ytdlp: { enabled: true },
++    },
++    { slskd: { apiKey: "stored-api-key" } },
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, {
++    slskd: { apiKey: "stored-api-key" },
++    ytdlp: { enabled: true },
++  });
++});
++
++test("managed slskd settings are not persisted when none were stored", () => {
++  const result = preserveStoredSlskdSettings(
++    {
++      slskd: { apiKey: "managed-api-key" },
++      ytdlp: { enabled: true },
++    },
++    {},
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, { ytdlp: { enabled: true } });
++});
++
++test("unmanaged slskd settings are persisted normally", () => {
++  const integrations = { slskd: { apiKey: "updated-api-key" } };
++  assert.deepEqual(
++    preserveStoredSlskdSettings(integrations, {}, {}),
++    integrations,
++  );
++});
