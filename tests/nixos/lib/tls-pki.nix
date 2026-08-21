@@ -8,6 +8,8 @@ pkgs.runCommand "nixos-test-tls-pki" { nativeBuildInputs = [ pkgs.openssl ]; } '
 
   openssl req -x509 -newkey rsa:2048 -nodes \
     -subj /CN=nixos-test-ca \
+    -addext "basicConstraints=critical,CA:TRUE" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -keyout "$out/ca.key" \
     -out "$out/ca.crt" \
     -days 36500
