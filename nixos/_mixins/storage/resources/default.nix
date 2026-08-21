@@ -1,8 +1,7 @@
 {
   config,
   lib,
-  outputs ? null,
-  storageConfigurations ? outputs.nixosConfigurations,
+  storageConfigurations,
   storageIdentities,
   ...
 }:

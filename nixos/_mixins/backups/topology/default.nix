@@ -1,8 +1,7 @@
 {
-  backupConfigurations ? outputs.nixosConfigurations,
+  backupConfigurations,
   config,
   lib,
-  outputs,
   ...
 }:
 let
