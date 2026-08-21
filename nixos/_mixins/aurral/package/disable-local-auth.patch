@@ -16,7 +16,7 @@ diff --git a/backend/middleware/auth.js b/backend/middleware/auth.js
 @@ -503,6 +508,7 @@ function migrateLegacyAdmin() {
  }
 
- function resolveUser(username, password) {
+ export function resolveUser(username, password) {
 +  if (!isLocalAuthEnabled()) return null;
    if (userOps.countUsers() === 0) {
      migrateLegacyAdmin();
