@@ -1,93 +1,84 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
-  clientPrivateKey = ''
-    -----BEGIN OPENSSH PRIVATE KEY-----
-    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-    QyNTUxOQAAACCVNmQc9v2Mk7UahzgJfb/dKhMl+J7SyjHtDsWYwsij2AAAAKCijFNNooxT
-    TQAAAAtzc2gtZWQyNTUxOQAAACCVNmQc9v2Mk7UahzgJfb/dKhMl+J7SyjHtDsWYwsij2A
-    AAAEA9dT2RtGIcZ9CUUaHp8ldV46mo87CpfX5vx8CKUtp9f5U2ZBz2/YyTtRqHOAl9v90q
-    EyX4ntLKMe0OxZjCyKPYAAAAFmlocmFjaHlzaGthQEpHV1hIV0RMNFgBAgMEBQYH
-    -----END OPENSSH PRIVATE KEY-----
-  '';
-  clientPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJU2ZBz2/YyTtRqHOAl9v90qEyX4ntLKMe0OxZjCyKPY backup-test-client";
-  serverPrivateKey = ''
-    -----BEGIN OPENSSH PRIVATE KEY-----
-    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-    QyNTUxOQAAACB6n/zaSVqpqbX3o50yYYe8I4T8qD5a7iNJNM+ukUyT2wAAAKAD1dIjA9XS
-    IwAAAAtzc2gtZWQyNTUxOQAAACB6n/zaSVqpqbX3o50yYYe8I4T8qD5a7iNJNM+ukUyT2w
-    AAAEArc0YV+SEIunxiYtCkqlAFI9QI3/C0A8Oi2g5ThZ6smXqf/NpJWqmptfejnTJhh7wj
-    hPyoPlruI0k0z66RTJPbAAAAFmlocmFjaHlzaGthQEpHV1hIV0RMNFgBAgMEBQYH
-    -----END OPENSSH PRIVATE KEY-----
-  '';
-  serverPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHqf/NpJWqmptfejnTJhh7wjhPyoPlruI0k0z66RTJPb backup-test-server";
+  fixtures = ./backup;
+  secret = name: value: pkgs.writeText "backup-test-${name}" "${value}\n";
+  password = secret "password" "test-password";
+  clientPrivateKey = pkgs.writeText "backup-test-client-key" (
+    builtins.readFile (fixtures + "/client-key")
+  );
+  s3AccessKey = "GKaaaaaaaaaaaaaaaaaaaaaaaa";
+  s3SecretKey = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 in
 pkgs.testers.runNixOSTest {
   name = "backup";
 
+  defaults =
+    { lib, nodes, ... }:
+    {
+      imports = [
+        inputs.sops-nix.nixosModules.sops
+        ../../nixos/_mixins/backups/composition.nix
+        ./lib/sops.nix
+      ];
+
+      _module.args.backupConfigurations = lib.mapAttrs (
+        _: node: builtins.removeAttrs node [ "config" ]
+      ) nodes;
+    };
+
   nodes = {
     server = {
-      imports = [
-        ../../nixos/_mixins/backups/metrics.nix
-        ../../nixos/_mixins/backups/server
-      ];
+      virtualisation.diskSize = 2 * 1024;
 
       environment.etc = {
         "ssh/ssh_host_ed25519_key" = {
-          text = serverPrivateKey;
+          source = fixtures + "/server-key";
           mode = "0600";
         };
-        "ssh/ssh_host_ed25519_key.pub".text = serverPublicKey;
-        "backup-test/password".text = "test-password\n";
+        "ssh/ssh_host_ed25519_key.pub".source = fixtures + "/server-key.pub";
       };
 
-      services.openssh = {
-        hostKeys = [
-          {
-            path = "/etc/ssh/ssh_host_ed25519_key";
-            type = "ed25519";
-          }
-        ];
-        settings.PasswordAuthentication = false;
+      services = {
+        garage = {
+          enable = true;
+          package = pkgs.garage_2;
+          settings = {
+            rpc_bind_addr = "127.0.0.1:3901";
+            rpc_public_addr = "127.0.0.1:3901";
+            rpc_secret = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            replication_factor = 1;
+            s3_api = {
+              s3_region = "us-east-1";
+              api_bind_addr = "127.0.0.1:9000";
+            };
+          };
+        };
+        openssh = {
+          hostKeys = [
+            {
+              path = "/etc/ssh/ssh_host_ed25519_key";
+              type = "ed25519";
+            }
+          ];
+          settings.PasswordAuthentication = false;
+        };
       };
 
       host.backups.server = {
         repositoryRoot = "/srv/restic";
-      };
-      _module.args.backupTopology.server = {
-        localClient = null;
-        repositories.test = {
-          storageName = "test";
-          publicKey = clientPublicKey;
-          cloud = {
-            backend = "local";
-            enable = true;
-            repository = "/srv/cloud/test";
-            sourcePasswordFile = "/etc/backup-test/password";
-            passwordFile = "/etc/backup-test/password";
-            storageProvider = null;
-            prefix = "";
-            pruneOpts = [
-              "--keep-daily=14"
-              "--keep-weekly=8"
-              "--keep-monthly=12"
-            ];
-            timerConfig = {
-              OnCalendar = "2099-01-01";
-              RandomizedDelaySec = "5m";
-              Persistent = true;
-            };
-            pruneTimerConfig = {
-              OnCalendar = "Sun *-*-* 07:00:00";
-              RandomizedDelaySec = "5m";
-              Persistent = true;
-            };
-          };
+        offsite = {
+          backend = "s3";
+          endpoint = "http://127.0.0.1:9000";
+          bucket = "backups";
         };
       };
 
-      systemd.tmpfiles.rules = [
-        "d /srv/cloud 0750 restic-test-offload restic-test-offload - -"
-      ];
+      testSupport.sops.sources = {
+        "backup/restic/client/cloud/localPassword" = password;
+        "backup/restic/client/cloud/password" = password;
+        "backup/restic/cloud/b2/applicationKeyId" = secret "s3-access-key" s3AccessKey;
+        "backup/restic/cloud/b2/applicationKey" = secret "s3-secret-key" s3SecretKey;
+      };
     };
 
     client =
@@ -111,36 +102,9 @@ pkgs.testers.runNixOSTest {
         };
       in
       {
-        imports = [
-          ../../nixos/_mixins/backups/client/options.nix
-          ../../nixos/_mixins/backups/client/jobs.nix
-          ../../nixos/_mixins/backups/metrics.nix
-        ];
-
-        _module.args.backupTopology.client.destination = {
-          transport = "sftp";
-          repositoryPath = "/srv/restic/test";
-          ingestUser = "restic-test";
-          user = "root";
-          passwordFile = "/etc/backup-test/password";
-          identityFile = "/etc/backup-test/id_ed25519";
-          dependencyUnits = [ ];
-        };
-
-        environment.etc = {
-          "backup-test/id_ed25519" = {
-            text = clientPrivateKey;
-            mode = "0400";
-          };
-          "backup-test/password" = {
-            text = "test-password\n";
-            mode = "0400";
-          };
-        };
-
         programs.ssh.knownHosts.server = {
           hostNames = [ "server" ];
-          publicKey = serverPublicKey;
+          publicKeyFile = fixtures + "/server-key.pub";
         };
 
         systemd.services.prepare-backup-test = {
@@ -155,86 +119,31 @@ pkgs.testers.runNixOSTest {
           "d /var/lib/backup-test 0750 root root -"
         ];
 
-        host.backups.destination.server = "server";
-        host.backups.sources.test = {
-          title = "Backup Test";
-          preparation = {
-            service = "prepare-backup-test";
-            paths = [ "/var/lib/backup-test/staged" ];
+        host.backups = {
+          destination = {
+            server = "server";
+            publicKey = builtins.readFile (fixtures + "/client-key.pub");
           };
+          sources.test = {
+            title = "Backup Test";
+            preparation = {
+              service = "prepare-backup-test";
+              paths = [ "/var/lib/backup-test/staged" ];
+            };
+          };
+        };
+
+        testSupport.sops.sources = {
+          "backup/restic/local/password" = password;
+          "backup/restic/local/ssh/privateKey" = clientPrivateKey;
         };
       };
   };
 
   testScript = ''
-    import json
-
-
-    def snapshot_count():
-        return len(json.loads(client.succeed("restic-server snapshots --json")))
-
-
-    def cloud_snapshot_count():
-        command = "restic -r /srv/cloud/test --password-file /etc/backup-test/password snapshots --json"
-        return len(json.loads(server.succeed(command)))
-
-
-    def assert_metric(machine, file_name, metric, value):
-        metrics = machine.succeed(f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}")
-        matches = [line for line in metrics.splitlines() if line.startswith(metric + "{")]
-        assert len(matches) == 1, (metric, metrics)
-        assert matches[0].endswith(f" {value}"), matches[0]
-        return metrics
-
-
-    start_all()
-    server.wait_for_unit("sshd.service")
-    server.succeed("systemctl start restic-test-repo-acl.service")
-    client.wait_for_unit("multi-user.target")
-    client.wait_for_unit("backup-metrics-configured.service")
-    client.succeed("printf 'first version\\n' > /var/lib/backup-test/source.txt")
-
-    with subtest("only the complete pipeline has a timer"):
-        client.succeed("systemctl cat restic-backups-server.timer")
-        client.fail("systemctl cat prepare-backup-test.timer")
-        server.succeed("systemctl cat restic-test-cloud-offload.timer")
-        server.succeed("systemctl cat restic-test-cloud-prune.timer")
-        server.fail("systemctl cat restic-cloud-usage-export.timer")
-
-    with subtest("pipeline prepares and snapshots once"):
-        client.succeed("systemctl start restic-backups-server.service")
-        assert client.succeed("cat /var/lib/backup-test/preparation-count").strip() == "1"
-        assert snapshot_count() == 1
-        assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "1.0")
-        assert_metric(client, "restic-server.prom", "host_observability_backup_last_success", "1.0")
-
-    with subtest("server offloads the repository"):
-        server.succeed("systemctl start restic-test-cloud-offload.service")
-        assert cloud_snapshot_count() == 1
-        metrics = assert_metric(
-            server,
-            "restic-test-cloud-offload.prom",
-            "host_observability_backup_last_success",
-            "1.0",
-        )
-        assert 'backup_job="restic-test-cloud-offload"' in metrics
-
-    with subtest("server prunes the cloud repository separately"):
-        server.succeed("systemctl start restic-test-cloud-prune.service")
-
-    with subtest("snapshot restores the prepared content"):
-        client.succeed("rm -rf /tmp/restore")
-        client.succeed("restic-server restore latest --target /tmp/restore")
-        restored = client.succeed("cat /tmp/restore/var/lib/backup-test/staged/source.txt")
-        assert restored.strip() == "first version", restored
-
-    with subtest("failed preparation blocks a new snapshot"):
-        client.succeed("touch /run/fail-backup-preparation")
-        client.fail("systemctl start restic-backups-server.service")
-        assert snapshot_count() == 1
-        assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "0.0")
-
-    with subtest("SFTP account cannot execute commands"):
-        client.fail("ssh restic-test@restic-backup-server true")
-  '';
+    CLOUD_REPOSITORY = "s3:http://127.0.0.1:9000/backups/client"
+    S3_ACCESS_KEY = ${builtins.toJSON s3AccessKey}
+    S3_SECRET_KEY = ${builtins.toJSON s3SecretKey}
+  ''
+  + builtins.readFile "${fixtures}/test.py";
 }
