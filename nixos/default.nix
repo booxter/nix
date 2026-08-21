@@ -39,6 +39,7 @@
       ./_mixins/maintenance
       ./_mixins/media-admin-sso
       ./_mixins/media-libraries
+      ./_mixins/motion-captcha-bot
       ./_mixins/network
       ./_mixins/nix
       ./_mixins/observability

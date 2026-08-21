@@ -63,6 +63,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    motion-captcha-bot = {
+      url = "github:FrostBy/motion-captcha-bot";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
