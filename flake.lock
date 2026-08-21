@@ -387,11 +387,11 @@
         "telegym": "telegym_2"
       },
       "locked": {
-        "lastModified": 1787274219,
-        "narHash": "sha256-+4de2lNPrjIh/moh9AOX+7BI/7sFmUIsMGVU1d5zS6c=",
+        "lastModified": 1787277235,
+        "narHash": "sha256-RnW8AtCwTMQPdVoOaTGtKPQFf+Ty1/hKxsCZO+onWE8=",
         "owner": "FrostBy",
         "repo": "motion-captcha-bot",
-        "rev": "4915ca9be50052340716e966228ffdea57e65333",
+        "rev": "6b84a4c5fde90bc576213f46ab0623e0bd16aae4",
         "type": "github"
       },
       "original": {
