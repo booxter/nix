@@ -119,26 +119,18 @@ index 4d21780..6ebcda1 100644
    const sabnzbdEnabled = sabnzbd.enabled === true;
 
    const updateIntegration = (key, patch) =>
-@@ -425,54 +427,62 @@ export function SettingsDownloadClientsSection({
-             </button>
-           }
-         >
+@@ -449,6 +451,10 @@ export function SettingsDownloadClientsSection({
 +          {slskdManaged ? (
 +            <SettingsModalCallout>Managed by the host configuration.</SettingsModalCallout>
 +          ) : null}
-           <SettingsModalSection title="General">
-             <SettingsModalToggle
-               label="Enable slskd"
-               checked={slskdEnabled}
-+              disabled={slskdManaged}
-               onChange={(event) => updateIntegration("slskd", { enabled: event.target.checked })}
-             />
-           </SettingsModalSection>
+           <SettingsModalToggle
+             label="Enable slskd"
+             checked={slskdEnabled}
++            disabled={slskdManaged}
+             onChange={(event) => updateIntegration("slskd", { enabled: event.target.checked })}
+           />
 
-           <SettingsModalSection title="Connection">
-             <SettingsModalField label="Server URL">
-               <SettingsInput
-                 type="url"
+@@ -459,6 +465,7 @@ export function SettingsDownloadClientsSection({
                  placeholder="http://localhost:5030"
                  autoComplete="off"
                  value={slskd.url || ""}
@@ -146,8 +138,7 @@ index 4d21780..6ebcda1 100644
                  onChange={(event) => updateIntegration("slskd", { url: event.target.value })}
                />
              </SettingsModalField>
-             <SettingsModalField label="API key">
-               <SettingsInput
+@@ -467,6 +474,7 @@ export function SettingsDownloadClientsSection({
                  type="password"
                  autoComplete="off"
                  value={slskd.apiKey || ""}
@@ -155,12 +146,7 @@ index 4d21780..6ebcda1 100644
                  onChange={(event) => updateIntegration("slskd", { apiKey: event.target.value })}
                />
              </SettingsModalField>
-           </SettingsModalSection>
-
-           <SettingsModalSection title="Behavior">
-             <SettingsModalField label="Source priority">
-               <SettingsInput
-                 type="number"
+@@ -479,6 +487,7 @@ export function SettingsDownloadClientsSection({
                  min="1"
                  max="1000"
                  value={slskd.priority ?? 10}
@@ -168,10 +154,7 @@ index 4d21780..6ebcda1 100644
                  onChange={(event) =>
                    updateIntegration("slskd", {
                      priority: toNumber(event.target.value, 10),
-                   })
-                 }
-               />
-             </SettingsModalField>
+@@ -489,6 +498,7 @@ export function SettingsDownloadClientsSection({
              <SettingsModalToggle
                label="Clean up after runs"
                checked={slskd.cleanupAfterRuns === true}
@@ -179,12 +162,6 @@ index 4d21780..6ebcda1 100644
                onChange={(event) =>
                  updateIntegration("slskd", {
                    cleanupAfterRuns: event.target.checked,
-                 })
-               }
-             />
-           </SettingsModalSection>
-         </SettingsIntegrationModal>
-       )}
 diff --git a/.tests/settings/managed-slskd.test.js b/.tests/settings/managed-slskd.test.js
 new file mode 100644
 --- /dev/null
