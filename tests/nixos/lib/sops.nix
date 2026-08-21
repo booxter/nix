@@ -6,19 +6,52 @@
 }:
 let
   sources = config.testSupport.sops.sources;
-  installSecrets = pkgs.writeShellApplication {
-    name = "install-test-secrets";
+  templateSources = lib.mapAttrs (
+    name: template: pkgs.writeText "test-sops-template-${name}" template.content
+  ) config.sops.templates;
+  install =
+    {
+      group,
+      mode,
+      owner,
+      path,
+      source,
+    }:
+    ''
+      install -D -m ${lib.escapeShellArg mode} -o ${
+        lib.escapeShellArg (if owner == null || builtins.stringLength owner == 0 then "root" else owner)
+      } -g ${
+        lib.escapeShellArg (if group == null || builtins.stringLength group == 0 then "root" else group)
+      } ${lib.escapeShellArg source} ${lib.escapeShellArg path}
+    '';
+  secretCommands = lib.mapAttrsToList (
+    name: secret:
+    install {
+      inherit (secret)
+        group
+        mode
+        owner
+        path
+        ;
+      source = sources.${name} or "/dev/null";
+    }
+  ) config.sops.secrets;
+  templateCommands = lib.mapAttrsToList (
+    name: template:
+    install {
+      inherit (template)
+        group
+        mode
+        owner
+        path
+        ;
+      source = templateSources.${name};
+    }
+  ) config.sops.templates;
+  installSops = pkgs.writeShellApplication {
+    name = "install-test-sops";
     runtimeInputs = [ pkgs.coreutils ];
-    text = lib.concatMapStringsSep "\n" (
-      name:
-      let
-        secret = config.sops.secrets.${name};
-        source = sources.${name} or "/dev/null";
-      in
-      ''
-        install -D -m ${lib.escapeShellArg secret.mode} -o ${lib.escapeShellArg secret.owner} -g ${lib.escapeShellArg secret.group} ${lib.escapeShellArg source} ${lib.escapeShellArg secret.path}
-      ''
-    ) (builtins.attrNames config.sops.secrets);
+    text = lib.concatStringsSep "\n" (secretCommands ++ templateCommands);
   };
 in
 {
@@ -44,7 +77,7 @@ in
     };
 
     systemd.services.sops-install-secrets.serviceConfig.ExecStart = lib.mkForce [
-      (lib.getExe installSecrets)
+      (lib.getExe installSops)
     ];
   };
 }
