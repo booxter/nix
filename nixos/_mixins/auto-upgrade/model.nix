@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
 }:
@@ -51,15 +52,17 @@ let
   };
   localPolicy = policy;
   hostView = hostConfig: {
-    inherit (hostConfig.host) realm;
     inherit (hostConfig.host.autoUpgrade) claims;
   };
-  configurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  allHosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
-    ${localHost} = hostView config;
-  };
-  hosts = lib.filterAttrs (_: host: host.realm == config.host.realm) allHosts;
-  hostNames = builtins.attrNames hosts;
+  hostNames = builtins.attrNames (
+    lib.filterAttrs (
+      _: host: host.platform == "nixos" && host.realm == config.host.realm
+    ) fleetInventory.hosts
+  );
+  hosts = lib.genAttrs hostNames (
+    hostName:
+    hostView (if hostName == localHost then config else outputs.nixosConfigurations.${hostName}.config)
+  );
   allWeekdays = [
     "Mon"
     "Tue"

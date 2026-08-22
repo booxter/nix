@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   pkgs,
@@ -10,6 +11,7 @@ let
   model = import ./model.nix {
     inherit
       config
+      fleetInventory
       lib
       outputs
       ;
