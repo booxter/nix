@@ -1,0 +1,48 @@
+groups:
+  - name: nixpkgs-cache-warmer
+    interval: 5m
+    rules:
+      - alert: NixpkgsCacheWarmerTargetFailed
+        expr: |
+          host_observability_nixpkgs_cache_warmer_target_configured{scrape_profile="node"} == 1
+          and on(instance, branch, system)
+          host_observability_nixpkgs_cache_warmer_last_attempt_success{scrape_profile="node"} == 0
+          and on(instance)
+          up{scrape_profile="node"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          category: nixpkgs-cache-warmer
+        annotations:
+          summary: "Nixpkgs cache warming failed for {{ $labels.branch }} on {{ $labels.system }}"
+          description: "The last {{ $labels.branch }} cache-warming attempt for {{ $labels.system }} on {{ $labels.instance }} did not fully succeed."
+      - alert: NixpkgsCacheWarmerTargetNeverSucceeded
+        expr: |
+          (
+            host_observability_nixpkgs_cache_warmer_target_configured{scrape_profile="node"} == 1
+            unless on(instance, branch, system)
+            host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds{scrape_profile="node"}
+          )
+          and on(instance)
+          up{scrape_profile="node"} == 1
+        for: 36h
+        labels:
+          severity: warning
+          category: nixpkgs-cache-warmer
+        annotations:
+          summary: "Nixpkgs cache warming has not succeeded for {{ $labels.branch }} on {{ $labels.system }}"
+          description: "The configured {{ $labels.branch }} cache-warming target for {{ $labels.system }} on {{ $labels.instance }} has not completed successfully within 36 hours."
+      - alert: NixpkgsCacheWarmerTargetStale
+        expr: |
+          host_observability_nixpkgs_cache_warmer_target_configured{scrape_profile="node"} == 1
+          and on(instance, branch, system)
+          time() - host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds{scrape_profile="node"} > 129600
+          and on(instance)
+          up{scrape_profile="node"} == 1
+        for: 15m
+        labels:
+          severity: warning
+          category: nixpkgs-cache-warmer
+        annotations:
+          summary: "Nixpkgs cache warming is stale for {{ $labels.branch }} on {{ $labels.system }}"
+          description: "The last successful {{ $labels.branch }} cache-warming run for {{ $labels.system }} on {{ $labels.instance }} is more than 36 hours old."

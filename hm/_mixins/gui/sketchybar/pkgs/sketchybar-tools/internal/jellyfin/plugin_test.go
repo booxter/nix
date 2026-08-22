@@ -127,8 +127,8 @@ func TestRunShowsErrorStateForFetcherAndMetricFailures(t *testing.T) {
 	for name, fetcher := range cases {
 		t.Run(name, func(t *testing.T) {
 			bar := &recordingBar{}
-			if err := Run(context.Background(), testConfig(), fetcher, bar); err != nil {
-				t.Fatalf("Run returned an error: %v", err)
+			if err := Run(context.Background(), testConfig(), fetcher, bar); err == nil {
+				t.Fatal("expected metrics failure")
 			}
 			calls := joinedCalls(bar)
 			if !strings.Contains(

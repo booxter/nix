@@ -1,0 +1,75 @@
+rule_files:
+  - ../rules/nixpkgs-cache-warmer.rules.yml
+
+evaluation_interval: 5m
+
+tests:
+  - interval: 5m
+    input_series:
+      - series: 'host_observability_nixpkgs_cache_warmer_target_configured{instance="mmini",branch="staging",system="x86_64-linux",scrape_profile="node"}'
+        values: "1x3"
+      - series: 'host_observability_nixpkgs_cache_warmer_last_attempt_success{instance="mmini",branch="staging",system="x86_64-linux",scrape_profile="node"}'
+        values: "0x3"
+      - series: 'up{instance="mmini",scrape_profile="node"}'
+        values: "1x3"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NixpkgsCacheWarmerTargetFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: NixpkgsCacheWarmerTargetFailed
+              branch: staging
+              category: nixpkgs-cache-warmer
+              instance: mmini
+              scrape_profile: node
+              severity: warning
+              system: x86_64-linux
+            exp_annotations:
+              summary: "Nixpkgs cache warming failed for staging on x86_64-linux"
+              description: "The last staging cache-warming attempt for x86_64-linux on mmini did not fully succeed."
+
+  - interval: 5m
+    input_series:
+      - series: 'host_observability_nixpkgs_cache_warmer_target_configured{instance="mmini",branch="staging-next",system="aarch64-darwin",scrape_profile="node"}'
+        values: "1x440"
+      - series: 'up{instance="mmini",scrape_profile="node"}'
+        values: "1x440"
+    alert_rule_test:
+      - eval_time: 36h5m
+        alertname: NixpkgsCacheWarmerTargetNeverSucceeded
+        exp_alerts:
+          - exp_labels:
+              alertname: NixpkgsCacheWarmerTargetNeverSucceeded
+              branch: staging-next
+              category: nixpkgs-cache-warmer
+              instance: mmini
+              scrape_profile: node
+              severity: warning
+              system: aarch64-darwin
+            exp_annotations:
+              summary: "Nixpkgs cache warming has not succeeded for staging-next on aarch64-darwin"
+              description: "The configured staging-next cache-warming target for aarch64-darwin on mmini has not completed successfully within 36 hours."
+
+  - interval: 5m
+    input_series:
+      - series: 'host_observability_nixpkgs_cache_warmer_target_configured{instance="mmini",branch="release-26.05",system="x86_64-linux",scrape_profile="node"}'
+        values: "1x440"
+      - series: 'host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds{instance="mmini",branch="release-26.05",system="x86_64-linux",scrape_profile="node"}'
+        values: "0x440"
+      - series: 'up{instance="mmini",scrape_profile="node"}'
+        values: "1x440"
+    alert_rule_test:
+      - eval_time: 36h20m
+        alertname: NixpkgsCacheWarmerTargetStale
+        exp_alerts:
+          - exp_labels:
+              alertname: NixpkgsCacheWarmerTargetStale
+              branch: release-26.05
+              category: nixpkgs-cache-warmer
+              instance: mmini
+              scrape_profile: node
+              severity: warning
+              system: x86_64-linux
+            exp_annotations:
+              summary: "Nixpkgs cache warming is stale for release-26.05 on x86_64-linux"
+              description: "The last successful release-26.05 cache-warming run for x86_64-linux on mmini is more than 36 hours old."

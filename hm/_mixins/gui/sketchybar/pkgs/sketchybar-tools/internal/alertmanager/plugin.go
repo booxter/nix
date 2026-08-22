@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/booxter/nix-config/sketchybar-tools/internal/sketchybar"
@@ -14,7 +15,7 @@ type AlertCounter interface {
 func Run(ctx context.Context, config Config, counter AlertCounter, bar sketchybar.Runner) error {
 	count, err := counter.Count(ctx)
 	if err != nil {
-		return showError(config, bar)
+		return errors.Join(err, showError(config, bar))
 	}
 	if count == 0 {
 		return bar.Run("--set", config.Name, "drawing=off")

@@ -1,0 +1,126 @@
+diff --git a/src/client/modules/modals/docs-modal/docs.ts b/src/client/modules/modals/docs-modal/docs.ts
+--- a/src/client/modules/modals/docs-modal/docs.ts
++++ b/src/client/modules/modals/docs-modal/docs.ts
+@@ -1,4 +1,4 @@
+-import { getStoredToken } from "../../settings/settings";
++import { getStoredToken } from "../../../utils/settings-token";
+ import { jsonHeaders } from "../../../utils/request";
+ import { getBase } from "../../../utils/base-url";
+ 
+diff --git a/src/client/modules/modals/settings-modal/modal.ts b/src/client/modules/modals/settings-modal/modal.ts
+--- a/src/client/modules/modals/settings-modal/modal.ts
++++ b/src/client/modules/modals/settings-modal/modal.ts
+@@ -1,7 +1,7 @@
+ import { renderField, initUrlList, syncConditionalFields } from "./modal-fields";
+ import { initListFields } from "./list-field";
+ import { getBase } from "../../../utils/base-url";
+-import { getStoredToken } from "../../settings/settings";
++import { getStoredToken } from "../../../utils/settings-token";
+ import { jsonHeaders } from "../../../utils/request";
+ import type { ExtensionMeta, SettingField } from "../../../types";
+ import { openExtensionDocs } from "../docs-modal/docs";
+diff --git a/src/client/modules/settings/settings.ts b/src/client/modules/settings/settings.ts
+--- a/src/client/modules/settings/settings.ts
++++ b/src/client/modules/settings/settings.ts
+@@ -18,7 +18,7 @@ import { initIndexerTab } from "../../settings/indexer/tab";
+ import { initShortcutsTab } from "../../settings/shortcuts/tab";
+ import { initGlobalSearch } from "../../settings/shared/settings-search";
+ import {
+-  getStoredToken as _getStoredToken,
++  getStoredToken,
+   SETTINGS_TOKEN_KEY,
+ } from "../../utils/settings-token";
+ import { initSettingsWizard } from "../wizard/wizard";
+@@ -27,6 +27,7 @@ import "../modals/settings-modal/modal";
+ import type { AllExtensions } from "../../types";
+ import { navigateSettingsBack } from "../../utils/navigation";
+ import {
++  switchSettingsTab,
+   getActiveSettingsTab,
+   getSettingsRoot,
+ } from "../../utils/settings-path";
+@@ -50,8 +51,6 @@ function _initSettingsBackLink(): void {
+   );
+ }
+ 
+-export const getStoredToken = _getStoredToken;
+-
+ const _checkAuth = async (): Promise<{
+   required: boolean;
+   valid: boolean;
+@@ -153,26 +152,6 @@ function _showAuthGate(): void {
+     });
+ }
+ 
+-export function switchSettingsTab(value: string, updateUrl = true): void {
+-  document
+-    .querySelectorAll<HTMLElement>(".settings-tab-panel")
+-    .forEach((p) => p.classList.remove("active"));
+-  document.getElementById(`tab-${value}`)?.classList.add("active");
+-  document.querySelectorAll<HTMLElement>(".settings-nav-item").forEach((b) => {
+-    b.classList.toggle("active", b.dataset.tab === value);
+-  });
+-  const select = document.getElementById(
+-    "settings-tab-select",
+-  ) as HTMLSelectElement | null;
+-  if (select) select.value = value;
+-
+-  if (updateUrl) {
+-    const root = getSettingsRoot();
+-    const path = value === "general" ? root : `${root}/${value}`;
+-    window.history.replaceState({}, "", path);
+-  }
+-}
+-
+ function _initTabs(): void {
+   const select = document.getElementById(
+     "settings-tab-select",
+diff --git a/src/client/modules/wizard/server.ts b/src/client/modules/wizard/server.ts
+--- a/src/client/modules/wizard/server.ts
++++ b/src/client/modules/wizard/server.ts
+@@ -1,5 +1,5 @@
+ import { getBase } from "../../utils/base-url";
+-import { getStoredToken } from "../settings/settings";
++import { getStoredToken } from "../../utils/settings-token";
+ 
+ const SERVER_SETTINGS_URL = "/api/server-settings";
+ 
+diff --git a/src/client/modules/wizard/tour.ts b/src/client/modules/wizard/tour.ts
+--- a/src/client/modules/wizard/tour.ts
++++ b/src/client/modules/wizard/tour.ts
+@@ -1,4 +1,4 @@
+-import { switchSettingsTab } from "../settings/settings";
++import { switchSettingsTab } from "../../utils/settings-path";
+ import {
+   buildRoot,
+   ensureInView,
+diff --git a/src/client/utils/settings-path.ts b/src/client/utils/settings-path.ts
+--- a/src/client/utils/settings-path.ts
++++ b/src/client/utils/settings-path.ts
+@@ -24,6 +24,26 @@ export function getActiveSettingsTab(): SettingsTab | null {
+   return segment as SettingsTab;
+ }
+ 
++export function switchSettingsTab(value: string, updateUrl = true): void {
++  document
++    .querySelectorAll<HTMLElement>(".settings-tab-panel")
++    .forEach((panel) => panel.classList.remove("active"));
++  document.getElementById(`tab-${value}`)?.classList.add("active");
++  document.querySelectorAll<HTMLElement>(".settings-nav-item").forEach((item) => {
++    item.classList.toggle("active", item.dataset.tab === value);
++  });
++  const select = document.getElementById(
++    "settings-tab-select",
++  ) as HTMLSelectElement | null;
++  if (select) select.value = value;
++
++  if (updateUrl) {
++    const root = getSettingsRoot();
++    const path = value === "general" ? root : `${root}/${value}`;
++    window.history.replaceState({}, "", path);
++  }
++}
++
+ export function isSettingsPathname(pathname: string): boolean {
+   const normalized = pathname.replace(/\/$/, "");
+   if (normalized === "/settings" || normalized.startsWith("/settings/")) {

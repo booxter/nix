@@ -10,6 +10,7 @@ let
   inherit (osConfig.nixpkgs.hostPlatform) isDarwin;
   logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/sketchybar.log";
   pkiRootCaPath = osConfig.host.pki.authority.rootCaCertificate;
+  pkiRootCa = pkgs.writeText "internal-pki-root-ca.crt" (builtins.readFile pkiRootCaPath);
   theme = import ./theme.nix {
     inherit config pkgs;
     height = cfg.height;
@@ -42,12 +43,12 @@ let
     pluginColors = theme.pluginEnvironment;
     alertmanager = lib.optionalAttrs cfg.alertmanager.enable {
       url = cfg.alertmanager.url;
-      caCertificate = pkiRootCaPath;
+      caCertificate = pkiRootCa;
       inherit (cfg.alertmanager) clientCertificate clientKey;
     };
     jellyfin = lib.optionalAttrs cfg.jellyfin.enable {
       inherit (cfg.jellyfin) metricsUrl clientCertificate clientKey;
-      caCertificate = pkiRootCaPath;
+      caCertificate = pkiRootCa;
     };
   };
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''

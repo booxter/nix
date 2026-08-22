@@ -1,0 +1,1 @@
+"""Nixpkgs cache warming automation."""

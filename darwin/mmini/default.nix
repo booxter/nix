@@ -8,7 +8,29 @@ in
   host.nix.builder = { };
   host.nix.builderClient = { };
 
-  host.nix.cacheWarmer = { };
+  host.nix.cacheWarmer = {
+    fleet.enable = true;
+    nixpkgs = {
+      enable = true;
+      runner = "mmini";
+      references = [
+        "github:NixOS/nixpkgs/master"
+        "github:NixOS/nixpkgs/nixos-unstable"
+        "github:NixOS/nixpkgs/staging"
+        "github:NixOS/nixpkgs/staging-next"
+        "github:NixOS/nixpkgs/staging-26.05"
+        "github:NixOS/nixpkgs/release-26.05"
+      ];
+      systems = [
+        "aarch64-darwin"
+        "x86_64-linux"
+      ];
+      excludePnamePatterns = [
+        "firefox.*"
+        "thunderbird.*"
+      ];
+    };
+  };
 
   host.network.interfaces.en0 = { };
 
