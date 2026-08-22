@@ -30,23 +30,19 @@ groups:
         annotations:
           summary: "Node CPU usage critical on {{ $labels.instance }}"
           description: "{{ $labels.instance }} CPU busy has been above 90% for 5 minutes."
-      - alert: NodeMemoryUsageHigh
+      - alert: NodeMemoryHeadroomLow
         expr: |
-          max by(instance, job) (
-            100 * (
-              1 - (
-                node_memory_MemAvailable_bytes{scrape_profile="node",host_laptop="false"}
-                / node_memory_MemTotal_bytes{scrape_profile="node",host_laptop="false"}
-              )
-            )
-          ) > 80
-        for: 5m
+          min by(instance, job) (
+            node_memory_MemAvailable_bytes{scrape_profile="node",host_laptop="false"}
+            / node_memory_MemTotal_bytes{scrape_profile="node",host_laptop="false"}
+          ) < 0.10
+        for: 15m
         labels:
           severity: warning
           category: capacity
         annotations:
-          summary: "Node memory usage high on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} memory usage has been above 80% for 5 minutes."
+          summary: "Node memory headroom low on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has had less than 10% memory available for 15 minutes."
       - alert: NodeMemoryUsageCritical
         expr: |
           max by(instance, job) (
