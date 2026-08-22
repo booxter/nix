@@ -38,7 +38,7 @@ def test_build_maps_printed_outputs_to_successful_targets() -> None:
     runner = FakeRunner(CommandResult(1, "/nix/store/one\n", "two failed\n"))
     log = io.StringIO()
 
-    outcome = NixBuilder(runner, Path("/nix")).build((one, two), log)
+    outcome = NixBuilder(runner, Path("/nix"), log).build((one, two))
 
     assert outcome.successful == (one,)
     assert outcome.failed == (two,)
@@ -53,8 +53,10 @@ def test_build_maps_printed_outputs_to_successful_targets() -> None:
 def test_build_requires_every_output_for_multi_output_target() -> None:
     package = target("multi", ("/nix/store/multi", "/nix/store/multi-dev"))
     outcome = NixBuilder(
-        FakeRunner(CommandResult(0, "/nix/store/multi\n", "warning")), Path("/nix")
-    ).build((package,), io.StringIO())
+        FakeRunner(CommandResult(0, "/nix/store/multi\n", "warning")),
+        Path("/nix"),
+        io.StringIO(),
+    ).build((package,))
 
     assert outcome.successful == ()
     assert outcome.failed == (package,)

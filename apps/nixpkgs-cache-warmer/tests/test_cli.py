@@ -98,7 +98,7 @@ def test_warm_reports_success(tmp_path: Path) -> None:
                 "",
             ),
             CommandResult(0, "/nix/store/a.drv\n", ""),
-            CommandResult(0, "/nix/store/one\n", ""),
+            CommandResult(0, "/nix/store/one\n", "raw nix build output\n"),
         ]
     )
     stderr = io.StringIO()
@@ -110,6 +110,8 @@ def test_warm_reports_success(tmp_path: Path) -> None:
             "booxter",
             "--system",
             "x86_64-linux",
+            "--build-log",
+            str(tmp_path / "build.log"),
         ],
         ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
         runner,
@@ -119,6 +121,8 @@ def test_warm_reports_success(tmp_path: Path) -> None:
 
     assert status == 0
     assert "Built 1/1" in stderr.getvalue()
+    assert "raw nix build output" not in stderr.getvalue()
+    assert (tmp_path / "build.log").read_text() == "raw nix build output\n"
     state = StateStore(tmp_path / "state.json").read()
     assert state.targets[0].last_success is not None
     assert state.targets[0].last_success.revision == "012345"

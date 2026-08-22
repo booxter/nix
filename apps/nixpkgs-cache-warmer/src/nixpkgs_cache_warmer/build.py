@@ -16,11 +16,12 @@ class BuildOutcome:
 
 
 class NixBuilder:
-    def __init__(self, runner: CommandRunner, nix: Path) -> None:
+    def __init__(self, runner: CommandRunner, nix: Path, log: TextIO) -> None:
         self._runner = runner
         self._nix = nix
+        self._log = log
 
-    def build(self, targets: tuple[PackageTarget, ...], log: TextIO) -> BuildOutcome:
+    def build(self, targets: tuple[PackageTarget, ...]) -> BuildOutcome:
         arguments = [
             str(self._nix),
             "build",
@@ -30,7 +31,7 @@ class NixBuilder:
             "--print-out-paths",
         ]
         arguments.extend(f"{target.drvPath}^*" for target in targets)
-        result = self._runner.run_streaming(arguments, log)
+        result = self._runner.run_streaming(arguments, self._log)
 
         outputs = tuple(sorted({Path(line) for line in result.stdout.splitlines() if line.strip()}))
         output_set = set(outputs)

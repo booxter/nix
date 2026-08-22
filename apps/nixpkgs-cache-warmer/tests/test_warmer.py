@@ -1,6 +1,5 @@
 import io
 from pathlib import Path
-from typing import TextIO
 
 import pytest
 
@@ -99,7 +98,7 @@ class FakeBuilder:
         self._outcome = outcome
         self.targets: tuple[PackageTarget, ...] | None = None
 
-    def build(self, targets: tuple[PackageTarget, ...], log: TextIO) -> BuildOutcome:
+    def build(self, targets: tuple[PackageTarget, ...]) -> BuildOutcome:
         self.targets = targets
         return self._outcome
 
