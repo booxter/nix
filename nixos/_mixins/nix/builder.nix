@@ -40,7 +40,10 @@ in
         after = [ "nix-daemon.service" ];
         requires = [ "nix-daemon.service" ];
         partOf = [ "nix-daemon.service" ];
-        wantedBy = [ "nix-daemon.service" ];
+        wantedBy = [
+          "multi-user.target"
+          "nix-daemon.service"
+        ];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
