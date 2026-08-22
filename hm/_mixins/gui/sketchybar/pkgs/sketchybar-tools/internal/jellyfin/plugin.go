@@ -2,6 +2,7 @@ package jellyfin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,11 +16,11 @@ type MetricsFetcher interface {
 func Run(ctx context.Context, config Config, fetcher MetricsFetcher, bar sketchybar.Runner) error {
 	metrics, err := fetcher.Fetch(ctx)
 	if err != nil {
-		return showError(config, bar)
+		return errors.Join(err, showError(config, bar))
 	}
 	sessions, err := ParseMetrics(strings.NewReader(string(metrics)))
 	if err != nil {
-		return showError(config, bar)
+		return errors.Join(err, showError(config, bar))
 	}
 	if len(sessions) == 0 {
 		if err := hidePopupRows(config.Name, bar); err != nil {

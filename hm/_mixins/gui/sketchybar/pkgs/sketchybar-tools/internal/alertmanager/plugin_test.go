@@ -66,14 +66,15 @@ func TestRunShowsFiringAlertCount(t *testing.T) {
 
 func TestRunShowsErrorStateWhenAlertmanagerIsUnavailable(t *testing.T) {
 	bar := &recordingBar{}
+	unavailable := errors.New("unavailable")
 	err := Run(
 		context.Background(),
 		testConfig(),
-		fakeCounter{err: errors.New("unavailable")},
+		fakeCounter{err: unavailable},
 		bar,
 	)
-	if err != nil {
-		t.Fatalf("Run returned an error: %v", err)
+	if !errors.Is(err, unavailable) {
+		t.Fatalf("Run error = %v, want unavailable", err)
 	}
 	want := [][]string{{
 		"--set", "alertmanager", "drawing=on", "icon=!",
