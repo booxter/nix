@@ -1,35 +1,33 @@
 {
   config,
+  launchdModel,
   lib,
   pkgs,
   ...
 }:
 let
-  launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
   userLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin";
   privateUserLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
   rotationJobName = "launchd-logrotate";
-  jobsByDomain = {
-    daemons = config.launchd.daemons;
-    agents = config.launchd.agents;
-  };
-  homeManagerUserAgents = lib.filterAttrs (
-    _: job: job.enable
-  ) config.home-manager.users.${config.host.username}.launchd.agents;
-  managedHomeManagerUserAgents = lib.filterAttrs (
-    _: job: launchdLib.hasProgramConfig job.config
-  ) homeManagerUserAgents;
+  enabledSystemJobsByDomain = lib.mapAttrs (
+    _: lib.filterAttrs (_: job: job.enabled)
+  ) launchdModel.systemJobsByDomain;
+  managedSystemJobsByDomain = lib.mapAttrs (
+    _: lib.filterAttrs (_: job: job.managed)
+  ) launchdModel.systemJobsByDomain;
+  homeManagerUserAgents = lib.filterAttrs (_: job: job.enabled) launchdModel.homeManagerJobs;
+  managedHomeManagerUserAgents = lib.filterAttrs (_: job: job.managed) launchdModel.homeManagerJobs;
   pathsFor =
-    serviceConfigFor: jobs:
+    jobs:
     builtins.sort builtins.lessThan (
       lib.unique (
         lib.concatMap (
           job:
           let
-            serviceConfig = serviceConfigFor job;
+            serviceConfig = job.serviceConfig;
           in
           builtins.filter (path: path != null) [
             serviceConfig.StandardOutPath
@@ -39,10 +37,9 @@ let
       )
     );
   systemLogPaths = lib.unique (
-    pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.daemons)
-    ++ pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.agents)
+    pathsFor enabledSystemJobsByDomain.daemons ++ pathsFor enabledSystemJobsByDomain.agents
   );
-  userLogPaths = pathsFor (job: job.config) homeManagerUserAgents;
+  userLogPaths = pathsFor homeManagerUserAgents;
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
@@ -128,8 +125,7 @@ in
 
     assertions = import ./logging/assertions.nix {
       inherit
-        jobsByDomain
-        launchdLib
+        managedSystemJobsByDomain
         lib
         managedHomeManagerUserAgents
         ;

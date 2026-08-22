@@ -1,8 +1,7 @@
 {
-  jobsByDomain,
-  launchdLib,
   lib,
   logLocations,
+  managedSystemJobsByDomain,
   managedHomeManagerUserAgents,
   homeManagerUsername,
 }:
@@ -19,13 +18,12 @@ let
       optionPath,
       scope ? null,
       serviceConfigName,
-      serviceConfigFor,
     }:
     let
       loggingAssertions = lib.mapAttrsToList (
         name: job:
         let
-          serviceConfig = serviceConfigFor job;
+          serviceConfig = job.serviceConfig;
           stdout = serviceConfig.StandardOutPath;
           stderr = serviceConfig.StandardErrorPath;
         in
@@ -37,7 +35,7 @@ let
       pathAssertions = lib.concatMap (
         name:
         let
-          serviceConfig = serviceConfigFor jobs.${name};
+          inherit (jobs.${name}) serviceConfig;
         in
         map
           (field: {
@@ -53,7 +51,7 @@ let
         lib.concatMap (
           name:
           let
-            serviceConfig = serviceConfigFor jobs.${name};
+            inherit (jobs.${name}) serviceConfig;
             paths = [
               serviceConfig.StandardOutPath
               serviceConfig.StandardErrorPath
@@ -104,18 +102,16 @@ in
   lib.mapAttrsToList (
     domain: jobs:
     assertionsFor {
-      jobs = launchdLib.managedJobs jobs;
-      optionPath = launchdLib.optionPaths.${domain};
+      inherit jobs;
+      optionPath = "launchd.${domain}";
       scope = "system";
       serviceConfigName = "serviceConfig";
-      serviceConfigFor = job: job.serviceConfig;
     }
-  ) jobsByDomain
+  ) managedSystemJobsByDomain
 )
 ++ assertionsFor {
   jobs = managedHomeManagerUserAgents;
   optionPath = "home-manager.users.${homeManagerUsername}.launchd.agents";
   scope = "user";
   serviceConfigName = "config";
-  serviceConfigFor = job: job.config;
 }

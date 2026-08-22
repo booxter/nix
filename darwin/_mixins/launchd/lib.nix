@@ -20,9 +20,4 @@ in
       "oneshot"
     else
       "on-demand";
-
-  optionPaths = {
-    daemons = "launchd.daemons";
-    agents = "launchd.agents";
-  };
 }
