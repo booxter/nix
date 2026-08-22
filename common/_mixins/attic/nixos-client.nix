@@ -9,11 +9,14 @@ let
   rootDir = "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   servers = config.host.attic.realmServers;
+  # Mitigate https://github.com/zhaofengli/attic/issues/233.
   watchStoreCommand =
     name: server:
     utils.escapeSystemdExecArgs [
       (lib.getExe pkgs.attic-client)
       "watch-store"
+      "--jobs"
+      "1"
       "${name}:${server.cacheName}"
     ];
 in
@@ -34,6 +37,8 @@ in
         environment.HOME = rootDir;
         serviceConfig = {
           ExecStart = watchStoreCommand name server;
+          MemoryHigh = "3G";
+          MemoryMax = "4G";
           Restart = "always";
           RestartSec = "15s";
           WorkingDirectory = rootDir;
