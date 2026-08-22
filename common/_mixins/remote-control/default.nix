@@ -1,4 +1,13 @@
-{ lib, ... }:
+{
+  config,
+  fleetInventory,
+  lib,
+  ...
+}:
+let
+  localVnc = config.host.remote-control.inventory.vnc;
+  inventoryVnc = fleetInventory.hosts.${config.networking.hostName}.remoteControl.vnc;
+in
 {
   options.host.remote-control.inventory.vnc = lib.mkOption {
     type =
@@ -26,4 +35,15 @@
     internal = true;
     description = "Resolved VNC connection information published to remote-control clients.";
   };
+
+  config.assertions = [
+    {
+      assertion = (localVnc != null) == (inventoryVnc != null);
+      message = "local VNC server configuration and fleet inventory must agree";
+    }
+    {
+      assertion = localVnc == null || inventoryVnc == null || localVnc == inventoryVnc;
+      message = "local VNC connection information must match fleet inventory";
+    }
+  ];
 }

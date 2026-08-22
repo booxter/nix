@@ -1,17 +1,16 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   pkgs,
   ...
 }:
 let
-  configurations = outputs.darwinConfigurations // outputs.nixosConfigurations;
   vncHosts = builtins.filter (host: host.vnc != null) (
-    lib.mapAttrsToList (name: configuration: {
+    lib.mapAttrsToList (name: host: {
       inherit name;
-      vnc = configuration.config.host.remote-control.inventory.vnc;
-    }) configurations
+      vnc = host.remoteControl.vnc;
+    }) fleetInventory.hosts
   );
   directHosts = builtins.filter (host: host.vnc.connection == "direct") vncHosts;
   tunneledHosts = builtins.filter (host: host.vnc.connection == "ssh-tunnel") vncHosts;

@@ -38,6 +38,31 @@ let
     maxTtl = "2h";
   };
   ticketPolicyOverrides.frame.allowX11Forwarding = true;
+  vncInventory = {
+    frame = {
+      connection = "ssh-tunnel";
+      displays = [
+        {
+          name = "left";
+          port = 5933;
+          primary = true;
+        }
+        {
+          name = "right";
+          port = 5934;
+          primary = false;
+        }
+      ];
+    };
+    mair = {
+      connection = "direct";
+      displays = [ ];
+    };
+    mmini = {
+      connection = "direct";
+      displays = [ ];
+    };
+  };
   knownHostNamesFor =
     platform: name:
     let
@@ -53,6 +78,7 @@ let
   hostFor = platform: system: name: path: {
     inherit platform system;
     realm = if builtins.elem name workHosts then "work" else "home";
+    remoteControl.vnc = vncInventory.${name} or null;
     ssh = {
       knownHostNames = knownHostNamesFor platform name;
       operatorAuthorizedKeys = map readPublicKey (operatorKeyFiles.${name} or [ ]);
