@@ -27,6 +27,15 @@ in
       minimumGapMinutes = 5;
     }) (builtins.attrValues servers);
 
+    systemd.slices."system-attic-watch-store" = {
+      description = "Attic Nix store watchers";
+      sliceConfig = {
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+        ManagedOOMMemoryPressureDurationSec = "5min";
+      };
+    };
+
     systemd.services = lib.mapAttrs' (
       name: server:
       lib.nameValuePair "attic-watch-store-${name}" {
@@ -44,6 +53,7 @@ in
           MemoryMax = "4G";
           Restart = "always";
           RestartSec = "15s";
+          Slice = "system-attic-watch-store.slice";
           WorkingDirectory = rootDir;
         };
       }
