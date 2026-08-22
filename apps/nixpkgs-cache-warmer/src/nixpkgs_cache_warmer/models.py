@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+PackageSelector = tuple[str, ...]
+
 
 class PackageTarget(BaseModel):
     """A buildable maintained package selected from nixpkgs."""
