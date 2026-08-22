@@ -24,6 +24,7 @@
     cache_limit = "16G";
 
     direct_unpack = true;
+    direct_unpack_tested = true;
     direct_unpack_threads = 30;
     pause_on_pwrar = 2;
     ignore_samples = true;

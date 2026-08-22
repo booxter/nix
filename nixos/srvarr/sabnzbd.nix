@@ -1,5 +1,32 @@
 { ... }:
 {
+  host.downloads.routes = {
+    lidarr-usenet = {
+      client = "sabnzbd";
+      category = "audio";
+      storage = {
+        claim = "media";
+        relativePath = "usenet/manual";
+      };
+    };
+    radarr-usenet = {
+      client = "sabnzbd";
+      category = "movies";
+      storage = {
+        claim = "media";
+        relativePath = "usenet/manual";
+      };
+    };
+    sonarr-usenet = {
+      client = "sabnzbd";
+      category = "tv";
+      storage = {
+        claim = "media";
+        relativePath = "usenet/manual";
+      };
+    };
+  };
+
   host.sabnzbd = {
     servers = {
       "news.frugalusenet.com" = {
