@@ -1,6 +1,11 @@
-{ config, lib, ... }:
+{
+  config,
+  fleetInventory,
+  lib,
+  ...
+}:
 let
-  cfg = config.host.ups;
+  client = builtins.hasAttr config.networking.hostName fleetInventory.ups.clients;
 in
 {
   imports = [
@@ -8,5 +13,5 @@ in
     ./options.nix
   ];
 
-  config.host.power.shutdown.leadSeconds.ups-client = lib.mkIf (cfg.client.server != null) 150;
+  config.host.power.shutdown.leadSeconds.ups-client = lib.mkIf client 150;
 }

@@ -9,5 +9,4 @@
     cluster = "lab";
   };
   host.network.interfaces.enp5s0f0np0 = { };
-  host.ups.client.server = "prx1-lab";
 }

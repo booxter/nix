@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
 }:
@@ -17,7 +18,11 @@ let
       hostConfig.host.proxmox.node != null && hostConfig.host.proxmox.node.controller != null;
     isNode = hostConfig.host.proxmox.node != null;
     realm = hostConfig.host.realm;
-    upsServer = if hostConfig.host.ups.server != null then name else hostConfig.host.ups.client.server;
+    upsServer =
+      if builtins.hasAttr name fleetInventory.ups.servers then
+        name
+      else
+        fleetInventory.ups.clients.${name} or null;
   };
   otherConfigurations = removeAttrs outputs.nixosConfigurations [ hostName ];
   hosts =

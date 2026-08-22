@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   inputs,
   lib,
   outputs,
@@ -30,5 +31,12 @@
     virtual = config.host.proxmox.guest != null;
   };
 
-  _module.args.proxmoxModel = import ./model.nix { inherit config lib outputs; };
+  _module.args.proxmoxModel = import ./model.nix {
+    inherit
+      config
+      fleetInventory
+      lib
+      outputs
+      ;
+  };
 }

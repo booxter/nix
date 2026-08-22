@@ -22,5 +22,4 @@ in
     mountPoint = "/cache";
   };
 
-  host.ups.client.server = "prx1-lab";
 }

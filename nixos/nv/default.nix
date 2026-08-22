@@ -13,7 +13,6 @@ in
     cores = 64;
     memoryGiB = 128;
   };
-  host.ups.client.server = "nvws";
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

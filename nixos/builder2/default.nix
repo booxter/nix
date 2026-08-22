@@ -8,6 +8,5 @@
     balloonGiB = 48;
     diskGiB = 150;
   };
-  host.ups.client.server = "prx1-lab";
   system.stateVersion = "25.11";
 }

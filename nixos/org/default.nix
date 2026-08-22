@@ -15,8 +15,6 @@ in
     diskGiB = 80;
   };
 
-  host.ups.client.server = "prx1-lab";
-
   host.backups.destination = {
     server = "beast";
     publicKey = readPublicKey ./restic.pub;

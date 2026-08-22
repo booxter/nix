@@ -60,8 +60,6 @@ in
     };
   };
 
-  host.ups.client.server = "frame";
-
   host.security = {
     smartCard = { };
     secrets.operator.ageIdentity = {

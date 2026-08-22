@@ -1,11 +1,15 @@
 {
   config,
+  fleetInventory,
   lib,
   ...
 }:
 let
   cfg = config.host.power.shutdown;
-  participates = config.host.ups.server != null || config.host.ups.client.server != null;
+  hostName = config.networking.hostName;
+  participates =
+    builtins.hasAttr hostName fleetInventory.ups.servers
+    || builtins.hasAttr hostName fleetInventory.ups.clients;
 in
 {
   options.host.power.shutdown = {

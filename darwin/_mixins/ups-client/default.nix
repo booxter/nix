@@ -2,21 +2,12 @@
   config,
   fleetInventory,
   lib,
-  outputs,
   pkgs,
   ...
 }:
 let
-  cfg = config.host.ups;
-  serverName = cfg.client.server;
-  model = import ../../../common/_mixins/ups/model.nix {
-    inherit
-      fleetInventory
-      lib
-      outputs
-      ;
-  };
-  server = if serverName == null then null else model.servers.${serverName} or null;
+  serverName = fleetInventory.ups.clients.${config.networking.hostName} or null;
+  server = if serverName == null then null else fleetInventory.ups.servers.${serverName};
   siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
   monitorName = if serverName == null then "" else serverName;
   monitorPasswordSecret = "nut/monitors/${monitorName}/password";
@@ -24,7 +15,7 @@ let
     server != null
     && import ../../../common/_mixins/ups/uses-literal-credentials.nix {
       clientRealm = config.host.realm;
-      serverRealm = server.realm;
+      serverRealm = fleetInventory.hosts.${serverName}.realm;
     };
   monitorPassword =
     if useLiteralPassword then "upsslave123" else config.sops.placeholder.${monitorPasswordSecret};

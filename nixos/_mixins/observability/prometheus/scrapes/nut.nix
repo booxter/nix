@@ -2,19 +2,15 @@
   config,
   fleetInventory,
   lib,
-  outputs,
   pkgs,
 }:
 let
-  model = import ../../../../../common/_mixins/ups/model.nix {
-    inherit
-      fleetInventory
-      lib
-      outputs
-      ;
-  };
   upsServers = builtins.attrValues (
-    lib.filterAttrs (_: server: server.realm == config.host.realm) model.servers
+    lib.mapAttrs (name: server: server // { inherit name; }) (
+      lib.filterAttrs (
+        name: _: fleetInventory.hosts.${name}.realm == config.host.realm
+      ) fleetInventory.ups.servers
+    )
   );
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [

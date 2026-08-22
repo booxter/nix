@@ -28,6 +28,4 @@ in
 
   host.network.ipController = { };
 
-  host.ups.client.server = "prx1-lab";
-
 }

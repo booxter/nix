@@ -15,6 +15,6 @@ in
   builders = import ./builders.nix { inherit lib; };
   inherit hosts;
   sites = import ./sites.nix;
-  upsServers = import ./ups.nix { inherit lib; };
+  ups = import ./ups.nix;
   inherit webServices;
 }

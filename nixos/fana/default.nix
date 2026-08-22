@@ -13,5 +13,4 @@
     diskGiB = 300;
   };
 
-  host.ups.client.server = "prx1-lab";
 }

@@ -1,6 +1,7 @@
 {
   appSet,
   autoUpgradeEvaluation,
+  fleetInventory,
   inputs,
   pkgs,
   system,
@@ -29,5 +30,19 @@ let
         touch "$out"
       '';
   };
+  upsTopologyErrors = import ./checks/ups-topology.nix {
+    inherit fleetInventory lib;
+  };
+  upsTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    ups-topology =
+      assert lib.assertMsg (upsTopologyErrors == [ ]) (lib.concatStringsSep "; " upsTopologyErrors);
+      pkgs.runCommand "ups-topology" { } ''
+        touch "$out"
+      '';
+  };
 in
-appSet.packages // autoUpgradeChecks // import ../tests { inherit inputs pkgs; } // inputNixosTests
+appSet.packages
+// autoUpgradeChecks
+// upsTopologyChecks
+// import ../tests { inherit inputs pkgs; }
+// inputNixosTests
