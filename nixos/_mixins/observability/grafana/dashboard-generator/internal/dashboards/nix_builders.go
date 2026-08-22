@@ -48,6 +48,58 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 			Min: ptr(0.0), Thresholds: warningCriticalThresholds(86400, 129600),
 		}))
 
+	capacity := layout.row(5, 6, 6, 6, 6)
+	model.
+		WithPanel(valueStat(ValueStatOptions{
+			ID: capacity[0].ID, Grid: capacity[0].Grid, Title: "Active Build Slots",
+			Expression: `sum(` + builder("host_observability_nix_builder_active_slots") + `)`,
+			Legend: "active", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+		})).
+		WithPanel(valueStat(ValueStatOptions{
+			ID: capacity[1].ID, Grid: capacity[1].Grid, Title: "Collector Coverage",
+			Expression: `100 * sum(` + builder("host_observability_nix_builder_collect_success") + `) / sum(` +
+				builder("up") + `)`,
+			Legend: "coverage", Unit: units.Percent, DataSource: prometheusDatasource,
+			Min: ptr(0.0), Max: ptr(100.0), Thresholds: redToGreenThreshold(100),
+		})).
+		WithPanel(valueStat(ValueStatOptions{
+			ID: capacity[2].ID, Grid: capacity[2].Grid, Title: "Builder Saturation",
+			Expression: `100 * sum(` + builder("host_observability_nix_builder_active_slots") + `) / sum(` +
+				builder("host_observability_nix_builder_configured_slots") + `)`,
+			Legend: "saturation", Unit: units.Percent, DataSource: prometheusDatasource,
+			Min: ptr(0.0), Thresholds: warningCriticalThresholds(75, 95),
+		})).
+		WithPanel(valueStat(ValueStatOptions{
+			ID: capacity[3].ID, Grid: capacity[3].Grid, Title: "Oldest Active Build",
+			Expression: `max(` + builder("host_observability_nix_builder_oldest_active_slot_seconds") + `)`,
+			Legend: "oldest", Unit: units.DurationInDaysHoursMinutesSeconds,
+			DataSource: prometheusDatasource, Min: ptr(0.0),
+		}))
+
+	buildActivity := layout.row(8, 8, 8, 8)
+	model.
+		WithPanel(timeSeries(TimeseriesOptions{
+			ID: buildActivity[0].ID, Grid: buildActivity[0].Grid, Title: "Build Slots By Builder",
+			Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+			Targets: []PrometheusTarget{
+				{RefID: "A", Expression: builder("host_observability_nix_builder_active_slots"), Legend: "{{instance}} active"},
+				{RefID: "B", Expression: builder("host_observability_nix_builder_configured_slots"), Legend: "{{instance}} configured"},
+			},
+		})).
+		WithPanel(timeSeries(TimeseriesOptions{
+			ID: buildActivity[1].ID, Grid: buildActivity[1].Grid, Title: "Active Build Memory",
+			Unit: units.BytesSI, DataSource: prometheusDatasource, Min: ptr(0.0),
+			Targets: []PrometheusTarget{{RefID: "A", Expression: builder("host_observability_nix_builder_memory_bytes"), Legend: "{{instance}}"}},
+		})).
+		WithPanel(timeSeries(TimeseriesOptions{
+			ID: buildActivity[2].ID, Grid: buildActivity[2].Grid, Title: "Active Build I/O",
+			Unit: units.BytesSI, DataSource: prometheusDatasource, Min: ptr(0.0),
+			Targets: []PrometheusTarget{
+				{RefID: "A", Expression: builder("host_observability_nix_builder_io_read_bytes"), Legend: "{{instance}} read"},
+				{RefID: "B", Expression: builder("host_observability_nix_builder_io_write_bytes"), Legend: "{{instance}} written"},
+			},
+		}))
+
 	resources := []struct {
 		title      string
 		expression string
@@ -179,7 +231,7 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 
 	logs := layout.row(12, 24)[0]
 	model.WithPanel(logsPanel(logs.ID, "Recent Nix And Warmer Logs",
-		`{job="systemd-journal",systemd_unit="nix-daemon.service"} or {job="darwin-file-log",service_name=~"nix-daemon|nixpkgs-cache-warmer|fleet-cache-warmer"}`,
+		`{job="systemd-journal",systemd_unit=~"nix-daemon.service|nix-builder-metrics.service"} or {job="darwin-file-log",service_name=~"nix-daemon|nix-builder-metrics|nixpkgs-cache-warmer|fleet-cache-warmer"}`,
 		logs.Grid, lokiDatasource))
 
 	return model.Build()

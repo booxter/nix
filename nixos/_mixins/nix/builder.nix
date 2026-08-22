@@ -8,6 +8,7 @@
     };
     nix.settings = {
       auto-allocate-uids = true;
+      use-cgroups = true;
       extra-experimental-features = [
         "auto-allocate-uids"
         "cgroups"
