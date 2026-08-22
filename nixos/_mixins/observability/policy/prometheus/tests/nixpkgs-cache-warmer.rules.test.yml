@@ -28,14 +28,14 @@ tests:
               summary: "Nixpkgs cache warming failed for staging on x86_64-linux"
               description: "The last staging cache-warming attempt for x86_64-linux on mmini did not fully succeed."
 
-  - interval: 1h
+  - interval: 5m
     input_series:
       - series: 'host_observability_nixpkgs_cache_warmer_target_configured{instance="mmini",branch="staging-next",system="aarch64-darwin",scrape_profile="node"}'
-        values: "1x38"
+        values: "1x440"
       - series: 'up{instance="mmini",scrape_profile="node"}'
-        values: "1x38"
+        values: "1x440"
     alert_rule_test:
-      - eval_time: 36h
+      - eval_time: 36h5m
         alertname: NixpkgsCacheWarmerTargetNeverSucceeded
         exp_alerts:
           - exp_labels:
@@ -50,16 +50,16 @@ tests:
               summary: "Nixpkgs cache warming has not succeeded for staging-next on aarch64-darwin"
               description: "The configured staging-next cache-warming target for aarch64-darwin on mmini has not completed successfully within 36 hours."
 
-  - interval: 15m
+  - interval: 5m
     input_series:
       - series: 'host_observability_nixpkgs_cache_warmer_target_configured{instance="mmini",branch="release-26.05",system="x86_64-linux",scrape_profile="node"}'
-        values: "1x150"
+        values: "1x440"
       - series: 'host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds{instance="mmini",branch="release-26.05",system="x86_64-linux",scrape_profile="node"}'
-        values: "0x150"
+        values: "0x440"
       - series: 'up{instance="mmini",scrape_profile="node"}'
-        values: "1x150"
+        values: "1x440"
     alert_rule_test:
-      - eval_time: 36h30m
+      - eval_time: 36h20m
         alertname: NixpkgsCacheWarmerTargetStale
         exp_alerts:
           - exp_labels:
