@@ -14,6 +14,7 @@ from nixpkgs_cache_warmer.inventory import Inventory
 from nixpkgs_cache_warmer.models import WarmerState
 from nixpkgs_cache_warmer.publish import AtticPublisher
 from nixpkgs_cache_warmer.resolver import SourceResolver
+from nixpkgs_cache_warmer.schedule import Schedule
 from nixpkgs_cache_warmer.state import RemoteStateReader, StateStore
 from nixpkgs_cache_warmer.tracking import TrackingWarmer
 from nixpkgs_cache_warmer.warmer import Warmer
@@ -41,6 +42,15 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--cache", action="append", default=[])
     warm.add_argument("--no-push", action="store_true")
     warm.add_argument("--state-file", type=Path)
+    scheduled = subparsers.add_parser("run", help="warm a branch and system matrix")
+    scheduled.add_argument("--reference", action="append", required=True)
+    scheduled.add_argument("--maintainer", required=True)
+    scheduled.add_argument("--system", action="append", required=True)
+    scheduled.add_argument("--exclude-pname-pattern", action="append", default=[])
+    scheduled.add_argument("--include-pname-pattern", action="append", default=[])
+    scheduled.add_argument("--cache", action="append", default=[])
+    scheduled.add_argument("--no-push", action="store_true")
+    scheduled.add_argument("--state-file", type=Path)
     status = subparsers.add_parser("status", help="show persisted warming status")
     status.add_argument("--state-file", type=Path)
     location = status.add_mutually_exclusive_group()
@@ -64,7 +74,7 @@ def run(
     try:
         state_file = (
             arguments.state_file or Path(environ["NIXPKGS_CACHE_WARMER_STATE_FILE"])
-            if arguments.command in ("status", "warm")
+            if arguments.command in ("status", "warm", "run")
             else None
         )
         if arguments.command == "status":
@@ -110,7 +120,7 @@ def run(
                     )
             return 0
 
-        if arguments.command == "warm":
+        if arguments.command in ("warm", "run"):
             assert state_file is not None
             if bool(arguments.cache) == arguments.no_push:
                 print(
@@ -119,7 +129,7 @@ def run(
                 )
                 return 2
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
-            outcome = TrackingWarmer(
+            warmer = TrackingWarmer(
                 Warmer(
                     SourceResolver(runner, nix),
                     Inventory(
@@ -133,7 +143,19 @@ def run(
                     else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
                 ),
                 StateStore(state_file),
-            ).warm(
+            )
+            if arguments.command == "run":
+                schedule_outcome = Schedule(warmer).run(
+                    tuple(arguments.reference),
+                    arguments.maintainer,
+                    tuple(arguments.system),
+                    tuple(arguments.exclude_pname_pattern),
+                    tuple(arguments.include_pname_pattern),
+                    tuple(arguments.cache),
+                    stderr,
+                )
+                return 1 if schedule_outcome.failed else 0
+            outcome = warmer.warm(
                 arguments.reference,
                 arguments.maintainer,
                 arguments.system,
