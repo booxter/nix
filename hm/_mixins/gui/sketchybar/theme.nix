@@ -61,7 +61,7 @@ in
 
     ICON_BASE_FONT="SF Pro"
     ICON_FONT="$ICON_BASE_FONT:Bold:14.0"
-    LABEL_BASE_FONT="${config.stylix.fonts.monospace.name}"
+    LABEL_BASE_FONT="MesloLGS Nerd Font Propo"
     LABEL_FONT="$LABEL_BASE_FONT:Regular:14.0"
     LABEL_HIGHLIGHT_FONT="$LABEL_BASE_FONT:ExtraBold:14.0"
 
