@@ -5,7 +5,7 @@ import pytest
 
 from nixpkgs_cache_warmer.build import BuildOutcome
 from nixpkgs_cache_warmer.commands import CommandError
-from nixpkgs_cache_warmer.models import PackageTarget, ResolvedSource, WarmerState
+from nixpkgs_cache_warmer.models import PackageTarget, ResolvedSource, TargetState, WarmerState
 from nixpkgs_cache_warmer.state import StateStore, completed_record, failed_record, update_state
 from nixpkgs_cache_warmer.warmer import WarmOutcome
 
@@ -81,6 +81,33 @@ def test_store_round_trips_atomically_with_public_mode(tmp_path: Path) -> None:
 
     assert store.read() == state
     assert path.stat().st_mode & 0o777 == 0o644
+
+
+def test_store_exports_attempt_success_and_successful_revision_metrics(tmp_path: Path) -> None:
+    state_path = tmp_path / "status.json"
+    metrics_path = tmp_path / "textfile" / "warmer.prom"
+    record = completed_record(
+        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ()), NOW
+    )
+    state = WarmerState(
+        targets=(
+            TargetState(
+                reference=RESOLVED.reference,
+                system="x86_64-linux",
+                last_attempt=record,
+                last_success=record,
+            ),
+        )
+    )
+
+    StateStore(state_path, metrics_path).write(state)
+
+    metrics = metrics_path.read_text()
+    labels = 'branch="staging",system="x86_64-linux"'
+    assert f"last_attempt_success{{{labels}}} 1" in metrics
+    assert f"last_success_timestamp_seconds{{{labels}}} {NOW.timestamp():.0f}" in metrics
+    assert f'last_success_revision_info{{{labels},revision="012345"}} 1' in metrics
+    assert metrics_path.stat().st_mode & 0o777 == 0o644
 
 
 def test_store_rejects_invalid_state(tmp_path: Path) -> None:

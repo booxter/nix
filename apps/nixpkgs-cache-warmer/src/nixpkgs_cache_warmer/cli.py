@@ -142,7 +142,12 @@ def run(
                     if arguments.no_push
                     else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
                 ),
-                StateStore(state_file),
+                StateStore(
+                    state_file,
+                    Path(environ["NIXPKGS_CACHE_WARMER_METRICS_FILE"])
+                    if environ.get("NIXPKGS_CACHE_WARMER_METRICS_FILE")
+                    else None,
+                ),
             )
             if arguments.command == "run":
                 schedule_outcome = Schedule(warmer).run(

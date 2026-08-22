@@ -7,6 +7,9 @@
 }:
 let
   cfg = config.host.nix.cacheWarmer;
+  nixpkgsStateDir = "/var/lib/nixpkgs-cache-warmer";
+  nixpkgsTextfileDir = "${nixpkgsStateDir}/textfile";
+  nixpkgsMetricsFile = "${nixpkgsTextfileDir}/state.prom";
   pushToAttic = config.host.attic.realmServers != { };
   configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   warmTargets = map (target: target.attr) (
@@ -45,6 +48,23 @@ let
     "--cache"
     cache
   ]) atticCaches;
+  escapeMetricLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
+  configuredTargets = lib.concatMap (
+    reference:
+    map (system: {
+      branch = lib.last (lib.splitString "/" reference);
+      inherit system;
+    }) cfg.nixpkgs.systems
+  ) cfg.nixpkgs.references;
+  nixpkgsExpectationsFile = pkgs.writeText "nixpkgs-cache-warmer-expectations.prom" (
+    ''
+      # HELP host_observability_nixpkgs_cache_warmer_target_configured Whether a branch and system target is configured for warming.
+      # TYPE host_observability_nixpkgs_cache_warmer_target_configured gauge
+    ''
+    + lib.concatMapStrings (target: ''
+      host_observability_nixpkgs_cache_warmer_target_configured{branch="${escapeMetricLabel target.branch}",system="${escapeMetricLabel target.system}"} 1
+    '') configuredTargets
+  );
 in
 {
   options.host.nix.cacheWarmer = {
@@ -142,8 +162,8 @@ in
       ];
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
-        mkdir -p /var/lib/nixpkgs-cache-warmer
-        chmod 0755 /var/lib/nixpkgs-cache-warmer
+        mkdir -p ${nixpkgsStateDir}
+        chmod 0755 ${nixpkgsStateDir}
       '';
 
       launchd.daemons.nixpkgs-cache-warmer = {
@@ -160,12 +180,24 @@ in
             HOME = "/var/root";
             NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+          }
+          // lib.optionalAttrs config.host.observability.enable {
+            NIXPKGS_CACHE_WARMER_METRICS_FILE = nixpkgsMetricsFile;
           };
           ProcessType = "Background";
           StandardOutPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
           StandardErrorPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
         };
       };
+    })
+
+    (lib.mkIf (cfg.nixpkgs.enable && config.host.observability.enable) {
+      host.observability.nodeExporter.textfile.directories.nixpkgsCacheWarmer = nixpkgsTextfileDir;
+
+      system.activationScripts.launchd.text = lib.mkAfter ''
+        install -d -m 0755 -o root -g wheel ${nixpkgsTextfileDir}
+        ln -sfn ${nixpkgsExpectationsFile} ${nixpkgsTextfileDir}/expectations.prom
+      '';
     })
   ];
 }

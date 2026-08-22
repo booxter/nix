@@ -16,8 +16,9 @@ from nixpkgs_cache_warmer.warmer import WarmOutcome
 
 
 class StateStore:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, metrics_path: Path | None = None) -> None:
         self.path = path
+        self._metrics_path = metrics_path
 
     def read(self) -> WarmerState:
         try:
@@ -34,6 +35,13 @@ class StateStore:
             write_text_atomic(self.path, content, mode=0o644)
         except OSError as error:
             raise CommandError(f"failed to write warmer state {self.path}: {error}") from error
+        if self._metrics_path is not None:
+            try:
+                write_text_atomic(self._metrics_path, render_metrics(state), mode=0o644)
+            except OSError as error:
+                raise CommandError(
+                    f"failed to write warmer metrics {self._metrics_path}: {error}"
+                ) from error
 
 
 class RemoteStateReader:
@@ -57,6 +65,50 @@ def parse_state(content: str, source: str) -> WarmerState:
         return WarmerState.model_validate_json(content)
     except ValidationError as error:
         raise CommandError(f"invalid warmer state {source}: {error}") from error
+
+
+def render_metrics(state: WarmerState) -> str:
+    lines = [
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_success Whether the last target attempt fully succeeded.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_success gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds Unix timestamp of the last target attempt.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds Unix timestamp of the last fully successful target run.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_revision_info Exact nixpkgs revision from the last fully successful target run.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_success_revision_info gauge",
+    ]
+    for target in state.targets:
+        labels = _metric_labels(target.reference, target.system)
+        lines.append(
+            "host_observability_nixpkgs_cache_warmer_last_attempt_success"
+            f"{{{labels}}} {int(target.last_attempt.status == 'success')}"
+        )
+        lines.append(
+            "host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds"
+            f"{{{labels}}} {target.last_attempt.attempted_at.timestamp():.0f}"
+        )
+        if target.last_success is not None:
+            lines.append(
+                "host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds"
+                f"{{{labels}}} {target.last_success.attempted_at.timestamp():.0f}"
+            )
+            revision = _escape_metric_label(target.last_success.revision or "")
+            lines.append(
+                "host_observability_nixpkgs_cache_warmer_last_success_revision_info"
+                f'{{{labels},revision="{revision}"}} 1'
+            )
+    return "\n".join(lines) + "\n"
+
+
+def _metric_labels(reference: str, system: str) -> str:
+    branch = _escape_metric_label(reference.rsplit("/", 1)[-1])
+    escaped_system = _escape_metric_label(system)
+    return f'branch="{branch}",system="{escaped_system}"'
+
+
+def _escape_metric_label(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
 
 
 def completed_record(outcome: WarmOutcome, now: datetime) -> RunRecord:
