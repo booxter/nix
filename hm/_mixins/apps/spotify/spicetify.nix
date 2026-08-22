@@ -17,6 +17,17 @@ in
 {
   imports = [ inputs.spicetify-nix.homeManagerModules.spicetify ];
 
+  home.activation.blockSpotifyUpdates =
+    lib.mkIf (cfg.enable && cfg.spicetify.enable && pkgs.stdenv.hostPlatform.isDarwin)
+      (
+        lib.hm.dag.entryBefore [ "copyApps" ] ''
+          spotify_update_dir=${lib.escapeShellArg "${config.home.homeDirectory}/Library/Application Support/Spotify/PersistentCache/Update"}
+
+          run /bin/mkdir -p "$spotify_update_dir"
+          run /usr/bin/chflags uchg "$spotify_update_dir"
+        ''
+      );
+
   programs.spicetify = lib.mkIf (cfg.enable && cfg.spicetify.enable) {
     enable = true;
     enabledExtensions = with spicePkgs.extensions; [
