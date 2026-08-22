@@ -66,12 +66,31 @@ class Inventory:
     def instantiate(
         self,
         source: Path,
+        reference: str,
         maintainer: str,
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
         include_pname_patterns: tuple[str, ...] = (),
     ) -> tuple[PackageTarget, ...]:
         selectors = self.discover(source, maintainer, system)
+        return self.instantiate_selected(
+            source,
+            maintainer,
+            system,
+            exclude_pname_patterns,
+            include_pname_patterns,
+            selectors,
+        )
+
+    def instantiate_selected(
+        self,
+        source: Path,
+        maintainer: str,
+        system: str,
+        exclude_pname_patterns: tuple[str, ...],
+        include_pname_patterns: tuple[str, ...],
+        selectors: tuple[PackageSelector, ...],
+    ) -> tuple[PackageTarget, ...]:
         targets = self.targets(
             source,
             maintainer,

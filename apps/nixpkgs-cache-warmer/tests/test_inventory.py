@@ -92,7 +92,7 @@ def test_inventory_instantiates_selected_derivations() -> None:
         ),
         Path("/nix-instantiate"),
         Path("/inventory.nix"),
-    ).instantiate(Path("/source"), "booxter", "x86_64-linux")
+    ).instantiate(Path("/source"), "staging", "booxter", "x86_64-linux")
 
     assert len(targets) == 1
     assert targets[0].drvPath == Path("/nix/store/a.drv")
@@ -113,4 +113,4 @@ def test_inventory_rejects_mismatched_instantiation() -> None:
             ),
             Path("/nix-instantiate"),
             Path("/inventory.nix"),
-        ).instantiate(Path("/source"), "booxter", "x86_64-linux")
+        ).instantiate(Path("/source"), "staging", "booxter", "x86_64-linux")

@@ -17,6 +17,7 @@ class PackageInventory(Protocol):
     def instantiate(
         self,
         source: Path,
+        reference: str,
         maintainer: str,
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
@@ -121,6 +122,7 @@ class Warmer:
         print(f"Selecting packages maintained by {maintainer} for {system}", file=log)
         targets = self._inventory.instantiate(
             resolved.source,
+            resolved.reference,
             maintainer,
             system,
             exclude_pname_patterns,

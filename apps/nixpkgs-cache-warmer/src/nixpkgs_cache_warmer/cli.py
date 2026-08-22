@@ -5,12 +5,14 @@ import json
 import os
 import sys
 from collections.abc import Mapping, Sequence
+from datetime import timedelta
 from pathlib import Path
 from typing import TextIO
 
 from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
+from nixpkgs_cache_warmer.inventory_cache import CachedInventory, InventoryCacheStore
 from nixpkgs_cache_warmer.models import WarmerState
 from nixpkgs_cache_warmer.resolver import SourceResolver
 from nixpkgs_cache_warmer.schedule import Schedule
@@ -39,6 +41,8 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--exclude-pname-pattern", action="append", default=[])
     warm.add_argument("--include-pname-pattern", action="append", default=[])
     warm.add_argument("--state-file", type=Path)
+    warm.add_argument("--inventory-cache-file", type=Path)
+    warm.add_argument("--inventory-cache-max-age-days", type=int, default=7)
     scheduled = subparsers.add_parser("run", help="warm a branch and system matrix")
     scheduled.add_argument("--reference", action="append", required=True)
     scheduled.add_argument("--maintainer", required=True)
@@ -46,6 +50,8 @@ def parser() -> argparse.ArgumentParser:
     scheduled.add_argument("--exclude-pname-pattern", action="append", default=[])
     scheduled.add_argument("--include-pname-pattern", action="append", default=[])
     scheduled.add_argument("--state-file", type=Path)
+    scheduled.add_argument("--inventory-cache-file", type=Path)
+    scheduled.add_argument("--inventory-cache-max-age-days", type=int, default=7)
     status = subparsers.add_parser("status", help="show persisted warming status")
     status.add_argument("--state-file", type=Path)
     location = status.add_mutually_exclusive_group()
@@ -118,16 +124,22 @@ def run(
         if arguments.command in ("warm", "run"):
             assert state_file is not None
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
+            inventory = Inventory(
+                runner,
+                Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
+                Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
+            )
+            package_inventory = (
+                CachedInventory(
+                    inventory,
+                    InventoryCacheStore(arguments.inventory_cache_file),
+                    timedelta(days=arguments.inventory_cache_max_age_days),
+                )
+                if arguments.inventory_cache_file is not None
+                else inventory
+            )
             warmer = TrackingWarmer(
-                Warmer(
-                    SourceResolver(runner, nix),
-                    Inventory(
-                        runner,
-                        Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
-                        Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
-                    ),
-                    NixBuilder(runner, nix),
-                ),
+                Warmer(SourceResolver(runner, nix), package_inventory, NixBuilder(runner, nix)),
                 StateStore(
                     state_file,
                     Path(environ["NIXPKGS_CACHE_WARMER_METRICS_FILE"])
