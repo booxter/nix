@@ -78,6 +78,7 @@ let
   hostFor = platform: system: name: path: {
     inherit platform system;
     realm = if builtins.elem name workHosts then "work" else "home";
+    site = "home";
     remoteControl.vnc = vncInventory.${name} or null;
     ssh = {
       knownHostNames = knownHostNamesFor platform name;

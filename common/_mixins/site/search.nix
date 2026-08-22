@@ -1,10 +1,32 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
+  localHost = config.networking.hostName;
+  localSite = config.host.site.name;
+  siteInventory = fleetInventory.sites.${localSite} or null;
+  inventoryProviders = if siteInventory == null then { } else siteInventory.searchProviders;
+  availableProviders = lib.mapAttrs (_: provider: removeAttrs provider [ "host" ]) inventoryProviders;
+  expectedLocalProviders = lib.mapAttrs (_: provider: removeAttrs provider [ "host" ]) (
+    lib.filterAttrs (_: provider: provider.host == localHost) inventoryProviders
+  );
+  providerEntries = builtins.concatLists (
+    lib.mapAttrsToList (
+      site: inventory:
+      lib.mapAttrsToList (id: provider: {
+        inherit id provider site;
+      }) inventory.searchProviders
+    ) fleetInventory.sites
+  );
+  invalidProviderEntries = builtins.filter (
+    entry:
+    !(builtins.hasAttr entry.provider.host fleetInventory.hosts)
+    || fleetInventory.hosts.${entry.provider.host}.site != entry.site
+  ) providerEntries;
+  invalidProviderIds = map (entry: "${entry.site}.${entry.id}") invalidProviderEntries;
   endpointType = lib.types.submodule {
     options = {
       baseUrl = lib.mkOption {
@@ -48,13 +70,6 @@ let
       };
     }
   );
-  model = import ./search-model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
 in
 {
   options.host.site.search = {
@@ -66,11 +81,29 @@ in
 
     availableProviders = lib.mkOption {
       type = lib.types.attrsOf providerType;
-      default = model.byId;
+      default = availableProviders;
       readOnly = true;
       internal = true;
-      description = "Search providers discovered across this host's physical site.";
+      description = "Search providers published for this host's physical site.";
     };
   };
 
+  config.assertions = [
+    {
+      assertion = siteInventory != null;
+      message = "site '${localSite}' must exist in fleet inventory";
+    }
+    {
+      assertion = fleetInventory.hosts.${localHost}.site == localSite;
+      message = "local site must match fleet host inventory";
+    }
+    {
+      assertion = invalidProviderEntries == [ ];
+      message = "search provider inventory entries must name hosts in their site: ${lib.concatStringsSep ", " invalidProviderIds}";
+    }
+    {
+      assertion = config.host.site.search.providers == expectedLocalProviders;
+      message = "local search provider publication must match fleet site inventory";
+    }
+  ];
 }
