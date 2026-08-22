@@ -7,6 +7,7 @@
 }:
 let
   pythonPackages = python3.pkgs;
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
 in
 pythonPackages.buildPythonApplication {
   pname = "nixpkgs-cache-warmer";
@@ -23,7 +24,10 @@ pythonPackages.buildPythonApplication {
   };
 
   build-system = [ pythonPackages.setuptools ];
-  dependencies = [ pythonPackages.pydantic ];
+  dependencies = [
+    atomicFileWrites
+    pythonPackages.pydantic
+  ];
 
   nativeCheckInputs = with pythonPackages; [
     ruff
@@ -37,6 +41,7 @@ pythonPackages.buildPythonApplication {
     "--set NIXPKGS_CACHE_WARMER_NIX ${lib.getExe nix}"
     "--set NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE ${lib.getExe' nix "nix-instantiate"}"
     "--set NIXPKGS_CACHE_WARMER_INVENTORY_EXPR ${./inventory.nix}"
+    "--set NIXPKGS_CACHE_WARMER_STATE_FILE /var/lib/nixpkgs-cache-warmer/status.json"
   ];
 
   preCheck = ''

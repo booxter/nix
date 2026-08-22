@@ -1,4 +1,6 @@
+from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -35,3 +37,32 @@ class ResolvedSource(BaseModel):
     reference: str
     revision: str
     source: Path
+
+
+class RunRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    attempted_at: datetime
+    revision: str | None
+    status: Literal["success", "partial", "failed"]
+    selected: int
+    built: int
+    failed: int
+    pushed: int
+    error: str | None = None
+
+
+class TargetState(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    reference: str
+    system: str
+    last_attempt: RunRecord
+    last_success: RunRecord | None = None
+
+
+class WarmerState(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1] = 1
+    targets: tuple[TargetState, ...] = ()

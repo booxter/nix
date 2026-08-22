@@ -11,8 +11,11 @@ from typing import TextIO
 from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
+from nixpkgs_cache_warmer.models import WarmerState
 from nixpkgs_cache_warmer.publish import AtticPublisher
 from nixpkgs_cache_warmer.resolver import SourceResolver
+from nixpkgs_cache_warmer.state import StateStore
+from nixpkgs_cache_warmer.tracking import TrackingWarmer
 from nixpkgs_cache_warmer.warmer import Warmer
 
 
@@ -37,6 +40,13 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--include-pname-pattern", action="append", default=[])
     warm.add_argument("--cache", action="append", default=[])
     warm.add_argument("--no-push", action="store_true")
+    warm.add_argument("--state-file", type=Path)
+    status = subparsers.add_parser("status", help="show persisted warming status")
+    status.add_argument("--state-file", type=Path)
+    status.add_argument("--branch")
+    status.add_argument("--system")
+    status.add_argument("--json", action="store_true")
+    status.add_argument("--print-revision", action="store_true")
     return result
 
 
@@ -49,7 +59,46 @@ def run(
 ) -> int:
     arguments = parser().parse_args(argv)
     try:
+        state_file = (
+            arguments.state_file or Path(environ["NIXPKGS_CACHE_WARMER_STATE_FILE"])
+            if arguments.command in ("status", "warm")
+            else None
+        )
+        if arguments.command == "status":
+            assert state_file is not None
+            state = StateStore(state_file).read()
+            status_targets = tuple(
+                status_target
+                for status_target in state.targets
+                if (
+                    arguments.branch is None
+                    or status_target.reference.rsplit("/", 1)[-1] == arguments.branch
+                )
+                and (arguments.system is None or status_target.system == arguments.system)
+            )
+            if arguments.print_revision:
+                if len(status_targets) != 1 or status_targets[0].last_success is None:
+                    raise CommandError(
+                        "revision output requires exactly one successful matching target"
+                    )
+                print(status_targets[0].last_success.revision, file=stdout)
+            elif arguments.json:
+                stdout.write(WarmerState(targets=status_targets).model_dump_json(indent=2) + "\n")
+            else:
+                for status_target in status_targets:
+                    attempt = status_target.last_attempt
+                    success = status_target.last_success
+                    print(
+                        f"{status_target.reference.rsplit('/', 1)[-1]}\t{status_target.system}\t"
+                        f"{attempt.revision or '-'}\t{attempt.status}\t"
+                        f"{attempt.built}/{attempt.selected}\t"
+                        f"last-success={success.revision if success is not None else '-'}",
+                        file=stdout,
+                    )
+            return 0
+
         if arguments.command == "warm":
+            assert state_file is not None
             if bool(arguments.cache) == arguments.no_push:
                 print(
                     "nixpkgs-cache-warmer: warm requires --cache or --no-push",
@@ -57,17 +106,20 @@ def run(
                 )
                 return 2
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
-            outcome = Warmer(
-                SourceResolver(runner, nix),
-                Inventory(
-                    runner,
-                    Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
-                    Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
+            outcome = TrackingWarmer(
+                Warmer(
+                    SourceResolver(runner, nix),
+                    Inventory(
+                        runner,
+                        Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
+                        Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
+                    ),
+                    NixBuilder(runner, nix),
+                    None
+                    if arguments.no_push
+                    else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
                 ),
-                NixBuilder(runner, nix),
-                None
-                if arguments.no_push
-                else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
+                StateStore(state_file),
             ).warm(
                 arguments.reference,
                 arguments.maintainer,
@@ -89,7 +141,7 @@ def run(
                 print(f"{resolved.revision}\t{resolved.source}", file=stdout)
             return 0
 
-        targets = Inventory(
+        package_targets = Inventory(
             runner,
             Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
             Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
@@ -108,11 +160,15 @@ def run(
         return 1
 
     if arguments.json:
-        json.dump([target.model_dump(mode="json") for target in targets], stdout, indent=2)
+        json.dump(
+            [package_target.model_dump(mode="json") for package_target in package_targets],
+            stdout,
+            indent=2,
+        )
         stdout.write("\n")
     else:
-        for target in targets:
-            print(f"{target.pname}\t{target.drvPath}", file=stdout)
+        for package_target in package_targets:
+            print(f"{package_target.pname}\t{package_target.drvPath}", file=stdout)
     return 0
 
 

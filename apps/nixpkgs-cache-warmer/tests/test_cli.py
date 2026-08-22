@@ -1,8 +1,11 @@
 import io
+from datetime import datetime, timezone
 from pathlib import Path
 
 from nixpkgs_cache_warmer.cli import run
 from nixpkgs_cache_warmer.commands import CommandResult
+from nixpkgs_cache_warmer.models import RunRecord, TargetState, WarmerState
+from nixpkgs_cache_warmer.state import StateStore
 
 
 class FakeRunner:
@@ -26,6 +29,7 @@ ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
     "NIXPKGS_CACHE_WARMER_ATTIC": "/attic",
+    "NIXPKGS_CACHE_WARMER_STATE_FILE": "/state.json",
 }
 
 
@@ -69,7 +73,7 @@ def test_resolve_prints_json() -> None:
     assert '"revision": "012345"' in stdout.getvalue()
 
 
-def test_warm_reports_success() -> None:
+def test_warm_reports_success(tmp_path: Path) -> None:
     runner = SequencedRunner(
         [
             CommandResult(
@@ -98,7 +102,7 @@ def test_warm_reports_success() -> None:
             "x86_64-linux",
             "--no-push",
         ],
-        ENVIRONMENT,
+        ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
         runner,
         io.StringIO(),
         stderr,
@@ -106,6 +110,9 @@ def test_warm_reports_success() -> None:
 
     assert status == 0
     assert "Built 1/1" in stderr.getvalue()
+    state = StateStore(tmp_path / "state.json").read()
+    assert state.targets[0].last_success is not None
+    assert state.targets[0].last_success.revision == "012345"
 
 
 def test_warm_requires_explicit_publication_policy() -> None:
@@ -127,6 +134,93 @@ def test_warm_requires_explicit_publication_policy() -> None:
 
     assert status == 2
     assert "requires --cache or --no-push" in stderr.getvalue()
+
+
+def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:
+    record = RunRecord(
+        attempted_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        revision="012345",
+        status="success",
+        selected=2,
+        built=2,
+        failed=0,
+        pushed=2,
+    )
+    StateStore(tmp_path / "status.json").write(
+        WarmerState(
+            targets=(
+                TargetState(
+                    reference="github:NixOS/nixpkgs/staging",
+                    system="x86_64-linux",
+                    last_attempt=record,
+                    last_success=record,
+                ),
+            )
+        )
+    )
+    stdout = io.StringIO()
+
+    status = run(
+        [
+            "status",
+            "--state-file",
+            str(tmp_path / "status.json"),
+            "--branch",
+            "staging",
+            "--system",
+            "x86_64-linux",
+        ],
+        ENVIRONMENT,
+        FakeRunner(CommandResult(0, "", "")),
+        stdout,
+        io.StringIO(),
+    )
+
+    assert status == 0
+    assert stdout.getvalue() == (
+        "staging\tx86_64-linux\t012345\tsuccess\t2/2\tlast-success=012345\n"
+    )
+
+
+def test_status_prints_single_successful_revision(tmp_path: Path) -> None:
+    record = RunRecord(
+        attempted_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        revision="012345",
+        status="success",
+        selected=1,
+        built=1,
+        failed=0,
+        pushed=0,
+    )
+    StateStore(tmp_path / "status.json").write(
+        WarmerState(
+            targets=(
+                TargetState(
+                    reference="github:NixOS/nixpkgs/staging",
+                    system="aarch64-darwin",
+                    last_attempt=record,
+                    last_success=record,
+                ),
+            )
+        )
+    )
+    stdout = io.StringIO()
+
+    status = run(
+        [
+            "status",
+            "--state-file",
+            str(tmp_path / "status.json"),
+            "--print-revision",
+        ],
+        ENVIRONMENT,
+        FakeRunner(CommandResult(0, "", "")),
+        stdout,
+        io.StringIO(),
+    )
+
+    assert status == 0
+    assert stdout.getvalue() == "012345\n"
 
 
 def test_targets_prints_human_inventory() -> None:

@@ -7,7 +7,7 @@ name = "nixpkgs-cache-warmer"
 version = "0.1.0"
 description = "Build maintained nixpkgs packages and publish them to Attic"
 requires-python = ">=3.11"
-dependencies = ["pydantic"]
+dependencies = ["atomic-file-writes", "pydantic"]
 
 [project.scripts]
 nixpkgs-cache-warmer = "nixpkgs_cache_warmer.cli:main"
