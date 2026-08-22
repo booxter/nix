@@ -2,7 +2,9 @@
   attic-client,
   lib,
   nix,
+  openssh,
   python3,
+  runnerHost ? "",
   ruff,
 }:
 let
@@ -42,6 +44,8 @@ pythonPackages.buildPythonApplication {
     "--set NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE ${lib.getExe' nix "nix-instantiate"}"
     "--set NIXPKGS_CACHE_WARMER_INVENTORY_EXPR ${./inventory.nix}"
     "--set NIXPKGS_CACHE_WARMER_STATE_FILE /var/lib/nixpkgs-cache-warmer/status.json"
+    "--set NIXPKGS_CACHE_WARMER_RUNNER ${lib.escapeShellArg runnerHost}"
+    "--set NIXPKGS_CACHE_WARMER_SSH ${lib.getExe openssh}"
   ];
 
   preCheck = ''

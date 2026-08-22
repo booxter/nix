@@ -30,6 +30,7 @@ ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
     "NIXPKGS_CACHE_WARMER_ATTIC": "/attic",
     "NIXPKGS_CACHE_WARMER_STATE_FILE": "/state.json",
+    "NIXPKGS_CACHE_WARMER_SSH": "/ssh",
 }
 
 
@@ -220,6 +221,48 @@ def test_status_prints_single_successful_revision(tmp_path: Path) -> None:
     )
 
     assert status == 0
+    assert stdout.getvalue() == "012345\n"
+
+
+def test_status_reads_authoritative_runner() -> None:
+    record = RunRecord(
+        attempted_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        revision="012345",
+        status="success",
+        selected=1,
+        built=1,
+        failed=0,
+        pushed=1,
+    )
+    remote_state = WarmerState(
+        targets=(
+            TargetState(
+                reference="github:NixOS/nixpkgs/staging",
+                system="x86_64-linux",
+                last_attempt=record,
+                last_success=record,
+            ),
+        )
+    ).model_dump_json()
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    status = run(
+        [
+            "status",
+            "--branch",
+            "staging",
+            "--system",
+            "x86_64-linux",
+            "--print-revision",
+        ],
+        ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_RUNNER": "mmini"},
+        FakeRunner(CommandResult(0, remote_state, "")),
+        stdout,
+        stderr,
+    )
+
+    assert status == 0, stderr.getvalue()
     assert stdout.getvalue() == "012345\n"
 
 

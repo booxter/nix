@@ -14,7 +14,7 @@ from nixpkgs_cache_warmer.inventory import Inventory
 from nixpkgs_cache_warmer.models import WarmerState
 from nixpkgs_cache_warmer.publish import AtticPublisher
 from nixpkgs_cache_warmer.resolver import SourceResolver
-from nixpkgs_cache_warmer.state import StateStore
+from nixpkgs_cache_warmer.state import RemoteStateReader, StateStore
 from nixpkgs_cache_warmer.tracking import TrackingWarmer
 from nixpkgs_cache_warmer.warmer import Warmer
 
@@ -43,6 +43,9 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--state-file", type=Path)
     status = subparsers.add_parser("status", help="show persisted warming status")
     status.add_argument("--state-file", type=Path)
+    location = status.add_mutually_exclusive_group()
+    location.add_argument("--host")
+    location.add_argument("--local", action="store_true")
     status.add_argument("--branch")
     status.add_argument("--system")
     status.add_argument("--json", action="store_true")
@@ -66,7 +69,17 @@ def run(
         )
         if arguments.command == "status":
             assert state_file is not None
-            state = StateStore(state_file).read()
+            runner_host = arguments.host or environ.get("NIXPKGS_CACHE_WARMER_RUNNER", "")
+            state = (
+                RemoteStateReader(
+                    runner,
+                    Path(environ["NIXPKGS_CACHE_WARMER_SSH"]),
+                    runner_host,
+                    state_file,
+                ).read()
+                if runner_host and not arguments.local
+                else StateStore(state_file).read()
+            )
             status_targets = tuple(
                 status_target
                 for status_target in state.targets
