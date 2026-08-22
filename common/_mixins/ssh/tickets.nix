@@ -1,16 +1,12 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
   localHost = config.networking.hostName;
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  otherConfigurations = removeAttrs configurations [ localHost ];
-  fleetHosts = lib.mapAttrs (_: configuration: configuration.config.host) otherConfigurations // {
-    ${localHost} = config.host;
-  };
+  localInventory = fleetInventory.hosts.${localHost};
   ticketIssuerType = lib.types.submodule {
     options = {
       publicKey = lib.mkOption {
@@ -28,10 +24,10 @@ let
     };
   };
   realmTicketIssuerHosts = lib.filterAttrs (
-    _: host: host.realm == config.host.realm && host.ssh.tickets.issuer != null
-  ) fleetHosts;
+    _: host: host.realm == config.host.realm && host.ssh.ticketIssuerPublicKey != null
+  ) fleetInventory.hosts;
   realmTrustedCaPublicKeys = lib.unique (
-    map (host: host.ssh.tickets.issuer.publicKey) (builtins.attrValues realmTicketIssuerHosts)
+    map (host: host.ssh.ticketIssuerPublicKey) (builtins.attrValues realmTicketIssuerHosts)
   );
   ticketTargetType = lib.types.submodule {
     options = {
@@ -41,23 +37,27 @@ let
       maxTtl = lib.mkOption { type = lib.types.nonEmptyStr; };
     };
   };
-  ticketTargetFor =
-    name: configuration:
-    let
-      tickets = configuration.config.host.ssh.tickets;
-    in
-    {
-      inherit name;
-      inherit (tickets)
-        allowX11Forwarding
-        defaultTtl
-        maxTtl
-        ;
-    };
+  ticketTargetFor = name: host: {
+    inherit name;
+    inherit (host.ssh.ticketPolicy)
+      allowX11Forwarding
+      defaultTtl
+      maxTtl
+      ;
+  };
   realmTicketConfigurations = lib.filterAttrs (
-    _: configuration: configuration.config.host.realm == config.host.realm
-  ) configurations;
+    _: host: host.realm == config.host.realm
+  ) fleetInventory.hosts;
   ticketTargets = lib.mapAttrsToList ticketTargetFor realmTicketConfigurations;
+  localIssuerPublicKey =
+    if config.host.ssh.tickets.issuer == null then null else config.host.ssh.tickets.issuer.publicKey;
+  localTicketPolicy = {
+    inherit (config.host.ssh.tickets)
+      allowX11Forwarding
+      defaultTtl
+      maxTtl
+      ;
+  };
 in
 {
   options.host.ssh.tickets = {
@@ -101,4 +101,15 @@ in
       description = "SSH ticket targets derived from evaluated fleet host options.";
     };
   };
+
+  config.assertions = [
+    {
+      assertion = localInventory.ssh.ticketIssuerPublicKey == localIssuerPublicKey;
+      message = "local SSH ticket issuer public key must match fleet inventory";
+    }
+    {
+      assertion = localInventory.ssh.ticketPolicy == localTicketPolicy;
+      message = "local SSH ticket policy must match fleet inventory";
+    }
+  ];
 }

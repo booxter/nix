@@ -1,30 +1,19 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   system,
   ...
 }:
 let
-  localHost = config.networking.hostName;
   platform = lib.systems.elaborate system;
   username = config.host.username;
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  otherConfigurations = removeAttrs configurations [ localHost ];
-  fleetHosts = lib.mapAttrs (_: configuration: configuration.config.host) otherConfigurations // {
-    ${localHost} = config.host;
-  };
-  operatorHostView = host: {
-    inherit (host) realm;
-    operator = host.security.secrets.operator.ageIdentity != null;
-    authorizedKeys = host.ssh.operator.authorizedKeys;
-  };
-  operatorHosts = lib.mapAttrs (_: operatorHostView) fleetHosts;
+  localInventory = fleetInventory.hosts.${config.networking.hostName};
   realmOperatorHosts = lib.filterAttrs (
-    _: host: host.operator && host.realm == config.host.realm
-  ) operatorHosts;
+    _: host: host.realm == config.host.realm && host.ssh.operatorAuthorizedKeys != [ ]
+  ) fleetInventory.hosts;
   realmAuthorizedKeys = lib.unique (
-    builtins.concatMap (host: host.authorizedKeys) (builtins.attrValues realmOperatorHosts)
+    builtins.concatMap (host: host.ssh.operatorAuthorizedKeys) (builtins.attrValues realmOperatorHosts)
   );
 in
 {
@@ -67,6 +56,14 @@ in
       {
         assertion = config.host.ssh.authorizedKeys != [ ];
         message = "realm '${config.host.realm}' must have at least one operator SSH authorized key";
+      }
+      {
+        assertion = localInventory.realm == config.host.realm && localInventory.system == system;
+        message = "local host realm and system must match fleet inventory";
+      }
+      {
+        assertion = localInventory.ssh.operatorAuthorizedKeys == config.host.ssh.operator.authorizedKeys;
+        message = "local SSH operator keys must match fleet inventory";
       }
     ];
 

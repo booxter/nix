@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   pkgs,
@@ -10,10 +11,9 @@ let
   stateDir = "/var/lib/fleet-cache-warmer";
   textfileDir = "${stateDir}/textfile";
   pushToAttic = config.host.attic.realmServers != { };
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
   warmTargets = map (target: target.attr) (
     lib.filter (
-      target: configurations.${target.host}.config.host.realm == config.host.realm
+      target: fleetInventory.hosts.${target.host}.realm == config.host.realm
     ) outputs.lib.ciTargets.buildTargets
   );
   atticCaches = lib.mapAttrsToList (
