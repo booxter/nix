@@ -80,13 +80,12 @@ in
         allowReboot = model.plan.reboot.mode == "with-upgrade";
         rebootWindow = if model.plan.reboot.mode == "with-upgrade" then model.rebootWindow else null;
       };
+
+      systemd.services.nixos-upgrade.serviceConfig.TimeoutStartSec = "12h";
     }
 
     (lib.mkIf (maintenanceGuards != [ ]) {
-      systemd.services.nixos-upgrade.serviceConfig = {
-        ExecStartPre = maintenanceGuards;
-        TimeoutStartSec = "infinity";
-      };
+      systemd.services.nixos-upgrade.serviceConfig.ExecStartPre = maintenanceGuards;
     })
 
     (lib.mkIf (model.plan.reboot.mode == "scheduled") {
