@@ -1,6 +1,7 @@
 {
   fleetInventory,
   inputs,
+  lib,
   outputs,
   plainPkgs,
   system,
@@ -8,9 +9,14 @@
 }:
 let
   pkgs = plainPkgs;
-  basePackages = pkgs.lib.filterAttrs (
-    _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
-  ) (import ../pkgs pkgs);
+  isDarwin = lib.hasSuffix "-darwin" system;
+  isLinux = lib.hasSuffix "-linux" system;
+  basePackages = removeAttrs (import ../pkgs pkgs) (
+    lib.optionals isDarwin [
+      "postgresql-role-password"
+      "storage-observability"
+    ]
+  );
   fleet = import ../apps/fleet.nix {
     inherit
       fleetInventory
@@ -29,10 +35,10 @@ basePackages
 
   qemu-host-package = pkgs.qemu;
 }
-// pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+// lib.optionalAttrs isDarwin {
   ismc = pkgs.callPackage ../darwin/_mixins/thermal-accounting/pkgs/ismc { };
 }
-// pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+// lib.optionalAttrs isLinux {
   aurral = pkgs.callPackage ../nixos/_mixins/aurral/package { };
   inherit (degoogPackages) degoog;
   degoog-devinside-extensions = degoogPackages.devinsideExtensions;

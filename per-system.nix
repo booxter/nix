@@ -30,6 +30,7 @@ let
       appSet
       fleetInventory
       inputs
+      lib
       outputs
       pkgs
       plainPkgs
