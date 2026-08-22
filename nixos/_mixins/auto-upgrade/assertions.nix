@@ -1,20 +1,12 @@
 {
+  autoUpgradeModel,
   config,
-  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
   isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
-  model = import ./model.nix {
-    inherit
-      config
-      fleetInventory
-      lib
-      outputs
-      ;
-  };
+  model = autoUpgradeModel;
 in
 {
   assertions = [

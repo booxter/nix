@@ -1,21 +1,13 @@
 {
+  autoUpgradeModel,
   config,
-  fleetInventory,
   lib,
-  outputs,
   pkgs,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      fleetInventory
-      lib
-      outputs
-      ;
-  };
+  model = autoUpgradeModel;
   autoUpgradeTools = pkgs.callPackage ./package {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
