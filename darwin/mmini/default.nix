@@ -9,15 +9,15 @@ in
   host.nix.builderClient = { };
 
   host.nix.cacheWarmer = {
+    builderMaxJobs = {
+      builder1 = 1;
+      builder2 = 1;
+      builder3 = 1;
+    };
     fleet.enable = true;
     nixpkgs = {
       enable = true;
       runner = "mmini";
-      builderMaxJobs = {
-        builder1 = 1;
-        builder2 = 1;
-        builder3 = 1;
-      };
       references = [
         "github:NixOS/nixpkgs/master"
         "github:NixOS/nixpkgs/nixos-unstable"

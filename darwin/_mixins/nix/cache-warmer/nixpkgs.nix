@@ -6,7 +6,6 @@
 }:
 let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
-  formatBuilder = import ../../../../common/_lib/format-nix-builder.nix { inherit lib; };
   stateDir = "/var/lib/nixpkgs-cache-warmer";
   textfileDir = "${stateDir}/textfile";
   metricsFile = "${textfileDir}/state.prom";
@@ -16,17 +15,6 @@ let
   package = pkgs.callPackage ../../../../apps/nixpkgs-cache-warmer {
     runnerHost = if cfg.runner == null then "" else cfg.runner;
   };
-  buildMachines = map (
-    builder:
-    builder
-    // {
-      maxJobs = lib.attrByPath [ builder.hostName ] builder.maxJobs cfg.builderMaxJobs;
-    }
-  ) config.nix.buildMachines;
-  builders = lib.concatStringsSep " ; " (map formatBuilder buildMachines);
-  unknownBuilders = lib.subtractLists (map (builder: builder.hostName) config.nix.buildMachines) (
-    builtins.attrNames cfg.builderMaxJobs
-  );
   arguments = [
     (lib.getExe package)
     "run"
@@ -96,12 +84,6 @@ in
       default = [ ];
       description = "Full-match regular expressions for package names to exclude.";
     };
-
-    builderMaxJobs = lib.mkOption {
-      type = lib.types.attrsOf lib.types.ints.positive;
-      default = { };
-      description = "Per-builder maximum concurrent jobs for cache-warmer Nix invocations.";
-    };
   };
 
   config = lib.mkMerge [
@@ -127,10 +109,6 @@ in
           assertion = atticCaches != [ ];
           message = "nixpkgs cache warming requires at least one Attic cache";
         }
-        {
-          assertion = unknownBuilders == [ ];
-          message = "unknown nixpkgs cache-warmer builders: ${lib.concatStringsSep ", " unknownBuilders}";
-        }
       ];
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
@@ -148,7 +126,7 @@ in
           WorkingDirectory = "/var/root";
           EnvironmentVariables = {
             HOME = "/var/root";
-            NIX_CONFIG = "builders = ${builders}";
+            NIX_CONFIG = "builders = ${config.host.nix.cacheWarmer.builders}";
             NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           }

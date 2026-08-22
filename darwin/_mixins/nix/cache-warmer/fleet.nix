@@ -42,6 +42,7 @@ in
         EnvironmentVariables = {
           HOME = "/var/root";
           FLEET_CACHE_WARMER_FLAKE = "github:booxter/nix";
+          NIX_CONFIG = "builders = ${config.host.nix.cacheWarmer.builders}";
         }
         // lib.optionalAttrs pushToAttic {
           FLEET_CACHE_WARMER_ATTIC_CACHES = builtins.toJSON atticCaches;
