@@ -9,6 +9,7 @@ from nixpkgs_cache_warmer.commands import CommandError
 from nixpkgs_cache_warmer.models import PackageTarget, ResolvedSource, WarmerState
 from nixpkgs_cache_warmer.tracking import TrackingWarmer
 from nixpkgs_cache_warmer.warmer import WarmOutcome
+from nixpkgs_cache_warmer.warmer import PreparationFailure, PreparationOutcome, PreparedTarget
 
 
 TARGET = PackageTarget(
@@ -30,11 +31,13 @@ OUTCOME = WarmOutcome(
 class FakeStore:
     def __init__(self) -> None:
         self.state = WarmerState()
+        self.writes = 0
 
     def read(self) -> WarmerState:
         return self.state
 
     def write(self, state: WarmerState) -> None:
+        self.writes += 1
         self.state = state
 
 
@@ -62,6 +65,36 @@ class FailingWarmer:
         log: TextIO,
     ) -> WarmOutcome:
         raise CommandError("network unavailable")
+
+
+class MatrixWarmer(SuccessfulWarmer):
+    def __init__(self, fail_build: bool = False) -> None:
+        self.fail_build = fail_build
+        self.prepared = (
+            PreparedTarget(OUTCOME.resolved, "aarch64-darwin", (TARGET,)),
+            PreparedTarget(OUTCOME.resolved, "x86_64-linux", (TARGET,)),
+        )
+
+    def prepare_matrix(
+        self,
+        references: tuple[str, ...],
+        maintainer: str,
+        systems: tuple[str, ...],
+        exclude_pname_patterns: tuple[str, ...],
+        include_pname_patterns: tuple[str, ...],
+        log: TextIO,
+    ) -> PreparationOutcome:
+        return PreparationOutcome(
+            prepared=self.prepared,
+            failed=(PreparationFailure("master", "x86_64-linux", "resolution failed"),),
+        )
+
+    def build_matrix(
+        self, prepared_targets: tuple[PreparedTarget, ...], log: TextIO
+    ) -> tuple[WarmOutcome, ...]:
+        if self.fail_build:
+            raise CommandError("build unavailable")
+        return (OUTCOME, OUTCOME)
 
 
 def test_tracks_completed_attempt() -> None:
@@ -94,3 +127,42 @@ def test_tracks_command_failure_before_reraising() -> None:
 
     assert store.state.targets[0].last_attempt.status == "failed"
     assert store.state.targets[0].last_attempt.error == "network unavailable"
+
+
+def test_tracks_complete_matrix_with_one_state_write() -> None:
+    store = FakeStore()
+
+    outcome = TrackingWarmer(MatrixWarmer(), store).warm_matrix(
+        ("master",),
+        "booxter",
+        ("aarch64-darwin", "x86_64-linux"),
+        (),
+        (),
+        io.StringIO(),
+    )
+
+    assert len(outcome.completed) == 2
+    assert outcome.failed == (PreparationFailure("master", "x86_64-linux", "resolution failed"),)
+    assert store.writes == 1
+    assert [(target.reference, target.system) for target in store.state.targets] == [
+        (OUTCOME.resolved.reference, "aarch64-darwin"),
+        (OUTCOME.resolved.reference, "x86_64-linux"),
+        ("master", "x86_64-linux"),
+    ]
+
+
+def test_tracks_all_prepared_targets_when_matrix_build_fails() -> None:
+    store = FakeStore()
+
+    with pytest.raises(CommandError, match="build unavailable"):
+        TrackingWarmer(MatrixWarmer(fail_build=True), store).warm_matrix(
+            ("master",),
+            "booxter",
+            ("aarch64-darwin", "x86_64-linux"),
+            (),
+            (),
+            io.StringIO(),
+        )
+
+    assert store.writes == 1
+    assert all(target.last_attempt.status == "failed" for target in store.state.targets)
