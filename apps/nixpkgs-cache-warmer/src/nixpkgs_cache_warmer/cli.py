@@ -10,6 +10,7 @@ from typing import TextIO
 
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
+from nixpkgs_cache_warmer.resolver import SourceResolver
 
 
 def parser() -> argparse.ArgumentParser:
@@ -21,6 +22,9 @@ def parser() -> argparse.ArgumentParser:
     targets.add_argument("--system", required=True)
     targets.add_argument("--exclude-pname-pattern", action="append", default=[])
     targets.add_argument("--json", action="store_true")
+    resolve = subparsers.add_parser("resolve", help="resolve a flake reference immutably")
+    resolve.add_argument("reference")
+    resolve.add_argument("--json", action="store_true")
     return result
 
 
@@ -33,19 +37,29 @@ def run(
 ) -> int:
     arguments = parser().parse_args(argv)
     try:
-        nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"])
-        expression = Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"])
-    except KeyError as error:
-        print(f"nixpkgs-cache-warmer: missing packaged setting: {error.args[0]}", file=stderr)
-        return 2
+        if arguments.command == "resolve":
+            resolved = SourceResolver(runner, Path(environ["NIXPKGS_CACHE_WARMER_NIX"])).resolve(
+                arguments.reference
+            )
+            if arguments.json:
+                stdout.write(resolved.model_dump_json(indent=2) + "\n")
+            else:
+                print(f"{resolved.revision}\t{resolved.source}", file=stdout)
+            return 0
 
-    try:
-        targets = Inventory(runner, nix, expression).targets(
+        targets = Inventory(
+            runner,
+            Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
+            Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
+        ).targets(
             arguments.source,
             arguments.maintainer,
             arguments.system,
             tuple(arguments.exclude_pname_pattern),
         )
+    except KeyError as error:
+        print(f"nixpkgs-cache-warmer: missing packaged setting: {error.args[0]}", file=stderr)
+        return 2
     except CommandError as error:
         print(f"nixpkgs-cache-warmer: {error}", file=stderr)
         return 1

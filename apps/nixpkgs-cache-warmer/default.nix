@@ -32,6 +32,7 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
+    "--set NIXPKGS_CACHE_WARMER_NIX ${lib.getExe nix}"
     "--set NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE ${lib.getExe' nix "nix-instantiate"}"
     "--set NIXPKGS_CACHE_WARMER_INVENTORY_EXPR ${./inventory.nix}"
   ];

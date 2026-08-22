@@ -14,9 +14,50 @@ class FakeRunner:
 
 
 ENVIRONMENT = {
+    "NIXPKGS_CACHE_WARMER_NIX": "/nix",
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
 }
+
+
+def test_resolve_prints_revision() -> None:
+    stdout = io.StringIO()
+    status = run(
+        ["resolve", "github:NixOS/nixpkgs/staging"],
+        ENVIRONMENT,
+        FakeRunner(
+            CommandResult(
+                0,
+                '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
+                "",
+            )
+        ),
+        stdout,
+        io.StringIO(),
+    )
+
+    assert status == 0
+    assert stdout.getvalue() == "012345\t/nix/store/source\n"
+
+
+def test_resolve_prints_json() -> None:
+    stdout = io.StringIO()
+    status = run(
+        ["resolve", "github:NixOS/nixpkgs/staging", "--json"],
+        ENVIRONMENT,
+        FakeRunner(
+            CommandResult(
+                0,
+                '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
+                "",
+            )
+        ),
+        stdout,
+        io.StringIO(),
+    )
+
+    assert status == 0
+    assert '"revision": "012345"' in stdout.getvalue()
 
 
 def test_targets_prints_human_inventory() -> None:
