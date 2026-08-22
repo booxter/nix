@@ -40,9 +40,22 @@ let
         touch "$out"
       '';
   };
+  proxmoxTopologyErrors = import ./checks/proxmox-topology.nix {
+    inherit fleetInventory lib;
+  };
+  proxmoxTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    proxmox-topology =
+      assert lib.assertMsg (proxmoxTopologyErrors == [ ]) (
+        lib.concatStringsSep "; " proxmoxTopologyErrors
+      );
+      pkgs.runCommand "proxmox-topology" { } ''
+        touch "$out"
+      '';
+  };
 in
 appSet.packages
 // autoUpgradeChecks
+// proxmoxTopologyChecks
 // upsTopologyChecks
 // import ../tests { inherit inputs pkgs; }
 // inputNixosTests

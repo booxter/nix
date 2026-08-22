@@ -14,6 +14,7 @@ in
   autoUpgrade = import ./auto-upgrade.nix;
   builders = import ./builders.nix { inherit lib; };
   inherit hosts;
+  proxmox = import ./proxmox.nix;
   sites = import ./sites.nix;
   ups = import ./ups.nix;
   inherit webServices;
