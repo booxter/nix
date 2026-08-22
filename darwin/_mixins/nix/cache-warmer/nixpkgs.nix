@@ -7,6 +7,7 @@
 let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
   stateDir = "/var/lib/nixpkgs-cache-warmer";
+  inventoryCacheFile = "${stateDir}/inventory.json";
   textfileDir = "${stateDir}/textfile";
   metricsFile = "${textfileDir}/state.prom";
   atticCaches = lib.mapAttrsToList (
@@ -20,6 +21,10 @@ let
     "run"
     "--maintainer"
     cfg.maintainer
+    "--inventory-cache-file"
+    inventoryCacheFile
+    "--inventory-cache-max-age-days"
+    "7"
   ]
   ++ lib.concatMap (reference: [
     "--reference"
