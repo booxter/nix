@@ -19,7 +19,6 @@ in
     host.web.services.loki = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
       internal = {
-        clientAuth = "mtls";
         locationExtraConfig = ''
           client_max_body_size 0;
           proxy_request_buffering off;

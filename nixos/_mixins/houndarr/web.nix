@@ -6,18 +6,6 @@ in
   config = lib.mkIf cfg.enable {
     host.web.services.houndarr = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/api/health";
-        };
-      };
-      dashboard = {
-        icon = "sh:houndarr.png";
-        section = "media-admin";
-      };
       auth.policy = "media-admin";
     };
   };

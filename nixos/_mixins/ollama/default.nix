@@ -43,7 +43,6 @@ in
     host.web.services.ollama = {
       upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
       internal = {
-        clientAuth = "mtls";
         localAliases = [ "ollama" ];
         locationExtraConfig = ''
           proxy_read_timeout 600s;

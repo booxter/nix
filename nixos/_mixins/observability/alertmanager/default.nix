@@ -39,7 +39,6 @@ in
       internal = {
         path = "= /-/ready";
         proxyWebsockets = false;
-        clientAuth = "mtls";
         locationExtraConfig = ''
           access_log off;
         '';

@@ -3,7 +3,6 @@ let
   node = config.host.proxmox.node;
   enabled = node != null && config.host.observability.enable;
   internalPort = 19221;
-  publicPort = 9221;
   apiUser = "prometheus@pve";
   apiTokenName = "metrics";
   apiTokenValueSecret = "proxmox/pve_exporter/token_value";
@@ -16,12 +15,6 @@ in
 {
   config = lib.mkIf enabled {
     host.web.services."proxmox-${config.networking.hostName}".metrics.default = {
-      endpointName = "pve";
-      discover = false;
-      jobName = "pve";
-      openFirewall = true;
-      port = publicPort;
-      path = "/";
       upstream = "http://127.0.0.1:${toString internalPort}";
     };
 

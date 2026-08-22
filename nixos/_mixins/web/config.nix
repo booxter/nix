@@ -1,11 +1,17 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   ...
 }:
 let
   services = config.host.web.services;
+  localHost = config.networking.hostName;
+  localInventoryEntries = fleetInventory.webServices.byOwner.${localHost} or { };
+  inventoryServices = lib.mapAttrs (_: entry: entry.declaration) localInventoryEntries;
+  inventoryServiceIds = builtins.attrNames localInventoryEntries;
+  localServiceIds = builtins.attrNames services;
   internalServices = lib.filterAttrs (_: service: service.internal != null) services;
   metrics = lib.concatMapAttrs (
     serviceName: service:
@@ -24,8 +30,24 @@ in
 {
   config = lib.mkMerge [
     {
+      host.web.services = inventoryServices;
+
+      assertions = [
+        {
+          assertion = localServiceIds == inventoryServiceIds;
+          message =
+            "host.web.services on ${localHost} must match its fleet inventory; "
+            + "configured: ${lib.concatStringsSep ", " localServiceIds}; "
+            + "inventoried: ${lib.concatStringsSep ", " inventoryServiceIds}";
+        }
+      ];
+
       _module.args.fleetWebServices = import ../../_lib/fleet-web-services.nix {
-        inherit config lib outputs;
+        inherit
+          fleetInventory
+          lib
+          outputs
+          ;
       };
 
       host.network.stableAddress.requiredBy = lib.optional (

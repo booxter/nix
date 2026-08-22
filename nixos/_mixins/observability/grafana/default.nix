@@ -261,12 +261,6 @@ in
 
     host.web.services.grafana = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
-      health.frontend = {
-        path = "/login";
-      };
-      dashboard = {
-        section = "infrastructure";
-      };
     };
 
     systemd.services.grafana = {

@@ -24,23 +24,6 @@ in
 
     host.web.services.goo = {
       inherit upstream;
-      public = {
-        hostName = "goo.${config.host.network.publicDomain}";
-      };
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/readyz";
-        };
-      };
-      observability.importance = "best-effort";
-      displayName = "Degoog";
-      dashboard = {
-        icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
-        section = "user";
-      };
       auth = {
         oauth2ProxyGate = {
           displayName = "Degoog";

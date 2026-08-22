@@ -111,13 +111,6 @@ in
 
     host.web.services.id = {
       upstream = "https://127.0.0.1:${toString kanidmPort}";
-      public.hostName = idPublicHost;
-      health.frontend.path = "/status";
-      observability = {
-        importance = "critical";
-        externalProbe.requirement = "required";
-      };
-      displayName = "SSO";
       internal.locationExtraConfig = ''
         proxy_set_header Host ${idPublicHost};
         proxy_set_header X-Forwarded-Host ${idPublicHost};

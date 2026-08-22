@@ -10,7 +10,6 @@ let
     gptOauth2ProxyPort
     gptPort
     metricsInternalPort
-    metricsMtlsPort
     paperlessService
     ssoApplication
     ;
@@ -19,22 +18,6 @@ in
   config = lib.mkIf (cfg != null) {
     host.web.services.paperless = {
       upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
-      public = {
-        hostName = "papers.${config.host.network.publicDomain}";
-        locationExtraConfig = ''
-          client_max_body_size 512m;
-          proxy_read_timeout 300s;
-          proxy_send_timeout 300s;
-        '';
-      };
-      health.frontend = {
-        path = "/accounts/login/";
-      };
-      displayName = "Paperless";
-      dashboard = {
-        icon = "sh:paperless-ngx";
-        section = "infrastructure";
-      };
       internal = {
         recommendedProxySettings = false;
         locationExtraConfig = ''
@@ -50,26 +33,12 @@ in
         '';
       };
       metrics.default = {
-        port = metricsMtlsPort;
         upstream = "http://127.0.0.1:${toString metricsInternalPort}/metrics";
       };
     };
 
     host.web.services.paperless-gpt = lib.mkIf (cfg.gpt != null) {
       upstream = "http://127.0.0.1:${toString gptPort}";
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/api/version";
-        };
-      };
-      displayName = "Paperless GPT";
-      dashboard = {
-        icon = "sh:paperless-ngx";
-        section = "infrastructure";
-      };
       auth = lib.mkIf (ssoApplication != null) {
         oauth2ProxyGate = {
           displayName = "Paperless GPT";

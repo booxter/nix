@@ -47,17 +47,6 @@ in
 
         host.web.services.${name} = {
           upstream = "http://127.0.0.1:${toString port}";
-          health = {
-            frontend = {
-              path = "/oauth2/sign_in";
-            };
-            backend = {
-              path = "/ping";
-            };
-          };
-          dashboard = {
-            section = "media-admin";
-          };
           auth.policy = "media-admin";
         };
 

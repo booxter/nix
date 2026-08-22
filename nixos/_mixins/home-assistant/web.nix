@@ -31,20 +31,11 @@ in
           };
         };
       };
-      health.frontend = { };
-      displayName = "Home Assistant";
-      dashboard = {
-        icon = "sh:home-assistant";
-        section = "infrastructure";
-      };
       internal.locationExtraConfig = ''
         proxy_buffering off;
         proxy_read_timeout 3600s;
       '';
       metrics.default = {
-        endpointName = "home-assistant";
-        jobName = "home-assistant";
-        port = cfg.metrics.port;
         upstream = "${cfg.localUrl}/api/prometheus";
       };
     };

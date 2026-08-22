@@ -38,7 +38,6 @@ in
     };
 
     host.web.services.sabnzbd.metrics.default = {
-      port = 9387;
       upstream = "http://127.0.0.1:${toString exporterPort}/metrics";
     };
   };

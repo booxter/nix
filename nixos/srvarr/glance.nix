@@ -40,17 +40,6 @@ in
 
     dash = {
       upstream = "http://127.0.0.1:${toString publicPort}";
-      public = {
-        hostName = "dash.${config.host.network.publicDomain}";
-        serveOnOwner = false;
-        splitDnsHost = config.networking.hostName;
-      };
-      health.frontend = { };
-      observability = {
-        importance = "critical";
-        externalProbe.requirement = "required";
-      };
-      displayName = "Dashboard";
     };
   };
 }

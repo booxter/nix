@@ -131,16 +131,6 @@ in
 
     host.web.services.audiobookshelf = {
       upstream = "http://127.0.0.1:${toString model.port}";
-      public = {
-        hostName = cfg.publicHostName;
-      };
-      health.frontend = {
-        path = "";
-      };
-      observability.importance = "important";
-      dashboard = {
-        section = "user";
-      };
       internal = {
         recommendedProxySettings = false;
         locationExtraConfig = ''

@@ -82,24 +82,6 @@ in
 
     host.web.services.aurral = {
       upstream = "http://127.0.0.1:${toString model.port}";
-      public = {
-        hostName = cfg.publicHostName;
-        locationExtraConfig = ''
-          proxy_set_header X-Forwarded-For $remote_addr;
-        '';
-      };
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/api/health/live";
-        };
-      };
-      observability.importance = "important";
-      dashboard = {
-        section = "user";
-      };
       auth = {
         oauth2ProxyGate = {
           displayName = "Aurral";
