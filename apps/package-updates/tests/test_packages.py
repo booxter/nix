@@ -166,7 +166,7 @@ def test_command_backend_runs_json_update_script_with_selector_environment(tmp_p
     command, environment, capture = runner.calls[-1]
     assert command == ("/store/update", "--flag")
     assert environment is not None
-    assert environment["UPDATE_NIX_ATTR_PATH"] == "demo"
+    assert environment["UPDATE_NIX_ATTR_PATH"] == "updatePackages.aarch64-darwin.demo"
     assert environment["UPDATE_NIX_SYSTEM"] == "aarch64-darwin"
     assert environment["PACKAGE_UPDATES_SELECT_NODEJS"] == "/package/bin/select-nodejs"
     assert capture is False
@@ -183,7 +183,7 @@ def test_command_backend_falls_back_to_nix_update_and_reads_metadata(tmp_path: P
         "--system",
         "x86_64-linux",
         "--src-only",
-        "demo",
+        "updatePackages.x86_64-linux.demo",
     )
     assert backend.metadata(target).version == "1.0.0"
 

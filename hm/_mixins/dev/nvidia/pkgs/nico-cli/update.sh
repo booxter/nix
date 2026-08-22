@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-attr="${UPDATE_NIX_ATTR_PATH:-nico-cli}"
+attr="${UPDATE_NIX_ATTR_PATH:-updatePackages.x86_64-linux.nico-cli}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 repo_url="https://github.com/NVIDIA/infra-controller.git"
 

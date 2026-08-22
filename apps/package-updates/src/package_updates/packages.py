@@ -88,8 +88,12 @@ class CommandPackageBackend:
         )
         return result.stdout.strip() if result.returncode == 0 else None
 
+    @staticmethod
+    def _attribute(target: PackageTarget) -> str:
+        return f"updatePackages.{target.system}.{target.attr}"
+
     def metadata(self, target: PackageTarget) -> PackageMetadata:
-        prefix = f".#packages.{target.system}.{target.attr}"
+        prefix = f".#{self._attribute(target)}"
         return PackageMetadata(
             version=self._eval(f"{prefix}.version", "--raw") or "",
             changelog=self._eval(f"{prefix}.meta.changelog", "--raw") or "",
@@ -98,7 +102,8 @@ class CommandPackageBackend:
         )
 
     def _run_update_script(self, target: PackageTarget) -> bool:
-        installable = f".#packages.{target.system}.{target.attr}.passthru.updateScript"
+        attribute = self._attribute(target)
+        installable = f".#{attribute}.passthru.updateScript"
         build = self.runner.run(
             [self.tools.nix, "build", "--no-link", "--print-out-paths", installable],
             cwd=self.repo_root,
@@ -131,7 +136,7 @@ class CommandPackageBackend:
 
         print("running passthru.updateScript")
         environment = os.environ | {
-            "UPDATE_NIX_ATTR_PATH": target.attr,
+            "UPDATE_NIX_ATTR_PATH": attribute,
             "UPDATE_NIX_SYSTEM": target.system,
             "PACKAGE_UPDATES_SELECT_NODEJS": self.tools.select_nodejs,
         }
@@ -157,7 +162,7 @@ class CommandPackageBackend:
                     "--system",
                     target.system,
                     *target.nix_update_args,
-                    target.attr,
+                    self._attribute(target),
                 ],
                 cwd=self.repo_root,
                 capture=False,

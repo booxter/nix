@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-attr="${UPDATE_NIX_ATTR_PATH:-ebook-converter-cli}"
+attr="${UPDATE_NIX_ATTR_PATH:-updatePackages.x86_64-linux.ebook-converter-cli}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 package_file="nixos/_mixins/shelfmark/ebook-converter/cli/default.nix"
 
@@ -13,8 +13,8 @@ cd "$repo_root"
 # pyproject instead of nix-update's fallback 0 prefix for release-less repos.
 nix-update --flake --system "$system" --version branch "$attr"
 
-src_path="$(nix eval --option eval-cache false --raw ".#packages.$system.$attr.src")"
-package_version="$(nix eval --option eval-cache false --raw ".#packages.$system.$attr.version")"
+src_path="$(nix eval --option eval-cache false --raw ".#$attr.src")"
+package_version="$(nix eval --option eval-cache false --raw ".#$attr.version")"
 upstream_version="$(sed -n -E 's/^version = "([^"]+)".*/\1/p' "$src_path/pyproject.toml")"
 snapshot_date="${package_version##*-unstable-}"
 

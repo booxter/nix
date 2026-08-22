@@ -147,6 +147,7 @@
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
       packages = selectPerSystem "packages";
+      updatePackages = selectPerSystem "update-packages";
 
       overlays = import ./overlays { inherit inputs; };
 
