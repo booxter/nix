@@ -149,6 +149,33 @@ func TestWriteAllProducesScrapeHealthDashboard(t *testing.T) {
 	}
 }
 
+func TestWriteAllProducesNixBuildersDashboard(t *testing.T) {
+	writer := &memoryWriter{files: make(map[string][]byte)}
+	output := "/dashboards"
+
+	if err := WriteAll(writer, testConfig, output); err != nil {
+		t.Fatalf("WriteAll() error = %v", err)
+	}
+
+	path := filepath.Join(output, "Infrastructure", "nix-builders.json")
+	if _, present := writer.files[path]; !present {
+		t.Fatalf("WriteAll() did not write %s", path)
+	}
+}
+
+func TestNixBuildersDashboardIdentity(t *testing.T) {
+	model, err := NixBuildersOverview(testConfig)
+	if err != nil {
+		t.Fatalf("NixBuildersOverview() error = %v", err)
+	}
+	if model.Uid == nil || *model.Uid != "fana-nix-builders" {
+		t.Fatalf("NixBuildersOverview() UID = %v", model.Uid)
+	}
+	if len(model.Panels) != 15 {
+		t.Fatalf("NixBuildersOverview() panels = %d, want 15", len(model.Panels))
+	}
+}
+
 func TestScrapeHealthIdentity(t *testing.T) {
 	model, err := ScrapeHealth(testConfig)
 	if err != nil {

@@ -52,6 +52,7 @@ func All(config Config) ([]Definition, error) {
 		{path: "Infrastructure/resolver-health.json", build: ResolverProbeOverview},
 		{path: "Infrastructure/pki.json", build: PKIOverview},
 		{path: "Infrastructure/network.json", build: NetworkOverview},
+		{path: "Infrastructure/nix-builders.json", build: NixBuildersOverview},
 		{path: "Infrastructure/power.json", build: PowerOverview},
 		{path: "Infrastructure/proxmox.json", build: ProxmoxOverview},
 		{path: "Infrastructure/sso.json", build: SSOOverview},
