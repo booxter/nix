@@ -51,19 +51,20 @@ class PsSource:
         cpu_seconds = 0.0
         memory_bytes = 0
         oldest_slot_seconds = 0.0
-        arguments = ["-axo", "uid=,etime=,time=,rss="]
+        arguments = ["-axo", "uid=,ppid=,etime=,time=,rss="]
         for line in self._runner.run(self._executable, arguments).splitlines():
             fields = line.split()
-            if len(fields) != 4:
+            if len(fields) != 5:
                 raise MetricsError(f"invalid ps output line: {line}")
             uid = int(fields[0])
-            if uid not in self._build_uids:
+            parent_pid = int(fields[1])
+            if uid not in self._build_uids or parent_pid == 1:
                 continue
             active_uids.add(uid)
             processes += 1
-            oldest_slot_seconds = max(oldest_slot_seconds, parse_duration(fields[1]))
-            cpu_seconds += parse_duration(fields[2])
-            memory_bytes += int(fields[3]) * 1024
+            oldest_slot_seconds = max(oldest_slot_seconds, parse_duration(fields[2]))
+            cpu_seconds += parse_duration(fields[3])
+            memory_bytes += int(fields[4]) * 1024
 
         return Sample(
             active_slots=len(active_uids),
