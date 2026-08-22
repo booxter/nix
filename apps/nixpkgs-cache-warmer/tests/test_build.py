@@ -15,6 +15,13 @@ class FakeRunner:
         self.arguments = tuple(arguments)
         return self.result
 
+    def run_streaming(
+        self, arguments: tuple[str, ...] | list[str], stderr: io.StringIO
+    ) -> CommandResult:
+        result = self.run(arguments)
+        stderr.write(result.stderr)
+        return CommandResult(result.returncode, result.stdout, "")
+
 
 def target(name: str, outputs: tuple[str, ...]) -> PackageTarget:
     return PackageTarget(

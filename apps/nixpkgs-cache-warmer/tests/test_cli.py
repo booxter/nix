@@ -23,6 +23,13 @@ class SequencedRunner:
     def run(self, arguments: tuple[str, ...] | list[str]) -> CommandResult:
         return self.results.pop(0)
 
+    def run_streaming(
+        self, arguments: tuple[str, ...] | list[str], stderr: io.StringIO
+    ) -> CommandResult:
+        result = self.run(arguments)
+        stderr.write(result.stderr)
+        return CommandResult(result.returncode, result.stdout, "")
+
 
 ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX": "/nix",

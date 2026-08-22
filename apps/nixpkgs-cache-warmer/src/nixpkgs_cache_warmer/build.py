@@ -30,11 +30,7 @@ class NixBuilder:
             "--print-out-paths",
         ]
         arguments.extend(f"{target.drvPath}^*" for target in targets)
-        result = self._runner.run(arguments)
-        if result.stderr:
-            log.write(result.stderr)
-            if not result.stderr.endswith("\n"):
-                log.write("\n")
+        result = self._runner.run_streaming(arguments, log)
 
         outputs = tuple(sorted({Path(line) for line in result.stdout.splitlines() if line.strip()}))
         output_set = set(outputs)

@@ -62,8 +62,10 @@ class Warmer:
         caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
+        print(f"Resolving {reference}", file=log)
         resolved = self._resolver.resolve(reference)
         print(f"Resolved {reference} to {resolved.revision}", file=log)
+        print(f"Selecting packages maintained by {maintainer} for {system}", file=log)
         targets = self._inventory.instantiate(
             resolved.source,
             maintainer,
