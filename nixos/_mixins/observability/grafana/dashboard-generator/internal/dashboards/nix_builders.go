@@ -53,7 +53,7 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		WithPanel(valueStat(ValueStatOptions{
 			ID: capacity[0].ID, Grid: capacity[0].Grid, Title: "Active Build Slots",
 			Expression: `sum(` + builder("host_observability_nix_builder_active_slots") + `)`,
-			Legend: "active", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+			Legend:     "active", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
 		})).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: capacity[1].ID, Grid: capacity[1].Grid, Title: "Collector Coverage",
@@ -72,7 +72,7 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		WithPanel(valueStat(ValueStatOptions{
 			ID: capacity[3].ID, Grid: capacity[3].Grid, Title: "Oldest Active Build",
 			Expression: `max(` + builder("host_observability_nix_builder_oldest_active_slot_seconds") + `)`,
-			Legend: "oldest", Unit: units.DurationInDaysHoursMinutesSeconds,
+			Legend:     "oldest", Unit: units.DurationInDaysHoursMinutesSeconds,
 			DataSource: prometheusDatasource, Min: ptr(0.0),
 		}))
 
@@ -205,7 +205,7 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		WithPanel(valueStat(ValueStatOptions{
 			ID: fleetWarmer[0].ID, Grid: fleetWarmer[0].Grid, Title: "Fleet Warmer Running",
 			Expression: builder("host_observability_fleet_cache_warmer_running"),
-			Legend: "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource,
+			Legend:     "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource,
 			Min: ptr(0.0), Max: ptr(1.0), Background: true,
 			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
 				"0": mappedValue("Idle", "green", 0),
@@ -215,18 +215,18 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		WithPanel(availabilityStat(AvailabilityStatOptions{
 			ID: fleetWarmer[1].ID, Grid: fleetWarmer[1].Grid, Title: "Fleet Warmer Last Attempt",
 			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_success"),
-			Legend: "{{instance}}", DataSource: prometheusDatasource,
+			Legend:     "{{instance}}", DataSource: prometheusDatasource,
 		})).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: fleetWarmer[2].ID, Grid: fleetWarmer[2].Grid, Title: "Fleet Warmer Duration",
 			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_duration_seconds"),
-			Legend: "{{instance}}", Unit: units.DurationInDaysHoursMinutesSeconds,
+			Legend:     "{{instance}}", Unit: units.DurationInDaysHoursMinutesSeconds,
 			DataSource: prometheusDatasource, Min: ptr(0.0),
 		})).
 		WithPanel(valueStat(ValueStatOptions{
 			ID: fleetWarmer[3].ID, Grid: fleetWarmer[3].Grid, Title: "Fleet Output Paths",
 			Expression: builder("host_observability_fleet_cache_warmer_output_paths"),
-			Legend: "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+			Legend:     "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
 		}))
 
 	logs := layout.row(12, 24)[0]
