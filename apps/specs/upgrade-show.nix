@@ -1,16 +1,34 @@
 {
-  outputs,
+  autoUpgradeEvaluation,
   pkgs,
   ...
 }:
 let
   inherit (pkgs) lib;
-  hostNames = builtins.attrNames outputs.nixosConfigurations;
+  inherit (autoUpgradeEvaluation)
+    calculatedSchedules
+    claimsByHost
+    committedSchedules
+    errors
+    nixosHosts
+    ;
+  hostNames = lib.unique (autoUpgradeEvaluation.hostNames ++ builtins.attrNames committedSchedules);
+  renderReboot =
+    schedule:
+    if schedule == null then
+      "-"
+    else if schedule.reboot.mode == "with-upgrade" then
+      "with switch"
+    else if schedule.reboot.mode == "never" then
+      "never"
+    else
+      schedule.reboot.calendar;
   rowFor =
     name:
     let
-      config = outputs.nixosConfigurations.${name}.config;
-      autoUpgrade = config.host.autoUpgrade;
+      committed = committedSchedules.${name} or null;
+      calculated = calculatedSchedules.${name} or null;
+      claims = claimsByHost.${name} or { };
       activeClaims = lib.filterAttrs (
         claimName: claim:
         claimName != "baseline"
@@ -20,25 +38,29 @@ let
           || claim.availabilityGroup != null
           || claim.exclusions != [ ]
         )
-      ) autoUpgrade.claims;
-      rebootTimer = config.systemd.timers.nixos-reboot-if-needed or null;
-      reboot =
-        if config.system.autoUpgrade.allowReboot then
-          "with switch"
-        else if rebootTimer == null then
-          "never"
-        else
-          rebootTimer.timerConfig.OnCalendar;
+      ) claims;
     in
     {
-      inherit name reboot;
-      inherit (config.host) realm;
+      inherit name;
+      realm = if builtins.hasAttr name nixosHosts then nixosHosts.${name}.realm else "-";
+      committedSwitch = if committed == null then "-" else committed.switch;
+      calculatedSwitch = if calculated == null then "-" else calculated.switch;
+      committedReboot = renderReboot committed;
+      calculatedReboot = renderReboot calculated;
       claims =
         if activeClaims == { } then
           "baseline"
         else
           lib.concatStringsSep "," (builtins.attrNames activeClaims);
-      switch = config.system.autoUpgrade.dates;
+      status =
+        if committed == null then
+          "missing"
+        else if calculated == null then
+          "unknown"
+        else if committed != calculated then
+          "drifted"
+        else
+          "current";
     };
   rows = map rowFor hostNames;
   columns = [
@@ -52,15 +74,27 @@ let
     }
     {
       heading = "SWITCH";
-      value = row: row.switch;
+      value = row: row.committedSwitch;
+    }
+    {
+      heading = "CALCULATED SWITCH";
+      value = row: row.calculatedSwitch;
     }
     {
       heading = "REBOOT";
-      value = row: row.reboot;
+      value = row: row.committedReboot;
+    }
+    {
+      heading = "CALCULATED REBOOT";
+      value = row: row.calculatedReboot;
     }
     {
       heading = "CLAIMS";
       value = row: row.claims;
+    }
+    {
+      heading = "STATUS";
+      value = row: row.status;
     }
   ];
   maxLength = values: lib.foldl' lib.max 0 (map builtins.stringLength values);
@@ -88,14 +122,19 @@ let
     ]
     ++ map renderRow rows
   );
+  errorText = lib.concatStringsSep "\n" errors;
   package = pkgs.writeShellApplication {
     name = "upgrade-show";
     text = ''
       printf '%s\n' ${lib.escapeShellArg table}
+      ${lib.optionalString (errors != [ ]) ''
+        printf '\n%s\n' ${lib.escapeShellArg errorText} >&2
+        exit 1
+      ''}
     '';
   };
 in
 {
   inherit package;
-  description = "Show the evaluated fleet auto-upgrade plan and contributing claims.";
+  description = "Check and show the committed fleet auto-upgrade plan.";
 }
