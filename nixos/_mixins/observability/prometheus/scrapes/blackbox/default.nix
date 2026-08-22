@@ -161,11 +161,12 @@ let
         labels = {
           component = "blackbox";
           probe_family = "network";
+          probe_role = "reachability";
           scrape_profile = "probe";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
           inherit (source) source;
-          inherit (probe) probe probe_title;
+          inherit (probe) probe probe_protocol probe_title;
         };
         targets = [ probe.target ];
       }) probes
@@ -176,6 +177,8 @@ let
       labels = {
         component = "blackbox";
         probe_family = "dns";
+        probe_protocol = "dns";
+        probe_role = "public-service";
         scrape_profile = "probe";
         scope = "external";
         service = service.id;
@@ -193,6 +196,9 @@ let
       component = "blackbox";
       module = service.blackboxModule or "http_service";
       probe_family = "service";
+      probe_protocol = "http";
+      probe_role = if service.scope == "backend" then "backend" else "frontdoor";
+      probe_title = if service.scope == "backend" then "Backend" else "Front door";
       scrape_profile = "probe";
       scope = service.scope;
       service = service.id;
@@ -290,6 +296,9 @@ in
           availability = service.availability or "always";
           component = "blackbox";
           probe_family = "service";
+          probe_protocol = "http";
+          probe_role = "public-wan";
+          probe_title = "Public WAN";
           scrape_profile = "probe";
           scope = "external";
           service = service.id;
@@ -329,6 +338,8 @@ in
         labels = {
           component = "blackbox";
           probe_family = "dns";
+          probe_protocol = "dns";
+          probe_role = "resolver";
           scrape_profile = "probe";
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;

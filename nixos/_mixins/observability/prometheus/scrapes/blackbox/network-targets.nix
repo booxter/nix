@@ -32,11 +32,13 @@ in
   wanIcmpProbeTargets = [
     {
       probe = "gateway";
+      probe_protocol = "icmp";
       probe_title = "Gateway ${gatewayAddress}";
       target = gatewayAddress;
     }
     {
       probe = "cloudflare";
+      probe_protocol = "icmp";
       probe_title = "Cloudflare 1.1.1.1";
       target = "1.1.1.1";
     }
@@ -45,11 +47,13 @@ in
   wanTcpProbeTargets = [
     {
       probe = "gateway-dns";
+      probe_protocol = "tcp";
       probe_title = "Gateway DNS ${gatewayAddress}:53";
       target = "${gatewayAddress}:53";
     }
     {
       probe = "cloudflare-https";
+      probe_protocol = "tcp";
       probe_title = "Cloudflare 1.1.1.1:443";
       target = "1.1.1.1:443";
     }
