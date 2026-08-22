@@ -14,7 +14,11 @@ buildGoModule {
   ];
 
   preCheck = ''
-    test -z "$(gofmt -l cmd internal)"
+    unformatted="$(gofmt -l cmd internal)"
+    if test -n "$unformatted"; then
+      gofmt -d cmd internal >&2
+      exit 1
+    fi
     go vet ./...
   '';
   checkPhase = ''

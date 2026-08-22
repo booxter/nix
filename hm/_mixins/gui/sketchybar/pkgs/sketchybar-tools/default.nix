@@ -24,7 +24,11 @@ buildGoModule {
   ];
 
   preCheck = ''
-    test -z "$(gofmt -l .)"
+    unformatted="$(gofmt -l .)"
+    if test -n "$unformatted"; then
+      gofmt -d . >&2
+      exit 1
+    fi
     go vet ./...
   '';
   checkFlags = [ "-cover" ];
