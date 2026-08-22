@@ -1,10 +1,10 @@
 {
   config,
+  fleetInventory ? {
+    hosts = { };
+  },
   lib,
   options,
-  outputs ? {
-    nixosConfigurations = { };
-  },
   pkgs,
   qosModel,
   utils,
@@ -22,7 +22,7 @@ let
     "pki"
     "clients"
   ] options;
-  model = import ./model.nix { inherit config outputs; };
+  model = import ./model.nix { inherit config fleetInventory; };
   inherit (model)
     cfg
     exporterUrl

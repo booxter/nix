@@ -1,7 +1,7 @@
 {
   config,
-  outputs ? {
-    nixosConfigurations = { };
+  fleetInventory ? {
+    hosts = { };
   },
 }:
 let
@@ -15,15 +15,12 @@ let
       config.host.downloads.clients.transmission or null;
   jellyfinHostName = if cfg == null then null else cfg.source.jellyfin.host;
   jellyfinHost =
-    if jellyfinHostName == null then
-      null
-    else
-      outputs.nixosConfigurations.${jellyfinHostName}.config or null;
+    if jellyfinHostName == null then null else fleetInventory.hosts.${jellyfinHostName} or null;
   jellyfinEndpoint =
-    if jellyfinHost == null then
+    if jellyfinHost == null || jellyfinHost.platform != "nixos" then
       null
     else
-      jellyfinHost.host.observability.prometheusEndpoints.jellyfin or null;
+      jellyfinHost.observability.prometheusEndpoints.jellyfin or null;
   exporterUrl =
     if cfg == null then
       null
@@ -32,7 +29,7 @@ let
     else if jellyfinHost == null || jellyfinEndpoint == null then
       null
     else
-      "https://${jellyfinHost.networking.hostName}:${toString jellyfinEndpoint.port}${jellyfinEndpoint.path}";
+      "https://${jellyfinHostName}:${toString jellyfinEndpoint.port}${jellyfinEndpoint.path}";
   pkiClientName = "jellyfin-upload-policy";
   pkiClient = config.host.pki.clients.${pkiClientName} or null;
   pkiMaterialization = if pkiClient == null then null else pkiClient.materializations.default;

@@ -1,5 +1,8 @@
 {
   config,
+  fleetInventory ? {
+    hosts = { };
+  },
   lib,
   pkgs,
   ...
@@ -7,6 +10,11 @@
 let
   cfg = config.host.jellyfin;
   exporter = pkgs.callPackage ./packages/exporter { };
+  inventoryEndpoint =
+    fleetInventory.hosts.${config.networking.hostName}.observability.prometheusEndpoints.jellyfin or {
+      port = 9594;
+      path = "/metrics";
+    };
 in
 {
   config = lib.mkIf (cfg != null) {
@@ -52,7 +60,7 @@ in
 
     host.web.services.jellyfin.metrics.default = {
       scrapeInterval = "5s";
-      port = 9594;
+      inherit (inventoryEndpoint) path port;
       upstream = "http://127.0.0.1:19594/metrics";
     };
   };

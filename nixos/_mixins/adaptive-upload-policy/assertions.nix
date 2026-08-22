@@ -1,13 +1,13 @@
 {
   config,
-  lib,
-  outputs ? {
-    nixosConfigurations = { };
+  fleetInventory ? {
+    hosts = { };
   },
+  lib,
   ...
 }:
 let
-  model = import ./model.nix { inherit config outputs; };
+  model = import ./model.nix { inherit config fleetInventory; };
   inherit (model)
     cfg
     jellyfinEndpoint

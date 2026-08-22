@@ -27,6 +27,10 @@ let
       ../common/_mixins/ssh/public-keys/yubikey.pub
     ];
   };
+  prometheusEndpointInventory.beast.jellyfin = {
+    port = 9594;
+    path = "/metrics";
+  };
   ticketIssuerKeyFiles = {
     frame = ../common/_mixins/ssh/public-keys/yubikey.pub;
     mair = ../common/_mixins/ssh/public-keys/fleet-user-ca.pub;
@@ -77,6 +81,7 @@ let
     );
   hostFor = platform: system: name: path: {
     inherit platform system;
+    observability.prometheusEndpoints = prometheusEndpointInventory.${name} or { };
     realm = if builtins.elem name workHosts then "work" else "home";
     site = "home";
     remoteControl.vnc = vncInventory.${name} or null;
