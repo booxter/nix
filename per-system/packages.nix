@@ -1,6 +1,7 @@
 {
   fleetInventory,
   inputs,
+  lib,
   outputs,
   plainPkgs,
   system,
@@ -17,9 +18,10 @@ let
   };
 in
 {
-  inherit (inputs.disko.packages.${system}) disko-install;
-
   fleet-tools = fleet.packages.fleet-tools;
 
   qemu-host-package = pkgs.qemu;
+}
+// lib.optionalAttrs (system == "x86_64-linux") {
+  inherit (inputs.disko.packages.${system}) disko-install;
 }

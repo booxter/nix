@@ -73,6 +73,12 @@ in
         system = darwinSystem;
       })
       (mkTarget {
+        attr = "packages.${nixosSystem}.disko-install";
+        host = "builder1";
+        name = "disko-install (${nixosSystem})";
+        system = nixosSystem;
+      })
+      (mkTarget {
         attr = "nixosConfigurations.builder1.config.virtualisation.proxmox.iso";
         host = "builder1";
         name = "nixos vm proxmox iso (${nixosSystem})";
