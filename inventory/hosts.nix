@@ -42,6 +42,10 @@ let
     maxTtl = "2h";
   };
   ticketPolicyOverrides.frame.allowX11Forwarding = true;
+  userEnvironmentTierOverrides = {
+    frame = "workstation";
+    nv = "developer";
+  };
   vncInventory = {
     frame = {
       connection = "ssh-tunnel";
@@ -84,6 +88,8 @@ let
     observability.prometheusEndpoints = prometheusEndpointInventory.${name} or { };
     realm = if builtins.elem name workHosts then "work" else "home";
     site = "home";
+    userEnvironmentTier =
+      userEnvironmentTierOverrides.${name} or (if platform == "darwin" then "workstation" else "base");
     remoteControl.vnc = vncInventory.${name} or null;
     ssh = {
       knownHostNames = knownHostNamesFor platform name;

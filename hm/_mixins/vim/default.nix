@@ -21,6 +21,11 @@
     host.hm.vim.package = config.programs.nixvim.build.package;
 
     programs.nixvim = {
+      enable = true;
+      defaultEditor = true;
+      viAlias = true;
+      vimAlias = true;
+      vimdiffAlias = true;
       nixpkgs.useGlobalPackages = true;
 
       env = lib.optionalAttrs osConfig.nixpkgs.hostPlatform.isDarwin {

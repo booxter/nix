@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   inputs,
   lib,
   pkgs,
@@ -8,6 +9,7 @@
 let
   hostname = config.networking.hostName;
   username = config.host.username;
+  userEnvironmentTier = fleetInventory.hosts.${hostname}.userEnvironmentTier;
 in
 {
   imports = [
@@ -48,7 +50,8 @@ in
     useGlobalPkgs = true;
     useUserPackages = true;
     users.${username} = {
-      imports = [ ../hm ];
+      imports = [ ../hm ] ++ lib.optional (userEnvironmentTier != "base") ../hm/_mixins/vim;
+      host.hm.env.tier = userEnvironmentTier;
       home.stateVersion = "25.11";
     };
   };
