@@ -51,7 +51,7 @@ class Schedule:
                 target = ScheduledTarget(reference=reference, system=system)
                 print(f"Starting {reference} for {system}", file=log)
                 try:
-                    outcome = self._warmer.warm(
+                    self._warmer.warm(
                         reference,
                         maintainer,
                         system,
@@ -64,6 +64,4 @@ class Schedule:
                     print(f"Failed {reference} for {system}: {error}", file=log)
                     failed.append(target)
                     continue
-                if outcome.build.failed:
-                    failed.append(target)
         return ScheduleOutcome(failed=tuple(failed))

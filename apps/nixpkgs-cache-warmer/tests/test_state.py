@@ -36,7 +36,7 @@ def test_successful_attempt_becomes_last_success() -> None:
     assert state.targets[0].last_attempt.pushed == 1
 
 
-def test_partial_attempt_preserves_previous_success() -> None:
+def test_partial_attempt_advances_completed_revision() -> None:
     success = completed_record(
         WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ()), NOW
     )
@@ -46,7 +46,7 @@ def test_partial_attempt_preserves_previous_success() -> None:
     updated = update_state(previous, RESOLVED.reference, "x86_64-linux", partial)
 
     assert updated.targets[0].last_attempt.status == "partial"
-    assert updated.targets[0].last_success == success
+    assert updated.targets[0].last_success == partial
     assert updated.targets[0].last_attempt.error == "failed packages: one"
 
 
@@ -83,12 +83,10 @@ def test_store_round_trips_atomically_with_public_mode(tmp_path: Path) -> None:
     assert path.stat().st_mode & 0o777 == 0o644
 
 
-def test_store_exports_attempt_success_and_successful_revision_metrics(tmp_path: Path) -> None:
+def test_store_treats_partial_build_as_operational_success_in_metrics(tmp_path: Path) -> None:
     state_path = tmp_path / "status.json"
     metrics_path = tmp_path / "textfile" / "warmer.prom"
-    record = completed_record(
-        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ()), NOW
-    )
+    record = completed_record(WarmOutcome(RESOLVED, BuildOutcome((), (TARGET,), ()), ()), NOW)
     state = WarmerState(
         targets=(
             TargetState(

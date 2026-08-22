@@ -69,20 +69,20 @@ def parse_state(content: str, source: str) -> WarmerState:
 
 def render_metrics(state: WarmerState) -> str:
     lines = [
-        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_success Whether the last target attempt fully succeeded.",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_success Whether the last target attempt completed operationally.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_success gauge",
         "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds Unix timestamp of the last target attempt.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds gauge",
-        "# HELP host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds Unix timestamp of the last fully successful target run.",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds Unix timestamp of the last operationally successful target run.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds gauge",
-        "# HELP host_observability_nixpkgs_cache_warmer_last_success_revision_info Exact nixpkgs revision from the last fully successful target run.",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_revision_info Exact nixpkgs revision from the last operationally successful target run.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_success_revision_info gauge",
     ]
     for target in state.targets:
         labels = _metric_labels(target.reference, target.system)
         lines.append(
             "host_observability_nixpkgs_cache_warmer_last_attempt_success"
-            f"{{{labels}}} {int(target.last_attempt.status == 'success')}"
+            f"{{{labels}}} {int(target.last_attempt.status != 'failed')}"
         )
         lines.append(
             "host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds"
@@ -156,7 +156,7 @@ def update_state(
         ),
         None,
     )
-    last_success = record if record.status == "success" else None
+    last_success = record if record.status != "failed" else None
     if existing is not None and last_success is None:
         last_success = existing.last_success
     updated = TargetState(
