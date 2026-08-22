@@ -34,7 +34,10 @@ in
         wantedBy = [ "multi-user.target" ];
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
-        environment.HOME = rootDir;
+        environment = {
+          HOME = rootDir;
+          NIX_REMOTE = "daemon";
+        };
         serviceConfig = {
           ExecStart = watchStoreCommand name server;
           MemoryHigh = "3G";

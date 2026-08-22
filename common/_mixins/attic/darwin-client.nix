@@ -25,6 +25,7 @@ in
           WorkingDirectory = rootDir;
           EnvironmentVariables = {
             HOME = rootDir;
+            NIX_REMOTE = "daemon";
             NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           };
