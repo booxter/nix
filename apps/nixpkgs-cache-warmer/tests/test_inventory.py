@@ -16,6 +16,14 @@ class FakeRunner:
         return self.result
 
 
+class SequencedRunner:
+    def __init__(self, results: list[CommandResult]) -> None:
+        self.results = results
+
+    def run(self, arguments: tuple[str, ...] | list[str]) -> CommandResult:
+        return self.results.pop(0)
+
+
 def test_inventory_parses_package_targets() -> None:
     runner = FakeRunner(
         CommandResult(
@@ -27,7 +35,7 @@ def test_inventory_parses_package_targets() -> None:
     )
 
     targets = Inventory(runner, Path("/nix"), Path("/inventory.nix")).targets(
-        Path("/source"), "booxter", "x86_64-linux", ("^firefox($|-)",)
+        Path("/source"), "booxter", "x86_64-linux", ("firefox.*",), ("one",)
     )
 
     assert len(targets) == 1
@@ -41,7 +49,9 @@ def test_inventory_parses_package_targets() -> None:
         "--strict",
         "--json",
     )
-    assert runner.arguments[-2:] == ("excludePnamePatternsJson", '["^firefox($|-)"]')
+    assert "excludePnamePatternsJson" in runner.arguments
+    assert '["firefox.*"]' in runner.arguments
+    assert runner.arguments[-2:] == ("includePnamePatternsJson", '["one"]')
     assert "/source" in runner.arguments
 
 
@@ -61,3 +71,39 @@ def test_inventory_rejects_invalid_json() -> None:
         Inventory(runner, Path("/nix"), Path("/inventory.nix")).targets(
             Path("/source"), "booxter", "x86_64-linux"
         )
+
+
+def test_inventory_instantiates_selected_derivations() -> None:
+    inventory_json = (
+        '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one","outputs":["/nix/store/one"]}]'
+    )
+    targets = Inventory(
+        SequencedRunner(
+            [
+                CommandResult(0, inventory_json, ""),
+                CommandResult(0, "/nix/store/a.drv\n", ""),
+            ]
+        ),
+        Path("/nix-instantiate"),
+        Path("/inventory.nix"),
+    ).instantiate(Path("/source"), "booxter", "x86_64-linux")
+
+    assert len(targets) == 1
+    assert targets[0].drvPath == Path("/nix/store/a.drv")
+
+
+def test_inventory_rejects_mismatched_instantiation() -> None:
+    inventory_json = (
+        '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one","outputs":["/nix/store/one"]}]'
+    )
+    with pytest.raises(CommandError, match="do not match"):
+        Inventory(
+            SequencedRunner(
+                [
+                    CommandResult(0, inventory_json, ""),
+                    CommandResult(0, "/nix/store/other.drv\n", ""),
+                ]
+            ),
+            Path("/nix-instantiate"),
+            Path("/inventory.nix"),
+        ).instantiate(Path("/source"), "booxter", "x86_64-linux")

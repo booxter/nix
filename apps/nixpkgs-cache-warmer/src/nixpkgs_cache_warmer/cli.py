@@ -8,9 +8,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TextIO
 
+from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
 from nixpkgs_cache_warmer.resolver import SourceResolver
+from nixpkgs_cache_warmer.warmer import Warmer
 
 
 def parser() -> argparse.ArgumentParser:
@@ -21,10 +23,17 @@ def parser() -> argparse.ArgumentParser:
     targets.add_argument("--maintainer", required=True)
     targets.add_argument("--system", required=True)
     targets.add_argument("--exclude-pname-pattern", action="append", default=[])
+    targets.add_argument("--include-pname-pattern", action="append", default=[])
     targets.add_argument("--json", action="store_true")
     resolve = subparsers.add_parser("resolve", help="resolve a flake reference immutably")
     resolve.add_argument("reference")
     resolve.add_argument("--json", action="store_true")
+    warm = subparsers.add_parser("warm", help="build maintained packages for one flake reference")
+    warm.add_argument("reference")
+    warm.add_argument("--maintainer", required=True)
+    warm.add_argument("--system", required=True)
+    warm.add_argument("--exclude-pname-pattern", action="append", default=[])
+    warm.add_argument("--include-pname-pattern", action="append", default=[])
     return result
 
 
@@ -37,6 +46,26 @@ def run(
 ) -> int:
     arguments = parser().parse_args(argv)
     try:
+        if arguments.command == "warm":
+            nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
+            outcome = Warmer(
+                SourceResolver(runner, nix),
+                Inventory(
+                    runner,
+                    Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
+                    Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
+                ),
+                NixBuilder(runner, nix),
+            ).warm(
+                arguments.reference,
+                arguments.maintainer,
+                arguments.system,
+                tuple(arguments.exclude_pname_pattern),
+                tuple(arguments.include_pname_pattern),
+                stderr,
+            )
+            return 1 if outcome.build.failed else 0
+
         if arguments.command == "resolve":
             resolved = SourceResolver(runner, Path(environ["NIXPKGS_CACHE_WARMER_NIX"])).resolve(
                 arguments.reference
@@ -56,6 +85,7 @@ def run(
             arguments.maintainer,
             arguments.system,
             tuple(arguments.exclude_pname_pattern),
+            tuple(arguments.include_pname_pattern),
         )
     except KeyError as error:
         print(f"nixpkgs-cache-warmer: missing packaged setting: {error.args[0]}", file=stderr)
@@ -74,4 +104,7 @@ def run(
 
 
 def main() -> int:
-    return run(sys.argv[1:], os.environ, SubprocessCommandRunner(), sys.stdout, sys.stderr)
+    try:
+        return run(sys.argv[1:], os.environ, SubprocessCommandRunner(), sys.stdout, sys.stderr)
+    except KeyboardInterrupt:
+        return 130

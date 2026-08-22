@@ -1,7 +1,9 @@
 {
   excludePnamePatternsJson ? "[]",
+  includePnamePatternsJson ? "[]",
   maintainer,
   nixpkgsSource,
+  output ? "records",
   system,
 }:
 let
@@ -13,13 +15,21 @@ let
     inherit maintainer system;
   };
   excludePnamePatterns = builtins.fromJSON excludePnamePatternsJson;
+  includePnamePatterns = builtins.fromJSON includePnamePatternsJson;
   excluded = pname: builtins.any (pattern: builtins.match pattern pname != null) excludePnamePatterns;
+  included =
+    pname:
+    includePnamePatterns == [ ]
+    || builtins.any (pattern: builtins.match pattern pname != null) includePnamePatterns;
   eligible =
     pkg:
     let
       pname = pkg.pname or pkg.name;
     in
-    !(pkg.meta.broken or false) && pkgs.lib.meta.availableOn { inherit system; } pkg && !excluded pname;
+    !(pkg.meta.broken or false)
+    && pkgs.lib.meta.availableOn { inherit system; } pkg
+    && included pname
+    && !excluded pname;
   toRecord = pkg: {
     drvPath = builtins.unsafeDiscardStringContext pkg.drvPath;
     name = pkg.name;
@@ -28,11 +38,12 @@ let
       output: builtins.unsafeDiscardStringContext pkg.${output}.outPath
     ) pkg.outputs;
   };
-  recordsByDrvPath = builtins.listToAttrs (
+  packagesByDrvPath = builtins.listToAttrs (
     map (pkg: {
       name = builtins.unsafeDiscardStringContext pkg.drvPath;
-      value = toRecord pkg;
+      value = pkg;
     }) (builtins.filter eligible packages)
   );
+  selectedPackages = builtins.attrValues packagesByDrvPath;
 in
-builtins.attrValues recordsByDrvPath
+if output == "packages" then map (pkg: pkg) selectedPackages else map toRecord selectedPackages

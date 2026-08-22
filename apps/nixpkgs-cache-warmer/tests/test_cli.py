@@ -13,6 +13,14 @@ class FakeRunner:
         return self.result
 
 
+class SequencedRunner:
+    def __init__(self, results: list[CommandResult]) -> None:
+        self.results = results
+
+    def run(self, arguments: tuple[str, ...] | list[str]) -> CommandResult:
+        return self.results.pop(0)
+
+
 ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX": "/nix",
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
@@ -58,6 +66,44 @@ def test_resolve_prints_json() -> None:
 
     assert status == 0
     assert '"revision": "012345"' in stdout.getvalue()
+
+
+def test_warm_reports_success() -> None:
+    runner = SequencedRunner(
+        [
+            CommandResult(
+                0,
+                '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
+                "",
+            ),
+            CommandResult(
+                0,
+                '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
+                '"outputs":["/nix/store/one"]}]',
+                "",
+            ),
+            CommandResult(0, "/nix/store/a.drv\n", ""),
+            CommandResult(0, "/nix/store/one\n", ""),
+        ]
+    )
+    stderr = io.StringIO()
+    status = run(
+        [
+            "warm",
+            "github:NixOS/nixpkgs/staging",
+            "--maintainer",
+            "booxter",
+            "--system",
+            "x86_64-linux",
+        ],
+        ENVIRONMENT,
+        runner,
+        io.StringIO(),
+        stderr,
+    )
+
+    assert status == 0
+    assert "Built 1/1" in stderr.getvalue()
 
 
 def test_targets_prints_human_inventory() -> None:
