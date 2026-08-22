@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.host.nix.cacheWarmer;
+  formatBuilder = import ../../../../common/_lib/format-nix-builder.nix { inherit lib; };
   nixpkgsStateDir = "/var/lib/nixpkgs-cache-warmer";
   nixpkgsTextfileDir = "${nixpkgsStateDir}/textfile";
   nixpkgsMetricsFile = "${nixpkgsTextfileDir}/state.prom";
@@ -26,6 +27,17 @@ let
   nixpkgsWarmerPackage = pkgs.callPackage ../../../../apps/nixpkgs-cache-warmer {
     runnerHost = if cfg.nixpkgs.runner == null then "" else cfg.nixpkgs.runner;
   };
+  nixpkgsBuildMachines = map (
+    builder:
+    builder
+    // {
+      maxJobs = lib.attrByPath [ builder.hostName ] builder.maxJobs cfg.nixpkgs.builderMaxJobs;
+    }
+  ) config.nix.buildMachines;
+  nixpkgsBuilders = lib.concatStringsSep " ; " (map formatBuilder nixpkgsBuildMachines);
+  unknownNixpkgsBuilders = lib.subtractLists (map (
+    builder: builder.hostName
+  ) config.nix.buildMachines) (builtins.attrNames cfg.nixpkgs.builderMaxJobs);
   nixpkgsArguments = [
     (lib.getExe nixpkgsWarmerPackage)
     "run"
@@ -98,6 +110,12 @@ in
         default = [ ];
         description = "Full-match regular expressions for package names to exclude.";
       };
+
+      builderMaxJobs = lib.mkOption {
+        type = lib.types.attrsOf lib.types.ints.positive;
+        default = { };
+        description = "Per-builder maximum concurrent jobs for cache-warmer Nix invocations.";
+      };
     };
   };
 
@@ -155,6 +173,10 @@ in
           assertion = atticCaches != [ ];
           message = "nixpkgs cache warming requires at least one Attic cache";
         }
+        {
+          assertion = unknownNixpkgsBuilders == [ ];
+          message = "unknown nixpkgs cache-warmer builders: ${lib.concatStringsSep ", " unknownNixpkgsBuilders}";
+        }
       ];
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
@@ -172,6 +194,7 @@ in
           WorkingDirectory = "/var/root";
           EnvironmentVariables = {
             HOME = "/var/root";
+            NIX_CONFIG = "builders = ${nixpkgsBuilders}";
             NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           }
