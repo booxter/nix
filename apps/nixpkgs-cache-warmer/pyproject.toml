@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nixpkgs-cache-warmer"
 version = "0.1.0"
-description = "Build maintained nixpkgs packages and publish them to Attic"
+description = "Build maintained nixpkgs packages for the local store watcher"
 requires-python = ">=3.11"
 dependencies = ["atomic-file-writes", "pydantic"]
 

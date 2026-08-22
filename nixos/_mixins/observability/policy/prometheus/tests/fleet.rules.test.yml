@@ -70,24 +70,24 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="false",host_laptop="false"}'
-        values: "15x12"
+        values: "9x32"
       - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="false",host_laptop="false"}'
-        values: "100x12"
+        values: "100x32"
     alert_rule_test:
-      - eval_time: 4m30s
-        alertname: NodeMemoryUsageHigh
-      - eval_time: 5m
-        alertname: NodeMemoryUsageHigh
+      - eval_time: 14m30s
+        alertname: NodeMemoryHeadroomLow
+      - eval_time: 15m
+        alertname: NodeMemoryHeadroomLow
         exp_alerts:
           - exp_labels:
-              alertname: NodeMemoryUsageHigh
+              alertname: NodeMemoryHeadroomLow
               category: capacity
               instance: beast
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Node memory usage high on beast"
-              description: "beast memory usage has been above 80% for 5 minutes."
+              summary: "Node memory headroom low on beast"
+              description: "beast has had less than 10% memory available for 15 minutes."
 
   - interval: 30s
     input_series:
@@ -114,12 +114,12 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_memory_MemAvailable_bytes{instance="mair",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="false",host_laptop="true"}'
-        values: "5x12"
+        values: "5x32"
       - series: 'node_memory_MemTotal_bytes{instance="mair",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="false",host_laptop="true"}'
-        values: "100x12"
+        values: "100x32"
     alert_rule_test:
-      - eval_time: 5m
-        alertname: NodeMemoryUsageHigh
+      - eval_time: 15m
+        alertname: NodeMemoryHeadroomLow
       - eval_time: 5m
         alertname: NodeMemoryUsageCritical
 
@@ -252,44 +252,34 @@ tests:
   - interval: 30s
     input_series:
       - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="true",host_laptop="false"}'
-        values: "25769803776x12"
+        values: "25769803776x32"
       - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="true",host_laptop="false"}'
-        values: "137438953472x12"
+        values: "137438953472x32"
     alert_rule_test:
-      - eval_time: 5m
-        alertname: NodeMemoryUsageHigh
-        exp_alerts:
-          - exp_labels:
-              alertname: NodeMemoryUsageHigh
-              category: capacity
-              instance: prx1-lab
-              job: node-mtls
-              severity: warning
-            exp_annotations:
-              summary: "Node memory usage high on prx1-lab"
-              description: "prx1-lab memory usage has been above 80% for 5 minutes."
+      - eval_time: 15m
+        alertname: NodeMemoryHeadroomLow
 
   - interval: 30s
     input_series:
       - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="true",host_laptop="false"}'
-        values: "16106127360x12"
+        values: "12884901888x32"
       - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls",scrape_profile="node",host_builder="false",host_hypervisor="true",host_laptop="false"}'
-        values: "137438953472x12"
+        values: "137438953472x32"
     alert_rule_test:
-      - eval_time: 4m30s
-        alertname: NodeMemoryUsageHigh
-      - eval_time: 5m
-        alertname: NodeMemoryUsageHigh
+      - eval_time: 14m30s
+        alertname: NodeMemoryHeadroomLow
+      - eval_time: 15m
+        alertname: NodeMemoryHeadroomLow
         exp_alerts:
           - exp_labels:
-              alertname: NodeMemoryUsageHigh
+              alertname: NodeMemoryHeadroomLow
               category: capacity
               instance: prx1-lab
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Node memory usage high on prx1-lab"
-              description: "prx1-lab memory usage has been above 80% for 5 minutes."
+              summary: "Node memory headroom low on prx1-lab"
+              description: "prx1-lab has had less than 10% memory available for 15 minutes."
 
   - interval: 30s
     input_series:

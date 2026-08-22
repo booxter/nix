@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class PackageTarget(BaseModel):
@@ -48,8 +48,16 @@ class RunRecord(BaseModel):
     selected: int
     built: int
     failed: int
-    pushed: int
     error: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def discard_legacy_pushed_count(cls, value: object) -> object:
+        if isinstance(value, dict) and "pushed" in value:
+            migrated = dict(value)
+            del migrated["pushed"]
+            return migrated
+        return value
 
 
 class TargetState(BaseModel):

@@ -124,7 +124,6 @@ def completed_record(outcome: WarmOutcome, now: datetime) -> RunRecord:
         selected=selected,
         built=len(outcome.build.successful),
         failed=len(outcome.build.failed),
-        pushed=len(outcome.build.outputs) if outcome.published_caches else 0,
         error=error,
     )
 
@@ -137,7 +136,6 @@ def failed_record(now: datetime, error: str) -> RunRecord:
         selected=0,
         built=0,
         failed=0,
-        pushed=0,
         error=error,
     )
 

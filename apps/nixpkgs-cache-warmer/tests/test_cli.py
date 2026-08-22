@@ -19,8 +19,10 @@ class FakeRunner:
 class SequencedRunner:
     def __init__(self, results: list[CommandResult]) -> None:
         self.results = results
+        self.calls: list[tuple[str, ...]] = []
 
     def run(self, arguments: tuple[str, ...] | list[str]) -> CommandResult:
+        self.calls.append(tuple(arguments))
         return self.results.pop(0)
 
     def run_streaming(
@@ -35,7 +37,6 @@ ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX": "/nix",
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
-    "NIXPKGS_CACHE_WARMER_ATTIC": "/attic",
     "NIXPKGS_CACHE_WARMER_STATE_FILE": "/state.json",
     "NIXPKGS_CACHE_WARMER_SSH": "/ssh",
 }
@@ -108,7 +109,6 @@ def test_warm_reports_success(tmp_path: Path) -> None:
             "booxter",
             "--system",
             "x86_64-linux",
-            "--no-push",
         ],
         ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
         runner,
@@ -123,25 +123,59 @@ def test_warm_reports_success(tmp_path: Path) -> None:
     assert state.targets[0].last_success.revision == "012345"
 
 
-def test_warm_requires_explicit_publication_policy() -> None:
-    stderr = io.StringIO()
+def test_run_builds_complete_matrix_with_one_nix_invocation(tmp_path: Path) -> None:
+    runner = SequencedRunner(
+        [
+            CommandResult(
+                0,
+                '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
+                "",
+            ),
+            CommandResult(
+                0,
+                '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
+                '"outputs":["/nix/store/one"]}]',
+                "",
+            ),
+            CommandResult(0, "/nix/store/a.drv\n", ""),
+            CommandResult(
+                0,
+                '[{"drvPath":"/nix/store/b.drv","name":"two-1","pname":"two",'
+                '"outputs":["/nix/store/two"]}]',
+                "",
+            ),
+            CommandResult(0, "/nix/store/b.drv\n", ""),
+            CommandResult(0, "/nix/store/one\n/nix/store/two\n", ""),
+        ]
+    )
+
     status = run(
         [
-            "warm",
+            "run",
+            "--reference",
             "github:NixOS/nixpkgs/staging",
             "--maintainer",
             "booxter",
             "--system",
+            "aarch64-darwin",
+            "--system",
             "x86_64-linux",
         ],
-        ENVIRONMENT,
-        FakeRunner(CommandResult(0, "", "")),
+        ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
+        runner,
         io.StringIO(),
-        stderr,
+        io.StringIO(),
     )
 
-    assert status == 2
-    assert "requires --cache or --no-push" in stderr.getvalue()
+    assert status == 0
+    build_calls = [call for call in runner.calls if len(call) > 1 and call[1] == "build"]
+    assert len(build_calls) == 1
+    assert set(build_calls[0][-2:]) == {
+        "/nix/store/a.drv^*",
+        "/nix/store/b.drv^*",
+    }
+    state = StateStore(tmp_path / "state.json").read()
+    assert [target.system for target in state.targets] == ["aarch64-darwin", "x86_64-linux"]
 
 
 def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:
@@ -152,7 +186,6 @@ def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:
         selected=2,
         built=2,
         failed=0,
-        pushed=2,
     )
     StateStore(tmp_path / "status.json").write(
         WarmerState(
@@ -198,7 +231,6 @@ def test_status_prints_single_successful_revision(tmp_path: Path) -> None:
         selected=1,
         built=1,
         failed=0,
-        pushed=0,
     )
     StateStore(tmp_path / "status.json").write(
         WarmerState(
@@ -239,7 +271,6 @@ def test_status_reads_authoritative_runner() -> None:
         selected=1,
         built=1,
         failed=0,
-        pushed=1,
     )
     remote_state = WarmerState(
         targets=(

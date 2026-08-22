@@ -43,11 +43,7 @@ let
   ++ lib.concatMap (pattern: [
     "--exclude-pname-pattern"
     pattern
-  ]) cfg.nixpkgs.excludePnamePatterns
-  ++ lib.concatMap (cache: [
-    "--cache"
-    cache
-  ]) atticCaches;
+  ]) cfg.nixpkgs.excludePnamePatterns;
   escapeMetricLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
   configuredTargets = lib.concatMap (
     reference:
@@ -169,12 +165,10 @@ in
       launchd.daemons.nixpkgs-cache-warmer = {
         command = lib.escapeShellArgs nixpkgsArguments;
         serviceConfig = {
-          StartCalendarInterval = [
-            {
-              Hour = 1;
-              Minute = 0;
-            }
-          ];
+          StartCalendarInterval = lib.genList (index: {
+            Hour = index * 4;
+            Minute = 0;
+          }) 6;
           WorkingDirectory = "/var/root";
           EnvironmentVariables = {
             HOME = "/var/root";
