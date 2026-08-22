@@ -7,7 +7,7 @@ import pytest
 from nixpkgs_cache_warmer.build import BuildOutcome
 from nixpkgs_cache_warmer.commands import CommandError
 from nixpkgs_cache_warmer.models import PackageTarget, ResolvedSource
-from nixpkgs_cache_warmer.warmer import Warmer
+from nixpkgs_cache_warmer.warmer import PreparedTarget, Warmer
 
 
 TARGET = PackageTarget(
@@ -87,6 +87,23 @@ def test_warms_resolved_source_and_reports_success() -> None:
     )
     assert builder.targets == (TARGET,)
     assert "Built 1/1" in log.getvalue()
+
+
+def test_prepares_packages_without_building() -> None:
+    inventory = FakeInventory((TARGET,))
+    builder = FakeBuilder(BuildOutcome((), (), ()))
+
+    prepared = Warmer(FakeResolver(), inventory, builder).prepare(
+        RESOLVED.reference,
+        "booxter",
+        "x86_64-linux",
+        (),
+        (),
+        io.StringIO(),
+    )
+
+    assert prepared == PreparedTarget(RESOLVED, "x86_64-linux", (TARGET,))
+    assert builder.targets is None
 
 
 def test_reports_partial_failure() -> None:

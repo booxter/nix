@@ -34,6 +34,13 @@ class WarmOutcome:
     build: BuildOutcome
 
 
+@dataclass(frozen=True)
+class PreparedTarget:
+    resolved: ResolvedSource
+    system: str
+    packages: tuple[PackageTarget, ...]
+
+
 class Warmer:
     def __init__(
         self,
@@ -54,6 +61,25 @@ class Warmer:
         include_pname_patterns: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
+        prepared = self.prepare(
+            reference,
+            maintainer,
+            system,
+            exclude_pname_patterns,
+            include_pname_patterns,
+            log,
+        )
+        return self.build(prepared, log)
+
+    def prepare(
+        self,
+        reference: str,
+        maintainer: str,
+        system: str,
+        exclude_pname_patterns: tuple[str, ...],
+        include_pname_patterns: tuple[str, ...],
+        log: TextIO,
+    ) -> PreparedTarget:
         print(f"Resolving {reference}", file=log)
         resolved = self._resolver.resolve(reference)
         print(f"Resolved {reference} to {resolved.revision}", file=log)
@@ -69,13 +95,19 @@ class Warmer:
             raise CommandError(
                 f"no maintained package targets selected for {reference} on {system}"
             )
-        print(f"Building {len(targets)} package target(s) for {system}", file=log)
-        build = self._builder.build(targets, log)
+        return PreparedTarget(resolved=resolved, system=system, packages=targets)
+
+    def build(self, prepared: PreparedTarget, log: TextIO) -> WarmOutcome:
         print(
-            f"Built {len(build.successful)}/{len(targets)} package target(s) "
-            f"for {reference} at {resolved.revision}",
+            f"Building {len(prepared.packages)} package target(s) for {prepared.system}",
+            file=log,
+        )
+        build = self._builder.build(prepared.packages, log)
+        print(
+            f"Built {len(build.successful)}/{len(prepared.packages)} package target(s) "
+            f"for {prepared.resolved.reference} at {prepared.resolved.revision}",
             file=log,
         )
         for target in build.failed:
             print(f"Failed: {target.pname} ({target.drvPath})", file=log)
-        return WarmOutcome(resolved=resolved, build=build)
+        return WarmOutcome(resolved=prepared.resolved, build=build)
