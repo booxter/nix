@@ -26,6 +26,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # Backport the corrected test from upstream develop commit 6825b7d3. The
     # release test expected an empty index to advertise a web search type.
     ./backport-indexer-engine-selection-test-fix.patch
+    # Keep the search bundle from executing the settings entry point through
+    # setup-wizard imports and redirecting searches after settings auth expires.
+    ./fix-search-settings-auth-redirect.patch
   ];
 
   nativeBuildInputs = [
