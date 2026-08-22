@@ -38,7 +38,7 @@ jobs:
             extra_conf: ""
             nix_config: ""
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 180
+    timeout-minutes: 60
     env:
       NIX_CONFIG: ${{ matrix.nix_config }}
     steps:

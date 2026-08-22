@@ -5,6 +5,13 @@
 let
   darwinSystem = "aarch64-darwin";
   nixosSystem = "x86_64-linux";
+  nixosBuildHosts = removeAttrs hosts.nixos [
+    # builder1 covers the shared builder profile.
+    "builder2"
+    "builder3"
+    # prx2-lab covers the shared Proxmox node profile.
+    "prx3-lab"
+  ];
   runners = {
     aarch64-darwin = "macos-26";
     x86_64-linux = "ubuntu-latest";
@@ -44,7 +51,7 @@ let
 in
 {
   buildTargets =
-    lib.mapAttrsToList mkNixosTarget hosts.nixos
+    lib.mapAttrsToList mkNixosTarget nixosBuildHosts
     ++ lib.mapAttrsToList mkDarwinTarget hosts.darwin
     ++ [
       (mkTarget {
