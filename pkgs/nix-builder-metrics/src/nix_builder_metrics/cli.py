@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .darwin import PsSource, SubprocessPsRunner
 from .exporter import write_metrics
-from .linux import CgroupSource
+from .linux import PathCgroupControl, CgroupSource, SystemClock, enable_accounting_controllers
 from .model import MetricsError, Sample, SampleSource
 
 BUILD_USER = re.compile(r"_?nixbld[0-9]+$")
@@ -49,4 +49,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"nix-builder-metrics: {error}", file=sys.stderr)
         return 1
     write_metrics(arguments.output_file, arguments.configured_slots, sample, success=True)
+    return 0
+
+
+def setup_parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser(
+        prog="nix-builder-cgroup-setup",
+        description="Enable delegated accounting controllers for Nix build cgroups.",
+    )
+    result.add_argument("--cgroup-root", type=Path, required=True)
+    return result
+
+
+def setup_main(argv: Sequence[str] | None = None) -> int:
+    arguments = setup_parser().parse_args(argv if argv is not None else sys.argv[1:])
+    try:
+        enable_accounting_controllers(PathCgroupControl(arguments.cgroup_root), SystemClock())
+    except (MetricsError, OSError) as error:
+        print(f"nix-builder-cgroup-setup: {error}", file=sys.stderr)
+        return 1
     return 0

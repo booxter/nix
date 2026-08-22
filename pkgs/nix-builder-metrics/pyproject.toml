@@ -11,6 +11,7 @@ dependencies = ["atomic-file-writes", "prometheus-client"]
 
 [project.scripts]
 nix-builder-metrics = "nix_builder_metrics.cli:main"
+nix-builder-cgroup-setup = "nix_builder_metrics.cli:setup_main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

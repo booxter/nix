@@ -5,8 +5,37 @@ from pathlib import Path
 
 import pytest
 
-from nix_builder_metrics.linux import CgroupSource
+from nix_builder_metrics.linux import CgroupSource, enable_accounting_controllers
 from nix_builder_metrics.model import MetricsError
+
+
+class FakeControl:
+    def __init__(self, processes: list[bool], available: frozenset[str]) -> None:
+        self.processes = processes
+        self.available_controllers = available
+        self.enabled_controllers: frozenset[str] = frozenset()
+
+    def has_processes(self) -> bool:
+        return self.processes.pop(0) if self.processes else False
+
+    def available(self) -> frozenset[str]:
+        return self.available_controllers
+
+    def enable(self, controllers: frozenset[str]) -> None:
+        self.enabled_controllers = controllers
+
+    def enabled(self) -> frozenset[str]:
+        return self.enabled_controllers
+
+
+class FakeClock:
+    now = 0.0
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.now += seconds
 
 
 def write_cgroup(path: Path, *, cpu: int, memory: int, peak: int, procs: str, io: str) -> None:
@@ -55,3 +84,25 @@ def test_samples_live_nix_cgroups(tmp_path: Path) -> None:
 def test_requires_nix_daemon_cgroup(tmp_path: Path) -> None:
     with pytest.raises(MetricsError, match="Nix daemon cgroup is absent"):
         CgroupSource(tmp_path).sample()
+
+
+def test_enables_all_available_controllers_after_daemon_moves() -> None:
+    control = FakeControl([True, False], frozenset({"cpu", "io", "memory", "pids"}))
+
+    enable_accounting_controllers(control, FakeClock())
+
+    assert control.enabled_controllers == frozenset({"cpu", "io", "memory", "pids"})
+
+
+def test_requires_memory_and_io_controllers() -> None:
+    control = FakeControl([False], frozenset({"cpu", "memory"}))
+
+    with pytest.raises(MetricsError, match="required cgroup controllers are unavailable: io"):
+        enable_accounting_controllers(control, FakeClock())
+
+
+def test_times_out_while_daemon_remains_in_root() -> None:
+    control = FakeControl([True, True, True], frozenset({"io", "memory"}))
+
+    with pytest.raises(MetricsError, match="Nix daemon did not leave"):
+        enable_accounting_controllers(control, FakeClock(), timeout_seconds=0.1)

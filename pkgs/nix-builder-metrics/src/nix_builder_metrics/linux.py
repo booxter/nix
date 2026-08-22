@@ -3,10 +3,82 @@ from __future__ import annotations
 import re
 import time
 from pathlib import Path
+from typing import Protocol
 
 from .model import MetricsError, Sample
 
 BUILD_CGROUP = re.compile(r"nix-build-(?:uid|pid)-[0-9]+(?:-[0-9]+)?$")
+REQUIRED_CONTROLLERS = frozenset({"io", "memory"})
+ACCOUNTING_CONTROLLERS = frozenset({"cpu", "io", "memory", "pids"})
+
+
+class CgroupControl(Protocol):
+    def has_processes(self) -> bool: ...
+
+    def available(self) -> frozenset[str]: ...
+
+    def enable(self, controllers: frozenset[str]) -> None: ...
+
+    def enabled(self) -> frozenset[str]: ...
+
+
+class Clock(Protocol):
+    def monotonic(self) -> float: ...
+
+    def sleep(self, seconds: float) -> None: ...
+
+
+class SystemClock:
+    def monotonic(self) -> float:
+        return time.monotonic()
+
+    def sleep(self, seconds: float) -> None:
+        time.sleep(seconds)
+
+
+class PathCgroupControl:
+    def __init__(self, root: Path) -> None:
+        self._root = root
+
+    def has_processes(self) -> bool:
+        return bool((self._root / "cgroup.procs").read_text().strip())
+
+    def available(self) -> frozenset[str]:
+        return frozenset((self._root / "cgroup.controllers").read_text().split())
+
+    def enable(self, controllers: frozenset[str]) -> None:
+        operations = " ".join(f"+{controller}" for controller in sorted(controllers))
+        (self._root / "cgroup.subtree_control").write_text(f"{operations}\n")
+
+    def enabled(self) -> frozenset[str]:
+        return frozenset(
+            controller.lstrip("+")
+            for controller in (self._root / "cgroup.subtree_control").read_text().split()
+        )
+
+
+def enable_accounting_controllers(
+    control: CgroupControl,
+    clock: Clock,
+    *,
+    timeout_seconds: float = 5.0,
+) -> None:
+    deadline = clock.monotonic() + timeout_seconds
+    while control.has_processes():
+        if clock.monotonic() >= deadline:
+            raise MetricsError("Nix daemon did not leave its service cgroup")
+        clock.sleep(0.05)
+
+    available = control.available()
+    missing = REQUIRED_CONTROLLERS - available
+    if missing:
+        raise MetricsError(
+            f"required cgroup controllers are unavailable: {' '.join(sorted(missing))}"
+        )
+    control.enable(available & ACCOUNTING_CONTROLLERS)
+    missing = REQUIRED_CONTROLLERS - control.enabled()
+    if missing:
+        raise MetricsError(f"failed to enable cgroup controllers: {' '.join(sorted(missing))}")
 
 
 def _keyed_values(path: Path) -> dict[str, int]:
