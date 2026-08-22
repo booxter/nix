@@ -181,3 +181,49 @@ class Warmer:
         for target in build.failed:
             print(f"Failed: {target.pname} ({target.drvPath})", file=log)
         return WarmOutcome(resolved=prepared.resolved, build=build)
+
+    def build_matrix(
+        self, prepared_targets: tuple[PreparedTarget, ...], log: TextIO
+    ) -> tuple[WarmOutcome, ...]:
+        packages_by_drv_path: dict[Path, PackageTarget] = {}
+        for prepared in prepared_targets:
+            for package in prepared.packages:
+                packages_by_drv_path.setdefault(package.drvPath, package)
+        packages = tuple(packages_by_drv_path.values())
+        if not packages:
+            return ()
+        print(
+            f"Building {len(packages)} unique package target(s) "
+            f"across {len(prepared_targets)} matrix target(s)",
+            file=log,
+        )
+        combined = self._builder.build(packages, log)
+        successful_drv_paths = {package.drvPath for package in combined.successful}
+        outcomes = []
+        for prepared in prepared_targets:
+            successful = tuple(
+                package for package in prepared.packages if package.drvPath in successful_drv_paths
+            )
+            failed = tuple(
+                package
+                for package in prepared.packages
+                if package.drvPath not in successful_drv_paths
+            )
+            outputs = tuple(
+                sorted({output for package in successful for output in package.outputs})
+            )
+            build = BuildOutcome(successful=successful, failed=failed, outputs=outputs)
+            print(
+                f"Built {len(successful)}/{len(prepared.packages)} package target(s) "
+                f"for {prepared.resolved.reference} on {prepared.system} "
+                f"at {prepared.resolved.revision}",
+                file=log,
+            )
+            for package in failed:
+                print(
+                    f"Failed for {prepared.resolved.reference} on {prepared.system}: "
+                    f"{package.pname} ({package.drvPath})",
+                    file=log,
+                )
+            outcomes.append(WarmOutcome(resolved=prepared.resolved, build=build))
+        return tuple(outcomes)

@@ -16,6 +16,12 @@ TARGET = PackageTarget(
     pname="one",
     outputs=(Path("/nix/store/one"),),
 )
+SECOND_TARGET = PackageTarget(
+    drvPath=Path("/nix/store/two.drv"),
+    name="two-1",
+    pname="two",
+    outputs=(Path("/nix/store/two"),),
+)
 RESOLVED = ResolvedSource(
     reference="github:NixOS/nixpkgs/staging",
     revision="012345",
@@ -186,6 +192,30 @@ def test_preparation_failures_do_not_abort_matrix() -> None:
         PreparationFailure("master", "x86_64-linux", "resolution failed"),
         PreparationFailure("staging", "aarch64-darwin", "inventory failed"),
     )
+
+
+def test_builds_deduplicated_matrix_and_partitions_outcomes() -> None:
+    builder = FakeBuilder(BuildOutcome((TARGET,), (SECOND_TARGET,), TARGET.outputs))
+    warmer = Warmer(FakeResolver(), FakeInventory(()), builder)
+    prepared = (
+        PreparedTarget(RESOLVED, "aarch64-darwin", (TARGET,)),
+        PreparedTarget(RESOLVED, "x86_64-linux", (TARGET, SECOND_TARGET)),
+    )
+
+    outcomes = warmer.build_matrix(prepared, io.StringIO())
+
+    assert builder.targets == (TARGET, SECOND_TARGET)
+    assert outcomes[0].build == BuildOutcome((TARGET,), (), TARGET.outputs)
+    assert outcomes[1].build == BuildOutcome((TARGET,), (SECOND_TARGET,), TARGET.outputs)
+
+
+def test_skips_build_for_empty_prepared_matrix() -> None:
+    builder = FakeBuilder(BuildOutcome((), (), ()))
+
+    outcomes = Warmer(FakeResolver(), FakeInventory(()), builder).build_matrix((), io.StringIO())
+
+    assert outcomes == ()
+    assert builder.targets is None
 
 
 def test_reports_partial_failure() -> None:
