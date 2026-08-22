@@ -117,8 +117,15 @@ def test_store_treats_partial_build_as_operational_success_in_metrics(tmp_path: 
     metrics = metrics_path.read_text()
     labels = 'branch="staging",system="x86_64-linux"'
     assert f"last_attempt_success{{{labels}}} 1" in metrics
+    assert f'last_attempt_status_info{{{labels},status="partial"}} 1' in metrics
+    assert f"last_attempt_selected_packages{{{labels}}} 1" in metrics
+    assert f"last_attempt_built_packages{{{labels}}} 0" in metrics
+    assert f"last_attempt_failed_packages{{{labels}}} 1" in metrics
     assert f"last_success_timestamp_seconds{{{labels}}} {NOW.timestamp():.0f}" in metrics
     assert f'last_success_revision_info{{{labels},revision="012345"}} 1' in metrics
+    assert f"last_success_selected_packages{{{labels}}} 1" in metrics
+    assert f"last_success_built_packages{{{labels}}} 0" in metrics
+    assert f"last_success_failed_packages{{{labels}}} 1" in metrics
     assert metrics_path.stat().st_mode & 0o777 == 0o644
 
 
