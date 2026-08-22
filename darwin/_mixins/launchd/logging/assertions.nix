@@ -1,4 +1,5 @@
 {
+  auxiliaryFiles,
   lib,
   logLocations,
   managedSystemJobsByDomain,
@@ -87,6 +88,29 @@ let
     in
     loggingAssertions ++ pathAssertions ++ destinationAssertions;
   locationDirectories = map (location: location.directory) locationValues;
+  auxiliaryFileAssertions = lib.concatLists (
+    lib.mapAttrsToList (
+      name: file:
+      let
+        location = locationFor file.scope file.path;
+        optionPath = "host.launchd.logging.auxiliaryFiles.${name}.path";
+      in
+      [
+        {
+          assertion = lib.hasPrefix "/" file.path;
+          message = "${optionPath} must be an absolute path";
+        }
+        {
+          assertion = lib.hasSuffix ".log" file.path;
+          message = "${optionPath} must end in .log: ${file.path}";
+        }
+        {
+          assertion = location != null;
+          message = "${optionPath} is not in a registered ${file.scope} log directory: ${file.path}";
+        }
+      ]
+    ) auxiliaryFiles
+  );
 in
 [
   {
@@ -97,7 +121,14 @@ in
     assertion = builtins.length locationDirectories == builtins.length (lib.unique locationDirectories);
     message = "Launchd log location directories must be unique";
   }
+  {
+    assertion =
+      builtins.length (builtins.attrValues auxiliaryFiles)
+      == builtins.length (lib.unique (map (file: file.path) (builtins.attrValues auxiliaryFiles)));
+    message = "Launchd auxiliary log file paths must be unique";
+  }
 ]
+++ auxiliaryFileAssertions
 ++ lib.concatLists (
   lib.mapAttrsToList (
     domain: jobs:
