@@ -130,6 +130,7 @@
             system:
             import ./per-system.nix {
               inherit
+                fleetInventory
                 inputs
                 outputs
                 system

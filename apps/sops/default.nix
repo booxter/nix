@@ -1,10 +1,9 @@
 {
-  outputs,
+  fleetInventory,
   pkgs,
 }:
 let
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  realmsByHost = pkgs.lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
+  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
 in
 {
   packages = {

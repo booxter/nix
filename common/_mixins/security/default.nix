@@ -1,15 +1,14 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   pkgs,
   ...
 }:
 let
   operatorIdentity = config.host.security.secrets.operator.ageIdentity;
   usesSecureEnclave = operatorIdentity != null && operatorIdentity.backend == "secure-enclave";
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
+  realmsByHost = lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
 in
 {

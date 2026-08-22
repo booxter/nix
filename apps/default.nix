@@ -1,4 +1,5 @@
 {
+  fleetInventory,
   inputs,
   outputs,
   pkgs,
@@ -8,6 +9,7 @@ let
   inherit (pkgs) lib;
   commonArgs = {
     inherit
+      fleetInventory
       inputs
       outputs
       pkgs

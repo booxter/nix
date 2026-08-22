@@ -1,4 +1,5 @@
 {
+  fleetInventory,
   inputs,
   outputs,
   system,
@@ -16,6 +17,7 @@ let
   };
   appSet = import ./apps {
     inherit
+      fleetInventory
       inputs
       outputs
       pkgs
@@ -25,6 +27,7 @@ let
   commonArgs = {
     inherit
       appSet
+      fleetInventory
       inputs
       outputs
       pkgs

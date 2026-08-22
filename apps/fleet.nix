@@ -1,6 +1,7 @@
 {
   outputs,
   pkgs,
+  staticFleetInventory,
 }:
 let
   fleetConfiguration = builtins.head (builtins.attrValues outputs.nixosConfigurations);
@@ -16,7 +17,7 @@ let
   darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
   nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
   fleetHosts = nixosHosts // darwinHosts;
-  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetHosts;
+  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) staticFleetInventory.hosts;
   tokenHosts = pkgs.lib.mapAttrs (_: host: { inherit (host) realm system; }) fleetHosts;
   appPackages = import ./packages.nix {
     fleetHosts = tokenHosts;

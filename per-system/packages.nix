@@ -1,4 +1,5 @@
 {
+  fleetInventory,
   inputs,
   outputs,
   plainPkgs,
@@ -11,6 +12,7 @@ let
     _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
   ) (import ../pkgs pkgs);
   fleet = import ../apps/fleet.nix {
+    staticFleetInventory = fleetInventory;
     inherit
       outputs
       pkgs

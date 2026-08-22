@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   pkgs,
@@ -15,8 +16,7 @@ let
   statusMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-certs.prom";
   rotationMetricsPath = "${config.host.observability.nodeExporter.textfile.directories.default}/pki-rotation.prom";
   bootstrap = pkgs.callPackage ./pkgs/step-ca-bootstrap { };
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  realmsByHost = lib.mapAttrs (_: configuration: configuration.config.host.realm) configurations;
+  realmsByHost = lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   sopsTools = import ../../../apps/sops/package.nix { inherit pkgs realmsByHost; };
   pkiCertificates = pkgs.callPackage ../../../apps/pki-certificates {
     atomicFileWrites = pkgs.atomic-file-writes;
