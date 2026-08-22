@@ -62,6 +62,14 @@ class FakeBuilder:
         return self._outcome
 
 
+class FakePublisher:
+    def __init__(self) -> None:
+        self.publications: list[tuple[str, tuple[Path, ...]]] = []
+
+    def publish(self, cache: str, outputs: tuple[Path, ...], log: TextIO) -> None:
+        self.publications.append((cache, outputs))
+
+
 def test_warms_resolved_source_and_reports_success() -> None:
     inventory = FakeInventory((TARGET,))
     builder = FakeBuilder(BuildOutcome((TARGET,), (), TARGET.outputs))
@@ -73,6 +81,7 @@ def test_warms_resolved_source_and_reports_success() -> None:
         "x86_64-linux",
         ("firefox.*",),
         ("one",),
+        (),
         log,
     )
 
@@ -95,7 +104,7 @@ def test_reports_partial_failure() -> None:
         FakeResolver(),
         FakeInventory((TARGET,)),
         FakeBuilder(BuildOutcome((), (TARGET,), ())),
-    ).warm(RESOLVED.reference, "booxter", "x86_64-linux", (), (), log)
+    ).warm(RESOLVED.reference, "booxter", "x86_64-linux", (), (), (), log)
 
     assert outcome.build.failed == (TARGET,)
     assert "Failed: one" in log.getvalue()
@@ -104,5 +113,29 @@ def test_reports_partial_failure() -> None:
 def test_rejects_empty_inventory() -> None:
     with pytest.raises(CommandError, match="no maintained package targets"):
         Warmer(FakeResolver(), FakeInventory(()), FakeBuilder(BuildOutcome((), (), ()))).warm(
-            RESOLVED.reference, "booxter", "x86_64-linux", (), (), io.StringIO()
+            RESOLVED.reference, "booxter", "x86_64-linux", (), (), (), io.StringIO()
         )
+
+
+def test_publishes_successful_outputs_to_each_cache() -> None:
+    publisher = FakePublisher()
+    outcome = Warmer(
+        FakeResolver(),
+        FakeInventory((TARGET,)),
+        FakeBuilder(BuildOutcome((TARGET,), (), TARGET.outputs)),
+        publisher,
+    ).warm(
+        RESOLVED.reference,
+        "booxter",
+        "x86_64-linux",
+        (),
+        (),
+        ("one:default", "two:default"),
+        io.StringIO(),
+    )
+
+    assert outcome.published_caches == ("one:default", "two:default")
+    assert publisher.publications == [
+        ("one:default", TARGET.outputs),
+        ("two:default", TARGET.outputs),
+    ]

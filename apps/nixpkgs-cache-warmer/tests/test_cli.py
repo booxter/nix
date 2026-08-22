@@ -25,6 +25,7 @@ ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX": "/nix",
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
+    "NIXPKGS_CACHE_WARMER_ATTIC": "/attic",
 }
 
 
@@ -95,6 +96,7 @@ def test_warm_reports_success() -> None:
             "booxter",
             "--system",
             "x86_64-linux",
+            "--no-push",
         ],
         ENVIRONMENT,
         runner,
@@ -104,6 +106,27 @@ def test_warm_reports_success() -> None:
 
     assert status == 0
     assert "Built 1/1" in stderr.getvalue()
+
+
+def test_warm_requires_explicit_publication_policy() -> None:
+    stderr = io.StringIO()
+    status = run(
+        [
+            "warm",
+            "github:NixOS/nixpkgs/staging",
+            "--maintainer",
+            "booxter",
+            "--system",
+            "x86_64-linux",
+        ],
+        ENVIRONMENT,
+        FakeRunner(CommandResult(0, "", "")),
+        io.StringIO(),
+        stderr,
+    )
+
+    assert status == 2
+    assert "requires --cache or --no-push" in stderr.getvalue()
 
 
 def test_targets_prints_human_inventory() -> None:

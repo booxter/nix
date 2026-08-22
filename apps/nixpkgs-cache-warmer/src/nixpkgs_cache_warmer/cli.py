@@ -11,6 +11,7 @@ from typing import TextIO
 from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
+from nixpkgs_cache_warmer.publish import AtticPublisher
 from nixpkgs_cache_warmer.resolver import SourceResolver
 from nixpkgs_cache_warmer.warmer import Warmer
 
@@ -34,6 +35,8 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--system", required=True)
     warm.add_argument("--exclude-pname-pattern", action="append", default=[])
     warm.add_argument("--include-pname-pattern", action="append", default=[])
+    warm.add_argument("--cache", action="append", default=[])
+    warm.add_argument("--no-push", action="store_true")
     return result
 
 
@@ -47,6 +50,12 @@ def run(
     arguments = parser().parse_args(argv)
     try:
         if arguments.command == "warm":
+            if bool(arguments.cache) == arguments.no_push:
+                print(
+                    "nixpkgs-cache-warmer: warm requires --cache or --no-push",
+                    file=stderr,
+                )
+                return 2
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
             outcome = Warmer(
                 SourceResolver(runner, nix),
@@ -56,12 +65,16 @@ def run(
                     Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
                 ),
                 NixBuilder(runner, nix),
+                None
+                if arguments.no_push
+                else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
             ).warm(
                 arguments.reference,
                 arguments.maintainer,
                 arguments.system,
                 tuple(arguments.exclude_pname_pattern),
                 tuple(arguments.include_pname_pattern),
+                tuple(arguments.cache),
                 stderr,
             )
             return 1 if outcome.build.failed else 0
