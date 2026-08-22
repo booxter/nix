@@ -7,7 +7,7 @@ import pytest
 from nixpkgs_cache_warmer.build import BuildOutcome
 from nixpkgs_cache_warmer.commands import CommandError
 from nixpkgs_cache_warmer.models import PackageTarget, ResolvedSource
-from nixpkgs_cache_warmer.warmer import PreparedTarget, Warmer
+from nixpkgs_cache_warmer.warmer import PreparationFailure, PreparedTarget, Warmer
 
 
 TARGET = PackageTarget(
@@ -27,6 +27,22 @@ class FakeResolver:
     def resolve(self, reference: str) -> ResolvedSource:
         assert reference == RESOLVED.reference
         return RESOLVED
+
+
+class MatrixResolver:
+    def __init__(self, failed: set[str] | None = None) -> None:
+        self.failed = failed or set()
+        self.references: list[str] = []
+
+    def resolve(self, reference: str) -> ResolvedSource:
+        self.references.append(reference)
+        if reference in self.failed:
+            raise CommandError("resolution failed")
+        return ResolvedSource(
+            reference=reference,
+            revision=f"{reference}-rev",
+            source=Path("/source"),
+        )
 
 
 class FakeInventory:
@@ -50,6 +66,23 @@ class FakeInventory:
             include_pname_patterns,
         )
         return self._targets
+
+
+class MatrixInventory:
+    def __init__(self, failed_systems: set[str] | None = None) -> None:
+        self.failed_systems = failed_systems or set()
+
+    def instantiate(
+        self,
+        source: Path,
+        maintainer: str,
+        system: str,
+        exclude_pname_patterns: tuple[str, ...] = (),
+        include_pname_patterns: tuple[str, ...] = (),
+    ) -> tuple[PackageTarget, ...]:
+        if system in self.failed_systems:
+            raise CommandError("inventory failed")
+        return (TARGET,)
 
 
 class FakeBuilder:
@@ -104,6 +137,55 @@ def test_prepares_packages_without_building() -> None:
 
     assert prepared == PreparedTarget(RESOLVED, "x86_64-linux", (TARGET,))
     assert builder.targets is None
+
+
+def test_prepares_matrix_with_one_resolution_per_reference() -> None:
+    resolver = MatrixResolver()
+    warmer = Warmer(resolver, MatrixInventory(), FakeBuilder(BuildOutcome((), (), ())))
+
+    outcome = warmer.prepare_matrix(
+        ("master", "staging"),
+        "booxter",
+        ("aarch64-darwin", "x86_64-linux"),
+        (),
+        (),
+        io.StringIO(),
+    )
+
+    assert resolver.references == ["master", "staging"]
+    assert [(target.resolved.reference, target.system) for target in outcome.prepared] == [
+        ("master", "aarch64-darwin"),
+        ("master", "x86_64-linux"),
+        ("staging", "aarch64-darwin"),
+        ("staging", "x86_64-linux"),
+    ]
+    assert outcome.failed == ()
+
+
+def test_preparation_failures_do_not_abort_matrix() -> None:
+    warmer = Warmer(
+        MatrixResolver({"master"}),
+        MatrixInventory({"aarch64-darwin"}),
+        FakeBuilder(BuildOutcome((), (), ())),
+    )
+
+    outcome = warmer.prepare_matrix(
+        ("master", "staging"),
+        "booxter",
+        ("aarch64-darwin", "x86_64-linux"),
+        (),
+        (),
+        io.StringIO(),
+    )
+
+    assert [(target.resolved.reference, target.system) for target in outcome.prepared] == [
+        ("staging", "x86_64-linux")
+    ]
+    assert outcome.failed == (
+        PreparationFailure("master", "aarch64-darwin", "resolution failed"),
+        PreparationFailure("master", "x86_64-linux", "resolution failed"),
+        PreparationFailure("staging", "aarch64-darwin", "inventory failed"),
+    )
 
 
 def test_reports_partial_failure() -> None:
