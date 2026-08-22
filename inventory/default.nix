@@ -11,6 +11,7 @@ let
 in
 {
   atticServers = import ./attic.nix { inherit lib; };
+  autoUpgrade = import ./auto-upgrade.nix;
   builders = import ./builders.nix { inherit lib; };
   inherit hosts;
   sites = import ./sites.nix;

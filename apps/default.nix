@@ -1,4 +1,5 @@
 {
+  autoUpgradeEvaluation,
   fleetInventory,
   inputs,
   outputs,
@@ -9,6 +10,7 @@ let
   inherit (pkgs) lib;
   commonArgs = {
     inherit
+      autoUpgradeEvaluation
       fleetInventory
       inputs
       outputs

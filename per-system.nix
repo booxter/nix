@@ -16,8 +16,16 @@ let
       outputs.overlays.modifications
     ];
   };
+  autoUpgradeEvaluation = import ./lib/auto-upgrade/evaluate.nix {
+    inherit
+      fleetInventory
+      lib
+      outputs
+      ;
+  };
   appSet = import ./apps {
     inherit
+      autoUpgradeEvaluation
       fleetInventory
       inputs
       outputs
@@ -28,6 +36,7 @@ let
   commonArgs = {
     inherit
       appSet
+      autoUpgradeEvaluation
       fleetInventory
       inputs
       lib
