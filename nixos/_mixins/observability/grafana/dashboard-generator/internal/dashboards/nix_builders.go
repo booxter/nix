@@ -128,6 +128,55 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 			}},
 		}))
 
+	packageOutcomes := layout.row(8, 24)[0]
+	model.WithPanel(timeSeries(TimeseriesOptions{
+		ID: packageOutcomes.ID, Grid: packageOutcomes.Grid, Title: "Nixpkgs Warmer Package Outcomes",
+		Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+		Targets: []PrometheusTarget{
+			{
+				RefID: "A", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_selected_packages"),
+				Legend: "{{branch}} {{system}} selected",
+			},
+			{
+				RefID: "B", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_built_packages"),
+				Legend: "{{branch}} {{system}} built",
+			},
+			{
+				RefID: "C", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_failed_packages"),
+				Legend: "{{branch}} {{system}} failed",
+			},
+		},
+	}))
+
+	fleetWarmer := layout.row(5, 6, 6, 6, 6)
+	model.
+		WithPanel(valueStat(ValueStatOptions{
+			ID: fleetWarmer[0].ID, Grid: fleetWarmer[0].Grid, Title: "Fleet Warmer Running",
+			Expression: builder("host_observability_fleet_cache_warmer_running"),
+			Legend: "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource,
+			Min: ptr(0.0), Max: ptr(1.0), Background: true,
+			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
+				"0": mappedValue("Idle", "green", 0),
+				"1": mappedValue("Running", "blue", 1),
+			})},
+		})).
+		WithPanel(availabilityStat(AvailabilityStatOptions{
+			ID: fleetWarmer[1].ID, Grid: fleetWarmer[1].Grid, Title: "Fleet Warmer Last Attempt",
+			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_success"),
+			Legend: "{{instance}}", DataSource: prometheusDatasource,
+		})).
+		WithPanel(valueStat(ValueStatOptions{
+			ID: fleetWarmer[2].ID, Grid: fleetWarmer[2].Grid, Title: "Fleet Warmer Duration",
+			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_duration_seconds"),
+			Legend: "{{instance}}", Unit: units.DurationInDaysHoursMinutesSeconds,
+			DataSource: prometheusDatasource, Min: ptr(0.0),
+		})).
+		WithPanel(valueStat(ValueStatOptions{
+			ID: fleetWarmer[3].ID, Grid: fleetWarmer[3].Grid, Title: "Fleet Output Paths",
+			Expression: builder("host_observability_fleet_cache_warmer_output_paths"),
+			Legend: "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
+		}))
+
 	logs := layout.row(12, 24)[0]
 	model.WithPanel(logsPanel(logs.ID, "Recent Nix And Warmer Logs",
 		`{job="systemd-journal",systemd_unit="nix-daemon.service"} or {job="darwin-file-log",service_name=~"nix-daemon|nixpkgs-cache-warmer|fleet-cache-warmer"}`,
