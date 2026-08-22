@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   pkgs,
@@ -7,7 +8,7 @@
 let
   model = import ../../../../../common/_mixins/ups/model.nix {
     inherit
-      config
+      fleetInventory
       lib
       outputs
       ;
@@ -37,7 +38,7 @@ let
       params = {
         # Use the stable LAN DNS hostname rather than .local/mDNS.
         server = [ spec.name ];
-        ups = [ spec.ups.server.name ];
+        ups = [ spec.deviceName ];
       };
       static_configs = [
         {

@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   fleetWebServices,
   lib,
   outputs,
@@ -72,6 +73,7 @@ let
   nutScrapes = import ./scrapes/nut.nix {
     inherit
       config
+      fleetInventory
       lib
       outputs
       pkgs

@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   pkgs,
@@ -10,7 +11,7 @@ let
   serverName = cfg.client.server;
   model = import ../../../common/_mixins/ups/model.nix {
     inherit
-      config
+      fleetInventory
       lib
       outputs
       ;
@@ -51,7 +52,7 @@ in
       mode = "0400";
       content = ''
         MINSUPPLIES 1
-        MONITOR ${server.ups.server.name}@${siteNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
+        MONITOR ${server.deviceName}@${siteNetwork.addressFor serverName} 1 upsslave ${monitorPassword} slave
         NOTIFYCMD ${pkgs.nut}/bin/upssched
         NOTIFYFLAG ONBATT SYSLOG+EXEC
         NOTIFYFLAG ONLINE SYSLOG+EXEC

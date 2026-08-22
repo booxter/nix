@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   outputs,
   ...
@@ -8,7 +9,7 @@ let
   cfg = config.host.ups.client;
   model = import ../../../common/_mixins/ups/model.nix {
     inherit
-      config
+      fleetInventory
       lib
       outputs
       ;
@@ -42,7 +43,7 @@ in
       enable = true;
       mode = "netclient";
       upsmon.monitor.${monitorName} = {
-        system = "${server.ups.server.name}@${siteNetwork.addressFor cfg.server}";
+        system = "${server.deviceName}@${siteNetwork.addressFor cfg.server}";
         user = "upsslave";
         inherit passwordFile;
         type = "slave";
