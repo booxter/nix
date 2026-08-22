@@ -26,22 +26,21 @@ RESOLVED = ResolvedSource(
 
 def test_successful_attempt_becomes_last_success() -> None:
     record = completed_record(
-        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ("home:default",)),
+        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs)),
         NOW,
     )
     state = update_state(WarmerState(), RESOLVED.reference, "x86_64-linux", record)
 
     assert state.targets[0].last_attempt.revision == "012345"
     assert state.targets[0].last_success == record
-    assert state.targets[0].last_attempt.pushed == 1
 
 
 def test_partial_attempt_advances_completed_revision() -> None:
     success = completed_record(
-        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ()), NOW
+        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs)), NOW
     )
     previous = update_state(WarmerState(), RESOLVED.reference, "x86_64-linux", success)
-    partial = completed_record(WarmOutcome(RESOLVED, BuildOutcome((), (TARGET,), ()), ()), NOW)
+    partial = completed_record(WarmOutcome(RESOLVED, BuildOutcome((), (TARGET,), ())), NOW)
 
     updated = update_state(previous, RESOLVED.reference, "x86_64-linux", partial)
 
@@ -52,7 +51,7 @@ def test_partial_attempt_advances_completed_revision() -> None:
 
 def test_failed_attempt_without_revision_preserves_previous_success() -> None:
     success = completed_record(
-        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs), ()), NOW
+        WarmOutcome(RESOLVED, BuildOutcome((TARGET,), (), TARGET.outputs)), NOW
     )
     previous = update_state(WarmerState(), RESOLVED.reference, "x86_64-linux", success)
 
@@ -83,10 +82,25 @@ def test_store_round_trips_atomically_with_public_mode(tmp_path: Path) -> None:
     assert path.stat().st_mode & 0o777 == 0o644
 
 
+def test_store_discards_legacy_pushed_counts(tmp_path: Path) -> None:
+    path = tmp_path / "status.json"
+    path.write_text(
+        '{"schema_version":1,"targets":[{"reference":"staging",'
+        '"system":"x86_64-linux","last_attempt":{"attempted_at":'
+        '"2026-08-21T05:00:00Z","revision":"012345","status":"success",'
+        '"selected":1,"built":1,"failed":0,"pushed":1,"error":null}}]}'
+    )
+
+    state = StateStore(path).read()
+
+    assert state.targets[0].last_attempt.revision == "012345"
+    assert "pushed" not in state.targets[0].last_attempt.model_dump()
+
+
 def test_store_treats_partial_build_as_operational_success_in_metrics(tmp_path: Path) -> None:
     state_path = tmp_path / "status.json"
     metrics_path = tmp_path / "textfile" / "warmer.prom"
-    record = completed_record(WarmOutcome(RESOLVED, BuildOutcome((), (TARGET,), ()), ()), NOW)
+    record = completed_record(WarmOutcome(RESOLVED, BuildOutcome((), (TARGET,), ())), NOW)
     state = WarmerState(
         targets=(
             TargetState(

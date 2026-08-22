@@ -43,11 +43,7 @@ let
   ++ lib.concatMap (pattern: [
     "--exclude-pname-pattern"
     pattern
-  ]) cfg.nixpkgs.excludePnamePatterns
-  ++ lib.concatMap (cache: [
-    "--cache"
-    cache
-  ]) atticCaches;
+  ]) cfg.nixpkgs.excludePnamePatterns;
   escapeMetricLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
   configuredTargets = lib.concatMap (
     reference:

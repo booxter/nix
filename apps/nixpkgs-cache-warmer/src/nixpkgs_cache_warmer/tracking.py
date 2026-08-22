@@ -17,7 +17,6 @@ class WarmOperation(Protocol):
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome: ...
 
@@ -40,7 +39,6 @@ class TrackingWarmer:
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
         state = self._store.read()
@@ -51,7 +49,6 @@ class TrackingWarmer:
                 system,
                 exclude_pname_patterns,
                 include_pname_patterns,
-                caches,
                 log,
             )
         except CommandError as error:

@@ -24,7 +24,6 @@ OUTCOME = WarmOutcome(
         source=Path("/nix/store/source"),
     ),
     BuildOutcome((TARGET,), (), TARGET.outputs),
-    (),
 )
 
 
@@ -47,7 +46,6 @@ class SuccessfulWarmer:
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
         return OUTCOME
@@ -61,7 +59,6 @@ class FailingWarmer:
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
         raise CommandError("network unavailable")
@@ -73,7 +70,6 @@ def test_tracks_completed_attempt() -> None:
         OUTCOME.resolved.reference,
         "booxter",
         "x86_64-linux",
-        (),
         (),
         (),
         io.StringIO(),
@@ -91,7 +87,6 @@ def test_tracks_command_failure_before_reraising() -> None:
             OUTCOME.resolved.reference,
             "booxter",
             "x86_64-linux",
-            (),
             (),
             (),
             io.StringIO(),

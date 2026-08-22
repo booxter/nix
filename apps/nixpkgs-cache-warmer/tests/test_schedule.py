@@ -21,7 +21,6 @@ class FakeWarmer:
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
         target = ScheduledTarget(reference=reference, system=system)
@@ -35,7 +34,6 @@ class FakeWarmer:
                 source=Path("/source"),
             ),
             build=BuildOutcome(successful=(), failed=(), outputs=()),
-            published_caches=caches,
         )
 
 
@@ -49,7 +47,6 @@ def test_continues_through_the_complete_matrix_after_failure() -> None:
         ("aarch64-darwin", "x86_64-linux"),
         ("firefox.*", "thunderbird.*"),
         (),
-        ("central:nix",),
         io.StringIO(),
     )
 
@@ -70,7 +67,6 @@ class PartialWarmer(FakeWarmer):
         system: str,
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
-        caches: tuple[str, ...],
         log: TextIO,
     ) -> WarmOutcome:
         outcome = super().warm(
@@ -79,7 +75,6 @@ class PartialWarmer(FakeWarmer):
             system,
             exclude_pname_patterns,
             include_pname_patterns,
-            caches,
             log,
         )
         broken = PackageTarget(
@@ -91,7 +86,6 @@ class PartialWarmer(FakeWarmer):
         return WarmOutcome(
             resolved=outcome.resolved,
             build=BuildOutcome(successful=(), failed=(broken,), outputs=()),
-            published_caches=outcome.published_caches,
         )
 
 
@@ -102,7 +96,6 @@ def test_package_failures_do_not_fail_the_schedule() -> None:
         ("x86_64-linux",),
         (),
         (),
-        ("central:nix",),
         io.StringIO(),
     )
 

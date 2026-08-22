@@ -35,7 +35,6 @@ ENVIRONMENT = {
     "NIXPKGS_CACHE_WARMER_NIX": "/nix",
     "NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE": "/nix-instantiate",
     "NIXPKGS_CACHE_WARMER_INVENTORY_EXPR": "/inventory.nix",
-    "NIXPKGS_CACHE_WARMER_ATTIC": "/attic",
     "NIXPKGS_CACHE_WARMER_STATE_FILE": "/state.json",
     "NIXPKGS_CACHE_WARMER_SSH": "/ssh",
 }
@@ -108,7 +107,6 @@ def test_warm_reports_success(tmp_path: Path) -> None:
             "booxter",
             "--system",
             "x86_64-linux",
-            "--no-push",
         ],
         ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
         runner,
@@ -123,27 +121,6 @@ def test_warm_reports_success(tmp_path: Path) -> None:
     assert state.targets[0].last_success.revision == "012345"
 
 
-def test_warm_requires_explicit_publication_policy() -> None:
-    stderr = io.StringIO()
-    status = run(
-        [
-            "warm",
-            "github:NixOS/nixpkgs/staging",
-            "--maintainer",
-            "booxter",
-            "--system",
-            "x86_64-linux",
-        ],
-        ENVIRONMENT,
-        FakeRunner(CommandResult(0, "", "")),
-        io.StringIO(),
-        stderr,
-    )
-
-    assert status == 2
-    assert "requires --cache or --no-push" in stderr.getvalue()
-
-
 def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:
     record = RunRecord(
         attempted_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
@@ -152,7 +129,6 @@ def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:
         selected=2,
         built=2,
         failed=0,
-        pushed=2,
     )
     StateStore(tmp_path / "status.json").write(
         WarmerState(
@@ -198,7 +174,6 @@ def test_status_prints_single_successful_revision(tmp_path: Path) -> None:
         selected=1,
         built=1,
         failed=0,
-        pushed=0,
     )
     StateStore(tmp_path / "status.json").write(
         WarmerState(
@@ -239,7 +214,6 @@ def test_status_reads_authoritative_runner() -> None:
         selected=1,
         built=1,
         failed=0,
-        pushed=1,
     )
     remote_state = WarmerState(
         targets=(

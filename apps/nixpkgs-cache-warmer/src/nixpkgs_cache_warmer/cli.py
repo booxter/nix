@@ -12,7 +12,6 @@ from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
 from nixpkgs_cache_warmer.models import WarmerState
-from nixpkgs_cache_warmer.publish import AtticPublisher
 from nixpkgs_cache_warmer.resolver import SourceResolver
 from nixpkgs_cache_warmer.schedule import Schedule
 from nixpkgs_cache_warmer.state import RemoteStateReader, StateStore
@@ -39,8 +38,6 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--system", required=True)
     warm.add_argument("--exclude-pname-pattern", action="append", default=[])
     warm.add_argument("--include-pname-pattern", action="append", default=[])
-    warm.add_argument("--cache", action="append", default=[])
-    warm.add_argument("--no-push", action="store_true")
     warm.add_argument("--state-file", type=Path)
     scheduled = subparsers.add_parser("run", help="warm a branch and system matrix")
     scheduled.add_argument("--reference", action="append", required=True)
@@ -48,8 +45,6 @@ def parser() -> argparse.ArgumentParser:
     scheduled.add_argument("--system", action="append", required=True)
     scheduled.add_argument("--exclude-pname-pattern", action="append", default=[])
     scheduled.add_argument("--include-pname-pattern", action="append", default=[])
-    scheduled.add_argument("--cache", action="append", default=[])
-    scheduled.add_argument("--no-push", action="store_true")
     scheduled.add_argument("--state-file", type=Path)
     status = subparsers.add_parser("status", help="show persisted warming status")
     status.add_argument("--state-file", type=Path)
@@ -122,12 +117,6 @@ def run(
 
         if arguments.command in ("warm", "run"):
             assert state_file is not None
-            if bool(arguments.cache) == arguments.no_push:
-                print(
-                    "nixpkgs-cache-warmer: warm requires --cache or --no-push",
-                    file=stderr,
-                )
-                return 2
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
             warmer = TrackingWarmer(
                 Warmer(
@@ -138,9 +127,6 @@ def run(
                         Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
                     ),
                     NixBuilder(runner, nix),
-                    None
-                    if arguments.no_push
-                    else AtticPublisher(runner, Path(environ["NIXPKGS_CACHE_WARMER_ATTIC"])),
                 ),
                 StateStore(
                     state_file,
@@ -156,7 +142,6 @@ def run(
                     tuple(arguments.system),
                     tuple(arguments.exclude_pname_pattern),
                     tuple(arguments.include_pname_pattern),
-                    tuple(arguments.cache),
                     stderr,
                 )
                 return 1 if schedule_outcome.failed else 0
@@ -166,7 +151,6 @@ def run(
                 arguments.system,
                 tuple(arguments.exclude_pname_pattern),
                 tuple(arguments.include_pname_pattern),
-                tuple(arguments.cache),
                 stderr,
             )
             return 1 if outcome.build.failed else 0
