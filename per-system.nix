@@ -5,9 +5,10 @@
   system,
 }:
 let
-  lib = inputs.nixpkgs.lib;
-  plainPkgs = inputs.nixpkgs.legacyPackages.${system};
-  pkgs = import inputs.nixpkgs {
+  nixpkgsInput = if system == "aarch64-darwin" then inputs.nixpkgs-darwin else inputs.nixpkgs;
+  lib = nixpkgsInput.lib;
+  plainPkgs = nixpkgsInput.legacyPackages.${system};
+  pkgs = import nixpkgsInput {
     inherit system;
     config.allowUnfree = true;
     overlays = [
