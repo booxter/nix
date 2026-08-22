@@ -19,8 +19,10 @@ class FakeRunner:
 class SequencedRunner:
     def __init__(self, results: list[CommandResult]) -> None:
         self.results = results
+        self.calls: list[tuple[str, ...]] = []
 
     def run(self, arguments: tuple[str, ...] | list[str]) -> CommandResult:
+        self.calls.append(tuple(arguments))
         return self.results.pop(0)
 
     def run_streaming(
@@ -119,6 +121,61 @@ def test_warm_reports_success(tmp_path: Path) -> None:
     state = StateStore(tmp_path / "state.json").read()
     assert state.targets[0].last_success is not None
     assert state.targets[0].last_success.revision == "012345"
+
+
+def test_run_builds_complete_matrix_with_one_nix_invocation(tmp_path: Path) -> None:
+    runner = SequencedRunner(
+        [
+            CommandResult(
+                0,
+                '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
+                "",
+            ),
+            CommandResult(
+                0,
+                '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
+                '"outputs":["/nix/store/one"]}]',
+                "",
+            ),
+            CommandResult(0, "/nix/store/a.drv\n", ""),
+            CommandResult(
+                0,
+                '[{"drvPath":"/nix/store/b.drv","name":"two-1","pname":"two",'
+                '"outputs":["/nix/store/two"]}]',
+                "",
+            ),
+            CommandResult(0, "/nix/store/b.drv\n", ""),
+            CommandResult(0, "/nix/store/one\n/nix/store/two\n", ""),
+        ]
+    )
+
+    status = run(
+        [
+            "run",
+            "--reference",
+            "github:NixOS/nixpkgs/staging",
+            "--maintainer",
+            "booxter",
+            "--system",
+            "aarch64-darwin",
+            "--system",
+            "x86_64-linux",
+        ],
+        ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
+        runner,
+        io.StringIO(),
+        io.StringIO(),
+    )
+
+    assert status == 0
+    build_calls = [call for call in runner.calls if len(call) > 1 and call[1] == "build"]
+    assert len(build_calls) == 1
+    assert set(build_calls[0][-2:]) == {
+        "/nix/store/a.drv^*",
+        "/nix/store/b.drv^*",
+    }
+    state = StateStore(tmp_path / "state.json").read()
+    assert [target.system for target in state.targets] == ["aarch64-darwin", "x86_64-linux"]
 
 
 def test_status_prints_last_attempt_and_success(tmp_path: Path) -> None:

@@ -3,20 +3,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, TextIO
 
-from nixpkgs_cache_warmer.commands import CommandError
-from nixpkgs_cache_warmer.warmer import WarmOutcome
+from nixpkgs_cache_warmer.tracking import MatrixTrackingOutcome
 
 
 class WarmOperation(Protocol):
-    def warm(
+    def warm_matrix(
         self,
-        reference: str,
+        references: tuple[str, ...],
         maintainer: str,
-        system: str,
+        systems: tuple[str, ...],
         exclude_pname_patterns: tuple[str, ...],
         include_pname_patterns: tuple[str, ...],
         log: TextIO,
-    ) -> WarmOutcome: ...
+    ) -> MatrixTrackingOutcome: ...
 
 
 @dataclass(frozen=True)
@@ -43,22 +42,17 @@ class Schedule:
         include_pname_patterns: tuple[str, ...],
         log: TextIO,
     ) -> ScheduleOutcome:
-        failed = []
-        for reference in references:
-            for system in systems:
-                target = ScheduledTarget(reference=reference, system=system)
-                print(f"Starting {reference} for {system}", file=log)
-                try:
-                    self._warmer.warm(
-                        reference,
-                        maintainer,
-                        system,
-                        exclude_pname_patterns,
-                        include_pname_patterns,
-                        log,
-                    )
-                except CommandError as error:
-                    print(f"Failed {reference} for {system}: {error}", file=log)
-                    failed.append(target)
-                    continue
-        return ScheduleOutcome(failed=tuple(failed))
+        outcome = self._warmer.warm_matrix(
+            references,
+            maintainer,
+            systems,
+            exclude_pname_patterns,
+            include_pname_patterns,
+            log,
+        )
+        return ScheduleOutcome(
+            failed=tuple(
+                ScheduledTarget(reference=failure.reference, system=failure.system)
+                for failure in outcome.failed
+            )
+        )
