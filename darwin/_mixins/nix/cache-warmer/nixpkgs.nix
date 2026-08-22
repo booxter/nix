@@ -7,6 +7,7 @@
 let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
   stateDir = "/var/lib/nixpkgs-cache-warmer";
+  buildLog = "/var/log/nix-darwin-private/nixpkgs-cache-warmer-build.log";
   inventoryCacheFile = "${stateDir}/inventory.json";
   textfileDir = "${stateDir}/textfile";
   metricsFile = "${textfileDir}/state.prom";
@@ -25,6 +26,8 @@ let
     inventoryCacheFile
     "--inventory-cache-max-age-days"
     "7"
+    "--build-log"
+    buildLog
   ]
   ++ lib.concatMap (reference: [
     "--reference"
@@ -120,6 +123,12 @@ in
         mkdir -p ${stateDir}
         chmod 0755 ${stateDir}
       '';
+
+      host.launchd.logging.auxiliaryFiles.nixpkgs-cache-warmer-build = {
+        mode = "0600";
+        path = buildLog;
+        scope = "system";
+      };
 
       launchd.daemons.nixpkgs-cache-warmer = {
         command = lib.escapeShellArgs arguments;
