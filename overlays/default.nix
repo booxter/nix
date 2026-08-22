@@ -7,17 +7,7 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-
-      getPkgs =
-        np:
-        import np {
-          inherit system;
-          config = {
-            allowUnfree = true;
-          };
-        };
-
-      pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
+      pkgsNixpkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
