@@ -7,7 +7,6 @@
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
   isLinux = lib.hasSuffix "-linux" system;
   localServer = fleetInventory.atticServers.${config.networking.hostName} or null;
   model = import ./model.nix {
@@ -46,8 +45,7 @@ in
   ++ lib.optionals isLinux [
     ./nixos-client.nix
     ./nixos-server.nix
-  ]
-  ++ lib.optional isDarwin ./darwin-client.nix;
+  ];
 
   options.host.attic = {
     server = {
