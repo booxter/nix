@@ -75,6 +75,7 @@
     let
       inherit (self) outputs;
       lib = inputs.nixpkgs.lib;
+      fleetInventory = import ./inventory { inherit lib; };
       hosts = import ./lib/hosts.nix { inherit lib; };
       specialArgsForHost =
         {
@@ -86,6 +87,7 @@
           storageConfigurations = outputs.nixosConfigurations;
           inherit
             hostName
+            fleetInventory
             inputs
             outputs
             system

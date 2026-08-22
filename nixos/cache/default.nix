@@ -1,20 +1,14 @@
 {
   config,
-  lib,
   ...
 }:
 let
-  readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   nfsPath = config.host.storage.claims.nixCache.mountPoint;
 in
 {
   system.stateVersion = "25.11";
 
-  host.attic.server = {
-    enable = true;
-    storagePath = nfsPath;
-    trustedPublicKey = readPublicKey ./attic-signing.pub;
-  };
+  host.attic.server.storagePath = nfsPath;
 
   host.proxmox.guest = {
     cluster = "lab";
