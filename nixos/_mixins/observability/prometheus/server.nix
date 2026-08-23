@@ -75,7 +75,6 @@ let
       config
       fleetInventory
       lib
-      outputs
       pkgs
       ;
   };
