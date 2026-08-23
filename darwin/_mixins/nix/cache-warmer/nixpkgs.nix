@@ -8,9 +8,9 @@ let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
   expression = pkgs.writeText "nixpkgs-cache-warmer.nix" ''
     let
-      branches = ${builtins.toJSON cfg.branches};
-      packageNames = ${builtins.toJSON cfg.packages};
-      systems = ${builtins.toJSON cfg.systems};
+      branches = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.branches)};
+      packageNames = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.packages)};
+      systems = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.systems)};
       packagesFor =
         branch: system:
         let
