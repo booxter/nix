@@ -9,6 +9,7 @@ const (
 
 type Config struct {
 	Name                 string
+	Sender               string
 	URL                  string
 	CACertificate        string
 	ClientCertificate    string
@@ -21,6 +22,7 @@ type Config struct {
 func ConfigFromEnvironment(getenv func(string) string) (Config, error) {
 	config := Config{
 		Name:                 getenv("NAME"),
+		Sender:               getenv("SENDER"),
 		URL:                  getenv("ALERTMANAGER_URL"),
 		CACertificate:        getenv("ALERTMANAGER_CA_CERTIFICATE"),
 		ClientCertificate:    getenv("ALERTMANAGER_CLIENT_CERTIFICATE"),

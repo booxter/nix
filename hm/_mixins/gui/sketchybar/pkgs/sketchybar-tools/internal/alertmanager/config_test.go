@@ -5,6 +5,7 @@ import "testing"
 func TestConfigFromEnvironmentAppliesColorsAndValidatesSettings(t *testing.T) {
 	values := map[string]string{
 		"NAME":                            "alertmanager",
+		"SENDER":                          "mouse.clicked",
 		"ALERTMANAGER_URL":                "https://alertmanager.test/api/v2/alerts",
 		"ALERTMANAGER_CA_CERTIFICATE":     "/ca",
 		"ALERTMANAGER_CLIENT_CERTIFICATE": "/cert",
@@ -19,6 +20,9 @@ func TestConfigFromEnvironmentAppliesColorsAndValidatesSettings(t *testing.T) {
 	}
 	if config.Red != "red" || config.Yellow != "yellow" {
 		t.Fatalf("configured colors were not retained: %#v", config)
+	}
+	if config.Sender != "mouse.clicked" {
+		t.Fatalf("sender = %q, want mouse.clicked", config.Sender)
 	}
 	delete(values, "ALERTMANAGER_URL")
 	if _, err := ConfigFromEnvironment(func(name string) string { return values[name] }); err == nil {

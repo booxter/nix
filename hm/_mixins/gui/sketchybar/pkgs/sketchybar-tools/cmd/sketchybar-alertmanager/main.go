@@ -24,7 +24,7 @@ func run() error {
 	return alertmanager.Run(
 		context.Background(),
 		config,
-		alertmanager.NewHTTPAlertCounter(config),
+		alertmanager.NewHTTPAlertFetcher(config),
 		sketchybar.Command{Executable: config.SketchybarExecutable},
 	)
 }

@@ -18,7 +18,7 @@ in
 
       grafanaUrl = lib.mkOption {
         type = lib.types.str;
-        description = "Grafana alert groups page opened when the applet is clicked.";
+        description = "Grafana alert groups page opened from the applet popup.";
       };
 
       clientCertificate = lib.mkOption {
@@ -44,8 +44,47 @@ in
                                     icon.padding_right=2 \
                                     label.padding_left=2 \
                                     label.padding_right=6 \
-                                    click_script="/usr/bin/open ${lib.escapeShellArg cfg.grafanaUrl}" \
-                 --subscribe alertmanager system_woke
+                                    popup.align=right \
+                                    popup.background.color="$BACKGROUND_COLOR" \
+                                    popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
+                                    popup.background.border_width=1 \
+                                    popup.background.corner_radius=6 \
+                 --subscribe alertmanager system_woke mouse.clicked
+
+      for index in {0..7}; do
+        sketchybar --add item "alertmanager.alert.$index" popup.alertmanager \
+                   --set "alertmanager.alert.$index" updates=off \
+                                                       drawing=off \
+                                                       icon.drawing=off \
+                                                       label.align=left \
+                                                       label.padding_left=8 \
+                                                       label.padding_right=8 \
+                                                       background.border_width=0 \
+                                                       background.height=24
+      done
+
+      sketchybar --add item alertmanager.more popup.alertmanager \
+                 --set alertmanager.more updates=off \
+                                         drawing=off \
+                                         icon.drawing=off \
+                                         label.align=left \
+                                         label.padding_left=8 \
+                                         label.padding_right=8 \
+                                         background.border_width=0 \
+                                         background.height=24
+
+      sketchybar --add item alertmanager.grafana popup.alertmanager \
+                 --set alertmanager.grafana updates=off \
+                                            icon="󰈹" \
+                                            icon.padding_left=8 \
+                                            icon.padding_right=4 \
+                                            label="Open Grafana" \
+                                            label.align=left \
+                                            label.padding_left=4 \
+                                            label.padding_right=8 \
+                                            background.border_width=0 \
+                                            background.height=24 \
+                                            click_script="/usr/bin/open ${lib.escapeShellArg cfg.grafanaUrl}; sketchybar --set alertmanager popup.drawing=off"
     '';
   };
 }
