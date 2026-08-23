@@ -26,6 +26,7 @@ in
 
     nix.linux-builder = {
       enable = true;
+      maxJobs = 4;
       package = pkgs.darwin.linux-builder-vz;
       systems = [
         "aarch64-linux"
@@ -37,6 +38,7 @@ in
         "kvm"
         "nixos-test"
       ];
+      config.virtualisation.cores = 8;
       config.virtualisation.memorySize = lib.mkForce 8192;
       config.virtualisation.vz.nestedVirtualization = true;
     };
