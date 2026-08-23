@@ -5,8 +5,6 @@
 }:
 {
   imports = [
-    ./inventory-endpoints.nix
-    ./inventory.nix
     ./node-exporter.nix
     ./policy.nix
   ];

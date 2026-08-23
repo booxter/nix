@@ -16,7 +16,6 @@ in
   host.pki.server = { };
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 2;
     memoryGiB = 8;
     diskGiB = 50;
@@ -27,7 +26,5 @@ in
   host.observability.uptimeRobot.controller.enable = true;
 
   host.network.ipController = { };
-
-  host.ups.client.server = "prx1-lab";
 
 }

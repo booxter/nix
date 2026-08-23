@@ -51,8 +51,6 @@ in
     };
 
     host.web.services.jellyfin.metrics.default = {
-      scrapeInterval = "5s";
-      port = 9594;
       upstream = "http://127.0.0.1:19594/metrics";
     };
   };

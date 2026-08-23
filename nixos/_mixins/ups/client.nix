@@ -1,27 +1,20 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
-  cfg = config.host.ups.client;
-  model = import ../../../common/_mixins/ups/model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
-  server = if cfg.server == null then null else model.servers.${cfg.server} or null;
+  serverName = fleetInventory.ups.clients.${config.networking.hostName} or null;
+  server = if serverName == null then null else fleetInventory.ups.servers.${serverName};
   siteNetwork = import ../../../common/_lib/site-network.nix { inherit config; };
-  monitorName = if cfg.server == null then "" else cfg.server;
+  monitorName = if serverName == null then "" else serverName;
   monitorSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
     server != null
     && import ../../../common/_mixins/ups/uses-literal-credentials.nix {
       clientRealm = config.host.realm;
-      serverRealm = server.realm;
+      serverRealm = fleetInventory.hosts.${serverName}.realm;
     };
   passwordFile =
     if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
@@ -42,7 +35,7 @@ in
       enable = true;
       mode = "netclient";
       upsmon.monitor.${monitorName} = {
-        system = "${server.ups.server.name}@${siteNetwork.addressFor cfg.server}";
+        system = "${server.deviceName}@${siteNetwork.addressFor serverName}";
         user = "upsslave";
         inherit passwordFile;
         type = "slave";

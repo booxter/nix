@@ -1,9 +1,11 @@
 {
+  fleetInventory,
   outputs,
   pkgs,
   ...
 }:
 {
-  package = (import ../fleet.nix { inherit outputs pkgs; }).packages.seerr-update-user-tags;
+  package =
+    (import ../fleet.nix { inherit fleetInventory outputs pkgs; }).packages.seerr-update-user-tags;
   description = "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
 }

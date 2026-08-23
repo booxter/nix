@@ -4,7 +4,6 @@
     ../../../../common/_mixins/host/options.nix
     ../../../../common/_mixins/internal-pki
     ../../../../common/_mixins/network
-    ../../../../common/_mixins/observability/inventory-endpoints.nix
     ../../../../common/_mixins/observability/policy.nix
     ../blackbox.nix
     ../prometheus-endpoints.nix

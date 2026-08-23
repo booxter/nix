@@ -28,11 +28,5 @@ in
       default = null;
       description = "Configuration for a locally attached UPS.";
     };
-
-    client.server = lib.mkOption {
-      type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = null;
-      description = "Host providing the UPS service monitored by this host.";
-    };
   };
 }

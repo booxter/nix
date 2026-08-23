@@ -122,6 +122,7 @@ nix run .#deploy -- --branch <branch> <host>
 - `deploy` clones the branch from GitHub, so unmerged local patches must be
   committed and pushed before deploy. Default branch: `master`.
 - Use `--dry-run` for SSH/disk checks and `--test` for NixOS dry activation.
+- Use `--local` to deploy from local checkout (includes origin/master changes).
 - Related apps: `prox-deploy` for Proxmox VMs, `vm` for local VM variants,
   `diff` for generated config comparisons.
 

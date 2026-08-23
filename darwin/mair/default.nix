@@ -67,12 +67,6 @@ in
         useAgent = true;
       };
     };
-    wireguard.client = {
-      network = "home";
-      address = "10.83.0.10";
-      publicKey = readPublicKey ./wireguard.pub;
-      privateKeySecret = "wireguard/gw/privateKey";
-    };
   };
 
 }

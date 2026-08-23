@@ -1,4 +1,5 @@
 {
+  fleetInventory,
   outputs,
   pkgs,
 }:
@@ -16,14 +17,14 @@ let
   darwinHosts = pkgs.lib.mapAttrs (mkFleetHost "aarch64-darwin") outputs.darwinConfigurations;
   nixosHosts = pkgs.lib.mapAttrs (mkFleetHost "x86_64-linux") outputs.nixosConfigurations;
   fleetHosts = nixosHosts // darwinHosts;
-  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetHosts;
+  realmsByHost = pkgs.lib.mapAttrs (_: host: host.realm) fleetInventory.hosts;
   tokenHosts = pkgs.lib.mapAttrs (_: host: { inherit (host) realm system; }) fleetHosts;
   appPackages = import ./packages.nix {
     fleetHosts = tokenHosts;
     inherit pkgs realmsByHost;
   };
 
-  fleetInventory = {
+  toolInventory = {
     aliases =
       pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations
       // pkgs.lib.mapAttrs (name: _: name) outputs.darwinConfigurations;
@@ -46,7 +47,8 @@ let
   };
   vmTargets = pkgs.lib.mapAttrs (name: _: name) outputs.nixosConfigurations;
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetInventory vmTargets wireguardHome;
+    fleetInventory = toolInventory;
+    inherit vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {

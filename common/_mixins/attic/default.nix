@@ -1,19 +1,19 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   pkgs,
   system,
   ...
 }:
 let
-  isDarwin = lib.hasSuffix "-darwin" system;
   isLinux = lib.hasSuffix "-linux" system;
+  localServer = fleetInventory.atticServers.${config.networking.hostName} or null;
   model = import ./model.nix {
     inherit
       config
+      fleetInventory
       lib
-      outputs
       ;
   };
   realmServerType = lib.types.submodule {
@@ -45,14 +45,19 @@ in
   ++ lib.optionals isLinux [
     ./nixos-client.nix
     ./nixos-server.nix
-  ]
-  ++ lib.optional isDarwin ./darwin-client.nix;
+  ];
 
   options.host.attic = {
     server = {
       enable =
         if isLinux then
-          lib.mkEnableOption "an Attic binary cache server"
+          lib.mkOption {
+            type = lib.types.bool;
+            default = localServer != null;
+            readOnly = true;
+            internal = true;
+            description = "Whether this host is registered as an Attic binary cache server.";
+          }
         else
           lib.mkOption {
             type = lib.types.bool;
@@ -64,11 +69,7 @@ in
 
       endpoint = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
-        default =
-          if isLinux && config.host.attic.server.enable then
-            config.host.web.services.atticd.internal.url
-          else
-            null;
+        default = if isLinux && config.host.attic.server.enable then localServer.endpoint else null;
         readOnly = true;
         internal = true;
         description = "Resolved HTTPS endpoint published to clients in this realm.";
@@ -76,14 +77,18 @@ in
 
       cacheName = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        default = "default";
-        description = "Attic cache published by this server.";
+        default = if localServer == null then "default" else localServer.cacheName;
+        readOnly = true;
+        internal = true;
+        description = "Attic cache registered for this server.";
       };
 
       trustedPublicKey = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
-        default = null;
-        description = "Nix signing public key published to clients in this realm.";
+        default = if localServer == null then null else localServer.trustedPublicKey;
+        readOnly = true;
+        internal = true;
+        description = "Nix signing public key registered for this server.";
       };
 
       environmentFile = lib.mkOption {

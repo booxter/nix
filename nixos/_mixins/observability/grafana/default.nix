@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  outputs,
+  observabilityCatalog,
   pkgs,
   ...
 }:
@@ -17,17 +17,6 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
-  localHost = config.networking.hostName;
-  nixosConfigurations = outputs.nixosConfigurations // {
-    ${localHost} = { inherit config; };
-  };
-  fleetConfigurations = nixosConfigurations // outputs.darwinConfigurations;
-  inventories = lib.mapAttrs (
-    _: configuration: configuration.config.host.observability.inventory
-  ) fleetConfigurations;
-  observableInventories = lib.filterAttrs (
-    _: inventory: inventory.realm == config.host.realm && inventory.dashboard != null
-  ) inventories;
   dashboardManifest = {
     dataSources = {
       prometheus = {
@@ -39,7 +28,7 @@ let
         uid = grafanaLokiUid;
       };
     };
-    hosts = map (inventory: inventory.dashboard) (builtins.attrValues observableInventories);
+    hosts = builtins.attrValues observabilityCatalog.dashboards;
     network.internet = {
       ingress = {
         capacityMbit = config.host.site.uplink.downloadMbit;
@@ -261,12 +250,6 @@ in
 
     host.web.services.grafana = {
       upstream = "http://127.0.0.1:${toString cfg.port}";
-      health.frontend = {
-        path = "/login";
-      };
-      dashboard = {
-        section = "infrastructure";
-      };
     };
 
     systemd.services.grafana = {

@@ -17,6 +17,7 @@ class PackageInventory(Protocol):
     def instantiate(
         self,
         source: Path,
+        reference: str,
         maintainer: str,
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
@@ -25,7 +26,7 @@ class PackageInventory(Protocol):
 
 
 class PackageBuilder(Protocol):
-    def build(self, targets: tuple[PackageTarget, ...], log: TextIO) -> BuildOutcome: ...
+    def build(self, targets: tuple[PackageTarget, ...]) -> BuildOutcome: ...
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,7 @@ class Warmer:
         print(f"Selecting packages maintained by {maintainer} for {system}", file=log)
         targets = self._inventory.instantiate(
             resolved.source,
+            resolved.reference,
             maintainer,
             system,
             exclude_pname_patterns,
@@ -172,7 +174,7 @@ class Warmer:
             f"Building {len(prepared.packages)} package target(s) for {prepared.system}",
             file=log,
         )
-        build = self._builder.build(prepared.packages, log)
+        build = self._builder.build(prepared.packages)
         print(
             f"Built {len(build.successful)}/{len(prepared.packages)} package target(s) "
             f"for {prepared.resolved.reference} at {prepared.resolved.revision}",
@@ -197,7 +199,7 @@ class Warmer:
             f"across {len(prepared_targets)} matrix target(s)",
             file=log,
         )
-        combined = self._builder.build(packages, log)
+        combined = self._builder.build(packages)
         successful_drv_paths = {package.drvPath for package in combined.successful}
         outcomes = []
         for prepared in prepared_targets:

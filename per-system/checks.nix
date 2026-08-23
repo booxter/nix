@@ -1,5 +1,7 @@
 {
   appSet,
+  autoUpgradeEvaluation,
+  fleetInventory,
   inputs,
   pkgs,
   system,
@@ -19,5 +21,13 @@ let
       lib.filterAttrs (checkName: _: lib.hasPrefix "nixos-" checkName) (input.checks.${system} or { })
     )
   ) checkedInputs;
+  topologyChecks = import ./checks/topo {
+    inherit
+      autoUpgradeEvaluation
+      fleetInventory
+      lib
+      pkgs
+      ;
+  };
 in
-appSet.packages // import ../tests { inherit inputs pkgs; } // inputNixosTests
+appSet.packages // topologyChecks // import ../tests { inherit inputs pkgs; } // inputNixosTests

@@ -11,12 +11,9 @@ in
   host.network.interfaces.ens18 = { };
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 16;
     memoryGiB = 32;
   };
-
-  host.ups.client.server = "prx1-lab";
 
   host.backups.destination = {
     server = "beast";

@@ -1,24 +1,34 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   pkgs,
   utils,
   ...
 }:
 let
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
   autoUpgradeTools = pkgs.callPackage ./package {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   cfg = config.host.autoUpgrade;
   hostname = config.networking.hostName;
+  policy = fleetInventory.autoUpgrade.policy;
+  # Keep host evaluation local; fleet constraints are checked against this
+  # committed schedule by the auto-upgrade CI evaluation.
+  schedule =
+    fleetInventory.autoUpgrade.schedules.${hostname}
+      or (throw "host '${hostname}' has no auto-upgrade schedule in fleet inventory");
+  formatClock =
+    clock:
+    let
+      pad = part: if part < 10 then "0${toString part}" else toString part;
+    in
+    "${pad clock.hour}:${pad clock.minute}";
+  randomizedDelay = "${toString policy.randomizedDelayMinutes}min";
+  rebootWindow = {
+    lower = formatClock policy.allowedWindow.start;
+    upper = formatClock policy.allowedWindow.end;
+  };
   metricsEnabled = config.host.observability.enable;
   textfileDir = config.host.observability.nodeExporter.textfile.directories.default;
   toolsConfig = (pkgs.formats.json { }).generate "auto-upgrade-tools.json" {
@@ -74,11 +84,11 @@ in
           "-L"
           "--show-trace"
         ];
-        dates = model.plan.switch.calendar;
-        randomizedDelaySec = model.randomizedDelay;
+        dates = schedule.switch;
+        randomizedDelaySec = randomizedDelay;
         persistent = false;
-        allowReboot = model.plan.reboot.mode == "with-upgrade";
-        rebootWindow = if model.plan.reboot.mode == "with-upgrade" then model.rebootWindow else null;
+        allowReboot = schedule.reboot.mode == "with-upgrade";
+        rebootWindow = if schedule.reboot.mode == "with-upgrade" then rebootWindow else null;
       };
 
       systemd.services.nixos-upgrade.serviceConfig.TimeoutStartSec = "12h";
@@ -88,7 +98,7 @@ in
       systemd.services.nixos-upgrade.serviceConfig.ExecStartPre = maintenanceGuards;
     })
 
-    (lib.mkIf (model.plan.reboot.mode == "scheduled") {
+    (lib.mkIf (schedule.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed = {
         description = "Reboot on schedule if the current NixOS profile needs it";
         serviceConfig = {
@@ -102,8 +112,8 @@ in
       systemd.timers.nixos-reboot-if-needed = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnCalendar = model.plan.reboot.scheduledCalendar;
-          RandomizedDelaySec = model.randomizedDelay;
+          OnCalendar = schedule.reboot.calendar;
+          RandomizedDelaySec = randomizedDelay;
           Persistent = false;
           Unit = "nixos-reboot-if-needed.service";
         };
@@ -114,7 +124,7 @@ in
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
 
-    (lib.mkIf (cfg.holds != [ ] && model.plan.reboot.mode == "scheduled") {
+    (lib.mkIf (cfg.holds != [ ] && schedule.reboot.mode == "scheduled") {
       systemd.services.nixos-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
 

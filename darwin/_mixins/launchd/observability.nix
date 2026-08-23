@@ -1,11 +1,11 @@
 {
   config,
+  launchdModel,
   lib,
   pkgs,
   ...
 }:
 let
-  launchdLib = import ./lib.nix { inherit lib; };
   exporterName = "observability-launchd-export";
   userExporterName = "observability-launchd-user-export";
   stateDir = "/var/lib/observability-launchd";
@@ -15,26 +15,18 @@ let
   username = config.host.username;
   userHome = config.users.users.${username}.home;
   userLogDir = "${userHome}/Library/Logs/nix-darwin";
-  homeManagerConfig = config.home-manager.users.${username};
+  expectedJobs = jobs: lib.mapAttrsToList (_: job: { inherit (job) domain label mode; }) jobs;
+  managedJobs = jobs: lib.filterAttrs (_: job: job.managed) jobs;
+  homeManagerJobs = lib.filterAttrs (_: job: job.managed && job.launchdEnabled) (
+    removeAttrs launchdModel.homeManagerJobs [ userExporterName ]
+  );
 
-  expectedFromNixDarwin =
-    domain: jobs:
-    lib.mapAttrsToList (_: job: {
-      inherit domain;
-      label = job.serviceConfig.Label;
-      mode = launchdLib.inferMode job.serviceConfig;
-    }) (launchdLib.managedJobs jobs);
-  homeManagerJobs = lib.filterAttrs (
-    _: job: job.enable && job.config.Disabled != true && launchdLib.hasProgramConfig job.config
-  ) (removeAttrs homeManagerConfig.launchd.agents [ userExporterName ]);
-  expectedFromHomeManager = lib.mapAttrsToList (_: job: {
-    domain = "user";
-    label = job.config.Label;
-    mode = launchdLib.inferMode job.config;
-  }) (lib.optionalAttrs homeManagerConfig.launchd.enable homeManagerJobs);
-
-  systemJobs = expectedFromNixDarwin "system" (removeAttrs config.launchd.daemons [ exporterName ]);
-  userJobs = expectedFromNixDarwin "user" config.launchd.agents ++ expectedFromHomeManager;
+  systemJobs = expectedJobs (
+    managedJobs (removeAttrs launchdModel.systemJobsByDomain.daemons [ exporterName ])
+  );
+  userJobs =
+    expectedJobs (managedJobs launchdModel.systemJobsByDomain.agents)
+    ++ expectedJobs (lib.optionalAttrs launchdModel.homeManagerLaunchdEnabled homeManagerJobs);
   sortJobs = builtins.sort (left: right: left.label < right.label);
   sortedSystemJobs = sortJobs systemJobs;
   sortedUserJobs = sortJobs userJobs;

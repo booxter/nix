@@ -21,7 +21,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-BS46DRuN9fU1vQBWKuHtG47l8n/mjKJR5WhOZltJ4Ao=";
+  cargoHash = "sha256-SbhoHtuWl5lXbf5K78/9ItJFBcqgTc4bBg81399O5YY=";
 
   FLEET_CACHE_WARMER_ATTIC = lib.optionalString pushToAttic (lib.getExe attic-client);
   FLEET_CACHE_WARMER_NIX = lib.getExe nix;

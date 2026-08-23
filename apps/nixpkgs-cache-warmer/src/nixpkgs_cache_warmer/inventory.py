@@ -6,9 +6,10 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, evaluate_json
-from nixpkgs_cache_warmer.models import PackageTarget
+from nixpkgs_cache_warmer.models import PackageSelector, PackageTarget
 
 TARGETS_ADAPTER = TypeAdapter(tuple[PackageTarget, ...])
+SELECTORS_ADAPTER = TypeAdapter(tuple[PackageSelector, ...])
 
 
 class Inventory:
@@ -24,14 +25,16 @@ class Inventory:
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
         include_pname_patterns: tuple[str, ...] = (),
+        selectors: tuple[PackageSelector, ...] | None = None,
     ) -> tuple[PackageTarget, ...]:
+        selected = selectors if selectors is not None else self.discover(source, maintainer, system)
         arguments = self._arguments(
             source,
             maintainer,
             system,
             exclude_pname_patterns,
             include_pname_patterns,
-        )
+        ) + (("selectorsJson", json.dumps(selected)),)
         raw = evaluate_json(
             self._runner,
             self._nix,
@@ -43,13 +46,50 @@ class Inventory:
         except ValidationError as error:
             raise CommandError(f"Nix returned an invalid package inventory: {error}") from error
 
-    def instantiate(
+    def discover(
         self,
         source: Path,
         maintainer: str,
         system: str,
+    ) -> tuple[PackageSelector, ...]:
+        raw = evaluate_json(
+            self._runner,
+            self._nix,
+            self._expression,
+            self._arguments(source, maintainer, system, (), ()) + (("output", "selectors"),),
+        )
+        try:
+            return SELECTORS_ADAPTER.validate_json(raw)
+        except ValidationError as error:
+            raise CommandError(f"Nix returned invalid package selectors: {error}") from error
+
+    def instantiate(
+        self,
+        source: Path,
+        reference: str,
+        maintainer: str,
+        system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
         include_pname_patterns: tuple[str, ...] = (),
+    ) -> tuple[PackageTarget, ...]:
+        selectors = self.discover(source, maintainer, system)
+        return self.instantiate_selected(
+            source,
+            maintainer,
+            system,
+            exclude_pname_patterns,
+            include_pname_patterns,
+            selectors,
+        )
+
+    def instantiate_selected(
+        self,
+        source: Path,
+        maintainer: str,
+        system: str,
+        exclude_pname_patterns: tuple[str, ...],
+        include_pname_patterns: tuple[str, ...],
+        selectors: tuple[PackageSelector, ...],
     ) -> tuple[PackageTarget, ...]:
         targets = self.targets(
             source,
@@ -57,6 +97,7 @@ class Inventory:
             system,
             exclude_pname_patterns,
             include_pname_patterns,
+            selectors,
         )
         arguments = [str(self._nix), str(self._expression)]
         for name, value in self._arguments(
@@ -65,7 +106,10 @@ class Inventory:
             system,
             exclude_pname_patterns,
             include_pname_patterns,
-        ) + (("output", "packages"),):
+        ) + (
+            ("selectorsJson", json.dumps(selectors)),
+            ("output", "packages"),
+        ):
             arguments.extend(("--argstr", name, value))
         result = self._runner.run(arguments)
         if result.returncode != 0:

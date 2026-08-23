@@ -1,9 +1,9 @@
 {
   config,
+  fleetInventory,
   fleetWebServices,
   lib,
-  observabilityInventory,
-  outputs,
+  observabilityCatalog,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
@@ -16,21 +16,8 @@ let
     wanTcpProbeTargets
     ;
   localHost = config.networking.hostName;
-  configurations = outputs.nixosConfigurations // {
-    ${localHost} = { inherit config; };
-  };
-  ingressConfigurations = lib.filterAttrs (
-    _: configuration:
-    configuration.config.host.realm == config.host.realm
-    && configuration.config.host.web.ingress != null
-    && configuration.config.host.web.ingress.dynamicDns != null
-  ) configurations;
-  ingressHosts = builtins.attrValues ingressConfigurations;
-  publicWanHost =
-    if ingressHosts == [ ] then
-      ""
-    else
-      (lib.head ingressHosts).config.host.web.ingress.dynamicDns.hostname;
+  ingress = fleetInventory.webIngress.${config.host.realm} or null;
+  publicWanHost = if ingress == null then "" else ingress.dynamicDns.hostname;
   publicServiceCatalog = map (contribution: {
     inherit (contribution) id;
     title = contribution.value.displayName;
@@ -140,10 +127,8 @@ let
         };
       };
     };
-  remoteBlackboxProbeSourceConfigs = lib.filter (source: source != null) (
-    map (inventory: inventory.blackbox) (
-      builtins.attrValues (removeAttrs observabilityInventory.nixos [ localHost ])
-    )
+  remoteBlackboxProbeSourceConfigs = map (source: removeAttrs source [ "host" ]) (
+    builtins.filter (source: source.host != localHost) observabilityCatalog.blackboxSources
   );
   blackboxProbeSourceConfigs = [
     {
@@ -161,11 +146,12 @@ let
         labels = {
           component = "blackbox";
           probe_family = "network";
+          probe_role = "reachability";
           scrape_profile = "probe";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
           inherit (source) source;
-          inherit (probe) probe probe_title;
+          inherit (probe) probe probe_protocol probe_title;
         };
         targets = [ probe.target ];
       }) probes
@@ -176,6 +162,8 @@ let
       labels = {
         component = "blackbox";
         probe_family = "dns";
+        probe_protocol = "dns";
+        probe_role = "public-service";
         scrape_profile = "probe";
         scope = "external";
         service = service.id;
@@ -193,6 +181,9 @@ let
       component = "blackbox";
       module = service.blackboxModule or "http_service";
       probe_family = "service";
+      probe_protocol = "http";
+      probe_role = if service.scope == "backend" then "backend" else "frontdoor";
+      probe_title = if service.scope == "backend" then "Backend" else "Front door";
       scrape_profile = "probe";
       scope = service.scope;
       service = service.id;
@@ -274,8 +265,8 @@ in
   modules = blackboxModules;
 
   assertions = lib.optional (publicServiceCatalog != [ ]) {
-    assertion = builtins.length ingressHosts == 1;
-    message = "Public WAN probes require exactly one dynamic-DNS web ingress in the Prometheus realm.";
+    assertion = ingress != null;
+    message = "Public WAN probes require a dynamic-DNS web ingress in the Prometheus realm.";
   };
 
   scrapeConfigs = [
@@ -290,6 +281,9 @@ in
           availability = service.availability or "always";
           component = "blackbox";
           probe_family = "service";
+          probe_protocol = "http";
+          probe_role = "public-wan";
+          probe_title = "Public WAN";
           scrape_profile = "probe";
           scope = "external";
           service = service.id;
@@ -329,6 +323,8 @@ in
         labels = {
           component = "blackbox";
           probe_family = "dns";
+          probe_protocol = "dns";
+          probe_role = "resolver";
           scrape_profile = "probe";
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;

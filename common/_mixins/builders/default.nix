@@ -1,15 +1,15 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
   model = import ./model.nix {
     inherit
       config
+      fleetInventory
       lib
-      outputs
       ;
   };
   useType = lib.types.enum [

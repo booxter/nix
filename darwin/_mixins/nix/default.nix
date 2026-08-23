@@ -8,6 +8,7 @@ let
 in
 {
   imports = [
+    ./builder-observability.nix
     ./cache-preference.nix
     ./cache-warmer
     ./linux-builder.nix

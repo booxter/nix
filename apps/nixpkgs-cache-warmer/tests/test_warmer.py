@@ -1,6 +1,5 @@
 import io
 from pathlib import Path
-from typing import TextIO
 
 import pytest
 
@@ -59,6 +58,7 @@ class FakeInventory:
     def instantiate(
         self,
         source: Path,
+        reference: str,
         maintainer: str,
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
@@ -66,6 +66,7 @@ class FakeInventory:
     ) -> tuple[PackageTarget, ...]:
         self.call = (
             source,
+            reference,
             maintainer,
             system,
             exclude_pname_patterns,
@@ -81,6 +82,7 @@ class MatrixInventory:
     def instantiate(
         self,
         source: Path,
+        reference: str,
         maintainer: str,
         system: str,
         exclude_pname_patterns: tuple[str, ...] = (),
@@ -96,7 +98,7 @@ class FakeBuilder:
         self._outcome = outcome
         self.targets: tuple[PackageTarget, ...] | None = None
 
-    def build(self, targets: tuple[PackageTarget, ...], log: TextIO) -> BuildOutcome:
+    def build(self, targets: tuple[PackageTarget, ...]) -> BuildOutcome:
         self.targets = targets
         return self._outcome
 
@@ -119,6 +121,7 @@ def test_warms_resolved_source_and_reports_success() -> None:
     assert outcome.build.successful == (TARGET,)
     assert inventory.call == (
         RESOLVED.source,
+        RESOLVED.reference,
         "booxter",
         "x86_64-linux",
         ("firefox.*",),

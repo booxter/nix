@@ -76,6 +76,10 @@
       inherit (self) outputs;
       lib = inputs.nixpkgs.lib;
       hosts = import ./lib/hosts.nix { inherit lib; };
+      fleetInventory = import ./inventory {
+        fleetHosts = hosts;
+        inherit lib;
+      };
       specialArgsForHost =
         {
           hostName,
@@ -86,6 +90,7 @@
           storageConfigurations = outputs.nixosConfigurations;
           inherit
             hostName
+            fleetInventory
             inputs
             outputs
             system
@@ -125,6 +130,7 @@
             system:
             import ./per-system.nix {
               inherit
+                fleetInventory
                 inputs
                 outputs
                 system
@@ -141,6 +147,7 @@
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
       packages = selectPerSystem "packages";
+      updatePackages = selectPerSystem "update-packages";
 
       overlays = import ./overlays { inherit inputs; };
 

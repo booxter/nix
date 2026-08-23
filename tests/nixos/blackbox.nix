@@ -13,6 +13,8 @@ in
 pkgs.testers.runNixOSTest {
   name = "blackbox";
 
+  node.specialArgs.fleetInventory.observability.blackboxSources = [ "blackbox" ];
+
   nodes.machine =
     { lib, ... }:
     {
@@ -43,16 +45,13 @@ pkgs.testers.runNixOSTest {
         };
 
         host.observability = {
-          blackbox = {
-            remote = { };
-            modules.http_created = {
-              http = {
-                preferred_ip_protocol = "ip4";
-                valid_status_codes = [ 201 ];
-              };
-              prober = "http";
-              timeout = "5s";
+          blackbox.modules.http_created = {
+            http = {
+              preferred_ip_protocol = "ip4";
+              valid_status_codes = [ 201 ];
             };
+            prober = "http";
+            timeout = "5s";
           };
         };
 

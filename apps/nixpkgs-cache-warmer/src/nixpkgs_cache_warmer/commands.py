@@ -24,7 +24,14 @@ class CommandRunner(Protocol):
 
 class SubprocessCommandRunner:
     def run(self, arguments: Sequence[str]) -> CommandResult:
-        completed = subprocess.run(arguments, check=False, capture_output=True, text=True)
+        completed = subprocess.run(
+            arguments,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         return CommandResult(completed.returncode, completed.stdout, completed.stderr)
 
     def run_streaming(self, arguments: Sequence[str], stderr: TextIO) -> CommandResult:
@@ -33,6 +40,8 @@ class SubprocessCommandRunner:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             bufsize=1,
         )
         assert process.stdout is not None

@@ -73,10 +73,24 @@ def render_metrics(state: WarmerState) -> str:
         "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_success gauge",
         "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds Unix timestamp of the last target attempt.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_status_info Exact outcome of the last target attempt.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_status_info gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_selected_packages Packages selected by the last target attempt.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_selected_packages gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_built_packages Packages built successfully by the last target attempt.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_built_packages gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_attempt_failed_packages Packages that failed in the last target attempt.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_attempt_failed_packages gauge",
         "# HELP host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds Unix timestamp of the last operationally successful target run.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds gauge",
         "# HELP host_observability_nixpkgs_cache_warmer_last_success_revision_info Exact nixpkgs revision from the last operationally successful target run.",
         "# TYPE host_observability_nixpkgs_cache_warmer_last_success_revision_info gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_selected_packages Packages selected by the last operationally successful target run.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_success_selected_packages gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_built_packages Packages built successfully by the last operationally successful target run.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_success_built_packages gauge",
+        "# HELP host_observability_nixpkgs_cache_warmer_last_success_failed_packages Packages that failed in the last operationally successful target run.",
+        "# TYPE host_observability_nixpkgs_cache_warmer_last_success_failed_packages gauge",
     ]
     for target in state.targets:
         labels = _metric_labels(target.reference, target.system)
@@ -88,6 +102,12 @@ def render_metrics(state: WarmerState) -> str:
             "host_observability_nixpkgs_cache_warmer_last_attempt_timestamp_seconds"
             f"{{{labels}}} {target.last_attempt.attempted_at.timestamp():.0f}"
         )
+        status = _escape_metric_label(target.last_attempt.status)
+        lines.append(
+            "host_observability_nixpkgs_cache_warmer_last_attempt_status_info"
+            f'{{{labels},status="{status}"}} 1'
+        )
+        lines.extend(_record_count_metrics("last_attempt", labels, target.last_attempt))
         if target.last_success is not None:
             lines.append(
                 "host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds"
@@ -98,6 +118,7 @@ def render_metrics(state: WarmerState) -> str:
                 "host_observability_nixpkgs_cache_warmer_last_success_revision_info"
                 f'{{{labels},revision="{revision}"}} 1'
             )
+            lines.extend(_record_count_metrics("last_success", labels, target.last_success))
     return "\n".join(lines) + "\n"
 
 
@@ -109,6 +130,17 @@ def _metric_labels(reference: str, system: str) -> str:
 
 def _escape_metric_label(value: str) -> str:
     return value.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
+
+
+def _record_count_metrics(prefix: str, labels: str, record: RunRecord) -> list[str]:
+    return [
+        f"host_observability_nixpkgs_cache_warmer_{prefix}_selected_packages"
+        f"{{{labels}}} {record.selected}",
+        f"host_observability_nixpkgs_cache_warmer_{prefix}_built_packages"
+        f"{{{labels}}} {record.built}",
+        f"host_observability_nixpkgs_cache_warmer_{prefix}_failed_packages"
+        f"{{{labels}}} {record.failed}",
+    ]
 
 
 def completed_record(outcome: WarmOutcome, now: datetime) -> RunRecord:

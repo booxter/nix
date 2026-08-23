@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   ...
 }:
@@ -7,6 +8,7 @@ let
   cfg = config.host.lolek;
   gpu = config.host.hardware.gpu;
   galleryCookiesSecret = config.sops.secrets."lolek/galleryDlCookies";
+  metricsEndpoint = fleetInventory.observability.endpoints.${config.networking.hostName}.lolek;
 in
 {
   config = lib.mkIf cfg.enable {
@@ -68,12 +70,15 @@ in
     };
 
     host.observability.prometheusEndpoints.lolek = {
-      port = cfg.metrics.port;
+      port = metricsEndpoint.port;
       upstream = "http://127.0.0.1:${toString cfg.metrics.internalPort}/metrics";
       scrape = {
-        profile = "application";
-        component = "lolek";
-        service = "lolek";
+        inherit (metricsEndpoint)
+          component
+          profile
+          service
+          ;
+        inherit (metricsEndpoint) jobName;
       };
     };
 

@@ -1,14 +1,17 @@
 {
   config,
+  fleetInventory,
   inputs,
-  lib,
-  outputs,
   ...
 }:
+let
+  topology = import ./topology.nix {
+    inherit config fleetInventory;
+  };
+in
 {
   imports = [
     ./api-certificate.nix
-    ./controller.nix
     ./guest.nix
     ./node.nix
     ./oidc.nix
@@ -23,12 +26,15 @@
       assertion = config.host.proxmox.node == null || config.host.proxmox.guest == null;
       message = "a host cannot be both a Proxmox node and guest";
     }
+    {
+      assertion = (config.host.proxmox.node != null) == topology.isNode;
+      message = "local Proxmox node configuration and fleet topology must agree";
+    }
+    {
+      assertion = (config.host.proxmox.guest != null) == topology.isGuest;
+      message = "local Proxmox guest configuration and fleet topology must agree";
+    }
   ];
 
-  host.observability.inventory.machine = {
-    hypervisor = config.host.proxmox.node != null;
-    virtual = config.host.proxmox.guest != null;
-  };
-
-  _module.args.proxmoxModel = import ./model.nix { inherit config lib outputs; };
+  _module.args.proxmoxTopology = topology;
 }

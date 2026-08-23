@@ -5,12 +5,15 @@ import json
 import os
 import sys
 from collections.abc import Mapping, Sequence
+from contextlib import nullcontext
+from datetime import timedelta
 from pathlib import Path
 from typing import TextIO
 
 from nixpkgs_cache_warmer.build import NixBuilder
 from nixpkgs_cache_warmer.commands import CommandError, CommandRunner, SubprocessCommandRunner
 from nixpkgs_cache_warmer.inventory import Inventory
+from nixpkgs_cache_warmer.inventory_cache import CachedInventory, InventoryCacheStore
 from nixpkgs_cache_warmer.models import WarmerState
 from nixpkgs_cache_warmer.resolver import SourceResolver
 from nixpkgs_cache_warmer.schedule import Schedule
@@ -39,6 +42,9 @@ def parser() -> argparse.ArgumentParser:
     warm.add_argument("--exclude-pname-pattern", action="append", default=[])
     warm.add_argument("--include-pname-pattern", action="append", default=[])
     warm.add_argument("--state-file", type=Path)
+    warm.add_argument("--inventory-cache-file", type=Path)
+    warm.add_argument("--inventory-cache-max-age-days", type=int, default=7)
+    warm.add_argument("--build-log", type=Path)
     scheduled = subparsers.add_parser("run", help="warm a branch and system matrix")
     scheduled.add_argument("--reference", action="append", required=True)
     scheduled.add_argument("--maintainer", required=True)
@@ -46,6 +52,9 @@ def parser() -> argparse.ArgumentParser:
     scheduled.add_argument("--exclude-pname-pattern", action="append", default=[])
     scheduled.add_argument("--include-pname-pattern", action="append", default=[])
     scheduled.add_argument("--state-file", type=Path)
+    scheduled.add_argument("--inventory-cache-file", type=Path)
+    scheduled.add_argument("--inventory-cache-max-age-days", type=int, default=7)
+    scheduled.add_argument("--build-log", type=Path)
     status = subparsers.add_parser("status", help="show persisted warming status")
     status.add_argument("--state-file", type=Path)
     location = status.add_mutually_exclusive_group()
@@ -118,42 +127,63 @@ def run(
         if arguments.command in ("warm", "run"):
             assert state_file is not None
             nix = Path(environ["NIXPKGS_CACHE_WARMER_NIX"])
-            warmer = TrackingWarmer(
-                Warmer(
-                    SourceResolver(runner, nix),
-                    Inventory(
-                        runner,
-                        Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
-                        Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
-                    ),
-                    NixBuilder(runner, nix),
-                ),
-                StateStore(
-                    state_file,
-                    Path(environ["NIXPKGS_CACHE_WARMER_METRICS_FILE"])
-                    if environ.get("NIXPKGS_CACHE_WARMER_METRICS_FILE")
-                    else None,
-                ),
+            inventory = Inventory(
+                runner,
+                Path(environ["NIXPKGS_CACHE_WARMER_NIX_INSTANTIATE"]),
+                Path(environ["NIXPKGS_CACHE_WARMER_INVENTORY_EXPR"]),
             )
-            if arguments.command == "run":
-                schedule_outcome = Schedule(warmer).run(
-                    tuple(arguments.reference),
+            package_inventory = (
+                CachedInventory(
+                    inventory,
+                    InventoryCacheStore(arguments.inventory_cache_file),
+                    timedelta(days=arguments.inventory_cache_max_age_days),
+                )
+                if arguments.inventory_cache_file is not None
+                else inventory
+            )
+            try:
+                build_log_context = (
+                    arguments.build_log.open("a", encoding="utf-8", buffering=1)
+                    if arguments.build_log is not None
+                    else nullcontext(stderr)
+                )
+            except OSError as error:
+                raise CommandError(
+                    f"failed to open build log {arguments.build_log}: {error}"
+                ) from error
+            with build_log_context as build_log:
+                warmer = TrackingWarmer(
+                    Warmer(
+                        SourceResolver(runner, nix),
+                        package_inventory,
+                        NixBuilder(runner, nix, build_log),
+                    ),
+                    StateStore(
+                        state_file,
+                        Path(environ["NIXPKGS_CACHE_WARMER_METRICS_FILE"])
+                        if environ.get("NIXPKGS_CACHE_WARMER_METRICS_FILE")
+                        else None,
+                    ),
+                )
+                if arguments.command == "run":
+                    schedule_outcome = Schedule(warmer).run(
+                        tuple(arguments.reference),
+                        arguments.maintainer,
+                        tuple(arguments.system),
+                        tuple(arguments.exclude_pname_pattern),
+                        tuple(arguments.include_pname_pattern),
+                        stderr,
+                    )
+                    return 1 if schedule_outcome.failed else 0
+                outcome = warmer.warm(
+                    arguments.reference,
                     arguments.maintainer,
-                    tuple(arguments.system),
+                    arguments.system,
                     tuple(arguments.exclude_pname_pattern),
                     tuple(arguments.include_pname_pattern),
                     stderr,
                 )
-                return 1 if schedule_outcome.failed else 0
-            outcome = warmer.warm(
-                arguments.reference,
-                arguments.maintainer,
-                arguments.system,
-                tuple(arguments.exclude_pname_pattern),
-                tuple(arguments.include_pname_pattern),
-                stderr,
-            )
-            return 1 if outcome.build.failed else 0
+                return 1 if outcome.build.failed else 0
 
         if arguments.command == "resolve":
             resolved = SourceResolver(runner, Path(environ["NIXPKGS_CACHE_WARMER_NIX"])).resolve(

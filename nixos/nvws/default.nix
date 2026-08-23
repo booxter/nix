@@ -13,10 +13,7 @@ in
     nix.builder = {
       hostName = "nvws.local";
     };
-    proxmox.node = {
-      cluster = "nvws";
-      controller = { };
-    };
+    proxmox.node = { };
     network.interfaces.enp3s0f0 = { };
   };
   host.ups = {

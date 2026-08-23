@@ -9,13 +9,9 @@ in
   host.realm = "work";
   host.nix.builderClient = { };
   host.proxmox.guest = {
-    cluster = "nvws";
     cores = 64;
     memoryGiB = 128;
   };
-  host.ups.client.server = "nvws";
-
-  home-manager.users.${username}.host.hm.env.tier = "developer";
 
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-attr="${UPDATE_NIX_ATTR_PATH:-aurral}"
+attr="${UPDATE_NIX_ATTR_PATH:-updatePackages.x86_64-linux.aurral}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 package_file="nixos/_mixins/aurral/package/default.nix"
 nodejs_selector="${PACKAGE_UPDATES_SELECT_NODEJS:-select-nodejs}"

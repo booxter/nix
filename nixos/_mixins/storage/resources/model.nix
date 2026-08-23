@@ -71,7 +71,13 @@ let
       }) claim.attachments
     ) localClaims
   );
-  providedClaims = builtins.filter (claim: claim.provider == hostName) allClaims;
+  providedClaims =
+    # Only providers need the fleet-wide claim view. Keep this guard lazy so
+    # clients do not evaluate every host merely to discover they provide none.
+    if config.host.storage.resources == { } then
+      [ ]
+    else
+      builtins.filter (claim: claim.provider == hostName) allClaims;
   providedRemoteClaims = builtins.filter (claim: !claim.local) providedClaims;
   localResources = lib.mapAttrs (
     resourceName: _: resolveResource hostName resourceName

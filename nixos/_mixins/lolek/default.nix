@@ -30,11 +30,6 @@ in
         description = "Loopback port where Lolek publishes Prometheus metrics.";
       };
 
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 9568;
-        description = "mTLS port exposing Lolek metrics to Prometheus.";
-      };
     };
   };
 

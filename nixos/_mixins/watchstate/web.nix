@@ -12,19 +12,6 @@ in
   config = lib.mkIf (cfg != null) {
     host.web.services.watchstate = {
       upstream = localUrl;
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/v1/api/system/healthcheck";
-        };
-      };
-      displayName = "WatchState";
-      dashboard = {
-        icon = "sh:watchstate.png";
-        section = "media-admin";
-      };
       internal.locationExtraConfig = ''
         proxy_read_timeout 300s;
         proxy_send_timeout 300s;

@@ -9,13 +9,10 @@ in
   system.stateVersion = "25.11";
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 4;
     memoryGiB = 16;
     diskGiB = 80;
   };
-
-  host.ups.client.server = "prx1-lab";
 
   host.backups.destination = {
     server = "beast";

@@ -19,7 +19,6 @@ in
     host.web.services.atticd = {
       upstream = "http://${listenAddress}";
       internal = {
-        serverName = "nix-cache.${config.host.network.lanDomain}";
         localAliases = [ "nix-cache" ];
         locationExtraConfig = ''
           client_max_body_size 0;

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-attr="${UPDATE_NIX_ATTR_PATH:-houndarr}"
+attr="${UPDATE_NIX_ATTR_PATH:-updatePackages.x86_64-linux.houndarr}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 
 repo_root="$(git rev-parse --show-toplevel)"

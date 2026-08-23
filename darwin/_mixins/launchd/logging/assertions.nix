@@ -1,8 +1,8 @@
 {
-  jobsByDomain,
-  launchdLib,
+  auxiliaryFiles,
   lib,
   logLocations,
+  managedSystemJobsByDomain,
   managedHomeManagerUserAgents,
   homeManagerUsername,
 }:
@@ -19,13 +19,12 @@ let
       optionPath,
       scope ? null,
       serviceConfigName,
-      serviceConfigFor,
     }:
     let
       loggingAssertions = lib.mapAttrsToList (
         name: job:
         let
-          serviceConfig = serviceConfigFor job;
+          serviceConfig = job.serviceConfig;
           stdout = serviceConfig.StandardOutPath;
           stderr = serviceConfig.StandardErrorPath;
         in
@@ -37,7 +36,7 @@ let
       pathAssertions = lib.concatMap (
         name:
         let
-          serviceConfig = serviceConfigFor jobs.${name};
+          inherit (jobs.${name}) serviceConfig;
         in
         map
           (field: {
@@ -53,7 +52,7 @@ let
         lib.concatMap (
           name:
           let
-            serviceConfig = serviceConfigFor jobs.${name};
+            inherit (jobs.${name}) serviceConfig;
             paths = [
               serviceConfig.StandardOutPath
               serviceConfig.StandardErrorPath
@@ -89,6 +88,29 @@ let
     in
     loggingAssertions ++ pathAssertions ++ destinationAssertions;
   locationDirectories = map (location: location.directory) locationValues;
+  auxiliaryFileAssertions = lib.concatLists (
+    lib.mapAttrsToList (
+      name: file:
+      let
+        location = locationFor file.scope file.path;
+        optionPath = "host.launchd.logging.auxiliaryFiles.${name}.path";
+      in
+      [
+        {
+          assertion = lib.hasPrefix "/" file.path;
+          message = "${optionPath} must be an absolute path";
+        }
+        {
+          assertion = lib.hasSuffix ".log" file.path;
+          message = "${optionPath} must end in .log: ${file.path}";
+        }
+        {
+          assertion = location != null;
+          message = "${optionPath} is not in a registered ${file.scope} log directory: ${file.path}";
+        }
+      ]
+    ) auxiliaryFiles
+  );
 in
 [
   {
@@ -99,23 +121,28 @@ in
     assertion = builtins.length locationDirectories == builtins.length (lib.unique locationDirectories);
     message = "Launchd log location directories must be unique";
   }
+  {
+    assertion =
+      builtins.length (builtins.attrValues auxiliaryFiles)
+      == builtins.length (lib.unique (map (file: file.path) (builtins.attrValues auxiliaryFiles)));
+    message = "Launchd auxiliary log file paths must be unique";
+  }
 ]
+++ auxiliaryFileAssertions
 ++ lib.concatLists (
   lib.mapAttrsToList (
     domain: jobs:
     assertionsFor {
-      jobs = launchdLib.managedJobs jobs;
-      optionPath = launchdLib.optionPaths.${domain};
+      inherit jobs;
+      optionPath = "launchd.${domain}";
       scope = "system";
       serviceConfigName = "serviceConfig";
-      serviceConfigFor = job: job.serviceConfig;
     }
-  ) jobsByDomain
+  ) managedSystemJobsByDomain
 )
 ++ assertionsFor {
   jobs = managedHomeManagerUserAgents;
   optionPath = "home-manager.users.${homeManagerUsername}.launchd.agents";
   scope = "user";
   serviceConfigName = "config";
-  serviceConfigFor = job: job.config;
 }

@@ -1,8 +1,9 @@
 {
   config,
+  fleetInventory,
   fleetWebServices,
   lib,
-  outputs,
+  observabilityCatalog,
   pkgs,
   ...
 }:
@@ -24,33 +25,20 @@ let
     cert_file = blackboxScrapeMaterialization.certificatePath;
     key_file = blackboxScrapeMaterialization.keyPath;
   };
-  localHost = config.networking.hostName;
-  nixosConfigurations = outputs.nixosConfigurations // {
-    ${localHost} = { inherit config; };
-  };
-  observabilityInventory = {
-    nixos = lib.mapAttrs (
-      _: configuration: configuration.config.host.observability.inventory
-    ) nixosConfigurations;
-    all = lib.mapAttrs (_: configuration: configuration.config.host.observability.inventory) (
-      nixosConfigurations // outputs.darwinConfigurations
-    );
-  };
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
-      lib
-      observabilityInventory
+      observabilityCatalog
       prometheusMtlsTlsConfig
       ;
   };
   blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
+      fleetInventory
       fleetWebServices
       lib
-      observabilityInventory
-      outputs
+      observabilityCatalog
       blackboxHttpMtlsTlsConfig
       prometheusMtlsTlsConfig
       ;
@@ -58,22 +46,22 @@ let
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
       lib
-      observabilityInventory
+      observabilityCatalog
       prometheusMtlsTlsConfig
       ;
   };
   endpointScrapes = import ./scrapes/endpoints.nix {
     inherit
       lib
-      observabilityInventory
+      observabilityCatalog
       prometheusMtlsTlsConfig
       ;
   };
   nutScrapes = import ./scrapes/nut.nix {
     inherit
       config
+      fleetInventory
       lib
-      outputs
       pkgs
       ;
   };
@@ -92,7 +80,7 @@ in
   };
 
   config = lib.mkIf serverEnabled {
-    assertions = blackboxScrapes.assertions ++ nodeScrapes.assertions ++ endpointScrapes.assertions;
+    assertions = blackboxScrapes.assertions;
 
     host.observability.blackbox = {
       enable = true;

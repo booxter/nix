@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   ...
 }:
@@ -8,8 +9,9 @@ let
   network = if cfg == null then null else config.host.wireguard.networks.${cfg.network} or null;
   internalAddress = "127.0.0.1";
   internalPort = 9587;
-  publicPort = 9586;
   metricsName = "wg-${cfg.network}";
+  metricsEndpoint =
+    fleetInventory.observability.endpoints.${config.networking.hostName}.${metricsName};
   peers = lib.mapAttrsToList (name: peer: {
     inherit name;
     inherit (peer) address publicKey;
@@ -32,15 +34,12 @@ in
 {
   config = lib.mkIf (cfg != null && network != null) {
     host.observability.prometheusEndpoints.${metricsName} = {
-      port = publicPort;
-      path = "/metrics";
+      inherit (metricsEndpoint) path port;
       upstream = "http://${internalAddress}:${toString internalPort}/metrics";
       serverName = "${config.networking.hostName}.${config.host.network.lanDomain}";
       secretPrefix = "prometheus/${metricsName}";
       scrape = {
-        jobName = "wireguard";
-        profile = "network";
-        component = "wireguard";
+        inherit (metricsEndpoint) component jobName profile;
         metricRelabelConfigs = lib.concatMap mkPeerMetricRelabels peers;
       };
     };

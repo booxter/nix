@@ -90,6 +90,7 @@ def test_warm_reports_success(tmp_path: Path) -> None:
                 '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
                 "",
             ),
+            CommandResult(0, '[["one"]]', ""),
             CommandResult(
                 0,
                 '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
@@ -97,7 +98,7 @@ def test_warm_reports_success(tmp_path: Path) -> None:
                 "",
             ),
             CommandResult(0, "/nix/store/a.drv\n", ""),
-            CommandResult(0, "/nix/store/one\n", ""),
+            CommandResult(0, "/nix/store/one\n", "raw nix build output\n"),
         ]
     )
     stderr = io.StringIO()
@@ -109,6 +110,8 @@ def test_warm_reports_success(tmp_path: Path) -> None:
             "booxter",
             "--system",
             "x86_64-linux",
+            "--build-log",
+            str(tmp_path / "build.log"),
         ],
         ENVIRONMENT | {"NIXPKGS_CACHE_WARMER_STATE_FILE": str(tmp_path / "state.json")},
         runner,
@@ -118,6 +121,8 @@ def test_warm_reports_success(tmp_path: Path) -> None:
 
     assert status == 0
     assert "Built 1/1" in stderr.getvalue()
+    assert "raw nix build output" not in stderr.getvalue()
+    assert (tmp_path / "build.log").read_text() == "raw nix build output\n"
     state = StateStore(tmp_path / "state.json").read()
     assert state.targets[0].last_success is not None
     assert state.targets[0].last_success.revision == "012345"
@@ -131,6 +136,7 @@ def test_run_builds_complete_matrix_with_one_nix_invocation(tmp_path: Path) -> N
                 '{"locked":{"rev":"012345"},"path":"/nix/store/source"}',
                 "",
             ),
+            CommandResult(0, '[["one"]]', ""),
             CommandResult(
                 0,
                 '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
@@ -138,6 +144,7 @@ def test_run_builds_complete_matrix_with_one_nix_invocation(tmp_path: Path) -> N
                 "",
             ),
             CommandResult(0, "/nix/store/a.drv\n", ""),
+            CommandResult(0, '[["two"]]', ""),
             CommandResult(
                 0,
                 '[{"drvPath":"/nix/store/b.drv","name":"two-1","pname":"two",'
@@ -309,13 +316,16 @@ def test_targets_prints_human_inventory() -> None:
     status = run(
         ["targets", "--source", "/source", "--maintainer", "booxter", "--system", "x86_64-linux"],
         ENVIRONMENT,
-        FakeRunner(
-            CommandResult(
-                0,
-                '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
-                '"outputs":["/nix/store/one"]}]',
-                "",
-            )
+        SequencedRunner(
+            [
+                CommandResult(0, '[["one"]]', ""),
+                CommandResult(
+                    0,
+                    '[{"drvPath":"/nix/store/a.drv","name":"one-1","pname":"one",'
+                    '"outputs":["/nix/store/one"]}]',
+                    "",
+                ),
+            ]
         ),
         stdout,
         io.StringIO(),

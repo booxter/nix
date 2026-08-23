@@ -12,8 +12,6 @@
   host.disko.layout = "plain";
   host.proxmox.node = {
     apiServerName = "proxmox.${config.host.network.lanDomain}";
-    cluster = "lab";
-    controller = { };
   };
   host.network.interfaces.enp5s0f0np0 = { };
   host.ups = {

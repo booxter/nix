@@ -1,7 +1,7 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   system,
   ...
 }:
@@ -10,12 +10,11 @@ let
   platform = lib.systems.elaborate system;
   readPublicKey = import ../../_lib/read-public-key.nix { inherit lib; };
   hostDirectory = (if platform.isDarwin then ../../../darwin else ../../../nixos) + "/${localHost}";
-  configurations = outputs.nixosConfigurations // outputs.darwinConfigurations;
-  hostConfigurationFor = name: if name == localHost then config else configurations.${name}.config;
-  managedKnownHosts = lib.mapAttrs (name: _: {
-    hostNames = (hostConfigurationFor name).host.ssh.knownHostNames;
-    publicKey = (hostConfigurationFor name).host.ssh.publicHostKey;
-  }) configurations;
+  localInventory = fleetInventory.hosts.${localHost};
+  managedKnownHosts = lib.mapAttrs (_: host: {
+    hostNames = host.ssh.knownHostNames;
+    publicKey = host.ssh.publicHostKey;
+  }) fleetInventory.hosts;
   preBootEndpointType = lib.types.submodule (
     { name, ... }:
     {
@@ -88,5 +87,18 @@ in
     };
   };
 
-  config.programs.ssh.knownHosts = managedKnownHosts // preBootKnownHosts;
+  config = {
+    assertions = [
+      {
+        assertion = localInventory.ssh.knownHostNames == config.host.ssh.knownHostNames;
+        message = "local SSH known-host names must match fleet inventory";
+      }
+      {
+        assertion = localInventory.ssh.publicHostKey == config.host.ssh.publicHostKey;
+        message = "local SSH host public key must match fleet inventory";
+      }
+    ];
+
+    programs.ssh.knownHosts = managedKnownHosts // preBootKnownHosts;
+  };
 }

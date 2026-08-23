@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-attr="${UPDATE_NIX_ATTR_PATH:-degoog-stackexchange-engine}"
+attr="${UPDATE_NIX_ATTR_PATH:-updatePackages.x86_64-linux.degoog-stackexchange-engine}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 package_file="nixos/_mixins/degoog/pkgs/degoog/stackexchange-engine.nix"
 

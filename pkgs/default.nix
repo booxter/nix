@@ -20,6 +20,10 @@ in
 
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
+  nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
+    inherit atomicFileWrites;
+  };
+
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
   storage-observability = pkgs.callPackage ./storage-observability {

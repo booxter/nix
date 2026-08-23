@@ -1,12 +1,14 @@
 {
+  fleetInventory,
   inputs,
   outputs,
   system,
 }:
 let
-  lib = inputs.nixpkgs.lib;
-  plainPkgs = inputs.nixpkgs.legacyPackages.${system};
-  pkgs = import inputs.nixpkgs {
+  nixpkgsInput = if system == "aarch64-darwin" then inputs.nixpkgs-darwin else inputs.nixpkgs;
+  lib = nixpkgsInput.lib;
+  plainPkgs = nixpkgsInput.legacyPackages.${system};
+  pkgs = import nixpkgsInput {
     inherit system;
     config.allowUnfree = true;
     overlays = [
@@ -14,8 +16,17 @@ let
       outputs.overlays.modifications
     ];
   };
+  autoUpgradeEvaluation = import ./lib/auto-upgrade/evaluate.nix {
+    inherit
+      fleetInventory
+      lib
+      outputs
+      ;
+  };
   appSet = import ./apps {
     inherit
+      autoUpgradeEvaluation
+      fleetInventory
       inputs
       outputs
       pkgs
@@ -25,7 +36,10 @@ let
   commonArgs = {
     inherit
       appSet
+      autoUpgradeEvaluation
+      fleetInventory
       inputs
+      lib
       outputs
       pkgs
       plainPkgs

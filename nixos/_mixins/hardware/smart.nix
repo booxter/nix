@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   pkgs,
   ...
@@ -8,7 +9,7 @@ let
   cfg = config.host.hardware.storage.smart;
   observabilityEnabled = config.host.observability.enable;
   exporterInternalPort = 19633;
-  exporterPort = 9633;
+  metricsEndpoint = fleetInventory.observability.endpoints.${config.networking.hostName}.smartctl;
   monitoredServices = [
     "smartd.service"
   ]
@@ -49,11 +50,10 @@ in
     };
 
     host.observability.prometheusEndpoints.smartctl = lib.mkIf observabilityEnabled {
-      port = exporterPort;
+      port = metricsEndpoint.port;
       upstream = "http://127.0.0.1:${toString exporterInternalPort}/metrics";
       scrape = {
-        profile = "hardware";
-        component = "smartctl";
+        inherit (metricsEndpoint) component jobName profile;
       };
     };
   };

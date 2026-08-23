@@ -30,6 +30,7 @@ in
     services.motion-captcha-bot = {
       enable = true;
       environmentFile = config.sops.templates."motion-captcha-bot.env".path;
+      environment.MESSAGES_FILE = "${./messages.json}";
     };
 
     systemd.services.motion-captcha-bot = {

@@ -42,7 +42,7 @@ in
       upstream = "https://127.0.0.1:${toString port}";
       internal = {
         endpointName = "proxmox";
-        inherit serverName secretPrefix;
+        inherit secretPrefix;
         aliases = builtins.filter (alias: alias != serverName) serverAliases;
         localAliases = [ ];
         locationExtraConfig = ''
@@ -52,8 +52,6 @@ in
           proxy_ssl_verify on;
         '';
       };
-      health.frontend = { };
-      displayName = "Proxmox ${config.networking.hostName}";
     };
 
     sops.secrets.${certificateSecret}.restartUnits = [

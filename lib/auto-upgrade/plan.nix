@@ -1,7 +1,8 @@
 {
-  config,
+  claimsByHost,
+  hostNames,
   lib,
-  outputs,
+  policy,
 }:
 let
   clockMinutes = clock: clock.hour * 60 + clock.minute;
@@ -24,42 +25,7 @@ let
   };
   moreRestrictiveCadence =
     left: right: if cadenceRank.${left} >= cadenceRank.${right} then left else right;
-  localHost = config.networking.hostName;
-  policy = {
-    allowedWindow = {
-      start = {
-        hour = 3;
-        minute = 30;
-      };
-      end = {
-        hour = 6;
-        minute = 30;
-      };
-    };
-    dailyAt = {
-      hour = 5;
-      minute = 15;
-    };
-    deferredRebootAt = {
-      hour = 4;
-      minute = 0;
-    };
-    preferredWeeklyDay = "Mon";
-    slotDurationMinutes = 30;
-    slotStepMinutes = 40;
-    randomizedDelayMinutes = 5;
-  };
   localPolicy = policy;
-  hostView = hostConfig: {
-    inherit (hostConfig.host) realm;
-    inherit (hostConfig.host.autoUpgrade) claims;
-  };
-  configurations = removeAttrs outputs.nixosConfigurations [ localHost ];
-  allHosts = lib.mapAttrs (_: configuration: hostView configuration.config) configurations // {
-    ${localHost} = hostView config;
-  };
-  hosts = lib.filterAttrs (_: host: host.realm == config.host.realm) allHosts;
-  hostNames = builtins.attrNames hosts;
   allWeekdays = [
     "Mon"
     "Tue"
@@ -69,7 +35,7 @@ let
     "Sat"
     "Sun"
   ];
-  claimsFor = hostName: builtins.attrValues hosts.${hostName}.claims;
+  claimsFor = hostName: builtins.attrValues claimsByHost.${hostName};
   operationPolicy =
     hostName: operation:
     let
@@ -321,16 +287,9 @@ let
 in
 {
   inherit
-    policy
     unknownExclusionHosts
     weekdayConflicts
     ;
   failures = switchAllocation.failures ++ rebootAllocation.failures;
-  plan = planFor localHost;
   plans = lib.genAttrs hostNames planFor;
-  randomizedDelay = "${toString policy.randomizedDelayMinutes}min";
-  rebootWindow = {
-    lower = formatClock (clockMinutes policy.allowedWindow.start);
-    upper = formatClock (clockMinutes policy.allowedWindow.end);
-  };
 }

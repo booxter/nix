@@ -13,14 +13,6 @@ in
     host.web.services.romm = {
       upstream = "http://127.0.0.1:${toString model.port}";
       internal.path = "/api";
-      public.hostName = cfg.publicHostName;
-      health.frontend = {
-        path = "/api/heartbeat";
-      };
-      displayName = "RomM";
-      dashboard = {
-        section = "user";
-      };
     };
 
     systemd.services.nginx = lib.mkIf model.ready {

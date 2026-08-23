@@ -8,7 +8,6 @@ let
   inherit (vikunjaModel)
     cfg
     localUrl
-    metricsPort
     publicHost
     ;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -17,14 +16,7 @@ in
   config = lib.mkIf (cfg != null) {
     host.web.services.vikunja = {
       upstream = localUrl;
-      public = {
-        hostName = publicHost;
-      };
-      health.frontend = {
-        path = "";
-      };
       metrics.default = {
-        port = metricsPort;
         upstream = "${localUrl}/api/v1/metrics";
       };
       auth = {
@@ -40,10 +32,6 @@ in
             restartUnits = [ "vikunja.service" ];
           };
         };
-      };
-      displayName = "Vikunja";
-      dashboard = {
-        section = "user";
       };
     };
   };

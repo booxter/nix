@@ -15,22 +15,11 @@ in
   config = lib.mkIf (cfg != null) {
     host.web.services.transmission = {
       upstream = "http://127.0.0.1:${toString rpcPort}";
-      health = {
-        frontend = {
-          path = "/oauth2/sign_in";
-        };
-        backend = {
-          path = "/__probe/transmission-rpc";
-          module = "http_service_409";
-          upstreamPath = "/transmission/rpc";
-          recommendedProxySettings = false;
-          allowedMethods = [ "GET" ];
-          locationExtraConfig = proxyHeaders;
-        };
-      };
-      displayName = "Transmission";
-      dashboard = {
-        section = "media-admin";
+      health.backend = {
+        upstreamPath = "/transmission/rpc";
+        recommendedProxySettings = false;
+        allowedMethods = [ "GET" ];
+        locationExtraConfig = proxyHeaders;
       };
       auth.policy = "media-admin";
       internal = {

@@ -12,7 +12,6 @@
     ./_mixins/ssh
     ./_mixins/user
     ./_mixins/env
-    ./_mixins/vim
   ];
 
 }

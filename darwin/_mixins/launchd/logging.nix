@@ -1,35 +1,51 @@
 {
   config,
+  launchdModel,
   lib,
   pkgs,
   ...
 }:
 let
-  launchdLib = import ./lib.nix { inherit lib; };
   logDirectory = "/var/log/nix-darwin";
   privateLogDirectory = "/var/log/nix-darwin-private";
   userLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin";
   privateUserLogDirectory = "/Users/${config.host.username}/Library/Logs/nix-darwin-private";
   stateDirectory = "/var/lib/nix-darwin-logrotate";
   rotationJobName = "launchd-logrotate";
-  jobsByDomain = {
-    daemons = config.launchd.daemons;
-    agents = config.launchd.agents;
-  };
-  homeManagerUserAgents = lib.filterAttrs (
-    _: job: job.enable
-  ) config.home-manager.users.${config.host.username}.launchd.agents;
-  managedHomeManagerUserAgents = lib.filterAttrs (
-    _: job: launchdLib.hasProgramConfig job.config
-  ) homeManagerUserAgents;
+  enabledSystemJobsByDomain = lib.mapAttrs (
+    _: lib.filterAttrs (_: job: job.enabled)
+  ) launchdModel.systemJobsByDomain;
+  managedSystemJobsByDomain = lib.mapAttrs (
+    _: lib.filterAttrs (_: job: job.managed)
+  ) launchdModel.systemJobsByDomain;
+  homeManagerUserAgents = lib.filterAttrs (_: job: job.enabled) launchdModel.homeManagerJobs;
+  managedHomeManagerUserAgents = lib.filterAttrs (_: job: job.managed) launchdModel.homeManagerJobs;
+  auxiliaryFiles = builtins.attrValues config.host.launchd.logging.auxiliaryFiles;
+  auxiliaryPathsFor =
+    scope: map (file: file.path) (builtins.filter (file: file.scope == scope) auxiliaryFiles);
+  auxiliaryFileSetup = lib.concatMapStringsSep "\n" (
+    file:
+    let
+      owner = if file.scope == "system" then "root" else config.host.username;
+      group = if file.scope == "system" then "wheel" else "staff";
+      path = lib.escapeShellArg file.path;
+    in
+    ''
+      if [[ ! -e ${path} ]]; then
+        install -m ${file.mode} -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} /dev/null ${path}
+      fi
+      chown ${lib.escapeShellArg "${owner}:${group}"} ${path}
+      chmod ${file.mode} ${path}
+    ''
+  ) auxiliaryFiles;
   pathsFor =
-    serviceConfigFor: jobs:
+    jobs:
     builtins.sort builtins.lessThan (
       lib.unique (
         lib.concatMap (
           job:
           let
-            serviceConfig = serviceConfigFor job;
+            serviceConfig = job.serviceConfig;
           in
           builtins.filter (path: path != null) [
             serviceConfig.StandardOutPath
@@ -39,10 +55,11 @@ let
       )
     );
   systemLogPaths = lib.unique (
-    pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.daemons)
-    ++ pathsFor (job: job.serviceConfig) (launchdLib.enabledJobs jobsByDomain.agents)
+    pathsFor enabledSystemJobsByDomain.daemons
+    ++ pathsFor enabledSystemJobsByDomain.agents
+    ++ auxiliaryPathsFor "system"
   );
-  userLogPaths = pathsFor (job: job.config) homeManagerUserAgents;
+  userLogPaths = lib.unique (pathsFor homeManagerUserAgents ++ auxiliaryPathsFor "user");
   quotePath = path: ''"${lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] path}"'';
   rotationBlock =
     {
@@ -102,6 +119,33 @@ in
     description = "Registered directories for launchd service logs.";
   };
 
+  options.host.launchd.logging.auxiliaryFiles = lib.mkOption {
+    type = lib.types.attrsOf (
+      lib.types.submodule {
+        options = {
+          path = lib.mkOption {
+            type = lib.types.nonEmptyStr;
+            description = "Path to an application-managed log file.";
+          };
+          mode = lib.mkOption {
+            type = lib.types.strMatching "0[0-7]{3}";
+            description = "Permissions maintained on the log file.";
+          };
+          scope = lib.mkOption {
+            type = lib.types.enum [
+              "system"
+              "user"
+            ];
+            description = "Launchd service scope that owns the log file.";
+          };
+        };
+      }
+    );
+    default = { };
+    internal = true;
+    description = "Application-managed log files included in launchd log rotation.";
+  };
+
   config = {
     host.launchd.logging.locations = {
       system = {
@@ -128,12 +172,12 @@ in
 
     assertions = import ./logging/assertions.nix {
       inherit
-        jobsByDomain
-        launchdLib
+        managedSystemJobsByDomain
         lib
         managedHomeManagerUserAgents
         ;
       homeManagerUsername = config.host.username;
+      inherit (config.host.launchd.logging) auxiliaryFiles;
       logLocations = config.host.launchd.logging.locations;
     };
 
@@ -143,6 +187,8 @@ in
       install -d -m 0755 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg userLogDirectory}
       install -d -m 0700 -o ${lib.escapeShellArg config.host.username} -g staff ${lib.escapeShellArg privateUserLogDirectory}
       install -d -m 0700 -o root -g wheel ${stateDirectory}
+
+      ${auxiliaryFileSetup}
 
       if [[ ! -e ${privateLogDirectory}/sops-install-secrets.log ]]; then
         install -m 0600 -o root -g wheel /dev/null ${privateLogDirectory}/sops-install-secrets.log

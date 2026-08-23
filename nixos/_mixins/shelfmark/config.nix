@@ -125,16 +125,6 @@ in
 
     host.web.services.shelfmark = {
       upstream = "http://127.0.0.1:${toString model.port}";
-      public = {
-        hostName = cfg.publicHostName;
-      };
-      health.frontend = {
-        path = "/api/health";
-      };
-      observability.importance = "important";
-      dashboard = {
-        section = "user";
-      };
       internal = {
         recommendedProxySettings = false;
         locationExtraConfig = ''
