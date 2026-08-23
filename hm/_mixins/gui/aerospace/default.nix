@@ -10,11 +10,6 @@ let
   cfg = config.host.hm.aerospace;
   logPath = "${config.home.homeDirectory}/Library/Logs/nix-darwin/aerospace.log";
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
-  aerospaceConfigPath =
-    if config.xdg.enable then
-      "${lib.removePrefix config.home.homeDirectory config.xdg.configHome}/aerospace/aerospace.toml"
-    else
-      ".aerospace.toml";
 
   aerospaceX11Actions = pkgs.callPackage ./pkgs { };
   defaultWorkspaceNames = map toString (lib.range 1 cfg.numberedWorkspaces);
@@ -146,16 +141,6 @@ in
           message = "host.hm.aerospace.x11 requires host.hm.xquartz.";
         }
       ];
-
-      # TODO: Remove after https://github.com/nix-community/home-manager/pull/9817 is merged and the input is updated.
-      home.file.${aerospaceConfigPath}.onChange = lib.mkForce ''
-        echo "AeroSpace config changed, reloading..."
-        if ${lib.getExe config.programs.aerospace.package} list-modes --current >/dev/null 2>&1; then
-          ${lib.getExe config.programs.aerospace.package} reload-config
-        else
-          echo "AeroSpace is not running yet, skipping reload-config."
-        fi
-      '';
 
       programs.aerospace = {
         enable = true;
