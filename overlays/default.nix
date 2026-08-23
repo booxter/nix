@@ -58,6 +58,11 @@
             pyarrow = pythonPrev.pyarrow.overrideAttrs {
               doInstallCheck = false;
             };
+
+            # https://github.com/NixOS/nixpkgs/pull/555598
+            mlx = pythonPrev.mlx.overrideAttrs {
+              doInstallCheck = false;
+            };
           }
         )
       ];
