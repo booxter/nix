@@ -11,11 +11,15 @@ let
   stateDir = "/var/lib/fleet-cache-warmer";
   textfileDir = "${stateDir}/textfile";
   pushToAttic = config.host.attic.realmServers != { };
-  warmTargets = map (target: target.attr) (
+  fleetTargets = map (target: target.attr) (
     lib.filter (
       target: fleetInventory.hosts.${target.host}.realm == config.host.realm
     ) outputs.lib.ciTargets.buildTargets
   );
+  checkTargets = lib.concatMap (
+    system: map (name: "checks.${system}.${name}") (builtins.attrNames outputs.checks.${system})
+  ) (builtins.attrNames outputs.checks);
+  warmTargets = fleetTargets ++ checkTargets;
   atticCaches = lib.mapAttrsToList (
     name: server: "${name}:${server.cacheName}"
   ) config.host.attic.realmServers;
