@@ -11,11 +11,15 @@ let
   stateDir = "/var/lib/fleet-cache-warmer";
   textfileDir = "${stateDir}/textfile";
   pushToAttic = config.host.attic.realmServers != { };
-  warmTargets = map (target: target.attr) (
+  fleetTargets = map (target: target.attr) (
     lib.filter (
       target: fleetInventory.hosts.${target.host}.realm == config.host.realm
     ) outputs.lib.ciTargets.buildTargets
   );
+  checkTargets = lib.concatMap (
+    system: map (name: "checks.${system}.${name}") (builtins.attrNames outputs.checks.${system})
+  ) (builtins.attrNames outputs.checks);
+  warmTargets = fleetTargets ++ checkTargets;
   atticCaches = lib.mapAttrsToList (
     name: server: "${name}:${server.cacheName}"
   ) config.host.attic.realmServers;
@@ -34,12 +38,28 @@ in
           serviceConfig = {
             StartCalendarInterval = [
               {
-                Hour = 8;
-                Minute = 30;
+                Hour = 2;
+                Minute = 0;
               }
               {
-                Hour = 20;
-                Minute = 30;
+                Hour = 6;
+                Minute = 0;
+              }
+              {
+                Hour = 10;
+                Minute = 0;
+              }
+              {
+                Hour = 14;
+                Minute = 0;
+              }
+              {
+                Hour = 18;
+                Minute = 0;
+              }
+              {
+                Hour = 22;
+                Minute = 0;
               }
             ];
             WorkingDirectory = "/var/root";
@@ -57,7 +77,7 @@ in
               NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
               SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             };
-            ProcessType = "Background";
+            ProcessType = "Standard";
             StandardOutPath = "/var/log/nix-darwin/fleet-cache-warmer.log";
             StandardErrorPath = "/var/log/nix-darwin/fleet-cache-warmer.log";
           };

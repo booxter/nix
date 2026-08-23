@@ -6,161 +6,100 @@
 }:
 let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
-  stateDir = "/var/lib/nixpkgs-cache-warmer";
-  buildLog = "/var/log/nix-darwin-private/nixpkgs-cache-warmer-build.log";
-  inventoryCacheFile = "${stateDir}/inventory.json";
-  textfileDir = "${stateDir}/textfile";
-  metricsFile = "${textfileDir}/state.prom";
-  atticCaches = lib.mapAttrsToList (
-    name: server: "${name}:${server.cacheName}"
-  ) config.host.attic.realmServers;
-  package = pkgs.callPackage ../../../../apps/nixpkgs-cache-warmer {
-    runnerHost = if cfg.runner == null then "" else cfg.runner;
-  };
+  expression = pkgs.writeText "nixpkgs-cache-warmer.nix" ''
+    let
+      branches = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.branches)};
+      packageNames = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.packages)};
+      systems = builtins.fromJSON ${builtins.toJSON (builtins.toJSON cfg.systems)};
+      packagesFor =
+        branch: system:
+        let
+          packages = (builtins.getFlake "github:NixOS/nixpkgs/''${branch}").legacyPackages.''${system};
+          selected = map (
+            name: packages.lib.getAttrFromPath (packages.lib.splitString "." name) packages
+          ) packageNames;
+        in
+        builtins.filter (package: packages.lib.meta.availableOn { inherit system; } package) selected;
+    in
+    builtins.concatMap (
+      branch: builtins.concatMap (system: packagesFor branch system) systems
+    ) branches
+  '';
   arguments = [
-    (lib.getExe package)
-    "run"
-    "--maintainer"
-    cfg.maintainer
-    "--inventory-cache-file"
-    inventoryCacheFile
-    "--inventory-cache-max-age-days"
-    "7"
-    "--build-log"
-    buildLog
-  ]
-  ++ lib.concatMap (reference: [
-    "--reference"
-    reference
-  ]) cfg.references
-  ++ lib.concatMap (system: [
-    "--system"
-    system
-  ]) cfg.systems
-  ++ lib.concatMap (pattern: [
-    "--exclude-pname-pattern"
-    pattern
-  ]) cfg.excludePnamePatterns;
-  escapeMetricLabel = value: lib.replaceStrings [ "\\" "\"" "\n" ] [ "\\\\" "\\\"" "\\n" ] value;
-  configuredTargets = lib.concatMap (
-    reference:
-    map (system: {
-      branch = lib.last (lib.splitString "/" reference);
-      inherit system;
-    }) cfg.systems
-  ) cfg.references;
-  expectationsFile = pkgs.writeText "nixpkgs-cache-warmer-expectations.prom" (
-    ''
-      # HELP host_observability_nixpkgs_cache_warmer_target_configured Whether a branch and system target is configured for warming.
-      # TYPE host_observability_nixpkgs_cache_warmer_target_configured gauge
-    ''
-    + lib.concatMapStrings (target: ''
-      host_observability_nixpkgs_cache_warmer_target_configured{branch="${escapeMetricLabel target.branch}",system="${escapeMetricLabel target.system}"} 1
-    '') configuredTargets
-  );
+    (lib.getExe pkgs.nix)
+    "build"
+    "-L"
+    "--keep-going"
+    "--max-jobs"
+    "1"
+    "--no-link"
+    "--refresh"
+    "--impure"
+    "--file"
+    expression
+  ];
 in
 {
   options.host.nix.cacheWarmer.nixpkgs = {
-    runner = lib.mkOption {
-      type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = null;
-      description = "Authoritative host for nixpkgs cache-warmer status.";
-    };
+    enable = lib.mkEnableOption "periodic nixpkgs cache warming";
 
-    enable = lib.mkEnableOption "nightly nixpkgs cache warming";
-
-    references = lib.mkOption {
+    branches = lib.mkOption {
       type = lib.types.listOf lib.types.nonEmptyStr;
       default = [ ];
-      description = "Nixpkgs flake references to warm.";
+      description = "Nixpkgs branches to warm.";
+    };
+
+    packages = lib.mkOption {
+      type = lib.types.listOf lib.types.nonEmptyStr;
+      default = [ ];
+      description = "Nixpkgs package attribute paths to warm.";
     };
 
     systems = lib.mkOption {
       type = lib.types.listOf lib.types.nonEmptyStr;
       default = [ ];
-      description = "Nix systems to warm for every reference.";
-    };
-
-    maintainer = lib.mkOption {
-      type = lib.types.nonEmptyStr;
-      default = "booxter";
-      description = "Nixpkgs maintainer handle whose packages are selected.";
-    };
-
-    excludePnamePatterns = lib.mkOption {
-      type = lib.types.listOf lib.types.nonEmptyStr;
-      default = [ ];
-      description = "Full-match regular expressions for package names to exclude.";
+      description = "Nix systems to warm for every branch.";
     };
   };
 
-  config = lib.mkMerge [
-    (lib.mkIf (cfg.runner != null) {
-      environment.systemPackages = [ package ];
-    })
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.branches != [ ];
+        message = "host.nix.cacheWarmer.nixpkgs.branches must not be empty";
+      }
+      {
+        assertion = cfg.packages != [ ];
+        message = "host.nix.cacheWarmer.nixpkgs.packages must not be empty";
+      }
+      {
+        assertion = cfg.systems != [ ];
+        message = "host.nix.cacheWarmer.nixpkgs.systems must not be empty";
+      }
+      {
+        assertion = config.host.attic.realmServers != { };
+        message = "nixpkgs cache warming requires at least one Attic cache";
+      }
+    ];
 
-    (lib.mkIf cfg.enable {
-      assertions = [
-        {
-          assertion = cfg.runner != null;
-          message = "host.nix.cacheWarmer.nixpkgs.runner must be set when warming is enabled";
-        }
-        {
-          assertion = cfg.references != [ ];
-          message = "host.nix.cacheWarmer.nixpkgs.references must not be empty";
-        }
-        {
-          assertion = cfg.systems != [ ];
-          message = "host.nix.cacheWarmer.nixpkgs.systems must not be empty";
-        }
-        {
-          assertion = atticCaches != [ ];
-          message = "nixpkgs cache warming requires at least one Attic cache";
-        }
-      ];
-
-      system.activationScripts.postActivation.text = lib.mkAfter ''
-        mkdir -p ${stateDir}
-        chmod 0755 ${stateDir}
-      '';
-
-      host.launchd.logging.auxiliaryFiles.nixpkgs-cache-warmer-build = {
-        mode = "0600";
-        path = buildLog;
-        scope = "system";
-      };
-
-      launchd.daemons.nixpkgs-cache-warmer = {
-        command = lib.escapeShellArgs arguments;
-        serviceConfig = {
-          StartCalendarInterval = lib.genList (index: {
-            Hour = index * 4;
-            Minute = 0;
-          }) 6;
-          WorkingDirectory = "/var/root";
-          EnvironmentVariables = {
-            HOME = "/var/root";
-            NIX_CONFIG = "builders = ${config.host.nix.cacheWarmer.builders}";
-            NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-            SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-          }
-          // lib.optionalAttrs config.host.observability.enable {
-            NIXPKGS_CACHE_WARMER_METRICS_FILE = metricsFile;
-          };
-          ProcessType = "Background";
-          StandardOutPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
-          StandardErrorPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
+    launchd.daemons.nixpkgs-cache-warmer = {
+      command = lib.escapeShellArgs arguments;
+      serviceConfig = {
+        StartCalendarInterval = lib.genList (index: {
+          Hour = index * 4;
+          Minute = 0;
+        }) 6;
+        WorkingDirectory = "/var/root";
+        EnvironmentVariables = {
+          HOME = "/var/root";
+          NIX_CONFIG = "builders = ${config.host.nix.cacheWarmer.builders}";
+          NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };
+        ProcessType = "Background";
+        StandardOutPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
+        StandardErrorPath = "/var/log/nix-darwin/nixpkgs-cache-warmer.log";
       };
-    })
-
-    (lib.mkIf (cfg.enable && config.host.observability.enable) {
-      host.observability.nodeExporter.textfile.directories.nixpkgsCacheWarmer = textfileDir;
-
-      system.activationScripts.launchd.text = lib.mkAfter ''
-        install -d -m 0755 -o root -g wheel ${textfileDir}
-        ln -sfn ${expectationsFile} ${textfileDir}/expectations.prom
-      '';
-    })
-  ];
+    };
+  };
 }
