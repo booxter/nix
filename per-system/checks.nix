@@ -30,93 +30,30 @@ let
         touch "$out"
       '';
   };
-  dashboardCatalogErrors = import ./checks/topo/dashboard.nix {
-    inherit fleetInventory lib;
-  };
-  dashboardCatalogChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    dashboard-catalog =
-      assert lib.assertMsg (dashboardCatalogErrors == [ ]) (
-        lib.concatStringsSep "; " dashboardCatalogErrors
-      );
-      pkgs.runCommand "dashboard-catalog" { } ''
-        touch "$out"
-      '';
-  };
-  observabilityTopologyErrors = import ./checks/topo/observability.nix {
-    inherit fleetInventory lib;
-  };
-  observabilityTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    observability-topology =
-      assert lib.assertMsg (observabilityTopologyErrors == [ ]) (
-        lib.concatStringsSep "; " observabilityTopologyErrors
-      );
-      pkgs.runCommand "observability-topology" { } ''
-        touch "$out"
-      '';
-  };
-  upsTopologyErrors = import ./checks/topo/ups.nix {
-    inherit fleetInventory lib;
-  };
-  upsTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    ups-topology =
-      assert lib.assertMsg (upsTopologyErrors == [ ]) (lib.concatStringsSep "; " upsTopologyErrors);
-      pkgs.runCommand "ups-topology" { } ''
-        touch "$out"
-      '';
-  };
-  proxmoxTopologyErrors = import ./checks/topo/proxmox.nix {
-    inherit fleetInventory lib;
-  };
-  proxmoxTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    proxmox-topology =
-      assert lib.assertMsg (proxmoxTopologyErrors == [ ]) (
-        lib.concatStringsSep "; " proxmoxTopologyErrors
-      );
-      pkgs.runCommand "proxmox-topology" { } ''
-        touch "$out"
-      '';
-  };
-  webIngressErrors = import ./checks/topo/web-ingress.nix {
-    inherit fleetInventory lib;
-  };
-  webIngressChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    web-ingress =
-      assert lib.assertMsg (webIngressErrors == [ ]) (lib.concatStringsSep "; " webIngressErrors);
-      pkgs.runCommand "web-ingress" { } ''
-        touch "$out"
-      '';
-  };
-  webServiceErrors = import ./checks/topo/web-services.nix {
-    inherit fleetInventory lib;
-  };
-  webServiceChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    web-services =
-      assert lib.assertMsg (webServiceErrors == [ ]) (lib.concatStringsSep "; " webServiceErrors);
-      pkgs.runCommand "web-services" { } ''
-        touch "$out"
-      '';
-  };
-  wireguardTopologyErrors = import ./checks/topo/wireguard.nix {
-    inherit fleetInventory lib;
-  };
-  wireguardTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    wireguard-topology =
-      assert lib.assertMsg (wireguardTopologyErrors == [ ]) (
-        lib.concatStringsSep "; " wireguardTopologyErrors
-      );
-      pkgs.runCommand "wireguard-topology" { } ''
-        touch "$out"
-      '';
-  };
+  topologyFiles = lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name) (
+    builtins.readDir ./checks/topo
+  );
+  topologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux (
+    lib.mapAttrs' (
+      fileName: _:
+      let
+        type = lib.removeSuffix ".nix" fileName;
+        checkName = "topo-${type}";
+        errors = import (./checks/topo + "/${fileName}") {
+          inherit fleetInventory lib;
+        };
+      in
+      lib.nameValuePair checkName (
+        assert lib.assertMsg (errors == [ ]) (lib.concatStringsSep "; " errors);
+        pkgs.runCommand checkName { } ''
+          touch "$out"
+        ''
+      )
+    ) topologyFiles
+  );
 in
 appSet.packages
 // autoUpgradeChecks
-// dashboardCatalogChecks
-// observabilityTopologyChecks
-// proxmoxTopologyChecks
-// upsTopologyChecks
-// webIngressChecks
-// webServiceChecks
-// wireguardTopologyChecks
+// topologyChecks
 // import ../tests { inherit inputs pkgs; }
 // inputNixosTests
