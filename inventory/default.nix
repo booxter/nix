@@ -13,6 +13,7 @@ in
   atticServers = import ./attic.nix { inherit lib; };
   autoUpgrade = import ./auto-upgrade.nix;
   builders = import ./builders.nix { inherit lib; };
+  dashboard = import ./dashboard.nix;
   inherit hosts;
   proxmox = import ./proxmox.nix;
   sites = import ./sites.nix;

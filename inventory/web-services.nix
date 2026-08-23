@@ -162,9 +162,14 @@
   prx1-lab = {
     proxmox-prx1-lab = {
       declaration = {
-        displayName = "Proxmox prx1-lab";
+        displayName = "Proxmox VE";
         internal.serverName = "proxmox.home.arpa";
         health.frontend = { };
+        dashboard = {
+          id = "proxmox-lab";
+          icon = "sh:proxmox";
+          section = "infrastructure";
+        };
         metrics.default = {
           discover = false;
           endpointName = "pve";

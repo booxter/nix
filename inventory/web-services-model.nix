@@ -92,6 +92,7 @@ let
             null
           else
             {
+              id = dashboardDeclaration.id or id;
               icon = dashboardDeclaration.icon or "sh:${id}";
               section = dashboardDeclaration.section;
             };

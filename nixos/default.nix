@@ -23,7 +23,6 @@
       ./_mixins/bazarr
       ./_mixins/desktop
       ./_mixins/degoog
-      ./_mixins/dashboard
       ./_mixins/downloads
       ./_mixins/disko
       ./_mixins/glance

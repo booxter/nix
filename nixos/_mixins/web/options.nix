@@ -422,6 +422,12 @@ in
               type = lib.types.nullOr (
                 lib.types.submodule {
                   options = {
+                    id = lib.mkOption {
+                      type = lib.types.nonEmptyStr;
+                      default = serviceName;
+                      description = "Stable identifier used by dashboard catalogs.";
+                    };
+
                     icon = lib.mkOption {
                       type = lib.types.nonEmptyStr;
                       default = "sh:${serviceName}";

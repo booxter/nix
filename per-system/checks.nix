@@ -30,6 +30,18 @@ let
         touch "$out"
       '';
   };
+  dashboardCatalogErrors = import ./checks/dashboard-catalog.nix {
+    inherit fleetInventory lib;
+  };
+  dashboardCatalogChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    dashboard-catalog =
+      assert lib.assertMsg (dashboardCatalogErrors == [ ]) (
+        lib.concatStringsSep "; " dashboardCatalogErrors
+      );
+      pkgs.runCommand "dashboard-catalog" { } ''
+        touch "$out"
+      '';
+  };
   upsTopologyErrors = import ./checks/ups-topology.nix {
     inherit fleetInventory lib;
   };
@@ -55,6 +67,7 @@ let
 in
 appSet.packages
 // autoUpgradeChecks
+// dashboardCatalogChecks
 // proxmoxTopologyChecks
 // upsTopologyChecks
 // import ../tests { inherit inputs pkgs; }

@@ -99,13 +99,6 @@ in
       step-ca.paths = [ stateDir ];
     };
 
-    host.dashboard.entries.pki-root-ca = lib.mkIf enabled {
-      title = "PKI Root CA";
-      icon = "sh:smallstep";
-      section = "infrastructure";
-      url = "${authority.url}${authority.rootsPath}";
-    };
-
     host.observability = lib.mkIf enabled {
       nodeExporter.textfile.periodicProducers.pki-status-export = {
         description = "Export internal PKI status metrics for node exporter";

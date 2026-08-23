@@ -12,7 +12,6 @@ in
 {
   imports = [
     ./api-certificate.nix
-    ./controller.nix
     ./guest.nix
     ./node.nix
     ./oidc.nix
