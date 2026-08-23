@@ -366,16 +366,15 @@
         "telegym": "telegym"
       },
       "locked": {
-        "lastModified": 1787500826,
-        "narHash": "sha256-4wlWrDDHnVSCoQP6aXxrBNr0Rj0zc0xk9R8daqI6Mlo=",
-        "owner": "booxter",
+        "lastModified": 1787506654,
+        "narHash": "sha256-PxqRC6XpVCF8khJsDcy3XDPLvHC2JzN5rJ+lXB4db3s=",
+        "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "85c26daad15dca176f8318a49265861d12bf3a8c",
+        "rev": "080fbf8657640b25b77c949352dd47d8a890ed93",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "reactions",
+        "owner": "dziaineka",
         "repo": "lolek",
         "type": "github"
       }
