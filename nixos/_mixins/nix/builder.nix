@@ -10,6 +10,7 @@ let
 in
 {
   config = lib.mkIf (config.host.nix.builder != null) {
+    boot.kernel.sysctl."vm.swappiness" = 10;
     host.autoUpgrade.claims.builder = {
       switch.cadence = "weekly";
       reboot.cadence = "weekly";
@@ -28,6 +29,13 @@ in
       ];
       extra-sandbox-paths = [ "/dev/net" ];
     };
+    swapDevices = [
+      {
+        device = "/var/lib/swapfile";
+        size = 16 * 1024;
+        randomEncryption.enable = true;
+      }
+    ];
     systemd.services = {
       # The upstream unit delegates its cgroup and Nix moves the daemon into a
       # child cgroup, but neither enables the delegated controllers in the
