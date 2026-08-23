@@ -30,27 +30,9 @@ let
         touch "$out"
       '';
   };
-  topologyFiles = lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name) (
-    builtins.readDir ./checks/topo
-  );
-  topologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux (
-    lib.mapAttrs' (
-      fileName: _:
-      let
-        type = lib.removeSuffix ".nix" fileName;
-        checkName = "topo-${type}";
-        errors = import (./checks/topo + "/${fileName}") {
-          inherit fleetInventory lib;
-        };
-      in
-      lib.nameValuePair checkName (
-        assert lib.assertMsg (errors == [ ]) (lib.concatStringsSep "; " errors);
-        pkgs.runCommand checkName { } ''
-          touch "$out"
-        ''
-      )
-    ) topologyFiles
-  );
+  topologyChecks = import ./checks/topo {
+    inherit fleetInventory lib pkgs;
+  };
 in
 appSet.packages
 // autoUpgradeChecks
