@@ -21,6 +21,7 @@ in
       darwin-builder = {
         uses = [ "nixpkgs" ];
         hostName = "darwin-build-box.nix-community.org";
+        protocol = "ssh-ng";
         publicKey = readPublicKey ./keys/darwin.pub;
         sshKey = identityFile;
         sshUser = "booxter";
@@ -32,6 +33,7 @@ in
       remote-linux-builder = {
         uses = [ "nixpkgs" ];
         hostName = "aarch64-build-box.nix-community.org";
+        protocol = "ssh-ng";
         publicKey = readPublicKey ./keys/linux-arm.pub;
         sshKey = identityFile;
         sshUser = "booxter";
@@ -43,6 +45,7 @@ in
       remote-linux-x86-builder = {
         uses = [ "nixpkgs" ];
         hostName = "build-box.nix-community.org";
+        protocol = "ssh-ng";
         publicKey = readPublicKey ./keys/linux-x86.pub;
         sshKey = identityFile;
         sshUser = "booxter";
