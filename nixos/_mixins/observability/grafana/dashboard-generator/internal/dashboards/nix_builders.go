@@ -23,7 +23,7 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 	fleetWarmerJob := builder("host_observability_darwin_launchd_job_running", `domain="system"`, `name="org.nixos.fleet-cache-warmer"`)
 	fleetWarmerFallback := `on(instance) (-1 + 0 * ` + fleetWarmerJob + `)`
 
-	summary := layout.row(5, 6, 6, 6, 6)
+	summary := layout.row(5, 12, 12)
 	model := newDashboard(DashboardOptions{
 		Title: "Nix", UID: "fana-nix-builders", Tags: []string{"nix", "builders", "fleet"},
 		From: "now-24h", Refresh: "30s",
@@ -37,17 +37,6 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 			ID: summary[1].ID, Grid: summary[1].Grid, Title: "Nix Daemons Active",
 			Expression: `sum(` + daemonActive + `)`, Legend: "active", Unit: units.Short,
 			DataSource: prometheusDatasource, Min: ptr(0.0), Thresholds: redToGreenThreshold(1),
-		})).
-		WithPanel(valueStat(ValueStatOptions{
-			ID: summary[2].ID, Grid: summary[2].Grid, Title: "Warmer Targets Healthy",
-			Expression: `sum(` + builder("host_observability_nixpkgs_cache_warmer_last_attempt_success") + `)`,
-			Legend:     "healthy", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
-		})).
-		WithPanel(valueStat(ValueStatOptions{
-			ID: summary[3].ID, Grid: summary[3].Grid, Title: "Oldest Warmer Success",
-			Expression: `max(time() - ` + builder("host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds") + `)`,
-			Legend:     "oldest", Unit: units.DurationInDaysHoursMinutesSeconds, DataSource: prometheusDatasource,
-			Min: ptr(0.0), Thresholds: warningCriticalThresholds(86400, 129600),
 		}))
 
 	capacity := layout.row(5, 6, 6, 6, 6)
@@ -172,43 +161,6 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 			}))
 		}
 	}
-
-	warmer := layout.row(8, 12, 12)
-	model.
-		WithPanel(stateTimeline(StateTimelineOptions{
-			ID: warmer[0].ID, Grid: warmer[0].Grid, Title: "Nixpkgs Warmer Outcomes",
-			Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_success"),
-			Legend:     "{{instance}} {{branch}} {{system}}", DataSource: prometheusDatasource,
-		})).
-		WithPanel(timeSeries(TimeseriesOptions{
-			ID: warmer[1].ID, Grid: warmer[1].Grid, Title: "Nixpkgs Warmer Success Age",
-			Unit: units.DurationInDaysHoursMinutesSeconds, DataSource: prometheusDatasource, Min: ptr(0.0),
-			Thresholds: warningCriticalThresholds(86400, 129600), ShowThresholds: true,
-			Targets: []PrometheusTarget{{
-				RefID: "A", Expression: `time() - ` + builder("host_observability_nixpkgs_cache_warmer_last_success_timestamp_seconds"),
-				Legend: "{{instance}} {{branch}} {{system}}",
-			}},
-		}))
-
-	packageOutcomes := layout.row(8, 24)[0]
-	model.WithPanel(timeSeries(TimeseriesOptions{
-		ID: packageOutcomes.ID, Grid: packageOutcomes.Grid, Title: "Nixpkgs Warmer Package Outcomes",
-		Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
-		Targets: []PrometheusTarget{
-			{
-				RefID: "A", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_selected_packages"),
-				Legend: "{{branch}} {{system}} selected",
-			},
-			{
-				RefID: "B", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_built_packages"),
-				Legend: "{{branch}} {{system}} built",
-			},
-			{
-				RefID: "C", Expression: builder("host_observability_nixpkgs_cache_warmer_last_attempt_failed_packages"),
-				Legend: "{{branch}} {{system}} failed",
-			},
-		},
-	}))
 
 	fleetWarmer := layout.row(5, 6, 6, 6, 6)
 	model.
