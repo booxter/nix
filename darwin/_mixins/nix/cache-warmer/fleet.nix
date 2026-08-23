@@ -38,12 +38,28 @@ in
           serviceConfig = {
             StartCalendarInterval = [
               {
-                Hour = 8;
-                Minute = 30;
+                Hour = 2;
+                Minute = 0;
               }
               {
-                Hour = 20;
-                Minute = 30;
+                Hour = 6;
+                Minute = 0;
+              }
+              {
+                Hour = 10;
+                Minute = 0;
+              }
+              {
+                Hour = 14;
+                Minute = 0;
+              }
+              {
+                Hour = 18;
+                Minute = 0;
+              }
+              {
+                Hour = 22;
+                Minute = 0;
               }
             ];
             WorkingDirectory = "/var/root";
