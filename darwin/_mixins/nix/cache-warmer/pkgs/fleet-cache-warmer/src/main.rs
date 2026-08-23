@@ -22,8 +22,6 @@ const HTTP_CONNECTIONS: &str = "8";
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct RunSummary {
     configured_targets: usize,
-    resolved_targets: usize,
-    skipped_targets: usize,
     output_paths: usize,
     fallback_failures: usize,
     attic_pushes: usize,
@@ -179,10 +177,6 @@ fn render_metrics(
         "# TYPE host_observability_fleet_cache_warmer_last_success_timestamp_seconds gauge",
         "# HELP host_observability_fleet_cache_warmer_configured_targets Fleet outputs configured for warming.",
         "# TYPE host_observability_fleet_cache_warmer_configured_targets gauge",
-        "# HELP host_observability_fleet_cache_warmer_resolved_targets Fleet outputs resolved by the last run.",
-        "# TYPE host_observability_fleet_cache_warmer_resolved_targets gauge",
-        "# HELP host_observability_fleet_cache_warmer_skipped_targets Missing or unevaluable fleet outputs skipped by the last run.",
-        "# TYPE host_observability_fleet_cache_warmer_skipped_targets gauge",
         "# HELP host_observability_fleet_cache_warmer_output_paths Unique output paths produced by the last run.",
         "# TYPE host_observability_fleet_cache_warmer_output_paths gauge",
         "# HELP host_observability_fleet_cache_warmer_fallback_failures Targets that failed during per-target fallback builds.",
@@ -216,14 +210,6 @@ fn render_metrics(
         format!(
             "host_observability_fleet_cache_warmer_configured_targets {}",
             summary.configured_targets
-        ),
-        format!(
-            "host_observability_fleet_cache_warmer_resolved_targets {}",
-            summary.resolved_targets
-        ),
-        format!(
-            "host_observability_fleet_cache_warmer_skipped_targets {}",
-            summary.skipped_targets
         ),
         format!(
             "host_observability_fleet_cache_warmer_output_paths {}",
@@ -267,7 +253,6 @@ struct BuildResult {
 }
 
 trait Backend {
-    fn resolves(&mut self, target: &str) -> Result<bool>;
     fn build(&mut self, targets: &[String], keep_going: bool) -> Result<BuildResult>;
     fn push(&mut self, cache: &str, outputs: &[PathBuf]) -> Result<()>;
 }
@@ -301,16 +286,6 @@ fn nix_build_command(
 }
 
 impl Backend for CommandBackend {
-    fn resolves(&mut self, target: &str) -> Result<bool> {
-        let status = Command::new(NIX)
-            .args(["eval", "--raw", &format!("{target}.outPath")])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .with_context(|| format!("failed to execute {NIX}"))?;
-        Ok(status.success())
-    }
-
     fn build(&mut self, targets: &[String], keep_going: bool) -> Result<BuildResult> {
         let output = nix_build_command(targets, keep_going, push_to_attic())
             .stderr(Stdio::inherit())
@@ -364,58 +339,9 @@ impl<B: Backend> Warmer<B> {
         };
         log_line(
             log,
-            format!("Resolving {} warm target(s)", self.targets.len()),
+            format!("Building {} warm target(s)", self.targets.len()),
         )?;
-        let mut buildable = Vec::new();
-        let mut skipped_inventory = 0;
-        for (index, target) in self.targets.iter().enumerate() {
-            log_line(
-                log,
-                format!(
-                    "Resolving target {}/{}: {target}",
-                    index + 1,
-                    self.targets.len()
-                ),
-            )?;
-            if self.backend.resolves(target)? {
-                buildable.push(target.clone());
-                log_line(
-                    log,
-                    format!(
-                        "Resolved target {}/{}: {target}",
-                        index + 1,
-                        self.targets.len()
-                    ),
-                )?;
-            } else {
-                skipped_inventory += 1;
-                log_line(
-                    log,
-                    format!(
-                        "{}: target is missing or does not evaluate, skipping: {target}",
-                        self.name
-                    ),
-                )?;
-            }
-        }
-
-        if buildable.is_empty() {
-            log_line(
-                log,
-                format!("{}: no warm targets resolved successfully", self.name),
-            )?;
-            summary.skipped_targets = skipped_inventory;
-            return Ok(summary);
-        }
-
-        summary.resolved_targets = buildable.len();
-        summary.skipped_targets = skipped_inventory;
-
-        log_line(
-            log,
-            format!("Building {} resolved warm target(s)", buildable.len()),
-        )?;
-        let batch = self.backend.build(&buildable, true)?;
+        let batch = self.backend.build(&self.targets, true)?;
         if batch.successful {
             log_line(log, "Batched build completed")?;
         } else {
@@ -439,7 +365,7 @@ impl<B: Backend> Warmer<B> {
                     self.name
                 ),
             )?;
-            for target in &buildable {
+            for target in &self.targets {
                 log_line(log, format!("Warming {target}"))?;
                 let result = self.backend.build(std::slice::from_ref(target), false)?;
                 outputs.extend(result.outputs);
@@ -495,15 +421,6 @@ impl<B: Backend> Warmer<B> {
             )?;
         }
 
-        if skipped_inventory > 0 {
-            log_line(
-                log,
-                format!(
-                    "{}: skipped {skipped_inventory} missing or unevaluable inventory target(s)",
-                    self.name
-                ),
-            )?;
-        }
         if fallback_failures > 0 {
             log_line(
                 log,
@@ -514,7 +431,7 @@ impl<B: Backend> Warmer<B> {
             )?;
         }
         summary.operational_success = true;
-        summary.partial = !batch_successful || skipped_inventory > 0 || fallback_failures > 0;
+        summary.partial = !batch_successful || fallback_failures > 0;
         Ok(summary)
     }
 }
@@ -595,23 +512,18 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, VecDeque};
+    use std::collections::VecDeque;
 
     use super::*;
 
     #[derive(Default)]
     struct FakeBackend {
-        resolutions: HashMap<String, bool>,
         builds: VecDeque<BuildResult>,
         build_calls: Vec<(Vec<String>, bool)>,
         pushes: Vec<(String, Vec<PathBuf>)>,
     }
 
     impl Backend for FakeBackend {
-        fn resolves(&mut self, target: &str) -> Result<bool> {
-            Ok(self.resolutions.get(target).copied().unwrap_or(false))
-        }
-
         fn build(&mut self, targets: &[String], keep_going: bool) -> Result<BuildResult> {
             self.build_calls.push((targets.to_vec(), keep_going));
             self.builds.pop_front().context("missing fake build result")
@@ -683,12 +595,8 @@ mod tests {
     }
 
     #[test]
-    fn builds_resolved_targets_and_pushes_unique_outputs() {
+    fn builds_targets_and_pushes_unique_outputs() {
         let backend = FakeBackend {
-            resolutions: HashMap::from([
-                ("flake#one".to_owned(), true),
-                ("flake#two".to_owned(), true),
-            ]),
             builds: VecDeque::from([BuildResult {
                 successful: false,
                 outputs: vec![
@@ -726,7 +634,6 @@ mod tests {
             summary,
             RunSummary {
                 configured_targets: 2,
-                resolved_targets: 2,
                 output_paths: 2,
                 attic_pushes: 2,
                 operational_success: true,
@@ -737,24 +644,8 @@ mod tests {
     }
 
     #[test]
-    fn skips_missing_targets_and_does_not_build_when_none_resolve() {
-        let mut warmer = warmer(FakeBackend::default(), &[]);
-        let mut log = Vec::new();
-        warmer.run(&mut log).unwrap();
-        assert!(warmer.backend.build_calls.is_empty());
-        assert!(warmer.backend.pushes.is_empty());
-        assert!(String::from_utf8(log)
-            .unwrap()
-            .contains("no warm targets resolved successfully"));
-    }
-
-    #[test]
     fn retries_empty_batch_individually_and_reports_failures() {
         let backend = FakeBackend {
-            resolutions: HashMap::from([
-                ("flake#one".to_owned(), true),
-                ("flake#two".to_owned(), true),
-            ]),
             builds: VecDeque::from([
                 BuildResult {
                     successful: false,
@@ -786,11 +677,11 @@ mod tests {
     #[test]
     fn successful_empty_fallback_is_reported_without_push() {
         let backend = FakeBackend {
-            resolutions: HashMap::from([
-                ("flake#one".to_owned(), true),
-                ("flake#two".to_owned(), false),
-            ]),
             builds: VecDeque::from([
+                BuildResult {
+                    successful: false,
+                    outputs: vec![],
+                },
                 BuildResult {
                     successful: false,
                     outputs: vec![],
@@ -816,8 +707,6 @@ mod tests {
         let started_at = DateTime::from_timestamp(1_700_000_000, 0).unwrap();
         let summary = RunSummary {
             configured_targets: 4,
-            resolved_targets: 3,
-            skipped_targets: 1,
             output_paths: 2,
             fallback_failures: 1,
             attic_pushes: 2,
@@ -830,7 +719,6 @@ mod tests {
         assert!(metrics.contains("last_attempt_status_info{status=\"partial\"} 1"));
         assert!(metrics.contains("last_attempt_duration_seconds 12.500"));
         assert!(metrics.contains("configured_targets 4"));
-        assert!(metrics.contains("resolved_targets 3"));
         assert!(metrics.contains("output_paths 2"));
         assert!(metrics.contains("last_success_timestamp_seconds 1699999999"));
     }
