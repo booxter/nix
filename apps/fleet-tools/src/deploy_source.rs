@@ -2,12 +2,15 @@ use std::fs;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::atomic::AtomicBool;
 
 use anyhow::{anyhow, bail, Context, Result};
 use gix::bstr::ByteSlice;
 use gix::object::tree::EntryKind;
 use tempfile::TempDir;
+
+const GIT: &str = env!("DEPLOY_GIT");
 
 pub enum SourceRequest<'a> {
     Local {
@@ -63,12 +66,39 @@ fn prepare_local(start: &Path, merge_master: bool) -> Result<PreparedSource> {
         .context("failed to resolve the committed HEAD for --local")?;
     let revision = commit.id().to_string();
     let tree_id = if merge_master {
+        fetch_master(&repository)?;
         let master = resolve_master(&repository)?;
         merge_tree(&repository, commit.id, master.id)?
     } else {
         commit.tree()?.id
     };
     prepare_tree(&repository, tree_id, revision)
+}
+
+fn fetch_master(repository: &gix::Repository) -> Result<()> {
+    let work_dir = repository
+        .workdir()
+        .context("--local must be run from a Git worktree")?;
+    let output = Command::new(GIT)
+        .arg("-C")
+        .arg(work_dir)
+        .args([
+            "fetch",
+            "--no-tags",
+            "origin",
+            "+refs/heads/master:refs/remotes/origin/master",
+        ])
+        .output()
+        .context("failed to start Git while fetching origin/master")?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!(
+            "failed to fetch origin/master: Git exited with {}: {}",
+            output.status,
+            stderr.trim()
+        );
+    }
+    Ok(())
 }
 
 fn prepare_remote(url: &str, branch: &str, merge_master: bool) -> Result<PreparedSource> {
@@ -324,27 +354,70 @@ mod tests {
     }
 
     #[test]
-    fn local_source_with_merge_combines_diverged_branch_and_master() {
+    fn local_source_with_merge_requires_a_fetchable_origin() {
         let checkout = tempfile::tempdir().expect("temporary checkout");
         let repository = gix::init(checkout.path()).expect("initialize repository");
-        let base_tree = tree(
+        let committed = tree(
             &repository,
             None,
             &[("flake.nix", EntryKind::Blob, b"{}\n")],
         );
-        let base = commit(&repository, "HEAD", "base", base_tree, std::iter::empty());
-        let master_tree = tree(
+        commit(
             &repository,
-            Some(base_tree),
-            &[("master-file", EntryKind::Blob, b"master\n")],
+            "HEAD",
+            "initial",
+            committed,
+            std::iter::empty(),
         );
-        let _master = commit(
-            &repository,
-            "refs/remotes/origin/master",
-            "master",
-            master_tree,
-            [base],
+        drop(repository);
+
+        let error = prepare_source(SourceRequest::Local {
+            start: checkout.path(),
+            merge_master: true,
+        })
+        .err()
+        .expect("missing origin should fail");
+
+        assert!(error.to_string().contains("failed to fetch origin/master"));
+    }
+
+    #[test]
+    fn local_source_with_merge_fetches_and_combines_diverged_branch_and_master() {
+        let upstream = tempfile::tempdir().expect("temporary upstream");
+        let upstream_repository =
+            gix::init_bare(upstream.path()).expect("initialize upstream repository");
+        let base_tree = tree(
+            &upstream_repository,
+            None,
+            &[("flake.nix", EntryKind::Blob, b"{}\n")],
         );
+        let base = commit(
+            &upstream_repository,
+            "refs/heads/master",
+            "base",
+            base_tree,
+            std::iter::empty(),
+        );
+        drop(upstream_repository);
+        let symbolic_ref_status = Command::new(GIT)
+            .arg("--git-dir")
+            .arg(upstream.path())
+            .args(["symbolic-ref", "HEAD", "refs/heads/master"])
+            .status()
+            .expect("set upstream HEAD");
+        assert!(symbolic_ref_status.success());
+
+        let checkout_parent = tempfile::tempdir().expect("temporary checkout parent");
+        let checkout = checkout_parent.path().join("checkout");
+        let clone_status = Command::new(GIT)
+            .args(["clone", "--quiet"])
+            .arg(upstream.path())
+            .arg(&checkout)
+            .status()
+            .expect("run Git clone");
+        assert!(clone_status.success());
+
+        let repository = gix::open(&checkout).expect("open checkout");
         let branch_tree = tree(
             &repository,
             Some(base_tree),
@@ -353,8 +426,23 @@ mod tests {
         let branch = commit(&repository, "HEAD", "feature", branch_tree, [base]);
         drop(repository);
 
+        let upstream_repository = gix::open(upstream.path()).expect("open upstream repository");
+        let master_tree = tree(
+            &upstream_repository,
+            Some(base_tree),
+            &[("master-file", EntryKind::Blob, b"master\n")],
+        );
+        let _master = commit(
+            &upstream_repository,
+            "refs/heads/master",
+            "master",
+            master_tree,
+            [base],
+        );
+        drop(upstream_repository);
+
         let prepared = prepare_source(SourceRequest::Local {
-            start: checkout.path(),
+            start: &checkout,
             merge_master: true,
         })
         .expect("prepare merged source");

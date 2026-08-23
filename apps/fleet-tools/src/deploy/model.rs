@@ -10,7 +10,7 @@ use crate::Host;
 #[command(
     version,
     about = "Deploy committed fleet configurations to local or remote hosts",
-    after_help = "Deployments merge origin/master by default.\n\
+    after_help = "Deployments fetch and merge origin/master by default.\n\
                   SSH_OPTS may contain additional shell-quoted OpenSSH options.",
     group(ArgGroup::new("mode").args(["personal", "work", "both"])),
     group(ArgGroup::new("action").args(["switch", "boot", "test"]))
@@ -44,7 +44,7 @@ pub struct DeployArgs {
     #[arg(long, conflicts_with = "branch")]
     pub local: bool,
 
-    /// Do not merge origin/master into the deployment source.
+    /// Do not fetch or merge origin/master into the deployment source.
     #[arg(long)]
     pub no_merge: bool,
 
