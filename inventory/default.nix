@@ -20,6 +20,7 @@ in
   builders = import ./builders.nix { inherit lib; };
   dashboard = import ./dashboard.nix;
   inherit hosts;
+  observability = import ./observability.nix;
   proxmox = import ./proxmox.nix;
   sites = import ./sites.nix;
   ups = import ./ups.nix;

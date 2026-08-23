@@ -1,31 +1,18 @@
 {
   config,
-  lib,
-  observabilityInventory,
+  observabilityCatalog,
   prometheusMtlsTlsConfig,
 }:
 let
   hostName = config.networking.hostName;
-  remoteNodes = lib.filter (node: node != null) (
-    map (inventory: inventory.node) (
-      builtins.attrValues (removeAttrs observabilityInventory.all [ hostName ])
-    )
-  );
-  nonMtlsNodes = map (node: node.labels.instance) (builtins.filter (node: !node.mtls) remoteNodes);
+  remoteNodes = builtins.attrValues (removeAttrs observabilityCatalog.nodes [ hostName ]);
   remoteNodeTargetConfigs = map (node: {
     targets = [ node.target ];
     inherit (node) labels;
   }) remoteNodes;
-  localNode = config.host.observability.inventory.node;
+  localNode = observabilityCatalog.nodes.${hostName};
 in
 {
-  assertions = [
-    {
-      assertion = nonMtlsNodes == [ ];
-      message = "All remote Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " nonMtlsNodes}";
-    }
-  ];
-
   scrapeConfigs = [
     {
       job_name = "node-local";

@@ -1,5 +1,6 @@
 {
   config,
+  fleetInventory,
   lib,
   pkgs,
   ...
@@ -7,7 +8,7 @@
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
-  remoteEnabled = cfg.remote != null;
+  remoteEnabled = builtins.elem config.networking.hostName fleetInventory.observability.blackboxSources;
   remotePort = 9115;
   httpService = {
     http = {
@@ -47,11 +48,6 @@ in
       description = "Built-in blackbox probe modules available to derived module definitions.";
     };
 
-    remote = lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule { });
-      default = null;
-      description = "Whether this host provides an mTLS-protected remote blackbox exporter.";
-    };
   };
 
   config = lib.mkMerge [
@@ -104,11 +100,6 @@ in
     (lib.mkIf remoteEnabled {
       host.observability = {
         blackbox.enable = true;
-        inventory.blackbox = {
-          exporter = "${config.networking.hostName}:${toString remotePort}";
-          scheme = "https";
-          source = config.services.avahi.hostName;
-        };
         prometheusEndpoints.blackbox = {
           port = remotePort;
           path = "/probe";

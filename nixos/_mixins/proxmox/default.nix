@@ -36,10 +36,5 @@ in
     }
   ];
 
-  host.observability.inventory.machine = {
-    hypervisor = config.host.proxmox.node != null;
-    virtual = config.host.proxmox.guest != null;
-  };
-
   _module.args.proxmoxTopology = topology;
 }

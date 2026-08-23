@@ -47,8 +47,6 @@
       };
     };
 
-    observability.blackbox.remote = { };
-
     lolek.enable = true;
     motion-captcha-bot.enable = true;
     watchstate = {

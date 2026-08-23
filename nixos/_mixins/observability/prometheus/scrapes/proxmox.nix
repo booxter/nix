@@ -1,12 +1,10 @@
 {
   lib,
-  observabilityInventory,
+  observabilityCatalog,
   prometheusMtlsTlsConfig,
 }:
 let
-  exporters = lib.filter (exporter: exporter != null) (
-    map (inventory: inventory.proxmox) (builtins.attrValues observabilityInventory.nixos)
-  );
+  exporters = observabilityCatalog.proxmoxExporters;
   exportersByRealm = lib.groupBy (exporter: exporter.realm) exporters;
   clusterRepresentatives = builtins.concatLists (
     map (

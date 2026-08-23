@@ -42,6 +42,18 @@ let
         touch "$out"
       '';
   };
+  observabilityTopologyErrors = import ./checks/observability-topology.nix {
+    inherit fleetInventory lib;
+  };
+  observabilityTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    observability-topology =
+      assert lib.assertMsg (observabilityTopologyErrors == [ ]) (
+        lib.concatStringsSep "; " observabilityTopologyErrors
+      );
+      pkgs.runCommand "observability-topology" { } ''
+        touch "$out"
+      '';
+  };
   upsTopologyErrors = import ./checks/ups-topology.nix {
     inherit fleetInventory lib;
   };
@@ -74,6 +86,16 @@ let
         touch "$out"
       '';
   };
+  webServiceErrors = import ./checks/web-services.nix {
+    inherit fleetInventory lib;
+  };
+  webServiceChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    web-services =
+      assert lib.assertMsg (webServiceErrors == [ ]) (lib.concatStringsSep "; " webServiceErrors);
+      pkgs.runCommand "web-services" { } ''
+        touch "$out"
+      '';
+  };
   wireguardTopologyErrors = import ./checks/wireguard-topology.nix {
     inherit fleetInventory lib;
   };
@@ -90,9 +112,11 @@ in
 appSet.packages
 // autoUpgradeChecks
 // dashboardCatalogChecks
+// observabilityTopologyChecks
 // proxmoxTopologyChecks
 // upsTopologyChecks
 // webIngressChecks
+// webServiceChecks
 // wireguardTopologyChecks
 // import ../tests { inherit inputs pkgs; }
 // inputNixosTests

@@ -2,7 +2,6 @@
   config,
   fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
@@ -43,11 +42,7 @@ in
       ];
 
       _module.args.fleetWebServices = import ../../_lib/fleet-web-services.nix {
-        inherit
-          fleetInventory
-          lib
-          outputs
-          ;
+        inherit fleetInventory;
       };
 
       host.network.stableAddress.requiredBy = lib.optional (

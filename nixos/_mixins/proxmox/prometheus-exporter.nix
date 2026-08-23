@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  proxmoxTopology,
   ...
 }:
 let
@@ -21,14 +20,6 @@ in
   config = lib.mkIf enabled {
     host.web.services."proxmox-${config.networking.hostName}".metrics.default = {
       upstream = "http://127.0.0.1:${toString internalPort}";
-    };
-
-    host.observability.inventory.proxmox = {
-      cluster = proxmoxTopology.clusterName;
-      realm = config.host.realm;
-      target = "${config.networking.hostName}:${toString config.host.observability.prometheusEndpoints.pve.port}";
-      node = config.networking.hostName;
-      pveTarget = node.apiServerName;
     };
 
     sops.secrets.proxmoxPveExporterTokenValue = {

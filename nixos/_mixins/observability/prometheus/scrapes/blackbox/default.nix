@@ -3,7 +3,7 @@
   fleetInventory,
   fleetWebServices,
   lib,
-  observabilityInventory,
+  observabilityCatalog,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
@@ -127,10 +127,8 @@ let
         };
       };
     };
-  remoteBlackboxProbeSourceConfigs = lib.filter (source: source != null) (
-    map (inventory: inventory.blackbox) (
-      builtins.attrValues (removeAttrs observabilityInventory.nixos [ localHost ])
-    )
+  remoteBlackboxProbeSourceConfigs = map (source: removeAttrs source [ "host" ]) (
+    builtins.filter (source: source.host != localHost) observabilityCatalog.blackboxSources
   );
   blackboxProbeSourceConfigs = [
     {

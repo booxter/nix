@@ -1,27 +1,11 @@
 {
   lib,
-  observabilityInventory,
+  observabilityCatalog,
   prometheusMtlsTlsConfig,
 }:
 let
-  endpointEntries = builtins.concatLists (
-    map (inventory: builtins.attrValues inventory.endpoints) (
-      builtins.attrValues observabilityInventory.nixos
-    )
-  );
+  endpointEntries = observabilityCatalog.endpoints;
   entriesByJob = lib.groupBy (endpoint: endpoint.jobName) endpointEntries;
-  scrapeShape = endpoint: {
-    inherit (endpoint)
-      interval
-      metricRelabelConfigs
-      path
-      ;
-  };
-  incompatibleJobs = builtins.attrNames (
-    lib.filterAttrs (
-      _: entries: builtins.length (lib.unique (map scrapeShape entries)) != 1
-    ) entriesByJob
-  );
   mkScrapeConfig =
     jobName: entries:
     let
@@ -43,11 +27,5 @@ let
     };
 in
 {
-  assertions = [
-    {
-      assertion = incompatibleJobs == [ ];
-      message = "Prometheus endpoints sharing a job must use the same path and timing: ${lib.concatStringsSep ", " incompatibleJobs}";
-    }
-  ];
   scrapeConfigs = lib.mapAttrsToList mkScrapeConfig entriesByJob;
 }

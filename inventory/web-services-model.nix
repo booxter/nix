@@ -65,6 +65,20 @@ let
           module = probe.module or "http_service";
         }
         // extra;
+      normalizeMetric =
+        metricName: metric:
+        let
+          defaultName = if metricName == "default" then id else "${id}-${metricName}";
+        in
+        {
+          endpointName = metric.endpointName or defaultName;
+          jobName = metric.jobName or defaultName;
+          port = metric.port;
+          path = metric.path or "/metrics";
+          discover = metric.discover or true;
+          interval = metric.scrapeInterval or null;
+          labels = metric.labels or { };
+        };
       dashboardDeclaration = service.dashboard or null;
     in
     {
@@ -83,6 +97,7 @@ let
                 title = health.backend.title or "Backend HTTP";
               };
         };
+        metrics = lib.mapAttrs normalizeMetric (service.metrics or { });
         observability = {
           availability = entry.availability or "always";
           importance = observability.importance or "normal";
@@ -99,18 +114,7 @@ let
             };
       };
     };
-  entriesById = builtins.groupBy (entry: entry.id) entries;
-  duplicateIds = lib.filterAttrs (_: values: builtins.length values != 1) entriesById;
-  unknownOwners = builtins.filter (entry: !builtins.hasAttr entry.owner hosts) entries;
 in
-assert lib.assertMsg (duplicateIds == { }) (
-  "web service inventory IDs must be unique: "
-  + lib.concatStringsSep ", " (builtins.attrNames duplicateIds)
-);
-assert lib.assertMsg (unknownOwners == [ ]) (
-  "web service inventory references unknown owner hosts: "
-  + lib.concatStringsSep ", " (map (entry: entry.owner) unknownOwners)
-);
 {
   byOwner = entriesByOwner;
   contributions = map normalize entries;
