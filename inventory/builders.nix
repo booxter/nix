@@ -10,6 +10,7 @@ let
     "devnet"
     "uid-range"
   ];
+  regularLinuxFeatures = (lib.remove "big-parallel" baseFeatures) ++ linuxFeatures;
   builder =
     {
       hostName,
@@ -39,14 +40,17 @@ in
   builder1 = builder {
     hostName = "builder1";
     maxJobs = 2;
+    supportedFeatures = regularLinuxFeatures;
   };
   builder2 = builder {
     hostName = "builder2";
     maxJobs = 2;
+    supportedFeatures = regularLinuxFeatures;
   };
   builder3 = builder {
     hostName = "builder3";
     maxJobs = 2;
+    supportedFeatures = regularLinuxFeatures;
   };
   frame = builder {
     hostName = "frame";

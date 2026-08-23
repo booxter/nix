@@ -9,7 +9,6 @@ in
     ./cache-warmer.nix
   ];
 
-  host.nix.builder = { };
   host.nix.builderClient = { };
 
   host.network.interfaces.en0 = { };

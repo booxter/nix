@@ -13,6 +13,10 @@ in
   '';
 
   config = {
+    host.nix.nixpkgs-review.additional-builders = lib.filter (
+      builder: builder.hostName == "linux-builder"
+    ) config.nix.buildMachines;
+
     assertions = [
       {
         assertion = cfg.acceptLicense;

@@ -27,10 +27,7 @@ in
       };
     };
     desktop = { };
-    nix = {
-      builder.speedFactor = 200;
-      builderClient = { };
-    };
+    nix.builderClient = { };
     hardware = {
       drmCard = "card1";
       displayMode = {

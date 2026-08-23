@@ -1,5 +1,4 @@
 {
-  host.nix.builder.maxJobs = 2;
   host.network.macAddress = "bc:24:11:49:bf:fc";
   host.proxmox.guest = {
     cores = 24;

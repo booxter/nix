@@ -6,6 +6,7 @@
   dix,
   fleetInventory,
   fzf,
+  git,
   lib,
   makeWrapper,
   nh,
@@ -44,6 +45,7 @@ rustPlatform.buildRustPackage {
   DEPLOY_NH = lib.getExe nh;
   DEPLOY_DIG = lib.getExe' bind "dig";
   DEPLOY_FZF = lib.getExe fzf;
+  DEPLOY_GIT = lib.getExe git;
   DEPLOY_NIX = lib.getExe nix;
   DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
   DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";

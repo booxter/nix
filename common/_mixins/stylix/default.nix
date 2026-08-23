@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   stylix = {
-    enable = true;
+    enable = config.host.desktop != null;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-hard.yaml";
     polarity = "dark";
 

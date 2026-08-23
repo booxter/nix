@@ -10,9 +10,6 @@ in
   host = {
     disko.layout = "plain";
     realm = "work";
-    nix.builder = {
-      hostName = "nvws.local";
-    };
     proxmox.node = { };
     network.interfaces.enp3s0f0 = { };
   };
