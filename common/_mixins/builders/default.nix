@@ -5,6 +5,16 @@
   ...
 }:
 let
+  hostName = config.networking.hostName;
+  inventoryBuilder = fleetInventory.builders.${hostName} or null;
+  inventoryProvider =
+    if inventoryBuilder == null then
+      null
+    else
+      removeAttrs inventoryBuilder [
+        "realm"
+        "system"
+      ];
   model = import ./model.nix {
     inherit
       config
@@ -134,8 +144,8 @@ in
   options.host.nix = {
     builder = lib.mkOption {
       type = with lib.types; nullOr providerType;
-      default = null;
-      description = "Nix builder advertised to other hosts in this realm.";
+      default = inventoryProvider;
+      description = "Nix builder advertised to other hosts in this realm, derived from fleet inventory.";
     };
 
     builderClient = lib.mkOption {
