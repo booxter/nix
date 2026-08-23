@@ -74,6 +74,18 @@ let
         touch "$out"
       '';
   };
+  wireguardTopologyErrors = import ./checks/wireguard-topology.nix {
+    inherit fleetInventory lib;
+  };
+  wireguardTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    wireguard-topology =
+      assert lib.assertMsg (wireguardTopologyErrors == [ ]) (
+        lib.concatStringsSep "; " wireguardTopologyErrors
+      );
+      pkgs.runCommand "wireguard-topology" { } ''
+        touch "$out"
+      '';
+  };
 in
 appSet.packages
 // autoUpgradeChecks
@@ -81,5 +93,6 @@ appSet.packages
 // proxmoxTopologyChecks
 // upsTopologyChecks
 // webIngressChecks
+// wireguardTopologyChecks
 // import ../tests { inherit inputs pkgs; }
 // inputNixosTests

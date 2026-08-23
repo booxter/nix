@@ -1,7 +1,7 @@
 {
   config,
+  fleetInventory,
   lib,
-  outputs,
   ...
 }:
 let
@@ -24,13 +24,9 @@ let
       description = "Additional networks routed to this peer by the server.";
     };
   };
-  model = import ./model.nix {
-    inherit
-      config
-      lib
-      outputs
-      ;
-  };
+  hostName = config.networking.hostName;
+  inventory = fleetInventory.wireguard;
+  networks = import ./model.nix { inherit inventory lib; };
 in
 {
   imports = [
@@ -107,7 +103,9 @@ in
             };
           };
         });
-      default = null;
+      default = inventory.servers.${hostName} or null;
+      readOnly = true;
+      internal = true;
       description = "WireGuard network served by this host.";
     };
 
@@ -136,16 +134,19 @@ in
             };
           };
         });
-      default = null;
+      default = inventory.clients.${hostName} or null;
+      readOnly = true;
+      internal = true;
       description = "Managed WireGuard network joined by this host.";
     };
 
     networks = lib.mkOption {
       type = lib.types.attrs;
-      default = model.networks;
+      default = networks;
       readOnly = true;
       internal = true;
       description = "Fleet WireGuard topology assembled from native host role declarations.";
     };
   };
+
 }

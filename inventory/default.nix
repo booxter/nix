@@ -25,4 +25,5 @@ in
   ups = import ./ups.nix;
   inherit webIngress;
   inherit webServices;
+  wireguard = import ./wireguard.nix;
 }
