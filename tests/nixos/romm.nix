@@ -77,9 +77,12 @@ pkgs.testers.runNixOSTest {
           viewer.groups = [ "romm-viewers" ];
         };
       };
-      web.services.romm.internal = {
-        inherit serverName;
-        clientAuth = "none";
+      web.services.romm = {
+        internal = {
+          inherit serverName;
+          clientAuth = "none";
+        };
+        public.hostName = "games.example.invalid";
       };
     };
 
