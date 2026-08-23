@@ -1,17 +1,7 @@
 { config, lib, ... }:
 let
-  clusterOption = lib.mkOption {
-    type = lib.types.nonEmptyStr;
-    description = "Proxmox cluster containing this host.";
-  };
   nodeType = lib.types.submodule {
     options = {
-      cluster = clusterOption;
-      controller = lib.mkOption {
-        type = with lib.types; nullOr (submodule { });
-        default = null;
-        description = "This node's role as owner of cluster-wide integrations.";
-      };
       apiServerName = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = config.networking.hostName;
@@ -21,8 +11,6 @@ let
   };
   guestType = lib.types.submodule {
     options = {
-      cluster = clusterOption;
-
       cores = lib.mkOption {
         type = lib.types.ints.positive;
         default = 4;

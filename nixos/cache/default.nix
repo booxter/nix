@@ -11,7 +11,6 @@ in
   host.attic.server.storagePath = nfsPath;
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 16;
     memoryGiB = 16;
     diskGiB = 50; # actual cache is on NFS

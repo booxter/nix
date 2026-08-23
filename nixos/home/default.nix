@@ -6,7 +6,6 @@ in
   system.stateVersion = "26.05";
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 4;
     memoryGiB = 8;
     diskGiB = 80;

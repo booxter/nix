@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  proxmoxTopology,
+  ...
+}:
 let
   node = config.host.proxmox.node;
   enabled = node != null && config.host.observability.enable;
@@ -19,7 +24,7 @@ in
     };
 
     host.observability.inventory.proxmox = {
-      cluster = node.cluster;
+      cluster = proxmoxTopology.clusterName;
       realm = config.host.realm;
       target = "${config.networking.hostName}:${toString config.host.observability.prometheusEndpoints.pve.port}";
       node = config.networking.hostName;

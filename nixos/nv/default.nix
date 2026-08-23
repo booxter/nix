@@ -9,7 +9,6 @@ in
   host.realm = "work";
   host.nix.builderClient = { };
   host.proxmox.guest = {
-    cluster = "nvws";
     cores = 64;
     memoryGiB = 128;
   };

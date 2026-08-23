@@ -16,7 +16,6 @@ in
   host.pki.server = { };
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 2;
     memoryGiB = 8;
     diskGiB = 50;

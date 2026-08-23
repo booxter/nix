@@ -8,7 +8,6 @@ in
   host.network.interfaces.ens18 = { };
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 2;
     memoryGiB = 8;
     diskGiB = 64;

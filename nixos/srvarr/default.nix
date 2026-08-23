@@ -11,7 +11,6 @@ in
   host.network.interfaces.ens18 = { };
 
   host.proxmox.guest = {
-    cluster = "lab";
     cores = 16;
     memoryGiB = 32;
   };

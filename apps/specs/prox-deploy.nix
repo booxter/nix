@@ -1,6 +1,6 @@
 {
+  fleetInventory,
   inputs,
-  outputs,
   pkgs,
   system,
   ...
@@ -9,8 +9,8 @@
   package =
     (import ../proxmox.nix {
       inherit
+        fleetInventory
         inputs
-        outputs
         pkgs
         system
         ;

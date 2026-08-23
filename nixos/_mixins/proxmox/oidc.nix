@@ -1,15 +1,14 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
-  proxmoxModel,
+  proxmoxTopology,
   utils,
   ...
 }:
 let
   node = config.host.proxmox.node;
-  enabled = node != null && node.controller != null && config.host.realm == "home";
+  enabled = node != null && proxmoxTopology.isController && config.host.realm == "home";
   realm = "kanidm";
   clientId = "proxmox";
   issuerUrl = "https://id.${config.host.network.publicDomain}/oauth2/openid/${clientId}";
@@ -25,14 +24,12 @@ let
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
-  topology = proxmoxModel;
-  certificateDnsNamesFor =
-    name:
-    if name == config.networking.hostName then
-      config.host.network.certificateDnsNames
-    else
-      outputs.nixosConfigurations.${name}.config.host.network.certificateDnsNames;
-  proxmoxLabHosts = lib.unique (lib.concatMap certificateDnsNamesFor topology.nodeNames);
+  conventionalDnsNamesFor = name: [
+    name
+    "${name}.${config.host.network.lanDomain}"
+    "${name}.local"
+  ];
+  proxmoxLabHosts = lib.unique (lib.concatMap conventionalDnsNamesFor proxmoxTopology.nodeNames);
   proxmoxCanonicalHost = "proxmox.${config.host.network.lanDomain}";
   proxmoxOriginUrls = lib.unique (
     [

@@ -3,7 +3,7 @@
   inputs,
   lib,
   pkgs,
-  proxmoxModel,
+  proxmoxTopology,
   system,
   ...
 }:
@@ -11,8 +11,12 @@ let
   bridgeName = "vmbr0";
   macAddress = config.host.network.macAddress;
   primaryInterface = config.host.network.primaryInterface;
+  expectedCertificateDnsNames = [
+    config.networking.hostName
+    "${config.networking.hostName}.${config.host.network.lanDomain}"
+    "${config.networking.hostName}.local"
+  ];
   proxmoxCache = import ../../../common/_mixins/nix/cache/proxmox.nix { inherit lib; };
-  model = proxmoxModel;
 in
 {
   config = lib.mkIf (config.host.proxmox.node != null) {
@@ -22,8 +26,10 @@ in
         message = "host.proxmox.node requires host.network.primaryInterface";
       }
       {
-        assertion = builtins.length model.controllerNames == 1;
-        message = "Proxmox cluster '${config.host.proxmox.node.cluster}' in realm '${config.host.realm}' requires exactly one controller";
+        assertion = lib.all (
+          name: builtins.elem name config.host.network.certificateDnsNames
+        ) expectedCertificateDnsNames;
+        message = "Proxmox node certificates must include conventional host DNS names used by OIDC";
       }
     ];
 
@@ -34,7 +40,7 @@ in
     host.autoUpgrade.claims.proxmox-node = {
       switch.cadence = "weekly";
       reboot.cadence = "weekly";
-      availabilityGroup = "proxmox:${config.host.realm}:${config.host.proxmox.node.cluster}";
+      availabilityGroup = "proxmox:${config.host.realm}:${proxmoxTopology.clusterName}";
     };
 
     nixpkgs.overlays = [
