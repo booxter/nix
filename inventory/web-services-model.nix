@@ -2,9 +2,9 @@
   entriesByOwner,
   hosts,
   lib,
+  webIngress,
 }:
 let
-  ingressByRealm.home = "beast";
   entries = builtins.concatLists (
     lib.mapAttrsToList (
       owner: ownerEntries:
@@ -32,7 +32,8 @@ let
       internalDeclaration = service.internal or { };
       health = service.health or { };
       observability = service.observability or { };
-      ingressHost = ingressByRealm.${hosts.${owner}.realm};
+      ingress = webIngress.${hosts.${owner}.realm} or null;
+      ingressHost = if ingress == null then null else ingress.host;
       public =
         if publicDeclaration == null then
           null
@@ -101,10 +102,6 @@ let
   entriesById = builtins.groupBy (entry: entry.id) entries;
   duplicateIds = lib.filterAttrs (_: values: builtins.length values != 1) entriesById;
   unknownOwners = builtins.filter (entry: !builtins.hasAttr entry.owner hosts) entries;
-  unknownIngressRealms = builtins.filter (
-    entry:
-    builtins.hasAttr entry.owner hosts && !builtins.hasAttr hosts.${entry.owner}.realm ingressByRealm
-  ) entries;
 in
 assert lib.assertMsg (duplicateIds == { }) (
   "web service inventory IDs must be unique: "
@@ -113,10 +110,6 @@ assert lib.assertMsg (duplicateIds == { }) (
 assert lib.assertMsg (unknownOwners == [ ]) (
   "web service inventory references unknown owner hosts: "
   + lib.concatStringsSep ", " (map (entry: entry.owner) unknownOwners)
-);
-assert lib.assertMsg (unknownIngressRealms == [ ]) (
-  "web service inventory has no ingress controller for service realms: "
-  + lib.concatStringsSep ", " (map (entry: entry.id) unknownIngressRealms)
 );
 {
   byOwner = entriesByOwner;

@@ -4,9 +4,14 @@
 }:
 let
   hosts = import ./hosts.nix { inherit fleetHosts lib; };
+  webIngress = import ./web-ingress.nix;
   webServices = import ./web-services-model.nix {
     entriesByOwner = import ./web-services.nix;
-    inherit hosts lib;
+    inherit
+      hosts
+      lib
+      webIngress
+      ;
   };
 in
 {
@@ -18,5 +23,6 @@ in
   proxmox = import ./proxmox.nix;
   sites = import ./sites.nix;
   ups = import ./ups.nix;
+  inherit webIngress;
   inherit webServices;
 }

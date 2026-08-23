@@ -47,12 +47,6 @@
       };
     };
 
-    web.ingress = {
-      dynamicDns = {
-        hostname = "ihrachyshka-beast.freeddns.org";
-        username = "ihrachyshka";
-      };
-    };
     observability.blackbox.remote = { };
 
     lolek.enable = true;

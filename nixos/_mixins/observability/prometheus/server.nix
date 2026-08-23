@@ -48,10 +48,10 @@ let
   blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
+      fleetInventory
       fleetWebServices
       lib
       observabilityInventory
-      outputs
       blackboxHttpMtlsTlsConfig
       prometheusMtlsTlsConfig
       ;

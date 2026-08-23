@@ -64,11 +64,22 @@ let
         touch "$out"
       '';
   };
+  webIngressErrors = import ./checks/web-ingress.nix {
+    inherit fleetInventory lib;
+  };
+  webIngressChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    web-ingress =
+      assert lib.assertMsg (webIngressErrors == [ ]) (lib.concatStringsSep "; " webIngressErrors);
+      pkgs.runCommand "web-ingress" { } ''
+        touch "$out"
+      '';
+  };
 in
 appSet.packages
 // autoUpgradeChecks
 // dashboardCatalogChecks
 // proxmoxTopologyChecks
 // upsTopologyChecks
+// webIngressChecks
 // import ../tests { inherit inputs pkgs; }
 // inputNixosTests

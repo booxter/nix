@@ -1,11 +1,15 @@
 {
   config,
+  fleetInventory,
   fleetWebServices,
   lib,
   ...
 }:
 let
   cfg = config.host.web.ingress;
+  hostName = config.networking.hostName;
+  inventory = fleetInventory.webIngress.${config.host.realm} or null;
+  localInventory = if inventory != null && inventory.host == hostName then inventory else null;
   dynamicDnsPolicy = import ../../../../common/_lib/dynamic-dns-policy.nix { inherit lib; };
   publicServices = builtins.filter (
     contribution: contribution.value.public.ingressHost == config.networking.hostName
@@ -71,52 +75,57 @@ in
     description = "Public HTTPS ingress controller policy.";
   };
 
-  config = lib.mkIf (cfg != null) {
-    host.network.stableAddress.requiredBy = lib.optional (publicServices != [ ]) "public ingress";
+  config = lib.mkMerge [
+    (lib.mkIf (localInventory != null) {
+      host.web.ingress.dynamicDns = localInventory.dynamicDns;
+    })
+    (lib.mkIf (cfg != null) {
+      host.network.stableAddress.requiredBy = lib.optional (publicServices != [ ]) "public ingress";
 
-    host.pki.clients = builtins.listToAttrs (
-      map (contribution: {
-        name = contribution.id;
-        value = {
-          category = "internal";
-          materializations.default = {
-            owner = config.services.nginx.user;
-            group = config.services.nginx.group;
-            mode = "0400";
-            restartUnits = [ "nginx.service" ];
+      host.pki.clients = builtins.listToAttrs (
+        map (contribution: {
+          name = contribution.id;
+          value = {
+            category = "internal";
+            materializations.default = {
+              owner = config.services.nginx.user;
+              group = config.services.nginx.group;
+              mode = "0400";
+              restartUnits = [ "nginx.service" ];
+            };
           };
-        };
-      }) mtlsPublicServices
-    );
+        }) mtlsPublicServices
+      );
 
-    security.acme = lib.mkIf (publicServices != [ ]) {
-      acceptTerms = true;
-      defaults.email = "ihar.hrachyshka@gmail.com";
-    };
+      security.acme = lib.mkIf (publicServices != [ ]) {
+        acceptTerms = true;
+        defaults.email = "ihar.hrachyshka@gmail.com";
+      };
 
-    services.nginx = lib.mkMerge [
-      { enableReload = true; }
-      (lib.mkIf (publicServices != [ ]) {
-        enable = true;
-        recommendedProxySettings = true;
-        recommendedTlsSettings = true;
-        virtualHosts = builtins.listToAttrs (
-          map (contribution: {
-            name = contribution.value.public.hostName;
-            value = publicVhost contribution;
-          }) publicServices
-        );
-      })
-    ];
+      services.nginx = lib.mkMerge [
+        { enableReload = true; }
+        (lib.mkIf (publicServices != [ ]) {
+          enable = true;
+          recommendedProxySettings = true;
+          recommendedTlsSettings = true;
+          virtualHosts = builtins.listToAttrs (
+            map (contribution: {
+              name = contribution.value.public.hostName;
+              value = publicVhost contribution;
+            }) publicServices
+          );
+        })
+      ];
 
-    systemd.services.nginx = lib.mkIf (mtlsPublicServices != [ ]) {
-      wants = [ "sops-install-secrets.service" ];
-      after = [ "sops-install-secrets.service" ];
-    };
+      systemd.services.nginx = lib.mkIf (mtlsPublicServices != [ ]) {
+        wants = [ "sops-install-secrets.service" ];
+        after = [ "sops-install-secrets.service" ];
+      };
 
-    networking.firewall.allowedTCPPorts = lib.optionals (publicServices != [ ]) [
-      80
-      443
-    ];
-  };
+      networking.firewall.allowedTCPPorts = lib.optionals (publicServices != [ ]) [
+        80
+        443
+      ];
+    })
+  ];
 }

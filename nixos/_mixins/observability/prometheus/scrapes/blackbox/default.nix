@@ -1,9 +1,9 @@
 {
   config,
+  fleetInventory,
   fleetWebServices,
   lib,
   observabilityInventory,
-  outputs,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
@@ -16,21 +16,8 @@ let
     wanTcpProbeTargets
     ;
   localHost = config.networking.hostName;
-  configurations = outputs.nixosConfigurations // {
-    ${localHost} = { inherit config; };
-  };
-  ingressConfigurations = lib.filterAttrs (
-    _: configuration:
-    configuration.config.host.realm == config.host.realm
-    && configuration.config.host.web.ingress != null
-    && configuration.config.host.web.ingress.dynamicDns != null
-  ) configurations;
-  ingressHosts = builtins.attrValues ingressConfigurations;
-  publicWanHost =
-    if ingressHosts == [ ] then
-      ""
-    else
-      (lib.head ingressHosts).config.host.web.ingress.dynamicDns.hostname;
+  ingress = fleetInventory.webIngress.${config.host.realm} or null;
+  publicWanHost = if ingress == null then "" else ingress.dynamicDns.hostname;
   publicServiceCatalog = map (contribution: {
     inherit (contribution) id;
     title = contribution.value.displayName;
@@ -280,8 +267,8 @@ in
   modules = blackboxModules;
 
   assertions = lib.optional (publicServiceCatalog != [ ]) {
-    assertion = builtins.length ingressHosts == 1;
-    message = "Public WAN probes require exactly one dynamic-DNS web ingress in the Prometheus realm.";
+    assertion = ingress != null;
+    message = "Public WAN probes require a dynamic-DNS web ingress in the Prometheus realm.";
   };
 
   scrapeConfigs = [
