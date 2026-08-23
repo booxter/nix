@@ -6,13 +6,25 @@
 }:
 let
   cfg = config.host.nix.cacheWarmer.nixpkgs;
-  installables = lib.concatMap (
-    branch:
-    lib.concatMap (
-      system:
-      map (package: "github:NixOS/nixpkgs/${branch}#legacyPackages.${system}.${package}") cfg.packages
-    ) cfg.systems
-  ) cfg.branches;
+  expression = pkgs.writeText "nixpkgs-cache-warmer.nix" ''
+    let
+      branches = ${builtins.toJSON cfg.branches};
+      packageNames = ${builtins.toJSON cfg.packages};
+      systems = ${builtins.toJSON cfg.systems};
+      packagesFor =
+        branch: system:
+        let
+          packages = (builtins.getFlake "github:NixOS/nixpkgs/''${branch}").legacyPackages.''${system};
+          selected = map (
+            name: packages.lib.getAttrFromPath (packages.lib.splitString "." name) packages
+          ) packageNames;
+        in
+        builtins.filter (package: packages.lib.meta.availableOn { inherit system; } package) selected;
+    in
+    builtins.concatMap (
+      branch: builtins.concatMap (system: packagesFor branch system) systems
+    ) branches
+  '';
   arguments = [
     (lib.getExe pkgs.nix)
     "build"
@@ -22,8 +34,10 @@ let
     "1"
     "--no-link"
     "--refresh"
-  ]
-  ++ installables;
+    "--impure"
+    "--file"
+    expression
+  ];
 in
 {
   options.host.nix.cacheWarmer.nixpkgs = {
