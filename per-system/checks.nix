@@ -30,7 +30,7 @@ let
         touch "$out"
       '';
   };
-  dashboardCatalogErrors = import ./checks/dashboard-catalog.nix {
+  dashboardCatalogErrors = import ./checks/topo/dashboard.nix {
     inherit fleetInventory lib;
   };
   dashboardCatalogChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -42,7 +42,7 @@ let
         touch "$out"
       '';
   };
-  observabilityTopologyErrors = import ./checks/observability-topology.nix {
+  observabilityTopologyErrors = import ./checks/topo/observability.nix {
     inherit fleetInventory lib;
   };
   observabilityTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -54,7 +54,7 @@ let
         touch "$out"
       '';
   };
-  upsTopologyErrors = import ./checks/ups-topology.nix {
+  upsTopologyErrors = import ./checks/topo/ups.nix {
     inherit fleetInventory lib;
   };
   upsTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -64,7 +64,7 @@ let
         touch "$out"
       '';
   };
-  proxmoxTopologyErrors = import ./checks/proxmox-topology.nix {
+  proxmoxTopologyErrors = import ./checks/topo/proxmox.nix {
     inherit fleetInventory lib;
   };
   proxmoxTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -76,7 +76,7 @@ let
         touch "$out"
       '';
   };
-  webIngressErrors = import ./checks/web-ingress.nix {
+  webIngressErrors = import ./checks/topo/web-ingress.nix {
     inherit fleetInventory lib;
   };
   webIngressChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -86,7 +86,7 @@ let
         touch "$out"
       '';
   };
-  webServiceErrors = import ./checks/web-services.nix {
+  webServiceErrors = import ./checks/topo/web-services.nix {
     inherit fleetInventory lib;
   };
   webServiceChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -96,7 +96,7 @@ let
         touch "$out"
       '';
   };
-  wireguardTopologyErrors = import ./checks/wireguard-topology.nix {
+  wireguardTopologyErrors = import ./checks/topo/wireguard.nix {
     inherit fleetInventory lib;
   };
   wireguardTopologyChecks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

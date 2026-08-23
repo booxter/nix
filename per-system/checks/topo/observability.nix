@@ -4,7 +4,7 @@
 }:
 let
   inherit (fleetInventory) hosts observability wireguard;
-  catalog = import ../../lib/observability/catalog.nix {
+  catalog = import ../../../lib/observability/catalog.nix {
     inherit fleetInventory lib;
   };
   realmServers = lib.mapAttrsToList (realm: entry: {

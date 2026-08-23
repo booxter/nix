@@ -4,8 +4,8 @@
 }:
 let
   inherit (fleetInventory) hosts wireguard;
-  ip = import ../../common/_lib/ipv4.nix { inherit lib; };
-  networks = import ../../common/_mixins/wireguard/model.nix {
+  ip = import ../../../common/_lib/ipv4.nix { inherit lib; };
+  networks = import ../../../common/_mixins/wireguard/model.nix {
     inventory = wireguard;
     inherit lib;
   };
