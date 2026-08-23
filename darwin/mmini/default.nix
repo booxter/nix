@@ -5,37 +5,12 @@ in
 {
   system.stateVersion = 5;
 
+  imports = [
+    ./cache-warmer.nix
+  ];
+
   host.nix.builder = { };
   host.nix.builderClient = { };
-
-  host.nix.cacheWarmer = {
-    builderMaxJobs = {
-      builder1 = 1;
-      builder2 = 1;
-      builder3 = 1;
-    };
-    fleet.enable = true;
-    nixpkgs = {
-      enable = true;
-      runner = "mmini";
-      references = [
-        "github:NixOS/nixpkgs/master"
-        "github:NixOS/nixpkgs/nixos-unstable"
-        "github:NixOS/nixpkgs/staging"
-        "github:NixOS/nixpkgs/staging-next"
-        "github:NixOS/nixpkgs/staging-26.05"
-        "github:NixOS/nixpkgs/release-26.05"
-      ];
-      systems = [
-        "aarch64-darwin"
-        "x86_64-linux"
-      ];
-      excludePnamePatterns = [
-        "firefox.*"
-        "thunderbird.*"
-      ];
-    };
-  };
 
   host.network.interfaces.en0 = { };
 
