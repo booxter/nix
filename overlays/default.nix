@@ -74,8 +74,8 @@
           # Merge dependent PRs into the reviewed worktree with --include-pr.
           # https://github.com/Mic92/nixpkgs-review/pull/562
           (prev.fetchpatch {
-            url = "https://github.com/Mic92/nixpkgs-review/commit/efb00d8799c7d26e2ef7f6f827922e41106ed0a2.patch";
-            hash = "sha256-jH4tnA1PIOU8BGkKetJXnBVggXe60kSRtvvKzKRjFVw=";
+            url = "https://github.com/Mic92/nixpkgs-review/commit/1bf8762fcc5c3a3d8b5219ab340f4a3a83608f13.patch";
+            hash = "sha256-RQJvXwRLZ47vHi4VhuvKLk8UHYQJfo3SmzUsV9dpNR0=";
           })
         ];
       });
