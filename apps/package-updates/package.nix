@@ -42,6 +42,7 @@ pythonPackages.buildPythonApplication {
         pkgs.gnused
         pkgs.jq
         pkgs.nix
+        pkgs.nix-prefetch-git
         pkgs.nix-update
         pkgs.prefetch-npm-deps
       ]
