@@ -13,8 +13,8 @@ cd "$repo_root"
 # package.json instead of nix-update's fallback 0 prefix.
 nix-update --flake --system "$system" --version branch "$attr"
 
-src_path="$(nix eval --option eval-cache false --raw ".#packages.$system.$attr.src")"
-package_version="$(nix eval --option eval-cache false --raw ".#packages.$system.$attr.version")"
+src_path="$(nix eval --option eval-cache false --raw ".#$attr.src")"
+package_version="$(nix eval --option eval-cache false --raw ".#$attr.version")"
 upstream_version="$(jq --raw-output '.engines[0].version // empty' "$src_path/package.json")"
 snapshot_date="${package_version##*-unstable-}"
 
