@@ -31,20 +31,24 @@ receivers:
           {{ if .CommonLabels.instance }}• Host: {{ .CommonLabels.instance }}
           {{ end }}{{ if .CommonLabels.severity }}• Severity: {{ .CommonLabels.severity }}
           {{ end }}{{ if .CommonLabels.category }}• Category: {{ .CommonLabels.category }}
-          {{ end }}{{ if .CommonLabels.job }}• Job: {{ .CommonLabels.job }}
+          {{ end }}{{ if .CommonLabels.job }}• Prometheus job: {{ .CommonLabels.job }}
           {{ end }}{{ if gt (len .Alerts.Firing) 1 }}• Firing alerts in group: {{ len .Alerts.Firing }}
           {{ end }}{{ if gt (len .Alerts.Resolved) 0 }}• Resolved alerts in group: {{ len .Alerts.Resolved }}
           {{ end }}{{ end }}{{ if or (gt (len .Alerts.Firing) 1) (gt (len .Alerts.Resolved) 0) }}
 
           {{ if gt (len .Alerts.Firing) 0 }}<b>Firing</b>
-          {{ range .Alerts.Firing }}{{ if .Labels.instance }}• {{ .Labels.instance }}
+          {{ range .Alerts.Firing }}{{ if .Annotations.summary }}• {{ .Annotations.summary }}
+          {{ else if .Labels.name }}• {{ .Labels.name }}{{ if .Labels.instance }} on {{ .Labels.instance }}{{ end }}
+          {{ else if .Labels.instance }}• {{ .Labels.instance }}
           {{ else if .Labels.target }}• {{ .Labels.target }}
           {{ else if .Labels.service_title }}• {{ .Labels.service_title }}
           {{ else }}• {{ .Labels.alertname }}
           {{ end }}{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}
 
           <b>Resolved</b>
-          {{ range .Alerts.Resolved }}{{ if .Labels.instance }}• {{ .Labels.instance }}
+          {{ range .Alerts.Resolved }}{{ if .Annotations.summary }}• {{ .Annotations.summary }}
+          {{ else if .Labels.name }}• {{ .Labels.name }}{{ if .Labels.instance }} on {{ .Labels.instance }}{{ end }}
+          {{ else if .Labels.instance }}• {{ .Labels.instance }}
           {{ else if .Labels.target }}• {{ .Labels.target }}
           {{ else if .Labels.service_title }}• {{ .Labels.service_title }}
           {{ else }}• {{ .Labels.alertname }}
