@@ -134,6 +134,16 @@ class CommandPackageBackend:
         if arguments is None:
             return False
 
+        for argument in arguments:
+            if argument.startswith("/nix/store/"):
+                checked(
+                    self.runner.run(
+                        [self.tools.nix_store, "--realise", argument],
+                        cwd=self.repo_root,
+                    ),
+                    f"realizing passthru.updateScript argument for {target.attr}",
+                )
+
         print("running passthru.updateScript")
         environment = os.environ | {
             "UPDATE_NIX_ATTR_PATH": attribute,
