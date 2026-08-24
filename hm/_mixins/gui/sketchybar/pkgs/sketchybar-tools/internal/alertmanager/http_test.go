@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -27,26 +28,33 @@ func TestAlertsURLAddsRequiredFilters(t *testing.T) {
 	}
 }
 
-func TestDecodeAlertCountRequiresAnArray(t *testing.T) {
+func TestDecodeAlertsRequiresAnArray(t *testing.T) {
 	cases := map[string]struct {
 		body    string
-		count   int
+		alerts  []Alert
 		wantErr bool
 	}{
-		"empty":   {body: `[]`, count: 0},
-		"alerts":  {body: `[{"labels":{"alertname":"one"}},{"labels":{"alertname":"two"}}]`, count: 2},
+		"empty": {body: `[]`, alerts: []Alert{}},
+		"alerts": {
+			body: `[{"labels":{"alertname":"DiskFull","instance":"server","severity":"critical"},` +
+				`"annotations":{"summary":"Disk is full"}}]`,
+			alerts: []Alert{{
+				Labels:      AlertLabels{Name: "DiskFull", Instance: "server", Severity: "critical"},
+				Annotations: AlertAnnotations{Summary: "Disk is full"},
+			}},
+		},
 		"object":  {body: `{"status":"ok"}`, wantErr: true},
 		"null":    {body: `null`, wantErr: true},
 		"invalid": {body: `{`, wantErr: true},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			count, err := decodeAlertCount([]byte(test.body))
+			alerts, err := decodeAlerts([]byte(test.body))
 			if (err != nil) != test.wantErr {
-				t.Fatalf("decodeAlertCount error = %v, wantErr %v", err, test.wantErr)
+				t.Fatalf("decodeAlerts error = %v, wantErr %v", err, test.wantErr)
 			}
-			if count != test.count {
-				t.Errorf("decodeAlertCount = %d, want %d", count, test.count)
+			if !reflect.DeepEqual(alerts, test.alerts) {
+				t.Errorf("decodeAlerts = %#v, want %#v", alerts, test.alerts)
 			}
 		})
 	}

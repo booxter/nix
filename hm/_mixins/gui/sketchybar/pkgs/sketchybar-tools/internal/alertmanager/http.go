@@ -12,33 +12,48 @@ import (
 
 const maxResponseBytes = 10 << 20
 
-type HTTPAlertCounter struct {
+type Alert struct {
+	Labels      AlertLabels      `json:"labels"`
+	Annotations AlertAnnotations `json:"annotations"`
+}
+
+type AlertLabels struct {
+	Name     string `json:"alertname"`
+	Instance string `json:"instance"`
+	Severity string `json:"severity"`
+}
+
+type AlertAnnotations struct {
+	Summary string `json:"summary"`
+}
+
+type HTTPAlertFetcher struct {
 	config Config
 }
 
-func NewHTTPAlertCounter(config Config) HTTPAlertCounter {
-	return HTTPAlertCounter{config: config}
+func NewHTTPAlertFetcher(config Config) HTTPAlertFetcher {
+	return HTTPAlertFetcher{config: config}
 }
 
-func (counter HTTPAlertCounter) Count(ctx context.Context) (int, error) {
+func (fetcher HTTPAlertFetcher) Fetch(ctx context.Context) ([]Alert, error) {
 	client, err := httpclient.NewMTLS(httpclient.MTLSConfig{
-		CACertificate:     counter.config.CACertificate,
-		ClientCertificate: counter.config.ClientCertificate,
-		ClientKey:         counter.config.ClientKey,
+		CACertificate:     fetcher.config.CACertificate,
+		ClientCertificate: fetcher.config.ClientCertificate,
+		ClientKey:         fetcher.config.ClientKey,
 		Timeout:           10 * time.Second,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("configure Alertmanager client: %w", err)
+		return nil, fmt.Errorf("configure Alertmanager client: %w", err)
 	}
-	endpoint, err := alertsURL(counter.config.URL)
+	endpoint, err := alertsURL(fetcher.config.URL)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	body, err := httpclient.Get(ctx, client, endpoint, maxResponseBytes)
 	if err != nil {
-		return 0, fmt.Errorf("fetch Alertmanager alerts: %w", err)
+		return nil, fmt.Errorf("fetch Alertmanager alerts: %w", err)
 	}
-	return decodeAlertCount(body)
+	return decodeAlerts(body)
 }
 
 func alertsURL(rawURL string) (string, error) {
@@ -54,13 +69,13 @@ func alertsURL(rawURL string) (string, error) {
 	return endpoint.String(), nil
 }
 
-func decodeAlertCount(body []byte) (int, error) {
-	var alerts []json.RawMessage
+func decodeAlerts(body []byte) ([]Alert, error) {
+	var alerts []Alert
 	if err := json.Unmarshal(body, &alerts); err != nil {
-		return 0, fmt.Errorf("decode Alertmanager response: %w", err)
+		return nil, fmt.Errorf("decode Alertmanager response: %w", err)
 	}
 	if alerts == nil {
-		return 0, fmt.Errorf("decode Alertmanager response: expected an array")
+		return nil, fmt.Errorf("decode Alertmanager response: expected an array")
 	}
-	return len(alerts), nil
+	return alerts, nil
 }
