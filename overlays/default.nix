@@ -135,6 +135,31 @@
         ];
       });
 
+      audiobookshelf = prev.audiobookshelf.overrideAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
+        patches = (old.patches or [ ]) ++ [
+          # Extract cover images from PDF ebooks.
+          # Upstream: https://github.com/advplyr/audiobookshelf/issues/1479
+          # https://github.com/booxter/audiobookshelf/tree/pdf-images
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/audiobookshelf/commit/2741f471f1fb31c3445be90ed4c9dc7c61ea0cde.patch";
+            hash = "sha256-eYE19TmqTk5TWU0A88kbFAW3e74BdiW122BJYX/c728=";
+          })
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/audiobookshelf/commit/662feb56b871667addacaf1042647e379fe9629b.patch";
+            hash = "sha256-ufFfGyMQFtTVxQK/p2gE6Z9DsvamRBgNZdixWuH8cX4=";
+          })
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/audiobookshelf/commit/5f6d2919d1c747f4125f6a05a9b665e27ea905d4.patch";
+            hash = "sha256-4oaEM7HvFFlcxRXRIbIzOJpQNb7/rY2XWkI2+zwH3OA=";
+          })
+        ];
+        postFixup = (old.postFixup or "") + ''
+          wrapProgram "$out/bin/audiobookshelf" \
+            --set PDFTOPPM_PATH ${lib.getExe' prev.poppler-utils "pdftoppm"}
+        '';
+      });
+
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
           # Catch websocket keepalive send races.
