@@ -59,6 +59,8 @@ lib.mkIf config.host.hm.env.roles.developer {
     # cat images in kitty
     icat = "kitten icat";
 
+    patch = "patch --no-backup-if-mismatch";
+
     # eza
     q = "eza";
     qq = "eza -l";

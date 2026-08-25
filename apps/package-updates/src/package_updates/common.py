@@ -62,6 +62,7 @@ class SubprocessRunner:
 @dataclass(frozen=True)
 class ToolPaths:
     nix: str
+    nix_store: str
     nix_update: str
     nix_prefetch_docker: str
     skopeo: str
@@ -71,6 +72,7 @@ class ToolPaths:
     def from_environment(cls) -> ToolPaths:
         return cls(
             nix=os.environ.get("PACKAGE_UPDATES_NIX", "nix"),
+            nix_store=os.environ.get("PACKAGE_UPDATES_NIX_STORE", "nix-store"),
             nix_update=os.environ.get("PACKAGE_UPDATES_NIX_UPDATE", "nix-update"),
             nix_prefetch_docker=os.environ.get(
                 "PACKAGE_UPDATES_NIX_PREFETCH_DOCKER", "nix-prefetch-docker"

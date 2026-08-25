@@ -216,6 +216,7 @@ def test_command_backend_parses_registry_boundaries(tmp_path: Path) -> None:
     runner = OciRunner()
     tools = ToolPaths(
         nix="nix",
+        nix_store="nix-store",
         nix_update="nix-update",
         nix_prefetch_docker="prefetch",
         skopeo="skopeo",

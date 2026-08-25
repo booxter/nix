@@ -39,6 +39,7 @@ class PackageRunner(Runner):
     def __init__(self, update_script: object = None) -> None:
         self.update_script = update_script
         self.calls: list[tuple[tuple[str, ...], Mapping[str, str] | None, bool]] = []
+        self.realized: set[str] = set()
 
     def run(
         self,
@@ -51,6 +52,9 @@ class PackageRunner(Runner):
         del cwd
         command = tuple(arguments)
         self.calls.append((command, environment, capture))
+        if command[0] == "nix-store":
+            self.realized.add(command[-1])
+            return CommandResult(0)
         if len(command) > 1 and command[1] == "build":
             return CommandResult(1)
         if len(command) > 1 and command[1] == "eval":
@@ -72,6 +76,7 @@ class PackageRunner(Runner):
 
 TOOLS = ToolPaths(
     nix="nix",
+    nix_store="nix-store",
     nix_update="nix-update",
     nix_prefetch_docker="prefetch",
     skopeo="skopeo",
@@ -158,13 +163,15 @@ def test_update_script_payloads_are_validated() -> None:
         parse_update_script({"command": "update"}, "demo")
 
 
-def test_command_backend_runs_json_update_script_with_selector_environment(tmp_path: Path) -> None:
-    runner = PackageRunner(["/store/update", "--flag"])
+def test_command_backend_realizes_and_runs_json_update_script(tmp_path: Path) -> None:
+    update_executable = "/nix/store/update-package/bin/update"
+    runner = PackageRunner([update_executable, "--flag"])
     backend = CommandPackageBackend(tmp_path, TOOLS, runner)
     target = PackageTarget(attr="demo", system="aarch64-darwin")
     backend.update(target)
     command, environment, capture = runner.calls[-1]
-    assert command == ("/store/update", "--flag")
+    assert update_executable in runner.realized
+    assert command == (update_executable, "--flag")
     assert environment is not None
     assert environment["UPDATE_NIX_ATTR_PATH"] == "updatePackages.aarch64-darwin.demo"
     assert environment["UPDATE_NIX_SYSTEM"] == "aarch64-darwin"

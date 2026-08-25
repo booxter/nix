@@ -42,11 +42,13 @@ pythonPackages.buildPythonApplication {
         pkgs.gnused
         pkgs.jq
         pkgs.nix
+        pkgs.nix-prefetch-git
         pkgs.nix-update
         pkgs.prefetch-npm-deps
       ]
     }"
     "--set PACKAGE_UPDATES_NIX ${pkgs.lib.getExe pkgs.nix}"
+    "--set PACKAGE_UPDATES_NIX_STORE ${pkgs.lib.getExe' pkgs.nix "nix-store"}"
     "--set PACKAGE_UPDATES_NIX_PREFETCH_DOCKER ${pkgs.lib.getExe pkgs.nix-prefetch-docker}"
     "--set PACKAGE_UPDATES_NIX_UPDATE ${pkgs.lib.getExe pkgs.nix-update}"
     "--set PACKAGE_UPDATES_SKOPEO ${pkgs.lib.getExe pkgs.skopeo}"

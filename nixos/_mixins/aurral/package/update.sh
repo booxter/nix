@@ -17,7 +17,7 @@ fi
 nix-update --flake --system "$system" --src-only --use-github-releases "$attr"
 
 src_path="$(
-  nix build --no-link --print-out-paths ".#packages.$system.$attr.src"
+  nix build --no-link --print-out-paths ".#$attr.src"
 )"
 nodejs_requirement="$(jq -r '.engines.node // empty' "$src_path/package.json")"
 
