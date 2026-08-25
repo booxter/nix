@@ -22,6 +22,7 @@ in
       options = "--delete-older-than 1d";
     };
     distributedBuilds = hasBuildMachines;
+    nrBuildUsers = 4;
     optimise.automatic = true;
     package =
       lib.mkForce

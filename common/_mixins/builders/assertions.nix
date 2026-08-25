@@ -50,5 +50,9 @@ in
       assertion = localBuilder == null || inventoryBuilder == null || localBuilder == inventoryBuilder;
       message = "local Nix builder configuration must match fleet inventory";
     }
+    {
+      assertion = builder == null || builder.maxJobs <= config.nix.nrBuildUsers;
+      message = "managed Nix builder maxJobs must not exceed nix.nrBuildUsers";
+    }
   ];
 }
