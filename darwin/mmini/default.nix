@@ -38,7 +38,6 @@ in
   };
 
   host.security = {
-    smartCard = { };
     secrets.operator.ageIdentity = {
       backend = "yubikey";
       path = "/Users/${config.host.username}/.config/sops/age/yubi-nix.txt";
