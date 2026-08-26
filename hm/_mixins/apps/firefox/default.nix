@@ -43,6 +43,12 @@ in
   config = lib.mkIf cfg.enable {
     stylix.targets.firefox.profileNames = [ "default" ];
 
+    home.packages = lib.optionals isDarwin [
+      (pkgs.firefox-migrate-app-data.override {
+        destinationRelativePath = firefoxAppDataDir;
+      })
+    ];
+
     programs.firefox = {
       enable = true;
       # Keep existing profiles in place unless a host explicitly opts into a

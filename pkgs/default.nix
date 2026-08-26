@@ -12,6 +12,8 @@ in
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
+  firefox-migrate-app-data = pkgs.callPackage ./firefox-migrate-app-data { };
+
   get-ff-cookie = appPackages.get-ff-cookie;
 
   flake-input-update-summary = pkgs.callPackage ./flake-input-update-summary { };
