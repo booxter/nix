@@ -23,6 +23,42 @@
     {
       inherit (pkgsNixpkgsUnstable) aerospace codex;
 
+      # Backport the appDataDir argument from the Firefox wrapper in
+      # https://github.com/NixOS/nixpkgs/pull/556611. Keep delegating all
+      # existing wrapper arguments to nixpkgs so this can be dropped without
+      # carrying a copy of wrapper.nix when the change reaches the release.
+      wrapFirefox = lib.makeOverridable (
+        wrapperOverrides: browser:
+        let
+          upstreamWrapper = (prev.wrapFirefox.override wrapperOverrides) browser;
+          wrapper =
+            args@{
+              appDataDir ? null,
+              ...
+            }:
+            let
+              wrapped = upstreamWrapper (builtins.removeAttrs args [ "appDataDir" ]);
+              result =
+                if appDataDir == null then
+                  wrapped
+                else
+                  wrapped.overrideAttrs (old: {
+                    makeWrapperArgs = (old.makeWrapperArgs or [ ]) ++ [
+                      "--set"
+                      "MOZ_APP_DATA"
+                      appDataDir
+                    ];
+                  });
+            in
+            result;
+          wrapperArgs = lib.functionArgs upstreamWrapper // {
+            appDataDir = true;
+          };
+          overridableWrapper = args: lib.makeOverridable (lib.setFunctionArgs wrapper wrapperArgs) args;
+        in
+        lib.setFunctionArgs overridableWrapper wrapperArgs
+      ) { };
+
       # Keep Telegram Desktop fresh until the update reaches 26.05.
       # https://github.com/NixOS/nixpkgs/pull/543925
       inherit (pkgsNixpkgsUnstable) telegram-desktop;

@@ -5,6 +5,9 @@ in
 {
   system.stateVersion = 5;
 
+  home-manager.users.${config.host.username}.programs.firefox.configPath =
+    "Library/Application Support/org.nixos.firefox";
+
   imports = [
     ./cache-warmer.nix
   ];
