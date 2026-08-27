@@ -12,8 +12,10 @@
       Defaults    timestamp_timeout=30
     '';
 
-    system.defaults.CustomSystemPreferences."/Library/Preferences/com.apple.security.smartcard" = {
-      UserPairing = false;
-    };
+    system.defaults.CustomSystemPreferences."/Library/Preferences/com.apple.security.smartcard" =
+      lib.optionalAttrs (config.host.realm == "home")
+        {
+          UserPairing = false;
+        };
   };
 }
