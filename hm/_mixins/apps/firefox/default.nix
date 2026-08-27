@@ -12,6 +12,21 @@ let
   searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};
   searchEndpoint = searchProvider.endpoint;
   firefoxDohExcludedDomains = [ publicDomain ];
+  # Pin Firefox to the legacy on-disk profile root until we intentionally
+  # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
+  defaultFirefoxConfigPath =
+    if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
+  firefoxConfigPath = config.programs.firefox.configPath;
+  firefoxAppDataDir =
+    if lib.hasPrefix "/" firefoxConfigPath then
+      firefoxConfigPath
+    else
+      "${config.home.homeDirectory}/${firefoxConfigPath}";
+  firefoxPackage =
+    if firefoxConfigPath == defaultFirefoxConfigPath then
+      pkgs.firefox
+    else
+      pkgs.wrapFirefox pkgs.firefox-unwrapped { appDataDir = firefoxAppDataDir; };
 in
 {
   imports = [ ./passkeys.nix ];
@@ -30,9 +45,10 @@ in
 
     programs.firefox = {
       enable = true;
-      # Pin Firefox to the legacy on-disk profile root until we intentionally
-      # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
-      configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
+      # Keep existing profiles in place unless a host explicitly opts into a
+      # different directory. The package wrapper follows the effective value.
+      configPath = lib.mkDefault defaultFirefoxConfigPath;
+      package = lib.mkDefault firefoxPackage;
       profiles.default = {
         search = {
           default = cfg.search.provider;
