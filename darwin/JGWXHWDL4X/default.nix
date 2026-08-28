@@ -50,7 +50,6 @@ in
       maas_glean = maasServer "maas_glean";
       maas_jira = maasServer "maas_jira";
       maas_nvbugs = maasServer "maas_nvbugs";
-      maas_nvinfo = maasServer "maas_nvinfo";
       maas_outlook = maasServer "maas_outlook";
       maas_ovnk = maasServer "maas_ovnk";
       maas_redmine = maasServer "maas_redmine";
