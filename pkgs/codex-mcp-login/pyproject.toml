@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-mcp-login"
+version = "0.1.0"
+description = "Repair expired Codex MCP OAuth credentials"
+requires-python = ">=3.11"
+dependencies = ["pydantic"]
+
+[project.scripts]
+codex-mcp-login = "codex_mcp_login.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+codex_mcp_login = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=codex_mcp_login --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/codex_mcp_login"]
+strict = true
+
+[tool.ruff]
+line-length = 100
