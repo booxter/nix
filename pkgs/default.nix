@@ -10,6 +10,8 @@ in
 
   atomic-file-writes = atomicFileWrites;
 
+  codex-mcp-login = pkgs.callPackage ./codex-mcp-login { };
+
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
   firefox-migrate-app-data = pkgs.callPackage ./firefox-migrate-app-data { };

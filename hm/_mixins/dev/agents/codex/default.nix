@@ -92,6 +92,13 @@ let
     boilerplate such as Summary, Validation, or Testing. No slop. Be brief.
   '';
   codexContext = agentContext + mcps.instructions;
+  oauthServerNames = builtins.attrNames (
+    lib.filterAttrs (_: server: server.oauth != null) cfg.mcp.httpServers
+  );
+  codexMcpLogin = pkgs.codex-mcp-login.override {
+    codex = config.programs.codex.package;
+    serverNames = oauthServerNames;
+  };
 in
 {
   imports = [ ./codex-warmer.nix ];
@@ -117,6 +124,10 @@ in
   };
 
   config = {
+    home.packages = lib.optionals (
+      config.host.hm.env.roles.developer && cfg.enable && oauthServerNames != [ ]
+    ) [ codexMcpLogin ];
+
     host.hm.sketchybar.codex.enable = lib.mkDefault (
       isDarwin && cfg.enable && config.host.hm.sketchybar.enable
     );
