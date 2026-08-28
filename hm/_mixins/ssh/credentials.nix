@@ -21,6 +21,7 @@ let
   yubikeyIdentityConfig = ''
     Match exec "test -z \"$SSH_CONNECTION\""
       IdentityFile ${yubikeyIdentityFile}
+      IdentityFile ${remoteFallbackIdentityFile}
       IdentitiesOnly yes
 
     Match exec "test -n \"$SSH_CONNECTION\""
@@ -48,7 +49,7 @@ in
   config = lib.mkIf enabled (
     lib.mkMerge [
       {
-        programs.ssh.settings."*".AddKeysToAgent = if useSecretive then "no" else "yes";
+        programs.ssh.settings."*".AddKeysToAgent = if useSecretive || useYubikey then "no" else "yes";
       }
       (lib.mkIf useSecretive {
         home.file.".ssh/secretive.pub".text = osConfig.host.ssh.credentials.secretive.publicKey + "\n";
