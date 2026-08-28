@@ -7,6 +7,10 @@ let
   username = config.host.username;
   readPublicKey = import ../../common/_lib/read-public-key.nix { inherit lib; };
   maasServer = name: {
+    instructions = ''
+      Only use the NVInfo MaaS MCP when the user explicitly requests NVIDIA
+      internal information or interaction with NVIDIA internal services.
+    '';
     url.secret = "codex/mcp/${name}/url";
     startupTimeoutSec = 60;
     oauth =
