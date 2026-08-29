@@ -20,7 +20,6 @@
         owner = "atticd";
         group = "atticd";
         mode = "0700";
-        enforce = true;
       };
       directories."." = { };
     };
@@ -30,7 +29,6 @@
       directoryDefaults = {
         group = "media";
         mode = "2775";
-        enforce = true;
       };
       directories = {
         library = { };
