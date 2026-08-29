@@ -44,6 +44,7 @@ in
   ]
   ++ lib.optionals isLinux [
     ./nixos-client.nix
+    ./nixos-cache-provisioning.nix
     ./nixos-server.nix
   ];
 
@@ -112,6 +113,42 @@ in
         type = with lib.types; listOf nonEmptyStr;
         default = [ "nix-cache" ];
         description = "Local DNS aliases published for the Attic HTTPS endpoint.";
+      };
+
+      caches = lib.mkOption {
+        type = lib.types.attrsOf (
+          lib.types.submodule {
+            options = {
+              public = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Whether anonymous clients may pull from this cache.";
+              };
+              priority = lib.mkOption {
+                type = lib.types.int;
+                default = 41;
+                description = "Nix substituter priority advertised by this cache.";
+              };
+              retentionPeriod = lib.mkOption {
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Cache-specific retention period, or null to use the server default.";
+              };
+              storeDir = lib.mkOption {
+                type = lib.types.nonEmptyStr;
+                default = "/nix/store";
+                description = "Nix store directory served by this cache.";
+              };
+              upstreamCacheKeyNames = lib.mkOption {
+                type = with lib.types; nonEmptyListOf nonEmptyStr;
+                default = [ "cache.nixos.org-1" ];
+                description = "Signing key names whose paths clients should avoid uploading.";
+              };
+            };
+          }
+        );
+        default = { };
+        description = "Attic caches created and reconciled by systemd.";
       };
 
       chunking = {

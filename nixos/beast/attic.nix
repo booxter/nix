@@ -18,6 +18,7 @@ in
       environmentFile = config.sops.templates."atticd.env".path;
       localAliases = [ "attic" ];
       inherit storagePath;
+      caches.default.public = true;
       chunking = {
         narSizeThreshold = 256 * 1024;
         minSize = 64 * 1024;
