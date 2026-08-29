@@ -42,7 +42,7 @@
     nur.url = "github:nix-community/NUR";
     nur.inputs.nixpkgs.follows = "nixpkgs";
 
-    proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
 
     disko.url = "github:nix-community/disko/latest";
 
