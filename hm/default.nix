@@ -20,4 +20,6 @@
     ./_mixins/env
   ];
 
+  # Home Manager must not add overlays when using the system package set.
+  stylix.overlays.enable = false;
 }
