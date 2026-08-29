@@ -3,7 +3,6 @@
   system.stateVersion = "25.11";
 
   imports = [
-    ./attic.nix
     ./jellyfin
     ./storage.nix
   ];
