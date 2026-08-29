@@ -80,7 +80,7 @@ in
       group = serviceName;
       mode = "0400";
       content = ''
-        ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64=${config.sops.placeholder.${serverTokenSecret}}
+        ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=${config.sops.placeholder.${serverTokenSecret}}
       '';
       restartUnits = [ "atticd.service" ];
     };
