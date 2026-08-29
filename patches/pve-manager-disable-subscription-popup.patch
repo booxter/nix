@@ -1,10 +1,10 @@
 diff --git a/www/manager6/Workspace.js b/www/manager6/Workspace.js
 --- a/www/manager6/Workspace.js
 +++ b/www/manager6/Workspace.js
-@@ -49,7 +49,7 @@ Ext.define('PVE.StdWorkspace', {
-                 handler: function (data) {
-                     me.login = null;
-                     me.updateLoginData(data);
+@@ -54,7 +54,7 @@ Ext.define('PVE.Workspace', {
+                         sessionStorage.removeItem('openid-deeplink');
+                         Ext.History.add(deeplink);
+                     }
 -                    Proxmox.Utils.checked_command(Ext.emptyFn); // display subscription status
 +                    Ext.emptyFn();
                  },
