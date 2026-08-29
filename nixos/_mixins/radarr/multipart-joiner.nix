@@ -68,7 +68,7 @@ in
             "--interval-seconds"
             "30"
             "--settle-seconds"
-            "180"
+            "60"
             "--request-timeout-seconds"
             "20"
             "--command-timeout-seconds"
