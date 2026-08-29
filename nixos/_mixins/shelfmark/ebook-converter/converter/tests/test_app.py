@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import tempfile
@@ -18,6 +19,7 @@ from srvarr_ebook_converter.app import (
     process_hook_payload,
     shelfmark_hook_main,
     validate_epub,
+    watch_command,
 )
 from srvarr_ebook_converter.metrics import prometheus_metrics
 from srvarr_ebook_converter.models import FileFingerprint, JobState
@@ -515,6 +517,27 @@ class WatchServiceTests(unittest.TestCase):
                 ],
                 3,
             )
+
+    def test_watch_writes_world_readable_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            locks = root / "locks"
+            metrics = root / "metrics.prom"
+            library.mkdir()
+            args = argparse.Namespace(
+                state_file=str(root / "state.json"),
+                library_root=str(library),
+                lock_root=str(locks),
+                settle_seconds=0.0,
+                max_attempts=3,
+                metrics_file=str(metrics),
+                once=True,
+                interval_seconds=0.0,
+            )
+
+            self.assertEqual(watch_command(args), 0)
+            self.assertEqual(metrics.stat().st_mode & 0o777, 0o644)
 
 
 if __name__ == "__main__":

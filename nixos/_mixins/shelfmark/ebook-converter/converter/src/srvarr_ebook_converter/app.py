@@ -441,7 +441,7 @@ def watch_command(args: argparse.Namespace) -> int:
             write_text_atomic(
                 Path(args.metrics_file),
                 prometheus_metrics(store.data, ok, time.time()),
-                mode=0o660,
+                mode=0o644,
             )
         except OSError:
             ok = False

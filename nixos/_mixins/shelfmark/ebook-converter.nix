@@ -24,6 +24,7 @@ in
       "d '${converter.stateDir}' 0770 ${converter.user} ${converter.group} - -"
       "z '${converter.stateDir}' 0770 ${converter.user} ${converter.group} - -"
       "d ${converter.metricsDir} 0755 ${converter.user} ${converter.group} - -"
+      "r /var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"
     ];
 
     host.storage.claims.${model.ebooks.storage.claim}.attachments.ebook-converter = { };
