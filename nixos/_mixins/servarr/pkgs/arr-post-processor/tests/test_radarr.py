@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from arr_post_processor.errors import NeedsAttention, SourceInvalid
+from arr_post_processor.media import safe_component
 from arr_post_processor.media_join import (
     CommandJoinBackend,
     JoinPlan,
@@ -415,6 +416,144 @@ class RadarrServiceTests(unittest.TestCase):
                 metrics,
             )
             self.assertNotIn("host_observability_lidarr_cue_splitter", metrics)
+
+    def test_manual_resolution_cleans_retained_staging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            queue_record = record(source)
+            client = FakeRadarr(queue_record, backend)
+            client.records = []
+            store = StateStore(root / "state.json")
+            job = store.job("download-id", title=queue_record.title)
+            job.status = "awaiting_manual_match"
+            job.updated_at = 100.0
+            job.ready_root = root / "work" / safe_component(job.download_id)
+            job.ready_root.mkdir(parents=True)
+            (job.ready_root / "joined.mkv").write_bytes(b"joined")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                missing_queue_confirmations=2,
+                now=lambda: 100.0,
+            )
+
+            service.iteration()
+            service.iteration()
+            self.assertEqual(job.status, "manual_resolved")
+            self.assertIsNone(job.ready_root)
+            self.assertFalse((root / "work" / safe_component(job.download_id)).exists())
+
+    def test_attention_staging_expires_after_retention(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            queue_record = record(source)
+            client = FakeRadarr(queue_record, backend)
+            store = StateStore(root / "state.json")
+            job = store.job("download-id", title=queue_record.title)
+            job.status = "awaiting_manual_match"
+            job.updated_at = 100.0
+            job.ready_root = root / "work" / safe_component(job.download_id)
+            job.ready_root.mkdir(parents=True)
+            (job.ready_root / "joined.mkv").write_bytes(b"joined")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                attention_staging_retention_seconds=10,
+                now=lambda: 111.0,
+            )
+
+            service.iteration()
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIsNone(job.ready_root)
+            self.assertFalse((root / "work" / safe_component(job.download_id)).exists())
+            self.assertTrue(source.exists())
+
+    def test_interrupted_join_cleans_partial_staging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            queue_record = record(source)
+            client = FakeRadarr(queue_record, backend)
+            store = StateStore(root / "state.json")
+            job = store.job("download-id", title=queue_record.title)
+            job.status = "joining"
+            job.updated_at = 100.0
+            partial_root = root / "work" / safe_component(job.download_id)
+            partial_root.mkdir(parents=True)
+            (partial_root / "partial.mkv").write_bytes(b"partial")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                now=lambda: 101.0,
+            )
+
+            service.iteration()
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIn("service restarted", job.error)
+            self.assertFalse(partial_root.exists())
+            self.assertTrue(source.exists())
+
+    def test_cleanup_refuses_non_job_staging_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            queue_record = record(source)
+            client = FakeRadarr(queue_record, backend)
+            client.records = []
+            outside = root / "outside"
+            outside.mkdir()
+            retained = outside / "keep.mkv"
+            retained.write_bytes(b"keep")
+            store = StateStore(root / "state.json")
+            job = store.job("download-id", title=queue_record.title)
+            job.status = "awaiting_manual_match"
+            job.updated_at = 100.0
+            job.ready_root = outside
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                missing_queue_confirmations=1,
+                now=lambda: 101.0,
+            )
+
+            service.iteration()
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIn("unsafe staging path", job.error)
+            self.assertTrue(retained.exists())
 
     def test_ineligible_and_ambiguous_downloads_are_not_joined(self):
         with tempfile.TemporaryDirectory() as directory:

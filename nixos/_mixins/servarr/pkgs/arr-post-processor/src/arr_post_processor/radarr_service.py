@@ -9,6 +9,7 @@ from typing import Callable
 from atomic_file_writes import write_text_atomic
 
 from .errors import CueSplitterError, NeedsAttention
+from .media import safe_component
 from .media_join import (
     JoinBackend,
     build_join_plan,
@@ -32,6 +33,7 @@ SUPPORTED_PROTOCOLS = {
 }
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
 MISSING_QUEUE_CONFIRMATIONS = 3
+ATTENTION_STAGING_RETENTION_SECONDS = 7 * 86400
 UNABLE_TO_PARSE_FILE = "unable to parse file"
 
 
@@ -48,6 +50,7 @@ class RadarrJoinService:
         settle_seconds: float,
         command_timeout_seconds: float,
         missing_queue_confirmations: int = MISSING_QUEUE_CONFIRMATIONS,
+        attention_staging_retention_seconds: float = ATTENTION_STAGING_RETENTION_SECONDS,
         now: Callable[[], float] = time.time,
         sleep: Callable[[float], None] = time.sleep,
     ):
@@ -60,6 +63,7 @@ class RadarrJoinService:
         self.settle_seconds = settle_seconds
         self.command_timeout_seconds = command_timeout_seconds
         self.missing_queue_confirmations = missing_queue_confirmations
+        self.attention_staging_retention_seconds = attention_staging_retention_seconds
         self.now = now
         self.sleep = sleep
 
@@ -84,6 +88,27 @@ class RadarrJoinService:
         LOG.warning(
             "multipart job needs attention: download_id=%s error=%s", job.download_id, error
         )
+
+    def cleanup_job_staging(self, job: Job) -> None:
+        expected = self.work_root / safe_component(job.download_id)
+        if job.ready_root is not None and job.ready_root.resolve() != expected:
+            raise NeedsAttention(f"refusing to clean an unsafe staging path: {job.ready_root}")
+        if expected.resolve() != expected:
+            raise NeedsAttention(f"refusing to clean an unsafe staging path: {expected}")
+        if expected.exists():
+            shutil.rmtree(expected)
+        job.ready_root = None
+
+    def expire_attention_staging(self, now: float) -> None:
+        for job in self.store.state.jobs.values():
+            if job.status != "awaiting_manual_match" or job.updated_at is None:
+                continue
+            if now - job.updated_at < self.attention_staging_retention_seconds:
+                continue
+            try:
+                self.cleanup_job_staging(job)
+            except NeedsAttention as error:
+                self.mark_attention(job, str(error), now)
 
     def wait_for_import(self, client: Radarr, command_id: int) -> None:
         deadline = time.monotonic() + self.command_timeout_seconds
@@ -238,11 +263,11 @@ class RadarrJoinService:
                     self.mark_attention(job, "completed import has no staging path", now)
                     continue
                 if job.ready_root is not None:
-                    if not job.ready_root.is_relative_to(self.work_root):
-                        self.mark_attention(job, "refusing to clean an unsafe staging path", now)
+                    try:
+                        self.cleanup_job_staging(job)
+                    except NeedsAttention as error:
+                        self.mark_attention(job, str(error), now)
                         continue
-                    if job.ready_root.exists():
-                        shutil.rmtree(job.ready_root)
                 job.status = "complete"
                 job.updated_at = now
                 self.store.state.totals.success += 1
@@ -251,12 +276,23 @@ class RadarrJoinService:
                 started = job.started_at if job.started_at is not None else now
                 self.store.state.last_duration = max(0.0, now - started)
             else:
+                try:
+                    self.cleanup_job_staging(job)
+                except NeedsAttention as error:
+                    self.mark_attention(job, str(error), now)
+                    continue
                 job.status = "manual_resolved"
                 job.updated_at = now
 
     def recover_interrupted(self, now: float) -> None:
         for job in self.store.state.jobs.values():
             if job.status in PROCESSING_JOB_STATES | {"joining"}:
+                if job.status == "joining":
+                    try:
+                        self.cleanup_job_staging(job)
+                    except NeedsAttention as error:
+                        self.mark_attention(job, str(error), now)
+                        continue
                 self.mark_attention(
                     job, "service restarted while multipart media was processing", now
                 )
@@ -268,6 +304,7 @@ class RadarrJoinService:
         queued_ids = {record.download_id for record in records if record.download_id}
         self.recover_interrupted(now)
         self.reconcile(queued_ids, now)
+        self.expire_attention_staging(now)
         ready: list[tuple[RadarrQueueRecord, Job]] = []
         for record in records:
             if not self.eligible_record(record):
