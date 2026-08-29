@@ -158,18 +158,20 @@ class RadarrJoinService:
         job.updated_at = self.now()
         job.error = ""
 
-    def process(self, client: Radarr, record: RadarrQueueRecord, job: Job, now: float) -> None:
+    def observe(self, record: RadarrQueueRecord, job: Job, now: float) -> bool:
         if record.output_path is None:
             raise CueSplitterError("Radarr queue record does not contain an output path")
         current_fingerprint = download_fingerprint(record.output_path)
         if current_fingerprint != job.fingerprint:
             job.fingerprint = current_fingerprint
+            job.status = "settling"
             job.discovered_at = now
             job.updated_at = now
-            return
+            return False
         discovered_at = job.discovered_at if job.discovered_at is not None else now
-        if now - discovered_at < self.settle_seconds:
-            return
+        return now - discovered_at >= self.settle_seconds
+
+    def process(self, client: Radarr, record: RadarrQueueRecord, job: Job, now: float) -> None:
         movie = client.movie(record.movie_id)
         if self.has_only_filename_parse_failures(record):
             single_file = build_single_file_plan(record, movie, self.allowed_roots, self.backend)
@@ -282,26 +284,33 @@ class RadarrJoinService:
         queued_ids = {record.download_id for record in records if record.download_id}
         self.recover_interrupted(now)
         self.reconcile(queued_ids, now)
+        ready: list[tuple[RadarrQueueRecord, Job]] = []
+        for record in records:
+            if not self.eligible_record(record):
+                continue
+            job = self.store.job(record.download_id, title=record.title)
+            if job.status in {
+                "awaiting_manual_match",
+                "awaiting_queue_removal",
+                "complete",
+                "manual_resolved",
+            }:
+                continue
+            if job.status == "ignored" and job.resolution == "unsupported":
+                continue
+            try:
+                if self.observe(record, job, now):
+                    ready.append((record, job))
+            except Exception as error:
+                LOG.exception(
+                    "multipart job observation failed: download_id=%s", record.download_id
+                )
+                self.mark_attention(job, str(error), now)
         if not any(
             job.status in PROCESSING_JOB_STATES | {"joining"}
             for job in self.store.state.jobs.values()
         ):
-            for record in records:
-                if not self.eligible_record(record):
-                    continue
-                job = self.store.job(record.download_id, title=record.title)
-                if job.status in {
-                    "awaiting_manual_match",
-                    "awaiting_queue_removal",
-                    "complete",
-                    "manual_resolved",
-                }:
-                    continue
-                if job.status == "ignored" and job.resolution == "unsupported":
-                    continue
-                if job.status == "unknown":
-                    job.status = "settling"
-                    job.discovered_at = now
+            for record, job in ready:
                 try:
                     self.process(client, record, job, now)
                 except Exception as error:

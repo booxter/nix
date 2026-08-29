@@ -313,6 +313,49 @@ class FakeRadarr:
 
 
 class RadarrServiceTests(unittest.TestCase):
+    def test_all_candidates_settle_concurrently_but_process_one_per_iteration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            backend = make_parts(first, ["random-a.mp4", "random-b.mp4"], [3600, 3600])
+            backend.probes.update(
+                make_parts(second, ["other-a.mp4", "other-b.mp4"], [3600, 3600]).probes
+            )
+            first_record = record(first, download_id="first-id", title="First")
+            second_record = record(second, download_id="second-id", title="Second")
+            client = FakeRadarr(first_record, backend)
+            client.records = [first_record, second_record]
+            current = [100.0]
+            store = StateStore(root / "state.json")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=30,
+                command_timeout_seconds=1,
+                now=lambda: current[0],
+            )
+
+            service.iteration()
+            self.assertEqual(store.state.jobs["first-id"].status, "settling")
+            self.assertEqual(store.state.jobs["second-id"].status, "settling")
+            self.assertEqual(store.state.jobs["first-id"].discovered_at, 100.0)
+            self.assertEqual(store.state.jobs["second-id"].discovered_at, 100.0)
+
+            current[0] += 31
+            service.iteration()
+            self.assertEqual(store.state.jobs["first-id"].status, "ignored")
+            self.assertEqual(store.state.jobs["second-id"].status, "settling")
+
+            service.iteration()
+            self.assertEqual(store.state.jobs["second-id"].status, "ignored")
+
     def test_full_join_import_and_cleanup_lifecycle(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
