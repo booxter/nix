@@ -65,6 +65,12 @@ class JoinPlan:
         return sum(probe.duration_seconds for probe in self.probes)
 
 
+@dataclass(frozen=True)
+class SingleFilePlan:
+    path: Path
+    probe: MediaProbe
+
+
 class JoinBackend(Protocol):
     def probe(self, path: Path) -> MediaProbe: ...
 
@@ -236,7 +242,45 @@ def build_join_plan(
     )
 
 
+def build_single_file_plan(
+    record: RadarrQueueRecord,
+    movie: RadarrMovie,
+    allowed_roots: list[Path],
+    backend: JoinBackend,
+) -> SingleFilePlan | None:
+    if record.output_path is None:
+        return None
+    output_path = record.output_path.resolve()
+    if not is_within(output_path, allowed_roots):
+        raise NeedsAttention(f"download path is outside allowed roots: {output_path}")
+    if output_path.is_file():
+        videos = [output_path] if output_path.suffix.lower() in VIDEO_SUFFIXES else []
+    elif output_path.is_dir():
+        videos = sorted(
+            path.resolve()
+            for path in output_path.rglob("*")
+            if path.is_file() and path.suffix.lower() in VIDEO_SUFFIXES
+        )
+    else:
+        return None
+    if len(videos) != 1 or not is_within(videos[0], allowed_roots) or movie.runtime <= 0:
+        return None
+    media_probe = backend.probe(videos[0])
+    expected = float(movie.runtime * 60)
+    tolerance = max(300.0, expected * 0.05)
+    if abs(media_probe.duration_seconds - expected) > tolerance:
+        return None
+    return SingleFilePlan(path=videos[0], probe=media_probe)
+
+
 def download_fingerprint(output_path: Path) -> str:
+    if output_path.is_file():
+        try:
+            stat = output_path.stat()
+        except OSError as error:
+            return f"unreadable:{output_path}:{error}"
+        entry = f"{output_path.name}\0{stat.st_size}\0{stat.st_mtime_ns}"
+        return hashlib.sha256(entry.encode()).hexdigest()
     if not output_path.is_dir():
         return f"missing:{output_path}"
     entries = []

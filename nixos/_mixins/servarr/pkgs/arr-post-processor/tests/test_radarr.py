@@ -12,6 +12,7 @@ from arr_post_processor.media_join import (
     JoinPlan,
     MediaProbe,
     build_join_plan,
+    build_single_file_plan,
     download_fingerprint,
     ordered_primary_parts,
     prepare_joined_media,
@@ -23,6 +24,7 @@ from arr_post_processor.radarr_models import (
     RadarrManualImportFile,
     RadarrMovie,
     RadarrQueueRecord,
+    Rejection,
 )
 from arr_post_processor.radarr_service import RadarrJoinService
 from arr_post_processor.state import StateStore
@@ -50,6 +52,12 @@ def record(path: Path, **changes: object) -> RadarrQueueRecord:
         "movie_id": 42,
         "tracked_download_status": "warning",
         "tracked_download_state": "importBlocked",
+        "status_messages": [
+            {
+                "title": path.name,
+                "messages": ["File is suspected multi-part file, Radarr doesn't support this"],
+            }
+        ],
         "quality": {"quality": {"id": 7, "name": "Bluray-1080p"}},
     }
     values.update(changes)
@@ -162,6 +170,28 @@ class FilenamePlanningTests(unittest.TestCase):
             with self.assertRaisesRegex(NeedsAttention, "outside allowed roots"):
                 build_join_plan(record(root), movie(), [root / "other"], backend)
 
+    def test_single_file_plan_requires_one_runtime_matched_video(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "MisBehavin 1080p.mkv"
+            source.write_bytes(b"media")
+            backend = FakeBackend({source.resolve(): probe(5042.8)})
+            plan = build_single_file_plan(record(source), movie(84), [root], backend)
+            self.assertIsNotNone(plan)
+            self.assertEqual(plan.path if plan is not None else None, source.resolve())
+            self.assertNotEqual(download_fingerprint(source), f"missing:{source}")
+
+            backend.probes[source.resolve()] = probe(3600)
+            self.assertIsNone(build_single_file_plan(record(source), movie(84), [root], backend))
+
+            second = root / "second.mkv"
+            second.write_bytes(b"media")
+            backend.probes[second.resolve()] = probe(5040)
+            self.assertIsNone(build_single_file_plan(record(root), movie(84), [root], backend))
+
+            with self.assertRaisesRegex(NeedsAttention, "outside allowed roots"):
+                build_single_file_plan(record(source), movie(84), [root / "other"], backend)
+
 
 class CommandBackendTests(unittest.TestCase):
     def test_probe_and_join_commands(self):
@@ -264,7 +294,7 @@ class FakeRadarr:
         return movie()
 
     def manual_import(self, folder, queue_record):
-        output = next(folder.iterdir())
+        output = folder if folder.is_file() else next(folder.iterdir())
         return [
             RadarrManualImportCandidate(
                 path=output,
@@ -363,6 +393,188 @@ class RadarrServiceTests(unittest.TestCase):
             self.assertFalse(
                 service.eligible_record(record(source, tracked_download_state="importPending"))
             )
+
+    def test_single_unparseable_file_is_imported_without_modifying_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "MisBehavin 1080p.mkv"
+            source.write_bytes(b"media")
+            backend = FakeBackend({source.resolve(): probe(5042.8)})
+            queue_record = record(
+                source,
+                status_messages=[{"title": source.name, "messages": ["Unable to parse file"]}],
+            )
+
+            class ParseFailureRadarr(FakeRadarr):
+                def manual_import(self, folder, queue_record):
+                    return [
+                        RadarrManualImportCandidate(
+                            path=source,
+                            movie=movie(84),
+                            quality=None,
+                            languages=None,
+                            release_group=None,
+                            download_id=queue_record.download_id,
+                            rejections=[Rejection(reason="Unable to parse file")],
+                        )
+                    ]
+
+                def movie(self, movie_id):
+                    assert movie_id == 42
+                    return movie(84)
+
+            client = ParseFailureRadarr(queue_record, backend)
+            current = [1000.0]
+            store = StateStore(root / "state.json")
+            migrated_job = store.job("download-id", title=queue_record.title)
+            migrated_job.status = "ignored"
+            migrated_job.fingerprint = download_fingerprint(source)
+            migrated_job.discovered_at = current[0] - 31
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=30,
+                command_timeout_seconds=10,
+                missing_queue_confirmations=2,
+                now=lambda: current[0],
+                sleep=lambda _seconds: None,
+            )
+
+            service.iteration()
+            job = store.state.jobs["download-id"]
+            self.assertEqual(job.status, "awaiting_queue_removal")
+            self.assertEqual(job.resolution, "single_file_import")
+            self.assertFalse(backend.joined)
+            self.assertTrue(source.exists())
+            self.assertIsNotNone(client.imported)
+            self.assertEqual(client.imported.path if client.imported else None, source.resolve())
+            self.assertEqual(client.imported.movie_id if client.imported else None, 42)
+            self.assertEqual(
+                client.imported.quality if client.imported else None,
+                queue_record.quality,
+            )
+
+            client.records = []
+            service.iteration()
+            service.iteration()
+            self.assertEqual(job.status, "complete")
+            self.assertTrue(source.exists())
+            self.assertEqual(store.state.totals.success, 1)
+
+    def test_single_file_recovery_rejects_ambiguous_or_other_failures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "movie.mkv"
+            source.write_bytes(b"media")
+            backend = FakeBackend({source.resolve(): probe(7200)})
+            current = [100.0]
+
+            for messages in (
+                [{"title": source.name, "messages": ["Not a preferred word upgrade"]}],
+                [
+                    {
+                        "title": source.name,
+                        "messages": ["Unable to parse file", "Not an upgrade"],
+                    }
+                ],
+            ):
+                with self.subTest(messages=messages):
+                    queue_record = record(source, status_messages=messages)
+                    client = FakeRadarr(queue_record, backend)
+                    store = StateStore(root / f"state-{len(messages[0]['messages'])}.json")
+                    service = RadarrJoinService(
+                        client_factory=lambda: client,
+                        backend=backend,
+                        store=store,
+                        allowed_roots=[root],
+                        work_root=root / "work",
+                        metrics_file=root / "metrics.prom",
+                        settle_seconds=0,
+                        command_timeout_seconds=1,
+                        now=lambda: current[0],
+                    )
+                    service.iteration()
+                    service.iteration()
+                    self.assertEqual(store.state.jobs["download-id"].status, "ignored")
+                    self.assertIsNone(client.imported)
+
+    def test_single_file_recovery_requires_matching_manual_candidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "movie.mkv"
+            source.write_bytes(b"media")
+            backend = FakeBackend({source.resolve(): probe(7200)})
+            queue_record = record(
+                source,
+                status_messages=[{"title": source.name, "messages": ["Unable to parse file"]}],
+            )
+
+            class WrongCandidateRadarr(FakeRadarr):
+                def manual_import(self, folder, queue_record):
+                    return [
+                        RadarrManualImportCandidate(
+                            path=source,
+                            movie=RadarrMovie(id=99, title="Wrong Movie", year=2020, runtime=120),
+                            rejections=[Rejection(reason="Unable to parse file")],
+                        )
+                    ]
+
+            client = WrongCandidateRadarr(queue_record, backend)
+            store = StateStore(root / "state.json")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                now=lambda: 100.0,
+            )
+            service.iteration()
+            service.iteration()
+            job = store.state.jobs["download-id"]
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIn("did not uniquely match", job.error)
+            self.assertIsNone(client.imported)
+
+            class OtherRejectionRadarr(FakeRadarr):
+                def manual_import(self, folder, queue_record):
+                    return [
+                        RadarrManualImportCandidate(
+                            path=source,
+                            movie=movie(),
+                            rejections=[
+                                Rejection(reason="Unable to parse file"),
+                                Rejection(reason="Not an upgrade"),
+                            ],
+                        )
+                    ]
+
+            client = OtherRejectionRadarr(queue_record, backend)
+            store = StateStore(root / "other-rejection-state.json")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                now=lambda: 100.0,
+            )
+            service.iteration()
+            service.iteration()
+            job = store.state.jobs["download-id"]
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIn("rejections other than filename parsing", job.error)
+            self.assertIsNone(client.imported)
 
 
 if __name__ == "__main__":

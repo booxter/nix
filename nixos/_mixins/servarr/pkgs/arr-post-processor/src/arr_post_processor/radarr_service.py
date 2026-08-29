@@ -12,6 +12,7 @@ from .errors import CueSplitterError, NeedsAttention
 from .media_join import (
     JoinBackend,
     build_join_plan,
+    build_single_file_plan,
     download_fingerprint,
     prepare_joined_media,
 )
@@ -31,6 +32,7 @@ SUPPORTED_PROTOCOLS = {
 }
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
 MISSING_QUEUE_CONFIRMATIONS = 3
+UNABLE_TO_PARSE_FILE = "unable to parse file"
 
 
 class RadarrJoinService:
@@ -98,6 +100,64 @@ class RadarrJoinService:
             self.sleep(2.0)
         raise NeedsAttention(f"Radarr manual-import command {command_id} timed out")
 
+    @staticmethod
+    def has_only_filename_parse_failures(record: RadarrQueueRecord) -> bool:
+        reasons = [
+            reason.strip().lower()
+            for status in record.status_messages
+            for reason in status.messages
+            if reason.strip()
+        ]
+        return bool(reasons) and all(reason == UNABLE_TO_PARSE_FILE for reason in reasons)
+
+    def import_single_file(
+        self,
+        client: Radarr,
+        record: RadarrQueueRecord,
+        job: Job,
+        movie_id: int,
+        path: Path,
+        now: float,
+    ) -> None:
+        if record.output_path is None:
+            raise CueSplitterError("Radarr queue record does not contain an output path")
+        candidates = [
+            candidate
+            for candidate in client.manual_import(record.output_path, record)
+            if candidate.path.resolve() == path.resolve()
+        ]
+        if len(candidates) != 1 or candidates[0].movie.id != movie_id:
+            raise NeedsAttention("Radarr did not uniquely match the single file to its queue item")
+        candidate = candidates[0]
+        rejections = [rejection.reason.strip().lower() for rejection in candidate.rejections]
+        if not rejections or any(reason != UNABLE_TO_PARSE_FILE for reason in rejections):
+            raise NeedsAttention(
+                "Radarr manual-import candidate has rejections other than filename parsing"
+            )
+        quality = candidate.quality or record.quality
+        if not quality:
+            raise NeedsAttention("Radarr did not provide a quality for the single file")
+        job.status = "importing"
+        job.started_at = now
+        job.updated_at = self.now()
+        job.resolution = "single_file_import"
+        self.store.save()
+        command_id = client.submit_manual_import(
+            RadarrManualImportFile(
+                path=path,
+                movie_id=movie_id,
+                quality=quality,
+                languages=candidate.languages or [],
+                release_group=candidate.release_group or "",
+                download_id=record.download_id,
+            )
+        )
+        job.command_id = command_id
+        self.wait_for_import(client, command_id)
+        job.status = "awaiting_queue_removal"
+        job.updated_at = self.now()
+        job.error = ""
+
     def process(self, client: Radarr, record: RadarrQueueRecord, job: Job, now: float) -> None:
         if record.output_path is None:
             raise CueSplitterError("Radarr queue record does not contain an output path")
@@ -111,18 +171,34 @@ class RadarrJoinService:
         if now - discovered_at < self.settle_seconds:
             return
         movie = client.movie(record.movie_id)
+        if self.has_only_filename_parse_failures(record):
+            single_file = build_single_file_plan(record, movie, self.allowed_roots, self.backend)
+            if single_file is not None:
+                self.import_single_file(
+                    client,
+                    record,
+                    job,
+                    movie.id,
+                    single_file.path,
+                    now,
+                )
+                return
         plan = build_join_plan(record, movie, self.allowed_roots, self.backend)
         if plan is None:
             if job.status != "ignored":
                 self.store.state.totals.ignored += 1
             job.status = "ignored"
             job.updated_at = now
-            job.error = "download is not an unambiguous runtime-matched multipart movie"
+            job.error = (
+                "download is not an unambiguous runtime-matched single-file or multipart movie"
+            )
+            job.resolution = "unsupported"
             return
         job.status = "joining"
         job.started_at = now
         job.updated_at = now
         job.tracks = len(plan.parts)
+        job.resolution = "multipart_join"
         self.store.save()
         output = prepare_joined_media(record, movie, plan, self.work_root, self.backend)
         job.status = "matching"
@@ -150,8 +226,8 @@ class RadarrJoinService:
                 path=output,
                 movie_id=movie.id,
                 quality=quality,
-                languages=candidate.languages,
-                release_group=candidate.release_group,
+                languages=candidate.languages or [],
+                release_group=candidate.release_group or "",
                 download_id=record.download_id,
             )
         )
@@ -172,11 +248,15 @@ class RadarrJoinService:
             if job.missing_queue_observations < self.missing_queue_confirmations:
                 continue
             if job.status == "awaiting_queue_removal":
-                if job.ready_root is None or not job.ready_root.is_relative_to(self.work_root):
-                    self.mark_attention(job, "refusing to clean an unsafe staging path", now)
+                if job.ready_root is None and job.resolution != "single_file_import":
+                    self.mark_attention(job, "completed import has no staging path", now)
                     continue
-                if job.ready_root.exists():
-                    shutil.rmtree(job.ready_root)
+                if job.ready_root is not None:
+                    if not job.ready_root.is_relative_to(self.work_root):
+                        self.mark_attention(job, "refusing to clean an unsafe staging path", now)
+                        continue
+                    if job.ready_root.exists():
+                        shutil.rmtree(job.ready_root)
                 job.status = "complete"
                 job.updated_at = now
                 self.store.state.totals.success += 1
@@ -214,9 +294,10 @@ class RadarrJoinService:
                     "awaiting_manual_match",
                     "awaiting_queue_removal",
                     "complete",
-                    "ignored",
                     "manual_resolved",
                 }:
+                    continue
+                if job.status == "ignored" and job.resolution == "unsupported":
                     continue
                 if job.status == "unknown":
                     job.status = "settling"

@@ -39,7 +39,7 @@ in
     ];
 
     systemd.services.arr-post-processor-radarr = {
-      description = "Join stalled multipart Radarr downloads and import the result";
+      description = "Recover stalled Radarr downloads and import the result";
       wantedBy = [ "multi-user.target" ];
       wants = serviceDeps;
       after = serviceDeps;

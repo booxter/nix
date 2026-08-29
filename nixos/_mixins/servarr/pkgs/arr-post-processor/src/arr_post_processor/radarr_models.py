@@ -10,6 +10,11 @@ class ApiModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="ignore")
 
 
+class RadarrStatusMessage(ApiModel):
+    title: str = ""
+    messages: list[str] = Field(default_factory=list)
+
+
 class RadarrQueueRecord(ApiModel):
     id: int | None = None
     download_id: str = ""
@@ -20,6 +25,7 @@ class RadarrQueueRecord(ApiModel):
     movie_id: int = 0
     tracked_download_status: str = ""
     tracked_download_state: str = ""
+    status_messages: list[RadarrStatusMessage] = Field(default_factory=list)
     quality: dict[str, JsonValue] = Field(default_factory=dict)
 
     @field_validator("protocol", mode="before")
@@ -43,9 +49,9 @@ class Rejection(ApiModel):
 class RadarrManualImportCandidate(ApiModel):
     path: Path
     movie: RadarrMovie
-    quality: dict[str, JsonValue] = Field(default_factory=dict)
-    languages: list[dict[str, JsonValue]] = Field(default_factory=list)
-    release_group: str = ""
+    quality: dict[str, JsonValue] | None = None
+    languages: list[dict[str, JsonValue]] | None = None
+    release_group: str | None = None
     download_id: str = ""
     rejections: list[Rejection] = Field(default_factory=list)
 
