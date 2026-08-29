@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   ...
 }:
 let
@@ -9,6 +10,8 @@ in
   system.stateVersion = "25.11";
 
   host.attic.server.storagePath = nfsPath;
+
+  services.atticd.settings.garbage-collection.interval = lib.mkForce "0 seconds";
 
   host.proxmox.guest = {
     cores = 16;
