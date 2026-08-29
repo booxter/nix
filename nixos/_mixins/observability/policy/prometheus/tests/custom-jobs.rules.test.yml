@@ -378,7 +378,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}'
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter/ebook-converter.prom"}'
         values: "0x22"
     alert_rule_test:
       - eval_time: 10m
@@ -389,7 +389,7 @@ tests:
           - exp_labels:
               alertname: EbookConverterMetricsStale
               category: media
-              file: /var/lib/prometheus-node-exporter-textfile/ebook-converter.prom
+              file: /var/lib/prometheus-node-exporter-textfile/ebook-converter/ebook-converter.prom
               instance: srvarr
               job: node-mtls
               severity: warning

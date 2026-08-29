@@ -156,7 +156,7 @@ groups:
           summary: "Ebook converter failing on srvarr"
           description: "The ebook converter on srvarr has been reporting unsuccessful iterations for 10 minutes."
       - alert: EbookConverterMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}) > 300
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter/ebook-converter.prom"}) > 300
         for: 5m
         labels:
           severity: warning

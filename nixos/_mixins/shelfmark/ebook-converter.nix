@@ -12,6 +12,8 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
+    host.observability.nodeExporter.textfile.directories.ebook-converter = converter.metricsDir;
+
     users.users.${converter.user} = {
       group = converter.group;
       home = "/var/empty";
@@ -21,7 +23,7 @@ in
     systemd.tmpfiles.rules = [
       "d '${converter.stateDir}' 0770 ${converter.user} ${converter.group} - -"
       "z '${converter.stateDir}' 0770 ${converter.user} ${converter.group} - -"
-      "z ${converter.metricsDir} 0775 root ${converter.group} - -"
+      "d ${converter.metricsDir} 0755 ${converter.user} ${converter.group} - -"
     ];
 
     host.storage.claims.${model.ebooks.storage.claim}.attachments.ebook-converter = { };
