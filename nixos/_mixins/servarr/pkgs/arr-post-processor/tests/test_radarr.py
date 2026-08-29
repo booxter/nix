@@ -326,6 +326,15 @@ class RadarrServiceTests(unittest.TestCase):
             self.assertEqual(store.state.totals.success, 1)
             self.assertEqual(store.state.totals.tracks, 2)
 
+            service.write_metrics(ok=True)
+            metrics = (root / "metrics.prom").read_text(encoding="utf-8")
+            self.assertIn("host_observability_radarr_multipart_joiner_ok 1.0", metrics)
+            self.assertIn(
+                'host_observability_radarr_multipart_joiner_jobs_total{result="success"} 1.0',
+                metrics,
+            )
+            self.assertNotIn("host_observability_lidarr_cue_splitter", metrics)
+
     def test_ineligible_and_ambiguous_downloads_are_not_joined(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

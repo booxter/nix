@@ -22,6 +22,7 @@ from .state import PROCESSING_JOB_STATES, Job, StateStore
 
 
 LOG = logging.getLogger("arr-post-processor.radarr-media-join")
+METRICS_PREFIX = "host_observability_radarr_multipart_joiner"
 SUPPORTED_PROTOCOLS = {
     "torrent",
     "torrentdownloadprotocol",
@@ -232,6 +233,11 @@ class RadarrJoinService:
     def write_metrics(self, ok: bool) -> None:
         write_text_atomic(
             self.metrics_file,
-            render_metrics(self.store.state, ok=ok, now=self.now()),
+            render_metrics(
+                self.store.state,
+                ok=ok,
+                now=self.now(),
+                prefix=METRICS_PREFIX,
+            ),
             mode=0o644,
         )

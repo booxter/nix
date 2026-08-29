@@ -389,13 +389,13 @@ class CueSplitterTests(unittest.TestCase):
             store.state.totals.tracks = 24
             metrics = render_metrics(store.state, ok=True, now=1234.0)
             self.assertEqual(
-                metric_value(metrics, "host_observability_arr_post_processor_ok"),
+                metric_value(metrics, "host_observability_lidarr_cue_splitter_ok"),
                 1,
             )
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_arr_post_processor_jobs",
+                    "host_observability_lidarr_cue_splitter_jobs",
                     {"state": "awaiting_manual_match"},
                 ),
                 1,
@@ -403,13 +403,13 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_arr_post_processor_jobs_total",
+                    "host_observability_lidarr_cue_splitter_jobs_total",
                     {"result": "success"},
                 ),
                 3,
             )
             self.assertEqual(
-                metric_value(metrics, "host_observability_arr_post_processor_tracks_total"),
+                metric_value(metrics, "host_observability_lidarr_cue_splitter_tracks_total"),
                 24,
             )
 
@@ -913,7 +913,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_arr_post_processor_jobs",
+                    "host_observability_lidarr_cue_splitter_jobs",
                     {"state": "dismissed"},
                 ),
                 1,
@@ -921,7 +921,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_arr_post_processor_jobs",
+                    "host_observability_lidarr_cue_splitter_jobs",
                     {"state": "needs_attention"},
                 ),
                 0,
