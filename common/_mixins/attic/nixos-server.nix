@@ -17,17 +17,6 @@ in
 {
   config = lib.mkIf isServer {
     host = {
-      autoUpgrade.claims.attic-server = {
-        switch = {
-          cadence = "weekly";
-          weekday = "Tue";
-        };
-        reboot = {
-          cadence = "weekly";
-          weekday = "Tue";
-        };
-      };
-
       backups.sources.attic = {
         title = "Attic";
         database = {
