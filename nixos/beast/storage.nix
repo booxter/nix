@@ -13,13 +13,22 @@
   };
 
   host.storage.resources = {
+    attic = {
+      volume = "bulk";
+      relativePath = "attic";
+      directoryDefaults = {
+        owner = "atticd";
+        group = "atticd";
+        mode = "0700";
+      };
+      directories."." = { };
+    };
     media = {
       volume = "bulk";
       relativePath = "Media";
       directoryDefaults = {
         group = "media";
         mode = "2775";
-        enforce = true;
       };
       directories = {
         library = { };
@@ -29,13 +38,6 @@
       };
       nfs = {
         fsid = 10;
-      };
-    };
-    nixCache = {
-      volume = "bulk";
-      relativePath = "nix-cache";
-      nfs = {
-        fsid = 11;
       };
     };
     paperless = {

@@ -112,7 +112,6 @@ let
         ;
       inherit (resource) resourceName;
       mode = if directory.mode == null then defaults.mode else directory.mode;
-      enforce = if directory.enforce == null then defaults.enforce else directory.enforce;
       absolutePath = if path == "." then resource.sourcePath else "${resource.sourcePath}/${path}";
     };
   resourceDirectories = lib.concatLists (

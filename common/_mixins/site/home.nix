@@ -20,10 +20,6 @@ lib.mkIf (config.host.site.name == "home") {
           address = "192.168.16.3";
           macAddress = "bc:fc:e7:3b:fe:da";
         };
-        cache = {
-          address = "192.168.20.7";
-          macAddress = "bc:24:11:0d:85:41";
-        };
         fana = {
           address = "192.168.13.110";
           macAddress = "bc:24:11:06:e8:8b";

@@ -1,5 +1,11 @@
 {
   beast = {
+    atticd = {
+      declaration = {
+        internal.serverName = "attic.home.arpa";
+        observability.importance = "important";
+      };
+    };
     jellyfin = {
       declaration = {
         upstream = "http://127.0.0.1:8096";
@@ -42,11 +48,6 @@
           section = "media-admin";
         };
       };
-    };
-  };
-  cache = {
-    atticd = {
-      declaration.internal.serverName = "nix-cache.home.arpa";
     };
   };
   fana = {

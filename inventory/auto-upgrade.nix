@@ -49,13 +49,6 @@
       };
     };
     builder3 = {
-      switch = "Mon 04:50";
-      reboot = {
-        mode = "with-upgrade";
-        calendar = null;
-      };
-    };
-    cache = {
       switch = "Tue 03:30";
       reboot = {
         mode = "with-upgrade";
@@ -63,28 +56,28 @@
       };
     };
     fana = {
-      switch = "05:15";
+      switch = "04:10";
       reboot = {
         mode = "with-upgrade";
         calendar = null;
       };
     };
     frame = {
-      switch = "Mon 05:30";
+      switch = "Tue 04:10";
       reboot = {
         mode = "never";
         calendar = null;
       };
     };
     gw = {
-      switch = "05:15";
+      switch = "04:10";
       reboot = {
         mode = "with-upgrade";
         calendar = null;
       };
     };
     home = {
-      switch = "05:15";
+      switch = "04:10";
       reboot = {
         mode = "with-upgrade";
         calendar = null;
@@ -112,7 +105,7 @@
       };
     };
     pki = {
-      switch = "05:15";
+      switch = "04:10";
       reboot = {
         mode = "with-upgrade";
         calendar = null;

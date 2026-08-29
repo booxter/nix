@@ -47,7 +47,6 @@ pkgs.testers.runNixOSTest {
             owner = "root";
             group = "media";
             mode = "0755";
-            enforce = false;
           };
         };
         volumes.durable = {

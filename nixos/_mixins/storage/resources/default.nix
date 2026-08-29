@@ -23,11 +23,6 @@ let
         default = null;
         description = "Directory mode, or null to inherit the resource default.";
       };
-      enforce = lib.mkOption {
-        type = with lib.types; nullOr bool;
-        default = null;
-        description = "Whether tmpfiles enforces ownership and mode on existing paths.";
-      };
     };
   };
 in
@@ -65,10 +60,6 @@ in
                 mode = lib.mkOption {
                   type = lib.types.strMatching "[0-7]{4}";
                   default = "0755";
-                };
-                enforce = lib.mkOption {
-                  type = lib.types.bool;
-                  default = false;
                 };
               };
               directories = lib.mkOption {

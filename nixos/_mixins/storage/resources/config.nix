@@ -66,10 +66,7 @@ let
     "${claim.resolvedResource.sourcePath} ${siteNetwork.addressFor claim.clientName}(${lib.concatStringsSep "," (exportOptions claim.resolvedResource)})"
   ) model.providedRemoteClaims;
   directoryRules = map (
-    directory:
-    "${
-      if directory.enforce then "z" else "d"
-    } ${directory.absolutePath} ${directory.mode} ${directory.owner} ${directory.group} - -"
+    directory: "d ${directory.absolutePath} ${directory.mode} ${directory.owner} ${directory.group} - -"
   ) model.uniqueDirectories;
   providedBackingMounts = lib.unique (
     map (claim: claim.resolvedResource.backingMount) model.providedRemoteClaims
