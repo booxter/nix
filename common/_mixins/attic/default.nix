@@ -54,9 +54,8 @@ in
           lib.mkOption {
             type = lib.types.bool;
             default = localServer != null;
-            readOnly = true;
             internal = true;
-            description = "Whether this host is registered as an Attic binary cache server.";
+            description = "Whether to run an Attic binary cache server.";
           }
         else
           lib.mkOption {
@@ -69,7 +68,7 @@ in
 
       endpoint = lib.mkOption {
         type = with lib.types; nullOr nonEmptyStr;
-        default = if isLinux && config.host.attic.server.enable then localServer.endpoint else null;
+        default = if isLinux && localServer != null then localServer.endpoint else null;
         readOnly = true;
         internal = true;
         description = "Resolved HTTPS endpoint published to clients in this realm.";
@@ -101,6 +100,37 @@ in
         type = lib.types.nonEmptyStr;
         default = "/var/lib/atticd/storage";
         description = "Filesystem path used for Attic server storage.";
+      };
+
+      databaseUrl = lib.mkOption {
+        type = with lib.types; nullOr nonEmptyStr;
+        default = null;
+        description = "Attic database URL, or null to use the upstream SQLite default.";
+      };
+
+      localAliases = lib.mkOption {
+        type = with lib.types; listOf nonEmptyStr;
+        default = [ "nix-cache" ];
+        description = "Local DNS aliases published for the Attic HTTPS endpoint.";
+      };
+
+      chunking = {
+        narSizeThreshold = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 64 * 1024;
+        };
+        minSize = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 16 * 1024;
+        };
+        avgSize = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 64 * 1024;
+        };
+        maxSize = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 256 * 1024;
+        };
       };
     };
 

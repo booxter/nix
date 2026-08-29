@@ -13,6 +13,17 @@
   };
 
   host.storage.resources = {
+    attic = {
+      volume = "bulk";
+      relativePath = "attic";
+      directoryDefaults = {
+        owner = "atticd";
+        group = "atticd";
+        mode = "0700";
+        enforce = true;
+      };
+      directories."." = { };
+    };
     media = {
       volume = "bulk";
       relativePath = "Media";

@@ -1,6 +1,12 @@
 { config, lib, ... }:
 let
   cfg = config.host.attic.server;
+  inherit (cfg.chunking)
+    avgSize
+    maxSize
+    minSize
+    narSizeThreshold
+    ;
   listenAddress = "127.0.0.1:8080";
 in
 {
@@ -19,7 +25,7 @@ in
     host.web.services.atticd = {
       upstream = "http://${listenAddress}";
       internal = {
-        localAliases = [ "nix-cache" ];
+        inherit (cfg) localAliases;
         locationExtraConfig = ''
           client_max_body_size 0;
           proxy_request_buffering off;
@@ -45,15 +51,21 @@ in
         # Changing these values prevents existing chunks from being reused for
         # newly uploaded NARs until the cache gradually deduplicates again.
         chunking = {
-          nar-size-threshold = 64 * 1024;
-          min-size = 16 * 1024;
-          avg-size = 64 * 1024;
-          max-size = 256 * 1024;
+          nar-size-threshold = narSizeThreshold;
+          min-size = minSize;
+          avg-size = avgSize;
+          max-size = maxSize;
         };
 
         storage = {
           type = "local";
           path = cfg.storagePath;
+        };
+      }
+      // lib.optionalAttrs (cfg.databaseUrl != null) {
+        database = {
+          url = cfg.databaseUrl;
+          heartbeat = true;
         };
       };
     };
