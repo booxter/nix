@@ -37,6 +37,11 @@ in
         listen = listenAddress;
         jwt = { };
 
+        garbage-collection = {
+          interval = "12 hours";
+          default-retention-period = "3 months";
+        };
+
         # Changing these values prevents existing chunks from being reused for
         # newly uploaded NARs until the cache gradually deduplicates again.
         chunking = {
