@@ -285,6 +285,7 @@ class FakeRadarr:
         self.queue_record = queue_record
         self.backend = backend
         self.imported: RadarrManualImportFile | None = None
+        self.manual_import_calls: list[tuple[Path, RadarrQueueRecord]] = []
 
     def queue(self):
         return self.records
@@ -294,6 +295,7 @@ class FakeRadarr:
         return movie()
 
     def manual_import(self, folder, queue_record):
+        self.manual_import_calls.append((folder, queue_record))
         output = folder if folder.is_file() else next(folder.iterdir())
         return [
             RadarrManualImportCandidate(
@@ -389,6 +391,12 @@ class RadarrServiceTests(unittest.TestCase):
             job = store.state.jobs["download-id"]
             self.assertEqual(job.status, "awaiting_queue_removal")
             self.assertIsNotNone(client.imported)
+            self.assertFalse(client.manual_import_calls)
+            self.assertEqual(client.imported.movie_id if client.imported else None, 42)
+            self.assertEqual(
+                client.imported.quality if client.imported else None,
+                queue_record.quality,
+            )
             self.assertTrue(job.ready_root and job.ready_root.exists())
 
             client.records = []
@@ -436,6 +444,35 @@ class RadarrServiceTests(unittest.TestCase):
             self.assertFalse(
                 service.eligible_record(record(source, tracked_download_state="importPending"))
             )
+
+    def test_missing_queue_quality_is_rejected_before_joining(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            queue_record = record(source, quality={})
+            client = FakeRadarr(queue_record, backend)
+            store = StateStore(root / "state.json")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                now=lambda: 100.0,
+            )
+
+            service.iteration()
+            service.iteration()
+            job = store.state.jobs["download-id"]
+            self.assertEqual(job.status, "awaiting_manual_match")
+            self.assertIn("does not contain a quality", job.error)
+            self.assertFalse(backend.joined)
+            self.assertIsNone(client.imported)
 
     def test_single_unparseable_file_is_imported_without_modifying_source(self):
         with tempfile.TemporaryDirectory() as directory:

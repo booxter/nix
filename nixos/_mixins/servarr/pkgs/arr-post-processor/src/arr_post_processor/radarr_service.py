@@ -196,6 +196,8 @@ class RadarrJoinService:
             )
             job.resolution = "unsupported"
             return
+        if not record.quality:
+            raise NeedsAttention("Radarr queue record does not contain a quality")
         job.status = "joining"
         job.started_at = now
         job.updated_at = now
@@ -203,23 +205,7 @@ class RadarrJoinService:
         job.resolution = "multipart_join"
         self.store.save()
         output = prepare_joined_media(record, movie, plan, self.work_root, self.backend)
-        job.status = "matching"
         job.ready_root = output.parent
-        job.updated_at = self.now()
-        self.store.save()
-        candidates = [
-            candidate
-            for candidate in client.manual_import(output.parent, record)
-            if candidate.path.resolve() == output.resolve()
-        ]
-        if len(candidates) != 1 or candidates[0].movie.id != movie.id:
-            raise NeedsAttention(
-                "Radarr did not uniquely match the generated movie to its queue item"
-            )
-        candidate = candidates[0]
-        quality = candidate.quality or record.quality
-        if not quality:
-            raise NeedsAttention("Radarr did not provide a quality for the generated movie")
         job.status = "importing"
         job.updated_at = self.now()
         self.store.save()
@@ -227,9 +213,7 @@ class RadarrJoinService:
             RadarrManualImportFile(
                 path=output,
                 movie_id=movie.id,
-                quality=quality,
-                languages=candidate.languages or [],
-                release_group=candidate.release_group or "",
+                quality=record.quality,
                 download_id=record.download_id,
             )
         )
