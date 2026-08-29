@@ -17,6 +17,7 @@ pub enum MediaExtension {
     Ts,
     Mp4,
     Mkv,
+    Avi,
 }
 
 impl MediaExtension {
@@ -25,12 +26,13 @@ impl MediaExtension {
             Self::Ts => "ts",
             Self::Mp4 => "mp4",
             Self::Mkv => "mkv",
+            Self::Avi => "avi",
         }
     }
 
     fn default_output(self) -> Self {
         match self {
-            Self::Ts | Self::Mkv => Self::Mkv,
+            Self::Ts | Self::Mkv | Self::Avi => Self::Mkv,
             Self::Mp4 => Self::Mp4,
         }
     }
@@ -39,7 +41,7 @@ impl MediaExtension {
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Join ordered TS/MP4/MKV media parts into one file",
+    about = "Join ordered TS/MP4/MKV/AVI media parts into one file",
     after_help = "Input parts are ordered using natural version ordering.\n\
                   TS output is concatenated directly; MKV and MP4 output is remuxed."
 )]
@@ -47,6 +49,14 @@ pub struct Args {
     /// Select the input extension instead of discovering it.
     #[arg(long = "ext", value_enum, ignore_case = true)]
     pub input_extension: Option<MediaExtension>,
+
+    /// Explicit ordered input part. Repeat for automation; requires --output.
+    #[arg(long = "part", action = clap::ArgAction::Append)]
+    pub parts: Vec<PathBuf>,
+
+    /// Explicit output path for --part mode.
+    #[arg(long = "output")]
+    pub explicit_output: Option<PathBuf>,
 
     /// Directory containing the ordered media parts.
     #[arg(default_value = ".")]
@@ -262,27 +272,56 @@ pub fn run(
     stdout: &mut impl Write,
     stderr: &mut impl Write,
 ) -> Result<PathBuf> {
-    let directory = arguments.directory.canonicalize().with_context(|| {
-        format!(
-            "input directory not found: {}",
-            arguments.directory.display()
-        )
-    })?;
-    if !directory.is_dir() {
-        bail!(
-            "input directory not found: {}",
-            arguments.directory.display()
-        );
+    let explicit = !arguments.parts.is_empty();
+    if explicit && arguments.parts.len() < 2 {
+        bail!("--part must be supplied at least twice");
+    }
+    if explicit && arguments.output.is_some() {
+        bail!("positional output is not supported with --part; use --output");
+    }
+    if !explicit && arguments.explicit_output.is_some() {
+        bail!("--output requires explicit --part inputs");
     }
 
-    let input_extension = match arguments.input_extension {
-        Some(extension) => extension,
-        None => discover_extension(&directory)?,
-    };
-    let parts = discover_parts(&directory, input_extension)?;
-    let output = match arguments.output {
-        Some(path) => path,
-        None => default_output_path(&directory, input_extension)?,
+    let (directory, input_extension, parts, output) = if explicit {
+        let parts = canonicalize_explicit_parts(&arguments.parts)?;
+        let input_extension = match arguments.input_extension {
+            Some(extension) => extension,
+            None => explicit_extension(&parts)?,
+        };
+        validate_explicit_extensions(&parts, input_extension)?;
+        let output = arguments
+            .explicit_output
+            .context("--output is required with --part")?;
+        let directory = output
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .canonicalize()
+            .with_context(|| format!("output directory not found for {}", output.display()))?;
+        (directory, input_extension, parts, output)
+    } else {
+        let directory = arguments.directory.canonicalize().with_context(|| {
+            format!(
+                "input directory not found: {}",
+                arguments.directory.display()
+            )
+        })?;
+        if !directory.is_dir() {
+            bail!(
+                "input directory not found: {}",
+                arguments.directory.display()
+            );
+        }
+        let input_extension = match arguments.input_extension {
+            Some(extension) => extension,
+            None => discover_extension(&directory)?,
+        };
+        let parts = discover_parts(&directory, input_extension)?;
+        let output = match arguments.output {
+            Some(path) => path,
+            None => default_output_path(&directory, input_extension)?,
+        };
+        (directory, input_extension, parts, output)
     };
     if output.try_exists()? {
         bail!("output already exists: {}", output.display());
@@ -302,7 +341,7 @@ pub fn run(
 
     match input_extension {
         MediaExtension::Ts => join_ts(&parts, output_extension, &output, backend, stderr)?,
-        MediaExtension::Mp4 | MediaExtension::Mkv => {
+        MediaExtension::Mp4 | MediaExtension::Mkv | MediaExtension::Avi => {
             join_container_parts(
                 &directory,
                 &parts,
@@ -318,18 +357,23 @@ pub fn run(
 }
 
 fn discover_extension(directory: &Path) -> Result<MediaExtension> {
-    let candidates = [MediaExtension::Ts, MediaExtension::Mp4, MediaExtension::Mkv]
-        .into_iter()
-        .filter(|extension| discover_parts(directory, *extension).is_ok())
-        .collect::<Vec<_>>();
+    let candidates = [
+        MediaExtension::Ts,
+        MediaExtension::Mp4,
+        MediaExtension::Mkv,
+        MediaExtension::Avi,
+    ]
+    .into_iter()
+    .filter(|extension| discover_parts(directory, *extension).is_ok())
+    .collect::<Vec<_>>();
     match candidates.as_slice() {
         [] => bail!(
-            "could not find at least two matching .ts, .mp4, or .mkv files in {}",
+            "could not find at least two matching .ts, .mp4, .mkv, or .avi files in {}",
             directory.display()
         ),
         [extension] => Ok(*extension),
         _ => bail!(
-            "multiple candidate extensions found in {}: {}; rerun with --ext <ts|mp4|mkv>",
+            "multiple candidate extensions found in {}: {}; rerun with --ext <ts|mp4|mkv|avi>",
             directory.display(),
             candidates
                 .iter()
@@ -338,6 +382,58 @@ fn discover_extension(directory: &Path) -> Result<MediaExtension> {
                 .join(" ")
         ),
     }
+}
+
+fn canonicalize_explicit_parts(parts: &[PathBuf]) -> Result<Vec<PathBuf>> {
+    parts
+        .iter()
+        .map(|part| {
+            let canonical = part
+                .canonicalize()
+                .with_context(|| format!("input part not found: {}", part.display()))?;
+            if !canonical.is_file() {
+                bail!("input part is not a file: {}", part.display());
+            }
+            Ok(canonical)
+        })
+        .collect()
+}
+
+fn extension_for_path(path: &Path) -> Result<MediaExtension> {
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .with_context(|| format!("input part has no supported extension: {}", path.display()))?;
+    if extension.eq_ignore_ascii_case("ts") {
+        Ok(MediaExtension::Ts)
+    } else if extension.eq_ignore_ascii_case("mp4") {
+        Ok(MediaExtension::Mp4)
+    } else if extension.eq_ignore_ascii_case("mkv") {
+        Ok(MediaExtension::Mkv)
+    } else if extension.eq_ignore_ascii_case("avi") {
+        Ok(MediaExtension::Avi)
+    } else {
+        bail!("unsupported input extension: .{extension}")
+    }
+}
+
+fn explicit_extension(parts: &[PathBuf]) -> Result<MediaExtension> {
+    let extension = extension_for_path(&parts[0])?;
+    validate_explicit_extensions(parts, extension)?;
+    Ok(extension)
+}
+
+fn validate_explicit_extensions(parts: &[PathBuf], extension: MediaExtension) -> Result<()> {
+    for part in parts {
+        if extension_for_path(part)? != extension {
+            bail!(
+                "explicit input extensions do not match: expected .{}, found {}",
+                extension.as_str(),
+                part.display()
+            );
+        }
+    }
+    Ok(())
 }
 
 fn discover_parts(directory: &Path, extension: MediaExtension) -> Result<Vec<PathBuf>> {
@@ -418,6 +514,7 @@ fn join_ts(
             write_concat_file(&list, parts)?;
             remux_ts_streams(&list, output_extension, output, backend, stderr)
         }
+        MediaExtension::Avi => bail!("AVI output is not supported"),
     }
 }
 
@@ -503,7 +600,7 @@ fn join_container_parts(
     backend: &mut impl MediaBackend,
     stdout: &mut impl Write,
 ) -> Result<()> {
-    if output_extension == MediaExtension::Ts {
+    if matches!(output_extension, MediaExtension::Ts | MediaExtension::Avi) {
         bail!("unsupported output extension for container input: .ts (expected .mkv or .mp4)");
     }
     let temp = Builder::new()
@@ -593,6 +690,8 @@ mod tests {
     fn args(directory: &Path, extension: MediaExtension, output: Option<PathBuf>) -> Args {
         Args {
             input_extension: Some(extension),
+            parts: Vec::new(),
+            explicit_output: None,
             directory: directory.to_owned(),
             output,
         }
@@ -624,6 +723,34 @@ mod tests {
     }
 
     #[test]
+    fn explicit_parts_preserve_caller_order() {
+        let temp = tempfile::tempdir().unwrap();
+        let first = temp.path().join("second.mp4");
+        let second = temp.path().join("first.mp4");
+        fs::write(&first, b"part").unwrap();
+        fs::write(&second, b"part").unwrap();
+        let output = temp.path().join("result.mp4");
+        let mut backend = FakeBackend::default();
+
+        run(
+            Args {
+                input_extension: None,
+                parts: vec![first, second],
+                explicit_output: Some(output.clone()),
+                directory: PathBuf::from("."),
+                output: None,
+            },
+            &mut backend,
+            &mut Vec::new(),
+            &mut Vec::new(),
+        )
+        .unwrap();
+
+        assert_eq!(backend.normalizations, ["second.mp4", "first.mp4"]);
+        assert_eq!(fs::read(output).unwrap(), b"joined");
+    }
+
+    #[test]
     fn discovery_rejects_ambiguous_extensions() {
         let temp = tempfile::tempdir().unwrap();
         for name in ["1.ts", "2.ts", "1.mp4", "2.mp4"] {
@@ -633,6 +760,8 @@ mod tests {
         let error = run(
             Args {
                 input_extension: None,
+                parts: Vec::new(),
+                explicit_output: None,
                 directory: temp.path().to_owned(),
                 output: None,
             },
