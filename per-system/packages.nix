@@ -1,4 +1,5 @@
 {
+  appSet,
   fleetInventory,
   inputs,
   lib,
@@ -19,6 +20,7 @@ let
 in
 {
   fleet-tools = fleet.packages.fleet-tools;
+  pki-certificates = appSet.packages.issue-internal-service-cert;
 
   qemu-host-package = pkgs.qemu;
 }
