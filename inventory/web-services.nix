@@ -50,11 +50,6 @@
       };
     };
   };
-  cache = {
-    atticd = {
-      declaration.internal.serverName = "nix-cache.home.arpa";
-    };
-  };
   fana = {
     alertmanager = {
       declaration.internal.clientAuth = "mtls";

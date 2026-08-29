@@ -18,7 +18,6 @@
     builder1 = "lab";
     builder2 = "lab";
     builder3 = "lab";
-    cache = "lab";
     fana = "lab";
     gw = "lab";
     home = "lab";

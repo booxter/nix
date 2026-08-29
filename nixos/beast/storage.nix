@@ -40,13 +40,6 @@
         fsid = 10;
       };
     };
-    nixCache = {
-      volume = "bulk";
-      relativePath = "nix-cache";
-      nfs = {
-        fsid = 11;
-      };
-    };
     paperless = {
       volume = "bulk";
       relativePath = "paperless";

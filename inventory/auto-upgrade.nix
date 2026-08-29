@@ -55,13 +55,6 @@
         calendar = null;
       };
     };
-    cache = {
-      switch = "Tue 03:30";
-      reboot = {
-        mode = "with-upgrade";
-        calendar = null;
-      };
-    };
     fana = {
       switch = "05:15";
       reboot = {

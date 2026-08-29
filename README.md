@@ -134,7 +134,6 @@ around `nixmoxer`).
 | `builder1` | CI VM | Primary builder VM for CI and heavy Nix builds. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder2` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder3` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
-| `cache` | CI VM | Cache VM backed by NFS for binary caching. | [nixos/cache/default.nix](nixos/cache/default.nix) | [common](common), [nixos](nixos) |
 
 ### Clients (macs, frame)
 
