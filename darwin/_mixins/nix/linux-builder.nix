@@ -27,20 +27,21 @@ in
     nix.linux-builder = {
       enable = true;
       maxJobs = 4;
-      package = pkgs.darwin.linux-builder-vz;
+      #package = pkgs.darwin.linux-builder-vz;
+      package = pkgs.darwin.linux-builder;
       systems = [
         "aarch64-linux"
-        "x86_64-linux"
+        #"x86_64-linux"
       ];
       supportedFeatures = [
         "benchmark"
         "big-parallel"
-        "kvm"
-        "nixos-test"
+        #"kvm"
+        #"nixos-test"
       ];
       config.virtualisation.cores = 8;
       config.virtualisation.memorySize = lib.mkForce 8192;
-      config.virtualisation.vz.nestedVirtualization = true;
+      #config.virtualisation.vz.nestedVirtualization = true;
     };
 
     launchd.daemons.linux-builder.serviceConfig = {
