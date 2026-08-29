@@ -16,6 +16,7 @@
       backupServer = true;
     };
     frame.gpuVendor = "amd";
+    mair.laptop = true;
   };
 
   endpoints = {
