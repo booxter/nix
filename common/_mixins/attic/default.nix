@@ -97,6 +97,12 @@ in
         description = "Environment file containing the Attic server token secret.";
       };
 
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8080;
+        description = "Loopback port used by the Attic server.";
+      };
+
       storagePath = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = "/var/lib/atticd/storage";

@@ -17,6 +17,7 @@ in
       databaseUrl = "postgresql://${databaseRole}@localhost/${databaseName}?host=/run/postgresql";
       environmentFile = config.sops.templates."atticd.env".path;
       localAliases = [ "attic" ];
+      port = 8082;
       inherit storagePath;
       caches.default.public = true;
       chunking = {

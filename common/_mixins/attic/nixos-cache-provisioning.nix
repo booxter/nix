@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.attic.server;
-  listenAddress = "127.0.0.1:8080";
+  listenAddress = "127.0.0.1:${toString cfg.port}";
   localEndpoint = "http://${listenAddress}";
   serverConfigFile =
     (pkgs.formats.toml { }).generate "attic-server-provision.toml"

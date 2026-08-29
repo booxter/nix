@@ -7,7 +7,7 @@ let
     minSize
     narSizeThreshold
     ;
-  listenAddress = "127.0.0.1:8080";
+  listenAddress = "127.0.0.1:${toString cfg.port}";
 in
 {
   config = lib.mkIf cfg.enable {
