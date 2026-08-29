@@ -35,6 +35,7 @@ let
       required
       timeout
       ;
+    pipelining_requests = 2;
     ssl_verify = server.tlsVerification;
   };
 in

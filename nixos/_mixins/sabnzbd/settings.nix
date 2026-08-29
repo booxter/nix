@@ -22,6 +22,7 @@
     bandwidth_max = "100M";
     bandwidth_perc = 100;
     cache_limit = "16G";
+    config_conversion_version = 5;
 
     direct_unpack = true;
     direct_unpack_tested = true;
