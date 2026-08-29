@@ -19,7 +19,7 @@ let
     protocol = "ssh-ng";
     sshKey = identityFile;
     sshUser = username;
-    systems = [ builder.system ];
+    systems = [ builder.system ] ++ lib.optional (builder.system == "x86_64-linux") "i686-linux";
   };
   candidates = lib.mapAttrs toBuilder (
     removeAttrs fleetInventory.builders [ config.networking.hostName ]
