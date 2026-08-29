@@ -16,6 +16,11 @@ in
     ];
   };
 
+  systemd.services.atftpd = {
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+  };
+
   networking.firewall.interfaces.vmbr0.allowedUDPPorts = [
     69 # TFTP
   ];
