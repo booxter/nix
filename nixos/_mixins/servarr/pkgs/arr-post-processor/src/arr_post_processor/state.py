@@ -16,6 +16,7 @@ ACTIVE_JOB_STATES = {
     "matching",
     "importing",
     "awaiting_queue_removal",
+    "joining",
 }
 PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
 PROBLEM_JOB_STATES = {"failed", "automation_failed", "needs_attention"}

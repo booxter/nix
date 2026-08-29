@@ -2,6 +2,7 @@
   atomicFileWrites,
   ffmpeg,
   flac,
+  joinMediaParts,
   lib,
   python3,
   ruff,
@@ -36,6 +37,9 @@ pythonPackages.buildPythonApplication {
     pythonPackages.pytest-cov
   ];
 
+  ARR_POST_PROCESSOR_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+  ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS = lib.getExe joinMediaParts;
+
   makeWrapperArgs = [
     "--prefix PATH : ${
       lib.makeBinPath [
@@ -44,6 +48,8 @@ pythonPackages.buildPythonApplication {
         unflac
       ]
     }"
+    "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"
+    "--set ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS ${lib.getExe joinMediaParts}"
   ];
 
   preCheck = ''

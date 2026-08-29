@@ -5,10 +5,14 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Protocol
 
 from .config import read_api_key
 from .lidarr import LidarrClient
 from .media import UnflacRunner
+from .media_join import CommandJoinBackend
+from .radarr import RadarrClient
+from .radarr_service import RadarrJoinService
 from .service import CueSplitterService
 from .state import StateStore
 
@@ -16,11 +20,19 @@ from .state import StateStore
 LOG = logging.getLogger("arr-post-processor")
 
 
+class RuntimeService(Protocol):
+    def iteration(self) -> None: ...
+
+    def write_metrics(self, ok: bool) -> None: ...
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run a queue-aware post-processor for a Servarr application."
     )
-    parser.add_argument("--processor", required=True, choices=["lidarr-cue-split"])
+    parser.add_argument(
+        "--processor", required=True, choices=["lidarr-cue-split", "radarr-media-join"]
+    )
     parser.add_argument("--arr-url", required=True)
     parser.add_argument("--arr-config", required=True)
     parser.add_argument("--allowed-root", action="append", required=True)
@@ -46,23 +58,45 @@ def main() -> int:
     )
     store = StateStore(Path(args.state_file))
 
-    def client_factory() -> LidarrClient:
-        return LidarrClient(
-            args.arr_url,
-            read_api_key(Path(args.arr_config)),
-            args.request_timeout_seconds,
-        )
+    service: RuntimeService
+    if args.processor == "lidarr-cue-split":
 
-    service = CueSplitterService(
-        client_factory=client_factory,
-        runner=UnflacRunner(),
-        store=store,
-        allowed_roots=[Path(root) for root in args.allowed_root],
-        work_root=Path(args.work_root),
-        metrics_file=Path(args.metrics_file),
-        settle_seconds=args.settle_seconds,
-        command_timeout_seconds=args.command_timeout_seconds,
-    )
+        def lidarr_client_factory() -> LidarrClient:
+            return LidarrClient(
+                args.arr_url,
+                read_api_key(Path(args.arr_config)),
+                args.request_timeout_seconds,
+            )
+
+        service = CueSplitterService(
+            client_factory=lidarr_client_factory,
+            runner=UnflacRunner(),
+            store=store,
+            allowed_roots=[Path(root) for root in args.allowed_root],
+            work_root=Path(args.work_root),
+            metrics_file=Path(args.metrics_file),
+            settle_seconds=args.settle_seconds,
+            command_timeout_seconds=args.command_timeout_seconds,
+        )
+    else:
+
+        def radarr_client_factory() -> RadarrClient:
+            return RadarrClient(
+                args.arr_url,
+                read_api_key(Path(args.arr_config)),
+                args.request_timeout_seconds,
+            )
+
+        service = RadarrJoinService(
+            client_factory=radarr_client_factory,
+            backend=CommandJoinBackend(timeout_seconds=args.command_timeout_seconds),
+            store=store,
+            allowed_roots=[Path(root) for root in args.allowed_root],
+            work_root=Path(args.work_root),
+            metrics_file=Path(args.metrics_file),
+            settle_seconds=args.settle_seconds,
+            command_timeout_seconds=args.command_timeout_seconds,
+        )
     while True:
         started = time.monotonic()
         ok = True
