@@ -21,7 +21,7 @@ from .state import (
 )
 
 
-LOG = logging.getLogger("lidarr-cue-splitter")
+LOG = logging.getLogger("arr-post-processor")
 SUPPORTED_PROTOCOLS = {
     "torrent",
     "torrentdownloadprotocol",

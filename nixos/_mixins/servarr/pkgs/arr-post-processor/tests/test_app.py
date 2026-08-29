@@ -13,10 +13,10 @@ from aiopyarr.models.const import ProtocolType
 from prometheus_client.parser import text_string_to_metric_families
 from pydantic import TypeAdapter
 
-from lidarr_cue_splitter.config import read_api_key
-from lidarr_cue_splitter.errors import CueSplitterError, ManualMatchRequired, SourceInvalid
-from lidarr_cue_splitter.lidarr import LidarrClient
-from lidarr_cue_splitter.media import (
+from arr_post_processor.config import read_api_key
+from arr_post_processor.errors import CueSplitterError, ManualMatchRequired, SourceInvalid
+from arr_post_processor.lidarr import LidarrClient
+from arr_post_processor.media import (
     UnflacRunner,
     build_manual_import_files,
     cue_already_split_audio_files,
@@ -25,16 +25,16 @@ from lidarr_cue_splitter.media import (
     output_fingerprint,
     safe_component,
 )
-from lidarr_cue_splitter.metrics import render_metrics
-from lidarr_cue_splitter.models import (
+from arr_post_processor.metrics import render_metrics
+from arr_post_processor.models import (
     CommandStatus,
     ManualImportCandidate,
     ManualImportFile,
     QueueRecord,
     UnflacInput,
 )
-from lidarr_cue_splitter.service import CueSplitterService
-from lidarr_cue_splitter.state import Job, StateStore
+from arr_post_processor.service import CueSplitterService
+from arr_post_processor.state import Job, StateStore
 
 
 INSPECTIONS = TypeAdapter(list[UnflacInput])
@@ -389,13 +389,13 @@ class CueSplitterTests(unittest.TestCase):
             store.state.totals.tracks = 24
             metrics = render_metrics(store.state, ok=True, now=1234.0)
             self.assertEqual(
-                metric_value(metrics, "host_observability_lidarr_cue_splitter_ok"),
+                metric_value(metrics, "host_observability_arr_post_processor_ok"),
                 1,
             )
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_arr_post_processor_jobs",
                     {"state": "awaiting_manual_match"},
                 ),
                 1,
@@ -403,13 +403,13 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs_total",
+                    "host_observability_arr_post_processor_jobs_total",
                     {"result": "success"},
                 ),
                 3,
             )
             self.assertEqual(
-                metric_value(metrics, "host_observability_lidarr_cue_splitter_tracks_total"),
+                metric_value(metrics, "host_observability_arr_post_processor_tracks_total"),
                 24,
             )
 
@@ -913,7 +913,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_arr_post_processor_jobs",
                     {"state": "dismissed"},
                 ),
                 1,
@@ -921,7 +921,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_arr_post_processor_jobs",
                     {"state": "needs_attention"},
                 ),
                 0,

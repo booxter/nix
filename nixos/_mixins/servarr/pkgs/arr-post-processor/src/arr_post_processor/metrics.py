@@ -9,7 +9,7 @@ from prometheus_client.core import GaugeMetricFamily, Metric
 from .state import ACTIVE_JOB_STATES, KNOWN_JOB_STATES, State
 
 
-PREFIX = "host_observability_lidarr_cue_splitter"
+PREFIX = "host_observability_arr_post_processor"
 
 
 def gauge(name: str, documentation: str, value: float) -> GaugeMetricFamily:

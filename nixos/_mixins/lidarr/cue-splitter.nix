@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.lidarr;
-  package = pkgs.callPackage ./pkgs/lidarr-cue-splitter {
+  package = pkgs.callPackage ../servarr/pkgs/arr-post-processor {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;
@@ -45,9 +45,11 @@ in
         ExecStart = lib.escapeShellArgs (
           [
             (lib.getExe package)
-            "--lidarr-url"
+            "--processor"
+            "lidarr-cue-split"
+            "--arr-url"
             "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
-            "--lidarr-config"
+            "--arr-config"
             "${cfg.stateDir}/config.xml"
           ]
           ++ lib.concatMap (root: [

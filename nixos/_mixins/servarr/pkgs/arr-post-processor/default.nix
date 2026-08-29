@@ -11,7 +11,7 @@ let
   pythonPackages = python3.pkgs;
 in
 pythonPackages.buildPythonApplication {
-  pname = "lidarr-cue-splitter";
+  pname = "arr-post-processor";
   version = "0.1.0";
   pyproject = true;
 
@@ -49,7 +49,7 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/lidarr_cue_splitter
+    mypy src/arr_post_processor
   '';
 
   postCheck = ''
@@ -73,12 +73,12 @@ pythonPackages.buildPythonApplication {
     find output -type f -name '*.flac' -exec ${flac}/bin/flac --silent --test '{}' +
   '';
 
-  pythonImportsCheck = [ "lidarr_cue_splitter" ];
+  pythonImportsCheck = [ "arr_post_processor" ];
 
   meta = {
-    description = "Split completed Lidarr CUE images and submit their tracks for manual import";
+    description = "Queue-aware post-processing service for Servarr applications";
     license = lib.licenses.mit;
-    mainProgram = "lidarr-cue-splitter";
+    mainProgram = "arr-post-processor";
     platforms = lib.platforms.linux;
   };
 }

@@ -13,15 +13,16 @@ from .service import CueSplitterService
 from .state import StateStore
 
 
-LOG = logging.getLogger("lidarr-cue-splitter")
+LOG = logging.getLogger("arr-post-processor")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Split completed Lidarr CUE images and import the generated tracks."
+        description="Run a queue-aware post-processor for a Servarr application."
     )
-    parser.add_argument("--lidarr-url", default="http://127.0.0.1:8686")
-    parser.add_argument("--lidarr-config", required=True)
+    parser.add_argument("--processor", required=True, choices=["lidarr-cue-split"])
+    parser.add_argument("--arr-url", required=True)
+    parser.add_argument("--arr-config", required=True)
     parser.add_argument("--allowed-root", action="append", required=True)
     parser.add_argument("--work-root", required=True)
     parser.add_argument("--state-file", required=True)
@@ -47,8 +48,8 @@ def main() -> int:
 
     def client_factory() -> LidarrClient:
         return LidarrClient(
-            args.lidarr_url,
-            read_api_key(Path(args.lidarr_config)),
+            args.arr_url,
+            read_api_key(Path(args.arr_config)),
             args.request_timeout_seconds,
         )
 
