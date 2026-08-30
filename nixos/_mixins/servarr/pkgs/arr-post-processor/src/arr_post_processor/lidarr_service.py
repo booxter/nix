@@ -95,6 +95,12 @@ class LidarrPostProcessorService:
         job.ready_root = self.pipeline.job_root(record.output_path, record.download_id)
         job.updated_at = self.now()
         self.store.save()
+        LOG.info(
+            "starting Lidarr recovery: download_id=%s title=%s source=%s",
+            record.download_id,
+            record.title,
+            record.output_path,
+        )
         try:
             result = self.pipeline.execute(record.output_path, record.download_id)
         except Exception:
@@ -106,6 +112,13 @@ class LidarrPostProcessorService:
         job.resolution = "+".join(result.transforms)
         job.updated_at = self.now()
         self.store.save()
+        LOG.info(
+            "requesting Lidarr manual import: download_id=%s transforms=%s tracks=%s path=%s",
+            record.download_id,
+            job.resolution,
+            job.tracks,
+            result.ready_root,
+        )
         job.status = "importing"
         job.phase = "manual_import"
         job.updated_at = self.now()
@@ -120,6 +133,11 @@ class LidarrPostProcessorService:
         job.updated_at = self.now()
         job.error = ""
         self.store.save()
+        LOG.info(
+            "Lidarr import completed; waiting for queue removal: download_id=%s command_id=%s",
+            record.download_id,
+            job.command_id,
+        )
 
     def mark_manual_match(self, job: Job, error: str, now: float) -> None:
         if job.status != "awaiting_manual_match":
@@ -134,13 +152,20 @@ class LidarrPostProcessorService:
             error,
         )
 
-    def mark_ignored(self, job: Job, now: float) -> None:
-        if job.status != "ignored":
+    def mark_ignored(self, job: Job, now: float, reason: str) -> None:
+        newly_ignored = job.status != "ignored"
+        if newly_ignored:
             self.store.state.totals.ignored += 1
         job.status = "ignored"
         job.updated_at = now
         job.fingerprint = ""
         job.error = ""
+        if newly_ignored:
+            LOG.info(
+                "ignoring Lidarr download: download_id=%s reason=%s",
+                job.download_id,
+                reason,
+            )
 
     def mark_automation_failed(self, job: Job, error: str, now: float) -> None:
         job.status = "automation_failed"
@@ -198,7 +223,14 @@ class LidarrPostProcessorService:
         job.updated_at = now
         job.attempts = attempts
         self.store.state.totals.failed += 1
-        LOG.exception("Lidarr post-processing job failed: download_id=%s", job.download_id)
+        LOG.exception(
+            "Lidarr post-processing job failed: download_id=%s failure_kind=%s attempt=%s/%s retry_seconds=%s",
+            job.download_id,
+            job.failure_kind,
+            attempts,
+            MAX_SOURCE_ATTEMPTS,
+            SOURCE_RETRY_SECONDS,
+        )
 
     def resolve_source_failure(
         self,
@@ -210,7 +242,7 @@ class LidarrPostProcessorService:
         if record.output_path is not None and self.pipeline.source_is_already_resolved(
             record.output_path
         ):
-            self.mark_ignored(job, now)
+            self.mark_ignored(job, now, "source is already split")
             return
         queue_id = record.id
         if queue_id is None or queue_id <= 0:
@@ -299,6 +331,11 @@ class LidarrPostProcessorService:
             ):
                 continue
             try:
+                LOG.info(
+                    "expiring retained manual-match staging: download_id=%s path=%s",
+                    job.download_id,
+                    job.ready_root,
+                )
                 self.cleanup_job_staging(job)
                 job.resolution = "attention_staging_expired"
             except NeedsAttention as error:
@@ -317,6 +354,11 @@ class LidarrPostProcessorService:
                 )
                 continue
             try:
+                LOG.info(
+                    "recovering interrupted job: download_id=%s status=%s action=clean_and_retry",
+                    job.download_id,
+                    status,
+                )
                 self.cleanup_job_staging(job)
             except NeedsAttention as error:
                 self.mark_automation_failed(job, str(error), now)
@@ -329,9 +371,20 @@ class LidarrPostProcessorService:
 
     def missing_queue_confirmed(self, job: Job, queued_download_ids: set[str]) -> bool:
         if job.download_id in queued_download_ids:
+            if job.missing_queue_observations:
+                LOG.info(
+                    "Lidarr queue item reappeared: download_id=%s",
+                    job.download_id,
+                )
             job.missing_queue_observations = 0
             return False
         job.missing_queue_observations += 1
+        LOG.info(
+            "observed Lidarr queue removal: download_id=%s observation=%s/%s",
+            job.download_id,
+            job.missing_queue_observations,
+            self.missing_queue_confirmations,
+        )
         return job.missing_queue_observations >= self.missing_queue_confirmations
 
     def reconcile_jobs(self, queued_download_ids: set[str], now: float) -> None:
@@ -415,6 +468,10 @@ class LidarrPostProcessorService:
                 )
                 previous_fingerprint = job.failure_fingerprint
                 if previous_fingerprint and previous_fingerprint != current_fingerprint:
+                    LOG.info(
+                        "failed source changed; resetting retries: download_id=%s",
+                        download_id,
+                    )
                     job.attempts = 0
                     job.failure_fingerprint = current_fingerprint
                 elif job.attempts >= MAX_SOURCE_ATTEMPTS:
@@ -425,13 +482,20 @@ class LidarrPostProcessorService:
                     < SOURCE_RETRY_SECONDS
                 ):
                     return False
+                else:
+                    LOG.info(
+                        "retrying failed Lidarr source: download_id=%s next_attempt=%s/%s",
+                        download_id,
+                        job.attempts + 1,
+                        MAX_SOURCE_ATTEMPTS,
+                    )
         try:
             if record.output_path is None:
                 raise PostProcessorError("Lidarr queue record does not contain an output path")
             inspection = self.pipeline.inspect(record.output_path)
             if not inspection.applicable:
                 job = self.store.job(download_id)
-                self.mark_ignored(job, now)
+                self.mark_ignored(job, now, "no transformation is applicable")
                 return False
             if job is None or job.fingerprint != inspection.fingerprint:
                 jobs[download_id] = Job(
@@ -443,14 +507,21 @@ class LidarrPostProcessorService:
                     updated_at=now,
                 )
                 LOG.info(
-                    "discovered recoverable Lidarr download: download_id=%s title=%s",
+                    "discovered recoverable Lidarr download: download_id=%s title=%s source=%s settling_seconds=%s",
                     download_id,
                     record.title,
+                    record.output_path,
+                    self.settle_seconds,
                 )
                 return True
             discovered_at = job.discovered_at if job.discovered_at is not None else now
             if now - discovered_at < self.settle_seconds:
                 return False
+            LOG.info(
+                "download settled; starting recovery: download_id=%s settled_seconds=%s",
+                download_id,
+                round(now - discovered_at, 1),
+            )
             job.started_at = now
             self.process(client, record, job)
         except ManualMatchRequired as exc:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 from typing import Callable
@@ -10,6 +11,7 @@ from .media import build_manual_import_files
 from .models import QueueRecord
 
 
+LOG = logging.getLogger("arr-post-processor.lidarr.import")
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
 
 
@@ -32,12 +34,33 @@ class LidarrImporter:
     ) -> int:
         try:
             outputs = client.manual_import(root, record)
+            LOG.info(
+                "received Lidarr manual-import candidates: download_id=%s candidates=%s generated_tracks=%s",
+                record.download_id,
+                len(outputs),
+                len(audio_files),
+            )
             import_files = build_manual_import_files(outputs, list(audio_files), record)
             command_id = client.submit_manual_import(import_files)
+            LOG.info(
+                "submitted Lidarr manual-import command: download_id=%s command_id=%s tracks=%s",
+                record.download_id,
+                command_id,
+                len(import_files),
+            )
             deadline = time.monotonic() + self.command_timeout_seconds
+            previous_status: str | None = None
             while time.monotonic() < deadline:
                 command = client.command(command_id)
                 status = command.status.lower()
+                if status != previous_status:
+                    LOG.info(
+                        "Lidarr manual-import command status: download_id=%s command_id=%s status=%s",
+                        record.download_id,
+                        command_id,
+                        status,
+                    )
+                    previous_status = status
                 if status in TERMINAL_COMMAND_STATES:
                     if status != "completed":
                         raise ManualMatchRequired(

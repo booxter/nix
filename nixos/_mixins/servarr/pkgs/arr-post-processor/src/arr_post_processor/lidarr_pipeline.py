@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 from dataclasses import dataclass
@@ -20,6 +21,9 @@ from .media import (
     safe_component,
 )
 from .models import CueSummary
+
+
+LOG = logging.getLogger("arr-post-processor.lidarr.pipeline")
 
 
 @dataclass(frozen=True)
@@ -114,6 +118,12 @@ class CueTransform:
         for index, summary in enumerate(summaries, start=1):
             cue_output = destination / f"disc-{index:02d}-{safe_component(summary.cue.stem)}"
             cue_output.mkdir(parents=True)
+            LOG.info(
+                "splitting CUE: cue=%s tracks=%s destination=%s",
+                summary.cue,
+                summary.track_count,
+                cue_output,
+            )
             generated.extend(self.runner.split(summary.cue, cue_output))
             expected_tracks += summary.track_count
         if len(generated) != expected_tracks:
@@ -176,14 +186,38 @@ class LidarrPipeline:
         self.cleanup_source_path(ready_root, source_root)
         partial_root.mkdir(parents=True)
         applied: list[str] = []
+        LOG.info(
+            "starting transformation pipeline: download_id=%s source=%s staging=%s",
+            download_id,
+            source_root,
+            partial_root,
+        )
         try:
             for index, transform in enumerate(self.transforms, start=1):
                 if not transform.applies(current):
+                    LOG.info(
+                        "skipping transformation: download_id=%s transform=%s reason=not_applicable",
+                        download_id,
+                        transform.name,
+                    )
                     continue
                 destination = partial_root / f"{index:02d}-{transform.name}"
+                LOG.info(
+                    "applying transformation: download_id=%s transform=%s input=%s output=%s",
+                    download_id,
+                    transform.name,
+                    current,
+                    destination,
+                )
                 result = transform.apply(current, destination)
                 current = result.root.resolve()
                 applied.append(transform.name)
+                LOG.info(
+                    "completed transformation: download_id=%s transform=%s artifacts=%s",
+                    download_id,
+                    transform.name,
+                    result.artifacts,
+                )
             if not applied:
                 raise PostProcessorError("no Lidarr transformation is applicable")
             relative_result = current.relative_to(partial_root.resolve())
@@ -198,12 +232,24 @@ class LidarrPipeline:
             )
             if not audio_files:
                 raise SourceInvalid("post-processing produced no recognized audio files")
+            LOG.info(
+                "transformation pipeline ready for import: download_id=%s transforms=%s tracks=%s path=%s",
+                download_id,
+                "+".join(applied),
+                len(audio_files),
+                final_root,
+            )
             return PipelineResult(
                 ready_root=final_root,
                 audio_files=audio_files,
                 transforms=tuple(applied),
             )
         except Exception:
+            LOG.info(
+                "cleaning incomplete transformation staging: download_id=%s staging=%s",
+                download_id,
+                partial_root,
+            )
             self.cleanup_source_path(partial_root, source_root)
             self.cleanup_source_path(ready_root, source_root)
             raise
@@ -227,6 +273,7 @@ class LidarrPipeline:
         if job_root.name != component or not is_within(job_root, self.allowed_roots):
             raise NeedsAttention(f"refusing to clean unsafe staging path: {ready_root}")
         if job_root.exists():
+            LOG.info("cleaning job staging: download_id=%s path=%s", download_id, job_root)
             shutil.rmtree(job_root)
         staging_root = job_root.parent
         if staging_root.exists() and not any(staging_root.iterdir()):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import subprocess
 import tarfile
@@ -14,6 +15,7 @@ from .lidarr_pipeline import TransformResult
 from .media import AUDIO_FILE_SUFFIXES, is_staging_path
 
 
+LOG = logging.getLogger("arr-post-processor.lidarr.archive")
 ARCHIVE_SUFFIXES = frozenset({".rar", ".tar"})
 MULTIPART_RAR_RE = re.compile(r"\.part\d+\.rar$", re.IGNORECASE)
 MAX_ARCHIVE_FILES = 10_000
@@ -207,6 +209,12 @@ class ArchiveTransform:
             raise SourceInvalid("archive transformation is no longer applicable")
         members = self.backend.members(archive)
         self.validate_members(archive, members)
+        LOG.info(
+            "extracting archive: archive=%s members=%s destination=%s",
+            archive,
+            len(members),
+            destination,
+        )
         destination.mkdir(parents=True)
         self.backend.extract(archive, destination)
         self.validate_extracted_tree(destination)
