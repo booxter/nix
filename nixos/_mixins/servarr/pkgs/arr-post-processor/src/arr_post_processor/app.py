@@ -14,7 +14,7 @@ from .media import UnflacRunner
 from .media_join import CommandJoinBackend
 from .radarr import RadarrClient
 from .radarr_service import RadarrJoinService
-from .service import CueSplitterService
+from .lidarr_service import LidarrPostProcessorService
 from .state import StateStore
 
 
@@ -31,9 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run a queue-aware post-processor for a Servarr application."
     )
-    parser.add_argument(
-        "--processor", required=True, choices=["lidarr-cue-split", "radarr-media-join"]
-    )
+    parser.add_argument("--processor", required=True, choices=["lidarr", "radarr"])
     parser.add_argument("--arr-url", required=True)
     parser.add_argument("--arr-config", required=True)
     parser.add_argument("--allowed-root", action="append", required=True)
@@ -60,7 +58,7 @@ def main() -> int:
     store = StateStore(Path(args.state_file))
 
     service: RuntimeService
-    if args.processor == "lidarr-cue-split":
+    if args.processor == "lidarr":
 
         def lidarr_client_factory() -> LidarrClient:
             return LidarrClient(
@@ -69,10 +67,12 @@ def main() -> int:
                 args.request_timeout_seconds,
             )
 
-        service = CueSplitterService(
+        service = LidarrPostProcessorService(
             client_factory=lidarr_client_factory,
             runner=UnflacRunner(),
-            archive_backend=NativeArchiveBackend(),
+            archive_backend=NativeArchiveBackend(
+                timeout_seconds=args.command_timeout_seconds,
+            ),
             store=store,
             allowed_roots=[Path(root) for root in args.allowed_root],
             work_root=Path(args.work_root),

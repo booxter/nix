@@ -11,10 +11,11 @@ let
     joinMediaParts = pkgs.join-media-parts;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;
-  workRoot = "${mediaDir}/.cue-splitter-work";
+  workRoot = "${mediaDir}/.arr-post-processor/lidarr";
+  # Keep the existing state directory across the service rename.
   stateDir = "/var/lib/lidarr-cue-splitter";
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter";
-  metricsFile = "${nodeExporterTextfileDir}/lidarr-cue-splitter.prom";
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/arr-post-processor-lidarr";
+  metricsFile = "${nodeExporterTextfileDir}/arr-post-processor-lidarr.prom";
   allowedRoots = [
     "${mediaDir}/torrents"
   ]
@@ -26,19 +27,21 @@ let
 in
 {
   config = lib.mkIf (cfg != null) {
-    host.observability.nodeExporter.textfile.directories.lidarr-cue-splitter = nodeExporterTextfileDir;
+    host.observability.nodeExporter.textfile.directories.arr-post-processor-lidarr =
+      nodeExporterTextfileDir;
 
     host.storage.claims.media = {
-      directories.".cue-splitter-work".mode = "2775";
-      attachments.lidarr-cue-splitter = { };
+      directories.".arr-post-processor/lidarr".mode = "2775";
+      attachments.arr-post-processor-lidarr = { };
     };
 
     systemd.tmpfiles.rules = [
       "d ${nodeExporterTextfileDir} 0755 lidarr media - -"
+      "D ${mediaDir}/.cue-splitter-work 2775 lidarr media 7d"
     ];
 
-    systemd.services.lidarr-cue-splitter = {
-      description = "Split completed Lidarr CUE images and import their tracks";
+    systemd.services.arr-post-processor-lidarr = {
+      description = "Recover stalled Lidarr downloads and import the result";
       wantedBy = [ "multi-user.target" ];
       wants = serviceDeps;
       after = serviceDeps;
@@ -47,7 +50,7 @@ in
           [
             (lib.getExe package)
             "--processor"
-            "lidarr-cue-split"
+            "lidarr"
             "--arr-url"
             "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
             "--arr-config"

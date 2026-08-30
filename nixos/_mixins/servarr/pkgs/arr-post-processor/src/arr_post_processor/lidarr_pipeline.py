@@ -202,6 +202,27 @@ class LidarrPipeline:
     def cleanup(self, download_id: str) -> None:
         self.cleanup_path(self.job_root(download_id))
 
+    def cleanup_legacy_cue_staging(self, ready_root: Path) -> None:
+        resolved = ready_root.resolve()
+        if "_lidarr-cue-split" not in resolved.parts or not is_within(resolved, self.allowed_roots):
+            raise NeedsAttention(f"refusing to clean unsafe legacy staging path: {ready_root}")
+        if resolved.exists():
+            shutil.rmtree(resolved)
+        parent = resolved.parent
+        if parent.name == "_lidarr-cue-split" and parent.exists() and not any(parent.iterdir()):
+            parent.rmdir()
+
+    def prune_stale(self, now: float, retention_seconds: float) -> None:
+        if not self.work_root.exists():
+            return
+        for path in self.work_root.iterdir():
+            try:
+                stale = now - path.stat().st_mtime >= retention_seconds
+            except OSError:
+                continue
+            if path.is_dir() and stale:
+                self.cleanup_path(path)
+
     def cleanup_path(self, path: Path) -> None:
         resolved = path.resolve()
         if resolved.parent != self.work_root:

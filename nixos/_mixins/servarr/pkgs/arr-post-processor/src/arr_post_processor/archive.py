@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Protocol
+from typing import Callable, Protocol
 
 import rarfile
 
@@ -34,6 +35,15 @@ class ArchiveBackend(Protocol):
 
 
 class NativeArchiveBackend:
+    def __init__(
+        self,
+        *,
+        timeout_seconds: float = 900,
+        run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    ):
+        self.timeout_seconds = timeout_seconds
+        self.run = run
+
     def members(self, archive: Path) -> list[ArchiveMember]:
         if archive.suffix.lower() == ".tar":
             return self.tar_members(archive)
@@ -81,8 +91,28 @@ class NativeArchiveBackend:
                 with tarfile.open(archive, mode="r:") as source:
                     source.extractall(destination, filter="data")
                 return
-            with rarfile.RarFile(archive) as source:
-                source.extractall(destination)
+            result = self.run(
+                [
+                    "unrar",
+                    "x",
+                    "-idq",
+                    "-o-",
+                    "-p-",
+                    str(archive),
+                    f"{destination}/",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                errors="replace",
+                timeout=self.timeout_seconds,
+            )
+            if result.returncode != 0:
+                raise SourceInvalid(
+                    f"cannot extract RAR archive {archive}: {result.stderr.strip()}"
+                )
+        except subprocess.TimeoutExpired as error:
+            raise SourceInvalid(f"RAR extraction timed out for {archive}") from error
         except (OSError, tarfile.TarError, rarfile.Error) as error:
             raise SourceInvalid(f"cannot extract archive {archive}: {error}") from error
 

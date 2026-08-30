@@ -415,7 +415,7 @@ class RadarrServiceTests(unittest.TestCase):
                 'host_observability_radarr_multipart_joiner_jobs_total{result="success"} 1.0',
                 metrics,
             )
-            self.assertNotIn("host_observability_lidarr_cue_splitter", metrics)
+            self.assertNotIn("host_observability_lidarr_post_processor", metrics)
 
     def test_manual_resolution_cleans_retained_staging(self):
         with tempfile.TemporaryDirectory() as directory:

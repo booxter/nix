@@ -48,7 +48,7 @@ in
           [
             (lib.getExe package)
             "--processor"
-            "radarr-media-join"
+            "radarr"
             "--arr-url"
             "http://127.0.0.1:${toString config.services.radarr.settings.server.port}"
             "--arr-config"

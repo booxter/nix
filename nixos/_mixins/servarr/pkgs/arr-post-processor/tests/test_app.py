@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import os
 import subprocess
 import tarfile
 import tempfile
@@ -38,7 +39,7 @@ from arr_post_processor.models import (
     QueueRecord,
     UnflacInput,
 )
-from arr_post_processor.service import CueSplitterService
+from arr_post_processor.lidarr_service import LidarrPostProcessorService
 from arr_post_processor.state import Job, StateStore
 
 
@@ -82,7 +83,7 @@ class UnexpectedArchiveBackend:
         raise AssertionError(f"should not extract {archive} into {destination}")
 
 
-class CueSplitterTests(unittest.TestCase):
+class LidarrPostProcessorTests(unittest.TestCase):
     def test_queue_record_normalizes_aiopyarr_protocol(self):
         record = queue_record({"protocol": ProtocolType.TORRENT})
         self.assertEqual(record.protocol, "torrent")
@@ -99,9 +100,9 @@ class CueSplitterTests(unittest.TestCase):
         healthy = eligible.model_copy(update={"tracked_download_status": "ok"})
         downloading = eligible.model_copy(update={"status": "downloading"})
 
-        self.assertTrue(CueSplitterService.completed_record(eligible))
-        self.assertFalse(CueSplitterService.completed_record(healthy))
-        self.assertFalse(CueSplitterService.completed_record(downloading))
+        self.assertTrue(LidarrPostProcessorService.completed_record(eligible))
+        self.assertFalse(LidarrPostProcessorService.completed_record(healthy))
+        self.assertFalse(LidarrPostProcessorService.completed_record(downloading))
 
     def test_reads_lidarr_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -158,6 +159,20 @@ class CueSplitterTests(unittest.TestCase):
             backend.extract(archive, destination)
             self.assertIn('FILE "album.flac"', (destination / "album.cue").read_text())
             self.assertEqual((destination / "album.flac").read_text(), "fixture audio\n")
+
+    def test_rar_extraction_timeout_is_a_source_failure(self):
+        def timeout(*args, **kwargs):
+            del args, kwargs
+            raise subprocess.TimeoutExpired("unrar", 5)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "album.rar"
+            archive.write_bytes(b"archive")
+            backend = NativeArchiveBackend(timeout_seconds=5, run=timeout)
+
+            with self.assertRaisesRegex(SourceInvalid, "extraction timed out"):
+                backend.extract(archive, root / "output")
 
     def test_archive_transform_rejects_unsafe_member_before_extraction(self):
         class FakeBackend:
@@ -545,13 +560,13 @@ class CueSplitterTests(unittest.TestCase):
             store.state.totals.tracks = 24
             metrics = render_metrics(store.state, ok=True, now=1234.0)
             self.assertEqual(
-                metric_value(metrics, "host_observability_lidarr_cue_splitter_ok"),
+                metric_value(metrics, "host_observability_lidarr_post_processor_ok"),
                 1,
             )
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_lidarr_post_processor_jobs",
                     {"state": "awaiting_manual_match"},
                 ),
                 1,
@@ -559,13 +574,13 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs_total",
+                    "host_observability_lidarr_post_processor_jobs_total",
                     {"result": "success"},
                 ),
                 3,
             )
             self.assertEqual(
-                metric_value(metrics, "host_observability_lidarr_cue_splitter_tracks_total"),
+                metric_value(metrics, "host_observability_lidarr_post_processor_tracks_total"),
                 24,
             )
 
@@ -673,7 +688,7 @@ class CueSplitterTests(unittest.TestCase):
             client = FakeClient()
             store = StateStore(root / "state.json")
             now = [1000.0]
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=FakeRunner(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -727,7 +742,7 @@ class CueSplitterTests(unittest.TestCase):
                 error="download path is outside allowed roots",
                 updated_at=1000.0,
             )
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=FakeClient,
                 runner=object(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -793,7 +808,7 @@ class CueSplitterTests(unittest.TestCase):
                 error="unflac could not parse EAC cue",
                 updated_at=1000.0,
             )
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=FakeClient,
                 runner=UnexpectedRunner(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -898,7 +913,7 @@ class CueSplitterTests(unittest.TestCase):
             runner = FakeRunner()
             store = StateStore(root / "state.json")
             now = [1000.0]
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=runner,
                 archive_backend=UnexpectedArchiveBackend(),
@@ -932,7 +947,60 @@ class CueSplitterTests(unittest.TestCase):
                 now[0] += 30
                 service.iteration()
             self.assertEqual(job.status, "manual_resolved")
-            self.assertEqual(len(list(ready_root.rglob("*.flac"))), 2)
+            self.assertFalse(ready_root.exists())
+
+    def test_manual_match_staging_expires_while_queue_item_remains(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            work = root / "work"
+            ready_root = work / safe_component("abc") / "01-cue_split"
+            ready_root.mkdir(parents=True)
+            (ready_root / "01.flac").write_bytes(b"flac")
+            orphan = work / "orphan.partial"
+            orphan.mkdir()
+            os.utime(orphan, (900.0, 900.0))
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "usenet",
+                    "downloadId": "abc",
+                    "outputPath": str(root / "downloads"),
+                }
+            )
+
+            class FakeClient:
+                def queue(self):
+                    return [record]
+
+            store = StateStore(root / "state.json")
+            job = Job(
+                download_id="abc",
+                status="awaiting_manual_match",
+                ready_root=ready_root,
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
+            service = LidarrPostProcessorService(
+                client_factory=FakeClient,
+                runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
+                store=store,
+                allowed_roots=[root / "downloads"],
+                work_root=work,
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=60,
+                attention_staging_retention_seconds=60,
+                now=lambda: 1061.0,
+                sleep=lambda _: None,
+            )
+
+            service.iteration()
+
+            self.assertFalse(ready_root.exists())
+            self.assertFalse(orphan.exists())
+            self.assertIsNone(job.ready_root)
+            self.assertEqual(job.resolution, "attention_staging_expired")
 
     def test_transient_empty_queue_does_not_dismiss_problem_job(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -967,7 +1035,7 @@ class CueSplitterTests(unittest.TestCase):
             )
             store.state.jobs["abc"] = job
             now = [1001.0]
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=object(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -1019,7 +1087,7 @@ class CueSplitterTests(unittest.TestCase):
                 updated_at=1000.0,
             )
             store.state.jobs["abc"] = job
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=FakeClient,
                 runner=object(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -1054,7 +1122,7 @@ class CueSplitterTests(unittest.TestCase):
                 updated_at=1000.0,
             )
             now = [1001.0]
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=FakeClient,
                 runner=object(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -1076,7 +1144,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_lidarr_post_processor_jobs",
                     {"state": "dismissed"},
                 ),
                 1,
@@ -1084,7 +1152,7 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 metric_value(
                     metrics,
-                    "host_observability_lidarr_cue_splitter_jobs",
+                    "host_observability_lidarr_post_processor_jobs",
                     {"state": "needs_attention"},
                 ),
                 0,
@@ -1133,7 +1201,7 @@ class CueSplitterTests(unittest.TestCase):
             runner = FailingRunner()
             store = StateStore(root / "state.json")
             now = [1000.0]
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=runner,
                 archive_backend=UnexpectedArchiveBackend(),
@@ -1213,7 +1281,7 @@ class CueSplitterTests(unittest.TestCase):
                 updated_at=1000.0,
             )
             store.state.jobs["abc"] = job
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=FailingRunner(),
                 archive_backend=UnexpectedArchiveBackend(),
@@ -1267,7 +1335,7 @@ class CueSplitterTests(unittest.TestCase):
                 updated_at=1000.0,
             )
             store.state.jobs["abc"] = job
-            service = CueSplitterService(
+            service = LidarrPostProcessorService(
                 client_factory=lambda: client,
                 runner=object(),
                 archive_backend=UnexpectedArchiveBackend(),
