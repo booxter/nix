@@ -93,7 +93,9 @@ class RadarrJoinService:
         job.error = error
         job.updated_at = now
         LOG.warning(
-            "multipart job needs attention: download_id=%s error=%s", job.download_id, error
+            "Radarr post-processing job needs attention: download_id=%s error=%s",
+            job.download_id,
+            error,
         )
 
     def cleanup_job_staging(self, job: Job) -> None:
@@ -103,6 +105,9 @@ class RadarrJoinService:
         if expected.resolve() != expected:
             raise NeedsAttention(f"refusing to clean an unsafe staging path: {expected}")
         if expected.exists():
+            LOG.info(
+                "cleaning Radarr job staging: download_id=%s path=%s", job.download_id, expected
+            )
             shutil.rmtree(expected)
         job.ready_root = None
 
@@ -113,15 +118,29 @@ class RadarrJoinService:
             if now - job.updated_at < self.attention_staging_retention_seconds:
                 continue
             try:
+                LOG.info(
+                    "expiring retained Radarr staging: download_id=%s path=%s",
+                    job.download_id,
+                    job.ready_root or "",
+                )
                 self.cleanup_job_staging(job)
             except NeedsAttention as error:
                 self.mark_attention(job, str(error), now)
 
-    def wait_for_import(self, client: Radarr, command_id: int) -> None:
+    def wait_for_import(self, client: Radarr, command_id: int, download_id: str) -> None:
         deadline = time.monotonic() + self.command_timeout_seconds
+        previous_status: str | None = None
         while time.monotonic() < deadline:
             command = client.command(command_id)
             status = command.status.lower()
+            if status != previous_status:
+                LOG.info(
+                    "Radarr manual-import command status: download_id=%s command_id=%s status=%s",
+                    download_id,
+                    command_id,
+                    status,
+                )
+                previous_status = status
             if status in TERMINAL_COMMAND_STATES:
                 if status != "completed":
                     raise NeedsAttention(
@@ -153,11 +172,16 @@ class RadarrJoinService:
     ) -> None:
         if record.output_path is None:
             raise PostProcessorError("Radarr queue record does not contain an output path")
+        outputs = client.manual_import(record.output_path, record)
         candidates = [
-            candidate
-            for candidate in client.manual_import(record.output_path, record)
-            if candidate.path.resolve() == path.resolve()
+            candidate for candidate in outputs if candidate.path.resolve() == path.resolve()
         ]
+        LOG.info(
+            "evaluated Radarr single-file import candidates: download_id=%s candidates=%s exact_path_matches=%s",
+            record.download_id,
+            len(outputs),
+            len(candidates),
+        )
         if len(candidates) != 1 or candidates[0].movie.id != movie_id:
             raise NeedsAttention("Radarr did not uniquely match the single file to its queue item")
         candidate = candidates[0]
@@ -185,10 +209,21 @@ class RadarrJoinService:
             )
         )
         job.command_id = command_id
-        self.wait_for_import(client, command_id)
+        LOG.info(
+            "submitted Radarr single-file import: download_id=%s command_id=%s path=%s",
+            record.download_id,
+            command_id,
+            path,
+        )
+        self.wait_for_import(client, command_id, record.download_id)
         job.status = "awaiting_queue_removal"
         job.updated_at = self.now()
         job.error = ""
+        LOG.info(
+            "Radarr single-file import completed; waiting for queue removal: download_id=%s command_id=%s",
+            record.download_id,
+            command_id,
+        )
 
     def observe(self, record: RadarrQueueRecord, job: Job, now: float) -> bool:
         if record.output_path is None:
@@ -199,15 +234,41 @@ class RadarrJoinService:
             job.status = "settling"
             job.discovered_at = now
             job.updated_at = now
+            LOG.info(
+                "discovered recoverable Radarr download: download_id=%s title=%s source=%s settling_seconds=%s",
+                record.download_id,
+                record.title,
+                record.output_path,
+                self.settle_seconds,
+            )
             return False
         discovered_at = job.discovered_at if job.discovered_at is not None else now
         return now - discovered_at >= self.settle_seconds
 
     def process(self, client: Radarr, record: RadarrQueueRecord, job: Job, now: float) -> None:
+        LOG.info(
+            "starting Radarr recovery: download_id=%s title=%s source=%s tracked_state=%s",
+            record.download_id,
+            record.title,
+            record.output_path or "",
+            record.tracked_download_state,
+        )
         movie = client.movie(record.movie_id)
         if self.has_only_filename_parse_failures(record):
+            LOG.info(
+                "evaluating single-file recovery: download_id=%s movie_id=%s runtime_minutes=%s",
+                record.download_id,
+                movie.id,
+                movie.runtime,
+            )
             single_file = build_single_file_plan(record, movie, self.allowed_roots, self.backend)
             if single_file is not None:
+                LOG.info(
+                    "selected single-file recovery: download_id=%s path=%s duration_seconds=%s",
+                    record.download_id,
+                    single_file.path,
+                    round(single_file.probe.duration_seconds, 1),
+                )
                 self.import_single_file(
                     client,
                     record,
@@ -217,6 +278,10 @@ class RadarrJoinService:
                     now,
                 )
                 return
+            LOG.info(
+                "single-file recovery not applicable: download_id=%s reason=file_count_or_runtime_mismatch",
+                record.download_id,
+            )
         plan = build_join_plan(record, movie, self.allowed_roots, self.backend)
         if plan is None:
             if job.status != "ignored":
@@ -227,6 +292,10 @@ class RadarrJoinService:
                 "download is not an unambiguous runtime-matched single-file or multipart movie"
             )
             job.resolution = "unsupported"
+            LOG.info(
+                "ignoring Radarr download: download_id=%s reason=no_unambiguous_runtime_matched_plan",
+                record.download_id,
+            )
             return
         if not record.quality:
             raise NeedsAttention("Radarr queue record does not contain a quality")
@@ -236,7 +305,19 @@ class RadarrJoinService:
         job.tracks = len(plan.parts)
         job.resolution = "multipart_join"
         self.store.save()
+        LOG.info(
+            "selected multipart recovery: download_id=%s parts=%s source_duration_seconds=%s expected_duration_seconds=%s",
+            record.download_id,
+            len(plan.parts),
+            round(plan.source_duration_seconds, 1),
+            round(plan.expected_duration_seconds, 1),
+        )
         output = prepare_joined_media(record, movie, plan, self.work_root, self.backend)
+        LOG.info(
+            "joined multipart movie: download_id=%s output=%s",
+            record.download_id,
+            output,
+        )
         job.ready_root = output.parent
         job.status = "importing"
         job.updated_at = self.now()
@@ -250,19 +331,38 @@ class RadarrJoinService:
             )
         )
         job.command_id = command_id
-        self.wait_for_import(client, command_id)
+        LOG.info(
+            "submitted Radarr multipart import: download_id=%s command_id=%s path=%s",
+            record.download_id,
+            command_id,
+            output,
+        )
+        self.wait_for_import(client, command_id, record.download_id)
         job.status = "awaiting_queue_removal"
         job.updated_at = self.now()
         job.error = ""
+        LOG.info(
+            "Radarr multipart import completed; waiting for queue removal: download_id=%s command_id=%s",
+            record.download_id,
+            command_id,
+        )
 
     def reconcile(self, queued_download_ids: set[str], now: float) -> None:
         for job in self.store.state.jobs.values():
             if job.download_id in queued_download_ids:
+                if job.missing_queue_observations:
+                    LOG.info("Radarr queue item reappeared: download_id=%s", job.download_id)
                 job.missing_queue_observations = 0
                 continue
             if job.status not in {"awaiting_queue_removal", "awaiting_manual_match"}:
                 continue
             job.missing_queue_observations += 1
+            LOG.info(
+                "observed Radarr queue removal: download_id=%s observation=%s/%s",
+                job.download_id,
+                job.missing_queue_observations,
+                self.missing_queue_confirmations,
+            )
             if job.missing_queue_observations < self.missing_queue_confirmations:
                 continue
             if job.status == "awaiting_queue_removal":
@@ -282,6 +382,12 @@ class RadarrJoinService:
                 self.store.state.last_success = now
                 started = job.started_at if job.started_at is not None else now
                 self.store.state.last_duration = max(0.0, now - started)
+                LOG.info(
+                    "completed Radarr post-processing/import: download_id=%s resolution=%s source_files=%s",
+                    job.download_id,
+                    job.resolution or "",
+                    1 if job.resolution == "single_file_import" else job.tracks,
+                )
             else:
                 try:
                     self.cleanup_job_staging(job)
@@ -290,6 +396,10 @@ class RadarrJoinService:
                     continue
                 job.status = "manual_resolved"
                 job.updated_at = now
+                LOG.info(
+                    "manual Radarr job left queue; cleaned staging: download_id=%s",
+                    job.download_id,
+                )
 
     def recover_interrupted(self, now: float) -> None:
         for job in self.store.state.jobs.values():
@@ -330,9 +440,7 @@ class RadarrJoinService:
                 if self.observe(record, job, now):
                     ready.append((record, job))
             except Exception as error:
-                LOG.exception(
-                    "multipart job observation failed: download_id=%s", record.download_id
-                )
+                LOG.exception("Radarr job observation failed: download_id=%s", record.download_id)
                 self.mark_attention(job, str(error), now)
         if not any(
             job.status in PROCESSING_JOB_STATES | {"joining"}
@@ -342,7 +450,9 @@ class RadarrJoinService:
                 try:
                     self.process(client, record, job, now)
                 except Exception as error:
-                    LOG.exception("multipart job failed: download_id=%s", record.download_id)
+                    LOG.exception(
+                        "Radarr post-processing job failed: download_id=%s", record.download_id
+                    )
                     self.mark_attention(job, str(error), now)
                 break
         self.store.prune(now)
