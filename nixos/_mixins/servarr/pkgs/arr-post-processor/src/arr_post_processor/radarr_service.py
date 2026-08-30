@@ -67,12 +67,19 @@ class RadarrJoinService:
         self.now = now
         self.sleep = sleep
 
-    @staticmethod
-    def eligible_record(record: RadarrQueueRecord) -> bool:
+    @classmethod
+    def eligible_record(cls, record: RadarrQueueRecord) -> bool:
+        tracked_state = record.tracked_download_state.lower()
         return (
             record.status.lower() == "completed"
             and record.tracked_download_status.lower() == "warning"
-            and record.tracked_download_state.lower() == "importblocked"
+            and (
+                tracked_state == "importblocked"
+                or (
+                    tracked_state == "importpending"
+                    and cls.has_only_filename_parse_failures(record)
+                )
+            )
             and record.protocol.lower() in SUPPORTED_PROTOCOLS
             and record.movie_id > 0
             and bool(record.download_id)

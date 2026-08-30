@@ -621,6 +621,7 @@ class RadarrServiceTests(unittest.TestCase):
             backend = FakeBackend({source.resolve(): probe(5042.8)})
             queue_record = record(
                 source,
+                tracked_download_state="importPending",
                 status_messages=[{"title": source.name, "messages": ["Unable to parse file"]}],
             )
 
