@@ -11,7 +11,7 @@ import rarfile
 
 from .errors import NeedsAttention, SourceInvalid
 from .lidarr_pipeline import TransformResult
-from .media import AUDIO_FILE_SUFFIXES
+from .media import AUDIO_FILE_SUFFIXES, is_staging_path
 
 
 ARCHIVE_SUFFIXES = frozenset({".rar", ".tar"})
@@ -137,7 +137,9 @@ class ArchiveTransform:
         return sorted(
             path
             for path in source.rglob("*")
-            if path.is_file() and path.suffix.lower() in ARCHIVE_SUFFIXES
+            if path.is_file()
+            and not is_staging_path(path.relative_to(source))
+            and path.suffix.lower() in ARCHIVE_SUFFIXES
         )
 
     def candidate(self, source: Path) -> Path | None:
@@ -153,7 +155,9 @@ class ArchiveTransform:
         standalone_audio = [
             path
             for path in source.rglob("*")
-            if path.is_file() and path.suffix.lower() in AUDIO_FILE_SUFFIXES
+            if path.is_file()
+            and not is_staging_path(path.relative_to(source))
+            and path.suffix.lower() in AUDIO_FILE_SUFFIXES
         ]
         return None if standalone_audio else archive
 

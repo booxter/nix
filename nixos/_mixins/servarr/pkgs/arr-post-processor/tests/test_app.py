@@ -254,7 +254,9 @@ class LidarrPostProcessorTests(unittest.TestCase):
 
             self.assertEqual(result.transforms, ("archive_extract",))
             self.assertEqual([path.name for path in result.audio_files], ["01.flac", "02.flac"])
-            self.assertTrue(all(path.is_relative_to(work) for path in result.audio_files))
+            self.assertTrue(all(path.is_relative_to(source) for path in result.audio_files))
+            self.assertTrue(all("_arr-post-processor" in path.parts for path in result.audio_files))
+            self.assertTrue(all(not path.is_relative_to(work) for path in result.audio_files))
             self.assertTrue((source / "album.tar").exists())
 
     def test_safe_component_is_stable_and_bounded(self):
@@ -271,6 +273,31 @@ class LidarrPostProcessorTests(unittest.TestCase):
             first = output_fingerprint(root)
             audio.write_bytes(b"second version")
             self.assertNotEqual(first, output_fingerprint(root))
+
+    def test_source_local_staging_is_excluded_from_discovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "album"
+            source.mkdir()
+            archive = source / "album.tar"
+            archive.write_bytes(b"archive")
+            transform = ArchiveTransform(UnexpectedArchiveBackend())
+            original_fingerprint = output_fingerprint(
+                source,
+                suffixes=frozenset({".tar", ".flac"}),
+            )
+            staging = source / "_arr-post-processor" / "job" / "01-archive_extract"
+            staging.mkdir(parents=True)
+            (staging / "01.flac").write_bytes(b"staged")
+
+            self.assertTrue(transform.applies(source))
+            self.assertEqual(
+                output_fingerprint(
+                    source,
+                    suffixes=frozenset({".tar", ".flac"}),
+                ),
+                original_fingerprint,
+            )
 
     def test_unflac_inspection(self):
         payload = [
@@ -662,6 +689,8 @@ class LidarrPostProcessorTests(unittest.TestCase):
                     return self.records
 
                 def manual_import(self, folder, queue_record):
+                    if not folder.is_relative_to(download):
+                        raise AssertionError("Lidarr staging must remain below its download")
                     return import_candidates(
                         [
                             {
@@ -714,6 +743,7 @@ class LidarrPostProcessorTests(unittest.TestCase):
             self.assertEqual(store.state.totals.success, 1)
             self.assertEqual(store.state.totals.tracks, 2)
             self.assertFalse((download / "_lidarr-cue-split").exists())
+            self.assertFalse((download / "_arr-post-processor").exists())
             self.assertTrue(audio.exists())
 
     def test_non_cue_download_recovers_from_needs_attention(self):
@@ -1001,6 +1031,67 @@ class LidarrPostProcessorTests(unittest.TestCase):
             self.assertFalse(orphan.exists())
             self.assertIsNone(job.ready_root)
             self.assertEqual(job.resolution, "attention_staging_expired")
+
+    def test_external_archive_staging_is_cleaned_and_retried_after_upgrade(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "downloads" / "album"
+            source.mkdir(parents=True)
+            (source / "album.tar").write_bytes(b"archive")
+            work = root / "work"
+            external_job_root = work / safe_component("abc")
+            ready_root = external_job_root / "01-archive_extract"
+            ready_root.mkdir(parents=True)
+            (ready_root / "01.flac").write_bytes(b"flac")
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "usenet",
+                    "downloadId": "abc",
+                    "outputPath": str(source),
+                }
+            )
+
+            class FakeClient:
+                def queue(self):
+                    return [record]
+
+            store = StateStore(root / "state.json")
+            job = Job(
+                download_id="abc",
+                status="awaiting_manual_match",
+                ready_root=ready_root,
+                resolution="archive_extract",
+                error="Lidarr returned no tracks",
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
+            service = LidarrPostProcessorService(
+                client_factory=FakeClient,
+                runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
+                store=store,
+                allowed_roots=[root / "downloads"],
+                work_root=work,
+                metrics_file=root / "metrics.prom",
+                settle_seconds=30,
+                command_timeout_seconds=60,
+                now=lambda: 1061.0,
+                sleep=lambda _: None,
+            )
+            job.fingerprint = output_fingerprint(
+                source,
+                suffixes=service.pipeline.input_suffixes,
+            )
+
+            service.iteration()
+
+            self.assertFalse(external_job_root.exists())
+            self.assertEqual(job.status, "settling")
+            self.assertIsNone(job.ready_root)
+            self.assertIsNone(job.resolution)
+            self.assertEqual(job.error, "")
+            self.assertEqual(job.discovered_at, 1061.0)
 
     def test_transient_empty_queue_does_not_dismiss_problem_job(self):
         with tempfile.TemporaryDirectory() as directory:

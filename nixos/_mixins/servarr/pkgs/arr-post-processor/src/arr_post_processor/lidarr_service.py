@@ -12,7 +12,7 @@ from .errors import ManualMatchRequired, NeedsAttention, PostProcessorError, Sou
 from .lidarr import Lidarr
 from .lidarr_import import LidarrImporter
 from .lidarr_pipeline import CueTransform, LidarrPipeline
-from .media import MediaRunner, output_fingerprint
+from .media import LEGACY_STAGING_DIR_NAME, MediaRunner, output_fingerprint
 from .metrics import render_metrics
 from .models import QueueRecord
 from .state import (
@@ -92,9 +92,14 @@ class LidarrPostProcessorService:
             raise PostProcessorError("Lidarr queue record does not contain an output path")
         job.status = "processing"
         job.phase = "transform"
+        job.ready_root = self.pipeline.job_root(record.output_path, record.download_id)
         job.updated_at = self.now()
         self.store.save()
-        result = self.pipeline.execute(record.output_path, record.download_id)
+        try:
+            result = self.pipeline.execute(record.output_path, record.download_id)
+        except Exception:
+            job.ready_root = None
+            raise
         job.phase = "manual_match"
         job.ready_root = result.ready_root
         job.tracks = len(result.audio_files)
@@ -252,11 +257,37 @@ class LidarrPostProcessorService:
         )
 
     def cleanup_job_staging(self, job: Job) -> None:
-        self.pipeline.cleanup(job.download_id)
         ready_root = job.ready_root
-        if ready_root is not None and "_lidarr-cue-split" in ready_root.parts:
+        self.pipeline.cleanup(job.download_id, ready_root)
+        if ready_root is not None and LEGACY_STAGING_DIR_NAME in ready_root.parts:
             self.pipeline.cleanup_legacy_cue_staging(ready_root)
         job.ready_root = None
+
+    def migrate_external_workspace_jobs(self, now: float) -> None:
+        for job in self.store.state.jobs.values():
+            ready_root = job.ready_root
+            if (
+                job.status != "awaiting_manual_match"
+                or ready_root is None
+                or job.resolution is None
+                or not {"archive_extract", "cue_split"}.intersection(job.resolution.split("+"))
+                or not ready_root.resolve().is_relative_to(self.pipeline.work_root)
+            ):
+                continue
+            self.cleanup_job_staging(job)
+            job.status = "settling"
+            job.phase = None
+            job.resolution = None
+            job.error = ""
+            job.discovered_at = now
+            job.updated_at = now
+            job.attempts = 0
+            job.command_id = None
+            job.missing_queue_observations = 0
+            LOG.info(
+                "reset job staged outside its download: download_id=%s",
+                job.download_id,
+            )
 
     def expire_attention_staging(self, now: float) -> None:
         for job in self.store.state.jobs.values():
@@ -284,6 +315,11 @@ class LidarrPostProcessorService:
                     "service restarted after splitting; generated tracks were preserved",
                     now,
                 )
+                continue
+            try:
+                self.cleanup_job_staging(job)
+            except NeedsAttention as error:
+                self.mark_automation_failed(job, str(error), now)
                 continue
             job.status = "failed"
             job.error = "service restarted while the source was processing"
@@ -448,6 +484,7 @@ class LidarrPostProcessorService:
         completed = {
             record.download_id: record for record in records if self.completed_record(record)
         }
+        self.migrate_external_workspace_jobs(now)
         self.recover_interrupted_jobs(now)
         self.reconcile_jobs(queued_download_ids, now)
         self.expire_attention_staging(now)

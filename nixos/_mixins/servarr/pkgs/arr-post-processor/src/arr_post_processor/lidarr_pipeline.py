@@ -9,9 +9,12 @@ from typing import Protocol
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import (
     AUDIO_FILE_SUFFIXES,
+    LEGACY_STAGING_DIR_NAME,
     MediaRunner,
+    STAGING_DIR_NAME,
     cue_already_split_audio_files,
     inspection_summary,
+    is_staging_path,
     is_within,
     output_fingerprint,
     safe_component,
@@ -58,7 +61,11 @@ class CueTransform:
     @staticmethod
     def cue_files(source: Path) -> list[Path]:
         return sorted(
-            path for path in source.rglob("*") if path.is_file() and path.suffix.lower() == ".cue"
+            path
+            for path in source.rglob("*")
+            if path.is_file()
+            and not is_staging_path(path.relative_to(source))
+            and path.suffix.lower() == ".cue"
         )
 
     def already_split(self, source: Path) -> bool:
@@ -156,15 +163,17 @@ class LidarrPipeline:
             for transform in self.transforms
         )
 
-    def job_root(self, download_id: str) -> Path:
-        return self.work_root / safe_component(download_id)
+    def job_root(self, source: Path, download_id: str) -> Path:
+        resolved = self.validate_source(source)
+        return resolved / STAGING_DIR_NAME / safe_component(download_id)
 
     def execute(self, source: Path, download_id: str) -> PipelineResult:
-        current = self.validate_source(source)
-        ready_root = self.job_root(download_id)
-        partial_root = self.work_root / f"{safe_component(download_id)}.partial"
-        self.cleanup_path(partial_root)
-        self.cleanup_path(ready_root)
+        source_root = self.validate_source(source)
+        current = source_root
+        ready_root = self.job_root(source_root, download_id)
+        partial_root = ready_root.with_name(f"{ready_root.name}.partial")
+        self.cleanup_source_path(partial_root, source_root)
+        self.cleanup_source_path(ready_root, source_root)
         partial_root.mkdir(parents=True)
         applied: list[str] = []
         try:
@@ -195,21 +204,44 @@ class LidarrPipeline:
                 transforms=tuple(applied),
             )
         except Exception:
-            self.cleanup_path(partial_root)
-            self.cleanup_path(ready_root)
+            self.cleanup_source_path(partial_root, source_root)
+            self.cleanup_source_path(ready_root, source_root)
             raise
 
-    def cleanup(self, download_id: str) -> None:
-        self.cleanup_path(self.job_root(download_id))
+    def cleanup(self, download_id: str, ready_root: Path | None) -> None:
+        component = safe_component(download_id)
+        self.cleanup_global_path(self.work_root / component)
+        self.cleanup_global_path(self.work_root / f"{component}.partial")
+        if ready_root is None:
+            return
+        resolved = ready_root.resolve()
+        if is_within(resolved, [self.work_root]):
+            return
+        try:
+            staging_index = resolved.parts.index(STAGING_DIR_NAME)
+        except ValueError:
+            return
+        if staging_index + 1 >= len(resolved.parts):
+            raise NeedsAttention(f"refusing to clean malformed staging path: {ready_root}")
+        job_root = Path(*resolved.parts[: staging_index + 2])
+        if job_root.name != component or not is_within(job_root, self.allowed_roots):
+            raise NeedsAttention(f"refusing to clean unsafe staging path: {ready_root}")
+        if job_root.exists():
+            shutil.rmtree(job_root)
+        staging_root = job_root.parent
+        if staging_root.exists() and not any(staging_root.iterdir()):
+            staging_root.rmdir()
 
     def cleanup_legacy_cue_staging(self, ready_root: Path) -> None:
         resolved = ready_root.resolve()
-        if "_lidarr-cue-split" not in resolved.parts or not is_within(resolved, self.allowed_roots):
+        if LEGACY_STAGING_DIR_NAME not in resolved.parts or not is_within(
+            resolved, self.allowed_roots
+        ):
             raise NeedsAttention(f"refusing to clean unsafe legacy staging path: {ready_root}")
         if resolved.exists():
             shutil.rmtree(resolved)
         parent = resolved.parent
-        if parent.name == "_lidarr-cue-split" and parent.exists() and not any(parent.iterdir()):
+        if parent.name == LEGACY_STAGING_DIR_NAME and parent.exists() and not any(parent.iterdir()):
             parent.rmdir()
 
     def prune_stale(self, now: float, retention_seconds: float) -> None:
@@ -221,11 +253,22 @@ class LidarrPipeline:
             except OSError:
                 continue
             if path.is_dir() and stale:
-                self.cleanup_path(path)
+                self.cleanup_global_path(path)
 
-    def cleanup_path(self, path: Path) -> None:
+    def cleanup_global_path(self, path: Path) -> None:
         resolved = path.resolve()
         if resolved.parent != self.work_root:
             raise NeedsAttention(f"refusing to clean unsafe staging path: {path}")
         if resolved.exists():
             shutil.rmtree(resolved)
+
+    @staticmethod
+    def cleanup_source_path(path: Path, source: Path) -> None:
+        resolved = path.resolve()
+        staging_root = source.resolve() / STAGING_DIR_NAME
+        if resolved.parent != staging_root:
+            raise NeedsAttention(f"refusing to clean unsafe source staging path: {path}")
+        if resolved.exists():
+            shutil.rmtree(resolved)
+        if staging_root.exists() and not any(staging_root.iterdir()):
+            staging_root.rmdir()
