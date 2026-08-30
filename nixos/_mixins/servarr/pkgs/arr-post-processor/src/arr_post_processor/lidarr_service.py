@@ -1,29 +1,20 @@
 from __future__ import annotations
 
 import logging
-import os
-import shutil
 import time
 from pathlib import Path
 from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
-from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .archive import ArchiveBackend, ArchiveTransform
+from .errors import ManualMatchRequired, NeedsAttention, PostProcessorError, SourceInvalid
 from .lidarr import Lidarr
-from .media import (
-    STAGING_DIR_NAME,
-    MediaRunner,
-    build_manual_import_files,
-    cue_already_split_audio_files,
-    inspection_summary,
-    is_within,
-    output_fingerprint,
-    safe_component,
-    source_fingerprint,
-)
+from .lidarr_import import LidarrImporter
+from .lidarr_pipeline import CueTransform, LidarrPipeline
+from .media import LEGACY_STAGING_DIR_NAME, MediaRunner, output_fingerprint
 from .metrics import render_metrics
-from .models import CueSummary, QueueRecord
+from .models import QueueRecord
 from .state import (
     PROCESSING_JOB_STATES,
     PROBLEM_JOB_STATES,
@@ -32,25 +23,26 @@ from .state import (
 )
 
 
-LOG = logging.getLogger("lidarr-cue-splitter")
+LOG = logging.getLogger("arr-post-processor.lidarr")
 SUPPORTED_PROTOCOLS = {
     "torrent",
     "torrentdownloadprotocol",
     "usenet",
     "usenetdownloadprotocol",
 }
-TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
 MAX_SOURCE_ATTEMPTS = 3
 SOURCE_RETRY_SECONDS = 300
 MISSING_QUEUE_CONFIRMATIONS = 3
+ATTENTION_STAGING_RETENTION_SECONDS = 7 * 86400
 
 
-class CueSplitterService:
+class LidarrPostProcessorService:
     def __init__(
         self,
         *,
         client_factory: Callable[[], Lidarr],
         runner: MediaRunner,
+        archive_backend: ArchiveBackend,
         store: StateStore,
         allowed_roots: list[Path],
         work_root: Path,
@@ -58,192 +50,94 @@ class CueSplitterService:
         settle_seconds: float,
         command_timeout_seconds: float,
         missing_queue_confirmations: int = MISSING_QUEUE_CONFIRMATIONS,
+        attention_staging_retention_seconds: float = ATTENTION_STAGING_RETENTION_SECONDS,
         now: Callable[[], float] = time.time,
         sleep: Callable[[float], None] = time.sleep,
     ):
         self.client_factory = client_factory
-        self.runner = runner
         self.store = store
-        self.allowed_roots = [root.resolve() for root in allowed_roots]
-        self.work_root = work_root.resolve()
         self.metrics_file = metrics_file
         self.settle_seconds = settle_seconds
         self.command_timeout_seconds = command_timeout_seconds
         self.missing_queue_confirmations = missing_queue_confirmations
+        self.attention_staging_retention_seconds = attention_staging_retention_seconds
         self.now = now
-        self.sleep = sleep
+        transform_roots = [*allowed_roots, work_root]
+        self.pipeline = LidarrPipeline(
+            transforms=[
+                ArchiveTransform(archive_backend),
+                CueTransform(runner, transform_roots),
+            ],
+            allowed_roots=allowed_roots,
+            work_root=work_root,
+        )
+        self.importer = LidarrImporter(
+            command_timeout_seconds=command_timeout_seconds,
+            sleep=sleep,
+        )
 
     @staticmethod
     def completed_record(record: QueueRecord) -> bool:
         return (
             record.status.lower() == "completed"
+            and record.tracked_download_status.lower() == "warning"
+            and record.tracked_download_state.lower() in {"importfailed", "importpending"}
             and record.protocol.lower() in SUPPORTED_PROTOCOLS
             and bool(record.download_id)
             and record.output_path is not None
         )
 
-    @staticmethod
-    def cue_files(output_path: Path) -> list[Path]:
-        return sorted(
-            path
-            for path in output_path.rglob("*")
-            if path.is_file()
-            and path.suffix.lower() == ".cue"
-            and STAGING_DIR_NAME not in path.parts
+    def process(self, client: Lidarr, record: QueueRecord, job: Job) -> None:
+        if record.output_path is None:
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
+        job.status = "processing"
+        job.phase = "transform"
+        job.ready_root = self.pipeline.job_root(record.output_path, record.download_id)
+        job.updated_at = self.now()
+        self.store.save()
+        LOG.info(
+            "starting Lidarr recovery: download_id=%s title=%s source=%s",
+            record.download_id,
+            record.title,
+            record.output_path,
         )
-
-    def download_is_already_split(self, record: QueueRecord) -> bool:
-        if record.output_path is None:
-            return False
-        output_path = record.output_path
-        if not is_within(output_path, self.allowed_roots) or not output_path.is_dir():
-            return False
-        cues = self.cue_files(output_path)
-        if not cues:
-            return False
-        for cue in cues:
-            audio_files = cue_already_split_audio_files(cue)
-            if audio_files is None:
-                return False
-            if not is_within(cue, self.allowed_roots) or any(
-                not is_within(path, self.allowed_roots) for path in audio_files
-            ):
-                return False
-        return True
-
-    def discover(self, record: QueueRecord) -> tuple[list[CueSummary], str]:
-        if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
-        output_path = record.output_path
-        if not is_within(output_path, self.allowed_roots):
-            raise NeedsAttention(f"download path is outside allowed roots: {output_path}")
-        if not output_path.is_dir():
-            raise CueSplitterError(f"download path does not exist: {output_path}")
-        cues = self.cue_files(output_path)
-        summaries = []
-        for cue in cues:
-            already_split_audio_files = cue_already_split_audio_files(cue)
-            if already_split_audio_files is not None:
-                if not is_within(cue, self.allowed_roots) or any(
-                    not is_within(path, self.allowed_roots) for path in already_split_audio_files
-                ):
-                    raise NeedsAttention(f"CUE references audio outside allowed roots: {cue}")
-                continue
-            summary = inspection_summary(cue, self.runner.inspect(cue))
-            if not is_within(summary.cue, self.allowed_roots) or any(
-                not is_within(path, self.allowed_roots) for path in summary.audio_files
-            ):
-                raise NeedsAttention(f"CUE references audio outside allowed roots: {cue}")
-            if summary.eligible:
-                summaries.append(summary)
-        return summaries, source_fingerprint(summaries) if summaries else ""
-
-    def prepare_split(
-        self,
-        record: QueueRecord,
-        job: Job,
-        summaries: list[CueSummary],
-    ) -> Path:
-        component = safe_component(record.download_id)
-        partial_root = self.work_root / f"{component}.partial"
-        if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
-        output_path = record.output_path.resolve()
-        ready_root = output_path / STAGING_DIR_NAME / component
-        if partial_root.exists():
-            shutil.rmtree(partial_root)
-        if ready_root.exists():
-            shutil.rmtree(ready_root)
-        partial_root.mkdir(parents=True)
-        generated: list[Path] = []
-        expected_tracks = 0
         try:
-            job.status = "splitting"
-            job.updated_at = self.now()
-            self.store.save()
-            for index, summary in enumerate(summaries, start=1):
-                cue_output = partial_root / f"disc-{index:02d}-{safe_component(summary.cue.stem)}"
-                cue_output.mkdir(parents=True)
-                generated.extend(self.runner.split(summary.cue, cue_output))
-                expected_tracks += summary.track_count
-            if len(generated) != expected_tracks:
-                raise SourceInvalid(
-                    f"unflac generated {len(generated)} tracks; expected {expected_tracks}"
-                )
-            job.status = "verifying"
-            job.updated_at = self.now()
-            self.store.save()
-            for path in generated:
-                self.runner.verify_flac(path)
-            ready_root.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(partial_root, ready_root)
-            generated = sorted(path.resolve() for path in ready_root.rglob("*.flac"))
-            job.status = "matching"
-            job.ready_root = ready_root
-            job.tracks = len(generated)
-            job.updated_at = self.now()
-            self.store.save()
-            return ready_root
+            result = self.pipeline.execute(record.output_path, record.download_id)
         except Exception:
-            if partial_root.exists():
-                shutil.rmtree(partial_root)
+            job.ready_root = None
             raise
-
-    def import_split(
-        self,
-        client: Lidarr,
-        record: QueueRecord,
-        job: Job,
-        ready_root: Path,
-    ) -> None:
-        generated = sorted(path.resolve() for path in ready_root.rglob("*.flac"))
-        try:
-            outputs = client.manual_import(ready_root, record)
-            import_files = build_manual_import_files(outputs, generated, record)
-            job.status = "importing"
-            job.updated_at = self.now()
-            self.store.save()
-            command_id = client.submit_manual_import(import_files)
-            job.command_id = command_id
-            deadline = time.monotonic() + self.command_timeout_seconds
-            while time.monotonic() < deadline:
-                command = client.command(command_id)
-                status = command.status.lower()
-                if status in TERMINAL_COMMAND_STATES:
-                    if status != "completed":
-                        raise ManualMatchRequired(
-                            f"Lidarr manual-import command {command_id} ended as {status}: {command.message}"
-                        )
-                    break
-                self.sleep(2.0)
-            else:
-                raise ManualMatchRequired(f"Lidarr manual-import command {command_id} timed out")
-        except ManualMatchRequired:
-            raise
-        except CueSplitterError as exc:
-            raise ManualMatchRequired(
-                f"Lidarr could not import the generated tracks: {exc}"
-            ) from exc
-        except Exception as exc:
-            raise NeedsAttention(
-                f"unexpected failure after splitting; generated tracks were preserved: {exc}"
-            ) from exc
+        job.phase = "manual_match"
+        job.ready_root = result.ready_root
+        job.tracks = len(result.audio_files)
+        job.resolution = "+".join(result.transforms)
+        job.updated_at = self.now()
+        self.store.save()
+        LOG.info(
+            "requesting Lidarr manual import: download_id=%s transforms=%s tracks=%s path=%s",
+            record.download_id,
+            job.resolution,
+            job.tracks,
+            result.ready_root,
+        )
+        job.status = "importing"
+        job.phase = "manual_import"
+        job.updated_at = self.now()
+        self.store.save()
+        job.command_id = self.importer.import_files(
+            client,
+            record,
+            result.ready_root,
+            result.audio_files,
+        )
         job.status = "awaiting_queue_removal"
         job.updated_at = self.now()
         job.error = ""
         self.store.save()
-
-    def process(self, client: Lidarr, record: QueueRecord, job: Job) -> None:
-        summaries, fingerprint = self.discover(record)
-        if fingerprint != job.fingerprint:
-            job.status = "settling"
-            job.fingerprint = fingerprint
-            job.discovered_at = self.now()
-            job.updated_at = self.now()
-            job.attempts = 0
-            return
-        ready_root = self.prepare_split(record, job, summaries)
-        self.import_split(client, record, job, ready_root)
+        LOG.info(
+            "Lidarr import completed; waiting for queue removal: download_id=%s command_id=%s",
+            record.download_id,
+            job.command_id,
+        )
 
     def mark_manual_match(self, job: Job, error: str, now: float) -> None:
         if job.status != "awaiting_manual_match":
@@ -252,26 +146,33 @@ class CueSplitterService:
         job.error = error
         job.updated_at = now
         LOG.warning(
-            "split tracks await manual Lidarr matching: download_id=%s path=%s error=%s",
+            "processed files await manual Lidarr matching: download_id=%s path=%s error=%s",
             job.download_id,
             job.ready_root or "",
             error,
         )
 
-    def mark_ignored(self, job: Job, now: float) -> None:
-        if job.status != "ignored":
+    def mark_ignored(self, job: Job, now: float, reason: str) -> None:
+        newly_ignored = job.status != "ignored"
+        if newly_ignored:
             self.store.state.totals.ignored += 1
         job.status = "ignored"
         job.updated_at = now
         job.fingerprint = ""
         job.error = ""
+        if newly_ignored:
+            LOG.info(
+                "ignoring Lidarr download: download_id=%s reason=%s",
+                job.download_id,
+                reason,
+            )
 
     def mark_automation_failed(self, job: Job, error: str, now: float) -> None:
         job.status = "automation_failed"
         job.error = error
         job.updated_at = now
         LOG.error(
-            "cue job automation failed: download_id=%s error=%s",
+            "Lidarr post-processing automation failed: download_id=%s error=%s",
             job.download_id,
             error,
         )
@@ -306,8 +207,11 @@ class CueSplitterService:
         now: float,
     ) -> None:
         if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
-        fingerprint = output_fingerprint(record.output_path)
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
+        fingerprint = output_fingerprint(
+            record.output_path,
+            suffixes=self.pipeline.input_suffixes,
+        )
         previous_fingerprint = job.failure_fingerprint
         attempts = job.attempts + 1 if previous_fingerprint in {None, fingerprint} else 1
         job.status = "failed"
@@ -319,7 +223,14 @@ class CueSplitterService:
         job.updated_at = now
         job.attempts = attempts
         self.store.state.totals.failed += 1
-        LOG.exception("cue job failed: download_id=%s", job.download_id)
+        LOG.exception(
+            "Lidarr post-processing job failed: download_id=%s failure_kind=%s attempt=%s/%s retry_seconds=%s",
+            job.download_id,
+            job.failure_kind,
+            attempts,
+            MAX_SOURCE_ATTEMPTS,
+            SOURCE_RETRY_SECONDS,
+        )
 
     def resolve_source_failure(
         self,
@@ -328,8 +239,10 @@ class CueSplitterService:
         job: Job,
         now: float,
     ) -> None:
-        if self.download_is_already_split(record):
-            self.mark_ignored(job, now)
+        if record.output_path is not None and self.pipeline.source_is_already_resolved(
+            record.output_path
+        ):
+            self.mark_ignored(job, now, "source is already split")
             return
         queue_id = record.id
         if queue_id is None or queue_id <= 0:
@@ -340,7 +253,7 @@ class CueSplitterService:
         failure_kind = job.failure_kind or "source_unavailable"
         try:
             client.detach_queue_item(queue_id, blocklist=failure_kind == "source_invalid")
-        except CueSplitterError as exc:
+        except PostProcessorError as exc:
             self.mark_automation_failed(
                 job, f"could not detach failed release from Lidarr: {exc}", now
             )
@@ -353,21 +266,13 @@ class CueSplitterService:
         else:
             self.store.state.totals.source_unavailable += 1
         LOG.warning(
-            "detached failed CUE release from Lidarr while retaining client data: download_id=%s state=%s",
+            "detached failed release from Lidarr while retaining client data: download_id=%s state=%s",
             job.download_id,
             failure_kind,
         )
 
-    def complete_job(self, job: Job, ready_root: Path, started: float) -> None:
-        if STAGING_DIR_NAME not in ready_root.parts or not is_within(
-            ready_root, self.allowed_roots
-        ):
-            raise NeedsAttention(f"refusing to clean unsafe staging path: {ready_root}")
-        if ready_root.exists():
-            shutil.rmtree(ready_root)
-        parent = ready_root.parent
-        if parent.exists() and not any(parent.iterdir()):
-            parent.rmdir()
+    def complete_job(self, job: Job, started: float) -> None:
+        self.cleanup_job_staging(job)
         finished = self.now()
         job.status = "complete"
         job.updated_at = finished
@@ -377,10 +282,64 @@ class CueSplitterService:
         self.store.state.last_success = finished
         self.store.state.last_duration = max(0.0, finished - started)
         LOG.info(
-            "completed cue split/import: download_id=%s tracks=%s",
+            "completed Lidarr post-processing/import: download_id=%s transforms=%s tracks=%s",
             job.download_id,
+            job.resolution or "",
             job.tracks,
         )
+
+    def cleanup_job_staging(self, job: Job) -> None:
+        ready_root = job.ready_root
+        self.pipeline.cleanup(job.download_id, ready_root)
+        if ready_root is not None and LEGACY_STAGING_DIR_NAME in ready_root.parts:
+            self.pipeline.cleanup_legacy_cue_staging(ready_root)
+        job.ready_root = None
+
+    def migrate_external_workspace_jobs(self, now: float) -> None:
+        for job in self.store.state.jobs.values():
+            ready_root = job.ready_root
+            if (
+                job.status != "awaiting_manual_match"
+                or ready_root is None
+                or job.resolution is None
+                or not {"archive_extract", "cue_split"}.intersection(job.resolution.split("+"))
+                or not ready_root.resolve().is_relative_to(self.pipeline.work_root)
+            ):
+                continue
+            self.cleanup_job_staging(job)
+            job.status = "settling"
+            job.phase = None
+            job.resolution = None
+            job.error = ""
+            job.discovered_at = now
+            job.updated_at = now
+            job.attempts = 0
+            job.command_id = None
+            job.missing_queue_observations = 0
+            LOG.info(
+                "reset job staged outside its download: download_id=%s",
+                job.download_id,
+            )
+
+    def expire_attention_staging(self, now: float) -> None:
+        for job in self.store.state.jobs.values():
+            if (
+                job.status != "awaiting_manual_match"
+                or job.updated_at is None
+                or job.ready_root is None
+                or now - job.updated_at < self.attention_staging_retention_seconds
+            ):
+                continue
+            try:
+                LOG.info(
+                    "expiring retained manual-match staging: download_id=%s path=%s",
+                    job.download_id,
+                    job.ready_root,
+                )
+                self.cleanup_job_staging(job)
+                job.resolution = "attention_staging_expired"
+            except NeedsAttention as error:
+                self.mark_automation_failed(job, str(error), now)
 
     def recover_interrupted_jobs(self, now: float) -> None:
         for job in self.store.state.jobs.values():
@@ -394,6 +353,16 @@ class CueSplitterService:
                     now,
                 )
                 continue
+            try:
+                LOG.info(
+                    "recovering interrupted job: download_id=%s status=%s action=clean_and_retry",
+                    job.download_id,
+                    status,
+                )
+                self.cleanup_job_staging(job)
+            except NeedsAttention as error:
+                self.mark_automation_failed(job, str(error), now)
+                continue
             job.status = "failed"
             job.error = "service restarted while the source was processing"
             job.failure_kind = "source_unavailable"
@@ -402,9 +371,20 @@ class CueSplitterService:
 
     def missing_queue_confirmed(self, job: Job, queued_download_ids: set[str]) -> bool:
         if job.download_id in queued_download_ids:
+            if job.missing_queue_observations:
+                LOG.info(
+                    "Lidarr queue item reappeared: download_id=%s",
+                    job.download_id,
+                )
             job.missing_queue_observations = 0
             return False
         job.missing_queue_observations += 1
+        LOG.info(
+            "observed Lidarr queue removal: download_id=%s observation=%s/%s",
+            job.download_id,
+            job.missing_queue_observations,
+            self.missing_queue_confirmations,
+        )
         return job.missing_queue_observations >= self.missing_queue_confirmations
 
     def reconcile_jobs(self, queued_download_ids: set[str], now: float) -> None:
@@ -434,22 +414,25 @@ class CueSplitterService:
                         raise NeedsAttention("completed import has no staging path")
                     self.complete_job(
                         job,
-                        job.ready_root,
                         job.started_at if job.started_at is not None else now,
                     )
                 except NeedsAttention as exc:
                     self.mark_automation_failed(job, str(exc), now)
             elif status == "awaiting_manual_match":
+                try:
+                    self.cleanup_job_staging(job)
+                except NeedsAttention as exc:
+                    self.mark_automation_failed(job, str(exc), now)
+                    continue
                 job.status = "manual_resolved"
                 job.updated_at = now
                 LOG.info(
-                    "manual-match job left the Lidarr queue; preserving generated tracks: download_id=%s path=%s",
+                    "manual-match job left the Lidarr queue; cleaned staging: download_id=%s",
                     job.download_id,
-                    job.ready_root or "",
                 )
             else:
                 LOG.info(
-                    "dismissing CUE job no longer present in Lidarr queue: download_id=%s",
+                    "dismissing Lidarr job no longer present in the queue: download_id=%s",
                     job.download_id,
                 )
                 job.status = "dismissed"
@@ -479,9 +462,16 @@ class CueSplitterService:
             if job.status == "failed":
                 if record.output_path is None:
                     return False
-                current_fingerprint = output_fingerprint(record.output_path)
+                current_fingerprint = output_fingerprint(
+                    record.output_path,
+                    suffixes=self.pipeline.input_suffixes,
+                )
                 previous_fingerprint = job.failure_fingerprint
                 if previous_fingerprint and previous_fingerprint != current_fingerprint:
+                    LOG.info(
+                        "failed source changed; resetting retries: download_id=%s",
+                        download_id,
+                    )
                     job.attempts = 0
                     job.failure_fingerprint = current_fingerprint
                 elif job.attempts >= MAX_SOURCE_ATTEMPTS:
@@ -492,30 +482,46 @@ class CueSplitterService:
                     < SOURCE_RETRY_SECONDS
                 ):
                     return False
+                else:
+                    LOG.info(
+                        "retrying failed Lidarr source: download_id=%s next_attempt=%s/%s",
+                        download_id,
+                        job.attempts + 1,
+                        MAX_SOURCE_ATTEMPTS,
+                    )
         try:
-            summaries, fingerprint = self.discover(record)
-            if not summaries:
+            if record.output_path is None:
+                raise PostProcessorError("Lidarr queue record does not contain an output path")
+            inspection = self.pipeline.inspect(record.output_path)
+            if not inspection.applicable:
                 job = self.store.job(download_id)
-                self.mark_ignored(job, now)
+                self.mark_ignored(job, now, "no transformation is applicable")
                 return False
-            if job is None or job.fingerprint != fingerprint:
+            if job is None or job.fingerprint != inspection.fingerprint:
                 jobs[download_id] = Job(
                     download_id=download_id,
                     title=record.title,
                     status="settling",
-                    fingerprint=fingerprint,
+                    fingerprint=inspection.fingerprint,
                     discovered_at=now,
                     updated_at=now,
                 )
                 LOG.info(
-                    "discovered CUE image: download_id=%s title=%s",
+                    "discovered recoverable Lidarr download: download_id=%s title=%s source=%s settling_seconds=%s",
                     download_id,
                     record.title,
+                    record.output_path,
+                    self.settle_seconds,
                 )
                 return True
             discovered_at = job.discovered_at if job.discovered_at is not None else now
             if now - discovered_at < self.settle_seconds:
                 return False
+            LOG.info(
+                "download settled; starting recovery: download_id=%s settled_seconds=%s",
+                download_id,
+                round(now - discovered_at, 1),
+            )
             job.started_at = now
             self.process(client, record, job)
         except ManualMatchRequired as exc:
@@ -549,8 +555,11 @@ class CueSplitterService:
         completed = {
             record.download_id: record for record in records if self.completed_record(record)
         }
+        self.migrate_external_workspace_jobs(now)
         self.recover_interrupted_jobs(now)
         self.reconcile_jobs(queued_download_ids, now)
+        self.expire_attention_staging(now)
+        self.pipeline.prune_stale(now, self.attention_staging_retention_seconds)
         self.process_completed_records(client, completed, now)
         self.store.prune(now)
         self.store.save()

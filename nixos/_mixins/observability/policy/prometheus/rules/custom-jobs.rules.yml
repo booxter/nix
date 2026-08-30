@@ -38,15 +38,15 @@ groups:
         annotations:
           summary: "Adaptive upload metrics stale on srvarr"
           description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
-      - alert: LidarrCueSplitterServiceDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="lidarr-cue-splitter.service",state="active"} < 1
+      - alert: LidarrPostProcessorServiceDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-lidarr.service",state="active"} < 1
         for: 5m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Lidarr CUE splitter service down on srvarr"
-          description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
+          summary: "Lidarr post-processor service down on srvarr"
+          description: "The Lidarr post-processor service on srvarr has not been active for 5 minutes."
       - alert: HoundarrStatusCollectorTimerDown
         expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="houndarr-status-collector.timer",state="active"} < 1
         for: 5m
@@ -83,33 +83,69 @@ groups:
         annotations:
           summary: "Houndarr has failing Arr instances on srvarr"
           description: "At least one enabled Houndarr Arr instance has reported an active scheduler error for 10 minutes."
-      - alert: LidarrCueSplitterIterationFailed
-        expr: host_observability_lidarr_cue_splitter_ok{job="node-mtls",instance="srvarr"} < 1
+      - alert: LidarrPostProcessorIterationFailed
+        expr: host_observability_lidarr_post_processor_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Lidarr CUE splitter failing on srvarr"
-          description: "The Lidarr CUE splitter on srvarr has been reporting unsuccessful iterations for 10 minutes."
-      - alert: LidarrCueSplitterMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter.prom"}) > 300
+          summary: "Lidarr post-processor failing on srvarr"
+          description: "The Lidarr post-processor on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: LidarrPostProcessorMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/arr-post-processor-lidarr/arr-post-processor-lidarr.prom"}) > 300
         for: 5m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Lidarr CUE splitter metrics stale on srvarr"
-          description: "The Lidarr CUE splitter metrics file on srvarr has not been refreshed for more than 5 minutes."
-      - alert: LidarrCueSplitterJobNeedsAttention
-        expr: host_observability_lidarr_cue_splitter_jobs{job="node-mtls",instance="srvarr",state=~"failed|automation_failed"} > 0
+          summary: "Lidarr post-processor metrics stale on srvarr"
+          description: "The Lidarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: LidarrPostProcessorJobNeedsAttention
+        expr: host_observability_lidarr_post_processor_jobs{job="node-mtls",instance="srvarr",state=~"failed|automation_failed"} > 0
         for: 15m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Lidarr CUE split job needs attention on srvarr"
-          description: "At least one Lidarr CUE split job on srvarr has remained failed or its automated resolution failed for 15 minutes."
+          summary: "Lidarr post-processing job needs attention on srvarr"
+          description: "At least one Lidarr post-processing job on srvarr has remained failed or its automated resolution failed for 15 minutes."
+      - alert: RadarrMultipartJoinerServiceDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-radarr.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr multipart joiner service down on srvarr"
+          description: "The Radarr multipart joiner service on srvarr has not been active for 5 minutes."
+      - alert: RadarrMultipartJoinerIterationFailed
+        expr: host_observability_radarr_multipart_joiner_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr multipart joiner failing on srvarr"
+          description: "The Radarr multipart joiner on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: RadarrMultipartJoinerMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr/arr-post-processor-radarr.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr multipart joiner metrics stale on srvarr"
+          description: "The Radarr multipart joiner metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: RadarrMultipartJoinerJobNeedsAttention
+        expr: host_observability_radarr_multipart_joiner_jobs{job="node-mtls",instance="srvarr",state="awaiting_manual_match"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr multipart join job needs attention on srvarr"
+          description: "At least one Radarr multipart join job on srvarr has required manual attention for 15 minutes."
       - alert: EbookConverterIterationFailed
         expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m
@@ -120,7 +156,7 @@ groups:
           summary: "Ebook converter failing on srvarr"
           description: "The ebook converter on srvarr has been reporting unsuccessful iterations for 10 minutes."
       - alert: EbookConverterMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}) > 300
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter/ebook-converter.prom"}) > 300
         for: 5m
         labels:
           severity: warning

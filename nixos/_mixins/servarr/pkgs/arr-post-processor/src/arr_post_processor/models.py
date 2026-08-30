@@ -21,6 +21,8 @@ class QueueRecord(ApiModel):
     protocol: str = ""
     artist_id: int = 0
     album_id: int = 0
+    tracked_download_status: str = ""
+    tracked_download_state: str = ""
 
     @field_validator("protocol", mode="before")
     @classmethod

@@ -25,7 +25,7 @@ in
     stateDir = "/var/lib/ebook-converter";
     user = "ebook-converter";
     group = "media";
-    metricsDir = "/var/lib/prometheus-node-exporter-textfile";
-    metricsFile = "/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom";
+    metricsDir = "/var/lib/prometheus-node-exporter-textfile/ebook-converter";
+    metricsFile = "/var/lib/prometheus-node-exporter-textfile/ebook-converter/ebook-converter.prom";
   };
 }

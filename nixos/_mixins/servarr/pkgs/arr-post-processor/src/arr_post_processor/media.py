@@ -18,7 +18,9 @@ from .models import (
 )
 
 
-STAGING_DIR_NAME = "_lidarr-cue-split"
+LEGACY_STAGING_DIR_NAME = "_lidarr-cue-split"
+STAGING_DIR_NAME = "_arr-post-processor"
+STAGING_DIR_NAMES = frozenset({LEGACY_STAGING_DIR_NAME, STAGING_DIR_NAME})
 AUDIO_FILE_SUFFIXES = {
     ".aac",
     ".aif",
@@ -51,6 +53,10 @@ def is_within(path: Path, roots: list[Path]) -> bool:
     return any(
         resolved == root.resolve() or resolved.is_relative_to(root.resolve()) for root in roots
     )
+
+
+def is_staging_path(path: Path) -> bool:
+    return any(part in STAGING_DIR_NAMES for part in path.parts)
 
 
 def safe_component(value: str) -> str:
@@ -193,19 +199,17 @@ def source_fingerprint(summaries: list[CueSummary]) -> str:
     return hashlib.sha256("\n".join(entries).encode()).hexdigest()
 
 
-def output_fingerprint(output_path: Path) -> str:
+def output_fingerprint(
+    output_path: Path,
+    *,
+    suffixes: frozenset[str] = frozenset({".cue"}) | AUDIO_FILE_SUFFIXES,
+) -> str:
     if not output_path.is_dir():
         return f"missing:{output_path}"
     entries: list[str] = []
     try:
         for path in sorted(output_path.rglob("*")):
-            if (
-                not path.is_file()
-                or STAGING_DIR_NAME in path.parts
-                or (
-                    path.suffix.lower() != ".cue" and path.suffix.lower() not in AUDIO_FILE_SUFFIXES
-                )
-            ):
+            if not path.is_file() or is_staging_path(path) or path.suffix.lower() not in suffixes:
                 continue
             stat = path.stat()
             entries.append(f"{path.relative_to(output_path)}\0{stat.st_size}\0{stat.st_mtime_ns}")

@@ -5,39 +5,41 @@
   ...
 }:
 let
-  cfg = config.host.lidarr;
-  package = pkgs.callPackage ./pkgs/lidarr-cue-splitter {
+  cfg = config.host.radarr;
+  package = pkgs.callPackage ../servarr/pkgs/arr-post-processor {
     atomicFileWrites = pkgs.atomic-file-writes;
+    joinMediaParts = pkgs.join-media-parts;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;
-  workRoot = "${mediaDir}/.cue-splitter-work";
-  stateDir = "/var/lib/lidarr-cue-splitter";
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter";
-  metricsFile = "${nodeExporterTextfileDir}/lidarr-cue-splitter.prom";
+  workRoot = "${mediaDir}/.arr-post-processor/radarr-media-join";
+  stateDir = "/var/lib/arr-post-processor-radarr";
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr";
+  metricsFile = "${nodeExporterTextfileDir}/arr-post-processor-radarr.prom";
   allowedRoots = [
-    "${mediaDir}/torrents"
+    "${mediaDir}/torrents/radarr"
   ]
   ++ lib.optional (config.host.sabnzbd != null) "${mediaDir}/usenet/manual";
   serviceDeps = [
-    "lidarr.service"
+    "radarr.service"
     "network-online.target"
   ];
 in
 {
   config = lib.mkIf (cfg != null) {
-    host.observability.nodeExporter.textfile.directories.lidarr-cue-splitter = nodeExporterTextfileDir;
+    host.observability.nodeExporter.textfile.directories.arr-post-processor-radarr =
+      nodeExporterTextfileDir;
 
     host.storage.claims.media = {
-      directories.".cue-splitter-work".mode = "2775";
-      attachments.lidarr-cue-splitter = { };
+      directories.".arr-post-processor/radarr-media-join".mode = "2775";
+      attachments.arr-post-processor-radarr = { };
     };
 
     systemd.tmpfiles.rules = [
-      "d ${nodeExporterTextfileDir} 0755 lidarr media - -"
+      "d ${nodeExporterTextfileDir} 0755 radarr media - -"
     ];
 
-    systemd.services.lidarr-cue-splitter = {
-      description = "Split completed Lidarr CUE images and import their tracks";
+    systemd.services.arr-post-processor-radarr = {
+      description = "Recover stalled Radarr downloads and import the result";
       wantedBy = [ "multi-user.target" ];
       wants = serviceDeps;
       after = serviceDeps;
@@ -45,9 +47,11 @@ in
         ExecStart = lib.escapeShellArgs (
           [
             (lib.getExe package)
-            "--lidarr-url"
-            "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
-            "--lidarr-config"
+            "--processor"
+            "radarr"
+            "--arr-url"
+            "http://127.0.0.1:${toString config.services.radarr.settings.server.port}"
+            "--arr-config"
             "${cfg.stateDir}/config.xml"
           ]
           ++ lib.concatMap (root: [
@@ -64,17 +68,17 @@ in
             "--interval-seconds"
             "30"
             "--settle-seconds"
-            "30"
+            "60"
             "--request-timeout-seconds"
             "20"
             "--command-timeout-seconds"
-            "900"
+            "14400"
           ]
         );
-        User = "lidarr";
+        User = "radarr";
         Group = "media";
         UMask = "0002";
-        StateDirectory = "lidarr-cue-splitter";
+        StateDirectory = "arr-post-processor-radarr";
         StateDirectoryMode = "0750";
         Restart = "always";
         RestartSec = "10s";

@@ -36,7 +36,7 @@ rustPlatform.buildRustPackage {
   cargoTestFlags = [ "--all-targets" ];
 
   meta = {
-    description = "Join ordered TS/MP4/MKV media parts into one file";
+    description = "Join ordered TS/MP4/MKV/AVI media parts into one file";
     license = lib.licenses.mit;
     mainProgram = "join-media-parts";
     platforms = lib.platforms.unix;

@@ -6,7 +6,7 @@ from pathlib import Path
 from atomic_file_writes import write_text_atomic
 from pydantic import TypeAdapter, ValidationError
 
-from .errors import CueSplitterError
+from .errors import PostProcessorError
 
 
 ACTIVE_JOB_STATES = {
@@ -16,8 +16,10 @@ ACTIVE_JOB_STATES = {
     "matching",
     "importing",
     "awaiting_queue_removal",
+    "joining",
+    "processing",
 }
-PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
+PROCESSING_JOB_STATES = {"processing", "splitting", "verifying", "matching", "importing"}
 PROBLEM_JOB_STATES = {"failed", "automation_failed", "needs_attention"}
 EXPIRING_JOB_STATES = {
     "complete",
@@ -56,6 +58,7 @@ class Job:
     failure_fingerprint: str | None = None
     failure_kind: str | None = None
     resolution: str | None = None
+    phase: str | None = None
     missing_queue_observations: int = 0
 
 
@@ -93,7 +96,7 @@ class StateStore:
         except FileNotFoundError:
             return
         except (OSError, ValidationError) as error:
-            raise CueSplitterError(f"cannot load state {self.path}: {error}") from error
+            raise PostProcessorError(f"cannot load state {self.path}: {error}") from error
 
     def save(self) -> None:
         content = STATE_ADAPTER.dump_json(self.state, indent=2).decode()

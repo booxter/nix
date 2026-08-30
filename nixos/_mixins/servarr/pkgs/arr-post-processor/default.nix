@@ -2,16 +2,18 @@
   atomicFileWrites,
   ffmpeg,
   flac,
+  joinMediaParts,
   lib,
   python3,
   ruff,
+  unrar,
   unflac,
 }:
 let
   pythonPackages = python3.pkgs;
 in
 pythonPackages.buildPythonApplication {
-  pname = "lidarr-cue-splitter";
+  pname = "arr-post-processor";
   version = "0.1.0";
   pyproject = true;
 
@@ -20,21 +22,27 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
+    aiohttp
     atomicFileWrites
     aiopyarr
     prometheus-client
     pydantic
+    rarfile
   ];
 
   nativeCheckInputs = [
     ffmpeg
     flac
     ruff
+    unrar
     unflac
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
   ];
+
+  ARR_POST_PROCESSOR_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+  ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS = lib.getExe joinMediaParts;
 
   makeWrapperArgs = [
     "--prefix PATH : ${
@@ -42,14 +50,17 @@ pythonPackages.buildPythonApplication {
         ffmpeg
         flac
         unflac
+        unrar
       ]
     }"
+    "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"
+    "--set ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS ${lib.getExe joinMediaParts}"
   ];
 
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/lidarr_cue_splitter
+    mypy src/arr_post_processor
   '';
 
   postCheck = ''
@@ -73,12 +84,12 @@ pythonPackages.buildPythonApplication {
     find output -type f -name '*.flac' -exec ${flac}/bin/flac --silent --test '{}' +
   '';
 
-  pythonImportsCheck = [ "lidarr_cue_splitter" ];
+  pythonImportsCheck = [ "arr_post_processor" ];
 
   meta = {
-    description = "Split completed Lidarr CUE images and submit their tracks for manual import";
+    description = "Queue-aware post-processing service for Servarr applications";
     license = lib.licenses.mit;
-    mainProgram = "lidarr-cue-splitter";
+    mainProgram = "arr-post-processor";
     platforms = lib.platforms.linux;
   };
 }
