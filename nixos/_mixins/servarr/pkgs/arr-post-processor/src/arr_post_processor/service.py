@@ -7,6 +7,7 @@ from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
+from .archive import ArchiveBackend, ArchiveTransform
 from .errors import ManualMatchRequired, NeedsAttention, PostProcessorError, SourceInvalid
 from .lidarr import Lidarr
 from .lidarr_import import LidarrImporter
@@ -40,6 +41,7 @@ class CueSplitterService:
         *,
         client_factory: Callable[[], Lidarr],
         runner: MediaRunner,
+        archive_backend: ArchiveBackend,
         store: StateStore,
         allowed_roots: list[Path],
         work_root: Path,
@@ -61,8 +63,12 @@ class CueSplitterService:
         self.missing_queue_confirmations = missing_queue_confirmations
         self.now = now
         self.sleep = sleep
+        transform_roots = [*allowed_roots, work_root]
         self.pipeline = LidarrPipeline(
-            transforms=[CueTransform(runner, allowed_roots)],
+            transforms=[
+                ArchiveTransform(archive_backend),
+                CueTransform(runner, transform_roots),
+            ],
             allowed_roots=allowed_roots,
             work_root=work_root,
         )
@@ -75,6 +81,8 @@ class CueSplitterService:
     def completed_record(record: QueueRecord) -> bool:
         return (
             record.status.lower() == "completed"
+            and record.tracked_download_status.lower() == "warning"
+            and record.tracked_download_state.lower() in {"importfailed", "importpending"}
             and record.protocol.lower() in SUPPORTED_PROTOCOLS
             and bool(record.download_id)
             and record.output_path is not None
@@ -169,7 +177,10 @@ class CueSplitterService:
     ) -> None:
         if record.output_path is None:
             raise PostProcessorError("Lidarr queue record does not contain an output path")
-        fingerprint = output_fingerprint(record.output_path)
+        fingerprint = output_fingerprint(
+            record.output_path,
+            suffixes=self.pipeline.input_suffixes,
+        )
         previous_fingerprint = job.failure_fingerprint
         attempts = job.attempts + 1 if previous_fingerprint in {None, fingerprint} else 1
         job.status = "failed"
@@ -336,7 +347,10 @@ class CueSplitterService:
             if job.status == "failed":
                 if record.output_path is None:
                     return False
-                current_fingerprint = output_fingerprint(record.output_path)
+                current_fingerprint = output_fingerprint(
+                    record.output_path,
+                    suffixes=self.pipeline.input_suffixes,
+                )
                 previous_fingerprint = job.failure_fingerprint
                 if previous_fingerprint and previous_fingerprint != current_fingerprint:
                     job.attempts = 0

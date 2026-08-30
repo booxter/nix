@@ -1,5 +1,8 @@
+import base64
+import io
 import json
 import subprocess
+import tarfile
 import tempfile
 import unittest
 import urllib.parse
@@ -13,9 +16,11 @@ from aiopyarr.models.const import ProtocolType
 from prometheus_client.parser import text_string_to_metric_families
 from pydantic import TypeAdapter
 
+from arr_post_processor.archive import ArchiveMember, ArchiveTransform, NativeArchiveBackend
 from arr_post_processor.config import read_api_key
 from arr_post_processor.errors import PostProcessorError, ManualMatchRequired, SourceInvalid
 from arr_post_processor.lidarr import LidarrClient
+from arr_post_processor.lidarr_pipeline import CueTransform, LidarrPipeline
 from arr_post_processor.media import (
     UnflacRunner,
     build_manual_import_files,
@@ -39,10 +44,17 @@ from arr_post_processor.state import Job, StateStore
 
 INSPECTIONS = TypeAdapter(list[UnflacInput])
 IMPORT_CANDIDATES = TypeAdapter(list[ManualImportCandidate])
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def queue_record(payload):
-    return QueueRecord.model_validate(payload)
+    return QueueRecord.model_validate(
+        {
+            "trackedDownloadStatus": "warning",
+            "trackedDownloadState": "importPending",
+            **payload,
+        }
+    )
 
 
 def inspections(payload):
@@ -62,10 +74,34 @@ def metric_value(metrics, name, labels=None):
     raise AssertionError(f"missing metric {name} with labels {expected_labels}")
 
 
+class UnexpectedArchiveBackend:
+    def members(self, archive):
+        raise AssertionError(f"should not inspect archive: {archive}")
+
+    def extract(self, archive, destination):
+        raise AssertionError(f"should not extract {archive} into {destination}")
+
+
 class CueSplitterTests(unittest.TestCase):
     def test_queue_record_normalizes_aiopyarr_protocol(self):
         record = queue_record({"protocol": ProtocolType.TORRENT})
         self.assertEqual(record.protocol, "torrent")
+
+    def test_lidarr_service_only_handles_completed_import_warnings(self):
+        eligible = queue_record(
+            {
+                "status": "completed",
+                "protocol": "usenet",
+                "downloadId": "download-1",
+                "outputPath": "/downloads/album",
+            }
+        )
+        healthy = eligible.model_copy(update={"tracked_download_status": "ok"})
+        downloading = eligible.model_copy(update={"status": "downloading"})
+
+        self.assertTrue(CueSplitterService.completed_record(eligible))
+        self.assertFalse(CueSplitterService.completed_record(healthy))
+        self.assertFalse(CueSplitterService.completed_record(downloading))
 
     def test_reads_lidarr_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -85,6 +121,126 @@ class CueSplitterTests(unittest.TestCase):
             root = Path(directory)
             self.assertTrue(is_within(root / "album" / "disc.cue", [root]))
             self.assertFalse(is_within(root.parent / "other" / "disc.cue", [root]))
+
+    def test_native_tar_backend_extracts_regular_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "album.tar"
+            payload = b"audio"
+            with tarfile.open(archive, mode="w") as output:
+                member = tarfile.TarInfo("album/01.flac")
+                member.size = len(payload)
+                output.addfile(member, io.BytesIO(payload))
+
+            backend = NativeArchiveBackend()
+            members = backend.members(archive)
+            self.assertEqual(
+                members,
+                [ArchiveMember("album/01.flac", len(payload), False, False)],
+            )
+            destination = root / "output"
+            backend.extract(archive, destination)
+            self.assertEqual((destination / "album" / "01.flac").read_bytes(), payload)
+
+    def test_native_rar_backend_extracts_regular_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "album.rar"
+            archive.write_bytes(base64.b64decode((FIXTURES / "album.rar.b64").read_bytes()))
+
+            backend = NativeArchiveBackend()
+            members = backend.members(archive)
+            self.assertEqual(
+                [member.name for member in members],
+                ["album.cue", "album.flac"],
+            )
+            destination = root / "output"
+            backend.extract(archive, destination)
+            self.assertIn('FILE "album.flac"', (destination / "album.cue").read_text())
+            self.assertEqual((destination / "album.flac").read_text(), "fixture audio\n")
+
+    def test_archive_transform_rejects_unsafe_member_before_extraction(self):
+        class FakeBackend:
+            extracted = False
+
+            def members(self, archive):
+                del archive
+                return [ArchiveMember("../escape.flac", 5, False, False)]
+
+            def extract(self, archive, destination):
+                del archive, destination
+                self.extracted = True
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            (source / "album.tar").write_bytes(b"archive")
+            backend = FakeBackend()
+            transform = ArchiveTransform(backend)
+            with self.assertRaises(SourceInvalid):
+                transform.apply(source, root / "output")
+            self.assertFalse(backend.extracted)
+
+    def test_archive_then_already_split_cue_pipeline(self):
+        class FakeBackend:
+            def members(self, archive):
+                del archive
+                return [
+                    ArchiveMember("album/album.cue", 100, False, False),
+                    ArchiveMember("album/01.flac", 100, False, False),
+                    ArchiveMember("album/02.flac", 100, False, False),
+                ]
+
+            def extract(self, archive, destination):
+                del archive
+                album = destination / "album"
+                album.mkdir()
+                (album / "album.cue").write_text(
+                    "\n".join(
+                        [
+                            'FILE "01.flac" WAVE',
+                            "  TRACK 01 AUDIO",
+                            'FILE "02.flac" WAVE',
+                            "  TRACK 02 AUDIO",
+                        ]
+                    ),
+                    encoding="utf-8",
+                )
+                (album / "01.flac").write_bytes(b"first")
+                (album / "02.flac").write_bytes(b"second")
+
+        class UnexpectedRunner:
+            def inspect(self, cue):
+                raise AssertionError(f"should not inspect an already split CUE: {cue}")
+
+            def split(self, cue, output_dir):
+                raise AssertionError(f"should not split {cue} into {output_dir}")
+
+            def verify_flac(self, path):
+                raise AssertionError(f"should not verify {path}")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "downloads" / "album"
+            source.mkdir(parents=True)
+            (source / "album.tar").write_bytes(b"archive")
+            work = root / "work"
+            pipeline = LidarrPipeline(
+                transforms=[
+                    ArchiveTransform(FakeBackend()),
+                    CueTransform(UnexpectedRunner(), [root / "downloads", work]),
+                ],
+                allowed_roots=[root / "downloads"],
+                work_root=work,
+            )
+
+            result = pipeline.execute(source, "download-1")
+
+            self.assertEqual(result.transforms, ("archive_extract",))
+            self.assertEqual([path.name for path in result.audio_files], ["01.flac", "02.flac"])
+            self.assertTrue(all(path.is_relative_to(work) for path in result.audio_files))
+            self.assertTrue((source / "album.tar").exists())
 
     def test_safe_component_is_stable_and_bounded(self):
         first = safe_component("lidarr:download/id")
@@ -520,6 +676,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=FakeRunner(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -549,7 +706,7 @@ class CueSplitterTests(unittest.TestCase):
             root = Path(directory)
             download = root / "usenet" / "manual" / "album"
             download.mkdir(parents=True)
-            (download / "album.tar").write_bytes(b"tar")
+            (download / "cover.jpg").write_bytes(b"jpeg")
             record = queue_record(
                 {
                     "status": "completed",
@@ -573,6 +730,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "usenet" / "manual"],
                 work_root=root / "work",
@@ -638,6 +796,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=UnexpectedRunner(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -742,6 +901,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=runner,
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -810,6 +970,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -861,6 +1022,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -895,6 +1057,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -973,6 +1136,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=runner,
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -1052,6 +1216,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=FailingRunner(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",
@@ -1105,6 +1270,7 @@ class CueSplitterTests(unittest.TestCase):
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=object(),
+                archive_backend=UnexpectedArchiveBackend(),
                 store=store,
                 allowed_roots=[root / "torrents"],
                 work_root=root / "work",

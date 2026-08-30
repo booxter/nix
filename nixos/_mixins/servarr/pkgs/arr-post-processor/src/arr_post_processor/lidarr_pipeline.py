@@ -196,6 +196,7 @@ class LidarrPipeline:
             )
         except Exception:
             self.cleanup_path(partial_root)
+            self.cleanup_path(ready_root)
             raise
 
     def cleanup(self, download_id: str) -> None:

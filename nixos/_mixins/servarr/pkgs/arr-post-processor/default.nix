@@ -6,6 +6,7 @@
   lib,
   python3,
   ruff,
+  unrar,
   unflac,
 }:
 let
@@ -25,12 +26,14 @@ pythonPackages.buildPythonApplication {
     aiopyarr
     prometheus-client
     pydantic
+    rarfile
   ];
 
   nativeCheckInputs = [
     ffmpeg
     flac
     ruff
+    unrar
     unflac
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
@@ -46,6 +49,7 @@ pythonPackages.buildPythonApplication {
         ffmpeg
         flac
         unflac
+        unrar
       ]
     }"
     "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"

@@ -7,12 +7,16 @@ name = "arr-post-processor"
 version = "0.1.0"
 description = "Queue-aware post-processing service for Servarr applications"
 requires-python = ">=3.11"
-dependencies = ["aiopyarr", "atomic-file-writes", "prometheus-client", "pydantic"]
+dependencies = ["aiopyarr", "atomic-file-writes", "prometheus-client", "pydantic", "rarfile"]
 
 [tool.mypy]
 files = ["src/arr_post_processor"]
 plugins = ["pydantic.mypy"]
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["rarfile"]
+ignore_missing_imports = true
 
 [project.scripts]
 arr-post-processor = "arr_post_processor.app:main"

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Protocol
 
+from .archive import NativeArchiveBackend
 from .config import read_api_key
 from .lidarr import LidarrClient
 from .media import UnflacRunner
@@ -71,6 +72,7 @@ def main() -> int:
         service = CueSplitterService(
             client_factory=lidarr_client_factory,
             runner=UnflacRunner(),
+            archive_backend=NativeArchiveBackend(),
             store=store,
             allowed_roots=[Path(root) for root in args.allowed_root],
             work_root=Path(args.work_root),
