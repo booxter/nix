@@ -354,7 +354,8 @@ class LidarrPostProcessorTests(unittest.TestCase):
 
             def do_DELETE(self):
                 requests.append(("DELETE", self.path, self.headers.get("X-Api-Key"), None))
-                self.send_json({})
+                self.send_response(200)
+                self.end_headers()
 
         @contextmanager
         def server() -> Iterator[str]:

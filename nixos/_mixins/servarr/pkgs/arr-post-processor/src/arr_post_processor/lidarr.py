@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from pathlib import Path
 from typing import Any, Protocol, TypeVar, cast
 
+from aiohttp import ClientError, ClientSession, ClientTimeout
 from aiopyarr.const import HTTPMethod
 from aiopyarr.exceptions import ArrException
 from aiopyarr.lidarr_client import LidarrClient as NativeLidarrClient
@@ -49,11 +50,15 @@ class LidarrClient:
             client = cast(NativeLidarrClient, request_client)
             return await operation(client)
 
-    def _run(self, operation: Callable[[NativeLidarrClient], Awaitable[T]]) -> T:
+    @staticmethod
+    def _run_async(operation: Callable[[], Coroutine[Any, Any, T]]) -> T:
         try:
-            return asyncio.run(self._request(operation))
-        except ArrException as error:
+            return asyncio.run(operation())
+        except (ArrException, ClientError, TimeoutError) as error:
             raise PostProcessorError(f"Lidarr API request failed: {error}") from error
+
+    def _run(self, operation: Callable[[NativeLidarrClient], Awaitable[T]]) -> T:
+        return self._run_async(lambda: self._request(operation))
 
     def queue(self) -> list[QueueRecord]:
         async def get_queue(client: NativeLidarrClient) -> list[QueueRecord]:
@@ -109,12 +114,22 @@ class LidarrClient:
             raise PostProcessorError("Lidarr command response has an unexpected shape") from error
 
     def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
-        async def detach(client: NativeLidarrClient) -> None:
-            await client.async_delete_queue(
-                queue_id,
-                remove_from_client=False,
-                blocklist=blocklist,
-                skipredownload=True,
-            )
+        async def detach() -> None:
+            # Lidarr returns HTTP 200 with an empty body for this DELETE. aiopyarr's
+            # generic request path always decodes successful responses as JSON, so
+            # async_delete_queue raises after Lidarr has already removed the item.
+            async with ClientSession(
+                headers={"X-Api-Key": self.api_key},
+                timeout=ClientTimeout(total=self.timeout_seconds),
+            ) as session:
+                async with session.delete(
+                    f"{self.base_url}/api/v1/queue/{queue_id}",
+                    params={
+                        "removeFromClient": "False",
+                        "blocklist": str(blocklist),
+                        "skipReDownload": "True",
+                    },
+                ) as response:
+                    response.raise_for_status()
 
-        self._run(detach)
+        self._run_async(detach)

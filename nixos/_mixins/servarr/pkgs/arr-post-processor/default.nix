@@ -22,6 +22,7 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
+    aiohttp
     atomicFileWrites
     aiopyarr
     prometheus-client
