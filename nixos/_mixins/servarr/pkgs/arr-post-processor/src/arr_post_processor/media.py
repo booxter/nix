@@ -193,7 +193,11 @@ def source_fingerprint(summaries: list[CueSummary]) -> str:
     return hashlib.sha256("\n".join(entries).encode()).hexdigest()
 
 
-def output_fingerprint(output_path: Path) -> str:
+def output_fingerprint(
+    output_path: Path,
+    *,
+    suffixes: frozenset[str] = frozenset({".cue"}) | AUDIO_FILE_SUFFIXES,
+) -> str:
     if not output_path.is_dir():
         return f"missing:{output_path}"
     entries: list[str] = []
@@ -202,9 +206,7 @@ def output_fingerprint(output_path: Path) -> str:
             if (
                 not path.is_file()
                 or STAGING_DIR_NAME in path.parts
-                or (
-                    path.suffix.lower() != ".cue" and path.suffix.lower() not in AUDIO_FILE_SUFFIXES
-                )
+                or path.suffix.lower() not in suffixes
             ):
                 continue
             stat = path.stat()

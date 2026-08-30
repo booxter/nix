@@ -7,12 +7,13 @@ from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
-from .errors import PostProcessorError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .errors import ManualMatchRequired, NeedsAttention, PostProcessorError, SourceInvalid
 from .lidarr import Lidarr
+from .lidarr_import import LidarrImporter
+from .lidarr_pipeline import CueTransform, LidarrPipeline
 from .media import MediaRunner, output_fingerprint
 from .metrics import render_metrics
 from .models import QueueRecord
-from .processor import CueProcessor
 from .state import (
     PROCESSING_JOB_STATES,
     PROBLEM_JOB_STATES,
@@ -60,13 +61,13 @@ class CueSplitterService:
         self.missing_queue_confirmations = missing_queue_confirmations
         self.now = now
         self.sleep = sleep
-        self.processor = CueProcessor(
-            runner=runner,
-            store=store,
+        self.pipeline = LidarrPipeline(
+            transforms=[CueTransform(runner, allowed_roots)],
             allowed_roots=allowed_roots,
             work_root=work_root,
+        )
+        self.importer = LidarrImporter(
             command_timeout_seconds=command_timeout_seconds,
-            now=now,
             sleep=sleep,
         )
 
@@ -80,16 +81,31 @@ class CueSplitterService:
         )
 
     def process(self, client: Lidarr, record: QueueRecord, job: Job) -> None:
-        summaries, fingerprint = self.processor.discover(record)
-        if fingerprint != job.fingerprint:
-            job.status = "settling"
-            job.fingerprint = fingerprint
-            job.discovered_at = self.now()
-            job.updated_at = self.now()
-            job.attempts = 0
-            return
-        ready_root = self.processor.prepare(record, job, summaries)
-        self.processor.import_result(client, record, job, ready_root)
+        if record.output_path is None:
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
+        job.status = "splitting"
+        job.updated_at = self.now()
+        self.store.save()
+        result = self.pipeline.execute(record.output_path, record.download_id)
+        job.status = "matching"
+        job.ready_root = result.ready_root
+        job.tracks = len(result.audio_files)
+        job.resolution = "+".join(result.transforms)
+        job.updated_at = self.now()
+        self.store.save()
+        job.status = "importing"
+        job.updated_at = self.now()
+        self.store.save()
+        job.command_id = self.importer.import_files(
+            client,
+            record,
+            result.ready_root,
+            result.audio_files,
+        )
+        job.status = "awaiting_queue_removal"
+        job.updated_at = self.now()
+        job.error = ""
+        self.store.save()
 
     def mark_manual_match(self, job: Job, error: str, now: float) -> None:
         if job.status != "awaiting_manual_match":
@@ -174,7 +190,9 @@ class CueSplitterService:
         job: Job,
         now: float,
     ) -> None:
-        if self.processor.download_is_already_split(record):
+        if record.output_path is not None and self.pipeline.source_is_already_resolved(
+            record.output_path
+        ):
             self.mark_ignored(job, now)
             return
         queue_id = record.id
@@ -205,7 +223,8 @@ class CueSplitterService:
         )
 
     def complete_job(self, job: Job, ready_root: Path, started: float) -> None:
-        self.processor.cleanup(ready_root)
+        del ready_root
+        self.pipeline.cleanup(job.download_id)
         finished = self.now()
         job.status = "complete"
         job.updated_at = finished
@@ -331,17 +350,19 @@ class CueSplitterService:
                 ):
                     return False
         try:
-            summaries, fingerprint = self.processor.discover(record)
-            if not summaries:
+            if record.output_path is None:
+                raise PostProcessorError("Lidarr queue record does not contain an output path")
+            inspection = self.pipeline.inspect(record.output_path)
+            if not inspection.applicable:
                 job = self.store.job(download_id)
                 self.mark_ignored(job, now)
                 return False
-            if job is None or job.fingerprint != fingerprint:
+            if job is None or job.fingerprint != inspection.fingerprint:
                 jobs[download_id] = Job(
                     download_id=download_id,
                     title=record.title,
                     status="settling",
-                    fingerprint=fingerprint,
+                    fingerprint=inspection.fingerprint,
                     discovered_at=now,
                     updated_at=now,
                 )
