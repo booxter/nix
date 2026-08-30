@@ -1,1 +1,1 @@
-"""Lidarr CUE splitting and import automation."""
+"""Queue-aware recovery and import automation for Arr applications."""

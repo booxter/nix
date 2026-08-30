@@ -1,8 +1,8 @@
-class CueSplitterError(RuntimeError):
+class PostProcessorError(RuntimeError):
     pass
 
 
-class NeedsAttention(CueSplitterError):
+class NeedsAttention(PostProcessorError):
     pass
 
 
@@ -10,5 +10,5 @@ class ManualMatchRequired(NeedsAttention):
     pass
 
 
-class SourceInvalid(CueSplitterError):
+class SourceInvalid(PostProcessorError):
     pass

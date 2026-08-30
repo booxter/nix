@@ -10,7 +10,7 @@ from aiopyarr.exceptions import ArrException
 from aiopyarr.lidarr_client import LidarrClient as NativeLidarrClient
 from aiopyarr.models.base import BaseModel
 
-from .errors import CueSplitterError
+from .errors import PostProcessorError
 from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
 
 
@@ -53,7 +53,7 @@ class LidarrClient:
         try:
             return asyncio.run(self._request(operation))
         except ArrException as error:
-            raise CueSplitterError(f"Lidarr API request failed: {error}") from error
+            raise PostProcessorError(f"Lidarr API request failed: {error}") from error
 
     def queue(self) -> list[QueueRecord]:
         async def get_queue(client: NativeLidarrClient) -> list[QueueRecord]:
@@ -95,7 +95,7 @@ class LidarrClient:
         payload = self._run(submit)
         command_id = payload.get("id") if isinstance(payload, dict) else None
         if not isinstance(command_id, int) or command_id <= 0:
-            raise CueSplitterError("Lidarr did not return a manual-import command ID")
+            raise PostProcessorError("Lidarr did not return a manual-import command ID")
         return command_id
 
     def command(self, command_id: int) -> CommandStatus:
@@ -106,7 +106,7 @@ class LidarrClient:
         try:
             return CommandStatus.model_validate(payload)
         except ValueError as error:
-            raise CueSplitterError("Lidarr command response has an unexpected shape") from error
+            raise PostProcessorError("Lidarr command response has an unexpected shape") from error
 
     def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
         async def detach(client: NativeLidarrClient) -> None:

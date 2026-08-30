@@ -14,7 +14,7 @@ from prometheus_client.parser import text_string_to_metric_families
 from pydantic import TypeAdapter
 
 from arr_post_processor.config import read_api_key
-from arr_post_processor.errors import CueSplitterError, ManualMatchRequired, SourceInvalid
+from arr_post_processor.errors import PostProcessorError, ManualMatchRequired, SourceInvalid
 from arr_post_processor.lidarr import LidarrClient
 from arr_post_processor.media import (
     UnflacRunner,
@@ -77,7 +77,7 @@ class CueSplitterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.xml"
             config.write_text("<Config />", encoding="utf-8")
-            with self.assertRaises(CueSplitterError):
+            with self.assertRaises(PostProcessorError):
                 read_api_key(config)
 
     def test_path_allowlist(self):
@@ -433,7 +433,7 @@ class CueSplitterTests(unittest.TestCase):
                 json.dumps({"jobs": {"abc": {"attempts": "invalid"}}}),
                 encoding="utf-8",
             )
-            with self.assertRaises(CueSplitterError):
+            with self.assertRaises(PostProcessorError):
                 StateStore(path)
 
     def test_completed_download_is_split_imported_and_cleaned(self):

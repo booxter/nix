@@ -10,7 +10,7 @@ from aiopyarr.exceptions import ArrException
 from aiopyarr.models.base import BaseModel
 from aiopyarr.radarr_client import RadarrClient as NativeRadarrClient
 
-from .errors import CueSplitterError
+from .errors import PostProcessorError
 from .radarr_models import (
     CommandStatus,
     RadarrManualImportCandidate,
@@ -60,7 +60,7 @@ class RadarrClient:
         try:
             return asyncio.run(self._request(operation))
         except ArrException as error:
-            raise CueSplitterError(f"Radarr API request failed: {error}") from error
+            raise PostProcessorError(f"Radarr API request failed: {error}") from error
 
     def queue(self) -> list[RadarrQueueRecord]:
         async def get_queue(client: NativeRadarrClient) -> list[RadarrQueueRecord]:
@@ -80,7 +80,7 @@ class RadarrClient:
         async def get_movie(client: NativeRadarrClient) -> RadarrMovie:
             movie = await client.async_get_movies(movieid=movie_id)
             if isinstance(movie, list):
-                raise CueSplitterError(f"Radarr returned no unique movie for id {movie_id}")
+                raise PostProcessorError(f"Radarr returned no unique movie for id {movie_id}")
             return RadarrMovie.model_validate(_attributes(movie))
 
         return self._run(get_movie)
@@ -117,7 +117,7 @@ class RadarrClient:
         payload = self._run(submit)
         command_id = payload.get("id") if isinstance(payload, dict) else None
         if not isinstance(command_id, int) or command_id <= 0:
-            raise CueSplitterError("Radarr did not return a manual-import command ID")
+            raise PostProcessorError("Radarr did not return a manual-import command ID")
         return command_id
 
     def command(self, command_id: int) -> CommandStatus:
@@ -128,4 +128,4 @@ class RadarrClient:
         try:
             return CommandStatus.model_validate(payload)
         except ValueError as error:
-            raise CueSplitterError("Radarr command response has an unexpected shape") from error
+            raise PostProcessorError("Radarr command response has an unexpected shape") from error

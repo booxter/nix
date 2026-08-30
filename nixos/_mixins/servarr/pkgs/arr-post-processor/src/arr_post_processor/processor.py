@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Callable
 
-from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .errors import PostProcessorError, ManualMatchRequired, NeedsAttention, SourceInvalid
 from .lidarr import Lidarr
 from .media import (
     STAGING_DIR_NAME,
@@ -78,12 +78,12 @@ class CueProcessor:
 
     def discover(self, record: QueueRecord) -> tuple[list[CueSummary], str]:
         if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
         output_path = record.output_path
         if not is_within(output_path, self.allowed_roots):
             raise NeedsAttention(f"download path is outside allowed roots: {output_path}")
         if not output_path.is_dir():
-            raise CueSplitterError(f"download path does not exist: {output_path}")
+            raise PostProcessorError(f"download path does not exist: {output_path}")
         summaries = []
         for cue in self.cue_files(output_path):
             already_split_audio_files = cue_already_split_audio_files(cue)
@@ -106,7 +106,7 @@ class CueProcessor:
         component = safe_component(record.download_id)
         partial_root = self.work_root / f"{component}.partial"
         if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
         output_path = record.output_path.resolve()
         ready_root = output_path / STAGING_DIR_NAME / component
         if partial_root.exists():
@@ -180,7 +180,7 @@ class CueProcessor:
                 raise ManualMatchRequired(f"Lidarr manual-import command {command_id} timed out")
         except ManualMatchRequired:
             raise
-        except CueSplitterError as exc:
+        except PostProcessorError as exc:
             raise ManualMatchRequired(
                 f"Lidarr could not import the generated tracks: {exc}"
             ) from exc

@@ -8,7 +8,7 @@ from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
-from .errors import CueSplitterError, NeedsAttention
+from .errors import PostProcessorError, NeedsAttention
 from .media import safe_component
 from .media_join import (
     JoinBackend,
@@ -145,7 +145,7 @@ class RadarrJoinService:
         now: float,
     ) -> None:
         if record.output_path is None:
-            raise CueSplitterError("Radarr queue record does not contain an output path")
+            raise PostProcessorError("Radarr queue record does not contain an output path")
         candidates = [
             candidate
             for candidate in client.manual_import(record.output_path, record)
@@ -185,7 +185,7 @@ class RadarrJoinService:
 
     def observe(self, record: RadarrQueueRecord, job: Job, now: float) -> bool:
         if record.output_path is None:
-            raise CueSplitterError("Radarr queue record does not contain an output path")
+            raise PostProcessorError("Radarr queue record does not contain an output path")
         current_fingerprint = download_fingerprint(record.output_path)
         if current_fingerprint != job.fingerprint:
             job.fingerprint = current_fingerprint

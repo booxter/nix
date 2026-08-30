@@ -7,7 +7,7 @@ from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
-from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .errors import PostProcessorError, ManualMatchRequired, NeedsAttention, SourceInvalid
 from .lidarr import Lidarr
 from .media import MediaRunner, output_fingerprint
 from .metrics import render_metrics
@@ -152,7 +152,7 @@ class CueSplitterService:
         now: float,
     ) -> None:
         if record.output_path is None:
-            raise CueSplitterError("Lidarr queue record does not contain an output path")
+            raise PostProcessorError("Lidarr queue record does not contain an output path")
         fingerprint = output_fingerprint(record.output_path)
         previous_fingerprint = job.failure_fingerprint
         attempts = job.attempts + 1 if previous_fingerprint in {None, fingerprint} else 1
@@ -186,7 +186,7 @@ class CueSplitterService:
         failure_kind = job.failure_kind or "source_unavailable"
         try:
             client.detach_queue_item(queue_id, blocklist=failure_kind == "source_invalid")
-        except CueSplitterError as exc:
+        except PostProcessorError as exc:
             self.mark_automation_failed(
                 job, f"could not detach failed release from Lidarr: {exc}", now
             )
