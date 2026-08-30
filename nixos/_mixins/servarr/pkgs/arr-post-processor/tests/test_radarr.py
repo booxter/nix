@@ -316,6 +316,44 @@ class FakeRadarr:
 
 
 class RadarrServiceTests(unittest.TestCase):
+    def test_expected_media_failure_logs_concise_attention(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            backend = make_parts(source, ["Scene 1.mp4", "Scene 2.mp4"], [3600, 3600])
+            second = (source / "Scene 2.mp4").resolve()
+            backend.probes[second] = probe(
+                3600,
+                (("video", "h264", 1440, 1080, None), ("audio", "aac", None, None, 2)),
+            )
+            queue_record = record(source)
+            client = FakeRadarr(queue_record, backend)
+            store = StateStore(root / "state.json")
+            service = RadarrJoinService(
+                client_factory=lambda: client,
+                backend=backend,
+                store=store,
+                allowed_roots=[root],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=1,
+                now=lambda: 100.0,
+            )
+
+            service.iteration()
+            with self.assertLogs(
+                "arr-post-processor.radarr-media-join", level="WARNING"
+            ) as captured:
+                service.iteration()
+
+            self.assertEqual(store.state.jobs["download-id"].status, "awaiting_manual_match")
+            self.assertEqual(len(captured.records), 1)
+            self.assertIsNone(captured.records[0].exc_info)
+            self.assertIn("title=Test.Movie.2020.1080p", captured.output[0])
+            self.assertIn("error=multipart stream layouts are not compatible", captured.output[0])
+
     def test_all_candidates_settle_concurrently_but_process_one_per_iteration(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

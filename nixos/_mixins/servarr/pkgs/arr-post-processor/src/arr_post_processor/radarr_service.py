@@ -8,7 +8,7 @@ from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
-from .errors import PostProcessorError, NeedsAttention
+from .errors import NeedsAttention, PostProcessorError
 from .media import safe_component
 from .media_join import (
     JoinBackend,
@@ -93,8 +93,9 @@ class RadarrJoinService:
         job.error = error
         job.updated_at = now
         LOG.warning(
-            "Radarr post-processing job needs attention: download_id=%s error=%s",
+            "Radarr post-processing job needs attention: download_id=%s title=%s error=%s",
             job.download_id,
+            job.title,
             error,
         )
 
@@ -439,8 +440,14 @@ class RadarrJoinService:
             try:
                 if self.observe(record, job, now):
                     ready.append((record, job))
+            except PostProcessorError as error:
+                self.mark_attention(job, str(error), now)
             except Exception as error:
-                LOG.exception("Radarr job observation failed: download_id=%s", record.download_id)
+                LOG.exception(
+                    "Unexpected Radarr job observation failure: download_id=%s title=%s",
+                    record.download_id,
+                    record.title,
+                )
                 self.mark_attention(job, str(error), now)
         if not any(
             job.status in PROCESSING_JOB_STATES | {"joining"}
@@ -449,9 +456,13 @@ class RadarrJoinService:
             for record, job in ready:
                 try:
                     self.process(client, record, job, now)
+                except PostProcessorError as error:
+                    self.mark_attention(job, str(error), now)
                 except Exception as error:
                     LOG.exception(
-                        "Radarr post-processing job failed: download_id=%s", record.download_id
+                        "Unexpected Radarr post-processing failure: download_id=%s title=%s",
+                        record.download_id,
+                        record.title,
                     )
                     self.mark_attention(job, str(error), now)
                 break
