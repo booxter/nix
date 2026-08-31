@@ -13,6 +13,12 @@ in
   options.host.ollama = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
+        options.contextLength = lib.mkOption {
+          type = lib.types.nullOr lib.types.ints.positive;
+          default = null;
+          description = "Default context length allocated by Ollama runners.";
+        };
+
         options.models = lib.mkOption {
           type = lib.types.attrsOf (
             lib.types.submodule {
@@ -58,7 +64,12 @@ in
       port = 11434;
       loadModels = builtins.attrNames cfg.models;
       syncModels = true;
-      environmentVariables.OLLAMA_KEEP_ALIVE = "30m";
+      environmentVariables = {
+        OLLAMA_KEEP_ALIVE = "30m";
+      }
+      // lib.optionalAttrs (cfg.contextLength != null) {
+        OLLAMA_CONTEXT_LENGTH = toString cfg.contextLength;
+      };
     };
 
     host.observability.nodeExporter.textfile.periodicProducers.ollama-metrics = {
