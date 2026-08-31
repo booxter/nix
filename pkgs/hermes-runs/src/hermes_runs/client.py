@@ -14,6 +14,12 @@ class HermesError(Exception):
     """A request to Hermes failed."""
 
 
+class HermesHttpError(HermesError):
+    def __init__(self, status: int, detail: str) -> None:
+        self.status = status
+        super().__init__(f"Hermes returned HTTP {status}: {detail}")
+
+
 class Client(Protocol):
     def request(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject: ...
 
@@ -64,7 +70,7 @@ class HermesClient:
                 parsed = json.load(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
-            raise HermesError(f"Hermes returned HTTP {error.code}: {detail}") from error
+            raise HermesHttpError(error.code, detail) from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
         if not isinstance(parsed, dict):
@@ -78,7 +84,7 @@ class HermesClient:
                 yield from parse_sse(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
-            raise HermesError(f"Hermes returned HTTP {error.code}: {detail}") from error
+            raise HermesHttpError(error.code, detail) from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
 

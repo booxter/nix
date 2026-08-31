@@ -6,7 +6,7 @@ from io import StringIO
 import pytest
 
 from hermes_runs.cli import run
-from hermes_runs.client import HermesError, JsonObject
+from hermes_runs.client import HermesError, HermesHttpError, JsonObject
 
 
 class FakeClient:
@@ -45,8 +45,30 @@ def test_run_requires_run_id() -> None:
 def test_status_prints_json() -> None:
     client = FakeClient({"run_id": "run_123", "status": "running"})
 
-    assert '"status": "running"' in invoke(["status", "run_123"], client)
+    assert invoke(["status", "run_123", "--json"], client) == (
+        '{\n  "run_id": "run_123",\n  "status": "running"\n}\n'
+    )
     assert client.requests == [("GET", "/v1/runs/run_123", None)]
+
+
+def test_status_prints_human_readable_output() -> None:
+    client = FakeClient(
+        {
+            "run_id": "run_123",
+            "status": "completed",
+            "model": "radarr-repair",
+            "last_event": "run.completed",
+            "output": "first line\nsecond line — readable",
+            "usage": {"total_tokens": 42},
+        }
+    )
+
+    assert invoke(["status", "run_123"], client) == (
+        "run_123: completed (radarr-repair)\n"
+        "last event: run.completed\n\n"
+        "first line\nsecond line — readable\n\n"
+        'usage: {"total_tokens": 42}\n'
+    )
 
 
 @pytest.mark.parametrize("resolve_all", [False, True])
@@ -99,6 +121,36 @@ def test_watch_uses_completed_output_when_no_deltas_arrived() -> None:
     client.event_values = [{"event": "run.completed", "output": "final answer"}]
 
     assert invoke(["watch", "run_123"], client) == "final answer\n[run.completed]\n"
+
+
+class ExpiredEventsClient(FakeClient):
+    def events(self, run_id: str) -> Iterator[JsonObject]:
+        if False:
+            yield {}
+        raise HermesHttpError(404, "run not found")
+
+
+def test_watch_falls_back_to_retained_status() -> None:
+    client = ExpiredEventsClient(
+        {"run_id": "run_123", "status": "completed", "output": "final answer"}
+    )
+
+    assert invoke(["watch", "run_123"], client) == (
+        "event stream is no longer available; showing retained status\n\n"
+        "run_123: completed\n\nfinal answer\n"
+    )
+    assert client.requests == [("GET", "/v1/runs/run_123", None)]
+
+
+def test_watch_preserves_other_http_errors() -> None:
+    class BrokenEventsClient(FakeClient):
+        def events(self, run_id: str) -> Iterator[JsonObject]:
+            if False:
+                yield {}
+            raise HermesHttpError(500, "broken")
+
+    with pytest.raises(HermesHttpError, match="HTTP 500"):
+        invoke(["watch", "run_123"], BrokenEventsClient())
 
 
 def test_environment_requires_api_key() -> None:
