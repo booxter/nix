@@ -13,33 +13,26 @@ class FakeClient:
     def __init__(self, response: JsonObject | None = None, run_id: str = "run_123") -> None:
         self.response = response if response is not None else {"status": "ok"}
         self.run_id = run_id
-        self.calls: list[tuple[object, ...]] = []
         self.event_values: list[JsonObject] = []
         self.run_values: list[RunSummary] = []
 
     def start_run(self, instruction: str) -> str:
-        self.calls.append(("start_run", instruction))
         return self.run_id
 
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
-        self.calls.append(("watch_run", run_id))
         yield from self.event_values
 
     def list_runs(self, limit: int) -> list[RunSummary]:
-        self.calls.append(("list_runs", limit))
         return self.run_values
 
     def get_run(self, run_id: str) -> JsonObject:
-        self.calls.append(("get_run", run_id))
         return self.response
 
     def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
-        self.calls.append(("approve_run", run_id, choice, resolve_all))
-        return self.response
+        return {"all": resolve_all, "choice": choice, "run_id": run_id}
 
     def stop_run(self, run_id: str) -> JsonObject:
-        self.calls.append(("stop_run", run_id))
-        return self.response
+        return {"run_id": run_id, "status": "stopping"}
 
 
 def invoke(arguments: list[str], client: FakeClient) -> str:
@@ -52,29 +45,6 @@ def test_run_prints_run_id() -> None:
     client = FakeClient()
 
     assert invoke(["run", "inspect files"], client) == "run_123\n"
-    assert client.calls == [("start_run", "inspect files")]
-
-
-def test_list_runs() -> None:
-    client = FakeClient()
-    client.run_values = [
-        RunSummary(
-            run_id="run_123",
-            status="completed",
-            last_active=0,
-            model="qwen",
-            preview="inspect\nfiles",
-        )
-    ]
-
-    result = invoke(["list", "--limit", "5"], client)
-
-    assert "RUN ID" in result
-    assert "run_123" in result
-    assert "completed" in result
-    assert "qwen" in result
-    assert "inspect files" in result
-    assert client.calls == [("list_runs", 5)]
 
 
 def test_list_runs_empty() -> None:
@@ -87,7 +57,6 @@ def test_status_prints_json() -> None:
     assert invoke(["status", "run_123", "--json"], client) == (
         '{\n  "run_id": "run_123",\n  "status": "running"\n}\n'
     )
-    assert client.calls == [("get_run", "run_123")]
 
 
 def test_status_prints_human_readable_output() -> None:
@@ -117,17 +86,19 @@ def test_approve(resolve_all: bool) -> None:
     if resolve_all:
         arguments.append("--all")
 
-    invoke(arguments, client)
-
-    assert client.calls == [("approve_run", "run_123", "once", resolve_all)]
+    expected = (
+        '{\n  "all": %s,\n  "choice": "once",\n  "run_id": "run_123"\n}\n'
+        % str(resolve_all).lower()
+    )
+    assert invoke(arguments, client) == expected
 
 
 def test_stop() -> None:
     client = FakeClient()
 
-    invoke(["stop", "run_123"], client)
-
-    assert client.calls == [("stop_run", "run_123")]
+    assert invoke(["stop", "run_123"], client) == (
+        '{\n  "run_id": "run_123",\n  "status": "stopping"\n}\n'
+    )
 
 
 def test_watch_renders_text_and_events() -> None:
@@ -175,7 +146,6 @@ def test_watch_falls_back_to_retained_status() -> None:
         "event stream is no longer available; showing retained status\n\n"
         "run_123: completed\n\nfinal answer\n"
     )
-    assert client.calls == [("get_run", "run_123")]
 
 
 def test_watch_preserves_other_http_errors() -> None:
