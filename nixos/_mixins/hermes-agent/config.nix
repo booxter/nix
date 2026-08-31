@@ -207,6 +207,8 @@ let
 in
 {
   config = lib.mkIf (agents != { }) {
+    environment.systemPackages = [ pkgs.hermes-runs ];
+
     host.pki.clients = builtins.listToAttrs (lib.mapAttrsToList pkiClientFor agents);
 
     services.stunnel = {
