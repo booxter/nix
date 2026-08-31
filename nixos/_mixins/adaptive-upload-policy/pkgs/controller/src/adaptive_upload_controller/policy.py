@@ -33,7 +33,6 @@ class DecisionConfig:
     no_streams_mbit: float
     minimum_streams_mbit: float
     fallback_mbit: float
-    stream_bitrate_headroom_fraction: float
     relaxation_hold_seconds: float
 
 
@@ -155,8 +154,7 @@ def observed_policy_from_stream_stats(
         reserved_mbit = None
     else:
         reserved_mbit = round_target_mbit(
-            (active_external_media_bitrate_bits_per_second / 1_000_000.0)
-            * (1.0 + config.stream_bitrate_headroom_fraction)
+            active_external_media_bitrate_bits_per_second / 1_000_000.0
         )
         target_mbit = round_target_mbit(
             min(

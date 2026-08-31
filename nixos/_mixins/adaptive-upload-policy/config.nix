@@ -65,7 +65,6 @@ let
       media_types = jellyfin.mediaTypes;
       idle_rate_mbit = policy.idleRateMbit;
       minimum_rate_mbit = policy.minimumRateMbit;
-      bitrate_headroom_fraction = 1.0;
       relaxation_hold_seconds = policy.relaxationHoldSeconds;
     };
     transmission =
