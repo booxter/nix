@@ -22,6 +22,8 @@ in
 
   git-command-runner = gitCommandRunner;
 
+  hermes-runs = pkgs.callPackage ./hermes-runs { };
+
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {

@@ -23,6 +23,10 @@
     {
       inherit (pkgsNixpkgsUnstable) aerospace codex;
 
+      # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable
+      # until a compatible release reaches the stable branch.
+      inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
+
       # Backport the appDataDir argument from the Firefox wrapper in
       # https://github.com/NixOS/nixpkgs/pull/556611. Keep delegating all
       # existing wrapper arguments to nixpkgs so this can be dropped without

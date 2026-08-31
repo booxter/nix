@@ -19,6 +19,20 @@ in
           type = lib.types.strMatching "^/.+";
           default = "/var/lib/${name}";
         };
+
+        options.agent = {
+          enable = lib.mkEnableOption "experimental ${name} Hermes Agent";
+          providerHost = lib.mkOption {
+            type = lib.types.nullOr lib.types.nonEmptyStr;
+            default = null;
+            description = "NixOS host providing Ollama inference to the ${name} agent.";
+          };
+          model = lib.mkOption {
+            type = lib.types.nullOr lib.types.nonEmptyStr;
+            default = null;
+            description = "Ollama model used by the ${name} agent.";
+          };
+        };
       }
     );
     default = null;
