@@ -15,6 +15,22 @@ let
   hermesHome = agent: "${agent.stateDir}/.hermes";
   inputTarget = agent: name: "${agent.workingDirectory}/input/${name}";
   outputTarget = agent: name: "${agent.workingDirectory}/output/${name}";
+  shellInitFor =
+    name: agent:
+    pkgs.writeText "hermes-agent-${name}-shell-init" ''
+      export PATH=${
+        lib.escapeShellArg (
+          lib.makeBinPath (
+            [
+              package
+              pkgs.bash
+              pkgs.coreutils
+            ]
+            ++ agent.tools
+          )
+        )
+      }:"$PATH"
+    '';
   configFileFor =
     name: agent:
     (pkgs.formats.json { }).generate "hermes-agent-${name}.json" (
@@ -31,6 +47,7 @@ let
           backend = "local";
           cwd = agent.workingDirectory;
           home_mode = "profile";
+          shell_init_files = [ "${shellInitFor name agent}" ];
         };
       }
     );
@@ -133,6 +150,10 @@ let
         "network-online.target"
         "sops-install-secrets.service"
         "stunnel.service"
+      ];
+      restartTriggers = [
+        (configFileFor name agent)
+        (shellInitFor name agent)
       ];
       unitConfig.RequiresMountsFor = requiredPaths;
       environment = {
