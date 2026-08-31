@@ -50,6 +50,7 @@ in
           "memory"
           "terminal"
         ];
+        settings.auxiliary.title_generation.enabled = false;
         filesystem = {
           hidden = [ mediaDir ];
           inputs = filesystemInputs;
