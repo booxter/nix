@@ -6,7 +6,7 @@ from io import StringIO
 import pytest
 
 from hermes_runs.cli import run
-from hermes_runs.client import HermesError, HermesHttpError, JsonObject
+from hermes_runs.client import HermesError, HermesHttpError, JsonObject, RunSummary
 
 
 class FakeClient:
@@ -15,6 +15,7 @@ class FakeClient:
         self.run_id = run_id
         self.calls: list[tuple[object, ...]] = []
         self.event_values: list[JsonObject] = []
+        self.run_values: list[RunSummary] = []
 
     def start_run(self, instruction: str) -> str:
         self.calls.append(("start_run", instruction))
@@ -23,6 +24,10 @@ class FakeClient:
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         self.calls.append(("watch_run", run_id))
         yield from self.event_values
+
+    def list_runs(self, limit: int) -> list[RunSummary]:
+        self.calls.append(("list_runs", limit))
+        return self.run_values
 
     def get_run(self, run_id: str) -> JsonObject:
         self.calls.append(("get_run", run_id))
@@ -48,6 +53,32 @@ def test_run_prints_run_id() -> None:
 
     assert invoke(["run", "inspect files"], client) == "run_123\n"
     assert client.calls == [("start_run", "inspect files")]
+
+
+def test_list_runs() -> None:
+    client = FakeClient()
+    client.run_values = [
+        RunSummary(
+            run_id="run_123",
+            status="completed",
+            last_active=0,
+            model="qwen",
+            preview="inspect\nfiles",
+        )
+    ]
+
+    result = invoke(["list", "--limit", "5"], client)
+
+    assert "RUN ID" in result
+    assert "run_123" in result
+    assert "completed" in result
+    assert "qwen" in result
+    assert "inspect files" in result
+    assert client.calls == [("list_runs", 5)]
+
+
+def test_list_runs_empty() -> None:
+    assert invoke(["list"], FakeClient()) == "no runs found\n"
 
 
 def test_status_prints_json() -> None:

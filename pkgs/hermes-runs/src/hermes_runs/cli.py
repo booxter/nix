@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import TextIO
 
 from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject
@@ -16,6 +17,9 @@ def parser() -> argparse.ArgumentParser:
 
     run = subparsers.add_parser("run", help="start a run and print its ID")
     run.add_argument("input", help="instruction for the agent")
+
+    list_runs = subparsers.add_parser("list", help="list recent runs")
+    list_runs.add_argument("--limit", type=int, default=20)
 
     watch = subparsers.add_parser("watch", help="follow a run's event stream")
     watch.add_argument("run_id")
@@ -62,6 +66,28 @@ def _status(value: JsonObject, output: TextIO) -> None:
     usage = value.get("usage")
     if isinstance(usage, dict) and usage:
         print(f"\nusage: {json.dumps(usage, ensure_ascii=False, sort_keys=True)}", file=output)
+
+
+def _list(client: Client, limit: int, output: TextIO) -> None:
+    runs = client.list_runs(limit)
+    if not runs:
+        print("no runs found", file=output)
+        return
+
+    print(
+        f"{'RUN ID':36}  {'STATUS':12}  {'LAST ACTIVE':19}  {'MODEL':24}  PREVIEW",
+        file=output,
+    )
+    for summary in runs:
+        last_active = "-"
+        if summary.last_active is not None:
+            last_active = datetime.fromtimestamp(summary.last_active).astimezone().strftime("%F %T")
+        preview = summary.preview.replace("\n", " ")
+        model = summary.model[:24]
+        print(
+            f"{summary.run_id:36}  {summary.status:12}  {last_active:19}  {model:24}  {preview}",
+            file=output,
+        )
 
 
 def _watch(client: Client, run_id: str, output: TextIO) -> None:
@@ -118,6 +144,8 @@ def run(
 
     if args.command == "run":
         print(client.start_run(args.input), file=output)
+    elif args.command == "list":
+        _list(client, args.limit, output)
     elif args.command == "watch":
         _watch(client, args.run_id, output)
     elif args.command == "status":

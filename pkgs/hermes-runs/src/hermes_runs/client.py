@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
 from types import TracebackType
 from typing import Protocol, Self, cast
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 JsonObject = dict[str, object]
@@ -20,8 +22,19 @@ class HermesHttpError(HermesError):
         super().__init__(f"Hermes returned HTTP {status}: {detail}")
 
 
+@dataclass(frozen=True)
+class RunSummary:
+    run_id: str
+    status: str
+    last_active: float | None
+    model: str
+    preview: str
+
+
 class Client(Protocol):
     def start_run(self, instruction: str) -> str: ...
+
+    def list_runs(self, limit: int) -> list[RunSummary]: ...
 
     def watch_run(self, run_id: str) -> Iterator[JsonObject]: ...
 
@@ -100,6 +113,41 @@ class HermesClient:
             raise HermesHttpError(error.code, detail) from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
+
+    def list_runs(self, limit: int) -> list[RunSummary]:
+        query = urlencode({"limit": limit, "offset": 0, "source": "api_server"})
+        response = self._request_json("GET", f"/api/sessions?{query}")
+        sessions = response.get("data")
+        if not isinstance(sessions, list):
+            raise HermesError("Hermes did not return a session list")
+
+        summaries: list[RunSummary] = []
+        for value in sessions:
+            if not isinstance(value, dict):
+                continue
+            run_id = value.get("id")
+            if not isinstance(run_id, str) or not run_id.startswith("run_"):
+                continue
+            status = "expired"
+            try:
+                run = self.get_run(run_id)
+                status = str(run.get("status", "unknown"))
+            except HermesHttpError as error:
+                if error.status != 404:
+                    raise
+            last_active = value.get("last_active")
+            summaries.append(
+                RunSummary(
+                    run_id=run_id,
+                    status=status,
+                    last_active=float(last_active)
+                    if isinstance(last_active, int | float)
+                    else None,
+                    model=str(value.get("model") or ""),
+                    preview=str(value.get("preview") or ""),
+                )
+            )
+        return summaries
 
     def get_run(self, run_id: str) -> JsonObject:
         return self._request_json("GET", f"/v1/runs/{run_id}")

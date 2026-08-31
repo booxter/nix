@@ -7,7 +7,7 @@ from urllib.request import Request
 
 import pytest
 
-from hermes_runs.client import HermesClient, HermesError, HttpResponse, parse_sse
+from hermes_runs.client import HermesClient, HermesError, HttpResponse, RunSummary, parse_sse
 
 
 class FakeResponse(BytesIO):
@@ -24,15 +24,16 @@ class FakeResponse(BytesIO):
 
 
 class FakeOpener:
-    def __init__(self, response: bytes | Exception) -> None:
-        self.response = response
+    def __init__(self, response: bytes | Exception | list[bytes | Exception]) -> None:
+        self.responses = response if isinstance(response, list) else [response]
         self.requests: list[Request] = []
 
     def __call__(self, request: Request) -> HttpResponse:
         self.requests.append(request)
-        if isinstance(self.response, Exception):
-            raise self.response
-        return FakeResponse(self.response)
+        response = self.responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return FakeResponse(response)
 
 
 def test_parse_sse_ignores_comments_and_combines_data_lines() -> None:
@@ -95,7 +96,7 @@ def test_events_parse_stream() -> None:
 
 
 def test_run_operations_map_to_api_endpoints() -> None:
-    opener = FakeOpener(b'{"status": "ok"}')
+    opener = FakeOpener([b'{"status": "ok"}'] * 4)
     client = HermesClient("http://localhost:8642", "secret", opener)
 
     client.get_run("run_123")
@@ -117,6 +118,45 @@ def test_run_operations_map_to_api_endpoints() -> None:
         ),
         ("POST", "http://localhost:8642/v1/runs/run_123/stop", None),
     ]
+
+
+def test_list_runs_merges_status_and_filters_non_run_sessions() -> None:
+    sessions = b"""{
+      "data": [
+        {"id": "run_123", "last_active": 12.5, "model": "qwen", "preview": "inspect"},
+        {"id": "api-chat", "last_active": 10, "model": "qwen", "preview": "chat"}
+      ]
+    }"""
+    opener = FakeOpener([sessions, b'{"status": "running"}'])
+    client = HermesClient("http://localhost:8642", "secret", opener)
+
+    assert client.list_runs(5) == [
+        RunSummary(
+            run_id="run_123",
+            status="running",
+            last_active=12.5,
+            model="qwen",
+            preview="inspect",
+        )
+    ]
+    assert opener.requests[0].full_url == (
+        "http://localhost:8642/api/sessions?limit=5&offset=0&source=api_server"
+    )
+
+
+def test_list_runs_marks_expired_status() -> None:
+    sessions = b'{"data": [{"id": "run_123"}]}'
+    missing = HTTPError("http://localhost", 404, "Not Found", {}, BytesIO(b"missing"))
+    client = HermesClient("http://localhost:8642", "secret", FakeOpener([sessions, missing]))
+
+    assert client.list_runs(20)[0].status == "expired"
+
+
+def test_list_runs_requires_session_list() -> None:
+    client = HermesClient("http://localhost:8642", "secret", FakeOpener(b"{}"))
+
+    with pytest.raises(HermesError, match="session list"):
+        client.list_runs(20)
 
 
 @pytest.mark.parametrize("events", [False, True])
