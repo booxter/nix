@@ -68,7 +68,7 @@ def _watch(client: Client, run_id: str, output: TextIO) -> None:
     in_message = False
     saw_message = False
     try:
-        for event in client.events(run_id):
+        for event in client.watch_run(run_id):
             event_name = str(event.get("event", "event"))
             if event_name == "message.delta":
                 print(str(event.get("delta", "")), end="", flush=True, file=output)
@@ -97,7 +97,7 @@ def _watch(client: Client, run_id: str, output: TextIO) -> None:
         if error.status != 404:
             raise
         print("event stream is no longer available; showing retained status\n", file=output)
-        _status(client.request("GET", f"/v1/runs/{run_id}"), output)
+        _status(client.get_run(run_id), output)
 
     if in_message:
         print(file=output)
@@ -117,26 +117,19 @@ def run(
         client = HermesClient(environment.get("HERMES_API", "http://127.0.0.1:8642"), api_key)
 
     if args.command == "run":
-        response = client.request("POST", "/v1/runs", {"input": args.input})
-        run_id = response.get("run_id")
-        if not isinstance(run_id, str):
-            raise HermesError("Hermes did not return a run_id")
-        print(run_id, file=output)
+        print(client.start_run(args.input), file=output)
     elif args.command == "watch":
         _watch(client, args.run_id, output)
     elif args.command == "status":
-        response = client.request("GET", f"/v1/runs/{args.run_id}")
+        response = client.get_run(args.run_id)
         if args.json:
             _json(response, output)
         else:
             _status(response, output)
     elif args.command == "approve":
-        body: JsonObject = {"choice": args.choice}
-        if args.all:
-            body["all"] = True
-        _json(client.request("POST", f"/v1/runs/{args.run_id}/approval", body), output)
+        _json(client.approve_run(args.run_id, args.choice, args.all), output)
     elif args.command == "stop":
-        _json(client.request("POST", f"/v1/runs/{args.run_id}/stop"), output)
+        _json(client.stop_run(args.run_id), output)
     return 0
 
 

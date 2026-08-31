@@ -10,18 +10,31 @@ from hermes_runs.client import HermesError, HermesHttpError, JsonObject
 
 
 class FakeClient:
-    def __init__(self, response: JsonObject | None = None) -> None:
-        self.response = response or {"status": "ok"}
-        self.requests: list[tuple[str, str, JsonObject | None]] = []
+    def __init__(self, response: JsonObject | None = None, run_id: str = "run_123") -> None:
+        self.response = response if response is not None else {"status": "ok"}
+        self.run_id = run_id
+        self.calls: list[tuple[object, ...]] = []
         self.event_values: list[JsonObject] = []
 
-    def request(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject:
-        self.requests.append((method, path, body))
+    def start_run(self, instruction: str) -> str:
+        self.calls.append(("start_run", instruction))
+        return self.run_id
+
+    def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+        self.calls.append(("watch_run", run_id))
+        yield from self.event_values
+
+    def get_run(self, run_id: str) -> JsonObject:
+        self.calls.append(("get_run", run_id))
         return self.response
 
-    def events(self, run_id: str) -> Iterator[JsonObject]:
-        self.requests.append(("GET", f"/v1/runs/{run_id}/events", None))
-        yield from self.event_values
+    def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
+        self.calls.append(("approve_run", run_id, choice, resolve_all))
+        return self.response
+
+    def stop_run(self, run_id: str) -> JsonObject:
+        self.calls.append(("stop_run", run_id))
+        return self.response
 
 
 def invoke(arguments: list[str], client: FakeClient) -> str:
@@ -31,15 +44,10 @@ def invoke(arguments: list[str], client: FakeClient) -> str:
 
 
 def test_run_prints_run_id() -> None:
-    client = FakeClient({"run_id": "run_123", "status": "started"})
+    client = FakeClient()
 
     assert invoke(["run", "inspect files"], client) == "run_123\n"
-    assert client.requests == [("POST", "/v1/runs", {"input": "inspect files"})]
-
-
-def test_run_requires_run_id() -> None:
-    with pytest.raises(HermesError, match="run_id"):
-        invoke(["run", "inspect files"], FakeClient())
+    assert client.calls == [("start_run", "inspect files")]
 
 
 def test_status_prints_json() -> None:
@@ -48,7 +56,7 @@ def test_status_prints_json() -> None:
     assert invoke(["status", "run_123", "--json"], client) == (
         '{\n  "run_id": "run_123",\n  "status": "running"\n}\n'
     )
-    assert client.requests == [("GET", "/v1/runs/run_123", None)]
+    assert client.calls == [("get_run", "run_123")]
 
 
 def test_status_prints_human_readable_output() -> None:
@@ -80,10 +88,7 @@ def test_approve(resolve_all: bool) -> None:
 
     invoke(arguments, client)
 
-    expected: JsonObject = {"choice": "once"}
-    if resolve_all:
-        expected["all"] = True
-    assert client.requests == [("POST", "/v1/runs/run_123/approval", expected)]
+    assert client.calls == [("approve_run", "run_123", "once", resolve_all)]
 
 
 def test_stop() -> None:
@@ -91,7 +96,7 @@ def test_stop() -> None:
 
     invoke(["stop", "run_123"], client)
 
-    assert client.requests == [("POST", "/v1/runs/run_123/stop", None)]
+    assert client.calls == [("stop_run", "run_123")]
 
 
 def test_watch_renders_text_and_events() -> None:
@@ -124,7 +129,7 @@ def test_watch_uses_completed_output_when_no_deltas_arrived() -> None:
 
 
 class ExpiredEventsClient(FakeClient):
-    def events(self, run_id: str) -> Iterator[JsonObject]:
+    def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         if False:
             yield {}
         raise HermesHttpError(404, "run not found")
@@ -139,12 +144,12 @@ def test_watch_falls_back_to_retained_status() -> None:
         "event stream is no longer available; showing retained status\n\n"
         "run_123: completed\n\nfinal answer\n"
     )
-    assert client.requests == [("GET", "/v1/runs/run_123", None)]
+    assert client.calls == [("get_run", "run_123")]
 
 
 def test_watch_preserves_other_http_errors() -> None:
     class BrokenEventsClient(FakeClient):
-        def events(self, run_id: str) -> Iterator[JsonObject]:
+        def watch_run(self, run_id: str) -> Iterator[JsonObject]:
             if False:
                 yield {}
             raise HermesHttpError(500, "broken")

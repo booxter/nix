@@ -21,9 +21,15 @@ class HermesHttpError(HermesError):
 
 
 class Client(Protocol):
-    def request(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject: ...
+    def start_run(self, instruction: str) -> str: ...
 
-    def events(self, run_id: str) -> Iterator[JsonObject]: ...
+    def watch_run(self, run_id: str) -> Iterator[JsonObject]: ...
+
+    def get_run(self, run_id: str) -> JsonObject: ...
+
+    def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject: ...
+
+    def stop_run(self, run_id: str) -> JsonObject: ...
 
 
 class HttpResponse(Protocol):
@@ -63,7 +69,7 @@ class HermesClient:
             },
         )
 
-    def request(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject:
+    def _request_json(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject:
         request = self._request(method, path, body)
         try:
             with self._opener(request) as response:
@@ -77,7 +83,14 @@ class HermesClient:
             raise HermesError("Hermes returned a non-object JSON response")
         return cast(JsonObject, parsed)
 
-    def events(self, run_id: str) -> Iterator[JsonObject]:
+    def start_run(self, instruction: str) -> str:
+        response = self._request_json("POST", "/v1/runs", {"input": instruction})
+        run_id = response.get("run_id")
+        if not isinstance(run_id, str):
+            raise HermesError("Hermes did not return a run_id")
+        return run_id
+
+    def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         request = self._request("GET", f"/v1/runs/{run_id}/events")
         try:
             with self._opener(request) as response:
@@ -87,6 +100,18 @@ class HermesClient:
             raise HermesHttpError(error.code, detail) from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
+
+    def get_run(self, run_id: str) -> JsonObject:
+        return self._request_json("GET", f"/v1/runs/{run_id}")
+
+    def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
+        body: JsonObject = {"choice": choice}
+        if resolve_all:
+            body["all"] = True
+        return self._request_json("POST", f"/v1/runs/{run_id}/approval", body)
+
+    def stop_run(self, run_id: str) -> JsonObject:
+        return self._request_json("POST", f"/v1/runs/{run_id}/stop")
 
 
 def parse_sse(lines: Iterable[bytes]) -> Iterator[JsonObject]:

@@ -59,22 +59,29 @@ def test_parse_sse_rejects_invalid_events(data: bytes) -> None:
         list(parse_sse(iter(data.splitlines(keepends=True))))
 
 
-def test_request_sends_auth_and_json() -> None:
+def test_start_run_sends_auth_and_json() -> None:
     opener = FakeOpener(b'{"run_id": "run_123"}')
     client = HermesClient("http://localhost:8642/", "secret", opener)
 
-    assert client.request("POST", "/v1/runs", {"input": "hello"}) == {"run_id": "run_123"}
+    assert client.start_run("hello") == "run_123"
     request = opener.requests[0]
     assert request.full_url == "http://localhost:8642/v1/runs"
     assert request.get_header("Authorization") == "Bearer secret"
     assert request.data == b'{"input": "hello"}'
 
 
+def test_start_run_requires_run_id() -> None:
+    client = HermesClient("http://localhost:8642", "secret", FakeOpener(b"{}"))
+
+    with pytest.raises(HermesError, match="run_id"):
+        client.start_run("hello")
+
+
 def test_request_rejects_non_object_response() -> None:
     client = HermesClient("http://localhost:8642", "secret", FakeOpener(b"[]"))
 
     with pytest.raises(HermesError, match="non-object"):
-        client.request("GET", "/v1/runs/run_123")
+        client.get_run("run_123")
 
 
 def test_events_parse_stream() -> None:
@@ -84,7 +91,32 @@ def test_events_parse_stream() -> None:
         FakeOpener(b'data: {"event": "run.completed"}\n\n'),
     )
 
-    assert list(client.events("run_123")) == [{"event": "run.completed"}]
+    assert list(client.watch_run("run_123")) == [{"event": "run.completed"}]
+
+
+def test_run_operations_map_to_api_endpoints() -> None:
+    opener = FakeOpener(b'{"status": "ok"}')
+    client = HermesClient("http://localhost:8642", "secret", opener)
+
+    client.get_run("run_123")
+    client.approve_run("run_123", "once", False)
+    client.approve_run("run_123", "deny", True)
+    client.stop_run("run_123")
+
+    assert [(request.method, request.full_url, request.data) for request in opener.requests] == [
+        ("GET", "http://localhost:8642/v1/runs/run_123", None),
+        (
+            "POST",
+            "http://localhost:8642/v1/runs/run_123/approval",
+            b'{"choice": "once"}',
+        ),
+        (
+            "POST",
+            "http://localhost:8642/v1/runs/run_123/approval",
+            b'{"choice": "deny", "all": true}',
+        ),
+        ("POST", "http://localhost:8642/v1/runs/run_123/stop", None),
+    ]
 
 
 @pytest.mark.parametrize("events", [False, True])
@@ -100,9 +132,9 @@ def test_http_error_includes_response(events: bool) -> None:
 
     with pytest.raises(HermesError, match='HTTP 401.*"unauthorized"'):
         if events:
-            list(client.events("run_123"))
+            list(client.watch_run("run_123"))
         else:
-            client.request("GET", "/v1/runs/run_123")
+            client.get_run("run_123")
 
 
 @pytest.mark.parametrize("events", [False, True])
@@ -113,6 +145,6 @@ def test_connection_error(events: bool) -> None:
 
     with pytest.raises(HermesError, match="connection refused"):
         if events:
-            list(client.events("run_123"))
+            list(client.watch_run("run_123"))
         else:
-            client.request("GET", "/v1/runs/run_123")
+            client.get_run("run_123")
