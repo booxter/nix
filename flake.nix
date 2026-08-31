@@ -70,7 +70,8 @@
 
     hermes-agent = {
       url = "github:NousResearch/hermes-agent/v2026.8.27";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # Stable still has SQLite 3.51.2, whose WAL-reset bug risks Hermes's state databases.
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
   };
