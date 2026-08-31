@@ -26,6 +26,7 @@ let
           context_length = agent.contextLength;
           ollama_num_ctx = agent.contextLength;
         };
+        platform_toolsets.api_server = agent.toolsets ++ [ "no_mcp" ];
         terminal = {
           backend = "local";
           cwd = agent.workingDirectory;
@@ -142,7 +143,6 @@ let
         HOME = agent.stateDir;
         HERMES_HOME = home;
         HERMES_MANAGED = "true";
-        MESSAGING_CWD = agent.workingDirectory;
       };
       path = [
         package

@@ -45,16 +45,16 @@ in
           pkgs.mediainfo
         ];
         supplementaryGroups = [ "media" ];
+        toolsets = [
+          "file"
+          "memory"
+          "terminal"
+        ];
         filesystem = {
           hidden = [ mediaDir ];
           inputs = filesystemInputs;
           outputs.processed = outputDir;
         };
-        settings.toolsets = [
-          "file"
-          "memory"
-          "terminal"
-        ];
       };
 
       host.storage.claims.media = {

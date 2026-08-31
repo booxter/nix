@@ -64,6 +64,12 @@ in
               description = "Nix packages placed on this agent's command search path.";
             };
 
+            toolsets = lib.mkOption {
+              type = lib.types.listOf lib.types.nonEmptyStr;
+              default = [ ];
+              description = "Hermes toolsets exposed to API-server runs for this agent.";
+            };
+
             supplementaryGroups = lib.mkOption {
               type = lib.types.listOf lib.types.nonEmptyStr;
               default = [ ];
