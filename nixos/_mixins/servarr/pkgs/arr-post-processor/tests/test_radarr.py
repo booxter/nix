@@ -171,7 +171,7 @@ class FilenamePlanningTests(unittest.TestCase):
             with self.assertRaisesRegex(NeedsAttention, "outside allowed roots"):
                 build_join_plan(record(root), movie(), [root / "other"], backend)
 
-    def test_single_file_plan_requires_one_runtime_matched_video(self):
+    def test_single_file_plan_accepts_half_to_one_and_a_half_runtime(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "MisBehavin 1080p.mkv"
@@ -182,8 +182,17 @@ class FilenamePlanningTests(unittest.TestCase):
             self.assertEqual(plan.path if plan is not None else None, source.resolve())
             self.assertNotEqual(download_fingerprint(source), f"missing:{source}")
 
-            backend.probes[source.resolve()] = probe(3600)
-            self.assertIsNone(build_single_file_plan(record(source), movie(84), [root], backend))
+            for duration in (2520, 3600, 7560):
+                backend.probes[source.resolve()] = probe(duration)
+                self.assertIsNotNone(
+                    build_single_file_plan(record(source), movie(84), [root], backend)
+                )
+
+            for duration in (2519.9, 7560.1):
+                backend.probes[source.resolve()] = probe(duration)
+                self.assertIsNone(
+                    build_single_file_plan(record(source), movie(84), [root], backend)
+                )
 
             second = root / "second.mkv"
             second.write_bytes(b"media")

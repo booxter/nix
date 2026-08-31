@@ -42,7 +42,6 @@ def policy_args(**overrides):
         "no_streams_mbit": 25.0,
         "minimum_streams_mbit": 0.5,
         "fallback_mbit": 8.0,
-        "stream_bitrate_headroom_fraction": 0.1,
         "relaxation_hold_seconds": 90.0,
     }
     values.update(overrides)
@@ -140,12 +139,13 @@ def test_policy_relaxes_only_after_stable_hold(tmp_path):
     with metrics_server(content) as url:
         args = policy_args(exporter_url=url)
         constrained = decide_effective_policy(args, state_file)
-        assert constrained.target_mbit == 20.6
+        assert constrained.reserved_external_media_bandwidth_mbit == 4.0
+        assert constrained.target_mbit == 21.0
         save_policy_state(state_file, constrained)
 
         content["value"] = ""
         holding = decide_effective_policy(args, state_file)
-        assert holding.target_mbit == 20.6
+        assert holding.target_mbit == 21.0
         assert holding.observed_target_mbit == 25.0
         assert holding.relaxation_pending_target_mbit == 25.0
 
@@ -237,7 +237,6 @@ def test_loads_shared_controller_configuration(tmp_path):
                     "media_types": ["movie", "episode"],
                     "idle_rate_mbit": 25,
                     "minimum_rate_mbit": 0.5,
-                    "bitrate_headroom_fraction": 0.1,
                     "relaxation_hold_seconds": 90,
                 },
                 "transmission": {

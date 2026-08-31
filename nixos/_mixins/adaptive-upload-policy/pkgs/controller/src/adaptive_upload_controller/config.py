@@ -20,7 +20,6 @@ class JellyfinSourceConfig(ConfigModel):
     media_types: frozenset[str] = Field(min_length=1)
     idle_rate_mbit: float = Field(gt=0)
     minimum_rate_mbit: float = Field(gt=0)
-    bitrate_headroom_fraction: float = Field(ge=0, le=1)
     relaxation_hold_seconds: float = Field(ge=0)
 
     @model_validator(mode="after")

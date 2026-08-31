@@ -52,7 +52,6 @@ def decision_config(config: ControllerConfig) -> DecisionConfig:
         no_streams_mbit=source.idle_rate_mbit,
         minimum_streams_mbit=source.minimum_rate_mbit,
         fallback_mbit=config.fallback_rate_mbit,
-        stream_bitrate_headroom_fraction=source.bitrate_headroom_fraction,
         relaxation_hold_seconds=source.relaxation_hold_seconds,
     )
 
