@@ -71,6 +71,10 @@ class SingleFilePlan:
     probe: MediaProbe
 
 
+MIN_SINGLE_FILE_RUNTIME_RATIO = 0.5
+MAX_SINGLE_FILE_RUNTIME_RATIO = 1.5
+
+
 class JoinBackend(Protocol):
     def probe(self, path: Path) -> MediaProbe: ...
 
@@ -267,8 +271,11 @@ def build_single_file_plan(
         return None
     media_probe = backend.probe(videos[0])
     expected = float(movie.runtime * 60)
-    tolerance = max(300.0, expected * 0.05)
-    if abs(media_probe.duration_seconds - expected) > tolerance:
+    if not (
+        expected * MIN_SINGLE_FILE_RUNTIME_RATIO
+        <= media_probe.duration_seconds
+        <= expected * MAX_SINGLE_FILE_RUNTIME_RATIO
+    ):
         return None
     return SingleFilePlan(path=videos[0], probe=media_probe)
 
