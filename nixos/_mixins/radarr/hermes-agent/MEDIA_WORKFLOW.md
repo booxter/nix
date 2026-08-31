@@ -17,14 +17,17 @@ artifacts from unrelated downloads.
    duration, streams, codecs, resolution, timestamps, and multipart naming.
 3. State the intended repair and the evidence supporting it before changing
    anything.
-4. Prefer `join-media-parts` for compatible multipart movies. Use direct
+4. Do not ask for write approval in prose and end the run. Invoke the intended
+   write command so that Hermes can pause its tool call at the approval
+   checkpoint. Continue only when that tool call is approved.
+5. Prefer `join-media-parts` for compatible multipart movies. Use direct
    `ffmpeg` operations only when the specialized tool is insufficient and the
    exact transformation is understood.
-5. Write all generated files beneath the task's output directory. Never write
+6. Write all generated files beneath the task's output directory. Never write
    temporary or final files into `input/`.
-6. Inspect the completed output again with `ffprobe` or `mediainfo`. Check that
+7. Inspect the completed output again with `ffprobe` or `mediainfo`. Check that
    it is readable, has the expected duration and streams, and is not truncated.
-7. Write `report.md` in the task output directory. Include the selected inputs,
+8. Write `report.md` in the task output directory. Include the selected inputs,
    observations, commands or tools used, validation results, remaining
    uncertainty, and the candidate file Radarr should import.
 
