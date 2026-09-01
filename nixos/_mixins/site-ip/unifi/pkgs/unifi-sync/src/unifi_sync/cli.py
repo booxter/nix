@@ -37,13 +37,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         mode, reservations = load_reservations(args)
         network_settings = build_network_settings(args)
-        dns_records = (
-            None if args.no_dns_records_update else parse_records(args.dns_records_json)
-        )
+        dns_records = None if args.no_dns_records_update else parse_records(args.dns_records_json)
         static_routes = (
-            None
-            if args.no_static_routes_update
-            else parse_static_routes(args.static_routes_json)
+            None if args.no_static_routes_update else parse_static_routes(args.static_routes_json)
         )
 
         client = UnifiLegacyClient(
@@ -74,11 +70,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             if args.network_id:
                 selected_dhcp_network = next(
-                    (
-                        network
-                        for network in networks
-                        if network.get("_id") == args.network_id
-                    ),
+                    (network for network in networks if network.get("_id") == args.network_id),
                     None,
                 )
             else:
@@ -178,9 +170,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 ],
                 "classless_static_routes_option": classless_static_routes_option_result,
                 "classless_static_routes_option_value": (
-                    render_classless_static_routes_option(
-                        network_settings.classless_static_routes
-                    )
+                    render_classless_static_routes_option(network_settings.classless_static_routes)
                     if network_settings.classless_static_routes is not None
                     else None
                 ),
@@ -232,9 +222,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "next_hop": str(route.next_hop),
                         "distance": route.distance,
                         "enabled": route.enabled,
-                        "route_id": _id(existing_route)
-                        if existing_route is not None
-                        else None,
+                        "route_id": _id(existing_route) if existing_route is not None else None,
                         "action": action,
                         "changed": changed,
                         "dry_run": args.dry_run,
@@ -246,26 +234,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             static_routes_result = {
                 "dry_run": args.dry_run,
                 "count": len(static_route_results),
-                "changed_count": sum(
-                    1 for result in static_route_results if result["changed"]
-                ),
+                "changed_count": sum(1 for result in static_route_results if result["changed"]),
                 "results": static_route_results,
             }
 
         selected_group: dict[str, Any] | None = None
-        allow_inventory_placeholders = (
-            mode == "inventory" and not args.no_create_known_clients
-        )
+        allow_inventory_placeholders = mode == "inventory" and not args.no_create_known_clients
         results: list[dict[str, Any]] = []
 
         for reservation in reservations:
             selected_network = (
                 next(
-                    (
-                        network
-                        for network in networks
-                        if network.get("_id") == args.network_id
-                    ),
+                    (network for network in networks if network.get("_id") == args.network_id),
                     None,
                 )
                 if args.network_id
@@ -281,9 +261,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             existing_client = clients_by_mac.get(reservation.mac)
             created_placeholder = False
             should_create_placeholder = (
-                args.create_known_client
-                if mode == "single"
-                else allow_inventory_placeholders
+                args.create_known_client if mode == "single" else allow_inventory_placeholders
             )
             if existing_client is None and should_create_placeholder:
                 # TODO: Re-check on a live UCG whether placeholder-only known clients
@@ -310,8 +288,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         fixed_ip=reservation.fixed_ip,
                         local_dns_record=(
                             reservation.hostname
-                            if not args.no_local_dns_record
-                            and reservation.hostname is not None
+                            if not args.no_local_dns_record and reservation.hostname is not None
                             else None
                         ),
                     )
@@ -330,8 +307,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                             "changes": changes,
                             "local_dns_record": (
                                 reservation.hostname
-                                if not args.no_local_dns_record
-                                and reservation.hostname is not None
+                                if not args.no_local_dns_record and reservation.hostname is not None
                                 else None
                             ),
                             "result": None,
@@ -388,26 +364,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             "mode": mode,
             "dry_run": args.dry_run,
             "count": len(results),
-            "reservation_changed_count": sum(
-                1 for result in results if result["changed"]
-            ),
+            "reservation_changed_count": sum(1 for result in results if result["changed"]),
             "changed_count": (
                 sum(1 for result in results if result["changed"])
-                + (
-                    1
-                    if dhcp_range_result is not None and dhcp_range_result["changed"]
-                    else 0
-                )
-                + (
-                    dns_records_result["changed_count"]
-                    if dns_records_result is not None
-                    else 0
-                )
-                + (
-                    static_routes_result["changed_count"]
-                    if static_routes_result is not None
-                    else 0
-                )
+                + (1 if dhcp_range_result is not None and dhcp_range_result["changed"] else 0)
+                + (dns_records_result["changed_count"] if dns_records_result is not None else 0)
+                + (static_routes_result["changed_count"] if static_routes_result is not None else 0)
             ),
             "dhcp_range_update": dhcp_range_result,
             "dns_records_update": dns_records_result,

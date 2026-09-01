@@ -31,6 +31,3 @@ precision = 2
 [tool.mypy]
 files = ["src/hba_flash"]
 strict = true
-
-[tool.ruff]
-line-length = 100

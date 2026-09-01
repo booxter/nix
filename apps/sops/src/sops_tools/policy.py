@@ -13,9 +13,7 @@ from .model import JsonValue, require_json_value
 
 def _string_list(value: JsonValue, *, description: str, allow_empty: bool) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise ToolError(
-            f".sops.yaml must contain a top-level '{description}' sequence."
-        )
+        raise ToolError(f".sops.yaml must contain a top-level '{description}' sequence.")
     if not value and not allow_empty:
         raise ToolError(f".sops.yaml '{description}' sequence must not be empty.")
     return cast(list[str], value)
@@ -55,9 +53,7 @@ class SopsPolicy:
 
         rules = self.document.get("creation_rules")
         if not isinstance(rules, list):
-            raise ToolError(
-                ".sops.yaml must contain a top-level 'creation_rules' sequence."
-            )
+            raise ToolError(".sops.yaml must contain a top-level 'creation_rules' sequence.")
         if not rules and not allow_empty:
             raise ToolError(".sops.yaml 'creation_rules' sequence must not be empty.")
 
@@ -68,12 +64,8 @@ class SopsPolicy:
     @property
     def creation_rules(self) -> list[dict[str, JsonValue]]:
         value = self.document["creation_rules"]
-        if not isinstance(value, list) or not all(
-            isinstance(rule, dict) for rule in value
-        ):
-            raise ToolError(
-                ".sops.yaml must contain a top-level 'creation_rules' sequence."
-            )
+        if not isinstance(value, list) or not all(isinstance(rule, dict) for rule in value):
+            raise ToolError(".sops.yaml must contain a top-level 'creation_rules' sequence.")
         return cast(list[dict[str, JsonValue]], value)
 
     def recipients_for_rule(self, path_regex: str) -> list[str]:
@@ -116,16 +108,10 @@ class SopsPolicy:
             if rule.get("path_regex") != path_regex:
                 continue
             groups = rule.get("key_groups")
-            if (
-                not isinstance(groups, list)
-                or not groups
-                or not isinstance(groups[0], dict)
-            ):
+            if not isinstance(groups, list) or not groups or not isinstance(groups[0], dict):
                 raise ToolError(f"Invalid age key group for policy rule: {path_regex}")
             age = groups[0].get("age")
-            if not isinstance(age, list) or not all(
-                isinstance(item, str) for item in age
-            ):
+            if not isinstance(age, list) or not all(isinstance(item, str) for item in age):
                 raise ToolError(f"Invalid age key group for policy rule: {path_regex}")
             for recipient in unique_recipients:
                 if recipient not in age:
@@ -149,9 +135,7 @@ class SopsPolicy:
 
 def validate_repository(root: Path) -> None:
     secret_files = [
-        path
-        for path in (root / "secrets").glob("*/*.yaml")
-        if path.name != "_template.yaml"
+        path for path in (root / "secrets").glob("*/*.yaml") if path.name != "_template.yaml"
     ]
     policy_path = root / ".sops.yaml"
     if secret_files and not policy_path.is_file():

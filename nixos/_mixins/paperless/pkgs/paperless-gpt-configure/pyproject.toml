@@ -29,6 +29,3 @@ precision = 2
 files = ["src/paperless_gpt_configure"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

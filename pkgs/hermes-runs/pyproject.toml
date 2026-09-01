@@ -27,6 +27,3 @@ precision = 2
 [tool.mypy]
 files = ["src/hermes_runs"]
 strict = true
-
-[tool.ruff]
-line-length = 100

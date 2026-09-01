@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/sync_repo"]
 strict = true
-
-[tool.ruff]
-line-length = 100

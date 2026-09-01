@@ -29,6 +29,3 @@ testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
-
-[tool.ruff]
-line-length = 100

@@ -45,9 +45,7 @@ def application(
     return Application(runtime, StaticBackendFactory(backend)), backend
 
 
-def test_cat_defaults_to_current_host(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_cat_defaults_to_current_host(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     current, _ = application(tmp_path, {"beast": {"keep": "value"}})
 
     assert cat_main(["--realm", "home"], application=current) == 0
@@ -118,9 +116,7 @@ def test_copy_reports_distinct_destination_path(
     assert "to destination:copied/value." in capsys.readouterr().out
 
 
-def test_update_reports_change_and_noop(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_update_reports_change_and_noop(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     current, _ = application(
         tmp_path,
         {"beast": {"keep": "secret"}},

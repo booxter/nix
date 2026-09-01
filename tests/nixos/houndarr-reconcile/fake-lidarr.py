@@ -27,9 +27,7 @@ def main() -> None:
                 self.send_response(404)
                 self.end_headers()
                 return
-            body = (
-                b'{"appName":"Lidarr","instanceName":"Test catalog","version":"3.1.0"}'
-            )
+            body = b'{"appName":"Lidarr","instanceName":"Test catalog","version":"3.1.0"}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))

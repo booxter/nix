@@ -27,6 +27,3 @@ precision = 2
 [tool.mypy]
 files = ["src/get_ff_cookie"]
 strict = true
-
-[tool.ruff]
-line-length = 100

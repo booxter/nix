@@ -30,6 +30,3 @@ precision = 2
 files = ["src/ssh_ticket"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

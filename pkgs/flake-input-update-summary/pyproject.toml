@@ -29,6 +29,3 @@ precision = 2
 files = ["src/flake_input_update_summary"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

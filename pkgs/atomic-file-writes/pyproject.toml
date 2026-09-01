@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/atomic_file_writes"]
 strict = true
-
-[tool.ruff]
-line-length = 100

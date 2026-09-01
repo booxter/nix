@@ -31,6 +31,3 @@ precision = 2
 [tool.mypy]
 files = ["src/bazarr_auth_config"]
 strict = true
-
-[tool.ruff]
-line-length = 100

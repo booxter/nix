@@ -32,6 +32,3 @@ precision = 2
 [tool.mypy]
 files = ["src/nix_builder_metrics"]
 strict = true
-
-[tool.ruff]
-line-length = 100

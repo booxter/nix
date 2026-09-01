@@ -28,9 +28,7 @@ class Client(Protocol):
 
     def create_dns_policy(self, site_id: str, payload: dict[str, Any]) -> Any: ...
 
-    def update_dns_policy(
-        self, site_id: str, policy_id: str, payload: dict[str, Any]
-    ) -> Any: ...
+    def update_dns_policy(self, site_id: str, policy_id: str, payload: dict[str, Any]) -> Any: ...
 
 
 def normalize_dns_name(value: str) -> str:
@@ -72,9 +70,7 @@ def parse_records(raw_json: str) -> list[DnsRecordSpec] | None:
         if not isinstance(domain, str):
             raise UnifiError(f"DNS record item {index} is missing domain")
         if not isinstance(ttl_seconds, int) or ttl_seconds < 0:
-            raise UnifiError(
-                f"DNS record item {index} is missing non-negative integer ttlSeconds"
-            )
+            raise UnifiError(f"DNS record item {index} is missing non-negative integer ttlSeconds")
         if not isinstance(enabled, bool):
             raise UnifiError(f"DNS record item {index} enabled must be boolean")
 
@@ -92,9 +88,7 @@ def parse_records(raw_json: str) -> list[DnsRecordSpec] | None:
                 raise UnifiError(f"DNS A record item {index} is missing ipv4Address")
             parsed_ip = ipaddress.ip_address(ipv4_address)
             if not isinstance(parsed_ip, ipaddress.IPv4Address):
-                raise UnifiError(
-                    f"DNS A record item {index} is not IPv4: {ipv4_address}"
-                )
+                raise UnifiError(f"DNS A record item {index} is not IPv4: {ipv4_address}")
             records.append(
                 DnsRecordSpec(
                     record_type=normalized_type,
@@ -270,9 +264,7 @@ def sync_records(
             else:
                 policy_id = _stringify(existing.get("id"))
                 if not policy_id:
-                    raise UnifiError(
-                        f"existing UniFi DNS policy for {record.domain} has no id"
-                    )
+                    raise UnifiError(f"existing UniFi DNS policy for {record.domain} has no id")
                 result = client.update_dns_policy(site_id, policy_id, payload)
         results.append(
             {

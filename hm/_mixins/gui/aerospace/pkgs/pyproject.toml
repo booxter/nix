@@ -36,6 +36,3 @@ strict = true
 [[tool.mypy.overrides]]
 module = ["AppKit", "Xlib", "Xlib.*"]
 ignore_missing_imports = true
-
-[tool.ruff]
-line-length = 100

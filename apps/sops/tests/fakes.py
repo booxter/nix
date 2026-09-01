@@ -79,9 +79,7 @@ class MemorySopsBackend:
                 current = current[segment]
             else:
                 assert isinstance(current, dict)
-                child = current.setdefault(
-                    segment, [] if isinstance(next_segment, int) else {}
-                )
+                child = current.setdefault(segment, [] if isinstance(next_segment, int) else {})
                 current = child
         final = key_path.segments[-1]
         if isinstance(final, int):

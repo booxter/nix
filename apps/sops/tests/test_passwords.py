@@ -116,9 +116,7 @@ def test_missing_secret_fails_before_touching_password_store(tmp_path: Path) -> 
 
 
 def test_command_store_reads_only_the_password_line() -> None:
-    store = CommandPasswordStore(
-        RecordingRunner(outputs=["password\nmetadata ignored\n"])
-    )
+    store = CommandPasswordStore(RecordingRunner(outputs=["password\nmetadata ignored\n"]))
 
     assert store.read("host/beast/root") == "password"
 

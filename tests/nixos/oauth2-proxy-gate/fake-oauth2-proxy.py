@@ -7,9 +7,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length) if content_length else b""
         redirect = self.headers.get("X-Auth-Request-Redirect", "")
         with open("/tmp/fake-oauth2-proxy.log", "a", encoding="utf-8") as log:
-            log.write(
-                f"{self.command} {self.path} body={len(body)} redirect={redirect}\n"
-            )
+            log.write(f"{self.command} {self.path} body={len(body)} redirect={redirect}\n")
 
         if self.path == "/oauth2/auth":
             if "session=valid" in self.headers.get("Cookie", ""):

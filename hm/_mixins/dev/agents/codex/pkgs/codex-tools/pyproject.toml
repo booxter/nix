@@ -31,6 +31,3 @@ precision = 2
 [tool.mypy]
 files = ["src/codex_tools"]
 strict = true
-
-[tool.ruff]
-line-length = 100

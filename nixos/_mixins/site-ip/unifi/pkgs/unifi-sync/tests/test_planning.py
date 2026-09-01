@@ -44,9 +44,7 @@ def test_dns_policy_update_plan_covers_create_noop_and_update():
     }
     assert dns.update_plan(existing, record) == ("noop", {}, {})
 
-    action, payload, changes = dns.update_plan(
-        existing, a_record(address="192.168.1.2", ttl=120)
-    )
+    action, payload, changes = dns.update_plan(existing, a_record(address="192.168.1.2", ttl=120))
     assert action == "update"
     assert payload["ipv4Address"] == "192.168.1.2"
     assert changes == {
@@ -176,9 +174,7 @@ def test_ensure_dhcp_custom_option_reports_dry_run_without_mutation():
     )
     client = FakeDhcpOptionClient([])
 
-    field_name, result = planning.ensure_dhcp_custom_option(
-        client, desired, dry_run=True
-    )
+    field_name, result = planning.ensure_dhcp_custom_option(client, desired, dry_run=True)
 
     assert field_name is None
     assert result["would_create"] is True
@@ -195,9 +191,7 @@ def test_ensure_dhcp_custom_option_creates_missing_definition():
     )
     client = FakeDhcpOptionClient([])
 
-    field_name, result = planning.ensure_dhcp_custom_option(
-        client, desired, dry_run=False
-    )
+    field_name, result = planning.ensure_dhcp_custom_option(client, desired, dry_run=False)
 
     assert field_name == "dhcpd_user_option_new-option"
     assert result["created"] is True

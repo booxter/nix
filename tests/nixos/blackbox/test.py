@@ -85,9 +85,7 @@ def wait_for_prometheus_value(query, expected):
     last_result = []
     while time.monotonic() < deadline:
         last_result = prometheus_query(query)
-        if len(last_result) == 1 and float(last_result[0]["value"][1]) == float(
-            expected
-        ):
+        if len(last_result) == 1 and float(last_result[0]["value"][1]) == float(expected):
             return
         time.sleep(1)
     raise AssertionError((query, expected, last_result))

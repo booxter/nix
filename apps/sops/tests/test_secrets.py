@@ -123,9 +123,7 @@ def test_force_update_reencrypts_without_changing_values(tmp_path: Path) -> None
     result = secrets.update("beast", force=True)
 
     assert result.changed and result.reencrypted
-    assert backend.encryptions == [
-        (secrets.repository.secret("beast"), {"present": "secret"})
-    ]
+    assert backend.encryptions == [(secrets.repository.secret("beast"), {"present": "secret"})]
 
 
 def test_empty_template_container_uses_full_reencryption(tmp_path: Path) -> None:

@@ -166,8 +166,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--bootfile",
         default=os.environ.get("UNIFI_NETWORK_BOOTFILE", ""),
         help=(
-            "Optional network-boot filename for DHCP option 67. Defaults to "
-            "UNIFI_NETWORK_BOOTFILE."
+            "Optional network-boot filename for DHCP option 67. Defaults to UNIFI_NETWORK_BOOTFILE."
         ),
     )
     parser.add_argument(

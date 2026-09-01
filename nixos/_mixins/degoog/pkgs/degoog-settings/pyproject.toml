@@ -32,6 +32,3 @@ precision = 2
 files = ["src/degoog_settings"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

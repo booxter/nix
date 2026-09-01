@@ -27,6 +27,3 @@ precision = 2
 [tool.mypy]
 files = ["src/check_commit_message"]
 strict = true
-
-[tool.ruff]
-line-length = 100

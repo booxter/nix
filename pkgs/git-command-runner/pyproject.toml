@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/git_command_runner"]
 strict = true
-
-[tool.ruff]
-line-length = 100

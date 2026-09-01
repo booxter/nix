@@ -29,6 +29,3 @@ precision = 2
 files = ["src/uptimerobot_sync"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

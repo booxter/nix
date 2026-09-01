@@ -30,6 +30,3 @@ precision = 2
 files = ["src/srvarr_ebook_converter"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

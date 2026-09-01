@@ -32,9 +32,7 @@ def tc_objects(kind, device):
 
 def tc_object(kind, device, field, value):
     matches = [
-        item
-        for item in tc_objects(kind, device)
-        if item.get(field, "").lower() == value.lower()
+        item for item in tc_objects(kind, device) if item.get(field, "").lower() == value.lower()
     ]
     for item in matches:
         if "options" in item:
@@ -117,8 +115,7 @@ def assert_limited(label, measured_mbit, configured_mbit):
     lower = configured_mbit * 0.45
     upper = configured_mbit * 1.40
     assert lower <= measured_mbit <= upper, (
-        f"{label}: expected {lower:.1f}..{upper:.1f} Mbit/s, "
-        f"measured {measured_mbit:.1f} Mbit/s"
+        f"{label}: expected {lower:.1f}..{upper:.1f} Mbit/s, measured {measured_mbit:.1f} Mbit/s"
     )
 
 

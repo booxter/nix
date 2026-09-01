@@ -26,9 +26,7 @@ with subtest("the complete service graph starts"):
     ):
         machine.wait_for_unit(unit)
     for unit in ("romm-db-init.service", "romm-backup.service"):
-        machine.succeed(
-            f"systemctl show --property=Result --value {unit} | grep -Fx success"
-        )
+        machine.succeed(f"systemctl show --property=Result --value {unit} | grep -Fx success")
 
 with subtest("the HTTPS frontend reaches the RomM API"):
     machine.wait_for_open_port(443)

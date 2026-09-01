@@ -50,9 +50,7 @@ class TransmissionRpcClient:
             )
 
             try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_seconds
-                ) as response:
+                with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
                     body = response.read().decode("utf-8")
             except urllib.error.HTTPError as exc:
                 if exc.code == 409 and attempt == 0:
@@ -60,24 +58,16 @@ class TransmissionRpcClient:
                     if session_id:
                         self.session_id = session_id
                         continue
-                raise TransmissionRpcError(
-                    f"HTTP {exc.code} from Transmission RPC"
-                ) from exc
+                raise TransmissionRpcError(f"HTTP {exc.code} from Transmission RPC") from exc
             except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
-                raise TransmissionRpcError(
-                    f"request to Transmission RPC failed: {exc}"
-                ) from exc
+                raise TransmissionRpcError(f"request to Transmission RPC failed: {exc}") from exc
 
             try:
                 parsed = json.loads(body)
             except json.JSONDecodeError as exc:
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON"
-                ) from exc
+                raise TransmissionRpcError("Transmission RPC returned invalid JSON") from exc
             if not isinstance(parsed, dict):
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON-RPC payload"
-                )
+                raise TransmissionRpcError("Transmission RPC returned invalid JSON-RPC payload")
 
             if parsed.get("id") != request_id:
                 raise TransmissionRpcError("Transmission RPC returned mismatched id")
@@ -96,9 +86,7 @@ class TransmissionRpcClient:
 
             result: object = parsed.get("result", {})
             if not isinstance(result, dict):
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid result payload"
-                )
+                raise TransmissionRpcError("Transmission RPC returned invalid result payload")
             return cast(dict[str, object], result)
 
         raise TransmissionRpcError("failed to negotiate Transmission session id")

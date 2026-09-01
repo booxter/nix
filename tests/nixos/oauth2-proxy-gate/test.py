@@ -46,9 +46,7 @@ def request(path, method="GET", headers=None, data=None):
 
 
 def clear_logs():
-    machine.succeed(
-        "truncate -s 0 /tmp/fake-oauth2-proxy.log /tmp/fake-oauth2-backend.log"
-    )
+    machine.succeed("truncate -s 0 /tmp/fake-oauth2-proxy.log /tmp/fake-oauth2-backend.log")
 
 
 def logs():
@@ -91,14 +89,10 @@ with subtest("document navigation starts sign-in with a safe GET"):
         },
     )
     assert response.status == 302, response
-    assert response.headers.get("location") == (
-        "https://idp.example.invalid/authorize"
-    ), response
+    assert response.headers.get("location") == ("https://idp.example.invalid/authorize"), response
     oauth_log, backend_log = logs()
     assert "GET /oauth2/start body=0 " in oauth_log, oauth_log
-    assert "redirect=https://test.example.invalid/library?sort=new" in oauth_log, (
-        oauth_log
-    )
+    assert "redirect=https://test.example.invalid/library?sort=new" in oauth_log, oauth_log
     assert backend_log == "", backend_log
 
 with subtest("HTML fallback works without Fetch Metadata"):

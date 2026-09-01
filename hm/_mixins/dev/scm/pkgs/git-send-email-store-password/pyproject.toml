@@ -27,6 +27,3 @@ precision = 2
 [tool.mypy]
 files = ["src/git_send_email_store_password"]
 strict = true
-
-[tool.ruff]
-line-length = 100

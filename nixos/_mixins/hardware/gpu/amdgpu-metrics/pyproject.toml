@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/amdgpu_metrics"]
 strict = true
-
-[tool.ruff]
-line-length = 100

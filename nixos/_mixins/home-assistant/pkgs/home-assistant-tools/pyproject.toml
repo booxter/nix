@@ -32,6 +32,3 @@ precision = 2
 files = ["src/home_assistant_tools"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

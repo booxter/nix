@@ -23,8 +23,8 @@ actionlint .github/workflows/*.yml
 git ls-files -z -- '*.yaml' '*.yml' ':(exclude)secrets/*/*.yaml' |
   xargs -0 -r prettier --write --log-level warn
 git ls-files -z -- '*.md' | xargs -0 -r markdownlint-cli2
-git ls-files -z -- '*.py' | xargs -0 -r ruff format
-git ls-files -z -- '*.py' | xargs -0 -r ruff check
+git ls-files -z -- '*.py' | xargs -0 -r ruff format --config ./ruff.toml
+git ls-files -z -- '*.py' | xargs -0 -r ruff check --config ./ruff.toml
 git ls-files -z -- '*.js' | xargs -0 -r eslint \
   --no-config-lookup \
   --config ./fmt/eslint.config.js

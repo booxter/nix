@@ -31,6 +31,3 @@ precision = 2
 [tool.mypy]
 files = ["src/postgresql_role_password"]
 strict = true
-
-[tool.ruff]
-line-length = 100

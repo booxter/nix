@@ -33,6 +33,3 @@ precision = 2
 files = ["src/houndarr_tools"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

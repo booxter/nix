@@ -42,6 +42,3 @@ precision = 2
 files = ["src/pki_rotation"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

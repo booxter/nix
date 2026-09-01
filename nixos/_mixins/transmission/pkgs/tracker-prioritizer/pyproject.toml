@@ -34,6 +34,3 @@ strict = true
 [[tool.mypy.overrides]]
 module = ["transmission_common.*"]
 ignore_missing_imports = true
-
-[tool.ruff]
-line-length = 100
