@@ -2,7 +2,6 @@ from prometheus_client import CollectorRegistry, Gauge, generate_latest
 
 from .policy import PolicyState
 
-
 PREFIX = "host_observability_adaptive_upload"
 
 

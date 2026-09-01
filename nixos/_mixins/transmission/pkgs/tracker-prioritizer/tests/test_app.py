@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from prometheus_client import generate_latest
 from prometheus_client.parser import text_string_to_metric_families
-
 from transmission_tracker_prioritizer import collector, core, prioritizer
 
 

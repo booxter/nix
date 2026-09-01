@@ -5,7 +5,6 @@ import io
 from pathlib import Path
 
 import pytest
-
 from proxmox_host_tools.certificate import Error, Pmxcfs, positive_integer, run
 
 

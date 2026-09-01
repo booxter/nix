@@ -8,7 +8,8 @@ from pathlib import Path, PurePosixPath
 from uuid import UUID, uuid4
 
 from atomic_file_writes import write_text_atomic
-from hermes_runs.client import Client as Hermes, HermesError, HermesHttpError, RunState
+from hermes_runs.client import Client as Hermes
+from hermes_runs.client import HermesError, HermesHttpError, RunState
 
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import safe_component
@@ -33,7 +34,6 @@ from .radarr_state import (
     RepairStateStore,
     RetainedArtifact,
 )
-
 
 LOG = logging.getLogger("arr-post-processor.radarr")
 SUPPORTED_PROTOCOLS = {

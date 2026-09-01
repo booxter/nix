@@ -11,8 +11,8 @@ from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import (
     AUDIO_FILE_SUFFIXES,
     LEGACY_STAGING_DIR_NAME,
-    MediaRunner,
     STAGING_DIR_NAME,
+    MediaRunner,
     cue_already_split_audio_files,
     inspection_summary,
     is_staging_path,
@@ -21,7 +21,6 @@ from .media import (
     safe_component,
 )
 from .models import CueSummary
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr.pipeline")
 

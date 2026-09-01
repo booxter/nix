@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import logging
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-import logging
 from pathlib import Path
-import time
 
 from atomic_file_writes import write_text_atomic
 from transmission_common.transmission import (
@@ -22,7 +22,6 @@ from .policy import (
     save_policy_state,
 )
 from .traffic_control import TrafficControl
-
 
 LOG = logging.getLogger("adaptive-upload-controller")
 

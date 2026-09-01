@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sops_tools.errors import ToolError
 from sops_tools.model import KeyPath, deep_merge, scalar_leaves, value_at
 

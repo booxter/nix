@@ -10,7 +10,6 @@ from .lidarr import Lidarr
 from .media import build_manual_import_files
 from .models import QueueRecord
 
-
 LOG = logging.getLogger("arr-post-processor.lidarr.import")
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
 

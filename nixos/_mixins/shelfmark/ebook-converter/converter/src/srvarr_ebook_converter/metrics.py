@@ -9,7 +9,6 @@ from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily, Metri
 
 from .models import ServiceState
 
-
 KNOWN_STATES = {"complete", "converting", "failed", "needs_attention", "settling"}
 
 

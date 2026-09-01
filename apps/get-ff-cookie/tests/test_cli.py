@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import TextIO
 
 import pytest
-
 from get_ff_cookie.cli import (
     BrowserCookieExporter,
     CookieExportError,

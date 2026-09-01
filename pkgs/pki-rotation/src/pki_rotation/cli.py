@@ -33,7 +33,6 @@ from .rotation import (
 )
 from .scanner import CertificateScanner, Clock, SystemClock
 
-
 DEFAULT_INTERMEDIATE_CERTIFICATE = Path("/var/lib/step-ca/certs/intermediate_ca.crt")
 DEFAULT_REPOSITORY_URL = "https://github.com/booxter/nix.git"
 DEFAULT_BASE_BRANCH = "master"

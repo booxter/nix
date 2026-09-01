@@ -1,7 +1,6 @@
 import ipaddress
 
 import pytest
-
 from unifi_sync import dns, models, parsing, planning
 
 

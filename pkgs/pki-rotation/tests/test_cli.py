@@ -7,7 +7,6 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
-
 from pki_rotation.cli import Application, run
 from pki_rotation.errors import RotationError
 from pki_rotation.models import (

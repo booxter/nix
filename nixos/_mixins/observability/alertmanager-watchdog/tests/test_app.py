@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from fana_alertmanager_watchdog.app import (
     Arguments,
     MtlsReadinessProbe,
@@ -19,9 +18,11 @@ from fana_alertmanager_watchdog.app import (
     parse_arguments,
     read_secret,
     run,
-    runtime as build_runtime,
     should_notify,
     truncate,
+)
+from fana_alertmanager_watchdog.app import (
+    runtime as build_runtime,
 )
 
 

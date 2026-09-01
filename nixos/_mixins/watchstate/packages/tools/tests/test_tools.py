@@ -7,9 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import bcrypt
-
 import pytest
-
 from watchstate_tools.cli import run_auth, run_backup
 from watchstate_tools.runtime import PodmanRuntime
 

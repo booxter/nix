@@ -3,7 +3,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 import pytest
-
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import UrllibJsonHttpClient
 

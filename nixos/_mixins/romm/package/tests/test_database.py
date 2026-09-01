@@ -8,7 +8,6 @@ from pathlib import Path
 
 import mariadb
 import pytest
-
 from romm_tools.database import run
 
 

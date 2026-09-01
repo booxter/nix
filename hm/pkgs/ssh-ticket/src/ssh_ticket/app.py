@@ -16,12 +16,15 @@ from pydantic import ValidationError
 
 from .durations import (
     DurationError,
+)
+from .durations import (
     format_duration as format_duration_value,
+)
+from .durations import (
     parse_duration as parse_duration_value,
 )
 from .models import TARGETS, Target, TicketMetadata, TicketPaths, TicketStatus
 from .runtime import CommandError, Runtime, system_runtime
-
 
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
 DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"

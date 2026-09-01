@@ -17,7 +17,6 @@ from .models import (
     StaticRouteSpec,
 )
 
-
 MAC_RE = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")
 DEFAULT_GROUP_NAMES = {"default"}
 

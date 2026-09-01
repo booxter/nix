@@ -8,20 +8,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from atomic_file_writes import write_text_atomic
+
 from .age import AgeRecipientResolver
 from .errors import ToolError
 from .flake import archive_flake_source
 from .model import JsonValue
 from .policy import SopsPolicy
 from .process import ProcessRunner
-from .repository import RuntimeEnvironment, Realm, SecretRepository
+from .repository import Realm, RuntimeEnvironment, SecretRepository
 from .runtime_key import (
     CommandAgeKeyGenerator,
     RuntimeKeyError,
     ensure_runtime_key,
 )
-from atomic_file_writes import write_text_atomic
-
 from .secrets import SopsBackend, load_yaml
 
 _RUNTIME_KEY = Path("/var/lib/sops-nix/key.txt")

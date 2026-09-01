@@ -4,7 +4,6 @@ import asyncio
 from pathlib import Path
 
 import pytest
-
 from home_assistant_tools.auth import LocalAuthenticator
 from home_assistant_tools.backup import BackupManager
 from home_assistant_tools.bootstrap import Bootstrapper

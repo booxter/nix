@@ -7,7 +7,6 @@ from typing import Any, Protocol
 
 from .errors import UnifiError
 
-
 SUPPORTED_RECORD_TYPES = {"A_RECORD", "CNAME_RECORD"}
 
 

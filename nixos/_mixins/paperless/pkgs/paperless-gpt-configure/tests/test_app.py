@@ -6,7 +6,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Mapping
 
 import pytest
-
 from paperless_gpt_configure import app
 
 

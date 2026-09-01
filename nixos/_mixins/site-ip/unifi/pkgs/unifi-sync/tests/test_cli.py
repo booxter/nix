@@ -1,5 +1,4 @@
 import pytest
-
 from unifi_sync import arguments, models, parsing, planning
 from unifi_sync.errors import UnifiError
 

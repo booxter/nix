@@ -16,12 +16,11 @@ from .media import LEGACY_STAGING_DIR_NAME, MediaRunner, output_fingerprint
 from .metrics import render_metrics
 from .models import QueueRecord
 from .state import (
-    PROCESSING_JOB_STATES,
     PROBLEM_JOB_STATES,
+    PROCESSING_JOB_STATES,
     Job,
     StateStore,
 )
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr")
 SUPPORTED_PROTOCOLS = {

@@ -3,7 +3,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-
 from aerospace_x11.cli import move, resize
 from aerospace_x11.service import Direction, display_names, moved_position, resized_dimensions
 

@@ -14,15 +14,13 @@ from threading import Thread
 from typing import Iterator
 
 from aiopyarr.models.const import ProtocolType
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import TypeAdapter
-
-from arr_post_processor.archive import ArchiveMember, ArchiveTransform, NativeArchiveBackend
 from arr_post_processor.app import parse_source_roots
+from arr_post_processor.archive import ArchiveMember, ArchiveTransform, NativeArchiveBackend
 from arr_post_processor.config import read_api_key, read_environment_value
-from arr_post_processor.errors import PostProcessorError, ManualMatchRequired, SourceInvalid
+from arr_post_processor.errors import ManualMatchRequired, PostProcessorError, SourceInvalid
 from arr_post_processor.lidarr import LidarrClient
 from arr_post_processor.lidarr_pipeline import CueTransform, LidarrPipeline
+from arr_post_processor.lidarr_service import LidarrPostProcessorService
 from arr_post_processor.media import (
     UnflacRunner,
     build_manual_import_files,
@@ -40,9 +38,9 @@ from arr_post_processor.models import (
     QueueRecord,
     UnflacInput,
 )
-from arr_post_processor.lidarr_service import LidarrPostProcessorService
 from arr_post_processor.state import Job, StateStore
-
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import TypeAdapter
 
 INSPECTIONS = TypeAdapter(list[UnflacInput])
 IMPORT_CANDIDATES = TypeAdapter(list[ManualImportCandidate])

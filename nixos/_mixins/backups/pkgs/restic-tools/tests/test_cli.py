@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from prometheus_client.parser import text_string_to_metric_families
-
 from restic_tools.cli import Collector, parser, run
 from restic_tools.models import (
     BucketState,

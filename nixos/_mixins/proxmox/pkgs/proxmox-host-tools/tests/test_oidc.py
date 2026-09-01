@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from proxmox_host_tools.oidc import load_config, run
 
 

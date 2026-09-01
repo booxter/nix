@@ -15,7 +15,6 @@ from transmission_common.transmission import (
     read_tracker_hosts,
 )
 
-
 LOG = logging.getLogger("transmission-torrent-cleaner")
 DAY_SECONDS = 86_400.0
 TORRENT_FIELDS = [

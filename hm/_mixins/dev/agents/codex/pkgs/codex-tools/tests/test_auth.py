@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 

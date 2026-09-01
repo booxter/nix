@@ -5,11 +5,10 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from sops_tools.bootstrap import BootstrapService, CommandRuntimeKeyProvider
 from sops_tools.errors import ToolError
 from sops_tools.policy import SopsPolicy
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 
 from .fakes import (
     MemorySopsBackend,

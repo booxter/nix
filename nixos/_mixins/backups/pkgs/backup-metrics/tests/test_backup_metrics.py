@@ -3,14 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from prometheus_client import CollectorRegistry
-from prometheus_client.parser import text_string_to_metric_families
-
 from backup_metrics.cli import run_configure, run_record
 from backup_metrics.metrics import configured_registry, result_registry
 from backup_metrics.models import BackupJob, BackupState, JobsConfig, Outcome
 from backup_metrics.state import read_state, updated_state, write_state
 from backup_metrics.systemd import duration_from_timestamps
+from prometheus_client import CollectorRegistry
+from prometheus_client.parser import text_string_to_metric_families
 
 
 class FixedDuration:

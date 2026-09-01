@@ -6,8 +6,6 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
-from pydantic import ValidationError
-
 from arr_post_processor.errors import NeedsAttention
 from arr_post_processor.radarr_repair import (
     RepairOutcome,
@@ -16,7 +14,7 @@ from arr_post_processor.radarr_repair import (
     load_repair_result,
     render_repair_instruction,
 )
-
+from pydantic import ValidationError
 
 ATTEMPT_ID = UUID("12345678-1234-5678-1234-567812345678")
 FINGERPRINT = "a" * 64

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import BinaryIO
 
 import pytest
-
 from romm_tools.setup import (
     Error,
     PodmanSetupRuntime,

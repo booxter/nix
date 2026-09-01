@@ -14,7 +14,6 @@ from .errors import NeedsAttention, SourceInvalid
 from .lidarr_pipeline import TransformResult
 from .media import AUDIO_FILE_SUFFIXES, is_staging_path
 
-
 LOG = logging.getLogger("arr-post-processor.lidarr.archive")
 ARCHIVE_SUFFIXES = frozenset({".rar", ".tar"})
 MULTIPART_RAR_RE = re.compile(r"\.part\d+\.rar$", re.IGNORECASE)

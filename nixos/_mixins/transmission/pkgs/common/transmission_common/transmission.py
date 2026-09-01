@@ -1,11 +1,11 @@
-from collections.abc import Callable, Mapping
 import json
 import socket
-from typing import cast
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import cast
 
 
 class TransmissionRpcError(RuntimeError):

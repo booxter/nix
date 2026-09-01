@@ -1,9 +1,9 @@
 import json
-from email.message import Message
-from pathlib import Path
 import tempfile
 import unittest
 import urllib.error
+from email.message import Message
+from pathlib import Path
 from unittest.mock import patch
 
 from transmission_common.transmission import (

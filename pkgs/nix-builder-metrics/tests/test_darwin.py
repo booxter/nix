@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
-
 from nix_builder_metrics.darwin import PsSource, parse_duration
 from nix_builder_metrics.model import MetricsError
 

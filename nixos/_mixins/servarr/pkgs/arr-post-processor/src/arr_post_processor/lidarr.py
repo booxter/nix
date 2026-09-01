@@ -14,7 +14,6 @@ from aiopyarr.models.base import BaseModel
 from .errors import PostProcessorError
 from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
 
-
 T = TypeVar("T")
 
 

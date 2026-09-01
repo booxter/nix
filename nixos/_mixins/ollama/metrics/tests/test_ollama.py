@@ -6,10 +6,6 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from prometheus_client import CollectorRegistry
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import ValidationError
-
 from ollama_metrics.collector import (
     Arguments,
     OllamaSource,
@@ -19,6 +15,9 @@ from ollama_metrics.collector import (
     success_registry,
 )
 from ollama_metrics.textfile import render, write
+from prometheus_client import CollectorRegistry
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import ValidationError
 
 
 class StaticTransport:

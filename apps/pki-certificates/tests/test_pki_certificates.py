@@ -6,10 +6,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-from sops_tools.errors import ToolError
-from sops_tools.repository import RuntimeEnvironment
-from sops_tools.secrets import UpdateResult
-
 from pki_certificates.cli import Application, run_internal, run_observability
 from pki_certificates.issuer import RemoteCertificateIssuer, StepCaIssuer
 from pki_certificates.models import (
@@ -23,6 +19,9 @@ from pki_certificates.repository import InventoryConfigSource, NixInventorySourc
 from pki_certificates.secrets import SopsCertificateStore
 from pki_certificates.services import ManagedCertificateService
 from pki_certificates.unifi import UnifiCertificateService, validate_basename
+from sops_tools.errors import ToolError
+from sops_tools.repository import RuntimeEnvironment
+from sops_tools.secrets import UpdateResult
 
 
 @dataclass

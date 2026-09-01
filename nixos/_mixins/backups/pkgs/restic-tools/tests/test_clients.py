@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-import json
 from pathlib import Path
 
 import pytest
-
 from restic_tools.clients import (
     B2SdkBucketUsageClient,
     CommandResult,

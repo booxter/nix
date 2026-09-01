@@ -1,5 +1,3 @@
-from prometheus_client.parser import text_string_to_metric_families
-
 from pki_rotation.metrics import certificate_metrics, rotation_metrics
 from pki_rotation.models import (
     CertificateCategory,
@@ -8,6 +6,7 @@ from pki_rotation.models import (
     RotationSummary,
     SourceKind,
 )
+from prometheus_client.parser import text_string_to_metric_families
 
 
 def sample_values(text: str) -> dict[str, float]:

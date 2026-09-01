@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
-
 from uptimerobot_sync import app
 
 

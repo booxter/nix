@@ -4,7 +4,6 @@ from collections.abc import Iterator
 from io import StringIO
 
 import pytest
-
 from hermes_runs.cli import run
 from hermes_runs.client import (
     HermesError,

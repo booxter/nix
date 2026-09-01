@@ -3,7 +3,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
-
 XQUARTZ_BUNDLE_IDENTIFIERS = frozenset(("org.nixos.xquartz.X11", "org.x.X11"))
 
 

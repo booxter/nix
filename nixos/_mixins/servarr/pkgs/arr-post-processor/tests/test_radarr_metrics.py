@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from prometheus_client.parser import text_string_to_metric_families
-
 from arr_post_processor.radarr_metrics import METRICS_PREFIX, render_radarr_metrics
 from arr_post_processor.radarr_state import (
     FailureKind,
@@ -9,6 +7,7 @@ from arr_post_processor.radarr_state import (
     RepairJob,
     RepairState,
 )
+from prometheus_client.parser import text_string_to_metric_families
 
 
 def metric_value(metrics: str, name: str, labels: dict[str, str] | None = None) -> float:

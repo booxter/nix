@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import NoReturn, Sequence
 
 import pytest
-
 from ssh_ticket import app as ssh_ticket
 from ssh_ticket.models import Target, TicketMetadata
 from ssh_ticket.runtime import CommandError, Runtime, SystemCommands

@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from arr_post_processor.errors import SourceInvalid
 from arr_post_processor.radarr_probe import CommandVideoVerifier
 

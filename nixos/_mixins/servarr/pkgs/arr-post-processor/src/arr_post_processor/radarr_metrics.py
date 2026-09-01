@@ -8,7 +8,6 @@ from prometheus_client.core import GaugeMetricFamily, Metric
 
 from .radarr_state import ACTIVE_AGENT_STATES, FailureKind, JobStatus, RepairState
 
-
 METRICS_PREFIX = "host_observability_radarr_post_processor"
 ACTIVE_STATES = ACTIVE_AGENT_STATES | {
     JobStatus.SETTLING,

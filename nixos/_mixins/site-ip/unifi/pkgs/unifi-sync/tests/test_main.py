@@ -2,7 +2,6 @@ import json
 
 from unifi_sync import cli
 
-
 INVENTORY = [
     {
         "hostname": "printer",

@@ -5,7 +5,6 @@ import json
 import shlex
 import time
 
-
 REMOTE_EXPORTER = "https://blackbox:9115"
 TARGET_HTTP = f"http://127.0.0.1:{TARGET_HTTP_PORT}"
 

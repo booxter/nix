@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from package_updates.common import (
     CommandResult,
     SubprocessRunner,

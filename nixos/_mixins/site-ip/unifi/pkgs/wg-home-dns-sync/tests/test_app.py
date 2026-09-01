@@ -9,11 +9,9 @@ from threading import Thread
 from typing import Any
 
 import pytest
-
 from wg_home_dns_sync.app import build_tls_context, main
 from wg_home_dns_sync.metrics import build_dns_records, build_status_by_public_key
 from wg_home_dns_sync.models import SyncError, load_peer_dns_specs
-
 
 PEERS = [
     {

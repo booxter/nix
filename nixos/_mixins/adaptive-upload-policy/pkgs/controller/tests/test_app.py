@@ -4,8 +4,6 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
-from prometheus_client.parser import text_string_to_metric_families
-
 from adaptive_upload_controller.config import load_config
 from adaptive_upload_controller.jellyfin import (
     DEFAULT_MEDIA_TYPES,
@@ -29,6 +27,7 @@ from adaptive_upload_controller.runtime import (
     transmission_get_current_upload_limit_kbps,
 )
 from adaptive_upload_controller.traffic_control import QosctlTrafficControl
+from prometheus_client.parser import text_string_to_metric_families
 
 
 def policy_args(**overrides):

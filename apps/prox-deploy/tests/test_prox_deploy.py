@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-
 from prox_deploy.adapters import (
     CommandResult,
     NixmoxerDeployer,

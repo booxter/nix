@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 import pytest
-
 from codex_mcp_login.login import LoginError, SubprocessLoginRunner
 
 

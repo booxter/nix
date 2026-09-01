@@ -1,5 +1,4 @@
 import pytest
-
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.usage import USAGE_ENDPOINT

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from prometheus_client.parser import text_string_to_metric_families
-
 from nix_builder_metrics.exporter import write_metrics
 from nix_builder_metrics.model import Sample
+from prometheus_client.parser import text_string_to_metric_families
 
 
 def test_writes_prometheus_metrics(tmp_path: Path) -> None:

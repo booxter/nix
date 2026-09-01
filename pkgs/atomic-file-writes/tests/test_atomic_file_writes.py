@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from atomic_file_writes import atomic_path, write_bytes_atomic, write_text_atomic
 
 

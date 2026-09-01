@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from nix_builder_metrics.cli import main, setup_main
 
 

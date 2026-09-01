@@ -10,10 +10,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Protocol, TextIO
 
+from atomic_file_writes import write_text_atomic
 from natsort import natsorted
 from pydantic import ValidationError
-
-from atomic_file_writes import write_text_atomic
 
 from package_updates.common import (
     Runner,

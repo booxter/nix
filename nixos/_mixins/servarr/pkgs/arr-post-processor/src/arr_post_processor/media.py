@@ -17,7 +17,6 @@ from .models import (
     UnflacInput,
 )
 
-
 LEGACY_STAGING_DIR_NAME = "_lidarr-cue-split"
 STAGING_DIR_NAME = "_arr-post-processor"
 STAGING_DIR_NAMES = frozenset({LEGACY_STAGING_DIR_NAME, STAGING_DIR_NAME})

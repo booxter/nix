@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, TextIO
 
-
 MAX_LINE_LENGTH = 72
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 TRAILER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:[ -][A-Za-z0-9][A-Za-z0-9-]*)*:[ \t]+\S")

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import datetime
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 
 from atomic_file_writes import write_text_atomic
@@ -16,7 +16,6 @@ from pydantic import (
 
 from .errors import ControllerError
 from .jellyfin import collect_media_stream_stats, fetch_url_text
-
 
 LOG = logging.getLogger("adaptive-upload-controller")
 TARGET_MBIT_EPSILON = 0.05

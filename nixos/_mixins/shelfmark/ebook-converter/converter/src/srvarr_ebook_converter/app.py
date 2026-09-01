@@ -24,7 +24,6 @@ from pydantic import ValidationError
 from .metrics import prometheus_metrics
 from .models import FileFingerprint, JobState, ServiceState, ShelfmarkPayload
 
-
 LOG = logging.getLogger("ebook-converter")
 SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
 JOB_POLICY_VERSION = 2

@@ -21,7 +21,6 @@ from .core import (
     write_iteration_metrics,
 )
 
-
 LOG = logging.getLogger("transmission-collector")
 
 

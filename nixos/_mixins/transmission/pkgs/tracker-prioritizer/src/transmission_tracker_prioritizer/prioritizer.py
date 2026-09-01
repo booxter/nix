@@ -18,7 +18,6 @@ from .core import (
     settings_from_args,
 )
 
-
 LOG = logging.getLogger("transmission-prioritizer")
 
 

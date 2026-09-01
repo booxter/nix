@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import psycopg
-
 from postgresql_role_password.cli import run
 from postgresql_role_password.role import read_secret
 

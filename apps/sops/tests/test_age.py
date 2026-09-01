@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from sops_tools.age import AgeRecipientResolver
 from sops_tools.errors import ToolError
 

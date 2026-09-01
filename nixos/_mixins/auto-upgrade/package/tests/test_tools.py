@@ -8,13 +8,12 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import ValidationError
-
 from auto_upgrade_tools.cli import guard, run
 from auto_upgrade_tools.metrics import write_hold_metrics, write_success_metric
 from auto_upgrade_tools.model import UpgradeConfig
 from auto_upgrade_tools.reboot import REBOOT_MESSAGE, reboot_required, schedule_reboot_if_needed
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import ValidationError
 
 
 def load_config(document: dict[str, object]) -> UpgradeConfig:

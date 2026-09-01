@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-
 from sops_tools.model import KeyPath
 from sops_tools.repository import Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService

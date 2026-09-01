@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from _pytest.capture import CaptureFixture
-
 from hba_flash.cli import defaults, main, options, parser
 from hba_flash.models import BundleDefaults, FlashOptions
 

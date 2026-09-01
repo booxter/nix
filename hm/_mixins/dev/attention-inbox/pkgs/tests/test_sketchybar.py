@@ -6,7 +6,6 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 
 import pytest
-
 from attention_inbox.errors import InboxError
 from attention_inbox.model import Author, InboxItem
 from attention_inbox.service import InboxService

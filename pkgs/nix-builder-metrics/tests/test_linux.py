@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from nix_builder_metrics.linux import CgroupSource, enable_accounting_controllers
 from nix_builder_metrics.model import MetricsError
 

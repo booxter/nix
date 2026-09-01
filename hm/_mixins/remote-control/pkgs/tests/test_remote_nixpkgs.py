@@ -7,7 +7,6 @@ from tempfile import TemporaryDirectory
 from typing import NoReturn
 
 import pytest
-
 from remote_nixpkgs.cli import Transport, main
 from remote_nixpkgs.runner import normalize_flake_ref
 from remote_nixpkgs.runtime import CocoaWayManager, CocoaWaySettings, CommandResult

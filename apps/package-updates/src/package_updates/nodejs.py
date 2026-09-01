@@ -7,8 +7,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol, TextIO, cast
 
-from pydantic import TypeAdapter, ValidationError
 import semantic_version  # type: ignore[import-untyped]
+from pydantic import TypeAdapter, ValidationError
 
 from package_updates.common import print_error
 

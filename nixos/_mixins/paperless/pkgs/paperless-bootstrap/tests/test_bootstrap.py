@@ -7,7 +7,6 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-
 from paperless_bootstrap.bootstrap import (
     Error,
     Repository,

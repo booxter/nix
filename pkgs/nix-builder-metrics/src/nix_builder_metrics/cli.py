@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .darwin import PsSource, SubprocessPsRunner
 from .exporter import write_metrics
-from .linux import PathCgroupControl, CgroupSource, SystemClock, enable_accounting_controllers
+from .linux import CgroupSource, PathCgroupControl, SystemClock, enable_accounting_controllers
 from .model import MetricsError, Sample, SampleSource
 
 BUILD_USER = re.compile(r"_?nixbld[0-9]+$")

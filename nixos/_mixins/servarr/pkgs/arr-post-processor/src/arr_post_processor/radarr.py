@@ -19,7 +19,6 @@ from .radarr_models import (
     RadarrQueueRecord,
 )
 
-
 T = TypeVar("T")
 
 

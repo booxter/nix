@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Sequence
 
 import yaml
-
 from sops_tools.errors import CommandError
 from sops_tools.model import JsonValue, KeyPath
 from sops_tools.passwords import PasswordHasher, PasswordStore

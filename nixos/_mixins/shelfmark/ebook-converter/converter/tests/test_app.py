@@ -8,10 +8,9 @@ from io import StringIO
 from pathlib import Path
 
 from prometheus_client.parser import text_string_to_metric_families
-
 from srvarr_ebook_converter.app import (
-    EbookConverterService,
     EbookConverterError,
+    EbookConverterService,
     ShelfmarkHookConfig,
     StateStore,
     convert_path,

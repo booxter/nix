@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 import pytest
-
 from home_assistant_tools.errors import HomeAssistantError
 from home_assistant_tools.websocket import WebsocketBackupSession, websocket_url
 

@@ -21,7 +21,6 @@ from .radarr_source import SourceRoot
 from .radarr_state import RepairStateStore
 from .state import StateStore
 
-
 LOG = logging.getLogger("arr-post-processor")
 
 

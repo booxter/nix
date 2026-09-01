@@ -12,7 +12,6 @@ from urllib.parse import urlsplit
 
 import httpx
 import pytest
-
 from pinepods_tools.api import PinepodsApi, PinepodsApiError
 from pinepods_tools.cli import run_bootstrap
 from pinepods_tools.models import CreateAdminRequest

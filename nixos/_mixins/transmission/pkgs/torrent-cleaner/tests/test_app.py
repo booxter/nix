@@ -2,9 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-
 from transmission_torrent_cleaner import app
-
 
 NOW = 2_000_000_000.0
 DAY_SECONDS = 86_400

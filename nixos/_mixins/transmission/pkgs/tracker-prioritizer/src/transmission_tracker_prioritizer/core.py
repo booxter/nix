@@ -16,7 +16,6 @@ from transmission_common.transmission import (
     read_tracker_hosts,
 )
 
-
 LOG = logging.getLogger("transmission-tracker-common")
 TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0

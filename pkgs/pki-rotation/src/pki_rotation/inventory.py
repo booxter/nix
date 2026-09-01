@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-from pydantic import ValidationError
 from pki_certificates.models import PkiInventory
 from pki_certificates.repository import InventorySource
+from pydantic import ValidationError
 from sops_tools.errors import ToolError
 
 from .models import (

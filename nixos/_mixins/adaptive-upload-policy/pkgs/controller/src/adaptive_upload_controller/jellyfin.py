@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import ipaddress
 import ssl
+from dataclasses import dataclass
 
 import httpx
 from prometheus_client.parser import text_string_to_metric_families
 
 from .errors import ControllerError
-
 
 DEFAULT_MEDIA_TYPES = frozenset(
     {

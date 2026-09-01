@@ -11,7 +11,6 @@ from sops_tools.process import ProcessRunner, SubprocessRunner
 
 from .models import PveUser, PveUserList, RemoteTokenRequest, TokenResponse
 
-
 _USERS: TypeAdapter[list[PveUser] | PveUserList] = TypeAdapter(list[PveUser] | PveUserList)
 
 

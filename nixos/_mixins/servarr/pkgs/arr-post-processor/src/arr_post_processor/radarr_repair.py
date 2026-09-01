@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from .errors import NeedsAttention
 
-
 RESULT_FILE_NAME = "result.json"
 REPORT_FILE_NAME = "report.md"
 VIDEO_SUFFIXES = frozenset(

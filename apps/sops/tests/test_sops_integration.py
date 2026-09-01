@@ -5,12 +5,11 @@ import subprocess
 from pathlib import Path
 
 import yaml
-
+from atomic_file_writes import write_text_atomic
 from sops_tools.model import KeyPath
 from sops_tools.policy import SopsPolicy
 from sops_tools.process import SubprocessRunner
 from sops_tools.repository import Realm, SecretRepository
-from atomic_file_writes import write_text_atomic
 from sops_tools.secrets import CommandSopsBackend, SecretService
 
 

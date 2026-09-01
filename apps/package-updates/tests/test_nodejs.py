@@ -3,7 +3,6 @@ import io
 import json
 
 import pytest
-
 from package_updates.nodejs import main, run, select_nodejs
 
 CANDIDATES = {

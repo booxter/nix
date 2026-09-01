@@ -13,7 +13,6 @@ from typing import cast
 from urllib.parse import urlsplit
 
 import pytest
-
 from jellyfin_tools.cli import run_backup, run_wait
 from jellyfin_tools.service import JellyfinServiceError, create_backup_artifact
 from jellyfin_tools.systemd import active_state

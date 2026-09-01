@@ -5,16 +5,6 @@ from collections.abc import Iterator
 from pathlib import Path
 from uuid import UUID
 
-from hermes_runs.client import (
-    HermesError,
-    HermesHttpError,
-    JsonObject,
-    RunState,
-    RunStatus,
-    RunSummary,
-    StopResult,
-)
-
 from arr_post_processor.errors import PostProcessorError
 from arr_post_processor.radarr_agent_service import RadarrAgentService
 from arr_post_processor.radarr_models import (
@@ -27,7 +17,15 @@ from arr_post_processor.radarr_models import (
 )
 from arr_post_processor.radarr_source import SourceRoot
 from arr_post_processor.radarr_state import FailureKind, JobStatus, RepairStateStore
-
+from hermes_runs.client import (
+    HermesError,
+    HermesHttpError,
+    JsonObject,
+    RunState,
+    RunStatus,
+    RunSummary,
+    StopResult,
+)
 
 ATTEMPT_ID = UUID("12345678-1234-5678-1234-567812345678")
 

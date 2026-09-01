@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-
 from codex_tools.auth import CodexAuth
 from codex_tools.cli import warmer_main
 from codex_tools.errors import CodexToolsError

@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from sops_tools.cli import (
     Application,
     cat_main,
@@ -14,7 +13,7 @@ from sops_tools.cli import (
     set_main,
     update_main,
 )
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 
 from .fakes import MemorySopsBackend, StaticBackendFactory
 

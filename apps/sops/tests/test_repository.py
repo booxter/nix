@@ -4,9 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
-
 from sops_tools.errors import ToolError
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 
 from .fakes import FailingRunner, RecordingRunner
 

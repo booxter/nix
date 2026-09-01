@@ -6,7 +6,6 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request
 
 import pytest
-
 from hermes_runs.client import (
     HermesClient,
     HermesError,
