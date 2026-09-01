@@ -2,7 +2,7 @@
   codex,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   serverNames ? [ ],
 }:
 let
@@ -29,7 +29,7 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   makeWrapperArgs = [
@@ -38,8 +38,6 @@ pythonPackages.buildPythonApplication {
   ++ lib.optional (serverNames != [ ]) "--add-flags ${lib.escapeShellArg serverFlags}";
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/codex_mcp_login
   '';
 

@@ -26,7 +26,7 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with pythonPackages; [
-    pkgs.ruff
+    pkgs.pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
@@ -55,8 +55,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/package_updates
   '';
 

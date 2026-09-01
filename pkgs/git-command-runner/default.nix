@@ -2,7 +2,7 @@
   git,
   lib,
   python,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python.pkgs;
@@ -18,15 +18,13 @@ pythonPackages.buildPythonPackage {
 
   nativeCheckInputs = with pythonPackages; [
     git
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/git_command_runner
   '';
 

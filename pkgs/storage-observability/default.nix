@@ -3,7 +3,7 @@
   lib,
   makeWrapper,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   storcli,
 }:
 let
@@ -28,12 +28,10 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/storage_observability
   '';
 

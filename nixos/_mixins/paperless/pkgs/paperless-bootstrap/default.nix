@@ -1,7 +1,7 @@
 {
   lib,
   paperless-ngx,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   python = paperless-ngx.python;
@@ -21,12 +21,10 @@ pythonPackages.buildPythonPackage {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/paperless_bootstrap
   '';
 

@@ -1,7 +1,7 @@
 {
   lib,
   python,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python.pkgs;
@@ -16,15 +16,13 @@ pythonPackages.buildPythonPackage {
   build-system = [ pythonPackages.setuptools ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/atomic_file_writes
   '';
 

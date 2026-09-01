@@ -1,6 +1,7 @@
 {
   lib,
   python3,
+  pythonRuffCheckHook,
 }:
 python3.pkgs.buildPythonApplication {
   pname = "ollama-metrics";
@@ -20,12 +21,10 @@ python3.pkgs.buildPythonApplication {
     mypy
     pytestCheckHook
     pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/ollama_metrics
   '';
 

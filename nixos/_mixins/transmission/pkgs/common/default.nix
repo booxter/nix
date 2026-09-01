@@ -1,7 +1,7 @@
 {
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 
 python3.pkgs.buildPythonPackage {
@@ -17,7 +17,12 @@ python3.pkgs.buildPythonPackage {
 
   nativeCheckInputs = [
     python3.pkgs.mypy
-    ruff
+    pythonRuffCheckHook
+  ];
+
+  pythonRuffCheckPaths = [
+    "transmission_common"
+    "test_transmission.py"
   ];
 
   pythonImportsCheck = [
@@ -26,8 +31,6 @@ python3.pkgs.buildPythonPackage {
 
   checkPhase = ''
     runHook preCheck
-    ruff format --check transmission_common test_transmission.py
-    ruff check transmission_common test_transmission.py
     mypy transmission_common
     python -m unittest discover -s . -p 'test_*.py'
     runHook postCheck

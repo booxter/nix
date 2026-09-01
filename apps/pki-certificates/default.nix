@@ -6,7 +6,7 @@
   nix,
   openssh,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   sops,
   sopsTools,
   step-cli,
@@ -45,12 +45,10 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/pki_certificates
   '';
 

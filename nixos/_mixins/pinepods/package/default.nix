@@ -1,7 +1,7 @@
 {
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -23,12 +23,10 @@ pythonPackages.buildPythonApplication {
     mypy
     pytestCheckHook
     pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/pinepods_tools
   '';
 

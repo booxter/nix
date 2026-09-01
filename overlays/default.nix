@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    _: prev:
+    final: prev:
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
@@ -77,6 +77,8 @@
         (
           pythonFinal: pythonPrev:
           {
+            pythonRuffCheckHook = final.pythonRuffCheckHook;
+
             # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
             # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
             pystemd = pythonPrev.pystemd.overrideAttrs (old: {

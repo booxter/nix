@@ -2,6 +2,7 @@
   atomicFileWrites,
   lib,
   python3,
+  pythonRuffCheckHook,
 }:
 python3.pkgs.buildPythonApplication {
   pname = "fana-alertmanager-watchdog";
@@ -21,12 +22,10 @@ python3.pkgs.buildPythonApplication {
     mypy
     pytestCheckHook
     pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/fana_alertmanager_watchdog
   '';
 

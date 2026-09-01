@@ -2,7 +2,7 @@
   glab,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -18,15 +18,13 @@ pythonPackages.buildPythonApplication {
   dependencies = [ pythonPackages.pydantic ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/attention_inbox
   '';
 

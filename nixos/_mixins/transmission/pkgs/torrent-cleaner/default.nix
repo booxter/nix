@@ -1,7 +1,7 @@
 {
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   transmissionCommon,
 }:
 let
@@ -25,12 +25,10 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/transmission_torrent_cleaner
   '';
 

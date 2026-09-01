@@ -6,7 +6,7 @@
   nix,
   openssh,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   sops,
   sopsTools,
 }:
@@ -38,12 +38,10 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/proxmox_exporter_token
   '';
 

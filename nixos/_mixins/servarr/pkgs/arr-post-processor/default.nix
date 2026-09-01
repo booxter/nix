@@ -5,7 +5,7 @@
   hermesRuns,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   unrar,
   unflac,
 }:
@@ -34,7 +34,7 @@ pythonPackages.buildPythonApplication {
   nativeCheckInputs = [
     ffmpeg
     flac
-    ruff
+    pythonRuffCheckHook
     unrar
     unflac
     pythonPackages.mypy
@@ -57,8 +57,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/arr_post_processor
   '';
 

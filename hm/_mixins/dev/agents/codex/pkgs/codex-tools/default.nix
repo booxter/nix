@@ -1,7 +1,7 @@
 {
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -21,15 +21,13 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/codex_tools
   '';
 

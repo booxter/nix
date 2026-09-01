@@ -3,7 +3,7 @@
   postgresql,
   postgresqlTestHook,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -24,7 +24,7 @@ pythonPackages.buildPythonApplication {
       mypy
       pytestCheckHook
       pytest-cov
-      ruff
+      pythonRuffCheckHook
     ]
     ++ [
       postgresql
@@ -34,8 +34,6 @@ pythonPackages.buildPythonApplication {
   postgresqlTestUserOptions = "LOGIN SUPERUSER";
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/postgresql_role_password
   '';
 

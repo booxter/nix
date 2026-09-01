@@ -2,7 +2,7 @@
   atomicFileWrites,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   transmissionCommon,
 }:
 let
@@ -26,15 +26,13 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = [
-    ruff
+    pythonRuffCheckHook
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/adaptive_upload_controller
   '';
 

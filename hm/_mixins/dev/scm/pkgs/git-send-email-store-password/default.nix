@@ -2,7 +2,7 @@
   git,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -17,7 +17,7 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
@@ -28,8 +28,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/git_send_email_store_password
   '';
 

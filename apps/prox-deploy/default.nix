@@ -3,7 +3,7 @@
   nixmoxer,
   pass,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   vmNodes,
 }:
 let
@@ -20,7 +20,7 @@ pythonPackages.buildPythonApplication {
   dependencies = [ nixmoxer ];
 
   nativeCheckInputs = [
-    ruff
+    pythonRuffCheckHook
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
@@ -32,8 +32,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/prox_deploy
   '';
 
