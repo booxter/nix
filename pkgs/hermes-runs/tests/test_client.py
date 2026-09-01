@@ -36,7 +36,7 @@ class FakeOpener:
         self.requests: list[Request] = []
         self.timeouts: list[float] = []
 
-    def __call__(self, request: Request, timeout: float) -> HttpResponse:
+    def __call__(self, request: Request, *, timeout: float) -> HttpResponse:
         self.requests.append(request)
         self.timeouts.append(timeout)
         response = self.responses.pop(0)

@@ -97,7 +97,7 @@ class HttpResponse(Protocol):
 
 
 class Opener(Protocol):
-    def __call__(self, request: Request, timeout: float) -> HttpResponse: ...
+    def __call__(self, request: Request, *, timeout: float) -> HttpResponse: ...
 
 
 class HermesClient:
@@ -129,7 +129,7 @@ class HermesClient:
     def _request_json(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject:
         request = self._request(method, path, body)
         try:
-            with self._opener(request, self._timeout_seconds) as response:
+            with self._opener(request, timeout=self._timeout_seconds) as response:
                 parsed = json.load(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
@@ -150,7 +150,7 @@ class HermesClient:
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         request = self._request("GET", f"/v1/runs/{run_id}/events")
         try:
-            with self._opener(request, self._timeout_seconds) as response:
+            with self._opener(request, timeout=self._timeout_seconds) as response:
                 yield from parse_sse(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
