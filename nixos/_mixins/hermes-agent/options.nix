@@ -76,6 +76,12 @@ in
               description = "Additional host groups granted to this agent's Unix user.";
             };
 
+            umask = lib.mkOption {
+              type = lib.types.strMatching "[0-7]{4}";
+              default = "0077";
+              description = "File creation mask applied to the agent service.";
+            };
+
             filesystem = {
               hidden = lib.mkOption {
                 type = lib.types.listOf (lib.types.strMatching "^/.+");

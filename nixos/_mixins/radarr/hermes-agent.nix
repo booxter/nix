@@ -45,6 +45,8 @@ in
           pkgs.mediainfo
         ];
         supplementaryGroups = [ "media" ];
+        # Share generated repairs through the setgid media output directory.
+        umask = "0007";
         toolsets = [
           "file"
           "memory"
