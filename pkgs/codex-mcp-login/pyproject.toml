@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "codex-mcp-login"
 version = "0.1.0"
 description = "Repair expired Codex MCP OAuth credentials"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]

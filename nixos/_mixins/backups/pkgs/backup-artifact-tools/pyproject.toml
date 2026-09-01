@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "backup-artifact-tools"
 version = "0.1.0"
 description = "Create consistent database artifacts for host backups"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]

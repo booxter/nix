@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pki-certificates"
 version = "0.1.0"
 description = "Issue and store fleet PKI certificates"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "pydantic", "sops-tools"]
 
 [project.scripts]

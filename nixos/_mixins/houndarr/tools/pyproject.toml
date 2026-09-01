@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "houndarr-tools"
 version = "0.1.0"
 description = "Reconciliation and status helpers for Houndarr"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "prometheus-client", "pydantic"]
 
 [project.scripts]

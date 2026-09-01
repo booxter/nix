@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "home-assistant-tools"
 version = "0.1.0"
 description = "Bootstrap and back up the fleet Home Assistant instance"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "pydantic", "websockets"]
 
 [project.scripts]

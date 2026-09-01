@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "flake-input-update-summary"
 version = "0.1.0"
 description = "Generate a revision-linked flake input update summary"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]

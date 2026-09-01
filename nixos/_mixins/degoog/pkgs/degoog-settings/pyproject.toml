@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "degoog-settings"
 version = "0.1.0"
 description = "Merge managed Degoog plugin settings"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "deepmerge", "pydantic"]
 
 [project.scripts]

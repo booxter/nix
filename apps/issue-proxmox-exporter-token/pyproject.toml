@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "issue-proxmox-exporter-token"
 version = "0.1.0"
 description = "Issue and store Proxmox exporter API tokens"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic", "sops-tools"]
 
 [project.scripts]

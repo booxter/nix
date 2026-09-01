@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "jellyfin-tools"
 version = "0.1.0"
 description = "Back up Jellyfin and gate maintenance on playback"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["jellyfin-apiclient-python", "pydantic", "pystemd"]
 
 [project.scripts]

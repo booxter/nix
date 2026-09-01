@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "arr-post-processor"
 version = "0.1.0"
 description = "Queue-aware post-processing service for Servarr applications"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["aiohttp", "aiopyarr", "atomic-file-writes", "hermes-runs", "prometheus-client", "pydantic", "rarfile"]
 
 [tool.mypy]

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "hermes-runs"
 version = "0.1.0"
 description = "Small command-line client for the Hermes Agent Runs API"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [project.scripts]
 hermes-runs = "hermes_runs.cli:main"

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pinepods-tools"
 version = "0.1.0"
 description = "Bootstrap a PinePods service"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "pydantic"]
 
 [project.scripts]

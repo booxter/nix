@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "wg-home-dns-sync"
 version = "0.1.0"
 description = "Sync home WireGuard peer DNS overrides to UniFi"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "prometheus-client", "pydantic", "unifi-sync"]
 
 [project.scripts]

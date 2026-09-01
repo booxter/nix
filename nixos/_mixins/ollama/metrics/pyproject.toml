@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ollama-metrics"
 version = "0.1.0"
 description = "Prometheus textfile collector for Ollama state"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "audiobookshelf-tools"
 version = "0.1.0"
 description = "Reconcile Audiobookshelf settings and libraries"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "pydantic", "pystemd"]
 
 [project.scripts]

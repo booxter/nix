@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "get-ff-cookie"
 version = "0.1.0"
 description = "Export Firefox cookies in Netscape format"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [project.scripts]
 get-ff-cookie = "get_ff_cookie.cli:main"

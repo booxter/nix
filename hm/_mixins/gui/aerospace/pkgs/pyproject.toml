@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aerospace-x11-aware-actions"
 version = "0.1.0"
 description = "Route AeroSpace actions to active X11 windows"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pyobjc-framework-Cocoa", "python-xlib"]
 
 [project.scripts]
