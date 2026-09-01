@@ -6,7 +6,16 @@ from io import StringIO
 import pytest
 
 from hermes_runs.cli import run
-from hermes_runs.client import HermesError, HermesHttpError, JsonObject, RunSummary
+from hermes_runs.client import (
+    HermesError,
+    HermesHttpError,
+    JsonObject,
+    RunState,
+    RunStatus,
+    RunSummary,
+    StopResult,
+    parse_run_status,
+)
 
 
 class FakeClient:
@@ -25,14 +34,15 @@ class FakeClient:
     def list_runs(self, limit: int) -> list[RunSummary]:
         return self.run_values
 
-    def get_run(self, run_id: str) -> JsonObject:
-        return self.response
+    def get_run(self, run_id: str) -> RunStatus:
+        return parse_run_status(self.response)
 
     def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
         return {"all": resolve_all, "choice": choice, "run_id": run_id}
 
-    def stop_run(self, run_id: str) -> JsonObject:
-        return {"run_id": run_id, "status": "stopping"}
+    def stop_run(self, run_id: str) -> StopResult:
+        raw: JsonObject = {"run_id": run_id, "status": "stopping"}
+        return StopResult(run_id=run_id, state=RunState.STOPPING, raw=raw)
 
 
 def invoke(arguments: list[str], client: FakeClient) -> str:

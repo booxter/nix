@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TextIO
 
-from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject
+from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject, RunStatus
 
 
 def parser() -> argparse.ArgumentParser:
@@ -42,30 +42,26 @@ def _json(value: JsonObject, output: TextIO) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True), file=output)
 
 
-def _status(value: JsonObject, output: TextIO) -> None:
-    run_id = value.get("run_id", "unknown run")
-    status = value.get("status", "unknown")
-    model = value.get("model")
-    heading = f"{run_id}: {status}"
-    if model:
-        heading += f" ({model})"
+def _status(value: RunStatus, output: TextIO) -> None:
+    heading = f"{value.run_id}: {value.state.value}"
+    if value.model:
+        heading += f" ({value.model})"
     print(heading, file=output)
 
-    last_event = value.get("last_event")
-    if last_event:
-        print(f"last event: {last_event}", file=output)
+    if value.last_event:
+        print(f"last event: {value.last_event}", file=output)
 
-    error = value.get("error")
-    if error:
-        print(f"\nerror:\n{error}", file=output)
+    if value.error:
+        print(f"\nerror:\n{value.error}", file=output)
 
-    final_output = value.get("output")
-    if final_output:
-        print(f"\n{final_output}", file=output)
+    if value.output:
+        print(f"\n{value.output}", file=output)
 
-    usage = value.get("usage")
-    if isinstance(usage, dict) and usage:
-        print(f"\nusage: {json.dumps(usage, ensure_ascii=False, sort_keys=True)}", file=output)
+    if value.usage:
+        print(
+            f"\nusage: {json.dumps(value.usage, ensure_ascii=False, sort_keys=True)}",
+            file=output,
+        )
 
 
 def _list(client: Client, limit: int, output: TextIO) -> None:
@@ -151,13 +147,13 @@ def run(
     elif args.command == "status":
         response = client.get_run(args.run_id)
         if args.json:
-            _json(response, output)
+            _json(response.raw, output)
         else:
             _status(response, output)
     elif args.command == "approve":
         _json(client.approve_run(args.run_id, args.choice, args.all), output)
     elif args.command == "stop":
-        _json(client.stop_run(args.run_id), output)
+        _json(client.stop_run(args.run_id).raw, output)
     return 0
 
 

@@ -6,7 +6,7 @@
 let
   pythonPackages = python3.pkgs;
 in
-pythonPackages.buildPythonApplication {
+pythonPackages.buildPythonPackage {
   pname = "hermes-runs";
   version = "0.1.0";
   pyproject = true;
