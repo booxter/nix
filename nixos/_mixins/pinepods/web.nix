@@ -12,6 +12,10 @@ in
   config = lib.mkIf (cfg != null) {
     host.web.services.pinepods = {
       upstream = "http://127.0.0.1:${toString port}";
+      health.backend = {
+        path = "/api/health";
+        title = "PinePods API health";
+      };
       internal = {
         recommendedProxySettings = false;
         locationExtraConfig = ''
