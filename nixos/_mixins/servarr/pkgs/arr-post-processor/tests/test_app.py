@@ -18,7 +18,8 @@ from prometheus_client.parser import text_string_to_metric_families
 from pydantic import TypeAdapter
 
 from arr_post_processor.archive import ArchiveMember, ArchiveTransform, NativeArchiveBackend
-from arr_post_processor.config import read_api_key
+from arr_post_processor.app import parse_source_roots
+from arr_post_processor.config import read_api_key, read_environment_value
 from arr_post_processor.errors import PostProcessorError, ManualMatchRequired, SourceInvalid
 from arr_post_processor.lidarr import LidarrClient
 from arr_post_processor.lidarr_pipeline import CueTransform, LidarrPipeline
@@ -116,6 +117,32 @@ class LidarrPostProcessorTests(unittest.TestCase):
             config.write_text("<Config />", encoding="utf-8")
             with self.assertRaises(PostProcessorError):
                 read_api_key(config)
+
+    def test_reads_hermes_api_key_credential(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = Path(directory) / "api-server.env"
+            environment.write_text("OTHER=value\nAPI_SERVER_KEY=secret-key\n", encoding="utf-8")
+
+            self.assertEqual(read_environment_value(environment, "API_SERVER_KEY"), "secret-key")
+
+    def test_rejects_ambiguous_hermes_api_key_credential(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = Path(directory) / "api-server.env"
+            environment.write_text(
+                "API_SERVER_KEY=first\nAPI_SERVER_KEY=second\n", encoding="utf-8"
+            )
+
+            with self.assertRaises(PostProcessorError):
+                read_environment_value(environment, "API_SERVER_KEY")
+
+    def test_parses_named_radarr_source_roots(self):
+        roots = parse_source_roots(
+            ["torrents=/data/media/torrents/radarr", "usenet-manual=/data/media/usenet/manual"]
+        )
+
+        self.assertEqual([root.name for root in roots], ["torrents", "usenet-manual"])
+        with self.assertRaises(ValueError):
+            parse_source_roots(["torrents=relative/path"])
 
     def test_path_allowlist(self):
         with tempfile.TemporaryDirectory() as directory:

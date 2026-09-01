@@ -7,11 +7,13 @@ from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from uuid import UUID, uuid4
 
+from atomic_file_writes import write_text_atomic
 from hermes_runs.client import Client as Hermes, HermesError, HermesHttpError, RunState
 
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import safe_component
 from .radarr import Radarr
+from .radarr_metrics import render_radarr_metrics
 from .radarr_models import RadarrManualImportFile, RadarrQueueRecord
 from .radarr_probe import VideoVerifier
 from .radarr_repair import (
@@ -57,6 +59,7 @@ class RadarrAgentService:
         source_roots: tuple[SourceRoot, ...],
         output_root: Path,
         audit_root: Path,
+        metrics_file: Path,
         verifier: VideoVerifier,
         settle_seconds: float,
         agent_timeout_seconds: float,
@@ -72,6 +75,7 @@ class RadarrAgentService:
         self.source_roots = source_roots
         self.output_root = output_root.resolve()
         self.audit_root = audit_root.resolve()
+        self.metrics_file = metrics_file
         self.verifier = verifier
         self.settle_seconds = settle_seconds
         self.agent_timeout_seconds = agent_timeout_seconds
@@ -666,3 +670,10 @@ class RadarrAgentService:
         self._expire_artifacts(now)
         self.store.prune_jobs(now)
         self.store.save()
+
+    def write_metrics(self, ok: bool) -> None:
+        write_text_atomic(
+            self.metrics_file,
+            render_radarr_metrics(self.store.state, ok=ok, now=self.now()),
+            mode=0o644,
+        )

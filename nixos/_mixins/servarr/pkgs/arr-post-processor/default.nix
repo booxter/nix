@@ -3,7 +3,6 @@
   ffmpeg,
   flac,
   hermesRuns,
-  joinMediaParts,
   lib,
   python3,
   ruff,
@@ -44,7 +43,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   ARR_POST_PROCESSOR_FFPROBE = lib.getExe' ffmpeg "ffprobe";
-  ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS = lib.getExe joinMediaParts;
 
   makeWrapperArgs = [
     "--prefix PATH : ${
@@ -56,7 +54,6 @@ pythonPackages.buildPythonApplication {
       ]
     }"
     "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"
-    "--set ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS ${lib.getExe joinMediaParts}"
   ];
 
   preCheck = ''

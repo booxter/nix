@@ -6,41 +6,43 @@
 }:
 let
   cfg = config.host.radarr;
+  enabled = cfg != null && cfg.agent.enable;
   package = pkgs.callPackage ../servarr/pkgs/arr-post-processor {
     atomicFileWrites = pkgs.atomic-file-writes;
     hermesRuns = pkgs.hermes-runs;
-    joinMediaParts = pkgs.join-media-parts;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;
-  workRoot = "${mediaDir}/.arr-post-processor/radarr-media-join";
+  outputRoot = "${mediaDir}/.hermes-agent/radarr-repair";
   stateDir = "/var/lib/arr-post-processor-radarr";
+  auditRoot = "${stateDir}/audit";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr";
   metricsFile = "${nodeExporterTextfileDir}/arr-post-processor-radarr.prom";
-  allowedRoots = [
-    "${mediaDir}/torrents/radarr"
-  ]
-  ++ lib.optional (config.host.sabnzbd != null) "${mediaDir}/usenet/manual";
+  sourceRoots = {
+    torrents = "${mediaDir}/torrents/radarr";
+  }
+  // lib.optionalAttrs (config.host.sabnzbd != null) {
+    usenet-manual = "${mediaDir}/usenet/manual";
+  };
+  hermesUnit = "hermes-agent-radarr-repair.service";
   serviceDeps = [
     "radarr.service"
+    hermesUnit
     "network-online.target"
   ];
 in
 {
-  config = lib.mkIf (cfg != null) {
+  config = lib.mkIf enabled {
     host.observability.nodeExporter.textfile.directories.arr-post-processor-radarr =
       nodeExporterTextfileDir;
 
-    host.storage.claims.media = {
-      directories.".arr-post-processor/radarr-media-join".mode = "2775";
-      attachments.arr-post-processor-radarr = { };
-    };
+    host.storage.claims.media.attachments.arr-post-processor-radarr = { };
 
     systemd.tmpfiles.rules = [
       "d ${nodeExporterTextfileDir} 0755 radarr media - -"
     ];
 
     systemd.services.arr-post-processor-radarr = {
-      description = "Recover stalled Radarr downloads and import the result";
+      description = "Repair stalled Radarr downloads with Hermes and import the result";
       wantedBy = [ "multi-user.target" ];
       wants = serviceDeps;
       after = serviceDeps;
@@ -54,16 +56,24 @@ in
             "http://127.0.0.1:${toString config.services.radarr.settings.server.port}"
             "--arr-config"
             "${cfg.stateDir}/config.xml"
+            "--hermes-url"
+            "http://127.0.0.1:8642"
+            "--hermes-api-key-file"
+            "%d/hermes-api-key"
           ]
-          ++ lib.concatMap (root: [
-            "--allowed-root"
-            root
-          ]) allowedRoots
+          ++ lib.concatLists (
+            lib.mapAttrsToList (name: root: [
+              "--source-root"
+              "${name}=${root}"
+            ]) sourceRoots
+          )
           ++ [
-            "--work-root"
-            workRoot
+            "--output-root"
+            outputRoot
+            "--audit-root"
+            auditRoot
             "--state-file"
-            "${stateDir}/state.json"
+            "${stateDir}/repair-state-v1.json"
             "--metrics-file"
             metricsFile
             "--interval-seconds"
@@ -72,13 +82,17 @@ in
             "60"
             "--request-timeout-seconds"
             "20"
-            "--command-timeout-seconds"
+            "--agent-timeout-seconds"
             "14400"
+            "--command-timeout-seconds"
+            "900"
           ]
         );
+        LoadCredential = "hermes-api-key:/var/lib/hermes-agent-radarr-repair/.hermes/api-server.env";
         User = "radarr";
         Group = "media";
-        UMask = "0002";
+        # Keep processor artifacts private to the collaborating media group.
+        UMask = "0007";
         StateDirectory = "arr-post-processor-radarr";
         StateDirectoryMode = "0750";
         Restart = "always";
@@ -112,8 +126,13 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         RemoveIPC = true;
+        IPAddressDeny = "any";
+        IPAddressAllow = [
+          "127.0.0.0/8"
+          "::1/128"
+        ];
         ReadWritePaths = [
-          mediaDir
+          outputRoot
           nodeExporterTextfileDir
         ];
       };
