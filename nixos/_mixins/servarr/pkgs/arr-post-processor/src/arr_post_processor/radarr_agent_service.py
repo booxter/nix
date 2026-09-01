@@ -9,11 +9,13 @@ from uuid import UUID, uuid4
 
 from hermes_runs.client import Client as Hermes, HermesError, HermesHttpError, RunState
 
-from .errors import NeedsAttention, PostProcessorError
+from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import safe_component
 from .radarr import Radarr
-from .radarr_models import RadarrQueueRecord
+from .radarr_models import RadarrManualImportFile, RadarrQueueRecord
+from .radarr_probe import VideoVerifier
 from .radarr_repair import (
+    REPORT_FILE_NAME,
     RESULT_FILE_NAME,
     RepairOutcome,
     RepairTask,
@@ -41,6 +43,8 @@ SUPPORTED_PROTOCOLS = {
 MISSING_QUEUE_CONFIRMATIONS = 3
 ARTIFACT_RETENTION_SECONDS = 7 * 86400
 STOP_GRACE_SECONDS = 300
+TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
+UNABLE_TO_PARSE_FILE = "unable to parse file"
 
 
 class RadarrAgentService:
@@ -52,8 +56,11 @@ class RadarrAgentService:
         store: RepairStateStore,
         source_roots: tuple[SourceRoot, ...],
         output_root: Path,
+        audit_root: Path,
+        verifier: VideoVerifier,
         settle_seconds: float,
         agent_timeout_seconds: float,
+        command_timeout_seconds: float,
         missing_queue_confirmations: int = MISSING_QUEUE_CONFIRMATIONS,
         artifact_retention_seconds: float = ARTIFACT_RETENTION_SECONDS,
         now: Callable[[], float] = time.time,
@@ -64,8 +71,11 @@ class RadarrAgentService:
         self.store = store
         self.source_roots = source_roots
         self.output_root = output_root.resolve()
+        self.audit_root = audit_root.resolve()
+        self.verifier = verifier
         self.settle_seconds = settle_seconds
         self.agent_timeout_seconds = agent_timeout_seconds
+        self.command_timeout_seconds = command_timeout_seconds
         self.missing_queue_confirmations = missing_queue_confirmations
         self.artifact_retention_seconds = artifact_retention_seconds
         self.now = now
@@ -121,6 +131,7 @@ class RadarrAgentService:
     def _mark_failure(self, job: RepairJob, kind: FailureKind, error: str, now: float) -> None:
         if job.status is not JobStatus.NEEDS_ATTENTION:
             self.store.state.totals.increment_failure(kind)
+        self._retain_task(job, now)
         job.status = JobStatus.NEEDS_ATTENTION
         job.failure_kind = kind
         job.pending_failure_kind = None
@@ -143,6 +154,167 @@ class RadarrAgentService:
         job.failure_kind = None
         job.pending_failure_kind = None
         job.run_id = None
+
+    def _archive_attempt(self, job: RepairJob) -> None:
+        if job.task_root is None or job.attempt_id is None:
+            raise NeedsAttention("completed repair has no task directory to archive")
+        expected = self._expected_task_root(job.download_id, job.attempt_id)
+        if job.task_root.resolve() != expected:
+            raise NeedsAttention(f"refusing to archive an unsafe task path: {job.task_root}")
+        destination = self.audit_root / str(job.attempt_id)
+        destination.mkdir(parents=True, exist_ok=True, mode=0o770)
+        for name in (REPORT_FILE_NAME, RESULT_FILE_NAME):
+            source = expected / name
+            if source.is_symlink() or not source.is_file():
+                raise NeedsAttention(f"repair audit file is missing or unsafe: {source}")
+            target = destination / name
+            shutil.copyfile(source, target)
+            target.chmod(0o640)
+
+    def _cleanup_task(self, job: RepairJob) -> None:
+        if job.task_root is None or job.attempt_id is None:
+            raise NeedsAttention("completed repair has no task directory to clean")
+        expected = self._expected_task_root(job.download_id, job.attempt_id)
+        if job.task_root.resolve() != expected:
+            raise NeedsAttention(f"refusing to remove an unsafe task path: {job.task_root}")
+        if expected.exists():
+            shutil.rmtree(expected)
+        try:
+            expected.parent.rmdir()
+        except OSError:
+            pass
+        job.task_root = None
+        job.candidate = None
+
+    def _complete_import(self, job: RepairJob, now: float) -> None:
+        try:
+            self._archive_attempt(job)
+            self._cleanup_task(job)
+        except PostProcessorError as error:
+            self._mark_failure(job, FailureKind.IMPORT_FAILED, str(error), now)
+            return
+        job.status = JobStatus.COMPLETE
+        job.updated_at = now
+        job.error = ""
+        job.failure_kind = None
+        job.command_id = None
+        self.store.state.totals.success += 1
+        self.store.state.last_success = now
+        started = job.started_at if job.started_at is not None else now
+        self.store.state.last_duration = max(0.0, now - started)
+        LOG.info("completed Radarr Hermes repair/import: download_id=%s", job.download_id)
+
+    def _process_ready(
+        self, client: Radarr, record: RadarrQueueRecord, job: RepairJob, now: float
+    ) -> None:
+        if job.candidate is None or job.task_root is None or job.task is None:
+            self._mark_failure(
+                job,
+                FailureKind.INVALID_OUTPUT,
+                "ready repair has no candidate or task contract",
+                now,
+            )
+            return
+        try:
+            self.verifier.verify(job.candidate)
+            outputs = client.manual_import(job.task_root, record)
+            matches = [
+                candidate
+                for candidate in outputs
+                if candidate.path.resolve() == job.candidate.resolve()
+            ]
+            if len(matches) != 1:
+                raise NeedsAttention(
+                    "Radarr did not return exactly one manual-import match for the repair candidate"
+                )
+            candidate = matches[0]
+            if candidate.movie.id != job.task.movie_id:
+                raise NeedsAttention("Radarr matched the repair candidate to a different movie")
+            if candidate.download_id != record.download_id:
+                raise NeedsAttention("Radarr matched the repair candidate to a different download")
+            rejections = [item.reason.strip().lower() for item in candidate.rejections]
+            if any(reason != UNABLE_TO_PARSE_FILE for reason in rejections):
+                raise NeedsAttention("Radarr rejected the repair candidate by import policy")
+            quality = candidate.quality or record.quality
+            if not quality:
+                raise NeedsAttention("Radarr did not provide a quality for the repair candidate")
+            job.status = JobStatus.IMPORTING
+            job.command_id = None
+            job.import_deadline_at = now + self.command_timeout_seconds
+            job.updated_at = now
+            self.store.save()
+            job.command_id = client.submit_manual_import(
+                RadarrManualImportFile(
+                    path=job.candidate,
+                    movie_id=job.task.movie_id,
+                    quality=quality,
+                    languages=candidate.languages or [],
+                    release_group=candidate.release_group or "",
+                    download_id=record.download_id,
+                )
+            )
+            job.updated_at = self.now()
+            self.store.save()
+            LOG.info(
+                "submitted repaired media to Radarr: download_id=%s command_id=%s path=%s",
+                record.download_id,
+                job.command_id,
+                job.candidate,
+            )
+        except SourceInvalid as error:
+            self._mark_failure(job, FailureKind.INVALID_OUTPUT, str(error), now)
+        except NeedsAttention as error:
+            self._mark_failure(job, FailureKind.IMPORT_REJECTED, str(error), now)
+        except PostProcessorError as error:
+            self._mark_failure(job, FailureKind.IMPORT_FAILED, str(error), now)
+        except Exception as error:
+            LOG.exception("unexpected Radarr repaired-media import failure")
+            self._mark_failure(job, FailureKind.IMPORT_FAILED, str(error), now)
+
+    def _advance_import(self, client: Radarr, job: RepairJob, now: float) -> None:
+        if job.command_id is None:
+            self._mark_failure(
+                job,
+                FailureKind.IMPORT_FAILED,
+                "Radarr import submission outcome is ambiguous after restart",
+                now,
+            )
+            return
+        try:
+            command = client.command(job.command_id)
+        except PostProcessorError as error:
+            if job.import_deadline_at is not None and now >= job.import_deadline_at:
+                self._mark_failure(job, FailureKind.IMPORT_FAILED, str(error), now)
+            else:
+                job.error = str(error)
+                job.updated_at = now
+            return
+        status = command.status.lower()
+        if status in TERMINAL_COMMAND_STATES:
+            if status != "completed":
+                self._mark_failure(
+                    job,
+                    FailureKind.IMPORT_FAILED,
+                    f"Radarr manual-import command ended as {status}: {command.message}",
+                    now,
+                )
+                return
+            job.status = JobStatus.AWAITING_QUEUE_REMOVAL
+            job.updated_at = now
+            job.error = ""
+            LOG.info(
+                "Radarr import completed; waiting for queue removal: download_id=%s command_id=%s",
+                job.download_id,
+                job.command_id,
+            )
+            return
+        if job.import_deadline_at is not None and now >= job.import_deadline_at:
+            self._mark_failure(
+                job,
+                FailureKind.IMPORT_FAILED,
+                f"Radarr manual-import command {job.command_id} timed out",
+                now,
+            )
 
     def _new_settling_job(
         self, record: RadarrQueueRecord, fingerprint: str, now: float
@@ -418,6 +590,8 @@ class RadarrAgentService:
                 if job.status in {JobStatus.AGENT_STARTING, JobStatus.AGENT_RUNNING}:
                     self._observe_active_source(record, job, now)
                 continue
+            if job.status in {JobStatus.COMPLETE, JobStatus.MANUAL_RESOLVED}:
+                continue
             job.missing_queue_observations += 1
             if job.missing_queue_observations < self.missing_queue_confirmations:
                 continue
@@ -429,6 +603,10 @@ class RadarrAgentService:
                     now=now,
                     dismiss=True,
                 )
+            elif job.status is JobStatus.IMPORTING:
+                continue
+            elif job.status is JobStatus.AWAITING_QUEUE_REMOVAL:
+                self._complete_import(job, now)
             else:
                 self._mark_manual_resolved(job, now)
 
@@ -437,10 +615,28 @@ class RadarrAgentService:
         client = self.client_factory()
         queue = client.queue()
         records = {record.download_id: record for record in queue if record.download_id}
+        ready_at_start = {
+            job.download_id
+            for job in self.store.state.jobs.values()
+            if job.status is JobStatus.READY
+        }
         self._reconcile_queue(records, now)
         for active_job in self.store.state.jobs.values():
             if active_job.status in ACTIVE_AGENT_STATES:
                 self._advance_agent(active_job, now)
+            elif active_job.status is JobStatus.IMPORTING:
+                self._advance_import(client, active_job, now)
+
+        for record in queue:
+            ready_job = self.store.state.jobs.get(record.download_id)
+            if (
+                self.eligible_record(record)
+                and record.download_id in ready_at_start
+                and ready_job is not None
+                and ready_job.status is JobStatus.READY
+            ):
+                self._process_ready(client, record, ready_job, now)
+                break
 
         if not any(job.status in ACTIVE_AGENT_STATES for job in self.store.state.jobs.values()):
             for record in queue:

@@ -52,6 +52,7 @@ def result_payload(**changes: object) -> dict[str, object]:
 
 
 def write_result(root: Path, payload: dict[str, object]) -> None:
+    (root / "report.md").write_text("# Repair report\n")
     (root / "result.json").write_text(json.dumps(payload))
 
 
@@ -138,6 +139,17 @@ def test_result_validation_rejects_missing_invalid_and_unreadable_results(tmp_pa
 
     write_result(tmp_path, result_payload(candidate="missing.mkv"))
     with pytest.raises(NeedsAttention, match="candidate is unavailable"):
+        load_repair_result(tmp_path, task())
+
+
+def test_result_validation_requires_report(tmp_path: Path) -> None:
+    candidate = tmp_path / "Test Movie (2020).mkv"
+    candidate.write_bytes(b"media")
+    candidate.chmod(0o660)
+    write_result(tmp_path, result_payload())
+    (tmp_path / "report.md").unlink()
+
+    with pytest.raises(NeedsAttention, match="report"):
         load_repair_result(tmp_path, task())
 
 

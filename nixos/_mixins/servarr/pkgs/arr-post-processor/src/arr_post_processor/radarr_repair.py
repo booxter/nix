@@ -132,6 +132,9 @@ def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepair
         or result.source_fingerprint != expected.source_fingerprint
     ):
         raise NeedsAttention("repair result does not match its requested attempt")
+    report_path = root / REPORT_FILE_NAME
+    if report_path.is_symlink() or not report_path.is_file():
+        raise NeedsAttention("repair report is missing or is not a regular file")
     if result.outcome is RepairOutcome.UNRESOLVED:
         return ValidatedRepairResult(result=result, candidate=None)
 

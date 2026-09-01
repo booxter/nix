@@ -15,8 +15,16 @@ from hermes_runs.client import (
     StopResult,
 )
 
+from arr_post_processor.errors import PostProcessorError
 from arr_post_processor.radarr_agent_service import RadarrAgentService
-from arr_post_processor.radarr_models import RadarrMovie, RadarrQueueRecord
+from arr_post_processor.radarr_models import (
+    CommandStatus,
+    RadarrManualImportCandidate,
+    RadarrManualImportFile,
+    RadarrMovie,
+    RadarrQueueRecord,
+    Rejection,
+)
 from arr_post_processor.radarr_source import SourceRoot
 from arr_post_processor.radarr_state import FailureKind, JobStatus, RepairStateStore
 
@@ -36,6 +44,10 @@ class FakeRadarr:
     def __init__(self, records: list[RadarrQueueRecord]) -> None:
         self.records = records
         self.movie_value = RadarrMovie(id=42, title="Test Movie", year=2020, runtime=120)
+        self.manual_candidates: list[RadarrManualImportCandidate] = []
+        self.imported: RadarrManualImportFile | None = None
+        self.command_status = CommandStatus(id=9, status="started")
+        self.submit_error: PostProcessorError | None = None
 
     def queue(self) -> list[RadarrQueueRecord]:
         return self.records
@@ -43,6 +55,29 @@ class FakeRadarr:
     def movie(self, movie_id: int) -> RadarrMovie:
         assert movie_id == self.movie_value.id
         return self.movie_value
+
+    def manual_import(
+        self, folder: Path, record: RadarrQueueRecord
+    ) -> list[RadarrManualImportCandidate]:
+        return self.manual_candidates
+
+    def submit_manual_import(self, file: RadarrManualImportFile) -> int:
+        self.imported = file
+        if self.submit_error is not None:
+            raise self.submit_error
+        return 9
+
+    def command(self, command_id: int) -> CommandStatus:
+        assert command_id == 9
+        return self.command_status
+
+
+class FakeVerifier:
+    def __init__(self) -> None:
+        self.verified: list[Path] = []
+
+    def verify(self, path: Path) -> None:
+        self.verified.append(path)
 
 
 class FakeHermes:
@@ -118,7 +153,16 @@ def queue_record(path: Path, **changes: object) -> RadarrQueueRecord:
 
 def service_fixture(
     tmp_path: Path,
-) -> tuple[RadarrAgentService, FakeRadarr, FakeHermes, RepairStateStore, Clock, Path, Path]:
+) -> tuple[
+    RadarrAgentService,
+    FakeRadarr,
+    FakeHermes,
+    RepairStateStore,
+    Clock,
+    Path,
+    Path,
+    FakeVerifier,
+]:
     source_root = tmp_path / "torrents"
     source_root.mkdir()
     source = source_root / "Test.Movie.2020.1080p"
@@ -130,6 +174,7 @@ def service_fixture(
     hermes = FakeHermes()
     store = RepairStateStore(tmp_path / "state.json")
     clock = Clock()
+    verifier = FakeVerifier()
     attempt_ids = iter(
         [
             ATTEMPT_ID,
@@ -142,12 +187,15 @@ def service_fixture(
         store=store,
         source_roots=(SourceRoot(name="torrents", host_path=source_root),),
         output_root=output_root,
+        audit_root=tmp_path / "audit",
+        verifier=verifier,
         settle_seconds=60,
         agent_timeout_seconds=3600,
+        command_timeout_seconds=600,
         now=clock,
         uuid_factory=lambda: next(attempt_ids),
     )
-    return service, radarr, hermes, store, clock, source, output_root
+    return service, radarr, hermes, store, clock, source, output_root, verifier
 
 
 def start_attempt(service: RadarrAgentService, store: RepairStateStore, clock: Clock) -> Path:
@@ -184,7 +232,33 @@ def write_result(
         "candidate": candidate,
         "reason": "repair result",
     }
+    (job.task_root / "report.md").write_text("# Repair report\n")
     (job.task_root / "result.json").write_text(json.dumps(payload))
+
+
+def finish_agent(
+    service: RadarrAgentService,
+    radarr: FakeRadarr,
+    hermes: FakeHermes,
+    store: RepairStateStore,
+) -> Path:
+    write_result(store)
+    hermes.state = RunState.COMPLETED
+    service.iteration()
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.READY
+    assert job.candidate is not None
+    radarr.manual_candidates = [
+        RadarrManualImportCandidate(
+            path=job.candidate,
+            movie=radarr.movie_value,
+            quality={"quality": {"id": 7, "name": "Bluray-1080p"}},
+            languages=[{"id": 1, "name": "English"}],
+            release_group="TEST",
+            download_id=job.download_id,
+        )
+    ]
+    return job.candidate
 
 
 def test_eligibility_uses_radarr_warning_not_repair_heuristics(tmp_path: Path) -> None:
@@ -201,7 +275,9 @@ def test_eligibility_uses_radarr_warning_not_repair_heuristics(tmp_path: Path) -
 
 
 def test_settled_source_starts_one_persisted_agent_attempt(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, output_root = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, output_root, _verifier = service_fixture(
+        tmp_path
+    )
 
     task_root = start_attempt(service, store, clock)
 
@@ -219,7 +295,7 @@ def test_settled_source_starts_one_persisted_agent_attempt(tmp_path: Path) -> No
 
 
 def test_completed_run_accepts_only_correlated_manifest(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     write_result(store)
     hermes.state = RunState.COMPLETED
@@ -233,7 +309,7 @@ def test_completed_run_accepts_only_correlated_manifest(tmp_path: Path) -> None:
 
 
 def test_unresolved_run_is_terminal_for_unchanged_source(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     write_result(store, outcome="unresolved", candidate=None)
     hermes.state = RunState.COMPLETED
@@ -249,7 +325,7 @@ def test_unresolved_run_is_terminal_for_unchanged_source(tmp_path: Path) -> None
 
 
 def test_approval_request_is_stopped_and_never_approved(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     hermes.state = RunState.WAITING_FOR_APPROVAL
 
@@ -265,7 +341,7 @@ def test_approval_request_is_stopped_and_never_approved(tmp_path: Path) -> None:
 
 
 def test_missing_api_status_recovers_a_durable_manifest(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     write_result(store)
     hermes.get_error = HermesHttpError(404, "run not found")
@@ -276,7 +352,7 @@ def test_missing_api_status_recovers_a_durable_manifest(tmp_path: Path) -> None:
 
 
 def test_failed_run_is_terminal_for_unchanged_source(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     hermes.state = RunState.FAILED
     hermes.error = "model provider failed"
@@ -292,7 +368,7 @@ def test_failed_run_is_terminal_for_unchanged_source(tmp_path: Path) -> None:
 
 
 def test_timed_out_run_is_stopped_and_not_consumed(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     clock.value += 3600
 
@@ -308,7 +384,7 @@ def test_timed_out_run_is_stopped_and_not_consumed(tmp_path: Path) -> None:
 
 
 def test_source_change_stops_the_active_attempt(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     (source / "part2.mkv").write_bytes(b"new source data")
 
@@ -321,7 +397,9 @@ def test_source_change_stops_the_active_attempt(tmp_path: Path) -> None:
 
 
 def test_ambiguous_start_recovers_manifest_after_restart(tmp_path: Path) -> None:
-    service, radarr, hermes, store, clock, _source, output_root = service_fixture(tmp_path)
+    service, radarr, hermes, store, clock, _source, output_root, verifier = service_fixture(
+        tmp_path
+    )
     hermes.start_error = HermesError("connection closed")
     service.iteration()
     clock.value += 60
@@ -336,8 +414,11 @@ def test_ambiguous_start_recovers_manifest_after_restart(tmp_path: Path) -> None
         store=reloaded,
         source_roots=(SourceRoot(name="torrents", host_path=tmp_path / "torrents"),),
         output_root=output_root,
+        audit_root=tmp_path / "audit",
+        verifier=verifier,
         settle_seconds=60,
         agent_timeout_seconds=3600,
+        command_timeout_seconds=600,
         now=clock,
     )
 
@@ -347,7 +428,7 @@ def test_ambiguous_start_recovers_manifest_after_restart(tmp_path: Path) -> None
 
 
 def test_new_source_fingerprint_gets_one_new_attempt(tmp_path: Path) -> None:
-    service, _radarr, hermes, store, clock, source, _output = service_fixture(tmp_path)
+    service, _radarr, hermes, store, clock, source, _output, _verifier = service_fixture(tmp_path)
     old_task = start_attempt(service, store, clock)
     write_result(store, outcome="unresolved", candidate=None)
     hermes.state = RunState.COMPLETED
@@ -367,7 +448,7 @@ def test_new_source_fingerprint_gets_one_new_attempt(tmp_path: Path) -> None:
 
 
 def test_disappearing_queue_stops_active_run_and_dismisses_it(tmp_path: Path) -> None:
-    service, radarr, hermes, store, clock, _source, _output = service_fixture(tmp_path)
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
     radarr.records = []
 
@@ -383,7 +464,7 @@ def test_disappearing_queue_stops_active_run_and_dismisses_it(tmp_path: Path) ->
 
 
 def test_source_outside_configured_root_is_not_handed_to_agent(tmp_path: Path) -> None:
-    service, radarr, hermes, store, _clock, _source, _output = service_fixture(tmp_path)
+    service, radarr, hermes, store, _clock, _source, _output, _verifier = service_fixture(tmp_path)
     outside = tmp_path / "outside"
     outside.mkdir()
     radarr.records = [queue_record(outside)]
@@ -394,3 +475,110 @@ def test_source_outside_configured_root_is_not_handed_to_agent(tmp_path: Path) -
     assert job.status is JobStatus.NEEDS_ATTENTION
     assert job.failure_kind is FailureKind.SOURCE_INVALID
     assert hermes.instructions == []
+
+
+def test_verified_candidate_imports_asynchronously_and_is_audited(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, verifier = service_fixture(tmp_path)
+    task_root = start_attempt(service, store, clock)
+    candidate = finish_agent(service, radarr, hermes, store)
+
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.IMPORTING
+    assert job.command_id == 9
+    assert verifier.verified == [candidate]
+    assert radarr.imported is not None
+    assert radarr.imported.path == candidate
+    assert radarr.imported.movie_id == 42
+    assert radarr.imported.release_group == "TEST"
+
+    radarr.command_status = CommandStatus(id=9, status="completed")
+    service.iteration()
+    assert job.status is JobStatus.AWAITING_QUEUE_REMOVAL
+
+    radarr.records = []
+    service.iteration()
+    service.iteration()
+    service.iteration()
+
+    assert job.status is JobStatus.COMPLETE
+    assert job.task_root is None
+    assert not task_root.exists()
+    audit = tmp_path / "audit" / str(ATTEMPT_ID)
+    assert (audit / "report.md").read_text() == "# Repair report\n"
+    assert json.loads((audit / "result.json").read_text())["outcome"] == "repaired"
+    assert store.state.totals.success == 1
+    assert store.state.last_success == clock.value
+
+
+def test_radarr_movie_mismatch_rejects_candidate_without_import(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    start_attempt(service, store, clock)
+    candidate = finish_agent(service, radarr, hermes, store)
+    radarr.manual_candidates = [
+        RadarrManualImportCandidate(
+            path=candidate,
+            movie=RadarrMovie(id=99, title="Wrong Movie", year=2021, runtime=90),
+            quality=radarr.records[0].quality,
+            download_id="download-id",
+        )
+    ]
+
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.IMPORT_REJECTED
+    assert radarr.imported is None
+
+
+def test_radarr_policy_rejection_is_terminal(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    start_attempt(service, store, clock)
+    finish_agent(service, radarr, hermes, store)
+    radarr.manual_candidates[0] = radarr.manual_candidates[0].model_copy(
+        update={"rejections": [Rejection(reason="Not an upgrade for existing movie file")]}
+    )
+
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.IMPORT_REJECTED
+    assert store.state.totals.import_rejected == 1
+    assert radarr.imported is None
+
+
+def test_failed_import_command_retains_artifacts_without_retry(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    task_root = start_attempt(service, store, clock)
+    finish_agent(service, radarr, hermes, store)
+    service.iteration()
+    radarr.command_status = CommandStatus(id=9, status="failed", message="disk full")
+
+    service.iteration()
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.IMPORT_FAILED
+    assert store.state.retained_artifacts[0].path == task_root
+    assert len(hermes.instructions) == 1
+
+
+def test_restart_does_not_repeat_ambiguous_import_submission(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    start_attempt(service, store, clock)
+    finish_agent(service, radarr, hermes, store)
+    job = store.state.jobs["download-id"]
+    job.status = JobStatus.IMPORTING
+    job.command_id = None
+    job.import_deadline_at = clock.value + 600
+    store.save()
+
+    service.iteration()
+
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.IMPORT_FAILED
+    assert radarr.imported is None
