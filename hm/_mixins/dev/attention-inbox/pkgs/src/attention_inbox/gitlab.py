@@ -149,7 +149,7 @@ def normalize_timestamp(value: str | None) -> str | None:
         return text
     if parsed.tzinfo is None:
         return text
-    return parsed.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    return parsed.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
 
 
 def item_reference(kind: str, target: GitLabTarget) -> str | None:

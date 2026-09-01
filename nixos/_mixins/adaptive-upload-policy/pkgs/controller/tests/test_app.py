@@ -153,7 +153,7 @@ def test_policy_relaxes_only_after_stable_hold(tmp_path):
 
         holding = holding.model_copy(
             update={
-                "relaxation_pending_since": datetime.datetime.now(datetime.timezone.utc)
+                "relaxation_pending_since": datetime.datetime.now(datetime.UTC)
                 - datetime.timedelta(minutes=2)
             }
         )
@@ -182,7 +182,7 @@ def test_stale_or_invalid_state_uses_safe_policy(tmp_path):
 
     stale_path = tmp_path / "stale.json"
     stale = default_policy_state(12.0, "current", True, 0).model_copy(
-        update={"updated_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)}
+        update={"updated_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.UTC)}
     )
     save_policy_state(stale_path, stale)
     loaded = load_policy_state(stale_path, 8.0, 90.0)

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import shlex
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, Sequence
+from typing import Protocol
 
 from sops_tools.errors import ToolError
 from sops_tools.flake import archive_flake_source

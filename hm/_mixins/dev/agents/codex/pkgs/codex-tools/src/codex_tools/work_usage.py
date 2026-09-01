@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
@@ -45,8 +45,8 @@ def normalize_work_usage(response: JsonObject, *, now: float) -> WorkUsage:
     if individual_limit is None:
         raise CodexToolsError("Missing spend_control.individual_limit in usage response")
 
-    current = datetime.fromtimestamp(now, timezone.utc)
-    window_start = datetime(current.year, current.month, 1, tzinfo=timezone.utc).timestamp()
+    current = datetime.fromtimestamp(now, UTC)
+    window_start = datetime(current.year, current.month, 1, tzinfo=UTC).timestamp()
     reset_at = individual_limit.reset_at
     credits = payload.credits
     return WorkUsage(

@@ -6,9 +6,10 @@ import os
 import platform
 import socket
 import sys
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Mapping, Protocol, Sequence
+from typing import Protocol
 
 from .age import AgeRecipientResolver
 from .bootstrap import (

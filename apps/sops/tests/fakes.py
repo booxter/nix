@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Sequence
 
 import yaml
 from sops_tools.errors import CommandError

@@ -12,11 +12,11 @@ import sys
 import time
 import uuid
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterator, Protocol, TextIO
+from typing import Protocol, TextIO
 
 from atomic_file_writes import write_text_atomic
 from pydantic import ValidationError

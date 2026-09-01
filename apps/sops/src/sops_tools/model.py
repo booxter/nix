@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TypeAlias, TypeGuard, cast
+from typing import TypeGuard, cast
 
 from .errors import ToolError
 
-JsonScalar: TypeAlias = None | bool | int | float | str
-JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
-PathSegment: TypeAlias = str | int
+type JsonScalar = None | bool | int | float | str
+type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
+type PathSegment = str | int
 
 
 def is_json_value(value: object) -> TypeGuard[JsonValue]:

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, Sequence
+from typing import Protocol
 
 
 class RuntimeKeyError(RuntimeError):

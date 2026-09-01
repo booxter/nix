@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, TypeAlias, TypeVar
+from typing import Annotated
 
 from codex_tools.errors import CodexToolsError
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
@@ -15,7 +15,7 @@ def _numeric_string(value: object) -> object:
         return value
 
 
-Numeric: TypeAlias = Annotated[int | float | None, BeforeValidator(_numeric_string)]
+type Numeric = Annotated[int | float | None, BeforeValidator(_numeric_string)]
 
 
 class Payload(BaseModel):
@@ -96,10 +96,7 @@ class WorkUsagePayload(Payload):
     credits: WorkCreditsPayload = Field(default_factory=WorkCreditsPayload)
 
 
-PayloadType = TypeVar("PayloadType", bound=Payload)
-
-
-def validate_payload(
+def validate_payload[PayloadType: Payload](
     model: type[PayloadType],
     value: object,
     *,

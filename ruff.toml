@@ -4,7 +4,7 @@ line-length = 100
 src = []
 
 [lint]
-select = ["E", "F", "I", "W"]
+select = ["E", "F", "I", "UP", "W"]
 
 [lint.isort]
 # Do not reclassify local imports when Ruff happens to run inside a package directory.

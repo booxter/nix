@@ -96,8 +96,11 @@ def test_approve(resolve_all: bool) -> None:
         arguments.append("--all")
 
     expected = (
-        '{\n  "all": %s,\n  "choice": "once",\n  "run_id": "run_123"\n}\n'
-        % str(resolve_all).lower()
+        "{\n"
+        f'  "all": {str(resolve_all).lower()},\n'
+        '  "choice": "once",\n'
+        '  "run_id": "run_123"\n'
+        "}\n"
     )
     assert invoke(arguments, client) == expected
 

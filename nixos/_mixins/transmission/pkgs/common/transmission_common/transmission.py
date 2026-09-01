@@ -1,5 +1,4 @@
 import json
-import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -59,7 +58,7 @@ class TransmissionRpcClient:
                         self.session_id = session_id
                         continue
                 raise TransmissionRpcError(f"HTTP {exc.code} from Transmission RPC") from exc
-            except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
+            except (TimeoutError, urllib.error.URLError) as exc:
                 raise TransmissionRpcError(f"request to Transmission RPC failed: {exc}") from exc
 
             try:
