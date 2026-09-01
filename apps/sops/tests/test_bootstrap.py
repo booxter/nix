@@ -22,7 +22,7 @@ def service(
     tmp_path: Path, hosts: tuple[str, ...] = ("newhost", "secondhost")
 ) -> tuple[BootstrapService, MemorySopsBackend, StaticRuntimeKeyProvider]:
     inventory = tmp_path / "realms.json"
-    inventory.write_text(json.dumps({host: "home" for host in hosts}))
+    inventory.write_text(json.dumps(dict.fromkeys(hosts, "home")))
     runtime = RuntimeEnvironment(
         repo_root=tmp_path,
         home=tmp_path / "home",

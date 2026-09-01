@@ -260,21 +260,20 @@ def collect_iteration_state(
     preferred_bootstrap_active = any(
         is_preferred and torrent.peers_getting_from_us > 0 for torrent, is_preferred in entries
     )
-    torrent_counts: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+    torrent_counts: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     activity_counts = {
         "seeding": {"active": 0, "inactive": 0},
         "downloading": {"active": 0, "inactive": 0},
     }
     bandwidth_counts: NestedCounts = {
-        direction: {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-        for direction in ("download", "upload")
+        direction: dict.fromkeys(PRIORITY_CLASSES, 0) for direction in ("download", "upload")
     }
     peer_counts: PeerCounts = {
         torrent_class: {"connected": 0, "getting_from_us": 0, "sending_to_us": 0}
         for torrent_class in PRIORITY_CLASSES
     }
-    downloads: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-    uploads: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+    downloads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
+    uploads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     high: list[str] = []
     normal: list[str] = []
     low: list[str] = []

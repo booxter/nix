@@ -92,7 +92,7 @@ def has_path(document: JsonValue, path: KeyPath) -> bool:
 def deep_merge(defaults: JsonValue, overrides: JsonValue) -> JsonValue:
     if not isinstance(defaults, dict) or not isinstance(overrides, dict):
         return overrides
-    merged: dict[str, JsonValue] = {key: value for key, value in defaults.items()}
+    merged: dict[str, JsonValue] = dict(defaults)
     for key, value in overrides.items():
         if key in merged:
             merged[key] = deep_merge(merged[key], value)

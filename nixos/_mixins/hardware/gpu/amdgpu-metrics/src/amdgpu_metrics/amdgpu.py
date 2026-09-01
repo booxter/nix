@@ -268,9 +268,7 @@ def success_registry(sample: AmdgpuSample, duration: float) -> CollectorRegistry
                 temperature.labels(*labels, sensor.removesuffix(" Temperature")).set(
                     scaled_value(reading, "celsius")
                 )
-            elif sensor.endswith(" Critical Temperature") or sensor.endswith(
-                " Emergency Temperature"
-            ):
+            elif sensor.endswith((" Critical Temperature", " Emergency Temperature")):
                 limit = "critical" if " Critical " in sensor else "emergency"
                 sensor_name = sensor.replace(" Critical Temperature", "").replace(
                     " Emergency Temperature", ""
