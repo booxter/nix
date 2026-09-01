@@ -163,6 +163,157 @@ def _device_labels(device: Device, index: int) -> tuple[str, str, str]:
     return str(index), pci, name
 
 
+@dataclass(frozen=True)
+class DeviceGauges:
+    info: Gauge
+    activity: Gauge
+    memory: Gauge
+    temperature: Gauge
+    temperature_limit: Gauge
+    power: Gauge
+    clock: Gauge
+    voltage: Gauge
+    fan: Gauge
+
+
+def _device_gauges(registry: CollectorRegistry) -> DeviceGauges:
+    return DeviceGauges(
+        info=_gauge(
+            registry,
+            "host_observability_amdgpu_info",
+            "Static AMD GPU device information.",
+            ("gpu", "pci", "device", "rocm_version", "amdgpu_top_version", "asic", "chip_class"),
+        ),
+        activity=_gauge(
+            registry,
+            "host_observability_amdgpu_activity_percent",
+            "AMDGPU activity percentage by engine.",
+            ("gpu", "pci", "device", "engine"),
+        ),
+        memory=_gauge(
+            registry,
+            "host_observability_amdgpu_memory_bytes",
+            "AMDGPU memory size by type and state.",
+            ("gpu", "pci", "device", "type", "state"),
+        ),
+        temperature=_gauge(
+            registry,
+            "host_observability_amdgpu_temperature_celsius",
+            "AMDGPU current temperature by sensor.",
+            ("gpu", "pci", "device", "sensor"),
+        ),
+        temperature_limit=_gauge(
+            registry,
+            "host_observability_amdgpu_temperature_limit_celsius",
+            "AMDGPU temperature limit by sensor.",
+            ("gpu", "pci", "device", "sensor", "limit"),
+        ),
+        power=_gauge(
+            registry,
+            "host_observability_amdgpu_power_watts",
+            "AMDGPU power sensor reading.",
+            ("gpu", "pci", "device", "sensor"),
+        ),
+        clock=_gauge(
+            registry,
+            "host_observability_amdgpu_clock_hertz",
+            "AMDGPU clock frequency by source.",
+            ("gpu", "pci", "device", "clock"),
+        ),
+        voltage=_gauge(
+            registry,
+            "host_observability_amdgpu_voltage_volts",
+            "AMDGPU voltage sensor reading.",
+            ("gpu", "pci", "device", "rail"),
+        ),
+        fan=_gauge(
+            registry,
+            "host_observability_amdgpu_fan_rpm",
+            "AMDGPU fan speed reading.",
+            ("gpu", "pci", "device", "sensor"),
+        ),
+    )
+
+
+def _record_memory(gauges: DeviceGauges, labels: tuple[str, str, str], device: Device) -> None:
+    memory_fields = {
+        "Total VRAM": ("vram", "total"),
+        "Total VRAM Usage": ("vram", "used"),
+        "Total GTT": ("gtt", "total"),
+        "Total GTT Usage": ("gtt", "used"),
+    }
+    for key, (memory_type, state) in memory_fields.items():
+        scaled = scaled_value(device.vram.get(key), "bytes")
+        if scaled is not None:
+            gauges.memory.labels(*labels, memory_type, state).set(scaled)
+
+
+def _record_sensors(gauges: DeviceGauges, labels: tuple[str, str, str], device: Device) -> None:
+    for sensor, reading in device.sensors.items():
+        if (
+            sensor.endswith(" Temperature")
+            and " Critical " not in sensor
+            and " Emergency " not in sensor
+        ):
+            gauges.temperature.labels(*labels, sensor.removesuffix(" Temperature")).set(
+                scaled_value(reading, "celsius")
+            )
+        elif sensor.endswith((" Critical Temperature", " Emergency Temperature")):
+            limit = "critical" if " Critical " in sensor else "emergency"
+            sensor_name = sensor.replace(" Critical Temperature", "").replace(
+                " Emergency Temperature", ""
+            )
+            gauges.temperature_limit.labels(*labels, sensor_name, limit).set(
+                scaled_value(reading, "celsius")
+            )
+        elif sensor in ("GFX Power", "Average Power", "Input Power"):
+            gauges.power.labels(*labels, sensor).set(scaled_value(reading, "watts"))
+        elif sensor in ("GFX_SCLK", "GFX_MCLK", "FCLK"):
+            gauges.clock.labels(*labels, sensor).set(scaled_value(reading, "hertz"))
+        elif sensor in ("VDDNB", "VDDGFX"):
+            gauges.voltage.labels(*labels, sensor).set(scaled_value(reading, "volts"))
+        elif sensor in ("Fan", "Fan Max"):
+            gauges.fan.labels(*labels, sensor).set(scaled_value(reading, "rpm"))
+
+
+def _record_gpu_metrics(
+    gauges: DeviceGauges,
+    labels: tuple[str, str, str],
+    device: Device,
+) -> None:
+    revision = gpu_metrics_revision(device.gpu_metrics)
+    for name, metric_value in device.gpu_metrics.items():
+        if isinstance(metric_value, bool) or not isinstance(metric_value, int | float):
+            continue
+        if name.startswith("temperature_"):
+            if (converted := gpu_metrics_temperature(metric_value)) is not None:
+                gauges.temperature.labels(*labels, name).set(converted)
+        elif name.endswith("_power"):
+            gauges.power.labels(*labels, name).set(gpu_metrics_power(metric_value, revision))
+        elif "_frequency" in name or (name.startswith("current_") and name.endswith("clk")):
+            gauges.clock.labels(*labels, name).set(float(metric_value) * 1000 * 1000)
+
+
+def _record_device(
+    gauges: DeviceGauges,
+    base_labels: tuple[str, str],
+    device: Device,
+    index: int,
+) -> None:
+    labels = _device_labels(device, index)
+    gauges.info.labels(
+        *labels,
+        *base_labels,
+        device.info.asic_name,
+        device.info.chip_class,
+    ).set(1)
+    for engine, reading in device.gpu_activity.items():
+        gauges.activity.labels(*labels, engine).set(scaled_value(reading, "percent"))
+    _record_memory(gauges, labels, device)
+    _record_sensors(gauges, labels, device)
+    _record_gpu_metrics(gauges, labels, device)
+
+
 def success_registry(sample: AmdgpuSample, duration: float) -> CollectorRegistry:
     registry = CollectorRegistry()
     _gauge(
@@ -182,120 +333,9 @@ def success_registry(sample: AmdgpuSample, duration: float) -> CollectorRegistry
     ).set(len(sample.devices))
 
     base_labels = (sample.rocm_version, sample.amdgpu_top_version.label)
-    info = _gauge(
-        registry,
-        "host_observability_amdgpu_info",
-        "Static AMD GPU device information.",
-        ("gpu", "pci", "device", "rocm_version", "amdgpu_top_version", "asic", "chip_class"),
-    )
-    activity = _gauge(
-        registry,
-        "host_observability_amdgpu_activity_percent",
-        "AMDGPU activity percentage by engine.",
-        ("gpu", "pci", "device", "engine"),
-    )
-    memory = _gauge(
-        registry,
-        "host_observability_amdgpu_memory_bytes",
-        "AMDGPU memory size by type and state.",
-        ("gpu", "pci", "device", "type", "state"),
-    )
-    temperature = _gauge(
-        registry,
-        "host_observability_amdgpu_temperature_celsius",
-        "AMDGPU current temperature by sensor.",
-        ("gpu", "pci", "device", "sensor"),
-    )
-    temperature_limit = _gauge(
-        registry,
-        "host_observability_amdgpu_temperature_limit_celsius",
-        "AMDGPU temperature limit by sensor.",
-        ("gpu", "pci", "device", "sensor", "limit"),
-    )
-    power = _gauge(
-        registry,
-        "host_observability_amdgpu_power_watts",
-        "AMDGPU power sensor reading.",
-        ("gpu", "pci", "device", "sensor"),
-    )
-    clock = _gauge(
-        registry,
-        "host_observability_amdgpu_clock_hertz",
-        "AMDGPU clock frequency by source.",
-        ("gpu", "pci", "device", "clock"),
-    )
-    voltage = _gauge(
-        registry,
-        "host_observability_amdgpu_voltage_volts",
-        "AMDGPU voltage sensor reading.",
-        ("gpu", "pci", "device", "rail"),
-    )
-    fan = _gauge(
-        registry,
-        "host_observability_amdgpu_fan_rpm",
-        "AMDGPU fan speed reading.",
-        ("gpu", "pci", "device", "sensor"),
-    )
-
+    gauges = _device_gauges(registry)
     for index, device in enumerate(sample.devices):
-        labels = _device_labels(device, index)
-        info.labels(
-            *labels,
-            *base_labels,
-            device.info.asic_name,
-            device.info.chip_class,
-        ).set(1)
-        for engine, reading in device.gpu_activity.items():
-            activity.labels(*labels, engine).set(scaled_value(reading, "percent"))
-
-        memory_fields = {
-            "Total VRAM": ("vram", "total"),
-            "Total VRAM Usage": ("vram", "used"),
-            "Total GTT": ("gtt", "total"),
-            "Total GTT Usage": ("gtt", "used"),
-        }
-        for key, (memory_type, state) in memory_fields.items():
-            scaled = scaled_value(device.vram.get(key), "bytes")
-            if scaled is not None:
-                memory.labels(*labels, memory_type, state).set(scaled)
-
-        for sensor, reading in device.sensors.items():
-            if (
-                sensor.endswith(" Temperature")
-                and " Critical " not in sensor
-                and " Emergency " not in sensor
-            ):
-                temperature.labels(*labels, sensor.removesuffix(" Temperature")).set(
-                    scaled_value(reading, "celsius")
-                )
-            elif sensor.endswith((" Critical Temperature", " Emergency Temperature")):
-                limit = "critical" if " Critical " in sensor else "emergency"
-                sensor_name = sensor.replace(" Critical Temperature", "").replace(
-                    " Emergency Temperature", ""
-                )
-                temperature_limit.labels(*labels, sensor_name, limit).set(
-                    scaled_value(reading, "celsius")
-                )
-            elif sensor in ("GFX Power", "Average Power", "Input Power"):
-                power.labels(*labels, sensor).set(scaled_value(reading, "watts"))
-            elif sensor in ("GFX_SCLK", "GFX_MCLK", "FCLK"):
-                clock.labels(*labels, sensor).set(scaled_value(reading, "hertz"))
-            elif sensor in ("VDDNB", "VDDGFX"):
-                voltage.labels(*labels, sensor).set(scaled_value(reading, "volts"))
-            elif sensor in ("Fan", "Fan Max"):
-                fan.labels(*labels, sensor).set(scaled_value(reading, "rpm"))
-
-        revision = gpu_metrics_revision(device.gpu_metrics)
-        for name, metric_value in device.gpu_metrics.items():
-            if isinstance(metric_value, bool) or not isinstance(metric_value, int | float):
-                continue
-            if name.startswith("temperature_"):
-                if (converted := gpu_metrics_temperature(metric_value)) is not None:
-                    temperature.labels(*labels, name).set(converted)
-            elif name.endswith("_power"):
-                power.labels(*labels, name).set(gpu_metrics_power(metric_value, revision))
-            elif "_frequency" in name or (name.startswith("current_") and name.endswith("clk")):
-                clock.labels(*labels, name).set(float(metric_value) * 1000 * 1000)
+        _record_device(gauges, base_labels, device, index)
     return registry
 
 

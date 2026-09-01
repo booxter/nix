@@ -9,6 +9,7 @@ select = [
   "B",
   "BLE",
   "C4",
+  "C90",
   "DTZ",
   "E",
   "EXE",
@@ -31,6 +32,9 @@ select = [
   "W",
   "YTT",
 ]
+
+[lint.mccabe]
+max-complexity = 15
 
 [lint.isort]
 # Do not reclassify local imports when Ruff happens to run inside a package directory.

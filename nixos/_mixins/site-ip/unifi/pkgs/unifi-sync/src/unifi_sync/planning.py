@@ -375,15 +375,12 @@ def ensure_dhcp_custom_option(
     )
 
 
-def build_network_update_payload(
+def _add_dhcp_range_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
     settings: NetworkDhcpSettingsSpec,
     current_network: dict[str, Any],
-    domain_search_option_field: str | None,
-    classless_static_routes_option_field: str | None,
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    payload: dict[str, Any] = {}
-    changes: dict[str, Any] = {}
-
+) -> None:
     if settings.dhcp_range is not None:
         desired_start = str(settings.dhcp_range.start)
         desired_stop = str(settings.dhcp_range.end)
@@ -400,18 +397,33 @@ def build_network_update_payload(
         if current_stop != desired_stop:
             changes["dhcpd_stop"] = build_change(current_stop, desired_stop)
 
+
+def _add_domain_name_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+) -> None:
     if settings.domain_name is not None:
         current_domain_name = stringify(current_network.get("domain_name"))
         if current_domain_name != settings.domain_name:
             payload["domain_name"] = settings.domain_name
             changes["domain_name"] = build_change(current_domain_name, settings.domain_name)
 
+
+def _add_domain_search_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    option_field: str | None,
+) -> None:
     if settings.domain_search is not None:
         if settings.domain_search_option is None:
             raise UnifiError("internal error: domain_search present without option spec")
 
-        if domain_search_option_field is not None:
-            current_option_value = stringify(current_network.get(domain_search_option_field))
+        if option_field is not None:
+            current_option_value = stringify(current_network.get(option_field))
 
             if settings.domain_search_option.encoding != "text":
                 raise UnifiError("domain-search option encoding must be text")
@@ -420,22 +432,28 @@ def build_network_update_payload(
             desired_networkconf_value = settings.domain_search[0]
 
             if current_option_value != desired_networkconf_value:
-                payload[domain_search_option_field] = desired_networkconf_value
-                changes[domain_search_option_field] = {
+                payload[option_field] = desired_networkconf_value
+                changes[option_field] = {
                     "current": current_option_value,
                     "desired": desired_networkconf_value,
                     "desired_domains": list(settings.domain_search),
                     "encoding": settings.domain_search_option.encoding,
                 }
 
+
+def _add_classless_static_routes_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    option_field: str | None,
+) -> None:
     if settings.classless_static_routes is not None:
         if settings.classless_static_routes_option is None:
             raise UnifiError("internal error: classless_static_routes present without option spec")
 
-        if classless_static_routes_option_field is not None:
-            current_option_value = stringify(
-                current_network.get(classless_static_routes_option_field)
-            )
+        if option_field is not None:
+            current_option_value = stringify(current_network.get(option_field))
             if settings.classless_static_routes_option.encoding != "text":
                 raise UnifiError("classless-static-routes option encoding must be text")
             desired_networkconf_value = render_classless_static_routes_option(
@@ -443,8 +461,8 @@ def build_network_update_payload(
             )
 
             if current_option_value != desired_networkconf_value:
-                payload[classless_static_routes_option_field] = desired_networkconf_value
-                changes[classless_static_routes_option_field] = {
+                payload[option_field] = desired_networkconf_value
+                changes[option_field] = {
                     "current": current_option_value,
                     "desired": desired_networkconf_value,
                     "desired_routes": [
@@ -456,6 +474,14 @@ def build_network_update_payload(
                     ],
                     "encoding": settings.classless_static_routes_option.encoding,
                 }
+
+
+def _add_netboot_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+) -> None:
     if settings.tftp_server is not None:
         current_boot_enabled = bool(current_network.get("dhcpd_boot_enabled"))
         current_boot_server = stringify(current_network.get("dhcpd_boot_server"))
@@ -471,4 +497,30 @@ def build_network_update_payload(
             payload["dhcpd_boot_filename"] = settings.bootfile
             changes["dhcpd_boot_filename"] = build_change(current_bootfile, settings.bootfile)
 
+
+def build_network_update_payload(
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    domain_search_option_field: str | None,
+    classless_static_routes_option_field: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    payload: dict[str, Any] = {}
+    changes: dict[str, Any] = {}
+    _add_dhcp_range_update(payload, changes, settings, current_network)
+    _add_domain_name_update(payload, changes, settings, current_network)
+    _add_domain_search_update(
+        payload,
+        changes,
+        settings,
+        current_network,
+        domain_search_option_field,
+    )
+    _add_classless_static_routes_update(
+        payload,
+        changes,
+        settings,
+        current_network,
+        classless_static_routes_option_field,
+    )
+    _add_netboot_update(payload, changes, settings, current_network)
     return payload, changes

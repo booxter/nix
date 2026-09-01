@@ -110,11 +110,14 @@ def _reject_symlinks(root: Path, relative: PurePosixPath) -> None:
             raise NeedsAttention(f"repair candidate traverses a symlink: {relative}")
 
 
-def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepairResult:
+def _resolve_task_root(task_root: Path) -> Path:
     try:
-        root = task_root.resolve(strict=True)
+        return task_root.resolve(strict=True)
     except OSError as error:
         raise NeedsAttention(f"repair task directory is unavailable: {error}") from error
+
+
+def _load_result_manifest(root: Path) -> RepairResult:
     result_path = root / RESULT_FILE_NAME
     if result_path.is_symlink():
         raise NeedsAttention("repair result manifest is a symlink")
@@ -124,13 +127,19 @@ def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepair
         raise NeedsAttention("repair result manifest is missing") from error
     except (OSError, ValidationError) as error:
         raise NeedsAttention(f"repair result manifest is invalid: {error}") from error
+    return result
 
+
+def _validate_result_identity(result: RepairResult, expected: RepairTask) -> None:
     if (
         result.attempt_id != expected.attempt_id
         or result.download_id != expected.download_id
         or result.source_fingerprint != expected.source_fingerprint
     ):
         raise NeedsAttention("repair result does not match its requested attempt")
+
+
+def _validate_report(root: Path) -> None:
     report_path = root / REPORT_FILE_NAME
     if report_path.is_symlink() or not report_path.is_file():
         raise NeedsAttention("repair report is missing or is not a regular file")
@@ -140,9 +149,9 @@ def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepair
         raise NeedsAttention(f"cannot inspect repair report: {error}") from error
     if not report_mode & 0o040:
         raise NeedsAttention("repair report is not group-readable")
-    if result.outcome is RepairOutcome.UNRESOLVED:
-        return ValidatedRepairResult(result=result, candidate=None)
 
+
+def _validate_candidate(root: Path, result: RepairResult) -> Path:
     assert result.candidate is not None
     relative = PurePosixPath(result.candidate)
     _reject_symlinks(root, relative)
@@ -162,4 +171,15 @@ def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepair
         raise NeedsAttention(f"cannot inspect repair candidate: {error}") from error
     if not mode & 0o040:
         raise NeedsAttention("repair candidate is not group-readable")
+    return candidate
+
+
+def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepairResult:
+    root = _resolve_task_root(task_root)
+    result = _load_result_manifest(root)
+    _validate_result_identity(result, expected)
+    _validate_report(root)
+    if result.outcome is RepairOutcome.UNRESOLVED:
+        return ValidatedRepairResult(result=result, candidate=None)
+    candidate = _validate_candidate(root, result)
     return ValidatedRepairResult(result=result, candidate=candidate)

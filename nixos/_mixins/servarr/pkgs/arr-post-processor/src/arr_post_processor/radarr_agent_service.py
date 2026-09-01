@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from atomic_file_writes import write_text_atomic
 from hermes_runs.client import Client as Hermes
-from hermes_runs.client import HermesError, HermesHttpError, RunState
+from hermes_runs.client import HermesError, HermesHttpError, RunState, RunStatus
 
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import safe_component
@@ -414,19 +414,97 @@ class RadarrAgentService:
             validated.candidate,
         )
 
-    def _advance_agent(self, job: RepairJob, now: float) -> None:
-        if job.status is JobStatus.AGENT_STARTING and job.run_id is None:
-            if job.task_root is not None and (job.task_root / RESULT_FILE_NAME).exists():
-                self._consume_result(job, now)
-            elif job.agent_deadline_at is not None and now >= job.agent_deadline_at:
+    def _advance_ambiguous_start(self, job: RepairJob, now: float) -> bool:
+        if job.status is not JobStatus.AGENT_STARTING or job.run_id is not None:
+            return False
+        if job.task_root is not None and (job.task_root / RESULT_FILE_NAME).exists():
+            self._consume_result(job, now)
+        elif job.agent_deadline_at is not None and now >= job.agent_deadline_at:
+            self._mark_failure(
+                job,
+                FailureKind.AGENT_START_AMBIGUOUS,
+                "Hermes run start outcome was ambiguous and no result appeared",
+                now,
+            )
+        return True
+
+    def _resolve_requested_stop(self, job: RepairJob, now: float) -> bool:
+        if job.dismiss_requested:
+            self._mark_manual_resolved(job, now)
+            return True
+        if job.pending_failure_kind is not None:
+            self._mark_failure(job, job.pending_failure_kind, job.error, now)
+            return True
+        return False
+
+    def _handle_missing_run(self, job: RepairJob, now: float) -> None:
+        if self._resolve_requested_stop(job, now):
+            return
+        if job.task_root is not None and (job.task_root / RESULT_FILE_NAME).exists():
+            self._consume_result(job, now)
+            return
+        self._mark_failure(
+            job,
+            FailureKind.AGENT_LOST,
+            "Hermes no longer knows the run and no result manifest exists",
+            now,
+        )
+
+    def _handle_run_error(self, job: RepairJob, error: HermesError, now: float) -> None:
+        job.error = str(error)
+        job.updated_at = now
+        if job.stop_deadline_at is None or now < job.stop_deadline_at:
+            return
+        if job.dismiss_requested:
+            self._mark_manual_resolved(job, now)
+            return
+        self._mark_failure(
+            job,
+            job.pending_failure_kind or FailureKind.AGENT_LOST,
+            str(error),
+            now,
+        )
+
+    def _handle_active_run(self, job: RepairJob, status: RunStatus, now: float) -> bool:
+        if status.state not in {RunState.QUEUED, RunState.RUNNING, RunState.STOPPING}:
+            return False
+        if (
+            job.status is JobStatus.AGENT_STOPPING
+            and job.stop_deadline_at is not None
+            and now >= job.stop_deadline_at
+        ):
+            if job.dismiss_requested:
+                self._mark_manual_resolved(job, now)
+            else:
                 self._mark_failure(
                     job,
-                    FailureKind.AGENT_START_AMBIGUOUS,
-                    "Hermes run start outcome was ambiguous and no result appeared",
+                    job.pending_failure_kind or FailureKind.AGENT_LOST,
+                    job.error or "Hermes did not stop the repair run",
                     now,
                 )
-            return
+        return True
 
+    def _finish_agent_run(self, job: RepairJob, status: RunStatus, now: float) -> None:
+        if status.state is RunState.COMPLETED:
+            self._consume_result(job, now)
+        elif status.state is RunState.FAILED:
+            self._mark_failure(
+                job,
+                FailureKind.AGENT_FAILED,
+                status.error or "Hermes repair run failed",
+                now,
+            )
+        else:
+            self._mark_failure(
+                job,
+                FailureKind.AGENT_CANCELLED,
+                "Hermes repair run was cancelled",
+                now,
+            )
+
+    def _advance_agent(self, job: RepairJob, now: float) -> None:
+        if self._advance_ambiguous_start(job, now):
+            return
         if job.run_id is None:
             self._mark_failure(
                 job,
@@ -450,54 +528,17 @@ class RadarrAgentService:
         try:
             status = self.hermes.get_run(job.run_id)
         except HermesHttpError as error:
-            if error.status != 404:
+            if error.status == 404:
+                self._handle_missing_run(job, now)
+            else:
                 job.error = str(error)
                 job.updated_at = now
-                return
-            if job.dismiss_requested:
-                self._mark_manual_resolved(job, now)
-            elif job.pending_failure_kind is not None:
-                self._mark_failure(job, job.pending_failure_kind, job.error, now)
-            elif job.task_root is not None and (job.task_root / RESULT_FILE_NAME).exists():
-                self._consume_result(job, now)
-            else:
-                self._mark_failure(
-                    job,
-                    FailureKind.AGENT_LOST,
-                    "Hermes no longer knows the run and no result manifest exists",
-                    now,
-                )
             return
         except HermesError as error:
-            job.error = str(error)
-            job.updated_at = now
-            if job.stop_deadline_at is not None and now >= job.stop_deadline_at:
-                if job.dismiss_requested:
-                    self._mark_manual_resolved(job, now)
-                else:
-                    self._mark_failure(
-                        job,
-                        job.pending_failure_kind or FailureKind.AGENT_LOST,
-                        str(error),
-                        now,
-                    )
+            self._handle_run_error(job, error, now)
             return
 
-        if status.state in {RunState.QUEUED, RunState.RUNNING, RunState.STOPPING}:
-            if (
-                job.status is JobStatus.AGENT_STOPPING
-                and job.stop_deadline_at is not None
-                and now >= job.stop_deadline_at
-            ):
-                if job.dismiss_requested:
-                    self._mark_manual_resolved(job, now)
-                else:
-                    self._mark_failure(
-                        job,
-                        job.pending_failure_kind or FailureKind.AGENT_LOST,
-                        job.error or "Hermes did not stop the repair run",
-                        now,
-                    )
+        if self._handle_active_run(job, status, now):
             return
         if status.state is RunState.WAITING_FOR_APPROVAL:
             self._request_stop(
@@ -507,28 +548,9 @@ class RadarrAgentService:
                 now=now,
             )
             return
-        if job.dismiss_requested:
-            self._mark_manual_resolved(job, now)
+        if self._resolve_requested_stop(job, now):
             return
-        if job.pending_failure_kind is not None:
-            self._mark_failure(job, job.pending_failure_kind, job.error, now)
-            return
-        if status.state is RunState.COMPLETED:
-            self._consume_result(job, now)
-        elif status.state is RunState.FAILED:
-            self._mark_failure(
-                job,
-                FailureKind.AGENT_FAILED,
-                status.error or "Hermes repair run failed",
-                now,
-            )
-        else:
-            self._mark_failure(
-                job,
-                FailureKind.AGENT_CANCELLED,
-                "Hermes repair run was cancelled",
-                now,
-            )
+        self._finish_agent_run(job, status, now)
 
     def _start_agent(
         self,
