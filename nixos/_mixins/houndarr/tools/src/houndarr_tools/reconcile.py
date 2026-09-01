@@ -4,7 +4,8 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 from pathlib import Path
 from typing import Protocol, cast
-from xml.etree import ElementTree
+
+from defusedxml import ElementTree
 
 from .models import CurrentInstance, DesiredInstance, Interface, ManagedPolicy, Value
 

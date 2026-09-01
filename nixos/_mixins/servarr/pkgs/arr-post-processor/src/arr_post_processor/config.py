@@ -1,5 +1,6 @@
-import xml.etree.ElementTree as ET
 from pathlib import Path
+
+from defusedxml import ElementTree as ET
 
 from .errors import PostProcessorError
 

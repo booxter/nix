@@ -26,7 +26,12 @@ class UnifiLegacyClient:
         self.debug = debug
         self.cookie_jar: CookieJar = CookieJar()
 
-        context = ssl.create_default_context() if verify_tls else ssl._create_unverified_context()
+        context = (
+            ssl.create_default_context()
+            if verify_tls
+            # This branch is reachable only through the explicit insecure-TLS option.
+            else ssl._create_unverified_context()  # noqa: S323
+        )
 
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPSHandler(context=context),

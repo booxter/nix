@@ -28,11 +28,31 @@ select = [
   "RET",
   "RSE",
   "RUF",
+  # Enable Bandit's high-signal rule groups while deferring the noisy rules below.
+  "S1",
+  "S2",
+  "S3",
+  "S5",
+  "S6",
+  "S7",
   "SIM",
   "T10",
   "UP",
   "W",
   "YTT",
+]
+ignore = [
+  # Assertions, credential-like literals, temporary paths, and general URL opening need
+  # test/source scoping before they can produce useful findings across the repository.
+  "S101",
+  "S105",
+  "S106",
+  "S108",
+  "S310",
+  # Shell-free process execution and executable lookup need a separate command-runner audit.
+  "S603",
+  "S606",
+  "S607",
 ]
 
 [lint.mccabe]

@@ -25,6 +25,7 @@ pythonPackages.buildPythonApplication {
     aiohttp
     atomicFileWrites
     aiopyarr
+    defusedxml
     hermesRuns
     prometheus-client
     pydantic

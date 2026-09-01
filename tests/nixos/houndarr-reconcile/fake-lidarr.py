@@ -39,7 +39,8 @@ def main() -> None:
 
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(options.certificate, options.key)
-    server = ThreadingHTTPServer(("0.0.0.0", options.port), Handler)
+    # The NixOS VM test client reaches this fake server over the VM network.
+    server = ThreadingHTTPServer(("0.0.0.0", options.port), Handler)  # noqa: S104
     server.socket = context.wrap_socket(server.socket, server_side=True)
     server.serve_forever()
 

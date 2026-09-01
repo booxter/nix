@@ -19,6 +19,7 @@ pythonPackages.buildPythonApplication {
     houndarr
   ]
   ++ (with pythonPackages; [
+    defusedxml
     httpx
     prometheus-client
     pydantic

@@ -147,7 +147,8 @@ def extract_archive(chunks: Iterable[bytes], destination: Path) -> None:
         archive_file.seek(0)
         try:
             with tarfile.open(fileobj=archive_file, mode="r:*") as archive:
-                archive.extractall(destination, filter=archive_filter)
+                # The custom filter delegates every retained member to tarfile.data_filter.
+                archive.extractall(destination, filter=archive_filter)  # noqa: S202
         except (tarfile.TarError, OSError) as error:
             raise Error(f"failed to extract RomM assets into {destination}") from error
 
