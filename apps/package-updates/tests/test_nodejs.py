@@ -29,7 +29,7 @@ def test_selects_newest_compatible_version() -> None:
 
 
 def test_reports_missing_compatible_node_line() -> None:
-    with pytest.raises(ValueError, match="no available nixpkgs Node.js version satisfies"):
+    with pytest.raises(ValueError, match=r"no available nixpkgs Node\.js version satisfies"):
         select_nodejs("23.x", CANDIDATES, "nodejs_24")
 
 

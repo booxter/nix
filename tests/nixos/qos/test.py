@@ -88,7 +88,7 @@ def iperf_rate(machine, target, port, *, user=None, seconds=3):
         "--json",
     ]
     if user is not None:
-        arguments = ["runuser", "--user", user, "--"] + arguments
+        arguments = ["runuser", "--user", user, "--", *arguments]
     result = json_command(machine, arguments)
     summary = result["end"]["sum_sent"]
     return float(summary["bits_per_second"]) / 1_000_000

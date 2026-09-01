@@ -56,7 +56,7 @@ def test_fetches_and_normalizes_work_usage() -> None:
 
 
 def test_rejects_missing_limit_and_account() -> None:
-    with pytest.raises(CodexToolsError, match="Missing spend_control.individual_limit"):
+    with pytest.raises(CodexToolsError, match=r"Missing spend_control\.individual_limit"):
         normalize_work_usage({}, now=0)
 
     with pytest.raises(CodexToolsError, match="account ID is required"):

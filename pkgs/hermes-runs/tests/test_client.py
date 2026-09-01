@@ -187,7 +187,7 @@ def test_http_error_includes_response(events: bool) -> None:
     )
     client = HermesClient("http://localhost:8642", "secret", opener=FakeOpener(error))
 
-    with pytest.raises(HermesError, match='HTTP 401.*"unauthorized"'):
+    with pytest.raises(HermesError, match=r'HTTP 401.*"unauthorized"'):
         if events:
             list(client.watch_run("run_123"))
         else:

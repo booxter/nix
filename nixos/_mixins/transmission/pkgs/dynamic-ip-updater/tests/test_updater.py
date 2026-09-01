@@ -15,7 +15,7 @@ class UpdateHandler(BaseHTTPRequestHandler):
     success = True
     received_cookie = ""
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         type(self).received_cookie = self.headers.get("Cookie", "")
         body = (
             b'{"Success":true,"message":"updated"}'

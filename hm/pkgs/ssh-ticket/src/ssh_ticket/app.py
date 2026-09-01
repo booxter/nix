@@ -434,7 +434,8 @@ def ssht_ssh_command(args: argparse.Namespace, target: Target, paths: TicketPath
         "-o",
         "ControlPath=none",
         target.name,
-    ] + ssh_args
+        *ssh_args,
+    ]
 
 
 def add_target_source_options(parser: argparse.ArgumentParser) -> None:

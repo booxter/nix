@@ -216,7 +216,7 @@ def test_browser_exporter_uses_cookie_library() -> None:
 
 
 def test_browser_exporter_reports_cookie_library_failure() -> None:
-    with pytest.raises(CookieExportError, match="cannot read example.com"):
+    with pytest.raises(CookieExportError, match=r"cannot read example\.com"):
         BrowserCookieExporter(FailingCookieLibrary()).export(
             ExportRequest("example.com", None, None, ()),
             io.StringIO(),

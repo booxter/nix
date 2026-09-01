@@ -296,7 +296,7 @@ def success_registry(sample: AmdgpuSample, duration: float) -> CollectorRegistry
                     temperature.labels(*labels, name).set(converted)
             elif name.endswith("_power"):
                 power.labels(*labels, name).set(gpu_metrics_power(metric_value, revision))
-            elif "_frequency" in name or name.startswith("current_") and name.endswith("clk"):
+            elif "_frequency" in name or (name.startswith("current_") and name.endswith("clk")):
                 clock.labels(*labels, name).set(float(metric_value) * 1000 * 1000)
     return registry
 

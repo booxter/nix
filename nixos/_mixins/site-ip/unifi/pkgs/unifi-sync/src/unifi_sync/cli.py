@@ -125,10 +125,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 classless_static_routes_option_field=classless_static_routes_option_field,
             )
             custom_options_changed = bool(
-                domain_search_option_result is not None
-                and domain_search_option_result["changed"]
-                or classless_static_routes_option_result is not None
-                and classless_static_routes_option_result["changed"]
+                (domain_search_option_result is not None and domain_search_option_result["changed"])
+                or (
+                    classless_static_routes_option_result is not None
+                    and classless_static_routes_option_result["changed"]
+                )
             )
             dhcp_changed = bool(dhcp_payload) or custom_options_changed
             dhcp_result = None
