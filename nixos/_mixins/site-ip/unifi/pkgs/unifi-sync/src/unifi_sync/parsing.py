@@ -119,7 +119,8 @@ def choose_usergroup(groups: list[dict[str, Any]], explicit_id: str) -> dict[str
 def parse_inventory_reservations(raw_json: str) -> list[ReservationSpec]:
     if not raw_json:
         raise UnifiError(
-            "missing inventory reservations; pass --inventory-json or run through the flake app wrapper"
+            "missing inventory reservations; pass --inventory-json or run through "
+            "the flake app wrapper"
         )
 
     try:
@@ -498,7 +499,8 @@ def load_reservations(args: Arguments) -> tuple[str, list[ReservationSpec]]:
     if args.no_reservations_update:
         if args.mac or args.ip or args.hostname:
             raise UnifiError(
-                "use either --no-reservations-update or single-client reservation arguments, not both"
+                "use either --no-reservations-update or single-client reservation "
+                "arguments, not both"
             )
         return "disabled", []
     if args.mac or args.ip or args.hostname:

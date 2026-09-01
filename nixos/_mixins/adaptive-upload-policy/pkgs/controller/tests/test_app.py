@@ -76,7 +76,10 @@ def metrics_server(content):
 def jellyfin_session(*, user, address, media_type="Video", bitrate=None):
     labels = f'user_id="{user}",username="{user}",device="tv",type="{media_type}"'
     lines = [
-        f'jellyfin_user_active{{user_id="{user}",username="{user}",device="tv",ip_address="{address}"}} 1',
+        (
+            f'jellyfin_user_active{{user_id="{user}",username="{user}",device="tv",'
+            f'ip_address="{address}"}} 1'
+        ),
         f"jellyfin_now_playing_state{{{labels}}} 1",
     ]
     if bitrate is not None:

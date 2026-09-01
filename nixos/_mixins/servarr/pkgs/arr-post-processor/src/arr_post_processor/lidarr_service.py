@@ -223,7 +223,8 @@ class LidarrPostProcessorService:
         job.attempts = attempts
         self.store.state.totals.failed += 1
         LOG.exception(
-            "Lidarr post-processing job failed: download_id=%s failure_kind=%s attempt=%s/%s retry_seconds=%s",
+            "Lidarr post-processing job failed: download_id=%s failure_kind=%s "
+            "attempt=%s/%s retry_seconds=%s",
             job.download_id,
             job.failure_kind,
             attempts,
@@ -265,7 +266,8 @@ class LidarrPostProcessorService:
         else:
             self.store.state.totals.source_unavailable += 1
         LOG.warning(
-            "detached failed release from Lidarr while retaining client data: download_id=%s state=%s",
+            "detached failed release from Lidarr while retaining client data: "
+            "download_id=%s state=%s",
             job.download_id,
             failure_kind,
         )
@@ -396,7 +398,8 @@ class LidarrPostProcessorService:
                 if now - updated_at > self.command_timeout_seconds:
                     self.mark_manual_match(
                         job,
-                        "Lidarr manual import completed but the download remained in the activity queue",
+                        "Lidarr manual import completed but the download remained "
+                        "in the activity queue",
                         now,
                     )
                 continue
@@ -506,7 +509,8 @@ class LidarrPostProcessorService:
                     updated_at=now,
                 )
                 LOG.info(
-                    "discovered recoverable Lidarr download: download_id=%s title=%s source=%s settling_seconds=%s",
+                    "discovered recoverable Lidarr download: download_id=%s title=%s "
+                    "source=%s settling_seconds=%s",
                     download_id,
                     record.title,
                     record.output_path,

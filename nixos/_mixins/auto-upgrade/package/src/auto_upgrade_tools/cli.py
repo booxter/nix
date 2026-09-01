@@ -59,7 +59,8 @@ def run(arguments: list[str], stderr: TextIO = sys.stderr) -> int:
             )
         else:
             print(
-                "Booted kernel, initrd, and modules match the current system profile; no reboot needed."
+                "Booted kernel, initrd, and modules match the current system profile; "
+                "no reboot needed."
             )
         return 0
     raise AssertionError(f"unhandled command {args.command}")

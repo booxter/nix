@@ -66,7 +66,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 lookup_ip = reservations[0].fixed_ip
             else:
                 raise UnifiError(
-                    "network settings without DHCP range require reservations or --network-id to choose a network"
+                    "network settings without DHCP range require reservations or --network-id "
+                    "to choose a network"
                 )
             if args.network_id:
                 selected_dhcp_network = next(
@@ -105,7 +106,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             if network_settings.classless_static_routes is not None:
                 if network_settings.classless_static_routes_option is None:
                     raise UnifiError(
-                        "internal error: classless_static_routes present without option specification"
+                        "internal error: classless_static_routes present without "
+                        "option specification"
                     )
                 (
                     classless_static_routes_option_field,

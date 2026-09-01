@@ -195,7 +195,8 @@ class LidarrPipeline:
             for index, transform in enumerate(self.transforms, start=1):
                 if not transform.applies(current):
                     LOG.info(
-                        "skipping transformation: download_id=%s transform=%s reason=not_applicable",
+                        "skipping transformation: download_id=%s transform=%s "
+                        "reason=not_applicable",
                         download_id,
                         transform.name,
                     )
@@ -232,7 +233,8 @@ class LidarrPipeline:
             if not audio_files:
                 raise SourceInvalid("post-processing produced no recognized audio files")
             LOG.info(
-                "transformation pipeline ready for import: download_id=%s transforms=%s tracks=%s path=%s",
+                "transformation pipeline ready for import: download_id=%s transforms=%s "
+                "tracks=%s path=%s",
                 download_id,
                 "+".join(applied),
                 len(audio_files),

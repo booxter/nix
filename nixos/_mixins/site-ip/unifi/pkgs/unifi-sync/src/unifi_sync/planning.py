@@ -277,18 +277,21 @@ def choose_existing_dhcp_option(
         return exact_matches[0]
     if len(exact_matches) > 1:
         raise UnifiError(
-            f"multiple UniFi DHCP option definitions match code {desired.code} and name {desired.name}"
+            f"multiple UniFi DHCP option definitions match code {desired.code} "
+            f"and name {desired.name}"
         )
 
     if len(candidates) == 1:
         return candidates[0]
 
     choices = ", ".join(
-        f"{option.get('name', '<unnamed>')}({_id(option)} type={option.get('type')} signed={option.get('signed')})"
+        f"{option.get('name', '<unnamed>')}({_id(option)} "
+        f"type={option.get('type')} signed={option.get('signed')})"
         for option in candidates
     )
     raise UnifiError(
-        f"multiple UniFi DHCP option definitions share code {desired.code}; refine the desired definition. "
+        f"multiple UniFi DHCP option definitions share code {desired.code}; "
+        "refine the desired definition. "
         f"Available: {choices}"
     )
 
