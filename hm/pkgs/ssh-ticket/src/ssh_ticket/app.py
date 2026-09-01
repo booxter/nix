@@ -48,7 +48,7 @@ def format_duration(seconds: int) -> str:
 
 
 def expand_path(value: str | os.PathLike[str]) -> pathlib.Path:
-    return pathlib.Path(os.path.expandvars(os.path.expanduser(value))).resolve()
+    return pathlib.Path(os.path.expandvars(os.fspath(value))).expanduser().resolve()
 
 
 def default_state_dir() -> pathlib.Path:

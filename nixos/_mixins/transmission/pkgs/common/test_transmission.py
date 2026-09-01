@@ -113,12 +113,14 @@ class TransmissionRpcClientTests(unittest.TestCase):
             "http://127.0.0.1:9091/transmission/rpc",
             timeout_seconds=20.0,
         )
-        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
-            with self.assertRaisesRegex(
+        with (
+            patch("urllib.request.urlopen", side_effect=fake_urlopen),
+            self.assertRaisesRegex(
                 TransmissionRpcError,
                 "method failed: bad field",
-            ):
-                client.call("torrent_set")
+            ),
+        ):
+            client.call("torrent_set")
 
 
 class TrackerHostTests(unittest.TestCase):

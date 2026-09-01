@@ -181,14 +181,14 @@ def convert_path(
         try:
             runner.convert(source, temporary_epub)
             validate_epub(temporary_epub)
-            os.chmod(temporary_epub, source_mode)
+            temporary_epub.chmod(source_mode)
             with temporary_epub.open("rb") as output_file:
                 os.fsync(output_file.fileno())
             if destination.exists():
                 raise EbookConverterError(
                     f"refusing to replace EPUB created during conversion: {destination}"
                 )
-            os.replace(temporary_epub, destination)
+            temporary_epub.replace(destination)
             source.unlink()
         except Exception:
             temporary_epub.unlink(missing_ok=True)

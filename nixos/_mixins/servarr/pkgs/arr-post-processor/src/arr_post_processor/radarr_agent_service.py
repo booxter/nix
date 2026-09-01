@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import shutil
 import time
@@ -126,10 +127,8 @@ class RadarrAgentService:
                 continue
             if expected.exists():
                 shutil.rmtree(expected)
-            try:
+            with contextlib.suppress(OSError):
                 expected.parent.rmdir()
-            except OSError:
-                pass
         self.store.state.retained_artifacts = retained
 
     def _mark_failure(self, job: RepairJob, kind: FailureKind, error: str, now: float) -> None:
@@ -183,10 +182,8 @@ class RadarrAgentService:
             raise NeedsAttention(f"refusing to remove an unsafe task path: {job.task_root}")
         if expected.exists():
             shutil.rmtree(expected)
-        try:
+        with contextlib.suppress(OSError):
             expected.parent.rmdir()
-        except OSError:
-            pass
         job.task_root = None
         job.candidate = None
 

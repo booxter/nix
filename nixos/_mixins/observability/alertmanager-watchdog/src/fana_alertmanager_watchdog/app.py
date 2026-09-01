@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import html
 import os
 import ssl
@@ -149,10 +150,8 @@ def read_secret(path: Path) -> str:
 
 
 def remove_file(path: Path) -> None:
-    try:
+    with contextlib.suppress(FileNotFoundError):
         path.unlink()
-    except FileNotFoundError:
-        pass
 
 
 def credential_path(name: str, explicit_path: str | None, environment: Mapping[str, str]) -> Path:

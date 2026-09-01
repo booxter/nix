@@ -29,9 +29,13 @@ def normalize_flake_ref(source: str) -> str:
     candidate = source if "://" in source else f"https://{source}"
     parsed = urlparse(candidate)
     parts = parsed.path.strip("/").split("/")
-    if parsed.hostname == "github.com" and len(parts) >= 4 and parts[2] == "pull":
-        if parts[3].isdigit():
-            return f"github:{parts[0]}/{parts[1]}?ref=pull/{parts[3]}/head"
+    if (
+        parsed.hostname == "github.com"
+        and len(parts) >= 4
+        and parts[2] == "pull"
+        and parts[3].isdigit()
+    ):
+        return f"github:{parts[0]}/{parts[1]}?ref=pull/{parts[3]}/head"
     return source
 
 

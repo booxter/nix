@@ -81,10 +81,9 @@ def test_atomic_path_preserves_existing_file_when_writer_fails(tmp_path: Path) -
     path = tmp_path / "state.txt"
     path.write_text("old")
 
-    with pytest.raises(RuntimeError, match="failed"):
-        with atomic_path(path) as temporary:
-            temporary.write_text("incomplete")
-            raise RuntimeError("writer failed")
+    with pytest.raises(RuntimeError, match="failed"), atomic_path(path) as temporary:
+        temporary.write_text("incomplete")
+        raise RuntimeError("writer failed")
 
     assert path.read_text() == "old"
     assert list(path.parent.iterdir()) == [path]

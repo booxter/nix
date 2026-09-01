@@ -49,7 +49,7 @@ def atomic_path(
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
-        os.replace(temporary, path)
+        temporary.replace(path)
         _sync_directory(path.parent)
     finally:
         temporary.unlink(missing_ok=True)

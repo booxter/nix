@@ -26,10 +26,7 @@ class UnifiLegacyClient:
         self.debug = debug
         self.cookie_jar: CookieJar = CookieJar()
 
-        if verify_tls:
-            context = ssl.create_default_context()
-        else:
-            context = ssl._create_unverified_context()
+        context = ssl.create_default_context() if verify_tls else ssl._create_unverified_context()
 
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPSHandler(context=context),

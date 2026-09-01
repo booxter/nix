@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from uuid import UUID
 
@@ -200,4 +199,4 @@ def test_candidate_file_mode_is_not_changed(tmp_path: Path) -> None:
 
     load_repair_result(tmp_path, task())
 
-    assert os.stat(candidate).st_mode & 0o777 == 0o640
+    assert candidate.stat().st_mode & 0o777 == 0o640

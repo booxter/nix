@@ -1,11 +1,12 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 
 class Handler(BaseHTTPRequestHandler):
     def handle_request(self):
         content_length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(content_length) if content_length else b""
-        with open("/tmp/fake-oauth2-backend.log", "a", encoding="utf-8") as log:
+        with Path("/tmp/fake-oauth2-backend.log").open("a", encoding="utf-8") as log:
             log.write(f"{self.command} {self.path} body={len(body)}\n")
 
         if self.path == "/native-401":

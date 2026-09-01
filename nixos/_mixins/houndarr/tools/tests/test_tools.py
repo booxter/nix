@@ -98,9 +98,11 @@ def test_status_counts_only_enabled_instances_with_active_errors() -> None:
             {"enabled": False, "active_error": True},
         ]
     }
-    with api_server({"/api/status": [(200, body)]}) as (base_url, state):
-        with httpx.Client() as client:
-            snapshot = collect_status(client, f"{base_url}/api/status", now=123)
+    with (
+        api_server({"/api/status": [(200, body)]}) as (base_url, state),
+        httpx.Client() as client,
+    ):
+        snapshot = collect_status(client, f"{base_url}/api/status", now=123)
 
     assert snapshot.ok
     assert snapshot.enabled_instances == 2

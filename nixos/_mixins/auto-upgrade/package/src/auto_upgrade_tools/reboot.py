@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,7 +12,7 @@ REBOOT_MESSAGE = "Rebooting to activate staged NixOS kernel, initrd, or module u
 
 
 def system_link_targets(profile: Path) -> tuple[str, ...]:
-    return tuple(os.readlink(profile / name) for name in SYSTEM_LINKS)
+    return tuple(str((profile / name).readlink()) for name in SYSTEM_LINKS)
 
 
 def reboot_required(booted_system: Path, current_system: Path) -> bool:

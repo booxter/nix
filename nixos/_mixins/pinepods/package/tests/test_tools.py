@@ -142,26 +142,24 @@ def test_bootstrap_times_out_when_setup_api_stays_unavailable() -> None:
     state = ApiState(self_service=[(503, {})])
     with api_server(state) as base_url:
         client, pinepods = api(base_url)
-        with client:
-            with pytest.raises(PinepodsServiceError, match="Timed out"):
-                bootstrap_admin(
-                    pinepods,
-                    CreateAdminRequest(
-                        username="admin",
-                        fullname="Admin User",
-                        email="admin@example.test",
-                        password="secret",
-                    ),
-                    attempts=2,
-                    interval=2,
-                    sleep=lambda _: None,
-                )
+        with client, pytest.raises(PinepodsServiceError, match="Timed out"):
+            bootstrap_admin(
+                pinepods,
+                CreateAdminRequest(
+                    username="admin",
+                    fullname="Admin User",
+                    email="admin@example.test",
+                    password="secret",
+                ),
+                attempts=2,
+                interval=2,
+                sleep=lambda _: None,
+            )
 
 
 def test_api_rejects_invalid_self_service_state() -> None:
     state = ApiState(self_service=[(200, {"first_admin_created": "invalid"})])
     with api_server(state) as base_url:
         client, pinepods = api(base_url)
-        with client:
-            with pytest.raises(PinepodsApiError, match="invalid self-service"):
-                pinepods.self_service_status()
+        with client, pytest.raises(PinepodsApiError, match="invalid self-service"):
+            pinepods.self_service_status()

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -221,7 +220,7 @@ class LidarrPipeline:
             if not applied:
                 raise PostProcessorError("no Lidarr transformation is applicable")
             relative_result = current.relative_to(partial_root.resolve())
-            os.replace(partial_root, ready_root)
+            partial_root.replace(ready_root)
             final_root = (ready_root / relative_result).resolve()
             audio_files = tuple(
                 sorted(

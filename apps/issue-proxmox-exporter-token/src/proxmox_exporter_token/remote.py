@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 from collections.abc import Sequence
@@ -34,10 +35,8 @@ class PveumClient:
             self._run("user", "add", user, "--comment", comment)
         self._run("aclmod", acl_path, "-user", user, "-role", role)
         if replace:
-            try:
+            with contextlib.suppress(CommandError):
                 self._run("user", "token", "remove", user, token_name)
-            except CommandError:
-                pass
         output = self._run(
             "user",
             "token",

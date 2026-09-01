@@ -93,12 +93,11 @@ def test_initializes_database_and_verifies_escaped_credentials(mariadb_socket: P
     assert failures == {}
 
     password = passwords[-1]
-    with connect_as_romm(mariadb_socket, password) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("CREATE TABLE native_test (value INTEGER NOT NULL)")
-            cursor.execute("INSERT INTO native_test VALUES (42)")
-            cursor.execute("SELECT value FROM native_test")
-            assert cursor.fetchone() == (42,)
+    with connect_as_romm(mariadb_socket, password) as connection, connection.cursor() as cursor:
+        cursor.execute("CREATE TABLE native_test (value INTEGER NOT NULL)")
+        cursor.execute("INSERT INTO native_test VALUES (42)")
+        cursor.execute("SELECT value FROM native_test")
+        assert cursor.fetchone() == (42,)
 
 
 def test_rerun_rotates_existing_account_password(mariadb_socket: Path) -> None:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -491,7 +490,7 @@ def test_unifi_service_writes_secure_import_files(tmp_path: Path):
     )
     assert (tmp_path / "console.crt").read_text() == "certificate\n"
     assert (tmp_path / "console.key").read_text() == "private-key\n"
-    assert os.stat(tmp_path / "console.key").st_mode & 0o777 == 0o600
+    assert (tmp_path / "console.key").stat().st_mode & 0o777 == 0o600
     with pytest.raises(ToolError, match="refusing to overwrite"):
         service.issue(
             ca_host="authority-node",

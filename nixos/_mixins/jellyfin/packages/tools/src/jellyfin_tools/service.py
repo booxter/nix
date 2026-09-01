@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -111,7 +110,7 @@ def create_backup_artifact(
 
     destination = staging_dir / source.name
     shutil.copyfile(source, destination)
-    os.chmod(destination, 0o640)
+    destination.chmod(0o640)
     return BackupResult(
         destination=destination,
         removed_staging=prune_archives(staging_dir, keep_staging),

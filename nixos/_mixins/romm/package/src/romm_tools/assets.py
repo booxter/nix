@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import sys
 import tarfile
@@ -169,16 +168,16 @@ def publish(paths: AssetPaths) -> None:
     try:
         for current, previous in zip(paths.current, paths.previous, strict=True):
             if current.exists() or current.is_symlink():
-                os.replace(current, previous)
+                current.replace(previous)
                 backed_up.append((current, previous))
         for staging, current in zip(paths.staging, paths.current, strict=True):
-            os.replace(staging, current)
+            staging.replace(current)
             published.append(current)
     except OSError as error:
         for current in reversed(published):
             remove_path(current)
         for current, previous in reversed(backed_up):
-            os.replace(previous, current)
+            previous.replace(current)
         raise Error("failed to publish RomM integration assets") from error
     else:
         for previous in paths.previous:

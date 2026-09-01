@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -492,7 +491,7 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
 
 def write_registry(path: Path, registry: CollectorRegistry) -> None:
     write_to_textfile(str(path), registry)
-    os.chmod(path, 0o644)
+    path.chmod(0o644)
 
 
 def write_health_metrics(

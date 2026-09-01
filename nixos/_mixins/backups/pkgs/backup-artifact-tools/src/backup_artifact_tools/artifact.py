@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import pwd
 import shutil
 import sqlite3
@@ -118,13 +117,13 @@ def create_artifact(
         created_at = staging / "created-at.txt"
         created_at.write_text(timestamp.isoformat(timespec="seconds") + "\n", encoding="utf-8")
 
-        os.replace(primary, config.destination_dir / primary.name)
+        primary.replace(config.destination_dir / primary.name)
         for staged in extra_files:
             relative = staged.relative_to(staging)
             destination = config.destination_dir / relative
             _prepare_directory(destination.parent)
-            os.replace(staged, destination)
-        os.replace(created_at, config.destination_dir / created_at.name)
+            staged.replace(destination)
+        created_at.replace(config.destination_dir / created_at.name)
 
 
 def destination_filename(config: Artifact) -> str:
