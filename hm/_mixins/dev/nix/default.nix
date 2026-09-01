@@ -8,7 +8,7 @@
 let
   nixPkgs = import ./pkgs { inherit pkgs; };
   nr = nixPkgs.nr.override {
-    builders = osConfig.host.nix.nixpkgs-review.builders;
+    builders = osConfig.host.nix.nixpkgs.builders;
   };
 in
 lib.mkIf config.host.hm.env.roles.developer {

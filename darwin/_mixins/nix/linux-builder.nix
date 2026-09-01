@@ -13,7 +13,7 @@ in
   '';
 
   config = {
-    host.nix.nixpkgs-review.additional-builders = lib.filter (
+    host.nix.nixpkgs.additional-builders = lib.filter (
       builder: builder.hostName == "linux-builder"
     ) config.nix.buildMachines;
 
