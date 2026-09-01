@@ -341,6 +341,21 @@ def test_approval_request_is_stopped_and_never_approved(tmp_path: Path) -> None:
     assert job.failure_kind is FailureKind.APPROVAL_REQUIRED
 
 
+def test_stop_grace_expiry_is_terminal_when_agent_ignores_stop(tmp_path: Path) -> None:
+    service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    start_attempt(service, store, clock)
+    hermes.state = RunState.WAITING_FOR_APPROVAL
+    service.iteration()
+    hermes.state = RunState.RUNNING
+    clock.value += 300
+
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.APPROVAL_REQUIRED
+
+
 def test_missing_api_status_recovers_a_durable_manifest(tmp_path: Path) -> None:
     service, _radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
     start_attempt(service, store, clock)
@@ -584,3 +599,23 @@ def test_restart_does_not_repeat_ambiguous_import_submission(tmp_path: Path) -> 
     assert job.status is JobStatus.NEEDS_ATTENTION
     assert job.failure_kind is FailureKind.IMPORT_FAILED
     assert radarr.imported is None
+
+
+def test_audit_io_failure_after_import_needs_attention(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, _verifier = service_fixture(tmp_path)
+    start_attempt(service, store, clock)
+    finish_agent(service, radarr, hermes, store)
+    service.iteration()
+    radarr.command_status = CommandStatus(id=9, status="completed")
+    service.iteration()
+    (tmp_path / "audit").write_text("not a directory")
+    radarr.records = []
+
+    service.iteration()
+    service.iteration()
+    service.iteration()
+
+    job = store.state.jobs["download-id"]
+    assert job.status is JobStatus.NEEDS_ATTENTION
+    assert job.failure_kind is FailureKind.IMPORT_FAILED
+    assert store.state.totals.import_failed == 1

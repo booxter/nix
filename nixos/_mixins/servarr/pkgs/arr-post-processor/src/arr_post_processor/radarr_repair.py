@@ -135,6 +135,12 @@ def load_repair_result(task_root: Path, expected: RepairTask) -> ValidatedRepair
     report_path = root / REPORT_FILE_NAME
     if report_path.is_symlink() or not report_path.is_file():
         raise NeedsAttention("repair report is missing or is not a regular file")
+    try:
+        report_mode = report_path.stat().st_mode
+    except OSError as error:
+        raise NeedsAttention(f"cannot inspect repair report: {error}") from error
+    if not report_mode & 0o040:
+        raise NeedsAttention("repair report is not group-readable")
     if result.outcome is RepairOutcome.UNRESOLVED:
         return ValidatedRepairResult(result=result, candidate=None)
 

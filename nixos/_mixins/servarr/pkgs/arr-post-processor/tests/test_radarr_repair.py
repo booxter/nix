@@ -153,6 +153,17 @@ def test_result_validation_requires_report(tmp_path: Path) -> None:
         load_repair_result(tmp_path, task())
 
 
+def test_result_validation_requires_group_readable_report(tmp_path: Path) -> None:
+    candidate = tmp_path / "Test Movie (2020).mkv"
+    candidate.write_bytes(b"media")
+    candidate.chmod(0o660)
+    write_result(tmp_path, result_payload())
+    (tmp_path / "report.md").chmod(0o600)
+
+    with pytest.raises(NeedsAttention, match="report is not group-readable"):
+        load_repair_result(tmp_path, task())
+
+
 def test_result_validation_rejects_symlinks(tmp_path: Path) -> None:
     outside = tmp_path.parent / f"{tmp_path.name}-outside.mkv"
     outside.write_bytes(b"media")

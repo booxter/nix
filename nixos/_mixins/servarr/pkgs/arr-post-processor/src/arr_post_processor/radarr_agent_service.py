@@ -194,7 +194,7 @@ class RadarrAgentService:
         try:
             self._archive_attempt(job)
             self._cleanup_task(job)
-        except PostProcessorError as error:
+        except (OSError, PostProcessorError) as error:
             self._mark_failure(job, FailureKind.IMPORT_FAILED, str(error), now)
             return
         job.status = JobStatus.COMPLETE
@@ -484,6 +484,20 @@ class RadarrAgentService:
             return
 
         if status.state in {RunState.QUEUED, RunState.RUNNING, RunState.STOPPING}:
+            if (
+                job.status is JobStatus.AGENT_STOPPING
+                and job.stop_deadline_at is not None
+                and now >= job.stop_deadline_at
+            ):
+                if job.dismiss_requested:
+                    self._mark_manual_resolved(job, now)
+                else:
+                    self._mark_failure(
+                        job,
+                        job.pending_failure_kind or FailureKind.AGENT_LOST,
+                        job.error or "Hermes did not stop the repair run",
+                        now,
+                    )
             return
         if status.state is RunState.WAITING_FOR_APPROVAL:
             self._request_stop(
