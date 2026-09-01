@@ -52,6 +52,7 @@ in
           "memory"
           "terminal"
         ];
+        settings.approvals.mode = "off";
         settings.auxiliary.title_generation.enabled = false;
         filesystem = {
           hidden = [ mediaDir ];
