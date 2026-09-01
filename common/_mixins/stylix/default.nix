@@ -1,8 +1,14 @@
-{ config, pkgs, ... }:
+{
+  config,
+  inputs,
+  pkgs,
+  ...
+}:
 {
   stylix = {
     enable = config.host.desktop != null;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-hard.yaml";
+    # Read the scheme from a source input so evaluation does not require IFD.
+    base16Scheme = "${inputs.stylix.inputs.tinted-schemes}/base16/gruvbox-dark-hard.yaml";
     polarity = "dark";
 
     fonts = {
