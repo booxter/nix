@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 JsonObject = dict[str, object]
+DEFAULT_EVENT_TIMEOUT_SECONDS = 60.0
 
 
 class HermesError(Exception):
@@ -107,11 +108,15 @@ class HermesClient:
         api_key: str,
         *,
         timeout_seconds: float = 20.0,
+        event_timeout_seconds: float = DEFAULT_EVENT_TIMEOUT_SECONDS,
         opener: Opener | None = None,
     ) -> None:
         self._api_url = api_url.rstrip("/")
         self._api_key = api_key
         self._timeout_seconds = timeout_seconds
+        # Hermes sends an SSE keepalive every 30 seconds, so event streams need
+        # a longer idle timeout than ordinary API requests.
+        self._event_timeout_seconds = event_timeout_seconds
         self._opener = opener or cast(Opener, urlopen)
 
     def _request(self, method: str, path: str, body: JsonObject | None = None) -> Request:
@@ -150,11 +155,13 @@ class HermesClient:
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         request = self._request("GET", f"/v1/runs/{run_id}/events")
         try:
-            with self._opener(request, timeout=self._timeout_seconds) as response:
+            with self._opener(request, timeout=self._event_timeout_seconds) as response:
                 yield from parse_sse(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
             raise HermesHttpError(error.code, detail) from error
+        except TimeoutError as error:
+            raise HermesError("Hermes event stream timed out") from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
 

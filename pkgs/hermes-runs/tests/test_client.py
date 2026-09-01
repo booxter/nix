@@ -96,13 +96,28 @@ def test_request_rejects_non_object_response() -> None:
 
 
 def test_events_parse_stream() -> None:
+    opener = FakeOpener(b'data: {"event": "run.completed"}\n\n')
     client = HermesClient(
         "http://localhost:8642",
         "secret",
-        opener=FakeOpener(b'data: {"event": "run.completed"}\n\n'),
+        timeout_seconds=7.5,
+        event_timeout_seconds=65.0,
+        opener=opener,
     )
 
     assert list(client.watch_run("run_123")) == [{"event": "run.completed"}]
+    assert opener.timeouts == [65.0]
+
+
+def test_events_report_timeout() -> None:
+    client = HermesClient(
+        "http://localhost:8642",
+        "secret",
+        opener=FakeOpener(TimeoutError()),
+    )
+
+    with pytest.raises(HermesError, match="event stream timed out"):
+        list(client.watch_run("run_123"))
 
 
 def test_run_operations_map_to_api_endpoints() -> None:
