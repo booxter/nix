@@ -5,13 +5,14 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Callable, Protocol
 
 from pydantic import BaseModel, Field, ValidationError
 
 from .errors import NeedsAttention, SourceInvalid
 from .media import is_within, safe_component
+from .radarr_source import LocatedSource, SourceRoot, source_fingerprint
 from .radarr_models import RadarrMovie, RadarrQueueRecord
 
 
@@ -281,25 +282,14 @@ def build_single_file_plan(
 
 
 def download_fingerprint(output_path: Path) -> str:
-    if output_path.is_file():
-        try:
-            stat = output_path.stat()
-        except OSError as error:
-            return f"unreadable:{output_path}:{error}"
-        entry = f"{output_path.name}\0{stat.st_size}\0{stat.st_mtime_ns}"
-        return hashlib.sha256(entry.encode()).hexdigest()
-    if not output_path.is_dir():
-        return f"missing:{output_path}"
-    entries = []
-    try:
-        for path in sorted(output_path.rglob("*")):
-            if not path.is_file():
-                continue
-            stat = path.stat()
-            entries.append(f"{path.relative_to(output_path)}\0{stat.st_size}\0{stat.st_mtime_ns}")
-    except OSError as error:
-        return f"unreadable:{output_path}:{error}"
-    return hashlib.sha256("\n".join(entries).encode()).hexdigest()
+    resolved = output_path.resolve(strict=True)
+    root = resolved if resolved.is_dir() else resolved.parent
+    source = LocatedSource(
+        host_path=resolved,
+        workspace_path=PurePosixPath("input", "legacy", resolved.name),
+        root=SourceRoot(name="legacy", host_path=root),
+    )
+    return source_fingerprint(source)
 
 
 def safe_output_name(record: RadarrQueueRecord, movie: RadarrMovie, extension: str) -> str:

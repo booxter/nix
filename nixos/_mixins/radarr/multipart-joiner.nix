@@ -8,6 +8,7 @@ let
   cfg = config.host.radarr;
   package = pkgs.callPackage ../servarr/pkgs/arr-post-processor {
     atomicFileWrites = pkgs.atomic-file-writes;
+    hermesRuns = pkgs.hermes-runs;
     joinMediaParts = pkgs.join-media-parts;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;

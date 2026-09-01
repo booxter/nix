@@ -2,6 +2,7 @@
   atomicFileWrites,
   ffmpeg,
   flac,
+  hermesRuns,
   joinMediaParts,
   lib,
   python3,
@@ -25,6 +26,7 @@ pythonPackages.buildPythonApplication {
     aiohttp
     atomicFileWrites
     aiopyarr
+    hermesRuns
     prometheus-client
     pydantic
     rarfile
