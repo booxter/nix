@@ -243,61 +243,61 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 			}},
 		}))
 
-	joinSummary := layout.row(5, 6, 6, 6, 6)
+	repairSummary := layout.row(5, 6, 6, 6, 6)
 	builder.WithPanel(availabilityStat(AvailabilityStatOptions{
-		ID: joinSummary[0].ID, Grid: joinSummary[0].Grid, Title: "Radarr Multipart Joiner Health",
-		Expression: "max(" + node("host_observability_radarr_multipart_joiner_ok") + ") or vector(0)",
+		ID: repairSummary[0].ID, Grid: repairSummary[0].Grid, Title: "Radarr Post-Processor Health",
+		Expression: "max(" + node("host_observability_radarr_post_processor_ok") + ") or vector(0)",
 		Legend:     "health", DataSource: datasource,
 	}))
-	joinStats := []struct {
+	repairStats := []struct {
 		title      string
 		expression string
 		thresholds *dashboard.ThresholdsConfigBuilder
 	}{
 		{
-			title: "Multipart Jobs In Flight",
-			expression: "sum(" + node("host_observability_radarr_multipart_joiner_jobs",
-				`state=~"settling|joining|matching|importing|awaiting_queue_removal"`) + ") or vector(0)",
+			title: "Repair Jobs In Flight",
+			expression: "sum(" + node("host_observability_radarr_post_processor_jobs",
+				`state=~"settling|agent_starting|agent_running|agent_stopping|ready|importing|awaiting_queue_removal"`) + ") or vector(0)",
 			thresholds: absoluteThresholds(
 				dashboard.Threshold{Color: "green", Value: nil},
 				dashboard.Threshold{Color: "blue", Value: ptr(1.0)},
 			),
 		},
 		{
-			title: "Multipart Jobs Needing Attention",
-			expression: "sum(" + node("host_observability_radarr_multipart_joiner_jobs",
-				`state="awaiting_manual_match"`) + ") or vector(0)",
+			title: "Repair Jobs Needing Attention",
+			expression: "sum(" + node("host_observability_radarr_post_processor_jobs",
+				`state="needs_attention"`) + ") or vector(0)",
 			thresholds: greenToRedThreshold(1),
 		},
 		{
-			title: "Multipart Downloads Ignored",
-			expression: "sum(" + node("host_observability_radarr_multipart_joiner_jobs",
-				`state="ignored"`) + ") or vector(0)",
+			title: "Successful Repairs",
+			expression: "sum(" + node("host_observability_radarr_post_processor_jobs_total",
+				`result="success"`) + ") or vector(0)",
 			thresholds: absoluteThresholds(dashboard.Threshold{Color: "green", Value: nil}),
 		},
 	}
-	for index, definition := range joinStats {
-		placement := joinSummary[index+1]
+	for index, definition := range repairStats {
+		placement := repairSummary[index+1]
 		builder.WithPanel(valueStat(ValueStatOptions{
 			ID: placement.ID, Grid: placement.Grid, Title: definition.title,
 			Expression: definition.expression, Legend: "", Unit: units.Short,
 			DataSource: datasource, Thresholds: definition.thresholds,
 		}))
 	}
-	joinSeries := layout.row(8, 12, 12)
+	repairSeries := layout.row(8, 12, 12)
 	builder.
 		WithPanel(timeSeries(TimeseriesOptions{
-			ID: joinSeries[0].ID, Grid: joinSeries[0].Grid, Title: "Radarr Multipart Joiner Job States",
-			Unit: units.Short, DataSource: datasource, Min: ptr(0.0), Stacking: "join-states", Fill: &fill,
+			ID: repairSeries[0].ID, Grid: repairSeries[0].Grid, Title: "Radarr Post-Processor Job States",
+			Unit: units.Short, DataSource: datasource, Min: ptr(0.0), Stacking: "repair-states", Fill: &fill,
 			Targets: []PrometheusTarget{{
-				RefID: "A", Expression: node("host_observability_radarr_multipart_joiner_jobs"), Legend: "{{state}}",
+				RefID: "A", Expression: node("host_observability_radarr_post_processor_jobs"), Legend: "{{state}}",
 			}},
 		})).
 		WithPanel(timeSeries(TimeseriesOptions{
-			ID: joinSeries[1].ID, Grid: joinSeries[1].Grid, Title: "Radarr Multipart Joiner Outcomes",
+			ID: repairSeries[1].ID, Grid: repairSeries[1].Grid, Title: "Radarr Repair Outcomes",
 			Unit: units.Short, DataSource: datasource, Min: ptr(0.0),
 			Targets: []PrometheusTarget{{
-				RefID: "A", Expression: "increase(" + node("host_observability_radarr_multipart_joiner_jobs_total") + "[$__rate_interval])", Legend: "{{result}}",
+				RefID: "A", Expression: "increase(" + node("host_observability_radarr_post_processor_jobs_total") + "[$__rate_interval])", Legend: "{{result}}",
 			}},
 		}))
 

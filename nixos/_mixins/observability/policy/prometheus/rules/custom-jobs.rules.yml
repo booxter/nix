@@ -110,42 +110,42 @@ groups:
         annotations:
           summary: "Lidarr post-processing job needs attention on srvarr"
           description: "At least one Lidarr post-processing job on srvarr has remained failed or its automated resolution failed for 15 minutes."
-      - alert: RadarrMultipartJoinerServiceDown
+      - alert: RadarrPostProcessorServiceDown
         expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-radarr.service",state="active"} < 1
         for: 5m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr multipart joiner service down on srvarr"
-          description: "The Radarr multipart joiner service on srvarr has not been active for 5 minutes."
-      - alert: RadarrMultipartJoinerIterationFailed
-        expr: host_observability_radarr_multipart_joiner_ok{job="node-mtls",instance="srvarr"} < 1
+          summary: "Radarr post-processor service down on srvarr"
+          description: "The Radarr post-processor service on srvarr has not been active for 5 minutes."
+      - alert: RadarrPostProcessorIterationFailed
+        expr: host_observability_radarr_post_processor_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr multipart joiner failing on srvarr"
-          description: "The Radarr multipart joiner on srvarr has been reporting unsuccessful iterations for 10 minutes."
-      - alert: RadarrMultipartJoinerMetricsStale
+          summary: "Radarr post-processor failing on srvarr"
+          description: "The Radarr post-processor on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: RadarrPostProcessorMetricsStale
         expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr/arr-post-processor-radarr.prom"}) > 300
         for: 5m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr multipart joiner metrics stale on srvarr"
-          description: "The Radarr multipart joiner metrics file on srvarr has not been refreshed for more than 5 minutes."
-      - alert: RadarrMultipartJoinerJobNeedsAttention
-        expr: host_observability_radarr_multipart_joiner_jobs{job="node-mtls",instance="srvarr",state="awaiting_manual_match"} > 0
+          summary: "Radarr post-processor metrics stale on srvarr"
+          description: "The Radarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: RadarrPostProcessorJobNeedsAttention
+        expr: host_observability_radarr_post_processor_jobs{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
         for: 15m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Radarr multipart join job needs attention on srvarr"
-          description: "At least one Radarr multipart join job on srvarr has required manual attention for 15 minutes."
+          summary: "Radarr repair job needs attention on srvarr"
+          description: "At least one Radarr repair handoff on srvarr has required attention for 15 minutes."
       - alert: EbookConverterIterationFailed
         expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m

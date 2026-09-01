@@ -278,12 +278,12 @@ tests:
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: RadarrMultipartJoinerServiceDown
+        alertname: RadarrPostProcessorServiceDown
       - eval_time: 5m
-        alertname: RadarrMultipartJoinerServiceDown
+        alertname: RadarrPostProcessorServiceDown
         exp_alerts:
           - exp_labels:
-              alertname: RadarrMultipartJoinerServiceDown
+              alertname: RadarrPostProcessorServiceDown
               category: media
               instance: srvarr
               job: node-mtls
@@ -291,28 +291,28 @@ tests:
               severity: warning
               state: active
             exp_annotations:
-              summary: "Radarr multipart joiner service down on srvarr"
-              description: "The Radarr multipart joiner service on srvarr has not been active for 5 minutes."
+              summary: "Radarr post-processor service down on srvarr"
+              description: "The Radarr post-processor service on srvarr has not been active for 5 minutes."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_radarr_multipart_joiner_ok{instance="srvarr",job="node-mtls"}'
+      - series: 'host_observability_radarr_post_processor_ok{instance="srvarr",job="node-mtls"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
-        alertname: RadarrMultipartJoinerIterationFailed
+        alertname: RadarrPostProcessorIterationFailed
       - eval_time: 10m
-        alertname: RadarrMultipartJoinerIterationFailed
+        alertname: RadarrPostProcessorIterationFailed
         exp_alerts:
           - exp_labels:
-              alertname: RadarrMultipartJoinerIterationFailed
+              alertname: RadarrPostProcessorIterationFailed
               category: media
               instance: srvarr
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Radarr multipart joiner failing on srvarr"
-              description: "The Radarr multipart joiner on srvarr has been reporting unsuccessful iterations for 10 minutes."
+              summary: "Radarr post-processor failing on srvarr"
+              description: "The Radarr post-processor on srvarr has been reporting unsuccessful iterations for 10 minutes."
 
   - interval: 30s
     input_series:
@@ -320,41 +320,41 @@ tests:
         values: "0x22"
     alert_rule_test:
       - eval_time: 10m
-        alertname: RadarrMultipartJoinerMetricsStale
+        alertname: RadarrPostProcessorMetricsStale
       - eval_time: 10m30s
-        alertname: RadarrMultipartJoinerMetricsStale
+        alertname: RadarrPostProcessorMetricsStale
         exp_alerts:
           - exp_labels:
-              alertname: RadarrMultipartJoinerMetricsStale
+              alertname: RadarrPostProcessorMetricsStale
               category: media
               file: /var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr/arr-post-processor-radarr.prom
               instance: srvarr
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Radarr multipart joiner metrics stale on srvarr"
-              description: "The Radarr multipart joiner metrics file on srvarr has not been refreshed for more than 5 minutes."
+              summary: "Radarr post-processor metrics stale on srvarr"
+              description: "The Radarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_radarr_multipart_joiner_jobs{instance="srvarr",job="node-mtls",state="awaiting_manual_match"}'
+      - series: 'host_observability_radarr_post_processor_jobs{instance="srvarr",job="node-mtls",state="needs_attention"}'
         values: "1x32"
     alert_rule_test:
       - eval_time: 14m30s
-        alertname: RadarrMultipartJoinerJobNeedsAttention
+        alertname: RadarrPostProcessorJobNeedsAttention
       - eval_time: 15m
-        alertname: RadarrMultipartJoinerJobNeedsAttention
+        alertname: RadarrPostProcessorJobNeedsAttention
         exp_alerts:
           - exp_labels:
-              alertname: RadarrMultipartJoinerJobNeedsAttention
+              alertname: RadarrPostProcessorJobNeedsAttention
               category: media
               instance: srvarr
               job: node-mtls
               severity: warning
-              state: awaiting_manual_match
+              state: needs_attention
             exp_annotations:
-              summary: "Radarr multipart join job needs attention on srvarr"
-              description: "At least one Radarr multipart join job on srvarr has required manual attention for 15 minutes."
+              summary: "Radarr repair job needs attention on srvarr"
+              description: "At least one Radarr repair handoff on srvarr has required attention for 15 minutes."
 
   - interval: 30s
     input_series:
