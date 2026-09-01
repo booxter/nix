@@ -8,9 +8,8 @@ from dataclasses import dataclass
 from typing import Protocol, TextIO, cast
 
 import semantic_version  # type: ignore[import-untyped]
-from pydantic import TypeAdapter, ValidationError
-
 from package_updates.common import print_error
+from pydantic import TypeAdapter, ValidationError
 
 
 class ComparableVersion(Protocol):

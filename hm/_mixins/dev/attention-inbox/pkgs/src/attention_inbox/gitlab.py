@@ -8,10 +8,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict, ValidationError
-
 from attention_inbox.errors import InboxError
 from attention_inbox.model import Author, InboxItem
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 
 class GitLabAuthor(BaseModel):

@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from typing import Final, Literal, Protocol
 
-from openai import OpenAI, OpenAIError
-from openai.types.responses import ResponseInputParam
-
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.usage import PersonalUsageService, UsageWindow
+from openai import OpenAI, OpenAIError
+from openai.types.responses import ResponseInputParam
 
 RESPONSES_ENDPOINT: Final = "https://chatgpt.com/backend-api/codex/responses"
 

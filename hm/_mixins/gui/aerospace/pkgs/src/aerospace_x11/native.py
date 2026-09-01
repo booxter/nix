@@ -2,11 +2,10 @@ import subprocess
 from collections.abc import Sequence
 from typing import Any
 
+from aerospace_x11.service import Direction, moved_position, resized_dimensions
 from AppKit import NSWorkspace
 from Xlib import X, display, error
 from Xlib.protocol import event
-
-from aerospace_x11.service import Direction, moved_position, resized_dimensions
 
 
 class CocoaFrontmostApplication:

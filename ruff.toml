@@ -1,5 +1,11 @@
 target-version = "py313"
 line-length = 100
+# Package checks run from their own source roots, so disable working-directory discovery.
+src = []
 
 [lint]
 select = ["E", "F", "I", "W"]
+
+[lint.isort]
+# Do not reclassify local imports when Ruff happens to run inside a package directory.
+detect-same-package = false

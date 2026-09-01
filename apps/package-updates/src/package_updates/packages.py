@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, TextIO
 
-from pydantic import ValidationError
-
 from package_updates.common import (
     Runner,
     SubprocessRunner,
@@ -26,6 +24,7 @@ from package_updates.summary import (
     compare_from_sources,
     markdown_link,
 )
+from pydantic import ValidationError
 
 SUMMARY_HEADER = """Automated package source update.
 

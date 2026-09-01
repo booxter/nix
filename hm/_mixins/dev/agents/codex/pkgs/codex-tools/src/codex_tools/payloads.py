@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Annotated, TypeAlias, TypeVar
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
-
 from codex_tools.errors import CodexToolsError
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
 
 
 def _numeric_string(value: object) -> object:

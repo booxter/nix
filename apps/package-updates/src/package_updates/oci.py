@@ -12,8 +12,6 @@ from typing import Protocol, TextIO
 
 from atomic_file_writes import write_text_atomic
 from natsort import natsorted
-from pydantic import ValidationError
-
 from package_updates.common import (
     Runner,
     SubprocessRunner,
@@ -37,6 +35,7 @@ from package_updates.summary import (
     compare_from_sources,
     markdown_link,
 )
+from pydantic import ValidationError
 
 SUMMARY_HEADER = """Automated OCI image tag update.
 
