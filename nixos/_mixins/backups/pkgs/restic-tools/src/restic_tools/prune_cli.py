@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .offload import OffloadFailure, prune
-from .offload_cli import ClientFactory, SystemClientFactory, load_client
+from .offload_cli import _SYSTEM_CLIENT_FACTORY, ClientFactory, load_client
 
 
 def parser() -> argparse.ArgumentParser:
@@ -20,7 +20,7 @@ def parser() -> argparse.ArgumentParser:
 
 def run(
     arguments: argparse.Namespace,
-    client_factory: ClientFactory = SystemClientFactory(),
+    client_factory: ClientFactory = _SYSTEM_CLIENT_FACTORY,
 ) -> int:
     prune(load_client(arguments, client_factory))
     return 0

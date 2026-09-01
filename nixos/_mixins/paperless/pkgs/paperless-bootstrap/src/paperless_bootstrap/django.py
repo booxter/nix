@@ -10,22 +10,10 @@ from paperless_bootstrap.bootstrap import Error, Repository, UserSpec, load_spec
 
 class DjangoRepository(Repository):
     def __init__(self) -> None:
-        self.user_model: Any = getattr(
-            import_module("django.contrib.auth"),
-            "get_user_model",
-        )()
-        self.group_model: Any = getattr(
-            import_module("django.contrib.auth.models"),
-            "Group",
-        )
-        self.email_model: Any = getattr(
-            import_module("allauth.account.models"),
-            "EmailAddress",
-        )
-        self.token_model: Any = getattr(
-            import_module("rest_framework.authtoken.models"),
-            "Token",
-        )
+        self.user_model: Any = import_module("django.contrib.auth").get_user_model()
+        self.group_model: Any = import_module("django.contrib.auth.models").Group
+        self.email_model: Any = import_module("allauth.account.models").EmailAddress
+        self.token_model: Any = import_module("rest_framework.authtoken.models").Token
 
     def ensure_group(self, name: str) -> None:
         self.group_model.objects.get_or_create(name=name)

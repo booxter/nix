@@ -39,13 +39,16 @@ class SystemClientFactory:
         return ResticOffloadClient(config, SubprocessRunner(), environment)
 
 
+_SYSTEM_CLIENT_FACTORY: ClientFactory = SystemClientFactory()
+
+
 def _read_secret(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
 def run(
     arguments: argparse.Namespace,
-    client_factory: ClientFactory = SystemClientFactory(),
+    client_factory: ClientFactory = _SYSTEM_CLIENT_FACTORY,
 ) -> int:
     offload(load_client(arguments, client_factory))
     return 0
@@ -53,7 +56,7 @@ def run(
 
 def load_client(
     arguments: argparse.Namespace,
-    client_factory: ClientFactory = SystemClientFactory(),
+    client_factory: ClientFactory = _SYSTEM_CLIENT_FACTORY,
 ) -> OffloadClient:
     config = OffloadConfig.model_validate_json(arguments.config.read_text(encoding="utf-8"))
     if config.application_key_id_file is None and config.application_key_file is None:
