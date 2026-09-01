@@ -533,7 +533,8 @@ class LidarrPostProcessorService:
         except NeedsAttention as exc:
             job = self.store.job(download_id)
             self.mark_automation_failed(job, str(exc), now)
-        except Exception as exc:
+        # Isolate malformed downloads so later queue records can still run.
+        except Exception as exc:  # noqa: BLE001
             job = self.store.job(download_id, title=record.title)
             self.record_source_failure(job, record, exc, now)
         return True

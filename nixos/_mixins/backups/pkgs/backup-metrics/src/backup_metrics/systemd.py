@@ -23,7 +23,8 @@ class SystemdDurationSource:
                     unit.Service.ExecMainStartTimestampMonotonic,
                     unit.Service.ExecMainExitTimestampMonotonic,
                 )
-        except Exception:
+        # This best-effort collector must not replace the original unit failure.
+        except Exception:  # noqa: BLE001
             # Outcome recording is best effort during ExecStopPost. A missing
             # property or unavailable system bus should not mask the service's
             # original result.

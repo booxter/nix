@@ -300,7 +300,8 @@ def runtime(arguments: Arguments, environment: Mapping[str, str] = os.environ) -
 def main(argv: Sequence[str] | None = None) -> int:
     try:
         run(runtime(parse_arguments(argv)), int(time.time()))
-    except Exception as error:
+    # The CLI boundary reports every runtime failure without a traceback.
+    except Exception as error:  # noqa: BLE001
         print(f"fana-alertmanager-watchdog: {error}", file=sys.stderr)
         return 1
     return 0

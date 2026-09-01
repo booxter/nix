@@ -337,7 +337,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except TransmissionRpcError as exc:
         LOG.error("cleanup run failed after Transmission RPC error: %s", exc)
     except KeyboardInterrupt:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         return 130
     return 1
 

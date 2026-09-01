@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -41,7 +41,7 @@ def guard(config: UpgradeConfig, today: date, stderr: TextIO) -> int:
 
 def run(arguments: list[str], stderr: TextIO = sys.stderr) -> int:
     args = build_parser().parse_args(arguments)
-    today = date.today()
+    today = datetime.now(UTC).astimezone().date()
     if args.command == "guard":
         return guard(UpgradeConfig.load(args.config), today, stderr)
     if args.command == "write-hold-metrics":

@@ -144,7 +144,7 @@ def normalize_timestamp(value: str | None) -> str | None:
     if text is None:
         return None
     try:
-        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        parsed = dt.datetime.fromisoformat(text)
     except ValueError:
         return text
     if parsed.tzinfo is None:

@@ -237,13 +237,11 @@ class LidarrPostProcessorTests(unittest.TestCase):
                 album = destination / "album"
                 album.mkdir()
                 (album / "album.cue").write_text(
-                    "\n".join(
-                        [
-                            'FILE "01.flac" WAVE',
-                            "  TRACK 01 AUDIO",
-                            'FILE "02.flac" WAVE',
-                            "  TRACK 02 AUDIO",
-                        ]
+                    (
+                        'FILE "01.flac" WAVE\n'
+                        "  TRACK 01 AUDIO\n"
+                        'FILE "02.flac" WAVE\n'
+                        "  TRACK 02 AUDIO"
                     ),
                     encoding="utf-8",
                 )
@@ -493,16 +491,14 @@ class LidarrPostProcessorTests(unittest.TestCase):
             root = Path(directory)
             cue = root / "album.cue"
             cue.write_text(
-                "\n".join(
-                    [
-                        'FILE "01 - First.wav" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 00 03:12:34",
-                        'FILE "02 - Second.wav" WAVE',
-                        "    INDEX 01 00:00:00",
-                    ]
+                (
+                    'FILE "01 - First.wav" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 00 03:12:34\n"
+                    'FILE "02 - Second.wav" WAVE\n'
+                    "    INDEX 01 00:00:00"
                 ),
                 encoding="utf-8",
             )
@@ -530,14 +526,12 @@ class LidarrPostProcessorTests(unittest.TestCase):
             root = Path(directory)
             cue = root / "album.cue"
             cue.write_text(
-                "\n".join(
-                    [
-                        'FILE "album.flac" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 01 03:12:34",
-                    ]
+                (
+                    'FILE "album.flac" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 01 03:12:34"
                 ),
                 encoding="utf-8",
             )
@@ -824,16 +818,14 @@ class LidarrPostProcessorTests(unittest.TestCase):
             download = root / "torrents" / "album"
             download.mkdir(parents=True)
             (download / "album.cue").write_text(
-                "\n".join(
-                    [
-                        'FILE "01.wav" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 00 03:12:34",
-                        'FILE "02.wav" WAVE',
-                        "    INDEX 01 00:00:00",
-                    ]
+                (
+                    'FILE "01.wav" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 00 03:12:34\n"
+                    'FILE "02.wav" WAVE\n'
+                    "    INDEX 01 00:00:00"
                 ),
                 encoding="utf-8",
             )

@@ -88,7 +88,7 @@ def item_is_new(item: InboxItem, week_start: float) -> bool:
     if item.created_at is None:
         return False
     try:
-        created = dt.datetime.fromisoformat(item.created_at.replace("Z", "+00:00"))
+        created = dt.datetime.fromisoformat(item.created_at)
     except ValueError:
         return False
     if created.tzinfo is None:

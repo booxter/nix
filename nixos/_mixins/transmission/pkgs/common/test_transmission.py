@@ -138,14 +138,11 @@ class TrackerHostTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             trackers_file = Path(tmp_dir) / "trackers.txt"
             trackers_file.write_text(
-                "\n".join(
-                    [
-                        "https://Tracker.EXAMPLE:443/announce",
-                        "user:pass@tracker2.example:6969/path # comment",
-                        "http:///missing-host",
-                        "[2001:db8::1]:443",
-                        "",
-                    ]
+                (
+                    "https://Tracker.EXAMPLE:443/announce\n"
+                    "user:pass@tracker2.example:6969/path # comment\n"
+                    "http:///missing-host\n"
+                    "[2001:db8::1]:443\n"
                 ),
                 encoding="utf-8",
             )
