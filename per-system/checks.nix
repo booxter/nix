@@ -29,5 +29,12 @@ let
       pkgs
       ;
   };
+  pythonQualityCheck = import ./checks/python-quality.nix { inherit lib pkgs; };
 in
-appSet.packages // topologyChecks // import ../tests { inherit inputs pkgs; } // inputNixosTests
+appSet.packages
+// topologyChecks
+// import ../tests { inherit inputs pkgs; }
+// inputNixosTests
+// {
+  python-quality = pythonQualityCheck;
+}
