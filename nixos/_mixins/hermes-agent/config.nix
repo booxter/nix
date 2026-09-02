@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   outputs,
   pkgs,
@@ -8,7 +7,7 @@
 }:
 let
   agents = config.host.hermesAgents;
-  package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.minimal;
+  package = pkgs.hermes-agent;
   providerFor = agent: outputs.nixosConfigurations.${agent.providerHost}.config or null;
   unitName = name: "hermes-agent-${name}";
   userName = name: unitName name;

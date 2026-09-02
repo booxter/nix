@@ -8,6 +8,25 @@
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
       pkgsNixpkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+      numtidePkgs = inputs.llm-agents.packages.${system};
+      # Numtide's Hermes 2026.8.31 source hash is stale.
+      fixedHermesAgent = numtidePkgs.hermes-agent.override {
+        fetchFromGitHub =
+          args:
+          prev.fetchFromGitHub (
+            args
+            //
+              lib.optionalAttrs
+                (
+                  args.owner == "NousResearch"
+                  && args.repo == "hermes-agent"
+                  && (args.hash or null) == "sha256-Ii9xP2fKUpvCcwWZuxJ0g3CZ+IL2UZH14pUNvBfdclc="
+                )
+                {
+                  hash = "sha256-85K1Q3hojPHgqPB54jRyY2PMPp1vGN185pgbBzRweGc=";
+                }
+          );
+      };
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
@@ -22,6 +41,8 @@
     in
     {
       inherit (pkgsNixpkgsUnstable) aerospace codex;
+
+      hermes-agent = fixedHermesAgent;
 
       # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable
       # until a compatible release reaches the stable branch.

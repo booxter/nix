@@ -72,12 +72,7 @@
       inputs.telegym.follows = "lolek/telegym";
     };
 
-    hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.8.27";
-      # Stable still has SQLite 3.51.2, whose WAL-reset bug risks Hermes's state databases.
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-      inputs.home-manager.follows = "home-manager";
-    };
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
   };
 
