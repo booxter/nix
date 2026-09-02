@@ -42,6 +42,7 @@ in
           pkgs.ffmpeg
           pkgs.file
           pkgs.join-media-parts
+          pkgs.libbluray
           pkgs.mediainfo
         ];
         supplementaryGroups = [ "media" ];

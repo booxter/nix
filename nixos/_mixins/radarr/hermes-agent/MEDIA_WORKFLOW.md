@@ -9,6 +9,9 @@
 The task gives you exact source and output paths. Use only those paths. Never
 mix artifacts from unrelated downloads.
 
+The workspace persists across tasks. Never inspect, execute, copy, or adapt a
+script or temporary artifact left by another task.
+
 The task contract is authoritative. Do not investigate Radarr, the post
 processor, download clients, containers, systemd units, host processes, or
 files outside the workspace. Do not search `/var/lib`, `/var/log`, `/run`, or
@@ -41,14 +44,42 @@ EBML or MP4 atom parsing, head or tail decodes, or full-file decodes on the
 successful-probe path. Do not repeat equivalent probes or investigate harmless
 container anomalies after the remux validates.
 
+## BDMV fast path
+
+When a directory source contains `BDMV/index.bdmv`, follow this algorithm
+exactly:
+
+1. Operate on the exact `source_path`. Do not parse `.mpls`, `.clpi`, `.m2ts`,
+   or other Blu-ray files yourself.
+2. Probe the automatically selected main title once with `ffprobe` using
+   `bluray:<source_path>` as the input.
+3. If the probe succeeds and reports a plausible feature with video and audio,
+   immediately create an MKV beneath the task output directory using `ffmpeg`,
+   the same `bluray:<source_path>` input, stream mappings for all video, audio,
+   and subtitle streams, and stream-copy codecs.
+4. Probe the MKV once with `ffprobe`. If it succeeds and reports the expected
+   streams, immediately write `report.md`, then `result.json`, and end the
+   task.
+5. Only if automatic title selection fails or selects a clearly non-feature
+   title, run `bd_list_titles <source_path> -s 600` once. Select the reported
+   main title, or the longest plausible feature when no main title is reported,
+   and retry the probe and remux with FFmpeg's `-playlist` option.
+6. If libbluray cannot identify or read a plausible title, report the task
+   unresolved.
+
+Do not write or run Python or shell parsers for Blu-ray metadata, dump raw
+playlist bytes, concatenate `.m2ts` files directly, or reuse a parser from a
+previous task. Treat `movie_runtime_minutes` as approximate catalog metadata,
+not a required duration.
+
 ## Procedure
 
-1. Use the single-file fast path when applicable. For a directory source, list
-   that exact directory and identify samples, extras, archives, multipart
-   files, subtitles, and metadata files.
-2. For a directory source, inspect plausible media with `file`, `mediainfo`,
-   and `ffprobe`. Compare duration, streams, codecs, resolution, timestamps,
-   and multipart naming.
+1. Use the single-file or BDMV fast path when applicable. For any other
+   directory source, list that exact directory and identify samples, extras,
+   archives, multipart files, subtitles, and metadata files.
+2. For any other directory source, inspect plausible media with `file`,
+   `mediainfo`, and `ffprobe`. Compare duration, streams, codecs, resolution,
+   timestamps, and multipart naming.
 3. Choose the smallest safe repair supported by the evidence. Work
    autonomously and do not request approval.
 4. Prefer `join-media-parts` for compatible multipart movies. Use direct
