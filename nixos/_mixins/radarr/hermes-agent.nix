@@ -54,6 +54,8 @@ in
         ];
         settings.approvals.mode = "off";
         settings.auxiliary.title_generation.enabled = false;
+        # Bound runaway reasoning turns on deterministic repair tasks.
+        settings.model.max_tokens = 4096;
         filesystem = {
           hidden = [ mediaDir ];
           inputs = filesystemInputs;
