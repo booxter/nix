@@ -80,21 +80,30 @@ not a required duration.
 2. For any other directory source, inspect plausible media with `file`,
    `mediainfo`, and `ffprobe`. Compare duration, streams, codecs, resolution,
    timestamps, and multipart naming.
-3. Choose the smallest safe repair supported by the evidence. Work
+3. Before attempting a repair, reject episodic media. Multiple independently
+   playable, episode-length files are a series or season pack, especially when
+   the directory or filenames contain season or episode markers such as `S02`,
+   `E03`, `Episode`, or a sequence of episode numbers. If the release title
+   describes a series or materially conflicts with `movie_title`, immediately
+   report the task unresolved. Never concatenate episodic media for Radarr.
+4. Choose the smallest safe repair supported by the evidence. Work
    autonomously and do not request approval.
-4. Prefer `join-media-parts` for compatible multipart movies. Use direct
-   `ffmpeg` operations only when the specialized tool is insufficient and the
-   exact transformation is understood.
-5. Write all generated files beneath the task's output directory. Never write
+5. Use `join-media-parts` only with positive evidence that the inputs are
+   segments of one movie, such as `CD1`/`CD2`, `Disc 1`/`Disc 2`, or explicit
+   part numbering for one feature. Compatible codecs or sequential filenames
+   alone are not evidence of a multipart movie. Use direct `ffmpeg` operations
+   only when the specialized tool is insufficient and the exact transformation
+   is understood.
+6. Write all generated files beneath the task's output directory. Never write
    temporary or final files into `input/`.
-6. Inspect the completed output again with `ffprobe` or `mediainfo`. Check that
+7. Inspect the completed output again with `ffprobe` or `mediainfo`. Check that
    it is readable, has the expected duration and streams, and is not truncated.
    When those checks pass, stop diagnosis; do not search for additional causes
    or perform redundant validation.
-7. Write `report.md` in the task output directory. Include the selected inputs,
+8. Write `report.md` in the task output directory. Include the selected inputs,
    observations, commands or tools used, validation results, remaining
    uncertainty, and the candidate file Radarr should import.
-8. Write `result.json` last. It must contain exactly these fields:
+9. Write `result.json` last. It must contain exactly these fields:
 
    ```json
    {
