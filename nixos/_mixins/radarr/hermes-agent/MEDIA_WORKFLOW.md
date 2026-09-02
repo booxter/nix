@@ -19,32 +19,36 @@ fingerprint is an opaque correlation value, not a file checksum; copy it into
 
 ## Single-file fast path
 
-When the task source is one regular media file:
+When the task source is one regular media file, follow this algorithm exactly:
 
-1. Inspect it once with `ffprobe` and, when useful, `mediainfo`.
-2. If its streams are readable and plausible for the requested movie, create a
-   lossless stream-copy remux beneath the task output directory. The Radarr
-   handoff itself is sufficient reason for one normalization remux; do not try
-   to reproduce Radarr's internal rejection first.
-3. Validate the remux once with `ffprobe` or `mediainfo`. Use a short head or
-   tail decode only when truncation is suspected. Do not run a full-file decode
-   or parse container bytes unless the ordinary probe or remux reports an
-   error that requires it.
-4. Once the candidate parses, has the expected streams and a plausible
-   duration, stop investigating and immediately write `report.md` and
-   `result.json`.
+1. Operate on the exact `source_path`. Do not list its parent directory or any
+   unrelated workspace path.
+2. Probe the source once with `ffprobe`.
+3. If the probe succeeds, perform no further source diagnosis. Immediately
+   create a lossless stream-copy remux beneath the task output directory. The
+   Radarr handoff itself is sufficient reason for this normalization remux.
+4. Probe the remux once with `ffprobe`. If it succeeds and reports the expected
+   streams, immediately write `report.md`, then `result.json`, and end the
+   task.
+5. Only when the probe or remux fails may you perform one targeted diagnostic.
+   Apply a clearly justified repair if one is available; otherwise report the
+   task unresolved.
 
-Do not repeat equivalent probes or pursue harmless container anomalies after
-the remux validates. Limit diagnosis to the initial inspection and one targeted
-follow-up before choosing the repair or reporting the task unresolved.
+`movie_runtime_minutes` is approximate catalog metadata. Never interpret a
+duration difference as evidence that the source is truncated. Do not use
+`mediainfo`, Python or other custom scripts, `xxd`, `od`, `hexdump`, manual
+EBML or MP4 atom parsing, head or tail decodes, or full-file decodes on the
+successful-probe path. Do not repeat equivalent probes or investigate harmless
+container anomalies after the remux validates.
 
 ## Procedure
 
 1. Use the single-file fast path when applicable. For a directory source, list
    that exact directory and identify samples, extras, archives, multipart
    files, subtitles, and metadata files.
-2. Inspect plausible media with `file`, `mediainfo`, and `ffprobe`. Compare
-   duration, streams, codecs, resolution, timestamps, and multipart naming.
+2. For a directory source, inspect plausible media with `file`, `mediainfo`,
+   and `ffprobe`. Compare duration, streams, codecs, resolution, timestamps,
+   and multipart naming.
 3. Choose the smallest safe repair supported by the evidence. Work
    autonomously and do not request approval.
 4. Prefer `join-media-parts` for compatible multipart movies. Use direct
