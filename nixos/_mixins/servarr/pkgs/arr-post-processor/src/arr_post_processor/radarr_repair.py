@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from .errors import NeedsAttention
+from .radarr_models import RadarrStatusMessage
 
 RESULT_FILE_NAME = "result.json"
 REPORT_FILE_NAME = "report.md"
@@ -20,6 +21,15 @@ VIDEO_SUFFIXES = frozenset(
 class RepairOutcome(StrEnum):
     REPAIRED = "repaired"
     UNRESOLVED = "unresolved"
+
+
+class RadarrQueueStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str = ""
+    tracked_download_status: str = ""
+    tracked_download_state: str = ""
+    messages: list[RadarrStatusMessage] = Field(default_factory=list)
 
 
 class RepairTask(BaseModel):
@@ -34,6 +44,7 @@ class RepairTask(BaseModel):
     movie_year: int = Field(ge=1800)
     movie_runtime_minutes: int = Field(ge=0)
     queue_title: str = Field(min_length=1)
+    radarr_queue_status: RadarrQueueStatus = Field(default_factory=RadarrQueueStatus)
     source_path: str = Field(min_length=1)
     output_path: str = Field(min_length=1)
 

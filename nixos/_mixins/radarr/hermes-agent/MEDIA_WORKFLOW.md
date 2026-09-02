@@ -12,8 +12,10 @@ mix artifacts from unrelated downloads.
 The task contract is authoritative. Do not investigate Radarr, the post
 processor, download clients, containers, systemd units, host processes, or
 files outside the workspace. Do not search `/var/lib`, `/var/log`, `/run`, or
-application state for another explanation. The source fingerprint is an opaque
-correlation value, not a file checksum; copy it into `result.json` unchanged.
+application state for another explanation. Use `radarr_queue_status` and its
+messages as the complete description of Radarr's observed failure. The source
+fingerprint is an opaque correlation value, not a file checksum; copy it into
+`result.json` unchanged.
 
 ## Single-file fast path
 

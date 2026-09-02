@@ -29,6 +29,17 @@ def task() -> RepairTask:
         movie_year=2020,
         movie_runtime_minutes=120,
         queue_title="Test.Movie.2020.1080p",
+        radarr_queue_status={
+            "status": "completed",
+            "tracked_download_status": "warning",
+            "tracked_download_state": "importBlocked",
+            "messages": [
+                {
+                    "title": "Import failed",
+                    "messages": ["Unable to parse file"],
+                }
+            ],
+        },
         source_path="input/torrents/Test.Movie.2020.1080p",
         output_path="output/processed/download-id/12345678",
     )
@@ -59,6 +70,8 @@ def test_instruction_contains_the_exact_contract() -> None:
     assert "Work autonomously: do not request approval" in instruction
     assert '"attempt_id": "12345678-1234-5678-1234-567812345678"' in instruction
     assert '"source_path": "input/torrents/Test.Movie.2020.1080p"' in instruction
+    assert '"tracked_download_state": "importBlocked"' in instruction
+    assert '"Unable to parse file"' in instruction
     assert "write result.json last" in instruction
 
 

@@ -21,6 +21,7 @@ from .radarr_probe import VideoVerifier
 from .radarr_repair import (
     REPORT_FILE_NAME,
     RESULT_FILE_NAME,
+    RadarrQueueStatus,
     RepairOutcome,
     RepairTask,
     load_repair_result,
@@ -573,6 +574,12 @@ class RadarrAgentService:
             movie_year=movie.year,
             movie_runtime_minutes=movie.runtime,
             queue_title=record.title,
+            radarr_queue_status=RadarrQueueStatus(
+                status=record.status,
+                tracked_download_status=record.tracked_download_status,
+                tracked_download_state=record.tracked_download_state,
+                messages=record.status_messages,
+            ),
             source_path=str(source.workspace_path),
             output_path=str(PurePosixPath("output", "processed", component, str(attempt_id))),
         )

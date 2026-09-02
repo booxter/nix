@@ -285,6 +285,10 @@ def test_settled_source_starts_one_persisted_agent_attempt(tmp_path: Path) -> No
     assert job.task is not None
     assert job.task.source_path == "input/torrents/Test.Movie.2020.1080p"
     assert job.task.output_path.endswith(str(ATTEMPT_ID))
+    assert job.task.radarr_queue_status.tracked_download_state == "importBlocked"
+    assert job.task.radarr_queue_status.messages[0].messages == [
+        "anything Radarr considers blocked"
+    ]
     assert len(job.source_fingerprint) == 64
     assert len(hermes.instructions) == 1
 
