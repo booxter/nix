@@ -25,7 +25,10 @@
       inherit (pkgsNixpkgsUnstable) aerospace codex;
 
       hermes-agent = numtidePkgs.hermes-agent.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ../patches/hermes-agent-reconnect-run-event-streams.patch ];
+        patches = (old.patches or [ ]) ++ [
+          ../patches/hermes-agent-reconnect-run-event-streams.patch
+          ../patches/hermes-agent-retain-active-run-events.patch
+        ];
       });
 
       # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable
