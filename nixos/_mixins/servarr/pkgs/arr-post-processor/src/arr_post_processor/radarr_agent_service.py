@@ -47,7 +47,10 @@ MISSING_QUEUE_CONFIRMATIONS = 3
 ARTIFACT_RETENTION_SECONDS = 7 * 86400
 STOP_GRACE_SECONDS = 300
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
-UNABLE_TO_PARSE_FILE = "unable to parse file"
+IGNORABLE_SCAN_REJECTIONS = {
+    "unable to parse file",
+    "unknown movie",
+}
 
 
 class RadarrAgentService:
@@ -218,7 +221,7 @@ class RadarrAgentService:
             return
         try:
             self.verifier.verify(job.candidate)
-            outputs = client.manual_import(job.task_root, record)
+            outputs = client.manual_import(job.task_root)
             matches = [
                 candidate
                 for candidate in outputs
@@ -229,12 +232,10 @@ class RadarrAgentService:
                     "Radarr did not return exactly one manual-import match for the repair candidate"
                 )
             candidate = matches[0]
-            if candidate.movie.id != job.task.movie_id:
+            if candidate.movie is not None and candidate.movie.id != job.task.movie_id:
                 raise NeedsAttention("Radarr matched the repair candidate to a different movie")
-            if candidate.download_id != record.download_id:
-                raise NeedsAttention("Radarr matched the repair candidate to a different download")
             rejections = [item.reason.strip().lower() for item in candidate.rejections]
-            if any(reason != UNABLE_TO_PARSE_FILE for reason in rejections):
+            if any(reason not in IGNORABLE_SCAN_REJECTIONS for reason in rejections):
                 raise NeedsAttention("Radarr rejected the repair candidate by import policy")
             quality = candidate.quality or record.quality
             if not quality:

@@ -43,6 +43,7 @@ class FakeRadarr:
         self.records = records
         self.movie_value = RadarrMovie(id=42, title="Test Movie", year=2020, runtime=120)
         self.manual_candidates: list[RadarrManualImportCandidate] = []
+        self.scanned_folders: list[Path] = []
         self.imported: RadarrManualImportFile | None = None
         self.command_status = CommandStatus(id=9, status="started")
         self.submit_error: PostProcessorError | None = None
@@ -54,9 +55,8 @@ class FakeRadarr:
         assert movie_id == self.movie_value.id
         return self.movie_value
 
-    def manual_import(
-        self, folder: Path, record: RadarrQueueRecord
-    ) -> list[RadarrManualImportCandidate]:
+    def manual_import(self, folder: Path) -> list[RadarrManualImportCandidate]:
+        self.scanned_folders.append(folder)
         return self.manual_candidates
 
     def submit_manual_import(self, file: RadarrManualImportFile) -> int:
@@ -250,11 +250,10 @@ def finish_agent(
     radarr.manual_candidates = [
         RadarrManualImportCandidate(
             path=job.candidate,
-            movie=radarr.movie_value,
             quality={"quality": {"id": 7, "name": "Bluray-1080p"}},
             languages=[{"id": 1, "name": "English"}],
             release_group="TEST",
-            download_id=job.download_id,
+            rejections=[Rejection(reason="Unknown Movie")],
         )
     ]
     return job.candidate
@@ -503,9 +502,11 @@ def test_verified_candidate_imports_asynchronously_and_is_audited(tmp_path: Path
     assert job.status is JobStatus.IMPORTING
     assert job.command_id == 9
     assert verifier.verified == [candidate]
+    assert radarr.scanned_folders == [task_root]
     assert radarr.imported is not None
     assert radarr.imported.path == candidate
     assert radarr.imported.movie_id == 42
+    assert radarr.imported.download_id == "download-id"
     assert radarr.imported.release_group == "TEST"
 
     radarr.command_status = CommandStatus(id=9, status="completed")
