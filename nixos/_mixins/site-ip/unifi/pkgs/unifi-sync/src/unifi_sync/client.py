@@ -14,17 +14,11 @@ from .errors import UnifiError
 
 
 class UnifiLegacyClient:
-    def __init__(
-        self, base_url: str, api_key: str, site: str, verify_tls: bool, debug: bool
-    ):
+    def __init__(self, base_url: str, api_key: str, site: str, verify_tls: bool, debug: bool):
         if not base_url:
-            raise UnifiError(
-                "missing UniFi base URL; pass --base-url or set UNIFI_BASE_URL"
-            )
+            raise UnifiError("missing UniFi base URL; pass --base-url or set UNIFI_BASE_URL")
         if not api_key:
-            raise UnifiError(
-                "missing UniFi API key; pass --api-key or set UNIFI_API_KEY"
-            )
+            raise UnifiError("missing UniFi API key; pass --api-key or set UNIFI_API_KEY")
 
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -32,10 +26,12 @@ class UnifiLegacyClient:
         self.debug = debug
         self.cookie_jar: CookieJar = CookieJar()
 
-        if verify_tls:
-            context = ssl.create_default_context()
-        else:
-            context = ssl._create_unverified_context()
+        context = (
+            ssl.create_default_context()
+            if verify_tls
+            # This branch is reachable only through the explicit insecure-TLS option.
+            else ssl._create_unverified_context()  # noqa: S323
+        )
 
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPSHandler(context=context),
@@ -94,9 +90,7 @@ class UnifiLegacyClient:
                 body = response.read().decode("utf-8")
         except urllib.error.HTTPError as error:
             body = error.read().decode("utf-8", errors="replace")
-            raise UnifiError(
-                f"{method} {url} failed with HTTP {error.code}\n{body}"
-            ) from error
+            raise UnifiError(f"{method} {url} failed with HTTP {error.code}\n{body}") from error
         except urllib.error.URLError as error:
             raise UnifiError(f"{method} {url} failed: {error.reason}") from error
 
@@ -109,9 +103,7 @@ class UnifiLegacyClient:
         try:
             decoded = json.loads(body)
         except json.JSONDecodeError as error:
-            raise UnifiError(
-                f"{method} {url} returned invalid JSON:\n{body}"
-            ) from error
+            raise UnifiError(f"{method} {url} returned invalid JSON:\n{body}") from error
 
         meta = decoded.get("meta")
         if isinstance(meta, dict) and meta.get("rc") not in (None, "ok"):
@@ -149,11 +141,7 @@ class UnifiLegacyClient:
 
     def create_dhcp_option(self, payload: dict[str, Any]) -> dict[str, Any]:
         data = self.request("POST", f"/api/s/{self.site}/rest/dhcpoption", payload)
-        if (
-            not isinstance(data, list)
-            or len(data) != 1
-            or not isinstance(data[0], dict)
-        ):
+        if not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], dict):
             raise UnifiError("unexpected response shape when creating DHCP option")
         return data[0]
 
@@ -222,9 +210,7 @@ class UnifiLegacyClient:
             payload,
         )
 
-    def update_dns_policy(
-        self, site_id: str, policy_id: str, payload: dict[str, Any]
-    ) -> Any:
+    def update_dns_policy(self, site_id: str, policy_id: str, payload: dict[str, Any]) -> Any:
         return self.request_json(
             "PUT",
             (

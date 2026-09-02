@@ -19,7 +19,6 @@ from .radarr_models import (
     RadarrQueueRecord,
 )
 
-
 T = TypeVar("T")
 
 
@@ -28,9 +27,7 @@ class Radarr(Protocol):
 
     def movie(self, movie_id: int) -> RadarrMovie: ...
 
-    def manual_import(
-        self, folder: Path, record: RadarrQueueRecord
-    ) -> list[RadarrManualImportCandidate]: ...
+    def manual_import(self, folder: Path) -> list[RadarrManualImportCandidate]: ...
 
     def submit_manual_import(self, file: RadarrManualImportFile) -> int: ...
 
@@ -85,14 +82,13 @@ class RadarrClient:
 
         return self._run(get_movie)
 
-    def manual_import(
-        self, folder: Path, record: RadarrQueueRecord
-    ) -> list[RadarrManualImportCandidate]:
+    def manual_import(self, folder: Path) -> list[RadarrManualImportCandidate]:
         async def get_manual_import(
             client: NativeRadarrClient,
         ) -> list[RadarrManualImportCandidate]:
             records = await client.async_get_manual_import(
-                downloadid=record.download_id,
+                # A real ID makes Radarr ignore the repair folder and rescan the download.
+                downloadid="",
                 folder=str(folder),
                 filterexistingfiles=False,
             )

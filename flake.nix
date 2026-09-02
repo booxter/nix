@@ -6,6 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -32,6 +33,7 @@
 
     stylix.url = "github:nix-community/stylix/release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
+    stylix.inputs.nur.follows = "nur";
 
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
     spicetify-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -45,6 +47,7 @@
     proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
 
     disko.url = "github:nix-community/disko/latest";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
 
     # TODO: switch to official when diff is contributed upstream
     jellarr.url = "github:booxter/jellarr/my-fork-plus-fix-plugin-404";
@@ -66,13 +69,10 @@
     motion-captcha-bot = {
       url = "github:FrostBy/motion-captcha-bot";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.telegym.follows = "lolek/telegym";
     };
 
-    hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.8.27";
-      # Stable still has SQLite 3.51.2, whose WAL-reset bug risks Hermes's state databases.
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
   };
 

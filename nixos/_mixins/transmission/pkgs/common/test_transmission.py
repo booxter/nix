@@ -1,9 +1,9 @@
 import json
-from email.message import Message
-from pathlib import Path
 import tempfile
 import unittest
 import urllib.error
+from email.message import Message
+from pathlib import Path
 from unittest.mock import patch
 
 from transmission_common.transmission import (
@@ -113,12 +113,14 @@ class TransmissionRpcClientTests(unittest.TestCase):
             "http://127.0.0.1:9091/transmission/rpc",
             timeout_seconds=20.0,
         )
-        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
-            with self.assertRaisesRegex(
+        with (
+            patch("urllib.request.urlopen", side_effect=fake_urlopen),
+            self.assertRaisesRegex(
                 TransmissionRpcError,
                 "method failed: bad field",
-            ):
-                client.call("torrent_set")
+            ),
+        ):
+            client.call("torrent_set")
 
 
 class TrackerHostTests(unittest.TestCase):
@@ -138,14 +140,11 @@ class TrackerHostTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             trackers_file = Path(tmp_dir) / "trackers.txt"
             trackers_file.write_text(
-                "\n".join(
-                    [
-                        "https://Tracker.EXAMPLE:443/announce",
-                        "user:pass@tracker2.example:6969/path # comment",
-                        "http:///missing-host",
-                        "[2001:db8::1]:443",
-                        "",
-                    ]
+                (
+                    "https://Tracker.EXAMPLE:443/announce\n"
+                    "user:pass@tracker2.example:6969/path # comment\n"
+                    "http:///missing-host\n"
+                    "[2001:db8::1]:443\n"
                 ),
                 encoding="utf-8",
             )

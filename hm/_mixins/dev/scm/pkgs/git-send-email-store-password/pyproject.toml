@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "git-send-email-store-password"
 version = "0.1.0"
 description = "Store Git send-email credentials in macOS Keychain"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [project.scripts]
 git-send-email-store-password = "git_send_email_store_password.cli:main"
@@ -27,6 +27,3 @@ precision = 2
 [tool.mypy]
 files = ["src/git_send_email_store_password"]
 strict = true
-
-[tool.ruff]
-line-length = 100

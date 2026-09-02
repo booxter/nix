@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from sops_tools.age import AgeRecipientResolver
 from sops_tools.errors import ToolError
 
@@ -46,9 +45,7 @@ def test_secure_enclave_can_derive_missing_metadata(tmp_path: Path) -> None:
     "content",
     [
         "AGE-PLUGIN-YUBIKEY-1TEST\n",
-        "# Recipient: age1yubikey1one\n"
-        "# Recipient: age1yubikey1two\n"
-        "AGE-PLUGIN-YUBIKEY-1TEST\n",
+        "# Recipient: age1yubikey1one\n# Recipient: age1yubikey1two\nAGE-PLUGIN-YUBIKEY-1TEST\n",
     ],
 )
 def test_yubikey_requires_one_metadata_recipient(tmp_path: Path, content: str) -> None:

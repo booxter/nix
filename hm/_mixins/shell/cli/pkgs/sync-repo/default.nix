@@ -4,7 +4,7 @@
   lib,
   openssh,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -25,7 +25,7 @@ pythonPackages.buildPythonApplication {
 
   nativeCheckInputs = with pythonPackages; [
     git
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
@@ -41,8 +41,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/sync_repo
   '';
 

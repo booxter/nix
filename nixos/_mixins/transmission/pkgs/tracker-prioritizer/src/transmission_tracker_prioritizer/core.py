@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -15,7 +14,6 @@ from transmission_common.transmission import (
     normalize_tracker_host,
     read_tracker_hosts,
 )
-
 
 LOG = logging.getLogger("transmission-tracker-common")
 TR_PRI_LOW = -1
@@ -261,21 +259,20 @@ def collect_iteration_state(
     preferred_bootstrap_active = any(
         is_preferred and torrent.peers_getting_from_us > 0 for torrent, is_preferred in entries
     )
-    torrent_counts: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+    torrent_counts: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     activity_counts = {
         "seeding": {"active": 0, "inactive": 0},
         "downloading": {"active": 0, "inactive": 0},
     }
     bandwidth_counts: NestedCounts = {
-        direction: {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-        for direction in ("download", "upload")
+        direction: dict.fromkeys(PRIORITY_CLASSES, 0) for direction in ("download", "upload")
     }
     peer_counts: PeerCounts = {
         torrent_class: {"connected": 0, "getting_from_us": 0, "sending_to_us": 0}
         for torrent_class in PRIORITY_CLASSES
     }
-    downloads: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-    uploads: PriorityCounts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+    downloads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
+    uploads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     high: list[str] = []
     normal: list[str] = []
     low: list[str] = []
@@ -494,7 +491,7 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
 
 def write_registry(path: Path, registry: CollectorRegistry) -> None:
     write_to_textfile(str(path), registry)
-    os.chmod(path, 0o644)
+    path.chmod(0o644)
 
 
 def write_health_metrics(

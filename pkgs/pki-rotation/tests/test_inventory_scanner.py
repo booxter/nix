@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from pki_certificates.models import PkiInventory
-
 from pki_rotation.inventory import (
     InventoryCertificateSpecSource,
     load_inventory,

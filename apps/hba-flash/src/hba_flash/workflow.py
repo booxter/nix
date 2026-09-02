@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol, TextIO
 
@@ -20,7 +20,7 @@ class RemoteHbaFactory(Protocol):
 
 
 def generated_remote_directory() -> str:
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M%S")
     return f"/tmp/hba-flash-{timestamp}-{os.getpid()}"
 
 

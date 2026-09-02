@@ -3,7 +3,6 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--api-key", required=True)
 parser.add_argument("--port", required=True, type=int)

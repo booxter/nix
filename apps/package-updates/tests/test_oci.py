@@ -6,8 +6,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from package_updates.common import CommandResult, Runner, ToolPaths, UpdateError
 from package_updates.models import OciPin, OciPins, PrefetchedImage
 from package_updates.oci import (
@@ -21,6 +19,7 @@ from package_updates.oci import (
     summary_row,
     update_oci_images,
 )
+from pydantic import ValidationError
 
 
 class FakeOciBackend:

@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   outputs,
   pkgs,
@@ -8,7 +7,7 @@
 }:
 let
   agents = config.host.hermesAgents;
-  package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.minimal;
+  package = pkgs.hermes-agent;
   providerFor = agent: outputs.nixosConfigurations.${agent.providerHost}.config or null;
   unitName = name: "hermes-agent-${name}";
   userName = name: unitName name;
@@ -179,7 +178,7 @@ let
         ExecStart = "${package}/bin/hermes gateway";
         Restart = "always";
         RestartSec = "10s";
-        UMask = "0077";
+        UMask = agent.umask;
         BindReadOnlyPaths = lib.mapAttrsToList (
           input: source: "${source}:${inputTarget agent input}"
         ) agent.filesystem.inputs;

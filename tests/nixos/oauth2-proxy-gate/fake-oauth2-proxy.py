@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -6,10 +7,8 @@ class Handler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(content_length) if content_length else b""
         redirect = self.headers.get("X-Auth-Request-Redirect", "")
-        with open("/tmp/fake-oauth2-proxy.log", "a", encoding="utf-8") as log:
-            log.write(
-                f"{self.command} {self.path} body={len(body)} redirect={redirect}\n"
-            )
+        with Path("/tmp/fake-oauth2-proxy.log").open("a", encoding="utf-8") as log:
+            log.write(f"{self.command} {self.path} body={len(body)} redirect={redirect}\n")
 
         if self.path == "/oauth2/auth":
             if "session=valid" in self.headers.get("Cookie", ""):

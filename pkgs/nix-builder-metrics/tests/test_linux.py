@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
-
 from nix_builder_metrics.linux import CgroupSource, enable_accounting_controllers
 from nix_builder_metrics.model import MetricsError
 
@@ -67,7 +65,7 @@ def test_samples_live_nix_cgroups(tmp_path: Path) -> None:
         procs="22\n",
         io="8:0 rbytes=7 wbytes=9\n",
     )
-    os.mkdir(tmp_path / "unrelated")
+    (tmp_path / "unrelated").mkdir()
 
     sample = CgroupSource(tmp_path).sample()
 

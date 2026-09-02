@@ -36,14 +36,10 @@ def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
 def build_network_settings(
     args: Arguments,
 ) -> NetworkDhcpSettingsSpec | None:
-    dhcp_range = (
-        None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
-    )
+    dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
     domain_name = args.domain_name.strip() or None
     domain_search = parse_domain_search(args.domain_search_json)
-    domain_search_option = parse_domain_search_option_json(
-        args.domain_search_option_json
-    )
+    domain_search_option = parse_domain_search_option_json(args.domain_search_option_json)
 
     classless_static_routes = (
         None
@@ -54,17 +50,11 @@ def build_network_settings(
         args.classless_static_routes_option_json
     )
 
-    raw_tftp_server = (
-        None if args.no_netboot_update else (args.tftp_server.strip() or None)
-    )
+    raw_tftp_server = None if args.no_netboot_update else (args.tftp_server.strip() or None)
     raw_bootfile = None if args.no_netboot_update else (args.bootfile.strip() or None)
     if (raw_tftp_server is None) != (raw_bootfile is None):
-        raise UnifiError(
-            "network boot requires both --tftp-server and --bootfile together"
-        )
-    tftp_server = (
-        normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
-    )
+        raise UnifiError("network boot requires both --tftp-server and --bootfile together")
+    tftp_server = normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
     bootfile = normalize_bootfile(raw_bootfile) if raw_bootfile is not None else None
     if domain_search is not None and domain_search_option is None:
         domain_search = None
@@ -134,8 +124,7 @@ def build_static_routes_by_destination(
         if key in by_destination:
             first = by_destination[key]
             raise UnifiError(
-                "multiple UniFi static routes share destination "
-                f"{key}: {_id(first)}, {_id(route)}"
+                f"multiple UniFi static routes share destination {key}: {_id(first)}, {_id(route)}"
             )
         by_destination[key] = route
     return by_destination
@@ -201,9 +190,7 @@ def build_static_route_update_plan(
     )
     if current_next_hop != desired_next_hop:
         payload["static-route_nexthop"] = desired_next_hop
-        changes["static-route_nexthop"] = build_change(
-            current_next_hop, desired_next_hop
-        )
+        changes["static-route_nexthop"] = build_change(current_next_hop, desired_next_hop)
 
     desired_distance = str(route.distance)
     current_distance = stringify(
@@ -211,9 +198,7 @@ def build_static_route_update_plan(
     )
     if current_distance != desired_distance:
         payload["static-route_distance"] = desired_distance
-        changes["static-route_distance"] = build_change(
-            current_distance, desired_distance
-        )
+        changes["static-route_distance"] = build_change(current_distance, desired_distance)
 
     if changes:
         return "update", desired_payload, changes
@@ -245,20 +230,14 @@ def build_client_update_plan(
         changes["fixed_ip"] = build_change(current_fixed_ip, desired_fixed_ip)
 
     if local_dns_record is not None:
-        current_local_dns_enabled = bool(
-            existing_client.get("local_dns_record_enabled")
-        )
+        current_local_dns_enabled = bool(existing_client.get("local_dns_record_enabled"))
         current_local_dns_record = stringify(existing_client.get("local_dns_record"))
         if not current_local_dns_enabled:
             payload["local_dns_record_enabled"] = True
-            changes["local_dns_record_enabled"] = build_change(
-                current_local_dns_enabled, True
-            )
+            changes["local_dns_record_enabled"] = build_change(current_local_dns_enabled, True)
         if current_local_dns_record != local_dns_record:
             payload["local_dns_record"] = local_dns_record
-            changes["local_dns_record"] = build_change(
-                current_local_dns_record, local_dns_record
-            )
+            changes["local_dns_record"] = build_change(current_local_dns_record, local_dns_record)
 
     return payload, changes
 
@@ -298,18 +277,21 @@ def choose_existing_dhcp_option(
         return exact_matches[0]
     if len(exact_matches) > 1:
         raise UnifiError(
-            f"multiple UniFi DHCP option definitions match code {desired.code} and name {desired.name}"
+            f"multiple UniFi DHCP option definitions match code {desired.code} "
+            f"and name {desired.name}"
         )
 
     if len(candidates) == 1:
         return candidates[0]
 
     choices = ", ".join(
-        f"{option.get('name', '<unnamed>')}({_id(option)} type={option.get('type')} signed={option.get('signed')})"
+        f"{option.get('name', '<unnamed>')}({_id(option)} "
+        f"type={option.get('type')} signed={option.get('signed')})"
         for option in candidates
     )
     raise UnifiError(
-        f"multiple UniFi DHCP option definitions share code {desired.code}; refine the desired definition. "
+        f"multiple UniFi DHCP option definitions share code {desired.code}; "
+        "refine the desired definition. "
         f"Available: {choices}"
     )
 
@@ -373,9 +355,7 @@ def ensure_dhcp_custom_option(
     )
     option_id = _id(created)
     if option_id == "<missing-id>":
-        raise UnifiError(
-            f"created UniFi DHCP option definition for code {desired.code} has no _id"
-        )
+        raise UnifiError(f"created UniFi DHCP option definition for code {desired.code} has no _id")
     return (
         dhcp_option_field_name(option_id),
         {
@@ -395,15 +375,12 @@ def ensure_dhcp_custom_option(
     )
 
 
-def build_network_update_payload(
+def _add_dhcp_range_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
     settings: NetworkDhcpSettingsSpec,
     current_network: dict[str, Any],
-    domain_search_option_field: str | None,
-    classless_static_routes_option_field: str | None,
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    payload: dict[str, Any] = {}
-    changes: dict[str, Any] = {}
-
+) -> None:
     if settings.dhcp_range is not None:
         desired_start = str(settings.dhcp_range.start)
         desired_stop = str(settings.dhcp_range.end)
@@ -411,11 +388,7 @@ def build_network_update_payload(
         current_start = stringify(current_network.get("dhcpd_start"))
         current_stop = stringify(current_network.get("dhcpd_stop"))
 
-        if (
-            not current_enabled
-            or current_start != desired_start
-            or current_stop != desired_stop
-        ):
+        if not current_enabled or current_start != desired_start or current_stop != desired_stop:
             payload.update(build_network_dhcp_payload(settings.dhcp_range))
         if not current_enabled:
             changes["dhcpd_enabled"] = build_change(current_enabled, True)
@@ -424,52 +397,63 @@ def build_network_update_payload(
         if current_stop != desired_stop:
             changes["dhcpd_stop"] = build_change(current_stop, desired_stop)
 
+
+def _add_domain_name_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+) -> None:
     if settings.domain_name is not None:
         current_domain_name = stringify(current_network.get("domain_name"))
         if current_domain_name != settings.domain_name:
             payload["domain_name"] = settings.domain_name
-            changes["domain_name"] = build_change(
-                current_domain_name, settings.domain_name
-            )
+            changes["domain_name"] = build_change(current_domain_name, settings.domain_name)
 
+
+def _add_domain_search_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    option_field: str | None,
+) -> None:
     if settings.domain_search is not None:
         if settings.domain_search_option is None:
-            raise UnifiError(
-                "internal error: domain_search present without option spec"
-            )
+            raise UnifiError("internal error: domain_search present without option spec")
 
-        if domain_search_option_field is not None:
-            current_option_value = stringify(
-                current_network.get(domain_search_option_field)
-            )
+        if option_field is not None:
+            current_option_value = stringify(current_network.get(option_field))
 
             if settings.domain_search_option.encoding != "text":
                 raise UnifiError("domain-search option encoding must be text")
             if len(settings.domain_search) != 1:
-                raise UnifiError(
-                    "domain-search option currently supports exactly one domain"
-                )
+                raise UnifiError("domain-search option currently supports exactly one domain")
             desired_networkconf_value = settings.domain_search[0]
 
             if current_option_value != desired_networkconf_value:
-                payload[domain_search_option_field] = desired_networkconf_value
-                changes[domain_search_option_field] = {
+                payload[option_field] = desired_networkconf_value
+                changes[option_field] = {
                     "current": current_option_value,
                     "desired": desired_networkconf_value,
                     "desired_domains": list(settings.domain_search),
                     "encoding": settings.domain_search_option.encoding,
                 }
 
+
+def _add_classless_static_routes_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    option_field: str | None,
+) -> None:
     if settings.classless_static_routes is not None:
         if settings.classless_static_routes_option is None:
-            raise UnifiError(
-                "internal error: classless_static_routes present without option spec"
-            )
+            raise UnifiError("internal error: classless_static_routes present without option spec")
 
-        if classless_static_routes_option_field is not None:
-            current_option_value = stringify(
-                current_network.get(classless_static_routes_option_field)
-            )
+        if option_field is not None:
+            current_option_value = stringify(current_network.get(option_field))
             if settings.classless_static_routes_option.encoding != "text":
                 raise UnifiError("classless-static-routes option encoding must be text")
             desired_networkconf_value = render_classless_static_routes_option(
@@ -477,10 +461,8 @@ def build_network_update_payload(
             )
 
             if current_option_value != desired_networkconf_value:
-                payload[classless_static_routes_option_field] = (
-                    desired_networkconf_value
-                )
-                changes[classless_static_routes_option_field] = {
+                payload[option_field] = desired_networkconf_value
+                changes[option_field] = {
                     "current": current_option_value,
                     "desired": desired_networkconf_value,
                     "desired_routes": [
@@ -492,6 +474,14 @@ def build_network_update_payload(
                     ],
                     "encoding": settings.classless_static_routes_option.encoding,
                 }
+
+
+def _add_netboot_update(
+    payload: dict[str, Any],
+    changes: dict[str, Any],
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+) -> None:
     if settings.tftp_server is not None:
         current_boot_enabled = bool(current_network.get("dhcpd_boot_enabled"))
         current_boot_server = stringify(current_network.get("dhcpd_boot_server"))
@@ -500,15 +490,37 @@ def build_network_update_payload(
             changes["dhcpd_boot_enabled"] = build_change(current_boot_enabled, True)
         if current_boot_server != settings.tftp_server:
             payload["dhcpd_boot_server"] = settings.tftp_server
-            changes["dhcpd_boot_server"] = build_change(
-                current_boot_server, settings.tftp_server
-            )
+            changes["dhcpd_boot_server"] = build_change(current_boot_server, settings.tftp_server)
     if settings.bootfile is not None:
         current_bootfile = stringify(current_network.get("dhcpd_boot_filename"))
         if current_bootfile != settings.bootfile:
             payload["dhcpd_boot_filename"] = settings.bootfile
-            changes["dhcpd_boot_filename"] = build_change(
-                current_bootfile, settings.bootfile
-            )
+            changes["dhcpd_boot_filename"] = build_change(current_bootfile, settings.bootfile)
 
+
+def build_network_update_payload(
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+    domain_search_option_field: str | None,
+    classless_static_routes_option_field: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    payload: dict[str, Any] = {}
+    changes: dict[str, Any] = {}
+    _add_dhcp_range_update(payload, changes, settings, current_network)
+    _add_domain_name_update(payload, changes, settings, current_network)
+    _add_domain_search_update(
+        payload,
+        changes,
+        settings,
+        current_network,
+        domain_search_option_field,
+    )
+    _add_classless_static_routes_update(
+        payload,
+        changes,
+        settings,
+        current_network,
+        classless_static_routes_option_field,
+    )
+    _add_netboot_update(payload, changes, settings, current_network)
     return payload, changes

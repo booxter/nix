@@ -48,12 +48,19 @@ class Rejection(ApiModel):
 
 class RadarrManualImportCandidate(ApiModel):
     path: Path
-    movie: RadarrMovie
+    movie: RadarrMovie | None = None
     quality: dict[str, JsonValue] | None = None
     languages: list[dict[str, JsonValue]] | None = None
     release_group: str | None = None
     download_id: str = ""
     rejections: list[Rejection] = Field(default_factory=list)
+
+    @field_validator("movie", mode="before")
+    @classmethod
+    def normalize_missing_movie(cls, value: object) -> object:
+        if isinstance(value, dict) and "id" not in value:
+            return None
+        return value
 
 
 class RadarrManualImportFile(ApiModel):

@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from flake_input_update_summary import app
 
 

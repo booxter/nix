@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "houndarr-tools"
 version = "0.1.0"
 description = "Reconciliation and status helpers for Houndarr"
-requires-python = ">=3.11"
-dependencies = ["httpx", "prometheus-client", "pydantic"]
+requires-python = ">=3.13"
+dependencies = ["defusedxml", "httpx", "prometheus-client", "pydantic"]
 
 [project.scripts]
 houndarr-status-collector = "houndarr_tools.cli:status_main"
@@ -34,5 +34,6 @@ files = ["src/houndarr_tools"]
 plugins = ["pydantic.mypy"]
 strict = true
 
-[tool.ruff]
-line-length = 100
+[[tool.mypy.overrides]]
+module = ["defusedxml", "defusedxml.*"]
+ignore_missing_imports = true

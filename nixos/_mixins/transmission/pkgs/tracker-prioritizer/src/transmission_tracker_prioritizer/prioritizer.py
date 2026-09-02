@@ -18,7 +18,6 @@ from .core import (
     settings_from_args,
 )
 
-
 LOG = logging.getLogger("transmission-prioritizer")
 
 
@@ -94,7 +93,7 @@ def main(argv: Sequence[str] | None = None, runner: Runner | None = None) -> int
     try:
         (runner or run)(settings, build_client(settings), SystemClock())
     except KeyboardInterrupt:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
     return 0
 
 

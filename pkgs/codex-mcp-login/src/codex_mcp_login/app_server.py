@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -147,10 +148,8 @@ class SubprocessStatusProbe:
     async def _shutdown(self, process: asyncio.subprocess.Process) -> None:
         if process.stdin is not None:
             process.stdin.close()
-            try:
+            with contextlib.suppress(BrokenPipeError, ConnectionResetError):
                 await process.stdin.wait_closed()
-            except (BrokenPipeError, ConnectionResetError):
-                pass
         try:
             await asyncio.wait_for(process.wait(), timeout=self.shutdown_timeout_seconds)
             return

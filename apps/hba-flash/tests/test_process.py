@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 import pytest
-
 from hba_flash.process import Command, FlashError, SubprocessRunner
 
 

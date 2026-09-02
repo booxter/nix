@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "adaptive-upload-controller"
 version = "0.1.0"
 description = "Coordinate Jellyfin-aware torrent upload limits"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "httpx", "prometheus-client", "pydantic", "transmission-common"]
 
 [project.scripts]
@@ -29,6 +29,3 @@ testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
-
-[tool.ruff]
-line-length = 100

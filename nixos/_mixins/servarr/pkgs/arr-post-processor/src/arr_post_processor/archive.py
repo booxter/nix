@@ -4,16 +4,16 @@ import logging
 import re
 import subprocess
 import tarfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Callable, Protocol
+from typing import Protocol
 
 import rarfile
 
 from .errors import NeedsAttention, SourceInvalid
 from .lidarr_pipeline import TransformResult
 from .media import AUDIO_FILE_SUFFIXES, is_staging_path
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr.archive")
 ARCHIVE_SUFFIXES = frozenset({".rar", ".tar"})

@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from attention_inbox.errors import InboxError
 from attention_inbox.gitlab import (
     CommandResult,

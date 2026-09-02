@@ -2,7 +2,7 @@
   houndarr,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -19,6 +19,7 @@ pythonPackages.buildPythonApplication {
     houndarr
   ]
   ++ (with pythonPackages; [
+    defusedxml
     httpx
     prometheus-client
     pydantic
@@ -28,12 +29,10 @@ pythonPackages.buildPythonApplication {
     mypy
     pytestCheckHook
     pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/houndarr_tools
   '';
 

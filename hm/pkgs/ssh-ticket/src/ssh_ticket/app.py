@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import contextlib
 import datetime as dt
@@ -16,12 +15,15 @@ from pydantic import ValidationError
 
 from .durations import (
     DurationError,
+)
+from .durations import (
     format_duration as format_duration_value,
+)
+from .durations import (
     parse_duration as parse_duration_value,
 )
 from .models import TARGETS, Target, TicketMetadata, TicketPaths, TicketStatus
 from .runtime import CommandError, Runtime, system_runtime
-
 
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
 DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
@@ -46,7 +48,7 @@ def format_duration(seconds: int) -> str:
 
 
 def expand_path(value: str | os.PathLike[str]) -> pathlib.Path:
-    return pathlib.Path(os.path.expandvars(os.path.expanduser(value))).resolve()
+    return pathlib.Path(os.path.expandvars(os.fspath(value))).expanduser().resolve()
 
 
 def default_state_dir() -> pathlib.Path:
@@ -431,7 +433,8 @@ def ssht_ssh_command(args: argparse.Namespace, target: Target, paths: TicketPath
         "-o",
         "ControlPath=none",
         target.name,
-    ] + ssh_args
+        *ssh_args,
+    ]
 
 
 def add_target_source_options(parser: argparse.ArgumentParser) -> None:

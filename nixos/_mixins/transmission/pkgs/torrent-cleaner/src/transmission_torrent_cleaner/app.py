@@ -15,7 +15,6 @@ from transmission_common.transmission import (
     read_tracker_hosts,
 )
 
-
 LOG = logging.getLogger("transmission-torrent-cleaner")
 DAY_SECONDS = 86_400.0
 TORRENT_FIELDS = [
@@ -338,7 +337,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except TransmissionRpcError as exc:
         LOG.error("cleanup run failed after Transmission RPC error: %s", exc)
     except KeyboardInterrupt:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         return 130
     return 1
 

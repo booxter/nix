@@ -6,9 +6,10 @@ import os
 import platform
 import socket
 import sys
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Mapping, Protocol, Sequence
+from typing import Protocol
 
 from .age import AgeRecipientResolver
 from .bootstrap import (
@@ -83,9 +84,7 @@ def _run(command: Callable[[], int]) -> int:
         return 1
 
 
-def cat_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
+def cat_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Decrypt and print a host secret.")
         parser.add_argument("host", nargs="?")
@@ -99,9 +98,7 @@ def cat_main(
     return _run(command)
 
 
-def edit_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
+def edit_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Edit a host secret with SOPS.")
         parser.add_argument("host", nargs="?")
@@ -114,9 +111,7 @@ def edit_main(
     return _run(command)
 
 
-def set_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
+def set_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Set a host secret value from stdin.")
         parser.add_argument("host")
@@ -124,8 +119,7 @@ def set_main(
         args = parser.parse_args(argv)
         if sys.stdin.isatty():
             raise ToolError(
-                "Refusing to read secret value from terminal; pipe or redirect the "
-                "value on stdin."
+                "Refusing to read secret value from terminal; pipe or redirect the value on stdin."
             )
         service = (application or Application.discover()).secrets(args.realm)
         service.set_text(args.host, KeyPath.parse(args.key_path), sys.stdin.read())
@@ -135,9 +129,7 @@ def set_main(
     return _run(command)
 
 
-def copy_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
+def copy_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Copy a value between host secrets.")
         parser.add_argument("source_host")
@@ -154,10 +146,7 @@ def copy_main(
             KeyPath.parse(destination_path),
         )
         if args.source_path == destination_path:
-            print(
-                f"Copied {args.source_path} from {args.source_host} "
-                f"to {args.destination_host}."
-            )
+            print(f"Copied {args.source_path} from {args.source_host} to {args.destination_host}.")
         else:
             print(
                 f"Copied {args.source_path} from {args.source_host} "
@@ -191,9 +180,7 @@ def update_main(
     return _run(command)
 
 
-def pass_main(
-    argv: Sequence[str] | None = None, *, application: Application | None = None
-) -> int:
+def pass_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
         parser = _parser("Hash and store a host login password.")
         parser.add_argument("--gen", action="store_true")
@@ -253,13 +240,9 @@ def bootstrap_main(
         service = BootstrapService(
             current.runtime,
             SecretRepository(current.runtime.repo_root, realm),
-            current.backend_factory.create(
-                environment, current.runtime.repo_root / ".sops.yaml"
-            ),
+            current.backend_factory.create(environment, current.runtime.repo_root / ".sops.yaml"),
             CommandRuntimeKeyProvider(runner, current.runtime.repo_root),
-            CommandOperatorRecipientProvider(
-                current.runtime, runner, AgeRecipientResolver(runner)
-            ),
+            CommandOperatorRecipientProvider(current.runtime, runner, AgeRecipientResolver(runner)),
         )
         result = service.bootstrap(
             args.host,

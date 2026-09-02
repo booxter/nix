@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "arr-post-processor"
 version = "0.1.0"
 description = "Queue-aware post-processing service for Servarr applications"
-requires-python = ">=3.11"
-dependencies = ["aiohttp", "aiopyarr", "atomic-file-writes", "prometheus-client", "pydantic", "rarfile"]
+requires-python = ">=3.13"
+dependencies = ["aiohttp", "aiopyarr", "atomic-file-writes", "defusedxml", "hermes-runs", "prometheus-client", "pydantic", "rarfile"]
 
 [tool.mypy]
 files = ["src/arr_post_processor"]
@@ -16,6 +16,10 @@ strict = true
 
 [[tool.mypy.overrides]]
 module = ["rarfile"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["defusedxml", "defusedxml.*"]
 ignore_missing_imports = true
 
 [project.scripts]
@@ -33,6 +37,3 @@ testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
-
-[tool.ruff]
-line-length = 100

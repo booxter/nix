@@ -14,7 +14,6 @@ from aiopyarr.models.base import BaseModel
 from .errors import PostProcessorError
 from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
 
-
 T = TypeVar("T")
 
 
@@ -118,18 +117,20 @@ class LidarrClient:
             # Lidarr returns HTTP 200 with an empty body for this DELETE. aiopyarr's
             # generic request path always decodes successful responses as JSON, so
             # async_delete_queue raises after Lidarr has already removed the item.
-            async with ClientSession(
-                headers={"X-Api-Key": self.api_key},
-                timeout=ClientTimeout(total=self.timeout_seconds),
-            ) as session:
-                async with session.delete(
+            async with (
+                ClientSession(
+                    headers={"X-Api-Key": self.api_key},
+                    timeout=ClientTimeout(total=self.timeout_seconds),
+                ) as session,
+                session.delete(
                     f"{self.base_url}/api/v1/queue/{queue_id}",
                     params={
                         "removeFromClient": "False",
                         "blocklist": str(blocklist),
                         "skipReDownload": "True",
                     },
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
         self._run_async(detach)

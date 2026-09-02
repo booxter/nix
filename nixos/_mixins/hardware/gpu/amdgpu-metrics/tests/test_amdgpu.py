@@ -4,10 +4,6 @@ import json
 from collections.abc import Iterator
 
 import pytest
-from prometheus_client import CollectorRegistry
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import ValidationError
-
 from amdgpu_metrics.amdgpu import (
     AmdgpuSample,
     Arguments,
@@ -21,6 +17,9 @@ from amdgpu_metrics.amdgpu import (
     success_registry,
 )
 from amdgpu_metrics.textfile import render
+from prometheus_client import CollectorRegistry
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import ValidationError
 
 
 class StaticSource:

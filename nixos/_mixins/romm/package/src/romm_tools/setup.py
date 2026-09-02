@@ -84,8 +84,7 @@ def _write_logs(logs: bytes | Iterable[bytes] | None, output: BinaryIO) -> None:
     if isinstance(logs, bytes):
         output.write(logs)
         return
-    for chunk in logs:
-        output.write(chunk)
+    output.writelines(logs)
 
 
 @dataclass

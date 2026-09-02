@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import subprocess
 from collections.abc import Sequence
 from dataclasses import dataclass
-import subprocess
 from typing import Protocol
 
 from .errors import ControllerError

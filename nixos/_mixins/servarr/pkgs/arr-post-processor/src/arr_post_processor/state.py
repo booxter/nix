@@ -8,7 +8,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from .errors import PostProcessorError
 
-
 ACTIVE_JOB_STATES = {
     "settling",
     "splitting",

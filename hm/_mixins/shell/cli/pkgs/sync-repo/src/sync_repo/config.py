@@ -2,9 +2,7 @@ from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
-
 from sync_repo.git import RepositorySpec
-
 
 NonEmptyString = Annotated[str, StringConstraints(min_length=1)]
 

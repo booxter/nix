@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from typing import BinaryIO
@@ -20,4 +19,4 @@ def write(registry: CollectorRegistry, destination: str, stdout: BinaryIO | None
         return
     path = Path(destination)
     write_to_textfile(str(path), registry)
-    os.chmod(path, 0o644)
+    path.chmod(0o644)

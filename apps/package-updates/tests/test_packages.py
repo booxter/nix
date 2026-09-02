@@ -6,8 +6,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from package_updates.common import CommandResult, Runner, ToolPaths, UpdateError
 from package_updates.models import PackageTarget, PackageTargets
 from package_updates.packages import (
@@ -21,6 +19,7 @@ from package_updates.packages import (
     update_packages,
     version_text,
 )
+from pydantic import ValidationError
 
 
 class FakePackageBackend:

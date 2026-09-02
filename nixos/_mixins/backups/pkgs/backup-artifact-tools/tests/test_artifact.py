@@ -6,11 +6,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from backup_artifact_tools.artifact import create_artifact
 from backup_artifact_tools.cli import run
 from backup_artifact_tools.model import ARTIFACT_ADAPTER, SQLiteArtifact
+from pydantic import ValidationError
 
 
 def sqlite_config(

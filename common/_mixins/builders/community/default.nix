@@ -12,6 +12,7 @@ let
     "big-parallel"
     "kvm"
     "nixos-test"
+    "uid-range"
   ];
   enabled = config.host.realm == "home" && config.host.nix.builderClient != null;
 in
@@ -37,10 +38,16 @@ in
         publicKey = readPublicKey ./keys/linux-arm.pub;
         sshKey = identityFile;
         sshUser = "booxter";
-        systems = [ "aarch64-linux" ];
+        systems = [
+          "aarch64-linux"
+          "armv7l-linux"
+        ];
         maxJobs = 10;
         speedFactor = 20;
-        supportedFeatures = linuxFeatures;
+        supportedFeatures = linuxFeatures ++ [
+          "gccarch-armv7-a"
+          "gccarch-armv8-a"
+        ];
       };
       remote-linux-x86-builder = {
         uses = [ "nixpkgs" ];
@@ -49,7 +56,12 @@ in
         publicKey = readPublicKey ./keys/linux-x86.pub;
         sshKey = identityFile;
         sshUser = "booxter";
-        systems = [ "x86_64-linux" ];
+        systems = [
+          "i686-linux"
+          "riscv64-linux"
+          "x86_64-freebsd"
+          "x86_64-linux"
+        ];
         maxJobs = 5;
         speedFactor = 20;
         supportedFeatures = linuxFeatures;

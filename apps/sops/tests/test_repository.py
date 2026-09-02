@@ -4,9 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
-
 from sops_tools.errors import ToolError
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 
 from .fakes import FailingRunner, RecordingRunner
 
@@ -49,9 +48,7 @@ def test_default_realm_comes_from_inventory(tmp_path: Path) -> None:
     inventory = tmp_path / "realms.json"
     inventory.write_text(json.dumps({"controller": "home"}))
 
-    realm = runtime(tmp_path, extra={"SOPS_REALMS_FILE": str(inventory)}).resolve_realm(
-        None
-    )
+    realm = runtime(tmp_path, extra={"SOPS_REALMS_FILE": str(inventory)}).resolve_realm(None)
 
     assert realm == Realm("home", None)
 

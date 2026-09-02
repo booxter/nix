@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "backup-metrics"
 version = "0.1.0"
 description = "Persist systemd backup outcomes as Prometheus metrics"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "prometheus-client", "pydantic", "pystemd"]
 
 [project.scripts]
@@ -33,6 +33,3 @@ precision = 2
 files = ["src/backup_metrics"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

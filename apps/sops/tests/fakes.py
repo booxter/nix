@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Sequence
 
 import yaml
-
 from sops_tools.errors import CommandError
 from sops_tools.model import JsonValue, KeyPath
 from sops_tools.passwords import PasswordHasher, PasswordStore
@@ -79,9 +78,7 @@ class MemorySopsBackend:
                 current = current[segment]
             else:
                 assert isinstance(current, dict)
-                child = current.setdefault(
-                    segment, [] if isinstance(next_segment, int) else {}
-                )
+                child = current.setdefault(segment, [] if isinstance(next_segment, int) else {})
                 current = child
         final = key_path.segments[-1]
         if isinstance(final, int):

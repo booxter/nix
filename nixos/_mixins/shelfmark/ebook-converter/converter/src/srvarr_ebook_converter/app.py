@@ -12,18 +12,17 @@ import sys
 import time
 import uuid
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterator, Protocol, TextIO
+from typing import Protocol, TextIO
 
 from atomic_file_writes import write_text_atomic
 from pydantic import ValidationError
 
 from .metrics import prometheus_metrics
 from .models import FileFingerprint, JobState, ServiceState, ShelfmarkPayload
-
 
 LOG = logging.getLogger("ebook-converter")
 SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
@@ -182,14 +181,14 @@ def convert_path(
         try:
             runner.convert(source, temporary_epub)
             validate_epub(temporary_epub)
-            os.chmod(temporary_epub, source_mode)
+            temporary_epub.chmod(source_mode)
             with temporary_epub.open("rb") as output_file:
                 os.fsync(output_file.fileno())
             if destination.exists():
                 raise EbookConverterError(
                     f"refusing to replace EPUB created during conversion: {destination}"
                 )
-            os.replace(temporary_epub, destination)
+            temporary_epub.replace(destination)
             source.unlink()
         except Exception:
             temporary_epub.unlink(missing_ok=True)

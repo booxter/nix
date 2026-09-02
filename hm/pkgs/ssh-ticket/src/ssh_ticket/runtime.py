@@ -3,8 +3,9 @@ import shlex
 import subprocess
 import sys
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import NoReturn, Protocol, Sequence, TextIO
+from typing import NoReturn, Protocol, TextIO
 
 
 class CommandError(RuntimeError):

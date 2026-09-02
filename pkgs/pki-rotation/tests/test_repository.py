@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from git_command_runner import GitResult
-
 from pki_rotation.askpass import response
 from pki_rotation.errors import RotationError
 from pki_rotation.models import CheckoutRequest

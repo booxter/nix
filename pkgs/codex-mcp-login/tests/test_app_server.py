@@ -5,10 +5,8 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from codex_mcp_login.app_server import ProbeError, SubprocessStatusProbe
 from codex_mcp_login.models import StartupStatus
-
 
 FAKE_CODEX = Path(__file__).with_name("fake_app_server.py")
 

@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from prometheus_client import CollectorRegistry
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import ValidationError
-
 from ollama_metrics.collector import (
     Arguments,
     OllamaSource,
@@ -19,6 +14,9 @@ from ollama_metrics.collector import (
     success_registry,
 )
 from ollama_metrics.textfile import render, write
+from prometheus_client import CollectorRegistry
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import ValidationError
 
 
 class StaticTransport:
@@ -190,7 +188,7 @@ def test_textfile_output_is_atomic_and_world_readable(tmp_path: Path) -> None:
     write(registry, str(destination))
 
     assert destination.read_text().startswith("# HELP host_observability_ollama_collector_ok")
-    assert os.stat(destination).st_mode & 0o777 == 0o644
+    assert destination.stat().st_mode & 0o777 == 0o644
     assert list(tmp_path.iterdir()) == [destination]
 
 

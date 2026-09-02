@@ -1,3 +1,4 @@
+import contextlib
 import os
 import signal
 import subprocess
@@ -52,17 +53,13 @@ class SubprocessGitRunner:
         try:
             stdout, stderr = process.communicate(timeout=self.timeout_seconds)
         except subprocess.TimeoutExpired:
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
             try:
                 stdout, stderr = process.communicate(timeout=self.termination_grace_seconds)
             except subprocess.TimeoutExpired:
-                try:
+                with contextlib.suppress(ProcessLookupError):
                     os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
                 stdout, stderr = process.communicate()
             timeout_message = f"git command timed out after {self.timeout_seconds:g} seconds"
             stderr = f"{stderr.rstrip()}\n{timeout_message}\n" if stderr else f"{timeout_message}\n"

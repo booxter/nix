@@ -6,7 +6,7 @@ from typing import Protocol
 
 from sops_tools.model import KeyPath
 from sops_tools.process import SubprocessRunner
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService, UpdateResult
 
 from .models import CertificateMaterial, FleetHosts

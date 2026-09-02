@@ -1,7 +1,7 @@
 import json
+from typing import ClassVar
 
 from unifi_sync import cli
-
 
 INVENTORY = [
     {
@@ -84,7 +84,7 @@ def comprehensive_args():
 
 
 class ComprehensiveFakeClient:
-    instances = []
+    instances: ClassVar[list["ComprehensiveFakeClient"]] = []
 
     def __init__(self, **kwargs):
         self.connection = kwargs

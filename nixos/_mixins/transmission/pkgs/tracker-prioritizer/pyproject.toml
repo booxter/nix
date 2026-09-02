@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "transmission-tracker-prioritizer"
 version = "0.1.0"
 description = "Transmission priority enforcement and metrics collection"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["prometheus-client", "pydantic", "transmission-common"]
 
 [project.scripts]
@@ -34,6 +34,3 @@ strict = true
 [[tool.mypy.overrides]]
 module = ["transmission_common.*"]
 ignore_missing_imports = true
-
-[tool.ruff]
-line-length = 100

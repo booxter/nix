@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+from enum import StrEnum
 from types import TracebackType
 from typing import Protocol, Self, cast
 from urllib.error import HTTPError, URLError
@@ -10,6 +11,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 JsonObject = dict[str, object]
+DEFAULT_EVENT_TIMEOUT_SECONDS = 60.0
 
 
 class HermesError(Exception):
@@ -19,7 +21,43 @@ class HermesError(Exception):
 class HermesHttpError(HermesError):
     def __init__(self, status: int, detail: str) -> None:
         self.status = status
+        self.detail = detail
         super().__init__(f"Hermes returned HTTP {status}: {detail}")
+
+
+class RunState(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    WAITING_FOR_APPROVAL = "waiting_for_approval"
+    STOPPING = "stopping"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+    @property
+    def terminal(self) -> bool:
+        return self in {RunState.COMPLETED, RunState.FAILED, RunState.CANCELLED}
+
+
+@dataclass(frozen=True)
+class RunStatus:
+    run_id: str
+    state: RunState
+    created_at: float | None
+    updated_at: float | None
+    model: str
+    last_event: str
+    output: str
+    error: str
+    usage: JsonObject
+    raw: JsonObject
+
+
+@dataclass(frozen=True)
+class StopResult:
+    run_id: str
+    state: RunState
+    raw: JsonObject
 
 
 @dataclass(frozen=True)
@@ -38,11 +76,11 @@ class Client(Protocol):
 
     def watch_run(self, run_id: str) -> Iterator[JsonObject]: ...
 
-    def get_run(self, run_id: str) -> JsonObject: ...
+    def get_run(self, run_id: str) -> RunStatus: ...
 
     def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject: ...
 
-    def stop_run(self, run_id: str) -> JsonObject: ...
+    def stop_run(self, run_id: str) -> StopResult: ...
 
 
 class HttpResponse(Protocol):
@@ -61,13 +99,24 @@ class HttpResponse(Protocol):
 
 
 class Opener(Protocol):
-    def __call__(self, request: Request) -> HttpResponse: ...
+    def __call__(self, request: Request, *, timeout: float) -> HttpResponse: ...
 
 
 class HermesClient:
-    def __init__(self, api_url: str, api_key: str, opener: Opener | None = None) -> None:
+    def __init__(
+        self,
+        api_url: str,
+        api_key: str,
+        *,
+        timeout_seconds: float = 20.0,
+        event_timeout_seconds: float = DEFAULT_EVENT_TIMEOUT_SECONDS,
+        opener: Opener | None = None,
+    ) -> None:
         self._api_url = api_url.rstrip("/")
         self._api_key = api_key
+        self._timeout_seconds = timeout_seconds
+        # Event streams need a longer idle timeout than ordinary API requests.
+        self._event_timeout_seconds = event_timeout_seconds
         self._opener = opener or cast(Opener, urlopen)
 
     def _request(self, method: str, path: str, body: JsonObject | None = None) -> Request:
@@ -85,7 +134,7 @@ class HermesClient:
     def _request_json(self, method: str, path: str, body: JsonObject | None = None) -> JsonObject:
         request = self._request(method, path, body)
         try:
-            with self._opener(request) as response:
+            with self._opener(request, timeout=self._timeout_seconds) as response:
                 parsed = json.load(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
@@ -106,11 +155,13 @@ class HermesClient:
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
         request = self._request("GET", f"/v1/runs/{run_id}/events")
         try:
-            with self._opener(request) as response:
+            with self._opener(request, timeout=self._event_timeout_seconds) as response:
                 yield from parse_sse(response)
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
             raise HermesHttpError(error.code, detail) from error
+        except TimeoutError as error:
+            raise HermesError("Hermes event stream timed out") from error
         except URLError as error:
             raise HermesError(f"Unable to contact Hermes: {error.reason}") from error
 
@@ -131,7 +182,7 @@ class HermesClient:
             status = "expired"
             try:
                 run = self.get_run(run_id)
-                status = str(run.get("status", "unknown"))
+                status = run.state.value
             except HermesHttpError as error:
                 if error.status != 404:
                     raise
@@ -149,8 +200,8 @@ class HermesClient:
             )
         return summaries
 
-    def get_run(self, run_id: str) -> JsonObject:
-        return self._request_json("GET", f"/v1/runs/{run_id}")
+    def get_run(self, run_id: str) -> RunStatus:
+        return parse_run_status(self._request_json("GET", f"/v1/runs/{run_id}"))
 
     def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
         body: JsonObject = {"choice": choice}
@@ -158,8 +209,54 @@ class HermesClient:
             body["all"] = True
         return self._request_json("POST", f"/v1/runs/{run_id}/approval", body)
 
-    def stop_run(self, run_id: str) -> JsonObject:
-        return self._request_json("POST", f"/v1/runs/{run_id}/stop")
+    def stop_run(self, run_id: str) -> StopResult:
+        return parse_stop_result(self._request_json("POST", f"/v1/runs/{run_id}/stop"))
+
+
+def _optional_float(value: object, field: str) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    raise HermesError(f"Hermes returned an invalid {field}")
+
+
+def _required_string(value: object, field: str) -> str:
+    if isinstance(value, str) and value:
+        return value
+    raise HermesError(f"Hermes did not return a valid {field}")
+
+
+def _run_state(value: object) -> RunState:
+    try:
+        return RunState(_required_string(value, "status"))
+    except ValueError as error:
+        raise HermesError(f"Hermes returned an unknown run status: {value}") from error
+
+
+def parse_run_status(payload: JsonObject) -> RunStatus:
+    usage_value = payload.get("usage")
+    usage = cast(JsonObject, usage_value) if isinstance(usage_value, dict) else {}
+    return RunStatus(
+        run_id=_required_string(payload.get("run_id"), "run_id"),
+        state=_run_state(payload.get("status")),
+        created_at=_optional_float(payload.get("created_at"), "created_at"),
+        updated_at=_optional_float(payload.get("updated_at"), "updated_at"),
+        model=str(payload.get("model") or ""),
+        last_event=str(payload.get("last_event") or ""),
+        output=str(payload.get("output") or ""),
+        error=str(payload.get("error") or ""),
+        usage=usage,
+        raw=payload,
+    )
+
+
+def parse_stop_result(payload: JsonObject) -> StopResult:
+    return StopResult(
+        run_id=_required_string(payload.get("run_id"), "run_id"),
+        state=_run_state(payload.get("status")),
+        raw=payload,
+    )
 
 
 def parse_sse(lines: Iterable[bytes]) -> Iterator[JsonObject]:

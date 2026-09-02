@@ -3,12 +3,12 @@ import pathlib
 import sys
 import threading
 import types
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import NoReturn, Sequence
+from typing import NoReturn
 
 import pytest
-
 from ssh_ticket import app as ssh_ticket
 from ssh_ticket.models import Target, TicketMetadata
 from ssh_ticket.runtime import CommandError, Runtime, SystemCommands

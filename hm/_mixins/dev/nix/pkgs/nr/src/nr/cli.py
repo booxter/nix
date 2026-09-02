@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-
 DEFAULT_SYSTEMS = ("x86_64-linux", "aarch64-darwin")
 AARCH64_LINUX_SYSTEMS = ("x86_64-linux", "aarch64-linux", "aarch64-darwin")
 

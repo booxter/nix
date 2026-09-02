@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "hba-flash"
 version = "0.2.0"
 description = "Preflight and flash the Broadcom HBA on beast"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = []
 
 [project.scripts]
@@ -31,6 +31,3 @@ precision = 2
 [tool.mypy]
 files = ["src/hba_flash"]
 strict = true
-
-[tool.ruff]
-line-length = 100

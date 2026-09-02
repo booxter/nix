@@ -17,7 +17,6 @@ from .models import (
     StaticRouteSpec,
 )
 
-
 MAC_RE = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")
 DEFAULT_GROUP_NAMES = {"default"}
 
@@ -110,9 +109,7 @@ def choose_usergroup(groups: list[dict[str, Any]], explicit_id: str) -> dict[str
     if len(default_matches) == 1:
         return default_matches[0]
 
-    choices = ", ".join(
-        f"{group.get('name', '<unnamed>')}({_id(group)})" for group in groups
-    )
+    choices = ", ".join(f"{group.get('name', '<unnamed>')}({_id(group)})" for group in groups)
     raise UnifiError(
         "cannot choose a user group automatically; pass --usergroup-id. "
         f"Available groups: {choices}"
@@ -122,7 +119,8 @@ def choose_usergroup(groups: list[dict[str, Any]], explicit_id: str) -> dict[str
 def parse_inventory_reservations(raw_json: str) -> list[ReservationSpec]:
     if not raw_json:
         raise UnifiError(
-            "missing inventory reservations; pass --inventory-json or run through the flake app wrapper"
+            "missing inventory reservations; pass --inventory-json or run through "
+            "the flake app wrapper"
         )
 
     try:
@@ -151,9 +149,7 @@ def parse_inventory_reservations(raw_json: str) -> list[ReservationSpec]:
 
         parsed_ip = ipaddress.ip_address(fixed_ip)
         if not isinstance(parsed_ip, ipaddress.IPv4Address):
-            raise UnifiError(
-                f"inventory item {index} uses non-IPv4 address: {fixed_ip}"
-            )
+            raise UnifiError(f"inventory item {index} uses non-IPv4 address: {fixed_ip}")
 
         reservations.append(
             ReservationSpec(
@@ -223,9 +219,7 @@ def parse_domain_search(raw_json: str) -> tuple[str, ...] | None:
         labels = domain.split(".")
         for label in labels:
             if not label:
-                raise UnifiError(
-                    f"domain-search item {index} has an empty label: {domain}"
-                )
+                raise UnifiError(f"domain-search item {index} has an empty label: {domain}")
             if len(label.encode("idna")) > 63:
                 raise UnifiError(f"domain-search label is too long in {domain}")
 
@@ -289,9 +283,7 @@ def normalize_dhcp_option_name(value: str) -> str:
     if not normalized:
         raise UnifiError("DHCP option name must not be empty")
     if not re.fullmatch(r"[A-Za-z0-9]+", normalized):
-        raise UnifiError(
-            f"DHCP option name must contain only letters and numbers: {value}"
-        )
+        raise UnifiError(f"DHCP option name must contain only letters and numbers: {value}")
     return normalized
 
 
@@ -394,26 +386,18 @@ def parse_static_routes(raw_json: str) -> list[StaticRouteSpec] | None:
         if not isinstance(next_hop, str):
             raise UnifiError(f"static route item {index} is missing nextHop")
         if isinstance(distance, bool) or not isinstance(distance, int):
-            raise UnifiError(
-                f"static route item {index} has non-integer distance: {distance!r}"
-            )
+            raise UnifiError(f"static route item {index} has non-integer distance: {distance!r}")
         if distance < 1 or distance > 255:
-            raise UnifiError(
-                f"static route item {index} distance must be between 1 and 255"
-            )
+            raise UnifiError(f"static route item {index} distance must be between 1 and 255")
         if not isinstance(enabled, bool):
             raise UnifiError(f"static route item {index} enabled must be boolean")
 
         parsed_destination = ipaddress.ip_network(destination, strict=False)
         if not isinstance(parsed_destination, ipaddress.IPv4Network):
-            raise UnifiError(
-                f"static route item {index} destination is not IPv4: {destination}"
-            )
+            raise UnifiError(f"static route item {index} destination is not IPv4: {destination}")
         parsed_next_hop = ipaddress.ip_address(next_hop)
         if not isinstance(parsed_next_hop, ipaddress.IPv4Address):
-            raise UnifiError(
-                f"static route item {index} nextHop is not IPv4: {next_hop}"
-            )
+            raise UnifiError(f"static route item {index} nextHop is not IPv4: {next_hop}")
 
         routes.append(
             StaticRouteSpec(
@@ -449,9 +433,7 @@ def parse_classless_static_routes(
 
         enabled = item.get("enabled", True)
         if not isinstance(enabled, bool):
-            raise UnifiError(
-                f"classless static route item {index} enabled must be boolean"
-            )
+            raise UnifiError(f"classless static route item {index} enabled must be boolean")
         if not enabled:
             continue
 
@@ -459,9 +441,7 @@ def parse_classless_static_routes(
         next_hop = item.get("nextHop", item.get("next_hop", item.get("router")))
 
         if not isinstance(destination, str):
-            raise UnifiError(
-                f"classless static route item {index} is missing destination"
-            )
+            raise UnifiError(f"classless static route item {index} is missing destination")
         if not isinstance(next_hop, str):
             raise UnifiError(f"classless static route item {index} is missing nextHop")
 
@@ -473,9 +453,7 @@ def parse_classless_static_routes(
 
         parsed_next_hop = ipaddress.ip_address(next_hop)
         if not isinstance(parsed_next_hop, ipaddress.IPv4Address):
-            raise UnifiError(
-                f"classless static route item {index} nextHop is not IPv4: {next_hop}"
-            )
+            raise UnifiError(f"classless static route item {index} nextHop is not IPv4: {next_hop}")
 
         routes.append(
             ClasslessStaticRouteSpec(
@@ -521,7 +499,8 @@ def load_reservations(args: Arguments) -> tuple[str, list[ReservationSpec]]:
     if args.no_reservations_update:
         if args.mac or args.ip or args.hostname:
             raise UnifiError(
-                "use either --no-reservations-update or single-client reservation arguments, not both"
+                "use either --no-reservations-update or single-client reservation "
+                "arguments, not both"
             )
         return "disabled", []
     if args.mac or args.ip or args.hostname:

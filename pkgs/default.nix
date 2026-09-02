@@ -32,6 +32,8 @@ in
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
+  pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
+
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;
   };

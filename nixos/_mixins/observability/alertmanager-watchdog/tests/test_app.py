@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
-
 from fana_alertmanager_watchdog.app import (
     Arguments,
     MtlsReadinessProbe,
@@ -19,9 +17,11 @@ from fana_alertmanager_watchdog.app import (
     parse_arguments,
     read_secret,
     run,
-    runtime as build_runtime,
     should_notify,
     truncate,
+)
+from fana_alertmanager_watchdog.app import (
+    runtime as build_runtime,
 )
 
 
@@ -62,7 +62,7 @@ def test_first_failure_notifies_and_records_private_state(tmp_path: Path) -> Non
     assert runtime.state.error_file.read_text() == "TLS <failed>\n"
     assert runtime.state.notified_file.read_text() == "100\n"
     assert "TLS &lt;failed&gt;" in notifier.messages[0]
-    assert os.stat(tmp_path).st_mode & 0o777 == 0o700
+    assert tmp_path.stat().st_mode & 0o777 == 0o700
 
 
 def test_repeated_failure_waits_until_repeat_window(tmp_path: Path) -> None:

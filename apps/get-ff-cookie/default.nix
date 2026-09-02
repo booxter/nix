@@ -2,7 +2,7 @@
   gallery-dl,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -19,7 +19,7 @@ pythonPackages.buildPythonApplication {
   dependencies = [ gallery-dl ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
@@ -30,8 +30,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/get_ff_cookie
   '';
 

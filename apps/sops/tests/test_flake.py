@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from sops_tools.errors import ToolError
 from sops_tools.flake import archive_flake_source
 

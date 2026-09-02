@@ -14,7 +14,6 @@ from urllib.parse import urlsplit
 from gallery_dl import cookies as gallery_cookies  # type: ignore[import-untyped]
 from gallery_dl import util as gallery_util
 
-
 DEFAULT_DOMAIN = "instagram.com"
 
 

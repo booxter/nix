@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import datetime
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 
 from atomic_file_writes import write_text_atomic
@@ -16,7 +16,6 @@ from pydantic import (
 
 from .errors import ControllerError
 from .jellyfin import collect_media_stream_stats, fetch_url_text
-
 
 LOG = logging.getLogger("adaptive-upload-controller")
 TARGET_MBIT_EPSILON = 0.05
@@ -81,8 +80,8 @@ class PolicyState(BaseModel):
         if value is None:
             return None
         if value.tzinfo is None:
-            return value.replace(tzinfo=datetime.timezone.utc)
-        return value.astimezone(datetime.timezone.utc)
+            return value.replace(tzinfo=datetime.UTC)
+        return value.astimezone(datetime.UTC)
 
     def signature(self) -> tuple[object, ...]:
         return (
@@ -102,7 +101,7 @@ class PolicyState(BaseModel):
 
 
 def utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime.now(datetime.UTC)
 
 
 def round_target_mbit(target_mbit: float) -> float:
@@ -365,7 +364,7 @@ def load_policy_state(
     if max_state_age_seconds is not None:
         updated_at = state.updated_at
         if updated_at.tzinfo is None:
-            updated_at = updated_at.replace(tzinfo=datetime.timezone.utc)
+            updated_at = updated_at.replace(tzinfo=datetime.UTC)
         age_seconds = ((now or utc_now()) - updated_at).total_seconds()
         if age_seconds > max_state_age_seconds:
             LOG.warning(

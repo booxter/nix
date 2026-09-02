@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from io import StringIO
 
 import pytest
-
 from codex_mcp_login.cli import main
 from codex_mcp_login.models import ServerStartup, StartupStatus
 

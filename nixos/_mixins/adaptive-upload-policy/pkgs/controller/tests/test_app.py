@@ -4,8 +4,6 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
-from prometheus_client.parser import text_string_to_metric_families
-
 from adaptive_upload_controller.config import load_config
 from adaptive_upload_controller.jellyfin import (
     DEFAULT_MEDIA_TYPES,
@@ -29,6 +27,7 @@ from adaptive_upload_controller.runtime import (
     transmission_get_current_upload_limit_kbps,
 )
 from adaptive_upload_controller.traffic_control import QosctlTrafficControl
+from prometheus_client.parser import text_string_to_metric_families
 
 
 def policy_args(**overrides):
@@ -77,7 +76,10 @@ def metrics_server(content):
 def jellyfin_session(*, user, address, media_type="Video", bitrate=None):
     labels = f'user_id="{user}",username="{user}",device="tv",type="{media_type}"'
     lines = [
-        f'jellyfin_user_active{{user_id="{user}",username="{user}",device="tv",ip_address="{address}"}} 1',
+        (
+            f'jellyfin_user_active{{user_id="{user}",username="{user}",device="tv",'
+            f'ip_address="{address}"}} 1'
+        ),
         f"jellyfin_now_playing_state{{{labels}}} 1",
     ]
     if bitrate is not None:
@@ -151,7 +153,7 @@ def test_policy_relaxes_only_after_stable_hold(tmp_path):
 
         holding = holding.model_copy(
             update={
-                "relaxation_pending_since": datetime.datetime.now(datetime.timezone.utc)
+                "relaxation_pending_since": datetime.datetime.now(datetime.UTC)
                 - datetime.timedelta(minutes=2)
             }
         )
@@ -180,7 +182,7 @@ def test_stale_or_invalid_state_uses_safe_policy(tmp_path):
 
     stale_path = tmp_path / "stale.json"
     stale = default_policy_state(12.0, "current", True, 0).model_copy(
-        update={"updated_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)}
+        update={"updated_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.UTC)}
     )
     save_policy_state(stale_path, stale)
     loaded = load_policy_state(stale_path, 8.0, 90.0)

@@ -4,9 +4,17 @@ from collections.abc import Iterator
 from io import StringIO
 
 import pytest
-
-from hermes_runs.cli import run
-from hermes_runs.client import HermesError, HermesHttpError, JsonObject, RunSummary
+from hermes_runs.cli import WATCH_BUSY_RETRY_ATTEMPTS, _watch, run
+from hermes_runs.client import (
+    HermesError,
+    HermesHttpError,
+    JsonObject,
+    RunState,
+    RunStatus,
+    RunSummary,
+    StopResult,
+    parse_run_status,
+)
 
 
 class FakeClient:
@@ -15,24 +23,27 @@ class FakeClient:
         self.run_id = run_id
         self.event_values: list[JsonObject] = []
         self.run_values: list[RunSummary] = []
+        self.watched_run_ids: list[str] = []
 
     def start_run(self, instruction: str) -> str:
         return self.run_id
 
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+        self.watched_run_ids.append(run_id)
         yield from self.event_values
 
     def list_runs(self, limit: int) -> list[RunSummary]:
-        return self.run_values
+        return self.run_values[:limit]
 
-    def get_run(self, run_id: str) -> JsonObject:
-        return self.response
+    def get_run(self, run_id: str) -> RunStatus:
+        return parse_run_status(self.response)
 
     def approve_run(self, run_id: str, choice: str, resolve_all: bool) -> JsonObject:
         return {"all": resolve_all, "choice": choice, "run_id": run_id}
 
-    def stop_run(self, run_id: str) -> JsonObject:
-        return {"run_id": run_id, "status": "stopping"}
+    def stop_run(self, run_id: str) -> StopResult:
+        raw: JsonObject = {"run_id": run_id, "status": "stopping"}
+        return StopResult(run_id=run_id, state=RunState.STOPPING, raw=raw)
 
 
 def invoke(arguments: list[str], client: FakeClient) -> str:
@@ -87,8 +98,11 @@ def test_approve(resolve_all: bool) -> None:
         arguments.append("--all")
 
     expected = (
-        '{\n  "all": %s,\n  "choice": "once",\n  "run_id": "run_123"\n}\n'
-        % str(resolve_all).lower()
+        "{\n"
+        f'  "all": {str(resolve_all).lower()},\n'
+        '  "choice": "once",\n'
+        '  "run_id": "run_123"\n'
+        "}\n"
     )
     assert invoke(arguments, client) == expected
 
@@ -114,6 +128,34 @@ def test_watch_renders_text_and_events() -> None:
         'hello world\n[tool.started] {"preview": "ls", "tool": "terminal"}\n'
         '[run.completed] {"usage": {"total_tokens": 4}}\n'
     )
+
+
+def test_watch_defaults_to_latest_run() -> None:
+    client = FakeClient()
+    client.run_values = [
+        RunSummary(
+            run_id="run_latest",
+            status="running",
+            last_active=42,
+            model="model",
+            preview="latest",
+        ),
+        RunSummary(
+            run_id="run_older",
+            status="completed",
+            last_active=21,
+            model="model",
+            preview="older",
+        ),
+    ]
+
+    assert invoke(["watch"], client) == ""
+    assert client.watched_run_ids == ["run_latest"]
+
+
+def test_watch_without_run_fails_when_no_runs_exist() -> None:
+    with pytest.raises(HermesError, match="no runs found"):
+        invoke(["watch"], FakeClient())
 
 
 def test_watch_adds_newline_after_final_delta() -> None:
@@ -148,14 +190,61 @@ def test_watch_falls_back_to_retained_status() -> None:
     )
 
 
-def test_watch_preserves_other_http_errors() -> None:
+def test_watch_retries_busy_stream() -> None:
+    class BusyThenReadyClient(FakeClient):
+        attempts = 0
+
+        def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+            self.attempts += 1
+            if self.attempts == 1:
+                raise HermesHttpError(409, "run_stream_in_use")
+            yield {"event": "tool.completed", "tool": "terminal"}
+
+    client = BusyThenReadyClient()
+    output = StringIO()
+    waits: list[float] = []
+
+    _watch(client, "run_123", output, sleep=waits.append)
+
+    assert client.attempts == 2
+    assert waits == [0.5]
+    assert output.getvalue() == (
+        'event stream is still closing; retrying...\n[tool.completed] {"tool": "terminal"}\n'
+    )
+
+
+def test_watch_stops_retrying_busy_stream() -> None:
+    class BusyClient(FakeClient):
+        attempts = 0
+
+        def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+            self.attempts += 1
+            if False:
+                yield {}
+            raise HermesHttpError(409, "run_stream_in_use")
+
+    client = BusyClient()
+    waits: list[float] = []
+
+    with pytest.raises(HermesHttpError, match="HTTP 409"):
+        _watch(client, "run_123", StringIO(), sleep=waits.append)
+
+    assert client.attempts == WATCH_BUSY_RETRY_ATTEMPTS + 1
+    assert waits == [0.5] * WATCH_BUSY_RETRY_ATTEMPTS
+
+
+@pytest.mark.parametrize(
+    ("status", "detail"),
+    [(500, "broken"), (409, "different_conflict")],
+)
+def test_watch_preserves_other_http_errors(status: int, detail: str) -> None:
     class BrokenEventsClient(FakeClient):
         def watch_run(self, run_id: str) -> Iterator[JsonObject]:
             if False:
                 yield {}
-            raise HermesHttpError(500, "broken")
+            raise HermesHttpError(status, detail)
 
-    with pytest.raises(HermesHttpError, match="HTTP 500"):
+    with pytest.raises(HermesHttpError, match=f"HTTP {status}"):
         invoke(["watch", "run_123"], BrokenEventsClient())
 
 

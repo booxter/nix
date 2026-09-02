@@ -13,7 +13,6 @@ from codex_mcp_login.models import (
 )
 from codex_mcp_login.workflow import LoginWorkflow
 
-
 ProbeResponse = tuple[ServerStartup, ...] | ProbeError
 
 

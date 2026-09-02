@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "prox-deploy"
 version = "0.1.0"
 description = "Deploy inventory-backed NixOS VMs through nixmoxer"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["nixmoxer"]
 
 [project.scripts]
@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/prox_deploy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

@@ -4,11 +4,15 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Mapping, Sequence
+import time
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import TextIO
 
-from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject
+from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject, RunStatus
+
+WATCH_BUSY_RETRY_ATTEMPTS = 20
+WATCH_BUSY_RETRY_SECONDS = 0.5
 
 
 def parser() -> argparse.ArgumentParser:
@@ -22,7 +26,7 @@ def parser() -> argparse.ArgumentParser:
     list_runs.add_argument("--limit", type=int, default=20)
 
     watch = subparsers.add_parser("watch", help="follow a run's event stream")
-    watch.add_argument("run_id")
+    watch.add_argument("run_id", nargs="?", help="run to follow; defaults to the latest run")
 
     status = subparsers.add_parser("status", help="show a run's current state")
     status.add_argument("run_id")
@@ -42,30 +46,26 @@ def _json(value: JsonObject, output: TextIO) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True), file=output)
 
 
-def _status(value: JsonObject, output: TextIO) -> None:
-    run_id = value.get("run_id", "unknown run")
-    status = value.get("status", "unknown")
-    model = value.get("model")
-    heading = f"{run_id}: {status}"
-    if model:
-        heading += f" ({model})"
+def _status(value: RunStatus, output: TextIO) -> None:
+    heading = f"{value.run_id}: {value.state.value}"
+    if value.model:
+        heading += f" ({value.model})"
     print(heading, file=output)
 
-    last_event = value.get("last_event")
-    if last_event:
-        print(f"last event: {last_event}", file=output)
+    if value.last_event:
+        print(f"last event: {value.last_event}", file=output)
 
-    error = value.get("error")
-    if error:
-        print(f"\nerror:\n{error}", file=output)
+    if value.error:
+        print(f"\nerror:\n{value.error}", file=output)
 
-    final_output = value.get("output")
-    if final_output:
-        print(f"\n{final_output}", file=output)
+    if value.output:
+        print(f"\n{value.output}", file=output)
 
-    usage = value.get("usage")
-    if isinstance(usage, dict) and usage:
-        print(f"\nusage: {json.dumps(usage, ensure_ascii=False, sort_keys=True)}", file=output)
+    if value.usage:
+        print(
+            f"\nusage: {json.dumps(value.usage, ensure_ascii=False, sort_keys=True)}",
+            file=output,
+        )
 
 
 def _list(client: Client, limit: int, output: TextIO) -> None:
@@ -90,11 +90,40 @@ def _list(client: Client, limit: int, output: TextIO) -> None:
         )
 
 
-def _watch(client: Client, run_id: str, output: TextIO) -> None:
+def _watch_events(
+    client: Client,
+    run_id: str,
+    output: TextIO,
+    sleep: Callable[[float], None],
+) -> Iterator[JsonObject]:
+    busy_retries = 0
+    while True:
+        try:
+            yield from client.watch_run(run_id)
+            return
+        except HermesHttpError as error:
+            if (
+                error.status != 409
+                or "run_stream_in_use" not in error.detail
+                or busy_retries >= WATCH_BUSY_RETRY_ATTEMPTS
+            ):
+                raise
+            if busy_retries == 0:
+                print("event stream is still closing; retrying...", file=output)
+            busy_retries += 1
+            sleep(WATCH_BUSY_RETRY_SECONDS)
+
+
+def _watch(
+    client: Client,
+    run_id: str,
+    output: TextIO,
+    sleep: Callable[[float], None] = time.sleep,
+) -> None:
     in_message = False
     saw_message = False
     try:
-        for event in client.watch_run(run_id):
+        for event in _watch_events(client, run_id, output, sleep):
             event_name = str(event.get("event", "event"))
             if event_name == "message.delta":
                 print(str(event.get("delta", "")), end="", flush=True, file=output)
@@ -147,17 +176,23 @@ def run(
     elif args.command == "list":
         _list(client, args.limit, output)
     elif args.command == "watch":
-        _watch(client, args.run_id, output)
+        run_id = args.run_id
+        if run_id is None:
+            runs = client.list_runs(1)
+            if not runs:
+                raise HermesError("no runs found")
+            run_id = runs[0].run_id
+        _watch(client, run_id, output)
     elif args.command == "status":
         response = client.get_run(args.run_id)
         if args.json:
-            _json(response, output)
+            _json(response.raw, output)
         else:
             _status(response, output)
     elif args.command == "approve":
         _json(client.approve_run(args.run_id, args.choice, args.all), output)
     elif args.command == "stop":
-        _json(client.stop_run(args.run_id), output)
+        _json(client.stop_run(args.run_id).raw, output)
     return 0
 
 

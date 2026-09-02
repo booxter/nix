@@ -3,8 +3,9 @@ from __future__ import annotations
 import hashlib
 import re
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Protocol
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -16,7 +17,6 @@ from .models import (
     QueueRecord,
     UnflacInput,
 )
-
 
 LEGACY_STAGING_DIR_NAME = "_lidarr-cue-split"
 STAGING_DIR_NAME = "_arr-post-processor"

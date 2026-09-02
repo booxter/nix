@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-from sops_tools.errors import ToolError
-from sops_tools.repository import RuntimeEnvironment
-from sops_tools.secrets import UpdateResult
-
 from pki_certificates.cli import Application, run_internal, run_observability
 from pki_certificates.issuer import RemoteCertificateIssuer, StepCaIssuer
 from pki_certificates.models import (
@@ -23,6 +18,9 @@ from pki_certificates.repository import InventoryConfigSource, NixInventorySourc
 from pki_certificates.secrets import SopsCertificateStore
 from pki_certificates.services import ManagedCertificateService
 from pki_certificates.unifi import UnifiCertificateService, validate_basename
+from sops_tools.errors import ToolError
+from sops_tools.repository import RuntimeEnvironment
+from sops_tools.secrets import UpdateResult
 
 
 @dataclass
@@ -492,7 +490,7 @@ def test_unifi_service_writes_secure_import_files(tmp_path: Path):
     )
     assert (tmp_path / "console.crt").read_text() == "certificate\n"
     assert (tmp_path / "console.key").read_text() == "private-key\n"
-    assert os.stat(tmp_path / "console.key").st_mode & 0o777 == 0o600
+    assert (tmp_path / "console.key").stat().st_mode & 0o777 == 0o600
     with pytest.raises(ToolError, match="refusing to overwrite"):
         service.issue(
             ca_host="authority-node",

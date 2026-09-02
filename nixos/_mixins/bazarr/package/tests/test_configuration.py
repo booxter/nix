@@ -4,10 +4,9 @@ import os
 from pathlib import Path
 
 import pytest
-from ruamel.yaml.parser import ParserError
-
 from bazarr_auth_config.cli import run
 from bazarr_auth_config.configuration import ConfigurationError, load_configuration, yaml_codec
+from ruamel.yaml.parser import ParserError
 
 
 def test_reconcile_preserves_unmanaged_yaml_and_comments(tmp_path: Path) -> None:

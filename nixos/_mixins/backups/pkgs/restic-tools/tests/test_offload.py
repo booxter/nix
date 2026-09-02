@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 from restic_tools.models import OffloadConfig
 from restic_tools.offload import OffloadFailure, offload, prune
 from restic_tools.offload_cli import parser, run

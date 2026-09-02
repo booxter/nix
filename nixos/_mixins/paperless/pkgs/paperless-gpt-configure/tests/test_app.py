@@ -1,12 +1,11 @@
 import json
 import threading
 import urllib.parse
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Mapping
 
 import pytest
-
 from paperless_gpt_configure import app
 
 

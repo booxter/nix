@@ -7,10 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TextIO
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
-
 from proxmox_host_tools.certificate import Error, Pmxcfs
 from proxmox_host_tools.process import Runner, SubprocessRunner
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 
 
 class OidcConfig(BaseModel):

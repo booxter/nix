@@ -5,9 +5,7 @@ start_all()
 machine.wait_for_unit("postgresql.service")
 machine.wait_for_unit("pinepods-valkey.service")
 machine.wait_for_unit("podman-pinepods.service")
-machine.wait_until_succeeds(
-    f"curl -sf http://127.0.0.1:8040/api/health | {JQ} -e '.database and .redis'"
-)
+machine.succeed(f"curl -sf http://127.0.0.1:8040/api/health | {JQ} -e '.database and .redis'")
 machine.wait_for_unit("pinepods-bootstrap-admin.service")
 machine.succeed(
     "curl -sf http://127.0.0.1:8040/api/data/self_service_status"

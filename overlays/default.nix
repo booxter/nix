@@ -3,11 +3,12 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    _: prev:
+    final: prev:
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
       pkgsNixpkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+      numtidePkgs = inputs.llm-agents.packages.${system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
@@ -22,6 +23,10 @@
     in
     {
       inherit (pkgsNixpkgsUnstable) aerospace codex;
+
+      hermes-agent = numtidePkgs.hermes-agent.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ../patches/hermes-agent-reconnect-run-event-streams.patch ];
+      });
 
       # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable
       # until a compatible release reaches the stable branch.
@@ -77,6 +82,8 @@
         (
           pythonFinal: pythonPrev:
           {
+            pythonRuffCheckHook = final.pythonRuffCheckHook;
+
             # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
             # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
             pystemd = pythonPrev.pystemd.overrideAttrs (old: {

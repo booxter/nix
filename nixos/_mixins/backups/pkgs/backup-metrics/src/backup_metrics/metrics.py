@@ -57,7 +57,7 @@ def result_registry(job: BackupJob, state: BackupState) -> CollectorRegistry:
             *values
         ).set(value)
 
-    result_labels = JOB_LABELS + ("service_result", "exit_code", "exit_status")
+    result_labels = (*JOB_LABELS, "service_result", "exit_code", "exit_status")
     Gauge(
         f"{PREFIX}_last_result_info",
         "Metadata about the most recent backup job result.",

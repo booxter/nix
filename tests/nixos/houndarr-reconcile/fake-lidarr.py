@@ -27,9 +27,7 @@ def main() -> None:
                 self.send_response(404)
                 self.end_headers()
                 return
-            body = (
-                b'{"appName":"Lidarr","instanceName":"Test catalog","version":"3.1.0"}'
-            )
+            body = b'{"appName":"Lidarr","instanceName":"Test catalog","version":"3.1.0"}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
@@ -41,7 +39,8 @@ def main() -> None:
 
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(options.certificate, options.key)
-    server = ThreadingHTTPServer(("0.0.0.0", options.port), Handler)
+    # The NixOS VM test client reaches this fake server over the VM network.
+    server = ThreadingHTTPServer(("0.0.0.0", options.port), Handler)  # noqa: S104
     server.socket = context.wrap_socket(server.socket, server_side=True)
     server.serve_forever()
 

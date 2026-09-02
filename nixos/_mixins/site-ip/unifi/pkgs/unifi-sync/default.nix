@@ -1,6 +1,7 @@
 {
   lib,
   python3,
+  pythonRuffCheckHook,
 }:
 python3.pkgs.buildPythonApplication {
   pname = "unifi-sync";
@@ -13,6 +14,7 @@ python3.pkgs.buildPythonApplication {
 
   nativeCheckInputs = with python3.pkgs; [
     mypy
+    pythonRuffCheckHook
     pytestCheckHook
     pytest-cov
   ];

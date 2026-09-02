@@ -18,9 +18,7 @@ class AgeRecipientResolver:
 
         identity_type = self._identity_type(identity_file)
         if identity_type.startswith("AGE-SECRET-KEY-"):
-            recipient = self.runner.run(
-                ["age-keygen", "-y", str(identity_file)]
-            ).strip()
+            recipient = self.runner.run(["age-keygen", "-y", str(identity_file)]).strip()
         elif identity_type.startswith("AGE-PLUGIN-SE-"):
             recipients = self._metadata_recipients(identity_file, "age1se1")
             if len(recipients) > 1:

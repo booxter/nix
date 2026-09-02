@@ -4,17 +4,16 @@ from __future__ import annotations
 
 import io
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import ValidationError
-
 from auto_upgrade_tools.cli import guard, run
 from auto_upgrade_tools.metrics import write_hold_metrics, write_success_metric
 from auto_upgrade_tools.model import UpgradeConfig
 from auto_upgrade_tools.reboot import REBOOT_MESSAGE, reboot_required, schedule_reboot_if_needed
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import ValidationError
 
 
 def load_config(document: dict[str, object]) -> UpgradeConfig:
@@ -128,7 +127,7 @@ def test_config_loads_generated_json(tmp_path: Path) -> None:
 
 
 def test_cli_guard_and_metric_workflow(tmp_path: Path) -> None:
-    today = date.today().isoformat()
+    today = datetime.now(UTC).astimezone().date().isoformat()
     config = tmp_path / "config.json"
     output = tmp_path / "hold.prom"
     success = tmp_path / "success.prom"

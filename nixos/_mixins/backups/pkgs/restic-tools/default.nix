@@ -4,7 +4,7 @@
   makeWrapper,
   python3,
   restic,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -29,12 +29,10 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/restic_tools
   '';
 

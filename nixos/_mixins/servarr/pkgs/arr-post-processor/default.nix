@@ -2,10 +2,10 @@
   atomicFileWrites,
   ffmpeg,
   flac,
-  joinMediaParts,
+  hermesRuns,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   unrar,
   unflac,
 }:
@@ -25,6 +25,8 @@ pythonPackages.buildPythonApplication {
     aiohttp
     atomicFileWrites
     aiopyarr
+    defusedxml
+    hermesRuns
     prometheus-client
     pydantic
     rarfile
@@ -33,7 +35,7 @@ pythonPackages.buildPythonApplication {
   nativeCheckInputs = [
     ffmpeg
     flac
-    ruff
+    pythonRuffCheckHook
     unrar
     unflac
     pythonPackages.mypy
@@ -42,7 +44,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   ARR_POST_PROCESSOR_FFPROBE = lib.getExe' ffmpeg "ffprobe";
-  ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS = lib.getExe joinMediaParts;
 
   makeWrapperArgs = [
     "--prefix PATH : ${
@@ -54,12 +55,9 @@ pythonPackages.buildPythonApplication {
       ]
     }"
     "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"
-    "--set ARR_POST_PROCESSOR_JOIN_MEDIA_PARTS ${lib.getExe joinMediaParts}"
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/arr_post_processor
   '';
 

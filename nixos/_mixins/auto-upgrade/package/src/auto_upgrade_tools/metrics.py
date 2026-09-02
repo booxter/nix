@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import time
-from datetime import date, datetime, time as datetime_time
+from datetime import date, datetime
+from datetime import time as datetime_time
 from pathlib import Path
 
 from atomic_file_writes import write_text_atomic

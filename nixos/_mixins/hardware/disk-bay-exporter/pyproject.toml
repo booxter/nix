@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "disk-bay-exporter"
 version = "0.1.0"
 description = "Export physical disk-bay mappings as Prometheus metrics"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
 
 [project.scripts]
@@ -32,6 +32,3 @@ precision = 2
 files = ["src/disk_bay_exporter"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

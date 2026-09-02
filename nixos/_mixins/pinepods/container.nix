@@ -4,6 +4,7 @@
   pinepodsModel,
   pkgs,
   storageIdentities,
+  utils,
   ...
 }:
 let
@@ -26,6 +27,24 @@ let
     "pinepods-postgresql-password.service"
     "pinepods-valkey.service"
     "sops-install-secrets.service"
+  ];
+  readinessCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe pkgs.curl)
+    "--fail"
+    "--silent"
+    "--show-error"
+    "--retry"
+    "60"
+    "--retry-all-errors"
+    "--retry-delay"
+    "2"
+    "--retry-max-time"
+    "300"
+    "--connect-timeout"
+    "2"
+    "--max-time"
+    "5"
+    "http://127.0.0.1:${toString port}/api/health"
   ];
 in
 {
@@ -94,6 +113,9 @@ in
           volumes = [ "${downloadsDir}:/opt/pinepods/downloads:rw" ];
           extraOptions = [
             "--cap-drop=all"
+            # Readiness is handled synchronously by systemd; Podman's automatic
+            # health timer creates failed transient units during normal startup.
+            "--no-healthcheck"
             # The upstream entrypoint starts as root, prepares writable paths,
             # remaps its runtime user, and then drops to PUID:PGID with su-exec.
             "--cap-add=CHOWN"
@@ -115,6 +137,7 @@ in
       after = dependencies;
       path = [ pkgs.slirp4netns ];
       environment.PINEPODS_LISTEN_PORT = toString port;
+      serviceConfig.ExecStartPost = readinessCommand;
     };
   };
 }

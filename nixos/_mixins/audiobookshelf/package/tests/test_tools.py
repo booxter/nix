@@ -11,7 +11,6 @@ from typing import cast
 from urllib.parse import urlsplit
 
 import pytest
-
 from audiobookshelf_tools.api import (
     AudiobookshelfError,
     AuthenticationRejected,

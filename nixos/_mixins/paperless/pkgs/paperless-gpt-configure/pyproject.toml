@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "paperless-gpt-configure"
 version = "0.1.0"
 description = "Configure Paperless workflows used by paperless-gpt"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]
@@ -29,6 +29,3 @@ precision = 2
 files = ["src/paperless_gpt_configure"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

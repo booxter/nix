@@ -2,7 +2,7 @@
   lib,
   mariadb,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -32,12 +32,10 @@ pythonPackages.buildPythonApplication {
     # podman exposes requests response types without propagating their stubs;
     # fix this in nixpkgs' podman dependency closure instead of keeping it here.
     pythonPackages.types-requests
-    ruff
+    pythonRuffCheckHook
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/romm_tools
   '';
 

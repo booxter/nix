@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from sops_tools.errors import ToolError
 from sops_tools.policy import SopsPolicy, validate_repository
 

@@ -48,7 +48,7 @@ pythonPackages.buildPythonApplication {
   nativeBuildInputs = [ pkgs.makeWrapper ];
   nativeCheckInputs = with pythonPackages; [
     pkgs.age
-    pkgs.ruff
+    pkgs.pythonRuffCheckHook
     pkgs.sops
     mypy
     pytestCheckHook
@@ -57,7 +57,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff check src tests
     mypy src/sops_tools
   '';
 

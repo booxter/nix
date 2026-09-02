@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-
 from pki_rotation.errors import RotationError
 from pki_rotation.models import (
     CertificateCategory,

@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 from pydantic import ValidationError
 from sops_tools.errors import CommandError, ToolError
 from sops_tools.process import ProcessRunner
 
 from .models import ExporterConfig, FleetHosts, HostInfo
-
 
 _SIMPLE_NIX_ATTRIBUTE = re.compile(r"[A-Za-z_][A-Za-z0-9_'-]*")
 

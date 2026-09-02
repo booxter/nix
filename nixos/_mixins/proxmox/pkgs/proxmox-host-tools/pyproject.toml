@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "proxmox-host-tools"
 version = "0.1.0"
 description = "Host integration tools for Proxmox VE nodes"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]
@@ -32,6 +32,3 @@ precision = 2
 [tool.mypy]
 files = ["src/proxmox_host_tools"]
 strict = true
-
-[tool.ruff]
-line-length = 100

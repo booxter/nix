@@ -51,7 +51,7 @@ class Pmxcfs:
         try:
             with source.open("rb") as source_file, temporary.open("wb") as destination_file:
                 shutil.copyfileobj(source_file, destination_file)
-            os.replace(temporary, destination)
+            temporary.replace(destination)
         except OSError as error:
             raise Error(f"failed to install {source} as {destination}") from error
         finally:

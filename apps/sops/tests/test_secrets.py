@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-
 from sops_tools.model import KeyPath
 from sops_tools.repository import Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
@@ -123,9 +122,7 @@ def test_force_update_reencrypts_without_changing_values(tmp_path: Path) -> None
     result = secrets.update("beast", force=True)
 
     assert result.changed and result.reencrypted
-    assert backend.encryptions == [
-        (secrets.repository.secret("beast"), {"present": "secret"})
-    ]
+    assert backend.encryptions == [(secrets.repository.secret("beast"), {"present": "secret"})]
 
 
 def test_empty_template_container_uses_full_reencryption(tmp_path: Path) -> None:

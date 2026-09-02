@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-
 from hba_flash.models import Artifacts, BundleDefaults, FlashOptions
 from hba_flash.process import FlashError
 from hba_flash.workflow import HbaFlashWorkflow

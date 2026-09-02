@@ -1,7 +1,7 @@
 {
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
   unifiSync,
 }:
 let
@@ -24,15 +24,13 @@ pythonPackages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with pythonPackages; [
-    ruff
+    pythonRuffCheckHook
     mypy
     pytestCheckHook
     pytest-cov
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/wg_home_dns_sync
   '';
 

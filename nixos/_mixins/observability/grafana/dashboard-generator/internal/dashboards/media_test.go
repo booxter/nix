@@ -79,7 +79,7 @@ func TestMediaCategoricalSeriesAreStackedAndFilled(t *testing.T) {
 		"Transmission Seeding Torrents",
 		"Transmission Downloading Torrents",
 		"Lidarr CUE Splitter Job States",
-		"Radarr Multipart Joiner Job States",
+		"Radarr Post-Processor Job States",
 	}
 	for _, title := range titles {
 		t.Run(title, func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestMediaCategoricalSeriesAreStackedAndFilled(t *testing.T) {
 		})
 	}
 
-	for _, title := range []string{"Lidarr CUE Splitter Outcomes", "Radarr Multipart Joiner Outcomes"} {
+	for _, title := range []string{"Lidarr CUE Splitter Outcomes", "Radarr Repair Outcomes"} {
 		t.Run(title, func(t *testing.T) {
 			outcomes := findPanel(t, model, title)
 			custom, ok := outcomes.FieldConfig.Defaults.Custom.(*common.GraphFieldConfig)

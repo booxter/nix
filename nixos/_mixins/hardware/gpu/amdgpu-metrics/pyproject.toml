@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "amdgpu-metrics"
 version = "0.1.0"
 description = "Prometheus textfile collector for AMD GPUs"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]
@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/amdgpu_metrics"]
 strict = true
-
-[tool.ruff]
-line-length = 100

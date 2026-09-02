@@ -5,8 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-from sops_tools.errors import CommandError, ToolError
-
 from proxmox_exporter_token.models import ExporterConfig, FleetHosts
 from proxmox_exporter_token.remote import PveumClient
 from proxmox_exporter_token.repository import (
@@ -20,6 +18,7 @@ from proxmox_exporter_token.service import (
     TokenRequest,
     TokenService,
 )
+from sops_tools.errors import CommandError, ToolError
 
 
 @dataclass

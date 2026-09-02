@@ -3,7 +3,7 @@
   ebookConverterCli,
   lib,
   python3,
-  ruff,
+  pythonRuffCheckHook,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -25,7 +25,7 @@ pythonPackages.buildPythonApplication {
 
   nativeCheckInputs = [
     ebookConverterCli
-    ruff
+    pythonRuffCheckHook
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
@@ -36,8 +36,6 @@ pythonPackages.buildPythonApplication {
   ];
 
   preCheck = ''
-    ruff format --check src tests
-    ruff check src tests
     mypy src/srvarr_ebook_converter
   '';
 

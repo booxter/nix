@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TypeAlias, TypeGuard, cast
+from typing import TypeGuard, cast
 
 from .errors import ToolError
 
-JsonScalar: TypeAlias = None | bool | int | float | str
-JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
-PathSegment: TypeAlias = str | int
+type JsonScalar = None | bool | int | float | str
+type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
+type PathSegment = str | int
 
 
 def is_json_value(value: object) -> TypeGuard[JsonValue]:
@@ -17,9 +17,7 @@ def is_json_value(value: object) -> TypeGuard[JsonValue]:
     if isinstance(value, list):
         return all(is_json_value(item) for item in value)
     if isinstance(value, dict):
-        return all(
-            isinstance(key, str) and is_json_value(item) for key, item in value.items()
-        )
+        return all(isinstance(key, str) and is_json_value(item) for key, item in value.items())
     return False
 
 
@@ -94,7 +92,7 @@ def has_path(document: JsonValue, path: KeyPath) -> bool:
 def deep_merge(defaults: JsonValue, overrides: JsonValue) -> JsonValue:
     if not isinstance(defaults, dict) or not isinstance(overrides, dict):
         return overrides
-    merged: dict[str, JsonValue] = {key: value for key, value in defaults.items()}
+    merged: dict[str, JsonValue] = dict(defaults)
     for key, value in overrides.items():
         if key in merged:
             merged[key] = deep_merge(merged[key], value)

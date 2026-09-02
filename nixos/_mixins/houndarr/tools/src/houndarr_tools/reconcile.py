@@ -4,7 +4,8 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 from pathlib import Path
 from typing import Protocol, cast
-from xml.etree import ElementTree
+
+from defusedxml import ElementTree
 
 from .models import CurrentInstance, DesiredInstance, Interface, ManagedPolicy, Value
 
@@ -41,7 +42,7 @@ class InstanceStore(Protocol):
 def read_api_key(credentials_directory: Path, desired: DesiredInstance) -> str:
     source = credentials_directory / desired.credential.name
     try:
-        root = ElementTree.parse(source).getroot()  # noqa: S314
+        root = ElementTree.parse(source).getroot()
     except (ElementTree.ParseError, OSError) as error:
         raise ReconcileError(f"cannot read API credential for {desired.key}") from error
     value = (root.findtext(desired.credential.field) or "").strip()

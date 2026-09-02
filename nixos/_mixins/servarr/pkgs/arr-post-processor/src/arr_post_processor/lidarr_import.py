@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from .errors import ManualMatchRequired, NeedsAttention, PostProcessorError
 from .lidarr import Lidarr
 from .media import build_manual_import_files
 from .models import QueueRecord
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr.import")
 TERMINAL_COMMAND_STATES = {"completed", "failed", "aborted", "cancelled", "orphaned"}
@@ -35,7 +34,8 @@ class LidarrImporter:
         try:
             outputs = client.manual_import(root, record)
             LOG.info(
-                "received Lidarr manual-import candidates: download_id=%s candidates=%s generated_tracks=%s",
+                "received Lidarr manual-import candidates: download_id=%s candidates=%s "
+                "generated_tracks=%s",
                 record.download_id,
                 len(outputs),
                 len(audio_files),
@@ -55,7 +55,8 @@ class LidarrImporter:
                 status = command.status.lower()
                 if status != previous_status:
                     LOG.info(
-                        "Lidarr manual-import command status: download_id=%s command_id=%s status=%s",
+                        "Lidarr manual-import command status: download_id=%s command_id=%s "
+                        "status=%s",
                         record.download_id,
                         command_id,
                         status,

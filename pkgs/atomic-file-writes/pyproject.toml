@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "atomic-file-writes"
 version = "0.1.0"
 description = "Typed durable atomic file replacement helpers"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = []
 
 [tool.setuptools]
@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/atomic_file_writes"]
 strict = true
-
-[tool.ruff]
-line-length = 100

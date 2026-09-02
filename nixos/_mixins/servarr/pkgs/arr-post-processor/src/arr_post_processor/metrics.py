@@ -8,7 +8,6 @@ from prometheus_client.core import GaugeMetricFamily, Metric
 
 from .state import ACTIVE_JOB_STATES, KNOWN_JOB_STATES, State
 
-
 DEFAULT_PREFIX = "host_observability_lidarr_post_processor"
 
 

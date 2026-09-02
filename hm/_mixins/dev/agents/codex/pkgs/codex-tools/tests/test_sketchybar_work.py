@@ -7,7 +7,6 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-
 from codex_tools.errors import CodexToolsError
 from codex_tools.sketchybar import Colors, Config
 from codex_tools.sketchybar_work import (

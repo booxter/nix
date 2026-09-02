@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
-
 from codex_tools.errors import CodexToolsError
 from codex_tools.sketchybar import (
     Colors,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,8 +10,8 @@ from .errors import NeedsAttention, PostProcessorError, SourceInvalid
 from .media import (
     AUDIO_FILE_SUFFIXES,
     LEGACY_STAGING_DIR_NAME,
-    MediaRunner,
     STAGING_DIR_NAME,
+    MediaRunner,
     cue_already_split_audio_files,
     inspection_summary,
     is_staging_path,
@@ -21,7 +20,6 @@ from .media import (
     safe_component,
 )
 from .models import CueSummary
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr.pipeline")
 
@@ -196,7 +194,8 @@ class LidarrPipeline:
             for index, transform in enumerate(self.transforms, start=1):
                 if not transform.applies(current):
                     LOG.info(
-                        "skipping transformation: download_id=%s transform=%s reason=not_applicable",
+                        "skipping transformation: download_id=%s transform=%s "
+                        "reason=not_applicable",
                         download_id,
                         transform.name,
                     )
@@ -221,7 +220,7 @@ class LidarrPipeline:
             if not applied:
                 raise PostProcessorError("no Lidarr transformation is applicable")
             relative_result = current.relative_to(partial_root.resolve())
-            os.replace(partial_root, ready_root)
+            partial_root.replace(ready_root)
             final_root = (ready_root / relative_result).resolve()
             audio_files = tuple(
                 sorted(
@@ -233,7 +232,8 @@ class LidarrPipeline:
             if not audio_files:
                 raise SourceInvalid("post-processing produced no recognized audio files")
             LOG.info(
-                "transformation pipeline ready for import: download_id=%s transforms=%s tracks=%s path=%s",
+                "transformation pipeline ready for import: download_id=%s transforms=%s "
+                "tracks=%s path=%s",
                 download_id,
                 "+".join(applied),
                 len(audio_files),

@@ -3,10 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from degoog_settings.cli import run
 from degoog_settings.settings import Settings, read_settings, reconcile
+from pydantic import ValidationError
 
 
 def write_settings(path: Path, settings: Settings) -> None:

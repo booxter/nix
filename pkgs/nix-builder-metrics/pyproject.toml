@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "nix-builder-metrics"
 version = "0.1.0"
 description = "Prometheus textfile metrics for active Nix builder slots"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["atomic-file-writes", "prometheus-client"]
 
 [project.scripts]
@@ -32,6 +32,3 @@ precision = 2
 [tool.mypy]
 files = ["src/nix_builder_metrics"]
 strict = true
-
-[tool.ruff]
-line-length = 100

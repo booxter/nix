@@ -20,9 +20,7 @@ def cloud_snapshot_count():
 
 
 def assert_metric(machine, file_name, metric, value):
-    metrics = machine.succeed(
-        f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}"
-    )
+    metrics = machine.succeed(f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}")
     matches = [line for line in metrics.splitlines() if line.startswith(metric + "{")]
     assert len(matches) == 1, (metric, metrics)
     assert matches[0].endswith(f" {value}"), matches[0]

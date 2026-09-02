@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "attention-inbox"
 version = "0.1.0"
 description = "Collect attention items from external services"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [project.scripts]
@@ -28,6 +28,3 @@ precision = 2
 [tool.mypy]
 files = ["src/attention_inbox"]
 strict = true
-
-[tool.ruff]
-line-length = 100

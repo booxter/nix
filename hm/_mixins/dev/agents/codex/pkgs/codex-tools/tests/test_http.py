@@ -3,7 +3,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 import pytest
-
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import UrllibJsonHttpClient
 
@@ -24,7 +23,7 @@ def test_reads_json_without_an_external_http_command() -> None:
 def test_reports_transport_failure(tmp_path: Path) -> None:
     client = UrllibJsonHttpClient()
 
-    with pytest.raises(CodexToolsError, match="Request to .* failed"):
+    with pytest.raises(CodexToolsError, match=r"Request to .* failed"):
         client.get_json((tmp_path / "missing.json").as_uri(), headers={})
 
 

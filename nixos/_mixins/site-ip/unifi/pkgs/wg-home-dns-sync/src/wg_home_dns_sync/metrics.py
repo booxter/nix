@@ -9,7 +9,6 @@ from unifi_sync.dns import DnsRecordSpec
 
 from .models import PeerDnsSpec, SyncError
 
-
 HANDSHAKE_AGE_METRIC = "wireguard_latest_handshake_delay_seconds"
 HANDSHAKE_TIME_METRIC = "wireguard_latest_handshake_seconds"
 

@@ -55,9 +55,7 @@ class CommandSopsBackend:
         try:
             value: object = yaml.safe_load(plaintext)
         except yaml.YAMLError as error:
-            raise ToolError(
-                f"SOPS returned invalid YAML for {path}: {error}"
-            ) from error
+            raise ToolError(f"SOPS returned invalid YAML for {path}: {error}") from error
         return require_json_value(value, source=str(path))
 
     def edit(self, path: Path) -> None:
@@ -128,16 +126,12 @@ class SecretService:
         destination_path: KeyPath,
     ) -> Path:
         source = self.repository.require_secret(source_host, role="Source")
-        destination = self.repository.require_secret(
-            destination_host, role="Destination"
-        )
+        destination = self.repository.require_secret(destination_host, role="Destination")
         source_document = self.sops.decrypt_data(source)
         try:
             value = value_at(source_document, source_path)
         except ToolError as error:
-            raise ToolError(
-                f"Path not found in source secret: {source_path.display()}"
-            ) from error
+            raise ToolError(f"Path not found in source secret: {source_path.display()}") from error
         self.sops.set_value(destination, destination_path, value)
         return destination
 
@@ -162,9 +156,7 @@ class SecretService:
             return UpdateResult(secret, changed=True, reencrypted=True)
 
         missing = [
-            (path, value)
-            for path, value in scalar_leaves(desired)
-            if not has_path(current, path)
+            (path, value) for path, value in scalar_leaves(desired) if not has_path(current, path)
         ]
         if missing:
             for path, value in missing:

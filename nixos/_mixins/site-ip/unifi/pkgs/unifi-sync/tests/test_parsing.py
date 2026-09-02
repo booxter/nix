@@ -1,7 +1,6 @@
 import ipaddress
 
 import pytest
-
 from unifi_sync import dns, models, parsing
 from unifi_sync.errors import UnifiError
 
@@ -31,9 +30,7 @@ def test_choose_network_by_ip_prefers_most_specific_subnet():
         {"_id": "broken", "ip_subnet": "invalid"},
     ]
 
-    selected = parsing.choose_network_by_ip(
-        networks, ipaddress.IPv4Address("192.168.1.20")
-    )
+    selected = parsing.choose_network_by_ip(networks, ipaddress.IPv4Address("192.168.1.20"))
 
     assert selected["_id"] == "lan"
 
@@ -63,9 +60,7 @@ def test_parse_inventory_reservations_normalizes_values():
 
 
 def test_parse_dhcp_range_validates_order():
-    dhcp_range = parsing.parse_dhcp_range(
-        '{"start":"192.168.1.100","end":"192.168.1.200"}'
-    )
+    dhcp_range = parsing.parse_dhcp_range('{"start":"192.168.1.100","end":"192.168.1.200"}')
 
     assert dhcp_range == models.DhcpRangeSpec(
         start=ipaddress.IPv4Address("192.168.1.100"),
@@ -131,9 +126,7 @@ def test_parse_dns_records_supports_a_and_cname_records():
 
 def test_parse_dns_records_rejects_unsupported_types():
     with pytest.raises(dns.UnifiError, match="unsupported type"):
-        dns.parse_records(
-            '[{"type":"TXT_RECORD","domain":"home.arpa","ttlSeconds":60}]'
-        )
+        dns.parse_records('[{"type":"TXT_RECORD","domain":"home.arpa","ttlSeconds":60}]')
 
 
 def test_parse_static_routes_normalizes_destination_and_defaults():
@@ -154,8 +147,7 @@ def test_parse_static_routes_normalizes_destination_and_defaults():
 def test_parse_static_routes_rejects_invalid_distance():
     with pytest.raises(UnifiError, match="between 1 and 255"):
         parsing.parse_static_routes(
-            '[{"name":"private","destination":"10.0.0.0/8",'
-            '"nextHop":"192.168.1.1","distance":0}]'
+            '[{"name":"private","destination":"10.0.0.0/8","nextHop":"192.168.1.1","distance":0}]'
         )
 
 

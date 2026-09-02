@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from prometheus_client.parser import text_string_to_metric_families
-
 from storage_observability.hba import (
     HbaError,
     HbaExporter,

@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 from romm_tools.assets import (
     HTML_PATH,
     NGINX_PATH,

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncIterator, Protocol, TypeVar, cast
+from typing import Protocol, TypeVar, cast
 from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import BaseModel, ValidationError

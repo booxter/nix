@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 from collections.abc import Sequence
@@ -10,7 +11,6 @@ from sops_tools.errors import CommandError, ToolError
 from sops_tools.process import ProcessRunner, SubprocessRunner
 
 from .models import PveUser, PveUserList, RemoteTokenRequest, TokenResponse
-
 
 _USERS: TypeAdapter[list[PveUser] | PveUserList] = TypeAdapter(list[PveUser] | PveUserList)
 
@@ -35,10 +35,8 @@ class PveumClient:
             self._run("user", "add", user, "--comment", comment)
         self._run("aclmod", acl_path, "-user", user, "-role", role)
         if replace:
-            try:
+            with contextlib.suppress(CommandError):
                 self._run("user", "token", "remove", user, token_name)
-            except CommandError:
-                pass
         output = self._run(
             "user",
             "token",

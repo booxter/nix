@@ -42,15 +42,21 @@ in
           pkgs.ffmpeg
           pkgs.file
           pkgs.join-media-parts
+          pkgs.libbluray
           pkgs.mediainfo
         ];
         supplementaryGroups = [ "media" ];
+        # Share generated repairs through the setgid media output directory.
+        umask = "0007";
         toolsets = [
           "file"
           "memory"
           "terminal"
         ];
+        settings.approvals.mode = "off";
         settings.auxiliary.title_generation.enabled = false;
+        # Bound runaway reasoning turns on deterministic repair tasks.
+        settings.model.max_tokens = 4096;
         filesystem = {
           hidden = [ mediaDir ];
           inputs = filesystemInputs;

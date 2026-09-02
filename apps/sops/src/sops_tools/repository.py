@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, cast
+from typing import cast
 
 from .errors import CommandError, ToolError
 from .process import ProcessRunner
@@ -49,9 +50,7 @@ class RuntimeEnvironment:
         config_home = Path(values.get("XDG_CONFIG_HOME", str(home / ".config")))
         return cls(repo_root, home, config_home, system_name, hostname, dict(values))
 
-    def resolve_realm(
-        self, explicit: str | None, *, require_identity: bool = True
-    ) -> Realm:
+    def resolve_realm(self, explicit: str | None, *, require_identity: bool = True) -> Realm:
         name = explicit or self._inventory_realm(self.machine_hostname)
         if not _REALM_PATTERN.fullmatch(name):
             raise ToolError(f"Invalid realm: {name}")
@@ -60,9 +59,7 @@ class RuntimeEnvironment:
         if name != "home" and not self.values.get("SOPS_AGE_KEY_FILE"):
             identity = self.realm_identity_file(name)
             if require_identity and not identity.is_file():
-                raise ToolError(
-                    f"Age identity for realm '{name}' not found: {identity}"
-                )
+                raise ToolError(f"Age identity for realm '{name}' not found: {identity}")
         return Realm(name, identity)
 
     def realm_identity_file(self, realm: str) -> Path:
@@ -86,9 +83,7 @@ class RuntimeEnvironment:
     def assert_realm_host(self, realm: Realm, host: str) -> None:
         registered = self.registered_realm(host)
         if registered != realm.name:
-            raise ToolError(
-                f"Host {host} belongs to realm '{registered}', not '{realm.name}'."
-            )
+            raise ToolError(f"Host {host} belongs to realm '{registered}', not '{realm.name}'.")
 
     def command_environment(self, realm: Realm) -> dict[str, str]:
         environment = dict(self.values)
@@ -118,8 +113,7 @@ class RuntimeEnvironment:
         except (OSError, json.JSONDecodeError) as error:
             raise ToolError(f"Invalid realm inventory: {inventory_path}") from error
         if not isinstance(value, dict) or not all(
-            isinstance(key, str) and isinstance(realm, str)
-            for key, realm in value.items()
+            isinstance(key, str) and isinstance(realm, str) for key, realm in value.items()
         ):
             raise ToolError(f"Invalid realm inventory: {inventory_path}")
         return cast(dict[str, str], value)

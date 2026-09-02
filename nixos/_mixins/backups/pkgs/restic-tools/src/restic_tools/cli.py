@@ -93,9 +93,12 @@ class SystemCollectorFactory:
         )
 
 
+_SYSTEM_COLLECTOR_FACTORY: CollectorFactory = SystemCollectorFactory()
+
+
 def run(
     arguments: argparse.Namespace,
-    collector_factory: CollectorFactory = SystemCollectorFactory(),
+    collector_factory: CollectorFactory = _SYSTEM_COLLECTOR_FACTORY,
 ) -> int:
     config = _load_config(arguments.config)
     application_key_id = _read_secret(config.b2_application_key_id_file)

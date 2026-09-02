@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from atomic_file_writes import write_text_atomic
 
@@ -16,12 +16,11 @@ from .media import LEGACY_STAGING_DIR_NAME, MediaRunner, output_fingerprint
 from .metrics import render_metrics
 from .models import QueueRecord
 from .state import (
-    PROCESSING_JOB_STATES,
     PROBLEM_JOB_STATES,
+    PROCESSING_JOB_STATES,
     Job,
     StateStore,
 )
-
 
 LOG = logging.getLogger("arr-post-processor.lidarr")
 SUPPORTED_PROTOCOLS = {
@@ -224,7 +223,8 @@ class LidarrPostProcessorService:
         job.attempts = attempts
         self.store.state.totals.failed += 1
         LOG.exception(
-            "Lidarr post-processing job failed: download_id=%s failure_kind=%s attempt=%s/%s retry_seconds=%s",
+            "Lidarr post-processing job failed: download_id=%s failure_kind=%s "
+            "attempt=%s/%s retry_seconds=%s",
             job.download_id,
             job.failure_kind,
             attempts,
@@ -266,7 +266,8 @@ class LidarrPostProcessorService:
         else:
             self.store.state.totals.source_unavailable += 1
         LOG.warning(
-            "detached failed release from Lidarr while retaining client data: download_id=%s state=%s",
+            "detached failed release from Lidarr while retaining client data: "
+            "download_id=%s state=%s",
             job.download_id,
             failure_kind,
         )
@@ -397,7 +398,8 @@ class LidarrPostProcessorService:
                 if now - updated_at > self.command_timeout_seconds:
                     self.mark_manual_match(
                         job,
-                        "Lidarr manual import completed but the download remained in the activity queue",
+                        "Lidarr manual import completed but the download remained "
+                        "in the activity queue",
                         now,
                     )
                 continue
@@ -507,7 +509,8 @@ class LidarrPostProcessorService:
                     updated_at=now,
                 )
                 LOG.info(
-                    "discovered recoverable Lidarr download: download_id=%s title=%s source=%s settling_seconds=%s",
+                    "discovered recoverable Lidarr download: download_id=%s title=%s "
+                    "source=%s settling_seconds=%s",
                     download_id,
                     record.title,
                     record.output_path,
@@ -530,7 +533,8 @@ class LidarrPostProcessorService:
         except NeedsAttention as exc:
             job = self.store.job(download_id)
             self.mark_automation_failed(job, str(exc), now)
-        except Exception as exc:
+        # Isolate malformed downloads so later queue records can still run.
+        except Exception as exc:  # noqa: BLE001
             job = self.store.job(download_id, title=record.title)
             self.record_source_failure(job, record, exc, now)
         return True

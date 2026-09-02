@@ -3,8 +3,9 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Protocol, Sequence
+from typing import Protocol
 
 from .errors import CommandError
 

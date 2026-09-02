@@ -137,7 +137,7 @@ in
     ./assertions.nix
     ./community
     ./build.nix
-    ./nixpkgs-review.nix
+    ./nixpkgs.nix
     ./ssh.nix
   ];
 

@@ -7,21 +7,20 @@ import tarfile
 import tempfile
 import unittest
 import urllib.parse
+from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
-from typing import Iterator
 
 from aiopyarr.models.const import ProtocolType
-from prometheus_client.parser import text_string_to_metric_families
-from pydantic import TypeAdapter
-
+from arr_post_processor.app import parse_source_roots
 from arr_post_processor.archive import ArchiveMember, ArchiveTransform, NativeArchiveBackend
-from arr_post_processor.config import read_api_key
-from arr_post_processor.errors import PostProcessorError, ManualMatchRequired, SourceInvalid
+from arr_post_processor.config import read_api_key, read_environment_value
+from arr_post_processor.errors import ManualMatchRequired, PostProcessorError, SourceInvalid
 from arr_post_processor.lidarr import LidarrClient
 from arr_post_processor.lidarr_pipeline import CueTransform, LidarrPipeline
+from arr_post_processor.lidarr_service import LidarrPostProcessorService
 from arr_post_processor.media import (
     UnflacRunner,
     build_manual_import_files,
@@ -39,9 +38,9 @@ from arr_post_processor.models import (
     QueueRecord,
     UnflacInput,
 )
-from arr_post_processor.lidarr_service import LidarrPostProcessorService
 from arr_post_processor.state import Job, StateStore
-
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import TypeAdapter
 
 INSPECTIONS = TypeAdapter(list[UnflacInput])
 IMPORT_CANDIDATES = TypeAdapter(list[ManualImportCandidate])
@@ -116,6 +115,32 @@ class LidarrPostProcessorTests(unittest.TestCase):
             config.write_text("<Config />", encoding="utf-8")
             with self.assertRaises(PostProcessorError):
                 read_api_key(config)
+
+    def test_reads_hermes_api_key_credential(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = Path(directory) / "api-server.env"
+            environment.write_text("OTHER=value\nAPI_SERVER_KEY=secret-key\n", encoding="utf-8")
+
+            self.assertEqual(read_environment_value(environment, "API_SERVER_KEY"), "secret-key")
+
+    def test_rejects_ambiguous_hermes_api_key_credential(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = Path(directory) / "api-server.env"
+            environment.write_text(
+                "API_SERVER_KEY=first\nAPI_SERVER_KEY=second\n", encoding="utf-8"
+            )
+
+            with self.assertRaises(PostProcessorError):
+                read_environment_value(environment, "API_SERVER_KEY")
+
+    def test_parses_named_radarr_source_roots(self):
+        roots = parse_source_roots(
+            ["torrents=/data/media/torrents/radarr", "usenet-manual=/data/media/usenet/manual"]
+        )
+
+        self.assertEqual([root.name for root in roots], ["torrents", "usenet-manual"])
+        with self.assertRaises(ValueError):
+            parse_source_roots(["torrents=relative/path"])
 
     def test_path_allowlist(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -212,13 +237,11 @@ class LidarrPostProcessorTests(unittest.TestCase):
                 album = destination / "album"
                 album.mkdir()
                 (album / "album.cue").write_text(
-                    "\n".join(
-                        [
-                            'FILE "01.flac" WAVE',
-                            "  TRACK 01 AUDIO",
-                            'FILE "02.flac" WAVE',
-                            "  TRACK 02 AUDIO",
-                        ]
+                    (
+                        'FILE "01.flac" WAVE\n'
+                        "  TRACK 01 AUDIO\n"
+                        'FILE "02.flac" WAVE\n'
+                        "  TRACK 02 AUDIO"
                     ),
                     encoding="utf-8",
                 )
@@ -468,16 +491,14 @@ class LidarrPostProcessorTests(unittest.TestCase):
             root = Path(directory)
             cue = root / "album.cue"
             cue.write_text(
-                "\n".join(
-                    [
-                        'FILE "01 - First.wav" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 00 03:12:34",
-                        'FILE "02 - Second.wav" WAVE',
-                        "    INDEX 01 00:00:00",
-                    ]
+                (
+                    'FILE "01 - First.wav" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 00 03:12:34\n"
+                    'FILE "02 - Second.wav" WAVE\n'
+                    "    INDEX 01 00:00:00"
                 ),
                 encoding="utf-8",
             )
@@ -505,14 +526,12 @@ class LidarrPostProcessorTests(unittest.TestCase):
             root = Path(directory)
             cue = root / "album.cue"
             cue.write_text(
-                "\n".join(
-                    [
-                        'FILE "album.flac" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 01 03:12:34",
-                    ]
+                (
+                    'FILE "album.flac" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 01 03:12:34"
                 ),
                 encoding="utf-8",
             )
@@ -799,16 +818,14 @@ class LidarrPostProcessorTests(unittest.TestCase):
             download = root / "torrents" / "album"
             download.mkdir(parents=True)
             (download / "album.cue").write_text(
-                "\n".join(
-                    [
-                        'FILE "01.wav" WAVE',
-                        "  TRACK 01 AUDIO",
-                        "    INDEX 01 00:00:00",
-                        "  TRACK 02 AUDIO",
-                        "    INDEX 00 03:12:34",
-                        'FILE "02.wav" WAVE',
-                        "    INDEX 01 00:00:00",
-                    ]
+                (
+                    'FILE "01.wav" WAVE\n'
+                    "  TRACK 01 AUDIO\n"
+                    "    INDEX 01 00:00:00\n"
+                    "  TRACK 02 AUDIO\n"
+                    "    INDEX 00 03:12:34\n"
+                    'FILE "02.wav" WAVE\n'
+                    "    INDEX 01 00:00:00"
                 ),
                 encoding="utf-8",
             )

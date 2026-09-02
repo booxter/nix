@@ -23,7 +23,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--base-url",
         default=os.environ.get("UNIFI_BASE_URL", ""),
-        help="UniFi base URL, for example https://unifi or https://192.168.0.1. Defaults to UNIFI_BASE_URL.",
+        help=(
+            "UniFi base URL, for example https://unifi or https://192.168.0.1. "
+            "Defaults to UNIFI_BASE_URL."
+        ),
     )
     parser.add_argument(
         "--site",
@@ -58,7 +61,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--insecure-tls",
         action="store_true",
-        help="Disable UniFi TLS certificate verification. Intended only for temporary local troubleshooting.",
+        help=(
+            "Disable UniFi TLS certificate verification. "
+            "Intended only for temporary local troubleshooting."
+        ),
     )
     parser.add_argument(
         "--debug",
@@ -136,7 +142,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--classless-static-routes-json",
         default=os.environ.get("UNIFI_CLASSLESS_STATIC_ROUTES_JSON", ""),
         help=(
-            "Optional JSON array of RFC 3442 classless static routes to publish via DHCP option 121. "
+            "Optional JSON array of RFC 3442 classless static routes to publish via DHCP "
+            "option 121. "
             "Defaults to UNIFI_CLASSLESS_STATIC_ROUTES_JSON."
         ),
     )
@@ -150,7 +157,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON", ""),
         help=(
             "Optional UniFi custom DHCP option definition for classless static routes, for example "
-            '{"code":121,"name":"ClasslessStaticRoutes","type":"text","signed":false,"encoding":"text"}. '
+            '{"code":121,"name":"ClasslessStaticRoutes","type":"text","signed":false,'
+            '"encoding":"text"}. '
             "Defaults to UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON."
         ),
     )
@@ -166,8 +174,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--bootfile",
         default=os.environ.get("UNIFI_NETWORK_BOOTFILE", ""),
         help=(
-            "Optional network-boot filename for DHCP option 67. Defaults to "
-            "UNIFI_NETWORK_BOOTFILE."
+            "Optional network-boot filename for DHCP option 67. Defaults to UNIFI_NETWORK_BOOTFILE."
         ),
     )
     parser.add_argument(

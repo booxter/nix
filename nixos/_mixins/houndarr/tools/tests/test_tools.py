@@ -12,10 +12,6 @@ from urllib.parse import urlsplit
 
 import httpx
 import pytest
-from prometheus_client import CollectorRegistry
-from prometheus_client.parser import text_string_to_metric_families
-
-from houndarr_tools.cli import run_reconcile, run_status
 from houndarr.services.instances import (
     CutoffPolicy,
     Instance,
@@ -28,6 +24,7 @@ from houndarr.services.instances import (
     TagFilterPolicy,
     UpgradePolicy,
 )
+from houndarr_tools.cli import run_reconcile, run_status
 from houndarr_tools.houndarr_store import HoundarrStore
 from houndarr_tools.models import (
     CurrentInstance,
@@ -43,6 +40,8 @@ from houndarr_tools.reconcile import (
     reconcile_instances,
 )
 from houndarr_tools.status import collect_status, status_registry
+from prometheus_client import CollectorRegistry
+from prometheus_client.parser import text_string_to_metric_families
 
 Response = tuple[int, object]
 
@@ -99,9 +98,11 @@ def test_status_counts_only_enabled_instances_with_active_errors() -> None:
             {"enabled": False, "active_error": True},
         ]
     }
-    with api_server({"/api/status": [(200, body)]}) as (base_url, state):
-        with httpx.Client() as client:
-            snapshot = collect_status(client, f"{base_url}/api/status", now=123)
+    with (
+        api_server({"/api/status": [(200, body)]}) as (base_url, state),
+        httpx.Client() as client,
+    ):
+        snapshot = collect_status(client, f"{base_url}/api/status", now=123)
 
     assert snapshot.ok
     assert snapshot.enabled_instances == 2

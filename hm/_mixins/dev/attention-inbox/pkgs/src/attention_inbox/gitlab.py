@@ -8,10 +8,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict, ValidationError
-
 from attention_inbox.errors import InboxError
 from attention_inbox.model import Author, InboxItem
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 
 class GitLabAuthor(BaseModel):
@@ -145,12 +144,12 @@ def normalize_timestamp(value: str | None) -> str | None:
     if text is None:
         return None
     try:
-        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        parsed = dt.datetime.fromisoformat(text)
     except ValueError:
         return text
     if parsed.tzinfo is None:
         return text
-    return parsed.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    return parsed.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
 
 
 def item_reference(kind: str, target: GitLabTarget) -> str | None:

@@ -5,11 +5,10 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from sops_tools.bootstrap import BootstrapService, CommandRuntimeKeyProvider
 from sops_tools.errors import ToolError
 from sops_tools.policy import SopsPolicy
-from sops_tools.repository import RuntimeEnvironment, Realm, SecretRepository
+from sops_tools.repository import Realm, RuntimeEnvironment, SecretRepository
 
 from .fakes import (
     MemorySopsBackend,
@@ -23,7 +22,7 @@ def service(
     tmp_path: Path, hosts: tuple[str, ...] = ("newhost", "secondhost")
 ) -> tuple[BootstrapService, MemorySopsBackend, StaticRuntimeKeyProvider]:
     inventory = tmp_path / "realms.json"
-    inventory.write_text(json.dumps({host: "home" for host in hosts}))
+    inventory.write_text(json.dumps(dict.fromkeys(hosts, "home")))
     runtime = RuntimeEnvironment(
         repo_root=tmp_path,
         home=tmp_path / "home",

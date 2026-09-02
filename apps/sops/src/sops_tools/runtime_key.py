@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, Sequence
+from typing import Protocol
 
 
 class RuntimeKeyError(RuntimeError):
@@ -46,9 +47,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("path", type=Path)
     args = parser.parse_args(argv)
     try:
-        recipient = ensure_runtime_key(
-            args.path, CommandAgeKeyGenerator(args.age_keygen)
-        )
+        recipient = ensure_runtime_key(args.path, CommandAgeKeyGenerator(args.age_keygen))
     except RuntimeKeyError as error:
         parser.exit(1, f"{error}\n")
     print(recipient)

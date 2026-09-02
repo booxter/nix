@@ -8,20 +8,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from atomic_file_writes import write_text_atomic
+
 from .age import AgeRecipientResolver
 from .errors import ToolError
 from .flake import archive_flake_source
 from .model import JsonValue
 from .policy import SopsPolicy
 from .process import ProcessRunner
-from .repository import RuntimeEnvironment, Realm, SecretRepository
+from .repository import Realm, RuntimeEnvironment, SecretRepository
 from .runtime_key import (
     CommandAgeKeyGenerator,
     RuntimeKeyError,
     ensure_runtime_key,
 )
-from atomic_file_writes import write_text_atomic
-
 from .secrets import SopsBackend, load_yaml
 
 _RUNTIME_KEY = Path("/var/lib/sops-nix/key.txt")
@@ -49,9 +49,7 @@ class CommandRuntimeKeyProvider:
         age_keygen = Path(self._executable("age-keygen"))
         if os.geteuid() == 0:
             try:
-                return ensure_runtime_key(
-                    _RUNTIME_KEY, CommandAgeKeyGenerator(age_keygen)
-                )
+                return ensure_runtime_key(_RUNTIME_KEY, CommandAgeKeyGenerator(age_keygen))
             except RuntimeKeyError as error:
                 raise ToolError(str(error)) from error
         return self.runner.run(
@@ -205,9 +203,7 @@ class BootstrapService:
         self.repository.directory.mkdir(parents=True, exist_ok=True)
         secret = self.repository.secret(host)
         if secret.is_file():
-            messages.append(
-                f"{secret.relative_to(self.runtime.repo_root)} already exists."
-            )
+            messages.append(f"{secret.relative_to(self.runtime.repo_root)} already exists.")
         else:
             plaintext: JsonValue = {}
             if self.repository.template.is_file():
@@ -220,9 +216,7 @@ class BootstrapService:
             messages.append(f"Created encrypted {relative}.")
         return BootstrapResult(tuple(messages))
 
-    def _control_plane_recipient(
-        self, policy: SopsPolicy, operator_recipient: str
-    ) -> str | None:
+    def _control_plane_recipient(self, policy: SopsPolicy, operator_recipient: str) -> str | None:
         if self.repository.realm.name != "home":
             return None
         return next(

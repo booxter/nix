@@ -141,7 +141,7 @@ def _parse_expiry(value: str | None) -> int | None:
     if value is None:
         return None
     try:
-        timestamp = datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        timestamp = datetime.fromisoformat(value).timestamp()
     except (ValueError, OverflowError):
         return None
     return math.floor(timestamp)

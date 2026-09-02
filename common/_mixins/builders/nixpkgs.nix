@@ -13,11 +13,11 @@ let
       { };
   builders =
     lib.mapAttrsToList (name: builder: builder // { hostName = name; }) poolBuilders
-    ++ config.host.nix.nixpkgs-review.additional-builders;
+    ++ config.host.nix.nixpkgs.additional-builders;
   builderString = lib.concatStringsSep " ; " (map formatBuilder builders);
 in
 {
-  options.host.nix.nixpkgs-review = {
+  options.host.nix.nixpkgs = {
     additional-builders = lib.mkOption {
       type = options.nix.buildMachines.type;
       default = [ ];
@@ -30,7 +30,7 @@ in
       default = builderString;
       readOnly = true;
       internal = true;
-      description = "Complete nixpkgs-review machines-file argument.";
+      description = "Complete machines-file argument for nixpkgs builds.";
     };
   };
 }

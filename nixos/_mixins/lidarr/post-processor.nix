@@ -8,7 +8,7 @@ let
   cfg = config.host.lidarr;
   package = pkgs.callPackage ../servarr/pkgs/arr-post-processor {
     atomicFileWrites = pkgs.atomic-file-writes;
-    joinMediaParts = pkgs.join-media-parts;
+    hermesRuns = pkgs.hermes-runs;
   };
   mediaDir = config.host.storage.claims.media.mountPoint;
   workRoot = "${mediaDir}/.arr-post-processor/lidarr";

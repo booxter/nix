@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, TextIO
 
-
 MAX_LINE_LENGTH = 72
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 TRAILER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:[ -][A-Za-z0-9][A-Za-z0-9-]*)*:[ \t]+\S")
@@ -70,7 +69,7 @@ def trailer_line_indexes(lines: list[str]) -> set[int]:
         line = lines[index]
         if TRAILER_RE.match(line):
             saw_trailer = True
-        elif not (saw_trailer and (line.startswith(" ") or line.startswith("\t"))):
+        elif not (saw_trailer and line.startswith((" ", "\t"))):
             return set()
     return indexes if saw_trailer else set()
 
@@ -89,7 +88,7 @@ def literal_line_indexes(lines: list[str]) -> set[int]:
             elif marker == fence:
                 fence = None
             continue
-        if fence is not None or line.startswith("    ") or line.startswith("\t"):
+        if fence is not None or line.startswith(("    ", "\t")):
             indexes.add(index)
     return indexes
 

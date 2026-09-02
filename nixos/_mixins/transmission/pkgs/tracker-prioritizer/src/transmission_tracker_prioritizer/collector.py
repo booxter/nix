@@ -21,7 +21,6 @@ from .core import (
     write_iteration_metrics,
 )
 
-
 LOG = logging.getLogger("transmission-collector")
 
 
@@ -134,7 +133,7 @@ def main(argv: Sequence[str] | None = None, runner: Runner | None = None) -> int
     try:
         (runner or run)(settings, build_client(settings.daemon), SystemClock())
     except KeyboardInterrupt:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
     return 0
 
 

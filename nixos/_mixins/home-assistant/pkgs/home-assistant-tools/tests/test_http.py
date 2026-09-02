@@ -6,7 +6,6 @@ from urllib.parse import parse_qs
 
 import httpx
 import pytest
-
 from home_assistant_tools.errors import HomeAssistantError, HomeAssistantUnavailable
 from home_assistant_tools.http import HttpxHomeAssistantApi
 

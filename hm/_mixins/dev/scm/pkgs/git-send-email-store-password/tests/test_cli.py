@@ -2,7 +2,6 @@ import io
 from collections.abc import Sequence
 
 import pytest
-
 from git_send_email_store_password.cli import (
     CommandResult,
     GitCredentialStore,

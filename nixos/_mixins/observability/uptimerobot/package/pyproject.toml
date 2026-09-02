@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "uptimerobot-sync"
 version = "0.1.0"
 description = "Sync UptimeRobot monitors from Nix service inventory"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = ["httpx", "pydantic"]
 
 [project.scripts]
@@ -29,6 +29,3 @@ precision = 2
 files = ["src/uptimerobot_sync"]
 plugins = ["pydantic.mypy"]
 strict = true
-
-[tool.ruff]
-line-length = 100

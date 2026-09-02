@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 import sqlite3
 import tarfile
@@ -48,9 +47,11 @@ def copy_state(data_dir: Path, destination: Path) -> None:
 
 def snapshot_database(source: Path, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with closing(sqlite3.connect(source)) as source_database:
-        with closing(sqlite3.connect(destination)) as destination_database:
-            source_database.backup(destination_database)
+    with (
+        closing(sqlite3.connect(source)) as source_database,
+        closing(sqlite3.connect(destination)) as destination_database,
+    ):
+        source_database.backup(destination_database)
 
 
 def archive_state(state_dir: Path, destination: Path) -> None:
@@ -95,7 +96,7 @@ def create_backup(
         archive_state(state_dir, temporary_archive)
         destination = staging_dir / archive_name
         shutil.copyfile(temporary_archive, destination)
-        os.chmod(destination, 0o640)
+        destination.chmod(0o640)
     return BackupResult(
         archive=destination,
         removed=prune_archives(staging_dir, keep),

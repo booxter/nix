@@ -24,7 +24,6 @@ from .service import (
     TokenService,
 )
 
-
 DEFAULT_API_USER = "prometheus@pve"
 DEFAULT_TOKEN_NAME = "metrics"
 DEFAULT_ROLE = "PVEAuditor"
