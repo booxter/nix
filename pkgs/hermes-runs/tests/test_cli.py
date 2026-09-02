@@ -23,15 +23,17 @@ class FakeClient:
         self.run_id = run_id
         self.event_values: list[JsonObject] = []
         self.run_values: list[RunSummary] = []
+        self.watched_run_ids: list[str] = []
 
     def start_run(self, instruction: str) -> str:
         return self.run_id
 
     def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+        self.watched_run_ids.append(run_id)
         yield from self.event_values
 
     def list_runs(self, limit: int) -> list[RunSummary]:
-        return self.run_values
+        return self.run_values[:limit]
 
     def get_run(self, run_id: str) -> RunStatus:
         return parse_run_status(self.response)
@@ -126,6 +128,34 @@ def test_watch_renders_text_and_events() -> None:
         'hello world\n[tool.started] {"preview": "ls", "tool": "terminal"}\n'
         '[run.completed] {"usage": {"total_tokens": 4}}\n'
     )
+
+
+def test_watch_defaults_to_latest_run() -> None:
+    client = FakeClient()
+    client.run_values = [
+        RunSummary(
+            run_id="run_latest",
+            status="running",
+            last_active=42,
+            model="model",
+            preview="latest",
+        ),
+        RunSummary(
+            run_id="run_older",
+            status="completed",
+            last_active=21,
+            model="model",
+            preview="older",
+        ),
+    ]
+
+    assert invoke(["watch"], client) == ""
+    assert client.watched_run_ids == ["run_latest"]
+
+
+def test_watch_without_run_fails_when_no_runs_exist() -> None:
+    with pytest.raises(HermesError, match="no runs found"):
+        invoke(["watch"], FakeClient())
 
 
 def test_watch_adds_newline_after_final_delta() -> None:

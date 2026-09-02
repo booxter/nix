@@ -26,7 +26,7 @@ def parser() -> argparse.ArgumentParser:
     list_runs.add_argument("--limit", type=int, default=20)
 
     watch = subparsers.add_parser("watch", help="follow a run's event stream")
-    watch.add_argument("run_id")
+    watch.add_argument("run_id", nargs="?", help="run to follow; defaults to the latest run")
 
     status = subparsers.add_parser("status", help="show a run's current state")
     status.add_argument("run_id")
@@ -176,7 +176,13 @@ def run(
     elif args.command == "list":
         _list(client, args.limit, output)
     elif args.command == "watch":
-        _watch(client, args.run_id, output)
+        run_id = args.run_id
+        if run_id is None:
+            runs = client.list_runs(1)
+            if not runs:
+                raise HermesError("no runs found")
+            run_id = runs[0].run_id
+        _watch(client, run_id, output)
     elif args.command == "status":
         response = client.get_run(args.run_id)
         if args.json:
