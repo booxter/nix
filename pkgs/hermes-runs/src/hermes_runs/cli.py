@@ -4,11 +4,15 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Mapping, Sequence
+import time
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import datetime
 from typing import TextIO
 
 from .client import Client, HermesClient, HermesError, HermesHttpError, JsonObject, RunStatus
+
+WATCH_BUSY_RETRY_ATTEMPTS = 20
+WATCH_BUSY_RETRY_SECONDS = 0.5
 
 
 def parser() -> argparse.ArgumentParser:
@@ -86,11 +90,40 @@ def _list(client: Client, limit: int, output: TextIO) -> None:
         )
 
 
-def _watch(client: Client, run_id: str, output: TextIO) -> None:
+def _watch_events(
+    client: Client,
+    run_id: str,
+    output: TextIO,
+    sleep: Callable[[float], None],
+) -> Iterator[JsonObject]:
+    busy_retries = 0
+    while True:
+        try:
+            yield from client.watch_run(run_id)
+            return
+        except HermesHttpError as error:
+            if (
+                error.status != 409
+                or "run_stream_in_use" not in error.detail
+                or busy_retries >= WATCH_BUSY_RETRY_ATTEMPTS
+            ):
+                raise
+            if busy_retries == 0:
+                print("event stream is still closing; retrying...", file=output)
+            busy_retries += 1
+            sleep(WATCH_BUSY_RETRY_SECONDS)
+
+
+def _watch(
+    client: Client,
+    run_id: str,
+    output: TextIO,
+    sleep: Callable[[float], None] = time.sleep,
+) -> None:
     in_message = False
     saw_message = False
     try:
-        for event in client.watch_run(run_id):
+        for event in _watch_events(client, run_id, output, sleep):
             event_name = str(event.get("event", "event"))
             if event_name == "message.delta":
                 print(str(event.get("delta", "")), end="", flush=True, file=output)

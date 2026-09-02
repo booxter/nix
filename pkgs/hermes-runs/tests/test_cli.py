@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from io import StringIO
 
 import pytest
-from hermes_runs.cli import run
+from hermes_runs.cli import WATCH_BUSY_RETRY_ATTEMPTS, _watch, run
 from hermes_runs.client import (
     HermesError,
     HermesHttpError,
@@ -160,14 +160,61 @@ def test_watch_falls_back_to_retained_status() -> None:
     )
 
 
-def test_watch_preserves_other_http_errors() -> None:
+def test_watch_retries_busy_stream() -> None:
+    class BusyThenReadyClient(FakeClient):
+        attempts = 0
+
+        def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+            self.attempts += 1
+            if self.attempts == 1:
+                raise HermesHttpError(409, "run_stream_in_use")
+            yield {"event": "tool.completed", "tool": "terminal"}
+
+    client = BusyThenReadyClient()
+    output = StringIO()
+    waits: list[float] = []
+
+    _watch(client, "run_123", output, sleep=waits.append)
+
+    assert client.attempts == 2
+    assert waits == [0.5]
+    assert output.getvalue() == (
+        'event stream is still closing; retrying...\n[tool.completed] {"tool": "terminal"}\n'
+    )
+
+
+def test_watch_stops_retrying_busy_stream() -> None:
+    class BusyClient(FakeClient):
+        attempts = 0
+
+        def watch_run(self, run_id: str) -> Iterator[JsonObject]:
+            self.attempts += 1
+            if False:
+                yield {}
+            raise HermesHttpError(409, "run_stream_in_use")
+
+    client = BusyClient()
+    waits: list[float] = []
+
+    with pytest.raises(HermesHttpError, match="HTTP 409"):
+        _watch(client, "run_123", StringIO(), sleep=waits.append)
+
+    assert client.attempts == WATCH_BUSY_RETRY_ATTEMPTS + 1
+    assert waits == [0.5] * WATCH_BUSY_RETRY_ATTEMPTS
+
+
+@pytest.mark.parametrize(
+    ("status", "detail"),
+    [(500, "broken"), (409, "different_conflict")],
+)
+def test_watch_preserves_other_http_errors(status: int, detail: str) -> None:
     class BrokenEventsClient(FakeClient):
         def watch_run(self, run_id: str) -> Iterator[JsonObject]:
             if False:
                 yield {}
-            raise HermesHttpError(500, "broken")
+            raise HermesHttpError(status, detail)
 
-    with pytest.raises(HermesHttpError, match="HTTP 500"):
+    with pytest.raises(HermesHttpError, match=f"HTTP {status}"):
         invoke(["watch", "run_123"], BrokenEventsClient())
 
 

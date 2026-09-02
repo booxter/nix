@@ -21,6 +21,7 @@ class HermesError(Exception):
 class HermesHttpError(HermesError):
     def __init__(self, status: int, detail: str) -> None:
         self.status = status
+        self.detail = detail
         super().__init__(f"Hermes returned HTTP {status}: {detail}")
 
 
@@ -114,8 +115,7 @@ class HermesClient:
         self._api_url = api_url.rstrip("/")
         self._api_key = api_key
         self._timeout_seconds = timeout_seconds
-        # Hermes sends an SSE keepalive every 30 seconds, so event streams need
-        # a longer idle timeout than ordinary API requests.
+        # Event streams need a longer idle timeout than ordinary API requests.
         self._event_timeout_seconds = event_timeout_seconds
         self._opener = opener or cast(Opener, urlopen)
 
