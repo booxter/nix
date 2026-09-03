@@ -40,7 +40,6 @@ in
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
       "sf-symbols"
-      "chatgpt"
     ]
     ++ lib.optionals wiresharkEnabled [
       "wireshark-chmodbpf"

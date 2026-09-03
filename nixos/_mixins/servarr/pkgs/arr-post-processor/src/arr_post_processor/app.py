@@ -9,17 +9,16 @@ from typing import Protocol
 
 from hermes_runs.client import HermesClient
 
-from .archive import NativeArchiveBackend
+from .audio_probe import CommandAudioVerifier
 from .config import read_api_key, read_environment_value
 from .lidarr import LidarrClient
-from .lidarr_service import LidarrPostProcessorService
-from .media import UnflacRunner
+from .lidarr_agent_service import LidarrAgentService
+from .lidarr_agent_state import RepairStateStore as LidarrRepairStateStore
 from .radarr import RadarrClient
 from .radarr_agent_service import RadarrAgentService
 from .radarr_probe import CommandVideoVerifier
-from .radarr_source import SourceRoot
 from .radarr_state import RepairStateStore
-from .state import StateStore
+from .repair_source import SourceRoot
 
 LOG = logging.getLogger("arr-post-processor")
 
@@ -37,8 +36,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--processor", required=True, choices=["lidarr", "radarr"])
     parser.add_argument("--arr-url", required=True)
     parser.add_argument("--arr-config", required=True)
-    parser.add_argument("--allowed-root", action="append", default=[])
-    parser.add_argument("--work-root")
     parser.add_argument("--source-root", action="append", default=[])
     parser.add_argument("--output-root")
     parser.add_argument("--audit-root")
@@ -51,25 +48,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--request-timeout-seconds", type=float, default=20.0)
     parser.add_argument("--command-timeout-seconds", type=float, default=900.0)
     parser.add_argument("--agent-timeout-seconds", type=float, default=14400.0)
+    parser.add_argument("--shadow", action="store_true")
     parser.add_argument("--once", action="store_true")
     parser.add_argument(
         "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
     )
     args = parser.parse_args()
-    if args.processor == "lidarr":
-        if not args.allowed_root or args.work_root is None:
-            parser.error("Lidarr requires --allowed-root and --work-root")
-    else:
-        required = {
-            "--source-root": args.source_root,
-            "--output-root": args.output_root,
-            "--audit-root": args.audit_root,
-            "--hermes-url": args.hermes_url,
-            "--hermes-api-key-file": args.hermes_api_key_file,
-        }
-        missing = [name for name, value in required.items() if not value]
-        if missing:
-            parser.error(f"Radarr requires {', '.join(missing)}")
+    required = {
+        "--source-root": args.source_root,
+        "--output-root": args.output_root,
+        "--audit-root": args.audit_root,
+        "--hermes-url": args.hermes_url,
+        "--hermes-api-key-file": args.hermes_api_key_file,
+    }
+    missing = [name for name, value in required.items() if not value]
+    if missing:
+        parser.error(f"{args.processor.capitalize()} requires {', '.join(missing)}")
     return args
 
 
@@ -98,7 +92,7 @@ def main() -> int:
     )
     service: RuntimeService
     if args.processor == "lidarr":
-        store = StateStore(Path(args.state_file))
+        store = LidarrRepairStateStore(Path(args.state_file))
 
         def lidarr_client_factory() -> LidarrClient:
             return LidarrClient(
@@ -107,18 +101,23 @@ def main() -> int:
                 args.request_timeout_seconds,
             )
 
-        service = LidarrPostProcessorService(
+        service = LidarrAgentService(
             client_factory=lidarr_client_factory,
-            runner=UnflacRunner(),
-            archive_backend=NativeArchiveBackend(
-                timeout_seconds=args.command_timeout_seconds,
+            hermes=HermesClient(
+                args.hermes_url,
+                read_environment_value(Path(args.hermes_api_key_file), "API_SERVER_KEY"),
+                timeout_seconds=args.request_timeout_seconds,
             ),
             store=store,
-            allowed_roots=[Path(root) for root in args.allowed_root],
-            work_root=Path(args.work_root),
+            source_roots=parse_source_roots(args.source_root),
+            output_root=Path(args.output_root),
+            audit_root=Path(args.audit_root),
             metrics_file=Path(args.metrics_file),
+            verifier=CommandAudioVerifier(timeout_seconds=args.command_timeout_seconds),
             settle_seconds=args.settle_seconds,
+            agent_timeout_seconds=args.agent_timeout_seconds,
             command_timeout_seconds=args.command_timeout_seconds,
+            shadow=args.shadow,
         )
     else:
         repair_store = RepairStateStore(Path(args.state_file))
@@ -146,6 +145,7 @@ def main() -> int:
             settle_seconds=args.settle_seconds,
             agent_timeout_seconds=args.agent_timeout_seconds,
             command_timeout_seconds=args.command_timeout_seconds,
+            shadow=args.shadow,
         )
     while True:
         started = time.monotonic()

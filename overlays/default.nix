@@ -7,7 +7,10 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-      pkgsNixpkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+      pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
       numtidePkgs = inputs.llm-agents.packages.${system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
@@ -22,10 +25,13 @@
       );
     in
     {
-      inherit (pkgsNixpkgsUnstable) aerospace codex;
+      inherit (pkgsNixpkgsUnstable) aerospace chatgpt codex;
 
       hermes-agent = numtidePkgs.hermes-agent.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ../patches/hermes-agent-reconnect-run-event-streams.patch ];
+        patches = (old.patches or [ ]) ++ [
+          ../patches/hermes-agent-reconnect-run-event-streams.patch
+          ../patches/hermes-agent-retain-active-run-events.patch
+        ];
       });
 
       # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable

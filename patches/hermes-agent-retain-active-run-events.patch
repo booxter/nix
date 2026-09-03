@@ -1,0 +1,176 @@
+From: NixOS deployment patch
+Subject: [PATCH] retain bounded event streams for active runs
+
+Keep pending SSE events for the lifetime of an active run so clients can
+attach after the transport TTL. Bound each queue by event count and serialized
+size, reporting any discarded prefix, then apply the existing TTL after the
+run becomes terminal.
+
+---
+ gateway/platforms/api_server.py      |  2 ++
+ gateway/platforms/api_server_runs.py | 106 ++++++++++++++++++++++++++++++++--
+ 2 files changed, 105 insertions(+), 3 deletions(-)
+
+diff --git a/gateway/platforms/api_server_runs.py b/gateway/platforms/api_server_runs.py
+--- a/gateway/platforms/api_server_runs.py
++++ b/gateway/platforms/api_server_runs.py
+@@ -24,6 +24,96 @@
+     if RequestKey is not None
+     else "hermes.room_run_retention_until"
+ )
++
++
++class _BoundedRunEventQueue(asyncio.Queue):
++    """Retain pending run events while bounding their aggregate memory use."""
++
++    def __init__(self, *, max_events: int, max_bytes: int) -> None:
++        super().__init__()
++        self._max_events = max_events
++        self._max_bytes = max_bytes
++        self._buffered_bytes = 0
++
++    @staticmethod
++    def _item_size(item: Optional[Dict]) -> int:
++        if item is None:
++            return 0
++        encoded = json.dumps(
++            item,
++            ensure_ascii=False,
++            default=str,
++            separators=(",", ":"),
++        ).encode()
++        return len(encoded)
++
++    @staticmethod
++    def _dropped(item: Optional[Dict], size: int) -> tuple[int, int]:
++        if isinstance(item, dict) and item.get("event") == "stream.truncated":
++            return (
++                int(item.get("dropped_events", 0)),
++                int(item.get("dropped_bytes", 0)),
++            )
++        return (0, 0) if item is None else (1, size)
++
++    @staticmethod
++    def _truncation_event(dropped_events: int, dropped_bytes: int) -> Dict:
++        return {
++            "event": "stream.truncated",
++            "dropped_events": dropped_events,
++            "dropped_bytes": dropped_bytes,
++        }
++
++    def _put(self, item: Optional[Dict]) -> None:
++        dropped_events = 0
++        dropped_bytes = 0
++
++        if (
++            self._queue
++            and isinstance(self._queue[0], dict)
++            and self._queue[0].get("event") == "stream.truncated"
++        ):
++            old_marker = self._queue.popleft()
++            old_marker_size = self._item_size(old_marker)
++            self._buffered_bytes -= old_marker_size
++            dropped_events, dropped_bytes = self._dropped(
++                old_marker, old_marker_size
++            )
++
++        item_size = self._item_size(item)
++        # Leave enough room to report that an individual event was discarded.
++        if item is not None and item_size > self._max_bytes - 1024:
++            new_events, new_bytes = self._dropped(item, item_size)
++            dropped_events += new_events
++            dropped_bytes += new_bytes
++        else:
++            self._queue.append(item)
++            self._buffered_bytes += item_size
++
++        while self._queue:
++            marker = self._truncation_event(dropped_events, dropped_bytes)
++            marker_size = self._item_size(marker) if dropped_events else 0
++            if (
++                len(self._queue) + bool(dropped_events) <= self._max_events
++                and self._buffered_bytes + marker_size <= self._max_bytes
++            ):
++                break
++            old_item = self._queue.popleft()
++            old_size = self._item_size(old_item)
++            self._buffered_bytes -= old_size
++            new_events, new_bytes = self._dropped(old_item, old_size)
++            dropped_events += new_events
++            dropped_bytes += new_bytes
++
++        if dropped_events:
++            marker = self._truncation_event(dropped_events, dropped_bytes)
++            self._queue.appendleft(marker)
++            self._buffered_bytes += self._item_size(marker)
++
++    def _get(self) -> Optional[Dict]:
++        item = self._queue.popleft()
++        self._buffered_bytes -= self._item_size(item)
++        return item
+ 
+ 
+ def _remember_room_retention(request: "web.Request", claims: dict[str, Any]) -> None:
+@@ -613,7 +703,10 @@ async def _handle_runs(
+     approval_session_key = run_id
+     ephemeral_system_prompt = instructions
+     loop = asyncio.get_running_loop()
+-    q: "asyncio.Queue[Optional[Dict]]" = asyncio.Queue()
++    q: "asyncio.Queue[Optional[Dict]]" = _BoundedRunEventQueue(
++        max_events=self._RUN_STREAM_MAX_EVENTS,
++        max_bytes=self._RUN_STREAM_MAX_BYTES,
++    )
+     created_at = time.time()
+     self._run_streams[run_id] = q
+     self._run_streams_created[run_id] = created_at
+@@ -624,6 +717,9 @@ async def _handle_runs(
+     def _put_event_if_active(event: Optional[Dict]) -> None:
+         """Enqueue only while this run still owns live transport state."""
+         if self._run_streams.get(run_id) is q:
++            if event is None:
++                # Terminal streams receive their full TTL after the run ends.
++                self._run_streams_created[run_id] = time.time()
+             q.put_nowait(event)
+ 
+     # Also wire stream_delta_callback so message.delta events flow through.
+@@ -1446,11 +1542,17 @@ def _sweep_orphaned_runs_once(self, now: Optional[float] = None) -> None:
+     """Expire old SSE buffers without treating transport age as run age."""
+     if now is None:
+         now = time.time()
++    active_run_ids = {
++        run_id
++        for run_id, task in self._active_run_tasks.items()
++        if not task.done()
++    }
+     stale = [
+         run_id
+         for run_id, created_at in list(self._run_streams_created.items())
+         if now - created_at > self._RUN_STREAM_TTL
+         and run_id not in self._run_stream_subscribers
++        and run_id not in active_run_ids
+     ]
+     for run_id in stale:
+         logger.debug("[api_server] sweeping expired run transport %s", run_id)
+@@ -1465,8 +1567,6 @@ def _sweep_orphaned_runs_once(self, now: Optional[float] = None) -> None:
+                     unregister_gateway_notify(approval_session_key)
+             except Exception:
+                 pass
+-        # The transport TTL always bounds buffering. Live control state is
+-        # independent and survives until the executor-backed task returns.
+         self._run_streams.pop(run_id, None)
+         self._run_streams_created.pop(run_id, None)
+         if task_done:
+diff --git a/gateway/platforms/api_server.py b/gateway/platforms/api_server.py
+--- a/gateway/platforms/api_server.py
++++ b/gateway/platforms/api_server.py
+@@ -7505,6 +7505,8 @@ class APIServerAdapter(BasePlatformAdapter):
+     # ------------------------------------------------------------------
+ 
+     _RUN_STREAM_TTL = 300  # seconds before orphaned runs are swept
++    _RUN_STREAM_MAX_EVENTS = 10_000
++    _RUN_STREAM_MAX_BYTES = 64 * 1024 * 1024
+     _RUN_STATUS_TTL = 3600  # seconds to retain terminal run status for polling
+ 
+     def _set_run_status(self, run_id: str, status: str, **fields: Any) -> Dict[str, Any]:
+-- 
+2.51.0

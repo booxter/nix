@@ -12,7 +12,16 @@ from aiopyarr.lidarr_client import LidarrClient as NativeLidarrClient
 from aiopyarr.models.base import BaseModel
 
 from .errors import PostProcessorError
-from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
+from .models import (
+    AlbumCatalog,
+    CatalogRelease,
+    CommandStatus,
+    LidarrAlbum,
+    LidarrTrack,
+    ManualImportCandidate,
+    ManualImportFile,
+    QueueRecord,
+)
 
 T = TypeVar("T")
 
@@ -20,13 +29,13 @@ T = TypeVar("T")
 class Lidarr(Protocol):
     def queue(self) -> list[QueueRecord]: ...
 
+    def album_catalog(self, album_id: int) -> AlbumCatalog: ...
+
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]: ...
 
     def submit_manual_import(self, files: list[ManualImportFile]) -> int: ...
 
     def command(self, command_id: int) -> CommandStatus: ...
-
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None: ...
 
 
 def _attributes(model: BaseModel) -> dict[str, Any]:
@@ -70,13 +79,36 @@ class LidarrClient:
 
         return self._run(get_queue)
 
+    def album_catalog(self, album_id: int) -> AlbumCatalog:
+        async def get_catalog() -> AlbumCatalog:
+            headers = {"X-Api-Key": self.api_key}
+            timeout = ClientTimeout(total=self.timeout_seconds)
+            async with ClientSession(headers=headers, timeout=timeout) as session:
+                async with session.get(f"{self.base_url}/api/v1/album/{album_id}") as response:
+                    response.raise_for_status()
+                    album = LidarrAlbum.model_validate(await response.json())
+                releases: list[CatalogRelease] = []
+                for release in album.releases:
+                    async with session.get(
+                        f"{self.base_url}/api/v1/track",
+                        params={"albumReleaseId": release.id},
+                    ) as response:
+                        response.raise_for_status()
+                        tracks = [
+                            LidarrTrack.model_validate(item) for item in await response.json()
+                        ]
+                    releases.append(CatalogRelease(release=release, tracks=tracks))
+                return AlbumCatalog(album=album, releases=releases)
+
+        return self._run_async(get_catalog)
+
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]:
         async def get_manual_import(client: NativeLidarrClient) -> list[ManualImportCandidate]:
             records = await client.async_get_manual_import(
                 folder=str(folder),
                 downloadid=record.download_id,
                 artistid=record.artist_id,
-                replaceexistingfiles=True,
+                replaceexistingfiles=False,
                 filterexistingfiles=False,
             )
             return [ManualImportCandidate.model_validate(_attributes(item)) for item in records]
@@ -91,7 +123,7 @@ class LidarrClient:
                     "name": "ManualImport",
                     "files": [file.model_dump(by_alias=True, mode="json") for file in files],
                     "importMode": "auto",
-                    "replaceExistingFiles": True,
+                    "replaceExistingFiles": False,
                 },
                 method=HTTPMethod.POST,
             )
@@ -111,26 +143,3 @@ class LidarrClient:
             return CommandStatus.model_validate(payload)
         except ValueError as error:
             raise PostProcessorError("Lidarr command response has an unexpected shape") from error
-
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
-        async def detach() -> None:
-            # Lidarr returns HTTP 200 with an empty body for this DELETE. aiopyarr's
-            # generic request path always decodes successful responses as JSON, so
-            # async_delete_queue raises after Lidarr has already removed the item.
-            async with (
-                ClientSession(
-                    headers={"X-Api-Key": self.api_key},
-                    timeout=ClientTimeout(total=self.timeout_seconds),
-                ) as session,
-                session.delete(
-                    f"{self.base_url}/api/v1/queue/{queue_id}",
-                    params={
-                        "removeFromClient": "False",
-                        "blocklist": str(blocklist),
-                        "skipReDownload": "True",
-                    },
-                ) as response,
-            ):
-                response.raise_for_status()
-
-        self._run_async(detach)

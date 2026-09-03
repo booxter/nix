@@ -124,9 +124,16 @@ in
   };
 
   config = {
-    home.packages = lib.optionals (
-      config.host.hm.env.roles.developer && cfg.enable && oauthServerNames != [ ]
-    ) [ codexMcpLogin ];
+    home.packages =
+      lib.optionals (config.host.hm.env.roles.developer && cfg.enable && oauthServerNames != [ ]) [
+        codexMcpLogin
+      ]
+      ++ lib.optional (
+        config.host.hm.env.roles.developer
+        && cfg.enable
+        && osConfig.host.desktop != null
+        && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.chatgpt
+      ) pkgs.chatgpt;
 
     host.hm.sketchybar.codex.enable = lib.mkDefault (
       isDarwin && cfg.enable && config.host.hm.sketchybar.enable

@@ -61,6 +61,7 @@ in
             "--hermes-api-key-file"
             "%d/hermes-api-key"
           ]
+          ++ lib.optional cfg.agent.shadow "--shadow"
           ++ lib.concatLists (
             lib.mapAttrsToList (name: root: [
               "--source-root"

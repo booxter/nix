@@ -15,8 +15,8 @@ from arr_post_processor.radarr_models import (
     RadarrQueueRecord,
     Rejection,
 )
-from arr_post_processor.radarr_source import SourceRoot
 from arr_post_processor.radarr_state import FailureKind, JobStatus, RepairStateStore
+from arr_post_processor.repair_source import SourceRoot
 from hermes_runs.client import (
     HermesError,
     HermesHttpError,
@@ -308,6 +308,21 @@ def test_completed_run_accepts_only_correlated_manifest(tmp_path: Path) -> None:
     assert job.status is JobStatus.READY
     assert job.candidate is not None
     assert job.candidate.name == "Test Movie (2020).mkv"
+
+
+def test_shadow_mode_validates_without_importing(tmp_path: Path) -> None:
+    service, radarr, hermes, store, clock, _source, _output, verifier = service_fixture(tmp_path)
+    service.shadow = True
+    start_attempt(service, store, clock)
+    write_result(store)
+    hermes.state = RunState.COMPLETED
+
+    service.iteration()
+    service.iteration()
+
+    assert store.state.jobs["download-id"].status is JobStatus.READY
+    assert radarr.imported is None
+    assert not verifier.verified
 
 
 def test_unresolved_run_is_terminal_for_unchanged_source(tmp_path: Path) -> None:

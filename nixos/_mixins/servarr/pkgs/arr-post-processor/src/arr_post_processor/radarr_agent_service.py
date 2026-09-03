@@ -13,7 +13,6 @@ from hermes_runs.client import Client as Hermes
 from hermes_runs.client import HermesError, HermesHttpError, RunState, RunStatus
 
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
-from .media import safe_component
 from .radarr import Radarr
 from .radarr_metrics import render_radarr_metrics
 from .radarr_models import RadarrManualImportFile, RadarrQueueRecord
@@ -27,7 +26,6 @@ from .radarr_repair import (
     load_repair_result,
     render_repair_instruction,
 )
-from .radarr_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 from .radarr_state import (
     ACTIVE_AGENT_STATES,
     FailureKind,
@@ -36,6 +34,8 @@ from .radarr_state import (
     RepairStateStore,
     RetainedArtifact,
 )
+from .repair_media import safe_component
+from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 
 LOG = logging.getLogger("arr-post-processor.radarr")
 SUPPORTED_PROTOCOLS = {
@@ -69,6 +69,7 @@ class RadarrAgentService:
         settle_seconds: float,
         agent_timeout_seconds: float,
         command_timeout_seconds: float,
+        shadow: bool = False,
         missing_queue_confirmations: int = MISSING_QUEUE_CONFIRMATIONS,
         artifact_retention_seconds: float = ARTIFACT_RETENTION_SECONDS,
         now: Callable[[], float] = time.time,
@@ -85,6 +86,7 @@ class RadarrAgentService:
         self.settle_seconds = settle_seconds
         self.agent_timeout_seconds = agent_timeout_seconds
         self.command_timeout_seconds = command_timeout_seconds
+        self.shadow = shadow
         self.missing_queue_confirmations = missing_queue_confirmations
         self.artifact_retention_seconds = artifact_retention_seconds
         self.now = now
@@ -679,6 +681,7 @@ class RadarrAgentService:
                 and record.download_id in ready_at_start
                 and ready_job is not None
                 and ready_job.status is JobStatus.READY
+                and not self.shadow
             ):
                 self._process_ready(client, record, ready_job, now)
                 break
