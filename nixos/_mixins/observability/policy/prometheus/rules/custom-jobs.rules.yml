@@ -102,14 +102,14 @@ groups:
           summary: "Lidarr post-processor metrics stale on srvarr"
           description: "The Lidarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
       - alert: LidarrPostProcessorJobNeedsAttention
-        expr: host_observability_lidarr_post_processor_jobs{job="node-mtls",instance="srvarr",state=~"failed|automation_failed"} > 0
+        expr: host_observability_lidarr_post_processor_jobs{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
         for: 15m
         labels:
           severity: warning
           category: media
         annotations:
-          summary: "Lidarr post-processing job needs attention on srvarr"
-          description: "At least one Lidarr post-processing job on srvarr has remained failed or its automated resolution failed for 15 minutes."
+          summary: "Lidarr repair job needs attention on srvarr"
+          description: "At least one Lidarr repair handoff on srvarr has required attention for 15 minutes."
       - alert: RadarrPostProcessorServiceDown
         expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-radarr.service",state="active"} < 1
         for: 5m

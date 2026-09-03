@@ -184,8 +184,8 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 
 	cueSummary := layout.row(5, 6, 6, 6, 6)
 	builder.WithPanel(availabilityStat(AvailabilityStatOptions{
-		ID: cueSummary[0].ID, Grid: cueSummary[0].Grid, Title: "Lidarr CUE Splitter Health",
-		Expression: "max(" + node("host_observability_lidarr_cue_splitter_ok") + ") or vector(0)",
+		ID: cueSummary[0].ID, Grid: cueSummary[0].Grid, Title: "Lidarr Post-Processor Health",
+		Expression: "max(" + node("host_observability_lidarr_post_processor_ok") + ") or vector(0)",
 		Legend:     "health", DataSource: datasource,
 	}))
 	cueStats := []struct {
@@ -195,22 +195,22 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 		thresholds *dashboard.ThresholdsConfigBuilder
 	}{
 		{
-			title: "CUE Jobs In Flight", unit: units.Short,
-			expression: "sum(" + node("host_observability_lidarr_cue_splitter_jobs",
-				`state=~"settling|splitting|verifying|matching|importing|awaiting_queue_removal"`) + ") or vector(0)",
+			title: "Repair Jobs In Flight", unit: units.Short,
+			expression: "sum(" + node("host_observability_lidarr_post_processor_jobs",
+				`state=~"settling|agent_starting|agent_running|agent_stopping|ready|staged|importing|awaiting_queue_removal"`) + ") or vector(0)",
 			thresholds: absoluteThresholds(
 				dashboard.Threshold{Color: "green", Value: nil},
 				dashboard.Threshold{Color: "blue", Value: ptr(1.0)},
 			),
 		},
 		{
-			title: "CUE Automation Failures", unit: units.Short,
-			expression: "sum(" + node("host_observability_lidarr_cue_splitter_jobs", `state=~"failed|automation_failed"`) +
+			title: "Repair Jobs Needing Attention", unit: units.Short,
+			expression: "sum(" + node("host_observability_lidarr_post_processor_jobs", `state="needs_attention"`) +
 				") or vector(0)", thresholds: greenToRedThreshold(1),
 		},
 		{
-			title: "Time Since Last CUE Import", unit: units.DurationInDaysHoursMinutesSeconds,
-			expression: "clamp_min(time() - max(" + node("host_observability_lidarr_cue_splitter_last_success_timestamp_seconds") +
+			title: "Time Since Last Repair", unit: units.DurationInDaysHoursMinutesSeconds,
+			expression: "clamp_min(time() - max(" + node("host_observability_lidarr_post_processor_last_success_timestamp_seconds") +
 				"), 0) or vector(0)",
 			thresholds: absoluteThresholds(
 				dashboard.Threshold{Color: "green", Value: nil},
@@ -229,17 +229,17 @@ func MediaOverview(config Config) (dashboard.Dashboard, error) {
 	cueSeries := layout.row(8, 12, 12)
 	builder.
 		WithPanel(timeSeries(TimeseriesOptions{
-			ID: cueSeries[0].ID, Grid: cueSeries[0].Grid, Title: "Lidarr CUE Splitter Job States",
+			ID: cueSeries[0].ID, Grid: cueSeries[0].Grid, Title: "Lidarr Post-Processor Job States",
 			Unit: units.Short, DataSource: datasource, Min: ptr(0.0), Stacking: "cue-states", Fill: &fill,
 			Targets: []PrometheusTarget{{
-				RefID: "A", Expression: node("host_observability_lidarr_cue_splitter_jobs"), Legend: "{{state}}",
+				RefID: "A", Expression: node("host_observability_lidarr_post_processor_jobs"), Legend: "{{state}}",
 			}},
 		})).
 		WithPanel(timeSeries(TimeseriesOptions{
-			ID: cueSeries[1].ID, Grid: cueSeries[1].Grid, Title: "Lidarr CUE Splitter Outcomes",
+			ID: cueSeries[1].ID, Grid: cueSeries[1].Grid, Title: "Lidarr Repair Outcomes",
 			Unit: units.Short, DataSource: datasource, Min: ptr(0.0),
 			Targets: []PrometheusTarget{{
-				RefID: "A", Expression: "increase(" + node("host_observability_lidarr_cue_splitter_jobs_total") + "[$__rate_interval])", Legend: "{{result}}",
+				RefID: "A", Expression: "increase(" + node("host_observability_lidarr_post_processor_jobs_total") + "[$__rate_interval])", Legend: "{{result}}",
 			}},
 		}))
 
