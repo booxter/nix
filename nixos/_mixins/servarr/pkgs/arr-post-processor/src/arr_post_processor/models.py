@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from pydantic.alias_generators import to_camel
@@ -41,11 +42,14 @@ class StatusMessage(ApiModel):
     messages: list[str] = Field(default_factory=list)
 
 
+TrackNumber = Annotated[int, Field(ge=1)] | Annotated[str, Field(min_length=1)]
+
+
 class LidarrTrack(ApiModel):
     id: int = Field(gt=0)
     title: str = Field(min_length=1)
     medium_number: int = Field(ge=1)
-    track_number: int = Field(ge=1)
+    track_number: TrackNumber
     absolute_track_number: int = Field(ge=0)
     duration: int = Field(ge=0)
 

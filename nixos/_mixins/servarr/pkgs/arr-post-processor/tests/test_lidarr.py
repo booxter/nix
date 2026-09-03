@@ -67,7 +67,7 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
                             "id": 10,
                             "title": "Track",
                             "mediumNumber": 1,
-                            "trackNumber": 1,
+                            "trackNumber": "A1",
                             "absoluteTrackNumber": 1,
                             "duration": 180000,
                         }
@@ -111,6 +111,7 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
         catalog = client.album_catalog(8)
         assert catalog.album.artist.artist_name == "Artist"
         assert [track.id for track in catalog.releases[0].tracks] == [10]
+        assert catalog.releases[0].tracks[0].track_number == "A1"
         assert client.manual_import(Path("/staging/album"), record) == []
         assert (
             client.submit_manual_import(
