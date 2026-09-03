@@ -24,6 +24,7 @@ from .lidarr_agent_state import (
     RepairStateStore,
     RetainedArtifact,
 )
+from .lidarr_metrics import render_lidarr_metrics
 from .lidarr_repair import (
     REPORT_FILE_NAME,
     RESULT_FILE_NAME,
@@ -33,8 +34,8 @@ from .lidarr_repair import (
     load_repair_result,
     render_repair_instruction,
 )
-from .media import STAGING_DIR_NAME, build_manual_import_files, safe_component
 from .models import QueueRecord
+from .repair_media import STAGING_DIR_NAME, build_manual_import_files, safe_component
 from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 
 LOG = logging.getLogger("arr-post-processor.lidarr")
@@ -655,5 +656,8 @@ class LidarrAgentService:
         self.store.save()
 
     def write_metrics(self, ok: bool) -> None:
-        del ok
-        write_text_atomic(self.metrics_file, "", mode=0o644)
+        write_text_atomic(
+            self.metrics_file,
+            render_lidarr_metrics(self.store.state, ok=ok, now=self.now()),
+            mode=0o644,
+        )

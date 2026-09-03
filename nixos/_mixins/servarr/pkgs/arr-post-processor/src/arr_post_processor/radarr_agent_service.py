@@ -13,7 +13,6 @@ from hermes_runs.client import Client as Hermes
 from hermes_runs.client import HermesError, HermesHttpError, RunState, RunStatus
 
 from .errors import NeedsAttention, PostProcessorError, SourceInvalid
-from .media import safe_component
 from .radarr import Radarr
 from .radarr_metrics import render_radarr_metrics
 from .radarr_models import RadarrManualImportFile, RadarrQueueRecord
@@ -35,6 +34,7 @@ from .radarr_state import (
     RepairStateStore,
     RetainedArtifact,
 )
+from .repair_media import safe_component
 from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 
 LOG = logging.getLogger("arr-post-processor.radarr")

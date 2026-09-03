@@ -82,28 +82,27 @@ class LidarrClient:
         return self._run(get_queue)
 
     def album_catalog(self, album_id: int) -> AlbumCatalog:
-        async def get_catalog(client: NativeLidarrClient) -> AlbumCatalog:
-            native_album = await client.async_get_albums(albumids=album_id)
-            if isinstance(native_album, list):
-                raise PostProcessorError(f"Lidarr returned no unique album for id {album_id}")
-            album = LidarrAlbum.model_validate(_attributes(native_album))
-            releases: list[CatalogRelease] = []
-            for release in album.releases:
-                native_tracks = await client.async_get_tracks(albumreleaseid=release.id)
-                if not isinstance(native_tracks, list):
-                    native_tracks = [native_tracks]
-                releases.append(
-                    CatalogRelease(
-                        release=release,
-                        tracks=[
-                            LidarrTrack.model_validate(_attributes(track))
-                            for track in native_tracks
-                        ],
-                    )
-                )
-            return AlbumCatalog(album=album, releases=releases)
+        async def get_catalog() -> AlbumCatalog:
+            headers = {"X-Api-Key": self.api_key}
+            timeout = ClientTimeout(total=self.timeout_seconds)
+            async with ClientSession(headers=headers, timeout=timeout) as session:
+                async with session.get(f"{self.base_url}/api/v1/album/{album_id}") as response:
+                    response.raise_for_status()
+                    album = LidarrAlbum.model_validate(await response.json())
+                releases: list[CatalogRelease] = []
+                for release in album.releases:
+                    async with session.get(
+                        f"{self.base_url}/api/v1/track",
+                        params={"albumReleaseId": release.id},
+                    ) as response:
+                        response.raise_for_status()
+                        tracks = [
+                            LidarrTrack.model_validate(item) for item in await response.json()
+                        ]
+                    releases.append(CatalogRelease(release=release, tracks=tracks))
+                return AlbumCatalog(album=album, releases=releases)
 
-        return self._run(get_catalog)
+        return self._run_async(get_catalog)
 
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]:
         async def get_manual_import(client: NativeLidarrClient) -> list[ManualImportCandidate]:

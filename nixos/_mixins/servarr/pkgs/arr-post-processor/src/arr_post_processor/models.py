@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -123,20 +122,3 @@ class CommandStatus(ApiModel):
     id: int
     status: str = ""
     message: str = ""
-
-
-class UnflacAudio(ApiModel):
-    path: Path
-    tracks: list[object]
-
-
-class UnflacInput(ApiModel):
-    audio: list[UnflacAudio] = Field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class CueSummary:
-    cue: Path
-    audio_files: tuple[Path, ...]
-    track_count: int
-    eligible: bool

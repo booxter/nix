@@ -9,8 +9,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from .errors import NeedsAttention
-from .media import AUDIO_FILE_SUFFIXES
 from .models import AlbumCatalog, StatusMessage
+from .repair_media import AUDIO_FILE_SUFFIXES
 
 RESULT_FILE_NAME = "result.json"
 REPORT_FILE_NAME = "report.md"
