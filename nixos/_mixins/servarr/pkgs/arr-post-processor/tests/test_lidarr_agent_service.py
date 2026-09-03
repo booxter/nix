@@ -264,3 +264,51 @@ def test_source_change_stops_active_agent(tmp_path: Path) -> None:
 
     assert store.state.jobs["download-1"].status is JobStatus.AGENT_STOPPING
     assert hermes.stopped == ["run-1"]
+
+
+def test_active_run_stages_matches_imports_and_cleans(tmp_path: Path) -> None:
+    service, client, hermes, store, clock, source, _verifier = fixture(tmp_path, shadow=False)
+    task_root = start(service, store, clock)
+    write_result(store)
+    hermes.state = RunState.COMPLETED
+    service.iteration()
+
+    service.iteration()
+    job = store.state.jobs["download-1"]
+    assert job.status is JobStatus.STAGED
+    assert job.handoff_root is not None
+    staged = [item.staged for item in job.files]
+    assert all(path is not None and path.is_relative_to(source) for path in staged)
+    client.import_candidates = [
+        ManualImportCandidate.model_validate(
+            {
+                "path": str(item.staged),
+                "artist": {"id": 7},
+                "album": {"id": 8},
+                "albumReleaseId": 9,
+                "tracks": [{"id": item.expected_track_ids[0]}],
+                "quality": {},
+                "downloadId": "download-1",
+            }
+        )
+        for item in job.files
+    ]
+
+    service.iteration()
+    assert job.status is JobStatus.IMPORTING
+    assert client.imported is not None
+    assert all(item.disable_release_switching for item in client.imported)
+
+    client.command_status = CommandStatus(id=12, status="completed")
+    service.iteration()
+    assert job.status is JobStatus.AWAITING_QUEUE_REMOVAL
+    client.records = []
+    service.iteration()
+    service.iteration()
+    service.iteration()
+
+    assert job.status is JobStatus.COMPLETE
+    assert not task_root.exists()
+    assert not (source / "_arr-post-processor").exists()
+    assert (tmp_path / "audit" / str(ATTEMPT_ID) / "result.json").is_file()
+    assert store.state.totals.tracks == 2

@@ -479,7 +479,11 @@ class LidarrAgentService:
                 raise NeedsAttention("not every repair candidate has a staged file")
             outputs = client.manual_import(job.handoff_root, record)
             imports = build_manual_import_files(outputs, list(staged), record)
-            expected = {item.staged: set(item.expected_track_ids) for item in job.files}
+            expected = {
+                item.staged.resolve(): set(item.expected_track_ids)
+                for item in job.files
+                if item.staged is not None
+            }
             for item in imports:
                 if item.album_release_id != job.release_id:
                     raise ManualMatchRequired("Lidarr selected a different album release")

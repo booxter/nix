@@ -479,7 +479,7 @@ class LidarrPostProcessorTests(unittest.TestCase):
         self.assertEqual(import_query["folder"], ["/staging/album"])
         self.assertEqual(import_query["downloadId"], ["download-1"])
         self.assertEqual(import_query["artistId"], ["7"])
-        self.assertEqual(import_query["replaceExistingFiles"], ["True"])
+        self.assertEqual(import_query["replaceExistingFiles"], ["False"])
         self.assertEqual(import_query["filterExistingFiles"], ["False"])
 
         self.assertEqual(requests[2][0:2], ("POST", "/api/v1/command"))
@@ -501,7 +501,7 @@ class LidarrPostProcessorTests(unittest.TestCase):
                     }
                 ],
                 "importMode": "auto",
-                "replaceExistingFiles": True,
+                "replaceExistingFiles": False,
             },
         )
 

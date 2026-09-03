@@ -111,7 +111,7 @@ class LidarrClient:
                 folder=str(folder),
                 downloadid=record.download_id,
                 artistid=record.artist_id,
-                replaceexistingfiles=True,
+                replaceexistingfiles=False,
                 filterexistingfiles=False,
             )
             return [ManualImportCandidate.model_validate(_attributes(item)) for item in records]
@@ -126,7 +126,7 @@ class LidarrClient:
                     "name": "ManualImport",
                     "files": [file.model_dump(by_alias=True, mode="json") for file in files],
                     "importMode": "auto",
-                    "replaceExistingFiles": True,
+                    "replaceExistingFiles": False,
                 },
                 method=HTTPMethod.POST,
             )
