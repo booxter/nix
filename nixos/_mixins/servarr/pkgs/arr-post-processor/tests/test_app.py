@@ -32,6 +32,7 @@ from arr_post_processor.media import (
 )
 from arr_post_processor.metrics import render_metrics
 from arr_post_processor.models import (
+    AlbumCatalog,
     CommandStatus,
     ManualImportCandidate,
     ManualImportFile,
@@ -83,6 +84,51 @@ class UnexpectedArchiveBackend:
 
 
 class LidarrPostProcessorTests(unittest.TestCase):
+    def test_album_catalog_preserves_release_track_layout(self):
+        catalog = AlbumCatalog.model_validate(
+            {
+                "album": {
+                    "id": 8,
+                    "title": "Album",
+                    "artistId": 7,
+                    "artist": {"id": 7, "artistName": "Artist"},
+                    "releases": [
+                        {
+                            "id": 9,
+                            "title": "Album",
+                            "mediumCount": 1,
+                            "trackCount": 1,
+                            "duration": 180000,
+                        }
+                    ],
+                },
+                "releases": [
+                    {
+                        "release": {
+                            "id": 9,
+                            "title": "Album",
+                            "mediumCount": 1,
+                            "trackCount": 1,
+                            "duration": 180000,
+                        },
+                        "tracks": [
+                            {
+                                "id": 10,
+                                "title": "Track",
+                                "mediumNumber": 1,
+                                "trackNumber": 1,
+                                "absoluteTrackNumber": 1,
+                                "duration": 180000,
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+
+        assert catalog.album.artist.artist_name == "Artist"
+        assert catalog.releases[0].tracks[0].duration == 180000
+
     def test_queue_record_normalizes_aiopyarr_protocol(self):
         record = queue_record({"protocol": ProtocolType.TORRENT})
         self.assertEqual(record.protocol, "torrent")

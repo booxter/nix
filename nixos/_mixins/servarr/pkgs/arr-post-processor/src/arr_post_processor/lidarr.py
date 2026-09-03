@@ -12,13 +12,24 @@ from aiopyarr.lidarr_client import LidarrClient as NativeLidarrClient
 from aiopyarr.models.base import BaseModel
 
 from .errors import PostProcessorError
-from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
+from .models import (
+    AlbumCatalog,
+    CatalogRelease,
+    CommandStatus,
+    LidarrAlbum,
+    LidarrTrack,
+    ManualImportCandidate,
+    ManualImportFile,
+    QueueRecord,
+)
 
 T = TypeVar("T")
 
 
 class Lidarr(Protocol):
     def queue(self) -> list[QueueRecord]: ...
+
+    def album_catalog(self, album_id: int) -> AlbumCatalog: ...
 
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]: ...
 
@@ -69,6 +80,30 @@ class LidarrClient:
             return [QueueRecord.model_validate(_attributes(record)) for record in queue.records]
 
         return self._run(get_queue)
+
+    def album_catalog(self, album_id: int) -> AlbumCatalog:
+        async def get_catalog(client: NativeLidarrClient) -> AlbumCatalog:
+            native_album = await client.async_get_albums(albumids=album_id)
+            if isinstance(native_album, list):
+                raise PostProcessorError(f"Lidarr returned no unique album for id {album_id}")
+            album = LidarrAlbum.model_validate(_attributes(native_album))
+            releases: list[CatalogRelease] = []
+            for release in album.releases:
+                native_tracks = await client.async_get_tracks(albumreleaseid=release.id)
+                if not isinstance(native_tracks, list):
+                    native_tracks = [native_tracks]
+                releases.append(
+                    CatalogRelease(
+                        release=release,
+                        tracks=[
+                            LidarrTrack.model_validate(_attributes(track))
+                            for track in native_tracks
+                        ],
+                    )
+                )
+            return AlbumCatalog(album=album, releases=releases)
+
+        return self._run(get_catalog)
 
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]:
         async def get_manual_import(client: NativeLidarrClient) -> list[ManualImportCandidate]:

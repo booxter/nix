@@ -23,6 +23,7 @@ class QueueRecord(ApiModel):
     album_id: int = 0
     tracked_download_status: str = ""
     tracked_download_state: str = ""
+    status_messages: list[StatusMessage] = Field(default_factory=list)
 
     @field_validator("protocol", mode="before")
     @classmethod
@@ -34,6 +35,60 @@ class QueueRecord(ApiModel):
 
 class EntityReference(ApiModel):
     id: int = 0
+
+
+class StatusMessage(ApiModel):
+    title: str = ""
+    messages: list[str] = Field(default_factory=list)
+
+
+class LidarrTrack(ApiModel):
+    id: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    medium_number: int = Field(ge=1)
+    track_number: int = Field(ge=1)
+    absolute_track_number: int = Field(ge=0)
+    duration: int = Field(ge=0)
+
+
+class LidarrRelease(ApiModel):
+    id: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    disambiguation: str = ""
+    format: str = ""
+    status: str = ""
+    monitored: bool = False
+    medium_count: int = Field(ge=0)
+    track_count: int = Field(ge=0)
+    duration: int = Field(ge=0)
+
+
+class LidarrAlbum(ApiModel):
+    id: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    artist_id: int = Field(gt=0)
+    artist: LidarrArtist
+    any_release_ok: bool = False
+    releases: list[LidarrRelease] = Field(default_factory=list)
+
+
+class LidarrArtist(ApiModel):
+    id: int = Field(gt=0)
+    artist_name: str = Field(min_length=1)
+
+
+class CatalogRelease(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    release: LidarrRelease
+    tracks: list[LidarrTrack]
+
+
+class AlbumCatalog(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    album: LidarrAlbum
+    releases: list[CatalogRelease]
 
 
 class Rejection(ApiModel):
