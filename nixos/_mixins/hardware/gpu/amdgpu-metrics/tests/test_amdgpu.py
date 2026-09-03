@@ -13,6 +13,7 @@ from amdgpu_metrics.amdgpu import (
     gpu_metrics_temperature,
     parse_arguments,
     parse_samples,
+    scaled_json_value,
     scaled_value,
     success_registry,
 )
@@ -116,7 +117,7 @@ def test_ndjson_parser_rejects_empty_and_invalid_samples() -> None:
     with pytest.raises(ValueError, match="no JSON samples"):
         parse_samples("\n")
     with pytest.raises(ValidationError):
-        parse_samples('{"devices": [{"Sensors": {"Fan": {"unit": "rpm"}}}]}')
+        parse_samples('{"devices": "not a list"}')
 
 
 def test_unit_scaling_and_gpu_metrics_revisions() -> None:
@@ -125,6 +126,10 @@ def test_unit_scaling_and_gpu_metrics_revisions() -> None:
     assert scaled_value(Reading(value=950, unit="mV"), "volts") == 0.95
     assert scaled_value(4, "bytes") == 4
     assert scaled_value(None, "bytes") is None
+    assert scaled_json_value({"value": 2, "unit": "MiB"}, "bytes") == 2 * 1024 * 1024
+    assert scaled_json_value({"value": None, "unit": "MiB"}, "bytes") is None
+    assert scaled_json_value([{"core_id": 0, "cur_freq": 2000}], "hertz") is None
+    assert scaled_json_value(True, "bytes") is None
     assert gpu_metrics_temperature(5500) == 55
     assert gpu_metrics_temperature(0) is None
     assert gpu_metrics_power(42000, 2) == 42
@@ -184,6 +189,46 @@ def test_success_registry_preserves_device_sensor_and_firmware_metrics() -> None
         ]
         == 42
     )
+
+
+def test_null_and_structured_readings_do_not_reject_sample() -> None:
+    data = fixture()
+    data["ROCm version"] = None
+    device = data["devices"][0]
+    assert isinstance(device, dict)
+    activity = device["gpu_activity"]
+    assert isinstance(activity, dict)
+    activity["Memory"] = {"value": None, "unit": "%"}
+    sensors = device["Sensors"]
+    assert isinstance(sensors, dict)
+    sensors.update(
+        {
+            "CPU Core freq": [{"core_id": 0, "cur_freq": 2000}],
+            "Edge Critical Temperature": {"value": None, "unit": "C"},
+            "Fan": None,
+            "Junction Temperature": None,
+        }
+    )
+
+    registry = success_registry(AmdgpuSample.model_validate(data), 0.25)
+
+    values = samples(registry)
+    assert values[("host_observability_amdgpu_collector_ok", ())] == 1
+    assert (
+        "host_observability_amdgpu_activity_percent",
+        device_labels(engine="Memory"),
+    ) not in values
+    assert (
+        "host_observability_amdgpu_temperature_limit_celsius",
+        device_labels(limit="critical", sensor="Edge"),
+    ) not in values
+    assert ("host_observability_amdgpu_fan_rpm", device_labels(sensor="Fan")) not in values
+    info = next(
+        labels
+        for (name, labels), value in values.items()
+        if name == "host_observability_amdgpu_info" and value == 1
+    )
+    assert ("rocm_version", "") in info
 
 
 def test_collection_failure_emits_health_metrics_and_preserves_source_options() -> None:
