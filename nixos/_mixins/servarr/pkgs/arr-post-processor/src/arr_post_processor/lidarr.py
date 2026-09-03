@@ -81,24 +81,29 @@ class LidarrClient:
 
     def album_catalog(self, album_id: int) -> AlbumCatalog:
         async def get_catalog() -> AlbumCatalog:
-            headers = {"X-Api-Key": self.api_key}
-            timeout = ClientTimeout(total=self.timeout_seconds)
-            async with ClientSession(headers=headers, timeout=timeout) as session:
-                async with session.get(f"{self.base_url}/api/v1/album/{album_id}") as response:
-                    response.raise_for_status()
-                    album = LidarrAlbum.model_validate(await response.json())
-                releases: list[CatalogRelease] = []
-                for release in album.releases:
-                    async with session.get(
-                        f"{self.base_url}/api/v1/track",
-                        params={"albumReleaseId": release.id},
-                    ) as response:
+            try:
+                headers = {"X-Api-Key": self.api_key}
+                timeout = ClientTimeout(total=self.timeout_seconds)
+                async with ClientSession(headers=headers, timeout=timeout) as session:
+                    async with session.get(f"{self.base_url}/api/v1/album/{album_id}") as response:
                         response.raise_for_status()
-                        tracks = [
-                            LidarrTrack.model_validate(item) for item in await response.json()
-                        ]
-                    releases.append(CatalogRelease(release=release, tracks=tracks))
-                return AlbumCatalog(album=album, releases=releases)
+                        album = LidarrAlbum.model_validate(await response.json())
+                    releases: list[CatalogRelease] = []
+                    for release in album.releases:
+                        async with session.get(
+                            f"{self.base_url}/api/v1/track",
+                            params={"albumReleaseId": release.id},
+                        ) as response:
+                            response.raise_for_status()
+                            tracks = [
+                                LidarrTrack.model_validate(item) for item in await response.json()
+                            ]
+                        releases.append(CatalogRelease(release=release, tracks=tracks))
+                    return AlbumCatalog(album=album, releases=releases)
+            except ValueError as error:
+                raise PostProcessorError(
+                    "Lidarr album catalog response has an unexpected shape"
+                ) from error
 
         return self._run_async(get_catalog)
 

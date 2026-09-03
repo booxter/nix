@@ -5,8 +5,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from uuid import UUID
 
+from arr_post_processor.errors import PostProcessorError
 from arr_post_processor.lidarr_agent_service import LidarrAgentService
-from arr_post_processor.lidarr_agent_state import JobStatus, RepairStateStore
+from arr_post_processor.lidarr_agent_state import FailureKind, JobStatus, RepairStateStore
 from arr_post_processor.models import (
     AlbumCatalog,
     CommandStatus,
@@ -84,12 +85,14 @@ class FakeLidarr:
         self.import_candidates: list[ManualImportCandidate] = []
         self.imported: list[ManualImportFile] | None = None
         self.command_status = CommandStatus(id=12, status="started")
+        self.catalog_errors: dict[int, PostProcessorError] = {}
 
     def queue(self) -> list[QueueRecord]:
         return self.records
 
     def album_catalog(self, album_id: int) -> AlbumCatalog:
-        assert album_id == 8
+        if error := self.catalog_errors.get(album_id):
+            raise error
         return catalog()
 
     def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]:
@@ -261,6 +264,35 @@ def test_source_change_stops_active_agent(tmp_path: Path) -> None:
 
     assert store.state.jobs["download-1"].status is JobStatus.AGENT_STOPPING
     assert hermes.stopped == ["run-1"]
+
+
+def test_invalid_catalog_does_not_block_next_release(tmp_path: Path) -> None:
+    service, client, hermes, store, clock, source, _verifier = fixture(tmp_path)
+    second_source = source.parent / "Artist - Other Album"
+    second_source.mkdir()
+    (second_source / "album.flac").write_bytes(b"source")
+    client.records.append(
+        client.records[0].model_copy(
+            update={
+                "download_id": "download-2",
+                "output_path": second_source,
+                "title": "Artist - Other Album",
+                "album_id": 9,
+            }
+        )
+    )
+    client.catalog_errors[8] = PostProcessorError("invalid catalog")
+
+    service.iteration()
+    clock.value += 60
+    service.iteration()
+    service.iteration()
+
+    first = store.state.jobs["download-1"]
+    assert first.status is JobStatus.NEEDS_ATTENTION
+    assert first.failure_kind is FailureKind.SOURCE_INVALID
+    assert store.state.jobs["download-2"].status is JobStatus.AGENT_RUNNING
+    assert len(hermes.instructions) == 1
 
 
 def test_active_run_stages_matches_imports_and_cleans(tmp_path: Path) -> None:
