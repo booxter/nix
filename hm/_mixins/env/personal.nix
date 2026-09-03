@@ -34,10 +34,7 @@
         enable = true;
         search.provider = "degoog";
       };
-      gmailctl = {
-        enable = true;
-        warmer.enable = true;
-      };
+      gmailctl.enable = true;
       hyprland.enable = pkgs.stdenv.hostPlatform.isLinux;
       kitty.enable = true;
       matrix.enable = true;
