@@ -14,6 +14,13 @@ let
   hermesHome = agent: "${agent.stateDir}/.hermes";
   inputTarget = agent: name: "${agent.workingDirectory}/input/${name}";
   outputTarget = agent: name: "${agent.workingDirectory}/output/${name}";
+  soulFileFor =
+    name: agent: pkgs.writeText "hermes-agent-${name}-soul" (builtins.readFile agent.soul);
+  documentFilesFor =
+    name: agent:
+    lib.mapAttrs (
+      document: source: pkgs.writeText "hermes-agent-${name}-${document}" (builtins.readFile source)
+    ) agent.documents;
   shellInitFor =
     name: agent:
     pkgs.writeText "hermes-agent-${name}-shell-init" ''
@@ -55,11 +62,12 @@ let
     let
       home = hermesHome agent;
       apiEnvironment = "${home}/api-server.env";
+      documentFiles = documentFilesFor name agent;
       installDocuments = lib.concatStringsSep "\n" (
         lib.mapAttrsToList (
           document: source:
           "install -o ${userName name} -g ${userName name} -m 0440 ${source} ${agent.workingDirectory}/${document}"
-        ) agent.documents
+        ) documentFiles
       );
     in
     lib.stringAfter [ "users" ] ''
@@ -85,7 +93,7 @@ let
         )
       )}
       install -o ${userName name} -g ${userName name} -m 0440 ${configFileFor name agent} ${home}/config.yaml
-      install -o ${userName name} -g ${userName name} -m 0440 ${agent.soul} ${home}/SOUL.md
+      install -o ${userName name} -g ${userName name} -m 0440 ${soulFileFor name agent} ${home}/SOUL.md
       touch ${home}/.managed
       chown ${userName name}:${userName name} ${home}/.managed
       chmod 0444 ${home}/.managed
@@ -153,7 +161,9 @@ let
       restartTriggers = [
         (configFileFor name agent)
         (shellInitFor name agent)
-      ];
+        (soulFileFor name agent)
+      ]
+      ++ builtins.attrValues (documentFilesFor name agent);
       unitConfig.RequiresMountsFor = requiredPaths;
       environment = {
         API_SERVER_ENABLED = "true";

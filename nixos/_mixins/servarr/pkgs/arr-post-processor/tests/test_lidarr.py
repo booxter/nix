@@ -8,7 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 
+import pytest
 from arr_post_processor.app import parse_source_roots
+from arr_post_processor.errors import PostProcessorError
 from arr_post_processor.lidarr import LidarrClient
 from arr_post_processor.models import ManualImportFile, QueueRecord
 
@@ -24,6 +26,7 @@ def test_parse_named_source_roots() -> None:
 
 def test_lidarr_client_catalog_and_import_round_trip() -> None:
     requests: list[tuple[str, str, object]] = []
+    invalid_catalog = False
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:
@@ -67,7 +70,7 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
                             "id": 10,
                             "title": "Track",
                             "mediumNumber": 1,
-                            "trackNumber": 1,
+                            "trackNumber": None if invalid_catalog else "A1",
                             "absoluteTrackNumber": 1,
                             "duration": 180000,
                         }
@@ -111,6 +114,10 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
         catalog = client.album_catalog(8)
         assert catalog.album.artist.artist_name == "Artist"
         assert [track.id for track in catalog.releases[0].tracks] == [10]
+        assert catalog.releases[0].tracks[0].track_number == "A1"
+        invalid_catalog = True
+        with pytest.raises(PostProcessorError, match="catalog response"):
+            client.album_catalog(8)
         assert client.manual_import(Path("/staging/album"), record) == []
         assert (
             client.submit_manual_import(
@@ -133,7 +140,7 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
 
     track_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[2][1]).query)
     assert track_query == {"albumReleaseId": ["9"]}
-    import_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[3][1]).query)
+    import_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[5][1]).query)
     assert import_query["replaceExistingFiles"] == ["False"]
-    assert requests[4][0:2] == ("POST", "/api/v1/command")
-    assert requests[4][2]["replaceExistingFiles"] is False  # type: ignore[index]
+    assert requests[6][0:2] == ("POST", "/api/v1/command")
+    assert requests[6][2]["replaceExistingFiles"] is False  # type: ignore[index]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -35,6 +36,7 @@ class Reading(BaseModel):
 
 
 ReadingValue = Reading | float
+FailureReporter = Callable[[Exception], None]
 
 
 class DevicePath(BaseModel):
@@ -57,11 +59,11 @@ class DeviceInfo(BaseModel):
 class Device(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    gpu_activity: dict[str, ReadingValue] = Field(default_factory=dict)
+    gpu_activity: dict[str, JsonValue] = Field(default_factory=dict)
     gpu_metrics: dict[str, JsonValue] = Field(default_factory=dict)
     info: DeviceInfo = Field(default_factory=DeviceInfo, alias="Info")
-    sensors: dict[str, ReadingValue] = Field(default_factory=dict, alias="Sensors")
-    vram: dict[str, ReadingValue] = Field(default_factory=dict, alias="VRAM")
+    sensors: dict[str, JsonValue] = Field(default_factory=dict, alias="Sensors")
+    vram: dict[str, JsonValue] = Field(default_factory=dict, alias="VRAM")
 
 
 class AmdgpuSample(BaseModel):
@@ -69,7 +71,7 @@ class AmdgpuSample(BaseModel):
 
     amdgpu_top_version: ToolVersion = Field(default_factory=ToolVersion)
     devices: list[Device] = Field(default_factory=list)
-    rocm_version: str = Field(default="", alias="ROCm version")
+    rocm_version: str | None = Field(default=None, alias="ROCm version")
 
 
 class SampleSource(Protocol):
@@ -128,6 +130,19 @@ def scaled_value(value: ReadingValue | None, expected_unit: str) -> float | None
     if expected_unit == "volts" and unit == "mV":
         return number / 1000
     return number
+
+
+def scaled_json_value(value: JsonValue, expected_unit: str) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return scaled_value(value, expected_unit)
+    if isinstance(value, dict):
+        try:
+            return scaled_value(Reading.model_validate(value), expected_unit)
+        except ValidationError:
+            return None
+    return None
 
 
 def gpu_metrics_revision(metrics: Mapping[str, JsonValue]) -> float | None:
@@ -243,37 +258,42 @@ def _record_memory(gauges: DeviceGauges, labels: tuple[str, str, str], device: D
         "Total GTT Usage": ("gtt", "used"),
     }
     for key, (memory_type, state) in memory_fields.items():
-        scaled = scaled_value(device.vram.get(key), "bytes")
+        scaled = scaled_json_value(device.vram.get(key), "bytes")
         if scaled is not None:
             gauges.memory.labels(*labels, memory_type, state).set(scaled)
 
 
 def _record_sensors(gauges: DeviceGauges, labels: tuple[str, str, str], device: Device) -> None:
     for sensor, reading in device.sensors.items():
+        scaled = scaled_json_value(reading, "celsius")
+        if scaled is None:
+            continue
         if (
             sensor.endswith(" Temperature")
             and " Critical " not in sensor
             and " Emergency " not in sensor
         ):
-            gauges.temperature.labels(*labels, sensor.removesuffix(" Temperature")).set(
-                scaled_value(reading, "celsius")
-            )
+            gauges.temperature.labels(*labels, sensor.removesuffix(" Temperature")).set(scaled)
         elif sensor.endswith((" Critical Temperature", " Emergency Temperature")):
             limit = "critical" if " Critical " in sensor else "emergency"
             sensor_name = sensor.replace(" Critical Temperature", "").replace(
                 " Emergency Temperature", ""
             )
-            gauges.temperature_limit.labels(*labels, sensor_name, limit).set(
-                scaled_value(reading, "celsius")
-            )
+            gauges.temperature_limit.labels(*labels, sensor_name, limit).set(scaled)
         elif sensor in ("GFX Power", "Average Power", "Input Power"):
-            gauges.power.labels(*labels, sensor).set(scaled_value(reading, "watts"))
+            if (scaled := scaled_json_value(reading, "watts")) is not None:
+                gauges.power.labels(*labels, sensor).set(scaled)
         elif sensor in ("GFX_SCLK", "GFX_MCLK", "FCLK"):
-            gauges.clock.labels(*labels, sensor).set(scaled_value(reading, "hertz"))
+            if (scaled := scaled_json_value(reading, "hertz")) is not None:
+                gauges.clock.labels(*labels, sensor).set(scaled)
         elif sensor in ("VDDNB", "VDDGFX"):
-            gauges.voltage.labels(*labels, sensor).set(scaled_value(reading, "volts"))
-        elif sensor in ("Fan", "Fan Max"):
-            gauges.fan.labels(*labels, sensor).set(scaled_value(reading, "rpm"))
+            if (scaled := scaled_json_value(reading, "volts")) is not None:
+                gauges.voltage.labels(*labels, sensor).set(scaled)
+        elif (
+            sensor in ("Fan", "Fan Max")
+            and (scaled := scaled_json_value(reading, "rpm")) is not None
+        ):
+            gauges.fan.labels(*labels, sensor).set(scaled)
 
 
 def _record_gpu_metrics(
@@ -308,7 +328,8 @@ def _record_device(
         device.info.chip_class,
     ).set(1)
     for engine, reading in device.gpu_activity.items():
-        gauges.activity.labels(*labels, engine).set(scaled_value(reading, "percent"))
+        if (scaled := scaled_json_value(reading, "percent")) is not None:
+            gauges.activity.labels(*labels, engine).set(scaled)
     _record_memory(gauges, labels, device)
     _record_sensors(gauges, labels, device)
     _record_gpu_metrics(gauges, labels, device)
@@ -332,7 +353,7 @@ def success_registry(sample: AmdgpuSample, duration: float) -> CollectorRegistry
         "Number of AMD GPU devices returned by amdgpu_top.",
     ).set(len(sample.devices))
 
-    base_labels = (sample.rocm_version, sample.amdgpu_top_version.label)
+    base_labels = (sample.rocm_version or "", sample.amdgpu_top_version.label)
     gauges = _device_gauges(registry)
     for index, device in enumerate(sample.devices):
         _record_device(gauges, base_labels, device, index)
@@ -354,16 +375,25 @@ def failure_registry(duration: float) -> CollectorRegistry:
     return registry
 
 
+def report_failure(error: Exception) -> None:
+    print(
+        f"amdgpu-metrics: collection failed: {type(error).__name__}: {error}",
+        file=sys.stderr,
+    )
+
+
 def collect(
     source: SampleSource,
     interval_ms: int,
     timeout: float,
     clock: Callable[[], float] = time.monotonic,
+    reporter: FailureReporter = report_failure,
 ) -> CollectorRegistry:
     started = clock()
     try:
         sample = source.sample(interval_ms, timeout)
-    except (OSError, subprocess.SubprocessError, ValidationError, ValueError):
+    except (OSError, subprocess.SubprocessError, ValidationError, ValueError) as error:
+        reporter(error)
         return failure_registry(clock() - started)
     return success_registry(sample, clock() - started)
 
