@@ -11,16 +11,24 @@ Use only the exact source and output paths in the task. Ignore any
 inspect Lidarr state, services, logs, other downloads, or artifacts from another
 task. The task catalog and queue status are authoritative.
 
+External network access is unavailable by design. Do not attempt `curl`,
+MusicBrainz queries, or other Internet lookups. Treat the task catalog as the
+complete release catalog; lack of network access is not a repair failure.
+
 The catalog may contain several releases with different track or disc layouts.
-Select a release only when the source can produce every track in that release.
+Select a release only when the source can produce every track in that release
+and the available evidence uniquely identifies it. `any_release_ok` does not
+permit an arbitrary choice between indistinguishable releases. If multiple
+catalog releases remain equally compatible, report the task as unresolved.
 Catalog durations are approximate evidence, not exact boundaries.
 
 ## Procedure
 
 1. Inspect the exact source directory and identify CUE sheets, referenced audio,
    archives, independently playable tracks, and disc structure.
-2. Compare titles, performers, track counts, disc layout, order, and durations
-   with every catalog release. Do not select a release using filenames alone.
+2. Compare titles, performers, embedded metadata, track counts, disc layout,
+   order, and durations with every catalog release. Do not select a release
+   using filenames alone, and do not break a tie arbitrarily.
 3. If the source is archived, inspect it before extraction. Reject encrypted,
    unsafe, ambiguous, or unexpectedly large archives. Extract only below the
    task output directory.
