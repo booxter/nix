@@ -7,7 +7,10 @@
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
-      pkgsNixpkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+      pkgsNixpkgsUnstable = import inputs.nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
       numtidePkgs = inputs.llm-agents.packages.${system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
