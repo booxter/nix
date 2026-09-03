@@ -44,6 +44,7 @@ pythonPackages.buildPythonApplication {
   ];
 
   ARR_POST_PROCESSOR_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+  ARR_POST_PROCESSOR_FLAC = lib.getExe flac;
 
   makeWrapperArgs = [
     "--prefix PATH : ${
@@ -55,6 +56,7 @@ pythonPackages.buildPythonApplication {
       ]
     }"
     "--set ARR_POST_PROCESSOR_FFPROBE ${lib.getExe' ffmpeg "ffprobe"}"
+    "--set ARR_POST_PROCESSOR_FLAC ${lib.getExe flac}"
   ];
 
   preCheck = ''

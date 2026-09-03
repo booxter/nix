@@ -27,7 +27,6 @@ from .radarr_repair import (
     load_repair_result,
     render_repair_instruction,
 )
-from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 from .radarr_state import (
     ACTIVE_AGENT_STATES,
     FailureKind,
@@ -36,6 +35,7 @@ from .radarr_state import (
     RepairStateStore,
     RetainedArtifact,
 )
+from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 
 LOG = logging.getLogger("arr-post-processor.radarr")
 SUPPORTED_PROTOCOLS = {

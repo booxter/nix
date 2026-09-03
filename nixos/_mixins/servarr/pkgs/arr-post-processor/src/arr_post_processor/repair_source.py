@@ -39,7 +39,9 @@ def locate_source(path: Path, roots: tuple[SourceRoot, ...]) -> LocatedSource:
     raise NeedsAttention(f"repair source is outside the configured roots: {resolved}")
 
 
-def source_fingerprint(source: LocatedSource) -> str:
+def source_fingerprint(
+    source: LocatedSource, *, ignored_directories: frozenset[str] = frozenset()
+) -> str:
     path = source.host_path
     entries: list[str] = []
     try:
@@ -48,6 +50,9 @@ def source_fingerprint(source: LocatedSource) -> str:
             entries.append(f"{path.name}\0{stat.st_size}\0{stat.st_mtime_ns}")
         else:
             for candidate in sorted(path.rglob("*")):
+                relative = candidate.relative_to(path)
+                if any(part in ignored_directories for part in relative.parts):
+                    continue
                 if candidate.is_symlink():
                     raise NeedsAttention(f"repair source contains a symlink: {candidate}")
                 if not candidate.is_file():
