@@ -130,7 +130,6 @@ def test_lidarr_client_catalog_and_import_round_trip() -> None:
             == 12
         )
         assert client.command(12).status == "completed"
-        client.detach_queue_item(42, blocklist=False)
 
     track_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[2][1]).query)
     assert track_query == {"albumReleaseId": ["9"]}

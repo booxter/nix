@@ -37,8 +37,6 @@ class Lidarr(Protocol):
 
     def command(self, command_id: int) -> CommandStatus: ...
 
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None: ...
-
 
 def _attributes(model: BaseModel) -> dict[str, Any]:
     return cast(dict[str, Any], model.attributes)
@@ -145,26 +143,3 @@ class LidarrClient:
             return CommandStatus.model_validate(payload)
         except ValueError as error:
             raise PostProcessorError("Lidarr command response has an unexpected shape") from error
-
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
-        async def detach() -> None:
-            # Lidarr returns HTTP 200 with an empty body for this DELETE. aiopyarr's
-            # generic request path always decodes successful responses as JSON, so
-            # async_delete_queue raises after Lidarr has already removed the item.
-            async with (
-                ClientSession(
-                    headers={"X-Api-Key": self.api_key},
-                    timeout=ClientTimeout(total=self.timeout_seconds),
-                ) as session,
-                session.delete(
-                    f"{self.base_url}/api/v1/queue/{queue_id}",
-                    params={
-                        "removeFromClient": "False",
-                        "blocklist": str(blocklist),
-                        "skipReDownload": "True",
-                    },
-                ) as response,
-            ):
-                response.raise_for_status()
-
-        self._run_async(detach)

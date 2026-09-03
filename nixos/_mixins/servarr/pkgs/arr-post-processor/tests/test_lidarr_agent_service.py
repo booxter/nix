@@ -103,9 +103,6 @@ class FakeLidarr:
         assert command_id == 12
         return self.command_status
 
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
-        raise AssertionError("agentic repairs never detach queue entries")
-
 
 def catalog() -> AlbumCatalog:
     return AlbumCatalog.model_validate(

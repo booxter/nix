@@ -123,6 +123,23 @@ class LidarrAgentService:
         job.task_root = None
         job.files = []
 
+    def _expire_artifacts(self, now: float) -> None:
+        retained: list[RetainedArtifact] = []
+        for artifact in self.store.state.retained_artifacts:
+            if artifact.expires_at > now:
+                retained.append(artifact)
+                continue
+            expected = self._expected_task_root(artifact.download_id, artifact.attempt_id)
+            if artifact.path.resolve() != expected:
+                LOG.error("refusing to remove unsafe Lidarr repair artifact: %s", artifact.path)
+                retained.append(artifact)
+                continue
+            if expected.exists():
+                shutil.rmtree(expected)
+            with contextlib.suppress(OSError):
+                expected.parent.rmdir()
+        self.store.state.retained_artifacts = retained
+
     def _cleanup_handoff(self, job: RepairJob) -> None:
         if job.handoff_root is None or job.attempt_id is None:
             return
@@ -613,6 +630,11 @@ class LidarrAgentService:
             job = self.store.state.jobs.get(record.download_id)
             if job is None or job.source_fingerprint != fingerprint:
                 if job is not None:
+                    try:
+                        self._cleanup_handoff(job)
+                    except NeedsAttention as error:
+                        self._mark_failure(job, FailureKind.INVALID_OUTPUT, str(error), now)
+                        continue
                     self._retain_task(job, now)
                 job = RepairJob(
                     download_id=record.download_id,
@@ -652,6 +674,7 @@ class LidarrAgentService:
         self._advance_existing_jobs(client, now)
         self._promote_ready_jobs(client, queue, ready_at_start, staged_at_start, now)
         self._discover_attempt(client, queue, now)
+        self._expire_artifacts(now)
         self.store.prune_jobs(now)
         self.store.save()
 
