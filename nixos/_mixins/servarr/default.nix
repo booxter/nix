@@ -22,6 +22,11 @@ in
 
         options.agent = {
           enable = lib.mkEnableOption "experimental ${name} Hermes Agent";
+          shadow = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Run the ${name} agent and validate its output without importing it.";
+          };
           providerHost = lib.mkOption {
             type = lib.types.nullOr lib.types.nonEmptyStr;
             default = null;

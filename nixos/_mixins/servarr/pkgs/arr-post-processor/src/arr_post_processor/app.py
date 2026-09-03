@@ -51,6 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--request-timeout-seconds", type=float, default=20.0)
     parser.add_argument("--command-timeout-seconds", type=float, default=900.0)
     parser.add_argument("--agent-timeout-seconds", type=float, default=14400.0)
+    parser.add_argument("--shadow", action="store_true")
     parser.add_argument("--once", action="store_true")
     parser.add_argument(
         "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
@@ -146,6 +147,7 @@ def main() -> int:
             settle_seconds=args.settle_seconds,
             agent_timeout_seconds=args.agent_timeout_seconds,
             command_timeout_seconds=args.command_timeout_seconds,
+            shadow=args.shadow,
         )
     while True:
         started = time.monotonic()

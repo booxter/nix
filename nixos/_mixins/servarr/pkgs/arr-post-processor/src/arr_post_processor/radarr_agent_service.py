@@ -69,6 +69,7 @@ class RadarrAgentService:
         settle_seconds: float,
         agent_timeout_seconds: float,
         command_timeout_seconds: float,
+        shadow: bool = False,
         missing_queue_confirmations: int = MISSING_QUEUE_CONFIRMATIONS,
         artifact_retention_seconds: float = ARTIFACT_RETENTION_SECONDS,
         now: Callable[[], float] = time.time,
@@ -85,6 +86,7 @@ class RadarrAgentService:
         self.settle_seconds = settle_seconds
         self.agent_timeout_seconds = agent_timeout_seconds
         self.command_timeout_seconds = command_timeout_seconds
+        self.shadow = shadow
         self.missing_queue_confirmations = missing_queue_confirmations
         self.artifact_retention_seconds = artifact_retention_seconds
         self.now = now
@@ -679,6 +681,7 @@ class RadarrAgentService:
                 and record.download_id in ready_at_start
                 and ready_job is not None
                 and ready_job.status is JobStatus.READY
+                and not self.shadow
             ):
                 self._process_ready(client, record, ready_job, now)
                 break
