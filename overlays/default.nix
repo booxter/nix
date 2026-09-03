@@ -22,7 +22,7 @@
       );
     in
     {
-      inherit (pkgsNixpkgsUnstable) aerospace codex;
+      inherit (pkgsNixpkgsUnstable) aerospace chatgpt codex;
 
       hermes-agent = numtidePkgs.hermes-agent.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
