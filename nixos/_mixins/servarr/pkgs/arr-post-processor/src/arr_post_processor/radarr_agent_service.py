@@ -27,7 +27,7 @@ from .radarr_repair import (
     load_repair_result,
     render_repair_instruction,
 )
-from .radarr_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
+from .repair_source import LocatedSource, SourceRoot, locate_source, source_fingerprint
 from .radarr_state import (
     ACTIVE_AGENT_STATES,
     FailureKind,

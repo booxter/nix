@@ -17,7 +17,7 @@ from .media import UnflacRunner
 from .radarr import RadarrClient
 from .radarr_agent_service import RadarrAgentService
 from .radarr_probe import CommandVideoVerifier
-from .radarr_source import SourceRoot
+from .repair_source import SourceRoot
 from .radarr_state import RepairStateStore
 from .state import StateStore
 
