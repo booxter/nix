@@ -13,6 +13,7 @@ from amdgpu_metrics.amdgpu import (
     gpu_metrics_temperature,
     parse_arguments,
     parse_samples,
+    report_failure,
     scaled_json_value,
     scaled_value,
     success_registry,
@@ -234,13 +235,23 @@ def test_null_and_structured_readings_do_not_reject_sample() -> None:
 def test_collection_failure_emits_health_metrics_and_preserves_source_options() -> None:
     source = StaticSource(error=OSError("device unavailable"))
     times = iter([4.0, 4.5])
+    errors: list[Exception] = []
 
-    registry = collect(source, 250, 3.5, lambda: clock(times))
+    registry = collect(source, 250, 3.5, lambda: clock(times), errors.append)
 
     assert source.calls == [(250, 3.5)]
+    assert errors == [source.error]
     values = samples(registry)
     assert values[("host_observability_amdgpu_collector_ok", ())] == 0
     assert values[("host_observability_amdgpu_collector_duration_seconds", ())] == 0.5
+
+
+def test_failure_reporter_writes_diagnostic(capsys: pytest.CaptureFixture[str]) -> None:
+    report_failure(ValueError("invalid sample"))
+
+    assert capsys.readouterr().err == (
+        "amdgpu-metrics: collection failed: ValueError: invalid sample\n"
+    )
 
 
 def test_cli_uses_wrapped_executable_default(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -35,6 +36,7 @@ class Reading(BaseModel):
 
 
 ReadingValue = Reading | float
+FailureReporter = Callable[[Exception], None]
 
 
 class DevicePath(BaseModel):
@@ -373,16 +375,25 @@ def failure_registry(duration: float) -> CollectorRegistry:
     return registry
 
 
+def report_failure(error: Exception) -> None:
+    print(
+        f"amdgpu-metrics: collection failed: {type(error).__name__}: {error}",
+        file=sys.stderr,
+    )
+
+
 def collect(
     source: SampleSource,
     interval_ms: int,
     timeout: float,
     clock: Callable[[], float] = time.monotonic,
+    reporter: FailureReporter = report_failure,
 ) -> CollectorRegistry:
     started = clock()
     try:
         sample = source.sample(interval_ms, timeout)
-    except (OSError, subprocess.SubprocessError, ValidationError, ValueError):
+    except (OSError, subprocess.SubprocessError, ValidationError, ValueError) as error:
+        reporter(error)
         return failure_registry(clock() - started)
     return success_registry(sample, clock() - started)
 
