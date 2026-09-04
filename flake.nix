@@ -72,8 +72,6 @@
       inputs.telegym.follows = "lolek/telegym";
     };
 
-    llm-agents.url = "github:numtide/llm-agents.nix";
-
   };
 
   outputs =

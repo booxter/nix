@@ -27,7 +27,6 @@
       ./_mixins/disko
       ./_mixins/glance
       ./_mixins/hardware
-      ./_mixins/hermes-agent
       ./_mixins/hm
       ./_mixins/home-assistant
       ./_mixins/houndarr

@@ -38,15 +38,6 @@ groups:
         annotations:
           summary: "Adaptive upload metrics stale on srvarr"
           description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
-      - alert: LidarrPostProcessorServiceDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-lidarr.service",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Lidarr post-processor service down on srvarr"
-          description: "The Lidarr post-processor service on srvarr has not been active for 5 minutes."
       - alert: HoundarrStatusCollectorTimerDown
         expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="houndarr-status-collector.timer",state="active"} < 1
         for: 5m
@@ -83,69 +74,6 @@ groups:
         annotations:
           summary: "Houndarr has failing Arr instances on srvarr"
           description: "At least one enabled Houndarr Arr instance has reported an active scheduler error for 10 minutes."
-      - alert: LidarrPostProcessorIterationFailed
-        expr: host_observability_lidarr_post_processor_ok{job="node-mtls",instance="srvarr"} < 1
-        for: 10m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Lidarr post-processor failing on srvarr"
-          description: "The Lidarr post-processor on srvarr has been reporting unsuccessful iterations for 10 minutes."
-      - alert: LidarrPostProcessorMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/arr-post-processor-lidarr/arr-post-processor-lidarr.prom"}) > 300
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Lidarr post-processor metrics stale on srvarr"
-          description: "The Lidarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
-      - alert: LidarrPostProcessorJobNeedsAttention
-        expr: host_observability_lidarr_post_processor_jobs{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
-        for: 15m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Lidarr repair job needs attention on srvarr"
-          description: "At least one Lidarr repair handoff on srvarr has required attention for 15 minutes."
-      - alert: RadarrPostProcessorServiceDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="arr-post-processor-radarr.service",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr post-processor service down on srvarr"
-          description: "The Radarr post-processor service on srvarr has not been active for 5 minutes."
-      - alert: RadarrPostProcessorIterationFailed
-        expr: host_observability_radarr_post_processor_ok{job="node-mtls",instance="srvarr"} < 1
-        for: 10m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr post-processor failing on srvarr"
-          description: "The Radarr post-processor on srvarr has been reporting unsuccessful iterations for 10 minutes."
-      - alert: RadarrPostProcessorMetricsStale
-        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/arr-post-processor-radarr/arr-post-processor-radarr.prom"}) > 300
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr post-processor metrics stale on srvarr"
-          description: "The Radarr post-processor metrics file on srvarr has not been refreshed for more than 5 minutes."
-      - alert: RadarrPostProcessorJobNeedsAttention
-        expr: host_observability_radarr_post_processor_jobs{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
-        for: 15m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Radarr repair job needs attention on srvarr"
-          description: "At least one Radarr repair handoff on srvarr has required attention for 15 minutes."
       - alert: EbookConverterIterationFailed
         expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m

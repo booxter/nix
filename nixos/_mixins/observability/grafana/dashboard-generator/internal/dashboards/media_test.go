@@ -78,8 +78,6 @@ func TestMediaCategoricalSeriesAreStackedAndFilled(t *testing.T) {
 		"Transmission Download Peers By Torrent Priority",
 		"Transmission Seeding Torrents",
 		"Transmission Downloading Torrents",
-		"Lidarr Post-Processor Job States",
-		"Radarr Post-Processor Job States",
 	}
 	for _, title := range titles {
 		t.Run(title, func(t *testing.T) {
@@ -97,16 +95,4 @@ func TestMediaCategoricalSeriesAreStackedAndFilled(t *testing.T) {
 		})
 	}
 
-	for _, title := range []string{"Lidarr Repair Outcomes", "Radarr Repair Outcomes"} {
-		t.Run(title, func(t *testing.T) {
-			outcomes := findPanel(t, model, title)
-			custom, ok := outcomes.FieldConfig.Defaults.Custom.(*common.GraphFieldConfig)
-			if !ok {
-				t.Fatalf("outcomes field config type = %T, want *common.GraphFieldConfig", outcomes.FieldConfig.Defaults.Custom)
-			}
-			if custom.Stacking != nil || custom.FillOpacity != nil {
-				t.Errorf("outcomes styling = %#v, want unstacked and unfilled", custom)
-			}
-		})
-	}
 }

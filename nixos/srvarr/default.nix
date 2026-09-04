@@ -43,12 +43,6 @@ in
   };
 
   host.lidarr = {
-    agent = {
-      enable = true;
-      providerHost = "frame";
-      model = "qwen3.8:27b-mtp-q4_K_M";
-      shadow = false;
-    };
     stateDir = "/data/.state/nixarr/lidarr";
   };
 
@@ -57,11 +51,6 @@ in
   };
 
   host.radarr = {
-    agent = {
-      enable = true;
-      providerHost = "frame";
-      model = "qwen3.8:27b-mtp-q4_K_M";
-    };
     stateDir = "/data/.state/nixarr/radarr";
   };
 
