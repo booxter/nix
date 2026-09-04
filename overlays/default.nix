@@ -11,7 +11,6 @@
         inherit system;
         config.allowUnfree = true;
       };
-      numtidePkgs = inputs.llm-agents.packages.${system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
@@ -26,17 +25,6 @@
     in
     {
       inherit (pkgsNixpkgsUnstable) aerospace chatgpt codex;
-
-      hermes-agent = numtidePkgs.hermes-agent.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../patches/hermes-agent-reconnect-run-event-streams.patch
-          ../patches/hermes-agent-retain-active-run-events.patch
-        ];
-      });
-
-      # Qwen 3.8 requires Ollama 0.32.12 or newer. Keep the server on unstable
-      # until a compatible release reaches the stable branch.
-      inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
 
       # Backport the appDataDir argument from the Firefox wrapper in
       # https://github.com/NixOS/nixpkgs/pull/556611. Keep delegating all
