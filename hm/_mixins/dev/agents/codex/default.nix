@@ -135,6 +135,12 @@ in
         && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.chatgpt
       ) pkgs.chatgpt;
 
+    home.file.".agents/skills/weekly-report" =
+      lib.mkIf (config.host.hm.env.roles.developer && cfg.enable && osConfig.host.realm == "work")
+        {
+          source = ./skills/weekly-report;
+        };
+
     host.hm.sketchybar.codex.enable = lib.mkDefault (
       isDarwin && cfg.enable && config.host.hm.sketchybar.enable
     );
