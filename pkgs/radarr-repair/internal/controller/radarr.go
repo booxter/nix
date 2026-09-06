@@ -9,6 +9,10 @@ type RadarrQueueReader interface {
 	ReadQueue(context.Context) ([]RadarrQueueRecord, error)
 }
 
+type RadarrMovieReader interface {
+	ReadMovie(context.Context, int64) (RadarrMovie, error)
+}
+
 // Keep Radarr's evolving string values instead of importing the client's enums
 // into the controller. Candidate policy will interpret known values separately.
 type QueueStatus string
@@ -42,4 +46,15 @@ type RadarrQueueRecord struct {
 	Indexer                       string
 	OutputPath                    string
 	DownloadClientHasPostCategory bool
+}
+
+type RadarrMovie struct {
+	ID              int64
+	TMDBID          int64
+	IMDbID          *string
+	Title           string
+	OriginalTitle   *string
+	AlternateTitles []string
+	Year            int
+	RuntimeMinutes  *int
 }

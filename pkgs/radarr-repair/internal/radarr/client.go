@@ -247,20 +247,24 @@ func invalidSize(value float64) bool {
 }
 
 func normalizePageError(page int, err error) error {
+	return normalizeRequestError(fmt.Sprintf("read Radarr queue page %d", page), err)
+}
+
+func normalizeRequestError(operation string, err error) error {
 	if errors.Is(err, errResponseTooLarge) {
-		return fmt.Errorf("read Radarr queue page %d: %w", page, errResponseTooLarge)
+		return fmt.Errorf("%s: %w", operation, errResponseTooLarge)
 	}
 	var requestError *starr.ReqError
 	if errors.As(err, &requestError) {
 		// Starr retains response bodies in ReqError. Return only the status so an
 		// upstream error page cannot leak credentials or unrelated server data.
 		return fmt.Errorf(
-			"read Radarr queue page %d: %w",
-			page,
+			"%s: %w",
+			operation,
 			&HTTPError{StatusCode: requestError.Code},
 		)
 	}
-	return fmt.Errorf("read Radarr queue page %d: %w", page, err)
+	return fmt.Errorf("%s: %w", operation, err)
 }
 
 func withResponseLimit(client *http.Client) *http.Client {

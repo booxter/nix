@@ -1,0 +1,38 @@
+{
+  "alternateTitles": [
+    {
+      "id": 1,
+      "language": {
+        "id": 1,
+        "name": "French"
+      },
+      "movieId": 42,
+      "movieMetadataId": 100,
+      "sourceId": 200,
+      "sourceType": "tmdb",
+      "title": "Le film",
+      "voteCount": 3,
+      "votes": 7
+    },
+    {
+      "id": 2,
+      "language": null,
+      "movieId": 42,
+      "movieMetadataId": 100,
+      "sourceId": 201,
+      "sourceType": "tmdb",
+      "title": "The Motion Picture",
+      "voteCount": 1,
+      "votes": 2
+    }
+  ],
+  "id": 42,
+  "imdbId": "tt1234567",
+  "originalTitle": "Le film original",
+  "overview": "Not retained by the repair controller",
+  "path": "/movies/Example Movie (2026)",
+  "runtime": 123,
+  "title": "Example Movie",
+  "tmdbId": 123456,
+  "year": 2026
+}
