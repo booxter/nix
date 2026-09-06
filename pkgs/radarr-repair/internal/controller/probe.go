@@ -1,5 +1,11 @@
 package controller
 
+import "context"
+
+type MediaProbeReader interface {
+	Probe(context.Context, string) (ProbeEvidence, error)
+}
+
 type Rational struct {
 	Numerator   int64
 	Denominator int64

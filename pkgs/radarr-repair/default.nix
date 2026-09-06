@@ -1,5 +1,6 @@
 {
   buildGoModule,
+  ffmpeg,
   goModels,
   lib,
   radarr,
@@ -21,6 +22,9 @@ buildGoModule {
   };
 
   vendorHash = "sha256-2RYdCyKWvNdrZZ4DxalltC+lIKq7kNkuIZ2N5DCF0ak=";
+
+  RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
+  RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";
 
   postPatch = ''
     cp ${goModels}/models.gen.go contracts/models.gen.go
