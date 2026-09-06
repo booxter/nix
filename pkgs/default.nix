@@ -32,6 +32,8 @@ in
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
 
+  radarr-repair-contracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
+
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;
   };

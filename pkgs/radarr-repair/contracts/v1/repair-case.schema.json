@@ -1,0 +1,849 @@
+{
+  "$defs": {
+    "downloadEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "client": {
+          "const": "transmission"
+        },
+        "completed_at": {
+          "$ref": "#/$defs/nullableTimestamp"
+        },
+        "download_ref": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "file_count": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "is_complete": {
+          "type": "boolean"
+        },
+        "labels": {
+          "$ref": "#/$defs/stringList"
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "source_type": {
+          "const": "torrent"
+        },
+        "total_size_bytes": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "tracker_hosts": {
+          "items": {
+            "$ref": "#/$defs/trackerHost"
+          },
+          "maxItems": 32,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "source_type",
+        "client",
+        "download_ref",
+        "name",
+        "total_size_bytes",
+        "file_count",
+        "is_complete",
+        "completed_at",
+        "tracker_hosts",
+        "labels"
+      ],
+      "type": "object"
+    },
+    "failedProbe": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "enum": [
+            "not_regular_file",
+            "unsupported_format",
+            "timeout",
+            "probe_error",
+            "invalid_output"
+          ]
+        },
+        "status": {
+          "const": "failed"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "summary"
+      ],
+      "type": "object"
+    },
+    "historyEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_type": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "evidence_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "languages": {
+          "$ref": "#/$defs/stringList"
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "quality": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_title": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "event_type",
+        "occurred_at",
+        "source_title",
+        "quality",
+        "languages"
+      ],
+      "type": "object"
+    },
+    "joinCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "join_parts_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "duration_tolerance_ms": {
+          "maximum": 3600000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "eligible_file_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 128,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expected_duration_ms": {
+          "$ref": "#/$defs/nullableDurationMs"
+        },
+        "input_container": {
+          "enum": [
+            "mpegts",
+            "mp4",
+            "matroska",
+            "avi"
+          ]
+        },
+        "output_container": {
+          "enum": [
+            "mp4",
+            "mkv"
+          ]
+        },
+        "probe_coverage": {
+          "enum": [
+            "complete",
+            "partial",
+            "none"
+          ]
+        },
+        "stream_compatibility": {
+          "enum": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "capability_id",
+        "action",
+        "eligible_file_ids",
+        "input_container",
+        "output_container",
+        "expected_duration_ms",
+        "duration_tolerance_ms",
+        "probe_coverage",
+        "stream_compatibility"
+      ],
+      "type": "object"
+    },
+    "manualImport": {
+      "additionalProperties": false,
+      "properties": {
+        "file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "languages": {
+          "$ref": "#/$defs/stringList"
+        },
+        "quality": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rejections": {
+          "items": {
+            "$ref": "#/$defs/manualImportRejection"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array"
+        },
+        "release_group": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "file_id",
+        "quality",
+        "languages",
+        "release_group",
+        "rejections"
+      ],
+      "type": "object"
+    },
+    "manualImportRejection": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "type": {
+          "enum": [
+            "permanent",
+            "temporary",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "evidence_id",
+        "type",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "mediaFile": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes_completed": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "extension": {
+          "enum": [
+            "ts",
+            "mp4",
+            "mkv",
+            "avi"
+          ]
+        },
+        "file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "path_components": {
+          "items": {
+            "$ref": "#/$defs/pathComponent"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        },
+        "probe": {
+          "$ref": "#/$defs/probeResult"
+        },
+        "size_bytes": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "torrent_index": {
+          "maximum": 999999,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "wanted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "file_id",
+        "path_components",
+        "size_bytes",
+        "torrent_index",
+        "wanted",
+        "bytes_completed",
+        "fingerprint",
+        "extension",
+        "probe"
+      ],
+      "type": "object"
+    },
+    "mediaStream": {
+      "additionalProperties": false,
+      "properties": {
+        "bit_rate_bps": {
+          "$ref": "#/$defs/nullableBitRate"
+        },
+        "channel_layout": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "channels": {
+          "maximum": 256,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "codec_name": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "codec_tag": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disposition": {
+          "$ref": "#/$defs/streamDisposition"
+        },
+        "duration_ms": {
+          "$ref": "#/$defs/nullableDurationMs"
+        },
+        "frame_rate": {
+          "$ref": "#/$defs/rational"
+        },
+        "height": {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "index": {
+          "maximum": 4095,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitle",
+            "data",
+            "attachment",
+            "other"
+          ]
+        },
+        "language": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pixel_format": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "profile": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sample_rate_hz": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "start_time_ms": {
+          "maximum": 604800000,
+          "minimum": -604800000,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "time_base": {
+          "$ref": "#/$defs/rational"
+        },
+        "width": {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "index",
+        "kind",
+        "codec_name",
+        "codec_tag",
+        "profile",
+        "time_base",
+        "start_time_ms",
+        "duration_ms",
+        "bit_rate_bps",
+        "language",
+        "disposition"
+      ],
+      "type": "object"
+    },
+    "movie": {
+      "additionalProperties": false,
+      "properties": {
+        "alternate_titles": {
+          "$ref": "#/$defs/stringList"
+        },
+        "imdb_id": {
+          "pattern": "^tt[0-9]{7,10}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "original_title": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "radarr_id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "runtime_minutes": {
+          "maximum": 10080,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "tmdb_id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "year": {
+          "maximum": 3000,
+          "minimum": 1870,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "radarr_id",
+        "tmdb_id",
+        "imdb_id",
+        "title",
+        "original_title",
+        "alternate_titles",
+        "year",
+        "runtime_minutes"
+      ],
+      "type": "object"
+    },
+    "nonEmptyText": {
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$",
+      "type": "string"
+    },
+    "nullableBitRate": {
+      "maximum": 10000000000,
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "nullableDurationMs": {
+      "maximum": 604800000,
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "opaqueId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "pathComponent": {
+      "maxLength": 255,
+      "minLength": 1,
+      "not": {
+        "enum": [
+          ".",
+          ".."
+        ]
+      },
+      "pattern": "^[^/\\\\\\u0000-\\u001f\\u007f]+$",
+      "type": "string"
+    },
+    "probeFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "bit_rate_bps": {
+          "$ref": "#/$defs/nullableBitRate"
+        },
+        "effective_duration_ms": {
+          "$ref": "#/$defs/nullableDurationMs"
+        },
+        "effective_duration_source": {
+          "enum": [
+            "format",
+            "longest_stream",
+            "consistent_format_and_stream",
+            "unknown"
+          ]
+        },
+        "format_duration_ms": {
+          "$ref": "#/$defs/nullableDurationMs"
+        },
+        "longest_stream_duration_ms": {
+          "$ref": "#/$defs/nullableDurationMs"
+        },
+        "names": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "size_bytes": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "names",
+        "effective_duration_ms",
+        "effective_duration_source",
+        "format_duration_ms",
+        "longest_stream_duration_ms",
+        "size_bytes",
+        "bit_rate_bps"
+      ],
+      "type": "object"
+    },
+    "probeResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/successfulProbe"
+        },
+        {
+          "$ref": "#/$defs/failedProbe"
+        }
+      ]
+    },
+    "queueFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "download_ref": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "queue_id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "status_messages": {
+          "items": {
+            "$ref": "#/$defs/statusMessage"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "tracked_download_state": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "tracked_download_status": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      },
+      "required": [
+        "queue_id",
+        "download_ref",
+        "title",
+        "status",
+        "tracked_download_status",
+        "tracked_download_state",
+        "status_messages"
+      ],
+      "type": "object"
+    },
+    "radarrEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "failure": {
+          "$ref": "#/$defs/queueFailure"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/historyEvent"
+          },
+          "maxItems": 32,
+          "type": "array"
+        },
+        "manual_imports": {
+          "items": {
+            "$ref": "#/$defs/manualImport"
+          },
+          "maxItems": 128,
+          "type": "array"
+        },
+        "movie": {
+          "$ref": "#/$defs/movie"
+        }
+      },
+      "required": [
+        "failure",
+        "movie",
+        "history",
+        "manual_imports"
+      ],
+      "type": "object"
+    },
+    "rational": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "numerator": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "type": "object"
+    },
+    "safeText": {
+      "maxLength": 1024,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*$",
+      "type": "string"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "statusMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "title",
+        "messages"
+      ],
+      "type": "object"
+    },
+    "streamDisposition": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "boolean"
+        },
+        "forced": {
+          "type": "boolean"
+        },
+        "hearing_impaired": {
+          "type": "boolean"
+        },
+        "visual_impaired": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "default",
+        "forced",
+        "hearing_impaired",
+        "visual_impaired"
+      ],
+      "type": "object"
+    },
+    "stringList": {
+      "items": {
+        "$ref": "#/$defs/nonEmptyText"
+      },
+      "maxItems": 32,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "successfulProbe": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/probeFormat"
+        },
+        "status": {
+          "const": "ok"
+        },
+        "streams": {
+          "items": {
+            "$ref": "#/$defs/mediaStream"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "format",
+        "streams"
+      ],
+      "type": "object"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "trackerHost": {
+      "format": "hostname",
+      "maxLength": 253,
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "$id": "urn:radarr-repair:schema:repair-case:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "items": {
+        "$ref": "#/$defs/joinCapability"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "type": "array"
+    },
+    "case_id": {
+      "$ref": "#/$defs/sha256Id"
+    },
+    "download": {
+      "$ref": "#/$defs/downloadEvidence"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/mediaFile"
+      },
+      "maxItems": 128,
+      "minItems": 2,
+      "type": "array"
+    },
+    "observed_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "radarr": {
+      "$ref": "#/$defs/radarrEvidence"
+    },
+    "schema_version": {
+      "const": "radarr-repair/v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "observed_at",
+    "radarr",
+    "download",
+    "files",
+    "capabilities"
+  ],
+  "title": "Radarr repair case version 1",
+  "type": "object"
+}

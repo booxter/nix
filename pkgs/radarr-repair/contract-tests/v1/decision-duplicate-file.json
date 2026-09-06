@@ -1,0 +1,12 @@
+{
+  "action": "join_parts_v1",
+  "capability_id": "capability_join_01",
+  "case_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evidence_refs": [],
+  "explanation": "This invalid decision repeats the same file.",
+  "ordered_file_ids": [
+    "file_01",
+    "file_01"
+  ],
+  "schema_version": "radarr-repair/v1"
+}

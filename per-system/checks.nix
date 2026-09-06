@@ -37,4 +37,5 @@ appSet.packages
 // inputNixosTests
 // {
   python-quality = pythonQualityCheck;
+  radarr-repair-contracts = pkgs.radarr-repair-contracts;
 }

@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "evidenceRefs": {
+      "items": {
+        "$ref": "#/$defs/opaqueId"
+      },
+      "maxItems": 32,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "joinParts": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "join_parts_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "ordered_file_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 128,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "radarr-repair/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "ordered_file_ids",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "noRepair": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "no_repair"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "missing_evidence": {
+          "items": {
+            "enum": [
+              "movie_identity",
+              "download_provenance",
+              "file_identity",
+              "part_membership",
+              "part_order",
+              "duration",
+              "stream_layout",
+              "container_compatibility"
+            ]
+          },
+          "maxItems": 16,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "reason": {
+          "enum": [
+            "no_repair_needed",
+            "not_a_multipart_release",
+            "ambiguous_part_order",
+            "insufficient_evidence",
+            "unsupported_repair",
+            "unsafe_to_repair"
+          ]
+        },
+        "schema_version": {
+          "const": "radarr-repair/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "reason",
+        "missing_evidence",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "opaqueId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "safeExplanation": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$",
+      "type": "string"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "urn:radarr-repair:schema:repair-decision:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/noRepair"
+    },
+    {
+      "$ref": "#/$defs/joinParts"
+    }
+  ],
+  "title": "Radarr repair decision version 1"
+}
