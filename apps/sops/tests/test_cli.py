@@ -84,6 +84,33 @@ def test_set_reads_the_exact_value_from_stdin(
     assert "Updated beast:nested/key.with-dash." in capsys.readouterr().out
 
 
+def test_set_all_updates_every_host_in_the_realm(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    current, backend = application(
+        tmp_path,
+        {
+            "beast": {"flakehub": {"token": "old"}},
+            "mair": {"flakehub": {"token": "old"}},
+        },
+    )
+    monkeypatch.setattr("sys.stdin", io.StringIO("new-token"))
+
+    assert (
+        set_main(
+            ["--realm", "home", "--all", "flakehub/token"],
+            application=current,
+        )
+        == 0
+    )
+
+    for document in backend.documents.values():
+        assert document["flakehub"] == {"token": "new-token"}  # type: ignore[index]
+    assert capsys.readouterr().out == "Updated flakehub/token for 2 hosts: beast, mair.\n"
+
+
 def test_copy_reports_distinct_destination_path(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

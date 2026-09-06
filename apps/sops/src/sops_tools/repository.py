@@ -138,6 +138,15 @@ class SecretRepository:
     def secret(self, host: str) -> Path:
         return self.directory / f"{host}.yaml"
 
+    def hosts(self) -> tuple[str, ...]:
+        if not self.directory.is_dir():
+            raise ToolError(f"Secret directory not found: {self.directory}")
+        return tuple(
+            path.stem
+            for path in sorted(self.directory.glob("*.yaml"))
+            if path.is_file() and path != self.template
+        )
+
     def require_secret(self, host: str, *, role: str | None = None) -> Path:
         path = self.secret(host)
         if not path.is_file():

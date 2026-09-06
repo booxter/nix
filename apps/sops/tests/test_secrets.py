@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
+from sops_tools.errors import ToolError
 from sops_tools.model import KeyPath
 from sops_tools.repository import Realm, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
@@ -43,6 +45,42 @@ def test_set_preserves_exact_text_and_literal_path(tmp_path: Path) -> None:
         "keep": "value",
         "nested": {"key.with-dashes": value},
     }
+
+
+def test_set_all_uses_sorted_host_secrets_and_excludes_template(tmp_path: Path) -> None:
+    secrets, backend = service(
+        tmp_path,
+        {
+            "mair": {"flakehub": {"token": "old"}},
+            "beast": {"flakehub": {"token": "old"}},
+        },
+    )
+
+    hosts = secrets.set_all_text(KeyPath.parse("flakehub/token"), "new")
+
+    assert hosts == ("beast", "mair")
+    assert [path.name for path, _, _ in backend.set_calls] == ["beast.yaml", "mair.yaml"]
+
+
+def test_set_all_reports_partial_completion(tmp_path: Path) -> None:
+    secrets, backend = service(
+        tmp_path,
+        {
+            "beast": {"flakehub": {"token": "old"}},
+            "mair": {"flakehub": {"token": "old"}},
+            "mmini": {"flakehub": {"token": "old"}},
+        },
+    )
+    backend.failing_set_paths.add(secrets.repository.secret("mair"))
+
+    with pytest.raises(
+        ToolError,
+        match=r"Bulk update stopped\. Updated: beast\. Not updated: mair, mmini\.",
+    ):
+        secrets.set_all_text(KeyPath.parse("flakehub/token"), "new")
+
+    assert backend.documents[secrets.repository.secret("beast")] == {"flakehub": {"token": "new"}}
+    assert backend.documents[secrets.repository.secret("mair")] == {"flakehub": {"token": "old"}}
 
 
 def test_copy_supports_different_paths_and_complex_values(tmp_path: Path) -> None:
