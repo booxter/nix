@@ -24,13 +24,13 @@
         "name": "Bluray-1080p"
       }
     },
-    "relativePath": "Example.Movie.2026.CD1.mkv",
     "rejections": [
       {
         "reason": "File is suspected multi-part file, Radarr doesn't support this",
         "type": "permanent"
       }
     ],
+    "relativePath": "Example.Movie.2026.CD1.mkv",
     "releaseGroup": "GROUP",
     "size": 2000000000
   },
@@ -45,13 +45,13 @@
     "name": "Example.Movie.2026.CD2",
     "path": "/downloads/Example.Movie.2026/Example.Movie.2026.CD2.mkv",
     "quality": null,
-    "relativePath": "Example.Movie.2026.CD2.mkv",
     "rejections": [
       {
         "reason": "A rejection introduced by a future Radarr version",
         "type": "futureRejectionType"
       }
     ],
+    "relativePath": "Example.Movie.2026.CD2.mkv",
     "releaseGroup": null,
     "size": 1900000000
   }
