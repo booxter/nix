@@ -13,12 +13,17 @@ type RadarrMovieReader interface {
 	ReadMovie(context.Context, int64) (RadarrMovie, error)
 }
 
+type RadarrHistoryReader interface {
+	ReadHistory(context.Context, int64, string) ([]RadarrHistoryEvent, error)
+}
+
 // Keep Radarr's evolving string values instead of importing the client's enums
 // into the controller. Candidate policy will interpret known values separately.
 type QueueStatus string
 type TrackedDownloadStatus string
 type TrackedDownloadState string
 type DownloadProtocol string
+type RadarrHistoryEventType string
 
 type RadarrStatusMessage struct {
 	Title    string
@@ -57,4 +62,15 @@ type RadarrMovie struct {
 	AlternateTitles []string
 	Year            int
 	RuntimeMinutes  *int
+}
+
+type RadarrHistoryEvent struct {
+	ID          int64
+	MovieID     int64
+	DownloadID  string
+	EventType   RadarrHistoryEventType
+	OccurredAt  time.Time
+	SourceTitle string
+	Quality     *string
+	Languages   []string
 }

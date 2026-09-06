@@ -1,0 +1,39 @@
+{
+  "page": 2,
+  "pageSize": 250,
+  "records": [
+    {
+      "data": {
+        "droppedPath": "/downloads/Example.Movie.2026",
+        "importedPath": "/movies/Example Movie (2026)/Example Movie.mkv"
+      },
+      "date": "2026-09-06T17:00:00Z",
+      "downloadId": "ABCDEF0123456789",
+      "eventType": "downloadFolderImported",
+      "id": 502,
+      "languages": [
+        {
+          "id": 1,
+          "name": "English"
+        },
+        {
+          "id": 2,
+          "name": "French"
+        }
+      ],
+      "movieId": 42,
+      "quality": {
+        "quality": {
+          "id": 7,
+          "name": "Bluray-1080p",
+          "resolution": 1080,
+          "source": "bluray"
+        }
+      },
+      "sourceTitle": "Example.Movie.2026.1080p.BluRay"
+    }
+  ],
+  "sortDirection": "ascending",
+  "sortKey": "date",
+  "totalRecords": 3
+}
