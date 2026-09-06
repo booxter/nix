@@ -10,7 +10,7 @@ stdenvNoCC.mkDerivation {
   src = lib.fileset.toSource {
     root = ./.;
     fileset = lib.fileset.unions [
-      ./contracts
+      ./contracts/v1
       ./contract-tests
     ];
   };
@@ -57,8 +57,8 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/share/radarr-repair"
-    cp -R contracts "$out/share/radarr-repair/"
+    mkdir -p "$out/share/radarr-repair/contracts"
+    cp -R contracts/v1 "$out/share/radarr-repair/contracts/"
 
     runHook postInstall
   '';

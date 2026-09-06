@@ -3,6 +3,8 @@
 These schemas are the canonical wire contract between the deterministic
 `radarr-repair` controller and the `radarr-repair-planner`. They use JSON Schema
 draft 2020-12 and do not depend on external schema resources.
+Language-specific wire models are derived from these schemas during Nix builds;
+generated source is not maintained in the repository.
 
 The controller sends normalized, bounded evidence rather than raw Radarr,
 Transmission, torrent, or `ffprobe` responses. All externally sourced text is

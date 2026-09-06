@@ -116,7 +116,7 @@
     "safeExplanation": {
       "maxLength": 1200,
       "minLength": 1,
-      "pattern": "^[^\\u0000-\\u001f\\u007f]+$",
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
       "type": "string"
     },
     "sha256Id": {

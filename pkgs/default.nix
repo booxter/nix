@@ -4,6 +4,10 @@ let
   appPackages = import ../apps/packages.nix { inherit pkgs; };
   atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
+  radarrRepairContracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
+  radarrRepairGoModels = pkgs.callPackage ./radarr-repair/go-models.nix {
+    contracts = radarrRepairContracts;
+  };
 in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
@@ -32,7 +36,13 @@ in
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
 
-  radarr-repair-contracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
+  radarr-repair = pkgs.callPackage ./radarr-repair {
+    goModels = radarrRepairGoModels;
+  };
+
+  radarr-repair-contracts = radarrRepairContracts;
+
+  radarr-repair-go-models = radarrRepairGoModels;
 
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;
