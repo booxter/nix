@@ -93,6 +93,27 @@ func TestReadMovieAcceptsMaximumAlternateTitles(t *testing.T) {
 	}
 }
 
+func TestReadMovieAcceptsLongIMDbID(t *testing.T) {
+	t.Parallel()
+
+	response := validMovieResponse()
+	response.IMDbID = "tt12345678901"
+	server := movieServer(t, response)
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	movie, err := client.ReadMovie(context.Background(), 42)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if movie.IMDbID == nil || *movie.IMDbID != response.IMDbID {
+		t.Fatalf("IMDb ID = %v", movie.IMDbID)
+	}
+}
+
 func TestReadMovieRejectsInvalidID(t *testing.T) {
 	t.Parallel()
 
@@ -145,6 +166,13 @@ func TestReadMovieRejectsInvalidResponse(t *testing.T) {
 			name: "invalid IMDb ID",
 			mutate: func(movie *testMovieResponse) {
 				movie.IMDbID = "not-an-imdb-id"
+			},
+			want: "IMDb ID is invalid",
+		},
+		{
+			name: "overlong IMDb ID",
+			mutate: func(movie *testMovieResponse) {
+				movie.IMDbID = "tt" + strings.Repeat("1", maximumIMDbIDLength)
 			},
 			want: "IMDb ID is invalid",
 		},

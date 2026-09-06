@@ -14,6 +14,7 @@ const (
 	maximumMovieTextLength = 512
 	maximumAlternateTitles = 1024
 	maximumMovieRuntime    = 10_080
+	maximumIMDbIDLength    = 32
 	minimumMovieYear       = 1870
 	maximumMovieYear       = 3000
 )
@@ -132,7 +133,7 @@ func validateMovieText(field, value string) error {
 }
 
 func validIMDbID(value string) bool {
-	if len(value) < len("tt")+7 || len(value) > len("tt")+10 || !strings.HasPrefix(value, "tt") {
+	if len(value) < len("tt")+7 || len(value) > maximumIMDbIDLength || !strings.HasPrefix(value, "tt") {
 		return false
 	}
 	for _, character := range value[len("tt"):] {

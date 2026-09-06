@@ -452,7 +452,8 @@
           "$ref": "#/$defs/alternateTitleList"
         },
         "imdb_id": {
-          "pattern": "^tt[0-9]{7,10}$",
+          "maxLength": 32,
+          "pattern": "^tt[0-9]{7,}$",
           "type": [
             "string",
             "null"
