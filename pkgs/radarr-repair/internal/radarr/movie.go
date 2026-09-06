@@ -12,7 +12,7 @@ import (
 
 const (
 	maximumMovieTextLength = 512
-	maximumAlternateTitles = 32
+	maximumAlternateTitles = 1024
 	maximumMovieRuntime    = 10_080
 	minimumMovieYear       = 1870
 	maximumMovieYear       = 3000

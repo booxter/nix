@@ -1,5 +1,13 @@
 {
   "$defs": {
+    "alternateTitleList": {
+      "items": {
+        "$ref": "#/$defs/nonEmptyText"
+      },
+      "maxItems": 1024,
+      "type": "array",
+      "uniqueItems": true
+    },
     "downloadEvidence": {
       "additionalProperties": false,
       "properties": {
@@ -441,7 +449,7 @@
       "additionalProperties": false,
       "properties": {
         "alternate_titles": {
-          "$ref": "#/$defs/stringList"
+          "$ref": "#/$defs/alternateTitleList"
         },
         "imdb_id": {
           "pattern": "^tt[0-9]{7,10}$",

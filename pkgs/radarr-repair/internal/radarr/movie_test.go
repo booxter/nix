@@ -72,6 +72,27 @@ func TestReadMovieNormalizesMissingOptionalFields(t *testing.T) {
 	}
 }
 
+func TestReadMovieAcceptsMaximumAlternateTitles(t *testing.T) {
+	t.Parallel()
+
+	response := validMovieResponse()
+	response.AlternateTitles = testAlternateTitles(maximumAlternateTitles)
+	server := movieServer(t, response)
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	movie, err := client.ReadMovie(context.Background(), 42)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(movie.AlternateTitles) != maximumAlternateTitles {
+		t.Fatalf("alternate titles = %d", len(movie.AlternateTitles))
+	}
+}
+
 func TestReadMovieRejectsInvalidID(t *testing.T) {
 	t.Parallel()
 
@@ -140,6 +161,13 @@ func TestReadMovieRejectsInvalidResponse(t *testing.T) {
 				movie.AlternateTitles = []*testAlternativeTitle{nil}
 			},
 			want: "alternate title 0 is null",
+		},
+		{
+			name: "too many alternate titles",
+			mutate: func(movie *testMovieResponse) {
+				movie.AlternateTitles = testAlternateTitles(maximumAlternateTitles + 1)
+			},
+			want: "more than 1024 alternate titles",
 		},
 		{
 			name: "duplicate alternate title",
@@ -235,6 +263,14 @@ func validMovieResponse() testMovieResponse {
 		AlternateTitles: []*testAlternativeTitle{},
 		Year:            2026,
 	}
+}
+
+func testAlternateTitles(count int) []*testAlternativeTitle {
+	titles := make([]*testAlternativeTitle, count)
+	for index := range titles {
+		titles[index] = &testAlternativeTitle{Title: fmt.Sprintf("Alternate title %d", index)}
+	}
+	return titles
 }
 
 func movieServer(t *testing.T, response any) *httptest.Server {
