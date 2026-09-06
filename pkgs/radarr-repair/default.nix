@@ -19,7 +19,7 @@ buildGoModule {
     ];
   };
 
-  vendorHash = "sha256-0Nkz66ahGO/kChkCc/e63mkx6EhzMNFKji1uq00Y1fY=";
+  vendorHash = "sha256-2RYdCyKWvNdrZZ4DxalltC+lIKq7kNkuIZ2N5DCF0ak=";
 
   postPatch = ''
     cp ${goModels}/models.gen.go contracts/models.gen.go
@@ -40,6 +40,8 @@ buildGoModule {
     go test ./... -cover
     runHook postCheck
   '';
+
+  __darwinAllowLocalNetworking = true;
 
   doInstallCheck = true;
   installCheckPhase = ''
