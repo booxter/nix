@@ -13,10 +13,11 @@ import (
 const MaxDocumentBytes = 4 << 20
 
 type Document struct {
-	Programs []Program `json:"programs"`
-	Streams  []Stream  `json:"streams"`
-	Chapters []Chapter `json:"chapters"`
-	Format   *Format   `json:"format"`
+	Programs     []Program  `json:"programs"`
+	StreamGroups []struct{} `json:"stream_groups"`
+	Streams      []Stream   `json:"streams"`
+	Chapters     []Chapter  `json:"chapters"`
+	Format       *Format    `json:"format"`
 }
 
 type Format struct {
@@ -132,6 +133,9 @@ func Decode(data []byte) (Document, error) {
 func validateDocument(document Document) error {
 	if document.Format == nil {
 		return fmt.Errorf("missing format")
+	}
+	if len(document.StreamGroups) != 0 {
+		return fmt.Errorf("stream groups are not supported")
 	}
 
 	streamIndexes := make(map[int64]struct{}, len(document.Streams))

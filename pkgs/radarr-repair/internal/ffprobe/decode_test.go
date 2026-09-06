@@ -56,6 +56,15 @@ func TestDecodePreservesMissingOptionalFields(t *testing.T) {
 	}
 }
 
+func TestDecodeAcceptsEmptyStreamGroupsSection(t *testing.T) {
+	t.Parallel()
+
+	_, err := Decode([]byte(`{"stream_groups":[],"streams":[{"index":0}],"format":{}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDecodeRejectsMalformedDocuments(t *testing.T) {
 	t.Parallel()
 
@@ -93,6 +102,11 @@ func TestDecodeRejectsMalformedDocuments(t *testing.T) {
 			name: "unknown program stream",
 			data: `{"programs":[{"program_id":1,"streams":[{"index":2}]}],"streams":[{"index":0}],"format":{}}`,
 			want: "program 1 references unknown stream index 2",
+		},
+		{
+			name: "non-empty stream groups",
+			data: `{"stream_groups":[{}],"streams":[],"format":{}}`,
+			want: "stream groups are not supported",
 		},
 	}
 
