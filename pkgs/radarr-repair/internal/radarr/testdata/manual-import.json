@@ -1,0 +1,58 @@
+[
+  {
+    "customFormatScore": 0,
+    "customFormats": [],
+    "downloadId": "ABCDEF0123456789",
+    "folderName": "Example.Movie.2026.1080p.BluRay-GROUP",
+    "id": 1001,
+    "indexerFlags": 0,
+    "languages": [
+      {
+        "id": 1,
+        "name": "English"
+      }
+    ],
+    "movie": {
+      "id": 42,
+      "title": "Example Movie"
+    },
+    "name": "Example.Movie.2026.CD1",
+    "path": "/downloads/Example.Movie.2026/Example.Movie.2026.CD1.mkv",
+    "quality": {
+      "quality": {
+        "id": 7,
+        "name": "Bluray-1080p"
+      }
+    },
+    "relativePath": "Example.Movie.2026.CD1.mkv",
+    "rejections": [
+      {
+        "reason": "File is suspected multi-part file, Radarr doesn't support this",
+        "type": "permanent"
+      }
+    ],
+    "releaseGroup": "GROUP",
+    "size": 2000000000
+  },
+  {
+    "downloadId": "ABCDEF0123456789",
+    "id": 1002,
+    "languages": null,
+    "movie": {
+      "id": 42,
+      "title": "Example Movie"
+    },
+    "name": "Example.Movie.2026.CD2",
+    "path": "/downloads/Example.Movie.2026/Example.Movie.2026.CD2.mkv",
+    "quality": null,
+    "relativePath": "Example.Movie.2026.CD2.mkv",
+    "rejections": [
+      {
+        "reason": "A rejection introduced by a future Radarr version",
+        "type": "futureRejectionType"
+      }
+    ],
+    "releaseGroup": null,
+    "size": 1900000000
+  }
+]
