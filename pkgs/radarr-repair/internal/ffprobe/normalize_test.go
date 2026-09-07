@@ -89,6 +89,23 @@ func TestNormalizeSplitsFormatNames(t *testing.T) {
 	}
 }
 
+func TestNormalizePreservesSignedChapterIDs(t *testing.T) {
+	t.Parallel()
+
+	document, err := Decode(readProbeFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	document.Chapters[0].ID = int64Pointer(-5_887_710_727_936_598_178)
+	evidence, err := Normalize(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if evidence.Chapters[0].ID != -5_887_710_727_936_598_178 {
+		t.Fatalf("chapter ID = %d", evidence.Chapters[0].ID)
+	}
+}
+
 func TestParseOptionalMilliseconds(t *testing.T) {
 	t.Parallel()
 

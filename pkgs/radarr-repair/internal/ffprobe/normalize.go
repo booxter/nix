@@ -233,9 +233,8 @@ func normalizeProgram(program Program) (controller.ProbeProgram, error) {
 }
 
 func normalizeChapter(chapter Chapter) (controller.ProbeChapter, error) {
-	if *chapter.ID < 0 {
-		return controller.ProbeChapter{}, fmt.Errorf("chapter ID is negative: %d", *chapter.ID)
-	}
+	// Chapter IDs are opaque. ffprobe can represent Matroska UIDs with their high
+	// bit set as negative int64 values.
 	timeBase, err := parseOptionalRational("time base", chapter.TimeBase)
 	if err != nil {
 		return controller.ProbeChapter{}, err
