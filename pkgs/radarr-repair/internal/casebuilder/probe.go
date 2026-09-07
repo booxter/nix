@@ -1,12 +1,15 @@
 package casebuilder
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
+
+var errIncompleteProbeMetadata = errors.New("probe metadata is incomplete")
 
 func mapFile(
 	assessment controller.MediaFileAssessment,
@@ -68,7 +71,14 @@ func mapProbe(outcome controller.MediaProbeOutcome, expectedSize int64) (contrac
 		if outcome.Evidence == nil || outcome.Reason != "" {
 			return contracts.Probe{}, fmt.Errorf("successful probe outcome is incomplete")
 		}
-		return mapSuccessfulProbe(*outcome.Evidence, expectedSize)
+		probe, err := mapSuccessfulProbe(*outcome.Evidence, expectedSize)
+		if errors.Is(err, errIncompleteProbeMetadata) {
+			return unavailableProbe(
+				controller.MediaProbeFailed,
+				controller.MediaProbeIncompleteMetadata,
+			), nil
+		}
+		return probe, err
 	case controller.MediaProbeFailed:
 		if outcome.Evidence != nil || !failedProbeReason(outcome.Reason) {
 			return contracts.Probe{}, fmt.Errorf("failed probe outcome is invalid")
@@ -80,16 +90,26 @@ func mapProbe(outcome controller.MediaProbeOutcome, expectedSize int64) (contrac
 	default:
 		return contracts.Probe{}, fmt.Errorf("probe outcome status %q is invalid", outcome.Status)
 	}
-	reason := contracts.ProbeReason(outcome.Reason)
-	summary := probeSummary(outcome.Reason)
+	return unavailableProbe(outcome.Status, outcome.Reason), nil
+}
+
+func unavailableProbe(
+	status controller.MediaProbeStatus,
+	reason controller.MediaProbeReason,
+) contracts.Probe {
+	mappedReason := contracts.ProbeReason(reason)
+	summary := probeSummary(reason)
 	return contracts.Probe{
-		Status: contracts.Status(outcome.Status), Reason: &reason, Summary: &summary,
-	}, nil
+		Status: contracts.Status(status), Reason: &mappedReason, Summary: &summary,
+	}
 }
 
 func mapSuccessfulProbe(evidence controller.ProbeEvidence, expectedSize int64) (contracts.Probe, error) {
 	if evidence.Format.SizeBytes == nil {
-		return contracts.Probe{}, fmt.Errorf("probe format size is missing")
+		return contracts.Probe{}, fmt.Errorf(
+			"%w: format size is missing",
+			errIncompleteProbeMetadata,
+		)
 	}
 	if *evidence.Format.SizeBytes != expectedSize {
 		return contracts.Probe{}, fmt.Errorf(
@@ -138,7 +158,8 @@ func failedProbeReason(reason controller.MediaProbeReason) bool {
 		controller.MediaProbeUnsupportedFormat,
 		controller.MediaProbeTimeout,
 		controller.MediaProbeError,
-		controller.MediaProbeInvalidOutput:
+		controller.MediaProbeInvalidOutput,
+		controller.MediaProbeIncompleteMetadata:
 		return true
 	default:
 		return false
@@ -162,6 +183,8 @@ func probeSummary(reason controller.MediaProbeReason) string {
 		return "ffprobe failed while inspecting the file."
 	case controller.MediaProbeInvalidOutput:
 		return "ffprobe returned invalid structured metadata."
+	case controller.MediaProbeIncompleteMetadata:
+		return "ffprobe omitted metadata required by the planner."
 	case controller.MediaProbeNotCandidate:
 		return "The file was retained as evidence but was not eligible for probing."
 	case controller.MediaProbeCollectionLimit:
@@ -173,18 +196,27 @@ func probeSummary(reason controller.MediaProbeReason) string {
 
 func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {
 	if stream.Kind == nil {
-		return contracts.StreamElement{}, fmt.Errorf("kind is missing")
+		return contracts.StreamElement{}, fmt.Errorf("%w: kind is missing", errIncompleteProbeMetadata)
 	}
 	if stream.CodecName == nil {
-		return contracts.StreamElement{}, fmt.Errorf("codec name is missing")
+		return contracts.StreamElement{}, fmt.Errorf(
+			"%w: codec name is missing",
+			errIncompleteProbeMetadata,
+		)
 	}
 	if stream.TimeBase == nil {
-		return contracts.StreamElement{}, fmt.Errorf("time base is missing")
+		return contracts.StreamElement{}, fmt.Errorf(
+			"%w: time base is missing",
+			errIncompleteProbeMetadata,
+		)
 	}
 	if stream.Disposition == nil || stream.Disposition.Default == nil ||
 		stream.Disposition.Forced == nil || stream.Disposition.HearingImpaired == nil ||
 		stream.Disposition.VisualImpaired == nil {
-		return contracts.StreamElement{}, fmt.Errorf("disposition is incomplete")
+		return contracts.StreamElement{}, fmt.Errorf(
+			"%w: disposition is incomplete",
+			errIncompleteProbeMetadata,
+		)
 	}
 
 	return contracts.StreamElement{

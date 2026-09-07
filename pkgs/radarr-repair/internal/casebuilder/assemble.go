@@ -77,19 +77,19 @@ func Assemble(observation Observation) (Assembly, error) {
 		if !ok {
 			return Assembly{}, fmt.Errorf("inventory file %q has no probe outcome", file.ID)
 		}
+		mapped, mapErr := mapFile(assessment, outcome)
+		if mapErr != nil {
+			return Assembly{}, fmt.Errorf("map file %q: %w", file.ID, mapErr)
+		}
 		if assessment.ProbeCandidate() {
 			part := controller.JoinPartEvidence{
 				FileID: file.ID, Extension: assessment.Extension,
 				Fingerprint: file.Fingerprint,
 			}
-			if outcome.Status == controller.MediaProbeSucceeded {
+			if mapped.Probe.Status == contracts.Ok {
 				part.Probe = outcome.Evidence
 			}
 			parts = append(parts, part)
-		}
-		mapped, mapErr := mapFile(assessment, outcome)
-		if mapErr != nil {
-			return Assembly{}, fmt.Errorf("map file %q: %w", file.ID, mapErr)
 		}
 		files = append(files, mapped)
 	}

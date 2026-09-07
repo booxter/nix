@@ -24,13 +24,14 @@ const (
 type MediaProbeReason string
 
 const (
-	MediaProbeNotRegularFile    MediaProbeReason = "not_regular_file"
-	MediaProbeUnsupportedFormat MediaProbeReason = "unsupported_format"
-	MediaProbeTimeout           MediaProbeReason = "timeout"
-	MediaProbeError             MediaProbeReason = "probe_error"
-	MediaProbeInvalidOutput     MediaProbeReason = "invalid_output"
-	MediaProbeNotCandidate      MediaProbeReason = "not_probe_candidate"
-	MediaProbeCollectionLimit   MediaProbeReason = "collection_limit"
+	MediaProbeNotRegularFile     MediaProbeReason = "not_regular_file"
+	MediaProbeUnsupportedFormat  MediaProbeReason = "unsupported_format"
+	MediaProbeTimeout            MediaProbeReason = "timeout"
+	MediaProbeError              MediaProbeReason = "probe_error"
+	MediaProbeInvalidOutput      MediaProbeReason = "invalid_output"
+	MediaProbeIncompleteMetadata MediaProbeReason = "incomplete_metadata"
+	MediaProbeNotCandidate       MediaProbeReason = "not_probe_candidate"
+	MediaProbeCollectionLimit    MediaProbeReason = "collection_limit"
 )
 
 type MediaProbeOutcome struct {

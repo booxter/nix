@@ -74,7 +74,8 @@
             "unsupported_format",
             "timeout",
             "probe_error",
-            "invalid_output"
+            "invalid_output",
+            "incomplete_metadata"
           ]
         },
         "status": {

@@ -193,13 +193,6 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 			want: "manual import size does not match",
 		},
 		{
-			name: "incomplete stream disposition",
-			mutate: func(observation *Observation) {
-				observation.Probes[0].Outcome.Evidence.Streams[0].Disposition.Forced = nil
-			},
-			want: "disposition is incomplete",
-		},
-		{
 			name: "local value in retained text",
 			mutate: func(observation *Observation) {
 				observation.Movie.Title = "Example " + testDownloadHash
@@ -230,6 +223,91 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 			t.Parallel()
 			observation := testObservation()
 			test.mutate(&observation)
+			_, err := Assemble(observation)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %v, want substring %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestAssembleRetainsIncompleteProbeMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		mutate func(*controller.ProbeEvidence)
+	}{
+		{
+			name: "missing format size",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Format.SizeBytes = nil
+			},
+		},
+		{
+			name: "missing stream kind",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams[0].Kind = nil
+			},
+		},
+		{
+			name: "incomplete stream disposition",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams[0].Disposition.Forced = nil
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			test.mutate(observation.Probes[0].Outcome.Evidence)
+			assembly, err := Assemble(observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			probe := assembly.Request.Files[0].Probe
+			if probe.Status != contracts.Failed || probe.Reason == nil ||
+				*probe.Reason != contracts.ProbeReason(controller.MediaProbeIncompleteMetadata) {
+				t.Fatalf("probe = %#v", probe)
+			}
+			if assembly.LocalSnapshot.Feasibility.ProbeCoverage != controller.ProbeCoveragePartial {
+				t.Fatalf("join feasibility = %#v", assembly.LocalSnapshot.Feasibility)
+			}
+		})
+	}
+}
+
+func TestAssembleRejectsInconsistentSuccessfulProbeEvidence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		mutate func(*controller.ProbeEvidence)
+		want   string
+	}{
+		{
+			name: "changed file size",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				*evidence.Format.SizeBytes++
+			},
+			want: "does not match inventory size",
+		},
+		{
+			name: "duplicate stream index",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams = append(evidence.Streams, evidence.Streams[0])
+			},
+			want: "duplicate stream index",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			test.mutate(observation.Probes[0].Outcome.Evidence)
 			_, err := Assemble(observation)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
