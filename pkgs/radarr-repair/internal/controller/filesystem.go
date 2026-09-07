@@ -1,6 +1,10 @@
 package controller
 
-import "context"
+import (
+	"context"
+
+	"github.com/booxter/nix-config/radarr-repair/internal/fileidentity"
+)
 
 type FileInventoryReader interface {
 	Inventory(context.Context, DownloadCorrelation) (FileInventory, error)
@@ -8,12 +12,7 @@ type FileInventoryReader interface {
 
 type FileID string
 
-type FileFingerprint struct {
-	Device    uint64
-	Inode     uint64
-	SizeBytes int64
-	MTimeNS   int64
-}
+type FileFingerprint = fileidentity.Snapshot
 
 type TorrentFileReference struct {
 	Index          int
