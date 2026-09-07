@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -66,12 +67,36 @@ func (runner *Runner) Probe(
 	ctx context.Context,
 	mediaPath string,
 ) (controller.ProbeEvidence, error) {
-	if runner == nil || runner.executable == "" || runner.timeout <= 0 {
-		return controller.ProbeEvidence{}, fmt.Errorf("ffprobe runner is not configured")
-	}
 	if mediaPath == "" || strings.ContainsRune(mediaPath, '\x00') ||
 		!filepath.IsAbs(mediaPath) || filepath.Clean(mediaPath) != mediaPath {
 		return controller.ProbeEvidence{}, fmt.Errorf("media path must be an absolute clean path")
+	}
+	if err := validateProbe(ctx, runner); err != nil {
+		return controller.ProbeEvidence{}, err
+	}
+
+	media, err := os.Open(mediaPath)
+	if err != nil {
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureExecution, cause: err}
+	}
+	defer media.Close()
+	return runner.ProbeFile(ctx, media)
+}
+
+// ProbeFile probes media through an inherited descriptor without reopening its
+// pathname. The caller retains ownership of media.
+func (runner *Runner) ProbeFile(
+	ctx context.Context,
+	media *os.File,
+) (controller.ProbeEvidence, error) {
+	if err := validateProbe(ctx, runner); err != nil {
+		return controller.ProbeEvidence{}, err
+	}
+	if media == nil {
+		return controller.ProbeEvidence{}, fmt.Errorf("media file is required")
+	}
+	if _, err := media.Seek(0, io.SeekStart); err != nil {
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureExecution, cause: err}
 	}
 
 	probeContext, cancel := context.WithTimeout(ctx, runner.timeout)
@@ -89,12 +114,16 @@ func (runner *Runner) Probe(
 		"-show_programs",
 		"-show_chapters",
 		"-show_entries", requestedEntries(),
-		"-protocol_whitelist", "file",
-		"-i", mediaPath,
+		"-protocol_whitelist", "fd",
+		"-fd", "3",
+		"-i", "fd:",
 	)
+	// pipe: is not seekable, so inherit the open file and use FFmpeg's fd
+	// protocol for containers that require random access.
+	command.ExtraFiles = []*os.File{media}
 	command.Stdout = &stdout
-	// ffprobe diagnostics can contain the absolute media path. The typed failure
-	// is sufficient here and cannot accidentally cross the planner boundary.
+	// The typed failure is sufficient here and cannot accidentally cross the
+	// planner boundary.
 	command.Stderr = io.Discard
 	if err := command.Run(); err != nil {
 		if ctx.Err() != nil {
@@ -118,6 +147,13 @@ func (runner *Runner) Probe(
 		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput, cause: err}
 	}
 	return evidence, nil
+}
+
+func validateProbe(ctx context.Context, runner *Runner) error {
+	if runner == nil || runner.executable == "" || runner.timeout <= 0 {
+		return fmt.Errorf("ffprobe runner is not configured")
+	}
+	return ctx.Err()
 }
 
 func requestedEntries() string {

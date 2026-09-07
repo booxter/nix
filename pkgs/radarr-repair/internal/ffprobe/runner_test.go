@@ -48,6 +48,28 @@ func TestRunnerProbesRealMedia(t *testing.T) {
 	}
 }
 
+func TestRunnerProbesOpenMediaWithoutPath(t *testing.T) {
+	t.Parallel()
+
+	mediaPath := makeMediaFixture(t)
+	media, err := os.Open(mediaPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer media.Close()
+	if err := os.Remove(mediaPath); err != nil {
+		t.Fatal(err)
+	}
+
+	evidence, err := testRunner(t, 10*time.Second).ProbeFile(context.Background(), media)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !contains(evidence.Format.Names, "matroska") || len(evidence.Streams) != 2 {
+		t.Fatalf("evidence = %#v", evidence)
+	}
+}
+
 func TestRunnerReturnsTypedFailures(t *testing.T) {
 	t.Parallel()
 
@@ -105,6 +127,15 @@ func TestRunnerRejectsRelativeMediaPath(t *testing.T) {
 
 	_, err := testRunner(t, time.Second).Probe(context.Background(), "relative/movie.mkv")
 	if err == nil || !strings.Contains(err.Error(), "absolute clean path") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestRunnerRejectsMissingMediaFile(t *testing.T) {
+	t.Parallel()
+
+	_, err := testRunner(t, time.Second).ProbeFile(context.Background(), nil)
+	if err == nil || !strings.Contains(err.Error(), "media file is required") {
 		t.Fatalf("error = %v", err)
 	}
 }
