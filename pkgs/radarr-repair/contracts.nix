@@ -29,6 +29,7 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema contracts/v1/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-request.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
 
     check-jsonschema \
       --schemafile contracts/v1/repair-case.schema.json \
@@ -40,6 +41,10 @@ stdenvNoCC.mkDerivation {
     check-jsonschema \
       --schemafile worker/contracts/v1/probe-request.schema.json \
       worker/contracts/v1/examples/probe-request.json
+    check-jsonschema \
+      --schemafile worker/contracts/v1/probe-response.schema.json \
+      worker/contracts/v1/examples/probe-response-ok.json \
+      worker/contracts/v1/examples/probe-response-failed.json
 
     expect_invalid() {
       schema="$1"
@@ -58,6 +63,9 @@ stdenvNoCC.mkDerivation {
       contract-tests/v1/request-unknown-field.json
     for fixture in worker/contract-tests/v1/request-*.json; do
       expect_invalid worker/contracts/v1/probe-request.schema.json "$fixture"
+    done
+    for fixture in worker/contract-tests/v1/response-*.json; do
+      expect_invalid worker/contracts/v1/probe-response.schema.json "$fixture"
     done
 
     runHook postCheck

@@ -1,0 +1,531 @@
+{
+  "$defs": {
+    "boundedText": {
+      "maxLength": 512,
+      "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+      "type": "string"
+    },
+    "chapter": {
+      "additionalProperties": false,
+      "properties": {
+        "end_ticks": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "end_time_ms": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "id": {
+          "$ref": "#/$defs/nonNegativeInt64"
+        },
+        "start_ticks": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "start_time_ms": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "tags": {
+          "$ref": "#/$defs/tagList"
+        },
+        "time_base": {
+          "$ref": "#/$defs/nullableRational"
+        }
+      },
+      "required": [
+        "id",
+        "time_base",
+        "start_ticks",
+        "start_time_ms",
+        "end_ticks",
+        "end_time_ms",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "disposition": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "forced": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "hearing_impaired": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "visual_impaired": {
+          "$ref": "#/$defs/nullableBoolean"
+        }
+      },
+      "required": [
+        "default",
+        "forced",
+        "hearing_impaired",
+        "visual_impaired"
+      ],
+      "type": "object"
+    },
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "chapters": {
+          "items": {
+            "$ref": "#/$defs/chapter"
+          },
+          "maxItems": 65536,
+          "type": "array"
+        },
+        "format": {
+          "$ref": "#/$defs/format"
+        },
+        "programs": {
+          "items": {
+            "$ref": "#/$defs/program"
+          },
+          "maxItems": 65536,
+          "type": "array"
+        },
+        "streams": {
+          "items": {
+            "$ref": "#/$defs/stream"
+          },
+          "maxItems": 8192,
+          "type": "array"
+        }
+      },
+      "required": [
+        "format",
+        "streams",
+        "programs",
+        "chapters"
+      ],
+      "type": "object"
+    },
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "probe_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "not_regular_file",
+            "fingerprint_mismatch",
+            "unsupported_format",
+            "timeout",
+            "probe_error",
+            "invalid_output",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "format": {
+      "additionalProperties": false,
+      "properties": {
+        "bit_rate_bps": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "duration_ms": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "long_name": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "names": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyBoundedText"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "probe_score": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "program_count": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "size_bytes": {
+          "$ref": "#/$defs/nullablePositiveInt64"
+        },
+        "start_time_ms": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "stream_count": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "tags": {
+          "$ref": "#/$defs/tagList"
+        }
+      },
+      "required": [
+        "names",
+        "long_name",
+        "stream_count",
+        "program_count",
+        "start_time_ms",
+        "duration_ms",
+        "size_bytes",
+        "bit_rate_bps",
+        "probe_score",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "int64": {
+      "maximum": 9223372036854775807,
+      "minimum": -9223372036854775808,
+      "type": "integer"
+    },
+    "nonEmptyBoundedText": {
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "type": "string"
+    },
+    "nonNegativeInt64": {
+      "maximum": 9223372036854775807,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "nullableBoolean": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "nullableBoundedText": {
+      "maxLength": 512,
+      "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nullableDisposition": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/disposition"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableInt64": {
+      "maximum": 9223372036854775807,
+      "minimum": -9223372036854775808,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "nullableNonNegativeInt64": {
+      "maximum": 9223372036854775807,
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "nullablePositiveInt64": {
+      "maximum": 9223372036854775807,
+      "minimum": 1,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "nullableRational": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/rational"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "opaqueId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "positiveInt64": {
+      "maximum": 9223372036854775807,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "program": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonNegativeInt64"
+        },
+        "number": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "pcr_pid": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "pmt_pid": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "stream_count": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "stream_indexes": {
+          "items": {
+            "$ref": "#/$defs/nonNegativeInt64"
+          },
+          "maxItems": 8192,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "tags": {
+          "$ref": "#/$defs/tagList"
+        }
+      },
+      "required": [
+        "id",
+        "number",
+        "stream_count",
+        "pmt_pid",
+        "pcr_pid",
+        "stream_indexes",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "rational": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/int64"
+            },
+            {
+              "not": {
+                "const": 0
+              }
+            }
+          ]
+        },
+        "numerator": {
+          "$ref": "#/$defs/int64"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "type": "object"
+    },
+    "stream": {
+      "additionalProperties": false,
+      "properties": {
+        "average_rate": {
+          "$ref": "#/$defs/nullableRational"
+        },
+        "bit_rate_bps": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "channel_layout": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "channels": {
+          "$ref": "#/$defs/nullablePositiveInt64"
+        },
+        "codec_long_name": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "codec_name": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "codec_tag": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "disposition": {
+          "$ref": "#/$defs/nullableDisposition"
+        },
+        "duration_ms": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "duration_ticks": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "frame_count": {
+          "$ref": "#/$defs/nullableNonNegativeInt64"
+        },
+        "frame_rate": {
+          "$ref": "#/$defs/nullableRational"
+        },
+        "height": {
+          "$ref": "#/$defs/nullablePositiveInt64"
+        },
+        "index": {
+          "$ref": "#/$defs/nonNegativeInt64"
+        },
+        "kind": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitle",
+            "data",
+            "attachment",
+            "other",
+            null
+          ]
+        },
+        "pixel_format": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "profile": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "sample_format": {
+          "$ref": "#/$defs/nullableBoundedText"
+        },
+        "sample_rate_hz": {
+          "$ref": "#/$defs/nullablePositiveInt64"
+        },
+        "start_ticks": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "start_time_ms": {
+          "$ref": "#/$defs/nullableInt64"
+        },
+        "tags": {
+          "$ref": "#/$defs/tagList"
+        },
+        "time_base": {
+          "$ref": "#/$defs/nullableRational"
+        },
+        "width": {
+          "$ref": "#/$defs/nullablePositiveInt64"
+        }
+      },
+      "required": [
+        "index",
+        "kind",
+        "codec_name",
+        "codec_long_name",
+        "profile",
+        "codec_tag",
+        "width",
+        "height",
+        "pixel_format",
+        "sample_format",
+        "sample_rate_hz",
+        "channels",
+        "channel_layout",
+        "frame_rate",
+        "average_rate",
+        "time_base",
+        "start_ticks",
+        "start_time_ms",
+        "duration_ticks",
+        "duration_ms",
+        "bit_rate_bps",
+        "frame_count",
+        "disposition",
+        "tags"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "operation": {
+          "const": "probe_v1"
+        },
+        "request_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "evidence"
+      ],
+      "type": "object"
+    },
+    "tag": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "creation_time",
+            "encoder",
+            "handler_name",
+            "language",
+            "service_name",
+            "service_provider",
+            "title"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/boundedText"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "tagList": {
+      "items": {
+        "$ref": "#/$defs/tag"
+      },
+      "maxItems": 7,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "$id": "urn:radarr-repair-worker:schema:probe-response:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker probe response version 1"
+}
