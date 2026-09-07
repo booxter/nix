@@ -1,0 +1,228 @@
+{
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "capability_id": "capability:e93252deee0501b5494a427532364b996d8346aa02e3fc271d245c398a30c6da",
+      "duration_tolerance_ms": 1000,
+      "eligible_file_ids": [
+        "file:1111111111111111111111111111111111111111111111111111111111111111",
+        "file:2222222222222222222222222222222222222222222222222222222222222222"
+      ],
+      "expected_duration_ms": 7200000,
+      "input_container": "matroska",
+      "output_container": "mkv",
+      "probe_coverage": "complete",
+      "stream_compatibility": "compatible"
+    }
+  ],
+  "case_id": "sha256:77143c0adb6cbc8e82a71f9504dc1dd5e4ee0483eec0f31d75ec4d9e7d3cdf4e",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-07T16:00:00Z",
+    "download_ref": "download:f109a2aab0338f4cfe32f70f3b1cbe43e186fce527270565b690b97ff46522db",
+    "file_count": 2,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Example.Movie.2024",
+    "source_type": "torrent",
+    "total_size_bytes": 3000,
+    "tracker_hosts": [
+      "tracker.example"
+    ]
+  },
+  "files": [
+    {
+      "bytes_completed": 1000,
+      "extension": "mkv",
+      "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111",
+      "fingerprint": "sha256:1fd277929044b950e55cb06145cb15acb6bc7812c2c190e117612a0ec4b3e01f",
+      "path_components": [
+        "CD1.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 8500000,
+          "effective_duration_ms": 3600000,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 3600000,
+          "longest_stream_duration_ms": 3600000,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 1000
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 8500000,
+            "codec_name": "h264",
+            "codec_tag": null,
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 3600000,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "High",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 1000,
+      "torrent_index": 0,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 2000,
+      "extension": "mkv",
+      "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222",
+      "fingerprint": "sha256:d1c03e04630b65340a139fa7cf87e5619d5dff6c206b6553314c79d496d28a65",
+      "path_components": [
+        "CD2.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 8500000,
+          "effective_duration_ms": 3600000,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 3600000,
+          "longest_stream_duration_ms": 3600000,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 2000
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 8500000,
+            "codec_name": "h264",
+            "codec_tag": null,
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 3600000,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "High",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 2000,
+      "torrent_index": 1,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-07T18:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:f109a2aab0338f4cfe32f70f3b1cbe43e186fce527270565b690b97ff46522db",
+      "queue_id": 71,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:da16364de893372f1b68997540a57623ecf8f136b72f0600746d7fe1f592ff76",
+          "messages": [
+            "File is suspected multi-part file, Radarr doesn't support this"
+          ],
+          "title": "Import failed"
+        }
+      ],
+      "title": "Example.Movie.2024.1080p.BluRay-GROUP",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:da61fac8e7f913084a3aa2df149332ad1b7786a0e89b0b97b15d5caaa07c6ce4",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-07T15:00:00Z",
+        "quality": "Bluray-1080p",
+        "source_title": "Example.Movie.2024.1080p.BluRay-GROUP"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111",
+        "languages": [
+          "English"
+        ],
+        "quality": "Bluray-1080p",
+        "rejections": [
+          {
+            "evidence_id": "evidence:b93ab7a05ed4d3041fcbc786ba9adae5d990ad6f4eade52f8455a3321e515065",
+            "reason": "File is suspected multi-part file, Radarr doesn't support this",
+            "type": "permanent"
+          }
+        ],
+        "release_group": "GROUP"
+      },
+      {
+        "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222",
+        "languages": [
+          "English"
+        ],
+        "quality": "Bluray-1080p",
+        "rejections": [
+          {
+            "evidence_id": "evidence:7614993e2aaf7296ce36426e613db0cd9a356265a47f1ffd1f468e252efd25c7",
+            "reason": "File is suspected multi-part file, Radarr doesn't support this",
+            "type": "permanent"
+          }
+        ],
+        "release_group": "GROUP"
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "Another Example"
+      ],
+      "imdb_id": "tt12345678",
+      "original_title": "Example Original",
+      "radarr_id": 42,
+      "runtime_minutes": 120,
+      "title": "Example Movie",
+      "tmdb_id": 1234,
+      "year": 2024
+    }
+  },
+  "schema_version": "radarr-repair/v1"
+}
