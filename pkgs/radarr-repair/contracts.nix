@@ -33,11 +33,10 @@ stdenvNoCC.mkDerivation {
 
     check-jsonschema \
       --schemafile contracts/v1/repair-case.schema.json \
-      contracts/v1/examples/repair-case-joinable.json
+      contracts/v1/examples/repair-case-*.json
     check-jsonschema \
       --schemafile contracts/v1/repair-decision.schema.json \
-      contracts/v1/examples/repair-decision-join.json \
-      contracts/v1/examples/repair-decision-no-repair.json
+      contracts/v1/examples/repair-decision-*.json
     check-jsonschema \
       --schemafile worker/contracts/v1/probe-request.schema.json \
       worker/contracts/v1/examples/probe-request.json

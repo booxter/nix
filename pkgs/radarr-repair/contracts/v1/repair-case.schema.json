@@ -222,7 +222,6 @@
             "$ref": "#/$defs/manualImportRejection"
           },
           "maxItems": 16,
-          "minItems": 1,
           "type": "array"
         },
         "release_group": {
@@ -271,18 +270,137 @@
     },
     "mediaFile": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "probe_candidate"
+              }
+            },
+            "required": [
+              "disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bytes_completed": {
+                "type": "integer"
+              },
+              "disposition_reason": {
+                "type": "null"
+              },
+              "extension": {
+                "enum": [
+                  "ts",
+                  "m2ts",
+                  "mp4",
+                  "mkv",
+                  "avi"
+                ]
+              },
+              "torrent_index": {
+                "type": "integer"
+              },
+              "wanted": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "evidence_only"
+              }
+            },
+            "required": [
+              "disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "disposition_reason": {
+                "enum": [
+                  "untracked",
+                  "unwanted",
+                  "incomplete",
+                  "empty",
+                  "unsupported_extension"
+                ]
+              },
+              "probe": {
+                "$ref": "#/$defs/notProbed"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "disposition_reason": {
+                "const": "untracked"
+              }
+            },
+            "required": [
+              "disposition_reason"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bytes_completed": {
+                "type": "null"
+              },
+              "torrent_index": {
+                "type": "null"
+              },
+              "wanted": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "bytes_completed": {
           "maximum": 9007199254740991,
           "minimum": 0,
-          "type": "integer"
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "disposition": {
+          "enum": [
+            "probe_candidate",
+            "evidence_only"
+          ]
+        },
+        "disposition_reason": {
+          "enum": [
+            "untracked",
+            "unwanted",
+            "incomplete",
+            "empty",
+            "unsupported_extension",
+            null
+          ]
         },
         "extension": {
-          "enum": [
-            "ts",
-            "mp4",
-            "mkv",
-            "avi"
+          "oneOf": [
+            {
+              "enum": [
+                "ts",
+                "m2ts",
+                "mp4",
+                "mkv",
+                "avi"
+              ]
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "file_id": {
@@ -304,16 +422,22 @@
         },
         "size_bytes": {
           "maximum": 9007199254740991,
-          "minimum": 1,
+          "minimum": 0,
           "type": "integer"
         },
         "torrent_index": {
           "maximum": 999999,
           "minimum": 0,
-          "type": "integer"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "wanted": {
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "required": [
@@ -325,6 +449,8 @@
         "bytes_completed",
         "fingerprint",
         "extension",
+        "disposition",
+        "disposition_reason",
         "probe"
       ],
       "type": "object"
@@ -512,6 +638,29 @@
       "pattern": "^[^\\x00-\\x1f\\x7f]+$",
       "type": "string"
     },
+    "notProbed": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "enum": [
+            "not_probe_candidate",
+            "collection_limit"
+          ]
+        },
+        "status": {
+          "const": "not_probed"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "summary"
+      ],
+      "type": "object"
+    },
     "nullableBitRate": {
       "maximum": 10000000000,
       "minimum": 0,
@@ -612,6 +761,9 @@
         },
         {
           "$ref": "#/$defs/failedProbe"
+        },
+        {
+          "$ref": "#/$defs/notProbed"
         }
       ]
     },
@@ -620,6 +772,9 @@
       "properties": {
         "download_ref": {
           "$ref": "#/$defs/opaqueId"
+        },
+        "error_message": {
+          "$ref": "#/$defs/safeText"
         },
         "queue_id": {
           "minimum": 1,
@@ -633,7 +788,6 @@
             "$ref": "#/$defs/statusMessage"
           },
           "maxItems": 32,
-          "minItems": 1,
           "type": "array"
         },
         "title": {
@@ -650,6 +804,7 @@
         "queue_id",
         "download_ref",
         "title",
+        "error_message",
         "status",
         "tracked_download_status",
         "tracked_download_state",
@@ -678,7 +833,14 @@
           "type": "array"
         },
         "movie": {
-          "$ref": "#/$defs/movie"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/movie"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -723,10 +885,9 @@
         },
         "messages": {
           "items": {
-            "$ref": "#/$defs/nonEmptyText"
+            "$ref": "#/$defs/safeText"
           },
           "maxItems": 16,
-          "minItems": 1,
           "type": "array"
         },
         "title": {
@@ -817,7 +978,6 @@
         "$ref": "#/$defs/joinCapability"
       },
       "maxItems": 16,
-      "minItems": 1,
       "type": "array"
     },
     "case_id": {
@@ -831,7 +991,7 @@
         "$ref": "#/$defs/mediaFile"
       },
       "maxItems": 128,
-      "minItems": 2,
+      "minItems": 1,
       "type": "array"
     },
     "observed_at": {

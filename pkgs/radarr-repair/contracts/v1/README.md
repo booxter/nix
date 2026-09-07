@@ -11,6 +11,17 @@ Transmission, torrent, or `ffprobe` responses. All externally sourced text is
 untrusted data. Absolute paths, credentials, tracker announce URLs, passkeys,
 magnet links, and raw diagnostic output are outside the protocol.
 
+Radarr status and error messages are represented as bounded opaque strings. The
+contract assigns them no semantic categories, so new or mixed messages require
+no protocol change.
+
+A case contains one or more safe media-file observations and may advertise no
+capabilities. File disposition records whether a file was a probe candidate or
+evidence only and why. Torrent index, wanted state, and completed bytes are null
+for an untracked filesystem file. Probe evidence is explicitly successful,
+failed, or not collected. Radarr movie identity may be null when association
+failed, and manual-import entries may have no rejection messages.
+
 ## Identity
 
 `case_id` is `sha256:` followed by the lowercase SHA-256 digest of the RFC 8785
@@ -42,6 +53,10 @@ The planner cannot select an output path or name, container, executable, or
 command argument. A schema-valid join decision is still inert until the
 controller validates identifier membership, feasibility, current source
 fingerprints, and execution policy.
+
+When `capabilities` is empty, `no_repair` is the only semantically valid
+decision. The controller will reject a schema-valid positive decision that does
+not reference a capability offered by the case.
 
 New optional evidence requires a new protocol version because every object is
 closed to unknown properties. Existing versions remain immutable.

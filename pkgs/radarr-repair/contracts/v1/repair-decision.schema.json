@@ -75,7 +75,12 @@
               "part_order",
               "duration",
               "stream_layout",
-              "container_compatibility"
+              "container_compatibility",
+              "file_selection",
+              "movie_runtime",
+              "import_metadata",
+              "disc_playlist",
+              "media_probe"
             ]
           },
           "maxItems": 16,
@@ -87,6 +92,10 @@
             "no_repair_needed",
             "not_a_multipart_release",
             "ambiguous_part_order",
+            "ambiguous_file_selection",
+            "content_not_single_movie",
+            "raw_disc_unsupported",
+            "missing_import_metadata",
             "insufficient_evidence",
             "unsupported_repair",
             "unsafe_to_repair"

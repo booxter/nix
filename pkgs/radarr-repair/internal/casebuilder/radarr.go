@@ -55,12 +55,13 @@ func mapRadarr(
 			QueueID:               failure.ID,
 			DownloadRef:           downloadRef,
 			Title:                 failure.Title,
+			ErrorMessage:          failure.ErrorMessage,
 			Status:                string(failure.Status),
 			TrackedDownloadStatus: string(failure.TrackedDownloadStatus),
 			TrackedDownloadState:  string(failure.TrackedDownloadState),
 			StatusMessages:        statusMessages,
 		},
-		Movie: contracts.Movie{
+		Movie: &contracts.MovieClass{
 			RadarrID:        observation.Movie.ID,
 			TmdbID:          observation.Movie.TMDBID,
 			ImdbID:          observation.Movie.IMDbID,

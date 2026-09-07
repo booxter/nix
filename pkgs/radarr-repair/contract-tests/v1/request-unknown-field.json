@@ -31,6 +31,8 @@
   "files": [
     {
       "bytes_completed": 100,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
       "extension": "mkv",
       "file_id": "file_01",
       "fingerprint": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -49,6 +51,8 @@
     },
     {
       "bytes_completed": 100,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
       "extension": "mkv",
       "file_id": "file_02",
       "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
@@ -70,6 +74,7 @@
   "radarr": {
     "failure": {
       "download_ref": "download_01",
+      "error_message": "",
       "queue_id": 1,
       "status": "completed",
       "status_messages": [

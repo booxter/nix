@@ -54,6 +54,132 @@ func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
 	}
 }
 
+func TestAllRepairCaseExamplesDecode(t *testing.T) {
+	paths, err := filepath.Glob("v1/examples/repair-case-*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) < 4 {
+		t.Fatalf("repair case examples = %d, want at least 4", len(paths))
+	}
+	for _, path := range paths {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			repairCase, err := DecodeCase(readFixture(t, path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			caseID, err := CalculateCaseID(repairCase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if caseID != repairCase.CaseID {
+				t.Fatalf("case ID = %q, want %q", repairCase.CaseID, caseID)
+			}
+		})
+	}
+}
+
+func TestGeneralizedRepairCaseExamples(t *testing.T) {
+	t.Parallel()
+
+	single, err := DecodeCase(readFixture(t, "v1/examples/repair-case-single-unparseable.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(single.Files) != 1 || len(single.Capabilities) != 0 || single.Radarr.Movie != nil {
+		t.Fatalf("single-file shape = %#v", single)
+	}
+	if len(single.Radarr.ManualImports) != 1 || len(single.Radarr.ManualImports[0].Rejections) != 0 {
+		t.Fatalf("manual imports = %#v", single.Radarr.ManualImports)
+	}
+
+	rawDisc, err := DecodeCase(readFixture(t, "v1/examples/repair-case-raw-bluray.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rawDisc.Files[0].Extension == nil ||
+		*rawDisc.Files[0].Extension != M2Ts ||
+		rawDisc.Files[0].Probe.Status != NotProbed {
+		t.Fatalf("raw-disc file = %#v", rawDisc.Files[0])
+	}
+
+	episodic, err := DecodeCase(readFixture(t, "v1/examples/repair-case-episodic-release.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(episodic.Files) != 2 || len(episodic.Capabilities) != 0 {
+		t.Fatalf("episodic shape = %#v", episodic)
+	}
+}
+
+func TestGeneralizedCaseDispositionRules(t *testing.T) {
+	t.Parallel()
+
+	var document map[string]any
+	if err := json.Unmarshal(
+		readFixture(t, "v1/examples/repair-case-single-unparseable.json"),
+		&document,
+	); err != nil {
+		t.Fatal(err)
+	}
+	file := document["files"].([]any)[0].(map[string]any)
+	file["disposition"] = "evidence_only"
+	data, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(data); err == nil {
+		t.Fatal("evidence-only file without a reason was accepted")
+	}
+
+	file["disposition_reason"] = "untracked"
+	data, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(data); err == nil {
+		t.Fatal("untracked file with torrent metadata was accepted")
+	}
+
+	file["torrent_index"] = nil
+	file["wanted"] = nil
+	file["bytes_completed"] = nil
+	file["probe"] = map[string]any{
+		"status":  "not_probed",
+		"reason":  "not_probe_candidate",
+		"summary": "The file is not a probe candidate.",
+	}
+	data, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(data); err != nil {
+		t.Fatalf("valid untracked file was rejected: %v", err)
+	}
+}
+
+func TestGeneralizedCaseAllowsEmptyRadarrMessages(t *testing.T) {
+	t.Parallel()
+
+	var document map[string]any
+	if err := json.Unmarshal(
+		readFixture(t, "v1/examples/repair-case-single-unparseable.json"),
+		&document,
+	); err != nil {
+		t.Fatal(err)
+	}
+	failure := document["radarr"].(map[string]any)["failure"].(map[string]any)
+	failure["error_message"] = ""
+	failure["status_messages"] = []any{}
+	data, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(data); err != nil {
+		t.Fatalf("empty Radarr messages were rejected: %v", err)
+	}
+}
+
 func TestNullableCaseFields(t *testing.T) {
 	var document map[string]any
 	if err := json.Unmarshal(
@@ -108,6 +234,23 @@ func TestDecisionExamplesDecodeToOneVariant(t *testing.T) {
 	}
 }
 
+func TestAllDecisionExamplesDecode(t *testing.T) {
+	paths, err := filepath.Glob("v1/examples/repair-decision-*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) < 5 {
+		t.Fatalf("repair decision examples = %d, want at least 5", len(paths))
+	}
+	for _, path := range paths {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			if _, err := DecodeDecision(readFixture(t, path)); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func TestNegativeContractFixturesAreRejected(t *testing.T) {
 	paths, err := filepath.Glob("../contract-tests/v1/decision-*.json")
 	if err != nil {
@@ -124,10 +267,21 @@ func TestNegativeContractFixturesAreRejected(t *testing.T) {
 		})
 	}
 
-	if _, err := DecodeCase(
-		readFixture(t, "../contract-tests/v1/request-unknown-field.json"),
-	); err == nil {
+	invalidCase := readFixture(t, "../contract-tests/v1/request-unknown-field.json")
+	if _, err := DecodeCase(invalidCase); err == nil {
 		t.Fatal("repair case with an unknown field was accepted")
+	}
+	var document map[string]any
+	if err := json.Unmarshal(invalidCase, &document); err != nil {
+		t.Fatal(err)
+	}
+	delete(document, "unexpected")
+	withoutUnknownField, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(withoutUnknownField); err != nil {
+		t.Fatalf("negative repair case fixture has another invalid field: %v", err)
 	}
 }
 

@@ -15,7 +15,7 @@
       "stream_compatibility": "compatible"
     }
   ],
-  "case_id": "sha256:77143c0adb6cbc8e82a71f9504dc1dd5e4ee0483eec0f31d75ec4d9e7d3cdf4e",
+  "case_id": "sha256:0e2b403c46ad149f8b32977657bc2d5752da4dafbac9f2f4add4a5d4fb2a0670",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",
@@ -35,6 +35,8 @@
   "files": [
     {
       "bytes_completed": 1000,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
       "extension": "mkv",
       "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111",
       "fingerprint": "sha256:1fd277929044b950e55cb06145cb15acb6bc7812c2c190e117612a0ec4b3e01f",
@@ -92,6 +94,8 @@
     },
     {
       "bytes_completed": 2000,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
       "extension": "mkv",
       "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222",
       "fingerprint": "sha256:d1c03e04630b65340a139fa7cf87e5619d5dff6c206b6553314c79d496d28a65",
@@ -152,6 +156,7 @@
   "radarr": {
     "failure": {
       "download_ref": "download:f109a2aab0338f4cfe32f70f3b1cbe43e186fce527270565b690b97ff46522db",
+      "error_message": "",
       "queue_id": 71,
       "status": "completed",
       "status_messages": [

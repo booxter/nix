@@ -20,16 +20,22 @@ func mapFile(
 	if err != nil {
 		return contracts.FileElement{}, err
 	}
+	torrentIndex := int64(file.TorrentFile.Index)
+	wanted := file.TorrentFile.Wanted
+	bytesCompleted := file.TorrentFile.BytesCompleted
+	mappedExtension := contracts.Extension(extension)
 	return contracts.FileElement{
-		FileID:         string(file.ID),
-		PathComponents: clone(file.PathComponents),
-		SizeBytes:      file.Fingerprint.SizeBytes,
-		TorrentIndex:   int64(file.TorrentFile.Index),
-		Wanted:         file.TorrentFile.Wanted,
-		BytesCompleted: file.TorrentFile.BytesCompleted,
-		Fingerprint:    file.Fingerprint.Fingerprint(),
-		Extension:      contracts.Extension(extension),
-		Probe:          probe,
+		FileID:            string(file.ID),
+		PathComponents:    clone(file.PathComponents),
+		SizeBytes:         file.Fingerprint.SizeBytes,
+		TorrentIndex:      &torrentIndex,
+		Wanted:            &wanted,
+		BytesCompleted:    &bytesCompleted,
+		Fingerprint:       file.Fingerprint.Fingerprint(),
+		Extension:         &mappedExtension,
+		Disposition:       contracts.DispositionEnum(controller.MediaFileProbeCandidate),
+		DispositionReason: nil,
+		Probe:             probe,
 	}, nil
 }
 
@@ -105,7 +111,7 @@ func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {
 		DurationMS:  stream.DurationMS,
 		BitRateBps:  stream.BitRateBPS,
 		Language:    streamLanguage(stream.Tags),
-		Disposition: contracts.Disposition{
+		Disposition: contracts.DispositionClass{
 			Default:         *stream.Disposition.Default,
 			Forced:          *stream.Disposition.Forced,
 			HearingImpaired: *stream.Disposition.HearingImpaired,

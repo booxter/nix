@@ -1,0 +1,12 @@
+{
+  "action": "no_repair",
+  "case_id": "sha256:7c1fc9898ae78985f5f08f4e00499c79f2f97d54277f49b8f3cca7ce79b6543f",
+  "evidence_refs": [
+    "file_episode_01",
+    "file_episode_02"
+  ],
+  "explanation": "The files appear to be separate episodes rather than parts of one movie.",
+  "missing_evidence": [],
+  "reason": "content_not_single_movie",
+  "schema_version": "radarr-repair/v1"
+}
