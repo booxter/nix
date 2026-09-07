@@ -78,6 +78,15 @@ func TestAssessInputContainerRejectsKnownContradictions(t *testing.T) {
 			position: 0,
 		},
 		{
+			name: "M2TS evidence is not yet joinable",
+			observations: []InputContainerObservation{
+				{Extension: MediaExtensionM2TS, FormatNames: []string{"mpegts"}},
+				{Extension: MediaExtensionM2TS, FormatNames: []string{"mpegts"}},
+			},
+			reason:   InputContainerUnsupportedExtension,
+			position: 0,
+		},
+		{
 			name: "mixed extensions",
 			observations: []InputContainerObservation{
 				{Extension: MediaExtensionMKV, FormatNames: []string{"matroska", "webm"}},

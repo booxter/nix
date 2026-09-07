@@ -9,37 +9,85 @@ import (
 )
 
 func mapFile(
-	file controller.InventoryFile,
-	extension controller.MediaExtension,
-	evidence controller.ProbeEvidence,
+	assessment controller.MediaFileAssessment,
+	outcome controller.MediaProbeOutcome,
 ) (contracts.FileElement, error) {
-	if file.TorrentFile == nil {
-		return contracts.FileElement{}, fmt.Errorf("torrent reference is missing")
-	}
-	probe, err := mapProbe(evidence, file.Fingerprint.SizeBytes)
+	file := assessment.File
+	probe, err := mapProbe(outcome, file.Fingerprint.SizeBytes)
 	if err != nil {
 		return contracts.FileElement{}, err
 	}
-	torrentIndex := int64(file.TorrentFile.Index)
-	wanted := file.TorrentFile.Wanted
-	bytesCompleted := file.TorrentFile.BytesCompleted
-	mappedExtension := contracts.Extension(extension)
+	if assessment.ProbeCandidate() && outcome.Status == controller.MediaProbeNotCollected &&
+		outcome.Reason == controller.MediaProbeNotCandidate {
+		return contracts.FileElement{}, fmt.Errorf("probe candidate was marked as ineligible for probing")
+	}
+	if !assessment.ProbeCandidate() && (outcome.Status != controller.MediaProbeNotCollected ||
+		outcome.Reason != controller.MediaProbeNotCandidate) {
+		return contracts.FileElement{}, fmt.Errorf("evidence-only file has an invalid probe outcome")
+	}
+
+	var torrentIndex *int64
+	var wanted *bool
+	var bytesCompleted *int64
+	if file.TorrentFile != nil {
+		mappedIndex := int64(file.TorrentFile.Index)
+		mappedWanted := file.TorrentFile.Wanted
+		mappedBytesCompleted := file.TorrentFile.BytesCompleted
+		torrentIndex = &mappedIndex
+		wanted = &mappedWanted
+		bytesCompleted = &mappedBytesCompleted
+	}
+	var extension *contracts.Extension
+	if assessment.Extension != "" {
+		mapped := contracts.Extension(assessment.Extension)
+		extension = &mapped
+	}
+	var dispositionReason *contracts.DispositionReason
+	if assessment.ExclusionReason != "" {
+		mapped := contracts.DispositionReason(assessment.ExclusionReason)
+		dispositionReason = &mapped
+	}
 	return contracts.FileElement{
 		FileID:            string(file.ID),
 		PathComponents:    clone(file.PathComponents),
 		SizeBytes:         file.Fingerprint.SizeBytes,
-		TorrentIndex:      &torrentIndex,
-		Wanted:            &wanted,
-		BytesCompleted:    &bytesCompleted,
+		TorrentIndex:      torrentIndex,
+		Wanted:            wanted,
+		BytesCompleted:    bytesCompleted,
 		Fingerprint:       file.Fingerprint.Fingerprint(),
-		Extension:         &mappedExtension,
-		Disposition:       contracts.DispositionEnum(controller.MediaFileProbeCandidate),
-		DispositionReason: nil,
+		Extension:         extension,
+		Disposition:       contracts.DispositionEnum(assessment.Disposition),
+		DispositionReason: dispositionReason,
 		Probe:             probe,
 	}, nil
 }
 
-func mapProbe(evidence controller.ProbeEvidence, expectedSize int64) (contracts.Probe, error) {
+func mapProbe(outcome controller.MediaProbeOutcome, expectedSize int64) (contracts.Probe, error) {
+	switch outcome.Status {
+	case controller.MediaProbeSucceeded:
+		if outcome.Evidence == nil || outcome.Reason != "" {
+			return contracts.Probe{}, fmt.Errorf("successful probe outcome is incomplete")
+		}
+		return mapSuccessfulProbe(*outcome.Evidence, expectedSize)
+	case controller.MediaProbeFailed:
+		if outcome.Evidence != nil || !failedProbeReason(outcome.Reason) {
+			return contracts.Probe{}, fmt.Errorf("failed probe outcome is invalid")
+		}
+	case controller.MediaProbeNotCollected:
+		if outcome.Evidence != nil || !uncollectedProbeReason(outcome.Reason) {
+			return contracts.Probe{}, fmt.Errorf("uncollected probe outcome is invalid")
+		}
+	default:
+		return contracts.Probe{}, fmt.Errorf("probe outcome status %q is invalid", outcome.Status)
+	}
+	reason := contracts.ProbeReason(outcome.Reason)
+	summary := probeSummary(outcome.Reason)
+	return contracts.Probe{
+		Status: contracts.Status(outcome.Status), Reason: &reason, Summary: &summary,
+	}, nil
+}
+
+func mapSuccessfulProbe(evidence controller.ProbeEvidence, expectedSize int64) (contracts.Probe, error) {
 	if evidence.Format.SizeBytes == nil {
 		return contracts.Probe{}, fmt.Errorf("probe format size is missing")
 	}
@@ -82,6 +130,45 @@ func mapProbe(evidence controller.ProbeEvidence, expectedSize int64) (contracts.
 		BitRateBps:              evidence.Format.BitRateBPS,
 	}
 	return contracts.Probe{Status: contracts.Ok, Format: &format, Streams: mappedStreams}, nil
+}
+
+func failedProbeReason(reason controller.MediaProbeReason) bool {
+	switch reason {
+	case controller.MediaProbeNotRegularFile,
+		controller.MediaProbeUnsupportedFormat,
+		controller.MediaProbeTimeout,
+		controller.MediaProbeError,
+		controller.MediaProbeInvalidOutput:
+		return true
+	default:
+		return false
+	}
+}
+
+func uncollectedProbeReason(reason controller.MediaProbeReason) bool {
+	return reason == controller.MediaProbeNotCandidate ||
+		reason == controller.MediaProbeCollectionLimit
+}
+
+func probeSummary(reason controller.MediaProbeReason) string {
+	switch reason {
+	case controller.MediaProbeNotRegularFile:
+		return "The worker did not observe a regular file."
+	case controller.MediaProbeUnsupportedFormat:
+		return "ffprobe did not recognize a supported media format."
+	case controller.MediaProbeTimeout:
+		return "Media probing reached its execution deadline."
+	case controller.MediaProbeError:
+		return "ffprobe failed while inspecting the file."
+	case controller.MediaProbeInvalidOutput:
+		return "ffprobe returned invalid structured metadata."
+	case controller.MediaProbeNotCandidate:
+		return "The file was retained as evidence but was not eligible for probing."
+	case controller.MediaProbeCollectionLimit:
+		return "The collection deadline was reached before the file could be probed."
+	default:
+		return "Media probe evidence is unavailable."
+	}
 }
 
 func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {

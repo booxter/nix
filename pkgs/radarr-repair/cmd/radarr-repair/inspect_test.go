@@ -61,9 +61,10 @@ func TestInspectWritesRedactedCaseToNewFile(t *testing.T) {
 			"root:archive":   "/data/archive",
 			"root:downloads": "/data/downloads",
 		},
-		Output:  output,
-		QueueID: 71,
-		Timeout: 45 * time.Second,
+		Output:            output,
+		QueueID:           71,
+		Timeout:           45 * time.Second,
+		CollectionTimeout: 90 * time.Second,
 	}
 	if !reflect.DeepEqual(gotConfig, wantConfig) {
 		t.Fatalf("config = %#v, want %#v", gotConfig, wantConfig)
@@ -201,6 +202,10 @@ func TestInspectRejectsInvalidConfigurationBeforeCollection(t *testing.T) {
 			name:      "zero timeout",
 			arguments: replaceArgument(valid, "--timeout", "0s"),
 		},
+		{
+			name:      "zero collection timeout",
+			arguments: replaceArgument(valid, "--collection-timeout", "0s"),
+		},
 		{name: "unexpected positional argument", arguments: append(valid, "extra")},
 	}
 
@@ -336,6 +341,7 @@ func validInspectArguments(t *testing.T, output string) ([]string, string) {
 		"--output", output,
 		"--queue-id", "71",
 		"--timeout", "45s",
+		"--collection-timeout", "90s",
 	}, apiKeyFile
 }
 

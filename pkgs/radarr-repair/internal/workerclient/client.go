@@ -155,13 +155,13 @@ func (client *Client) Close() {
 func (client *Client) Probe(
 	ctx context.Context,
 	target controller.MediaProbeTarget,
-) (controller.ProbeEvidence, error) {
+) (controller.MediaProbeOutcome, error) {
 	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
-		return controller.ProbeEvidence{}, fmt.Errorf("worker client is not configured")
+		return controller.MediaProbeOutcome{}, fmt.Errorf("worker client is not configured")
 	}
 	rootID, components, err := client.resolve(target.AbsolutePath)
 	if err != nil {
-		return controller.ProbeEvidence{}, err
+		return controller.MediaProbeOutcome{}, err
 	}
 	requestID := fmt.Sprintf("request:%d", client.nextRequestID.Add(1))
 	payload, err := workercontracts.EncodeProbeRequest(workercontracts.ProbeRequestV1{
@@ -173,7 +173,7 @@ func (client *Client) Probe(
 		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
 	})
 	if err != nil {
-		return controller.ProbeEvidence{}, fmt.Errorf("construct worker probe request: %w", err)
+		return controller.MediaProbeOutcome{}, fmt.Errorf("construct worker probe request: %w", err)
 	}
 
 	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
@@ -185,46 +185,69 @@ func (client *Client) Probe(
 		bytes.NewReader(payload),
 	)
 	if err != nil {
-		return controller.ProbeEvidence{}, fmt.Errorf("construct worker HTTP request: %w", err)
+		return controller.MediaProbeOutcome{}, fmt.Errorf("construct worker HTTP request: %w", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return controller.ProbeEvidence{}, client.requestFailure(ctx, requestContext, err)
+		return controller.MediaProbeOutcome{}, client.requestFailure(ctx, requestContext, err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return controller.ProbeEvidence{}, &Failure{
+		return controller.MediaProbeOutcome{}, &Failure{
 			Kind: FailureHTTP, StatusCode: response.StatusCode,
 		}
 	}
 	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidResponse, cause: err}
+		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	data, err := io.ReadAll(io.LimitReader(response.Body, workercontracts.MaxProbeResponseBytes+1))
 	if err != nil {
-		return controller.ProbeEvidence{}, client.requestFailure(ctx, requestContext, err)
+		return controller.MediaProbeOutcome{}, client.requestFailure(ctx, requestContext, err)
 	}
 	if len(data) > workercontracts.MaxProbeResponseBytes {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidResponse}
+		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	probeResponse, err := workercontracts.DecodeProbeResponse(data)
 	if err != nil {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidResponse, cause: err}
+		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	if probeResponse.RequestID() != requestID {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidResponse}
+		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	if probeResponse.Failure != nil {
-		return controller.ProbeEvidence{}, &Failure{
+		if reason, retained := retainedProbeFailure(probeResponse.Failure.Reason); retained {
+			return controller.FailedMediaProbe(reason), nil
+		}
+		return controller.MediaProbeOutcome{}, &Failure{
 			Kind: FailureRejected, Reason: probeResponse.Failure.Reason,
 		}
 	}
 	if probeResponse.Success == nil {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidResponse}
+		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
 	}
-	return convertEvidence(probeResponse.Success.Evidence), nil
+	return controller.SuccessfulMediaProbe(convertEvidence(probeResponse.Success.Evidence)), nil
+}
+
+func retainedProbeFailure(reason workercontracts.Reason) (controller.MediaProbeReason, bool) {
+	// Media-specific probe failures are useful negative evidence. Root, path,
+	// fingerprint, protocol, and internal failures instead mean collection could
+	// not be trusted and remain errors.
+	switch reason {
+	case workercontracts.NotRegularFile:
+		return controller.MediaProbeNotRegularFile, true
+	case workercontracts.UnsupportedFormat:
+		return controller.MediaProbeUnsupportedFormat, true
+	case workercontracts.Timeout:
+		return controller.MediaProbeTimeout, true
+	case workercontracts.ProbeError:
+		return controller.MediaProbeError, true
+	case workercontracts.InvalidOutput:
+		return controller.MediaProbeInvalidOutput, true
+	default:
+		return "", false
+	}
 }
 
 func (client *Client) resolve(absolutePath string) (string, []string, error) {

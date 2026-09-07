@@ -2,7 +2,9 @@ package inspection
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
@@ -16,11 +18,12 @@ type RadarrReader interface {
 }
 
 type Dependencies struct {
-	Clock        controller.Clock
-	Radarr       RadarrReader
-	Transmission controller.TransmissionReader
-	Files        controller.FileInventoryReader
-	Probes       controller.MediaProbeReader
+	Clock             controller.Clock
+	Radarr            RadarrReader
+	Transmission      controller.TransmissionReader
+	Files             controller.FileInventoryReader
+	Probes            controller.MediaProbeReader
+	CollectionTimeout time.Duration
 }
 
 type Selection struct {
@@ -52,6 +55,8 @@ func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector,
 		return nil, fmt.Errorf("file inventory reader is required")
 	case dependencies.Probes == nil:
 		return nil, fmt.Errorf("media probe reader is required")
+	case dependencies.CollectionTimeout <= 0:
+		return nil, fmt.Errorf("collection timeout must be positive")
 	case assemble == nil:
 		return nil, fmt.Errorf("case assembler is required")
 	default:
@@ -72,8 +77,10 @@ func (inspector *Inspector) Inspect(
 	if selection.QueueID < 0 {
 		return casebuilder.Assembly{}, fmt.Errorf("queue ID must not be negative")
 	}
+	collectionContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
+	defer cancel()
 
-	records, err := inspector.dependencies.Radarr.ReadQueue(ctx)
+	records, err := inspector.dependencies.Radarr.ReadQueue(collectionContext)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Radarr queue: %w", err)
 	}
@@ -82,7 +89,7 @@ func (inspector *Inspector) Inspect(
 		return casebuilder.Assembly{}, err
 	}
 
-	torrent, found, err := inspector.dependencies.Transmission.FindTorrent(ctx, record.DownloadID)
+	torrent, found, err := inspector.dependencies.Transmission.FindTorrent(collectionContext, record.DownloadID)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Transmission torrent: %w", err)
 	}
@@ -102,16 +109,16 @@ func (inspector *Inspector) Inspect(
 	}
 
 	movieID := *record.MovieID
-	movie, err := inspector.dependencies.Radarr.ReadMovie(ctx, movieID)
+	movie, err := inspector.dependencies.Radarr.ReadMovie(collectionContext, movieID)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Radarr movie: %w", err)
 	}
-	history, err := inspector.dependencies.Radarr.ReadHistory(ctx, movieID, record.DownloadID)
+	history, err := inspector.dependencies.Radarr.ReadHistory(collectionContext, movieID, record.DownloadID)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", err)
 	}
 	manualImports, err := inspector.dependencies.Radarr.ReadManualImports(
-		ctx,
+		collectionContext,
 		controller.RadarrManualImportQuery{
 			MovieID: movieID, DownloadID: record.DownloadID, Folder: correlation.DownloadRoot,
 		},
@@ -119,11 +126,11 @@ func (inspector *Inspector) Inspect(
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", err)
 	}
-	inventory, err := inspector.dependencies.Files.Inventory(ctx, correlation)
+	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inventory download files: %w", err)
 	}
-	probes, err := inspector.collectProbes(ctx, inventory)
+	probes, err := inspector.collectProbes(ctx, collectionContext, inventory)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
@@ -188,7 +195,8 @@ func selectCandidate(
 }
 
 func (inspector *Inspector) collectProbes(
-	ctx context.Context,
+	callerContext context.Context,
+	collectionContext context.Context,
 	inventory controller.FileInventory,
 ) ([]casebuilder.FileProbe, error) {
 	paths := make(map[controller.FileID]string, len(inventory.Paths))
@@ -203,24 +211,54 @@ func (inspector *Inspector) collectProbes(
 	probes := make([]casebuilder.FileProbe, 0, len(assessments))
 	for _, assessment := range assessments {
 		if !assessment.ProbeCandidate() {
+			probes = append(probes, casebuilder.FileProbe{
+				FileID: assessment.File.ID,
+				Outcome: controller.UncollectedMediaProbe(
+					controller.MediaProbeNotCandidate,
+				),
+			})
 			continue
 		}
-		if err := ctx.Err(); err != nil {
-			return nil, err
+		if err := collectionContext.Err(); err != nil {
+			if callerErr := callerContext.Err(); callerErr != nil {
+				return nil, callerErr
+			}
+			if !errors.Is(err, context.DeadlineExceeded) {
+				return nil, err
+			}
+			probes = append(probes, casebuilder.FileProbe{
+				FileID: assessment.File.ID,
+				Outcome: controller.UncollectedMediaProbe(
+					controller.MediaProbeCollectionLimit,
+				),
+			})
+			continue
 		}
 		path, ok := paths[assessment.File.ID]
 		if !ok {
 			return nil, fmt.Errorf("candidate file %q has no local path", assessment.File.ID)
 		}
-		evidence, err := inspector.dependencies.Probes.Probe(ctx, controller.MediaProbeTarget{
+		outcome, err := inspector.dependencies.Probes.Probe(collectionContext, controller.MediaProbeTarget{
 			AbsolutePath: path,
 			Fingerprint:  assessment.File.Fingerprint,
 		})
 		if err != nil {
+			if callerErr := callerContext.Err(); callerErr != nil {
+				return nil, callerErr
+			}
+			if errors.Is(collectionContext.Err(), context.DeadlineExceeded) {
+				probes = append(probes, casebuilder.FileProbe{
+					FileID: assessment.File.ID,
+					Outcome: controller.UncollectedMediaProbe(
+						controller.MediaProbeCollectionLimit,
+					),
+				})
+				continue
+			}
 			return nil, fmt.Errorf("probe candidate file %q: %w", assessment.File.ID, err)
 		}
 		probes = append(probes, casebuilder.FileProbe{
-			FileID: assessment.File.ID, Evidence: evidence,
+			FileID: assessment.File.ID, Outcome: outcome,
 		})
 	}
 	return probes, nil

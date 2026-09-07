@@ -229,6 +229,83 @@ func TestInspectHonorsCancellationBeforeReading(t *testing.T) {
 	}
 }
 
+func TestNewRejectsMissingCollectionTimeout(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	dependencies := fixture.dependencies()
+	dependencies.CollectionTimeout = 0
+	if _, err := newInspector(dependencies, successfulTestAssembler); err == nil ||
+		!strings.Contains(err.Error(), "collection timeout") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestInspectRetainsProbeFailuresAndEvidenceOnlyFiles(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	extra := inventoryFile("file:notes", "README.txt", 100, 12, 2)
+	fixture.files.inventory.Files = append(fixture.files.inventory.Files, extra)
+	fixture.files.inventory.Paths = append(fixture.files.inventory.Paths, controller.FilePathMapping{
+		FileID: extra.ID, AbsolutePath: "/downloads/Example_Movie/README.txt",
+	})
+	fixture.probes.outcome = controller.FailedMediaProbe(
+		controller.MediaProbeUnsupportedFormat,
+	)
+	var observed casebuilder.Observation
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		observed = observation
+		return casebuilder.Assembly{}, nil
+	})
+	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+		t.Fatal(err)
+	}
+	if len(observed.Probes) != 3 ||
+		observed.Probes[0].Outcome.Status != controller.MediaProbeFailed ||
+		observed.Probes[1].Outcome.Status != controller.MediaProbeFailed ||
+		observed.Probes[2].Outcome.Status != controller.MediaProbeNotCollected ||
+		observed.Probes[2].Outcome.Reason != controller.MediaProbeNotCandidate {
+		t.Fatalf("probe outcomes = %#v", observed.Probes)
+	}
+	if len(fixture.probes.targets) != 2 {
+		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
+	}
+}
+
+func TestInspectRetainsCollectionDeadlineAsIncompleteEvidence(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.probes.waitForCancellation = true
+	dependencies := fixture.dependencies()
+	dependencies.CollectionTimeout = 20 * time.Millisecond
+	var observed casebuilder.Observation
+	inspector := newTestInspector(t, dependencies, func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		observed = observation
+		return casebuilder.Assembly{}, nil
+	})
+	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+		t.Fatal(err)
+	}
+	if len(observed.Probes) != 2 {
+		t.Fatalf("probe outcomes = %#v", observed.Probes)
+	}
+	for _, probe := range observed.Probes {
+		if probe.Outcome.Status != controller.MediaProbeNotCollected ||
+			probe.Outcome.Reason != controller.MediaProbeCollectionLimit {
+			t.Fatalf("probe outcome = %#v", probe)
+		}
+	}
+	if len(fixture.probes.targets) != 1 {
+		t.Fatalf("worker probe targets = %#v", fixture.probes.targets)
+	}
+}
+
 type inspectionTestFixture struct {
 	clock         *fakeClock
 	radarr        *fakeRadarr
@@ -267,7 +344,7 @@ func inspectionFixture() inspectionTestFixture {
 func (fixture inspectionTestFixture) dependencies() Dependencies {
 	return Dependencies{
 		Clock: fixture.clock, Radarr: fixture.radarr, Transmission: fixture.transmission,
-		Files: fixture.files, Probes: fixture.probes,
+		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
 }
 
@@ -393,15 +470,27 @@ func (reader *fakeFiles) Inventory(
 }
 
 type fakeProbes struct {
-	evidence controller.ProbeEvidence
-	err      error
-	targets  []controller.MediaProbeTarget
+	evidence            controller.ProbeEvidence
+	outcome             controller.MediaProbeOutcome
+	err                 error
+	waitForCancellation bool
+	targets             []controller.MediaProbeTarget
 }
 
 func (reader *fakeProbes) Probe(
-	_ context.Context,
+	ctx context.Context,
 	target controller.MediaProbeTarget,
-) (controller.ProbeEvidence, error) {
+) (controller.MediaProbeOutcome, error) {
 	reader.targets = append(reader.targets, target)
-	return reader.evidence, reader.err
+	if reader.waitForCancellation {
+		<-ctx.Done()
+		return controller.MediaProbeOutcome{}, ctx.Err()
+	}
+	if reader.err != nil {
+		return controller.MediaProbeOutcome{}, reader.err
+	}
+	if reader.outcome.Status != "" {
+		return reader.outcome, nil
+	}
+	return controller.SuccessfulMediaProbe(reader.evidence), nil
 }

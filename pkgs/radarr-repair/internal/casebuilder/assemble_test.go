@@ -92,7 +92,7 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 			mutate: func(observation *Observation) {
 				observation.Probes = observation.Probes[:1]
 			},
-			want: "has no successful probe",
+			want: "has no probe outcome",
 		},
 		{
 			name: "extra probe",
@@ -101,7 +101,7 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 					FileID: "file:3333333333333333333333333333333333333333333333333333333333333333",
 				})
 			},
-			want: "does not exactly match",
+			want: "do not exactly match",
 		},
 		{
 			name: "duplicate inventory ID",
@@ -109,13 +109,6 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 				observation.Inventory.Files[1].ID = testFileOneID
 			},
 			want: "duplicate file ID",
-		},
-		{
-			name: "infeasible container",
-			mutate: func(observation *Observation) {
-				observation.Probes[1].Evidence.Format.Names = []string{"mov"}
-			},
-			want: "not eligible for deterministic joining",
 		},
 		{
 			name: "history movie mismatch",
@@ -141,7 +134,7 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 		{
 			name: "incomplete stream disposition",
 			mutate: func(observation *Observation) {
-				observation.Probes[0].Evidence.Streams[0].Disposition.Forced = nil
+				observation.Probes[0].Outcome.Evidence.Streams[0].Disposition.Forced = nil
 			},
 			want: "disposition is incomplete",
 		},
@@ -181,6 +174,79 @@ func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestAssembleWithholdsJoinForIncompleteProbeEvidence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		outcome controller.MediaProbeOutcome
+	}{
+		{
+			name:    "failed",
+			outcome: controller.FailedMediaProbe(controller.MediaProbeUnsupportedFormat),
+		},
+		{
+			name: "collection limit",
+			outcome: controller.UncollectedMediaProbe(
+				controller.MediaProbeCollectionLimit,
+			),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			observation.Probes[1].Outcome = test.outcome
+			assembly, err := Assemble(observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(assembly.Request.Capabilities) != 0 {
+				t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+			}
+			if assembly.Request.Files[1].Probe.Status == contracts.Ok {
+				t.Fatalf("probe = %#v", assembly.Request.Files[1].Probe)
+			}
+		})
+	}
+}
+
+func TestAssembleRetainsEvidenceOnlyFiles(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	extra := testInventoryFile(
+		"file:3333333333333333333333333333333333333333333333333333333333333333",
+		"README.txt",
+		100,
+		2,
+	)
+	extra.TorrentFile = nil
+	observation.Inventory.Files = append(observation.Inventory.Files, extra)
+	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
+		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/README.txt",
+	})
+	observation.Probes = append(observation.Probes, FileProbe{
+		FileID: extra.ID,
+		Outcome: controller.UncollectedMediaProbe(
+			controller.MediaProbeNotCandidate,
+		),
+	})
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Files) != 3 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
+	}
+	file := assembly.Request.Files[2]
+	if file.Disposition != contracts.EvidenceOnly ||
+		file.DispositionReason == nil || *file.DispositionReason != contracts.Untracked ||
+		file.Probe.Status != contracts.NotProbed {
+		t.Fatalf("evidence-only file = %#v", file)
 	}
 }
 
@@ -289,8 +355,18 @@ func testObservation() Observation {
 		},
 		Inventory: controller.FileInventory{Files: files, Paths: paths},
 		Probes: []FileProbe{
-			{FileID: testFileOneID, Evidence: testProbe(1_000, 3_600_000)},
-			{FileID: testFileTwoID, Evidence: testProbe(2_000, 3_600_000)},
+			{
+				FileID: testFileOneID,
+				Outcome: controller.SuccessfulMediaProbe(
+					testProbe(1_000, 3_600_000),
+				),
+			},
+			{
+				FileID: testFileTwoID,
+				Outcome: controller.SuccessfulMediaProbe(
+					testProbe(2_000, 3_600_000),
+				),
+			},
 		},
 	}
 }

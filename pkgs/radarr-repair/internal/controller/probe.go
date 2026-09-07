@@ -3,7 +3,7 @@ package controller
 import "context"
 
 type MediaProbeReader interface {
-	Probe(context.Context, MediaProbeTarget) (ProbeEvidence, error)
+	Probe(context.Context, MediaProbeTarget) (MediaProbeOutcome, error)
 }
 
 // MediaProbeTarget retains the controller-local path alongside the fingerprint
@@ -11,6 +11,44 @@ type MediaProbeReader interface {
 type MediaProbeTarget struct {
 	AbsolutePath string
 	Fingerprint  FileFingerprint
+}
+
+type MediaProbeStatus string
+
+const (
+	MediaProbeSucceeded    MediaProbeStatus = "ok"
+	MediaProbeFailed       MediaProbeStatus = "failed"
+	MediaProbeNotCollected MediaProbeStatus = "not_probed"
+)
+
+type MediaProbeReason string
+
+const (
+	MediaProbeNotRegularFile    MediaProbeReason = "not_regular_file"
+	MediaProbeUnsupportedFormat MediaProbeReason = "unsupported_format"
+	MediaProbeTimeout           MediaProbeReason = "timeout"
+	MediaProbeError             MediaProbeReason = "probe_error"
+	MediaProbeInvalidOutput     MediaProbeReason = "invalid_output"
+	MediaProbeNotCandidate      MediaProbeReason = "not_probe_candidate"
+	MediaProbeCollectionLimit   MediaProbeReason = "collection_limit"
+)
+
+type MediaProbeOutcome struct {
+	Status   MediaProbeStatus
+	Evidence *ProbeEvidence
+	Reason   MediaProbeReason
+}
+
+func SuccessfulMediaProbe(evidence ProbeEvidence) MediaProbeOutcome {
+	return MediaProbeOutcome{Status: MediaProbeSucceeded, Evidence: &evidence}
+}
+
+func FailedMediaProbe(reason MediaProbeReason) MediaProbeOutcome {
+	return MediaProbeOutcome{Status: MediaProbeFailed, Reason: reason}
+}
+
+func UncollectedMediaProbe(reason MediaProbeReason) MediaProbeOutcome {
+	return MediaProbeOutcome{Status: MediaProbeNotCollected, Reason: reason}
 }
 
 type Rational struct {

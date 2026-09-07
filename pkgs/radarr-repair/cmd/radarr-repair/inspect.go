@@ -26,19 +26,21 @@ import (
 )
 
 const (
-	defaultInspectTimeout = 30 * time.Second
-	maximumAPIKeySize     = 4 << 10
+	defaultInspectTimeout    = 30 * time.Second
+	defaultCollectionTimeout = 2 * time.Minute
+	maximumAPIKeySize        = 4 << 10
 )
 
 type inspectConfig struct {
-	RadarrURL        string
-	RadarrAPIKeyFile string
-	TransmissionURL  string
-	WorkerSocket     string
-	WorkerRoots      map[string]string
-	Output           string
-	QueueID          int64
-	Timeout          time.Duration
+	RadarrURL         string
+	RadarrAPIKeyFile  string
+	TransmissionURL   string
+	WorkerSocket      string
+	WorkerRoots       map[string]string
+	Output            string
+	QueueID           int64
+	Timeout           time.Duration
+	CollectionTimeout time.Duration
 }
 
 type inspectFunc func(context.Context, inspectConfig) (casebuilder.Assembly, error)
@@ -65,6 +67,11 @@ func (app application) runInspect(
 	output := flags.String("output", "", "new output file, or - for standard output")
 	queueID := flags.Int64("queue-id", 0, "specific Radarr queue record")
 	timeout := flags.Duration("timeout", defaultInspectTimeout, "per-request timeout")
+	collectionTimeout := flags.Duration(
+		"collection-timeout",
+		defaultCollectionTimeout,
+		"total inspection evidence-collection timeout",
+	)
 	workerRoots := mediaroot.NewMappings()
 	flags.Var(workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
 	if err := flags.Parse(arguments); err != nil {
@@ -75,14 +82,15 @@ func (app application) runInspect(
 		return fmt.Errorf("inspect accepts no positional arguments")
 	}
 	config := inspectConfig{
-		RadarrURL:        *radarrURL,
-		RadarrAPIKeyFile: *radarrAPIKeyFile,
-		TransmissionURL:  *transmissionURL,
-		WorkerSocket:     *workerSocket,
-		WorkerRoots:      workerRoots.Paths(),
-		Output:           *output,
-		QueueID:          *queueID,
-		Timeout:          *timeout,
+		RadarrURL:         *radarrURL,
+		RadarrAPIKeyFile:  *radarrAPIKeyFile,
+		TransmissionURL:   *transmissionURL,
+		WorkerSocket:      *workerSocket,
+		WorkerRoots:       workerRoots.Paths(),
+		Output:            *output,
+		QueueID:           *queueID,
+		Timeout:           *timeout,
+		CollectionTimeout: *collectionTimeout,
 	}
 	if err := validateInspectConfig(config); err != nil {
 		return err
@@ -131,6 +139,9 @@ func validateInspectConfig(config inspectConfig) error {
 	}
 	if config.Timeout <= 0 {
 		return fmt.Errorf("request timeout must be positive")
+	}
+	if config.CollectionTimeout <= 0 {
+		return fmt.Errorf("collection timeout must be positive")
 	}
 	return nil
 }
@@ -190,11 +201,12 @@ func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembl
 	}
 	defer probeClient.Close()
 	inspector, err := inspection.New(inspection.Dependencies{
-		Clock:        wallClock{},
-		Radarr:       radarrClient,
-		Transmission: transmissionClient,
-		Files:        filesource.New(),
-		Probes:       probeClient,
+		Clock:             wallClock{},
+		Radarr:            radarrClient,
+		Transmission:      transmissionClient,
+		Files:             filesource.New(),
+		Probes:            probeClient,
+		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("configure inspector: %w", err)

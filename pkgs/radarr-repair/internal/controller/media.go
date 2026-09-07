@@ -8,10 +8,11 @@ import (
 type MediaExtension string
 
 const (
-	MediaExtensionTS  MediaExtension = "ts"
-	MediaExtensionMP4 MediaExtension = "mp4"
-	MediaExtensionMKV MediaExtension = "mkv"
-	MediaExtensionAVI MediaExtension = "avi"
+	MediaExtensionTS   MediaExtension = "ts"
+	MediaExtensionM2TS MediaExtension = "m2ts"
+	MediaExtensionMP4  MediaExtension = "mp4"
+	MediaExtensionMKV  MediaExtension = "mkv"
+	MediaExtensionAVI  MediaExtension = "avi"
 )
 
 type MediaFileDisposition string
@@ -55,6 +56,10 @@ func classifyMediaFile(file InventoryFile) MediaFileAssessment {
 		File:        file,
 		Disposition: MediaFileEvidenceOnly,
 	}
+	extension, supported := supportedMediaExtension(file.PathComponents)
+	if supported {
+		assessment.Extension = extension
+	}
 	if file.TorrentFile == nil {
 		assessment.ExclusionReason = MediaFileUntracked
 		return assessment
@@ -72,13 +77,11 @@ func classifyMediaFile(file InventoryFile) MediaFileAssessment {
 		return assessment
 	}
 
-	extension, supported := supportedMediaExtension(file.PathComponents)
 	if !supported {
 		assessment.ExclusionReason = MediaFileUnsupportedExtension
 		return assessment
 	}
 
-	assessment.Extension = extension
 	assessment.Disposition = MediaFileProbeCandidate
 	return assessment
 }
@@ -93,6 +96,8 @@ func supportedMediaExtension(pathComponents []string) (MediaExtension, bool) {
 	switch strings.ToLower(path.Ext(pathComponents[len(pathComponents)-1])) {
 	case ".ts":
 		return MediaExtensionTS, true
+	case ".m2ts":
+		return MediaExtensionM2TS, true
 	case ".mp4":
 		return MediaExtensionMP4, true
 	case ".mkv":

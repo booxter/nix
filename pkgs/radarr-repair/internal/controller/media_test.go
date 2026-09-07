@@ -14,6 +14,7 @@ func TestClassifyMediaFilesAcceptsSupportedWantedFiles(t *testing.T) {
 		extension MediaExtension
 	}{
 		{name: "transport stream", path: []string{"Movie-part1.ts"}, extension: MediaExtensionTS},
+		{name: "Blu-ray transport stream", path: []string{"BDMV", "STREAM", "00001.m2ts"}, extension: MediaExtensionM2TS},
 		{name: "MP4 case insensitive", path: []string{"Movie-part2.MP4"}, extension: MediaExtensionMP4},
 		{name: "Matroska", path: []string{"Movie-part3.mkv"}, extension: MediaExtensionMKV},
 		{name: "AVI", path: []string{"Movie-part4.avi"}, extension: MediaExtensionAVI},
@@ -45,30 +46,31 @@ func TestClassifyMediaFilesRetainsExcludedFilesAsEvidence(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		mutate func(*InventoryFile)
-		want   MediaFileExclusionReason
+		name          string
+		mutate        func(*InventoryFile)
+		want          MediaFileExclusionReason
+		wantExtension MediaExtension
 	}{
 		{
 			name: "untracked",
 			mutate: func(file *InventoryFile) {
 				file.TorrentFile = nil
 			},
-			want: MediaFileUntracked,
+			want: MediaFileUntracked, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "unwanted",
 			mutate: func(file *InventoryFile) {
 				file.TorrentFile.Wanted = false
 			},
-			want: MediaFileUnwanted,
+			want: MediaFileUnwanted, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "incomplete",
 			mutate: func(file *InventoryFile) {
 				file.TorrentFile.BytesCompleted--
 			},
-			want: MediaFileIncomplete,
+			want: MediaFileIncomplete, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "empty",
@@ -77,7 +79,7 @@ func TestClassifyMediaFilesRetainsExcludedFilesAsEvidence(t *testing.T) {
 				file.TorrentFile.LengthBytes = 0
 				file.TorrentFile.BytesCompleted = 0
 			},
-			want: MediaFileEmpty,
+			want: MediaFileEmpty, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "Radarr extension outside repair v1",
@@ -110,8 +112,8 @@ func TestClassifyMediaFilesRetainsExcludedFilesAsEvidence(t *testing.T) {
 			if assessment.ExclusionReason != test.want {
 				t.Fatalf("exclusion reason = %q, want %q", assessment.ExclusionReason, test.want)
 			}
-			if assessment.Extension != "" {
-				t.Fatalf("extension = %q", assessment.Extension)
+			if assessment.Extension != test.wantExtension {
+				t.Fatalf("extension = %q, want %q", assessment.Extension, test.wantExtension)
 			}
 			if !reflect.DeepEqual(assessment.File, file) {
 				t.Fatalf("file changed: %#v", assessment.File)

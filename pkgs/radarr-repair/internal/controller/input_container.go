@@ -108,6 +108,10 @@ func containerForExtension(extension MediaExtension) (InputContainer, bool) {
 	switch extension {
 	case MediaExtensionTS:
 		return InputContainerMPEGTS, true
+	case MediaExtensionM2TS:
+		// M2TS files are probed as evidence, but remain unavailable to joins until
+		// raw-disc streams can be excluded by the multipart grouping policy.
+		return "", false
 	case MediaExtensionMP4:
 		return InputContainerMP4, true
 	case MediaExtensionMKV:

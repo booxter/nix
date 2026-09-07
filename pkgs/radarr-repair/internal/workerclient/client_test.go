@@ -49,12 +49,13 @@ func TestClientProbesThroughUnixSocket(t *testing.T) {
 		},
 	}
 
-	evidence, err := client.Probe(context.Background(), target)
+	outcome, err := client.Probe(context.Background(), target)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(evidence, wantEvidence) {
-		t.Fatalf("evidence = %#v, want %#v", evidence, wantEvidence)
+	if outcome.Status != controller.MediaProbeSucceeded ||
+		outcome.Evidence == nil || !reflect.DeepEqual(*outcome.Evidence, wantEvidence) {
+		t.Fatalf("outcome = %#v, want evidence %#v", outcome, wantEvidence)
 	}
 	probeRequest := <-requests
 	if probeRequest.RootID != "root:movies" ||
@@ -62,6 +63,49 @@ func TestClientProbesThroughUnixSocket(t *testing.T) {
 		probeRequest.ExpectedFingerprint != target.Fingerprint.Fingerprint() ||
 		probeRequest.RequestID != "request:1" {
 		t.Fatalf("request = %#v", probeRequest)
+	}
+}
+
+func TestClientRetainsTypedMediaProbeFailures(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		workerReason workercontracts.Reason
+		wantReason   controller.MediaProbeReason
+	}{
+		{workercontracts.NotRegularFile, controller.MediaProbeNotRegularFile},
+		{workercontracts.UnsupportedFormat, controller.MediaProbeUnsupportedFormat},
+		{workercontracts.Timeout, controller.MediaProbeTimeout},
+		{workercontracts.ProbeError, controller.MediaProbeError},
+		{workercontracts.InvalidOutput, controller.MediaProbeInvalidOutput},
+	}
+	for _, test := range tests {
+		t.Run(string(test.workerReason), func(t *testing.T) {
+			t.Parallel()
+			socketPath := serveUnix(t, http.HandlerFunc(func(
+				writer http.ResponseWriter,
+				request *http.Request,
+			) {
+				probeRequest, err := readProbeRequest(request)
+				if err != nil {
+					http.Error(writer, "invalid request", http.StatusBadRequest)
+					return
+				}
+				writeProbeResponse(writer, workerprobe.FailureResponse(
+					probeRequest.RequestID,
+					test.workerReason,
+				))
+			}))
+			client := testClient(t, socketPath, testRoots(), time.Second)
+			outcome, err := client.Probe(context.Background(), testTarget())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if outcome.Status != controller.MediaProbeFailed ||
+				outcome.Reason != test.wantReason || outcome.Evidence != nil {
+				t.Fatalf("outcome = %#v", outcome)
+			}
+		})
 	}
 }
 

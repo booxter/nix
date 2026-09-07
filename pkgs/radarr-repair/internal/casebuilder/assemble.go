@@ -16,8 +16,8 @@ import (
 const opaqueIDDomain = "radarr-repair-opaque-id-v1\x00"
 
 type FileProbe struct {
-	FileID   controller.FileID
-	Evidence controller.ProbeEvidence
+	FileID  controller.FileID
+	Outcome controller.MediaProbeOutcome
 }
 
 type Observation struct {
@@ -73,42 +73,44 @@ func Assemble(observation Observation) (Assembly, error) {
 	assessments := controller.ClassifyMediaFiles(observation.Inventory)
 	parts := make([]controller.JoinPartEvidence, 0, len(assessments))
 	files := make([]contracts.FileElement, 0, len(assessments))
-	eligibleFiles := make(map[controller.FileID]struct{}, len(assessments))
 	for _, assessment := range assessments {
-		if !assessment.ProbeCandidate() {
-			continue
-		}
 		file := assessment.File
 		if _, ok := paths[file.ID]; !ok {
-			return Assembly{}, fmt.Errorf("candidate file %q has no local path", file.ID)
+			return Assembly{}, fmt.Errorf("inventory file %q has no local path", file.ID)
 		}
-		probe, ok := probes[file.ID]
+		outcome, ok := probes[file.ID]
 		if !ok {
-			return Assembly{}, fmt.Errorf("candidate file %q has no successful probe", file.ID)
+			return Assembly{}, fmt.Errorf("inventory file %q has no probe outcome", file.ID)
 		}
-		eligibleFiles[file.ID] = struct{}{}
-		parts = append(parts, controller.JoinPartEvidence{
-			FileID: file.ID, Extension: assessment.Extension,
-			Fingerprint: file.Fingerprint, Probe: &probe,
-		})
-		mapped, mapErr := mapFile(file, assessment.Extension, probe)
+		if assessment.ProbeCandidate() {
+			part := controller.JoinPartEvidence{
+				FileID: file.ID, Extension: assessment.Extension,
+				Fingerprint: file.Fingerprint,
+			}
+			if outcome.Status == controller.MediaProbeSucceeded {
+				part.Probe = outcome.Evidence
+			}
+			parts = append(parts, part)
+		}
+		mapped, mapErr := mapFile(assessment, outcome)
 		if mapErr != nil {
 			return Assembly{}, fmt.Errorf("map file %q: %w", file.ID, mapErr)
 		}
 		files = append(files, mapped)
 	}
 	if len(probes) != len(files) {
-		return Assembly{}, fmt.Errorf("probe set does not exactly match candidate files")
+		return Assembly{}, fmt.Errorf("probe outcomes do not exactly match inventory files")
 	}
 
 	feasibility := controller.AssessJoinFeasibility(parts)
-	if !feasibility.Eligible() {
-		return Assembly{}, fmt.Errorf("candidate files are not eligible for deterministic joining")
+	capabilities := make([]contracts.CapabilityElement, 0, 1)
+	if feasibility.Eligible() {
+		capabilities = append(capabilities, mapCapability(feasibility))
 	}
 
 	downloadRef := opaqueID("download", strings.ToLower(observation.Correlation.Transmission.Hash))
 	radarrEvidence, err := mapRadarr(
-		observation, downloadRef, inventoryFiles, paths, eligibleFiles,
+		observation, downloadRef, inventoryFiles, paths,
 	)
 	if err != nil {
 		return Assembly{}, err
@@ -119,7 +121,7 @@ func Assemble(observation Observation) (Assembly, error) {
 		Radarr:        radarrEvidence,
 		Download:      mapDownload(observation.Correlation.Transmission, downloadRef),
 		Files:         files,
-		Capabilities:  []contracts.CapabilityElement{mapCapability(feasibility)},
+		Capabilities:  capabilities,
 	}
 	if err := rejectLocalValues(request, observation); err != nil {
 		return Assembly{}, err
@@ -176,8 +178,8 @@ func indexInventory(
 	return indexedFiles, paths, nil
 }
 
-func indexProbes(probes []FileProbe) (map[controller.FileID]controller.ProbeEvidence, error) {
-	indexed := make(map[controller.FileID]controller.ProbeEvidence, len(probes))
+func indexProbes(probes []FileProbe) (map[controller.FileID]controller.MediaProbeOutcome, error) {
+	indexed := make(map[controller.FileID]controller.MediaProbeOutcome, len(probes))
 	for _, probe := range probes {
 		if probe.FileID == "" {
 			return nil, fmt.Errorf("probe has no file ID")
@@ -185,7 +187,7 @@ func indexProbes(probes []FileProbe) (map[controller.FileID]controller.ProbeEvid
 		if _, duplicate := indexed[probe.FileID]; duplicate {
 			return nil, fmt.Errorf("duplicate probe for file ID %q", probe.FileID)
 		}
-		indexed[probe.FileID] = probe.Evidence
+		indexed[probe.FileID] = probe.Outcome
 	}
 	return indexed, nil
 }

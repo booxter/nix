@@ -14,7 +14,6 @@ func mapRadarr(
 	downloadRef string,
 	inventoryFiles map[controller.FileID]controller.InventoryFile,
 	paths map[controller.FileID]string,
-	eligibleFiles map[controller.FileID]struct{},
 ) (contracts.Radarr, error) {
 	failure := observation.Correlation.Radarr
 	statusMessages := make([]contracts.StatusMessageElement, len(failure.StatusMessages))
@@ -45,7 +44,7 @@ func mapRadarr(
 	}
 
 	imports, err := mapManualImports(
-		observation.ManualImports, inventoryFiles, paths, eligibleFiles,
+		observation.ManualImports, inventoryFiles, paths,
 	)
 	if err != nil {
 		return contracts.Radarr{}, err
@@ -80,7 +79,6 @@ func mapManualImports(
 	imports []controller.RadarrManualImport,
 	inventoryFiles map[controller.FileID]controller.InventoryFile,
 	paths map[controller.FileID]string,
-	eligibleFiles map[controller.FileID]struct{},
 ) ([]contracts.ManualImportElement, error) {
 	pathIDs := make(map[string]controller.FileID, len(paths))
 	for fileID, path := range paths {
@@ -95,9 +93,6 @@ func mapManualImports(
 		fileID, ok := pathIDs[item.Path]
 		if !ok {
 			return nil, fmt.Errorf("manual import path does not match the inventory")
-		}
-		if _, ok := eligibleFiles[fileID]; !ok {
-			return nil, fmt.Errorf("manual import refers to ineligible file %q", fileID)
 		}
 		if _, duplicate := seen[fileID]; duplicate {
 			return nil, fmt.Errorf("multiple manual imports refer to file %q", fileID)
