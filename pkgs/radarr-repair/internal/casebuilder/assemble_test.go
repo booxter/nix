@@ -149,7 +149,7 @@ func TestAssembleOffersJoinCandidatePool(t *testing.T) {
 		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
 	}
 	capability := assembly.Request.Capabilities[0]
-	if capability.Action != contracts.JoinPartsV1 {
+	if capability.Action != contracts.CapabilityActionJoinParts {
 		t.Fatalf("action = %q", capability.Action)
 	}
 	wantFileIDs := []string{string(testFileOneID), string(testFileTwoID)}

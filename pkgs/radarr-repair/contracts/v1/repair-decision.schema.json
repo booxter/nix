@@ -50,6 +50,42 @@
       ],
       "type": "object"
     },
+    "manualImportFile": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "manual_import_file_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "file_id",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
     "noRepair": {
       "additionalProperties": false,
       "properties": {
@@ -141,6 +177,9 @@
     },
     {
       "$ref": "#/$defs/joinParts"
+    },
+    {
+      "$ref": "#/$defs/manualImportFile"
     }
   ],
   "title": "Radarr repair decision version 1"

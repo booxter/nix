@@ -10,11 +10,11 @@ import (
 )
 
 type caseIdentity struct {
-	Capabilities  []CapabilityElement `json:"capabilities"`
-	Download      Download            `json:"download"`
-	Files         []FileElement       `json:"files"`
-	Radarr        Radarr              `json:"radarr"`
-	SchemaVersion SchemaVersion       `json:"schema_version"`
+	Capabilities  []Capability  `json:"capabilities"`
+	Download      Download      `json:"download"`
+	Files         []FileElement `json:"files"`
+	Radarr        Radarr        `json:"radarr"`
+	SchemaVersion SchemaVersion `json:"schema_version"`
 }
 
 func CalculateCaseID(repairCase RepairCaseV1) (string, error) {

@@ -1,0 +1,12 @@
+{
+  "action": "manual_import_file_v1",
+  "capability_id": "capability_manual_import_01",
+  "case_id": "sha256:f7a7c7297596ae1ba966810db665320b025ee59a184a6aaf65dc71cc1035769f",
+  "evidence_refs": [
+    "file_manual_01",
+    "evidence_manual_queue_01"
+  ],
+  "explanation": "The file is a complete feature matching the intended movie and has controller-owned import metadata.",
+  "file_id": "file_manual_01",
+  "schema_version": "radarr-repair/v1"
+}

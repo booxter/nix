@@ -42,7 +42,7 @@ JSON Schema cannot infer their meaning from prose.
 
 ## Decisions
 
-Version 1 offers two actions:
+Version 1 offers three actions:
 
 - `no_repair` records a bounded reason, missing-evidence categories, evidence
   references, and explanation.
@@ -50,6 +50,10 @@ Version 1 offers two actions:
   or more identifiers from its `candidate_file_ids` pool. The pool restricts
   which files the planner may reference; it does not assert that they belong
   together or carry aggregate join feasibility.
+- `manual_import_file_v1` selects one controller-advertised capability and
+  echoes its single file ID. The capability means the controller has already
+  bound every Radarr import field needed for that file; those fields are not
+  present in the decision.
 
 The planner cannot select an output path or name, container, executable, or
 command argument. A schema-valid join decision is still inert until the
@@ -60,6 +64,12 @@ execution policy.
 When `capabilities` is empty, `no_repair` is the only semantically valid
 decision. The controller will reject a schema-valid positive decision that does
 not reference a capability offered by the case.
+
+JSON Schema cannot compare the value of `file_id` in a decision with the value
+bound to its referenced capability in an earlier request. The controller must
+reject that mismatch during semantic validation. Closed decision objects still
+let the schema reject attempts to supply a path, movie ID, quality, languages,
+release group, import mode, or command parameters.
 
 New optional evidence requires a new protocol version because every object is
 closed to unknown properties. Existing versions remain immutable.

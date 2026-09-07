@@ -47,6 +47,14 @@ func DecodeDecision(data []byte) (RepairDecisionV1, error) {
 			return RepairDecisionV1{}, fmt.Errorf("decode join-parts decision: %w", err)
 		}
 		return RepairDecisionV1{Kind: ActionJoinParts, JoinParts: &decision}, nil
+	case ActionManualImportFile:
+		var decision ManualImportFileDecision
+		if err := decodeStrict(data, &decision); err != nil {
+			return RepairDecisionV1{}, fmt.Errorf("decode manual-import-file decision: %w", err)
+		}
+		return RepairDecisionV1{
+			Kind: ActionManualImportFile, ManualImportFile: &decision,
+		}, nil
 	default:
 		return RepairDecisionV1{}, fmt.Errorf("unsupported repair decision action %q", envelope.Action)
 	}

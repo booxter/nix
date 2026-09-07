@@ -17,12 +17,16 @@ let
         join_decision = {
           "$ref" = "repair-decision.schema.json#/$defs/joinParts";
         };
+        manual_import_file_decision = {
+          "$ref" = "repair-decision.schema.json#/$defs/manualImportFile";
+        };
         no_repair_decision = {
           "$ref" = "repair-decision.schema.json#/$defs/noRepair";
         };
       };
       required = [
         "join_decision"
+        "manual_import_file_decision"
         "no_repair_decision"
       ];
     }

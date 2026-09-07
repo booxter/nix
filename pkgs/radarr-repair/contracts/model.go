@@ -5,14 +5,19 @@ type RepairCaseV1 = RadarrRepairCaseVersion1
 type DecisionAction string
 
 const (
-	ActionNoRepair  DecisionAction = DecisionAction(NoRepair)
-	ActionJoinParts DecisionAction = DecisionAction(JoinPartsV1)
+	CapabilityActionJoinParts        CapabilityAction = "join_parts_v1"
+	CapabilityActionManualImportFile CapabilityAction = "manual_import_file_v1"
+
+	ActionNoRepair         DecisionAction = "no_repair"
+	ActionJoinParts        DecisionAction = "join_parts_v1"
+	ActionManualImportFile DecisionAction = "manual_import_file_v1"
 )
 
 type RepairDecisionV1 struct {
-	Kind      DecisionAction
-	NoRepair  *NoRepairDecision
-	JoinParts *JoinDecision
+	Kind             DecisionAction
+	NoRepair         *NoRepairDecision
+	JoinParts        *JoinDecision
+	ManualImportFile *ManualImportFileDecision
 }
 
 func (decision RepairDecisionV1) CaseID() string {
@@ -24,6 +29,10 @@ func (decision RepairDecisionV1) CaseID() string {
 	case ActionJoinParts:
 		if decision.JoinParts != nil {
 			return decision.JoinParts.CaseID
+		}
+	case ActionManualImportFile:
+		if decision.ManualImportFile != nil {
+			return decision.ManualImportFile.CaseID
 		}
 	}
 	return ""

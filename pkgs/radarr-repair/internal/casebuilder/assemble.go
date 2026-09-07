@@ -130,17 +130,17 @@ func Assemble(observation Observation) (Assembly, error) {
 	}, nil
 }
 
-func joinCapabilities(candidateFileIDs []string) []contracts.CapabilityElement {
-	capabilities := make([]contracts.CapabilityElement, 0, 1)
+func joinCapabilities(candidateFileIDs []string) []contracts.Capability {
+	capabilities := make([]contracts.Capability, 0, 1)
 	if len(candidateFileIDs) < 2 {
 		return capabilities
 	}
 
 	identity := make([]string, 1, len(candidateFileIDs)+1)
-	identity[0] = string(contracts.JoinPartsV1)
+	identity[0] = string(contracts.CapabilityActionJoinParts)
 	identity = append(identity, candidateFileIDs...)
-	capabilities = append(capabilities, contracts.CapabilityElement{
-		Action:           contracts.JoinPartsV1,
+	capabilities = append(capabilities, contracts.Capability{
+		Action:           contracts.CapabilityActionJoinParts,
 		CandidateFileIDS: clone(candidateFileIDs),
 		CapabilityID:     opaqueID("capability", identity...),
 	})

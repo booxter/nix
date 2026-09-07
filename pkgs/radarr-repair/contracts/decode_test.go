@@ -112,6 +112,19 @@ func TestGeneralizedRepairCaseExamples(t *testing.T) {
 	if len(episodic.Files) != 2 || len(episodic.Capabilities) != 0 {
 		t.Fatalf("episodic shape = %#v", episodic)
 	}
+
+	manualImportable, err := DecodeCase(readFixture(t, "v1/examples/repair-case-manual-importable.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(manualImportable.Capabilities) != 1 {
+		t.Fatalf("manual-import capabilities = %#v", manualImportable.Capabilities)
+	}
+	capability := manualImportable.Capabilities[0]
+	if capability.Action != CapabilityActionManualImportFile || capability.FileID == nil ||
+		*capability.FileID != "file_manual_01" {
+		t.Fatalf("manual-import capability = %#v", capability)
+	}
 }
 
 func TestRepairCaseRetainsLargeBoundedFileLists(t *testing.T) {
@@ -300,6 +313,7 @@ func TestDecisionExamplesDecodeToOneVariant(t *testing.T) {
 		kind DecisionAction
 	}{
 		{"v1/examples/repair-decision-join.json", ActionJoinParts},
+		{"v1/examples/repair-decision-manual-import.json", ActionManualImportFile},
 		{"v1/examples/repair-decision-no-repair.json", ActionNoRepair},
 	}
 	for _, test := range tests {
@@ -311,7 +325,17 @@ func TestDecisionExamplesDecodeToOneVariant(t *testing.T) {
 			if decision.Kind != test.kind {
 				t.Fatalf("decision kind = %q", decision.Kind)
 			}
-			if (decision.NoRepair == nil) == (decision.JoinParts == nil) {
+			populated := 0
+			for _, present := range []bool{
+				decision.NoRepair != nil,
+				decision.JoinParts != nil,
+				decision.ManualImportFile != nil,
+			} {
+				if present {
+					populated++
+				}
+			}
+			if populated != 1 {
 				t.Fatal("expected exactly one populated decision variant")
 			}
 			if decision.CaseID() == "" {

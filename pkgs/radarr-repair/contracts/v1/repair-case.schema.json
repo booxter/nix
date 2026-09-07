@@ -203,6 +203,26 @@
       ],
       "type": "object"
     },
+    "manualImportCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "manual_import_file_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "file_id": {
+          "$ref": "#/$defs/opaqueId"
+        }
+      },
+      "required": [
+        "capability_id",
+        "action",
+        "file_id"
+      ],
+      "type": "object"
+    },
     "manualImportRejection": {
       "additionalProperties": false,
       "properties": {
@@ -934,9 +954,16 @@
   "properties": {
     "capabilities": {
       "items": {
-        "$ref": "#/$defs/joinCapability"
+        "oneOf": [
+          {
+            "$ref": "#/$defs/joinCapability"
+          },
+          {
+            "$ref": "#/$defs/manualImportCapability"
+          }
+        ]
       },
-      "maxItems": 16,
+      "maxItems": 129,
       "type": "array"
     },
     "case_id": {
