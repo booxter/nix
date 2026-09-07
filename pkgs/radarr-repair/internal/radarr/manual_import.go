@@ -17,6 +17,13 @@ const manualImportPath = starrRadarr.APIver + "/manualimport"
 
 var _ controller.RadarrManualImportReader = (*Client)(nil)
 
+type manualImportOutput struct {
+	starrRadarr.ManualImportOutput
+	// Starr omits this field even though Radarr returns it and requires it in
+	// the later ManualImport command.
+	IndexerFlags int64 `json:"indexerFlags"`
+}
+
 func (client *Client) ReadManualImports(
 	ctx context.Context,
 	query controller.RadarrManualImportQuery,
@@ -25,7 +32,7 @@ func (client *Client) ReadManualImports(
 		return nil, err
 	}
 
-	var response []*starrRadarr.ManualImportOutput
+	var response []*manualImportOutput
 	// Starr's ManualImportContext decodes one object, but Radarr's GET endpoint
 	// returns an array. Keep Starr's authenticated request path and decode that
 	// array into its typed response model directly.
@@ -86,7 +93,7 @@ func manualImportRequest(query controller.RadarrManualImportQuery) starr.Request
 }
 
 func mapManualImport(
-	item *starrRadarr.ManualImportOutput,
+	item *manualImportOutput,
 	query controller.RadarrManualImportQuery,
 ) (controller.RadarrManualImport, error) {
 	if item == nil {
@@ -97,6 +104,9 @@ func mapManualImport(
 	}
 	if item.RelativePath == "" || strings.ContainsRune(item.RelativePath, '\x00') {
 		return controller.RadarrManualImport{}, fmt.Errorf("relative path is invalid")
+	}
+	if strings.ContainsRune(item.FolderName, '\x00') {
+		return controller.RadarrManualImport{}, fmt.Errorf("folder name is invalid")
 	}
 	if item.Size < 0 {
 		return controller.RadarrManualImport{}, fmt.Errorf("size must not be negative")
@@ -115,12 +125,12 @@ func mapManualImport(
 		return controller.RadarrManualImport{}, fmt.Errorf("download ID does not match request")
 	}
 
-	languages := make([]string, len(item.Languages))
+	languages := make([]controller.RadarrLanguage, len(item.Languages))
 	for index, language := range item.Languages {
 		if language == nil || strings.TrimSpace(language.Name) == "" {
 			return controller.RadarrManualImport{}, fmt.Errorf("language %d is invalid", index)
 		}
-		languages[index] = language.Name
+		languages[index] = controller.RadarrLanguage{ID: language.ID, Name: language.Name}
 	}
 
 	rejections := make([]controller.RadarrManualImportRejection, len(item.Rejections))
@@ -143,21 +153,36 @@ func mapManualImport(
 	result := controller.RadarrManualImport{
 		Path:         item.Path,
 		RelativePath: item.RelativePath,
+		FolderName:   item.FolderName,
 		SizeBytes:    item.Size,
+		MovieID:      query.MovieID,
+		DownloadID:   query.DownloadID,
 		Languages:    languages,
+		ReleaseGroup: item.ReleaseGroup,
+		IndexerFlags: item.IndexerFlags,
 		Rejections:   rejections,
 	}
 	if item.Quality != nil && item.Quality.Quality != nil &&
 		strings.TrimSpace(item.Quality.Quality.Name) != "" {
-		quality := item.Quality.Quality.Name
-		result.Quality = &quality
+		quality := item.Quality.Quality
+		result.Quality = &controller.RadarrQualityModel{
+			Quality: controller.RadarrQuality{
+				ID: quality.ID, Name: quality.Name, Source: quality.Source,
+				Resolution: quality.Resolution, Modifier: quality.Modifier,
+			},
+		}
+		if item.Quality.Revision != nil {
+			result.Quality.Revision = &controller.RadarrQualityRevision{
+				Version:  item.Quality.Revision.Version,
+				Real:     item.Quality.Revision.Real,
+				IsRepack: item.Quality.Revision.IsRepack,
+			}
+		}
 	}
 	if item.ReleaseGroup != "" {
 		if strings.TrimSpace(item.ReleaseGroup) == "" {
 			return controller.RadarrManualImport{}, fmt.Errorf("release group is blank")
 		}
-		releaseGroup := item.ReleaseGroup
-		result.ReleaseGroup = &releaseGroup
 	}
 
 	return result, nil

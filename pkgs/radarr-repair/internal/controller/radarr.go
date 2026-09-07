@@ -86,13 +86,41 @@ type RadarrHistoryEvent struct {
 	Languages   []string
 }
 
+type RadarrQuality struct {
+	ID         int64
+	Name       string
+	Source     string
+	Resolution int
+	Modifier   string
+}
+
+type RadarrQualityRevision struct {
+	Version  int64
+	Real     int64
+	IsRepack bool
+}
+
+type RadarrQualityModel struct {
+	Quality  RadarrQuality
+	Revision *RadarrQualityRevision
+}
+
+type RadarrLanguage struct {
+	ID   int64
+	Name string
+}
+
 type RadarrManualImport struct {
 	Path         string
 	RelativePath string
+	FolderName   string
 	SizeBytes    int64
-	Quality      *string
-	Languages    []string
-	ReleaseGroup *string
+	MovieID      int64
+	DownloadID   string
+	Quality      *RadarrQualityModel
+	Languages    []RadarrLanguage
+	ReleaseGroup string
+	IndexerFlags int64
 	Rejections   []RadarrManualImportRejection
 }
 

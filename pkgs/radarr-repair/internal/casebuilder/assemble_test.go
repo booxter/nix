@@ -482,8 +482,11 @@ func testObservation() Observation {
 	runtime := 120
 	originalTitle := "Example Original"
 	imdbID := "tt12345678"
-	quality := "Bluray-1080p"
-	releaseGroup := "GROUP"
+	qualityName := "Bluray-1080p"
+	quality := &controller.RadarrQualityModel{
+		Quality: controller.RadarrQuality{ID: 7, Name: qualityName},
+	}
+	languages := []controller.RadarrLanguage{{ID: 1, Name: "English"}}
 
 	files := []controller.InventoryFile{
 		testInventoryFile(testFileOneID, "CD1.mkv", 1_000, 0),
@@ -551,7 +554,7 @@ func testObservation() Observation {
 			EventType:   "grabbed",
 			OccurredAt:  observedAt.Add(-3 * time.Hour),
 			SourceTitle: "Example.Movie.2024.1080p.BluRay-GROUP",
-			Quality:     &quality,
+			Quality:     &qualityName,
 			Languages:   []string{"English"},
 		}},
 		ManualImports: []controller.RadarrManualImport{
@@ -559,9 +562,11 @@ func testObservation() Observation {
 				Path:         paths[0].AbsolutePath,
 				RelativePath: "CD1.mkv",
 				SizeBytes:    1_000,
-				Quality:      &quality,
-				Languages:    []string{"English"},
-				ReleaseGroup: &releaseGroup,
+				MovieID:      movieID,
+				DownloadID:   strings.ToUpper(testDownloadHash),
+				Quality:      quality,
+				Languages:    languages,
+				ReleaseGroup: "GROUP",
 				Rejections: []controller.RadarrManualImportRejection{{
 					Type: "permanent", Reason: "File is suspected multi-part file, Radarr doesn't support this",
 				}},
@@ -570,9 +575,11 @@ func testObservation() Observation {
 				Path:         paths[1].AbsolutePath,
 				RelativePath: "CD2.mkv",
 				SizeBytes:    2_000,
-				Quality:      &quality,
-				Languages:    []string{"English"},
-				ReleaseGroup: &releaseGroup,
+				MovieID:      movieID,
+				DownloadID:   strings.ToUpper(testDownloadHash),
+				Quality:      quality,
+				Languages:    languages,
+				ReleaseGroup: "GROUP",
 				Rejections: []controller.RadarrManualImportRejection{{
 					Type: "permanent", Reason: "File is suspected multi-part file, Radarr doesn't support this",
 				}},

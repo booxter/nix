@@ -49,16 +49,26 @@ func TestReadManualImports(t *testing.T) {
 	first := imports[0]
 	if first.Path != "/downloads/Example.Movie.2026/Example.Movie.2026.CD1.mkv" ||
 		first.RelativePath != "Example.Movie.2026.CD1.mkv" ||
-		first.SizeBytes != 2_000_000_000 || first.Quality == nil ||
-		*first.Quality != "Bluray-1080p" || first.ReleaseGroup == nil ||
-		*first.ReleaseGroup != "GROUP" ||
-		!reflect.DeepEqual(first.Languages, []string{"English"}) ||
+		first.FolderName != "Example.Movie.2026.1080p.BluRay-GROUP" ||
+		first.SizeBytes != 2_000_000_000 || first.MovieID != 42 ||
+		first.DownloadID != testHistoryDownloadID || first.ReleaseGroup != "GROUP" ||
+		first.IndexerFlags != 4 ||
+		!reflect.DeepEqual(first.Quality, &controller.RadarrQualityModel{
+			Quality: controller.RadarrQuality{
+				ID: 7, Name: "Bluray-1080p", Source: "bluray",
+				Resolution: 1080, Modifier: "none",
+			},
+			Revision: &controller.RadarrQualityRevision{
+				Version: 2, Real: 1, IsRepack: true,
+			},
+		}) ||
+		!reflect.DeepEqual(first.Languages, []controller.RadarrLanguage{{ID: 1, Name: "English"}}) ||
 		len(first.Rejections) != 1 || first.Rejections[0].Type != "permanent" ||
 		first.Rejections[0].Reason != "File is suspected multi-part file, Radarr doesn't support this" {
 		t.Fatalf("first manual import = %#v", first)
 	}
 	second := imports[1]
-	if second.Quality != nil || second.ReleaseGroup != nil || second.Languages == nil ||
+	if second.Quality != nil || second.ReleaseGroup != "" || second.Languages == nil ||
 		len(second.Languages) != 0 || len(second.Rejections) != 1 ||
 		second.Rejections[0].Type != "futureRejectionType" {
 		t.Fatalf("nullable/future fields = %#v", second)

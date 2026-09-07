@@ -5,7 +5,7 @@
     "downloadId": "ABCDEF0123456789",
     "folderName": "Example.Movie.2026.1080p.BluRay-GROUP",
     "id": 1001,
-    "indexerFlags": 0,
+    "indexerFlags": 4,
     "languages": [
       {
         "id": 1,
@@ -21,7 +21,15 @@
     "quality": {
       "quality": {
         "id": 7,
-        "name": "Bluray-1080p"
+        "modifier": "none",
+        "name": "Bluray-1080p",
+        "resolution": 1080,
+        "source": "bluray"
+      },
+      "revision": {
+        "isRepack": true,
+        "real": 1,
+        "version": 2
       }
     },
     "rejections": [

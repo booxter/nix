@@ -121,13 +121,35 @@ func mapManualImports(
 		}
 		mapped[index] = contracts.ManualImportElement{
 			FileID:       string(fileID),
-			Quality:      item.Quality,
-			Languages:    clone(item.Languages),
-			ReleaseGroup: item.ReleaseGroup,
+			Quality:      manualImportQualityName(item.Quality),
+			Languages:    manualImportLanguageNames(item.Languages),
+			ReleaseGroup: optionalText(item.ReleaseGroup),
 			Rejections:   rejections,
 		}
 	}
 	return mapped, nil
+}
+
+func manualImportQualityName(quality *controller.RadarrQualityModel) *string {
+	if quality == nil {
+		return nil
+	}
+	return &quality.Quality.Name
+}
+
+func manualImportLanguageNames(languages []controller.RadarrLanguage) []string {
+	names := make([]string, len(languages))
+	for index, language := range languages {
+		names[index] = language.Name
+	}
+	return names
+}
+
+func optionalText(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 func mapRejectionType(value controller.RadarrManualImportRejectionType) contracts.Type {
