@@ -3,6 +3,7 @@
   ffmpeg,
   goModels,
   lib,
+  makeWrapper,
   radarr,
 }:
 buildGoModule {
@@ -32,7 +33,17 @@ buildGoModule {
     cp ${goModels}/worker-models.gen.go worker/contracts/models.gen.go
   '';
 
-  subPackages = [ "cmd/radarr-repair" ];
+  nativeBuildInputs = [ makeWrapper ];
+
+  subPackages = [
+    "cmd/radarr-repair"
+    "cmd/radarr-repair-worker"
+  ];
+
+  postInstall = ''
+    wrapProgram "$out/bin/radarr-repair-worker" \
+      --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg "ffprobe"}"}
+  '';
 
   preCheck = ''
     grep -Fq ${lib.escapeShellArg "File is suspected multi-part file, Radarr doesn't support this"} ${radarr.src}/src/NzbDrone.Core/MediaFiles/MovieImport/Specifications/NotMultiPartSpecification.cs
@@ -49,13 +60,12 @@ buildGoModule {
     runHook postCheck
   '';
 
-  __darwinAllowLocalNetworking = true;
-
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
     "$out/bin/radarr-repair" validate-case contracts/v1/examples/repair-case-joinable.json
     "$out/bin/radarr-repair" validate-decision contracts/v1/examples/repair-decision-join.json
+    "$out/bin/radarr-repair-worker" -h >/dev/null
     runHook postInstallCheck
   '';
 
@@ -63,6 +73,6 @@ buildGoModule {
     description = "Deterministic controller for repairing failed Radarr imports";
     license = lib.licenses.mit;
     mainProgram = "radarr-repair";
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.linux;
   };
 }
