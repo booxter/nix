@@ -27,6 +27,12 @@ type Reader struct {
 	openRoot rootOpener
 }
 
+type inventoryScope struct {
+	rootPath   string
+	walkPath   string
+	singleFile bool
+}
+
 var _ controller.FileInventoryReader = (*Reader)(nil)
 
 func New() *Reader {
@@ -51,47 +57,55 @@ func (reader *Reader) Inventory(
 		return controller.FileInventory{}, err
 	}
 
-	manifest, err := buildManifest(correlation)
+	scope, targetSnapshot, err := resolveInventoryScope(correlation.DownloadRoot)
 	if err != nil {
 		return controller.FileInventory{}, err
 	}
-	outerRootInfo, err := os.Lstat(correlation.DownloadRoot)
+	manifest, err := buildManifest(correlation, scope.rootPath)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("inspect download root: %w", err)
+		return controller.FileInventory{}, err
+	}
+	if err := validateManifestScope(manifest, scope); err != nil {
+		return controller.FileInventory{}, err
+	}
+
+	outerRootInfo, err := os.Lstat(scope.rootPath)
+	if err != nil {
+		return controller.FileInventory{}, fmt.Errorf("inspect inventory root: %w", err)
 	}
 	if !outerRootInfo.IsDir() || outerRootInfo.Mode()&os.ModeSymlink != 0 {
-		return controller.FileInventory{}, fmt.Errorf("download root is not a regular directory")
+		return controller.FileInventory{}, fmt.Errorf("inventory root is not a regular directory")
 	}
 	outerRootSnapshot, err := snapshot(outerRootInfo)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("inspect download root metadata: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("inspect inventory root metadata: %w", err)
 	}
 
-	root, err := reader.openRoot(correlation.DownloadRoot)
+	root, err := reader.openRoot(scope.rootPath)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("open download root: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("open inventory root: %w", err)
 	}
 	defer func() {
 		_ = root.Close()
 	}()
 	openedRootInfo, err := root.Lstat(".")
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("inspect opened download root: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("inspect opened inventory root: %w", err)
 	}
 	if !openedRootInfo.IsDir() || openedRootInfo.Mode()&os.ModeSymlink != 0 {
-		return controller.FileInventory{}, fmt.Errorf("opened download root is not a regular directory")
+		return controller.FileInventory{}, fmt.Errorf("opened inventory root is not a regular directory")
 	}
 	openedRootSnapshot, err := snapshot(openedRootInfo)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("inspect opened download root metadata: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("inspect opened inventory root metadata: %w", err)
 	}
 	if !sameSnapshot(outerRootSnapshot, openedRootSnapshot) {
-		return controller.FileInventory{}, fmt.Errorf("download root changed while it was opened")
+		return controller.FileInventory{}, fmt.Errorf("inventory root changed while it was opened")
 	}
 
 	observed := make([]observedFile, 0, len(manifest))
 	snapshots := make([]entrySnapshot, 0, len(manifest)+1)
-	err = fs.WalkDir(root.FS(), ".", func(path string, entry fs.DirEntry, walkErr error) error {
+	err = fs.WalkDir(root.FS(), scope.walkPath, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -133,22 +147,64 @@ func (reader *Reader) Inventory(
 	if err := recheckSnapshots(ctx, root, snapshots); err != nil {
 		return controller.FileInventory{}, err
 	}
-	outerRootInfo, err = os.Lstat(correlation.DownloadRoot)
+	outerRootInfo, err = os.Lstat(scope.rootPath)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("recheck download root: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("recheck inventory root: %w", err)
 	}
 	if !outerRootInfo.IsDir() || outerRootInfo.Mode()&os.ModeSymlink != 0 {
-		return controller.FileInventory{}, fmt.Errorf("download root changed type during inventory")
+		return controller.FileInventory{}, fmt.Errorf("inventory root changed type during inventory")
 	}
 	outerRootFinal, err := snapshot(outerRootInfo)
 	if err != nil {
-		return controller.FileInventory{}, fmt.Errorf("recheck download root metadata: %w", err)
+		return controller.FileInventory{}, fmt.Errorf("recheck inventory root metadata: %w", err)
 	}
 	if !sameSnapshot(outerRootSnapshot, outerRootFinal) {
-		return controller.FileInventory{}, fmt.Errorf("download root changed during inventory")
+		return controller.FileInventory{}, fmt.Errorf("inventory root changed during inventory")
+	}
+	targetInfo, err := os.Lstat(correlation.DownloadRoot)
+	if err != nil {
+		return controller.FileInventory{}, fmt.Errorf("recheck download target: %w", err)
+	}
+	targetFinal, err := snapshot(targetInfo)
+	if err != nil {
+		return controller.FileInventory{}, fmt.Errorf("recheck download target metadata: %w", err)
+	}
+	if targetInfo.Mode()&os.ModeSymlink != 0 || !sameSnapshot(targetSnapshot, targetFinal) {
+		return controller.FileInventory{}, fmt.Errorf("download target changed during inventory")
 	}
 
-	return assembleInventory(correlation, manifest, observed)
+	return assembleInventory(correlation, manifest, observed, scope.rootPath)
+}
+
+func resolveInventoryScope(downloadRoot string) (inventoryScope, controller.FileFingerprint, error) {
+	info, err := os.Lstat(downloadRoot)
+	if err != nil {
+		return inventoryScope{}, controller.FileFingerprint{}, fmt.Errorf("inspect download target: %w", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return inventoryScope{}, controller.FileFingerprint{}, fmt.Errorf(
+			"download target is not a regular file or directory",
+		)
+	}
+	targetSnapshot, err := snapshot(info)
+	if err != nil {
+		return inventoryScope{}, controller.FileFingerprint{}, fmt.Errorf(
+			"inspect download target metadata: %w",
+			err,
+		)
+	}
+	switch {
+	case info.IsDir():
+		return inventoryScope{rootPath: downloadRoot, walkPath: "."}, targetSnapshot, nil
+	case info.Mode().IsRegular():
+		return inventoryScope{
+			rootPath: filepath.Dir(downloadRoot), walkPath: filepath.Base(downloadRoot), singleFile: true,
+		}, targetSnapshot, nil
+	default:
+		return inventoryScope{}, controller.FileFingerprint{}, fmt.Errorf(
+			"download target is not a regular file or directory",
+		)
+	}
 }
 
 type manifestFile struct {
@@ -158,6 +214,7 @@ type manifestFile struct {
 
 func buildManifest(
 	correlation controller.DownloadCorrelation,
+	inventoryRoot string,
 ) (map[string]*manifestFile, error) {
 	manifest := make(map[string]*manifestFile, len(correlation.Transmission.Files))
 	seenIndices := make(map[int]struct{}, len(correlation.Transmission.Files))
@@ -170,7 +227,7 @@ func buildManifest(
 		}
 		seenIndices[file.Index] = struct{}{}
 
-		relative, err := manifestRelativePath(correlation, file.Name)
+		relative, err := manifestRelativePath(correlation, inventoryRoot, file.Name)
 		if err != nil {
 			return nil, fmt.Errorf("Transmission file %d: %w", file.Index, err)
 		}
@@ -182,8 +239,22 @@ func buildManifest(
 	return manifest, nil
 }
 
+func validateManifestScope(manifest map[string]*manifestFile, scope inventoryScope) error {
+	if !scope.singleFile {
+		return nil
+	}
+	if len(manifest) != 1 {
+		return fmt.Errorf("single-file download has %d Transmission files", len(manifest))
+	}
+	if _, exists := manifest[filepath.ToSlash(scope.walkPath)]; !exists {
+		return fmt.Errorf("Transmission manifest does not match single-file download")
+	}
+	return nil
+}
+
 func manifestRelativePath(
 	correlation controller.DownloadCorrelation,
+	inventoryRoot string,
 	name string,
 ) (string, error) {
 	if name == "" || strings.ContainsRune(name, '\x00') || filepath.IsAbs(name) {
@@ -194,7 +265,7 @@ func manifestRelativePath(
 		return "", fmt.Errorf("path is not canonical")
 	}
 	absolute := filepath.Join(correlation.Transmission.DownloadDirectory, nativeName)
-	relative, err := filepath.Rel(correlation.DownloadRoot, absolute)
+	relative, err := filepath.Rel(inventoryRoot, absolute)
 	if err != nil || relative == "." || filepath.IsAbs(relative) ||
 		relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("path is outside the download root")
@@ -314,6 +385,7 @@ func assembleInventory(
 	correlation controller.DownloadCorrelation,
 	manifest map[string]*manifestFile,
 	observed []observedFile,
+	inventoryRoot string,
 ) (controller.FileInventory, error) {
 	inventory := controller.FileInventory{
 		Files: make([]controller.InventoryFile, 0, len(observed)),
@@ -359,7 +431,7 @@ func assembleInventory(
 		})
 		inventory.Paths = append(inventory.Paths, controller.FilePathMapping{
 			FileID:       fileID,
-			AbsolutePath: filepath.Join(correlation.DownloadRoot, filepath.FromSlash(observedFile.path)),
+			AbsolutePath: filepath.Join(inventoryRoot, filepath.FromSlash(observedFile.path)),
 		})
 	}
 

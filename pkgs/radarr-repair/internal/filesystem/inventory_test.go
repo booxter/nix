@@ -74,6 +74,67 @@ func TestInventoryReconcilesRegularFiles(t *testing.T) {
 	}
 }
 
+func TestInventoryReconcilesSingleFileTorrent(t *testing.T) {
+	t.Parallel()
+
+	parent := t.TempDir()
+	name := "Single.Movie.mkv"
+	path := filepath.Join(parent, name)
+	if err := os.WriteFile(path, []byte("movie"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	correlation := controller.DownloadCorrelation{
+		DownloadRoot: path,
+		Transmission: controller.TransmissionTorrent{
+			Hash:              inventoryTorrentHash,
+			DownloadDirectory: parent,
+			Files: []controller.TransmissionFile{
+				{
+					Index:          0,
+					Name:           name,
+					LengthBytes:    5,
+					BytesCompleted: 5,
+					Wanted:         true,
+				},
+			},
+		},
+	}
+	inventory, err := New().Inventory(context.Background(), correlation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inventory.Files) != 1 || len(inventory.Paths) != 1 {
+		t.Fatalf("inventory = %#v", inventory)
+	}
+	if !reflect.DeepEqual(inventory.Files[0].PathComponents, []string{name}) ||
+		inventory.Files[0].TorrentFile == nil ||
+		inventory.Files[0].TorrentFile.Index != 0 ||
+		inventory.Paths[0].AbsolutePath != path {
+		t.Fatalf("inventory = %#v", inventory)
+	}
+}
+
+func TestInventoryRejectsMismatchedSingleFileManifest(t *testing.T) {
+	t.Parallel()
+
+	parent := t.TempDir()
+	path := filepath.Join(parent, "Single.Movie.mkv")
+	if err := os.WriteFile(path, []byte("movie"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	correlation := controller.DownloadCorrelation{
+		DownloadRoot: path,
+		Transmission: controller.TransmissionTorrent{
+			Hash:              inventoryTorrentHash,
+			DownloadDirectory: parent,
+			Files: []controller.TransmissionFile{
+				{Index: 0, Name: "Other.Movie.mkv", LengthBytes: 5, BytesCompleted: 5, Wanted: true},
+			},
+		},
+	}
+	assertInventoryError(t, New(), correlation, "manifest does not match single-file download")
+}
+
 func TestInventoryRequiresWantedFilesAndMatchingSizes(t *testing.T) {
 	t.Parallel()
 
@@ -216,7 +277,7 @@ func TestInventoryRejectsUnsafeFilesystemEntries(t *testing.T) {
 				1,
 			)
 		}
-		assertInventoryError(t, New(), correlation, "download root is not a regular directory")
+		assertInventoryError(t, New(), correlation, "download target is not a regular file or directory")
 	})
 }
 
