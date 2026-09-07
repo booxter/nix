@@ -1,7 +1,6 @@
 package workercontracts
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -34,12 +33,25 @@ func TestProbeRequestExampleDecodesAndRoundTrips(t *testing.T) {
 		t.Fatalf("request = %#v", request)
 	}
 
-	encoded, err := json.Marshal(request)
+	encoded, err := EncodeProbeRequest(request)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := DecodeProbeRequest(encoded); err != nil {
 		t.Fatalf("decode round trip: %v", err)
+	}
+}
+
+func TestEncodeProbeRequestValidatesGeneratedModel(t *testing.T) {
+	t.Parallel()
+
+	request, err := DecodeProbeRequest(readFixture(t, "v1/examples/probe-request.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.RootID = "INVALID ROOT"
+	if _, err := EncodeProbeRequest(request); err == nil {
+		t.Fatal("schema-invalid generated model was encoded")
 	}
 }
 

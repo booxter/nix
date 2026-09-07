@@ -3,7 +3,14 @@ package controller
 import "context"
 
 type MediaProbeReader interface {
-	Probe(context.Context, string) (ProbeEvidence, error)
+	Probe(context.Context, MediaProbeTarget) (ProbeEvidence, error)
+}
+
+// MediaProbeTarget retains the controller-local path alongside the fingerprint
+// captured during inventory. Adapters must not recalculate that fingerprint.
+type MediaProbeTarget struct {
+	AbsolutePath string
+	Fingerprint  FileFingerprint
 }
 
 type Rational struct {

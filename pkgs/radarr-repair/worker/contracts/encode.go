@@ -5,6 +5,22 @@ import (
 	"fmt"
 )
 
+func EncodeProbeRequest(request ProbeRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode probe request: %w", err)
+	}
+	if err := validateMessage(
+		data,
+		MaxProbeRequestBytes,
+		"probe request",
+		probeRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func EncodeProbeResponse(response ProbeResponseV1) ([]byte, error) {
 	var message any
 	switch response.Kind {

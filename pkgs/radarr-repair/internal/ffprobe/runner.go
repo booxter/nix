@@ -15,8 +15,6 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
-var _ controller.MediaProbeReader = (*Runner)(nil)
-
 type FailureKind string
 
 const (
