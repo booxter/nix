@@ -1,7 +1,6 @@
 package workercontracts
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -36,12 +35,7 @@ func TestProbeResponseExamplesDecodeAndRoundTrip(t *testing.T) {
 				}
 			}
 
-			var encoded []byte
-			if response.Success != nil {
-				encoded, err = json.Marshal(response.Success)
-			} else {
-				encoded, err = json.Marshal(response.Failure)
-			}
+			encoded, err := EncodeProbeResponse(response)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -49,6 +43,87 @@ func TestProbeResponseExamplesDecodeAndRoundTrip(t *testing.T) {
 				t.Fatalf("decode round trip: %v", err)
 			}
 		})
+	}
+}
+
+func TestEncodeProbeResponseRejectsInvalidEnvelope(t *testing.T) {
+	t.Parallel()
+
+	successResponse, err := DecodeProbeResponse(
+		readFixture(t, "v1/examples/probe-response-ok.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	failureResponse, err := DecodeProbeResponse(
+		readFixture(t, "v1/examples/probe-response-failed.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name     string
+		response ProbeResponseV1
+	}{
+		{name: "unknown kind"},
+		{name: "missing success", response: ProbeResponseV1{Kind: ProbeResponseSucceeded}},
+		{
+			name: "success with failure",
+			response: ProbeResponseV1{
+				Kind:    ProbeResponseSucceeded,
+				Success: successResponse.Success,
+				Failure: failureResponse.Failure,
+			},
+		},
+		{name: "missing failure", response: ProbeResponseV1{Kind: ProbeResponseFailed}},
+		{
+			name: "failure with success",
+			response: ProbeResponseV1{
+				Kind:    ProbeResponseFailed,
+				Success: successResponse.Success,
+				Failure: failureResponse.Failure,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			if _, err := EncodeProbeResponse(test.response); err == nil {
+				t.Fatal("invalid response envelope was encoded")
+			}
+		})
+	}
+}
+
+func TestEncodeProbeResponseValidatesGeneratedModel(t *testing.T) {
+	t.Parallel()
+
+	response, err := DecodeProbeResponse(
+		readFixture(t, "v1/examples/probe-response-failed.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Failure.Reason = Reason("not-a-contract-reason")
+	if _, err := EncodeProbeResponse(response); err == nil {
+		t.Fatal("schema-invalid generated model was encoded")
+	}
+}
+
+func TestEncodeProbeResponseRejectsOversizedModel(t *testing.T) {
+	t.Parallel()
+
+	response, err := DecodeProbeResponse(
+		readFixture(t, "v1/examples/probe-response-ok.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Success.Evidence.Format.Names = []string{
+		strings.Repeat("x", MaxProbeResponseBytes),
+	}
+	if _, err := EncodeProbeResponse(response); err == nil {
+		t.Fatal("oversized generated model was encoded")
 	}
 }
 
