@@ -35,7 +35,7 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 		t.Fatalf("assembly = %#v, want %#v", assembly, wantAssembly)
 	}
 	if !observed.ObservedAt.Equal(fixture.clock.now) ||
-		!reflect.DeepEqual(observed.Movie, fixture.radarr.movie) ||
+		!reflect.DeepEqual(observed.Movie, &fixture.radarr.movie) ||
 		!reflect.DeepEqual(observed.History, fixture.radarr.history) ||
 		!reflect.DeepEqual(observed.ManualImports, fixture.radarr.imports) ||
 		!reflect.DeepEqual(observed.Inventory, fixture.files.inventory) {

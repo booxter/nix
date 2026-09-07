@@ -79,6 +79,52 @@ func TestAssembleCaseIdentityIgnoresObservationTime(t *testing.T) {
 	}
 }
 
+func TestAssembleProducesOneFileCaseWithoutCapability(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.StatusMessages = nil
+	observation.Correlation.Radarr.SizeBytes = 1_000
+	observation.Correlation.Transmission.TotalSizeBytes = 1_000
+	observation.Correlation.Transmission.Files = observation.Correlation.Transmission.Files[:1]
+	observation.ManualImports = observation.ManualImports[:1]
+	observation.Inventory.Files = observation.Inventory.Files[:1]
+	observation.Inventory.Paths = observation.Inventory.Paths[:1]
+	observation.Probes = observation.Probes[:1]
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Files) != 1 || len(assembly.Request.Capabilities) != 0 {
+		t.Fatalf("planner request = %#v", assembly.Request)
+	}
+	if len(assembly.LocalSnapshot.Observation.Inventory.Paths) != 1 {
+		t.Fatalf("local snapshot = %#v", assembly.LocalSnapshot)
+	}
+}
+
+func TestAssembleProducesMissingMovieCaseWithoutCapability(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.MovieID = nil
+	observation.Movie = nil
+	observation.History = nil
+	observation.ManualImports = nil
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if assembly.Request.Radarr.Movie != nil {
+		t.Fatalf("movie = %#v", assembly.Request.Radarr.Movie)
+	}
+	if len(assembly.Request.Capabilities) != 0 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+}
+
 func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 	t.Parallel()
 
@@ -309,7 +355,7 @@ func testObservation() Observation {
 				TrackerHosts: []string{"tracker.example"},
 			},
 		},
-		Movie: controller.RadarrMovie{
+		Movie: &controller.RadarrMovie{
 			ID:              movieID,
 			TMDBID:          1234,
 			IMDbID:          &imdbID,

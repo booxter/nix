@@ -138,7 +138,7 @@ func (inspector *Inspector) Inspect(
 	assembly, err := inspector.assemble(casebuilder.Observation{
 		ObservedAt:    inspector.dependencies.Clock.Now(),
 		Correlation:   correlation,
-		Movie:         movie,
+		Movie:         &movie,
 		History:       history,
 		ManualImports: manualImports,
 		Inventory:     inventory,

@@ -27,7 +27,7 @@ func mapRadarr(
 
 	history := make([]contracts.HistoryElement, len(observation.History))
 	for index, event := range observation.History {
-		if event.MovieID != observation.Movie.ID {
+		if failure.MovieID == nil || event.MovieID != *failure.MovieID {
 			return contracts.Radarr{}, fmt.Errorf("history event %d refers to another movie", event.ID)
 		}
 		if !strings.EqualFold(event.DownloadID, failure.DownloadID) {
@@ -60,19 +60,26 @@ func mapRadarr(
 			TrackedDownloadState:  string(failure.TrackedDownloadState),
 			StatusMessages:        statusMessages,
 		},
-		Movie: &contracts.MovieClass{
-			RadarrID:        observation.Movie.ID,
-			TmdbID:          observation.Movie.TMDBID,
-			ImdbID:          observation.Movie.IMDbID,
-			Title:           observation.Movie.Title,
-			OriginalTitle:   observation.Movie.OriginalTitle,
-			AlternateTitles: clone(observation.Movie.AlternateTitles),
-			Year:            int64(observation.Movie.Year),
-			RuntimeMinutes:  intToInt64(observation.Movie.RuntimeMinutes),
-		},
+		Movie:         mapMovie(observation.Movie),
 		History:       history,
 		ManualImports: imports,
 	}, nil
+}
+
+func mapMovie(movie *controller.RadarrMovie) *contracts.MovieClass {
+	if movie == nil {
+		return nil
+	}
+	return &contracts.MovieClass{
+		RadarrID:        movie.ID,
+		TmdbID:          movie.TMDBID,
+		ImdbID:          movie.IMDbID,
+		Title:           movie.Title,
+		OriginalTitle:   movie.OriginalTitle,
+		AlternateTitles: clone(movie.AlternateTitles),
+		Year:            int64(movie.Year),
+		RuntimeMinutes:  intToInt64(movie.RuntimeMinutes),
+	}
 }
 
 func mapManualImports(

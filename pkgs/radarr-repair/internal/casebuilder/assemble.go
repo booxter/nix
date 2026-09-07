@@ -23,7 +23,7 @@ type FileProbe struct {
 type Observation struct {
 	ObservedAt    time.Time
 	Correlation   controller.DownloadCorrelation
-	Movie         controller.RadarrMovie
+	Movie         *controller.RadarrMovie
 	History       []controller.RadarrHistoryEvent
 	ManualImports []controller.RadarrManualImport
 	Inventory     controller.FileInventory
@@ -51,13 +51,8 @@ func Assemble(observation Observation) (Assembly, error) {
 	if !observation.Correlation.Eligible() {
 		return Assembly{}, fmt.Errorf("download correlation is ineligible")
 	}
-	candidate := controller.ClassifyRepairCandidates([]controller.RadarrQueueRecord{
-		observation.Correlation.Radarr,
-	})[0]
-	if !candidate.Eligible() {
-		return Assembly{}, fmt.Errorf("Radarr queue record is ineligible")
-	}
-	if candidate.Record.MovieID == nil || *candidate.Record.MovieID != observation.Movie.ID {
+	if observation.Movie != nil && (observation.Correlation.Radarr.MovieID == nil ||
+		*observation.Correlation.Radarr.MovieID != observation.Movie.ID) {
 		return Assembly{}, fmt.Errorf("Radarr movie does not match the queue record")
 	}
 
@@ -104,7 +99,7 @@ func Assemble(observation Observation) (Assembly, error) {
 
 	feasibility := controller.AssessJoinFeasibility(parts)
 	capabilities := make([]contracts.CapabilityElement, 0, 1)
-	if feasibility.Eligible() {
+	if observation.Movie != nil && feasibility.Eligible() {
 		capabilities = append(capabilities, mapCapability(feasibility))
 	}
 
