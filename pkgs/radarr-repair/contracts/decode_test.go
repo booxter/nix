@@ -3,6 +3,7 @@ package contracts
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,6 +111,57 @@ func TestGeneralizedRepairCaseExamples(t *testing.T) {
 	if len(episodic.Files) != 2 || len(episodic.Capabilities) != 0 {
 		t.Fatalf("episodic shape = %#v", episodic)
 	}
+}
+
+func TestRepairCaseRetainsLargeBoundedFileLists(t *testing.T) {
+	t.Parallel()
+
+	large := repairCaseWithFileCount(t, 152)
+	encoded, err := EncodeCase(large)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeCase(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(decoded.Files) != 152 {
+		t.Fatalf("files = %d", len(decoded.Files))
+	}
+
+	overLimit := repairCaseWithFileCount(t, 1025)
+	if _, err := EncodeCase(overLimit); err == nil {
+		t.Fatal("repair case above the file limit was accepted")
+	}
+}
+
+func repairCaseWithFileCount(t *testing.T, count int) RepairCaseV1 {
+	t.Helper()
+	repairCase, err := DecodeCase(readFixture(t, "v1/examples/repair-case-single-unparseable.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	template := repairCase.Files[0]
+	files := make([]FileElement, count)
+	for index := range files {
+		file := template
+		if index > 0 {
+			file.FileID = fmt.Sprintf("file:%064x", index)
+		}
+		file.Fingerprint = fmt.Sprintf("sha256:%064x", index+1)
+		file.PathComponents = []string{fmt.Sprintf("Episode.%04d.mkv", index+1)}
+		torrentIndex := int64(index)
+		file.TorrentIndex = &torrentIndex
+		files[index] = file
+	}
+	repairCase.Files = files
+	repairCase.Download.FileCount = int64(count)
+	repairCase.Download.TotalSizeBytes = template.SizeBytes * int64(count)
+	repairCase.CaseID, err = CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return repairCase
 }
 
 func TestGeneralizedCaseDispositionRules(t *testing.T) {

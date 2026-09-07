@@ -990,7 +990,7 @@
       "items": {
         "$ref": "#/$defs/mediaFile"
       },
-      "maxItems": 128,
+      "maxItems": 1024,
       "minItems": 1,
       "type": "array"
     },
