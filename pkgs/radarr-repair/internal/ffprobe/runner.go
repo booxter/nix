@@ -218,6 +218,10 @@ func requestedEntries() string {
 			"pcr_pid",
 		),
 		sectionEntries("program_stream", "index"),
+		// The top-level stream selectors also apply to streams repeated inside a
+		// program. Suppress their child sections, which we do not use.
+		sectionEntries("program_stream_disposition"),
+		sectionEntries("program_stream_tags"),
 		sectionEntries("program_tags", "service_name", "service_provider"),
 		sectionEntries(
 			"chapter",

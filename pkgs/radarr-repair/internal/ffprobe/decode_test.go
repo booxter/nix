@@ -65,6 +65,31 @@ func TestDecodeAcceptsEmptyStreamGroupsSection(t *testing.T) {
 	}
 }
 
+func TestDecodeAcceptsStreamMetadataRepeatedInsidePrograms(t *testing.T) {
+	t.Parallel()
+
+	document, err := Decode([]byte(`{
+		"programs":[{"program_id":1,"streams":[{
+			"index":0,
+			"codec_name":"h264",
+			"codec_type":"video",
+			"width":1920,
+			"height":1080,
+			"disposition":{}
+		}]}],
+		"streams":[{"index":0}],
+		"format":{}
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(document.Programs) != 1 || len(document.Programs[0].Streams) != 1 ||
+		document.Programs[0].Streams[0].Index == nil ||
+		*document.Programs[0].Streams[0].Index != 0 {
+		t.Fatalf("programs = %#v", document.Programs)
+	}
+}
+
 func TestDecodeRejectsMalformedDocuments(t *testing.T) {
 	t.Parallel()
 

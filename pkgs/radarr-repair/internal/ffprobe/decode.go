@@ -77,9 +77,9 @@ type Program struct {
 	Streams     []ProgramStream `json:"streams"`
 }
 
-type ProgramStream struct {
-	Index *int64 `json:"index"`
-}
+// Selecting top-level stream fields also makes ffprobe repeat those fields in
+// program streams. Only the index is retained after normalization.
+type ProgramStream Stream
 
 type Chapter struct {
 	ID        *int64  `json:"id"`
