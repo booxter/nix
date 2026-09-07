@@ -42,8 +42,9 @@ func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
 	if repairCase.Files[0].Probe.Status != Ok {
 		t.Fatalf("probe status = %q", repairCase.Files[0].Probe.Status)
 	}
-	if repairCase.Capabilities[0].OutputContainer != OutputContainerMkv {
-		t.Fatalf("output container = %q", repairCase.Capabilities[0].OutputContainer)
+	if len(repairCase.Capabilities) != 1 ||
+		len(repairCase.Capabilities[0].CandidateFileIDS) != 2 {
+		t.Fatalf("capabilities = %#v", repairCase.Capabilities)
 	}
 
 	encoded, err := json.Marshal(repairCase)
@@ -132,6 +133,40 @@ func TestRepairCaseRetainsLargeBoundedFileLists(t *testing.T) {
 	overLimit := repairCaseWithFileCount(t, 1025)
 	if _, err := EncodeCase(overLimit); err == nil {
 		t.Fatal("repair case above the file limit was accepted")
+	}
+}
+
+func TestJoinCandidatePoolHasIndependentBound(t *testing.T) {
+	t.Parallel()
+
+	var document map[string]any
+	if err := json.Unmarshal(
+		readFixture(t, "v1/examples/repair-case-joinable.json"),
+		&document,
+	); err != nil {
+		t.Fatal(err)
+	}
+	capability := document["capabilities"].([]any)[0].(map[string]any)
+	candidates := make([]string, 1_024)
+	for index := range candidates {
+		candidates[index] = fmt.Sprintf("file_%04d", index)
+	}
+	capability["candidate_file_ids"] = candidates
+	encoded, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(encoded); err != nil {
+		t.Fatalf("bounded candidate pool was rejected: %v", err)
+	}
+
+	capability["candidate_file_ids"] = append(candidates, "file_over_limit")
+	encoded, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(encoded); err == nil {
+		t.Fatal("candidate pool above the limit was accepted")
 	}
 }
 
@@ -334,6 +369,48 @@ func TestNegativeContractFixturesAreRejected(t *testing.T) {
 	}
 	if _, err := DecodeCase(withoutUnknownField); err != nil {
 		t.Fatalf("negative repair case fixture has another invalid field: %v", err)
+	}
+}
+
+func TestRetiredJoinCapabilityFieldsAreRejected(t *testing.T) {
+	t.Parallel()
+
+	fields := map[string]any{
+		"duration_tolerance_ms": 5000,
+		"eligible_file_ids":     []string{"file_01", "file_02"},
+		"expected_duration_ms":  7_200_000,
+		"input_container":       "matroska",
+		"output_container":      "mkv",
+		"probe_coverage":        "complete",
+		"stream_compatibility":  "compatible",
+	}
+	for name, value := range fields {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var document map[string]any
+			if err := json.Unmarshal(
+				readFixture(t, "v1/examples/repair-case-joinable.json"),
+				&document,
+			); err != nil {
+				t.Fatal(err)
+			}
+			capabilities, ok := document["capabilities"].([]any)
+			if !ok || len(capabilities) != 1 {
+				t.Fatalf("capabilities = %#v", document["capabilities"])
+			}
+			capability, ok := capabilities[0].(map[string]any)
+			if !ok {
+				t.Fatalf("capability = %#v", capabilities[0])
+			}
+			capability[name] = value
+			encoded, err := json.Marshal(document)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := DecodeCase(encoded); err == nil {
+				t.Fatalf("retired field %q was accepted", name)
+			}
+		})
 	}
 }
 

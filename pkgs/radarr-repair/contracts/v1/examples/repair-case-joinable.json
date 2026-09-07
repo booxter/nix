@@ -2,20 +2,14 @@
   "capabilities": [
     {
       "action": "join_parts_v1",
-      "capability_id": "capability_join_01",
-      "duration_tolerance_ms": 5000,
-      "eligible_file_ids": [
+      "candidate_file_ids": [
         "file_01",
         "file_02"
       ],
-      "expected_duration_ms": 7200000,
-      "input_container": "matroska",
-      "output_container": "mkv",
-      "probe_coverage": "complete",
-      "stream_compatibility": "compatible"
+      "capability_id": "capability_join_01"
     }
   ],
-  "case_id": "sha256:0d63932ae952ff47b5d34bcbd618adc069961d80041dfc018898d4699ace88b4",
+  "case_id": "sha256:5bb712d1971942fc17db745b521d83b8ac0b1ecdd0e1d7951f8d334c86a30d12",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-05T22:15:00Z",

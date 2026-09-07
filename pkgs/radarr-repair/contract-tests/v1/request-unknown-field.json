@@ -2,17 +2,11 @@
   "capabilities": [
     {
       "action": "join_parts_v1",
-      "capability_id": "capability_join_01",
-      "duration_tolerance_ms": 5000,
-      "eligible_file_ids": [
+      "candidate_file_ids": [
         "file_01",
         "file_02"
       ],
-      "expected_duration_ms": null,
-      "input_container": "matroska",
-      "output_container": "mkv",
-      "probe_coverage": "none",
-      "stream_compatibility": "unknown"
+      "capability_id": "capability_join_01"
     }
   ],
   "case_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",

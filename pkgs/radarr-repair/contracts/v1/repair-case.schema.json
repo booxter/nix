@@ -137,65 +137,23 @@
         "action": {
           "const": "join_parts_v1"
         },
-        "capability_id": {
-          "$ref": "#/$defs/opaqueId"
-        },
-        "duration_tolerance_ms": {
-          "maximum": 3600000,
-          "minimum": 0,
-          "type": "integer"
-        },
-        "eligible_file_ids": {
+        "candidate_file_ids": {
           "items": {
             "$ref": "#/$defs/opaqueId"
           },
-          "maxItems": 128,
+          "maxItems": 1024,
           "minItems": 2,
           "type": "array",
           "uniqueItems": true
         },
-        "expected_duration_ms": {
-          "$ref": "#/$defs/nullableDurationMs"
-        },
-        "input_container": {
-          "enum": [
-            "mpegts",
-            "mp4",
-            "matroska",
-            "avi"
-          ]
-        },
-        "output_container": {
-          "enum": [
-            "mp4",
-            "mkv"
-          ]
-        },
-        "probe_coverage": {
-          "enum": [
-            "complete",
-            "partial",
-            "none"
-          ]
-        },
-        "stream_compatibility": {
-          "enum": [
-            "compatible",
-            "incompatible",
-            "unknown"
-          ]
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
         }
       },
       "required": [
         "capability_id",
         "action",
-        "eligible_file_ids",
-        "input_container",
-        "output_container",
-        "expected_duration_ms",
-        "duration_tolerance_ms",
-        "probe_coverage",
-        "stream_compatibility"
+        "candidate_file_ids"
       ],
       "type": "object"
     },

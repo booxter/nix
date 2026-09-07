@@ -47,12 +47,15 @@ Version 1 offers two actions:
 - `no_repair` records a bounded reason, missing-evidence categories, evidence
   references, and explanation.
 - `join_parts_v1` selects one controller-advertised capability and orders two
-  or more eligible file identifiers.
+  or more identifiers from its `candidate_file_ids` pool. The pool restricts
+  which files the planner may reference; it does not assert that they belong
+  together or carry aggregate join feasibility.
 
 The planner cannot select an output path or name, container, executable, or
 command argument. A schema-valid join decision is still inert until the
-controller validates identifier membership, feasibility, current source
-fingerprints, and execution policy.
+controller validates identifier membership and calculates feasibility from the
+selected ordered files before checking current source fingerprints and
+execution policy.
 
 When `capabilities` is empty, `no_repair` is the only semantically valid
 decision. The controller will reject a schema-valid positive decision that does
