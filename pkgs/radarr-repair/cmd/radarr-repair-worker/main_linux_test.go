@@ -134,18 +134,6 @@ func TestRunRejectsInvalidConfiguration(t *testing.T) {
 	}
 }
 
-func TestRootPathsRejectDuplicateID(t *testing.T) {
-	t.Parallel()
-
-	paths := make(rootPaths)
-	if err := paths.Set("downloads=/one"); err != nil {
-		t.Fatal(err)
-	}
-	if err := paths.Set("downloads=/two"); err == nil {
-		t.Fatal("duplicate root ID was accepted")
-	}
-}
-
 func waitForSocket(t *testing.T, socketPath string, serverDone <-chan error) {
 	t.Helper()
 	timer := time.NewTimer(10 * time.Second)

@@ -10,12 +10,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
+	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediafile"
 	workerprobe "github.com/booxter/nix-config/radarr-repair/worker/probe"
 	workerserver "github.com/booxter/nix-config/radarr-repair/worker/server"
@@ -44,7 +43,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		defaultMaxConcurrent,
 		"maximum concurrent probes",
 	)
-	roots := make(rootPaths)
+	roots := mediaroot.NewMappings()
 	flags.Var(roots, "root", "media root as ID=PATH; repeatable")
 	if err := flags.Parse(arguments); err != nil {
 		return err
@@ -66,7 +65,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		return nil
 	}
 
-	rootSet, err := mediafile.NewRootSet(roots)
+	rootSet, err := mediafile.NewRootSet(roots.Paths())
 	if err != nil {
 		return err
 	}
@@ -121,31 +120,6 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		}
 		return nil
 	}
-}
-
-type rootPaths map[string]string
-
-func (paths rootPaths) String() string {
-	return ""
-}
-
-func (paths rootPaths) Set(value string) error {
-	rootID, rootPath, found := strings.Cut(value, "=")
-	if !found || rootID == "" || rootPath == "" {
-		return fmt.Errorf("media root must have the form ID=PATH")
-	}
-	if strings.ContainsRune(rootID, '\x00') {
-		return fmt.Errorf("media root ID contains a null byte")
-	}
-	if strings.ContainsRune(rootPath, '\x00') || !filepath.IsAbs(rootPath) ||
-		filepath.Clean(rootPath) != rootPath {
-		return fmt.Errorf("media root %q must have an absolute clean path", rootID)
-	}
-	if _, exists := paths[rootID]; exists {
-		return fmt.Errorf("media root %q is configured more than once", rootID)
-	}
-	paths[rootID] = rootPath
-	return nil
 }
 
 func main() {

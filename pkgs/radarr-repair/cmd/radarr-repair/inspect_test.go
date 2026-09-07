@@ -1,0 +1,351 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"flag"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+)
+
+func TestInspectWritesRedactedCaseToNewFile(t *testing.T) {
+	t.Parallel()
+
+	output := filepath.Join(t.TempDir(), "case.json")
+	arguments, apiKeyFile := validInspectArguments(t, output)
+	var gotConfig inspectConfig
+	app := application{inspect: func(
+		_ context.Context,
+		config inspectConfig,
+	) (casebuilder.Assembly, error) {
+		gotConfig = config
+		return casebuilder.Assembly{EncodedRequest: []byte(`{"case_id":"sha256:test"}`)}, nil
+	}}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := app.run(
+		context.Background(), arguments, strings.NewReader(""), &stdout, &stderr,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if stdout.Len() != 0 || stderr.Len() != 0 {
+		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+	}
+	data, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != `{"case_id":"sha256:test"}` {
+		t.Fatalf("output = %q", data)
+	}
+	info, err := os.Stat(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("output mode = %o", info.Mode().Perm())
+	}
+	wantConfig := inspectConfig{
+		RadarrURL:        "http://127.0.0.1:7878",
+		RadarrAPIKeyFile: apiKeyFile,
+		TransmissionURL:  "http://localhost:9091/transmission/rpc",
+		WorkerSocket:     "/run/radarr-repair/worker.sock",
+		WorkerRoots: map[string]string{
+			"root:archive":   "/data/archive",
+			"root:downloads": "/data/downloads",
+		},
+		Output:  output,
+		QueueID: 71,
+		Timeout: 45 * time.Second,
+	}
+	if !reflect.DeepEqual(gotConfig, wantConfig) {
+		t.Fatalf("config = %#v, want %#v", gotConfig, wantConfig)
+	}
+}
+
+func TestInspectCanWriteOnlyCaseBytesToStandardOutput(t *testing.T) {
+	t.Parallel()
+
+	arguments, _ := validInspectArguments(t, "-")
+	app := application{inspect: func(
+		context.Context,
+		inspectConfig,
+	) (casebuilder.Assembly, error) {
+		return casebuilder.Assembly{EncodedRequest: []byte(`{"case":"redacted"}`)}, nil
+	}}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := app.run(
+		context.Background(), arguments, strings.NewReader(""), &stdout, &stderr,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if stdout.String() != `{"case":"redacted"}` || stderr.Len() != 0 {
+		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+	}
+}
+
+func TestInspectRefusesExistingOutputBeforeCollection(t *testing.T) {
+	t.Parallel()
+
+	output := filepath.Join(t.TempDir(), "case.json")
+	if err := os.WriteFile(output, []byte("existing"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	arguments, _ := validInspectArguments(t, output)
+	calls := 0
+	app := application{inspect: func(
+		context.Context,
+		inspectConfig,
+	) (casebuilder.Assembly, error) {
+		calls++
+		return casebuilder.Assembly{}, nil
+	}}
+	err := app.run(context.Background(), arguments, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("error = %v", err)
+	}
+	if calls != 0 {
+		t.Fatal("inspection ran before the existing output was rejected")
+	}
+	data, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "existing" {
+		t.Fatalf("existing output changed to %q", data)
+	}
+}
+
+func TestInspectFailureCreatesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	output := filepath.Join(t.TempDir(), "case.json")
+	arguments, _ := validInspectArguments(t, output)
+	wantErr := errors.New("collection failed")
+	app := application{inspect: func(
+		context.Context,
+		inspectConfig,
+	) (casebuilder.Assembly, error) {
+		return casebuilder.Assembly{}, wantErr
+	}}
+	err := app.run(context.Background(), arguments, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("error = %v", err)
+	}
+	if _, err := os.Lstat(output); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("output exists after failure: %v", err)
+	}
+}
+
+func TestInspectHonorsCancellationBeforeCollection(t *testing.T) {
+	t.Parallel()
+
+	arguments, _ := validInspectArguments(t, "-")
+	app := application{inspect: func(
+		context.Context,
+		inspectConfig,
+	) (casebuilder.Assembly, error) {
+		t.Fatal("inspection ran after cancellation")
+		return casebuilder.Assembly{}, nil
+	}}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	err := app.run(ctx, arguments, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestInspectRejectsInvalidConfigurationBeforeCollection(t *testing.T) {
+	t.Parallel()
+
+	valid, _ := validInspectArguments(t, "-")
+	tests := []struct {
+		name      string
+		arguments []string
+	}{
+		{name: "missing arguments", arguments: []string{"inspect"}},
+		{
+			name:      "remote Radarr",
+			arguments: replaceArgument(valid, "--radarr-url", "http://radarr.example:7878"),
+		},
+		{
+			name:      "HTTPS Radarr",
+			arguments: replaceArgument(valid, "--radarr-url", "https://localhost:7878"),
+		},
+		{
+			name:      "remote Transmission",
+			arguments: replaceArgument(valid, "--transmission-url", "http://transmission.example:9091"),
+		},
+		{
+			name:      "relative credential",
+			arguments: replaceArgument(valid, "--radarr-api-key-file", "api-key"),
+		},
+		{
+			name:      "relative socket",
+			arguments: replaceArgument(valid, "--worker-socket", "worker.sock"),
+		},
+		{
+			name:      "negative queue ID",
+			arguments: replaceArgument(valid, "--queue-id", "-1"),
+		},
+		{
+			name:      "zero timeout",
+			arguments: replaceArgument(valid, "--timeout", "0s"),
+		},
+		{name: "unexpected positional argument", arguments: append(valid, "extra")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			calls := 0
+			app := application{inspect: func(
+				context.Context,
+				inspectConfig,
+			) (casebuilder.Assembly, error) {
+				calls++
+				return casebuilder.Assembly{}, nil
+			}}
+			if err := app.run(
+				context.Background(), test.arguments, strings.NewReader(""),
+				&bytes.Buffer{}, &bytes.Buffer{},
+			); err == nil {
+				t.Fatalf("arguments %q were accepted", test.arguments)
+			}
+			if calls != 0 {
+				t.Fatal("inspection ran with invalid configuration")
+			}
+		})
+	}
+}
+
+func TestInspectHelpDoesNotRunCollection(t *testing.T) {
+	t.Parallel()
+
+	app := application{inspect: func(
+		context.Context,
+		inspectConfig,
+	) (casebuilder.Assembly, error) {
+		t.Fatal("inspection ran for help")
+		return casebuilder.Assembly{}, nil
+	}}
+	var stderr bytes.Buffer
+	err := app.run(
+		context.Background(), []string{"inspect", "-h"}, strings.NewReader(""),
+		&bytes.Buffer{}, &stderr,
+	)
+	if !errors.Is(err, flag.ErrHelp) || !strings.Contains(stderr.String(), "usage:") {
+		t.Fatalf("error = %v, stderr = %q", err, stderr.String())
+	}
+}
+
+func TestReadAPIKeyAcceptsOneOptionalLineEnding(t *testing.T) {
+	t.Parallel()
+
+	for _, content := range []string{"api-key", "api-key\n", "api-key\r\n"} {
+		path := filepath.Join(t.TempDir(), "api-key")
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		key, err := readAPIKey(path)
+		if err != nil {
+			t.Fatalf("content %q: %v", content, err)
+		}
+		if key != "api-key" {
+			t.Fatalf("key = %q", key)
+		}
+	}
+}
+
+func TestReadAPIKeyRejectsInvalidCredentialWithoutEchoingIt(t *testing.T) {
+	t.Parallel()
+
+	secret := "do-not-echo-this"
+	tests := [][]byte{
+		nil,
+		[]byte(" " + secret),
+		[]byte(secret + "\n\n"),
+		[]byte(secret + "\r"),
+		[]byte(secret + "\x00"),
+		bytes.Repeat([]byte("x"), maximumAPIKeySize+1),
+	}
+	for _, content := range tests {
+		path := filepath.Join(t.TempDir(), "api-key")
+		if err := os.WriteFile(path, content, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		_, err := readAPIKey(path)
+		if err == nil {
+			t.Fatalf("content of length %d was accepted", len(content))
+		}
+		if strings.Contains(err.Error(), secret) {
+			t.Fatalf("error echoed credential: %v", err)
+		}
+	}
+}
+
+func TestValidateLoopbackHTTP(t *testing.T) {
+	t.Parallel()
+
+	for _, endpoint := range []string{
+		"http://127.0.0.1:7878",
+		"http://[::1]:7878/radarr",
+		"http://localhost.:7878",
+	} {
+		if err := validateLoopbackHTTP("service", endpoint); err != nil {
+			t.Fatalf("endpoint %q: %v", endpoint, err)
+		}
+	}
+	for _, endpoint := range []string{
+		"https://localhost:7878",
+		"http://service.example:7878",
+		"http://key@localhost:7878",
+		"http://localhost:7878?key=value",
+		"http://secret%zz@localhost:7878",
+	} {
+		err := validateLoopbackHTTP("service", endpoint)
+		if err == nil {
+			t.Fatalf("endpoint %q was accepted", endpoint)
+		}
+		if strings.Contains(err.Error(), "secret") {
+			t.Fatalf("error echoed URL credentials: %v", err)
+		}
+	}
+}
+
+func validInspectArguments(t *testing.T, output string) ([]string, string) {
+	t.Helper()
+	apiKeyFile := filepath.Join(t.TempDir(), "radarr-api-key")
+	return []string{
+		"inspect",
+		"--radarr-url", "http://127.0.0.1:7878",
+		"--radarr-api-key-file", apiKeyFile,
+		"--transmission-url", "http://localhost:9091/transmission/rpc",
+		"--worker-socket", "/run/radarr-repair/worker.sock",
+		"--worker-root", "root:downloads=/data/downloads",
+		"--worker-root", "root:archive=/data/archive",
+		"--output", output,
+		"--queue-id", "71",
+		"--timeout", "45s",
+	}, apiKeyFile
+}
+
+func replaceArgument(arguments []string, name, value string) []string {
+	replaced := append([]string(nil), arguments...)
+	for index := range replaced {
+		if replaced[index] == name {
+			replaced[index+1] = value
+			return replaced
+		}
+	}
+	panic("argument not found")
+}

@@ -1,23 +1,46 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 )
 
 const maximumDocumentSize = 8 << 20
 
+type application struct {
+	inspect inspectFunc
+}
+
+func newApplication() application {
+	return application{inspect: inspectCase}
+}
+
 func run(arguments []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	return newApplication().run(context.Background(), arguments, stdin, stdout, stderr)
+}
+
+func (app application) run(
+	ctx context.Context,
+	arguments []string,
+	stdin io.Reader,
+	stdout, stderr io.Writer,
+) error {
 	if len(arguments) == 0 {
 		writeUsage(stderr)
-		return fmt.Errorf("expected validate-case or validate-decision")
+		return fmt.Errorf("expected inspect, validate-case, or validate-decision")
 	}
 
 	switch arguments[0] {
+	case "inspect":
+		return app.runInspect(ctx, arguments[1:], stdout, stderr)
 	case "validate-case":
 		data, err := readCommandDocument("validate-case", arguments[1:], stdin, stderr)
 		if err != nil {
@@ -94,11 +117,16 @@ func readBounded(reader io.Reader) ([]byte, error) {
 }
 
 func writeUsage(writer io.Writer) {
-	_, _ = fmt.Fprintln(writer, "usage: radarr-repair <validate-case|validate-decision> FILE")
+	_, _ = fmt.Fprintln(writer, "usage: radarr-repair <inspect|validate-case|validate-decision> ...")
 }
 
 func main() {
-	if err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := newApplication().run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
