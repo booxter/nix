@@ -43,7 +43,7 @@ func TestRootSetOpensNestedRegularFile(t *testing.T) {
 	if string(data) != "media" {
 		t.Fatalf("media = %q", data)
 	}
-	if err := Verify(media, pathFingerprint(t, mediaPath)); err != nil {
+	if err := rootSet.Verify(media, pathFingerprint(t, mediaPath)); err != nil {
 		t.Fatalf("verify open media: %v", err)
 	}
 }
@@ -158,7 +158,7 @@ func TestVerifyDetectsChangeAfterOpening(t *testing.T) {
 	if err := os.WriteFile(mediaPath, []byte("changed media"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	assertFailureKind(t, Verify(media, fingerprint), FailureFingerprintMismatch)
+	assertFailureKind(t, rootSet.Verify(media, fingerprint), FailureFingerprintMismatch)
 }
 
 func TestNewRootSetRejectsUnsafeRoot(t *testing.T) {

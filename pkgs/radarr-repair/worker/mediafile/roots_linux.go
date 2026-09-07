@@ -138,7 +138,7 @@ func (rootSet *RootSet) Open(
 	}
 
 	media := os.NewFile(uintptr(fd), "media")
-	if err := Verify(media, expectedFingerprint); err != nil {
+	if err := rootSet.Verify(media, expectedFingerprint); err != nil {
 		_ = media.Close()
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (rootSet *RootSet) Open(
 
 // Verify compares current descriptor metadata with the expected fingerprint.
 // Calling it both before and after ffprobe detects ordinary concurrent writes.
-func Verify(media *os.File, expectedFingerprint string) error {
+func (rootSet *RootSet) Verify(media *os.File, expectedFingerprint string) error {
 	if media == nil {
 		return &Failure{Kind: FailureInternal}
 	}
