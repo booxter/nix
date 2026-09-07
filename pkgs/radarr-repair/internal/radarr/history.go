@@ -176,30 +176,21 @@ func mapHistoryRecord(
 		return controller.RadarrHistoryEvent{}, fmt.Errorf("record source title is missing")
 	}
 
-	languages := make([]string, len(record.Languages))
-	for index, language := range record.Languages {
-		if language == nil || strings.TrimSpace(language.Name) == "" {
-			return controller.RadarrHistoryEvent{}, fmt.Errorf("record language %d is invalid", index)
-		}
-		languages[index] = language.Name
+	languages, err := mapLanguages(record.Languages)
+	if err != nil {
+		return controller.RadarrHistoryEvent{}, fmt.Errorf("record %w", err)
 	}
 
-	result := controller.RadarrHistoryEvent{
+	return controller.RadarrHistoryEvent{
 		ID:          record.ID,
 		MovieID:     record.MovieID,
 		DownloadID:  record.DownloadID,
 		EventType:   controller.RadarrHistoryEventType(record.EventType),
 		OccurredAt:  record.Date.UTC(),
 		SourceTitle: record.SourceTitle,
+		Quality:     mapQuality(record.Quality),
 		Languages:   languages,
-	}
-	if record.Quality != nil && record.Quality.Quality != nil &&
-		strings.TrimSpace(record.Quality.Quality.Name) != "" {
-		quality := record.Quality.Quality.Name
-		result.Quality = &quality
-	}
-
-	return result, nil
+	}, nil
 }
 
 func sortHistory(records []controller.RadarrHistoryEvent) {

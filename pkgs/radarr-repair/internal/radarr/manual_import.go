@@ -125,12 +125,9 @@ func mapManualImport(
 		return controller.RadarrManualImport{}, fmt.Errorf("download ID does not match request")
 	}
 
-	languages := make([]controller.RadarrLanguage, len(item.Languages))
-	for index, language := range item.Languages {
-		if language == nil || strings.TrimSpace(language.Name) == "" {
-			return controller.RadarrManualImport{}, fmt.Errorf("language %d is invalid", index)
-		}
-		languages[index] = controller.RadarrLanguage{ID: language.ID, Name: language.Name}
+	languages, err := mapLanguages(item.Languages)
+	if err != nil {
+		return controller.RadarrManualImport{}, err
 	}
 
 	rejections := make([]controller.RadarrManualImportRejection, len(item.Rejections))
@@ -162,27 +159,9 @@ func mapManualImport(
 		IndexerFlags: item.IndexerFlags,
 		Rejections:   rejections,
 	}
-	if item.Quality != nil && item.Quality.Quality != nil &&
-		strings.TrimSpace(item.Quality.Quality.Name) != "" {
-		quality := item.Quality.Quality
-		result.Quality = &controller.RadarrQualityModel{
-			Quality: controller.RadarrQuality{
-				ID: quality.ID, Name: quality.Name, Source: quality.Source,
-				Resolution: quality.Resolution, Modifier: quality.Modifier,
-			},
-		}
-		if item.Quality.Revision != nil {
-			result.Quality.Revision = &controller.RadarrQualityRevision{
-				Version:  item.Quality.Revision.Version,
-				Real:     item.Quality.Revision.Real,
-				IsRepack: item.Quality.Revision.IsRepack,
-			}
-		}
-	}
-	if item.ReleaseGroup != "" {
-		if strings.TrimSpace(item.ReleaseGroup) == "" {
-			return controller.RadarrManualImport{}, fmt.Errorf("release group is blank")
-		}
+	result.Quality = mapQuality(item.Quality)
+	if item.ReleaseGroup != "" && strings.TrimSpace(item.ReleaseGroup) == "" {
+		return controller.RadarrManualImport{}, fmt.Errorf("release group is blank")
 	}
 
 	return result, nil

@@ -22,6 +22,7 @@
       "quality": {
         "quality": {
           "id": 7,
+          "modifier": "none",
           "name": "Bluray-1080p",
           "resolution": 1080,
           "source": "bluray"

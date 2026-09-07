@@ -38,8 +38,8 @@ func mapRadarr(
 			EventType:   string(event.EventType),
 			OccurredAt:  event.OccurredAt.UTC(),
 			SourceTitle: event.SourceTitle,
-			Quality:     event.Quality,
-			Languages:   clone(event.Languages),
+			Quality:     qualityName(event.Quality),
+			Languages:   languageNames(event.Languages),
 		}
 	}
 
@@ -121,8 +121,8 @@ func mapManualImports(
 		}
 		mapped[index] = contracts.ManualImportElement{
 			FileID:       string(fileID),
-			Quality:      manualImportQualityName(item.Quality),
-			Languages:    manualImportLanguageNames(item.Languages),
+			Quality:      qualityName(item.Quality),
+			Languages:    languageNames(item.Languages),
 			ReleaseGroup: optionalText(item.ReleaseGroup),
 			Rejections:   rejections,
 		}
@@ -130,14 +130,14 @@ func mapManualImports(
 	return mapped, nil
 }
 
-func manualImportQualityName(quality *controller.RadarrQualityModel) *string {
+func qualityName(quality *controller.RadarrQualityModel) *string {
 	if quality == nil {
 		return nil
 	}
 	return &quality.Quality.Name
 }
 
-func manualImportLanguageNames(languages []controller.RadarrLanguage) []string {
+func languageNames(languages []controller.RadarrLanguage) []string {
 	names := make([]string, len(languages))
 	for index, language := range languages {
 		names[index] = language.Name

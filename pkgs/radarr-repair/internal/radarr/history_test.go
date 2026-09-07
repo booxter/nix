@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 const testHistoryDownloadID = "ABCDEF0123456789"
@@ -54,8 +56,14 @@ func TestReadHistory(t *testing.T) {
 	if first.MovieID != 42 || first.DownloadID != testHistoryDownloadID ||
 		first.EventType != "grabbed" || first.SourceTitle != "Example.Movie.2026.1080p.BluRay" ||
 		!first.OccurredAt.Equal(time.Date(2026, 9, 6, 16, 0, 0, 0, time.UTC)) ||
-		first.Quality == nil || *first.Quality != "Bluray-1080p" ||
-		!reflect.DeepEqual(first.Languages, []string{"English"}) {
+		!reflect.DeepEqual(first.Quality, &controller.RadarrQualityModel{
+			Quality: controller.RadarrQuality{
+				ID: 7, Name: "Bluray-1080p", Source: "bluray",
+				Resolution: 1080, Modifier: "none",
+			},
+			Revision: &controller.RadarrQualityRevision{Version: 1},
+		}) ||
+		!reflect.DeepEqual(first.Languages, []controller.RadarrLanguage{{ID: 1, Name: "English"}}) {
 		t.Fatalf("first record = %#v", first)
 	}
 	if records[2].EventType != "futureEventType" || records[2].Quality != nil ||

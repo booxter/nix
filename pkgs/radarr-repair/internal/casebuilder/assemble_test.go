@@ -554,8 +554,8 @@ func testObservation() Observation {
 			EventType:   "grabbed",
 			OccurredAt:  observedAt.Add(-3 * time.Hour),
 			SourceTitle: "Example.Movie.2024.1080p.BluRay-GROUP",
-			Quality:     &qualityName,
-			Languages:   []string{"English"},
+			Quality:     quality,
+			Languages:   languages,
 		}},
 		ManualImports: []controller.RadarrManualImport{
 			{

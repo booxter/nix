@@ -82,8 +82,8 @@ type RadarrHistoryEvent struct {
 	EventType   RadarrHistoryEventType
 	OccurredAt  time.Time
 	SourceTitle string
-	Quality     *string
-	Languages   []string
+	Quality     *RadarrQualityModel
+	Languages   []RadarrLanguage
 }
 
 type RadarrQuality struct {
