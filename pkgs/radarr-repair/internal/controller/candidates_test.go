@@ -5,39 +5,28 @@ import (
 	"testing"
 )
 
-func TestClassifyRepairCandidatesAcceptsRadarrMultiPartRejection(t *testing.T) {
+func TestClassifyRepairCandidatesAcceptsSupportedLifecycleStates(t *testing.T) {
 	t.Parallel()
 
-	record := eligibleCandidateRecord()
-	record.StatusMessages = []RadarrStatusMessage{
-		{
-			Title: "Movie-part1.mkv",
-			Messages: []string{
-				"  file IS suspected MULTI-part file, radarr DOESN'T support THIS  ",
-			},
-		},
-		{
-			Title:    "One or more movies expected in this release were not imported or missing",
-			Messages: []string{},
-		},
-	}
-
-	assessments := ClassifyRepairCandidates([]RadarrQueueRecord{record})
-	if len(assessments) != 1 {
-		t.Fatalf("assessments = %d", len(assessments))
-	}
-	if !assessments[0].Eligible() {
-		t.Fatalf("rejection reasons = %v", assessments[0].RejectionReasons)
-	}
-	if !reflect.DeepEqual(assessments[0].Record, record) {
-		t.Fatalf("record changed: %#v", assessments[0].Record)
+	for _, state := range []TrackedDownloadState{"importBlocked", "importPending"} {
+		t.Run(string(state), func(t *testing.T) {
+			t.Parallel()
+			record := eligibleCandidateRecord()
+			record.TrackedDownloadState = state
+			assessment := ClassifyRepairCandidates([]RadarrQueueRecord{record})[0]
+			if !assessment.Eligible() {
+				t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
+			}
+			if !reflect.DeepEqual(assessment.Record, record) {
+				t.Fatalf("record changed: %#v", assessment.Record)
+			}
+		})
 	}
 }
 
 func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 	t.Parallel()
 
-	zeroMovieID := int64(0)
 	tests := []struct {
 		name   string
 		mutate func(*RadarrQueueRecord)
@@ -46,9 +35,9 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 		{
 			name: "active download",
 			mutate: func(record *RadarrQueueRecord) {
-				record.Status = QueueStatus("downloading")
-				record.TrackedDownloadStatus = TrackedDownloadStatus("ok")
-				record.TrackedDownloadState = TrackedDownloadState("downloading")
+				record.Status = "downloading"
+				record.TrackedDownloadStatus = "ok"
+				record.TrackedDownloadState = "downloading"
 				record.SizeRemainingBytes = 1024
 			},
 			want: []CandidateRejectionReason{
@@ -66,44 +55,30 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 		{
 			name: "usenet",
 			mutate: func(record *RadarrQueueRecord) {
-				record.Protocol = DownloadProtocol("usenet")
+				record.Protocol = "usenet"
 			},
 			want: []CandidateRejectionReason{CandidateUnsupportedProtocol},
 		},
 		{
 			name: "future protocol",
 			mutate: func(record *RadarrQueueRecord) {
-				record.Protocol = DownloadProtocol("futureProtocol")
+				record.Protocol = "futureProtocol"
 			},
 			want: []CandidateRejectionReason{CandidateUnsupportedProtocol},
 		},
 		{
 			name: "error status",
 			mutate: func(record *RadarrQueueRecord) {
-				record.TrackedDownloadStatus = TrackedDownloadStatus("error")
+				record.TrackedDownloadStatus = "error"
 			},
 			want: []CandidateRejectionReason{CandidateUnsupportedQueueState},
 		},
 		{
 			name: "future queue state",
 			mutate: func(record *RadarrQueueRecord) {
-				record.TrackedDownloadState = TrackedDownloadState("futureState")
+				record.TrackedDownloadState = "futureState"
 			},
 			want: []CandidateRejectionReason{CandidateUnsupportedQueueState},
-		},
-		{
-			name: "missing movie ID",
-			mutate: func(record *RadarrQueueRecord) {
-				record.MovieID = nil
-			},
-			want: []CandidateRejectionReason{CandidateMissingMovieID},
-		},
-		{
-			name: "zero movie ID",
-			mutate: func(record *RadarrQueueRecord) {
-				record.MovieID = &zeroMovieID
-			},
-			want: []CandidateRejectionReason{CandidateMissingMovieID},
 		},
 		{
 			name: "empty download ID",
@@ -140,13 +115,6 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 			},
 			want: []CandidateRejectionReason{CandidateInvalidOutputPath},
 		},
-		{
-			name: "download client error",
-			mutate: func(record *RadarrQueueRecord) {
-				record.ErrorMessage = "download client unavailable"
-			},
-			want: []CandidateRejectionReason{CandidateDownloadClientError},
-		},
 	}
 
 	for _, test := range tests {
@@ -165,41 +133,19 @@ func TestClassifyRepairCandidatesRejectsInvalidFacts(t *testing.T) {
 	}
 }
 
-func TestClassifyRepairCandidatesRequiresExactMessageBody(t *testing.T) {
+func TestClassifyRepairCandidatesRejectsOtherLifecycleStates(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		messages []RadarrStatusMessage
-	}{
-		{name: "no messages"},
-		{
-			name: "marker in title only",
-			messages: []RadarrStatusMessage{
-				{Title: radarrMultiPartRejection},
-			},
-		},
-		{
-			name: "partial marker",
-			messages: []RadarrStatusMessage{
-				{Title: "Movie-part1.mkv", Messages: []string{"File is suspected multi-part file"}},
-			},
-		},
-		{
-			name: "unrelated import failure",
-			messages: []RadarrStatusMessage{
-				{Title: "Movie.mkv", Messages: []string{"Unable to parse file"}},
-			},
-		},
+	states := []TrackedDownloadState{
+		"downloading", "importing", "imported", "failedPending", "failed", "ignored",
 	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, state := range states {
+		t.Run(string(state), func(t *testing.T) {
 			t.Parallel()
 			record := eligibleCandidateRecord()
-			record.StatusMessages = test.messages
+			record.TrackedDownloadState = state
 			assessment := ClassifyRepairCandidates([]RadarrQueueRecord{record})[0]
-			want := []CandidateRejectionReason{CandidateUnsupportedImportError}
+			want := []CandidateRejectionReason{CandidateUnsupportedQueueState}
 			if !reflect.DeepEqual(assessment.RejectionReasons, want) {
 				t.Fatalf("rejection reasons = %v, want %v", assessment.RejectionReasons, want)
 			}
@@ -207,17 +153,29 @@ func TestClassifyRepairCandidatesRequiresExactMessageBody(t *testing.T) {
 	}
 }
 
-func TestClassifyRepairCandidatesRejectsMixedFailuresOnceAndPreservesOrder(t *testing.T) {
+func TestClassifyRepairCandidatesIgnoresMovieAndMessageEvidence(t *testing.T) {
+	t.Parallel()
+
+	record := eligibleCandidateRecord()
+	record.MovieID = nil
+	record.ErrorMessage = "A diagnostic from the download client"
+	record.StatusMessages = []RadarrStatusMessage{
+		{Title: "first", Messages: []string{}},
+		{Title: "second", Messages: []string{"diagnostic one", "diagnostic two"}},
+	}
+	assessment := ClassifyRepairCandidates([]RadarrQueueRecord{record})[0]
+	if !assessment.Eligible() {
+		t.Fatalf("rejection reasons = %v", assessment.RejectionReasons)
+	}
+}
+
+func TestClassifyRepairCandidatesPreservesOrderAndReasons(t *testing.T) {
 	t.Parallel()
 
 	first := eligibleCandidateRecord()
 	first.ID = 1
-	first.Protocol = DownloadProtocol("usenet")
-	first.StatusMessages[0].Messages = append(
-		first.StatusMessages[0].Messages,
-		"Unable to parse file",
-		"Unable to parse file",
-	)
+	first.Protocol = "usenet"
+	first.StatusMessages = nil
 	second := eligibleCandidateRecord()
 	second.ID = 2
 
@@ -225,10 +183,7 @@ func TestClassifyRepairCandidatesRejectsMixedFailuresOnceAndPreservesOrder(t *te
 	if len(assessments) != 2 || assessments[0].Record.ID != 1 || assessments[1].Record.ID != 2 {
 		t.Fatalf("assessment order = %#v", assessments)
 	}
-	want := []CandidateRejectionReason{
-		CandidateUnsupportedProtocol,
-		CandidateUnsupportedImportError,
-	}
+	want := []CandidateRejectionReason{CandidateUnsupportedProtocol}
 	if !reflect.DeepEqual(assessments[0].RejectionReasons, want) {
 		t.Fatalf("rejection reasons = %v, want %v", assessments[0].RejectionReasons, want)
 	}
@@ -243,15 +198,15 @@ func eligibleCandidateRecord() RadarrQueueRecord {
 		ID:                    101,
 		MovieID:               &movieID,
 		Title:                 "Movie",
-		Status:                QueueStatus("completed"),
-		TrackedDownloadStatus: TrackedDownloadStatus("warning"),
-		TrackedDownloadState:  TrackedDownloadState("importBlocked"),
+		Status:                "completed",
+		TrackedDownloadStatus: "warning",
+		TrackedDownloadState:  "importBlocked",
 		SizeRemainingBytes:    0,
 		DownloadID:            "torrent-id",
-		Protocol:              DownloadProtocol("torrent"),
+		Protocol:              "torrent",
 		OutputPath:            "/downloads/Movie",
 		StatusMessages: []RadarrStatusMessage{
-			{Title: "Movie-part1.mkv", Messages: []string{radarrMultiPartRejection}},
+			{Title: "Movie.mkv", Messages: []string{"diagnostic"}},
 		},
 	}
 }

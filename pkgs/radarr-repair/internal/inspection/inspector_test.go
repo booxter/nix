@@ -90,6 +90,41 @@ func TestInspectSelectsAnExplicitEligibleCandidate(t *testing.T) {
 	}
 }
 
+func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.radarr.records[0].MovieID = nil
+	fixture.radarr.records[0].ErrorMessage = "A download client diagnostic"
+	fixture.radarr.records[0].StatusMessages = nil
+	var observed casebuilder.Observation
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		observed = observation
+		return casebuilder.Assembly{}, nil
+	})
+
+	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+		t.Fatal(err)
+	}
+	if observed.Movie != nil || len(observed.History) != 0 || len(observed.ManualImports) != 0 {
+		t.Fatalf("movie-specific evidence = %#v", observed)
+	}
+	if fixture.radarr.movieReads != 0 || fixture.radarr.historyReads != 0 ||
+		fixture.radarr.manualImportReads != 0 {
+		t.Fatalf("movie-specific reads = %d, %d, %d",
+			fixture.radarr.movieReads,
+			fixture.radarr.historyReads,
+			fixture.radarr.manualImportReads,
+		)
+	}
+	if observed.Correlation.Radarr.ErrorMessage != "A download client diagnostic" ||
+		observed.Correlation.Radarr.StatusMessages != nil {
+		t.Fatalf("queue evidence = %#v", observed.Correlation.Radarr)
+	}
+}
+
 func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 	t.Parallel()
 
@@ -104,7 +139,7 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.radarr.records[0].Protocol = "usenet"
 			},
-			want: "no eligible repair candidates",
+			want: "no completed unimported downloads",
 		},
 		{
 			name: "ambiguous candidates",
@@ -113,7 +148,7 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 				other.ID++
 				fixture.radarr.records = append(fixture.radarr.records, other)
 			},
-			want: "2 eligible repair candidates",
+			want: "2 completed unimported downloads",
 		},
 		{
 			name:      "missing requested candidate",
@@ -417,6 +452,9 @@ type fakeRadarr struct {
 	imports           []controller.RadarrManualImport
 	manualImportQuery controller.RadarrManualImportQuery
 	queueReads        int
+	movieReads        int
+	historyReads      int
+	manualImportReads int
 }
 
 func (reader *fakeRadarr) ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error) {
@@ -425,6 +463,7 @@ func (reader *fakeRadarr) ReadQueue(context.Context) ([]controller.RadarrQueueRe
 }
 
 func (reader *fakeRadarr) ReadMovie(context.Context, int64) (controller.RadarrMovie, error) {
+	reader.movieReads++
 	return reader.movie, nil
 }
 
@@ -433,6 +472,7 @@ func (reader *fakeRadarr) ReadHistory(
 	int64,
 	string,
 ) ([]controller.RadarrHistoryEvent, error) {
+	reader.historyReads++
 	return reader.history, nil
 }
 
@@ -440,6 +480,7 @@ func (reader *fakeRadarr) ReadManualImports(
 	_ context.Context,
 	query controller.RadarrManualImportQuery,
 ) ([]controller.RadarrManualImport, error) {
+	reader.manualImportReads++
 	reader.manualImportQuery = query
 	return reader.imports, nil
 }

@@ -125,6 +125,21 @@ func TestAssembleProducesMissingMovieCaseWithoutCapability(t *testing.T) {
 	}
 }
 
+func TestAssembleDoesNotOfferJoinFromFileCount(t *testing.T) {
+	t.Parallel()
+
+	assembly, err := Assemble(testObservation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !assembly.LocalSnapshot.Feasibility.Eligible() {
+		t.Fatalf("join feasibility = %#v", assembly.LocalSnapshot.Feasibility)
+	}
+	if len(assembly.Request.Capabilities) != 0 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+}
+
 func TestAssembleRejectsInconsistentObservations(t *testing.T) {
 	t.Parallel()
 

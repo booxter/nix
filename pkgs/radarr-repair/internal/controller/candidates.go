@@ -5,19 +5,14 @@ import (
 	"strings"
 )
 
-const radarrMultiPartRejection = "File is suspected multi-part file, Radarr doesn't support this"
-
 type CandidateRejectionReason string
 
 const (
-	CandidateUnsupportedProtocol    CandidateRejectionReason = "unsupported_protocol"
-	CandidateIncompleteDownload     CandidateRejectionReason = "incomplete_download"
-	CandidateUnsupportedQueueState  CandidateRejectionReason = "unsupported_queue_state"
-	CandidateMissingMovieID         CandidateRejectionReason = "missing_movie_id"
-	CandidateMissingDownloadID      CandidateRejectionReason = "missing_download_id"
-	CandidateInvalidOutputPath      CandidateRejectionReason = "invalid_output_path"
-	CandidateDownloadClientError    CandidateRejectionReason = "download_client_error"
-	CandidateUnsupportedImportError CandidateRejectionReason = "unsupported_import_failure"
+	CandidateUnsupportedProtocol   CandidateRejectionReason = "unsupported_protocol"
+	CandidateIncompleteDownload    CandidateRejectionReason = "incomplete_download"
+	CandidateUnsupportedQueueState CandidateRejectionReason = "unsupported_queue_state"
+	CandidateMissingDownloadID     CandidateRejectionReason = "missing_download_id"
+	CandidateInvalidOutputPath     CandidateRejectionReason = "invalid_output_path"
 )
 
 type CandidateAssessment struct {
@@ -40,6 +35,11 @@ var eligibleQueueStates = [...]candidateQueueState{
 		status:        QueueStatus("completed"),
 		trackedStatus: TrackedDownloadStatus("warning"),
 		trackedState:  TrackedDownloadState("importBlocked"),
+	},
+	{
+		status:        QueueStatus("completed"),
+		trackedStatus: TrackedDownloadStatus("warning"),
+		trackedState:  TrackedDownloadState("importPending"),
 	},
 }
 
@@ -71,43 +71,11 @@ func classifyRepairCandidate(record RadarrQueueRecord) CandidateAssessment {
 	if !eligibleQueueState(record) {
 		addReason(CandidateUnsupportedQueueState)
 	}
-	if record.MovieID == nil || *record.MovieID <= 0 {
-		addReason(CandidateMissingMovieID)
-	}
 	if !usableDownloadID(record.DownloadID) {
 		addReason(CandidateMissingDownloadID)
 	}
 	if !usableOutputPath(record.OutputPath) {
 		addReason(CandidateInvalidOutputPath)
-	}
-	if strings.TrimSpace(record.ErrorMessage) != "" {
-		addReason(CandidateDownloadClientError)
-	}
-
-	foundMultiPart := false
-	foundImportMessage := false
-	for _, statusMessage := range record.StatusMessages {
-		// Radarr status-message titles are filenames or release names. Only message
-		// bodies carry import rejection text, so titles cannot establish eligibility.
-		for _, message := range statusMessage.Messages {
-			normalized := strings.TrimSpace(message)
-			if normalized == "" {
-				continue
-			}
-			foundImportMessage = true
-			if strings.EqualFold(normalized, radarrMultiPartRejection) {
-				foundMultiPart = true
-				continue
-			}
-			addReason(CandidateUnsupportedImportError)
-		}
-	}
-
-	// Radarr retains the structured MultiPartMovie rejection internally but its
-	// queue API exposes only the rendered message. Match that complete upstream
-	// message because neither Starr nor the API provides the rejection enum.
-	if !foundMultiPart && !foundImportMessage {
-		addReason(CandidateUnsupportedImportError)
 	}
 
 	return assessment

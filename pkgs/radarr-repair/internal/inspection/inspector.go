@@ -27,8 +27,8 @@ type Dependencies struct {
 }
 
 type Selection struct {
-	// QueueID zero selects the only eligible queue record. An explicit ID is
-	// required when more than one record is eligible.
+	// QueueID zero selects the only completed unimported download that is safe to
+	// inspect. An explicit ID is required when more than one record qualifies.
 	QueueID int64
 }
 
@@ -108,23 +108,33 @@ func (inspector *Inspector) Inspect(
 		)
 	}
 
-	movieID := *record.MovieID
-	movie, err := inspector.dependencies.Radarr.ReadMovie(collectionContext, movieID)
-	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read Radarr movie: %w", err)
-	}
-	history, err := inspector.dependencies.Radarr.ReadHistory(collectionContext, movieID, record.DownloadID)
-	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", err)
-	}
-	manualImports, err := inspector.dependencies.Radarr.ReadManualImports(
-		collectionContext,
-		controller.RadarrManualImportQuery{
-			MovieID: movieID, DownloadID: record.DownloadID, Folder: correlation.DownloadRoot,
-		},
-	)
-	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", err)
+	var movie *controller.RadarrMovie
+	var history []controller.RadarrHistoryEvent
+	var manualImports []controller.RadarrManualImport
+	if record.MovieID != nil && *record.MovieID > 0 {
+		movieID := *record.MovieID
+		observedMovie, readErr := inspector.dependencies.Radarr.ReadMovie(collectionContext, movieID)
+		if readErr != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("read Radarr movie: %w", readErr)
+		}
+		movie = &observedMovie
+		history, readErr = inspector.dependencies.Radarr.ReadHistory(
+			collectionContext,
+			movieID,
+			record.DownloadID,
+		)
+		if readErr != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", readErr)
+		}
+		manualImports, readErr = inspector.dependencies.Radarr.ReadManualImports(
+			collectionContext,
+			controller.RadarrManualImportQuery{
+				MovieID: movieID, DownloadID: record.DownloadID, Folder: correlation.DownloadRoot,
+			},
+		)
+		if readErr != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", readErr)
+		}
 	}
 	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
 	if err != nil {
@@ -138,7 +148,7 @@ func (inspector *Inspector) Inspect(
 	assembly, err := inspector.assemble(casebuilder.Observation{
 		ObservedAt:    inspector.dependencies.Clock.Now(),
 		Correlation:   correlation,
-		Movie:         &movie,
+		Movie:         movie,
 		History:       history,
 		ManualImports: manualImports,
 		Inventory:     inventory,
@@ -183,12 +193,14 @@ func selectCandidate(
 	}
 	switch len(eligible) {
 	case 0:
-		return controller.RadarrQueueRecord{}, fmt.Errorf("Radarr queue has no eligible repair candidates")
+		return controller.RadarrQueueRecord{}, fmt.Errorf(
+			"Radarr queue has no completed unimported downloads eligible for inspection",
+		)
 	case 1:
 		return eligible[0], nil
 	default:
 		return controller.RadarrQueueRecord{}, fmt.Errorf(
-			"Radarr queue has %d eligible repair candidates; select a queue ID",
+			"Radarr queue has %d completed unimported downloads eligible for inspection; select a queue ID",
 			len(eligible),
 		)
 	}

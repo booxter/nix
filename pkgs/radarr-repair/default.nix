@@ -4,7 +4,6 @@
   goModels,
   lib,
   makeWrapper,
-  radarr,
 }:
 buildGoModule {
   pname = "radarr-repair";
@@ -46,7 +45,6 @@ buildGoModule {
   '';
 
   preCheck = ''
-    grep -Fq ${lib.escapeShellArg "File is suspected multi-part file, Radarr doesn't support this"} ${radarr.src}/src/NzbDrone.Core/MediaFiles/MovieImport/Specifications/NotMultiPartSpecification.cs
     unformatted="$(gofmt -l cmd contracts internal worker)"
     if test -n "$unformatted"; then
       gofmt -d cmd contracts internal worker >&2

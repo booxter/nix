@@ -98,10 +98,9 @@ func Assemble(observation Observation) (Assembly, error) {
 	}
 
 	feasibility := controller.AssessJoinFeasibility(parts)
-	capabilities := make([]contracts.CapabilityElement, 0, 1)
-	if observation.Movie != nil && feasibility.Eligible() {
-		capabilities = append(capabilities, mapCapability(feasibility))
-	}
+	// Do not offer a join from file count alone. The filename grouping check is
+	// added separately before join capabilities are enabled again.
+	capabilities := make([]contracts.CapabilityElement, 0)
 
 	downloadRef := opaqueID("download", strings.ToLower(observation.Correlation.Transmission.Hash))
 	radarrEvidence, err := mapRadarr(
@@ -200,24 +199,6 @@ func mapDownload(torrent controller.TransmissionTorrent, downloadRef string) con
 		CompletedAt:    completedAt,
 		TrackerHosts:   clone(torrent.TrackerHosts),
 		Labels:         clone(torrent.Labels),
-	}
-}
-
-func mapCapability(feasibility controller.JoinFeasibilityAssessment) contracts.CapabilityElement {
-	fileIDs := make([]string, len(feasibility.FileIDs))
-	for index, fileID := range feasibility.FileIDs {
-		fileIDs[index] = string(fileID)
-	}
-	return contracts.CapabilityElement{
-		CapabilityID:        opaqueID("capability", append([]string{"join_parts_v1"}, fileIDs...)...),
-		Action:              contracts.JoinPartsV1,
-		EligibleFileIDS:     fileIDs,
-		InputContainer:      contracts.InputContainer(*feasibility.InputContainer.Container),
-		OutputContainer:     contracts.OutputContainer(*feasibility.OutputContainer.Container),
-		ExpectedDurationMS:  feasibility.Duration.ExpectedMS,
-		DurationToleranceMS: *feasibility.Duration.ToleranceMS,
-		ProbeCoverage:       contracts.ProbeCoverage(feasibility.ProbeCoverage),
-		StreamCompatibility: contracts.StreamCompatibility(feasibility.Streams.Compatibility),
 	}
 }
 
