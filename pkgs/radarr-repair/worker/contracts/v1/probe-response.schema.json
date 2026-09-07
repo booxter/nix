@@ -15,7 +15,7 @@
           "$ref": "#/$defs/nullableInt64"
         },
         "id": {
-          "$ref": "#/$defs/nonNegativeInt64"
+          "$ref": "#/$defs/int64"
         },
         "start_ticks": {
           "$ref": "#/$defs/nullableInt64"

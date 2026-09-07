@@ -45,6 +45,19 @@ func TestSuccessResponsePreservesEmptyArrays(t *testing.T) {
 	assertEncodes(t, response)
 }
 
+func TestSuccessResponsePreservesSignedChapterIDs(t *testing.T) {
+	t.Parallel()
+
+	evidence := completeEvidence()
+	evidence.Chapters[0].ID = -5_887_710_727_936_598_178
+	response := SuccessResponse("request:signed-chapter", evidence)
+	if response.Success == nil ||
+		response.Success.Evidence.Chapters[0].ID != -5_887_710_727_936_598_178 {
+		t.Fatalf("response = %#v", response)
+	}
+	assertEncodes(t, response)
+}
+
 func TestFailureResponseBuildsWireEnvelope(t *testing.T) {
 	t.Parallel()
 
