@@ -16,6 +16,7 @@ buildGoModule {
       ./contract-tests
       ./contracts
       ./internal
+      ./worker
       ./go.mod
       ./go.sum
     ];
@@ -28,15 +29,16 @@ buildGoModule {
 
   postPatch = ''
     cp ${goModels}/models.gen.go contracts/models.gen.go
+    cp ${goModels}/worker-models.gen.go worker/contracts/models.gen.go
   '';
 
   subPackages = [ "cmd/radarr-repair" ];
 
   preCheck = ''
     grep -Fq ${lib.escapeShellArg "File is suspected multi-part file, Radarr doesn't support this"} ${radarr.src}/src/NzbDrone.Core/MediaFiles/MovieImport/Specifications/NotMultiPartSpecification.cs
-    unformatted="$(gofmt -l cmd contracts internal)"
+    unformatted="$(gofmt -l cmd contracts internal worker)"
     if test -n "$unformatted"; then
-      gofmt -d cmd contracts internal >&2
+      gofmt -d cmd contracts internal worker >&2
       exit 1
     fi
     go vet ./...

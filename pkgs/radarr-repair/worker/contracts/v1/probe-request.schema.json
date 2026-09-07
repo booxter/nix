@@ -1,0 +1,64 @@
+{
+  "$defs": {
+    "opaqueId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "pathComponent": {
+      "maxLength": 255,
+      "minLength": 1,
+      "not": {
+        "enum": [
+          ".",
+          ".."
+        ]
+      },
+      "pattern": "^[^/\\\\\\x00-\\x1f\\x7f]+$",
+      "type": "string"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "urn:radarr-repair-worker:schema:probe-request:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "expected_fingerprint": {
+      "$ref": "#/$defs/sha256Id"
+    },
+    "operation": {
+      "const": "probe_v1"
+    },
+    "path_components": {
+      "items": {
+        "$ref": "#/$defs/pathComponent"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "type": "array"
+    },
+    "request_id": {
+      "$ref": "#/$defs/opaqueId"
+    },
+    "root_id": {
+      "$ref": "#/$defs/opaqueId"
+    },
+    "schema_version": {
+      "const": "radarr-repair-worker/v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "operation",
+    "request_id",
+    "root_id",
+    "path_components",
+    "expected_fingerprint"
+  ],
+  "title": "Radarr repair worker probe request version 1",
+  "type": "object"
+}

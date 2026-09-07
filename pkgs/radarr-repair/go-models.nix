@@ -28,6 +28,7 @@ let
     }
   );
   schemaDirectory = "${contracts}/share/radarr-repair/contracts/v1";
+  workerSchemaDirectory = "${contracts}/share/radarr-repair/worker-contracts/v1";
 in
 runCommand "radarr-repair-go-models-v1"
   {
@@ -56,5 +57,14 @@ runCommand "radarr-repair-go-models-v1"
       --out "$out/models.gen.go" \
       "${schemaDirectory}/repair-case.schema.json" \
       work/decision-variants.schema.json
-    gofmt -w "$out/models.gen.go"
+    quicktype \
+      --telemetry disable \
+      --src-lang schema \
+      --lang go \
+      --package workercontracts \
+      --top-level ProbeRequestV1 \
+      --just-types-and-package \
+      --out "$out/worker-models.gen.go" \
+      "${workerSchemaDirectory}/probe-request.schema.json"
+    gofmt -w "$out/models.gen.go" "$out/worker-models.gen.go"
   ''
