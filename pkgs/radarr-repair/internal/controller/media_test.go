@@ -145,6 +145,32 @@ func TestClassifyMediaFilesPreservesInventoryOrder(t *testing.T) {
 	}
 }
 
+func TestSupportsJoinPartsPathExcludesRawDiscTrees(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		pathComponents []string
+		want           bool
+	}{
+		{name: "regular file", pathComponents: []string{"Movie", "part1.mkv"}, want: true},
+		{name: "BDMV tree", pathComponents: []string{"Movie", "BDMV", "STREAM", "00001.m2ts"}},
+		{name: "case insensitive BDMV tree", pathComponents: []string{"bdmv", "stream", "00001.m2ts"}},
+		{name: "DVD tree", pathComponents: []string{"Movie", "VIDEO_TS", "VTS_01_1.VOB"}},
+		{name: "directory-like filename", pathComponents: []string{"BDMV.mkv"}, want: true},
+		{name: "missing path"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			if got := SupportsJoinPartsPath(test.pathComponents); got != test.want {
+				t.Fatalf("SupportsJoinPartsPath() = %t, want %t", got, test.want)
+			}
+		})
+	}
+}
+
 func completeInventoryFile(id FileID, pathComponents []string) InventoryFile {
 	return InventoryFile{
 		ID:             id,

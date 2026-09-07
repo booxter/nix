@@ -1,6 +1,15 @@
 {
-  "capabilities": [],
-  "case_id": "sha256:259ae14e0f4d5e98668386f5eec3ed2d0d57eeb3bba0fafae4da48edfc2723c9",
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "candidate_file_ids": [
+        "file:1111111111111111111111111111111111111111111111111111111111111111",
+        "file:2222222222222222222222222222222222222222222222222222222222222222"
+      ],
+      "capability_id": "capability:e93252deee0501b5494a427532364b996d8346aa02e3fc271d245c398a30c6da"
+    }
+  ],
+  "case_id": "sha256:b82a4f8f4e56587fb0b72f512353b6121fce502141455ccdeae43eb36e3051fc",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",

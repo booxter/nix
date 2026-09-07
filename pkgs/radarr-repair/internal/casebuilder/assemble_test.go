@@ -3,8 +3,10 @@ package casebuilder
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -18,6 +20,7 @@ const (
 	testDownloadHash = "abcdef0123456789abcdef0123456789abcdef01"
 	testFileOneID    = controller.FileID("file:1111111111111111111111111111111111111111111111111111111111111111")
 	testFileTwoID    = controller.FileID("file:2222222222222222222222222222222222222222222222222222222222222222")
+	testFileThreeID  = controller.FileID("file:3333333333333333333333333333333333333333333333333333333333333333")
 )
 
 func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
@@ -104,7 +107,7 @@ func TestAssembleProducesOneFileCaseWithoutCapability(t *testing.T) {
 	}
 }
 
-func TestAssembleProducesMissingMovieCaseWithoutCapability(t *testing.T) {
+func TestAssembleProducesMissingMovieCaseWithCandidates(t *testing.T) {
 	t.Parallel()
 
 	observation := testObservation()
@@ -120,23 +123,41 @@ func TestAssembleProducesMissingMovieCaseWithoutCapability(t *testing.T) {
 	if assembly.Request.Radarr.Movie != nil {
 		t.Fatalf("movie = %#v", assembly.Request.Radarr.Movie)
 	}
-	if len(assembly.Request.Capabilities) != 0 {
+	if len(assembly.Request.Capabilities) != 1 {
 		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
 	}
 }
 
-func TestAssembleDoesNotOfferJoinFromFileCount(t *testing.T) {
+func TestAssembleOffersJoinCandidatePool(t *testing.T) {
 	t.Parallel()
 
-	assembly, err := Assemble(testObservation())
+	observation := testObservation()
+	observation.Correlation.Radarr.StatusMessages[0].Messages = []string{"Unable to parse file"}
+	for index, name := range []string{"Alpha.mkv", "Unrelated.mkv"} {
+		observation.Inventory.Files[index].PathComponents = []string{name}
+		path := "/srv/downloads/Example.Movie.2024/" + name
+		observation.Inventory.Paths[index].AbsolutePath = path
+		observation.ManualImports[index].Path = path
+		observation.ManualImports[index].RelativePath = name
+	}
+
+	assembly, err := Assemble(observation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !assembly.LocalSnapshot.Feasibility.Eligible() {
-		t.Fatalf("join feasibility = %#v", assembly.LocalSnapshot.Feasibility)
-	}
-	if len(assembly.Request.Capabilities) != 0 {
+	if len(assembly.Request.Capabilities) != 1 {
 		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	capability := assembly.Request.Capabilities[0]
+	if capability.Action != contracts.JoinPartsV1 {
+		t.Fatalf("action = %q", capability.Action)
+	}
+	wantFileIDs := []string{string(testFileOneID), string(testFileTwoID)}
+	if !reflect.DeepEqual(capability.CandidateFileIDS, wantFileIDs) {
+		t.Fatalf("candidate file IDs = %#v, want %#v", capability.CandidateFileIDS, wantFileIDs)
+	}
+	if capability.CapabilityID == "" {
+		t.Fatal("capability ID is empty")
 	}
 }
 
@@ -272,8 +293,8 @@ func TestAssembleRetainsIncompleteProbeMetadata(t *testing.T) {
 				*probe.Reason != contracts.ProbeReason(controller.MediaProbeIncompleteMetadata) {
 				t.Fatalf("probe = %#v", probe)
 			}
-			if assembly.LocalSnapshot.Feasibility.ProbeCoverage != controller.ProbeCoveragePartial {
-				t.Fatalf("join feasibility = %#v", assembly.LocalSnapshot.Feasibility)
+			if len(assembly.Request.Capabilities) != 0 {
+				t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
 			}
 		})
 	}
@@ -350,6 +371,71 @@ func TestAssembleWithholdsJoinForIncompleteProbeEvidence(t *testing.T) {
 				t.Fatalf("probe = %#v", assembly.Request.Files[1].Probe)
 			}
 		})
+	}
+}
+
+func TestAssembleKeepsUsableCandidatesWhenAnotherProbeFails(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	extra := testInventoryFile(testFileThreeID, "Broken.mkv", 500, 2)
+	observation.Inventory.Files = append(observation.Inventory.Files, extra)
+	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
+		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/Broken.mkv",
+	})
+	observation.Probes = append(observation.Probes, FileProbe{
+		FileID: extra.ID,
+		Outcome: controller.FailedMediaProbe(
+			controller.MediaProbeUnsupportedFormat,
+		),
+	})
+	observation.Correlation.Transmission.Files = append(
+		observation.Correlation.Transmission.Files,
+		controller.TransmissionFile{
+			Index: 2, Name: "Example.Movie.2024/Broken.mkv",
+			LengthBytes: 500, BytesCompleted: 500, Wanted: true,
+		},
+	)
+	observation.Correlation.Transmission.TotalSizeBytes += 500
+	observation.Correlation.Radarr.SizeBytes += 500
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Capabilities) != 1 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	wantFileIDs := []string{string(testFileOneID), string(testFileTwoID)}
+	if got := assembly.Request.Capabilities[0].CandidateFileIDS; !reflect.DeepEqual(got, wantFileIDs) {
+		t.Fatalf("candidate file IDs = %#v, want %#v", got, wantFileIDs)
+	}
+	if len(assembly.Request.Files) != 3 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
+	}
+}
+
+func TestAssembleExcludesRawDiscFilesFromJoinCandidates(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	for index := range observation.Inventory.Files {
+		name := fmt.Sprintf("%05d.m2ts", index)
+		observation.Inventory.Files[index].PathComponents = []string{"BDMV", "STREAM", name}
+		path := "/srv/downloads/Example.Movie.2024/BDMV/STREAM/" + name
+		observation.Inventory.Paths[index].AbsolutePath = path
+		observation.ManualImports[index].Path = path
+	}
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Capabilities) != 0 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	if len(assembly.Request.Files) != 2 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
 	}
 }
 

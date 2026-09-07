@@ -51,6 +51,21 @@ func ClassifyMediaFiles(inventory FileInventory) []MediaFileAssessment {
 	return assessments
 }
 
+func SupportsJoinPartsPath(pathComponents []string) bool {
+	if len(pathComponents) == 0 {
+		return false
+	}
+	for _, component := range pathComponents[:len(pathComponents)-1] {
+		switch strings.ToUpper(component) {
+		case "BDMV", "VIDEO_TS":
+			// Raw discs require playlist or title selection. A linear file join
+			// cannot safely describe that operation.
+			return false
+		}
+	}
+	return true
+}
+
 func classifyMediaFile(file InventoryFile) MediaFileAssessment {
 	assessment := MediaFileAssessment{
 		File:        file,

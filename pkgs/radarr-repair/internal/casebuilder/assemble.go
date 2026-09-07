@@ -35,7 +35,6 @@ type Observation struct {
 type LocalSnapshot struct {
 	CaseID      string
 	Observation Observation
-	Feasibility controller.JoinFeasibilityAssessment
 }
 
 type Assembly struct {
@@ -66,7 +65,7 @@ func Assemble(observation Observation) (Assembly, error) {
 	}
 
 	assessments := controller.ClassifyMediaFiles(observation.Inventory)
-	parts := make([]controller.JoinPartEvidence, 0, len(assessments))
+	candidateFileIDs := make([]string, 0, len(assessments))
 	files := make([]contracts.FileElement, 0, len(assessments))
 	for _, assessment := range assessments {
 		file := assessment.File
@@ -81,15 +80,10 @@ func Assemble(observation Observation) (Assembly, error) {
 		if mapErr != nil {
 			return Assembly{}, fmt.Errorf("map file %q: %w", file.ID, mapErr)
 		}
-		if assessment.ProbeCandidate() {
-			part := controller.JoinPartEvidence{
-				FileID: file.ID, Extension: assessment.Extension,
-				Fingerprint: file.Fingerprint,
-			}
-			if mapped.Probe.Status == contracts.Ok {
-				part.Probe = outcome.Evidence
-			}
-			parts = append(parts, part)
+		if assessment.ProbeCandidate() &&
+			mapped.Probe.Status == contracts.Ok &&
+			controller.SupportsJoinPartsPath(file.PathComponents) {
+			candidateFileIDs = append(candidateFileIDs, mapped.FileID)
 		}
 		files = append(files, mapped)
 	}
@@ -97,10 +91,7 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, fmt.Errorf("probe outcomes do not exactly match inventory files")
 	}
 
-	feasibility := controller.AssessJoinFeasibility(parts)
-	// Do not offer a join from file count alone. The filename grouping check is
-	// added separately before join capabilities are enabled again.
-	capabilities := make([]contracts.CapabilityElement, 0)
+	capabilities := joinCapabilities(candidateFileIDs)
 
 	downloadRef := opaqueID("download", strings.ToLower(observation.Correlation.Transmission.Hash))
 	radarrEvidence, err := mapRadarr(
@@ -135,9 +126,25 @@ func Assemble(observation Observation) (Assembly, error) {
 		LocalSnapshot: LocalSnapshot{
 			CaseID:      request.CaseID,
 			Observation: observation,
-			Feasibility: feasibility,
 		},
 	}, nil
+}
+
+func joinCapabilities(candidateFileIDs []string) []contracts.CapabilityElement {
+	capabilities := make([]contracts.CapabilityElement, 0, 1)
+	if len(candidateFileIDs) < 2 {
+		return capabilities
+	}
+
+	identity := make([]string, 1, len(candidateFileIDs)+1)
+	identity[0] = string(contracts.JoinPartsV1)
+	identity = append(identity, candidateFileIDs...)
+	capabilities = append(capabilities, contracts.CapabilityElement{
+		Action:           contracts.JoinPartsV1,
+		CandidateFileIDS: clone(candidateFileIDs),
+		CapabilityID:     opaqueID("capability", identity...),
+	})
+	return capabilities
 }
 
 func indexInventory(
