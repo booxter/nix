@@ -23,7 +23,7 @@ buildGoModule {
     ];
   };
 
-  vendorHash = "sha256-nj4GiZKVQ74675SrgvZLXgQPYe+2DbWE/hf4CW6imJY=";
+  vendorHash = "sha256-n5f+o0UTkD4Y+TVFeTNPEt02pTrAOd/kOfxlVHiew7A=";
 
   RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
   RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";
