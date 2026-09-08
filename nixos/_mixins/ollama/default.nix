@@ -51,6 +51,8 @@ in
       internal = {
         localAliases = [ "ollama" ];
         locationExtraConfig = ''
+          # Ollama rejects non-local Host values when it listens on loopback.
+          proxy_set_header Host localhost;
           proxy_read_timeout 600s;
           proxy_send_timeout 600s;
         '';
