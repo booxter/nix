@@ -63,6 +63,7 @@ in
       contextLength = 65536;
       models = {
         "granite4:32b-a9b-h" = { };
+        "qwen3.8:27b-mtp-q4_K_M" = { };
         "qwen3-vl:8b-instruct".capabilities = [
           "text"
           "vision"
