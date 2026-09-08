@@ -52,18 +52,22 @@ func ClassifyMediaFiles(inventory FileInventory) []MediaFileAssessment {
 }
 
 func SupportsJoinPartsPath(pathComponents []string) bool {
+	return len(pathComponents) != 0 && !isRawDiscPath(pathComponents)
+}
+
+func isRawDiscPath(pathComponents []string) bool {
 	if len(pathComponents) == 0 {
 		return false
 	}
 	for _, component := range pathComponents[:len(pathComponents)-1] {
 		switch strings.ToUpper(component) {
 		case "BDMV", "VIDEO_TS":
-			// Raw discs require playlist or title selection. A linear file join
-			// cannot safely describe that operation.
-			return false
+			// Raw discs require playlist or title selection. Treating one stream
+			// file as a standalone movie or linear part is unsafe.
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func classifyMediaFile(file InventoryFile) MediaFileAssessment {
