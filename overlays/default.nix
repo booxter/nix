@@ -26,6 +26,10 @@
     {
       inherit (pkgsNixpkgsUnstable) aerospace chatgpt codex;
 
+      # The repair planner's Qwen model requires Ollama features newer than
+      # the release branch. Keep the base and ROCm variants on one revision.
+      inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
+
       # Backport the appDataDir argument from the Firefox wrapper in
       # https://github.com/NixOS/nixpkgs/pull/556611. Keep delegating all
       # existing wrapper arguments to nixpkgs so this can be dropped without
