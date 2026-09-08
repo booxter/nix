@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "radarr-repair-planner"
+version = "0.1.0"
+description = "Agentic planner for Radarr import repair"
+requires-python = ">=3.13"
+dependencies = ["jsonschema", "pydantic"]
+
+[project.scripts]
+radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+radarr_repair_planner = ["schemas/*.json"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=radarr_repair_planner --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.coverage.run]
+omit = ["*/case_models.py", "*/decision_models.py"]
+
+[tool.mypy]
+files = ["src/radarr_repair_planner"]
+strict = true

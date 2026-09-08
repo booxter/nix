@@ -75,6 +75,8 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p "$out/share/radarr-repair/contracts"
     cp -R contracts/v1 "$out/share/radarr-repair/contracts/"
+    mkdir -p "$out/share/radarr-repair/contract-tests"
+    cp -R contract-tests/v1 "$out/share/radarr-repair/contract-tests/"
     mkdir -p "$out/share/radarr-repair/worker-contracts"
     cp -R worker/contracts/v1 "$out/share/radarr-repair/worker-contracts/"
 

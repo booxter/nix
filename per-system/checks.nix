@@ -39,4 +39,5 @@ appSet.packages
   python-quality = pythonQualityCheck;
   radarr-repair = pkgs.radarr-repair;
   radarr-repair-contracts = pkgs.radarr-repair-contracts;
+  radarr-repair-planner = pkgs.radarr-repair-planner;
 }

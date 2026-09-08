@@ -8,6 +8,9 @@ let
   radarrRepairGoModels = pkgs.callPackage ./radarr-repair/go-models.nix {
     contracts = radarrRepairContracts;
   };
+  radarrRepairPydanticModels = pkgs.callPackage ./radarr-repair/pydantic-models.nix {
+    contracts = radarrRepairContracts;
+  };
 in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
@@ -38,6 +41,11 @@ in
 
   radarr-repair = pkgs.callPackage ./radarr-repair {
     goModels = radarrRepairGoModels;
+  };
+
+  radarr-repair-planner = pkgs.callPackage ./radarr-repair-planner {
+    contracts = radarrRepairContracts;
+    pydanticModels = radarrRepairPydanticModels;
   };
 
   radarr-repair-contracts = radarrRepairContracts;
