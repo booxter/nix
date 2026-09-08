@@ -1,0 +1,270 @@
+from __future__ import annotations
+
+import json
+from copy import deepcopy
+from dataclasses import dataclass
+from importlib.resources import files
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints, model_validator
+
+from .case_models import RepairCaseV1
+from .contracts import decode_case, encode_decision
+from .decision_models import Reason
+from .planning import PlanningGraph, PlanningOutcome
+
+EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
+CaseFilename = Annotated[str, StringConstraints(pattern=r"^repair-case-[a-z0-9-]+\.json$")]
+
+
+class EvaluationDataError(ValueError):
+    """The packaged evaluation corpus is malformed."""
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ExpectedNoRepair(StrictModel):
+    action: Literal["no_repair"]
+    allowed_reasons: list[Reason] = Field(min_length=1)
+
+
+class ExpectedJoin(StrictModel):
+    action: Literal["join_parts_v1"]
+    capability_id: str
+    ordered_file_ids: list[str] = Field(min_length=2)
+
+
+class ExpectedManualImport(StrictModel):
+    action: Literal["manual_import_file_v1"]
+    capability_id: str
+    file_id: str
+
+
+ExpectedDecision = Annotated[
+    ExpectedNoRepair | ExpectedJoin | ExpectedManualImport,
+    Field(discriminator="action"),
+]
+
+
+class EvaluationCaseSpec(StrictModel):
+    name: EvaluationName
+    base_case: CaseFilename
+    replacements: dict[str, JsonValue] = Field(default_factory=dict)
+    expected: ExpectedDecision
+
+
+class EvaluationManifest(StrictModel):
+    schema_version: Literal["radarr-repair-evaluation/v1"]
+    cases: list[EvaluationCaseSpec] = Field(min_length=1, max_length=64)
+
+    @model_validator(mode="after")
+    def unique_names(self) -> EvaluationManifest:
+        names = [case.name for case in self.cases]
+        if len(names) != len(set(names)):
+            raise ValueError("evaluation case names must be unique")
+        return self
+
+
+@dataclass(frozen=True)
+class EvaluationCase:
+    spec: EvaluationCaseSpec
+    repair_case: RepairCaseV1
+
+
+class EvaluationSettings(StrictModel):
+    model: str
+    context_tokens: int
+    output_tokens: int
+    reasoning: bool
+    timeout_seconds: float
+    runs: int
+
+
+class EvaluationResult(StrictModel):
+    case_name: str
+    run: int
+    attempts: int
+    used_fallback: bool
+    passed: bool
+    violations: list[str]
+    decision: dict[str, JsonValue]
+
+
+class EvaluationReport(StrictModel):
+    schema_version: Literal["radarr-repair-evaluation-report/v1"] = (
+        "radarr-repair-evaluation-report/v1"
+    )
+    settings: EvaluationSettings
+    passed: bool
+    results: list[EvaluationResult]
+
+
+def _decode_pointer_token(token: str) -> str:
+    return token.replace("~1", "/").replace("~0", "~")
+
+
+def _replace_pointer(value: JsonValue, pointer: str, replacement: JsonValue) -> None:
+    if not pointer.startswith("/"):
+        raise EvaluationDataError(f"replacement path is not an absolute JSON pointer: {pointer}")
+    tokens = [_decode_pointer_token(token) for token in pointer[1:].split("/")]
+    current: Any = value
+    for token in tokens[:-1]:
+        try:
+            current = current[int(token)] if isinstance(current, list) else current[token]
+        except (IndexError, KeyError, TypeError, ValueError) as error:
+            raise EvaluationDataError(f"replacement path does not exist: {pointer}") from error
+    final = tokens[-1]
+    try:
+        if isinstance(current, list):
+            current[int(final)] = deepcopy(replacement)
+        else:
+            if final not in current:
+                raise KeyError(final)
+            current[final] = deepcopy(replacement)
+    except (IndexError, KeyError, TypeError, ValueError) as error:
+        raise EvaluationDataError(f"replacement path does not exist: {pointer}") from error
+
+
+def load_evaluation_cases() -> list[EvaluationCase]:
+    root = files(__package__).joinpath("evaluations", "v1")
+    manifest = EvaluationManifest.model_validate_json(
+        root.joinpath("manifest.json").read_text(encoding="utf-8")
+    )
+    result: list[EvaluationCase] = []
+    for spec in manifest.cases:
+        base_payload = root.joinpath("cases", spec.base_case).read_text(encoding="utf-8")
+        value: JsonValue = json.loads(base_payload)
+        for pointer, replacement in spec.replacements.items():
+            _replace_pointer(value, pointer, replacement)
+        result.append(
+            EvaluationCase(
+                spec=spec,
+                repair_case=decode_case(json.dumps(value, allow_nan=False).encode()),
+            )
+        )
+    return result
+
+
+def _reference_ids(value: JsonValue) -> set[str]:
+    if isinstance(value, dict):
+        object_references = {
+            reference_id
+            for key, item in value.items()
+            if key in {"capability_id", "evidence_id", "file_id"}
+            and isinstance((reference_id := item), str)
+        }
+        for item in value.values():
+            object_references.update(_reference_ids(item))
+        return object_references
+    if isinstance(value, list):
+        list_references: set[str] = set()
+        for item in value:
+            list_references.update(_reference_ids(item))
+        return list_references
+    return set()
+
+
+def _capabilities(case_value: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {capability["capability_id"]: capability for capability in case_value["capabilities"]}
+
+
+def _reference_violations(
+    case_value: dict[str, Any],
+    decision_value: dict[str, Any],
+) -> list[str]:
+    violations: list[str] = []
+    if decision_value["case_id"] != case_value["case_id"]:
+        violations.append("decision case_id does not match the case")
+    unknown_evidence = set(decision_value["evidence_refs"]) - _reference_ids(case_value)
+    if unknown_evidence:
+        violations.append("decision references evidence absent from the case")
+
+    action = decision_value["action"]
+    capabilities = _capabilities(case_value)
+    if action != "no_repair":
+        capability = capabilities.get(decision_value["capability_id"])
+        if capability is None:
+            violations.append("decision references a capability absent from the case")
+        elif capability["action"] != action:
+            violations.append("decision action does not match its capability")
+        elif action == "join_parts_v1":
+            selected = set(decision_value["ordered_file_ids"])
+            if not selected.issubset(set(capability["candidate_file_ids"])):
+                violations.append("join selects files outside its capability")
+        elif decision_value["file_id"] != capability["file_id"]:
+            violations.append("manual import file does not match its capability")
+    return violations
+
+
+def _expectation_violations(
+    expected: ExpectedDecision,
+    decision_value: dict[str, Any],
+) -> list[str]:
+    violations: list[str] = []
+    action = decision_value["action"]
+
+    if action != expected.action:
+        violations.append(f"expected {expected.action}, received {action}")
+    elif isinstance(expected, ExpectedNoRepair):
+        allowed_reasons = {reason.value for reason in expected.allowed_reasons}
+        if decision_value["reason"] not in allowed_reasons:
+            violations.append("no-repair reason is not allowed by the evaluation case")
+    elif isinstance(expected, ExpectedJoin):
+        if decision_value["capability_id"] != expected.capability_id:
+            violations.append("join selected the wrong capability")
+        if decision_value["ordered_file_ids"] != expected.ordered_file_ids:
+            violations.append("join selected the wrong files or order")
+    elif isinstance(expected, ExpectedManualImport):
+        if decision_value["capability_id"] != expected.capability_id:
+            violations.append("manual import selected the wrong capability")
+        if decision_value["file_id"] != expected.file_id:
+            violations.append("manual import selected the wrong file")
+    return violations
+
+
+def _semantic_violations(
+    evaluation_case: EvaluationCase,
+    outcome: PlanningOutcome,
+) -> list[str]:
+    case_value = json.loads(evaluation_case.repair_case.model_dump_json(by_alias=True))
+    decision_value = json.loads(encode_decision(outcome.decision))
+    violations = ["planner exhausted its attempts"] if outcome.used_fallback else []
+    violations.extend(_reference_violations(case_value, decision_value))
+    violations.extend(_expectation_violations(evaluation_case.spec.expected, decision_value))
+    return violations
+
+
+def evaluate_outcome(
+    evaluation_case: EvaluationCase,
+    run: int,
+    outcome: PlanningOutcome,
+) -> EvaluationResult:
+    decision_value = json.loads(encode_decision(outcome.decision))
+    violations = _semantic_violations(evaluation_case, outcome)
+    return EvaluationResult(
+        case_name=evaluation_case.spec.name,
+        run=run,
+        attempts=outcome.attempts,
+        used_fallback=outcome.used_fallback,
+        passed=not violations,
+        violations=violations,
+        decision=decision_value,
+    )
+
+
+async def run_evaluation(
+    graph: PlanningGraph,
+    settings: EvaluationSettings,
+) -> EvaluationReport:
+    results: list[EvaluationResult] = []
+    for evaluation_case in load_evaluation_cases():
+        for run in range(1, settings.runs + 1):
+            outcome = await graph.plan_with_outcome(evaluation_case.repair_case)
+            results.append(evaluate_outcome(evaluation_case, run, outcome))
+    return EvaluationReport(
+        settings=settings,
+        passed=all(result.passed for result in results),
+        results=results,
+    )

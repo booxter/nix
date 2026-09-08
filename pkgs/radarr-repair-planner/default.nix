@@ -20,6 +20,9 @@ python3Packages.buildPythonApplication {
     mkdir -p src/radarr_repair_planner/schemas
     cp ${contracts}/share/radarr-repair/contracts/v1/*.schema.json \
       src/radarr_repair_planner/schemas/
+    mkdir -p src/radarr_repair_planner/evaluations/v1/cases
+    cp ${contracts}/share/radarr-repair/contracts/v1/examples/repair-case-*.json \
+      src/radarr_repair_planner/evaluations/v1/cases/
   '';
 
   build-system = [ python3Packages.setuptools ];
@@ -51,6 +54,7 @@ python3Packages.buildPythonApplication {
       ${contracts}/share/radarr-repair/contracts/v1/examples/repair-case-joinable.json
     "$out/bin/radarr-repair-planner" validate-decision \
       ${contracts}/share/radarr-repair/contracts/v1/examples/repair-decision-join.json
+    "$out/bin/radarr-repair-planner-evaluate" --help >/dev/null
   '';
 
   pythonImportsCheck = [ "radarr_repair_planner" ];

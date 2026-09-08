@@ -11,6 +11,7 @@ dependencies = ["jsonschema", "langchain-core", "langchain-ollama", "langgraph",
 
 [project.scripts]
 radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
+radarr-repair-planner-evaluate = "radarr_repair_planner.evaluation_cli:entrypoint"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -19,7 +20,11 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-radarr_repair_planner = ["schemas/*.json"]
+radarr_repair_planner = [
+  "evaluations/v1/*.json",
+  "evaluations/v1/cases/*.json",
+  "schemas/*.json",
+]
 
 [tool.pytest.ini_options]
 addopts = "-q --cov=radarr_repair_planner --cov-report=term-missing --cov-fail-under=90"

@@ -56,6 +56,15 @@ async def test_graph_returns_valid_model_decision() -> None:
     assert model.calls[0][0] == SYSTEM_INSTRUCTION
 
 
+async def test_graph_reports_successful_attempt() -> None:
+    model = ScriptedDecisionModel([repair_decision()])
+
+    outcome = await PlanningGraph(model).plan_with_outcome(repair_case())
+
+    assert outcome.attempts == 1
+    assert not outcome.used_fallback
+
+
 async def test_graph_retries_one_expected_failure() -> None:
     expected = repair_decision()
     model = ScriptedDecisionModel([DecisionModelError("unavailable"), expected])
@@ -83,6 +92,17 @@ async def test_graph_falls_back_after_attempt_limit() -> None:
     assert value["case_id"] == case.case_id.root
     assert value["reason"] == "unsafe_to_repair"
     assert value["evidence_refs"] == []
+
+
+async def test_graph_reports_fallback() -> None:
+    model = ScriptedDecisionModel(
+        [DecisionModelError("first failure"), DecisionModelError("second failure")]
+    )
+
+    outcome = await PlanningGraph(model).plan_with_outcome(repair_case())
+
+    assert outcome.attempts == 2
+    assert outcome.used_fallback
 
 
 async def test_graph_retries_wrong_case_id_then_falls_back() -> None:

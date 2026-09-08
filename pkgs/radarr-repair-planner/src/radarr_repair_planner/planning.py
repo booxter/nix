@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Literal, Protocol, TypedDict, cast
 
 from langgraph.graph import END, START, StateGraph
@@ -36,14 +37,23 @@ class PlanningState(TypedDict):
     repair_case: RepairCaseV1
     attempts: int
     decision: RepairDecisionV1 | None
+    used_fallback: bool
 
 
 class PlanningUpdate(TypedDict, total=False):
     attempts: int
     decision: RepairDecisionV1 | None
+    used_fallback: bool
 
 
 Route = Literal["done", "retry", "fallback"]
+
+
+@dataclass(frozen=True)
+class PlanningOutcome:
+    decision: RepairDecisionV1
+    attempts: int
+    used_fallback: bool
 
 
 class PlanningGraph:
@@ -68,6 +78,9 @@ class PlanningGraph:
         )
 
     async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
+        return (await self.plan_with_outcome(repair_case)).decision
+
+    async def plan_with_outcome(self, repair_case: RepairCaseV1) -> PlanningOutcome:
         validated_case = decode_case(encode_case(repair_case))
         result = cast(
             PlanningState,
@@ -76,13 +89,18 @@ class PlanningGraph:
                     "repair_case": validated_case,
                     "attempts": 0,
                     "decision": None,
+                    "used_fallback": False,
                 }
             ),
         )
         decision = result["decision"]
         if decision is None:
             raise RuntimeError("planning graph completed without a decision")
-        return decode_decision(encode_decision(decision))
+        return PlanningOutcome(
+            decision=decode_decision(encode_decision(decision)),
+            attempts=result["attempts"],
+            used_fallback=result["used_fallback"],
+        )
 
     async def _attempt(self, state: PlanningState) -> PlanningUpdate:
         attempts = state["attempts"] + 1
@@ -125,5 +143,6 @@ class PlanningGraph:
                     reason=Reason.unsafe_to_repair,
                     schema_version="radarr-repair/v1",
                 )
-            )
+            ),
+            "used_fallback": True,
         }
