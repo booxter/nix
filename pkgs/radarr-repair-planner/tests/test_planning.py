@@ -63,15 +63,17 @@ async def test_graph_reports_successful_attempt() -> None:
 
     assert outcome.attempts == 1
     assert not outcome.used_fallback
+    assert outcome.attempt_errors == ()
 
 
 async def test_graph_retries_one_expected_failure() -> None:
     expected = repair_decision()
     model = ScriptedDecisionModel([DecisionModelError("unavailable"), expected])
 
-    actual = await PlanningGraph(model).plan(repair_case())
+    outcome = await PlanningGraph(model).plan_with_outcome(repair_case())
 
-    assert actual == expected
+    assert outcome.decision == expected
+    assert outcome.attempt_errors == ("attempt 1: unavailable",)
     assert len(model.calls) == 2
 
 
@@ -103,6 +105,10 @@ async def test_graph_reports_fallback() -> None:
 
     assert outcome.attempts == 2
     assert outcome.used_fallback
+    assert outcome.attempt_errors == (
+        "attempt 1: first failure",
+        "attempt 2: second failure",
+    )
 
 
 async def test_graph_retries_wrong_case_id_then_falls_back() -> None:
@@ -110,9 +116,13 @@ async def test_graph_retries_wrong_case_id_then_falls_back() -> None:
     wrong.root.case_id.root = "sha256:" + "0" * 64
     model = ScriptedDecisionModel([wrong, wrong])
 
-    result = await PlanningGraph(model).plan(repair_case())
+    outcome = await PlanningGraph(model).plan_with_outcome(repair_case())
 
-    assert json.loads(encode_decision(result))["action"] == "no_repair"
+    assert json.loads(encode_decision(outcome.decision))["action"] == "no_repair"
+    assert outcome.attempt_errors == (
+        "attempt 1: decision case_id did not match the case",
+        "attempt 2: decision case_id did not match the case",
+    )
     assert len(model.calls) == 2
 
 

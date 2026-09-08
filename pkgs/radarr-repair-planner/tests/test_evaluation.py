@@ -121,6 +121,7 @@ async def test_matching_decisions_pass_the_corpus() -> None:
     assert len(report.results) == 18
     assert all(result.passed for result in report.results)
     assert all(result.attempts == 1 for result in report.results)
+    assert all(result.attempt_errors == [] for result in report.results)
 
 
 def test_wrong_join_order_is_reported() -> None:
@@ -154,11 +155,13 @@ def test_fallback_is_never_counted_as_success() -> None:
             decision=matching_decision(evaluation_case),
             attempts=2,
             used_fallback=True,
+            attempt_errors=("attempt 1: HTTP 403", "attempt 2: HTTP 403"),
         ),
     )
 
     assert not result.passed
     assert "planner exhausted its attempts" in result.violations
+    assert result.attempt_errors == ["attempt 1: HTTP 403", "attempt 2: HTTP 403"]
 
 
 def expected_model_factory(settings: OllamaSettings) -> ExpectedDecisionModel:

@@ -19,6 +19,7 @@ from .decision_models import RepairDecisionV1
 from .planning import DecisionModelError
 
 MODEL_NAME = "qwen3.8:27b-mtp-q4_K_M"
+MODEL_ERROR_LIMIT = 384
 
 
 class OllamaConfigurationError(ValueError):
@@ -116,7 +117,11 @@ class OllamaDecisionModel:
         # without a stable common exception type. Failures raised by that boundary
         # are retryable; our serialization and validation below remain visible.
         except Exception as error:
-            raise DecisionModelError("Ollama request or structured decoding failed") from error
+            detail = " ".join(str(error).split())
+            diagnostic = type(error).__name__ + (f": {detail}" if detail else "")
+            raise DecisionModelError(
+                "Ollama request or structured decoding failed: " + diagnostic[:MODEL_ERROR_LIMIT]
+            ) from error
         if not isinstance(result, dict):
             raise DecisionModelError("Ollama structured output was not an object")
         try:

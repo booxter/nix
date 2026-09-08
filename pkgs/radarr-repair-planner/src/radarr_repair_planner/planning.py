@@ -19,6 +19,7 @@ from .decision_models import (
 from .prompt import SYSTEM_INSTRUCTION
 
 ATTEMPT_LIMIT = 2
+ATTEMPT_ERROR_LIMIT = 512
 
 
 class DecisionModelError(Exception):
@@ -36,12 +37,14 @@ class DecisionModel(Protocol):
 class PlanningState(TypedDict):
     repair_case: RepairCaseV1
     attempts: int
+    attempt_errors: list[str]
     decision: RepairDecisionV1 | None
     used_fallback: bool
 
 
 class PlanningUpdate(TypedDict, total=False):
     attempts: int
+    attempt_errors: list[str]
     decision: RepairDecisionV1 | None
     used_fallback: bool
 
@@ -54,6 +57,12 @@ class PlanningOutcome:
     decision: RepairDecisionV1
     attempts: int
     used_fallback: bool
+    attempt_errors: tuple[str, ...] = ()
+
+
+def _attempt_error(attempt: int, detail: str) -> str:
+    normalized = " ".join(detail.split())
+    return f"attempt {attempt}: {normalized}"[:ATTEMPT_ERROR_LIMIT]
 
 
 class PlanningGraph:
@@ -88,6 +97,7 @@ class PlanningGraph:
                 {
                     "repair_case": validated_case,
                     "attempts": 0,
+                    "attempt_errors": [],
                     "decision": None,
                     "used_fallback": False,
                 }
@@ -100,6 +110,7 @@ class PlanningGraph:
             decision=decode_decision(encode_decision(decision)),
             attempts=result["attempts"],
             used_fallback=result["used_fallback"],
+            attempt_errors=tuple(result["attempt_errors"]),
         )
 
     async def _attempt(self, state: PlanningState) -> PlanningUpdate:
@@ -110,10 +121,33 @@ class PlanningGraph:
                 state["repair_case"],
             )
             decision = decode_decision(encode_decision(proposed))
-        except (ContractError, DecisionModelError):
-            return {"attempts": attempts, "decision": None}
+        except ContractError as error:
+            return {
+                "attempts": attempts,
+                "attempt_errors": [
+                    *state["attempt_errors"],
+                    _attempt_error(attempts, f"decision contract failed: {error}"),
+                ],
+                "decision": None,
+            }
+        except DecisionModelError as error:
+            return {
+                "attempts": attempts,
+                "attempt_errors": [
+                    *state["attempt_errors"],
+                    _attempt_error(attempts, str(error)),
+                ],
+                "decision": None,
+            }
         if decision.root.case_id.root != state["repair_case"].case_id.root:
-            return {"attempts": attempts, "decision": None}
+            return {
+                "attempts": attempts,
+                "attempt_errors": [
+                    *state["attempt_errors"],
+                    _attempt_error(attempts, "decision case_id did not match the case"),
+                ],
+                "decision": None,
+            }
         return {"attempts": attempts, "decision": decision}
 
     @staticmethod

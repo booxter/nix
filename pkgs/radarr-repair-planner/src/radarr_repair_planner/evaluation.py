@@ -86,6 +86,7 @@ class EvaluationResult(StrictModel):
     case_name: str
     run: int
     attempts: int
+    attempt_errors: list[str]
     used_fallback: bool
     passed: bool
     violations: list[str]
@@ -247,6 +248,7 @@ def evaluate_outcome(
         case_name=evaluation_case.spec.name,
         run=run,
         attempts=outcome.attempts,
+        attempt_errors=list(outcome.attempt_errors),
         used_fallback=outcome.used_fallback,
         passed=not violations,
         violations=violations,

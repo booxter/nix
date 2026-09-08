@@ -81,7 +81,10 @@ async def test_decision_model_sends_case_as_messages() -> None:
 async def test_decision_model_wraps_runnable_failure() -> None:
     chat = ScriptedStructuredModel(RuntimeError("transport failed"))
 
-    with pytest.raises(DecisionModelError, match="Ollama request"):
+    with pytest.raises(
+        DecisionModelError,
+        match=r"Ollama request.*RuntimeError: transport failed",
+    ):
         await OllamaDecisionModel(chat).decide("system instruction", repair_case())
 
 
