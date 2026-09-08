@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from importlib.resources import files
 from typing import Any, NoReturn, cast
 
@@ -27,12 +28,15 @@ def _load_schema(name: str) -> dict[str, Any]:
     return cast(dict[str, Any], value)
 
 
+CASE_SCHEMA = _load_schema("repair-case.schema.json")
+DECISION_SCHEMA = _load_schema("repair-decision.schema.json")
+
 CASE_VALIDATOR = Draft202012Validator(
-    _load_schema("repair-case.schema.json"),
+    CASE_SCHEMA,
     format_checker=FormatChecker(),
 )
 DECISION_VALIDATOR = Draft202012Validator(
-    _load_schema("repair-decision.schema.json"),
+    DECISION_SCHEMA,
     format_checker=FormatChecker(),
 )
 
@@ -68,10 +72,10 @@ def decode_decision(payload: bytes) -> RepairDecisionV1:
     return _decode(payload, DECISION_VALIDATOR, RepairDecisionV1)
 
 
-def encode_decision(decision: RepairDecisionV1) -> bytes:
-    value = decision.model_dump(mode="json", by_alias=True)
+def _encode(model: BaseModel, validator: Draft202012Validator) -> bytes:
+    value = model.model_dump(mode="json", by_alias=True, exclude_unset=True)
     try:
-        DECISION_VALIDATOR.validate(value)
+        validator.validate(value)
     except SchemaValidationError as error:
         raise ContractError(f"contract validation failed: {error.message}") from error
     return json.dumps(
@@ -80,3 +84,15 @@ def encode_decision(decision: RepairDecisionV1) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode()
+
+
+def encode_case(repair_case: RepairCaseV1) -> bytes:
+    return _encode(repair_case, CASE_VALIDATOR)
+
+
+def encode_decision(decision: RepairDecisionV1) -> bytes:
+    return _encode(decision, DECISION_VALIDATOR)
+
+
+def decision_schema() -> dict[str, Any]:
+    return deepcopy(DECISION_SCHEMA)

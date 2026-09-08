@@ -10,6 +10,7 @@ from radarr_repair_planner.contracts import (
     ContractError,
     decode_case,
     decode_decision,
+    encode_case,
     encode_decision,
 )
 
@@ -33,6 +34,7 @@ def test_valid_case_examples_materialize(path: Path) -> None:
 
     assert repair_case.schema_version == "radarr-repair/v1"
     assert repair_case.case_id.root.startswith("sha256:")
+    assert decode_case(encode_case(repair_case)) == repair_case
 
 
 @pytest.mark.parametrize("path", VALID_DECISIONS, ids=lambda path: path.name)

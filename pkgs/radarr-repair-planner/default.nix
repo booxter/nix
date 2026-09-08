@@ -26,6 +26,8 @@ python3Packages.buildPythonApplication {
 
   dependencies = with python3Packages; [
     jsonschema
+    langchain-core
+    langchain-ollama
     langgraph
     pydantic
   ];
@@ -36,6 +38,7 @@ python3Packages.buildPythonApplication {
     pytestCheckHook
     pytest-cov
     pythonRuffCheckHook
+    trustme
   ];
 
   RADARR_REPAIR_CONTRACT_FIXTURES = "${contracts}/share/radarr-repair";

@@ -6,7 +6,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from .case_models import RepairCaseV1
-from .contracts import ContractError, decode_case, decode_decision, encode_decision
+from .contracts import ContractError, decode_case, decode_decision, encode_case, encode_decision
 from .decision_models import (
     EvidenceRefs,
     NoRepair,
@@ -68,9 +68,7 @@ class PlanningGraph:
         )
 
     async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
-        validated_case = decode_case(
-            repair_case.model_dump_json(by_alias=True, exclude_unset=True).encode()
-        )
+        validated_case = decode_case(encode_case(repair_case))
         result = cast(
             PlanningState,
             await self._graph.ainvoke(

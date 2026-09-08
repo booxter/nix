@@ -7,7 +7,7 @@ name = "radarr-repair-planner"
 version = "0.1.0"
 description = "Agentic planner for Radarr import repair"
 requires-python = ">=3.13"
-dependencies = ["jsonschema", "langgraph", "pydantic"]
+dependencies = ["jsonschema", "langchain-core", "langchain-ollama", "langgraph", "pydantic"]
 
 [project.scripts]
 radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
