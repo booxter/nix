@@ -7,7 +7,7 @@ name = "radarr-repair-planner"
 version = "0.1.0"
 description = "Agentic planner for Radarr import repair"
 requires-python = ">=3.13"
-dependencies = ["jsonschema", "pydantic"]
+dependencies = ["jsonschema", "langgraph", "pydantic"]
 
 [project.scripts]
 radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
@@ -23,6 +23,7 @@ radarr_repair_planner = ["schemas/*.json"]
 
 [tool.pytest.ini_options]
 addopts = "-q --cov=radarr_repair_planner --cov-report=term-missing --cov-fail-under=90"
+asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.coverage.report]

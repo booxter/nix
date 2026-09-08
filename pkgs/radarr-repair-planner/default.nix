@@ -26,11 +26,13 @@ python3Packages.buildPythonApplication {
 
   dependencies = with python3Packages; [
     jsonschema
+    langgraph
     pydantic
   ];
 
   nativeCheckInputs = with python3Packages; [
     mypy
+    pytest-asyncio
     pytestCheckHook
     pytest-cov
     pythonRuffCheckHook
