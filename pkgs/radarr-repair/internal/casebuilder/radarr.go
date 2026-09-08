@@ -12,8 +12,7 @@ import (
 func mapRadarr(
 	observation Observation,
 	downloadRef string,
-	inventoryFiles map[controller.FileID]controller.InventoryFile,
-	paths map[controller.FileID]string,
+	manualImports []manualImportMatch,
 ) (contracts.Radarr, error) {
 	failure := observation.Correlation.Radarr
 	statusMessages := make([]contracts.StatusMessageElement, len(failure.StatusMessages))
@@ -43,12 +42,6 @@ func mapRadarr(
 		}
 	}
 
-	imports, err := mapManualImports(
-		observation.ManualImports, inventoryFiles, paths,
-	)
-	if err != nil {
-		return contracts.Radarr{}, err
-	}
 	return contracts.Radarr{
 		Failure: contracts.Failure{
 			QueueID:               failure.ID,
@@ -62,7 +55,7 @@ func mapRadarr(
 		},
 		Movie:         mapMovie(observation.Movie),
 		History:       history,
-		ManualImports: imports,
+		ManualImports: mapManualImports(manualImports),
 	}, nil
 }
 
@@ -82,11 +75,17 @@ func mapMovie(movie *controller.RadarrMovie) *contracts.MovieClass {
 	}
 }
 
-func mapManualImports(
+type manualImportMatch struct {
+	File         controller.InventoryFile
+	AbsolutePath string
+	Import       controller.RadarrManualImport
+}
+
+func matchManualImports(
 	imports []controller.RadarrManualImport,
 	inventoryFiles map[controller.FileID]controller.InventoryFile,
 	paths map[controller.FileID]string,
-) ([]contracts.ManualImportElement, error) {
+) ([]manualImportMatch, error) {
 	pathIDs := make(map[string]controller.FileID, len(paths))
 	for fileID, path := range paths {
 		if _, duplicate := pathIDs[path]; duplicate {
@@ -94,7 +93,7 @@ func mapManualImports(
 		}
 		pathIDs[path] = fileID
 	}
-	mapped := make([]contracts.ManualImportElement, len(imports))
+	matches := make([]manualImportMatch, len(imports))
 	seen := make(map[controller.FileID]struct{}, len(imports))
 	for index, item := range imports {
 		fileID, ok := pathIDs[item.Path]
@@ -108,7 +107,18 @@ func mapManualImports(
 		if item.SizeBytes != inventoryFiles[fileID].Fingerprint.SizeBytes {
 			return nil, fmt.Errorf("manual import size does not match file %q", fileID)
 		}
+		matches[index] = manualImportMatch{
+			File: inventoryFiles[fileID], AbsolutePath: paths[fileID], Import: item,
+		}
+	}
+	return matches, nil
+}
 
+func mapManualImports(matches []manualImportMatch) []contracts.ManualImportElement {
+	mapped := make([]contracts.ManualImportElement, len(matches))
+	for index, match := range matches {
+		fileID := match.File.ID
+		item := match.Import
 		rejections := make([]contracts.RejectionElement, len(item.Rejections))
 		for rejectionIndex, rejection := range item.Rejections {
 			rejections[rejectionIndex] = contracts.RejectionElement{
@@ -127,7 +137,7 @@ func mapManualImports(
 			Rejections:   rejections,
 		}
 	}
-	return mapped, nil
+	return mapped
 }
 
 func qualityName(quality *controller.RadarrQualityModel) *string {

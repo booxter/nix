@@ -7,9 +7,19 @@
         "file:2222222222222222222222222222222222222222222222222222222222222222"
       ],
       "capability_id": "capability:e93252deee0501b5494a427532364b996d8346aa02e3fc271d245c398a30c6da"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:a98bd0d2598ab6403d833b8ac116bd51a44361f67ba28f4594151b4c70044642",
+      "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:a34a408ecba5d070d13dd1fc72ba53e7b991a91f4bfcc5464b34d92961405dc9",
+      "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222"
     }
   ],
-  "case_id": "sha256:b82a4f8f4e56587fb0b72f512353b6121fce502141455ccdeae43eb36e3051fc",
+  "case_id": "sha256:d79db68f08c4888557851acef40b71ba5f698cf0a30846fe69bcea59ced0db0d",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",

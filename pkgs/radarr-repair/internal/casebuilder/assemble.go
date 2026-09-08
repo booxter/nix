@@ -33,8 +33,9 @@ type Observation struct {
 // LocalSnapshot retains controller-only observations needed to audit and later
 // execute a decision. It must never be sent to the planner.
 type LocalSnapshot struct {
-	CaseID      string
-	Observation Observation
+	CaseID               string
+	Observation          Observation
+	ManualImportBindings map[string]controller.RadarrManualImportBinding
 }
 
 type Assembly struct {
@@ -91,15 +92,24 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, fmt.Errorf("probe outcomes do not exactly match inventory files")
 	}
 
-	capabilities := joinCapabilities(candidateFileIDs)
-
 	downloadRef := opaqueID("download", strings.ToLower(observation.Correlation.Transmission.Hash))
+	manualImports, err := matchManualImports(observation.ManualImports, inventoryFiles, paths)
+	if err != nil {
+		return Assembly{}, err
+	}
 	radarrEvidence, err := mapRadarr(
-		observation, downloadRef, inventoryFiles, paths,
+		observation, downloadRef, manualImports,
 	)
 	if err != nil {
 		return Assembly{}, err
 	}
+	manualImportCapabilities, manualImportBindings, err := bindManualImportCapabilities(
+		manualImports, observation.History,
+	)
+	if err != nil {
+		return Assembly{}, err
+	}
+	capabilities := append(joinCapabilities(candidateFileIDs), manualImportCapabilities...)
 	request := contracts.RepairCaseV1{
 		SchemaVersion: contracts.RadarrRepairV1,
 		ObservedAt:    observation.ObservedAt.UTC(),
@@ -124,8 +134,9 @@ func Assemble(observation Observation) (Assembly, error) {
 		Request:        request,
 		EncodedRequest: encoded,
 		LocalSnapshot: LocalSnapshot{
-			CaseID:      request.CaseID,
-			Observation: observation,
+			CaseID:               request.CaseID,
+			Observation:          observation,
+			ManualImportBindings: manualImportBindings,
 		},
 	}, nil
 }
@@ -145,6 +156,72 @@ func joinCapabilities(candidateFileIDs []string) []contracts.Capability {
 		CapabilityID:     opaqueID("capability", identity...),
 	})
 	return capabilities
+}
+
+func bindManualImportCapabilities(
+	matches []manualImportMatch,
+	history []controller.RadarrHistoryEvent,
+) ([]contracts.Capability, map[string]controller.RadarrManualImportBinding, error) {
+	capabilities := make([]contracts.Capability, 0, len(matches))
+	bindings := make(map[string]controller.RadarrManualImportBinding, len(matches))
+	for _, match := range matches {
+		binding, ok := controller.BindRadarrManualImportFile(
+			match.File, match.AbsolutePath, match.Import, history,
+		)
+		if !ok {
+			continue
+		}
+		capabilityID := manualImportCapabilityID(binding)
+		if _, duplicate := bindings[capabilityID]; duplicate {
+			return nil, nil, fmt.Errorf("duplicate manual import capability %q", capabilityID)
+		}
+		bindings[capabilityID] = binding
+		fileID := string(binding.FileID)
+		capabilities = append(capabilities, contracts.Capability{
+			Action:       contracts.CapabilityActionManualImportFile,
+			CapabilityID: capabilityID,
+			FileID:       &fileID,
+		})
+	}
+	return capabilities, bindings, nil
+}
+
+func manualImportCapabilityID(binding controller.RadarrManualImportBinding) string {
+	identity := []string{
+		string(contracts.CapabilityActionManualImportFile),
+		string(binding.FileID),
+		binding.ExpectedFingerprint.Fingerprint(),
+		string(binding.ImportMode),
+		binding.File.Path,
+		binding.File.FolderName,
+		strconv.FormatInt(binding.File.Quality.Quality.ID, 10),
+		binding.File.Quality.Quality.Name,
+		binding.File.Quality.Quality.Source,
+		strconv.Itoa(binding.File.Quality.Quality.Resolution),
+		binding.File.Quality.Quality.Modifier,
+	}
+	if binding.File.Quality.Revision == nil {
+		identity = append(identity, "revision:absent")
+	} else {
+		revision := binding.File.Quality.Revision
+		identity = append(identity,
+			"revision:present",
+			strconv.FormatInt(revision.Version, 10),
+			strconv.FormatInt(revision.Real, 10),
+			strconv.FormatBool(revision.IsRepack),
+		)
+	}
+	identity = append(identity, strconv.Itoa(len(binding.File.Languages)))
+	for _, language := range binding.File.Languages {
+		identity = append(identity, strconv.FormatInt(language.ID, 10), language.Name)
+	}
+	identity = append(identity,
+		binding.File.ReleaseGroup,
+		strconv.FormatInt(binding.File.IndexerFlags, 10),
+		binding.File.DownloadID,
+		strconv.FormatInt(binding.File.MovieID, 10),
+	)
+	return opaqueID("capability", identity...)
 }
 
 func indexInventory(
