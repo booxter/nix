@@ -24,6 +24,7 @@ class Arguments(argparse.Namespace):
     reasoning: str
     timeout_seconds: float
     runs: int
+    case_name: str | None
     output: str
 
 
@@ -49,6 +50,7 @@ def parser() -> argparse.ArgumentParser:
     )
     result.add_argument("--timeout-seconds", required=True, type=float)
     result.add_argument("--runs", default=1, type=_bounded_runs)
+    result.add_argument("--case", dest="case_name")
     result.add_argument("--output", required=True, help="Report path, or - for standard output")
     return result
 
@@ -74,6 +76,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
             reasoning=reasoning,
             timeout_seconds=arguments.timeout_seconds,
             runs=arguments.runs,
+            case=arguments.case_name,
         ),
     )
 

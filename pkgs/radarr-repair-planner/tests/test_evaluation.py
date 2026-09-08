@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from radarr_repair_planner.case_models import RepairCaseV1
 from radarr_repair_planner.contracts import decode_decision
 from radarr_repair_planner.decision_models import RepairDecisionV1
@@ -83,7 +84,7 @@ class AlwaysNoRepairModel:
         return decode_decision(json.dumps(value).encode())
 
 
-def settings(runs: int = 1) -> EvaluationSettings:
+def settings(runs: int = 1, case: str | None = None) -> EvaluationSettings:
     return EvaluationSettings(
         model=MODEL_NAME,
         context_tokens=32768,
@@ -91,6 +92,7 @@ def settings(runs: int = 1) -> EvaluationSettings:
         reasoning=True,
         timeout_seconds=5,
         runs=runs,
+        case=case,
     )
 
 
@@ -122,6 +124,24 @@ async def test_matching_decisions_pass_the_corpus() -> None:
     assert all(result.passed for result in report.results)
     assert all(result.attempts == 1 for result in report.results)
     assert all(result.attempt_errors == [] for result in report.results)
+
+
+async def test_evaluation_can_select_one_case() -> None:
+    report = await run_evaluation(
+        PlanningGraph(ExpectedDecisionModel()),
+        settings(case="clear_ordered_join"),
+    )
+
+    assert report.passed
+    assert [result.case_name for result in report.results] == ["clear_ordered_join"]
+
+
+async def test_evaluation_rejects_unknown_case() -> None:
+    with pytest.raises(ValueError, match="unknown evaluation case: missing"):
+        await run_evaluation(
+            PlanningGraph(ExpectedDecisionModel()),
+            settings(case="missing"),
+        )
 
 
 def test_wrong_join_order_is_reported() -> None:
@@ -206,6 +226,20 @@ def test_cli_writes_passing_report(tmp_path: Path) -> None:
     assert result == 0
     assert report["passed"] is True
     assert report["settings"]["model"] == MODEL_NAME
+
+
+def test_cli_selects_one_case(tmp_path: Path) -> None:
+    output = tmp_path / "report.json"
+
+    result = main(
+        [*cli_arguments(output), "--case", "clear_ordered_join"],
+        model_factory=expected_model_factory,
+    )
+
+    report = json.loads(output.read_bytes())
+    assert result == 0
+    assert report["settings"]["case"] == "clear_ordered_join"
+    assert [item["case_name"] for item in report["results"]] == ["clear_ordered_join"]
 
 
 def test_cli_returns_one_for_failed_expectations(tmp_path: Path) -> None:

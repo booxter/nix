@@ -80,6 +80,7 @@ class EvaluationSettings(StrictModel):
     reasoning: bool
     timeout_seconds: float
     runs: int
+    case: EvaluationName | None = None
 
 
 class EvaluationResult(StrictModel):
@@ -261,7 +262,16 @@ async def run_evaluation(
     settings: EvaluationSettings,
 ) -> EvaluationReport:
     results: list[EvaluationResult] = []
-    for evaluation_case in load_evaluation_cases():
+    evaluation_cases = load_evaluation_cases()
+    if settings.case is not None:
+        evaluation_cases = [
+            evaluation_case
+            for evaluation_case in evaluation_cases
+            if evaluation_case.spec.name == settings.case
+        ]
+        if not evaluation_cases:
+            raise EvaluationDataError(f"unknown evaluation case: {settings.case}")
+    for evaluation_case in evaluation_cases:
         for run in range(1, settings.runs + 1):
             outcome = await graph.plan_with_outcome(evaluation_case.repair_case)
             results.append(evaluate_outcome(evaluation_case, run, outcome))
