@@ -20,6 +20,7 @@ from radarr_repair_planner.evaluation import (
 from radarr_repair_planner.evaluation_cli import main
 from radarr_repair_planner.ollama_model import MODEL_NAME, OllamaSettings
 from radarr_repair_planner.planning import PlanningGraph, PlanningOutcome
+from radarr_repair_planner.tracing import TraceSink
 
 
 def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV1:
@@ -184,13 +185,19 @@ def test_fallback_is_never_counted_as_success() -> None:
     assert result.attempt_errors == ["attempt 1: HTTP 403", "attempt 2: HTTP 403"]
 
 
-def expected_model_factory(settings: OllamaSettings) -> ExpectedDecisionModel:
-    del settings
+def expected_model_factory(
+    settings: OllamaSettings,
+    trace_sink: TraceSink | None,
+) -> ExpectedDecisionModel:
+    del settings, trace_sink
     return ExpectedDecisionModel()
 
 
-def no_repair_model_factory(settings: OllamaSettings) -> AlwaysNoRepairModel:
-    del settings
+def no_repair_model_factory(
+    settings: OllamaSettings,
+    trace_sink: TraceSink | None,
+) -> AlwaysNoRepairModel:
+    del settings, trace_sink
     return AlwaysNoRepairModel()
 
 
@@ -240,6 +247,20 @@ def test_cli_selects_one_case(tmp_path: Path) -> None:
     assert result == 0
     assert report["settings"]["case"] == "clear_ordered_join"
     assert [item["case_name"] for item in report["results"]] == ["clear_ordered_join"]
+
+
+def test_cli_creates_private_trace_file(tmp_path: Path) -> None:
+    output = tmp_path / "report.json"
+    trace = tmp_path / "trace.jsonl"
+
+    result = main(
+        [*cli_arguments(output), "--trace-output", str(trace)],
+        model_factory=expected_model_factory,
+    )
+
+    assert result == 0
+    assert trace.read_bytes() == b""
+    assert trace.stat().st_mode & 0o777 == 0o600
 
 
 def test_cli_returns_one_for_failed_expectations(tmp_path: Path) -> None:

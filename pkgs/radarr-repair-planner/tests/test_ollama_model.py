@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 import trustme
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.runnables import RunnableConfig
 from radarr_repair_planner.case_models import RepairCaseV1
 from radarr_repair_planner.contracts import (
@@ -29,6 +29,7 @@ from radarr_repair_planner.ollama_model import (
     OllamaSettings,
 )
 from radarr_repair_planner.planning import DecisionModelError
+from radarr_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
 
@@ -43,7 +44,7 @@ def decision_value() -> dict[str, Any]:
     return value
 
 
-class ScriptedStructuredModel:
+class ScriptedResponseModel:
     def __init__(self, result: object | Exception) -> None:
         self.result = result
         self.calls: list[tuple[LanguageModelInput, dict[str, Any]]] = []
@@ -62,7 +63,7 @@ class ScriptedStructuredModel:
 
 
 async def test_decision_model_sends_case_as_messages() -> None:
-    chat = ScriptedStructuredModel(decision_value())
+    chat = ScriptedResponseModel(AIMessage(content=json.dumps(decision_value())))
     case = repair_case()
 
     result = await OllamaDecisionModel(chat).decide("system instruction", case)
@@ -79,7 +80,7 @@ async def test_decision_model_sends_case_as_messages() -> None:
 
 
 async def test_decision_model_wraps_runnable_failure() -> None:
-    chat = ScriptedStructuredModel(RuntimeError("transport failed"))
+    chat = ScriptedResponseModel(RuntimeError("transport failed"))
 
     with pytest.raises(
         DecisionModelError,
@@ -88,12 +89,72 @@ async def test_decision_model_wraps_runnable_failure() -> None:
         await OllamaDecisionModel(chat).decide("system instruction", repair_case())
 
 
-@pytest.mark.parametrize("result", [None, [], {"action": object()}])
-async def test_decision_model_rejects_non_json_object(result: object) -> None:
-    chat = ScriptedStructuredModel(result)
+@pytest.mark.parametrize(
+    ("result", "message"),
+    [
+        (None, "response was not a message"),
+        (AIMessage(content=[]), "output was not text"),
+        (AIMessage(content="[]"), "output was not an object"),
+        (AIMessage(content="not JSON"), "decoding failed"),
+    ],
+)
+async def test_decision_model_rejects_invalid_response(result: object, message: str) -> None:
+    chat = ScriptedResponseModel(result)
 
-    with pytest.raises(DecisionModelError, match="structured output"):
+    with pytest.raises(DecisionModelError, match=message):
         await OllamaDecisionModel(chat).decide("system instruction", repair_case())
+
+
+async def test_decision_model_traces_raw_parse_failure(tmp_path: Path) -> None:
+    path = tmp_path / "trace.jsonl"
+    case = repair_case()
+    raw = AIMessage(
+        content='{"action":',
+        additional_kwargs={"reasoning_content": "I should join the ordered parts."},
+        response_metadata={
+            "done_reason": "length",
+            "eval_count": 4096,
+            "ignored": "value",
+        },
+    )
+    chat = ScriptedResponseModel(raw)
+
+    with (
+        JsonlTraceWriter(path, {case.case_id.root: "clear_ordered_join"}) as trace,
+        pytest.raises(DecisionModelError, match="structured decoding failed"),
+    ):
+        await OllamaDecisionModel(chat, trace).decide("system instruction", case)
+
+    value = json.loads(path.read_text())
+    assert value["case_name"] == "clear_ordered_join"
+    assert value["attempt"] == 1
+    assert value["case_id"] == case.case_id.root
+    assert value["raw_output"] == '{"action":'
+    assert value["reasoning"] == "I should join the ordered parts."
+    assert value["response_metadata"] == {
+        "done_reason": "length",
+        "eval_count": 4096,
+    }
+    assert value["error"].startswith("structured decoding failed: JSONDecodeError:")
+    assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_trace_writer_numbers_attempts(tmp_path: Path) -> None:
+    path = tmp_path / "trace.jsonl"
+    trace = ModelTrace(
+        case_id="sha256:" + "a" * 64,
+        raw_output=None,
+        reasoning=None,
+        response_metadata={},
+        error="request failed",
+    )
+
+    with JsonlTraceWriter(path, {}) as writer:
+        writer.record(trace)
+        writer.record(trace)
+
+    values = [json.loads(line) for line in path.read_text().splitlines()]
+    assert [value["attempt"] for value in values] == [1, 2]
 
 
 class RecordingOllamaServer(ThreadingHTTPServer):

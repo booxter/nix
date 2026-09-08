@@ -7,11 +7,17 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NoReturn
 
-from .evaluation import EvaluationReport, EvaluationSettings, run_evaluation
+from .evaluation import (
+    EvaluationReport,
+    EvaluationSettings,
+    load_evaluation_cases,
+    run_evaluation,
+)
 from .ollama_model import MODEL_NAME, OllamaDecisionModel, OllamaSettings
 from .planning import DecisionModel, PlanningGraph
+from .tracing import JsonlTraceWriter, TraceSink
 
-ModelFactory = Callable[[OllamaSettings], DecisionModel]
+ModelFactory = Callable[[OllamaSettings, TraceSink | None], DecisionModel]
 
 
 class Arguments(argparse.Namespace):
@@ -25,6 +31,7 @@ class Arguments(argparse.Namespace):
     timeout_seconds: float
     runs: int
     case_name: str | None
+    trace_output: Path | None
     output: str
 
 
@@ -51,6 +58,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--timeout-seconds", required=True, type=float)
     result.add_argument("--runs", default=1, type=_bounded_runs)
     result.add_argument("--case", dest="case_name")
+    result.add_argument("--trace-output", type=Path)
     result.add_argument("--output", required=True, help="Report path, or - for standard output")
     return result
 
@@ -67,18 +75,32 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
         reasoning=reasoning,
         timeout_seconds=arguments.timeout_seconds,
     )
-    return await run_evaluation(
-        PlanningGraph(model_factory(ollama_settings)),
-        EvaluationSettings(
-            model=MODEL_NAME,
-            context_tokens=arguments.context_tokens,
-            output_tokens=arguments.output_tokens,
-            reasoning=reasoning,
-            timeout_seconds=arguments.timeout_seconds,
-            runs=arguments.runs,
-            case=arguments.case_name,
-        ),
+    evaluation_settings = EvaluationSettings(
+        model=MODEL_NAME,
+        context_tokens=arguments.context_tokens,
+        output_tokens=arguments.output_tokens,
+        reasoning=reasoning,
+        timeout_seconds=arguments.timeout_seconds,
+        runs=arguments.runs,
+        case=arguments.case_name,
     )
+    trace_writer: JsonlTraceWriter | None = None
+    try:
+        if arguments.trace_output is not None:
+            trace_writer = JsonlTraceWriter(
+                arguments.trace_output,
+                {
+                    evaluation_case.repair_case.case_id.root: evaluation_case.spec.name
+                    for evaluation_case in load_evaluation_cases()
+                },
+            )
+        return await run_evaluation(
+            PlanningGraph(model_factory(ollama_settings, trace_writer)),
+            evaluation_settings,
+        )
+    finally:
+        if trace_writer is not None:
+            trace_writer.close()
 
 
 def main(
