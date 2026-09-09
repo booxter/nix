@@ -24,9 +24,11 @@ class ServerStartup:
     failure_reason: str | None = None
 
     @property
-    def requires_reauthentication(self) -> bool:
-        return (
-            self.status is StartupStatus.FAILED and self.failure_reason == REAUTHENTICATION_REQUIRED
+    def should_attempt_login(self) -> bool:
+        refresh_failure = f"failed to refresh OAuth tokens for server {self.name}"
+        return self.status is StartupStatus.FAILED and (
+            self.failure_reason == REAUTHENTICATION_REQUIRED
+            or refresh_failure in (self.error or "")
         )
 
 

@@ -24,7 +24,7 @@ def test_collects_only_requested_terminal_statuses_in_requested_order() -> None:
     statuses = probe("mixed").probe(["beta", "alpha", "alpha"])
 
     assert [status.name for status in statuses] == ["beta", "alpha"]
-    assert statuses[0].requires_reauthentication
+    assert statuses[0].should_attempt_login
     assert statuses[1].status is StartupStatus.READY
 
 
@@ -32,7 +32,7 @@ def test_returns_cancelled_status() -> None:
     (status,) = probe("cancelled").probe(["alpha"])
 
     assert status.status is StartupStatus.CANCELLED
-    assert not status.requires_reauthentication
+    assert not status.should_attempt_login
 
 
 @pytest.mark.parametrize(
