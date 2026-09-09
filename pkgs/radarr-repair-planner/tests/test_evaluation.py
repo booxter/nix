@@ -224,6 +224,25 @@ def cli_arguments(output: Path) -> list[str]:
     ]
 
 
+def cloud_cli_arguments(output: Path, api_key_file: Path) -> list[str]:
+    return [
+        "--ollama-url",
+        "https://ollama.com",
+        "--ollama-api-key-file",
+        str(api_key_file),
+        "--context-tokens",
+        "32768",
+        "--output-tokens",
+        "4096",
+        "--reasoning",
+        "disabled",
+        "--timeout-seconds",
+        "5",
+        "--output",
+        str(output),
+    ]
+
+
 def test_cli_writes_passing_report(tmp_path: Path) -> None:
     output = tmp_path / "report.json"
 
@@ -270,6 +289,33 @@ def test_cli_selects_model(tmp_path: Path) -> None:
     assert result == 0
     assert selected_models == ["granite4:32b-a9b-h"]
     assert report["settings"]["model"] == "granite4:32b-a9b-h"
+
+
+def test_cli_selects_api_key_file_without_recording_it(tmp_path: Path) -> None:
+    output = tmp_path / "report.json"
+    api_key_file = tmp_path / "ollama-api-key"
+    selected_settings: list[OllamaSettings] = []
+
+    def recording_model_factory(
+        settings: OllamaSettings,
+        trace_sink: TraceSink | None,
+    ) -> ExpectedDecisionModel:
+        del trace_sink
+        selected_settings.append(settings)
+        return ExpectedDecisionModel()
+
+    result = main(
+        cloud_cli_arguments(output, api_key_file),
+        model_factory=recording_model_factory,
+    )
+
+    report = output.read_text(encoding="utf-8")
+    assert result == 0
+    assert selected_settings[0].api_key_file == api_key_file
+    assert selected_settings[0].ca_file is None
+    assert selected_settings[0].client_cert_file is None
+    assert selected_settings[0].client_key_file is None
+    assert str(api_key_file) not in report
 
 
 def test_cli_creates_private_trace_file(tmp_path: Path) -> None:

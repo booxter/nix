@@ -23,9 +23,10 @@ ModelFactory = Callable[[OllamaSettings, TraceSink | None], DecisionModel]
 class Arguments(argparse.Namespace):
     ollama_url: str
     model: str
-    ca_file: Path
-    client_cert_file: Path
-    client_key_file: Path
+    ca_file: Path | None
+    client_cert_file: Path | None
+    client_key_file: Path | None
+    ollama_api_key_file: Path | None
     context_tokens: int
     output_tokens: int
     reasoning: str
@@ -47,9 +48,10 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="radarr-repair-planner-evaluate")
     result.add_argument("--ollama-url", required=True)
     result.add_argument("--model", default=MODEL_NAME)
-    result.add_argument("--ca-file", required=True, type=Path)
-    result.add_argument("--client-cert-file", required=True, type=Path)
-    result.add_argument("--client-key-file", required=True, type=Path)
+    result.add_argument("--ca-file", type=Path)
+    result.add_argument("--client-cert-file", type=Path)
+    result.add_argument("--client-key-file", type=Path)
+    result.add_argument("--ollama-api-key-file", type=Path)
     result.add_argument("--context-tokens", required=True, type=int)
     result.add_argument("--output-tokens", required=True, type=int)
     result.add_argument(
@@ -72,6 +74,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
         ca_file=arguments.ca_file,
         client_cert_file=arguments.client_cert_file,
         client_key_file=arguments.client_key_file,
+        api_key_file=arguments.ollama_api_key_file,
         context_tokens=arguments.context_tokens,
         output_tokens=arguments.output_tokens,
         reasoning=reasoning,

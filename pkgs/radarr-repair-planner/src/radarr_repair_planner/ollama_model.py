@@ -39,14 +39,15 @@ class OllamaConfigurationError(ValueError):
 @dataclass(frozen=True)
 class OllamaSettings:
     base_url: str
-    ca_file: Path
-    client_cert_file: Path
-    client_key_file: Path
+    ca_file: Path | None
+    client_cert_file: Path | None
+    client_key_file: Path | None
     context_tokens: int
     output_tokens: int
     reasoning: bool
     timeout_seconds: float
     model: str = MODEL_NAME
+    api_key_file: Path | None = None
 
     def __post_init__(self) -> None:
         parsed_url = urlsplit(self.base_url)
@@ -54,6 +55,16 @@ class OllamaSettings:
             raise OllamaConfigurationError("Ollama base URL must be an absolute HTTPS URL")
         if parsed_url.username is not None or parsed_url.password is not None:
             raise OllamaConfigurationError("Ollama base URL must not contain credentials")
+        has_client_cert = self.client_cert_file is not None
+        has_client_key = self.client_key_file is not None
+        if has_client_cert != has_client_key:
+            raise OllamaConfigurationError(
+                "Ollama client certificate and key must be configured together"
+            )
+        if self.api_key_file is not None and has_client_cert:
+            raise OllamaConfigurationError("Ollama bearer and mTLS authentication are exclusive")
+        if self.api_key_file is None and not has_client_cert:
+            raise OllamaConfigurationError("Ollama authentication must be configured")
         if not self.model or self.model != self.model.strip():
             raise OllamaConfigurationError("Ollama model name must be non-empty and trimmed")
         if self.context_tokens <= 0:
@@ -78,13 +89,25 @@ class ChatResponseModel(Protocol):
 def _tls_context(settings: OllamaSettings) -> ssl.SSLContext:
     try:
         context = ssl.create_default_context(cafile=settings.ca_file)
-        context.load_cert_chain(
-            certfile=settings.client_cert_file,
-            keyfile=settings.client_key_file,
-        )
+        if settings.client_cert_file is not None and settings.client_key_file is not None:
+            context.load_cert_chain(
+                certfile=settings.client_cert_file,
+                keyfile=settings.client_key_file,
+            )
     except (OSError, ssl.SSLError) as error:
         raise OllamaConfigurationError("failed to load Ollama TLS credentials") from error
     return context
+
+
+def _api_key(path: Path) -> str:
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise OllamaConfigurationError("failed to load Ollama API key") from error
+    value = raw.rstrip("\r\n")
+    if not value or value != value.strip() or "\r" in value or "\n" in value:
+        raise OllamaConfigurationError("Ollama API key must be non-empty and trimmed")
+    return value
 
 
 class OllamaDecisionModel:
@@ -102,14 +125,19 @@ class OllamaDecisionModel:
         settings: OllamaSettings,
         trace_sink: TraceSink | None = None,
     ) -> OllamaDecisionModel:
+        client_kwargs: dict[str, Any] = {
+            "timeout": settings.timeout_seconds,
+            "trust_env": False,
+            "verify": _tls_context(settings),
+        }
+        if settings.api_key_file is not None:
+            client_kwargs["headers"] = {
+                "Authorization": "Bearer " + _api_key(settings.api_key_file)
+            }
         chat = ChatOllama(
             model=settings.model,
             base_url=settings.base_url,
-            client_kwargs={
-                "timeout": settings.timeout_seconds,
-                "trust_env": False,
-                "verify": _tls_context(settings),
-            },
+            client_kwargs=client_kwargs,
             disable_streaming=True,
             num_ctx=settings.context_tokens,
             num_predict=settings.output_tokens,

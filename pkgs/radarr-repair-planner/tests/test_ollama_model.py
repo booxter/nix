@@ -171,6 +171,7 @@ class OllamaHandler(BaseHTTPRequestHandler):
         assert isinstance(request_value, dict)
         peer_certificate = self.connection.getpeercert()
         request_value["test_peer_certificate"] = peer_certificate
+        request_value["test_authorization"] = self.headers.get("Authorization")
         self.server.request_values.put(request_value)
 
         response = {
@@ -195,7 +196,11 @@ class OllamaHandler(BaseHTTPRequestHandler):
 
 
 @contextmanager
-def ollama_tls_server(tmp_path: Path) -> Iterator[tuple[str, Path, Path, Path, Queue]]:
+def ollama_tls_server(
+    tmp_path: Path,
+    *,
+    require_client_certificate: bool = True,
+) -> Iterator[tuple[str, Path, Path, Path, Queue]]:
     ca = trustme.CA()
     server_identity = ca.issue_cert("localhost")
     client_identity = ca.issue_cert("radarr-repair-planner")
@@ -209,8 +214,9 @@ def ollama_tls_server(tmp_path: Path) -> Iterator[tuple[str, Path, Path, Path, Q
 
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     server_identity.configure_cert(context)
-    ca.configure_trust(context)
-    context.verify_mode = ssl.CERT_REQUIRED
+    if require_client_certificate:
+        ca.configure_trust(context)
+        context.verify_mode = ssl.CERT_REQUIRED
 
     requests: Queue[dict[str, Any]] = Queue()
     server = RecordingOllamaServer(("localhost", 0), OllamaHandler)
@@ -270,6 +276,41 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
         {"role": "user", "content": encode_case(case).decode()},
     ]
     assert request["test_peer_certificate"]
+    assert request["test_authorization"] is None
+
+
+async def test_real_client_uses_bearer_token_without_client_certificate(tmp_path: Path) -> None:
+    case = repair_case()
+    api_key_file = tmp_path / "api-key"
+    api_key_file.write_text("cloud-secret\n", encoding="utf-8")
+    with ollama_tls_server(tmp_path, require_client_certificate=False) as (
+        base_url,
+        ca_file,
+        _client_cert_file,
+        _client_key_file,
+        requests,
+    ):
+        settings = OllamaSettings(
+            base_url=base_url,
+            ca_file=ca_file,
+            client_cert_file=None,
+            client_key_file=None,
+            api_key_file=api_key_file,
+            context_tokens=32768,
+            output_tokens=4096,
+            reasoning=False,
+            timeout_seconds=5,
+        )
+
+        result = await OllamaDecisionModel.from_settings(settings).decide(
+            "system instruction",
+            case,
+        )
+
+    assert result.root.case_id.root == case.case_id.root
+    request = requests.get_nowait()
+    assert request["test_authorization"] == "Bearer cloud-secret"
+    assert not request["test_peer_certificate"]
 
 
 @pytest.mark.parametrize(
@@ -283,6 +324,13 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
         ({"timeout_seconds": float("inf")}, "timeout"),
         ({"model": ""}, "model name"),
         ({"model": " granite4:32b-a9b-h"}, "model name"),
+        ({"client_key_file": None}, "configured together"),
+        ({"client_cert_file": None}, "configured together"),
+        ({"api_key_file": Path("api-key")}, "exclusive"),
+        (
+            {"client_cert_file": None, "client_key_file": None},
+            "authentication must be configured",
+        ),
     ],
 )
 def test_settings_reject_unsafe_values(changes: dict[str, object], message: str) -> None:
@@ -315,4 +363,41 @@ def test_model_rejects_unreadable_tls_credentials(tmp_path: Path) -> None:
     )
 
     with pytest.raises(OllamaConfigurationError, match="TLS credentials"):
+        OllamaDecisionModel.from_settings(settings)
+
+
+@pytest.mark.parametrize("value", ["", " secret", "secret ", "secret\nsecond"])
+def test_model_rejects_invalid_api_key(tmp_path: Path, value: str) -> None:
+    api_key_file = tmp_path / "api-key"
+    api_key_file.write_text(value, encoding="utf-8")
+    settings = OllamaSettings(
+        base_url="https://ollama.com",
+        ca_file=None,
+        client_cert_file=None,
+        client_key_file=None,
+        api_key_file=api_key_file,
+        context_tokens=32768,
+        output_tokens=4096,
+        reasoning=False,
+        timeout_seconds=5,
+    )
+
+    with pytest.raises(OllamaConfigurationError, match="API key must be non-empty and trimmed"):
+        OllamaDecisionModel.from_settings(settings)
+
+
+def test_model_rejects_unreadable_api_key(tmp_path: Path) -> None:
+    settings = OllamaSettings(
+        base_url="https://ollama.com",
+        ca_file=None,
+        client_cert_file=None,
+        client_key_file=None,
+        api_key_file=tmp_path / "missing-api-key",
+        context_tokens=32768,
+        output_tokens=4096,
+        reasoning=False,
+        timeout_seconds=5,
+    )
+
+    with pytest.raises(OllamaConfigurationError, match="failed to load Ollama API key"):
         OllamaDecisionModel.from_settings(settings)
