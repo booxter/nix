@@ -22,6 +22,11 @@ from radarr_repair_planner.contracts import (
     decode_case,
     encode_case,
 )
+from radarr_repair_planner.decision_validation import (
+    DecisionViolation,
+    ViolationCode,
+    format_correction,
+)
 from radarr_repair_planner.ollama_model import (
     MODEL_NAME,
     SCHEMA_INSTRUCTION,
@@ -94,19 +99,57 @@ async def test_decision_model_wraps_runnable_failure() -> None:
 
 
 @pytest.mark.parametrize(
-    ("result", "message"),
+    ("result", "message", "violation_code"),
     [
-        (None, "response was not a message"),
-        (AIMessage(content=[]), "output was not text"),
-        (AIMessage(content="[]"), "output was not an object"),
-        (AIMessage(content="not JSON"), "decoding failed"),
+        (None, "response was not a message", None),
+        (AIMessage(content=[]), "output was not text", None),
+        (AIMessage(content="[]"), "output was not an object", ViolationCode.NON_OBJECT_JSON),
+        (AIMessage(content="not JSON"), "decoding failed", ViolationCode.INVALID_JSON),
+        (AIMessage(content="{}"), "decision contract failed", ViolationCode.MISSING_FIELD),
+        (
+            AIMessage(content='{"action":"no_repair"}{"action":"no_repair"}'),
+            "decoding failed",
+            ViolationCode.EXTRA_OUTPUT,
+        ),
     ],
 )
-async def test_decision_model_rejects_invalid_response(result: object, message: str) -> None:
+async def test_decision_model_rejects_invalid_response(
+    result: object,
+    message: str,
+    violation_code: ViolationCode | None,
+) -> None:
     chat = ScriptedResponseModel(result)
 
-    with pytest.raises(DecisionModelError, match=message):
+    with pytest.raises(DecisionModelError, match=message) as raised:
         await OllamaDecisionModel(chat).decide("system instruction", repair_case())
+
+    assert tuple(violation.code for violation in raised.value.violations) == (
+        () if violation_code is None else (violation_code,)
+    )
+
+
+async def test_decision_model_adds_correction_to_trusted_instruction() -> None:
+    chat = ScriptedResponseModel(AIMessage(content=json.dumps(decision_value())))
+    correction = (
+        DecisionViolation(
+            ViolationCode.UNKNOWN_EVIDENCE,
+            ("evidence_refs",),
+            rejected_values=("download_01",),
+            allowed_values=("evidence_queue_01",),
+        ),
+    )
+
+    await OllamaDecisionModel(chat).decide(
+        "system instruction",
+        repair_case(),
+        correction,
+    )
+
+    messages, _kwargs = chat.calls[0]
+    assert isinstance(messages, list)
+    content = messages[0].content
+    assert isinstance(content, str)
+    assert content.endswith(format_correction(correction))
 
 
 async def test_decision_model_traces_raw_parse_failure(tmp_path: Path) -> None:

@@ -16,7 +16,11 @@ from .decision_models import (
     SafeExplanation,
     Sha256Id,
 )
-from .decision_validation import describe_violations, validate_decision_for_case
+from .decision_validation import (
+    DecisionViolation,
+    describe_violations,
+    validate_decision_for_case,
+)
 from .prompt import SYSTEM_INSTRUCTION
 
 ATTEMPT_LIMIT = 2
@@ -26,12 +30,21 @@ ATTEMPT_ERROR_LIMIT = 512
 class DecisionModelError(Exception):
     """An expected model call or structured-output failure."""
 
+    def __init__(
+        self,
+        message: str,
+        violations: tuple[DecisionViolation, ...] = (),
+    ) -> None:
+        super().__init__(message)
+        self.violations = violations
+
 
 class DecisionModel(Protocol):
     async def decide(
         self,
         system_instruction: str,
         repair_case: RepairCaseV1,
+        correction: tuple[DecisionViolation, ...],
     ) -> RepairDecisionV1: ...
 
 
@@ -40,6 +53,7 @@ class PlanningState(TypedDict):
     attempts: int
     attempt_errors: list[str]
     decision: RepairDecisionV1 | None
+    correction: tuple[DecisionViolation, ...]
     used_fallback: bool
 
 
@@ -47,6 +61,7 @@ class PlanningUpdate(TypedDict, total=False):
     attempts: int
     attempt_errors: list[str]
     decision: RepairDecisionV1 | None
+    correction: tuple[DecisionViolation, ...]
     used_fallback: bool
 
 
@@ -100,6 +115,7 @@ class PlanningGraph:
                     "attempts": 0,
                     "attempt_errors": [],
                     "decision": None,
+                    "correction": (),
                     "used_fallback": False,
                 }
             ),
@@ -120,6 +136,7 @@ class PlanningGraph:
             proposed = await self._model.decide(
                 SYSTEM_INSTRUCTION,
                 state["repair_case"],
+                state["correction"],
             )
             decision = decode_decision(encode_decision(proposed))
         except ContractError as error:
@@ -129,6 +146,7 @@ class PlanningGraph:
                     *state["attempt_errors"],
                     _attempt_error(attempts, f"decision contract failed: {error}"),
                 ],
+                "correction": (),
                 "decision": None,
             }
         except DecisionModelError as error:
@@ -138,6 +156,7 @@ class PlanningGraph:
                     *state["attempt_errors"],
                     _attempt_error(attempts, str(error)),
                 ],
+                "correction": error.violations,
                 "decision": None,
             }
         violations = validate_decision_for_case(state["repair_case"], decision)
@@ -148,9 +167,10 @@ class PlanningGraph:
                     *state["attempt_errors"],
                     _attempt_error(attempts, describe_violations(violations)),
                 ],
+                "correction": violations,
                 "decision": None,
             }
-        return {"attempts": attempts, "decision": decision}
+        return {"attempts": attempts, "correction": (), "decision": decision}
 
     @staticmethod
     def _route(state: PlanningState) -> Route:

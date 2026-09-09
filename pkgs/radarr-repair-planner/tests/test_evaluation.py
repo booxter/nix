@@ -7,6 +7,7 @@ import pytest
 from radarr_repair_planner.case_models import RepairCaseV1
 from radarr_repair_planner.contracts import decode_decision
 from radarr_repair_planner.decision_models import RepairDecisionV1
+from radarr_repair_planner.decision_validation import DecisionViolation
 from radarr_repair_planner.evaluation import (
     EvaluationCase,
     EvaluationSettings,
@@ -61,8 +62,9 @@ class ExpectedDecisionModel:
         self,
         system_instruction: str,
         repair_case: RepairCaseV1,
+        correction: tuple[DecisionViolation, ...],
     ) -> RepairDecisionV1:
-        del system_instruction
+        del system_instruction, correction
         return self.decisions[repair_case.case_id.root]
 
 
@@ -71,8 +73,9 @@ class AlwaysNoRepairModel:
         self,
         system_instruction: str,
         repair_case: RepairCaseV1,
+        correction: tuple[DecisionViolation, ...],
     ) -> RepairDecisionV1:
-        del system_instruction
+        del system_instruction, correction
         value = {
             "schema_version": "radarr-repair/v1",
             "case_id": repair_case.case_id.root,

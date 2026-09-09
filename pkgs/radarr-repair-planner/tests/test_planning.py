@@ -14,6 +14,7 @@ from radarr_repair_planner.contracts import (
     encode_decision,
 )
 from radarr_repair_planner.decision_models import RepairDecisionV1
+from radarr_repair_planner.decision_validation import DecisionViolation, ViolationCode
 from radarr_repair_planner.planning import DecisionModelError, PlanningGraph
 from radarr_repair_planner.prompt import SYSTEM_INSTRUCTION
 
@@ -23,14 +24,15 @@ FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/e
 class ScriptedDecisionModel:
     def __init__(self, steps: Sequence[RepairDecisionV1 | Exception]) -> None:
         self.steps = list(steps)
-        self.calls: list[tuple[str, RepairCaseV1]] = []
+        self.calls: list[tuple[str, RepairCaseV1, tuple[DecisionViolation, ...]]] = []
 
     async def decide(
         self,
         system_instruction: str,
         repair_case: RepairCaseV1,
+        correction: tuple[DecisionViolation, ...],
     ) -> RepairDecisionV1:
-        self.calls.append((system_instruction, repair_case))
+        self.calls.append((system_instruction, repair_case, correction))
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step
@@ -54,6 +56,7 @@ async def test_graph_returns_valid_model_decision() -> None:
     assert actual == expected
     assert len(model.calls) == 1
     assert model.calls[0][0] == SYSTEM_INSTRUCTION
+    assert model.calls[0][2] == ()
 
 
 async def test_graph_reports_successful_attempt() -> None:
@@ -75,6 +78,7 @@ async def test_graph_retries_one_expected_failure() -> None:
     assert outcome.decision == expected
     assert outcome.attempt_errors == ("attempt 1: unavailable",)
     assert len(model.calls) == 2
+    assert model.calls[1][2] == ()
 
 
 async def test_graph_falls_back_after_attempt_limit() -> None:
@@ -124,6 +128,26 @@ async def test_graph_retries_wrong_case_id_then_falls_back() -> None:
         "attempt 2: decision case_id does not match the case",
     )
     assert len(model.calls) == 2
+    assert model.calls[1][2] == (
+        DecisionViolation(
+            code=ViolationCode.CASE_ID_MISMATCH,
+            path=("case_id",),
+            rejected_values=("sha256:" + "0" * 64,),
+            allowed_values=(repair_case().case_id.root,),
+        ),
+    )
+
+
+async def test_graph_passes_model_rejection_to_retry() -> None:
+    violation = DecisionViolation(ViolationCode.INVALID_JSON, ())
+    expected = repair_decision()
+    model = ScriptedDecisionModel([DecisionModelError("invalid response", (violation,)), expected])
+
+    outcome = await PlanningGraph(model).plan_with_outcome(repair_case())
+
+    assert outcome.decision == expected
+    assert model.calls[0][2] == ()
+    assert model.calls[1][2] == (violation,)
 
 
 async def test_graph_retries_invalid_structured_output_then_falls_back() -> None:
