@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints,
 from .case_models import RepairCaseV1
 from .contracts import decode_case, encode_decision
 from .decision_models import Reason
+from .decision_validation import describe_violation, validate_decision_for_case
 from .planning import PlanningGraph, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
@@ -149,57 +150,6 @@ def load_evaluation_cases() -> list[EvaluationCase]:
     return result
 
 
-def _reference_ids(value: JsonValue) -> set[str]:
-    if isinstance(value, dict):
-        object_references = {
-            reference_id
-            for key, item in value.items()
-            if key in {"capability_id", "evidence_id", "file_id"}
-            and isinstance((reference_id := item), str)
-        }
-        for item in value.values():
-            object_references.update(_reference_ids(item))
-        return object_references
-    if isinstance(value, list):
-        list_references: set[str] = set()
-        for item in value:
-            list_references.update(_reference_ids(item))
-        return list_references
-    return set()
-
-
-def _capabilities(case_value: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return {capability["capability_id"]: capability for capability in case_value["capabilities"]}
-
-
-def _reference_violations(
-    case_value: dict[str, Any],
-    decision_value: dict[str, Any],
-) -> list[str]:
-    violations: list[str] = []
-    if decision_value["case_id"] != case_value["case_id"]:
-        violations.append("decision case_id does not match the case")
-    unknown_evidence = set(decision_value["evidence_refs"]) - _reference_ids(case_value)
-    if unknown_evidence:
-        violations.append("decision references evidence absent from the case")
-
-    action = decision_value["action"]
-    capabilities = _capabilities(case_value)
-    if action != "no_repair":
-        capability = capabilities.get(decision_value["capability_id"])
-        if capability is None:
-            violations.append("decision references a capability absent from the case")
-        elif capability["action"] != action:
-            violations.append("decision action does not match its capability")
-        elif action == "join_parts_v1":
-            selected = set(decision_value["ordered_file_ids"])
-            if not selected.issubset(set(capability["candidate_file_ids"])):
-                violations.append("join selects files outside its capability")
-        elif decision_value["file_id"] != capability["file_id"]:
-            violations.append("manual import file does not match its capability")
-    return violations
-
-
 def _expectation_violations(
     expected: ExpectedDecision,
     decision_value: dict[str, Any],
@@ -230,10 +180,15 @@ def _semantic_violations(
     evaluation_case: EvaluationCase,
     outcome: PlanningOutcome,
 ) -> list[str]:
-    case_value = json.loads(evaluation_case.repair_case.model_dump_json(by_alias=True))
     decision_value = json.loads(encode_decision(outcome.decision))
     violations = ["planner exhausted its attempts"] if outcome.used_fallback else []
-    violations.extend(_reference_violations(case_value, decision_value))
+    violations.extend(
+        describe_violation(violation)
+        for violation in validate_decision_for_case(
+            evaluation_case.repair_case,
+            outcome.decision,
+        )
+    )
     violations.extend(_expectation_violations(evaluation_case.spec.expected, decision_value))
     return violations
 

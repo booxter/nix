@@ -16,6 +16,7 @@ from .decision_models import (
     SafeExplanation,
     Sha256Id,
 )
+from .decision_validation import describe_violations, validate_decision_for_case
 from .prompt import SYSTEM_INSTRUCTION
 
 ATTEMPT_LIMIT = 2
@@ -139,12 +140,13 @@ class PlanningGraph:
                 ],
                 "decision": None,
             }
-        if decision.root.case_id.root != state["repair_case"].case_id.root:
+        violations = validate_decision_for_case(state["repair_case"], decision)
+        if violations:
             return {
                 "attempts": attempts,
                 "attempt_errors": [
                     *state["attempt_errors"],
-                    _attempt_error(attempts, "decision case_id did not match the case"),
+                    _attempt_error(attempts, describe_violations(violations)),
                 ],
                 "decision": None,
             }

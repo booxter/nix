@@ -120,8 +120,8 @@ async def test_graph_retries_wrong_case_id_then_falls_back() -> None:
 
     assert json.loads(encode_decision(outcome.decision))["action"] == "no_repair"
     assert outcome.attempt_errors == (
-        "attempt 1: decision case_id did not match the case",
-        "attempt 2: decision case_id did not match the case",
+        "attempt 1: decision case_id does not match the case",
+        "attempt 2: decision case_id does not match the case",
     )
     assert len(model.calls) == 2
 
