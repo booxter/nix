@@ -102,9 +102,11 @@
     {
       "base_case": "repair-case-joinable.json",
       "expected": {
-        "action": "no_repair",
-        "allowed_reasons": [
-          "insufficient_evidence"
+        "action": "join_parts_v1",
+        "capability_id": "capability_join_01",
+        "ordered_file_ids": [
+          "file_01",
+          "file_02"
         ]
       },
       "name": "missing_movie_identity",
