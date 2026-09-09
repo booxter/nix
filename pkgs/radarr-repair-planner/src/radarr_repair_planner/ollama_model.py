@@ -46,6 +46,7 @@ class OllamaSettings:
     output_tokens: int
     reasoning: bool
     timeout_seconds: float
+    model: str = MODEL_NAME
 
     def __post_init__(self) -> None:
         parsed_url = urlsplit(self.base_url)
@@ -53,6 +54,8 @@ class OllamaSettings:
             raise OllamaConfigurationError("Ollama base URL must be an absolute HTTPS URL")
         if parsed_url.username is not None or parsed_url.password is not None:
             raise OllamaConfigurationError("Ollama base URL must not contain credentials")
+        if not self.model or self.model != self.model.strip():
+            raise OllamaConfigurationError("Ollama model name must be non-empty and trimmed")
         if self.context_tokens <= 0:
             raise OllamaConfigurationError("Ollama context token limit must be positive")
         if self.output_tokens <= 0 or self.output_tokens > self.context_tokens:
@@ -100,7 +103,7 @@ class OllamaDecisionModel:
         trace_sink: TraceSink | None = None,
     ) -> OllamaDecisionModel:
         chat = ChatOllama(
-            model=MODEL_NAME,
+            model=settings.model,
             base_url=settings.base_url,
             client_kwargs={
                 "timeout": settings.timeout_seconds,

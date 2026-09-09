@@ -281,6 +281,8 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
         ({"output_tokens": 0}, "output token"),
         ({"output_tokens": 32769}, "output token"),
         ({"timeout_seconds": float("inf")}, "timeout"),
+        ({"model": ""}, "model name"),
+        ({"model": " granite4:32b-a9b-h"}, "model name"),
     ],
 )
 def test_settings_reject_unsafe_values(changes: dict[str, object], message: str) -> None:

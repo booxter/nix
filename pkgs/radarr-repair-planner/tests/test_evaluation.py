@@ -249,6 +249,29 @@ def test_cli_selects_one_case(tmp_path: Path) -> None:
     assert [item["case_name"] for item in report["results"]] == ["clear_ordered_join"]
 
 
+def test_cli_selects_model(tmp_path: Path) -> None:
+    output = tmp_path / "report.json"
+    selected_models: list[str] = []
+
+    def recording_model_factory(
+        settings: OllamaSettings,
+        trace_sink: TraceSink | None,
+    ) -> ExpectedDecisionModel:
+        del trace_sink
+        selected_models.append(settings.model)
+        return ExpectedDecisionModel()
+
+    result = main(
+        [*cli_arguments(output), "--model", "granite4:32b-a9b-h"],
+        model_factory=recording_model_factory,
+    )
+
+    report = json.loads(output.read_bytes())
+    assert result == 0
+    assert selected_models == ["granite4:32b-a9b-h"]
+    assert report["settings"]["model"] == "granite4:32b-a9b-h"
+
+
 def test_cli_creates_private_trace_file(tmp_path: Path) -> None:
     output = tmp_path / "report.json"
     trace = tmp_path / "trace.jsonl"

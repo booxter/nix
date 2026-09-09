@@ -22,6 +22,7 @@ ModelFactory = Callable[[OllamaSettings, TraceSink | None], DecisionModel]
 
 class Arguments(argparse.Namespace):
     ollama_url: str
+    model: str
     ca_file: Path
     client_cert_file: Path
     client_key_file: Path
@@ -45,6 +46,7 @@ def _bounded_runs(value: str) -> int:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="radarr-repair-planner-evaluate")
     result.add_argument("--ollama-url", required=True)
+    result.add_argument("--model", default=MODEL_NAME)
     result.add_argument("--ca-file", required=True, type=Path)
     result.add_argument("--client-cert-file", required=True, type=Path)
     result.add_argument("--client-key-file", required=True, type=Path)
@@ -74,9 +76,10 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
         output_tokens=arguments.output_tokens,
         reasoning=reasoning,
         timeout_seconds=arguments.timeout_seconds,
+        model=arguments.model,
     )
     evaluation_settings = EvaluationSettings(
-        model=MODEL_NAME,
+        model=arguments.model,
         context_tokens=arguments.context_tokens,
         output_tokens=arguments.output_tokens,
         reasoning=reasoning,
