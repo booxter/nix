@@ -24,6 +24,7 @@ from radarr_repair_planner.contracts import (
 )
 from radarr_repair_planner.ollama_model import (
     MODEL_NAME,
+    SCHEMA_INSTRUCTION,
     OllamaConfigurationError,
     OllamaDecisionModel,
     OllamaSettings,
@@ -72,10 +73,13 @@ async def test_decision_model_sends_case_as_messages() -> None:
     messages, kwargs = chat.calls[0]
     assert isinstance(messages, list)
     assert all(isinstance(message, BaseMessage) for message in messages)
-    assert [(message.type, message.content) for message in messages] == [
-        ("system", "system instruction"),
-        ("human", encode_case(case).decode()),
-    ]
+    assert [message.type for message in messages] == ["system", "human"]
+    system_content = messages[0].content
+    assert isinstance(system_content, str)
+    prefix = "system instruction\n\n" + SCHEMA_INSTRUCTION
+    assert system_content.startswith(prefix)
+    assert json.loads(system_content.removeprefix(prefix)) == decision_schema()
+    assert messages[1].content == encode_case(case).decode()
     assert kwargs == {"stream": False}
 
 
@@ -272,7 +276,19 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
         "temperature": 0.0,
     }
     assert request["messages"] == [
-        {"role": "system", "content": "system instruction"},
+        {
+            "role": "system",
+            "content": (
+                "system instruction\n\n"
+                + SCHEMA_INSTRUCTION
+                + json.dumps(
+                    decision_schema(),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+            ),
+        },
         {"role": "user", "content": encode_case(case).decode()},
     ]
     assert request["test_peer_certificate"]

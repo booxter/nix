@@ -30,6 +30,10 @@ TRACE_METADATA_FIELDS = (
     "eval_count",
     "eval_duration",
 )
+SCHEMA_INSTRUCTION = """\
+The authoritative response JSON Schema follows. Return only one JSON object
+that validates against it, without Markdown fences or surrounding text.
+"""
 
 
 class OllamaConfigurationError(ValueError):
@@ -199,8 +203,14 @@ class OllamaDecisionModel:
         system_instruction: str,
         repair_case: RepairCaseV1,
     ) -> RepairDecisionV1:
+        schema = json.dumps(
+            decision_schema(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
         messages = [
-            SystemMessage(content=system_instruction),
+            SystemMessage(content=f"{system_instruction.rstrip()}\n\n{SCHEMA_INSTRUCTION}{schema}"),
             HumanMessage(content=encode_case(repair_case).decode()),
         ]
         try:
