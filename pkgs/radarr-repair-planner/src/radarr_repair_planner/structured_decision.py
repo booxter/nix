@@ -42,6 +42,7 @@ def decision_prompt(
     system_instruction: str,
     repair_case: RepairCaseV1,
     correction: tuple[DecisionViolation, ...],
+    schema_instruction: str = SCHEMA_INSTRUCTION,
 ) -> tuple[str, str]:
     schema = json.dumps(
         decision_schema(),
@@ -49,7 +50,7 @@ def decision_prompt(
         separators=(",", ":"),
         sort_keys=True,
     )
-    system_content = f"{system_instruction.rstrip()}\n\n{SCHEMA_INSTRUCTION}{schema}"
+    system_content = f"{system_instruction.rstrip()}\n\n{schema_instruction}{schema}"
     if correction:
         system_content += "\n\n" + format_correction(correction)
     return system_content, encode_case(repair_case).decode()

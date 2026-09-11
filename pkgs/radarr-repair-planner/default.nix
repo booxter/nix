@@ -34,6 +34,7 @@ python3Packages.buildPythonApplication {
     langgraph
     openai
     pydantic
+    pydantic-ai-slim
   ];
 
   nativeCheckInputs = with python3Packages; [

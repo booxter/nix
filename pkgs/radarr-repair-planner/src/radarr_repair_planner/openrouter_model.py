@@ -12,9 +12,14 @@ from openai.types.shared_params.response_format_json_schema import (
 )
 
 from .case_models import RepairCaseV1
-from .contracts import decision_schema
 from .decision_models import RepairDecisionV1
 from .decision_validation import DecisionViolation
+from .openai_structured_output import (
+    SCHEMA_INSTRUCTION,
+    OpenAIStructuredOutputError,
+    openai_decision_schema,
+    unwrap_openai_decision,
+)
 from .planning import DecisionModelError
 from .structured_decision import (
     StructuredDecisionError,
@@ -134,7 +139,7 @@ class OpenRouterChatTransport:
             "type": "json_schema",
             "json_schema": {
                 "name": SCHEMA_NAME,
-                "schema": decision_schema(),
+                "schema": openai_decision_schema(),
                 "strict": True,
             },
         }
@@ -246,6 +251,7 @@ class OpenRouterDecisionModel:
             system_instruction,
             repair_case,
             correction,
+            schema_instruction=SCHEMA_INSTRUCTION,
         )
         request = OpenRouterRequest(
             model=self._settings.model,
@@ -270,7 +276,11 @@ class OpenRouterDecisionModel:
             self._trace(repair_case, response, detail)
             raise DecisionModelError(detail)
         try:
-            decision = decode_structured_decision(response.content)
+            decision_output = unwrap_openai_decision(response.content)
+            decision = decode_structured_decision(decision_output)
+        except OpenAIStructuredOutputError as error:
+            self._trace(repair_case, response, str(error))
+            raise DecisionModelError("OpenRouter " + str(error)) from error
         except StructuredDecisionError as error:
             self._trace(repair_case, response, str(error))
             raise DecisionModelError(

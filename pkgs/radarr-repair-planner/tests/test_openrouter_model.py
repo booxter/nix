@@ -18,6 +18,12 @@ from radarr_repair_planner.decision_validation import (
     ViolationCode,
     format_correction,
 )
+from radarr_repair_planner.openai_structured_output import (
+    SCHEMA_INSTRUCTION as OPENAI_SCHEMA_INSTRUCTION,
+)
+from radarr_repair_planner.openai_structured_output import (
+    openai_decision_schema,
+)
 from radarr_repair_planner.openrouter_model import (
     SCHEMA_NAME,
     OpenRouterChatTransport,
@@ -28,7 +34,6 @@ from radarr_repair_planner.openrouter_model import (
     OpenRouterSettings,
 )
 from radarr_repair_planner.planning import DecisionModelError
-from radarr_repair_planner.structured_decision import SCHEMA_INSTRUCTION
 from radarr_repair_planner.tracing import JsonlTraceWriter
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
@@ -42,6 +47,10 @@ def decision_value() -> dict[str, Any]:
     value = json.loads((FIXTURES / "repair-decision-join.json").read_bytes())
     assert isinstance(value, dict)
     return value
+
+
+def decision_output(value: object | None = None) -> str:
+    return json.dumps({"decision": decision_value() if value is None else value})
 
 
 def settings(**changes: object) -> OpenRouterSettings:
@@ -75,7 +84,7 @@ class ScriptedTransport:
 
 async def test_decision_model_sends_pinned_structured_request() -> None:
     response = OpenRouterResponse(
-        content=json.dumps(decision_value()),
+        content=decision_output(),
         refused=False,
         metadata={"provider": "OpenAI"},
     )
@@ -103,7 +112,7 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
     assert request.provider == "openai"
     assert request.output_tokens == 4096
     assert request.reasoning_effort == "medium"
-    prefix = "system instruction\n\n" + SCHEMA_INSTRUCTION
+    prefix = "system instruction\n\n" + OPENAI_SCHEMA_INSTRUCTION
     schema_text, separator, correction_text = request.system_content.removeprefix(prefix).partition(
         "\n\n"
     )
@@ -144,17 +153,17 @@ async def test_decision_model_wraps_transport_failure() -> None:
             None,
         ),
         (
-            OpenRouterResponse("[]", False, {}),
+            OpenRouterResponse(decision_output([]), False, {}),
             "output was not an object",
             ViolationCode.NON_OBJECT_JSON,
         ),
         (
             OpenRouterResponse("not JSON", False, {}),
-            "decoding failed",
-            ViolationCode.INVALID_JSON,
+            "envelope was not valid JSON",
+            None,
         ),
         (
-            OpenRouterResponse("{}", False, {}),
+            OpenRouterResponse(decision_output({}), False, {}),
             "decision contract failed",
             ViolationCode.MISSING_FIELD,
         ),
@@ -164,8 +173,8 @@ async def test_decision_model_wraps_transport_failure() -> None:
                 False,
                 {},
             ),
-            "decoding failed",
-            ViolationCode.EXTRA_OUTPUT,
+            "envelope was not valid JSON",
+            None,
         ),
     ],
 )
@@ -184,10 +193,24 @@ async def test_decision_model_rejects_invalid_response(
     )
 
 
+async def test_decision_model_applies_complete_contract_after_unwrapping() -> None:
+    decision = decision_value()
+    evidence_refs = decision["evidence_refs"]
+    assert isinstance(evidence_refs, list)
+    evidence_refs.append(evidence_refs[0])
+    model = OpenRouterDecisionModel(
+        ScriptedTransport(OpenRouterResponse(decision_output(decision), False, {})),
+        settings(),
+    )
+
+    with pytest.raises(DecisionModelError, match="decision contract failed"):
+        await model.decide("system instruction", repair_case())
+
+
 async def test_decision_model_traces_response_without_reasoning(tmp_path: Path) -> None:
     path = tmp_path / "trace.jsonl"
     case = repair_case()
-    raw_output = json.dumps(decision_value())
+    raw_output = decision_output()
     response = OpenRouterResponse(
         content=raw_output,
         refused=False,
@@ -240,7 +263,7 @@ class OpenRouterHandler(BaseHTTPRequestHandler):
                     "finish_reason": "stop",
                     "message": {
                         "role": "assistant",
-                        "content": json.dumps(decision_value()),
+                        "content": decision_output(),
                     },
                 }
             ],
@@ -311,7 +334,7 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
             "type": "json_schema",
             "json_schema": {
                 "name": SCHEMA_NAME,
-                "schema": decision_schema(),
+                "schema": openai_decision_schema(),
                 "strict": True,
             },
         },
@@ -327,7 +350,7 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
         "test_path": "/v1/chat/completions",
         "test_authorization": "Bearer router-secret",
     }
-    assert response.content == json.dumps(decision_value())
+    assert response.content == decision_output()
     assert response.refused is False
     assert response.metadata == {
         "model": "openai/gpt-5.6-terra",
