@@ -32,8 +32,9 @@ in
 
     programs.firefox = {
       enable = true;
-      configPath =
-        if isDarwin then "Library/Application Support/org.nixos.firefox" else ".mozilla/firefox";
+      configPath = lib.mkIf (config.programs.firefox.package != null) (
+        if isDarwin then "Library/Application Support/org.nixos.firefox" else ".mozilla/firefox"
+      );
       profiles.default = {
         search = {
           default = cfg.search.provider;
