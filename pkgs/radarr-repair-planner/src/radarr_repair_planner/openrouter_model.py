@@ -141,7 +141,7 @@ class OpenRouterChatTransport:
         completion = await self._client.chat.completions.create(
             messages=messages,
             model=request.model,
-            max_completion_tokens=request.output_tokens,
+            max_tokens=request.output_tokens,
             response_format=response_format,
             store=False,
             stream=False,

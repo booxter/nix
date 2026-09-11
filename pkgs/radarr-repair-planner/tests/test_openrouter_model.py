@@ -306,7 +306,7 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
             {"role": "user", "content": "case JSON"},
         ],
         "model": "openai/gpt-5.6-terra",
-        "max_completion_tokens": 4096,
+        "max_tokens": 4096,
         "response_format": {
             "type": "json_schema",
             "json_schema": {
