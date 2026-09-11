@@ -10,16 +10,17 @@ from radarr_repair_planner.decision_models import RepairDecisionV1
 from radarr_repair_planner.decision_validation import DecisionViolation
 from radarr_repair_planner.evaluation import (
     EvaluationCase,
-    EvaluationSettings,
     ExpectedJoin,
     ExpectedManualImport,
     ExpectedNoRepair,
+    OllamaEvaluationSettings,
     evaluate_outcome,
     load_evaluation_cases,
     run_evaluation,
 )
 from radarr_repair_planner.evaluation_cli import main
 from radarr_repair_planner.ollama_model import MODEL_NAME, OllamaSettings
+from radarr_repair_planner.openrouter_model import OpenRouterSettings
 from radarr_repair_planner.planning import PlanningGraph, PlanningOutcome
 from radarr_repair_planner.tracing import TraceSink
 
@@ -68,6 +69,15 @@ class ExpectedDecisionModel:
         return self.decisions[repair_case.case_id.root]
 
 
+class CloseableExpectedDecisionModel(ExpectedDecisionModel):
+    def __init__(self) -> None:
+        super().__init__()
+        self.closed = False
+
+    async def close(self) -> None:
+        self.closed = True
+
+
 class AlwaysNoRepairModel:
     async def decide(
         self,
@@ -88,8 +98,8 @@ class AlwaysNoRepairModel:
         return decode_decision(json.dumps(value).encode())
 
 
-def settings(runs: int = 1, case: str | None = None) -> EvaluationSettings:
-    return EvaluationSettings(
+def settings(runs: int = 1, case: str | None = None) -> OllamaEvaluationSettings:
+    return OllamaEvaluationSettings(
         model=MODEL_NAME,
         context_tokens=32768,
         output_tokens=4096,
@@ -189,7 +199,7 @@ def test_fallback_is_never_counted_as_success() -> None:
 
 
 def expected_model_factory(
-    settings: OllamaSettings,
+    settings: OllamaSettings | OpenRouterSettings,
     trace_sink: TraceSink | None,
 ) -> ExpectedDecisionModel:
     del settings, trace_sink
@@ -197,7 +207,7 @@ def expected_model_factory(
 
 
 def no_repair_model_factory(
-    settings: OllamaSettings,
+    settings: OllamaSettings | OpenRouterSettings,
     trace_sink: TraceSink | None,
 ) -> AlwaysNoRepairModel:
     del settings, trace_sink
@@ -246,6 +256,27 @@ def cloud_cli_arguments(output: Path, api_key_file: Path) -> list[str]:
     ]
 
 
+def openrouter_cli_arguments(output: Path, api_key_file: Path) -> list[str]:
+    return [
+        "--backend",
+        "openrouter",
+        "--model",
+        "openai/gpt-5.6-terra",
+        "--openrouter-provider",
+        "OpenAI",
+        "--openrouter-api-key-file",
+        str(api_key_file),
+        "--output-tokens",
+        "4096",
+        "--reasoning",
+        "high",
+        "--timeout-seconds",
+        "5",
+        "--output",
+        str(output),
+    ]
+
+
 def test_cli_writes_passing_report(tmp_path: Path) -> None:
     output = tmp_path / "report.json"
 
@@ -254,6 +285,7 @@ def test_cli_writes_passing_report(tmp_path: Path) -> None:
     report = json.loads(output.read_bytes())
     assert result == 0
     assert report["passed"] is True
+    assert report["settings"]["backend"] == "ollama"
     assert report["settings"]["model"] == MODEL_NAME
 
 
@@ -276,10 +308,11 @@ def test_cli_selects_model(tmp_path: Path) -> None:
     selected_models: list[str] = []
 
     def recording_model_factory(
-        settings: OllamaSettings,
+        settings: OllamaSettings | OpenRouterSettings,
         trace_sink: TraceSink | None,
     ) -> ExpectedDecisionModel:
         del trace_sink
+        assert isinstance(settings, OllamaSettings)
         selected_models.append(settings.model)
         return ExpectedDecisionModel()
 
@@ -300,10 +333,11 @@ def test_cli_selects_api_key_file_without_recording_it(tmp_path: Path) -> None:
     selected_settings: list[OllamaSettings] = []
 
     def recording_model_factory(
-        settings: OllamaSettings,
+        settings: OllamaSettings | OpenRouterSettings,
         trace_sink: TraceSink | None,
     ) -> ExpectedDecisionModel:
         del trace_sink
+        assert isinstance(settings, OllamaSettings)
         selected_settings.append(settings)
         return ExpectedDecisionModel()
 
@@ -319,6 +353,83 @@ def test_cli_selects_api_key_file_without_recording_it(tmp_path: Path) -> None:
     assert selected_settings[0].client_cert_file is None
     assert selected_settings[0].client_key_file is None
     assert str(api_key_file) not in report
+
+
+def test_cli_selects_openrouter_without_recording_its_key(tmp_path: Path) -> None:
+    output = tmp_path / "report.json"
+    api_key_file = tmp_path / "openrouter-api-key"
+    selected_settings: list[OpenRouterSettings] = []
+    selected_models: list[CloseableExpectedDecisionModel] = []
+
+    def recording_model_factory(
+        settings: OllamaSettings | OpenRouterSettings,
+        trace_sink: TraceSink | None,
+    ) -> CloseableExpectedDecisionModel:
+        del trace_sink
+        assert isinstance(settings, OpenRouterSettings)
+        selected_settings.append(settings)
+        model = CloseableExpectedDecisionModel()
+        selected_models.append(model)
+        return model
+
+    result = main(
+        openrouter_cli_arguments(output, api_key_file),
+        model_factory=recording_model_factory,
+    )
+
+    report = json.loads(output.read_bytes())
+    assert result == 0
+    assert selected_settings == [
+        OpenRouterSettings(
+            api_key_file=api_key_file,
+            model="openai/gpt-5.6-terra",
+            provider="OpenAI",
+            output_tokens=4096,
+            reasoning_effort="high",
+            timeout_seconds=5,
+        )
+    ]
+    assert report["settings"] == {
+        "backend": "openrouter",
+        "model": "openai/gpt-5.6-terra",
+        "provider": "OpenAI",
+        "output_tokens": 4096,
+        "reasoning_effort": "high",
+        "timeout_seconds": 5.0,
+        "runs": 1,
+        "case": None,
+    }
+    assert str(api_key_file) not in output.read_text(encoding="utf-8")
+    assert selected_models[0].closed
+
+
+@pytest.mark.parametrize(
+    ("backend", "arguments", "message"),
+    [
+        ("ollama", ["--reasoning", "high"], "enabled or disabled"),
+        ("openrouter", ["--ollama-url", "https://frame:11434"], "cannot be used"),
+    ],
+)
+def test_cli_rejects_backend_specific_options(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    backend: str,
+    arguments: list[str],
+    message: str,
+) -> None:
+    output = tmp_path / "report.json"
+    api_key_file = tmp_path / "openrouter-api-key"
+    base = (
+        cli_arguments(output)
+        if backend == "ollama"
+        else openrouter_cli_arguments(output, api_key_file)
+    )
+
+    result = main([*base, *arguments], model_factory=expected_model_factory)
+
+    assert result == 2
+    assert message in capsys.readouterr().err
+    assert not output.exists()
 
 
 def test_cli_creates_private_trace_file(tmp_path: Path) -> None:

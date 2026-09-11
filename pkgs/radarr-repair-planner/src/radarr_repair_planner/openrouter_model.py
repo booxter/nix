@@ -94,6 +94,8 @@ class OpenRouterResponse:
 class OpenRouterTransport(Protocol):
     async def complete(self, request: OpenRouterRequest) -> OpenRouterResponse: ...
 
+    async def close(self) -> None: ...
+
 
 def _api_key(path: Path) -> str:
     try:
@@ -212,6 +214,9 @@ class OpenRouterDecisionModel:
             timeout_seconds=settings.timeout_seconds,
         )
         return cls(transport, settings, trace_sink)
+
+    async def close(self) -> None:
+        await self._transport.close()
 
     def _trace(
         self,

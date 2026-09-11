@@ -61,12 +61,16 @@ class ScriptedTransport:
     def __init__(self, result: OpenRouterResponse | Exception) -> None:
         self.result = result
         self.requests: list[OpenRouterRequest] = []
+        self.closed = False
 
     async def complete(self, request: OpenRouterRequest) -> OpenRouterResponse:
         self.requests.append(request)
         if isinstance(self.result, Exception):
             raise self.result
         return self.result
+
+    async def close(self) -> None:
+        self.closed = True
 
 
 async def test_decision_model_sends_pinned_structured_request() -> None:
@@ -76,6 +80,7 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
         metadata={"provider": "OpenAI"},
     )
     transport = ScriptedTransport(response)
+    model = OpenRouterDecisionModel(transport, settings())
     case = repair_case()
     correction = (
         DecisionViolation(
@@ -86,7 +91,7 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
         ),
     )
 
-    result = await OpenRouterDecisionModel(transport, settings()).decide(
+    result = await model.decide(
         "system instruction",
         case,
         correction,
@@ -106,6 +111,10 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
     assert separator == "\n\n"
     assert correction_text == format_correction(correction)
     assert request.case_content == encode_case(case).decode()
+
+    await model.close()
+
+    assert transport.closed
 
 
 async def test_decision_model_wraps_transport_failure() -> None:

@@ -12,6 +12,7 @@ from .case_models import RepairCaseV1
 from .contracts import decode_case, encode_decision
 from .decision_models import Reason
 from .decision_validation import describe_violation, validate_decision_for_case
+from .openrouter_model import ReasoningEffort
 from .planning import PlanningGraph, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
@@ -74,14 +75,30 @@ class EvaluationCase:
     repair_case: RepairCaseV1
 
 
-class EvaluationSettings(StrictModel):
+class CommonEvaluationSettings(StrictModel):
     model: str
-    context_tokens: int
     output_tokens: int
-    reasoning: bool
     timeout_seconds: float
     runs: int
     case: EvaluationName | None = None
+
+
+class OllamaEvaluationSettings(CommonEvaluationSettings):
+    backend: Literal["ollama"] = "ollama"
+    context_tokens: int
+    reasoning: bool
+
+
+class OpenRouterEvaluationSettings(CommonEvaluationSettings):
+    backend: Literal["openrouter"] = "openrouter"
+    provider: str
+    reasoning_effort: ReasoningEffort
+
+
+EvaluationSettings = Annotated[
+    OllamaEvaluationSettings | OpenRouterEvaluationSettings,
+    Field(discriminator="backend"),
+]
 
 
 class EvaluationResult(StrictModel):
