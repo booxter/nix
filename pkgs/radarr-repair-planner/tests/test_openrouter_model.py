@@ -22,10 +22,9 @@ from radarr_repair_planner.openai_structured_output import (
     SCHEMA_INSTRUCTION as OPENAI_SCHEMA_INSTRUCTION,
 )
 from radarr_repair_planner.openai_structured_output import (
-    openai_decision_schema,
+    OpenAIDecisionEnvelope,
 )
 from radarr_repair_planner.openrouter_model import (
-    SCHEMA_NAME,
     OpenRouterChatTransport,
     OpenRouterConfigurationError,
     OpenRouterDecisionModel,
@@ -323,6 +322,13 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
             await transport.close()
 
     value = requests.get_nowait()
+    response_format = value.pop("response_format")
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["name"] == OpenAIDecisionEnvelope.__name__
+    assert response_format["json_schema"]["strict"] is True
+    schema = response_format["json_schema"]["schema"]
+    assert schema["type"] == "object"
+    assert schema["required"] == ["decision"]
     assert value == {
         "messages": [
             {"role": "system", "content": "system instruction"},
@@ -330,14 +336,6 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
         ],
         "model": "openai/gpt-5.6-terra",
         "max_tokens": 4096,
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": SCHEMA_NAME,
-                "schema": openai_decision_schema(),
-                "strict": True,
-            },
-        },
         "store": False,
         "stream": False,
         "provider": {

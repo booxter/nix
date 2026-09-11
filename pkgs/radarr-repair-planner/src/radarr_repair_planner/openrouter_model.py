@@ -7,17 +7,14 @@ from typing import Literal, Protocol, cast
 
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
-from openai.types.shared_params.response_format_json_schema import (
-    ResponseFormatJSONSchema,
-)
 
 from .case_models import RepairCaseV1
 from .decision_models import RepairDecisionV1
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
     SCHEMA_INSTRUCTION,
+    OpenAIDecisionEnvelope,
     OpenAIStructuredOutputError,
-    openai_decision_schema,
     unwrap_openai_decision,
 )
 from .planning import DecisionModelError
@@ -30,7 +27,6 @@ from .structured_decision import (
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1"
-SCHEMA_NAME = "radarr_repair_decision_v1"
 ReasoningEffort = Literal[
     "none",
     "minimal",
@@ -135,21 +131,12 @@ class OpenRouterChatTransport:
             {"role": "system", "content": request.system_content},
             {"role": "user", "content": request.case_content},
         ]
-        response_format: ResponseFormatJSONSchema = {
-            "type": "json_schema",
-            "json_schema": {
-                "name": SCHEMA_NAME,
-                "schema": openai_decision_schema(),
-                "strict": True,
-            },
-        }
-        completion = await self._client.chat.completions.create(
+        completion = await self._client.chat.completions.parse(
             messages=messages,
             model=request.model,
             max_tokens=request.output_tokens,
-            response_format=response_format,
+            response_format=OpenAIDecisionEnvelope,
             store=False,
-            stream=False,
             extra_body={
                 "provider": {
                     "only": [request.provider],

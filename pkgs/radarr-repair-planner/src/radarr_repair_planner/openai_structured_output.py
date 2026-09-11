@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 
-from pydantic_ai.profiles.openai import OpenAIJsonSchemaTransformer
+from pydantic import BaseModel, ConfigDict
 
-from .contracts import decision_schema
+from .decision_models import RepairDecisionV1
 
 DECISION_FIELD = "decision"
 SCHEMA_INSTRUCTION = """\
@@ -19,26 +18,10 @@ class OpenAIStructuredOutputError(ValueError):
     """An OpenAI structured response that does not contain a decision."""
 
 
-def openai_decision_schema() -> dict[str, Any]:
-    """Derive an OpenAI-compatible schema without weakening the local contract."""
-    schema = decision_schema()
-    definitions = schema.get("$defs")
-    alternatives = schema.get("oneOf")
-    if not isinstance(definitions, dict) or not isinstance(alternatives, list):
-        raise RuntimeError("decision contract does not have the expected root union")
+class OpenAIDecisionEnvelope(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-    envelope: dict[str, Any] = {
-        "$defs": definitions,
-        "type": "object",
-        "properties": {
-            DECISION_FIELD: {
-                "anyOf": alternatives,
-            }
-        },
-        "required": [DECISION_FIELD],
-        "additionalProperties": False,
-    }
-    return OpenAIJsonSchemaTransformer(envelope, strict=True).walk()
+    decision: RepairDecisionV1
 
 
 def unwrap_openai_decision(raw_output: str) -> str:
