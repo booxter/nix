@@ -12,21 +12,6 @@ let
   searchProvider = osConfig.host.site.search.availableProviders.${cfg.search.provider};
   searchEndpoint = searchProvider.endpoint;
   firefoxDohExcludedDomains = [ publicDomain ];
-  # Pin Firefox to the legacy on-disk profile root until we intentionally
-  # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
-  defaultFirefoxConfigPath =
-    if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
-  firefoxConfigPath = config.programs.firefox.configPath;
-  firefoxAppDataDir =
-    if lib.hasPrefix "/" firefoxConfigPath then
-      firefoxConfigPath
-    else
-      "${config.home.homeDirectory}/${firefoxConfigPath}";
-  firefoxPackage =
-    if firefoxConfigPath == defaultFirefoxConfigPath then
-      pkgs.firefox
-    else
-      pkgs.wrapFirefox pkgs.firefox-unwrapped { appDataDir = firefoxAppDataDir; };
 in
 {
   imports = [ ./passkeys.nix ];
@@ -43,18 +28,12 @@ in
   config = lib.mkIf cfg.enable {
     stylix.targets.firefox.profileNames = [ "default" ];
 
-    home.packages = lib.optionals isDarwin [
-      (pkgs.firefox-migrate-app-data.override {
-        destinationRelativePath = firefoxAppDataDir;
-      })
-    ];
+    home.packages = lib.optionals isDarwin [ pkgs.firefox-migrate-app-data ];
 
     programs.firefox = {
       enable = true;
-      # Keep existing profiles in place unless a host explicitly opts into a
-      # different directory. The package wrapper follows the effective value.
-      configPath = lib.mkDefault defaultFirefoxConfigPath;
-      package = lib.mkDefault firefoxPackage;
+      configPath =
+        if isDarwin then "Library/Application Support/org.nixos.firefox" else ".mozilla/firefox";
       profiles.default = {
         search = {
           default = cfg.search.provider;
