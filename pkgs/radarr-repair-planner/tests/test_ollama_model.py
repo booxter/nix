@@ -29,12 +29,12 @@ from radarr_repair_planner.decision_validation import (
 )
 from radarr_repair_planner.ollama_model import (
     MODEL_NAME,
-    SCHEMA_INSTRUCTION,
     OllamaConfigurationError,
     OllamaDecisionModel,
     OllamaSettings,
 )
 from radarr_repair_planner.planning import DecisionModelError
+from radarr_repair_planner.structured_decision import SCHEMA_INSTRUCTION
 from radarr_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"

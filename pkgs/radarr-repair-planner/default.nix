@@ -32,6 +32,7 @@ python3Packages.buildPythonApplication {
     langchain-core
     langchain-ollama
     langgraph
+    openai
     pydantic
   ];
 

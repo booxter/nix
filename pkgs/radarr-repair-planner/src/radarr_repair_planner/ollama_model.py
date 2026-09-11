@@ -14,21 +14,19 @@ from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
 
 from .case_models import RepairCaseV1
-from .contracts import ContractError, decision_schema, decode_decision, encode_case
+from .contracts import decision_schema
 from .decision_models import RepairDecisionV1
-from .decision_validation import (
-    DecisionViolation,
-    describe_violations,
-    format_correction,
-    non_object_violation,
-    parsing_violation,
-    validate_decision_object,
-)
+from .decision_validation import DecisionViolation
 from .planning import DecisionModelError
+from .structured_decision import (
+    StructuredDecisionError,
+    decision_prompt,
+    decode_structured_decision,
+    diagnostic,
+)
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
 MODEL_NAME = "qwen3.8:27b-mtp-q4_K_M"
-MODEL_ERROR_LIMIT = 384
 TRACE_METADATA_FIELDS = (
     "done_reason",
     "total_duration",
@@ -38,10 +36,6 @@ TRACE_METADATA_FIELDS = (
     "eval_count",
     "eval_duration",
 )
-SCHEMA_INSTRUCTION = """\
-The authoritative response JSON Schema follows. Return only one JSON object
-that validates against it, without Markdown fences or surrounding text.
-"""
 
 
 class OllamaConfigurationError(ValueError):
@@ -164,11 +158,6 @@ class OllamaDecisionModel:
         return cls(response_model, trace_sink)
 
     @staticmethod
-    def _diagnostic(error: BaseException) -> str:
-        detail = " ".join(str(error).split())
-        return (type(error).__name__ + (f": {detail}" if detail else ""))[:MODEL_ERROR_LIMIT]
-
-    @staticmethod
     def _raw_fields(
         raw: object,
     ) -> tuple[str | None, str | None, dict[str, MetadataValue]]:
@@ -212,18 +201,14 @@ class OllamaDecisionModel:
         repair_case: RepairCaseV1,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> RepairDecisionV1:
-        schema = json.dumps(
-            decision_schema(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
+        system_content, case_content = decision_prompt(
+            system_instruction,
+            repair_case,
+            correction,
         )
-        system_content = f"{system_instruction.rstrip()}\n\n{SCHEMA_INSTRUCTION}{schema}"
-        if correction:
-            system_content += "\n\n" + format_correction(correction)
         messages = [
             SystemMessage(content=system_content),
-            HumanMessage(content=encode_case(repair_case).decode()),
+            HumanMessage(content=case_content),
         ]
         try:
             result = await self._response_model.ainvoke(messages, stream=False)
@@ -231,10 +216,10 @@ class OllamaDecisionModel:
         # common exception type. Failures raised by that boundary are retryable;
         # our parsing and contract validation below remain visible.
         except Exception as error:
-            diagnostic = self._diagnostic(error)
-            self._trace(repair_case, None, "request failed: " + diagnostic)
+            detail = diagnostic(error)
+            self._trace(repair_case, None, "request failed: " + detail)
             raise DecisionModelError(
-                "Ollama request or structured decoding failed: " + diagnostic
+                "Ollama request or structured decoding failed: " + detail
             ) from error
         if not isinstance(result, BaseMessage):
             self._trace(repair_case, None, "Ollama response was not a message")
@@ -244,35 +229,12 @@ class OllamaDecisionModel:
             self._trace(repair_case, raw, "structured output was not text")
             raise DecisionModelError("Ollama structured output was not text")
         try:
-            result = json.loads(raw.content)
-        except json.JSONDecodeError as error:
-            diagnostic = self._diagnostic(error)
-            self._trace(repair_case, raw, "structured decoding failed: " + diagnostic)
-            violation = parsing_violation(extra_output=error.msg == "Extra data")
+            decision = decode_structured_decision(raw.content)
+        except StructuredDecisionError as error:
+            self._trace(repair_case, raw, str(error))
             raise DecisionModelError(
-                "Ollama structured decoding failed: " + diagnostic,
-                (violation,),
-            ) from error
-        if not isinstance(result, dict):
-            self._trace(repair_case, raw, "structured output was not an object")
-            raise DecisionModelError(
-                "Ollama structured output was not an object",
-                (non_object_violation(),),
-            )
-        try:
-            payload = json.dumps(result, allow_nan=False).encode()
-        except (TypeError, ValueError) as error:
-            self._trace(repair_case, raw, "structured output was not JSON")
-            raise DecisionModelError("Ollama structured output was not JSON") from error
-        try:
-            decision = decode_decision(payload)
-        except ContractError as error:
-            self._trace(repair_case, raw, "decision contract failed: " + self._diagnostic(error))
-            violations = validate_decision_object(result)
-            detail = describe_violations(violations) if violations else self._diagnostic(error)
-            raise DecisionModelError(
-                "decision contract failed: " + detail,
-                violations,
+                "Ollama " + str(error),
+                error.violations,
             ) from error
         self._trace(repair_case, raw, None)
         return decision
