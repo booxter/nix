@@ -29,7 +29,7 @@ class LoginWorkflow:
         for status in initial:
             if status.status is StartupStatus.READY:
                 self.note(f"{status.name}: ready")
-            elif status.requires_reauthentication:
+            elif status.should_attempt_login:
                 self.note(f"{status.name}: reauthentication required")
                 reauthentication.append(status.name)
             else:

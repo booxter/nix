@@ -55,6 +55,17 @@ def reauthentication_required(name: str) -> ServerStartup:
     )
 
 
+def refresh_failed(name: str) -> ServerStartup:
+    return ServerStartup(
+        name,
+        StartupStatus.FAILED,
+        error=(
+            f"MCP client for `{name}` failed to start: MCP startup failed: "
+            f"failed to refresh OAuth tokens for server {name}"
+        ),
+    )
+
+
 def run_workflow(
     probe: FakeProbe,
     login: FakeLogin,
@@ -79,7 +90,7 @@ def test_skips_ready_servers() -> None:
 def test_logs_in_sequentially_and_verifies_with_fresh_probe() -> None:
     probe = FakeProbe(
         [
-            (ready("alpha"), reauthentication_required("beta"), reauthentication_required("gamma")),
+            (ready("alpha"), reauthentication_required("beta"), refresh_failed("gamma")),
             (ready("beta"), ready("gamma")),
         ]
     )
@@ -128,13 +139,30 @@ def test_reports_nonzero_login_and_verification_failure() -> None:
 
 def test_reports_startup_and_probe_failures() -> None:
     initial_failure = ServerStartup("alpha", StartupStatus.FAILED, error="network failed")
-    status, output = run_workflow(FakeProbe([(initial_failure, ready("beta"))]), FakeLogin({}))
+    login = FakeLogin({})
+    status, output = run_workflow(FakeProbe([(initial_failure, ready("beta"))]), login)
     assert status == 1
+    assert login.calls == []
     assert "alpha: startup failed: network failed" in output
 
     status, output = run_workflow(FakeProbe([ProbeError("probe broke")]), FakeLogin({}))
     assert status == 1
     assert "error: probe broke" in output
+
+
+def test_does_not_login_for_refresh_failure_naming_another_server() -> None:
+    failure = ServerStartup(
+        "alpha",
+        StartupStatus.FAILED,
+        error="failed to refresh OAuth tokens for server beta",
+    )
+    login = FakeLogin({})
+
+    status, output = run_workflow(FakeProbe([(failure, ready("beta"))]), login)
+
+    assert status == 1
+    assert login.calls == []
+    assert "alpha: startup failed" in output
 
 
 def test_reports_verification_probe_failure() -> None:
