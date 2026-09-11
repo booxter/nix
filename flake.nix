@@ -28,7 +28,7 @@
       flake = false;
     };
 
-    home-manager.url = "github:nix-community/home-manager/release-26.05";
+    home-manager.url = "github:booxter/home-manager/firefox-macos27-backport";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     stylix.url = "github:nix-community/stylix/release-26.05";
