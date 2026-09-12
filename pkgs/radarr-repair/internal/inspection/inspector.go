@@ -88,6 +88,50 @@ func (inspector *Inspector) Inspect(
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
+	return inspector.inspectRecord(ctx, collectionContext, record)
+}
+
+func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assembly, error) {
+	if inspector == nil || inspector.assemble == nil {
+		return nil, fmt.Errorf("inspector is not configured")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	queueContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
+	records, err := inspector.dependencies.Radarr.ReadQueue(queueContext)
+	cancel()
+	if err != nil {
+		return nil, fmt.Errorf("read Radarr queue: %w", err)
+	}
+	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(records))
+	if len(eligible) == 0 {
+		return nil, fmt.Errorf(
+			"Radarr queue has no completed unimported downloads eligible for inspection",
+		)
+	}
+
+	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
+	for _, record := range eligible {
+		collectionContext, collectionCancel := context.WithTimeout(
+			ctx,
+			inspector.dependencies.CollectionTimeout,
+		)
+		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
+		collectionCancel()
+		if inspectErr != nil {
+			return nil, fmt.Errorf("inspect Radarr queue record %d: %w", record.ID, inspectErr)
+		}
+		assemblies = append(assemblies, assembly)
+	}
+	return assemblies, nil
+}
+
+func (inspector *Inspector) inspectRecord(
+	callerContext context.Context,
+	collectionContext context.Context,
+	record controller.RadarrQueueRecord,
+) (casebuilder.Assembly, error) {
 
 	torrent, found, err := inspector.dependencies.Transmission.FindTorrent(collectionContext, record.DownloadID)
 	if err != nil {
@@ -140,7 +184,7 @@ func (inspector *Inspector) Inspect(
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inventory download files: %w", err)
 	}
-	probes, err := inspector.collectProbes(ctx, collectionContext, inventory)
+	probes, err := inspector.collectProbes(callerContext, collectionContext, inventory)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
@@ -158,6 +202,18 @@ func (inspector *Inspector) Inspect(
 		return casebuilder.Assembly{}, fmt.Errorf("assemble repair case: %w", err)
 	}
 	return assembly, nil
+}
+
+func eligibleCandidates(
+	assessments []controller.CandidateAssessment,
+) []controller.RadarrQueueRecord {
+	eligible := make([]controller.RadarrQueueRecord, 0, len(assessments))
+	for _, assessment := range assessments {
+		if assessment.Eligible() {
+			eligible = append(eligible, assessment.Record)
+		}
+	}
+	return eligible
 }
 
 func selectCandidate(
@@ -185,12 +241,7 @@ func selectCandidate(
 		)
 	}
 
-	eligible := make([]controller.RadarrQueueRecord, 0, len(assessments))
-	for _, assessment := range assessments {
-		if assessment.Eligible() {
-			eligible = append(eligible, assessment.Record)
-		}
-	}
+	eligible := eligibleCandidates(assessments)
 	switch len(eligible) {
 	case 0:
 		return controller.RadarrQueueRecord{}, fmt.Errorf(

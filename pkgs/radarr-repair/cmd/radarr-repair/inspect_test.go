@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 )
 
@@ -93,6 +94,85 @@ func TestInspectCanWriteOnlyCaseBytesToStandardOutput(t *testing.T) {
 	}
 }
 
+func TestInspectAllWritesExactCasesToNewPrivateDirectory(t *testing.T) {
+	t.Parallel()
+
+	outputDirectory := filepath.Join(t.TempDir(), "capture")
+	arguments, apiKeyFile := validInspectAllArguments(t, outputDirectory)
+	firstID := "sha256:" + strings.Repeat("a", 64)
+	secondID := "sha256:" + strings.Repeat("b", 64)
+	first := []byte(`{"case_id":"` + firstID + `"}`)
+	second := []byte(`{"case_id":"` + secondID + `"}`)
+	var gotConfig inspectConfig
+	app := application{inspectAll: func(
+		_ context.Context,
+		config inspectConfig,
+	) ([]casebuilder.Assembly, error) {
+		gotConfig = config
+		return []casebuilder.Assembly{
+			{Request: contracts.RepairCaseV1{CaseID: firstID}, EncodedRequest: first},
+			{Request: contracts.RepairCaseV1{CaseID: secondID}, EncodedRequest: second},
+		}, nil
+	}}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := app.run(
+		context.Background(), arguments, strings.NewReader(""), &stdout, &stderr,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if stdout.String() != "captured 2 repair cases\n" || stderr.Len() != 0 {
+		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+	}
+	for _, expected := range []struct {
+		name string
+		data []byte
+	}{
+		{name: strings.Repeat("a", 64) + ".json", data: first},
+		{name: strings.Repeat("b", 64) + ".json", data: second},
+	} {
+		path := filepath.Join(outputDirectory, expected.name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(data, expected.data) {
+			t.Fatalf("output %s = %q", expected.name, data)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o600 {
+			t.Fatalf("output %s mode = %o", expected.name, info.Mode().Perm())
+		}
+	}
+	info, err := os.Stat(outputDirectory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o700 {
+		t.Fatalf("output directory mode = %o", info.Mode().Perm())
+	}
+	wantConfig := inspectConfig{
+		RadarrURL:        "http://127.0.0.1:7878",
+		RadarrAPIKeyFile: apiKeyFile,
+		TransmissionURL:  "http://localhost:9091/transmission/rpc",
+		WorkerSocket:     "/run/radarr-repair/worker.sock",
+		WorkerRoots: map[string]string{
+			"root:archive":   "/data/archive",
+			"root:downloads": "/data/downloads",
+		},
+		OutputDirectory:   outputDirectory,
+		All:               true,
+		Timeout:           45 * time.Second,
+		CollectionTimeout: 90 * time.Second,
+	}
+	if !reflect.DeepEqual(gotConfig, wantConfig) {
+		t.Fatalf("config = %#v, want %#v", gotConfig, wantConfig)
+	}
+}
+
 func TestInspectRefusesExistingOutputBeforeCollection(t *testing.T) {
 	t.Parallel()
 
@@ -122,6 +202,30 @@ func TestInspectRefusesExistingOutputBeforeCollection(t *testing.T) {
 	}
 	if string(data) != "existing" {
 		t.Fatalf("existing output changed to %q", data)
+	}
+}
+
+func TestInspectAllRefusesExistingDirectoryBeforeCollection(t *testing.T) {
+	t.Parallel()
+
+	outputDirectory := t.TempDir()
+	arguments, _ := validInspectAllArguments(t, outputDirectory)
+	calls := 0
+	app := application{inspectAll: func(
+		context.Context,
+		inspectConfig,
+	) ([]casebuilder.Assembly, error) {
+		calls++
+		return nil, nil
+	}}
+	err := app.run(
+		context.Background(), arguments, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{},
+	)
+	if err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("error = %v", err)
+	}
+	if calls != 0 {
+		t.Fatal("bulk inspection ran before the existing directory was rejected")
 	}
 }
 
@@ -169,6 +273,7 @@ func TestInspectRejectsInvalidConfigurationBeforeCollection(t *testing.T) {
 	t.Parallel()
 
 	valid, _ := validInspectArguments(t, "-")
+	validAll, _ := validInspectAllArguments(t, filepath.Join(t.TempDir(), "capture"))
 	tests := []struct {
 		name      string
 		arguments []string
@@ -197,6 +302,22 @@ func TestInspectRejectsInvalidConfigurationBeforeCollection(t *testing.T) {
 		{
 			name:      "negative queue ID",
 			arguments: replaceArgument(valid, "--queue-id", "-1"),
+		},
+		{
+			name:      "output directory without all",
+			arguments: append(append([]string(nil), valid...), "--output-directory", "/tmp/cases"),
+		},
+		{
+			name:      "bulk mode with queue ID",
+			arguments: append(append([]string(nil), validAll...), "--queue-id", "71"),
+		},
+		{
+			name:      "bulk mode with single output",
+			arguments: append(append([]string(nil), validAll...), "--output", "-"),
+		},
+		{
+			name:      "relative bulk output directory",
+			arguments: replaceArgument(validAll, "--output-directory", "cases"),
 		},
 		{
 			name:      "zero timeout",
@@ -340,6 +461,24 @@ func validInspectArguments(t *testing.T, output string) ([]string, string) {
 		"--worker-root", "root:archive=/data/archive",
 		"--output", output,
 		"--queue-id", "71",
+		"--timeout", "45s",
+		"--collection-timeout", "90s",
+	}, apiKeyFile
+}
+
+func validInspectAllArguments(t *testing.T, outputDirectory string) ([]string, string) {
+	t.Helper()
+	apiKeyFile := filepath.Join(t.TempDir(), "radarr-api-key")
+	return []string{
+		"inspect",
+		"--radarr-url", "http://127.0.0.1:7878",
+		"--radarr-api-key-file", apiKeyFile,
+		"--transmission-url", "http://localhost:9091/transmission/rpc",
+		"--worker-socket", "/run/radarr-repair/worker.sock",
+		"--worker-root", "root:downloads=/data/downloads",
+		"--worker-root", "root:archive=/data/archive",
+		"--all",
+		"--output-directory", outputDirectory,
 		"--timeout", "45s",
 		"--collection-timeout", "90s",
 	}, apiKeyFile

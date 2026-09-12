@@ -38,12 +38,15 @@ type inspectConfig struct {
 	WorkerSocket      string
 	WorkerRoots       map[string]string
 	Output            string
+	OutputDirectory   string
 	QueueID           int64
+	All               bool
 	Timeout           time.Duration
 	CollectionTimeout time.Duration
 }
 
 type inspectFunc func(context.Context, inspectConfig) (casebuilder.Assembly, error)
+type inspectAllFunc func(context.Context, inspectConfig) ([]casebuilder.Assembly, error)
 
 func (app application) runInspect(
 	ctx context.Context,
@@ -57,7 +60,7 @@ func (app application) runInspect(
 			stderr,
 			"usage: radarr-repair inspect --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
-				"--output FILE [--queue-id ID]",
+				"(--output FILE [--queue-id ID] | --all --output-directory DIR)",
 		)
 	}
 	radarrURL := flags.String("radarr-url", "", "loopback Radarr URL")
@@ -65,12 +68,18 @@ func (app application) runInspect(
 	transmissionURL := flags.String("transmission-url", "", "loopback Transmission RPC URL")
 	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
 	output := flags.String("output", "", "new output file, or - for standard output")
+	outputDirectory := flags.String(
+		"output-directory",
+		"",
+		"new private directory for cases captured with --all",
+	)
 	queueID := flags.Int64("queue-id", 0, "specific Radarr queue record")
+	all := flags.Bool("all", false, "inspect every eligible Radarr queue record")
 	timeout := flags.Duration("timeout", defaultInspectTimeout, "per-request timeout")
 	collectionTimeout := flags.Duration(
 		"collection-timeout",
 		defaultCollectionTimeout,
-		"total inspection evidence-collection timeout",
+		"per-case evidence-collection timeout",
 	)
 	workerRoots := mediaroot.NewMappings()
 	flags.Var(workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
@@ -88,7 +97,9 @@ func (app application) runInspect(
 		WorkerSocket:      *workerSocket,
 		WorkerRoots:       workerRoots.Paths(),
 		Output:            *output,
+		OutputDirectory:   *outputDirectory,
 		QueueID:           *queueID,
+		All:               *all,
 		Timeout:           *timeout,
 		CollectionTimeout: *collectionTimeout,
 	}
@@ -98,7 +109,25 @@ func (app application) runInspect(
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := ensureOutputDoesNotExist(config.Output); err != nil {
+	outputPath := config.Output
+	if config.All {
+		outputPath = config.OutputDirectory
+	}
+	if err := ensureOutputDoesNotExist(outputPath); err != nil {
+		return err
+	}
+	if config.All {
+		if app.inspectAll == nil {
+			return fmt.Errorf("bulk inspection command is not configured")
+		}
+		assemblies, err := app.inspectAll(ctx, config)
+		if err != nil {
+			return err
+		}
+		if err := writeInspectionDirectory(config.OutputDirectory, assemblies); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(stdout, "captured %d repair cases\n", len(assemblies))
 		return err
 	}
 	if app.inspect == nil {
@@ -131,11 +160,19 @@ func validateInspectConfig(config inspectConfig) error {
 	if len(config.WorkerRoots) == 0 {
 		return fmt.Errorf("at least one worker root is required")
 	}
-	if config.Output == "" {
-		return fmt.Errorf("output is required")
-	}
 	if config.QueueID < 0 {
 		return fmt.Errorf("queue ID must not be negative")
+	}
+	if config.All {
+		if config.QueueID != 0 || config.Output != "" || config.OutputDirectory == "" {
+			return fmt.Errorf("--all requires --output-directory and cannot use --output or --queue-id")
+		}
+		if !filepath.IsAbs(config.OutputDirectory) ||
+			filepath.Clean(config.OutputDirectory) != config.OutputDirectory {
+			return fmt.Errorf("output directory must be an absolute clean path")
+		}
+	} else if config.Output == "" || config.OutputDirectory != "" {
+		return fmt.Errorf("--output is required without --all and --output-directory is not allowed")
 	}
 	if config.Timeout <= 0 {
 		return fmt.Errorf("request timeout must be positive")
@@ -167,15 +204,32 @@ func isLoopbackHost(host string) bool {
 }
 
 func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembly, error) {
-	apiKey, err := readAPIKey(config.RadarrAPIKeyFile)
+	inspector, closeInspector, err := configureInspector(config)
 	if err != nil {
 		return casebuilder.Assembly{}, err
+	}
+	defer closeInspector()
+	return inspector.Inspect(ctx, inspection.Selection{QueueID: config.QueueID})
+}
+
+func inspectAllCases(ctx context.Context, config inspectConfig) ([]casebuilder.Assembly, error) {
+	inspector, closeInspector, err := configureInspector(config)
+	if err != nil {
+		return nil, err
+	}
+	defer closeInspector()
+	return inspector.InspectAll(ctx)
+}
+
+func configureInspector(config inspectConfig) (*inspection.Inspector, func(), error) {
+	apiKey, err := readAPIKey(config.RadarrAPIKeyFile)
+	if err != nil {
+		return nil, nil, err
 	}
 	transport, err := directHTTPTransport()
 	if err != nil {
-		return casebuilder.Assembly{}, err
+		return nil, nil, err
 	}
-	defer transport.CloseIdleConnections()
 	httpClient := &http.Client{
 		Transport: transport,
 		Timeout:   config.Timeout,
@@ -185,7 +239,8 @@ func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembl
 	}
 	radarrClient, err := radarrsource.New(config.RadarrURL, apiKey, httpClient)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("configure Radarr client: %w", err)
+		transport.CloseIdleConnections()
+		return nil, nil, fmt.Errorf("configure Radarr client: %w", err)
 	}
 	transmissionClient, err := transmissionsource.New(
 		config.TransmissionURL,
@@ -193,13 +248,14 @@ func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembl
 		httpClient,
 	)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("configure Transmission client: %w", err)
+		transport.CloseIdleConnections()
+		return nil, nil, fmt.Errorf("configure Transmission client: %w", err)
 	}
 	probeClient, err := workerclient.New(config.WorkerSocket, config.WorkerRoots, config.Timeout)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("configure media worker client: %w", err)
+		transport.CloseIdleConnections()
+		return nil, nil, fmt.Errorf("configure media worker client: %w", err)
 	}
-	defer probeClient.Close()
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
@@ -209,9 +265,15 @@ func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembl
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("configure inspector: %w", err)
+		probeClient.Close()
+		transport.CloseIdleConnections()
+		return nil, nil, fmt.Errorf("configure inspector: %w", err)
 	}
-	return inspector.Inspect(ctx, inspection.Selection{QueueID: config.QueueID})
+	closeInspector := func() {
+		probeClient.Close()
+		transport.CloseIdleConnections()
+	}
+	return inspector, closeInspector, nil
 }
 
 func directHTTPTransport() (*http.Transport, error) {
@@ -303,6 +365,67 @@ func writeInspectionOutput(path string, data []byte, stdout io.Writer) error {
 	}
 	complete = true
 	return nil
+}
+
+func writeInspectionDirectory(path string, assemblies []casebuilder.Assembly) error {
+	if len(assemblies) == 0 {
+		return fmt.Errorf("bulk inspection produced no repair cases")
+	}
+	filenames := make([]string, len(assemblies))
+	seen := make(map[string]struct{}, len(assemblies))
+	for index, assembly := range assemblies {
+		if len(assembly.EncodedRequest) == 0 {
+			return fmt.Errorf("assembled repair case %d is empty", index)
+		}
+		filename, err := inspectionFilename(assembly.Request.CaseID)
+		if err != nil {
+			return err
+		}
+		if _, duplicate := seen[filename]; duplicate {
+			return fmt.Errorf("bulk inspection produced duplicate case ID %q", assembly.Request.CaseID)
+		}
+		seen[filename] = struct{}{}
+		filenames[index] = filename
+	}
+
+	if err := os.Mkdir(path, 0o700); err != nil {
+		return fmt.Errorf("create output directory %s: %w", path, err)
+	}
+	written := make([]string, 0, len(assemblies))
+	complete := false
+	defer func() {
+		if complete {
+			return
+		}
+		for _, output := range written {
+			_ = os.Remove(output)
+		}
+		_ = os.Remove(path)
+	}()
+
+	for index, assembly := range assemblies {
+		output := filepath.Join(path, filenames[index])
+		if err := writeInspectionOutput(output, assembly.EncodedRequest, io.Discard); err != nil {
+			return err
+		}
+		written = append(written, output)
+	}
+	complete = true
+	return nil
+}
+
+func inspectionFilename(caseID string) (string, error) {
+	const prefix = "sha256:"
+	if !strings.HasPrefix(caseID, prefix) || len(caseID) != len(prefix)+64 {
+		return "", fmt.Errorf("assembled repair case has invalid case ID %q", caseID)
+	}
+	digest := strings.TrimPrefix(caseID, prefix)
+	for _, character := range digest {
+		if (character < '0' || character > '9') && (character < 'a' || character > 'f') {
+			return "", fmt.Errorf("assembled repair case has invalid case ID %q", caseID)
+		}
+	}
+	return digest + ".json", nil
 }
 
 func writeAll(writer io.Writer, data []byte) error {

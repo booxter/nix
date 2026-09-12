@@ -16,11 +16,12 @@ import (
 const maximumDocumentSize = 8 << 20
 
 type application struct {
-	inspect inspectFunc
+	inspect    inspectFunc
+	inspectAll inspectAllFunc
 }
 
 func newApplication() application {
-	return application{inspect: inspectCase}
+	return application{inspect: inspectCase, inspectAll: inspectAllCases}
 }
 
 func run(arguments []string, stdin io.Reader, stdout, stderr io.Writer) error {

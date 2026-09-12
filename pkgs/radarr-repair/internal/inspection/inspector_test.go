@@ -90,6 +90,45 @@ func TestInspectSelectsAnExplicitEligibleCandidate(t *testing.T) {
 	}
 }
 
+func TestInspectAllCollectsEveryEligibleCandidateFromOneQueueRead(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	other := fixture.radarr.records[0]
+	other.ID = 72
+	fixture.radarr.records = append(fixture.radarr.records, other)
+	var selectedQueueIDs []int64
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		selectedQueueIDs = append(selectedQueueIDs, observation.Correlation.Radarr.ID)
+		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
+	})
+
+	assemblies, err := inspector.InspectAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assemblies) != 2 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
+		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
+	}
+	if fixture.radarr.queueReads != 1 {
+		t.Fatalf("Radarr queue reads = %d", fixture.radarr.queueReads)
+	}
+}
+
+func TestInspectAllRejectsQueueWithoutEligibleCandidates(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.radarr.records[0].Protocol = "usenet"
+	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
+	_, err := inspector.InspectAll(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "no completed unimported downloads") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
 func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
 	t.Parallel()
 
