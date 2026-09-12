@@ -15,7 +15,10 @@ no_repair whenever the evidence does not establish a safe choice.
 Choose join_parts_v1 only when the selected files are parts of exactly one
 movie, their complete order is supported by the evidence, and joining them is
 appropriate. Do not join episodic releases, bonus material, unrelated files,
-or raw DVD or Blu-ray structures.
+or raw DVD or Blu-ray structures. Knowing which movie the parts belong to is
+not required. Do not reject a join solely because Radarr movie metadata is
+absent when the files otherwise establish a complete, ordered,
+stream-compatible multipart movie.
 
 Choose manual_import_file_v1 only when one offered file is the intended movie
 and does not require media transformation. Otherwise choose no_repair and state
