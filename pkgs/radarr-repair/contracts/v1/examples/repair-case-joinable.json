@@ -14,7 +14,7 @@
     "client": "transmission",
     "completed_at": "2026-09-05T22:15:00Z",
     "download_ref": "download_01",
-    "file_count": 4,
+    "file_count": 2,
     "is_complete": true,
     "labels": [
       "radarr"
