@@ -19,8 +19,7 @@
     "labels": [],
     "name": "Example.Movie.parts",
     "source_type": "torrent",
-    "total_size_bytes": 200,
-    "tracker_hosts": []
+    "total_size_bytes": 200
   },
   "files": [
     {

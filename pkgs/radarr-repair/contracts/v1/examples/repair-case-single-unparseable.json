@@ -1,6 +1,6 @@
 {
   "capabilities": [],
-  "case_id": "sha256:df14e027c7b458ec1c174ac23752239ffec8cb81c9f3bf54e5cf7454571b7f5e",
+  "case_id": "sha256:fd95793fe960d729feabe39a448c1f0c888c08a7065384a3cc5fbc064410bd80",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T12:00:00Z",
@@ -12,8 +12,7 @@
     ],
     "name": "Poorly Named Feature",
     "source_type": "torrent",
-    "total_size_bytes": 1500000000,
-    "tracker_hosts": []
+    "total_size_bytes": 1500000000
   },
   "files": [
     {

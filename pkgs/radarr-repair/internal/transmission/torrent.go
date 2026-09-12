@@ -25,7 +25,6 @@ var torrentFields = []string{
 	"total_size",
 	"files",
 	"file_stats",
-	"tracker_stats",
 }
 
 // Existing tagged Go clients target Transmission's deprecated pre-4.1 RPC
@@ -90,7 +89,6 @@ type torrentResponse struct {
 	TotalSize     *int64                     `json:"total_size"`
 	Files         []*torrentFileResponse     `json:"files"`
 	FileStats     []*torrentFileStatResponse `json:"file_stats"`
-	TrackerStats  []*torrentTrackerResponse  `json:"tracker_stats"`
 }
 
 type torrentFileResponse struct {
@@ -103,10 +101,6 @@ type torrentFileStatResponse struct {
 	BytesCompleted *int64 `json:"bytes_completed"`
 	Wanted         *bool  `json:"wanted"`
 	Priority       *int   `json:"priority"`
-}
-
-type torrentTrackerResponse struct {
-	Host string `json:"host"`
 }
 
 func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
@@ -132,7 +126,7 @@ func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
 	if *raw.DownloadDir == "" || strings.ContainsRune(*raw.DownloadDir, '\x00') {
 		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission download directory is invalid")
 	}
-	if raw.Labels == nil || raw.Files == nil || raw.FileStats == nil || raw.TrackerStats == nil {
+	if raw.Labels == nil || raw.Files == nil || raw.FileStats == nil {
 		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent is missing required collections")
 	}
 	if len(raw.Files) != len(raw.FileStats) {
@@ -155,10 +149,6 @@ func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
 		)
 	}
 	labels, err := validateLabels(raw.Labels)
-	if err != nil {
-		return controller.TransmissionTorrent{}, err
-	}
-	trackerHosts, err := normalizeTrackerHosts(raw.TrackerStats)
 	if err != nil {
 		return controller.TransmissionTorrent{}, err
 	}
@@ -189,7 +179,6 @@ func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
 		CompletedAt:       completedAt,
 		TotalSizeBytes:    *raw.TotalSize,
 		Files:             files,
-		TrackerHosts:      trackerHosts,
 	}, nil
 }
 

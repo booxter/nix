@@ -281,7 +281,6 @@ func mapDownload(torrent controller.TransmissionTorrent, downloadRef string) con
 		FileCount:      int64(len(torrent.Files)),
 		IsComplete:     true,
 		CompletedAt:    completedAt,
-		TrackerHosts:   clone(torrent.TrackerHosts),
 		Labels:         clone(torrent.Labels),
 	}
 }

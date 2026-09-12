@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -255,28 +254,4 @@ func unixTime(value int64) (*time.Time, error) {
 	}
 	timestamp := time.Unix(value, 0).UTC()
 	return &timestamp, nil
-}
-
-func normalizeTrackerHosts(trackers []*torrentTrackerResponse) ([]string, error) {
-	hosts := make(map[string]struct{}, len(trackers))
-	for index, tracker := range trackers {
-		if tracker == nil {
-			return nil, fmt.Errorf("tracker %d is null", index)
-		}
-		host := strings.ToLower(strings.TrimSuffix(strings.TrimSpace(tracker.Host), "."))
-		if host == "" || strings.ContainsAny(host, "/@\x00") {
-			return nil, fmt.Errorf("tracker %d host is invalid", index)
-		}
-		if hostname, _, err := net.SplitHostPort(host); err == nil {
-			host = strings.Trim(hostname, "[]")
-		}
-		hosts[host] = struct{}{}
-	}
-
-	result := make([]string, 0, len(hosts))
-	for host := range hosts {
-		result = append(result, host)
-	}
-	sort.Strings(result)
-	return result, nil
 }

@@ -8,8 +8,9 @@ generated source is not maintained in the repository.
 
 The controller sends normalized, bounded evidence rather than raw Radarr,
 Transmission, torrent, or `ffprobe` responses. All externally sourced text is
-untrusted data. Absolute paths, credentials, tracker announce URLs, passkeys,
-magnet links, and raw diagnostic output are outside the protocol.
+untrusted data. Absolute paths, credentials, tracker hostnames and announce
+URLs, passkeys, magnet links, and raw diagnostic output are outside the
+protocol.
 
 Radarr status and error messages are represented as bounded opaque strings. The
 contract assigns them no semantic categories, so new or mixed messages require

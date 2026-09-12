@@ -25,7 +25,6 @@ type TransmissionTorrent struct {
 	CompletedAt       *time.Time
 	TotalSizeBytes    int64
 	Files             []TransmissionFile
-	TrackerHosts      []string
 }
 
 type TransmissionFile struct {

@@ -206,7 +206,7 @@ func recordTestAssembly(t *testing.T) casebuilder.Assembly {
 					Index: 0, Name: "PoorlyNamed.mkv", LengthBytes: 100,
 					BytesCompleted: 100, Wanted: true,
 				}},
-				Labels: []string{}, TrackerHosts: []string{},
+				Labels: []string{},
 			},
 		},
 		History: []controller.RadarrHistoryEvent{},

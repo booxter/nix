@@ -42,21 +42,7 @@
         "name": "Example.Movie.2026.1080p.BluRay-GROUP",
         "percent_done": 1.0,
         "status": 6,
-        "total_size": 3900000000,
-        "tracker_stats": [
-          {
-            "announce": "https://Tracker.Example.COM/secret-passkey/announce",
-            "host": "Tracker.Example.COM."
-          },
-          {
-            "announce": "https://backup.example.com:443/secret/announce",
-            "host": "backup.example.com:443"
-          },
-          {
-            "announce": "https://tracker.example.com/another-secret/announce",
-            "host": "tracker.example.com"
-          }
-        ]
+        "total_size": 3900000000
       }
     ]
   }

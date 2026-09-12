@@ -687,7 +687,6 @@ func testObservation() Observation {
 					{Index: 0, Name: "Example.Movie.2024/CD1.mkv", LengthBytes: 1_000, BytesCompleted: 1_000, Wanted: true},
 					{Index: 1, Name: "Example.Movie.2024/CD2.mkv", LengthBytes: 2_000, BytesCompleted: 2_000, Wanted: true},
 				},
-				TrackerHosts: []string{"tracker.example"},
 			},
 		},
 		Movie: &controller.RadarrMovie{

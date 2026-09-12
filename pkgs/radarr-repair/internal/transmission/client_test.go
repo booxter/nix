@@ -58,8 +58,7 @@ func TestFindTorrent(t *testing.T) {
 		torrent.Name != "Example.Movie.2026.1080p.BluRay-GROUP" || torrent.Status != 6 ||
 		torrent.PercentDone != 1 || torrent.LeftUntilDone != 0 || !torrent.Finished ||
 		torrent.DownloadDirectory != "/downloads" || torrent.TotalSizeBytes != 3_900_000_000 ||
-		!reflect.DeepEqual(torrent.Labels, []string{"radarr", "movies"}) ||
-		!reflect.DeepEqual(torrent.TrackerHosts, []string{"backup.example.com", "tracker.example.com"}) {
+		!reflect.DeepEqual(torrent.Labels, []string{"radarr", "movies"}) {
 		t.Fatalf("torrent = %#v", torrent)
 	}
 	if torrent.CreatedAt == nil || torrent.AddedAt == nil || torrent.CompletedAt == nil ||
@@ -343,7 +342,6 @@ func validTorrentResponse() map[string]any {
 		"file_stats": []any{map[string]any{
 			"bytes_completed": 1, "wanted": true, "priority": 0,
 		}},
-		"tracker_stats": []any{},
 	}
 }
 

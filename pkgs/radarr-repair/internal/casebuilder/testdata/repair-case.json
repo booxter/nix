@@ -19,7 +19,7 @@
       "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222"
     }
   ],
-  "case_id": "sha256:d79db68f08c4888557851acef40b71ba5f698cf0a30846fe69bcea59ced0db0d",
+  "case_id": "sha256:9d0b083f2c48e2ef3f25f2fa465e213c874190284e08eb76fc65ebd746446bc0",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",
@@ -31,10 +31,7 @@
     ],
     "name": "Example.Movie.2024",
     "source_type": "torrent",
-    "total_size_bytes": 3000,
-    "tracker_hosts": [
-      "tracker.example"
-    ]
+    "total_size_bytes": 3000
   },
   "files": [
     {

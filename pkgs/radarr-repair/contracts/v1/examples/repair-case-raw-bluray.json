@@ -1,6 +1,6 @@
 {
   "capabilities": [],
-  "case_id": "sha256:ca8c9fdc009661b5429871979f228621cf6b09d989dc108285612419ad7d15d6",
+  "case_id": "sha256:71670bf1deadc15116ad0613113b2d8da997acf45701fa73bef9b78da99d9f52",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T12:00:00Z",
@@ -12,8 +12,7 @@
     ],
     "name": "Example Feature BLURAY",
     "source_type": "torrent",
-    "total_size_bytes": 24000000000,
-    "tracker_hosts": []
+    "total_size_bytes": 24000000000
   },
   "files": [
     {

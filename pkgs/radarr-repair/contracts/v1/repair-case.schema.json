@@ -41,14 +41,6 @@
           "maximum": 9007199254740991,
           "minimum": 1,
           "type": "integer"
-        },
-        "tracker_hosts": {
-          "items": {
-            "$ref": "#/$defs/trackerHost"
-          },
-          "maxItems": 32,
-          "type": "array",
-          "uniqueItems": true
         }
       },
       "required": [
@@ -60,7 +52,6 @@
         "file_count",
         "is_complete",
         "completed_at",
-        "tracker_hosts",
         "labels"
       ],
       "type": "object"
@@ -939,12 +930,6 @@
     },
     "timestamp": {
       "format": "date-time",
-      "type": "string"
-    },
-    "trackerHost": {
-      "format": "hostname",
-      "maxLength": 253,
-      "minLength": 1,
       "type": "string"
     }
   },

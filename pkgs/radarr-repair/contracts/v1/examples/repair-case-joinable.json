@@ -9,7 +9,7 @@
       "capability_id": "capability_join_01"
     }
   ],
-  "case_id": "sha256:5bb712d1971942fc17db745b521d83b8ac0b1ecdd0e1d7951f8d334c86a30d12",
+  "case_id": "sha256:bef6e67cbc687534cf7cc06724d39f66dfd3fc7844a31d8528eb209cde320d36",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-05T22:15:00Z",
@@ -21,10 +21,7 @@
     ],
     "name": "Example.Movie.2024.1080p.BluRay-GROUP",
     "source_type": "torrent",
-    "total_size_bytes": 8400000000,
-    "tracker_hosts": [
-      "tracker.example"
-    ]
+    "total_size_bytes": 8400000000
   },
   "files": [
     {

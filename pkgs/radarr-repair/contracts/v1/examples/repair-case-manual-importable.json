@@ -6,7 +6,7 @@
       "file_id": "file_manual_01"
     }
   ],
-  "case_id": "sha256:f7a7c7297596ae1ba966810db665320b025ee59a184a6aaf65dc71cc1035769f",
+  "case_id": "sha256:5acc3eae919d3a9440f00ca1679bed38131d0b2c77f7533e87ccc93b4cddc559",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T12:00:00Z",
@@ -18,8 +18,7 @@
     ],
     "name": "Poorly Named Feature",
     "source_type": "torrent",
-    "total_size_bytes": 1500000000,
-    "tracker_hosts": []
+    "total_size_bytes": 1500000000
   },
   "files": [
     {
