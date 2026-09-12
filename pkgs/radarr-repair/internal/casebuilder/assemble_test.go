@@ -94,6 +94,9 @@ func TestAssembleOffersManualImportForOneFile(t *testing.T) {
 	observation.Correlation.Transmission.TotalSizeBytes = 1_000
 	observation.Correlation.Transmission.Files = observation.Correlation.Transmission.Files[:1]
 	observation.ManualImports = observation.ManualImports[:1]
+	observation.ManualImports[0].FolderName = ""
+	observation.ManualImports[0].Quality = nil
+	observation.ManualImports[0].Languages = nil
 	observation.Inventory.Files = observation.Inventory.Files[:1]
 	observation.Inventory.Paths = observation.Inventory.Paths[:1]
 	observation.Probes = observation.Probes[:1]

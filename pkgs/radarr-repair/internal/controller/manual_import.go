@@ -47,7 +47,7 @@ func BindRadarrManualImportFile(
 		manualImport.Path != absolutePath ||
 		manualImport.SizeBytes != file.Fingerprint.SizeBytes ||
 		manualImport.MovieID <= 0 ||
-		!completeText(manualImport.FolderName) ||
+		(manualImport.FolderName != "" && !completeText(manualImport.FolderName)) ||
 		!completeText(manualImport.DownloadID) ||
 		(manualImport.ReleaseGroup != "" && !completeText(manualImport.ReleaseGroup)) {
 		return RadarrManualImportBinding{}, false

@@ -47,6 +47,8 @@ func TestBindRadarrManualImportFileUsesLatestGrabMetadata(t *testing.T) {
 	t.Parallel()
 
 	file, path, manualImport := manualImportBindingFixture()
+	// Radarr does not provide a folder name when the download itself is one file.
+	manualImport.FolderName = ""
 	manualImport.Quality = nil
 	manualImport.Languages = nil
 	olderQuality := bindingQuality(3, "WEBDL-1080p")
@@ -72,7 +74,8 @@ func TestBindRadarrManualImportFileUsesLatestGrabMetadata(t *testing.T) {
 	if !ok {
 		t.Fatal("manual import was not completed from grab history")
 	}
-	if !reflect.DeepEqual(binding.File.Quality, *newerQuality) ||
+	if binding.File.FolderName != "" ||
+		!reflect.DeepEqual(binding.File.Quality, *newerQuality) ||
 		!reflect.DeepEqual(binding.File.Languages, history[1].Languages) {
 		t.Fatalf("bound metadata = %#v", binding.File)
 	}
@@ -151,9 +154,9 @@ func TestBindRadarrManualImportFileRejectsIncompleteBindings(t *testing.T) {
 			},
 		},
 		{
-			name: "missing folder name",
+			name: "invalid folder name",
 			mutate: func(_ *InventoryFile, _ *string, manualImport *RadarrManualImport) {
-				manualImport.FolderName = ""
+				manualImport.FolderName = " "
 			},
 		},
 		{
