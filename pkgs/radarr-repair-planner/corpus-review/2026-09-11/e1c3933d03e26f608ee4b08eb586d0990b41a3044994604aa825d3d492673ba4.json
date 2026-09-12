@@ -1,0 +1,318 @@
+{
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "candidate_file_ids": [
+        "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
+        "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747"
+      ],
+      "capability_id": "capability:d7e35c5eaeb07f45d675311b3a44d8fe4a4d9578b722a490b5ddff7f1cb32b39"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:5a5a40d5b836cb1b27f87bb8173187b20cafb435c82742bd3ea3404fc3663be5",
+      "file_id": "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:edfc33cceda39c1a208c8bc485b5a47d8bf3261a55dfc55f714794c959d641a6",
+      "file_id": "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747"
+    }
+  ],
+  "case_id": "sha256:e1c3933d03e26f608ee4b08eb586d0990b41a3044994604aa825d3d492673ba4",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-09T11:54:24Z",
+    "download_ref": "download:f8cd3af82273975123b3feee77e730a34159817fdd6a227a9d5700c92a4cb85b",
+    "file_count": 2,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "The Grafenberg Spot",
+    "source_type": "torrent",
+    "total_size_bytes": 8656680057
+  },
+  "files": [
+    {
+      "bytes_completed": 6969563152,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "mkv",
+      "file_id": "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
+      "fingerprint": "sha256:af98caafd0895aea172e555b490d76a1437319c9458d8b61e9b03a5c7267f43e",
+      "path_components": [
+        "The Grafenberg Spot  01_1080.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 12332890,
+          "effective_duration_ms": 4520960,
+          "effective_duration_source": "format",
+          "format_duration_ms": 4520960,
+          "longest_stream_duration_ms": null,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 6969563152
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "frame_rate": {
+              "denominator": 317,
+              "numerator": 19001
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1422
+          },
+          {
+            "bit_rate_bps": 224000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 6969563152,
+      "torrent_index": 0,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 1687116905,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "mkv",
+      "file_id": "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747",
+      "fingerprint": "sha256:0bbf76cdd7df6d11f7567b6f83f9a19649f9dca83d31d8f5e425691adcb1a177",
+      "path_components": [
+        "The Grafenberg Spot  02_1080.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 12692342,
+          "effective_duration_ms": 1063392,
+          "effective_duration_source": "format",
+          "format_duration_ms": 1063392,
+          "longest_stream_duration_ms": null,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 1687116905
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 30000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1444
+          },
+          {
+            "bit_rate_bps": 224000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1687116905,
+      "torrent_index": 1,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-12T03:49:33.770912987Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:f8cd3af82273975123b3feee77e730a34159817fdd6a227a9d5700c92a4cb85b",
+      "error_message": "",
+      "queue_id": 490230279,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:4074eaa4cf4459b06f24f5a52beb84f90e87075a171c7da3e8f17e806c1bed63",
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:078d8f1a061f886650ec66be169a4ae452b216b9c5d9aadc92ab430c0bb12709",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "The Grafenberg Spot  01_1080.mkv"
+        },
+        {
+          "evidence_id": "evidence:420f5fb927aad0f9bf8f00d28e9cf622759689b9dbcf5d384477f434681cc5f4",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "The Grafenberg Spot  02_1080.mkv"
+        }
+      ],
+      "title": "The Grafenberg Spot",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:ca1a176d8153e28770327f359ca09d60e720d120a390622c06a954e83571e073",
+        "languages": [
+          "Unknown"
+        ],
+        "occurred_at": "2025-11-24T00:14:43Z",
+        "quality": "WEBDL-1080p",
+        "source_title": "The Grafenberg Spot (Artie Mitchell, Mitchell Brothers) 1985 WEB-DL 1080p"
+      },
+      {
+        "event_type": "downloadFailed",
+        "evidence_id": "evidence:6b72f6561aeebc0c02d5801193cb3cce903af659ade72428584c28962e569849",
+        "languages": [
+          "Unknown"
+        ],
+        "occurred_at": "2025-11-24T03:26:56Z",
+        "quality": "WEBDL-1080p",
+        "source_title": "The Grafenberg Spot (Artie Mitchell, Mitchell Brothers) 1985 WEB-DL 1080p"
+      },
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:53227769082a2a6407d7b658f9c737eeb7ced3061b5247fc7d108a422503c1ba",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-08-05T22:06:17Z",
+        "quality": "HDTV-1080p",
+        "source_title": "The Grafenberg Spot / Точка G (Artie Mitchell, Mitchell Brothers) [1985 г., Feature, Classic, Squirt, Upscale, 1080p] (Ginger Lynn, Amber Lynn, Annette Haven, Traci Lords, Fanny Fatale, Nina Hartley, Rita Ricardo, Lili Marlene, Harry Reems, Thor Southern, Rick Savage, John Holmes)"
+      },
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:9ae95c9670ebb913e87e09e85f7c3b7806ad3891db40b48e838782f60e57e71b",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-09T00:53:44Z",
+        "quality": "HDTV-1080p",
+        "source_title": "The Grafenberg Spot / Точка G (Artie Mitchell, Mitchell Brothers) [1985 г., Feature, Classic, Squirt, Upscale, 1080p] (Ginger Lynn, Amber Lynn, Annette Haven, Traci Lords, Fanny Fatale, Nina Hartley, Rita Ricardo, Lili Marlene, Harry Reems, Thor Southern, Rick Savage, John Holmes)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:a12a411987fac652771d548965322c14f297c883e9d5bb16c61dce9f0ce00e90",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:a6d805c245e054010c2c87f848866ff5e38abeaba29e0532c2656c4a61dba67f",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": "tt0089224",
+      "original_title": "The Grafenberg Spot",
+      "radarr_id": 3335,
+      "runtime_minutes": 69,
+      "title": "The Grafenberg Spot",
+      "tmdb_id": 365581,
+      "year": 1985
+    }
+  },
+  "schema_version": "radarr-repair/v1"
+}

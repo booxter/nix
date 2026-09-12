@@ -1,0 +1,170 @@
+{
+  "capabilities": [
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:ba19fb9719c46971047d8cdf53ac3fa8210cf3cf880631b85072387a9a30c90c",
+      "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f"
+    }
+  ],
+  "case_id": "sha256:22d24e039d24f04037b77d7e0bbfa57c3c3cce5049f7d4992f78d948cbc4ea81",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-07T08:32:56Z",
+    "download_ref": "download:04cb09c3c704273c6ea565a2679ea7548124aef81c8b0cb54917529354b9b4fb",
+    "file_count": 1,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Portrait Of A Call Girl",
+    "source_type": "torrent",
+    "total_size_bytes": 19242247071
+  },
+  "files": [
+    {
+      "bytes_completed": 19242247071,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "mkv",
+      "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f",
+      "fingerprint": "sha256:4c8e0cf7667be21f48361da8ba4f7d049222a529ab40ccfb80ccd192d240f151",
+      "path_components": [
+        "Portrait Of A Call Girl.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 17277910,
+          "effective_duration_ms": 8909525,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 8909525,
+          "longest_stream_duration_ms": 8909525,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 19242247071
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "vc1",
+            "codec_tag": "WVC1",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 8909525,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "3",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 256000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 19242247071,
+      "torrent_index": 0,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-12T03:49:28.759715181Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:04cb09c3c704273c6ea565a2679ea7548124aef81c8b0cb54917529354b9b4fb",
+      "error_message": "",
+      "queue_id": 206702019,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:f763f2f42073f056b9bb71bdc1fe7d1a3d3af6f0ebad087d91ce6ccb5cb49775",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "Portrait Of A Call Girl"
+        }
+      ],
+      "title": "Portrait Of A Call Girl",
+      "tracked_download_state": "importPending",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:e4ca67a8530745573ca12856387b62f447542c50f26b8ce5693c05857f0ab1d3",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-05T22:50:10Z",
+        "quality": "Remux-1080p",
+        "source_title": "Portrait Of A Call Girl / Портрет Девушки По Вызову (Graham Travis, Elegant Angel) [2011 г., Feature, 2012 AVN Award Winner, 1080p, BDRemux] (Jessie Andrews, Darla Crane, Mick Blue, Manuel Ferrara, Danny Mountain, Alex Gonz, Bill Bailey, Alan Stafford, Alec Knight, Eric John, Jay Crew)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:4cd914f07975b15f14a75bad931074cbdbfbd4fbe19f49d96b74ee55d4b08272",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "一个应招女郎的肖像",
+        "应召女郎图鉴"
+      ],
+      "imdb_id": "tt2071559",
+      "original_title": "Portrait of a Call Girl",
+      "radarr_id": 3398,
+      "runtime_minutes": 149,
+      "title": "Portrait of a Call Girl",
+      "tmdb_id": 74565,
+      "year": 2011
+    }
+  },
+  "schema_version": "radarr-repair/v1"
+}

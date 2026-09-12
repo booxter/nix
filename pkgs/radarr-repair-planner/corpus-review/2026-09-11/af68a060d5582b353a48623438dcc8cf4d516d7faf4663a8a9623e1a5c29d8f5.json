@@ -1,0 +1,167 @@
+{
+  "capabilities": [
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:088c4f9eed55ec7fe4ee9cc22e0a41a64bb509ad6660e60d9f7f5d69049d83fc",
+      "file_id": "file:4ea7340c572d3ac56e34a3953c1a6cabaaa7e7859b1378ba60710fe2614d1a31"
+    }
+  ],
+  "case_id": "sha256:af68a060d5582b353a48623438dcc8cf4d516d7faf4663a8a9623e1a5c29d8f5",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-05T08:39:15Z",
+    "download_ref": "download:b903b67829162916f02f921e90f8ad33e3e18205a2e7611c3a5adcef8140da24",
+    "file_count": 1,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "This Aint The Expendables XXX XXX 1080p Bluray x264 DPXXXHD",
+    "source_type": "torrent",
+    "total_size_bytes": 7043565674
+  },
+  "files": [
+    {
+      "bytes_completed": 7043565674,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "mkv",
+      "file_id": "file:4ea7340c572d3ac56e34a3953c1a6cabaaa7e7859b1378ba60710fe2614d1a31",
+      "fingerprint": "sha256:1780f21327798afc962f2792f822719165ed5095e81b3420a677655256e019dc",
+      "path_components": [
+        "dp-this.aint.expendables.1080p.x264.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 9571744,
+          "effective_duration_ms": 5886965,
+          "effective_duration_source": "format",
+          "format_duration_ms": 5886965,
+          "longest_stream_duration_ms": null,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 7043565674
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 640000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "[0][0][0][0]",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 7043565674,
+      "torrent_index": 0,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-12T03:49:27.741264977Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:b903b67829162916f02f921e90f8ad33e3e18205a2e7611c3a5adcef8140da24",
+      "error_message": "",
+      "queue_id": 427341548,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:ac62c19dbfcb73a04939d4bd1c29b607086f903184ed1669d347a0fa0c6d3772",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "This Aint The Expendables XXX XXX 1080p Bluray x264 DPXXXHD"
+        }
+      ],
+      "title": "This Aint The Expendables XXX XXX 1080p Bluray x264 DPXXXHD",
+      "tracked_download_state": "importPending",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:fea41d884caa8d6420f206de8f30284a4586d44f330116789b0de3ddf39d5578",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-04T06:41:56Z",
+        "quality": "Bluray-1080p",
+        "source_title": "This Ain't the Expendables XXX / Неудержимые (Axel Braun, Hustler) [2012 г., Feature, Spoofs / Parodies, bdrip 1080p]"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:4ea7340c572d3ac56e34a3953c1a6cabaaa7e7859b1378ba60710fe2614d1a31",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:a14d90df37483faff6b19429c0e84aecd96c541c32942a656c86b6b3ac5d31c6",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": "tt2584880",
+      "original_title": "This Ain't The Expendables XXX",
+      "radarr_id": 10389,
+      "runtime_minutes": 98,
+      "title": "This Ain't The Expendables XXX",
+      "tmdb_id": 206907,
+      "year": 2012
+    }
+  },
+  "schema_version": "radarr-repair/v1"
+}

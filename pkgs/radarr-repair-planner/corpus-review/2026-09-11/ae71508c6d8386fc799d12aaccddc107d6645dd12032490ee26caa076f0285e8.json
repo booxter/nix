@@ -1,0 +1,1372 @@
+{
+  "capabilities": [],
+  "case_id": "sha256:ae71508c6d8386fc799d12aaccddc107d6645dd12032490ee26caa076f0285e8",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-04T21:59:53Z",
+    "download_ref": "download:bf0d9ca70bc83232a989d0127d6542d7ce0a970821529648fa720c3db6ad7e50",
+    "file_count": 39,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Pandoras.Mirror.BLURAY 1080p",
+    "source_type": "torrent",
+    "total_size_bytes": 23926740440
+  },
+  "files": [
+    {
+      "bytes_completed": 37936,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:945a0706f01dbc0c7cd3c022d7e32ec174120209f829c80ceebc0f04ea959f7d",
+      "fingerprint": "sha256:7d285928812a3ec88e49c8b810b5250e4ca632b62efd953374915553829b8fc6",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00000.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 37936,
+      "torrent_index": 28,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 296,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:d38d3f0650e421f9c904d9d26a49692bc54b17041dcd9fbee6774b4f7391405f",
+      "fingerprint": "sha256:b403c41d860a61c442c510850d241ecd3d1ea8d0ed516afc707c82bec8a8c26f",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00001.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 296,
+      "torrent_index": 29,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 3048,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:81ce8c4bc280d898bce29e3a222b2e340f06123ac5b357b2eff7fb3a7b1f2e06",
+      "fingerprint": "sha256:7363f2cd8de49674a6505e2c6bc4a79e95e05e0ed4d4c36b87310786093ccdc6",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00002.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 3048,
+      "torrent_index": 30,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 892,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:3dcde9029f1292f729846c9ad072afcf184e1c7ca258387cf703d1243d0d54da",
+      "fingerprint": "sha256:3653a1b86f9d20c977d61c10ac04f4d15eb6b3559efed349364dcc65354d2de8",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00003.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 892,
+      "torrent_index": 31,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 908,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:5b8ccf1f32f99dc351b754cd5f0401403f7bba359a7a5dce9863bf0ca26d8304",
+      "fingerprint": "sha256:5175bdd1338787146be0ac464b2573133861ef963b4aab4e020a0210d5669f01",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00004.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 908,
+      "torrent_index": 32,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 428,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:ee3376c260c58cc9786cffb49dc69cff71a1d07af7104c8ec19367bc108f8805",
+      "fingerprint": "sha256:419f295e1325be7eddae18d41ddcb05ee414fd03c0fc0280cf7073af70b05eec",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00005.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 428,
+      "torrent_index": 33,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 392,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:d67587261fb754d088a373525b82f28f55fb586d43b439287582c15f3656bf97",
+      "fingerprint": "sha256:5da7108d240292617b0a898c04f239d7cd3b63f70ccc07062340f03b7e798a8d",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00006.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 392,
+      "torrent_index": 34,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 1350,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:e28943800f6ae5a9481d526ac209dd0219ca010fd1680713964978d69072c8d4",
+      "fingerprint": "sha256:000c3dfa5fbc59ac134372965d22b655de1aa3671d1e4fa5f9e12cb3803c3512",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "MovieObject.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1350,
+      "torrent_index": 36,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 344,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:c80b639b566499c0da90ee16010a01f10dd487cb40aacc9da212b5e04b1b10bd",
+      "fingerprint": "sha256:199e0aab7cfb3ac3490db25f29b9c7ac6841f63eb98ef9721c51ed7a497adb43",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00000.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 344,
+      "torrent_index": 22,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 198,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:5f1a148c5f47a0333a994fd516c01d07443ae5fef59015d3149d9c79c2b8d0ed",
+      "fingerprint": "sha256:b1e5167b522c96cacba79d209685e2136848f0e8e3265fd65b240020914c45e0",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00001.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 198,
+      "torrent_index": 23,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 186,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:231007829a6452431966bf366d8c186fbf990d51df4b79d45cf507befc236267",
+      "fingerprint": "sha256:5ab5085f83493e793a5d5f510262031eeefdd1996685fb57137f8991b5d95197",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00002.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186,
+      "torrent_index": 24,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 186,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:01188abb3e7fe30ca88ffdf75cfde8b92ae6a30f65ad9b1b19dfe4ea340d91b6",
+      "fingerprint": "sha256:649d38b26660ce0eaa887015de9df314c79a634ab8ce7ec65ea14464f9eb37e1",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00003.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186,
+      "torrent_index": 25,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 184,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:205f5bb6d4756ec3a4dfa0d8d02383dc51a2244cf41678b8b2deef26ca5f4304",
+      "fingerprint": "sha256:c1a42628ef17a58a2ef939448e5aa192f68ffb3aca1829891ee52bc9cf2ef605",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00004.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184,
+      "torrent_index": 26,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 184,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:67468e3947a57805719f112bf5994f96474196d7cd2ad24c1dcd0d889cd385ce",
+      "fingerprint": "sha256:1b8b5e4cc69c655201e49b30637b74bc4a7a527dd5e68aa8fa926037711127ef",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00005.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184,
+      "torrent_index": 27,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 192,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:56d4dc718b4e1a023cad1592a5d7d903ddc0a19a8fa03d9cb85509b953a0a222",
+      "fingerprint": "sha256:0ac688737d317317c4f9c4c24baf3651abebcc6b64e4d4baa6d560684f30d10b",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "index.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 192,
+      "torrent_index": 35,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 37936,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:e49450313928d8e81055cb1d10094ebe8a8aeb8d316e1a1dba01b7ce818f1ae3",
+      "fingerprint": "sha256:b9f7bd93da661b9f9f3437226907573520b1b61d2acb8d21ca396c5511ac2bc6",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00000.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 37936,
+      "torrent_index": 15,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 296,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:d1960469d7469628de6e9c92e22ff645d6d15d31dbd092e7fd215c885fe9ec8c",
+      "fingerprint": "sha256:68926f9c5bd10dfdb17d827e97b0e9c488cfb6bbcc69a38e594311c01527dfcc",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00001.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 296,
+      "torrent_index": 16,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 3048,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:39f758db71631dc2f189bbcb10a3ebc70a00c6947fbfe85e16f82a676558ee11",
+      "fingerprint": "sha256:6a65ea3cfe905c41d1818bfcacda0c5f9bf540fb2ed89e154476dc856796ed56",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00002.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 3048,
+      "torrent_index": 17,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 892,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:1ad5bad9d3b67b0cd30a3f52055a50a80921af18a4f66459947c241ef57362a1",
+      "fingerprint": "sha256:a04a1bc80f4a7c17eaca1d61e437573a28cbe81d7aabdcb3c70334383731e053",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00003.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 892,
+      "torrent_index": 18,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 908,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:3d7fd38e26b09329823f4e81067b12cbefca932491cfba3f81f3f4134d6d11f0",
+      "fingerprint": "sha256:6ddeeb33865dec51230ed79acdf5d18b5c23e38e0da7cab5e3f01cb2f4a99bd7",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00004.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 908,
+      "torrent_index": 19,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 428,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:bb05b9388cb633912837a35cd7da00f3256f10df3d0329cebc1feef31d24d0a1",
+      "fingerprint": "sha256:99d52dde070a96a035fb7f965df26092e9b6dc9d48184ee7b9612ef8b4568354",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00005.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 428,
+      "torrent_index": 20,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 392,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:3295fdc081c7d85a711ae5e37d5a3abb478c8e5d8f86599dc536f414bc990630",
+      "fingerprint": "sha256:9e0173d31937ffe133bf1cecb1d3cef4d8ec0703f370bea938e9c97cfaffc47e",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00006.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 392,
+      "torrent_index": 21,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 1350,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:816ec40c65ec30afd0c8bbf701024d8832b8e70be4a5496d5d7b644f9e5e0992",
+      "fingerprint": "sha256:310d21b543c10baf3030ef49ad94120efafa6946783bdae15ae1c491ca00e56b",
+      "path_components": [
+        "BDMV",
+        "MovieObject.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1350,
+      "torrent_index": 38,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 344,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:09f686ef5b5c7d26e55c15c0274cdfba7a90c80547d2eac18063ba4d7318eaa1",
+      "fingerprint": "sha256:ec122886c0763db6ee4bc92b564f095ec8acc9847f3179420ca2cbac3ab58093",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00000.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 344,
+      "torrent_index": 9,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 198,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:534f4104366ce4f0c4922531c429ba1e83a5af93080169d02ab7225f8a2b0b2e",
+      "fingerprint": "sha256:e1691c2d29ce9a320026967b87563dcd59b72b4fb1afe59f3eebe8ae1e288118",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00001.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 198,
+      "torrent_index": 10,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 186,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:62b50311a68effb038351230bea8a8ef34e43385ec6ea6119089838e61a91d73",
+      "fingerprint": "sha256:6e91ee3cf8db055b23172b436f7753ca964c96ca41fe55a88f123afe77a14fc3",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00002.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186,
+      "torrent_index": 11,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 186,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:61f760895315de0fb5388625154d501b14113ab85844e0de24175219310b979b",
+      "fingerprint": "sha256:1af702cd1aaf5ee6b7585a10b74e53e7746fb0b5d9145a02b0bbc79c4e7b314b",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00003.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186,
+      "torrent_index": 12,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 184,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:2154dcb975f2afa686faf479dc18aec1f24c97273bc0297095d8868ac6eefcfc",
+      "fingerprint": "sha256:d490d9930f2490a732724885616ad543577feeb8a069664cf39bcf9e44aea81c",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00004.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184,
+      "torrent_index": 13,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 184,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:2da4e0da495cf966dcb9786d818f5365aca4d4824364ccb1d8f6172bb7ea503a",
+      "fingerprint": "sha256:e9ee1e8a4558207af38bd9439f1d886f7c74481cd3c8791ef22ef8ac199210c3",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00005.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184,
+      "torrent_index": 14,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 23197495296,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:1af116001c67896e16888c8372840fcca518c1a7f2ae658b8681b9a02edc8169",
+      "fingerprint": "sha256:7c9d7f0c5f48285e2780b9dbfc353a91bb77b23a732672f24e11fd3b73d06a42",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00000.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 32965627,
+          "effective_duration_ms": 5629499,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 5629499,
+          "longest_stream_duration_ms": 5629499,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 23197495296
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629499,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": null,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "dts",
+            "codec_tag": "[134][0][0][0]",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": "60",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": 96000,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 2,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": 96000,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 3,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": null,
+            "codec_name": "hdmv_pgs_subtitle",
+            "codec_tag": "[144][0][0][0]",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "height": 1080,
+            "index": 4,
+            "kind": "subtitle",
+            "language": null,
+            "profile": null,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 23197495296,
+      "torrent_index": 2,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 73728,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:4a4502876e66971b3872e1f8d36e5fff4619a8276ec5025f1ca2b00229dd2079",
+      "fingerprint": "sha256:16688b45d9a425a93d44cf8280c6a7682f8b128bb99dfc2d93872dcf2a7ead31",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00001.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "incomplete_metadata",
+        "summary": "ffprobe omitted metadata required by the planner."
+      },
+      "size_bytes": 73728,
+      "torrent_index": 3,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 517226496,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:76f5bb16cbb9a353240b36abc8ae83d6b3b8a47ac7916bdabb02a47249d31a89",
+      "fingerprint": "sha256:b9970491074e6317bf5001890589a46366b2a50b27375321f3e1864f97f08252",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00002.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 16105240,
+          "effective_duration_ms": 256923,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 256923,
+          "longest_stream_duration_ms": 256923,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 517226496
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 256923,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 320000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 256864,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 517226496,
+      "torrent_index": 4,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 118265856,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:9bb0dec1869fee03aa5f731e7c17b0dffdf067a20dcb296800d84a707a31646b",
+      "fingerprint": "sha256:07b9b0dbaf079df4c055c9207e6230a41069317f681e24e15fabec543e0e8e54",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00003.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "invalid_output",
+        "summary": "ffprobe returned invalid structured metadata."
+      },
+      "size_bytes": 118265856,
+      "torrent_index": 5,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 90869760,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:569e4a08436edaca4625ff7a0f8db35e04087269565bab20c69319075ec2b1e6",
+      "fingerprint": "sha256:340ce81c05cf943e3ca4de9031afe0e41b9e8a86f065598392b008c3da8749f7",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00004.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "invalid_output",
+        "summary": "ffprobe returned invalid structured metadata."
+      },
+      "size_bytes": 90869760,
+      "torrent_index": 6,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 1388544,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:1d639e449518ec3b589682aba06eea6b1cc26faf929b936f90051889a207e448",
+      "fingerprint": "sha256:79d8b5ca890ec47a6ef5bade9f56cba076a92d11c1687ec28f97b6adaca9178b",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00005.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 1387158,
+          "effective_duration_ms": 8008,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 8008,
+          "longest_stream_duration_ms": 8008,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 1388544
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 8008,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 192000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 7936,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1388544,
+      "torrent_index": 7,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 1327104,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "m2ts",
+      "file_id": "file:56c91970f8705683fab3b1d420eaa714645a690b6ee4e1bb4be6602bc1dc0a7d",
+      "fingerprint": "sha256:b00284cb0cb31a7954a4041f08882d8bf3626227e8059f4695c67ee37195262b",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00006.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 2356944,
+          "effective_duration_ms": 4504,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 4504,
+          "longest_stream_duration_ms": 4504,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 1327104
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 4504,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 192000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 4448,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1327104,
+      "torrent_index": 8,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 192,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:c5d37a1a909918bc9bbedeee2b1ea797b33b22ad09dbf8860c861c7a7adbb057",
+      "fingerprint": "sha256:1dfa81b88816648f2bfb4c9d10e2816470e3d571e5e86fb6e8518f5cae97c67d",
+      "path_components": [
+        "BDMV",
+        "index.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 192,
+      "torrent_index": 37,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 104,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:1df2c620bf96e2148c8144c58d993145525eb600db2ad1da5c890da9bcbdbe6c",
+      "fingerprint": "sha256:2bbca7797ea6d9c0b63e8642d361e6f7054a56405f305abc1714c1807d93e2e6",
+      "path_components": [
+        "CERTIFICATE",
+        "BACKUP",
+        "id.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 104,
+      "torrent_index": 0,
+      "wanted": true
+    },
+    {
+      "bytes_completed": 104,
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "extension": null,
+      "file_id": "file:8c53cac44b1614f5c494cc430eb91e4296af714ec0676cfb79458ec1de0a6596",
+      "fingerprint": "sha256:3579711445f03cbd175615532ac1d138945fd5c2bfa1e4b288b78d82c47cb933",
+      "path_components": [
+        "CERTIFICATE",
+        "id.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 104,
+      "torrent_index": 1,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-12T03:49:28.634716204Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:bf0d9ca70bc83232a989d0127d6542d7ce0a970821529648fa720c3db6ad7e50",
+      "error_message": "",
+      "queue_id": 58927337,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:e5f19abfae32d818aae8550ce685e4ba5a96623fc2a0e350354f401be6cae20e",
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:e1b681531aa187342a0c684de4c4b69a7be4de14656f5a26ed339d0c00e642d3",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00000.m2ts"
+        },
+        {
+          "evidence_id": "evidence:6328d40f36b0030444d4771d4a9b1c9aa08bd316d835a5764ce41b6917511001",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00001.m2ts"
+        },
+        {
+          "evidence_id": "evidence:a35eebea485da89e552eea020e0a016f986307b73504eedaf28b8da0cb4da845",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00002.m2ts"
+        },
+        {
+          "evidence_id": "evidence:0e44cc53f9a6d34d55cabc56833fa4d7d4dd285d41ad372f1aeee5847c4b19d4",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00003.m2ts"
+        },
+        {
+          "evidence_id": "evidence:c187c66f4966c272d139b1c34262c5cc2e03a6bcd33785efc53c15e04b6f39cf",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00004.m2ts"
+        },
+        {
+          "evidence_id": "evidence:40a531da4474db32a476da0d6bb6fa6a4686254af7db1cfde958d6fef5fa0e32",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00005.m2ts"
+        },
+        {
+          "evidence_id": "evidence:2196c8ecee5da4f3fbd147f7adbac086b47200699fcd84eee53dd7759f3dcec5",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00006.m2ts"
+        }
+      ],
+      "title": "Pandoras.Mirror.BLURAY 1080p",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:ca2bc61a65a425f4d8ecd3c224414771c8f34b0157f2d67cc1e9afef9ad60a9e",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-08-08T09:41:21Z",
+        "quality": "Bluray-1080p",
+        "source_title": "Pandora's Mirror / Зеркало Пандоры(Shaun Costello, Vinegar Syndrome) [1981 г., Feature, Classic ,Straight All Sex ,Hardcore, Blu-Ray, 1080p] (Veronica Hart, Jamie Gillis, Tiffany Clark, Marlene Willoughby, Kandi Barbour, Annie Sprinkle, Hillary Summers, Jerry Butler)"
+      },
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:1ccb18fa984e39768b09e7a7f882557139a3dbcac773bd3dacbf4d8c678ccb19",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-04T21:15:09Z",
+        "quality": "Bluray-1080p",
+        "source_title": "Pandora's Mirror / Зеркало Пандоры(Shaun Costello, Vinegar Syndrome) [1981 г., Feature, Classic ,Straight All Sex ,Hardcore, Blu-Ray, 1080p] (Veronica Hart, Jamie Gillis, Tiffany Clark, Marlene Willoughby, Kandi Barbour, Annie Sprinkle, Hillary Summers, Jerry Butler)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:1af116001c67896e16888c8372840fcca518c1a7f2ae658b8681b9a02edc8169",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:d8ef36934dcdf5fb6340032a5332b99154487154fe06036594f520f5b6bce595",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:4a4502876e66971b3872e1f8d36e5fff4619a8276ec5025f1ca2b00229dd2079",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:463be5d8a1991765698a4865cc6af7ae42ac81ff2c480d5edc93ebe0676ccbde",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:76f5bb16cbb9a353240b36abc8ae83d6b3b8a47ac7916bdabb02a47249d31a89",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:0633efc4ac1088b7d47db3758f04ed6d870314aa6cd9fc0d60a98c4261039ed0",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:9bb0dec1869fee03aa5f731e7c17b0dffdf067a20dcb296800d84a707a31646b",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:90bddc547da3b703799e500628e6ee270d06e4c8c61ff767a5bcd04059f17d42",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:569e4a08436edaca4625ff7a0f8db35e04087269565bab20c69319075ec2b1e6",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:1cd4603258b3f513439f15da87b6119d0c6035ffa19b4f373616f36fcd48d7f6",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:1d639e449518ec3b589682aba06eea6b1cc26faf929b936f90051889a207e448",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:f523fca0814da2ef5d05c06b34bea5963364c57b82a7a903624dd8eafb91d8a9",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:56c91970f8705683fab3b1d420eaa714645a690b6ee4e1bb4be6602bc1dc0a7d",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:31dfaefaff9213fe4f5d8cdc3cd6b4c5cadd7ee8077301b26b3fce095fad5815",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "Le miroir obscène de Pandora",
+        "De obscene spiegel van Pandorra",
+        "Det forsexede spejl",
+        "Pandora... il sapore della carne",
+        "O Espelho do Desejo",
+        "ＳＭミラージュ／肉奴隷"
+      ],
+      "imdb_id": "tt0082879",
+      "original_title": "Pandora's Mirror",
+      "radarr_id": 3222,
+      "runtime_minutes": 94,
+      "title": "Pandora's Mirror",
+      "tmdb_id": 27608,
+      "year": 1981
+    }
+  },
+  "schema_version": "radarr-repair/v1"
+}
