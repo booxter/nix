@@ -126,7 +126,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "real_anime_season",
         "real_double_exposure_raw_bluray",
         "real_expendables_manual_import",
-        "real_grafenberg_join",
+        "real_grafenberg_ambiguous",
         "real_pandoras_mirror_raw_bluray",
         "real_portrait_manual_import",
         "real_traci_manual_import",
@@ -140,7 +140,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
 
 def test_corpus_rejects_unavailable_expected_capability() -> None:
     evaluation_case = next(
-        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+        case for case in load_evaluation_cases() if case.spec.name == "clear_ordered_join"
     )
     expected = evaluation_case.spec.expected.model_copy(
         update={"capability_id": "capability:" + "0" * 64}
@@ -153,7 +153,7 @@ def test_corpus_rejects_unavailable_expected_capability() -> None:
 
 def test_corpus_rejects_expected_capability_with_wrong_action() -> None:
     evaluation_case = next(
-        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+        case for case in load_evaluation_cases() if case.spec.name == "clear_ordered_join"
     )
     assert isinstance(evaluation_case.spec.expected, ExpectedJoin)
     expected = ExpectedManualImport(
@@ -180,7 +180,7 @@ def test_corpus_rejects_wrong_expected_manual_import_file() -> None:
 
 def test_corpus_rejects_unavailable_expected_join_file() -> None:
     evaluation_case = next(
-        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+        case for case in load_evaluation_cases() if case.spec.name == "clear_ordered_join"
     )
     assert isinstance(evaluation_case.spec.expected, ExpectedJoin)
     expected = evaluation_case.spec.expected.model_copy(

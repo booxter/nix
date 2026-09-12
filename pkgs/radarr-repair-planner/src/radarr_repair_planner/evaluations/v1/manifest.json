@@ -207,14 +207,13 @@
     {
       "base_case": "e1c3933d03e26f608ee4b08eb586d0990b41a3044994604aa825d3d492673ba4.json",
       "expected": {
-        "action": "join_parts_v1",
-        "capability_id": "capability:d7e35c5eaeb07f45d675311b3a44d8fe4a4d9578b722a490b5ddff7f1cb32b39",
-        "ordered_file_ids": [
-          "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
-          "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747"
+        "action": "no_repair",
+        "allowed_reasons": [
+          "ambiguous_file_selection",
+          "insufficient_evidence"
         ]
       },
-      "name": "real_grafenberg_join"
+      "name": "real_grafenberg_ambiguous"
     },
     {
       "base_case": "db879def0949a0f6f813cfd5489dc5e242e91311ee1565b23731deb500e4901e.json",
