@@ -30,6 +30,7 @@ python3Packages.buildPythonApplication {
   build-system = [ python3Packages.setuptools ];
 
   dependencies = with python3Packages; [
+    fastapi
     jsonschema
     langchain-core
     langchain-ollama
@@ -39,6 +40,7 @@ python3Packages.buildPythonApplication {
   ];
 
   nativeCheckInputs = with python3Packages; [
+    httpx
     mypy
     pytest-asyncio
     pytestCheckHook
