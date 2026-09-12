@@ -210,7 +210,8 @@
         "action": "no_repair",
         "allowed_reasons": [
           "ambiguous_file_selection",
-          "insufficient_evidence"
+          "insufficient_evidence",
+          "unsafe_to_repair"
         ]
       },
       "name": "real_grafenberg_ambiguous"
