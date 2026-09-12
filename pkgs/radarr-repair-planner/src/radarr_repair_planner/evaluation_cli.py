@@ -3,9 +3,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import NoReturn, Protocol, runtime_checkable
+from typing import NoReturn
 
 from .evaluation import (
     EvaluationReport,
@@ -15,39 +15,21 @@ from .evaluation import (
     load_evaluation_cases,
     run_evaluation,
 )
-from .ollama_model import MODEL_NAME, OllamaDecisionModel, OllamaSettings
-from .openrouter_model import (
-    REASONING_EFFORTS,
-    OpenRouterDecisionModel,
-    OpenRouterSettings,
-    ReasoningEffort,
+from .model_runtime import (
+    BackendSettings,
+    ModelArguments,
+    ModelFactory,
+    add_model_arguments,
+    close_model,
+    create_model,
+    settings_from_arguments,
 )
+from .ollama_model import OllamaSettings
 from .planning import DecisionModel, PlanningGraph
-from .tracing import JsonlTraceWriter, TraceSink
-
-BackendSettings = OllamaSettings | OpenRouterSettings
-ModelFactory = Callable[[BackendSettings, TraceSink | None], DecisionModel]
+from .tracing import JsonlTraceWriter
 
 
-@runtime_checkable
-class CloseableDecisionModel(Protocol):
-    async def close(self) -> None: ...
-
-
-class Arguments(argparse.Namespace):
-    backend: str
-    ollama_url: str | None
-    model: str | None
-    ca_file: Path | None
-    client_cert_file: Path | None
-    client_key_file: Path | None
-    ollama_api_key_file: Path | None
-    openrouter_api_key_file: Path | None
-    openrouter_provider: str | None
-    context_tokens: int | None
-    output_tokens: int
-    reasoning: str
-    timeout_seconds: float
+class Arguments(ModelArguments):
     runs: int
     case_name: str | None
     trace_output: Path | None
@@ -63,24 +45,7 @@ def _bounded_runs(value: str) -> int:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="radarr-repair-planner-evaluate")
-    result.add_argument("--backend", choices=("ollama", "openrouter"), default="ollama")
-    result.add_argument("--model")
-    result.add_argument("--ollama-url")
-    result.add_argument("--ca-file", type=Path)
-    result.add_argument("--client-cert-file", type=Path)
-    result.add_argument("--client-key-file", type=Path)
-    result.add_argument("--ollama-api-key-file", type=Path)
-    result.add_argument("--openrouter-api-key-file", type=Path)
-    result.add_argument("--openrouter-provider")
-    result.add_argument("--context-tokens", type=int)
-    result.add_argument("--output-tokens", required=True, type=int)
-    result.add_argument(
-        "--reasoning",
-        choices=("enabled", "disabled", *REASONING_EFFORTS),
-        required=True,
-        help="enabled/disabled for Ollama; an effort level for OpenRouter",
-    )
-    result.add_argument("--timeout-seconds", required=True, type=float)
+    add_model_arguments(result)
     result.add_argument("--runs", default=1, type=_bounded_runs)
     result.add_argument("--case", dest="case_name")
     result.add_argument("--trace-output", type=Path)
@@ -88,122 +53,34 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
-def _reject_options(arguments: Arguments, names: tuple[str, ...], backend: str) -> None:
-    supplied = [name for name in names if getattr(arguments, name.replace("-", "_")) is not None]
-    if supplied:
-        options = ", ".join(f"--{name}" for name in supplied)
-        raise ValueError(f"{options} cannot be used with --backend {backend}")
-
-
-def _require[RequiredValue](
-    value: RequiredValue | None,
-    option: str,
-    backend: str,
-) -> RequiredValue:
-    if value is None:
-        raise ValueError(f"{option} is required with --backend {backend}")
-    return value
-
-
-def _ollama_configuration(
+def _evaluation_settings(
+    settings: BackendSettings,
     arguments: Arguments,
-) -> tuple[OllamaSettings, OllamaEvaluationSettings]:
-    _reject_options(
-        arguments,
-        ("openrouter-api-key-file", "openrouter-provider"),
-        "ollama",
-    )
-    if arguments.reasoning not in ("enabled", "disabled"):
-        raise ValueError("--reasoning must be enabled or disabled with --backend ollama")
-    model = arguments.model or MODEL_NAME
-    base_url = _require(arguments.ollama_url, "--ollama-url", "ollama")
-    context_tokens = _require(arguments.context_tokens, "--context-tokens", "ollama")
-    reasoning = arguments.reasoning == "enabled"
-    connection = OllamaSettings(
-        base_url=base_url,
-        ca_file=arguments.ca_file,
-        client_cert_file=arguments.client_cert_file,
-        client_key_file=arguments.client_key_file,
-        api_key_file=arguments.ollama_api_key_file,
-        context_tokens=context_tokens,
-        output_tokens=arguments.output_tokens,
-        reasoning=reasoning,
-        timeout_seconds=arguments.timeout_seconds,
-        model=model,
-    )
-    report = OllamaEvaluationSettings(
-        model=model,
-        context_tokens=context_tokens,
-        output_tokens=arguments.output_tokens,
-        reasoning=reasoning,
-        timeout_seconds=arguments.timeout_seconds,
-        runs=arguments.runs,
-        case=arguments.case_name,
-    )
-    return connection, report
-
-
-def _openrouter_configuration(
-    arguments: Arguments,
-) -> tuple[OpenRouterSettings, OpenRouterEvaluationSettings]:
-    _reject_options(
-        arguments,
-        (
-            "ollama-url",
-            "ca-file",
-            "client-cert-file",
-            "client-key-file",
-            "ollama-api-key-file",
-            "context-tokens",
-        ),
-        "openrouter",
-    )
-    if arguments.reasoning not in REASONING_EFFORTS:
-        raise ValueError("--reasoning must be an effort level with --backend openrouter")
-    model = _require(arguments.model, "--model", "openrouter")
-    provider = _require(arguments.openrouter_provider, "--openrouter-provider", "openrouter")
-    api_key_file = _require(
-        arguments.openrouter_api_key_file,
-        "--openrouter-api-key-file",
-        "openrouter",
-    )
-    reasoning_effort: ReasoningEffort = arguments.reasoning
-    connection = OpenRouterSettings(
-        api_key_file=api_key_file,
-        model=model,
-        provider=provider,
-        output_tokens=arguments.output_tokens,
-        reasoning_effort=reasoning_effort,
-        timeout_seconds=arguments.timeout_seconds,
-    )
-    report = OpenRouterEvaluationSettings(
-        model=model,
-        provider=provider,
-        output_tokens=arguments.output_tokens,
-        reasoning_effort=reasoning_effort,
-        timeout_seconds=arguments.timeout_seconds,
-        runs=arguments.runs,
-        case=arguments.case_name,
-    )
-    return connection, report
-
-
-def _configuration(arguments: Arguments) -> tuple[BackendSettings, EvaluationSettings]:
-    if arguments.backend == "ollama":
-        return _ollama_configuration(arguments)
-    if arguments.backend == "openrouter":
-        return _openrouter_configuration(arguments)
-    raise AssertionError(f"unsupported backend parsed: {arguments.backend}")
-
-
-def _model(settings: BackendSettings, trace_sink: TraceSink | None) -> DecisionModel:
+) -> EvaluationSettings:
     if isinstance(settings, OllamaSettings):
-        return OllamaDecisionModel.from_settings(settings, trace_sink)
-    return OpenRouterDecisionModel.from_settings(settings, trace_sink)
+        return OllamaEvaluationSettings(
+            model=settings.model,
+            context_tokens=settings.context_tokens,
+            output_tokens=settings.output_tokens,
+            reasoning=settings.reasoning,
+            timeout_seconds=settings.timeout_seconds,
+            runs=arguments.runs,
+            case=arguments.case_name,
+        )
+    return OpenRouterEvaluationSettings(
+        model=settings.model,
+        provider=settings.provider,
+        output_tokens=settings.output_tokens,
+        reasoning_effort=settings.reasoning_effort,
+        timeout_seconds=settings.timeout_seconds,
+        runs=arguments.runs,
+        case=arguments.case_name,
+    )
 
 
 async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> EvaluationReport:
-    backend_settings, evaluation_settings = _configuration(arguments)
+    backend_settings = settings_from_arguments(arguments)
+    evaluation_settings = _evaluation_settings(backend_settings, arguments)
     trace_writer: JsonlTraceWriter | None = None
     model: DecisionModel | None = None
     try:
@@ -219,8 +96,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
         return await run_evaluation(PlanningGraph(model), evaluation_settings)
     finally:
         try:
-            if isinstance(model, CloseableDecisionModel):
-                await model.close()
+            await close_model(model)
         finally:
             if trace_writer is not None:
                 trace_writer.close()
@@ -228,7 +104,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
 
 def main(
     argv: Sequence[str] | None = None,
-    model_factory: ModelFactory = _model,
+    model_factory: ModelFactory = create_model,
 ) -> int:
     arguments = parser().parse_args(argv, namespace=Arguments())
     try:

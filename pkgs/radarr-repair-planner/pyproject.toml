@@ -7,11 +7,12 @@ name = "radarr-repair-planner"
 version = "0.1.0"
 description = "Agentic planner for Radarr import repair"
 requires-python = ">=3.13"
-dependencies = ["fastapi", "jsonschema", "langchain-core", "langchain-ollama", "langgraph", "openai", "pydantic"]
+dependencies = ["fastapi", "jsonschema", "langchain-core", "langchain-ollama", "langgraph", "openai", "pydantic", "uvicorn"]
 
 [project.scripts]
 radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
 radarr-repair-planner-evaluate = "radarr_repair_planner.evaluation_cli:entrypoint"
+radarr-repair-planner-serve = "radarr_repair_planner.server_cli:entrypoint"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

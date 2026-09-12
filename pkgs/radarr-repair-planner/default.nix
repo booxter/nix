@@ -37,6 +37,7 @@ python3Packages.buildPythonApplication {
     langgraph
     openai
     pydantic
+    uvicorn
   ];
 
   nativeCheckInputs = with python3Packages; [
@@ -60,6 +61,7 @@ python3Packages.buildPythonApplication {
     "$out/bin/radarr-repair-planner" validate-decision \
       ${contracts}/share/radarr-repair/contracts/v1/examples/repair-decision-join.json
     "$out/bin/radarr-repair-planner-evaluate" --help >/dev/null
+    "$out/bin/radarr-repair-planner-serve" --help >/dev/null
   '';
 
   pythonImportsCheck = [ "radarr_repair_planner" ];
