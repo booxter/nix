@@ -1,4 +1,5 @@
 {
+  extraOptions ? { },
   media ? true,
   name,
 }:
@@ -15,10 +16,13 @@ in
   options.host.${name} = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
-        options.stateDir = lib.mkOption {
-          type = lib.types.strMatching "^/.+";
-          default = "/var/lib/${name}";
-        };
+        options = {
+          stateDir = lib.mkOption {
+            type = lib.types.strMatching "^/.+";
+            default = "/var/lib/${name}";
+          };
+        }
+        // extraOptions;
       }
     );
     default = null;
