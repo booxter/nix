@@ -10,10 +10,12 @@ from radarr_repair_planner.decision_models import RepairDecisionV1
 from radarr_repair_planner.decision_validation import DecisionViolation
 from radarr_repair_planner.evaluation import (
     EvaluationCase,
+    EvaluationDataError,
     ExpectedJoin,
     ExpectedManualImport,
     ExpectedNoRepair,
     OllamaEvaluationSettings,
+    _validate_expected_capability,
     evaluate_outcome,
     load_evaluation_cases,
     run_evaluation,
@@ -121,11 +123,78 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "missing_movie_identity",
         "poorly_named_manual_import",
         "raw_bluray",
+        "real_anime_season",
+        "real_double_exposure_raw_bluray",
+        "real_expendables_manual_import",
+        "real_grafenberg_join",
+        "real_pandoras_mirror_raw_bluray",
+        "real_portrait_manual_import",
+        "real_traci_manual_import",
+        "real_xconfessions_raw_bluray",
         "single_file_without_capability",
         "untrusted_filename_instruction",
     }
     clear_join = next(case for case in cases if case.spec.name == "clear_ordered_join")
     assert clear_join.repair_case.files[0].path_components[-1].root == "Example.Movie.2024.CD1.mkv"
+
+
+def test_corpus_rejects_unavailable_expected_capability() -> None:
+    evaluation_case = next(
+        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+    )
+    expected = evaluation_case.spec.expected.model_copy(
+        update={"capability_id": "capability:" + "0" * 64}
+    )
+    spec = evaluation_case.spec.model_copy(update={"expected": expected})
+
+    with pytest.raises(EvaluationDataError, match="unavailable capability"):
+        _validate_expected_capability(spec, evaluation_case.repair_case)
+
+
+def test_corpus_rejects_expected_capability_with_wrong_action() -> None:
+    evaluation_case = next(
+        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+    )
+    assert isinstance(evaluation_case.spec.expected, ExpectedJoin)
+    expected = ExpectedManualImport(
+        action="manual_import_file_v1",
+        capability_id=evaluation_case.spec.expected.capability_id,
+        file_id="file:" + "0" * 64,
+    )
+    spec = evaluation_case.spec.model_copy(update={"expected": expected})
+
+    with pytest.raises(EvaluationDataError, match="wrong capability action"):
+        _validate_expected_capability(spec, evaluation_case.repair_case)
+
+
+def test_corpus_rejects_wrong_expected_manual_import_file() -> None:
+    evaluation_case = next(
+        case for case in load_evaluation_cases() if case.spec.name == "real_portrait_manual_import"
+    )
+    expected = evaluation_case.spec.expected.model_copy(update={"file_id": "file:" + "0" * 64})
+    spec = evaluation_case.spec.model_copy(update={"expected": expected})
+
+    with pytest.raises(EvaluationDataError, match="wrong manual-import file"):
+        _validate_expected_capability(spec, evaluation_case.repair_case)
+
+
+def test_corpus_rejects_unavailable_expected_join_file() -> None:
+    evaluation_case = next(
+        case for case in load_evaluation_cases() if case.spec.name == "real_grafenberg_join"
+    )
+    assert isinstance(evaluation_case.spec.expected, ExpectedJoin)
+    expected = evaluation_case.spec.expected.model_copy(
+        update={
+            "ordered_file_ids": [
+                *evaluation_case.spec.expected.ordered_file_ids,
+                "file:" + "0" * 64,
+            ]
+        }
+    )
+    spec = evaluation_case.spec.model_copy(update={"expected": expected})
+
+    with pytest.raises(EvaluationDataError, match="unavailable join files"):
+        _validate_expected_capability(spec, evaluation_case.repair_case)
 
 
 async def test_matching_decisions_pass_the_corpus() -> None:
@@ -134,7 +203,7 @@ async def test_matching_decisions_pass_the_corpus() -> None:
     assert report.passed, [
         (result.case_name, result.violations) for result in report.results if not result.passed
     ]
-    assert len(report.results) == 18
+    assert len(report.results) == 34
     assert all(result.passed for result in report.results)
     assert all(result.attempts == 1 for result in report.results)
     assert all(result.attempt_errors == [] for result in report.results)

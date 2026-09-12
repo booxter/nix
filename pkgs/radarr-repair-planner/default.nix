@@ -23,6 +23,8 @@ python3Packages.buildPythonApplication {
     mkdir -p src/radarr_repair_planner/evaluations/v1/cases
     cp ${contracts}/share/radarr-repair/contracts/v1/examples/repair-case-*.json \
       src/radarr_repair_planner/evaluations/v1/cases/
+    cp corpus-review/*/*.json \
+      src/radarr_repair_planner/evaluations/v1/cases/
   '';
 
   build-system = [ python3Packages.setuptools ];

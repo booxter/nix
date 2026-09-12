@@ -16,7 +16,10 @@ from .openrouter_model import ReasoningEffort
 from .planning import PlanningGraph, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
-CaseFilename = Annotated[str, StringConstraints(pattern=r"^repair-case-[a-z0-9-]+\.json$")]
+CaseFilename = Annotated[
+    str,
+    StringConstraints(pattern=r"^(?:repair-case-[a-z0-9-]+|[0-9a-f]{64})\.json$"),
+]
 
 
 class EvaluationDataError(ValueError):
@@ -73,6 +76,40 @@ class EvaluationManifest(StrictModel):
 class EvaluationCase:
     spec: EvaluationCaseSpec
     repair_case: RepairCaseV1
+
+
+def _validate_expected_capability(
+    spec: EvaluationCaseSpec,
+    repair_case: RepairCaseV1,
+) -> None:
+    expected = spec.expected
+    if isinstance(expected, ExpectedNoRepair):
+        return
+
+    case_value = repair_case.model_dump(mode="json", by_alias=True)
+    capabilities = {
+        capability["capability_id"]: capability for capability in case_value["capabilities"]
+    }
+    capability = capabilities.get(expected.capability_id)
+    if capability is None:
+        raise EvaluationDataError(f"evaluation case {spec.name} expects an unavailable capability")
+    if capability["action"] != expected.action:
+        raise EvaluationDataError(
+            f"evaluation case {spec.name} expects the wrong capability action"
+        )
+
+    if isinstance(expected, ExpectedManualImport):
+        if capability["file_id"] != expected.file_id:
+            raise EvaluationDataError(
+                f"evaluation case {spec.name} expects the wrong manual-import file"
+            )
+        return
+
+    candidate_ids = set(capability["candidate_file_ids"])
+    if len(set(expected.ordered_file_ids)) != len(expected.ordered_file_ids) or not set(
+        expected.ordered_file_ids
+    ).issubset(candidate_ids):
+        raise EvaluationDataError(f"evaluation case {spec.name} expects unavailable join files")
 
 
 class CommonEvaluationSettings(StrictModel):
@@ -158,12 +195,9 @@ def load_evaluation_cases() -> list[EvaluationCase]:
         value: JsonValue = json.loads(base_payload)
         for pointer, replacement in spec.replacements.items():
             _replace_pointer(value, pointer, replacement)
-        result.append(
-            EvaluationCase(
-                spec=spec,
-                repair_case=decode_case(json.dumps(value, allow_nan=False).encode()),
-            )
-        )
+        repair_case = decode_case(json.dumps(value, allow_nan=False).encode())
+        _validate_expected_capability(spec, repair_case)
+        result.append(EvaluationCase(spec=spec, repair_case=repair_case))
     return result
 
 

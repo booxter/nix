@@ -144,6 +144,86 @@
         "/radarr/movie/original_title": "Example Feature",
         "/radarr/movie/title": "Example Feature"
       }
+    },
+    {
+      "base_case": "189bc9071c81cea1d62dc2879ff315ba3ed9fb77f1dbc523c56d350d45b87569.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "content_not_single_movie",
+          "not_a_multipart_release"
+        ]
+      },
+      "name": "real_anime_season"
+    },
+    {
+      "base_case": "1ba980d5999ecc37c4eb10b2cada8eb7bd91bff05e3c961365549562c5285fd4.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "real_xconfessions_raw_bluray"
+    },
+    {
+      "base_case": "22d24e039d24f04037b77d7e0bbfa57c3c3cce5049f7d4992f78d948cbc4ea81.json",
+      "expected": {
+        "action": "manual_import_file_v1",
+        "capability_id": "capability:ba19fb9719c46971047d8cdf53ac3fa8210cf3cf880631b85072387a9a30c90c",
+        "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f"
+      },
+      "name": "real_portrait_manual_import"
+    },
+    {
+      "base_case": "ae71508c6d8386fc799d12aaccddc107d6645dd12032490ee26caa076f0285e8.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "real_pandoras_mirror_raw_bluray"
+    },
+    {
+      "base_case": "af68a060d5582b353a48623438dcc8cf4d516d7faf4663a8a9623e1a5c29d8f5.json",
+      "expected": {
+        "action": "manual_import_file_v1",
+        "capability_id": "capability:088c4f9eed55ec7fe4ee9cc22e0a41a64bb509ad6660e60d9f7f5d69049d83fc",
+        "file_id": "file:4ea7340c572d3ac56e34a3953c1a6cabaaa7e7859b1378ba60710fe2614d1a31"
+      },
+      "name": "real_expendables_manual_import"
+    },
+    {
+      "base_case": "d6a3ffd1d9e97fdcbe24e36705e27d34ce7de2564fda21bcf5181088b2862182.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "real_double_exposure_raw_bluray"
+    },
+    {
+      "base_case": "e1c3933d03e26f608ee4b08eb586d0990b41a3044994604aa825d3d492673ba4.json",
+      "expected": {
+        "action": "join_parts_v1",
+        "capability_id": "capability:d7e35c5eaeb07f45d675311b3a44d8fe4a4d9578b722a490b5ddff7f1cb32b39",
+        "ordered_file_ids": [
+          "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
+          "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747"
+        ]
+      },
+      "name": "real_grafenberg_join"
+    },
+    {
+      "base_case": "db879def0949a0f6f813cfd5489dc5e242e91311ee1565b23731deb500e4901e.json",
+      "expected": {
+        "action": "manual_import_file_v1",
+        "capability_id": "capability:e48621ff3c46b3aa83f49d062014351e987c596575d85f7bda039439fbca56c6",
+        "file_id": "file:c5063d72e1c1dc2d88c70fd60b12e5524bd342dc73dca5ae612678da6bf649f2"
+      },
+      "name": "real_traci_manual_import"
     }
   ],
   "schema_version": "radarr-repair-evaluation/v1"
