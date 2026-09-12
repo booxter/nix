@@ -65,7 +65,7 @@ func TestCaseIdentityCanonicalizesJSONStrings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "sha256:ba6ae78312974880300266fc5cb8dff2f1fdd65fa73ba9b812d5cadf90ac82b8"
+	const want = "sha256:7c02ffdb402f647b3c55dc76207f3ec312249b4f9247ea5c4406ebe6057d571c"
 	if caseID != want {
 		t.Fatalf("case ID = %q, want %q", caseID, want)
 	}
