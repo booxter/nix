@@ -31,6 +31,21 @@ type RadarrManualImportBinding struct {
 	File                RadarrManualImportCommandFile
 }
 
+// Complete reports whether the binding contains everything needed to submit
+// the controller-selected file to Radarr without filling fields later.
+func (binding RadarrManualImportBinding) Complete() bool {
+	return binding.FileID != "" &&
+		binding.ExpectedFingerprint.SizeBytes > 0 &&
+		binding.ImportMode == RadarrImportModeCopy &&
+		usableOutputPath(binding.File.Path) &&
+		(binding.File.FolderName == "" || completeText(binding.File.FolderName)) &&
+		completeText(binding.File.Quality.Quality.Name) &&
+		validLanguages(binding.File.Languages) &&
+		(binding.File.ReleaseGroup == "" || completeText(binding.File.ReleaseGroup)) &&
+		completeText(binding.File.DownloadID) &&
+		binding.File.MovieID > 0
+}
+
 // BindRadarrManualImportFile returns a binding only when the controller can
 // construct the complete, source-preserving Radarr command in advance. Media
 // interpretation remains the planner's job, so probe and runtime evidence are
@@ -42,14 +57,9 @@ func BindRadarrManualImportFile(
 	history []RadarrHistoryEvent,
 ) (RadarrManualImportBinding, bool) {
 	assessment := classifyMediaFile(file)
-	if file.ID == "" || absolutePath == "" || !assessment.ProbeCandidate() ||
-		isRawDiscPath(file.PathComponents) ||
+	if !assessment.ProbeCandidate() || isRawDiscPath(file.PathComponents) ||
 		manualImport.Path != absolutePath ||
-		manualImport.SizeBytes != file.Fingerprint.SizeBytes ||
-		manualImport.MovieID <= 0 ||
-		(manualImport.FolderName != "" && !completeText(manualImport.FolderName)) ||
-		!completeText(manualImport.DownloadID) ||
-		(manualImport.ReleaseGroup != "" && !completeText(manualImport.ReleaseGroup)) {
+		manualImport.SizeBytes != file.Fingerprint.SizeBytes {
 		return RadarrManualImportBinding{}, false
 	}
 
@@ -68,7 +78,7 @@ func BindRadarrManualImportFile(
 		return RadarrManualImportBinding{}, false
 	}
 
-	return RadarrManualImportBinding{
+	binding := RadarrManualImportBinding{
 		FileID:              file.ID,
 		ExpectedFingerprint: file.Fingerprint,
 		ImportMode:          RadarrImportModeCopy,
@@ -82,7 +92,8 @@ func BindRadarrManualImportFile(
 			DownloadID:   manualImport.DownloadID,
 			MovieID:      manualImport.MovieID,
 		},
-	}, true
+	}
+	return binding, binding.Complete()
 }
 
 func latestMatchingGrab(
