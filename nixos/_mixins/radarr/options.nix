@@ -1,5 +1,41 @@
 { lib, pkgs }:
 {
+  repair.worker = {
+    enable = lib.mkEnableOption "isolated Radarr repair media probe worker";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.radarr-repair;
+      description = "Radarr repair worker package.";
+    };
+    socketPath = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/run/radarr-repair-worker/worker.sock";
+      readOnly = true;
+      description = "Local media probe worker socket.";
+    };
+    clientGroup = lib.mkOption {
+      type = lib.types.str;
+      default = "radarr-repair-worker-clients";
+      readOnly = true;
+      description = "Group allowed to call the media probe worker.";
+    };
+    roots = lib.mkOption {
+      type = with lib.types; attrsOf (strMatching "^/.+");
+      default = { };
+      description = "Media roots exposed to the worker by opaque identifier.";
+    };
+    probeTimeoutSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 30;
+      description = "Maximum duration of one media probe.";
+    };
+    maxConcurrent = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 2;
+      description = "Maximum number of concurrent media probes.";
+    };
+  };
+
   repair.planner = {
     enable = lib.mkEnableOption "agentic Radarr repair planning service";
     package = lib.mkOption {

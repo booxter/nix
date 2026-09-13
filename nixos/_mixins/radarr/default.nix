@@ -10,5 +10,6 @@ in
     })
     ./letterboxd-list.nix
     ./repair.nix
+    ./worker.nix
   ];
 }
