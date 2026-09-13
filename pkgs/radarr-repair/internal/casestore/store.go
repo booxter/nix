@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
+	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"golang.org/x/sys/unix"
 )
 
@@ -22,6 +23,14 @@ type Store struct {
 	root        string
 	casesDir    string
 	planningDir string
+}
+
+func (store *Store) PutAssembly(assembly casebuilder.Assembly) (bool, error) {
+	record, err := NewRecord(assembly)
+	if err != nil {
+		return false, err
+	}
+	return store.Put(record)
 }
 
 func New(root string) (*Store, error) {

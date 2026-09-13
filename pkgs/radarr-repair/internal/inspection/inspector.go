@@ -112,7 +112,12 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 	}
 
 	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
+	var inspectionErrors []error
 	for _, record := range eligible {
+		if err := ctx.Err(); err != nil {
+			inspectionErrors = append(inspectionErrors, err)
+			break
+		}
 		collectionContext, collectionCancel := context.WithTimeout(
 			ctx,
 			inspector.dependencies.CollectionTimeout,
@@ -120,11 +125,15 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
 		collectionCancel()
 		if inspectErr != nil {
-			return nil, fmt.Errorf("inspect Radarr queue record %d: %w", record.ID, inspectErr)
+			inspectionErrors = append(
+				inspectionErrors,
+				fmt.Errorf("inspect Radarr queue record %d: %w", record.ID, inspectErr),
+			)
+			continue
 		}
 		assemblies = append(assemblies, assembly)
 	}
-	return assemblies, nil
+	return assemblies, errors.Join(inspectionErrors...)
 }
 
 func (inspector *Inspector) inspectRecord(

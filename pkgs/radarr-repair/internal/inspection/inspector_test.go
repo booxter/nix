@@ -117,6 +117,34 @@ func TestInspectAllCollectsEveryEligibleCandidateFromOneQueueRead(t *testing.T) 
 	}
 }
 
+func TestInspectAllReturnsSuccessfulCasesAlongsideCollectionErrors(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	other := fixture.radarr.records[0]
+	other.ID = 72
+	fixture.radarr.records = append(fixture.radarr.records, other)
+	var selectedQueueIDs []int64
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		queueID := observation.Correlation.Radarr.ID
+		selectedQueueIDs = append(selectedQueueIDs, queueID)
+		if queueID == 71 {
+			return casebuilder.Assembly{}, errors.New("cannot assemble")
+		}
+		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
+	})
+
+	assemblies, err := inspector.InspectAll(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "queue record 71") {
+		t.Fatalf("error = %v", err)
+	}
+	if len(assemblies) != 1 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
+		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
+	}
+}
+
 func TestInspectAllRejectsQueueWithoutEligibleCandidates(t *testing.T) {
 	t.Parallel()
 
