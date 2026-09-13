@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 	"golang.org/x/sys/unix"
@@ -15,6 +16,7 @@ const (
 	workerDirectoryName = ".radarr-repair"
 	stagedDirectoryName = "staged"
 	stagedNameDomain    = "radarr-repair-worker-staged-name-v1\x00"
+	publishedNameDomain = "radarr-repair-worker-published-name-v1\x00"
 )
 
 type StagedArtifact interface {
@@ -333,6 +335,116 @@ func (rootSet *RootSet) RemoveCompleted(
 	)
 }
 
+func (rootSet *RootSet) PublishCompleted(
+	rootID string,
+	artifactID string,
+	container workercontracts.OutputContainer,
+	expectedFingerprint string,
+	inputPaths [][]string,
+) ([]string, error) {
+	if rootSet == nil || rootSet.roots == nil {
+		return nil, &Failure{Kind: FailureInternal}
+	}
+	root, found := rootSet.roots[rootID]
+	if !found {
+		return nil, &Failure{Kind: FailureUnknownRoot}
+	}
+	if artifactID == "" || expectedFingerprint == "" {
+		return nil, &Failure{Kind: FailureInternal}
+	}
+	extension, err := stagedExtension(container)
+	if err != nil {
+		return nil, err
+	}
+	directoryComponents, err := commonInputDirectory(inputPaths)
+	if err != nil {
+		return nil, err
+	}
+	name := publishedName(artifactID, extension)
+	location := append(append([]string(nil), directoryComponents...), name)
+
+	stagedDirectory, found, err := openStagedDirectory(root)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, &Failure{Kind: FailureFileUnavailable}
+	}
+	defer stagedDirectory.Close()
+	destinationDirectory, err := openMediaDirectory(root, directoryComponents)
+	if err != nil {
+		return nil, err
+	}
+	defer destinationDirectory.Close()
+
+	staged, stagedFound, err := openArtifact(
+		stagedDirectory,
+		stagedName(artifactID, extension),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if staged != nil {
+		defer staged.Close()
+	}
+	published, publishedFound, err := openPublishedArtifact(destinationDirectory, name)
+	if err != nil {
+		return nil, err
+	}
+	if published != nil {
+		defer published.Close()
+	}
+
+	var publishedArtifact *os.File
+	if stagedFound {
+		if err := verifyArtifactFingerprint(staged, expectedFingerprint); err != nil {
+			return nil, err
+		}
+		if publishedFound {
+			return nil, &Failure{Kind: FailureDestinationExists}
+		}
+		if err := unix.Renameat2(
+			int(stagedDirectory.Fd()),
+			stagedName(artifactID, extension),
+			int(destinationDirectory.Fd()),
+			name,
+			unix.RENAME_NOREPLACE,
+		); err != nil {
+			switch {
+			case errors.Is(err, unix.EEXIST):
+				return nil, &Failure{Kind: FailureDestinationExists, cause: err}
+			case errors.Is(err, unix.ENOENT):
+				return nil, &Failure{Kind: FailureFileUnavailable, cause: err}
+			default:
+				return nil, &Failure{Kind: FailureInternal, cause: err}
+			}
+		}
+		publishedArtifact = staged
+	} else {
+		if !publishedFound {
+			return nil, &Failure{Kind: FailureFileUnavailable}
+		}
+		if err := verifyArtifactFingerprint(published, expectedFingerprint); err != nil {
+			return nil, err
+		}
+		publishedArtifact = published
+	}
+	if err := makePublishedArtifactReadable(
+		destinationDirectory,
+		publishedArtifact,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := errors.Join(
+		syncDirectory(destinationDirectory),
+		syncDirectory(stagedDirectory),
+	); err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
 func (artifact *completedArtifact) File() *os.File {
 	if artifact == nil || artifact.closed {
 		return nil
@@ -425,6 +537,127 @@ func stagedName(artifactID string, extension string) string {
 	_, _ = digest.Write([]byte(stagedNameDomain))
 	_, _ = digest.Write([]byte(artifactID))
 	return hex.EncodeToString(digest.Sum(nil)) + extension
+}
+
+func publishedName(artifactID string, extension string) string {
+	digest := sha256.New()
+	_, _ = digest.Write([]byte(publishedNameDomain))
+	_, _ = digest.Write([]byte(artifactID))
+	return "radarr-repair-" + hex.EncodeToString(digest.Sum(nil)) + extension
+}
+
+func commonInputDirectory(inputPaths [][]string) ([]string, error) {
+	if len(inputPaths) < 2 {
+		return nil, &Failure{Kind: FailureInvalidPath}
+	}
+	for _, path := range inputPaths {
+		if !validComponents(path) {
+			return nil, &Failure{Kind: FailureInvalidPath}
+		}
+	}
+	common := append([]string(nil), inputPaths[0][:len(inputPaths[0])-1]...)
+	for _, path := range inputPaths[1:] {
+		parent := path[:len(path)-1]
+		limit := min(len(common), len(parent))
+		matched := 0
+		for matched < limit && common[matched] == parent[matched] {
+			matched++
+		}
+		common = common[:matched]
+	}
+	if len(common) > 0 && common[0] == workerDirectoryName {
+		return nil, &Failure{Kind: FailureInvalidPath}
+	}
+	return common, nil
+}
+
+func openMediaDirectory(root *os.File, components []string) (*os.File, error) {
+	path := "."
+	if len(components) > 0 {
+		path = strings.Join(components, "/")
+	}
+	fd, err := unix.Openat2(
+		int(root.Fd()),
+		path,
+		&unix.OpenHow{
+			Flags: unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC | unix.O_NOFOLLOW,
+			Resolve: unix.RESOLVE_BENEATH |
+				unix.RESOLVE_NO_SYMLINKS |
+				unix.RESOLVE_NO_MAGICLINKS,
+		},
+	)
+	if err != nil {
+		return nil, classifyOpenFailure(err)
+	}
+	return os.NewFile(uintptr(fd), "media-directory"), nil
+}
+
+func openPublishedArtifact(
+	directory *os.File,
+	name string,
+) (*os.File, bool, error) {
+	var directoryStat unix.Stat_t
+	if err := unix.Fstat(int(directory.Fd()), &directoryStat); err != nil {
+		return nil, false, &Failure{Kind: FailureInternal, cause: err}
+	}
+	fd, err := unix.Openat2(
+		int(directory.Fd()),
+		name,
+		&unix.OpenHow{
+			Flags: unix.O_RDONLY | unix.O_CLOEXEC | unix.O_NOFOLLOW | unix.O_NONBLOCK,
+			Resolve: unix.RESOLVE_BENEATH |
+				unix.RESOLVE_NO_SYMLINKS |
+				unix.RESOLVE_NO_MAGICLINKS,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, unix.ENOENT) {
+			return nil, false, nil
+		}
+		return nil, true, &Failure{Kind: FailureDestinationExists, cause: err}
+	}
+	artifact := os.NewFile(uintptr(fd), "published-media")
+	var stat unix.Stat_t
+	if err := unix.Fstat(fd, &stat); err != nil {
+		_ = artifact.Close()
+		return nil, true, &Failure{Kind: FailureDestinationExists, cause: err}
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFREG ||
+		stat.Uid != uint32(os.Geteuid()) ||
+		(stat.Mode&0o777 != 0o600 &&
+			(stat.Mode&0o777 != 0o640 || stat.Gid != directoryStat.Gid)) {
+		_ = artifact.Close()
+		return nil, true, &Failure{Kind: FailureDestinationExists}
+	}
+	return artifact, true, nil
+}
+
+func makePublishedArtifactReadable(directory *os.File, artifact *os.File) error {
+	var stat unix.Stat_t
+	if err := unix.Fstat(int(directory.Fd()), &stat); err != nil {
+		return &Failure{Kind: FailureInternal, cause: err}
+	}
+	if err := unix.Fchown(int(artifact.Fd()), -1, int(stat.Gid)); err != nil {
+		return &Failure{Kind: FailureInternal, cause: err}
+	}
+	if err := unix.Fchmod(int(artifact.Fd()), 0o640); err != nil {
+		return &Failure{Kind: FailureInternal, cause: err}
+	}
+	if err := unix.Fsync(int(artifact.Fd())); err != nil {
+		return &Failure{Kind: FailureInternal, cause: err}
+	}
+	return nil
+}
+
+func verifyArtifactFingerprint(artifact *os.File, expected string) error {
+	current, err := snapshot(artifact)
+	if err != nil {
+		return err
+	}
+	if current.Fingerprint() != expected {
+		return &Failure{Kind: FailureFingerprintMismatch}
+	}
+	return nil
 }
 
 func partialStagedName(completedName string) string {

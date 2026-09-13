@@ -22,6 +22,7 @@ const (
 	FailureFingerprintMismatch
 	FailureInsufficientSpace
 	FailureArtifactExists
+	FailureDestinationExists
 	FailureInternal
 )
 
@@ -46,6 +47,8 @@ func (failure *Failure) Error() string {
 		return "insufficient space for staged media"
 	case FailureArtifactExists:
 		return "staged media artifact already exists"
+	case FailureDestinationExists:
+		return "published media destination already exists"
 	default:
 		return "media file access failed"
 	}
