@@ -5,7 +5,8 @@ import (
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 )
 
-func convertEvidence(evidence workercontracts.Evidence) controller.ProbeEvidence {
+// EvidenceFromWorker converts schema-validated worker evidence into controller data.
+func EvidenceFromWorker(evidence workercontracts.Evidence) controller.ProbeEvidence {
 	streams := make([]controller.ProbeStream, len(evidence.Streams))
 	for index, stream := range evidence.Streams {
 		streams[index] = convertStream(stream)

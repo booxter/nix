@@ -183,6 +183,55 @@ func (layout StreamLayout) Clone() StreamLayout {
 	return cloned
 }
 
+func (layout StreamLayout) Matches(streams []ProbeStream) bool {
+	if len(streams) != len(layout.Streams) {
+		return false
+	}
+	ordered := orderedStreams(streams)
+	for position, expected := range layout.Streams {
+		if position > 0 && ordered[position-1].Index == ordered[position].Index {
+			return false
+		}
+		reference, valid := streamFromLayout(expected)
+		if !valid {
+			return false
+		}
+		comparison := compareStreams(reference, ordered[position])
+		if comparison.missing != "" || comparison.mismatch != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func streamFromLayout(entry StreamLayoutEntry) (ProbeStream, bool) {
+	stream := ProbeStream{
+		Kind:      copiedValue(&entry.Kind),
+		CodecName: copiedValue(&entry.CodecName),
+		Profile:   copiedValue(entry.Profile),
+		TimeBase:  copiedValue(&entry.TimeBase),
+	}
+	switch entry.Kind {
+	case ProbeStreamVideo:
+		if entry.Video == nil {
+			return ProbeStream{}, false
+		}
+		stream.Width = copiedValue(&entry.Video.Width)
+		stream.Height = copiedValue(&entry.Video.Height)
+		stream.PixelFormat = copiedValue(&entry.Video.PixelFormat)
+		stream.AverageRate = copiedValue(&entry.Video.AverageRate)
+	case ProbeStreamAudio:
+		if entry.Audio == nil {
+			return ProbeStream{}, false
+		}
+		stream.SampleFormat = copiedValue(&entry.Audio.SampleFormat)
+		stream.SampleRateHz = copiedValue(&entry.Audio.SampleRateHz)
+		stream.Channels = copiedValue(&entry.Audio.Channels)
+		stream.ChannelLayout = copiedValue(&entry.Audio.ChannelLayout)
+	}
+	return stream, true
+}
+
 func layoutFromStreams(streams []ProbeStream) *StreamLayout {
 	layout := StreamLayout{Streams: make([]StreamLayoutEntry, len(streams))}
 	for index, stream := range streams {

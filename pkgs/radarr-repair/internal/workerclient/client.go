@@ -227,7 +227,7 @@ func (client *Client) Probe(
 	if probeResponse.Success == nil {
 		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
 	}
-	return controller.SuccessfulMediaProbe(convertEvidence(probeResponse.Success.Evidence)), nil
+	return controller.SuccessfulMediaProbe(EvidenceFromWorker(probeResponse.Success.Evidence)), nil
 }
 
 func retainedProbeFailure(reason workercontracts.Reason) (controller.MediaProbeReason, bool) {

@@ -258,6 +258,60 @@ func TestAssessStreamCompatibilityRequiresEveryStreamToMatch(t *testing.T) {
 	}
 }
 
+func TestStreamLayoutMatchesOrderedProbeStreams(t *testing.T) {
+	t.Parallel()
+
+	assessment := AssessStreamCompatibility([]ProbeEvidence{
+		{Streams: []ProbeStream{videoStream(0), audioStream(1)}},
+		{Streams: []ProbeStream{videoStream(0), audioStream(1)}},
+	})
+	if assessment.Layout == nil {
+		t.Fatal("compatible streams did not produce a layout")
+	}
+	if !assessment.Layout.Matches([]ProbeStream{audioStream(1), videoStream(0)}) {
+		t.Fatal("layout did not match streams returned out of array order")
+	}
+
+	reordered := []ProbeStream{audioStream(0), videoStream(1)}
+	if assessment.Layout.Matches(reordered) {
+		t.Fatal("layout matched streams with different index order")
+	}
+	duplicateIndexes := []ProbeStream{videoStream(0), audioStream(0)}
+	if assessment.Layout.Matches(duplicateIndexes) {
+		t.Fatal("layout matched duplicate stream indexes")
+	}
+
+	changed := []ProbeStream{videoStream(0), audioStream(1)}
+	changed[1].Channels = pointerTo(int64(2))
+	if assessment.Layout.Matches(changed) {
+		t.Fatal("layout matched changed audio")
+	}
+}
+
+func TestStreamLayoutRejectsIncompleteEvidence(t *testing.T) {
+	t.Parallel()
+
+	layout := StreamLayout{Streams: []StreamLayoutEntry{{
+		Kind:      ProbeStreamVideo,
+		CodecName: "h264",
+		TimeBase:  Rational{Numerator: 1, Denominator: 1_000},
+		Video: &VideoStreamLayout{
+			Width:       1_920,
+			Height:      1_080,
+			PixelFormat: "yuv420p",
+			AverageRate: Rational{Numerator: 24_000, Denominator: 1_001},
+		},
+	}}}
+	if layout.Matches([]ProbeStream{videoStreamWithoutTimeBase(0)}) {
+		t.Fatal("layout matched incomplete stream evidence")
+	}
+
+	layout.Streams[0].Video = nil
+	if layout.Matches([]ProbeStream{videoStream(0)}) {
+		t.Fatal("malformed expected layout matched a stream")
+	}
+}
+
 func assertStreamIssue(
 	t *testing.T,
 	assessment StreamCompatibilityAssessment,

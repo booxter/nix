@@ -135,7 +135,7 @@ func TestClientReturnsTypedWorkerRejection(t *testing.T) {
 func TestConvertEvidencePreservesEmptyCollections(t *testing.T) {
 	t.Parallel()
 
-	evidence := convertEvidence(workercontracts.Evidence{
+	evidence := EvidenceFromWorker(workercontracts.Evidence{
 		Format: workercontracts.Format{
 			Names: []string{},
 			Tags:  []workercontracts.TagElement{},
