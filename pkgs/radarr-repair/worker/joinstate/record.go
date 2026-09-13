@@ -165,7 +165,7 @@ func artifactID(specification Specification) (string, error) {
 	digest := sha256.New()
 	_, _ = digest.Write([]byte(artifactIDDomain))
 	_, _ = digest.Write(canonical)
-	return "artifact:" + hex.EncodeToString(digest.Sum(nil)), nil
+	return artifactIDPrefix + hex.EncodeToString(digest.Sum(nil)), nil
 }
 
 func validateExecution(execution Execution) error {

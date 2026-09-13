@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/privatefile"
@@ -20,6 +21,7 @@ const (
 	executionsDirectoryName = "executions"
 	lockFileName            = ".lock"
 	executionPathDomain     = "radarr-repair-worker-execution-path-v1\x00"
+	artifactIDPrefix        = "artifact:"
 )
 
 type Store struct {
@@ -126,6 +128,60 @@ func (store *Store) Get(executionID string) (Execution, bool, error) {
 		)
 	}
 	return cloneExecution(execution), found, nil
+}
+
+func (store *Store) FindByArtifactID(artifactID string) (Execution, bool, error) {
+	if err := validateArtifactID(artifactID); err != nil {
+		return Execution{}, false, err
+	}
+	entries, err := os.ReadDir(store.executionsDir)
+	if err != nil {
+		return Execution{}, false, fmt.Errorf("read join executions: %w", err)
+	}
+
+	var match *Execution
+	for _, entry := range entries {
+		if isTemporaryExecutionName(entry.Name()) {
+			continue
+		}
+		path := filepath.Join(store.executionsDir, entry.Name())
+		execution, found, err := readExecution(path)
+		if err != nil {
+			return Execution{}, false, err
+		}
+		if !found {
+			return Execution{}, false, fmt.Errorf(
+				"join execution %q disappeared during artifact lookup",
+				entry.Name(),
+			)
+		}
+		expectedPath, err := store.executionPath(execution.ExecutionID)
+		if err != nil {
+			return Execution{}, false, err
+		}
+		if filepath.Base(expectedPath) != entry.Name() {
+			return Execution{}, false, fmt.Errorf(
+				"join execution file %q does not match execution %q",
+				entry.Name(),
+				execution.ExecutionID,
+			)
+		}
+		if execution.ArtifactID != artifactID {
+			continue
+		}
+		if match != nil {
+			return Execution{}, false, fmt.Errorf(
+				"multiple join executions contain artifact %q",
+				artifactID,
+			)
+		}
+		matched := cloneExecution(execution)
+		match = &matched
+	}
+	if match == nil {
+		return Execution{}, false, nil
+	}
+	return cloneExecution(*match), true, nil
 }
 
 func (store *Store) MarkStaged(
@@ -349,6 +405,22 @@ func validateExecutionID(executionID string) error {
 		return fmt.Errorf("invalid execution ID %q: %w", executionID, err)
 	}
 	return nil
+}
+
+func validateArtifactID(artifactID string) error {
+	digest := strings.TrimPrefix(artifactID, artifactIDPrefix)
+	if digest == artifactID || len(digest) != sha256.Size*2 {
+		return fmt.Errorf("invalid join artifact ID %q", artifactID)
+	}
+	decoded, err := hex.DecodeString(digest)
+	if err != nil || hex.EncodeToString(decoded) != digest {
+		return fmt.Errorf("invalid join artifact ID %q", artifactID)
+	}
+	return nil
+}
+
+func isTemporaryExecutionName(name string) bool {
+	return strings.HasPrefix(name, ".state-") && strings.HasSuffix(name, ".tmp")
 }
 
 func (store *Store) lock() (*os.File, error) {

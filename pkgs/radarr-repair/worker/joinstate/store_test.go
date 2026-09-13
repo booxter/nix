@@ -1,6 +1,7 @@
 package joinstate
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"os"
@@ -62,6 +63,15 @@ func TestStorePersistsJoinLifecycle(t *testing.T) {
 	stored, found, err := reopened.Get(request.ExecutionID)
 	if err != nil || !found || !reflect.DeepEqual(stored, prepared) {
 		t.Fatalf("reopen: found = %t, record = %#v, error = %v", found, stored, err)
+	}
+	byArtifact, found, err := reopened.FindByArtifactID(prepared.ArtifactID)
+	if err != nil || !found || !reflect.DeepEqual(byArtifact, prepared) {
+		t.Fatalf(
+			"artifact lookup: found = %t, record = %#v, error = %v",
+			found,
+			byArtifact,
+			err,
+		)
 	}
 
 	staged := stagedArtifact(t)
@@ -301,6 +311,92 @@ func TestStoreRejectsCorruptExecution(t *testing.T) {
 	if _, found, err := store.Get(request.ExecutionID); err == nil || found ||
 		!strings.Contains(err.Error(), "unknown field") {
 		t.Fatalf("corrupt execution: found = %t, error = %v", found, err)
+	}
+	if _, found, err := store.FindByArtifactID(
+		"artifact:0000000000000000000000000000000000000000000000000000000000000000",
+	); err == nil || found || !strings.Contains(err.Error(), "unknown field") {
+		t.Fatalf("corrupt artifact lookup: found = %t, error = %v", found, err)
+	}
+}
+
+func TestStoreArtifactLookupHandlesMissingAndTemporaryRecords(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join(t.TempDir(), "state")
+	store, err := New(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := stageRequest(t)
+	prepared, _, err := store.Prepare(
+		request,
+		time.Date(2026, time.September, 13, 16, 0, 0, 0, time.UTC),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(root, executionsDirectoryName, ".state-abandoned.tmp"),
+		[]byte("incomplete"),
+		0o600,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	foundExecution, found, err := store.FindByArtifactID(prepared.ArtifactID)
+	if err != nil || !found || !reflect.DeepEqual(foundExecution, prepared) {
+		t.Fatalf(
+			"artifact lookup: found = %t, record = %#v, error = %v",
+			found,
+			foundExecution,
+			err,
+		)
+	}
+	missingID := "artifact:0000000000000000000000000000000000000000000000000000000000000000"
+	if _, found, err := store.FindByArtifactID(missingID); err != nil || found {
+		t.Fatalf("missing artifact lookup: found = %t, error = %v", found, err)
+	}
+	if _, found, err := store.FindByArtifactID("artifact:not-a-digest"); err == nil || found {
+		t.Fatalf("invalid artifact lookup: found = %t, error = %v", found, err)
+	}
+}
+
+func TestStoreArtifactLookupRejectsDuplicateRecord(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join(t.TempDir(), "state")
+	store, err := New(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := stageRequest(t)
+	prepared, _, err := store.Prepare(
+		request,
+		time.Date(2026, time.September, 13, 16, 0, 0, 0, time.UTC),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(filepath.Join(root, executionsDirectoryName))
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("read execution directory: entries = %d, error = %v", len(entries), err)
+	}
+	original := filepath.Join(root, executionsDirectoryName, entries[0].Name())
+	data, err := os.ReadFile(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	duplicate := filepath.Join(
+		root,
+		executionsDirectoryName,
+		strings.Repeat("0", sha256.Size*2)+".json",
+	)
+	if err := os.WriteFile(duplicate, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, found, err := store.FindByArtifactID(prepared.ArtifactID); err == nil || found {
+		t.Fatalf("duplicate artifact lookup: found = %t, error = %v", found, err)
 	}
 }
 
