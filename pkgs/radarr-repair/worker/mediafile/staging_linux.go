@@ -47,6 +47,22 @@ type StagedArtifacts interface {
 	) (StagedArtifact, error)
 }
 
+type RecoverableStagedArtifacts interface {
+	StagedArtifacts
+	InspectStaged(
+		string,
+		string,
+		workercontracts.OutputContainer,
+	) (StagedStatus, CompletedArtifact, error)
+	RemovePartial(string, string, workercontracts.OutputContainer) (bool, error)
+	RemoveCompleted(
+		string,
+		string,
+		workercontracts.OutputContainer,
+		string,
+	) (bool, error)
+}
+
 type stagedArtifact struct {
 	file          *os.File
 	directory     *os.File
@@ -60,7 +76,7 @@ type completedArtifact struct {
 	closed bool
 }
 
-var _ StagedArtifacts = (*RootSet)(nil)
+var _ RecoverableStagedArtifacts = (*RootSet)(nil)
 
 func (rootSet *RootSet) CreateStaged(
 	rootID string,
@@ -276,27 +292,45 @@ func (rootSet *RootSet) RemovePartial(
 	if status != StagedPartial {
 		return false, nil
 	}
-	root := rootSet.roots[rootID]
-	directory, found, err := openStagedDirectory(root)
-	if err != nil || !found {
-		return false, err
-	}
-	defer directory.Close()
 	extension, err := stagedExtension(container)
 	if err != nil {
 		return false, err
 	}
-	name := partialStagedName(stagedName(artifactID, extension))
-	if err := unix.Unlinkat(int(directory.Fd()), name, 0); err != nil {
-		if errors.Is(err, unix.ENOENT) {
-			return false, nil
-		}
-		return false, &Failure{Kind: FailureInternal, cause: err}
+	return rootSet.removeStagedName(
+		rootID,
+		partialStagedName(stagedName(artifactID, extension)),
+		"",
+	)
+}
+
+func (rootSet *RootSet) RemoveCompleted(
+	rootID string,
+	artifactID string,
+	container workercontracts.OutputContainer,
+	expectedFingerprint string,
+) (bool, error) {
+	if expectedFingerprint == "" {
+		return false, &Failure{Kind: FailureInternal}
 	}
-	if err := unix.Fsync(int(directory.Fd())); err != nil {
-		return false, &Failure{Kind: FailureInternal, cause: err}
+	status, completed, err := rootSet.InspectStaged(rootID, artifactID, container)
+	if completed != nil {
+		_ = completed.Close()
 	}
-	return true, nil
+	if err != nil {
+		return false, err
+	}
+	if status != StagedComplete {
+		return false, nil
+	}
+	extension, err := stagedExtension(container)
+	if err != nil {
+		return false, err
+	}
+	return rootSet.removeStagedName(
+		rootID,
+		stagedName(artifactID, extension),
+		expectedFingerprint,
+	)
 }
 
 func (artifact *completedArtifact) File() *os.File {
@@ -326,6 +360,53 @@ func (artifact *completedArtifact) Close() error {
 		return &Failure{Kind: FailureInternal, cause: err}
 	}
 	return nil
+}
+
+func (rootSet *RootSet) removeStagedName(
+	rootID string,
+	name string,
+	expectedFingerprint string,
+) (bool, error) {
+	if rootSet == nil || rootSet.roots == nil {
+		return false, &Failure{Kind: FailureInternal}
+	}
+	root, found := rootSet.roots[rootID]
+	if !found {
+		return false, &Failure{Kind: FailureUnknownRoot}
+	}
+	directory, found, err := openStagedDirectory(root)
+	if err != nil || !found {
+		return false, err
+	}
+	defer directory.Close()
+	artifact, found, err := openArtifact(directory, name)
+	if err != nil || !found {
+		return false, err
+	}
+	if expectedFingerprint != "" {
+		current, err := snapshot(artifact)
+		if err != nil {
+			_ = artifact.Close()
+			return false, err
+		}
+		if current.Fingerprint() != expectedFingerprint {
+			_ = artifact.Close()
+			return false, &Failure{Kind: FailureFingerprintMismatch}
+		}
+	}
+	if err := artifact.Close(); err != nil {
+		return false, &Failure{Kind: FailureInternal, cause: err}
+	}
+	if err := unix.Unlinkat(int(directory.Fd()), name, 0); err != nil {
+		if errors.Is(err, unix.ENOENT) {
+			return false, nil
+		}
+		return false, &Failure{Kind: FailureInternal, cause: err}
+	}
+	if err := unix.Fsync(int(directory.Fd())); err != nil {
+		return false, &Failure{Kind: FailureInternal, cause: err}
+	}
+	return true, nil
 }
 
 func stagedExtension(container workercontracts.OutputContainer) (string, error) {

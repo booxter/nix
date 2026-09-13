@@ -74,20 +74,20 @@ func (failure *Failure) Unwrap() error {
 
 type Executor struct {
 	inputs    InputFiles
-	artifacts mediafile.StagedArtifacts
+	artifacts mediafile.RecoverableStagedArtifacts
 	joiner    mediajoin.Joiner
 	prober    MediaProber
 }
 
 var (
-	_ InputFiles                = (*mediafile.RootSet)(nil)
-	_ mediafile.StagedArtifacts = (*mediafile.RootSet)(nil)
-	_ MediaProber               = (*ffprobe.Runner)(nil)
+	_ InputFiles                           = (*mediafile.RootSet)(nil)
+	_ mediafile.RecoverableStagedArtifacts = (*mediafile.RootSet)(nil)
+	_ MediaProber                          = (*ffprobe.Runner)(nil)
 )
 
 func NewExecutor(
 	inputs InputFiles,
-	artifacts mediafile.StagedArtifacts,
+	artifacts mediafile.RecoverableStagedArtifacts,
 	joiner mediajoin.Joiner,
 	prober MediaProber,
 ) (*Executor, error) {
@@ -108,16 +108,59 @@ func NewExecutor(
 	}, nil
 }
 
+func (executor *Executor) StageOrRecover(
+	ctx context.Context,
+	execution joinstate.Execution,
+) (Result, error) {
+	if err := validateExecution(ctx, executor, execution); err != nil {
+		return Result{}, err
+	}
+	status, completed, err := executor.artifacts.InspectStaged(
+		execution.Specification.RootID,
+		execution.ArtifactID,
+		execution.Specification.OutputContainer,
+	)
+	if err != nil {
+		return Result{}, failureFor(err, mediajoin.Diagnostics{})
+	}
+	switch status {
+	case mediafile.StagedComplete:
+		if completed == nil {
+			return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
+		}
+		return executor.recoverCompleted(ctx, execution, completed)
+	case mediafile.StagedPartial:
+		removed, err := executor.artifacts.RemovePartial(
+			execution.Specification.RootID,
+			execution.ArtifactID,
+			execution.Specification.OutputContainer,
+		)
+		if err != nil {
+			return Result{}, failureFor(err, mediajoin.Diagnostics{})
+		}
+		if !removed {
+			return Result{}, &Failure{Reason: workercontracts.StageJoinExecutionConflict}
+		}
+	case mediafile.StagedMissing:
+		if completed != nil {
+			_ = completed.Close()
+			return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
+		}
+	default:
+		if completed != nil {
+			_ = completed.Close()
+		}
+		return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
+	}
+	return executor.Stage(ctx, execution)
+}
+
 func (executor *Executor) Stage(
 	ctx context.Context,
 	execution joinstate.Execution,
 ) (result Result, returnedErr error) {
-	if err := ctx.Err(); err != nil {
-		return Result{}, failureFor(err, mediajoin.Diagnostics{})
-	}
-	if executor == nil || execution.State != joinstate.Prepared ||
-		execution.ArtifactID == "" {
-		return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
+	if err := validateExecution(ctx, executor, execution); err != nil {
+		return Result{}, err
 	}
 
 	parts, sourceBytes, err := executor.openParts(execution.Specification)
@@ -194,6 +237,83 @@ func (executor *Executor) Stage(
 	}, nil
 }
 
+func (executor *Executor) recoverCompleted(
+	ctx context.Context,
+	execution joinstate.Execution,
+	artifact mediafile.CompletedArtifact,
+) (Result, error) {
+	fingerprintBefore, sizeBefore, initialErr := artifact.Snapshot()
+	var evidence controller.ProbeEvidence
+	var probeErr error
+	if initialErr == nil && sizeBefore > 0 {
+		evidence, probeErr = executor.prober.ProbeFile(ctx, artifact.File())
+	}
+	fingerprintAfter, sizeAfter, finalErr := artifact.Snapshot()
+	closeErr := artifact.Close()
+
+	var recoveryErr error
+	switch {
+	case initialErr != nil:
+		recoveryErr = initialErr
+	case sizeBefore <= 0:
+		recoveryErr = &Failure{Reason: workercontracts.StageJoinInvalidOutput}
+	case probeErr != nil:
+		recoveryErr = failureFor(probeErr, mediajoin.Diagnostics{})
+	case finalErr != nil:
+		recoveryErr = finalErr
+	case fingerprintBefore != fingerprintAfter || sizeBefore != sizeAfter:
+		recoveryErr = &Failure{Reason: workercontracts.StageJoinInvalidOutput}
+	case closeErr != nil:
+		recoveryErr = closeErr
+	case ctx.Err() != nil:
+		recoveryErr = ctx.Err()
+	}
+	if recoveryErr == nil {
+		return Result{
+			Fingerprint: fingerprintAfter,
+			SizeBytes:   sizeAfter,
+			Evidence:    evidence,
+		}, nil
+	}
+	if finalErr != nil || fingerprintAfter == "" {
+		return Result{}, failureFor(
+			errors.Join(recoveryErr, closeErr),
+			mediajoin.Diagnostics{},
+		)
+	}
+	removed, removeErr := executor.artifacts.RemoveCompleted(
+		execution.Specification.RootID,
+		execution.ArtifactID,
+		execution.Specification.OutputContainer,
+		fingerprintAfter,
+	)
+	if removeErr != nil || !removed {
+		return Result{}, &Failure{
+			Reason: workercontracts.StageJoinInternalError,
+			cause:  errors.Join(recoveryErr, closeErr, removeErr),
+		}
+	}
+	return Result{}, failureFor(
+		errors.Join(recoveryErr, closeErr),
+		mediajoin.Diagnostics{},
+	)
+}
+
+func validateExecution(
+	ctx context.Context,
+	executor *Executor,
+	execution joinstate.Execution,
+) error {
+	if err := ctx.Err(); err != nil {
+		return failureFor(err, mediajoin.Diagnostics{})
+	}
+	if executor == nil || execution.State != joinstate.Prepared ||
+		execution.ArtifactID == "" {
+		return &Failure{Reason: workercontracts.StageJoinInternalError}
+	}
+	return nil
+}
+
 func (executor *Executor) openParts(
 	specification joinstate.Specification,
 ) ([]*os.File, int64, error) {
@@ -258,6 +378,15 @@ func closeFiles(files []*os.File) {
 }
 
 func failureFor(err error, diagnostics mediajoin.Diagnostics) error {
+	var stageFailure *Failure
+	if errors.As(err, &stageFailure) {
+		return &Failure{
+			Reason:      stageFailure.Reason,
+			Diagnostics: stageFailure.Diagnostics,
+			cause:       err,
+		}
+	}
+
 	var fileFailure *mediafile.Failure
 	if errors.As(err, &fileFailure) {
 		reason := workercontracts.StageJoinInternalError

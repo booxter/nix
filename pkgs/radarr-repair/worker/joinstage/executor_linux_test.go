@@ -236,9 +236,123 @@ func TestExecutorCleansArtifactAfterJoinOrProbeFailure(t *testing.T) {
 	}
 }
 
+func TestExecutorRecoversCompletedArtifactWithoutJoiningAgain(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	for _, name := range []string{"first.mkv", "second.mkv"} {
+		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
+	rootSet := newRootSet(t, rootPath)
+	joiner := &concatenatingJoiner{}
+	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	staged, err := executor.Stage(context.Background(), execution)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recovered, err := executor.StageOrRecover(context.Background(), execution)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if joiner.calls != 1 {
+		t.Fatalf("join calls = %d, want 1", joiner.calls)
+	}
+	if recovered.Fingerprint != staged.Fingerprint || recovered.SizeBytes != staged.SizeBytes {
+		t.Fatalf("recovered result = %#v, want %#v", recovered, staged)
+	}
+}
+
+func TestExecutorRemovesPartialArtifactBeforeRetry(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	for _, name := range []string{"first.mkv", "second.mkv"} {
+		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
+	rootSet := newRootSet(t, rootPath)
+	partial, err := rootSet.CreateStaged(
+		execution.Specification.RootID,
+		execution.ArtifactID,
+		execution.Specification.OutputContainer,
+		execution.Specification.ExpectedSourceBytes,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := partial.File().WriteString("interrupted"); err != nil {
+		t.Fatal(err)
+	}
+	if err := partial.File().Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	joiner := &concatenatingJoiner{}
+	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := executor.StageOrRecover(context.Background(), execution); err != nil {
+		t.Fatal(err)
+	}
+	if joiner.calls != 1 {
+		t.Fatalf("join calls = %d, want 1", joiner.calls)
+	}
+}
+
+func TestExecutorRemovesCompletedArtifactThatFailsRecoveryProbe(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	for _, name := range []string{"first.mkv", "second.mkv"} {
+		if err := os.WriteFile(filepath.Join(rootPath, name), []byte(name), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	execution := preparedExecution(t, rootPath, []string{"first.mkv", "second.mkv"})
+	rootSet := newRootSet(t, rootPath)
+	joiner := &concatenatingJoiner{}
+	executor, err := NewExecutor(rootSet, rootSet, joiner, fixedProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := executor.Stage(context.Background(), execution); err != nil {
+		t.Fatal(err)
+	}
+
+	failing, err := NewExecutor(
+		rootSet,
+		rootSet,
+		joiner,
+		failingProber{err: &ffprobe.Failure{Kind: ffprobe.FailureExecution}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = failing.StageOrRecover(context.Background(), execution)
+	assertFailureReason(t, err, workercontracts.StageJoinProbeError)
+
+	if _, err := executor.StageOrRecover(context.Background(), execution); err != nil {
+		t.Fatal(err)
+	}
+	if joiner.calls != 2 {
+		t.Fatalf("join calls = %d, want 2", joiner.calls)
+	}
+}
+
 type concatenatingJoiner struct {
 	joined    string
 	afterJoin func()
+	calls     int
 }
 
 func (joiner *concatenatingJoiner) Join(
@@ -247,6 +361,7 @@ func (joiner *concatenatingJoiner) Join(
 	output *os.File,
 	_ workercontracts.OutputContainer,
 ) (mediajoin.Result, error) {
+	joiner.calls++
 	var joined []byte
 	for _, part := range parts {
 		if _, err := part.Seek(0, io.SeekStart); err != nil {
@@ -312,6 +427,31 @@ func (artifacts failingArtifacts) CreateStaged(
 	int64,
 ) (mediafile.StagedArtifact, error) {
 	return nil, artifacts.err
+}
+
+func (artifacts failingArtifacts) InspectStaged(
+	string,
+	string,
+	workercontracts.OutputContainer,
+) (mediafile.StagedStatus, mediafile.CompletedArtifact, error) {
+	return mediafile.StagedMissing, nil, nil
+}
+
+func (artifacts failingArtifacts) RemovePartial(
+	string,
+	string,
+	workercontracts.OutputContainer,
+) (bool, error) {
+	return false, artifacts.err
+}
+
+func (artifacts failingArtifacts) RemoveCompleted(
+	string,
+	string,
+	workercontracts.OutputContainer,
+	string,
+) (bool, error) {
+	return false, artifacts.err
 }
 
 func preparedExecution(
