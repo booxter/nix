@@ -20,8 +20,7 @@ type ProbeExecutor interface {
 
 type Handler struct {
 	executor ProbeExecutor
-	timeout  time.Duration
-	slots    chan struct{}
+	settings operationSettings
 }
 
 func NewHandler(
@@ -40,30 +39,59 @@ func NewHandler(
 	}
 	return &Handler{
 		executor: executor,
-		timeout:  timeout,
-		slots:    make(chan struct{}, maxConcurrent),
+		settings: operationSettings{
+			path:            probePath,
+			maxRequestBytes: workercontracts.MaxProbeRequestBytes,
+			timeout:         timeout,
+			slots:           make(chan struct{}, maxConcurrent),
+		},
 	}, nil
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	serveOperation(
+		writer,
+		request,
+		handler.settings,
+		workercontracts.DecodeProbeRequest,
+		handler.executor.Execute,
+		workercontracts.EncodeProbeResponse,
+	)
+}
+
+type operationSettings struct {
+	path            string
+	maxRequestBytes int64
+	timeout         time.Duration
+	slots           chan struct{}
+}
+
+func serveOperation[Request, Response any](
+	writer http.ResponseWriter,
+	httpRequest *http.Request,
+	settings operationSettings,
+	decode func([]byte) (Request, error),
+	execute func(context.Context, Request) Response,
+	encode func(Response) ([]byte, error),
+) {
 	writer.Header().Set("Cache-Control", "no-store")
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
-	if request.URL.Path != probePath {
+	if httpRequest.URL.Path != settings.path {
 		writer.WriteHeader(http.StatusNotFound)
 		return
 	}
-	if request.Method != http.MethodPost {
+	if httpRequest.Method != http.MethodPost {
 		writer.Header().Set("Allow", http.MethodPost)
 		writer.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	mediaType, _, err := mime.ParseMediaType(request.Header.Get("Content-Type"))
+	mediaType, _, err := mime.ParseMediaType(httpRequest.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {
 		writer.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 
-	body := http.MaxBytesReader(writer, request.Body, workercontracts.MaxProbeRequestBytes)
+	body := http.MaxBytesReader(writer, httpRequest.Body, settings.maxRequestBytes)
 	defer body.Close()
 	data, err := io.ReadAll(body)
 	if err != nil {
@@ -75,24 +103,24 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		}
 		return
 	}
-	probeRequest, err := workercontracts.DecodeProbeRequest(data)
+	operationRequest, err := decode(data)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case handler.slots <- struct{}{}:
-		defer func() { <-handler.slots }()
+	case settings.slots <- struct{}{}:
+		defer func() { <-settings.slots }()
 	default:
 		writer.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(request.Context(), handler.timeout)
+	ctx, cancel := context.WithTimeout(httpRequest.Context(), settings.timeout)
 	defer cancel()
-	response := handler.executor.Execute(ctx, probeRequest)
-	encoded, err := workercontracts.EncodeProbeResponse(response)
+	response := execute(ctx, operationRequest)
+	encoded, err := encode(response)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
