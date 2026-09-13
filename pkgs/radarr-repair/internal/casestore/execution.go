@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
@@ -38,6 +39,17 @@ type ManualImportExecution struct {
 	PreparedAt          time.Time                  `json:"prepared_at"`
 	UpdatedAt           time.Time                  `json:"updated_at"`
 	CommandID           *int64                     `json:"command_id,omitempty"`
+	Confirmation        *ManualImportConfirmation  `json:"confirmation,omitempty"`
+}
+
+type ManualImportConfirmation struct {
+	HistoryID    int64     `json:"history_id"`
+	MovieFileID  int64     `json:"movie_file_id"`
+	MovieID      int64     `json:"movie_id"`
+	DownloadID   string    `json:"download_id"`
+	OccurredAt   time.Time `json:"occurred_at"`
+	DroppedPath  string    `json:"dropped_path"`
+	ImportedPath string    `json:"imported_path"`
 }
 
 func EncodeManualImportExecution(record ManualImportExecution) ([]byte, error) {
@@ -181,23 +193,63 @@ func (store *Store) MarkManualImportRequested(
 }
 
 func (store *Store) MarkManualImportImported(
-	caseID string,
+	authorized decisionpolicy.AuthorizedManualImport,
+	imported controller.RadarrImportedFile,
 	updatedAt time.Time,
 ) (ManualImportExecution, bool, error) {
-	return store.markManualImportTerminal(caseID, ManualImportImported, false, updatedAt)
+	if err := store.validateManualImportAuthorization(authorized); err != nil {
+		return ManualImportExecution{}, false, err
+	}
+	if imported.MovieID != authorized.File.MovieID ||
+		imported.DownloadID != authorized.File.DownloadID ||
+		imported.DroppedPath != authorized.File.Path {
+		return ManualImportExecution{}, false, fmt.Errorf(
+			"Radarr import confirmation does not match the authorized file",
+		)
+	}
+	confirmation := manualImportConfirmation(imported)
+	if err := validateManualImportConfirmation(confirmation); err != nil {
+		return ManualImportExecution{}, false, err
+	}
+	return store.updateManualImportExecution(
+		authorized.CaseID,
+		updatedAt,
+		func(previous ManualImportExecution) (ManualImportExecution, bool, error) {
+			if !sameManualImport(previous, authorized) {
+				return ManualImportExecution{}, false, fmt.Errorf(
+					"manual import confirmation does not match the prepared operation",
+				)
+			}
+			switch previous.State {
+			case ManualImportPrepared, ManualImportRequested:
+				if !confirmation.OccurredAt.After(previous.PreparedAt) {
+					return ManualImportExecution{}, false, fmt.Errorf(
+						"Radarr import confirmation does not follow preparation",
+					)
+				}
+				previous.State = ManualImportImported
+				previous.Confirmation = &confirmation
+				return previous, true, nil
+			case ManualImportImported:
+				if previous.Confirmation != nil && *previous.Confirmation == confirmation {
+					return previous, false, nil
+				}
+				return ManualImportExecution{}, false, fmt.Errorf(
+					"manual import is already bound to different confirmation evidence",
+				)
+			default:
+				return ManualImportExecution{}, false, fmt.Errorf(
+					"cannot mark manual import %q from state %q",
+					ManualImportImported,
+					previous.State,
+				)
+			}
+		},
+	)
 }
 
 func (store *Store) MarkManualImportFailed(
 	caseID string,
-	updatedAt time.Time,
-) (ManualImportExecution, bool, error) {
-	return store.markManualImportTerminal(caseID, ManualImportFailed, true, updatedAt)
-}
-
-func (store *Store) markManualImportTerminal(
-	caseID string,
-	state ManualImportExecutionState,
-	allowPrepared bool,
 	updatedAt time.Time,
 ) (ManualImportExecution, bool, error) {
 	return store.updateManualImportExecution(
@@ -205,24 +257,15 @@ func (store *Store) markManualImportTerminal(
 		updatedAt,
 		func(previous ManualImportExecution) (ManualImportExecution, bool, error) {
 			switch previous.State {
-			case ManualImportRequested:
-				previous.State = state
+			case ManualImportPrepared, ManualImportRequested:
+				previous.State = ManualImportFailed
 				return previous, true, nil
-			case ManualImportPrepared:
-				if allowPrepared {
-					previous.State = state
-					return previous, true, nil
-				}
-				return ManualImportExecution{}, false, fmt.Errorf(
-					"cannot mark manual import %q before a Radarr command is known",
-					state,
-				)
-			case state:
+			case ManualImportFailed:
 				return previous, false, nil
 			default:
 				return ManualImportExecution{}, false, fmt.Errorf(
 					"cannot mark manual import %q from state %q",
-					state,
+					ManualImportFailed,
 					previous.State,
 				)
 			}
@@ -383,16 +426,35 @@ func validateManualImportExecution(record ManualImportExecution) error {
 	}
 	switch record.State {
 	case ManualImportPrepared:
-		if record.CommandID != nil {
-			return fmt.Errorf("prepared manual import cannot have a Radarr command ID")
+		if record.CommandID != nil || record.Confirmation != nil {
+			return fmt.Errorf("prepared manual import has result evidence")
 		}
 	case ManualImportRequested:
 		if record.CommandID == nil || *record.CommandID <= 0 {
 			return fmt.Errorf("requested manual import requires a Radarr command ID")
 		}
-	case ManualImportImported, ManualImportFailed:
+		if record.Confirmation != nil {
+			return fmt.Errorf("requested manual import has confirmation evidence")
+		}
+	case ManualImportImported:
 		if record.CommandID != nil && *record.CommandID <= 0 {
 			return fmt.Errorf("manual import Radarr command ID must be positive")
+		}
+		if record.Confirmation == nil {
+			return fmt.Errorf("imported manual import requires confirmation evidence")
+		}
+		if err := validateManualImportConfirmation(*record.Confirmation); err != nil {
+			return err
+		}
+		if !record.Confirmation.OccurredAt.After(record.PreparedAt) {
+			return fmt.Errorf("Radarr import confirmation does not follow preparation")
+		}
+	case ManualImportFailed:
+		if record.CommandID != nil && *record.CommandID <= 0 {
+			return fmt.Errorf("manual import Radarr command ID must be positive")
+		}
+		if record.Confirmation != nil {
+			return fmt.Errorf("failed manual import has confirmation evidence")
 		}
 	default:
 		return fmt.Errorf("unknown manual import execution state %q", record.State)
@@ -412,4 +474,37 @@ func sameManualImport(
 
 func int64Pointer(value int64) *int64 {
 	return &value
+}
+
+func manualImportConfirmation(imported controller.RadarrImportedFile) ManualImportConfirmation {
+	return ManualImportConfirmation{
+		HistoryID: imported.HistoryID, MovieFileID: imported.MovieFileID,
+		MovieID: imported.MovieID, DownloadID: imported.DownloadID,
+		OccurredAt: imported.OccurredAt.UTC(), DroppedPath: imported.DroppedPath,
+		ImportedPath: imported.ImportedPath,
+	}
+}
+
+func validateManualImportConfirmation(confirmation ManualImportConfirmation) error {
+	if confirmation.HistoryID <= 0 || confirmation.MovieFileID <= 0 || confirmation.MovieID <= 0 {
+		return fmt.Errorf("Radarr import confirmation IDs must be positive")
+	}
+	if confirmation.DownloadID == "" ||
+		strings.TrimSpace(confirmation.DownloadID) != confirmation.DownloadID ||
+		strings.ContainsRune(confirmation.DownloadID, '\x00') {
+		return fmt.Errorf("Radarr import confirmation download ID is invalid")
+	}
+	if confirmation.OccurredAt.IsZero() {
+		return fmt.Errorf("Radarr import confirmation time is missing")
+	}
+	if !validExecutionPath(confirmation.DroppedPath) ||
+		!validExecutionPath(confirmation.ImportedPath) {
+		return fmt.Errorf("Radarr import confirmation paths are invalid")
+	}
+	return nil
+}
+
+func validExecutionPath(path string) bool {
+	return path != "" && !strings.ContainsRune(path, '\x00') &&
+		filepath.IsAbs(path) && filepath.Clean(path) == path && filepath.Dir(path) != path
 }

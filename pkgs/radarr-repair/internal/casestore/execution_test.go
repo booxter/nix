@@ -74,13 +74,30 @@ func TestStoreManualImportExecutionLifecycle(t *testing.T) {
 	}
 
 	importedAt := requestedAt.Add(2 * time.Minute)
-	imported, changed, err := store.MarkManualImportImported(authorized.CaseID, importedAt)
+	evidence := manualImportEvidence(authorized, importedAt.Add(-time.Minute))
+	wrongEvidence := evidence
+	wrongEvidence.DroppedPath = "/downloads/different.mkv"
+	if _, changed, err := store.MarkManualImportImported(
+		authorized,
+		wrongEvidence,
+		importedAt,
+	); err == nil || changed {
+		t.Fatalf("mismatched confirmation: changed = %t, error = %v", changed, err)
+	}
+	imported, changed, err := store.MarkManualImportImported(
+		authorized,
+		evidence,
+		importedAt,
+	)
 	if err != nil || !changed || imported.State != ManualImportImported ||
-		!imported.UpdatedAt.Equal(importedAt) {
+		!imported.UpdatedAt.Equal(importedAt) || imported.Confirmation == nil ||
+		imported.Confirmation.HistoryID != evidence.HistoryID ||
+		imported.Confirmation.ImportedPath != evidence.ImportedPath {
 		t.Fatalf("mark imported: changed = %t, record = %#v, error = %v", changed, imported, err)
 	}
 	repeated, changed, err = store.MarkManualImportImported(
-		authorized.CaseID,
+		authorized,
+		evidence,
 		importedAt.Add(time.Minute),
 	)
 	if err != nil || changed || !reflect.DeepEqual(repeated, imported) {
@@ -99,7 +116,7 @@ func TestStoreManualImportExecutionLifecycle(t *testing.T) {
 	}
 }
 
-func TestStoreManualImportCanFailBeforeCommandIDIsKnown(t *testing.T) {
+func TestStoreManualImportCanResolveUncertainSubmission(t *testing.T) {
 	t.Parallel()
 
 	store, authorized := newManualImportExecutionStore(t)
@@ -107,11 +124,25 @@ func TestStoreManualImportCanFailBeforeCommandIDIsKnown(t *testing.T) {
 	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err != nil || !changed {
 		t.Fatalf("prepare: changed = %t, error = %v", changed, err)
 	}
-	if _, _, err := store.MarkManualImportImported(
-		authorized.CaseID,
-		preparedAt.Add(time.Minute),
-	); err == nil {
-		t.Fatal("manual import was confirmed without a known Radarr command")
+	evidence := manualImportEvidence(authorized, preparedAt.Add(time.Minute))
+	imported, changed, err := store.MarkManualImportImported(
+		authorized,
+		evidence,
+		preparedAt.Add(2*time.Minute),
+	)
+	if err != nil || !changed || imported.State != ManualImportImported ||
+		imported.CommandID != nil || imported.Confirmation == nil {
+		t.Fatalf("confirm uncertain import: changed = %t, record = %#v, error = %v", changed, imported, err)
+	}
+}
+
+func TestStoreManualImportCanFailBeforeCommandIDIsKnown(t *testing.T) {
+	t.Parallel()
+
+	store, authorized := newManualImportExecutionStore(t)
+	preparedAt := time.Date(2026, time.September, 13, 14, 0, 0, 0, time.UTC)
+	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err != nil || !changed {
+		t.Fatalf("prepare failure case: changed = %t, error = %v", changed, err)
 	}
 	failed, changed, err := store.MarkManualImportFailed(
 		authorized.CaseID,
@@ -120,8 +151,10 @@ func TestStoreManualImportCanFailBeforeCommandIDIsKnown(t *testing.T) {
 	if err != nil || !changed || failed.State != ManualImportFailed || failed.CommandID != nil {
 		t.Fatalf("mark failed: changed = %t, record = %#v, error = %v", changed, failed, err)
 	}
+	evidence := manualImportEvidence(authorized, preparedAt.Add(time.Minute))
 	if _, _, err := store.MarkManualImportImported(
-		authorized.CaseID,
+		authorized,
+		evidence,
 		preparedAt.Add(2*time.Minute),
 	); err == nil {
 		t.Fatal("terminal failed state changed to imported")
@@ -207,6 +240,14 @@ func TestDecodeManualImportExecutionRejectsInvalidRecords(t *testing.T) {
 		},
 		"backwards time": func(value *ManualImportExecution) {
 			value.UpdatedAt = value.PreparedAt.Add(-time.Second)
+		},
+		"confirmation before import": func(value *ManualImportExecution) {
+			confirmation := manualImportConfirmation(controller.RadarrImportedFile{
+				HistoryID: 1, MovieFileID: 2, MovieID: 3, DownloadID: "download",
+				OccurredAt: value.PreparedAt, DroppedPath: "/downloads/movie.mkv",
+				ImportedPath: "/movies/Movie/movie.mkv",
+			})
+			value.Confirmation = &confirmation
 		},
 	} {
 		mutate := mutate
@@ -331,4 +372,16 @@ func manualImportExecutionDecision(
 	decision.ManualImportFile.CapabilityID = capabilityID
 	decision.ManualImportFile.FileID = fileID
 	return decision
+}
+
+func manualImportEvidence(
+	authorized decisionpolicy.AuthorizedManualImport,
+	occurredAt time.Time,
+) controller.RadarrImportedFile {
+	return controller.RadarrImportedFile{
+		HistoryID: 71, MovieFileID: 72, MovieID: authorized.File.MovieID,
+		DownloadID: authorized.File.DownloadID, OccurredAt: occurredAt,
+		DroppedPath:  authorized.File.Path,
+		ImportedPath: "/movies/Poorly Named Feature (2026)/Poorly Named Feature.mkv",
+	}
 }
