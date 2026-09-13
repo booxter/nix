@@ -49,21 +49,7 @@ in
             authentication.apiKey = {
               source = lib.mkOption {
                 type = lib.types.strMatching "^/.*";
-                description = "File from which systemd may load the API credential source.";
-              };
-
-              format = lib.mkOption {
-                type = lib.types.enum [
-                  "raw"
-                  "xml-element"
-                ];
-                description = "Encoding used by the API key credential source.";
-              };
-
-              field = lib.mkOption {
-                type = with lib.types; nullOr nonEmptyStr;
-                default = null;
-                description = "Field containing the API key in a structured credential source.";
+                description = "File containing the API key.";
               };
             };
           };
@@ -76,23 +62,10 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = lib.concatLists (
-        lib.mapAttrsToList (name: api: [
-          {
-            assertion = builtins.hasAttr api.service config.host.web.services;
-            message = "host.web.api.${name}.service must select a web service";
-          }
-          {
-            assertion =
-              api.authentication.apiKey.format != "xml-element" || api.authentication.apiKey.field != null;
-            message = "host.web.api.${name}.authentication.apiKey.field is required for xml-element credentials";
-          }
-          {
-            assertion = api.authentication.apiKey.format != "raw" || api.authentication.apiKey.field == null;
-            message = "host.web.api.${name}.authentication.apiKey.field must be omitted for raw credentials";
-          }
-        ]) cfg
-      );
+      assertions = lib.mapAttrsToList (name: api: {
+        assertion = builtins.hasAttr api.service config.host.web.services;
+        message = "host.web.api.${name}.service must select a web service";
+      }) cfg;
     }
     {
       services.nginx.virtualHosts = lib.mkMerge (

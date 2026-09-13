@@ -55,13 +55,7 @@ let
       interface = api.interface;
       enabled = instance.enable;
       inherit (api) url;
-      credential = {
-        name = credentialName instance;
-        inherit (api.authentication.apiKey) format;
-      }
-      // lib.optionalAttrs (api.authentication.apiKey.field != null) {
-        inherit (api.authentication.apiKey) field;
-      };
+      credential.name = credentialName instance;
       policy = policyFor instance.policy;
     };
   configuration = pkgs.writeText "houndarr-reconcile.json" (

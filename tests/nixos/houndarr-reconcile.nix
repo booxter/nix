@@ -65,10 +65,7 @@ pkgs.testers.runNixOSTest {
               service = "lidarr";
               interface = "lidarr";
               allowedCidrs = [ "${arrAddress}/32" ];
-              authentication.apiKey = {
-                source = "${credential}";
-                format = "raw";
-              };
+              authentication.apiKey.source = "${credential}";
             };
           };
         };

@@ -1,5 +1,4 @@
 {
-  apiKeySecret ? null,
   extraOptions ? { },
   media ? true,
   name,
@@ -12,6 +11,7 @@
 let
   cfg = config.host.${name};
   port = config.services.${name}.settings.server.port;
+  apiKeySecret = "${name}/apiKey";
   apiKeyEnvironment = "${name}-api-key.env";
 in
 {
@@ -61,18 +61,7 @@ in
           interface = name;
           localUnit = "${name}.service";
           allowedCidrs = [ "${config.host.network.ipAddress}/32" ];
-          authentication.apiKey =
-            if apiKeySecret == null then
-              {
-                source = "${cfg.stateDir}/config.xml";
-                format = "xml-element";
-                field = "ApiKey";
-              }
-            else
-              {
-                source = config.sops.secrets.${apiKeySecret}.path;
-                format = "raw";
-              };
+          authentication.apiKey.source = config.sops.secrets.${apiKeySecret}.path;
         };
 
         host.backups.sources.${name} = {
@@ -80,7 +69,7 @@ in
           paths = [ "${cfg.stateDir}/Backups" ];
         };
       }
-      (lib.mkIf (apiKeySecret != null) {
+      {
         sops.secrets.${apiKeySecret} = { };
 
         sops.templates.${apiKeyEnvironment} = {
@@ -91,7 +80,7 @@ in
         };
 
         services.${name}.environmentFiles = [ config.sops.templates.${apiKeyEnvironment}.path ];
-      })
+      }
       (lib.optionalAttrs media {
         services.${name} = {
           user = name;

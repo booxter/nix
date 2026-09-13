@@ -6,7 +6,6 @@ in
   imports = [
     (import ../servarr {
       name = "radarr";
-      apiKeySecret = "radarr/apiKey";
       extraOptions = radarrOptions;
     })
     ./letterboxd-list.nix
