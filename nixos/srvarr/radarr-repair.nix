@@ -1,5 +1,14 @@
-{ config, ... }:
 {
+  config,
+  transmissionModel,
+  ...
+}:
+{
+  host.radarr.repair.controller = {
+    enable = true;
+    transmissionUrl = transmissionModel.rpcUrl;
+  };
+
   host.radarr.repair.planner.enable = true;
   host.radarr.repair.worker = {
     enable = true;

@@ -106,9 +106,7 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 	}
 	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(records))
 	if len(eligible) == 0 {
-		return nil, fmt.Errorf(
-			"Radarr queue has no completed unimported downloads eligible for inspection",
-		)
+		return []casebuilder.Assembly{}, nil
 	}
 
 	assemblies := make([]casebuilder.Assembly, 0, len(eligible))

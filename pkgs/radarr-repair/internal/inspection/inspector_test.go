@@ -145,15 +145,18 @@ func TestInspectAllReturnsSuccessfulCasesAlongsideCollectionErrors(t *testing.T)
 	}
 }
 
-func TestInspectAllRejectsQueueWithoutEligibleCandidates(t *testing.T) {
+func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	fixture.radarr.records[0].Protocol = "usenet"
 	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-	_, err := inspector.InspectAll(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "no completed unimported downloads") {
-		t.Fatalf("error = %v", err)
+	assemblies, err := inspector.InspectAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assemblies) != 0 {
+		t.Fatalf("assemblies = %d", len(assemblies))
 	}
 }
 

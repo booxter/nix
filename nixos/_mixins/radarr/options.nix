@@ -1,5 +1,24 @@
 { lib, pkgs }:
 {
+  repair.controller = {
+    enable = lib.mkEnableOption "scheduled Radarr repair shadow controller";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.radarr-repair;
+      description = "Radarr repair controller package.";
+    };
+    transmissionUrl = lib.mkOption {
+      type = lib.types.nullOr lib.types.nonEmptyStr;
+      default = null;
+      description = "Loopback Transmission RPC URL.";
+    };
+    interval = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "15m";
+      description = "Delay between completed shadow runs.";
+    };
+  };
+
   repair.worker = {
     enable = lib.mkEnableOption "isolated Radarr repair media probe worker";
     package = lib.mkOption {
