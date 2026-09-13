@@ -54,7 +54,7 @@ func TestWorkerServesRealProbeOverUnixSocket(t *testing.T) {
 	}
 }
 
-func TestWorkerStagesRealJoinOverUnixSocket(t *testing.T) {
+func TestWorkerPublishesRealJoinOverUnixSocket(t *testing.T) {
 	t.Parallel()
 
 	rootPath := t.TempDir()
@@ -108,6 +108,43 @@ func TestWorkerStagesRealJoinOverUnixSocket(t *testing.T) {
 		retry.Success.ArtifactFingerprint != response.Success.ArtifactFingerprint {
 		t.Fatalf("retry response = %#v, first response = %#v", retry, response)
 	}
+
+	publishRequest := workercontracts.PublishRequestV1{
+		ArtifactFingerprint: response.Success.ArtifactFingerprint,
+		ArtifactID:          response.Success.ArtifactID,
+		Operation:           workercontracts.PublishV1,
+		RequestID:           "request:publish:integration",
+		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+	}
+	published := publishJoin(t, worker.client, publishRequest)
+	if published.Success == nil || published.Success.RootID != request.RootID {
+		t.Fatalf("publish response = %#v", published)
+	}
+	publishedPath := filepath.Join(
+		rootPath,
+		filepath.Join(published.Success.PathComponents...),
+	)
+	if info, err := os.Stat(publishedPath); err != nil || info.Size() == 0 {
+		t.Fatalf("published media: info = %#v, error = %v", info, err)
+	}
+	for _, sourcePath := range []string{firstPath, secondPath} {
+		if info, err := os.Stat(sourcePath); err != nil || info.Size() == 0 {
+			t.Fatalf("source media %q: info = %#v, error = %v", sourcePath, info, err)
+		}
+	}
+
+	discardRequest := workercontracts.DiscardRequestV1{
+		ArtifactFingerprint: response.Success.ArtifactFingerprint,
+		ArtifactID:          response.Success.ArtifactID,
+		Operation:           workercontracts.DiscardV1,
+		RequestID:           "request:discard:published",
+		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+	}
+	discarded := discardJoin(t, worker.client, discardRequest)
+	if discarded.Failure == nil ||
+		discarded.Failure.Reason != workercontracts.DiscardArtifactPublished {
+		t.Fatalf("discard response = %#v", discarded)
+	}
 }
 
 func stageJoin(
@@ -122,6 +159,48 @@ func stageJoin(
 	}
 	status, data := postWorker(t, client, "/v1/join/stage", payload)
 	response, err := workercontracts.DecodeStageJoinResponse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status != http.StatusOK || response.RequestID() != request.RequestID {
+		t.Fatalf("HTTP status = %d, response = %#v", status, response)
+	}
+	return response
+}
+
+func publishJoin(
+	t *testing.T,
+	client *http.Client,
+	request workercontracts.PublishRequestV1,
+) workercontracts.PublishResponseV1 {
+	t.Helper()
+	payload, err := workercontracts.EncodePublishRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, data := postWorker(t, client, "/v1/join/publish", payload)
+	response, err := workercontracts.DecodePublishResponse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status != http.StatusOK || response.RequestID() != request.RequestID {
+		t.Fatalf("HTTP status = %d, response = %#v", status, response)
+	}
+	return response
+}
+
+func discardJoin(
+	t *testing.T,
+	client *http.Client,
+	request workercontracts.DiscardRequestV1,
+) workercontracts.DiscardResponseV1 {
+	t.Helper()
+	payload, err := workercontracts.EncodeDiscardRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, data := postWorker(t, client, "/v1/join/discard", payload)
+	response, err := workercontracts.DecodeDiscardResponse(data)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -16,6 +16,7 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
+	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstate"
@@ -140,7 +141,26 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	router, err := workerserver.NewRouter(probeHandler, stageJoinHandler)
+	finishExecutor, err := joinfinish.NewExecutor(joinfinish.Dependencies{
+		Store: state, Artifacts: rootSet, Clock: wallClock{},
+	})
+	if err != nil {
+		return err
+	}
+	publishHandler, err := workerserver.NewPublishHandler(finishExecutor, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	discardHandler, err := workerserver.NewDiscardHandler(finishExecutor, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	router, err := workerserver.NewRouter(
+		probeHandler,
+		stageJoinHandler,
+		publishHandler,
+		discardHandler,
+	)
 	if err != nil {
 		return err
 	}
