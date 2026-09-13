@@ -53,6 +53,12 @@ pkgs.testers.runNixOSTest {
         "--data '{}' --unix-socket ${socketPath} http://localhost/v1/probe"
     ).strip()
     assert response == "400", response
+    response = machine.succeed(
+        "runuser -u worker-client -- ${pkgs.curl}/bin/curl --silent --output /dev/null "
+        "--write-out '%{http_code}' --request POST --header 'Content-Type: application/json' "
+        "--data '{}' --unix-socket ${socketPath} http://localhost/v1/join/stage"
+    ).strip()
+    assert response == "400", response
     machine.fail(
         "runuser -u worker-outsider -- ${pkgs.curl}/bin/curl --silent "
         "--connect-timeout 1 --unix-socket ${socketPath} http://localhost/v1/probe"

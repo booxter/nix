@@ -54,6 +54,11 @@
       default = 30;
       description = "Maximum duration of one media probe.";
     };
+    joinTimeoutSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 1800;
+      description = "Maximum duration of one staged join request.";
+    };
     maxConcurrent = lib.mkOption {
       type = lib.types.ints.positive;
       default = 2;

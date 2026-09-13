@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -28,23 +27,8 @@ func TestWorkerServesRealProbeOverUnixSocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	mediaPath := filepath.Join(mediaDirectory, "movie.mkv")
-	makeMedia(t, mediaPath)
-	socketPath := filepath.Join(t.TempDir(), "worker.sock")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	arguments := []string{
-		"--socket", socketPath,
-		"--ffprobe", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"),
-		"--root", "root:downloads=" + rootPath,
-		"--timeout", "10s",
-		"--max-concurrent", "1",
-	}
-	serverDone := make(chan error, 1)
-	go func() {
-		serverDone <- run(ctx, arguments, io.Discard)
-	}()
-	waitForSocket(t, socketPath, serverDone)
+	makeMedia(t, mediaPath, "red")
+	worker := startTestWorker(t, rootPath)
 
 	probeRequest := workercontracts.ProbeRequestV1{
 		ExpectedFingerprint: pathFingerprint(t, mediaPath),
@@ -54,58 +38,97 @@ func TestWorkerServesRealProbeOverUnixSocket(t *testing.T) {
 		RootID:              "root:downloads",
 		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
 	}
-	requestData, err := json.Marshal(probeRequest)
+	requestData, err := workercontracts.EncodeProbeRequest(probeRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
-	request, err := http.NewRequestWithContext(
-		context.Background(),
-		http.MethodPost,
-		"http://worker/v1/probe",
-		bytes.NewReader(requestData),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	transport := &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
-		},
-	}
-	defer transport.CloseIdleConnections()
-	client := &http.Client{Transport: transport, Timeout: 15 * time.Second}
-	httpResponse, err := client.Do(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer httpResponse.Body.Close()
-	responseData, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
+	status, responseData := postWorker(t, worker.client, "/v1/probe", requestData)
 	response, err := workercontracts.DecodeProbeResponse(responseData)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if httpResponse.StatusCode != http.StatusOK || response.Success == nil ||
+	if status != http.StatusOK || response.Success == nil ||
 		response.RequestID() != probeRequest.RequestID ||
 		len(response.Success.Evidence.Streams) != 1 {
-		t.Fatalf("HTTP status = %d, response = %#v", httpResponse.StatusCode, response)
+		t.Fatalf("HTTP status = %d, response = %#v", status, response)
+	}
+}
+
+func TestWorkerStagesRealJoinOverUnixSocket(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	mediaDirectory := filepath.Join(rootPath, "Movie")
+	if err := os.Mkdir(mediaDirectory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	firstPath := filepath.Join(mediaDirectory, "first.mkv")
+	secondPath := filepath.Join(mediaDirectory, "second.mkv")
+	makeMedia(t, firstPath, "red")
+	makeMedia(t, secondPath, "blue")
+	worker := startTestWorker(t, rootPath)
+
+	request := workercontracts.StageJoinRequestV1{
+		CapabilityID:        "capability:join:integration",
+		CaseID:              "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+		DurationToleranceMS: 200,
+		ExecutionID:         "execution:join:integration",
+		ExpectedDurationMS:  400,
+		ExpectedSourceBytes: fileSize(t, firstPath) + fileSize(t, secondPath),
+		ExpectedStreamCount: 1,
+		Operation:           workercontracts.StageJoinV1,
+		OutputContainer:     workercontracts.OutputContainerMKV,
+		Parts: []workercontracts.StageJoinPartV1{
+			{
+				ExpectedFingerprint: pathFingerprint(t, firstPath),
+				FileID:              "file:part:first",
+				PathComponents:      []string{"Movie", "first.mkv"},
+			},
+			{
+				ExpectedFingerprint: pathFingerprint(t, secondPath),
+				FileID:              "file:part:second",
+				PathComponents:      []string{"Movie", "second.mkv"},
+			},
+		},
+		RequestID:     "request:join:integration",
+		RootID:        "root:downloads",
+		SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+	}
+	response := stageJoin(t, worker.client, request)
+	if response.Success == nil || response.Success.Evidence.Format.DurationMS == nil ||
+		*response.Success.Evidence.Format.DurationMS < 300 ||
+		*response.Success.Evidence.Format.DurationMS > 600 {
+		t.Fatalf("stage response = %#v", response)
 	}
 
-	cancel()
-	select {
-	case err := <-serverDone:
-		if err != nil {
-			t.Fatal(err)
-		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("worker did not stop")
+	request.RequestID = "request:join:integration:retry"
+	retry := stageJoin(t, worker.client, request)
+	if retry.Success == nil ||
+		retry.Success.ArtifactID != response.Success.ArtifactID ||
+		retry.Success.ArtifactFingerprint != response.Success.ArtifactFingerprint {
+		t.Fatalf("retry response = %#v, first response = %#v", retry, response)
 	}
-	if _, err := os.Lstat(socketPath); !os.IsNotExist(err) {
-		t.Fatalf("worker socket remains after shutdown: %v", err)
+}
+
+func stageJoin(
+	t *testing.T,
+	client *http.Client,
+	request workercontracts.StageJoinRequestV1,
+) workercontracts.StageJoinResponseV1 {
+	t.Helper()
+	payload, err := workercontracts.EncodeStageJoinRequest(request)
+	if err != nil {
+		t.Fatal(err)
 	}
+	status, data := postWorker(t, client, "/v1/join/stage", payload)
+	response, err := workercontracts.DecodeStageJoinResponse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status != http.StatusOK || response.RequestID() != request.RequestID {
+		t.Fatalf("HTTP status = %d, response = %#v", status, response)
+	}
+	return response
 }
 
 func TestRunRejectsInvalidConfiguration(t *testing.T) {
@@ -114,17 +137,34 @@ func TestRunRejectsInvalidConfiguration(t *testing.T) {
 	tests := [][]string{
 		nil,
 		{"--socket", "/tmp/worker.sock"},
-		{"--socket", "/tmp/worker.sock", "--ffprobe", "/nix/store/ffprobe"},
 		{
 			"--socket", "/tmp/worker.sock",
+			"--state-directory", "/state",
 			"--ffprobe", "/nix/store/ffprobe",
+			"--root", "downloads=/downloads",
+		},
+		{
+			"--socket", "/tmp/worker.sock",
+			"--state-directory", "/state",
+			"--ffprobe", "/nix/store/ffprobe",
+			"--ffmpeg", "/nix/store/ffmpeg",
 			"--root", "downloads=relative",
 		},
 		{
 			"--socket", "/tmp/worker.sock",
+			"--state-directory", "/state",
 			"--ffprobe", "/nix/store/ffprobe",
+			"--ffmpeg", "/nix/store/ffmpeg",
 			"--root", "downloads=/downloads",
 			"unexpected",
+		},
+		{
+			"--socket", "/tmp/worker.sock",
+			"--state-directory", "/state",
+			"--ffprobe", "/nix/store/ffprobe",
+			"--ffmpeg", "/nix/store/ffmpeg",
+			"--join-timeout", "0",
+			"--root", "downloads=/downloads",
 		},
 	}
 	for _, arguments := range tests {
@@ -132,6 +172,85 @@ func TestRunRejectsInvalidConfiguration(t *testing.T) {
 			t.Fatalf("arguments %q were accepted", arguments)
 		}
 	}
+}
+
+type testWorker struct {
+	client *http.Client
+}
+
+func startTestWorker(t *testing.T, rootPath string) testWorker {
+	t.Helper()
+	socketPath := filepath.Join(t.TempDir(), "worker.sock")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	arguments := []string{
+		"--socket", socketPath,
+		"--state-directory", filepath.Join(t.TempDir(), "state"),
+		"--ffprobe", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"),
+		"--ffmpeg", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
+		"--root", "root:downloads=" + rootPath,
+		"--timeout", "10s",
+		"--join-timeout", "10s",
+		"--max-concurrent", "1",
+	}
+	serverDone := make(chan error, 1)
+	go func() {
+		serverDone <- run(ctx, arguments, io.Discard)
+	}()
+	waitForSocket(t, socketPath, serverDone)
+
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
+		},
+	}
+	t.Cleanup(func() {
+		transport.CloseIdleConnections()
+		cancel()
+		select {
+		case err := <-serverDone:
+			if err != nil {
+				t.Errorf("stop worker: %v", err)
+			}
+		case <-time.After(10 * time.Second):
+			t.Error("worker did not stop")
+		}
+		if _, err := os.Lstat(socketPath); !os.IsNotExist(err) {
+			t.Errorf("worker socket remains after shutdown: %v", err)
+		}
+	})
+	return testWorker{
+		client: &http.Client{Transport: transport, Timeout: 15 * time.Second},
+	}
+}
+
+func postWorker(
+	t *testing.T,
+	client *http.Client,
+	path string,
+	payload []byte,
+) (int, []byte) {
+	t.Helper()
+	request, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		"http://worker"+path,
+		bytes.NewReader(payload),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response.StatusCode, data
 }
 
 func waitForSocket(t *testing.T, socketPath string, serverDone <-chan error) {
@@ -156,7 +275,7 @@ func waitForSocket(t *testing.T, socketPath string, serverDone <-chan error) {
 	}
 }
 
-func makeMedia(t *testing.T, mediaPath string) {
+func makeMedia(t *testing.T, mediaPath string, color string) {
 	t.Helper()
 	command := exec.Command(
 		requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
@@ -164,7 +283,7 @@ func makeMedia(t *testing.T, mediaPath string) {
 		"-loglevel", "error",
 		"-nostdin",
 		"-f", "lavfi",
-		"-i", "color=c=red:s=16x16:r=25:d=0.2",
+		"-i", "color=c="+color+":s=16x16:r=25:d=0.2",
 		"-c:v", "ffv1",
 		"-y",
 		mediaPath,
@@ -172,6 +291,15 @@ func makeMedia(t *testing.T, mediaPath string) {
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("generate media fixture: %v: %s", err, output)
 	}
+}
+
+func fileSize(t *testing.T, path string) int64 {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return info.Size()
 }
 
 func pathFingerprint(t *testing.T, path string) string {

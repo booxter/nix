@@ -83,7 +83,8 @@ let
       nativeBuildInputs = [ makeWrapper ];
       postInstall = ''
         wrapProgram "$out/bin/radarr-repair-worker" \
-          --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg "ffprobe"}"}
+          --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg "ffprobe"}"} \
+          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe ffmpeg}"}
       '';
 
       doCheck = false;
@@ -95,7 +96,7 @@ let
       '';
 
       meta = common.meta // {
-        description = "Isolated media probe worker for Radarr repair planning";
+        description = "Isolated media worker for Radarr repair";
         mainProgram = "radarr-repair-worker";
       };
     }

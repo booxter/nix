@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,15 +16,21 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
+	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
+	"github.com/booxter/nix-config/radarr-repair/worker/joinstage"
+	"github.com/booxter/nix-config/radarr-repair/worker/joinstate"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediafile"
+	"github.com/booxter/nix-config/radarr-repair/worker/mediajoin"
 	workerprobe "github.com/booxter/nix-config/radarr-repair/worker/probe"
 	workerserver "github.com/booxter/nix-config/radarr-repair/worker/server"
 )
 
 const (
 	defaultProbeTimeout  = 30 * time.Second
+	defaultJoinTimeout   = 30 * time.Minute
 	defaultMaxConcurrent = 2
 	shutdownTimeout      = 5 * time.Second
+	writeTimeoutMargin   = 5 * time.Second
 )
 
 func run(ctx context.Context, arguments []string, stderr io.Writer) error {
@@ -32,12 +39,20 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	flags.Usage = func() {
 		_, _ = fmt.Fprintln(
 			stderr,
-			"usage: radarr-repair-worker --socket PATH --root ID=PATH [--root ID=PATH ...]",
+			"usage: radarr-repair-worker --socket PATH --state-directory PATH "+
+				"--root ID=PATH [--root ID=PATH ...]",
 		)
 	}
 	socketPath := flags.String("socket", "", "Unix socket path")
+	stateDirectory := flags.String("state-directory", "", "private state directory")
 	ffprobePath := flags.String("ffprobe", "", "absolute ffprobe executable path")
+	ffmpegPath := flags.String("ffmpeg", "", "absolute ffmpeg executable path")
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
+	joinTimeout := flags.Duration(
+		"join-timeout",
+		defaultJoinTimeout,
+		"maximum staged join request duration",
+	)
 	maxConcurrent := flags.Int(
 		"max-concurrent",
 		defaultMaxConcurrent,
@@ -55,9 +70,26 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if *socketPath == "" {
 		return fmt.Errorf("worker socket is required")
 	}
+	if *stateDirectory == "" {
+		return fmt.Errorf("worker state directory is required")
+	}
 	if *ffprobePath == "" {
 		return fmt.Errorf("ffprobe executable is required")
 	}
+	if *ffmpegPath == "" {
+		return fmt.Errorf("ffmpeg executable is required")
+	}
+	if *probeTimeout <= 0 {
+		return fmt.Errorf("probe timeout must be positive")
+	}
+	if *joinTimeout <= 0 {
+		return fmt.Errorf("join timeout must be positive")
+	}
+	requestTimeout := max(*probeTimeout, *joinTimeout)
+	if requestTimeout > time.Duration(math.MaxInt64)-writeTimeoutMargin {
+		return fmt.Errorf("worker request timeout is too large")
+	}
+	writeTimeout := requestTimeout + writeTimeoutMargin
 	if len(roots) == 0 {
 		return fmt.Errorf("at least one media root is required")
 	}
@@ -74,11 +106,41 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	executor, err := workerprobe.NewExecutor(rootSet, probeRunner)
+	probeExecutor, err := workerprobe.NewExecutor(rootSet, probeRunner)
 	if err != nil {
 		return err
 	}
-	handler, err := workerserver.NewHandler(executor, *probeTimeout, *maxConcurrent)
+	probeHandler, err := workerserver.NewHandler(
+		probeExecutor,
+		*probeTimeout,
+		*maxConcurrent,
+	)
+	if err != nil {
+		return err
+	}
+	state, err := joinstate.New(*stateDirectory)
+	if err != nil {
+		return err
+	}
+	joinRunner, err := mediajoin.NewRunner(*ffmpegPath, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	joinStager, err := joinstage.NewExecutor(rootSet, rootSet, joinRunner, probeRunner)
+	if err != nil {
+		return err
+	}
+	joinExecutor, err := joinrequest.NewExecutor(joinrequest.Dependencies{
+		Store: state, Stager: joinStager, Clock: wallClock{},
+	})
+	if err != nil {
+		return err
+	}
+	stageJoinHandler, err := workerserver.NewStageJoinHandler(joinExecutor, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	router, err := workerserver.NewRouter(probeHandler, stageJoinHandler)
 	if err != nil {
 		return err
 	}
@@ -88,10 +150,10 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 
 	server := &http.Server{
-		Handler:           handler,
+		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      *probeTimeout + 5*time.Second,
+		WriteTimeout:      writeTimeout,
 		IdleTimeout:       30 * time.Second,
 		MaxHeaderBytes:    8 << 10,
 		ErrorLog:          log.New(stderr, "", 0),
@@ -120,6 +182,12 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		}
 		return nil
 	}
+}
+
+type wallClock struct{}
+
+func (wallClock) Now() time.Time {
+	return time.Now()
 }
 
 func main() {

@@ -19,8 +19,12 @@ let
       (lib.getExe' worker.package "radarr-repair-worker")
       "--socket"
       worker.socketPath
+      "--state-directory"
+      "/var/lib/${serviceName}"
       "--timeout"
       "${toString worker.probeTimeoutSeconds}s"
+      "--join-timeout"
+      "${toString worker.joinTimeoutSeconds}s"
       "--max-concurrent"
       (toString worker.maxConcurrent)
     ]
@@ -57,7 +61,7 @@ in
     };
 
     systemd.services.${serviceName} = {
-      description = "Probe media for Radarr repair planning";
+      description = "Perform isolated media operations for Radarr repair";
       wantedBy = [ "multi-user.target" ];
       after = [ "local-fs.target" ];
       unitConfig.RequiresMountsFor = rootPaths;
@@ -68,6 +72,8 @@ in
         SupplementaryGroups = [ "media" ];
         RuntimeDirectory = serviceName;
         RuntimeDirectoryMode = "0750";
+        StateDirectory = serviceName;
+        StateDirectoryMode = "0700";
         Restart = "on-failure";
         RestartSec = "5s";
         TimeoutStopSec = "10s";
