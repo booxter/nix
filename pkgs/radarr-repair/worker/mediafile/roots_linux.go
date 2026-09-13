@@ -20,6 +20,8 @@ const (
 	FailureFileUnavailable
 	FailureNotRegularFile
 	FailureFingerprintMismatch
+	FailureInsufficientSpace
+	FailureArtifactExists
 	FailureInternal
 )
 
@@ -40,6 +42,10 @@ func (failure *Failure) Error() string {
 		return "media path is not a regular file"
 	case FailureFingerprintMismatch:
 		return "media file fingerprint changed"
+	case FailureInsufficientSpace:
+		return "insufficient space for staged media"
+	case FailureArtifactExists:
+		return "staged media artifact already exists"
 	default:
 		return "media file access failed"
 	}
@@ -152,28 +158,34 @@ func (rootSet *RootSet) Open(
 // Verify compares current descriptor metadata with the expected fingerprint.
 // Calling it both before and after ffprobe detects ordinary concurrent writes.
 func (rootSet *RootSet) Verify(media *os.File, expectedFingerprint string) error {
-	if media == nil {
-		return &Failure{Kind: FailureInternal}
-	}
-
-	var stat unix.Stat_t
-	if err := unix.Fstat(int(media.Fd()), &stat); err != nil {
-		return &Failure{Kind: FailureFileUnavailable, cause: err}
-	}
-	if stat.Mode&unix.S_IFMT != unix.S_IFREG {
-		return &Failure{Kind: FailureNotRegularFile}
-	}
-
-	snapshot := fileidentity.Snapshot{
-		Device:    uint64(stat.Dev),
-		Inode:     stat.Ino,
-		SizeBytes: stat.Size,
-		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
+	snapshot, err := snapshot(media)
+	if err != nil {
+		return err
 	}
 	if snapshot.Fingerprint() != expectedFingerprint {
 		return &Failure{Kind: FailureFingerprintMismatch}
 	}
 	return nil
+}
+
+func snapshot(media *os.File) (fileidentity.Snapshot, error) {
+	if media == nil {
+		return fileidentity.Snapshot{}, &Failure{Kind: FailureInternal}
+	}
+
+	var stat unix.Stat_t
+	if err := unix.Fstat(int(media.Fd()), &stat); err != nil {
+		return fileidentity.Snapshot{}, &Failure{Kind: FailureFileUnavailable, cause: err}
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFREG {
+		return fileidentity.Snapshot{}, &Failure{Kind: FailureNotRegularFile}
+	}
+	return fileidentity.Snapshot{
+		Device:    uint64(stat.Dev),
+		Inode:     stat.Ino,
+		SizeBytes: stat.Size,
+		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
+	}, nil
 }
 
 func validComponents(components []string) bool {
