@@ -199,10 +199,11 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		selection Selection
-		mutate    func(*inspectionTestFixture)
-		want      string
+		name        string
+		selection   Selection
+		mutate      func(*inspectionTestFixture)
+		want        string
+		unavailable CandidateUnavailableReason
 	}{
 		{
 			name: "no eligible candidates",
@@ -221,10 +222,11 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 			want: "2 completed unimported downloads",
 		},
 		{
-			name:      "missing requested candidate",
-			selection: Selection{QueueID: 999},
-			mutate:    func(*inspectionTestFixture) {},
-			want:      "record 999 was not found",
+			name:        "missing requested candidate",
+			selection:   Selection{QueueID: 999},
+			mutate:      func(*inspectionTestFixture) {},
+			want:        "record 999 was not found",
+			unavailable: CandidateMissing,
 		},
 		{
 			name:      "ineligible requested candidate",
@@ -232,7 +234,8 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 			mutate: func(fixture *inspectionTestFixture) {
 				fixture.radarr.records[0].Protocol = "usenet"
 			},
-			want: "record 71 is ineligible",
+			want:        "record 71 is ineligible",
+			unavailable: CandidateIneligible,
 		},
 		{
 			name:      "negative requested candidate",
@@ -251,6 +254,12 @@ func TestInspectRejectsAmbiguousOrInvalidSelection(t *testing.T) {
 			_, err := inspector.Inspect(context.Background(), test.selection)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
+			}
+			if test.unavailable != "" {
+				var unavailable *CandidateUnavailableError
+				if !errors.As(err, &unavailable) || unavailable.Reason != test.unavailable {
+					t.Fatalf("unavailable error = %#v, want %q", unavailable, test.unavailable)
+				}
 			}
 		})
 	}

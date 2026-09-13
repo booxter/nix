@@ -32,6 +32,30 @@ type Selection struct {
 	QueueID int64
 }
 
+type CandidateUnavailableReason string
+
+const (
+	CandidateMissing    CandidateUnavailableReason = "missing"
+	CandidateIneligible CandidateUnavailableReason = "ineligible"
+)
+
+type CandidateUnavailableError struct {
+	QueueID          int64
+	Reason           CandidateUnavailableReason
+	RejectionReasons []controller.CandidateRejectionReason
+}
+
+func (failure *CandidateUnavailableError) Error() string {
+	if failure.Reason == CandidateIneligible {
+		return fmt.Sprintf(
+			"Radarr queue record %d is ineligible: %v",
+			failure.QueueID,
+			failure.RejectionReasons,
+		)
+	}
+	return fmt.Sprintf("Radarr queue record %d was not found", failure.QueueID)
+}
+
 type assembleFunc func(casebuilder.Observation) (casebuilder.Assembly, error)
 
 type Inspector struct {
@@ -234,18 +258,19 @@ func selectCandidate(
 				continue
 			}
 			if !assessment.Eligible() {
-				return controller.RadarrQueueRecord{}, fmt.Errorf(
-					"Radarr queue record %d is ineligible: %v",
-					selection.QueueID,
-					assessment.RejectionReasons,
-				)
+				return controller.RadarrQueueRecord{}, &CandidateUnavailableError{
+					QueueID: selection.QueueID, Reason: CandidateIneligible,
+					RejectionReasons: append(
+						[]controller.CandidateRejectionReason(nil),
+						assessment.RejectionReasons...,
+					),
+				}
 			}
 			return assessment.Record, nil
 		}
-		return controller.RadarrQueueRecord{}, fmt.Errorf(
-			"Radarr queue record %d was not found",
-			selection.QueueID,
-		)
+		return controller.RadarrQueueRecord{}, &CandidateUnavailableError{
+			QueueID: selection.QueueID, Reason: CandidateMissing,
+		}
 	}
 
 	eligible := eligibleCandidates(assessments)

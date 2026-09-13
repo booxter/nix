@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
@@ -224,16 +223,12 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("decode new repair case: %w", err)
 	}
-	leftRequest.ObservedAt = rightRequest.ObservedAt
-
-	leftSnapshot := left.Snapshot
-	rightSnapshot := right.Snapshot
-	leftSnapshot.Observation.ObservedAt = rightSnapshot.Observation.ObservedAt
-
 	return left.Version == right.Version &&
 		left.CaseID == right.CaseID &&
-		reflect.DeepEqual(leftRequest, rightRequest) &&
-		reflect.DeepEqual(leftSnapshot, rightSnapshot), nil
+		casebuilder.SameCaseState(
+			casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot},
+			casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot},
+		), nil
 }
 
 func caseDigest(caseID string) (string, error) {
