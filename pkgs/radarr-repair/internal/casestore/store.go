@@ -13,15 +13,17 @@ import (
 )
 
 const (
-	casesDirectoryName    = "cases"
-	planningDirectoryName = "planning"
-	lockFileName          = ".lock"
+	casesDirectoryName     = "cases"
+	planningDirectoryName  = "planning"
+	executionDirectoryName = "executions"
+	lockFileName           = ".lock"
 )
 
 type Store struct {
-	root        string
-	casesDir    string
-	planningDir string
+	root         string
+	casesDir     string
+	planningDir  string
+	executionDir string
 }
 
 func (store *Store) PutAssembly(assembly casebuilder.Assembly) (bool, error) {
@@ -47,10 +49,17 @@ func New(root string) (*Store, error) {
 	if err := ensurePrivateDirectory(planningDir); err != nil {
 		return nil, fmt.Errorf("prepare planning records directory: %w", err)
 	}
+	executionDir := filepath.Join(root, executionDirectoryName)
+	if err := ensurePrivateDirectory(executionDir); err != nil {
+		return nil, fmt.Errorf("prepare execution records directory: %w", err)
+	}
 	if err := syncDirectory(root); err != nil {
 		return nil, fmt.Errorf("sync case store root: %w", err)
 	}
-	return &Store{root: root, casesDir: casesDir, planningDir: planningDir}, nil
+	return &Store{
+		root: root, casesDir: casesDir, planningDir: planningDir,
+		executionDir: executionDir,
+	}, nil
 }
 
 // Put stores a record without replacing anything already published under its
@@ -269,4 +278,36 @@ func syncDirectory(path string) error {
 	}
 	defer directory.Close()
 	return directory.Sync()
+}
+
+func replacePrivateFile(directory, path string, data []byte) error {
+	temporary, err := os.CreateTemp(directory, ".state-*.tmp")
+	if err != nil {
+		return fmt.Errorf("create temporary state record: %w", err)
+	}
+	temporaryPath := temporary.Name()
+	defer os.Remove(temporaryPath)
+
+	if err := temporary.Chmod(0o600); err != nil {
+		temporary.Close()
+		return fmt.Errorf("set temporary state record permissions: %w", err)
+	}
+	if _, err := temporary.Write(data); err != nil {
+		temporary.Close()
+		return fmt.Errorf("write temporary state record: %w", err)
+	}
+	if err := temporary.Sync(); err != nil {
+		temporary.Close()
+		return fmt.Errorf("sync temporary state record: %w", err)
+	}
+	if err := temporary.Close(); err != nil {
+		return fmt.Errorf("close temporary state record: %w", err)
+	}
+	if err := os.Rename(temporaryPath, path); err != nil {
+		return fmt.Errorf("publish state record: %w", err)
+	}
+	if err := syncDirectory(directory); err != nil {
+		return fmt.Errorf("sync state records directory: %w", err)
+	}
+	return nil
 }

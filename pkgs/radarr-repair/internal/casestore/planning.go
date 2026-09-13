@@ -248,38 +248,6 @@ func readPlanningResult(path string) (PlanningResult, bool, error) {
 	return result, true, nil
 }
 
-func replacePrivateFile(directory, path string, data []byte) error {
-	temporary, err := os.CreateTemp(directory, ".planning-*.tmp")
-	if err != nil {
-		return fmt.Errorf("create temporary planning result: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	defer os.Remove(temporaryPath)
-
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return fmt.Errorf("set temporary planning result permissions: %w", err)
-	}
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return fmt.Errorf("write temporary planning result: %w", err)
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return fmt.Errorf("sync temporary planning result: %w", err)
-	}
-	if err := temporary.Close(); err != nil {
-		return fmt.Errorf("close temporary planning result: %w", err)
-	}
-	if err := os.Rename(temporaryPath, path); err != nil {
-		return fmt.Errorf("publish planning result: %w", err)
-	}
-	if err := syncDirectory(directory); err != nil {
-		return fmt.Errorf("sync planning results directory: %w", err)
-	}
-	return nil
-}
-
 func validatePlanningResult(result PlanningResult) error {
 	if result.Version != PlanningResultVersionV1 {
 		return fmt.Errorf("unsupported planning result version %q", result.Version)
