@@ -248,9 +248,12 @@ type publishCall struct {
 }
 
 type fakeArtifacts struct {
-	path  []string
-	err   error
-	calls []publishCall
+	path        []string
+	err         error
+	calls       []publishCall
+	removeCalls []discardCall
+	removeErr   error
+	removed     bool
 }
 
 func (artifacts *fakeArtifacts) PublishCompleted(
@@ -269,6 +272,26 @@ func (artifacts *fakeArtifacts) PublishCompleted(
 		fingerprint: fingerprint, inputPaths: paths,
 	})
 	return append([]string(nil), artifacts.path...), artifacts.err
+}
+
+type discardCall struct {
+	rootID      string
+	artifactID  string
+	container   workercontracts.OutputContainer
+	fingerprint string
+}
+
+func (artifacts *fakeArtifacts) RemoveCompleted(
+	rootID string,
+	artifactID string,
+	container workercontracts.OutputContainer,
+	fingerprint string,
+) (bool, error) {
+	artifacts.removeCalls = append(artifacts.removeCalls, discardCall{
+		rootID: rootID, artifactID: artifactID, container: container,
+		fingerprint: fingerprint,
+	})
+	return artifacts.removed, artifacts.removeErr
 }
 
 type failingPublishStore struct {

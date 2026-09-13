@@ -21,6 +21,12 @@ type Store interface {
 		joinstate.PublishedArtifact,
 		time.Time,
 	) (joinstate.Execution, bool, error)
+	MarkDiscarded(
+		string,
+		string,
+		string,
+		time.Time,
+	) (joinstate.Execution, bool, error)
 }
 
 type Artifacts interface {
@@ -31,6 +37,12 @@ type Artifacts interface {
 		string,
 		[][]string,
 	) ([]string, error)
+	RemoveCompleted(
+		string,
+		string,
+		workercontracts.OutputContainer,
+		string,
+	) (bool, error)
 }
 
 type Dependencies struct {
@@ -71,12 +83,10 @@ func (executor *Executor) Publish(
 	if executor == nil || ctx == nil {
 		return publishFailure(request.RequestID, workercontracts.PublishInternalError)
 	}
-	select {
-	case executor.finishSlot <- struct{}{}:
-		defer func() { <-executor.finishSlot }()
-	case <-ctx.Done():
+	if !executor.begin(ctx) {
 		return publishFailure(request.RequestID, workercontracts.PublishErrorReason)
 	}
+	defer executor.end()
 
 	execution, found, err := executor.dependencies.Store.FindByArtifactID(
 		request.ArtifactID,
@@ -140,6 +150,80 @@ func (executor *Executor) Publish(
 	return storedPublishSuccess(request.RequestID, published)
 }
 
+func (executor *Executor) Discard(
+	ctx context.Context,
+	request workercontracts.DiscardRequestV1,
+) workercontracts.DiscardResponseV1 {
+	if executor == nil || ctx == nil {
+		return discardFailure(request.RequestID, workercontracts.DiscardInternalError)
+	}
+	if !executor.begin(ctx) {
+		return discardFailure(request.RequestID, workercontracts.DiscardErrorReason)
+	}
+	defer executor.end()
+
+	execution, found, err := executor.dependencies.Store.FindByArtifactID(
+		request.ArtifactID,
+	)
+	if err != nil {
+		return discardFailure(request.RequestID, workercontracts.DiscardInternalError)
+	}
+	if !found {
+		return discardFailure(request.RequestID, workercontracts.DiscardArtifactNotFound)
+	}
+
+	switch execution.State {
+	case joinstate.Staged, joinstate.Published, joinstate.Discarded:
+		if !matchingFingerprint(execution, request.ArtifactFingerprint) {
+			return discardFailure(
+				request.RequestID,
+				workercontracts.DiscardArtifactFingerprintMismatch,
+			)
+		}
+	default:
+		return discardFailure(request.RequestID, workercontracts.DiscardArtifactNotFound)
+	}
+	if execution.State == joinstate.Published {
+		return discardFailure(request.RequestID, workercontracts.DiscardArtifactPublished)
+	}
+	if execution.State == joinstate.Discarded {
+		return discardSuccess(request.RequestID, execution)
+	}
+
+	fingerprint := execution.Staged.Fingerprint
+	if _, err := executor.dependencies.Artifacts.RemoveCompleted(
+		execution.Specification.RootID,
+		execution.ArtifactID,
+		execution.Specification.OutputContainer,
+		fingerprint,
+	); err != nil {
+		return discardFailure(request.RequestID, discardFailureReason(err))
+	}
+	discarded, _, err := executor.dependencies.Store.MarkDiscarded(
+		execution.ExecutionID,
+		execution.ArtifactID,
+		fingerprint,
+		executor.dependencies.Clock.Now().UTC(),
+	)
+	if err != nil || discarded.State != joinstate.Discarded {
+		return discardFailure(request.RequestID, workercontracts.DiscardInternalError)
+	}
+	return discardSuccess(request.RequestID, discarded)
+}
+
+func (executor *Executor) begin(ctx context.Context) bool {
+	select {
+	case executor.finishSlot <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func (executor *Executor) end() {
+	<-executor.finishSlot
+}
+
 func matchingFingerprint(execution joinstate.Execution, fingerprint string) bool {
 	return execution.Staged != nil && execution.Staged.Fingerprint == fingerprint
 }
@@ -160,6 +244,21 @@ func publishFailureReason(err error) workercontracts.PublishFailureReason {
 		return workercontracts.PublishInternalError
 	default:
 		return workercontracts.PublishErrorReason
+	}
+}
+
+func discardFailureReason(err error) workercontracts.DiscardFailureReason {
+	var failure *mediafile.Failure
+	if !errors.As(err, &failure) {
+		return workercontracts.DiscardInternalError
+	}
+	switch failure.Kind {
+	case mediafile.FailureFingerprintMismatch:
+		return workercontracts.DiscardArtifactFingerprintMismatch
+	case mediafile.FailureInternal:
+		return workercontracts.DiscardInternalError
+	default:
+		return workercontracts.DiscardErrorReason
 	}
 }
 
@@ -197,6 +296,42 @@ func publishFailure(
 		Kind: workercontracts.ProbeResponseFailed,
 		Failure: &workercontracts.PublishFailureResponseV1{
 			Operation:     workercontracts.PublishV1,
+			Reason:        reason,
+			RequestID:     requestID,
+			SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+			Status:        workercontracts.Failed,
+		},
+	}
+}
+
+func discardSuccess(
+	requestID string,
+	execution joinstate.Execution,
+) workercontracts.DiscardResponseV1 {
+	if execution.Staged == nil {
+		return discardFailure(requestID, workercontracts.DiscardInternalError)
+	}
+	return workercontracts.DiscardResponseV1{
+		Kind: workercontracts.ProbeResponseSucceeded,
+		Success: &workercontracts.DiscardSuccessResponseV1{
+			ArtifactFingerprint: execution.Staged.Fingerprint,
+			ArtifactID:          execution.ArtifactID,
+			Operation:           workercontracts.DiscardV1,
+			RequestID:           requestID,
+			SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+			Status:              workercontracts.Ok,
+		},
+	}
+}
+
+func discardFailure(
+	requestID string,
+	reason workercontracts.DiscardFailureReason,
+) workercontracts.DiscardResponseV1 {
+	return workercontracts.DiscardResponseV1{
+		Kind: workercontracts.ProbeResponseFailed,
+		Failure: &workercontracts.DiscardFailureResponseV1{
+			Operation:     workercontracts.DiscardV1,
 			Reason:        reason,
 			RequestID:     requestID,
 			SchemaVersion: workercontracts.RadarrRepairWorkerV1,
