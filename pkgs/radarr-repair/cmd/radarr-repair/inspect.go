@@ -141,24 +141,8 @@ func (app application) runInspect(
 }
 
 func validateInspectConfig(config inspectConfig) error {
-	if err := validateLoopbackHTTP("Radarr", config.RadarrURL); err != nil {
+	if err := validateInspectionAccess(config); err != nil {
 		return err
-	}
-	if err := validateLoopbackHTTP("Transmission", config.TransmissionURL); err != nil {
-		return err
-	}
-	if config.RadarrAPIKeyFile == "" || strings.ContainsRune(config.RadarrAPIKeyFile, '\x00') ||
-		!filepath.IsAbs(config.RadarrAPIKeyFile) ||
-		filepath.Clean(config.RadarrAPIKeyFile) != config.RadarrAPIKeyFile {
-		return fmt.Errorf("Radarr API-key file must be an absolute clean path")
-	}
-	if config.WorkerSocket == "" || strings.ContainsRune(config.WorkerSocket, '\x00') ||
-		!filepath.IsAbs(config.WorkerSocket) ||
-		filepath.Clean(config.WorkerSocket) != config.WorkerSocket {
-		return fmt.Errorf("worker socket must be an absolute clean path")
-	}
-	if len(config.WorkerRoots) == 0 {
-		return fmt.Errorf("at least one worker root is required")
 	}
 	if config.QueueID < 0 {
 		return fmt.Errorf("queue ID must not be negative")
@@ -174,11 +158,39 @@ func validateInspectConfig(config inspectConfig) error {
 	} else if config.Output == "" || config.OutputDirectory != "" {
 		return fmt.Errorf("--output is required without --all and --output-directory is not allowed")
 	}
+	return nil
+}
+
+func validateInspectionAccess(config inspectConfig) error {
+	if err := validateLoopbackHTTP("Radarr", config.RadarrURL); err != nil {
+		return err
+	}
+	if err := validateLoopbackHTTP("Transmission", config.TransmissionURL); err != nil {
+		return err
+	}
+	if err := validateAbsolutePath("Radarr API-key file", config.RadarrAPIKeyFile, true); err != nil {
+		return err
+	}
+	if err := validateAbsolutePath("worker socket", config.WorkerSocket, true); err != nil {
+		return err
+	}
+	if len(config.WorkerRoots) == 0 {
+		return fmt.Errorf("at least one worker root is required")
+	}
 	if config.Timeout <= 0 {
 		return fmt.Errorf("request timeout must be positive")
 	}
 	if config.CollectionTimeout <= 0 {
 		return fmt.Errorf("collection timeout must be positive")
+	}
+	return nil
+}
+
+func validateAbsolutePath(name, path string, allowFilesystemRoot bool) error {
+	if path == "" || strings.ContainsRune(path, '\x00') ||
+		!filepath.IsAbs(path) || filepath.Clean(path) != path ||
+		(!allowFilesystemRoot && filepath.Dir(path) == path) {
+		return fmt.Errorf("%s must be an absolute clean path", name)
 	}
 	return nil
 }

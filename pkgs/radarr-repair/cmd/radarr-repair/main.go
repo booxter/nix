@@ -18,10 +18,13 @@ const maximumDocumentSize = 8 << 20
 type application struct {
 	inspect    inspectFunc
 	inspectAll inspectAllFunc
+	shadow     shadowFunc
 }
 
 func newApplication() application {
-	return application{inspect: inspectCase, inspectAll: inspectAllCases}
+	return application{
+		inspect: inspectCase, inspectAll: inspectAllCases, shadow: runShadowOnce,
+	}
 }
 
 func run(arguments []string, stdin io.Reader, stdout, stderr io.Writer) error {
@@ -36,12 +39,14 @@ func (app application) run(
 ) error {
 	if len(arguments) == 0 {
 		writeUsage(stderr)
-		return fmt.Errorf("expected inspect, validate-case, or validate-decision")
+		return fmt.Errorf("expected inspect, shadow, validate-case, or validate-decision")
 	}
 
 	switch arguments[0] {
 	case "inspect":
 		return app.runInspect(ctx, arguments[1:], stdout, stderr)
+	case "shadow":
+		return app.runShadow(ctx, arguments[1:], stdout, stderr)
 	case "validate-case":
 		data, err := readCommandDocument("validate-case", arguments[1:], stdin, stderr)
 		if err != nil {
@@ -118,7 +123,10 @@ func readBounded(reader io.Reader) ([]byte, error) {
 }
 
 func writeUsage(writer io.Writer) {
-	_, _ = fmt.Fprintln(writer, "usage: radarr-repair <inspect|validate-case|validate-decision> ...")
+	_, _ = fmt.Fprintln(
+		writer,
+		"usage: radarr-repair <inspect|shadow|validate-case|validate-decision> ...",
+	)
 }
 
 func main() {
