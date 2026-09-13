@@ -26,11 +26,16 @@ stdenvNoCC.mkDerivation {
   checkPhase = ''
     runHook preCheck
 
+    worker_schema_base="file://$PWD/worker/contracts/v1"
+
     check-jsonschema --check-metaschema contracts/v1/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/media-evidence.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/wire-types.schema.json
 
     check-jsonschema \
       --schemafile contracts/v1/repair-case.schema.json \
@@ -39,13 +44,29 @@ stdenvNoCC.mkDerivation {
       --schemafile contracts/v1/repair-decision.schema.json \
       contracts/v1/examples/repair-decision-*.json
     check-jsonschema \
+      --base-uri "$worker_schema_base/probe-request.schema.json" \
       --schemafile worker/contracts/v1/probe-request.schema.json \
       worker/contracts/v1/examples/probe-request.json
     check-jsonschema \
-      --base-uri "file://$PWD/worker/contracts/v1/probe-response.schema.json" \
+      --base-uri "$worker_schema_base/probe-response.schema.json" \
       --schemafile worker/contracts/v1/probe-response.schema.json \
       worker/contracts/v1/examples/probe-response-ok.json \
       worker/contracts/v1/examples/probe-response-failed.json
+    check-jsonschema \
+      --base-uri "$worker_schema_base/join-request.schema.json" \
+      --schemafile worker/contracts/v1/join-request.schema.json \
+      worker/contracts/v1/examples/join-stage-request.json \
+      worker/contracts/v1/examples/join-publish-request.json \
+      worker/contracts/v1/examples/join-discard-request.json
+    check-jsonschema \
+      --base-uri "$worker_schema_base/join-response.schema.json" \
+      --schemafile worker/contracts/v1/join-response.schema.json \
+      worker/contracts/v1/examples/join-stage-response-ok.json \
+      worker/contracts/v1/examples/join-stage-response-failed.json \
+      worker/contracts/v1/examples/join-publish-response-ok.json \
+      worker/contracts/v1/examples/join-publish-response-failed.json \
+      worker/contracts/v1/examples/join-discard-response-ok.json \
+      worker/contracts/v1/examples/join-discard-response-failed.json
 
     expect_invalid() {
       schema="$1"
@@ -71,6 +92,12 @@ stdenvNoCC.mkDerivation {
     done
     for fixture in worker/contract-tests/v1/response-*.json; do
       expect_invalid worker/contracts/v1/probe-response.schema.json "$fixture"
+    done
+    for fixture in worker/contract-tests/v1/join-request-*.json; do
+      expect_invalid worker/contracts/v1/join-request.schema.json "$fixture"
+    done
+    for fixture in worker/contract-tests/v1/join-response-*.json; do
+      expect_invalid worker/contracts/v1/join-response.schema.json "$fixture"
     done
 
     runHook postCheck

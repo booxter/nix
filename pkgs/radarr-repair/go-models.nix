@@ -38,6 +38,24 @@ let
       type = "object";
       additionalProperties = false;
       properties = {
+        discard_request_v1 = {
+          "$ref" = "join-request.schema.json#/$defs/discard";
+        };
+        discard_failure_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/discardFailure";
+        };
+        discard_success_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/discardSuccess";
+        };
+        publish_request_v1 = {
+          "$ref" = "join-request.schema.json#/$defs/publish";
+        };
+        publish_failure_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/publishFailure";
+        };
+        publish_success_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/publishSuccess";
+        };
         probe_request_v1 = {
           "$ref" = "probe-request.schema.json";
         };
@@ -47,11 +65,29 @@ let
         probe_failure_response_v1 = {
           "$ref" = "probe-response.schema.json#/$defs/failure";
         };
+        stage_join_request_v1 = {
+          "$ref" = "join-request.schema.json#/$defs/stageJoin";
+        };
+        stage_join_failure_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/stageJoinFailure";
+        };
+        stage_join_success_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/stageJoinSuccess";
+        };
       };
       required = [
+        "discard_request_v1"
+        "discard_failure_response_v1"
+        "discard_success_response_v1"
+        "publish_request_v1"
+        "publish_failure_response_v1"
+        "publish_success_response_v1"
         "probe_request_v1"
         "probe_success_response_v1"
         "probe_failure_response_v1"
+        "stage_join_request_v1"
+        "stage_join_failure_response_v1"
+        "stage_join_success_response_v1"
       ];
     }
   );
@@ -75,9 +111,12 @@ runCommand "radarr-repair-go-models-v1"
     mkdir work "$out"
     ln -s "${schemaDirectory}/repair-decision.schema.json" work/repair-decision.schema.json
     cp "${decisionVariants}" work/decision-variants.schema.json
+    ln -s "${workerSchemaDirectory}/join-request.schema.json" work/join-request.schema.json
+    ln -s "${workerSchemaDirectory}/join-response.schema.json" work/join-response.schema.json
     ln -s "${workerSchemaDirectory}/media-evidence.schema.json" work/media-evidence.schema.json
     ln -s "${workerSchemaDirectory}/probe-request.schema.json" work/probe-request.schema.json
     ln -s "${workerSchemaDirectory}/probe-response.schema.json" work/probe-response.schema.json
+    ln -s "${workerSchemaDirectory}/wire-types.schema.json" work/wire-types.schema.json
     cp "${workerWireModels}" work/worker-wire-models.schema.json
 
     quicktype \

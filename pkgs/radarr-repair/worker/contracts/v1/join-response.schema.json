@@ -1,0 +1,257 @@
+{
+  "$defs": {
+    "discardFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "discard_v1"
+        },
+        "reason": {
+          "enum": [
+            "artifact_not_found",
+            "artifact_fingerprint_mismatch",
+            "artifact_published",
+            "discard_error",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "discardSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_fingerprint": {
+          "$ref": "wire-types.schema.json#/$defs/sha256Id"
+        },
+        "artifact_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "operation": {
+          "const": "discard_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint"
+      ],
+      "type": "object"
+    },
+    "publishFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "publish_v1"
+        },
+        "reason": {
+          "enum": [
+            "artifact_not_found",
+            "artifact_fingerprint_mismatch",
+            "artifact_not_staged",
+            "destination_exists",
+            "publish_error",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "publishSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_fingerprint": {
+          "$ref": "wire-types.schema.json#/$defs/sha256Id"
+        },
+        "artifact_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "operation": {
+          "const": "publish_v1"
+        },
+        "path_components": {
+          "items": {
+            "$ref": "wire-types.schema.json#/$defs/pathComponent"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "root_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint",
+        "root_id",
+        "path_components"
+      ],
+      "type": "object"
+    },
+    "stageJoinFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "stage_join_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "not_regular_file",
+            "fingerprint_mismatch",
+            "source_size_mismatch",
+            "insufficient_space",
+            "execution_conflict",
+            "join_error",
+            "timeout",
+            "probe_error",
+            "invalid_output",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "stageJoinSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_fingerprint": {
+          "$ref": "wire-types.schema.json#/$defs/sha256Id"
+        },
+        "artifact_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "evidence": {
+          "$ref": "media-evidence.schema.json#/$defs/evidence"
+        },
+        "operation": {
+          "const": "stage_join_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "size_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint",
+        "size_bytes",
+        "evidence"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "join-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/stageJoinSuccess"
+    },
+    {
+      "$ref": "#/$defs/stageJoinFailure"
+    },
+    {
+      "$ref": "#/$defs/publishSuccess"
+    },
+    {
+      "$ref": "#/$defs/publishFailure"
+    },
+    {
+      "$ref": "#/$defs/discardSuccess"
+    },
+    {
+      "$ref": "#/$defs/discardFailure"
+    }
+  ],
+  "title": "Radarr repair worker join response version 1"
+}

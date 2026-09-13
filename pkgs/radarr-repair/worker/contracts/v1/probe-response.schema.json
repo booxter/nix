@@ -21,7 +21,7 @@
           ]
         },
         "request_id": {
-          "$ref": "#/$defs/opaqueId"
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
         },
         "schema_version": {
           "const": "radarr-repair-worker/v1"
@@ -39,12 +39,6 @@
       ],
       "type": "object"
     },
-    "opaqueId": {
-      "maxLength": 128,
-      "minLength": 1,
-      "pattern": "^[a-z][a-z0-9_:-]*$",
-      "type": "string"
-    },
     "success": {
       "additionalProperties": false,
       "properties": {
@@ -55,7 +49,7 @@
           "const": "probe_v1"
         },
         "request_id": {
-          "$ref": "#/$defs/opaqueId"
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
         },
         "schema_version": {
           "const": "radarr-repair-worker/v1"

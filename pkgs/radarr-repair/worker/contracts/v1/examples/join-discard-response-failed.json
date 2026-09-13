@@ -1,0 +1,7 @@
+{
+  "operation": "discard_v1",
+  "reason": "artifact_published",
+  "request_id": "request:discard:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

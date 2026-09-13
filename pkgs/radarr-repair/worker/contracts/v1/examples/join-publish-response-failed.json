@@ -1,0 +1,7 @@
+{
+  "operation": "publish_v1",
+  "reason": "destination_exists",
+  "request_id": "request:publish:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

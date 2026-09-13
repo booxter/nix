@@ -17,16 +17,30 @@ const MaxProbeRequestBytes = 16 << 10
 // ffprobe; responses never contain media payloads.
 const MaxProbeResponseBytes = 4 << 20
 
+// MaxJoinRequestBytes bounds the worst-case 128-part request with 32 full-size
+// path components per part.
+const MaxJoinRequestBytes = 2 << 20
+
+// MaxJoinResponseBytes accommodates the same bounded media evidence returned
+// by a probe response.
+const MaxJoinResponseBytes = 4 << 20
+
 const (
+	wireTypesSchemaFile         = "v1/wire-types.schema.json"
+	wireTypesSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/wire-types.schema.json"
 	probeRequestSchemaFile      = "v1/probe-request.schema.json"
-	probeRequestSchemaLocation  = "urn:radarr-repair-worker:schema:probe-request:v1"
+	probeRequestSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/probe-request.schema.json"
 	mediaEvidenceSchemaFile     = "v1/media-evidence.schema.json"
 	mediaEvidenceSchemaLocation = "file:///radarr-repair-worker/contracts/v1/media-evidence.schema.json"
 	probeResponseSchemaFile     = "v1/probe-response.schema.json"
 	probeResponseSchemaLocation = "file:///radarr-repair-worker/contracts/v1/probe-response.schema.json"
+	joinRequestSchemaFile       = "v1/join-request.schema.json"
+	joinRequestSchemaLocation   = "file:///radarr-repair-worker/contracts/v1/join-request.schema.json"
+	joinResponseSchemaFile      = "v1/join-response.schema.json"
+	joinResponseSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/join-response.schema.json"
 )
 
-//go:embed v1/media-evidence.schema.json v1/probe-request.schema.json v1/probe-response.schema.json
+//go:embed v1/*.schema.json
 var schemaFiles embed.FS
 
 type schemaResource struct {
@@ -34,18 +48,48 @@ type schemaResource struct {
 	location string
 }
 
+var (
+	wireTypesSchemaResource = schemaResource{
+		fileName: wireTypesSchemaFile,
+		location: wireTypesSchemaLocation,
+	}
+	mediaEvidenceSchemaResource = schemaResource{
+		fileName: mediaEvidenceSchemaFile,
+		location: mediaEvidenceSchemaLocation,
+	}
+)
+
 var probeRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(probeRequestSchemaFile, probeRequestSchemaLocation)
+	return compileSchema(
+		probeRequestSchemaFile,
+		probeRequestSchemaLocation,
+		wireTypesSchemaResource,
+	)
 })
 
 var probeResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
 	return compileSchema(
 		probeResponseSchemaFile,
 		probeResponseSchemaLocation,
-		schemaResource{
-			fileName: mediaEvidenceSchemaFile,
-			location: mediaEvidenceSchemaLocation,
-		},
+		wireTypesSchemaResource,
+		mediaEvidenceSchemaResource,
+	)
+})
+
+var joinRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		joinRequestSchemaFile,
+		joinRequestSchemaLocation,
+		wireTypesSchemaResource,
+	)
+})
+
+var joinResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		joinResponseSchemaFile,
+		joinResponseSchemaLocation,
+		wireTypesSchemaResource,
+		mediaEvidenceSchemaResource,
 	)
 })
 

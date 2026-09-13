@@ -59,6 +59,120 @@ func DecodeProbeResponse(data []byte) (ProbeResponseV1, error) {
 	}
 }
 
+func DecodeStageJoinRequest(data []byte) (StageJoinRequestV1, error) {
+	return decodeJoinRequest[StageJoinRequestV1](data, "stage join request", "stage_join_v1")
+}
+
+func DecodePublishRequest(data []byte) (PublishRequestV1, error) {
+	return decodeJoinRequest[PublishRequestV1](data, "publish request", "publish_v1")
+}
+
+func DecodeDiscardRequest(data []byte) (DiscardRequestV1, error) {
+	return decodeJoinRequest[DiscardRequestV1](data, "discard request", "discard_v1")
+}
+
+func DecodeStageJoinResponse(data []byte) (StageJoinResponseV1, error) {
+	kind, success, failure, err := decodeJoinResponse[
+		StageJoinSuccessResponseV1,
+		StageJoinFailureResponseV1,
+	](data, "stage join response", "stage_join_v1")
+	if err != nil {
+		return StageJoinResponseV1{}, err
+	}
+	return StageJoinResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
+func DecodePublishResponse(data []byte) (PublishResponseV1, error) {
+	kind, success, failure, err := decodeJoinResponse[
+		PublishSuccessResponseV1,
+		PublishFailureResponseV1,
+	](data, "publish response", "publish_v1")
+	if err != nil {
+		return PublishResponseV1{}, err
+	}
+	return PublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
+func DecodeDiscardResponse(data []byte) (DiscardResponseV1, error) {
+	kind, success, failure, err := decodeJoinResponse[
+		DiscardSuccessResponseV1,
+		DiscardFailureResponseV1,
+	](data, "discard response", "discard_v1")
+	if err != nil {
+		return DiscardResponseV1{}, err
+	}
+	return DiscardResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
+func decodeJoinRequest[T any](data []byte, name string, operation string) (T, error) {
+	var request T
+	if err := validateMessage(data, MaxJoinRequestBytes, name, joinRequestSchema); err != nil {
+		return request, err
+	}
+	var envelope struct {
+		Operation string `json:"operation"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return request, fmt.Errorf("decode %s operation: %w", name, err)
+	}
+	if envelope.Operation != operation {
+		return request, fmt.Errorf(
+			"decode %s: received operation %q",
+			name,
+			envelope.Operation,
+		)
+	}
+	if err := decodeStrict(data, name, &request); err != nil {
+		return request, err
+	}
+	return request, nil
+}
+
+func decodeJoinResponse[S any, F any](
+	data []byte,
+	name string,
+	operation string,
+) (ProbeResponseKind, *S, *F, error) {
+	if err := validateMessage(data, MaxJoinResponseBytes, name, joinResponseSchema); err != nil {
+		return "", nil, nil, err
+	}
+	var envelope struct {
+		Operation string `json:"operation"`
+		Status    string `json:"status"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return "", nil, nil, fmt.Errorf("decode %s envelope: %w", name, err)
+	}
+	if envelope.Operation != operation {
+		return "", nil, nil, fmt.Errorf(
+			"decode %s: received operation %q",
+			name,
+			envelope.Operation,
+		)
+	}
+
+	switch ProbeResponseKind(envelope.Status) {
+	case ProbeResponseSucceeded:
+		var response S
+		if err := decodeStrict(data, name, &response); err != nil {
+			return "", nil, nil, err
+		}
+		return ProbeResponseSucceeded, &response, nil, nil
+	case ProbeResponseFailed:
+		var response F
+		if err := decodeStrict(data, name, &response); err != nil {
+			return "", nil, nil, err
+		}
+		return ProbeResponseFailed, nil, &response, nil
+	default:
+		return "", nil, nil, fmt.Errorf(
+			"decode %s: unsupported status %q",
+			name,
+			envelope.Status,
+		)
+	}
+}
+
 func validateAndDecode(
 	data []byte,
 	limit int,

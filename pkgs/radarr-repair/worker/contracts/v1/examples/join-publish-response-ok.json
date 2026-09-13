@@ -1,0 +1,13 @@
+{
+  "artifact_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "artifact_id": "artifact:join:01",
+  "operation": "publish_v1",
+  "path_components": [
+    "Movie.Release",
+    "radarr-repair-join-01.mkv"
+  ],
+  "request_id": "request:publish:01",
+  "root_id": "root:downloads",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "ok"
+}

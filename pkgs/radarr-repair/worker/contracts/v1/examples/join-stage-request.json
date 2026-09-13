@@ -1,0 +1,32 @@
+{
+  "capability_id": "capability:join:01",
+  "case_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "duration_tolerance_ms": 3000,
+  "execution_id": "execution:join:01",
+  "expected_duration_ms": 7200000,
+  "expected_source_bytes": 8400000000,
+  "expected_stream_count": 1,
+  "operation": "stage_join_v1",
+  "output_container": "mkv",
+  "parts": [
+    {
+      "expected_fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "file_id": "file:part:01",
+      "path_components": [
+        "Movie.Release",
+        "Movie.CD1.mkv"
+      ]
+    },
+    {
+      "expected_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "file_id": "file:part:02",
+      "path_components": [
+        "Movie.Release",
+        "Movie.CD2.mkv"
+      ]
+    }
+  ],
+  "request_id": "request:join:01",
+  "root_id": "root:downloads",
+  "schema_version": "radarr-repair-worker/v1"
+}
