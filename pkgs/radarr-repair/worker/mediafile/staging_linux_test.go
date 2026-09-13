@@ -52,13 +52,24 @@ func TestStagedArtifactIsPrivateAndOnMediaFilesystem(t *testing.T) {
 	if err := artifact.Retain(); err != nil {
 		t.Fatal(err)
 	}
-
-	entries, err := os.ReadDir(filepath.Join(rootPath, workerDirectoryName, stagedDirectoryName))
+	status, completed, err := rootSet.InspectStaged(
+		"downloads",
+		"artifact:test",
+		workercontracts.OutputContainerMKV,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(entries) != 1 {
-		t.Fatalf("retained staged artifacts = %d, want 1", len(entries))
+	if status != StagedComplete || completed == nil {
+		t.Fatalf("staged status = %v, artifact = %#v", status, completed)
+	}
+	t.Cleanup(func() { _ = completed.Close() })
+	completedFingerprint, completedSize, err := completed.Snapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if completedFingerprint != fingerprint || completedSize != sizeBytes {
+		t.Fatalf("completed snapshot = %q, %d", completedFingerprint, completedSize)
 	}
 }
 
@@ -121,6 +132,129 @@ func TestCreateStagedRejectsExistingArtifact(t *testing.T) {
 	}
 	var failure *Failure
 	if !errors.As(err, &failure) || failure.Kind != FailureArtifactExists {
-		t.Fatalf("duplicate error = %v", err)
+		t.Fatalf("partial duplicate error = %v", err)
 	}
+	if err := artifact.Retain(); err != nil {
+		t.Fatal(err)
+	}
+	duplicate, err = rootSet.CreateStaged(
+		"downloads",
+		"artifact:same",
+		workercontracts.OutputContainerMP4,
+		1,
+	)
+	if duplicate != nil {
+		t.Fatal("completed staged artifact was replaced")
+	}
+	if !errors.As(err, &failure) || failure.Kind != FailureArtifactExists {
+		t.Fatalf("completed duplicate error = %v", err)
+	}
+}
+
+func TestInterruptedStagedArtifactCanBeDetectedAndRemoved(t *testing.T) {
+	t.Parallel()
+
+	rootSet := testRootSet(t, t.TempDir())
+	status, completed, err := rootSet.InspectStaged(
+		"downloads",
+		"artifact:interrupted",
+		workercontracts.OutputContainerMKV,
+	)
+	if err != nil || status != StagedMissing || completed != nil {
+		t.Fatalf("initial inspection = %v, %#v, %v", status, completed, err)
+	}
+
+	artifact, err := rootSet.CreateStaged(
+		"downloads",
+		"artifact:interrupted",
+		workercontracts.OutputContainerMKV,
+		1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := artifact.File().Write([]byte("partial")); err != nil {
+		t.Fatal(err)
+	}
+	abandonStagedArtifact(t, artifact)
+
+	status, completed, err = rootSet.InspectStaged(
+		"downloads",
+		"artifact:interrupted",
+		workercontracts.OutputContainerMKV,
+	)
+	if err != nil || status != StagedPartial || completed != nil {
+		t.Fatalf("interrupted inspection = %v, %#v, %v", status, completed, err)
+	}
+	removed, err := rootSet.RemovePartial(
+		"downloads",
+		"artifact:interrupted",
+		workercontracts.OutputContainerMKV,
+	)
+	if err != nil || !removed {
+		t.Fatalf("remove partial = %t, %v", removed, err)
+	}
+	status, completed, err = rootSet.InspectStaged(
+		"downloads",
+		"artifact:interrupted",
+		workercontracts.OutputContainerMKV,
+	)
+	if err != nil || status != StagedMissing || completed != nil {
+		t.Fatalf("final inspection = %v, %#v, %v", status, completed, err)
+	}
+}
+
+func TestRetainMakesOnlyCompletedArtifactVisible(t *testing.T) {
+	t.Parallel()
+
+	rootSet := testRootSet(t, t.TempDir())
+	artifact, err := rootSet.CreateStaged(
+		"downloads",
+		"artifact:complete",
+		workercontracts.OutputContainerMP4,
+		1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := artifact.File().Write([]byte("complete")); err != nil {
+		t.Fatal(err)
+	}
+	status, completed, err := rootSet.InspectStaged(
+		"downloads",
+		"artifact:complete",
+		workercontracts.OutputContainerMP4,
+	)
+	if err != nil || status != StagedPartial || completed != nil {
+		t.Fatalf("before retain = %v, %#v, %v", status, completed, err)
+	}
+	if err := artifact.Retain(); err != nil {
+		t.Fatal(err)
+	}
+	status, completed, err = rootSet.InspectStaged(
+		"downloads",
+		"artifact:complete",
+		workercontracts.OutputContainerMP4,
+	)
+	if err != nil || status != StagedComplete || completed == nil {
+		t.Fatalf("after retain = %v, %#v, %v", status, completed, err)
+	}
+	if err := completed.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func abandonStagedArtifact(t *testing.T, artifact StagedArtifact) {
+	t.Helper()
+	staged, ok := artifact.(*stagedArtifact)
+	if !ok {
+		t.Fatalf("unexpected staged artifact %T", artifact)
+	}
+	if err := staged.file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := staged.directory.Close(); err != nil {
+		t.Fatal(err)
+	}
+	staged.closed = true
 }
