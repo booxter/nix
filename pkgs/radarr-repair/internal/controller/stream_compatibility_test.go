@@ -20,9 +20,21 @@ func TestAssessStreamCompatibilityAcceptsMatchingSilentParts(t *testing.T) {
 	got := AssessStreamCompatibility(
 		[]ProbeEvidence{{Streams: []ProbeStream{first}}, {Streams: []ProbeStream{second}}},
 	)
-	want := StreamCompatibilityAssessment{Compatibility: StreamsCompatible}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("assessment = %#v, want %#v", got, want)
+	want := StreamLayout{Streams: []StreamLayoutEntry{{
+		Kind:      ProbeStreamVideo,
+		CodecName: "h264",
+		Profile:   pointerTo("High"),
+		TimeBase:  Rational{Numerator: 1, Denominator: 1_000},
+		Video: &VideoStreamLayout{
+			Width:       1_920,
+			Height:      1_080,
+			PixelFormat: "yuv420p",
+			AverageRate: Rational{Numerator: 24_000, Denominator: 1_001},
+		},
+	}}}
+	if got.Compatibility != StreamsCompatible || got.Issue != nil ||
+		got.Layout == nil || !reflect.DeepEqual(*got.Layout, want) {
+		t.Fatalf("assessment = %#v, want layout %#v", got, want)
 	}
 }
 
@@ -35,8 +47,12 @@ func TestAssessStreamCompatibilityAcceptsMatchingAudioVideoParts(t *testing.T) {
 			{Streams: []ProbeStream{videoStream(0), audioStream(1)}},
 		},
 	)
-	if got.Compatibility != StreamsCompatible || got.Issue != nil {
+	if got.Compatibility != StreamsCompatible || got.Issue != nil || got.Layout == nil {
 		t.Fatalf("assessment = %#v", got)
+	}
+	if got.Layout.Streams[0].Kind != ProbeStreamVideo ||
+		got.Layout.Streams[1].Kind != ProbeStreamAudio {
+		t.Fatalf("stream layout = %#v", got.Layout)
 	}
 }
 
@@ -205,7 +221,7 @@ func TestAssessStreamCompatibilityReturnsUnknownForMissingEvidence(t *testing.T)
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			got := AssessStreamCompatibility(test.probes)
-			if got.Compatibility != StreamsUnknown || got.Issue == nil ||
+			if got.Compatibility != StreamsUnknown || got.Issue == nil || got.Layout != nil ||
 				got.Issue.Reason != test.reason ||
 				!reflect.DeepEqual(got.Issue.PartPosition, test.partPosition) {
 				t.Fatalf("assessment = %#v", got)
@@ -230,7 +246,7 @@ func TestAssessStreamCompatibilityRequiresEveryStreamToMatch(t *testing.T) {
 		streamOfKind(3, ProbeStreamSubtitle, "dvb_teletext"),
 	}
 	got := AssessStreamCompatibility([]ProbeEvidence{{Streams: first}, {Streams: matching}})
-	if got.Compatibility != StreamsCompatible || got.Issue != nil {
+	if got.Compatibility != StreamsCompatible || got.Issue != nil || got.Layout == nil {
 		t.Fatalf("matching assessment = %#v", got)
 	}
 
@@ -251,7 +267,8 @@ func assertStreamIssue(
 ) {
 	t.Helper()
 	if assessment.Compatibility != compatibility || assessment.Issue == nil ||
-		assessment.Issue.Reason != reason || assessment.Issue.Field != field {
+		assessment.Issue.Reason != reason || assessment.Issue.Field != field ||
+		assessment.Layout != nil {
 		t.Fatalf("assessment = %#v", assessment)
 	}
 }

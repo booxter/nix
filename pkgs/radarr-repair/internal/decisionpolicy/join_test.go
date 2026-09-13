@@ -33,6 +33,11 @@ func TestValidateJoinAuthorizesSelectedSubsetInPlannerOrder(t *testing.T) {
 		authorized.OutputContainer != controller.OutputContainerMKV {
 		t.Fatalf("authorized join = %#v", authorized)
 	}
+	if len(authorized.ExpectedStreamLayout.Streams) != 1 ||
+		authorized.ExpectedStreamLayout.Streams[0].Kind != controller.ProbeStreamVideo ||
+		authorized.ExpectedStreamLayout.Streams[0].CodecName != "h264" {
+		t.Fatalf("expected stream layout = %#v", authorized.ExpectedStreamLayout)
+	}
 }
 
 func TestValidateJoinRejectsSelectionsOutsideGrantedAuthority(t *testing.T) {

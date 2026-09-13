@@ -48,9 +48,37 @@ type StreamCompatibilityIssue struct {
 	Field          StreamCompatibilityField
 }
 
+type StreamLayout struct {
+	Streams []StreamLayoutEntry
+}
+
+type StreamLayoutEntry struct {
+	Kind      ProbeStreamKind
+	CodecName string
+	Profile   *string
+	TimeBase  Rational
+	Video     *VideoStreamLayout
+	Audio     *AudioStreamLayout
+}
+
+type VideoStreamLayout struct {
+	Width       int64
+	Height      int64
+	PixelFormat string
+	AverageRate Rational
+}
+
+type AudioStreamLayout struct {
+	SampleFormat  string
+	SampleRateHz  int64
+	Channels      int64
+	ChannelLayout string
+}
+
 type StreamCompatibilityAssessment struct {
 	Compatibility StreamCompatibility
 	Issue         *StreamCompatibilityIssue
+	Layout        *StreamLayout
 }
 
 func AssessStreamCompatibility(probes []ProbeEvidence) StreamCompatibilityAssessment {
@@ -138,7 +166,51 @@ func AssessStreamCompatibility(probes []ProbeEvidence) StreamCompatibilityAssess
 	if firstUnknown != nil {
 		return StreamCompatibilityAssessment{Compatibility: StreamsUnknown, Issue: firstUnknown}
 	}
-	return StreamCompatibilityAssessment{Compatibility: StreamsCompatible}
+	return StreamCompatibilityAssessment{
+		Compatibility: StreamsCompatible,
+		Layout:        layoutFromStreams(reference),
+	}
+}
+
+func (layout StreamLayout) Clone() StreamLayout {
+	cloned := StreamLayout{Streams: make([]StreamLayoutEntry, len(layout.Streams))}
+	for index, stream := range layout.Streams {
+		cloned.Streams[index] = stream
+		cloned.Streams[index].Profile = copiedValue(stream.Profile)
+		cloned.Streams[index].Video = copiedValue(stream.Video)
+		cloned.Streams[index].Audio = copiedValue(stream.Audio)
+	}
+	return cloned
+}
+
+func layoutFromStreams(streams []ProbeStream) *StreamLayout {
+	layout := StreamLayout{Streams: make([]StreamLayoutEntry, len(streams))}
+	for index, stream := range streams {
+		entry := StreamLayoutEntry{
+			Kind:      *stream.Kind,
+			CodecName: *stream.CodecName,
+			Profile:   copiedValue(stream.Profile),
+			TimeBase:  *stream.TimeBase,
+		}
+		switch entry.Kind {
+		case ProbeStreamVideo:
+			entry.Video = &VideoStreamLayout{
+				Width:       *stream.Width,
+				Height:      *stream.Height,
+				PixelFormat: *stream.PixelFormat,
+				AverageRate: *stream.AverageRate,
+			}
+		case ProbeStreamAudio:
+			entry.Audio = &AudioStreamLayout{
+				SampleFormat:  *stream.SampleFormat,
+				SampleRateHz:  *stream.SampleRateHz,
+				Channels:      *stream.Channels,
+				ChannelLayout: *stream.ChannelLayout,
+			}
+		}
+		layout.Streams[index] = entry
+	}
+	return &layout
 }
 
 func orderedStreams(streams []ProbeStream) []ProbeStream {
@@ -275,6 +347,10 @@ func streamIssue(
 }
 
 func copiedInt(value *int) *int {
+	return copiedValue(value)
+}
+
+func copiedValue[T any](value *T) *T {
 	if value == nil {
 		return nil
 	}

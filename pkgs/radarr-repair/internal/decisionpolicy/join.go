@@ -34,13 +34,14 @@ type AuthorizedJoinPart struct {
 }
 
 type AuthorizedJoin struct {
-	CaseID              string
-	CapabilityID        string
-	OrderedParts        []AuthorizedJoinPart
-	SourceBytes         int64
-	ExpectedDurationMS  int64
-	DurationToleranceMS int64
-	OutputContainer     controller.OutputContainer
+	CaseID               string
+	CapabilityID         string
+	OrderedParts         []AuthorizedJoinPart
+	SourceBytes          int64
+	ExpectedDurationMS   int64
+	DurationToleranceMS  int64
+	OutputContainer      controller.OutputContainer
+	ExpectedStreamLayout controller.StreamLayout
 }
 
 type JoinValidation struct {
@@ -141,13 +142,14 @@ func ValidateJoin(
 		}
 	}
 	validation.Authorized = &AuthorizedJoin{
-		CaseID:              assembly.Request.CaseID,
-		CapabilityID:        capability.CapabilityID,
-		OrderedParts:        orderedParts,
-		SourceBytes:         *feasibility.SourceBytes,
-		ExpectedDurationMS:  *feasibility.Duration.ExpectedMS,
-		DurationToleranceMS: *feasibility.Duration.ToleranceMS,
-		OutputContainer:     *feasibility.OutputContainer.Container,
+		CaseID:               assembly.Request.CaseID,
+		CapabilityID:         capability.CapabilityID,
+		OrderedParts:         orderedParts,
+		SourceBytes:          *feasibility.SourceBytes,
+		ExpectedDurationMS:   *feasibility.Duration.ExpectedMS,
+		DurationToleranceMS:  *feasibility.Duration.ToleranceMS,
+		OutputContainer:      *feasibility.OutputContainer.Container,
+		ExpectedStreamLayout: feasibility.Streams.Layout.Clone(),
 	}
 	return validation
 }

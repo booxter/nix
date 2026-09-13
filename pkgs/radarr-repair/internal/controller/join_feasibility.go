@@ -77,6 +77,7 @@ func (assessment JoinFeasibilityAssessment) Eligible() bool {
 		assessment.SourceBytes != nil && assessment.Duration.Issue == nil &&
 		assessment.Duration.ExpectedMS != nil && assessment.Duration.ToleranceMS != nil &&
 		assessment.Streams.Compatibility == StreamsCompatible && assessment.Streams.Issue == nil &&
+		assessment.Streams.Layout != nil &&
 		assessment.InputContainer.Status == InputContainerConfirmed &&
 		assessment.InputContainer.Container != nil && assessment.InputContainer.Issue == nil &&
 		assessment.OutputContainer.Container != nil && assessment.OutputContainer.Issue == nil
