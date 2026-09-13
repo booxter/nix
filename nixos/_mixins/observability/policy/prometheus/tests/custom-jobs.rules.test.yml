@@ -6,6 +6,34 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
+      - series: 'host_observability_radarr_repair_shadow_run_success{instance="srvarr",job="node-mtls"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairShadowRunFailing
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_shadow_run_success{instance="srvarr",job="node-mtls"}'
+        values: "0x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: RadarrRepairShadowRunFailing
+      - eval_time: 30m
+        alertname: RadarrRepairShadowRunFailing
+        exp_alerts:
+          - exp_labels:
+              alertname: RadarrRepairShadowRunFailing
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Radarr repair shadow runs failing on srvarr"
+              description: "The Radarr repair controller has reported unsuccessful shadow runs for 30 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_transmission_exporter_ok{instance="srvarr"}'
         values: "1x22"
     alert_rule_test:

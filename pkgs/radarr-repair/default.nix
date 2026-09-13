@@ -21,7 +21,7 @@ let
   };
   common = {
     inherit src version;
-    vendorHash = "sha256-n5f+o0UTkD4Y+TVFeTNPEt02pTrAOd/kOfxlVHiew7A=";
+    vendorHash = "sha256-k8ZD+en3FYpJ7tlPkmuLm7jtGMPH84IBEFaEi+F0Wv4=";
     postPatch = ''
       cp ${goModels}/models.gen.go contracts/models.gen.go
       cp ${goModels}/worker-models.gen.go worker/contracts/models.gen.go

@@ -9,6 +9,9 @@
     transmissionUrl = transmissionModel.rpcUrl;
   };
 
+  host.observability.nodeExporter.textfile.directories.radarr-repair =
+    config.host.radarr.repair.controller.metricsDirectory;
+
   host.radarr.repair.planner.enable = true;
   host.radarr.repair.worker = {
     enable = true;

@@ -9,6 +9,7 @@ let
   planner = if radarr == null then null else radarr.repair.planner;
   worker = if radarr == null then null else radarr.repair.worker;
   serviceName = "radarr-repair-controller";
+  metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;
   rootPaths = if worker == null then [ ] else builtins.attrValues worker.roots;
   rootArguments = lib.concatMap (rootID: [
@@ -33,6 +34,8 @@ let
       planner.socketPath
       "--state-directory"
       "/var/lib/${serviceName}"
+      "--metrics-file"
+      metricsFile
       "--planner-timeout"
       "${toString plannerTimeoutSeconds}s"
     ]
@@ -62,6 +65,10 @@ in
       group = serviceName;
       home = "/var/empty";
     };
+
+    systemd.tmpfiles.rules = [
+      "d ${controller.metricsDirectory} 0755 ${serviceName} ${serviceName} - -"
+    ];
 
     systemd.services.${serviceName} = {
       description = "Plan Radarr import repairs in shadow mode";
@@ -120,6 +127,7 @@ in
         ProtectSystem = "strict";
         ProcSubset = "pid";
         ReadOnlyPaths = rootPaths;
+        ReadWritePaths = [ controller.metricsDirectory ];
         RemoveIPC = true;
         RestrictAddressFamilies = [
           "AF_INET"

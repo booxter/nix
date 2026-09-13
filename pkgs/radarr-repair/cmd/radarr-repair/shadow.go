@@ -28,6 +28,7 @@ type shadowConfig struct {
 	WorkerRoots       map[string]string
 	PlannerSocket     string
 	StateDirectory    string
+	MetricsFile       string
 	RequestTimeout    time.Duration
 	CollectionTimeout time.Duration
 	PlannerTimeout    time.Duration
@@ -49,7 +50,7 @@ func (app application) runShadow(
 			stderr,
 			"usage: radarr-repair shadow --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
-				"--planner-socket PATH --state-directory DIR",
+				"--planner-socket PATH --state-directory DIR --metrics-file FILE",
 		)
 	}
 	radarrURL := flags.String("radarr-url", "", "loopback Radarr URL")
@@ -60,6 +61,7 @@ func (app application) runShadow(
 	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
 	plannerSocket := flags.String("planner-socket", "", "repair planner Unix socket")
 	stateDirectory := flags.String("state-directory", "", "private controller state directory")
+	metricsFile := flags.String("metrics-file", "", "Prometheus textfile output")
 	requestTimeout := flags.Duration(
 		"request-timeout", defaultInspectTimeout, "Radarr, Transmission, and worker request timeout",
 	)
@@ -92,6 +94,7 @@ func (app application) runShadow(
 		WorkerRoots:       workerRoots.Paths(),
 		PlannerSocket:     *plannerSocket,
 		StateDirectory:    *stateDirectory,
+		MetricsFile:       *metricsFile,
 		RequestTimeout:    *requestTimeout,
 		CollectionTimeout: *collectionTimeout,
 		PlannerTimeout:    *plannerTimeout,
@@ -108,6 +111,12 @@ func (app application) runShadow(
 		return fmt.Errorf("shadow command is not configured")
 	}
 	report, runErr := app.shadow(ctx, config)
+	metricsErr := shadowrunner.WriteMetrics(
+		config.MetricsFile,
+		report,
+		runErr == nil,
+		time.Now().UTC(),
+	)
 	_, outputErr := fmt.Fprintf(
 		stdout,
 		"observed=%d stored=%d submitted=%d decided=%d already_decided=%d deferred=%d failed=%d\n",
@@ -119,7 +128,7 @@ func (app application) runShadow(
 		report.Deferred,
 		report.Failed,
 	)
-	return errors.Join(runErr, outputErr)
+	return errors.Join(runErr, metricsErr, outputErr)
 }
 
 func validateShadowConfig(config shadowConfig) error {
@@ -130,6 +139,9 @@ func validateShadowConfig(config shadowConfig) error {
 		return err
 	}
 	if err := validateAbsolutePath("state directory", config.StateDirectory, false); err != nil {
+		return err
+	}
+	if err := validateAbsolutePath("metrics file", config.MetricsFile, false); err != nil {
 		return err
 	}
 	if config.PlannerTimeout <= 0 {

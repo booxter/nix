@@ -56,6 +56,15 @@ groups:
         annotations:
           summary: "Houndarr status collection failed on srvarr"
           description: "The Houndarr operational status endpoint has been unavailable or invalid for 5 minutes."
+      - alert: RadarrRepairShadowRunFailing
+        expr: host_observability_radarr_repair_shadow_run_success{job="node-mtls",instance="srvarr"} < 1
+        for: 30m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr repair shadow runs failing on srvarr"
+          description: "The Radarr repair controller has reported unsuccessful shadow runs for 30 minutes."
       - alert: HoundarrStatusMetricsStale
         expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
         for: 5m

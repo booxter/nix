@@ -49,7 +49,7 @@ func TestRunProcessesCasesAfterCollectionAndPlannerFailures(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 3, Stored: 3, Submitted: 3, Decided: 2, Failed: 1}
-	if report != wantReport {
+	if reportSummary(report) != wantReport {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if !reflect.DeepEqual(planner.calls, []string{firstID, secondID, thirdID}) {
@@ -94,7 +94,7 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantReport := Report{Observed: 2, AlreadyDecided: 1, Deferred: 1}
-	if report != wantReport {
+	if reportSummary(report) != wantReport {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if len(planner.calls) != 0 {
@@ -125,7 +125,7 @@ func TestRunDoublesRetryDelayAfterEarlierFailures(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 1, Submitted: 1, Failed: 1}
-	if report != wantReport {
+	if reportSummary(report) != wantReport {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if len(store.failures) != 1 ||
@@ -158,7 +158,7 @@ func TestRunContinuesAfterCaseStorageFailure(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 2, Stored: 1, Submitted: 1, Decided: 1, Failed: 1}
-	if report != wantReport {
+	if reportSummary(report) != wantReport {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if !reflect.DeepEqual(planner.calls, []string{workingID}) {
@@ -380,6 +380,11 @@ func classifyTestFailure(error) casestore.PlanningFailure {
 
 func testAssembly(caseID string) casebuilder.Assembly {
 	return casebuilder.Assembly{Request: contracts.RepairCaseV1{CaseID: caseID}}
+}
+
+func reportSummary(report Report) Report {
+	report.metrics = metricData{}
+	return report
 }
 
 func testDecision(t *testing.T, caseID string) contracts.RepairDecisionV1 {

@@ -56,6 +56,59 @@ type Report struct {
 	AlreadyDecided int
 	Deferred       int
 	Failed         int
+	metrics        metricData
+}
+
+const (
+	lifecycleImportBlocked = iota
+	lifecycleImportPending
+	lifecycleOther
+	lifecycleCount
+)
+
+const (
+	capabilityJoinParts = iota
+	capabilityManualImportFile
+	capabilityCount
+)
+
+const (
+	decisionNoRepair = iota
+	decisionJoinParts
+	decisionManualImportFile
+	decisionCount
+)
+
+var noRepairReasons = [...]contracts.NoRepairDecisionReason{
+	contracts.NoRepairNeeded,
+	contracts.NotAMultipartRelease,
+	contracts.AmbiguousPartOrder,
+	contracts.AmbiguousFileSelection,
+	contracts.ContentNotSingleMovie,
+	contracts.RawDiscUnsupported,
+	contracts.MissingImportMetadata,
+	contracts.InsufficientEvidence,
+	contracts.UnsupportedRepair,
+	contracts.UnsafeToRepair,
+}
+
+var plannerFailureKinds = [...]casestore.PlanningFailureKind{
+	casestore.PlanningFailureUnavailable,
+	casestore.PlanningFailureTimeout,
+	casestore.PlanningFailureHTTP,
+	casestore.PlanningFailureInvalidResult,
+	casestore.PlanningFailureUnexpected,
+}
+
+type metricData struct {
+	collectionFailed  bool
+	lifecycleStates   [lifecycleCount]int
+	capabilities      [capabilityCount]int
+	decisions         [decisionCount]int
+	noRepair          [len(noRepairReasons)]int
+	plannerFailures   [len(plannerFailureKinds)]int
+	plannerDuration   time.Duration
+	oldestCompletedAt time.Time
 }
 
 type Runner struct {
@@ -93,8 +146,12 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 
 	assemblies, collectionErr := runner.dependencies.Cases.InspectAll(ctx)
 	report := Report{Observed: len(assemblies)}
+	for _, assembly := range assemblies {
+		report.observe(assembly)
+	}
 	runErrors := make([]error, 0, len(assemblies)+1)
 	if collectionErr != nil {
+		report.metrics.collectionFailed = true
 		runErrors = append(runErrors, collectionErr)
 	}
 	for _, assembly := range assemblies {
@@ -123,9 +180,12 @@ const (
 )
 
 type caseResult struct {
-	Outcome   caseOutcome
-	Stored    bool
-	Submitted bool
+	Outcome         caseOutcome
+	Stored          bool
+	Submitted       bool
+	Decision        contracts.RepairDecisionV1
+	PlannerFailure  *casestore.PlanningFailure
+	PlannerDuration time.Duration
 }
 
 func (report *Report) add(result caseResult) {
@@ -134,6 +194,13 @@ func (report *Report) add(result caseResult) {
 	}
 	if result.Submitted {
 		report.Submitted++
+		report.metrics.plannerDuration += result.PlannerDuration
+	}
+	if result.Decision.Kind != "" {
+		report.observeDecision(result.Decision)
+	}
+	if result.PlannerFailure != nil {
+		report.observePlannerFailure(result.PlannerFailure.Kind)
 	}
 	switch result.Outcome {
 	case caseDecided:
@@ -177,11 +244,15 @@ func (runner *Runner) process(
 	}
 
 	result.Submitted = true
+	startedAt := now
 	decision, planErr := runner.dependencies.Planner.Plan(ctx, assembly.Request)
 	completedAt := runner.dependencies.Clock.Now().UTC()
 	if completedAt.IsZero() {
 		result.Outcome = caseFailed
 		return result, fmt.Errorf("clock returned a zero time")
+	}
+	if completedAt.After(startedAt) {
+		result.PlannerDuration = completedAt.Sub(startedAt)
 	}
 	if planErr != nil {
 		priorAttempts := uint64(0)
@@ -190,6 +261,7 @@ func (runner *Runner) process(
 		}
 		retryAfter := completedAt.Add(runner.dependencies.Backoff.delay(priorAttempts))
 		failure := runner.dependencies.ClassifyFailure(planErr)
+		result.PlannerFailure = &failure
 		_, _, storeErr := runner.dependencies.Store.PutPlanningFailure(
 			caseID, failure, completedAt, retryAfter,
 		)
@@ -202,6 +274,7 @@ func (runner *Runner) process(
 		}
 		return result, fmt.Errorf("planner failed: %w", planErr)
 	}
+	result.Decision = decision
 
 	stored, changed, err := runner.dependencies.Store.PutPlanningDecision(
 		caseID, decision, completedAt,
@@ -220,6 +293,59 @@ func (runner *Runner) process(
 	}
 	result.Outcome = caseDecided
 	return result, nil
+}
+
+func (report *Report) observe(assembly casebuilder.Assembly) {
+	switch assembly.Request.Radarr.Failure.TrackedDownloadState {
+	case "importBlocked":
+		report.metrics.lifecycleStates[lifecycleImportBlocked]++
+	case "importPending":
+		report.metrics.lifecycleStates[lifecycleImportPending]++
+	default:
+		report.metrics.lifecycleStates[lifecycleOther]++
+	}
+	for _, capability := range assembly.Request.Capabilities {
+		switch capability.Action {
+		case contracts.CapabilityActionJoinParts:
+			report.metrics.capabilities[capabilityJoinParts]++
+		case contracts.CapabilityActionManualImportFile:
+			report.metrics.capabilities[capabilityManualImportFile]++
+		}
+	}
+	if completedAt := assembly.Request.Download.CompletedAt; completedAt != nil &&
+		(report.metrics.oldestCompletedAt.IsZero() || completedAt.Before(report.metrics.oldestCompletedAt)) {
+		report.metrics.oldestCompletedAt = completedAt.UTC()
+	}
+}
+
+func (report *Report) observeDecision(decision contracts.RepairDecisionV1) {
+	switch decision.Kind {
+	case contracts.ActionNoRepair:
+		report.metrics.decisions[decisionNoRepair]++
+		if decision.NoRepair == nil {
+			return
+		}
+		reason := decision.NoRepair.Reason
+		for index, known := range noRepairReasons {
+			if reason == known {
+				report.metrics.noRepair[index]++
+				return
+			}
+		}
+	case contracts.ActionJoinParts:
+		report.metrics.decisions[decisionJoinParts]++
+	case contracts.ActionManualImportFile:
+		report.metrics.decisions[decisionManualImportFile]++
+	}
+}
+
+func (report *Report) observePlannerFailure(kind casestore.PlanningFailureKind) {
+	for index, known := range plannerFailureKinds {
+		if kind == known {
+			report.metrics.plannerFailures[index]++
+			return
+		}
+	}
 }
 
 func (backoff Backoff) delay(priorAttempts uint64) time.Duration {

@@ -17,6 +17,12 @@
       default = "15m";
       description = "Delay between completed shadow runs.";
     };
+    metricsDirectory = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/var/lib/prometheus-node-exporter-textfile/radarr-repair";
+      readOnly = true;
+      description = "Directory containing controller Prometheus textfile metrics.";
+    };
   };
 
   repair.worker = {

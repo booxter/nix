@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -19,7 +20,7 @@ import (
 func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 	t.Parallel()
 
-	arguments, apiKeyFile, stateDirectory := validShadowArguments(t)
+	arguments, apiKeyFile, stateDirectory, metricsFile := validShadowArguments(t)
 	var gotConfig shadowConfig
 	wantReport := shadowrunner.Report{
 		Observed: 12, Stored: 3, Submitted: 4, Decided: 3,
@@ -54,6 +55,7 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 		},
 		PlannerSocket:     "/run/radarr-repair/planner.sock",
 		StateDirectory:    stateDirectory,
+		MetricsFile:       metricsFile,
 		RequestTimeout:    45 * time.Second,
 		CollectionTimeout: 90 * time.Second,
 		PlannerTimeout:    3 * time.Minute,
@@ -68,7 +70,7 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 func TestShadowPrintsSummaryWhenRunFails(t *testing.T) {
 	t.Parallel()
 
-	arguments, _, _ := validShadowArguments(t)
+	arguments, _, _, metricsFile := validShadowArguments(t)
 	wantErr := errors.New("one case failed")
 	app := application{shadow: func(
 		context.Context,
@@ -87,12 +89,22 @@ func TestShadowPrintsSummaryWhenRunFails(t *testing.T) {
 		"already_decided=0 deferred=0 failed=1\n" {
 		t.Fatalf("stdout = %q", stdout.String())
 	}
+	data, readErr := os.ReadFile(metricsFile)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if !strings.Contains(
+		string(data),
+		"host_observability_radarr_repair_shadow_run_success 0",
+	) {
+		t.Fatalf("failed run metrics = %s", data)
+	}
 }
 
 func TestShadowRejectsInvalidConfigurationBeforeRunning(t *testing.T) {
 	t.Parallel()
 
-	valid, _, _ := validShadowArguments(t)
+	valid, _, _, _ := validShadowArguments(t)
 	tests := []struct {
 		name      string
 		arguments []string
@@ -105,6 +117,10 @@ func TestShadowRejectsInvalidConfigurationBeforeRunning(t *testing.T) {
 		{
 			name:      "filesystem root state",
 			arguments: replaceArgument(valid, "--state-directory", string(filepath.Separator)),
+		},
+		{
+			name:      "relative metrics file",
+			arguments: replaceArgument(valid, "--metrics-file", "radarr-repair.prom"),
 		},
 		{
 			name:      "zero request timeout",
@@ -204,10 +220,11 @@ func TestClassifyPlannerFailure(t *testing.T) {
 	}
 }
 
-func validShadowArguments(t *testing.T) ([]string, string, string) {
+func validShadowArguments(t *testing.T) ([]string, string, string, string) {
 	t.Helper()
 	apiKeyFile := filepath.Join(t.TempDir(), "radarr-api-key")
 	stateDirectory := filepath.Join(t.TempDir(), "state")
+	metricsFile := filepath.Join(t.TempDir(), "radarr-repair.prom")
 	return []string{
 		"shadow",
 		"--radarr-url", "http://127.0.0.1:7878",
@@ -218,10 +235,11 @@ func validShadowArguments(t *testing.T) ([]string, string, string) {
 		"--worker-root", "root:archive=/data/archive",
 		"--planner-socket", "/run/radarr-repair/planner.sock",
 		"--state-directory", stateDirectory,
+		"--metrics-file", metricsFile,
 		"--request-timeout", "45s",
 		"--collection-timeout", "90s",
 		"--planner-timeout", "3m",
 		"--retry-initial", "7m",
 		"--retry-maximum", "1h",
-	}, apiKeyFile, stateDirectory
+	}, apiKeyFile, stateDirectory, metricsFile
 }
