@@ -75,6 +75,7 @@ runCommand "radarr-repair-go-models-v1"
     mkdir work "$out"
     ln -s "${schemaDirectory}/repair-decision.schema.json" work/repair-decision.schema.json
     cp "${decisionVariants}" work/decision-variants.schema.json
+    ln -s "${workerSchemaDirectory}/media-evidence.schema.json" work/media-evidence.schema.json
     ln -s "${workerSchemaDirectory}/probe-request.schema.json" work/probe-request.schema.json
     ln -s "${workerSchemaDirectory}/probe-response.schema.json" work/probe-response.schema.json
     cp "${workerWireModels}" work/worker-wire-models.schema.json

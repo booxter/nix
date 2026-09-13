@@ -158,6 +158,34 @@ func TestProbeResponseAcceptsClosedFailureReasons(t *testing.T) {
 	}
 }
 
+func TestProbeResponseSchemaRejectsValuesOutsideInt64(t *testing.T) {
+	t.Parallel()
+
+	fixture := string(readFixture(t, "v1/examples/probe-response-ok.json"))
+	for _, value := range []string{
+		"9223372036854775808",
+		"-9223372036854775809",
+	} {
+		t.Run(value, func(t *testing.T) {
+			t.Parallel()
+			data := strings.Replace(
+				fixture,
+				`"start_time_ms": 0`,
+				`"start_time_ms": `+value,
+				1,
+			)
+			if err := validateMessage(
+				[]byte(data),
+				MaxProbeResponseBytes,
+				"probe response",
+				probeResponseSchema,
+			); err == nil {
+				t.Fatal("probe response outside int64 bounds was accepted")
+			}
+		})
+	}
+}
+
 func TestInvalidProbeResponseFixturesAreRejected(t *testing.T) {
 	t.Parallel()
 

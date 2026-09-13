@@ -28,6 +28,7 @@ stdenvNoCC.mkDerivation {
 
     check-jsonschema --check-metaschema contracts/v1/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/media-evidence.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
 
@@ -41,6 +42,7 @@ stdenvNoCC.mkDerivation {
       --schemafile worker/contracts/v1/probe-request.schema.json \
       worker/contracts/v1/examples/probe-request.json
     check-jsonschema \
+      --base-uri "file://$PWD/worker/contracts/v1/probe-response.schema.json" \
       --schemafile worker/contracts/v1/probe-response.schema.json \
       worker/contracts/v1/examples/probe-response-ok.json \
       worker/contracts/v1/examples/probe-response-failed.json
@@ -48,7 +50,11 @@ stdenvNoCC.mkDerivation {
     expect_invalid() {
       schema="$1"
       fixture="$2"
-      if check-jsonschema --quiet --schemafile "$schema" "$fixture"; then
+      if check-jsonschema \
+        --quiet \
+        --base-uri "file://$PWD/$schema" \
+        --schemafile "$schema" \
+        "$fixture"; then
         echo "expected contract fixture to be rejected: $fixture" >&2
         exit 1
       fi
