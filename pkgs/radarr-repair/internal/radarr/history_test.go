@@ -218,12 +218,13 @@ type testHistoryPage struct {
 }
 
 type testHistoryRecord struct {
-	ID          int64     `json:"id"`
-	MovieID     int64     `json:"movieId"`
-	DownloadID  string    `json:"downloadId"`
-	Date        time.Time `json:"date"`
-	EventType   string    `json:"eventType"`
-	SourceTitle string    `json:"sourceTitle"`
+	ID          int64             `json:"id"`
+	MovieID     int64             `json:"movieId"`
+	DownloadID  string            `json:"downloadId"`
+	Date        time.Time         `json:"date"`
+	EventType   string            `json:"eventType"`
+	SourceTitle string            `json:"sourceTitle"`
+	Data        map[string]string `json:"data,omitempty"`
 }
 
 func validHistoryRecord(id int64) *testHistoryRecord {

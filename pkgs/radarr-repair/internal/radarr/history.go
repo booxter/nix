@@ -25,15 +25,31 @@ func (client *Client) ReadHistory(
 	movieID int64,
 	downloadID string,
 ) ([]controller.RadarrHistoryEvent, error) {
-	if movieID <= 0 {
-		return nil, fmt.Errorf("Radarr movie ID must be positive")
+	rawRecords, err := client.readHistoryRecords(ctx, movieID, downloadID)
+	if err != nil {
+		return nil, err
 	}
-	if downloadID == "" || strings.TrimSpace(downloadID) != downloadID ||
-		strings.ContainsRune(downloadID, '\x00') {
-		return nil, fmt.Errorf("Radarr download ID is invalid")
+	records := make([]controller.RadarrHistoryEvent, len(rawRecords))
+	for index, record := range rawRecords {
+		mapped, err := mapHistoryRecord(record)
+		if err != nil {
+			return nil, fmt.Errorf("Radarr history record %d: %w", index, err)
+		}
+		records[index] = mapped
+	}
+	return records, nil
+}
+
+func (client *Client) readHistoryRecords(
+	ctx context.Context,
+	movieID int64,
+	downloadID string,
+) ([]*starrRadarr.HistoryRecord, error) {
+	if err := validateHistoryQuery(movieID, downloadID); err != nil {
+		return nil, err
 	}
 
-	records := make([]controller.RadarrHistoryEvent, 0)
+	records := make([]*starrRadarr.HistoryRecord, 0)
 	seen := make(map[int64]struct{})
 	expectedTotal := -1
 
@@ -59,20 +75,24 @@ func (client *Client) ReadHistory(
 		}
 
 		for index, record := range response.Records {
-			mapped, err := mapHistoryRecord(record, movieID, downloadID)
-			if err != nil {
+			if err := validateHistoryRecord(record, movieID, downloadID); err != nil {
 				return nil, fmt.Errorf("Radarr history page %d record %d: %w", page, index, err)
 			}
-			if _, exists := seen[mapped.ID]; exists {
-				return nil, fmt.Errorf("Radarr history contains duplicate record ID %d", mapped.ID)
+			if _, exists := seen[record.ID]; exists {
+				return nil, fmt.Errorf("Radarr history contains duplicate record ID %d", record.ID)
 			}
-			seen[mapped.ID] = struct{}{}
-			records = append(records, mapped)
+			seen[record.ID] = struct{}{}
+			records = append(records, record)
 		}
 
 		switch {
 		case len(records) == expectedTotal:
-			sortHistory(records)
+			sort.Slice(records, func(left, right int) bool {
+				if records[left].Date.Equal(records[right].Date) {
+					return records[left].ID < records[right].ID
+				}
+				return records[left].Date.Before(records[right].Date)
+			})
 			return records, nil
 		case len(records) > expectedTotal:
 			return nil, fmt.Errorf(
@@ -90,6 +110,17 @@ func (client *Client) ReadHistory(
 	}
 
 	return nil, fmt.Errorf("Radarr history exceeds %d pages", maximumHistoryPages)
+}
+
+func validateHistoryQuery(movieID int64, downloadID string) error {
+	if movieID <= 0 {
+		return fmt.Errorf("Radarr movie ID must be positive")
+	}
+	if downloadID == "" || strings.TrimSpace(downloadID) != downloadID ||
+		strings.ContainsRune(downloadID, '\x00') {
+		return fmt.Errorf("Radarr download ID is invalid")
+	}
+	return nil
 }
 
 func historyPageRequest(page int, movieID int64, downloadID string) *starr.PageReq {
@@ -145,33 +176,39 @@ func validateHistoryPage(
 	return nil
 }
 
-func mapHistoryRecord(
+func validateHistoryRecord(
 	record *starrRadarr.HistoryRecord,
 	movieID int64,
 	downloadID string,
-) (controller.RadarrHistoryEvent, error) {
+) error {
 	if record == nil {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf("record is null")
+		return fmt.Errorf("record is null")
 	}
 	if record.ID <= 0 {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf("record ID must be positive")
+		return fmt.Errorf("record ID must be positive")
 	}
 	if record.MovieID != movieID {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf(
+		return fmt.Errorf(
 			"record movie ID %d does not match requested ID %d",
 			record.MovieID,
 			movieID,
 		)
 	}
 	if record.DownloadID != downloadID {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf("record download ID does not match request")
+		return fmt.Errorf("record download ID does not match request")
 	}
 	if record.Date.IsZero() {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf("record date is missing")
+		return fmt.Errorf("record date is missing")
 	}
 	if strings.TrimSpace(record.EventType) == "" {
-		return controller.RadarrHistoryEvent{}, fmt.Errorf("record event type is missing")
+		return fmt.Errorf("record event type is missing")
 	}
+	return nil
+}
+
+func mapHistoryRecord(
+	record *starrRadarr.HistoryRecord,
+) (controller.RadarrHistoryEvent, error) {
 	if strings.TrimSpace(record.SourceTitle) == "" {
 		return controller.RadarrHistoryEvent{}, fmt.Errorf("record source title is missing")
 	}
@@ -191,13 +228,4 @@ func mapHistoryRecord(
 		Quality:     mapQuality(record.Quality),
 		Languages:   languages,
 	}, nil
-}
-
-func sortHistory(records []controller.RadarrHistoryEvent) {
-	sort.Slice(records, func(left, right int) bool {
-		if records[left].OccurredAt.Equal(records[right].OccurredAt) {
-			return records[left].ID < records[right].ID
-		}
-		return records[left].OccurredAt.Before(records[right].OccurredAt)
-	})
 }

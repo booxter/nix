@@ -4,7 +4,8 @@
   "records": [
     {
       "data": {
-        "droppedPath": "/downloads/Example.Movie.2026",
+        "droppedPath": "/downloads/Example.Movie.2026/Example.Movie.2026.mkv",
+        "fileId": "90210",
         "importedPath": "/movies/Example Movie (2026)/Example Movie.mkv"
       },
       "date": "2026-09-06T17:00:00Z",
