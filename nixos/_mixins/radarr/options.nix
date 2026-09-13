@@ -4,7 +4,7 @@
     enable = lib.mkEnableOption "isolated Radarr repair media probe worker";
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.radarr-repair;
+      default = pkgs.radarr-repair-worker;
       description = "Radarr repair worker package.";
     };
     socketPath = lib.mkOption {

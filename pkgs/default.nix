@@ -11,6 +11,9 @@ let
   radarrRepairPydanticModels = pkgs.callPackage ./radarr-repair/pydantic-models.nix {
     contracts = radarrRepairContracts;
   };
+  radarrRepair = pkgs.callPackage ./radarr-repair {
+    goModels = radarrRepairGoModels;
+  };
 in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
@@ -39,9 +42,9 @@ in
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
 
-  radarr-repair = pkgs.callPackage ./radarr-repair {
-    goModels = radarrRepairGoModels;
-  };
+  radarr-repair = radarrRepair.controller;
+
+  radarr-repair-worker = radarrRepair.worker;
 
   radarr-repair-planner = pkgs.callPackage ./radarr-repair-planner {
     contracts = radarrRepairContracts;
