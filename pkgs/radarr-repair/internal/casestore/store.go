@@ -13,13 +13,15 @@ import (
 )
 
 const (
-	casesDirectoryName = "cases"
-	lockFileName       = ".lock"
+	casesDirectoryName    = "cases"
+	planningDirectoryName = "planning"
+	lockFileName          = ".lock"
 )
 
 type Store struct {
-	root     string
-	casesDir string
+	root        string
+	casesDir    string
+	planningDir string
 }
 
 func New(root string) (*Store, error) {
@@ -33,10 +35,14 @@ func New(root string) (*Store, error) {
 	if err := ensurePrivateDirectory(casesDir); err != nil {
 		return nil, fmt.Errorf("prepare case records directory: %w", err)
 	}
+	planningDir := filepath.Join(root, planningDirectoryName)
+	if err := ensurePrivateDirectory(planningDir); err != nil {
+		return nil, fmt.Errorf("prepare planning records directory: %w", err)
+	}
 	if err := syncDirectory(root); err != nil {
 		return nil, fmt.Errorf("sync case store root: %w", err)
 	}
-	return &Store{root: root, casesDir: casesDir}, nil
+	return &Store{root: root, casesDir: casesDir, planningDir: planningDir}, nil
 }
 
 // Put stores a record without replacing anything already published under its

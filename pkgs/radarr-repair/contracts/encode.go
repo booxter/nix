@@ -49,6 +49,57 @@ func EncodeCase(repairCase RepairCaseV1) ([]byte, error) {
 	return data, nil
 }
 
+func EncodeDecision(decision RepairDecisionV1) ([]byte, error) {
+	value, err := decisionValue(decision)
+	if err != nil {
+		return nil, err
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("encode repair decision: %w", err)
+	}
+	schema, err := decisionSchema()
+	if err != nil {
+		return nil, err
+	}
+	if err := validateJSON(data, schema); err != nil {
+		return nil, fmt.Errorf("invalid repair decision: %w", err)
+	}
+	return data, nil
+}
+
+func decisionValue(decision RepairDecisionV1) (any, error) {
+	set := 0
+	for _, present := range []bool{
+		decision.NoRepair != nil,
+		decision.JoinParts != nil,
+		decision.ManualImportFile != nil,
+	} {
+		if present {
+			set++
+		}
+	}
+	if set != 1 {
+		return nil, fmt.Errorf("repair decision must contain exactly one action")
+	}
+
+	switch decision.Kind {
+	case ActionNoRepair:
+		if decision.NoRepair != nil {
+			return decision.NoRepair, nil
+		}
+	case ActionJoinParts:
+		if decision.JoinParts != nil {
+			return decision.JoinParts, nil
+		}
+	case ActionManualImportFile:
+		if decision.ManualImportFile != nil {
+			return decision.ManualImportFile, nil
+		}
+	}
+	return nil, fmt.Errorf("repair decision kind %q does not match its action", decision.Kind)
+}
+
 func canonicalCaseIdentity(repairCase RepairCaseV1) ([]byte, error) {
 	serialized, err := json.Marshal(caseIdentity{
 		Capabilities:  repairCase.Capabilities,

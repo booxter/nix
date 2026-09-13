@@ -120,6 +120,69 @@ func TestCanonicalCaseIdentityUsesJCSStringEncoding(t *testing.T) {
 	}
 }
 
+func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{
+		"v1/examples/repair-decision-no-repair.json",
+		"v1/examples/repair-decision-join.json",
+		"v1/examples/repair-decision-manual-import.json",
+	} {
+		path := path
+		t.Run(path, func(t *testing.T) {
+			t.Parallel()
+			decision, err := DecodeDecision(readFixture(t, path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			encoded, err := EncodeDecision(decision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			roundTripped, err := DecodeDecision(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			reencoded, err := EncodeDecision(roundTripped)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(reencoded, encoded) {
+				t.Fatalf("second encoding differs:\n got: %s\nwant: %s", reencoded, encoded)
+			}
+		})
+	}
+}
+
+func TestEncodeDecisionRejectsInconsistentUnion(t *testing.T) {
+	t.Parallel()
+
+	valid, err := DecodeDecision(readFixture(t, "v1/examples/repair-decision-no-repair.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, decision := range map[string]RepairDecisionV1{
+		"empty": {},
+		"wrong kind": {
+			Kind:     ActionJoinParts,
+			NoRepair: valid.NoRepair,
+		},
+		"two actions": {
+			Kind:             ActionNoRepair,
+			NoRepair:         valid.NoRepair,
+			ManualImportFile: &ManualImportFileDecision{},
+		},
+	} {
+		decision := decision
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			if _, err := EncodeDecision(decision); err == nil {
+				t.Fatal("inconsistent decision encoded successfully")
+			}
+		})
+	}
+}
+
 func exampleCase(t *testing.T) RepairCaseV1 {
 	t.Helper()
 	repairCase, err := DecodeCase(readFixture(t, "v1/examples/repair-case-joinable.json"))
