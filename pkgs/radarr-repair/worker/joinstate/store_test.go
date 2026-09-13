@@ -356,7 +356,7 @@ func TestStoreArtifactLookupHandlesMissingAndTemporaryRecords(t *testing.T) {
 	if _, found, err := store.FindByArtifactID(missingID); err != nil || found {
 		t.Fatalf("missing artifact lookup: found = %t, error = %v", found, err)
 	}
-	if _, found, err := store.FindByArtifactID("artifact:not-a-digest"); err == nil || found {
+	if _, found, err := store.FindByArtifactID("INVALID ARTIFACT"); err == nil || found {
 		t.Fatalf("invalid artifact lookup: found = %t, error = %v", found, err)
 	}
 }

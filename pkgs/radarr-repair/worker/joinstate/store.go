@@ -408,13 +408,15 @@ func validateExecutionID(executionID string) error {
 }
 
 func validateArtifactID(artifactID string) error {
-	digest := strings.TrimPrefix(artifactID, artifactIDPrefix)
-	if digest == artifactID || len(digest) != sha256.Size*2 {
-		return fmt.Errorf("invalid join artifact ID %q", artifactID)
-	}
-	decoded, err := hex.DecodeString(digest)
-	if err != nil || hex.EncodeToString(decoded) != digest {
-		return fmt.Errorf("invalid join artifact ID %q", artifactID)
+	_, err := workercontracts.EncodeDiscardRequest(workercontracts.DiscardRequestV1{
+		ArtifactFingerprint: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+		ArtifactID:          artifactID,
+		Operation:           workercontracts.DiscardV1,
+		RequestID:           validationRequestID,
+		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+	})
+	if err != nil {
+		return fmt.Errorf("invalid join artifact ID %q: %w", artifactID, err)
 	}
 	return nil
 }
