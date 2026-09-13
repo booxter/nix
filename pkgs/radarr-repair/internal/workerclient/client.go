@@ -19,7 +19,7 @@ import (
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 )
 
-const probeURL = "http://worker/v1/probe"
+const workerURL = "http://worker"
 
 type FailureKind uint8
 
@@ -156,14 +156,14 @@ func (client *Client) Probe(
 	ctx context.Context,
 	target controller.MediaProbeTarget,
 ) (controller.MediaProbeOutcome, error) {
-	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
+	if !client.configured() {
 		return controller.MediaProbeOutcome{}, fmt.Errorf("worker client is not configured")
 	}
 	rootID, components, err := client.resolve(target.AbsolutePath)
 	if err != nil {
 		return controller.MediaProbeOutcome{}, err
 	}
-	requestID := fmt.Sprintf("request:%d", client.nextRequestID.Add(1))
+	requestID := client.nextID()
 	payload, err := workercontracts.EncodeProbeRequest(workercontracts.ProbeRequestV1{
 		ExpectedFingerprint: target.Fingerprint.Fingerprint(),
 		Operation:           workercontracts.ProbeV1,
@@ -176,38 +176,9 @@ func (client *Client) Probe(
 		return controller.MediaProbeOutcome{}, fmt.Errorf("construct worker probe request: %w", err)
 	}
 
-	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-	request, err := http.NewRequestWithContext(
-		requestContext,
-		http.MethodPost,
-		probeURL,
-		bytes.NewReader(payload),
-	)
+	data, err := client.post(ctx, "/v1/probe", payload, workercontracts.MaxProbeResponseBytes)
 	if err != nil {
-		return controller.MediaProbeOutcome{}, fmt.Errorf("construct worker HTTP request: %w", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	response, err := client.httpClient.Do(request)
-	if err != nil {
-		return controller.MediaProbeOutcome{}, client.requestFailure(ctx, requestContext, err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return controller.MediaProbeOutcome{}, &Failure{
-			Kind: FailureHTTP, StatusCode: response.StatusCode,
-		}
-	}
-	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || mediaType != "application/json" {
-		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse, cause: err}
-	}
-	data, err := io.ReadAll(io.LimitReader(response.Body, workercontracts.MaxProbeResponseBytes+1))
-	if err != nil {
-		return controller.MediaProbeOutcome{}, client.requestFailure(ctx, requestContext, err)
-	}
-	if len(data) > workercontracts.MaxProbeResponseBytes {
-		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
+		return controller.MediaProbeOutcome{}, err
 	}
 	probeResponse, err := workercontracts.DecodeProbeResponse(data)
 	if err != nil {
@@ -228,6 +199,54 @@ func (client *Client) Probe(
 		return controller.MediaProbeOutcome{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	return controller.SuccessfulMediaProbe(EvidenceFromWorker(probeResponse.Success.Evidence)), nil
+}
+
+func (client *Client) configured() bool {
+	return client != nil && client.httpClient != nil && client.requestTimeout > 0
+}
+
+func (client *Client) nextID() string {
+	return fmt.Sprintf("request:%d", client.nextRequestID.Add(1))
+}
+
+func (client *Client) post(
+	ctx context.Context,
+	path string,
+	payload []byte,
+	responseLimit int,
+) ([]byte, error) {
+	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(
+		requestContext,
+		http.MethodPost,
+		workerURL+path,
+		bytes.NewReader(payload),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("construct worker HTTP request: %w", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := client.httpClient.Do(request)
+	if err != nil {
+		return nil, client.requestFailure(ctx, requestContext, err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, &Failure{Kind: FailureHTTP, StatusCode: response.StatusCode}
+	}
+	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/json" {
+		return nil, &Failure{Kind: FailureInvalidResponse, cause: err}
+	}
+	data, err := io.ReadAll(io.LimitReader(response.Body, int64(responseLimit)+1))
+	if err != nil {
+		return nil, client.requestFailure(ctx, requestContext, err)
+	}
+	if len(data) > responseLimit {
+		return nil, &Failure{Kind: FailureInvalidResponse}
+	}
+	return data, nil
 }
 
 func retainedProbeFailure(reason workercontracts.Reason) (controller.MediaProbeReason, bool) {
@@ -256,9 +275,8 @@ func (client *Client) resolve(absolutePath string) (string, []string, error) {
 		return "", nil, fmt.Errorf("media path must be an absolute clean path")
 	}
 	for _, root := range client.roots {
-		relative, err := filepath.Rel(root.path, absolutePath)
-		if err != nil || relative == "." || relative == ".." ||
-			strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		relative, contained := relativeToRoot(root.path, absolutePath)
+		if !contained {
 			continue
 		}
 		return root.id, strings.Split(filepath.ToSlash(relative), "/"), nil
