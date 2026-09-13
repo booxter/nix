@@ -9,6 +9,7 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/radarr-repair/internal/privatefile"
 	"golang.org/x/sys/unix"
 )
 
@@ -255,59 +256,13 @@ func caseDigest(caseID string) (string, error) {
 }
 
 func ensurePrivateDirectory(path string) error {
-	if err := os.MkdirAll(path, 0o700); err != nil {
-		return err
-	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		return err
-	}
-	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
-		return fmt.Errorf("%q is not a directory", path)
-	}
-	if err := os.Chmod(path, 0o700); err != nil {
-		return err
-	}
-	return nil
+	return privatefile.EnsureDirectory(path)
 }
 
 func syncDirectory(path string) error {
-	directory, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer directory.Close()
-	return directory.Sync()
+	return privatefile.SyncDirectory(path)
 }
 
 func replacePrivateFile(directory, path string, data []byte) error {
-	temporary, err := os.CreateTemp(directory, ".state-*.tmp")
-	if err != nil {
-		return fmt.Errorf("create temporary state record: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	defer os.Remove(temporaryPath)
-
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return fmt.Errorf("set temporary state record permissions: %w", err)
-	}
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return fmt.Errorf("write temporary state record: %w", err)
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return fmt.Errorf("sync temporary state record: %w", err)
-	}
-	if err := temporary.Close(); err != nil {
-		return fmt.Errorf("close temporary state record: %w", err)
-	}
-	if err := os.Rename(temporaryPath, path); err != nil {
-		return fmt.Errorf("publish state record: %w", err)
-	}
-	if err := syncDirectory(directory); err != nil {
-		return fmt.Errorf("sync state records directory: %w", err)
-	}
-	return nil
+	return privatefile.Replace(directory, path, data)
 }
