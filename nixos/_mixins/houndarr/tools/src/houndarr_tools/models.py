@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
@@ -31,12 +31,25 @@ class StatusSnapshot:
     active_error_instances: int
 
 
-class ApiKeyCredential(BaseModel):
+class RawApiKeyCredential(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str = Field(min_length=1)
+    format: Literal["raw"]
+
+
+class XmlElementApiKeyCredential(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     name: str = Field(min_length=1)
     format: Literal["xml-element"]
     field: str = Field(min_length=1)
+
+
+ApiKeyCredential = Annotated[
+    RawApiKeyCredential | XmlElementApiKeyCredential,
+    Field(discriminator="format"),
+]
 
 
 class ManagedPolicy(BaseModel):

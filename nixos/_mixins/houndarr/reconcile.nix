@@ -57,7 +57,10 @@ let
       inherit (api) url;
       credential = {
         name = credentialName instance;
-        inherit (api.authentication.apiKey) format field;
+        inherit (api.authentication.apiKey) format;
+      }
+      // lib.optionalAttrs (api.authentication.apiKey.field != null) {
+        inherit (api.authentication.apiKey) field;
       };
       policy = policyFor instance.policy;
     };

@@ -7,7 +7,14 @@ from typing import Protocol, cast
 
 from defusedxml import ElementTree
 
-from .models import CurrentInstance, DesiredInstance, Interface, ManagedPolicy, Value
+from .models import (
+    CurrentInstance,
+    DesiredInstance,
+    Interface,
+    ManagedPolicy,
+    Value,
+    XmlElementApiKeyCredential,
+)
 
 
 class ReconcileError(RuntimeError):
@@ -42,10 +49,14 @@ class InstanceStore(Protocol):
 def read_api_key(credentials_directory: Path, desired: DesiredInstance) -> str:
     source = credentials_directory / desired.credential.name
     try:
-        root = ElementTree.parse(source).getroot()
+        if isinstance(desired.credential, XmlElementApiKeyCredential):
+            root = ElementTree.parse(source).getroot()
+            value = root.findtext(desired.credential.field) or ""
+        else:
+            value = source.read_text(encoding="utf-8")
     except (ElementTree.ParseError, OSError) as error:
         raise ReconcileError(f"cannot read API credential for {desired.key}") from error
-    value = (root.findtext(desired.credential.field) or "").strip()
+    value = value.strip()
     if not value:
         raise ReconcileError(f"API credential for {desired.key} is empty")
     return value

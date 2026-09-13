@@ -53,13 +53,17 @@ in
               };
 
               format = lib.mkOption {
-                type = lib.types.enum [ "xml-element" ];
-                default = "xml-element";
+                type = lib.types.enum [
+                  "raw"
+                  "xml-element"
+                ];
+                description = "Encoding used by the API key credential source.";
               };
 
               field = lib.mkOption {
-                type = lib.types.nonEmptyStr;
-                description = "Field containing the API key in the credential source.";
+                type = with lib.types; nullOr nonEmptyStr;
+                default = null;
+                description = "Field containing the API key in a structured credential source.";
               };
             };
           };
@@ -72,10 +76,23 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = lib.mapAttrsToList (name: api: {
-        assertion = builtins.hasAttr api.service config.host.web.services;
-        message = "host.web.api.${name}.service must select a web service";
-      }) cfg;
+      assertions = lib.concatLists (
+        lib.mapAttrsToList (name: api: [
+          {
+            assertion = builtins.hasAttr api.service config.host.web.services;
+            message = "host.web.api.${name}.service must select a web service";
+          }
+          {
+            assertion =
+              api.authentication.apiKey.format != "xml-element" || api.authentication.apiKey.field != null;
+            message = "host.web.api.${name}.authentication.apiKey.field is required for xml-element credentials";
+          }
+          {
+            assertion = api.authentication.apiKey.format != "raw" || api.authentication.apiKey.field == null;
+            message = "host.web.api.${name}.authentication.apiKey.field must be omitted for raw credentials";
+          }
+        ]) cfg
+      );
     }
     {
       services.nginx.virtualHosts = lib.mkMerge (

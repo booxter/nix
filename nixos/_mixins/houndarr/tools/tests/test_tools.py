@@ -188,6 +188,18 @@ def test_reconcile_creates_connection_without_claiming_policy(tmp_path: Path) ->
     assert store.closed
 
 
+def test_reconcile_reads_raw_api_credential(tmp_path: Path) -> None:
+    (tmp_path / "api-catalog").write_text(" raw-secret\n", encoding="utf-8")
+    item = DesiredInstance.model_validate(
+        desired().model_dump(by_alias=True)
+        | {"credential": {"name": "api-catalog", "format": "raw"}}
+    )
+    store = FakeStore()
+
+    assert run(store, item, tmp_path) == 1
+    assert store.created[0][1] == "raw-secret"
+
+
 def test_reconcile_adopts_endpoint_and_updates_only_owned_fields(tmp_path: Path) -> None:
     write_credential(tmp_path, "new-key")
     current = CurrentInstance(
