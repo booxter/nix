@@ -78,6 +78,7 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 	store.known[decidedID] = true
 	store.known[deferredID] = true
 	store.known[staleID] = true
+	store.assemblies[decidedID] = testAssembly(decidedID)
 	store.results[decidedID] = casestore.PlanningResult{
 		CaseID: decidedID, Attempts: 1, Decision: encodedTestDecision(t, decidedID),
 	}
@@ -109,6 +110,42 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 	assertPlannedCaseIDs(t, report.PlannedCases, []string{decidedID})
 }
 
+func TestRunKeepsFirstObservationForAlreadyDecidedCase(t *testing.T) {
+	t.Parallel()
+
+	caseID := testCaseID("d")
+	first := testAssembly(caseID)
+	first.Request.ObservedAt = time.Date(2026, time.September, 12, 17, 0, 0, 0, time.UTC)
+	first.LocalSnapshot.Observation.ObservedAt = first.Request.ObservedAt
+	fresh := testAssembly(caseID)
+	fresh.Request.ObservedAt = first.Request.ObservedAt.Add(time.Hour)
+	fresh.LocalSnapshot.Observation.ObservedAt = fresh.Request.ObservedAt
+	store := newFakeStore()
+	store.known[caseID] = true
+	store.assemblies[caseID] = first
+	store.results[caseID] = casestore.PlanningResult{
+		CaseID: caseID, Attempts: 1, Decision: encodedTestDecision(t, caseID),
+	}
+	runner := newTestRunner(
+		t,
+		&fakeCaseSource{assemblies: []casebuilder.Assembly{fresh}},
+		store,
+		&fakePlanner{},
+		fresh.Request.ObservedAt,
+	)
+
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.PlannedCases) != 1 ||
+		report.PlannedCases[0].Assembly.Request.ObservedAt != first.Request.ObservedAt ||
+		report.PlannedCases[0].Assembly.LocalSnapshot.Observation.ObservedAt !=
+			first.LocalSnapshot.Observation.ObservedAt {
+		t.Fatalf("planned cases = %#v", report.PlannedCases)
+	}
+}
+
 func TestRunRejectsStoredDecisionForAnotherCase(t *testing.T) {
 	t.Parallel()
 
@@ -116,6 +153,7 @@ func TestRunRejectsStoredDecisionForAnotherCase(t *testing.T) {
 	otherID := testCaseID("c")
 	store := newFakeStore()
 	store.known[caseID] = true
+	store.assemblies[caseID] = testAssembly(caseID)
 	store.results[caseID] = casestore.PlanningResult{
 		CaseID: caseID, Attempts: 1, Decision: encodedTestDecision(t, otherID),
 	}
@@ -277,6 +315,7 @@ type storedFailure struct {
 
 type fakeStore struct {
 	known       map[string]bool
+	assemblies  map[string]casebuilder.Assembly
 	results     map[string]casestore.PlanningResult
 	putErrors   map[string]error
 	failures    []storedFailure
@@ -287,9 +326,10 @@ type fakeStore struct {
 
 func newFakeStore() *fakeStore {
 	return &fakeStore{
-		known:     make(map[string]bool),
-		results:   make(map[string]casestore.PlanningResult),
-		putErrors: make(map[string]error),
+		known:      make(map[string]bool),
+		assemblies: make(map[string]casebuilder.Assembly),
+		results:    make(map[string]casestore.PlanningResult),
+		putErrors:  make(map[string]error),
 	}
 }
 
@@ -302,7 +342,24 @@ func (store *fakeStore) PutAssembly(assembly casebuilder.Assembly) (bool, error)
 		return false, nil
 	}
 	store.known[caseID] = true
+	store.assemblies[caseID] = assembly
 	return true, nil
+}
+
+func (store *fakeStore) GetPlannedCase(caseID string) (casestore.PlannedCase, error) {
+	assembly, found := store.assemblies[caseID]
+	if !found {
+		return casestore.PlannedCase{}, errors.New("stored assembly not found")
+	}
+	result, found := store.results[caseID]
+	if !found || !result.HasDecision() {
+		return casestore.PlannedCase{}, errors.New("stored decision not found")
+	}
+	decision, err := contracts.DecodeDecision(result.Decision)
+	if err != nil {
+		return casestore.PlannedCase{}, err
+	}
+	return casestore.PlannedCase{Assembly: assembly, Decision: decision}, nil
 }
 
 func (store *fakeStore) GetPlanningResult(
