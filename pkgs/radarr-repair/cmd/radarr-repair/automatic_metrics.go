@@ -38,7 +38,7 @@ func automaticMetrics(report automaticReport, successful bool) []prometheus.Coll
 	cases.WithLabelValues("permitted").Set(float64(report.Apply.Permitted))
 	cases.WithLabelValues("finished").Set(float64(report.Apply.Finished))
 	cases.WithLabelValues("selected").Set(float64(report.Apply.Selected))
-	cases.WithLabelValues("executed").Set(float64(len(report.Apply.Executions)))
+	cases.WithLabelValues("attempted").Set(float64(len(report.Apply.Executions)))
 
 	rejectionCounts := make(map[executioncheck.RejectionReason]int)
 	executionCounts := make(map[automaticExecutionOutcome]int)

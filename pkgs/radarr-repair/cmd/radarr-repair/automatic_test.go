@@ -15,6 +15,8 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/executioncheck"
+	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 	shadowrunner "github.com/booxter/nix-config/radarr-repair/internal/shadow"
 )
 
@@ -32,6 +34,9 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 			Shadow: shadowrunner.Report{Observed: 2, Decided: 1},
 			Apply: applyrunner.Report{Executions: []applyrunner.CaseResult{{
 				CaseID: "case-1", Action: contracts.ActionJoinParts,
+				Result: repairexecution.Result{Join: &casestore.JoinExecution{
+					ExecutionID: "join-1", State: casestore.JoinImported,
+				}},
 			}}},
 			ShadowSucceeded: true,
 		}, nil
@@ -45,7 +50,8 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 	}
 	if stdout.String() != "observed=2 stored=0 submitted=0 decided=1 "+
 		"already_decided=0 deferred=0 failed=0\n"+
-		"apply=executed case_id=case-1 action=join_parts_v1\n" || stderr.Len() != 0 {
+		"apply=completed case_id=case-1 action=join_parts_v1 "+
+		"state=imported execution_id=join-1\n" || stderr.Len() != 0 {
 		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
 	}
 	if !gotConfig.AllowedActions[contracts.ActionJoinParts] ||
@@ -112,6 +118,40 @@ func TestAutomaticRunRejectsUnsafeConfigurationBeforeRunning(t *testing.T) {
 				t.Fatal("automatic run started with unsafe configuration")
 			}
 		})
+	}
+}
+
+func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
+	t.Parallel()
+
+	observedAt := time.Date(2026, time.September, 14, 19, 3, 52, 0, time.UTC)
+	checkedAt := observedAt.Add(12 * time.Minute)
+	report := automaticReport{
+		ShadowSucceeded: true,
+		Apply: applyrunner.Report{Executions: []applyrunner.CaseResult{{
+			CaseID: "case-1",
+			Action: contracts.ActionManualImportFile,
+			Result: repairexecution.Result{Check: executioncheck.Result{
+				Rejections: []executioncheck.Rejection{{
+					Reason: executioncheck.StabilizationPending,
+					Stabilization: &executioncheck.StabilizationAssessment{
+						ObservedAt: observedAt, CheckedAt: checkedAt,
+						RequiredAge: 15 * time.Minute, ActualAge: 12 * time.Minute,
+					},
+				}},
+			}},
+		}}},
+	}
+	var output bytes.Buffer
+	if err := writeAutomaticSummary(&output, report); err != nil {
+		t.Fatal(err)
+	}
+	want := "observed=0 stored=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0\n" +
+		"apply=precondition_rejected case_id=case-1 action=manual_import_file_v1 " +
+		"reason=stabilization_pending observed_at=2026-09-14T19:03:52Z " +
+		"checked_at=2026-09-14T19:15:52Z required_age=15m0s actual_age=12m0s\n"
+	if output.String() != want {
+		t.Fatalf("summary = %q, want %q", output.String(), want)
 	}
 }
 

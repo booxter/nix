@@ -179,13 +179,82 @@ func writeAutomaticSummary(writer io.Writer, report automaticReport) error {
 		return err
 	}
 	execution := report.Apply.Executions[0]
+	if len(execution.Result.Check.Rejections) != 0 {
+		return writeAutomaticRejection(writer, execution)
+	}
+	return writeAutomaticExecution(writer, execution)
+}
+
+func writeAutomaticRejection(writer io.Writer, execution applyrunner.CaseResult) error {
+	rejection := execution.Result.Check.Rejections[0]
+	if rejection.Stabilization != nil {
+		assessment := rejection.Stabilization
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=precondition_rejected case_id=%s action=%s reason=%s "+
+				"observed_at=%s checked_at=%s required_age=%s actual_age=%s\n",
+			execution.CaseID,
+			execution.Action,
+			rejection.Reason,
+			assessment.ObservedAt.UTC().Format(time.RFC3339Nano),
+			assessment.CheckedAt.UTC().Format(time.RFC3339Nano),
+			assessment.RequiredAge,
+			assessment.ActualAge,
+		)
+		return err
+	}
 	_, err := fmt.Fprintf(
 		writer,
-		"apply=executed case_id=%s action=%s\n",
+		"apply=precondition_rejected case_id=%s action=%s reason=%s\n",
 		execution.CaseID,
 		execution.Action,
+		rejection.Reason,
 	)
 	return err
+}
+
+func writeAutomaticExecution(writer io.Writer, execution applyrunner.CaseResult) error {
+	result := execution.Result
+	switch {
+	case result.ManualImport != nil:
+		if result.ManualImport.CommandID == nil {
+			_, err := fmt.Fprintf(
+				writer,
+				"apply=completed case_id=%s action=%s state=%s\n",
+				execution.CaseID,
+				execution.Action,
+				result.ManualImport.State,
+			)
+			return err
+		}
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=completed case_id=%s action=%s state=%s command_id=%d\n",
+			execution.CaseID,
+			execution.Action,
+			result.ManualImport.State,
+			*result.ManualImport.CommandID,
+		)
+		return err
+	case result.Join != nil:
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=completed case_id=%s action=%s state=%s execution_id=%s\n",
+			execution.CaseID,
+			execution.Action,
+			result.Join.State,
+			result.Join.ExecutionID,
+		)
+		return err
+	default:
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=executor_error case_id=%s action=%s\n",
+			execution.CaseID,
+			execution.Action,
+		)
+		return err
+	}
 }
 
 func runAutomaticOnce(ctx context.Context, config automaticConfig) (automaticReport, error) {

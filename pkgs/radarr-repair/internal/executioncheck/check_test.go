@@ -157,6 +157,13 @@ func TestCheckWaitsForStableImportPendingEvidence(t *testing.T) {
 			}
 			if !test.accepted {
 				assertRejected(t, result, StabilizationPending)
+				assessment := result.Rejections[0].Stabilization
+				if assessment == nil || assessment.ObservedAt != stored.Request.ObservedAt ||
+					assessment.CheckedAt != stored.Request.ObservedAt.Add(test.elapsed) ||
+					assessment.RequiredAge != 30*time.Minute ||
+					assessment.ActualAge != test.elapsed {
+					t.Fatalf("stabilization assessment = %#v", assessment)
+				}
 				if cases.calls != 0 {
 					t.Fatalf("fresh case reads = %d", cases.calls)
 				}

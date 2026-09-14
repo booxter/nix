@@ -28,7 +28,15 @@ const (
 )
 
 type Rejection struct {
-	Reason RejectionReason
+	Reason        RejectionReason
+	Stabilization *StabilizationAssessment
+}
+
+type StabilizationAssessment struct {
+	ObservedAt  time.Time
+	CheckedAt   time.Time
+	RequiredAge time.Duration
+	ActualAge   time.Duration
 }
 
 type Authorization struct {
@@ -107,7 +115,15 @@ func (checker *Checker) Check(
 	if observation.Correlation.Radarr.TrackedDownloadState == "importPending" &&
 		(now.Before(observation.ObservedAt) ||
 			now.Sub(observation.ObservedAt) < checker.dependencies.Stabilization) {
-		return rejected(StabilizationPending), nil
+		return Result{Rejections: []Rejection{{
+			Reason: StabilizationPending,
+			Stabilization: &StabilizationAssessment{
+				ObservedAt:  observation.ObservedAt,
+				CheckedAt:   now,
+				RequiredAge: checker.dependencies.Stabilization,
+				ActualAge:   now.Sub(observation.ObservedAt),
+			},
+		}}}, nil
 	}
 
 	queueID := observation.Correlation.Radarr.ID

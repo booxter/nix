@@ -64,7 +64,7 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 		t, families, prefix+"_apply_cases", map[string]string{"outcome": "permitted"}, 4,
 	)
 	assertAutomaticMetric(
-		t, families, prefix+"_apply_cases", map[string]string{"outcome": "executed"}, 3,
+		t, families, prefix+"_apply_cases", map[string]string{"outcome": "attempted"}, 3,
 	)
 	assertAutomaticMetric(
 		t,
