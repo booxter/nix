@@ -84,7 +84,7 @@ func TestRequestManualImport(t *testing.T) {
 	}
 }
 
-func TestReadCommand(t *testing.T) {
+func TestReadManualImportCommand(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -105,7 +105,7 @@ func TestReadCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	command, err := client.ReadCommand(context.Background(), 81)
+	command, err := client.ReadManualImportCommand(context.Background(), 81)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 	if _, err := client.RequestManualImport(context.Background(), authorized); err == nil {
 		t.Fatal("incomplete authorization was accepted")
 	}
-	if _, err := client.ReadCommand(context.Background(), 0); err == nil {
+	if _, err := client.ReadManualImportCommand(context.Background(), 0); err == nil {
 		t.Fatal("invalid command ID was accepted")
 	}
 
@@ -145,7 +145,7 @@ func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 		}, want: "requested ID 81"},
 		{name: "different command", response: map[string]any{
 			"id": 81, "name": "RefreshMovie", "status": "queued",
-		}, want: "unexpected command"},
+		}, want: "instead of \"ManualImport\""},
 		{name: "missing status", response: map[string]any{
 			"id": 81, "name": "ManualImport",
 		}, want: "no status"},
@@ -161,7 +161,7 @@ func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = client.ReadCommand(context.Background(), 81)
+			_, err = client.ReadManualImportCommand(context.Background(), 81)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}

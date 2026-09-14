@@ -17,7 +17,7 @@ type Radarr interface {
 		context.Context,
 		decisionpolicy.AuthorizedManualImport,
 	) (radarr.Command, error)
-	ReadCommand(context.Context, int64) (radarr.Command, error)
+	ReadManualImportCommand(context.Context, int64) (radarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
 }
 
@@ -210,7 +210,10 @@ func (executor *Executor) follow(
 			return confirmed, err
 		}
 
-		command, err := executor.dependencies.Radarr.ReadCommand(ctx, *execution.CommandID)
+		command, err := executor.dependencies.Radarr.ReadManualImportCommand(
+			ctx,
+			*execution.CommandID,
+		)
 		if err != nil {
 			return execution, fmt.Errorf("read Radarr manual-import command: %w", err)
 		}

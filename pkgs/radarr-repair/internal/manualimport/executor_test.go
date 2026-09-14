@@ -307,7 +307,10 @@ func (client *fakeRadarr) RequestManualImport(
 	return client.requestCommand, client.requestErr
 }
 
-func (client *fakeRadarr) ReadCommand(context.Context, int64) (radarr.Command, error) {
+func (client *fakeRadarr) ReadManualImportCommand(
+	context.Context,
+	int64,
+) (radarr.Command, error) {
 	index := client.commandReads
 	client.commandReads++
 	if len(client.commands) == 0 {

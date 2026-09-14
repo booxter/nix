@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	commandPath             = starrRadarr.APIver + "/command"
-	manualImportCommandName = "ManualImport"
+	commandPath                     = starrRadarr.APIver + "/command"
+	manualImportCommandName         = "ManualImport"
+	downloadedMoviesScanCommandName = "DownloadedMoviesScan"
 )
 
 type CommandStatus string
@@ -124,10 +125,21 @@ func (client *Client) RequestManualImport(
 	if err := client.api.PostInto(ctx, starr.Request{URI: commandPath, Body: &body}, &response); err != nil {
 		return Command{}, normalizeRequestError("request Radarr manual import", err)
 	}
-	return mapCommand(response, 0)
+	return mapCommand(response, 0, manualImportCommandName)
 }
 
-func (client *Client) ReadCommand(ctx context.Context, commandID int64) (Command, error) {
+func (client *Client) ReadManualImportCommand(
+	ctx context.Context,
+	commandID int64,
+) (Command, error) {
+	return client.readCommand(ctx, commandID, manualImportCommandName)
+}
+
+func (client *Client) readCommand(
+	ctx context.Context,
+	commandID int64,
+	expectedName string,
+) (Command, error) {
 	if commandID <= 0 {
 		return Command{}, fmt.Errorf("Radarr command ID must be positive")
 	}
@@ -137,7 +149,7 @@ func (client *Client) ReadCommand(ctx context.Context, commandID int64) (Command
 	if err := client.api.GetInto(ctx, starr.Request{URI: path}, &response); err != nil {
 		return Command{}, normalizeRequestError("read Radarr command", err)
 	}
-	return mapCommand(response, commandID)
+	return mapCommand(response, commandID, expectedName)
 }
 
 func validateAuthorizedManualImport(authorized decisionpolicy.AuthorizedManualImport) error {
@@ -178,7 +190,7 @@ func mapManualImportCommandFile(file controller.RadarrManualImportCommandFile) m
 	}
 }
 
-func mapCommand(response commandResponse, expectedID int64) (Command, error) {
+func mapCommand(response commandResponse, expectedID int64, expectedName string) (Command, error) {
 	if response.ID <= 0 {
 		return Command{}, fmt.Errorf("Radarr command response has invalid ID %d", response.ID)
 	}
@@ -189,8 +201,12 @@ func mapCommand(response commandResponse, expectedID int64) (Command, error) {
 			expectedID,
 		)
 	}
-	if response.Name != manualImportCommandName {
-		return Command{}, fmt.Errorf("Radarr returned unexpected command %q", response.Name)
+	if response.Name != expectedName {
+		return Command{}, fmt.Errorf(
+			"Radarr returned command %q instead of %q",
+			response.Name,
+			expectedName,
+		)
 	}
 	if response.Status == "" {
 		return Command{}, fmt.Errorf("Radarr command response has no status")
