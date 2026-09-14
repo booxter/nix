@@ -244,6 +244,7 @@ func joinExecutionAssembly(t *testing.T) (casebuilder.Assembly, decisionpolicy.A
 	first := joinExecutionFile("file:first", "Movie.CD1.mkv", 100, 0)
 	second := joinExecutionFile("file:second", "Movie.CD2.mkv", 200, 1)
 	downloadID := strings.Repeat("a", 40)
+	movieID := int64(42)
 	observation := casebuilder.Observation{
 		ObservedAt: time.Date(2026, time.September, 13, 16, 0, 0, 0, time.UTC),
 		Correlation: controller.DownloadCorrelation{
@@ -252,6 +253,7 @@ func joinExecutionAssembly(t *testing.T) (casebuilder.Assembly, decisionpolicy.A
 				ID: 71, Protocol: "torrent", Title: "Movie", Status: "completed",
 				TrackedDownloadStatus: "warning", TrackedDownloadState: "importPending",
 				DownloadID: downloadID, OutputPath: "/downloads/Movie.Release",
+				MovieID: &movieID,
 			},
 			Transmission: controller.TransmissionTorrent{
 				Hash: downloadID, Name: "Movie.Release", TotalSizeBytes: 300,
@@ -262,6 +264,9 @@ func joinExecutionAssembly(t *testing.T) (casebuilder.Assembly, decisionpolicy.A
 				},
 				Labels: []string{},
 			},
+		},
+		Movie: &controller.RadarrMovie{
+			ID: 42, TMDBID: 100, Title: "Movie", Year: 2026,
 		},
 		History:       []controller.RadarrHistoryEvent{},
 		ManualImports: []controller.RadarrManualImport{},

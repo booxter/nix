@@ -242,7 +242,7 @@ func TestDecodeManualImportExecutionRejectsInvalidRecords(t *testing.T) {
 			value.UpdatedAt = value.PreparedAt.Add(-time.Second)
 		},
 		"confirmation before import": func(value *ManualImportExecution) {
-			confirmation := manualImportConfirmation(controller.RadarrImportedFile{
+			confirmation := radarrImportConfirmation(controller.RadarrImportedFile{
 				HistoryID: 1, MovieFileID: 2, MovieID: 3, DownloadID: "download",
 				OccurredAt: value.PreparedAt, DroppedPath: "/downloads/movie.mkv",
 				ImportedPath: "/movies/Movie/movie.mkv",

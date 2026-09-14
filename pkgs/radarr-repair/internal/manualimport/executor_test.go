@@ -381,7 +381,7 @@ func (store *fakeStore) MarkManualImportImported(
 	store.importedCalls++
 	store.execution.State = casestore.ManualImportImported
 	store.execution.UpdatedAt = updatedAt
-	store.execution.Confirmation = &casestore.ManualImportConfirmation{
+	store.execution.Confirmation = &casestore.RadarrImportConfirmation{
 		HistoryID: imported.HistoryID, MovieFileID: imported.MovieFileID,
 		MovieID: imported.MovieID, DownloadID: imported.DownloadID,
 		OccurredAt: imported.OccurredAt, DroppedPath: imported.DroppedPath,

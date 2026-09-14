@@ -31,6 +31,10 @@ const (
 	JoinPublished      JoinExecutionState = "artifact_published"
 	JoinDiscarded      JoinExecutionState = "artifact_discarded"
 	JoinFailed         JoinExecutionState = "join_failed"
+	JoinScanPrepared   JoinExecutionState = "scan_prepared"
+	JoinScanRequested  JoinExecutionState = "scan_requested"
+	JoinImported       JoinExecutionState = "imported"
+	JoinImportFailed   JoinExecutionState = "import_failed"
 )
 
 type JoinExecution struct {
@@ -44,6 +48,8 @@ type JoinExecution struct {
 	Artifact      *JoinArtifact                 `json:"artifact,omitempty"`
 	Published     *JoinPublishedArtifact        `json:"published,omitempty"`
 	Failure       *JoinFailure                  `json:"failure,omitempty"`
+	Scan          *JoinScan                     `json:"scan,omitempty"`
+	Confirmation  *RadarrImportConfirmation     `json:"confirmation,omitempty"`
 }
 
 type JoinStage struct {
@@ -429,7 +435,8 @@ func validateJoinExecution(record JoinExecution) error {
 	}
 	if record.State == JoinPrepared {
 		if record.Stage != nil || record.Artifact != nil ||
-			record.Published != nil || record.Failure != nil {
+			record.Published != nil || record.Failure != nil ||
+			record.Scan != nil || record.Confirmation != nil {
 			return fmt.Errorf("prepared join contains result evidence")
 		}
 		return nil
@@ -452,24 +459,43 @@ func validateJoinExecution(record JoinExecution) error {
 	hasRejections := len(record.Stage.Rejections) != 0
 	switch record.State {
 	case JoinArtifactReady:
-		return requireJoinArtifact(record, false, false)
+		return requireJoinBeforeScan(record, false, false)
 	case JoinDiscardPending, JoinDiscarded:
-		return requireJoinArtifact(record, true, false)
+		return requireJoinBeforeScan(record, true, false)
 	case JoinPublished:
-		return requireJoinArtifact(record, false, true)
+		return requireJoinBeforeScan(record, false, true)
+	case JoinScanPrepared:
+		return requireJoinScan(record, false, false)
+	case JoinScanRequested:
+		return requireJoinScan(record, true, false)
+	case JoinImported:
+		return requireJoinScan(record, false, true)
+	case JoinImportFailed:
+		return requireJoinScan(record, true, false)
 	case JoinFailed:
 		switch record.Failure.Operation {
 		case string(workercontracts.StageJoinV1):
-			if record.Artifact != nil || record.Published != nil || !hasRejections {
+			if record.Artifact != nil || record.Published != nil || !hasRejections ||
+				record.Scan != nil || record.Confirmation != nil {
 				return fmt.Errorf("failed staging record is inconsistent")
 			}
 		case string(workercontracts.PublishV1):
-			return requireJoinArtifact(record, false, false)
+			return requireJoinBeforeScan(record, false, false)
 		case string(workercontracts.DiscardV1):
-			return requireJoinArtifact(record, true, false)
+			return requireJoinBeforeScan(record, true, false)
 		}
 	default:
 		return fmt.Errorf("unknown join execution state %q", record.State)
+	}
+	return nil
+}
+
+func requireJoinBeforeScan(record JoinExecution, rejected, published bool) error {
+	if err := requireJoinArtifact(record, rejected, published); err != nil {
+		return err
+	}
+	if record.Scan != nil || record.Confirmation != nil {
+		return fmt.Errorf("join state contains unexpected Radarr import evidence")
 	}
 	return nil
 }
@@ -644,6 +670,17 @@ func cloneJoinExecution(record JoinExecution) JoinExecution {
 	if record.Failure != nil {
 		failure := *record.Failure
 		record.Failure = &failure
+	}
+	if record.Scan != nil {
+		scan := *record.Scan
+		if scan.CommandID != nil {
+			scan.CommandID = int64Pointer(*scan.CommandID)
+		}
+		record.Scan = &scan
+	}
+	if record.Confirmation != nil {
+		confirmation := *record.Confirmation
+		record.Confirmation = &confirmation
 	}
 	return record
 }

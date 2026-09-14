@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
@@ -39,17 +38,7 @@ type ManualImportExecution struct {
 	PreparedAt          time.Time                  `json:"prepared_at"`
 	UpdatedAt           time.Time                  `json:"updated_at"`
 	CommandID           *int64                     `json:"command_id,omitempty"`
-	Confirmation        *ManualImportConfirmation  `json:"confirmation,omitempty"`
-}
-
-type ManualImportConfirmation struct {
-	HistoryID    int64     `json:"history_id"`
-	MovieFileID  int64     `json:"movie_file_id"`
-	MovieID      int64     `json:"movie_id"`
-	DownloadID   string    `json:"download_id"`
-	OccurredAt   time.Time `json:"occurred_at"`
-	DroppedPath  string    `json:"dropped_path"`
-	ImportedPath string    `json:"imported_path"`
+	Confirmation        *RadarrImportConfirmation  `json:"confirmation,omitempty"`
 }
 
 func EncodeManualImportExecution(record ManualImportExecution) ([]byte, error) {
@@ -207,8 +196,8 @@ func (store *Store) MarkManualImportImported(
 			"Radarr import confirmation does not match the authorized file",
 		)
 	}
-	confirmation := manualImportConfirmation(imported)
-	if err := validateManualImportConfirmation(confirmation); err != nil {
+	confirmation := radarrImportConfirmation(imported)
+	if err := validateRadarrImportConfirmation(confirmation); err != nil {
 		return ManualImportExecution{}, false, err
 	}
 	return store.updateManualImportExecution(
@@ -470,7 +459,7 @@ func validateManualImportExecution(record ManualImportExecution) error {
 		if record.Confirmation == nil {
 			return fmt.Errorf("imported manual import requires confirmation evidence")
 		}
-		if err := validateManualImportConfirmation(*record.Confirmation); err != nil {
+		if err := validateRadarrImportConfirmation(*record.Confirmation); err != nil {
 			return err
 		}
 		if !record.Confirmation.OccurredAt.After(record.PreparedAt) {
@@ -501,37 +490,4 @@ func sameManualImport(
 
 func int64Pointer(value int64) *int64 {
 	return &value
-}
-
-func manualImportConfirmation(imported controller.RadarrImportedFile) ManualImportConfirmation {
-	return ManualImportConfirmation{
-		HistoryID: imported.HistoryID, MovieFileID: imported.MovieFileID,
-		MovieID: imported.MovieID, DownloadID: imported.DownloadID,
-		OccurredAt: imported.OccurredAt.UTC(), DroppedPath: imported.DroppedPath,
-		ImportedPath: imported.ImportedPath,
-	}
-}
-
-func validateManualImportConfirmation(confirmation ManualImportConfirmation) error {
-	if confirmation.HistoryID <= 0 || confirmation.MovieFileID <= 0 || confirmation.MovieID <= 0 {
-		return fmt.Errorf("Radarr import confirmation IDs must be positive")
-	}
-	if confirmation.DownloadID == "" ||
-		strings.TrimSpace(confirmation.DownloadID) != confirmation.DownloadID ||
-		strings.ContainsRune(confirmation.DownloadID, '\x00') {
-		return fmt.Errorf("Radarr import confirmation download ID is invalid")
-	}
-	if confirmation.OccurredAt.IsZero() {
-		return fmt.Errorf("Radarr import confirmation time is missing")
-	}
-	if !validExecutionPath(confirmation.DroppedPath) ||
-		!validExecutionPath(confirmation.ImportedPath) {
-		return fmt.Errorf("Radarr import confirmation paths are invalid")
-	}
-	return nil
-}
-
-func validExecutionPath(path string) bool {
-	return path != "" && !strings.ContainsRune(path, '\x00') &&
-		filepath.IsAbs(path) && filepath.Clean(path) == path && filepath.Dir(path) != path
 }
