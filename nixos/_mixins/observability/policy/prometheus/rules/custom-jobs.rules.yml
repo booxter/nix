@@ -65,6 +65,33 @@ groups:
         annotations:
           summary: "Radarr repair shadow runs failing on srvarr"
           description: "The Radarr repair controller has reported unsuccessful shadow runs for 30 minutes."
+      - alert: RadarrRepairApplyRunFailing
+        expr: host_observability_radarr_repair_apply_run_success{job="node-mtls",instance="srvarr"} < 1
+        for: 30m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr repair apply runs failing on srvarr"
+          description: "The Radarr repair controller has reported unsuccessful apply runs for 30 minutes."
+      - alert: RadarrRepairApplyMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/radarr-repair/radarr-repair.prom"}) > 2700
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr repair metrics stale on srvarr"
+          description: "The Radarr repair controller metrics have not been refreshed for more than one hour."
+      - alert: RadarrRepairPublishedArtifactStuck
+        expr: host_observability_radarr_repair_apply_executions{job="node-mtls",instance="srvarr",action="join_parts_v1",state="artifact_published"} > 0
+        for: 30m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Radarr repair joined artifact stuck on srvarr"
+          description: "A joined artifact has remained published without a confirmed Radarr import for 30 minutes."
       - alert: HoundarrStatusMetricsStale
         expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
         for: 5m
