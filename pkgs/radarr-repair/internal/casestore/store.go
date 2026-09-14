@@ -183,23 +183,31 @@ func (store *Store) recordPath(caseID string) (string, error) {
 }
 
 func (store *Store) lock() (*os.File, error) {
-	path := filepath.Join(store.root, lockFileName)
+	lock, err := store.openLock(lockFileName, "case store lock")
+	if err != nil {
+		return nil, err
+	}
+	if err := unix.Flock(int(lock.Fd()), unix.LOCK_EX); err != nil {
+		lock.Close()
+		return nil, fmt.Errorf("lock case store: %w", err)
+	}
+	return lock, nil
+}
+
+func (store *Store) openLock(name, description string) (*os.File, error) {
+	path := filepath.Join(store.root, name)
 	fd, err := unix.Open(
 		path,
 		unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOFOLLOW,
 		0o600,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("open case store lock: %w", err)
+		return nil, fmt.Errorf("open %s: %w", description, err)
 	}
 	lock := os.NewFile(uintptr(fd), path)
 	if err := lock.Chmod(0o600); err != nil {
 		lock.Close()
-		return nil, fmt.Errorf("set case store lock permissions: %w", err)
-	}
-	if err := unix.Flock(fd, unix.LOCK_EX); err != nil {
-		lock.Close()
-		return nil, fmt.Errorf("lock case store: %w", err)
+		return nil, fmt.Errorf("set %s permissions: %w", description, err)
 	}
 	return lock, nil
 }
