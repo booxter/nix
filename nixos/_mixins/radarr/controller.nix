@@ -9,6 +9,7 @@ let
   planner = if radarr == null then null else radarr.repair.planner;
   worker = if radarr == null then null else radarr.repair.worker;
   serviceName = "radarr-repair-controller";
+  killSwitchFile = "/run/radarr-repair-disable-apply";
   metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;
   rootPaths = if worker == null then [ ] else builtins.attrValues worker.roots;
@@ -16,12 +17,30 @@ let
     "--worker-root"
     "${rootID}=${worker.roots.${rootID}}"
   ]) rootIDs;
+  actionArguments = lib.concatMap (action: [
+    "--allow-action"
+    action
+  ]) controller.apply.allowedActions;
+  modeArguments =
+    if controller.apply.enable then
+      [
+        "run"
+        "--apply"
+        "--kill-switch-file"
+        killSwitchFile
+      ]
+      ++ actionArguments
+    else
+      [ "shadow" ];
+  joinAllowed = builtins.elem "join_parts_v1" controller.apply.allowedActions;
   transmissionURL = if controller.transmissionUrl == null then "" else controller.transmissionUrl;
   plannerTimeoutSeconds = planner.planningTimeoutSeconds + 30;
   command = lib.escapeShellArgs (
     [
       (lib.getExe controller.package)
-      "shadow"
+    ]
+    ++ modeArguments
+    ++ [
       "--radarr-url"
       "http://127.0.0.1:${toString config.services.radarr.settings.server.port}"
       "--radarr-api-key-file"
@@ -57,6 +76,25 @@ in
         assertion = planner.enable;
         message = "Radarr repair controller requires the repair planner.";
       }
+      {
+        assertion = !controller.apply.enable || controller.apply.allowedActions != [ ];
+        message = "Radarr repair apply mode requires at least one allowed action.";
+      }
+      {
+        assertion = controller.apply.enable || controller.apply.allowedActions == [ ];
+        message = "Radarr repair actions can be allowed only when apply mode is enabled.";
+      }
+      {
+        assertion =
+          builtins.length controller.apply.allowedActions
+          == builtins.length (lib.unique controller.apply.allowedActions);
+        message = "Radarr repair allowed actions must be unique.";
+      }
+      {
+        assertion =
+          !joinAllowed || builtins.all (rootID: builtins.elem rootID worker.writableRoots) rootIDs;
+        message = "Automatic joins require every worker root to permit staged media writes.";
+      }
     ];
 
     users.groups.${serviceName} = { };
@@ -71,7 +109,11 @@ in
     ];
 
     systemd.services.${serviceName} = {
-      description = "Plan Radarr import repairs in shadow mode";
+      description =
+        if controller.apply.enable then
+          "Plan and apply permitted Radarr import repairs"
+        else
+          "Plan Radarr import repairs in shadow mode";
       requires = [
         "radarr-repair-planner.socket"
         "radarr-repair-worker.service"
@@ -142,7 +184,7 @@ in
     };
 
     systemd.timers.${serviceName} = {
-      description = "Periodically plan Radarr import repairs in shadow mode";
+      description = "Periodically run the Radarr repair controller";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "5m";

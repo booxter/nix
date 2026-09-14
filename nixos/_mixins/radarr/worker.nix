@@ -10,6 +10,14 @@ let
   serviceUser = serviceName;
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;
   rootPaths = if worker == null then [ ] else builtins.attrValues worker.roots;
+  knownWritableRootIDs =
+    if worker == null then
+      [ ]
+    else
+      builtins.filter (rootID: builtins.hasAttr rootID worker.roots) worker.writableRoots;
+  writableRootPaths = map (rootID: worker.roots.${rootID}) knownWritableRootIDs;
+  readOnlyRootPaths =
+    if worker == null then [ ] else builtins.attrValues (removeAttrs worker.roots worker.writableRoots);
   rootArguments = lib.concatMap (rootID: [
     "--root"
     "${rootID}=${worker.roots.${rootID}}"
@@ -50,6 +58,15 @@ in
       {
         assertion = builtins.all (path: builtins.dirOf path != path) rootPaths;
         message = "Radarr repair worker cannot expose the filesystem root.";
+      }
+      {
+        assertion =
+          builtins.length worker.writableRoots == builtins.length (lib.unique worker.writableRoots);
+        message = "Radarr repair worker writable root identifiers must be unique.";
+      }
+      {
+        assertion = builtins.all (rootID: builtins.hasAttr rootID worker.roots) worker.writableRoots;
+        message = "Radarr repair worker writable roots must name configured worker roots.";
       }
     ];
 
@@ -98,7 +115,8 @@ in
         ProtectProc = "invisible";
         ProtectSystem = "strict";
         ProcSubset = "pid";
-        ReadOnlyPaths = rootPaths;
+        ReadOnlyPaths = readOnlyRootPaths;
+        ReadWritePaths = writableRootPaths;
         RemoveIPC = true;
         RestrictAddressFamilies = [ "AF_UNIX" ];
         RestrictNamespaces = true;

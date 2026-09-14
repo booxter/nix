@@ -1,7 +1,7 @@
 { lib, pkgs }:
 {
   repair.controller = {
-    enable = lib.mkEnableOption "scheduled Radarr repair shadow controller";
+    enable = lib.mkEnableOption "scheduled Radarr repair controller";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.radarr-repair;
@@ -15,13 +15,26 @@
     interval = lib.mkOption {
       type = lib.types.nonEmptyStr;
       default = "15m";
-      description = "Delay between completed shadow runs.";
+      description = "Delay between completed controller runs.";
     };
     metricsDirectory = lib.mkOption {
       type = lib.types.strMatching "^/.+";
       default = "/var/lib/prometheus-node-exporter-textfile/radarr-repair";
       readOnly = true;
       description = "Directory containing controller Prometheus textfile metrics.";
+    };
+    apply = {
+      enable = lib.mkEnableOption "automatic application of Radarr repairs";
+      allowedActions = lib.mkOption {
+        type =
+          with lib.types;
+          listOf (enum [
+            "join_parts_v1"
+            "manual_import_file_v1"
+          ]);
+        default = [ ];
+        description = "Repair actions the automatic controller may apply.";
+      };
     };
   };
 
@@ -48,6 +61,11 @@
       type = with lib.types; attrsOf (strMatching "^/.+");
       default = { };
       description = "Media roots exposed to the worker by opaque identifier.";
+    };
+    writableRoots = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ ];
+      description = "Worker root identifiers that permit staged media writes.";
     };
     probeTimeoutSeconds = lib.mkOption {
       type = lib.types.ints.positive;

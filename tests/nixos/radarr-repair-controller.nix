@@ -34,6 +34,10 @@ pkgs.testers.runNixOSTest {
         controller = {
           enable = true;
           transmissionUrl = "http://127.0.0.1:9091/transmission/rpc";
+          apply = {
+            enable = true;
+            allowedActions = [ "manual_import_file_v1" ];
+          };
         };
         planner.enable = true;
         worker = {
@@ -99,5 +103,16 @@ pkgs.testers.runNixOSTest {
     )
     assert "host_observability_radarr_repair_shadow_run_success 1" in metrics
     assert 'host_observability_radarr_repair_shadow_cases{outcome="observed"} 0' in metrics
+    assert "host_observability_radarr_repair_apply_run_success 1" in metrics
+    assert "host_observability_radarr_repair_apply_disabled 0" in metrics
+    assert 'host_observability_radarr_repair_apply_cases{outcome="selected"} 0' in metrics
+
+    machine.succeed("touch /run/radarr-repair-disable-apply")
+    machine.succeed("systemctl start radarr-repair-controller.service")
+    metrics = machine.succeed(
+        "cat /var/lib/prometheus-node-exporter-textfile/radarr-repair/radarr-repair.prom"
+    )
+    assert "host_observability_radarr_repair_apply_run_success 1" in metrics
+    assert "host_observability_radarr_repair_apply_disabled 1" in metrics
   '';
 }
