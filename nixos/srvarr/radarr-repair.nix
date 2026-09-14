@@ -9,7 +9,10 @@
     transmissionUrl = transmissionModel.rpcUrl;
     apply = {
       enable = true;
-      allowedActions = [ "join_parts_v1" ];
+      allowedActions = [
+        "join_parts_v1"
+        "manual_import_file_v1"
+      ];
     };
   };
 
