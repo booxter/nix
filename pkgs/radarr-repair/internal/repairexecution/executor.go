@@ -39,7 +39,13 @@ type JoinedFileImporter interface {
 	Execute(context.Context, string) (casestore.JoinExecution, error)
 }
 
+type ExecutionStore interface {
+	GetManualImportExecution(string) (casestore.ManualImportExecution, bool, error)
+	GetJoinExecution(string) (casestore.JoinExecution, bool, error)
+}
+
 type Dependencies struct {
+	Store             ExecutionStore
 	Checker           Checker
 	ManualImports     ManualImporter
 	Joins             JoinExecutor
@@ -54,10 +60,15 @@ type Result struct {
 	Check        executioncheck.Result
 	ManualImport *casestore.ManualImportExecution
 	Join         *casestore.JoinExecution
+	Resumed      bool
 }
+
+var _ ExecutionStore = (*casestore.Store)(nil)
 
 func New(dependencies Dependencies) (*Executor, error) {
 	switch {
+	case dependencies.Store == nil:
+		return nil, fmt.Errorf("execution store is required")
 	case dependencies.Checker == nil:
 		return nil, fmt.Errorf("execution checker is required")
 	case dependencies.ManualImports == nil:
@@ -82,6 +93,9 @@ func (executor *Executor) Execute(
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
+	if result, found, err := executor.resumeExisting(ctx, assembly, decision); found || err != nil {
+		return result, err
+	}
 
 	checked, err := executor.dependencies.Checker.Check(ctx, assembly, decision)
 	result := Result{Check: checked}
@@ -95,6 +109,55 @@ func (executor *Executor) Execute(
 		return executor.executeManualImport(ctx, result, *checked.Authorization.ManualImport)
 	}
 	return executor.executeJoin(ctx, result, assembly, *checked.Authorization.Join)
+}
+
+func (executor *Executor) resumeExisting(
+	ctx context.Context,
+	assembly casebuilder.Assembly,
+	decision contracts.RepairDecisionV1,
+) (Result, bool, error) {
+	caseID := assembly.Request.CaseID
+	switch decision.Kind {
+	case contracts.ActionManualImportFile:
+		execution, found, err := executor.dependencies.Store.GetManualImportExecution(caseID)
+		result := Result{ManualImport: &execution, Resumed: found}
+		if err != nil {
+			return Result{}, false, fmt.Errorf("read manual-import execution: %w", err)
+		}
+		if !found {
+			return Result{}, false, nil
+		}
+		validation := decisionpolicy.ValidateManualImport(assembly, decision)
+		if !validation.Accepted() {
+			return result, true, fmt.Errorf("stored manual import is no longer authorized")
+		}
+		resumed, err := executor.executeManualImport(ctx, result, *validation.Authorized)
+		return resumed, true, err
+	case contracts.ActionJoinParts:
+		execution, found, err := executor.dependencies.Store.GetJoinExecution(caseID)
+		result := Result{Join: &execution, Resumed: found}
+		if err != nil {
+			return Result{}, false, fmt.Errorf("read join execution: %w", err)
+		}
+		if !found {
+			return Result{}, false, nil
+		}
+		validation := decisionpolicy.ValidateJoin(assembly, decision)
+		if !validation.Accepted() {
+			return result, true, fmt.Errorf("stored join is no longer authorized")
+		}
+		executionID, err := casestore.JoinExecutionID(*validation.Authorized)
+		if err != nil {
+			return result, true, fmt.Errorf("identify authorized join: %w", err)
+		}
+		if execution.ExecutionID != executionID {
+			return result, true, fmt.Errorf("stored join does not match the authorized join")
+		}
+		resumed, err := executor.resumeJoin(ctx, result, assembly, *validation.Authorized)
+		return resumed, true, err
+	default:
+		return Result{}, false, nil
+	}
 }
 
 func (executor *Executor) executeManualImport(
@@ -140,8 +203,40 @@ func (executor *Executor) executeJoin(
 	default:
 		return result, fmt.Errorf("join returned non-terminal state %q", execution.State)
 	}
+	return executor.executeJoinedFileImport(ctx, result, authorized.CaseID)
+}
 
-	execution, err = executor.dependencies.JoinedFileImports.Execute(ctx, authorized.CaseID)
+func (executor *Executor) resumeJoin(
+	ctx context.Context,
+	result Result,
+	assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedJoin,
+) (Result, error) {
+	switch result.Join.State {
+	case casestore.JoinPrepared,
+		casestore.JoinArtifactReady,
+		casestore.JoinDiscardPending:
+		return executor.executeJoin(ctx, result, assembly, authorized)
+	case casestore.JoinPublished,
+		casestore.JoinScanPrepared,
+		casestore.JoinScanRequested:
+		return executor.executeJoinedFileImport(ctx, result, authorized.CaseID)
+	case casestore.JoinDiscarded,
+		casestore.JoinFailed,
+		casestore.JoinImported,
+		casestore.JoinImportFailed:
+		return result, nil
+	default:
+		return result, fmt.Errorf("cannot resume join from state %q", result.Join.State)
+	}
+}
+
+func (executor *Executor) executeJoinedFileImport(
+	ctx context.Context,
+	result Result,
+	caseID string,
+) (Result, error) {
+	execution, err := executor.dependencies.JoinedFileImports.Execute(ctx, caseID)
 	result.Join = &execution
 	if err != nil {
 		return result, fmt.Errorf("import joined file: %w", err)

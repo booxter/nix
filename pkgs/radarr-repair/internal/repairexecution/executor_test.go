@@ -190,14 +190,15 @@ func TestNewRequiresDependencies(t *testing.T) {
 	t.Parallel()
 
 	valid := Dependencies{
-		Checker: &fakeChecker{}, ManualImports: &fakeManualImporter{},
+		Store: &fakeExecutionStore{}, Checker: &fakeChecker{}, ManualImports: &fakeManualImporter{},
 		Joins: &fakeJoinExecutor{}, JoinedFileImports: &fakeJoinedFileImporter{},
 	}
 	tests := []Dependencies{
-		{ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Checker: valid.Checker, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
-		{Checker: valid.Checker, ManualImports: valid.ManualImports, JoinedFileImports: valid.JoinedFileImports},
-		{Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins},
+		{Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
+		{Store: valid.Store, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
+		{Store: valid.Store, Checker: valid.Checker, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
+		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, JoinedFileImports: valid.JoinedFileImports},
+		{Store: valid.Store, Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins},
 	}
 	for _, dependencies := range tests {
 		if _, err := New(dependencies); err == nil {
@@ -209,6 +210,7 @@ func TestNewRequiresDependencies(t *testing.T) {
 type fakeChecker struct {
 	result executioncheck.Result
 	err    error
+	calls  int
 }
 
 func (checker *fakeChecker) Check(
@@ -216,7 +218,28 @@ func (checker *fakeChecker) Check(
 	casebuilder.Assembly,
 	contracts.RepairDecisionV1,
 ) (executioncheck.Result, error) {
+	checker.calls++
 	return checker.result, checker.err
+}
+
+type fakeExecutionStore struct {
+	manual      casestore.ManualImportExecution
+	manualFound bool
+	join        casestore.JoinExecution
+	joinFound   bool
+	err         error
+}
+
+func (store *fakeExecutionStore) GetManualImportExecution(
+	string,
+) (casestore.ManualImportExecution, bool, error) {
+	return store.manual, store.manualFound, store.err
+}
+
+func (store *fakeExecutionStore) GetJoinExecution(
+	string,
+) (casestore.JoinExecution, bool, error) {
+	return store.join, store.joinFound, store.err
 }
 
 type fakeManualImporter struct {
@@ -278,8 +301,27 @@ func testExecutor(
 	imports JoinedFileImporter,
 ) *Executor {
 	t.Helper()
+	return testExecutorWithStore(
+		t,
+		&fakeExecutionStore{},
+		checker,
+		manual,
+		joins,
+		imports,
+	)
+}
+
+func testExecutorWithStore(
+	t *testing.T,
+	store ExecutionStore,
+	checker Checker,
+	manual ManualImporter,
+	joins JoinExecutor,
+	imports JoinedFileImporter,
+) *Executor {
+	t.Helper()
 	executor, err := New(Dependencies{
-		Checker: checker, ManualImports: manual, Joins: joins,
+		Store: store, Checker: checker, ManualImports: manual, Joins: joins,
 		JoinedFileImports: imports,
 	})
 	if err != nil {
