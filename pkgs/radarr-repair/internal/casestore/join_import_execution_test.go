@@ -126,8 +126,8 @@ func TestStoreJoinedFileImportRequiresExactEvidence(t *testing.T) {
 		{name: "path", change: func(imported *controller.RadarrImportedFile, _ time.Time) {
 			imported.DroppedPath = "/downloads/Movie.Release/other.mkv"
 		}},
-		{name: "old event", change: func(imported *controller.RadarrImportedFile, preparedAt time.Time) {
-			imported.OccurredAt = preparedAt
+		{name: "old event", change: func(imported *controller.RadarrImportedFile, _ time.Time) {
+			imported.HistoryID = 100
 		}},
 	}
 	for _, test := range tests {
@@ -288,9 +288,10 @@ func publishedJoinRecord(
 
 func testJoinScanRequest() JoinScanRequest {
 	return JoinScanRequest{
-		Path:       "/downloads/Movie.Release/radarr-repair-join.mkv",
-		MovieID:    42,
-		DownloadID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Path:            "/downloads/Movie.Release/radarr-repair-join.mkv",
+		MovieID:         42,
+		DownloadID:      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		HistoryIDBefore: 100,
 	}
 }
 

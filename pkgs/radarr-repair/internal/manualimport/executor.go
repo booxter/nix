@@ -24,6 +24,7 @@ type Radarr interface {
 type Store interface {
 	PrepareManualImport(
 		decisionpolicy.AuthorizedManualImport,
+		int64,
 		time.Time,
 	) (casestore.ManualImportExecution, bool, error)
 	MarkManualImportRequested(
@@ -118,12 +119,24 @@ func (executor *Executor) Execute(
 	if err := ctx.Err(); err != nil {
 		return casestore.ManualImportExecution{}, err
 	}
+	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
+		ctx,
+		authorized.File.MovieID,
+		authorized.File.DownloadID,
+	)
+	if err != nil {
+		return casestore.ManualImportExecution{}, fmt.Errorf(
+			"read Radarr imported-file history before manual import: %w",
+			err,
+		)
+	}
 	preparedAt, err := executor.now()
 	if err != nil {
 		return casestore.ManualImportExecution{}, err
 	}
 	execution, prepared, err := executor.dependencies.Store.PrepareManualImport(
 		authorized,
+		radarr.HighestImportedFileHistoryID(imports),
 		preparedAt,
 	)
 	if err != nil {
@@ -252,7 +265,7 @@ func (executor *Executor) confirm(
 	}
 	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
 		MovieID: authorized.File.MovieID, DownloadID: authorized.File.DownloadID,
-		DroppedPath: authorized.File.Path, After: execution.PreparedAt,
+		DroppedPath: authorized.File.Path, AfterHistoryID: execution.HistoryIDBefore,
 	})
 	if !found {
 		return execution, nil

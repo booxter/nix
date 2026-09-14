@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	starrRadarr "golift.io/starr/radarr"
@@ -15,10 +14,10 @@ import (
 const importedHistoryEvent = "downloadFolderImported"
 
 type ImportedFileMatch struct {
-	MovieID     int64
-	DownloadID  string
-	DroppedPath string
-	After       time.Time
+	MovieID        int64
+	DownloadID     string
+	DroppedPath    string
+	AfterHistoryID int64
 }
 
 var _ controller.RadarrImportedFileReader = (*Client)(nil)
@@ -46,8 +45,18 @@ func (client *Client) ReadImportedFiles(
 	return imports, nil
 }
 
-// FindImportedFile returns the earliest history record that confirms the exact
-// file import after its operation was prepared.
+// HighestImportedFileHistoryID captures the history boundary before a request.
+func HighestImportedFileHistoryID(imports []controller.RadarrImportedFile) int64 {
+	var highest int64
+	for _, imported := range imports {
+		if imported.HistoryID > highest {
+			highest = imported.HistoryID
+		}
+	}
+	return highest
+}
+
+// FindImportedFile ignores exact matches that existed before the request.
 func FindImportedFile(
 	imports []controller.RadarrImportedFile,
 	match ImportedFileMatch,
@@ -56,11 +65,11 @@ func FindImportedFile(
 	found := false
 	for _, imported := range imports {
 		if imported.MovieID != match.MovieID || imported.DownloadID != match.DownloadID ||
-			imported.DroppedPath != match.DroppedPath || !imported.OccurredAt.After(match.After) {
+			imported.DroppedPath != match.DroppedPath ||
+			imported.HistoryID <= match.AfterHistoryID {
 			continue
 		}
-		if !found || imported.OccurredAt.Before(selected.OccurredAt) ||
-			(imported.OccurredAt.Equal(selected.OccurredAt) && imported.HistoryID < selected.HistoryID) {
+		if !found || imported.HistoryID < selected.HistoryID {
 			selected = imported
 			found = true
 		}

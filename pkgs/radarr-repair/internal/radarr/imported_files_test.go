@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 func TestReadImportedFiles(t *testing.T) {
@@ -103,5 +105,39 @@ func TestReadImportedFilesRejectsInvalidEvidence(t *testing.T) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestImportedFileMatchUsesHistoryIDBoundary(t *testing.T) {
+	t.Parallel()
+
+	when := time.Date(2026, 9, 14, 20, 9, 25, 0, time.UTC)
+	old := controller.RadarrImportedFile{
+		HistoryID: 40, MovieID: 42, DownloadID: testHistoryDownloadID,
+		DroppedPath: "/downloads/movie.mkv", OccurredAt: when.Add(time.Minute),
+	}
+	newImport := old
+	newImport.HistoryID = 42
+	newImport.OccurredAt = when
+	mismatch := newImport
+	mismatch.HistoryID = 41
+	mismatch.DroppedPath = "/downloads/other.mkv"
+	imports := []controller.RadarrImportedFile{newImport, old, mismatch}
+
+	if highest := HighestImportedFileHistoryID(imports); highest != 42 {
+		t.Fatalf("highest history ID = %d", highest)
+	}
+	found, ok := FindImportedFile(imports, ImportedFileMatch{
+		MovieID: 42, DownloadID: testHistoryDownloadID,
+		DroppedPath: "/downloads/movie.mkv", AfterHistoryID: 40,
+	})
+	if !ok || found.HistoryID != 42 {
+		t.Fatalf("matched import = %#v, found = %t", found, ok)
+	}
+	if _, ok := FindImportedFile(imports, ImportedFileMatch{
+		MovieID: 42, DownloadID: testHistoryDownloadID,
+		DroppedPath: "/downloads/movie.mkv", AfterHistoryID: 42,
+	}); ok {
+		t.Fatal("history event at the saved boundary was accepted")
 	}
 }

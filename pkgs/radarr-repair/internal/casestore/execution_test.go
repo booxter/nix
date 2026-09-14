@@ -29,16 +29,17 @@ func TestStoreManualImportExecutionLifecycle(t *testing.T) {
 		0,
 		time.FixedZone("test", -4*60*60),
 	)
-	prepared, changed, err := store.PrepareManualImport(authorized, preparedAt)
+	prepared, changed, err := store.PrepareManualImport(authorized, 70, preparedAt)
 	if err != nil || !changed {
 		t.Fatalf("prepare: changed = %t, error = %v", changed, err)
 	}
 	if prepared.State != ManualImportPrepared || prepared.CommandID != nil ||
+		prepared.HistoryIDBefore != 70 ||
 		prepared.PreparedAt.Location() != time.UTC || prepared.UpdatedAt != prepared.PreparedAt {
 		t.Fatalf("prepared execution = %#v", prepared)
 	}
 
-	repeated, changed, err := store.PrepareManualImport(authorized, preparedAt.Add(time.Hour))
+	repeated, changed, err := store.PrepareManualImport(authorized, 99, preparedAt.Add(time.Hour))
 	if err != nil || changed || !reflect.DeepEqual(repeated, prepared) {
 		t.Fatalf("repeat preparation: changed = %t, record = %#v, error = %v", changed, repeated, err)
 	}
@@ -121,7 +122,7 @@ func TestStoreManualImportCanResolveUncertainSubmission(t *testing.T) {
 
 	store, authorized := newManualImportExecutionStore(t)
 	preparedAt := time.Date(2026, time.September, 13, 14, 0, 0, 0, time.UTC)
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err != nil || !changed {
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err != nil || !changed {
 		t.Fatalf("prepare: changed = %t, error = %v", changed, err)
 	}
 	evidence := manualImportEvidence(authorized, preparedAt.Add(time.Minute))
@@ -141,7 +142,7 @@ func TestStoreManualImportCanFailBeforeCommandIDIsKnown(t *testing.T) {
 
 	store, authorized := newManualImportExecutionStore(t)
 	preparedAt := time.Date(2026, time.September, 13, 14, 0, 0, 0, time.UTC)
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err != nil || !changed {
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err != nil || !changed {
 		t.Fatalf("prepare failure case: changed = %t, error = %v", changed, err)
 	}
 	failed, changed, err := store.MarkManualImportFailed(
@@ -170,7 +171,7 @@ func TestStoreManualImportPreparationRequiresStoredAuthorization(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, authorized := manualImportExecutionAssembly(t)
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err == nil || changed {
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err == nil || changed {
 		t.Fatalf("missing case: changed = %t, error = %v", changed, err)
 	}
 
@@ -186,7 +187,7 @@ func TestStoreManualImportPreparationRequiresStoredAuthorization(t *testing.T) {
 	if created, err := store.Put(record); err != nil || !created {
 		t.Fatalf("put case: created = %t, error = %v", created, err)
 	}
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err == nil || changed ||
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err == nil || changed ||
 		!strings.Contains(err.Error(), "no stored planning decision") {
 		t.Fatalf("missing decision: changed = %t, error = %v", changed, err)
 	}
@@ -197,14 +198,14 @@ func TestStoreManualImportPreparationRequiresStoredAuthorization(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err == nil || changed ||
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err == nil || changed ||
 		!strings.Contains(err.Error(), "does not match") {
 		t.Fatalf("different decision: changed = %t, error = %v", changed, err)
 	}
 
 	store, authorized = newManualImportExecutionStore(t)
 	authorized.ExpectedFingerprint.Inode++
-	if _, changed, err := store.PrepareManualImport(authorized, preparedAt); err == nil || changed ||
+	if _, changed, err := store.PrepareManualImport(authorized, 0, preparedAt); err == nil || changed ||
 		!strings.Contains(err.Error(), "does not match") {
 		t.Fatalf("changed authorization: changed = %t, error = %v", changed, err)
 	}

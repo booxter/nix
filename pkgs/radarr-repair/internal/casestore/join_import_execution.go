@@ -9,17 +9,20 @@ import (
 )
 
 type JoinScanRequest struct {
-	Path       string
-	MovieID    int64
-	DownloadID string
+	Path            string
+	MovieID         int64
+	DownloadID      string
+	HistoryIDBefore int64
 }
 
 type JoinScan struct {
-	Path       string    `json:"path"`
-	MovieID    int64     `json:"movie_id"`
-	DownloadID string    `json:"download_id"`
-	PreparedAt time.Time `json:"prepared_at"`
-	CommandID  *int64    `json:"command_id,omitempty"`
+	Path       string `json:"path"`
+	MovieID    int64  `json:"movie_id"`
+	DownloadID string `json:"download_id"`
+	// HistoryIDBefore separates this request from older matching imports.
+	HistoryIDBefore int64     `json:"history_id_before"`
+	PreparedAt      time.Time `json:"prepared_at"`
+	CommandID       *int64    `json:"command_id,omitempty"`
 }
 
 func (store *Store) PrepareJoinScan(
@@ -51,7 +54,8 @@ func (store *Store) PrepareJoinScan(
 			previous.State = JoinScanPrepared
 			previous.Scan = &JoinScan{
 				Path: request.Path, MovieID: request.MovieID,
-				DownloadID: request.DownloadID, PreparedAt: preparedAt.UTC(),
+				DownloadID: request.DownloadID, HistoryIDBefore: request.HistoryIDBefore,
+				PreparedAt: preparedAt.UTC(),
 			}
 			return previous, true, nil
 		},
@@ -118,9 +122,9 @@ func (store *Store) MarkJoinImported(
 			}
 			switch previous.State {
 			case JoinScanPrepared, JoinScanRequested:
-				if !confirmation.OccurredAt.After(previous.Scan.PreparedAt) {
+				if confirmation.HistoryID <= previous.Scan.HistoryIDBefore {
 					return JoinExecution{}, false, fmt.Errorf(
-						"Radarr import confirmation does not follow scan preparation",
+						"Radarr import confirmation predates the scan request",
 					)
 				}
 				previous.State = JoinImported
@@ -169,6 +173,7 @@ func (store *Store) MarkJoinImportFailed(
 
 func (store *Store) validateJoinScanRequest(caseID string, request JoinScanRequest) error {
 	if !validExecutionPath(request.Path) || request.MovieID <= 0 ||
+		request.HistoryIDBefore < 0 ||
 		request.DownloadID == "" || strings.TrimSpace(request.DownloadID) != request.DownloadID ||
 		strings.ContainsRune(request.DownloadID, '\x00') {
 		return fmt.Errorf("Radarr scan request is invalid")
@@ -218,7 +223,7 @@ func requireJoinScan(
 		if record.Confirmation.MovieID != record.Scan.MovieID ||
 			record.Confirmation.DownloadID != record.Scan.DownloadID ||
 			record.Confirmation.DroppedPath != record.Scan.Path ||
-			!record.Confirmation.OccurredAt.After(record.Scan.PreparedAt) {
+			record.Confirmation.HistoryID <= record.Scan.HistoryIDBefore {
 			return fmt.Errorf("Radarr import confirmation does not match the joined file")
 		}
 	} else if record.Confirmation != nil {
@@ -229,6 +234,7 @@ func requireJoinScan(
 
 func validateStoredJoinScan(scan JoinScan, executionPreparedAt, updatedAt time.Time) error {
 	if !validExecutionPath(scan.Path) || scan.MovieID <= 0 ||
+		scan.HistoryIDBefore < 0 ||
 		scan.DownloadID == "" || strings.TrimSpace(scan.DownloadID) != scan.DownloadID ||
 		strings.ContainsRune(scan.DownloadID, '\x00') || scan.PreparedAt.IsZero() ||
 		scan.PreparedAt.Before(executionPreparedAt) || scan.PreparedAt.After(updatedAt) ||

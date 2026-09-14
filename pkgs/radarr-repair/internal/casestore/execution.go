@@ -33,10 +33,12 @@ type ManualImportExecution struct {
 	FileID              controller.FileID          `json:"file_id"`
 	ExpectedFingerprint controller.FileFingerprint `json:"expected_fingerprint"`
 	State               ManualImportExecutionState `json:"state"`
-	PreparedAt          time.Time                  `json:"prepared_at"`
-	UpdatedAt           time.Time                  `json:"updated_at"`
-	CommandID           *int64                     `json:"command_id,omitempty"`
-	Confirmation        *RadarrImportConfirmation  `json:"confirmation,omitempty"`
+	// HistoryIDBefore separates this request from older matching imports.
+	HistoryIDBefore int64                     `json:"history_id_before"`
+	PreparedAt      time.Time                 `json:"prepared_at"`
+	UpdatedAt       time.Time                 `json:"updated_at"`
+	CommandID       *int64                    `json:"command_id,omitempty"`
+	Confirmation    *RadarrImportConfirmation `json:"confirmation,omitempty"`
 }
 
 func EncodeManualImportExecution(record ManualImportExecution) ([]byte, error) {
@@ -96,8 +98,12 @@ func (store *Store) GetManualImportExecution(
 
 func (store *Store) PrepareManualImport(
 	authorized decisionpolicy.AuthorizedManualImport,
+	historyIDBefore int64,
 	preparedAt time.Time,
 ) (ManualImportExecution, bool, error) {
+	if historyIDBefore < 0 {
+		return ManualImportExecution{}, false, fmt.Errorf("Radarr history ID cannot be negative")
+	}
 	if preparedAt.IsZero() {
 		return ManualImportExecution{}, false, fmt.Errorf("manual import preparation time is required")
 	}
@@ -136,6 +142,7 @@ func (store *Store) PrepareManualImport(
 		FileID:              authorized.FileID,
 		ExpectedFingerprint: authorized.ExpectedFingerprint,
 		State:               ManualImportPrepared,
+		HistoryIDBefore:     historyIDBefore,
 		PreparedAt:          preparedAt.UTC(),
 		UpdatedAt:           preparedAt.UTC(),
 	}
@@ -209,9 +216,9 @@ func (store *Store) MarkManualImportImported(
 			}
 			switch previous.State {
 			case ManualImportPrepared, ManualImportRequested:
-				if !confirmation.OccurredAt.After(previous.PreparedAt) {
+				if confirmation.HistoryID <= previous.HistoryIDBefore {
 					return ManualImportExecution{}, false, fmt.Errorf(
-						"Radarr import confirmation does not follow preparation",
+						"Radarr import confirmation predates the request",
 					)
 				}
 				previous.State = ManualImportImported
@@ -368,7 +375,7 @@ func validateManualImportExecution(record ManualImportExecution) error {
 		return err
 	}
 	if record.CapabilityID == "" || record.FileID == "" ||
-		record.ExpectedFingerprint.SizeBytes <= 0 {
+		record.ExpectedFingerprint.SizeBytes <= 0 || record.HistoryIDBefore < 0 {
 		return fmt.Errorf("manual import execution identity is incomplete")
 	}
 	if record.PreparedAt.IsZero() || record.UpdatedAt.IsZero() ||
@@ -397,8 +404,8 @@ func validateManualImportExecution(record ManualImportExecution) error {
 		if err := validateRadarrImportConfirmation(*record.Confirmation); err != nil {
 			return err
 		}
-		if !record.Confirmation.OccurredAt.After(record.PreparedAt) {
-			return fmt.Errorf("Radarr import confirmation does not follow preparation")
+		if record.Confirmation.HistoryID <= record.HistoryIDBefore {
+			return fmt.Errorf("Radarr import confirmation predates the request")
 		}
 	case ManualImportFailed:
 		if record.CommandID != nil && *record.CommandID <= 0 {

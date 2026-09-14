@@ -23,11 +23,14 @@ const (
 func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 	t.Parallel()
 
-	now := time.Date(2026, time.September, 13, 20, 0, 0, 0, time.UTC)
+	now := time.Date(2026, time.September, 13, 20, 0, 0, 500_000_000, time.UTC)
 	store := newFakeStore(now)
-	exact := importedFile(now.Add(time.Second))
+	exact := importedFile(now.Truncate(time.Second))
 	mismatch := exact
+	mismatch.HistoryID++
 	mismatch.DroppedPath = "/downloads/Movie.Release/other.mkv"
+	old := exact
+	old.HistoryID--
 	radarrClient := &fakeRadarr{
 		requestCommand: radarr.Command{
 			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandQueued,
@@ -37,7 +40,7 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandCompleted,
 			Result: radarr.CommandResultSuccessful,
 		}},
-		imports: [][]controller.RadarrImportedFile{{mismatch}, {exact}},
+		imports: [][]controller.RadarrImportedFile{{old}, {old, mismatch}, {old, exact}},
 	}
 	waiter := &fakeWaiter{}
 	executor := newTestExecutor(t, store, radarrClient, waiter, now)
@@ -57,7 +60,7 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 		t.Fatalf("requested scan = %#v", radarrClient.requested)
 	}
 	if radarrClient.requestCalls != 1 || radarrClient.commandReads != 1 ||
-		radarrClient.historyReads != 2 || waiter.waits != 1 {
+		radarrClient.historyReads != 3 || waiter.waits != 1 {
 		t.Fatalf(
 			"calls: request = %d, command = %d, history = %d, waits = %d",
 			radarrClient.requestCalls,
@@ -78,7 +81,7 @@ func TestExecutorNeverRepeatsUncertainScan(t *testing.T) {
 
 	execution, err := executor.Execute(context.Background(), testCaseID)
 	assertUncertainSubmission(t, execution, err)
-	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 1 {
+	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 2 {
 		t.Fatalf(
 			"first calls: request = %d, history = %d",
 			radarrClient.requestCalls,
@@ -90,7 +93,7 @@ func TestExecutorNeverRepeatsUncertainScan(t *testing.T) {
 	executor = newTestExecutor(t, store, radarrClient, &fakeWaiter{}, now)
 	execution, err = executor.Execute(context.Background(), testCaseID)
 	assertUncertainSubmission(t, execution, err)
-	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 2 {
+	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 3 {
 		t.Fatalf(
 			"restart calls: request = %d, history = %d",
 			radarrClient.requestCalls,
@@ -119,7 +122,7 @@ func TestExecutorResumesRequestedScan(t *testing.T) {
 	store.execution.State = casestore.JoinScanRequested
 	store.execution.Scan = &casestore.JoinScan{
 		Path: testJoinedPath, MovieID: 42, DownloadID: testDownloadID,
-		PreparedAt: now.Add(-time.Minute), CommandID: &commandID,
+		HistoryIDBefore: 92, PreparedAt: now.Add(-time.Minute), CommandID: &commandID,
 	}
 	radarrClient := &fakeRadarr{imports: [][]controller.RadarrImportedFile{{
 		importedFile(now),
@@ -372,7 +375,7 @@ func (store *fakeStore) PrepareJoinScan(
 	store.execution.State = casestore.JoinScanPrepared
 	store.execution.Scan = &casestore.JoinScan{
 		Path: request.Path, MovieID: request.MovieID, DownloadID: request.DownloadID,
-		PreparedAt: preparedAt,
+		HistoryIDBefore: request.HistoryIDBefore, PreparedAt: preparedAt,
 	}
 	store.execution.UpdatedAt = preparedAt
 	return store.execution, true, nil

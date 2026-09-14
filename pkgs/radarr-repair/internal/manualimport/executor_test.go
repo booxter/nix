@@ -17,14 +17,14 @@ func TestExecutorConfirmsExactImportedFile(t *testing.T) {
 	t.Parallel()
 
 	authorized := testAuthorization()
-	now := time.Date(2026, time.September, 13, 16, 0, 0, 0, time.UTC)
-	exact := importedFile(authorized, now.Add(2*time.Second))
+	now := time.Date(2026, time.September, 13, 16, 0, 0, 500_000_000, time.UTC)
+	exact := importedFile(authorized, now.Truncate(time.Second))
 	otherPath := exact
 	otherPath.HistoryID++
 	otherPath.DroppedPath = "/downloads/Other/movie.mkv"
 	old := exact
 	old.HistoryID--
-	old.OccurredAt = now.Add(-time.Second)
+	old.OccurredAt = now.Add(time.Minute)
 	store := &fakeStore{}
 	radarrClient := &fakeRadarr{
 		requestCommand: radarr.Command{
@@ -35,7 +35,7 @@ func TestExecutorConfirmsExactImportedFile(t *testing.T) {
 			ID: 81, Name: "ManualImport", Status: radarr.CommandCompleted,
 			Result: radarr.CommandResultSuccessful,
 		}},
-		imports: [][]controller.RadarrImportedFile{{old, otherPath}, {exact}},
+		imports: [][]controller.RadarrImportedFile{{old}, {old, otherPath}, {old, exact}},
 	}
 	waiter := &fakeWaiter{}
 	executor := newTestExecutor(t, radarrClient, store, waiter, now)
@@ -50,7 +50,7 @@ func TestExecutorConfirmsExactImportedFile(t *testing.T) {
 		t.Fatalf("execution = %#v", execution)
 	}
 	if radarrClient.requestCalls != 1 || radarrClient.commandReads != 1 ||
-		radarrClient.historyReads != 2 || waiter.waits != 1 {
+		radarrClient.historyReads != 3 || waiter.waits != 1 {
 		t.Fatalf(
 			"request calls = %d, command reads = %d, history reads = %d, waits = %d",
 			radarrClient.requestCalls,
@@ -76,8 +76,9 @@ func TestExecutorResumesRequestedImportWithoutSubmittingAgain(t *testing.T) {
 			Version: casestore.ManualImportExecutionVersionV1,
 			CaseID:  authorized.CaseID, CapabilityID: authorized.CapabilityID,
 			FileID: authorized.FileID, ExpectedFingerprint: authorized.ExpectedFingerprint,
-			State: casestore.ManualImportRequested, PreparedAt: now.Add(-time.Minute),
-			UpdatedAt: now.Add(-time.Minute), CommandID: &commandID,
+			State: casestore.ManualImportRequested, HistoryIDBefore: 90,
+			PreparedAt: now.Add(-time.Minute),
+			UpdatedAt:  now.Add(-time.Minute), CommandID: &commandID,
 		},
 	}
 	radarrClient := &fakeRadarr{
@@ -109,7 +110,7 @@ func TestExecutorNeverRepeatsUncertainSubmission(t *testing.T) {
 
 	execution, err := executor.Execute(context.Background(), authorized)
 	assertUncertainSubmission(t, execution, err)
-	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 1 {
+	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 2 {
 		t.Fatalf(
 			"request calls = %d, history reads = %d",
 			radarrClient.requestCalls,
@@ -120,7 +121,7 @@ func TestExecutorNeverRepeatsUncertainSubmission(t *testing.T) {
 	radarrClient.requestErr = nil
 	execution, err = executor.Execute(context.Background(), authorized)
 	assertUncertainSubmission(t, execution, err)
-	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 2 {
+	if radarrClient.requestCalls != 1 || radarrClient.historyReads != 4 {
 		t.Fatalf(
 			"request calls after restart = %d, history reads = %d",
 			radarrClient.requestCalls,
@@ -347,6 +348,7 @@ type fakeStore struct {
 
 func (store *fakeStore) PrepareManualImport(
 	authorized decisionpolicy.AuthorizedManualImport,
+	historyIDBefore int64,
 	preparedAt time.Time,
 ) (casestore.ManualImportExecution, bool, error) {
 	if store.found {
@@ -357,7 +359,8 @@ func (store *fakeStore) PrepareManualImport(
 		Version: casestore.ManualImportExecutionVersionV1,
 		CaseID:  authorized.CaseID, CapabilityID: authorized.CapabilityID,
 		FileID: authorized.FileID, ExpectedFingerprint: authorized.ExpectedFingerprint,
-		State: casestore.ManualImportPrepared, PreparedAt: preparedAt, UpdatedAt: preparedAt,
+		State: casestore.ManualImportPrepared, HistoryIDBefore: historyIDBefore,
+		PreparedAt: preparedAt, UpdatedAt: preparedAt,
 	}
 	return store.execution, true, nil
 }

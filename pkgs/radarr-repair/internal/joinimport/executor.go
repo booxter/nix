@@ -138,6 +138,18 @@ func (executor *Executor) prepareAndSubmit(
 	if err != nil {
 		return execution, err
 	}
+	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
+		ctx,
+		request.MovieID,
+		request.DownloadID,
+	)
+	if err != nil {
+		return execution, fmt.Errorf(
+			"read Radarr imported-file history before joined-file scan: %w",
+			err,
+		)
+	}
+	request.HistoryIDBefore = radarr.HighestImportedFileHistoryID(imports)
 	preparedAt, err := executor.now()
 	if err != nil {
 		return execution, err
@@ -283,7 +295,8 @@ func (executor *Executor) confirm(
 	}
 	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
 		MovieID: execution.Scan.MovieID, DownloadID: execution.Scan.DownloadID,
-		DroppedPath: execution.Scan.Path, After: execution.Scan.PreparedAt,
+		DroppedPath:    execution.Scan.Path,
+		AfterHistoryID: execution.Scan.HistoryIDBefore,
 	})
 	if !found {
 		return execution, nil
