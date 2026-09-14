@@ -135,43 +135,23 @@ func (runner *Runner) Join(
 	command.Stdin = strings.NewReader(manifest)
 	command.Stdout = io.Discard
 	command.ExtraFiles = append(append([]*os.File(nil), parts...), output)
-	stderr, err := command.StderrPipe()
-	if err != nil {
-		return Result{}, &Failure{Kind: FailureExecution, cause: err}
-	}
-	defer stderr.Close()
-	if err := command.Start(); err != nil {
-		if errors.Is(joinContext.Err(), context.DeadlineExceeded) {
-			return Result{}, &Failure{Kind: FailureTimeout, cause: err}
-		}
-		if ctx.Err() != nil {
-			return Result{}, ctx.Err()
-		}
-		return Result{}, &Failure{Kind: FailureExecution, cause: err}
-	}
-	diagnosticsChannel := make(chan diagnosticRead, 1)
-	go func() {
-		diagnosticsChannel <- readDiagnostics(stderr)
-	}()
-	waitErr := command.Wait()
-	diagnosticResult := <-diagnosticsChannel
-	diagnostics := diagnosticResult.Diagnostics
-	if diagnosticResult.Err != nil && waitErr == nil {
-		waitErr = diagnosticResult.Err
-	}
-	if waitErr != nil {
+	diagnosticOutput := &diagnosticWriter{}
+	command.Stderr = diagnosticOutput
+	if err := command.Run(); err != nil {
+		diagnostics := diagnosticOutput.Diagnostics()
 		if ctx.Err() != nil {
 			return Result{}, ctx.Err()
 		}
 		if errors.Is(joinContext.Err(), context.DeadlineExceeded) {
 			return Result{}, &Failure{
-				Kind: FailureTimeout, Diagnostics: diagnostics, cause: waitErr,
+				Kind: FailureTimeout, Diagnostics: diagnostics, cause: err,
 			}
 		}
 		return Result{}, &Failure{
-			Kind: FailureExecution, Diagnostics: diagnostics, cause: waitErr,
+			Kind: FailureExecution, Diagnostics: diagnostics, cause: err,
 		}
 	}
+	diagnostics := diagnosticOutput.Diagnostics()
 
 	if err := output.Sync(); err != nil {
 		return Result{}, &Failure{
@@ -271,23 +251,26 @@ func concatManifest(partCount int) string {
 	return manifest.String()
 }
 
-type diagnosticRead struct {
-	Diagnostics Diagnostics
-	Err         error
+type diagnosticWriter struct {
+	data      []byte
+	truncated bool
 }
 
-func readDiagnostics(reader io.Reader) diagnosticRead {
-	data, readErr := io.ReadAll(io.LimitReader(reader, maxDiagnosticBytes+1))
-	truncated := len(data) > maxDiagnosticBytes
-	if truncated {
-		data = data[:maxDiagnosticBytes]
+func (writer *diagnosticWriter) Write(data []byte) (int, error) {
+	written := len(data)
+	remaining := maxDiagnosticBytes - len(writer.data)
+	if remaining > 0 {
+		writer.data = append(writer.data, data[:min(len(data), remaining)]...)
 	}
-	_, drainErr := io.Copy(io.Discard, reader)
-	return diagnosticRead{
-		Diagnostics: Diagnostics{
-			Text:      strings.TrimSpace(string(data)),
-			Truncated: truncated,
-		},
-		Err: errors.Join(readErr, drainErr),
+	if len(data) > remaining {
+		writer.truncated = true
+	}
+	return written, nil
+}
+
+func (writer *diagnosticWriter) Diagnostics() Diagnostics {
+	return Diagnostics{
+		Text:      strings.TrimSpace(string(writer.data)),
+		Truncated: writer.truncated,
 	}
 }

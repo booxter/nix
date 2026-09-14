@@ -51,7 +51,18 @@ func TestExecutorStagesRealMultipartMedia(t *testing.T) {
 
 	result, err := executor.Stage(context.Background(), execution)
 	if err != nil {
-		t.Fatalf("stage media: %v, cause = %v", err, errors.Unwrap(err))
+		var failure *Failure
+		if errors.As(err, &failure) {
+			cause := errors.Unwrap(err)
+			t.Fatalf(
+				"stage media: %v, cause = %v, root cause = %v, diagnostics = %q",
+				err,
+				cause,
+				errors.Unwrap(cause),
+				failure.Diagnostics.Text,
+			)
+		}
+		t.Fatal(err)
 	}
 	if result.Fingerprint == "" || result.SizeBytes <= 0 {
 		t.Fatalf("staged result = %#v", result)

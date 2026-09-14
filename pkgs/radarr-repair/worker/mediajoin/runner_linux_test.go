@@ -144,6 +144,25 @@ func TestRunnerReportsFFmpegFailureWithoutMediaPaths(t *testing.T) {
 	}
 }
 
+func TestRunnerBoundsFFmpegDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	writer := &diagnosticWriter{}
+	data := strings.Repeat("x", maxDiagnosticBytes+1)
+	written, err := writer.Write([]byte(data))
+	if err != nil || written != len(data) {
+		t.Fatalf("write diagnostics: bytes = %d, error = %v", written, err)
+	}
+	diagnostics := writer.Diagnostics()
+	if len(diagnostics.Text) != maxDiagnosticBytes || !diagnostics.Truncated {
+		t.Fatalf(
+			"diagnostics length = %d, truncated = %t",
+			len(diagnostics.Text),
+			diagnostics.Truncated,
+		)
+	}
+}
+
 func TestRunnerHonorsCancellationAndTimeout(t *testing.T) {
 	t.Parallel()
 
