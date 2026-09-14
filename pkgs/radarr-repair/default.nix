@@ -62,6 +62,7 @@ let
         "$out/bin/radarr-repair" validate-decision contracts/v1/examples/repair-decision-join.json
         "$out/bin/radarr-repair" inspect -h >/dev/null
         "$out/bin/radarr-repair" shadow -h >/dev/null
+        "$out/bin/radarr-repair" execute-case -h >/dev/null
         runHook postInstallCheck
       '';
 

@@ -234,13 +234,28 @@ func inspectAllCases(ctx context.Context, config inspectConfig) ([]casebuilder.A
 }
 
 func configureInspector(config inspectConfig) (*inspection.Inspector, func(), error) {
-	apiKey, err := readAPIKey(config.RadarrAPIKeyFile)
+	access, err := configureControllerAccess(config)
 	if err != nil {
 		return nil, nil, err
 	}
+	return access.inspector, access.Close, nil
+}
+
+type controllerAccess struct {
+	inspector *inspection.Inspector
+	radarr    *radarrsource.Client
+	worker    *workerclient.Client
+	transport *http.Transport
+}
+
+func configureControllerAccess(config inspectConfig) (*controllerAccess, error) {
+	apiKey, err := readAPIKey(config.RadarrAPIKeyFile)
+	if err != nil {
+		return nil, err
+	}
 	transport, err := directHTTPTransport()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	httpClient := &http.Client{
 		Transport: transport,
@@ -252,7 +267,7 @@ func configureInspector(config inspectConfig) (*inspection.Inspector, func(), er
 	radarrClient, err := radarrsource.New(config.RadarrURL, apiKey, httpClient)
 	if err != nil {
 		transport.CloseIdleConnections()
-		return nil, nil, fmt.Errorf("configure Radarr client: %w", err)
+		return nil, fmt.Errorf("configure Radarr client: %w", err)
 	}
 	transmissionClient, err := transmissionsource.New(
 		config.TransmissionURL,
@@ -261,12 +276,12 @@ func configureInspector(config inspectConfig) (*inspection.Inspector, func(), er
 	)
 	if err != nil {
 		transport.CloseIdleConnections()
-		return nil, nil, fmt.Errorf("configure Transmission client: %w", err)
+		return nil, fmt.Errorf("configure Transmission client: %w", err)
 	}
 	probeClient, err := workerclient.New(config.WorkerSocket, config.WorkerRoots, config.Timeout)
 	if err != nil {
 		transport.CloseIdleConnections()
-		return nil, nil, fmt.Errorf("configure media worker client: %w", err)
+		return nil, fmt.Errorf("configure media worker client: %w", err)
 	}
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
@@ -279,13 +294,22 @@ func configureInspector(config inspectConfig) (*inspection.Inspector, func(), er
 	if err != nil {
 		probeClient.Close()
 		transport.CloseIdleConnections()
-		return nil, nil, fmt.Errorf("configure inspector: %w", err)
+		return nil, fmt.Errorf("configure inspector: %w", err)
 	}
-	closeInspector := func() {
-		probeClient.Close()
-		transport.CloseIdleConnections()
+	return &controllerAccess{
+		inspector: inspector,
+		radarr:    radarrClient,
+		worker:    probeClient,
+		transport: transport,
+	}, nil
+}
+
+func (access *controllerAccess) Close() {
+	if access == nil {
+		return
 	}
-	return inspector, closeInspector, nil
+	access.worker.Close()
+	access.transport.CloseIdleConnections()
 }
 
 func directHTTPTransport() (*http.Transport, error) {
