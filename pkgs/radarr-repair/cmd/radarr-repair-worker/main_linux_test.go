@@ -94,11 +94,21 @@ func TestWorkerPublishesRealJoinOverUnixSocket(t *testing.T) {
 		RootID:        "root:downloads",
 		SchemaVersion: workercontracts.RadarrRepairWorkerV1,
 	}
+	inspect := inspectJoin(t, worker.client, request.ExecutionID, "request:inspect:absent")
+	if inspect.Success == nil ||
+		inspect.Success.State != workercontracts.InspectJoinAbsent {
+		t.Fatalf("inspect absent response = %#v", inspect)
+	}
 	response := stageJoin(t, worker.client, request)
 	if response.Success == nil || response.Success.Evidence.Format.DurationMS == nil ||
 		*response.Success.Evidence.Format.DurationMS < 300 ||
 		*response.Success.Evidence.Format.DurationMS > 600 {
 		t.Fatalf("stage response = %#v", response)
+	}
+	inspect = inspectJoin(t, worker.client, request.ExecutionID, "request:inspect:staged")
+	if inspect.Success == nil ||
+		inspect.Success.State != workercontracts.InspectJoinStaged {
+		t.Fatalf("inspect staged response = %#v", inspect)
 	}
 
 	request.RequestID = "request:join:integration:retry"
@@ -119,6 +129,11 @@ func TestWorkerPublishesRealJoinOverUnixSocket(t *testing.T) {
 	published := publishJoin(t, worker.client, publishRequest)
 	if published.Success == nil || published.Success.RootID != request.RootID {
 		t.Fatalf("publish response = %#v", published)
+	}
+	inspect = inspectJoin(t, worker.client, request.ExecutionID, "request:inspect:published")
+	if inspect.Success == nil ||
+		inspect.Success.State != workercontracts.InspectJoinPublished {
+		t.Fatalf("inspect published response = %#v", inspect)
 	}
 	publishedPath := filepath.Join(
 		rootPath,
@@ -201,6 +216,34 @@ func discardJoin(
 	}
 	status, data := postWorker(t, client, "/v1/join/discard", payload)
 	response, err := workercontracts.DecodeDiscardResponse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status != http.StatusOK || response.RequestID() != request.RequestID {
+		t.Fatalf("HTTP status = %d, response = %#v", status, response)
+	}
+	return response
+}
+
+func inspectJoin(
+	t *testing.T,
+	client *http.Client,
+	executionID string,
+	requestID string,
+) workercontracts.InspectJoinResponseV1 {
+	t.Helper()
+	request := workercontracts.InspectJoinRequestV1{
+		ExecutionID:   executionID,
+		Operation:     workercontracts.InspectJoinV1,
+		RequestID:     requestID,
+		SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+	}
+	payload, err := workercontracts.EncodeInspectJoinRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, data := postWorker(t, client, "/v1/join/inspect", payload)
+	response, err := workercontracts.DecodeInspectJoinResponse(data)
 	if err != nil {
 		t.Fatal(err)
 	}

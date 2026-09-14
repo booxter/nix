@@ -17,6 +17,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
+	"github.com/booxter/nix-config/radarr-repair/worker/joininspect"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstate"
@@ -155,11 +156,20 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	inspectExecutor, err := joininspect.NewExecutor(state)
+	if err != nil {
+		return err
+	}
+	inspectHandler, err := workerserver.NewInspectJoinHandler(inspectExecutor, *probeTimeout)
+	if err != nil {
+		return err
+	}
 	router, err := workerserver.NewRouter(
 		probeHandler,
 		stageJoinHandler,
 		publishHandler,
 		discardHandler,
+		inspectHandler,
 	)
 	if err != nil {
 		return err

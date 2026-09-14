@@ -10,6 +10,7 @@ func NewRouter(
 	stageJoin *StageJoinHandler,
 	publish *PublishHandler,
 	discard *DiscardHandler,
+	inspectJoin *InspectJoinHandler,
 ) (http.Handler, error) {
 	if probe == nil {
 		return nil, fmt.Errorf("probe handler is required")
@@ -23,10 +24,14 @@ func NewRouter(
 	if discard == nil {
 		return nil, fmt.Errorf("join discard handler is required")
 	}
+	if inspectJoin == nil {
+		return nil, fmt.Errorf("join inspection handler is required")
+	}
 	router := http.NewServeMux()
 	router.Handle(probePath, probe)
 	router.Handle(stageJoinPath, stageJoin)
 	router.Handle(publishPath, publish)
 	router.Handle(discardPath, discard)
+	router.Handle(inspectJoinPath, inspectJoin)
 	return router, nil
 }
