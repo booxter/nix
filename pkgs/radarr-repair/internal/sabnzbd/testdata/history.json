@@ -1,0 +1,20 @@
+{
+  "history": {
+    "noofslots": 1,
+    "slots": [
+      {
+        "bytes": 34265436989,
+        "category": "movies",
+        "completed": 1788552041,
+        "fail_message": "",
+        "loaded": false,
+        "name": "duplicate.the.death.of.robin.hood.2026.1080p.bluray.h264",
+        "nzo_id": "998d2f1f-cb49-4714-be1e-875f03e1f3c2",
+        "script_log": [],
+        "status": "Completed",
+        "storage": "/data/media/usenet/manual/duplicate.the.death.of.robin.hood.2026.1080p.bluray.h264/duplicate.the.death.of.robin.hood.2026.1080p.bluray.h264.mkv",
+        "time_added": 1788549636
+      }
+    ]
+  }
+}
