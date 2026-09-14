@@ -65,7 +65,11 @@ func (reader *Reader) Inventory(
 	if err != nil {
 		return controller.FileInventory{}, err
 	}
-	if err := validateManifestScope(manifest, scope); err != nil {
+	if err := validateManifestScope(
+		manifest,
+		scope,
+		correlation.Download.ContentOwnership,
+	); err != nil {
 		return controller.FileInventory{}, err
 	}
 
@@ -216,6 +220,19 @@ func buildManifest(
 	correlation controller.DownloadCorrelation,
 	inventoryRoot string,
 ) (map[string]*manifestFile, error) {
+	switch correlation.Download.ContentOwnership {
+	case controller.DownloadContentOutputTree:
+		if len(correlation.Download.Files) != 0 {
+			return nil, fmt.Errorf("output-tree download must not contain a source manifest")
+		}
+		return map[string]*manifestFile{}, nil
+	case controller.DownloadContentManifest:
+	default:
+		return nil, fmt.Errorf(
+			"download content ownership %q is invalid",
+			correlation.Download.ContentOwnership,
+		)
+	}
 	manifest := make(map[string]*manifestFile, len(correlation.Download.Files))
 	seenIndices := make(map[int]struct{}, len(correlation.Download.Files))
 	for _, file := range correlation.Download.Files {
@@ -239,7 +256,14 @@ func buildManifest(
 	return manifest, nil
 }
 
-func validateManifestScope(manifest map[string]*manifestFile, scope inventoryScope) error {
+func validateManifestScope(
+	manifest map[string]*manifestFile,
+	scope inventoryScope,
+	ownership controller.DownloadContentOwnership,
+) error {
+	if ownership == controller.DownloadContentOutputTree {
+		return nil
+	}
 	if !scope.singleFile {
 		return nil
 	}
@@ -402,7 +426,13 @@ func assembleInventory(
 		seenIDs[fileID] = struct{}{}
 
 		var reference *controller.DownloadFileReference
-		if expected, exists := manifest[observedFile.path]; exists {
+		if correlation.Download.ContentOwnership == controller.DownloadContentOutputTree {
+			reference = &controller.DownloadFileReference{
+				LengthBytes:    fingerprint.SizeBytes,
+				BytesCompleted: fingerprint.SizeBytes,
+				Selected:       true,
+			}
+		} else if expected, exists := manifest[observedFile.path]; exists {
 			if fingerprint.SizeBytes != expected.file.LengthBytes {
 				return controller.FileInventory{}, fmt.Errorf(
 					"filesystem entry %q size does not match download manifest",

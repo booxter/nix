@@ -114,6 +114,54 @@ func TestInventoryReconcilesSingleFileTorrent(t *testing.T) {
 	}
 }
 
+func TestInventoryOwnsEveryFileInCompletedOutputTree(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	for relative, contents := range map[string]string{
+		"Movie.mkv":   "movie",
+		"Subs/en.srt": "subtitle",
+	} {
+		path := filepath.Join(root, filepath.FromSlash(relative))
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	correlation := controller.DownloadCorrelation{
+		DownloadRoot: root,
+		Download: controller.Download{
+			ID: "sab-id", ContentOwnership: controller.DownloadContentOutputTree,
+		},
+	}
+
+	inventory, err := New().Inventory(context.Background(), correlation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inventory.Files) != 2 {
+		t.Fatalf("files = %#v", inventory.Files)
+	}
+	for _, file := range inventory.Files {
+		if file.DownloadFile == nil || file.DownloadFile.HasIndex ||
+			!file.DownloadFile.Selected ||
+			file.DownloadFile.BytesCompleted != file.Fingerprint.SizeBytes ||
+			file.DownloadFile.LengthBytes != file.Fingerprint.SizeBytes {
+			t.Fatalf("output-tree file = %#v", file)
+		}
+	}
+}
+
+func TestInventoryRejectsManifestForOutputTree(t *testing.T) {
+	t.Parallel()
+
+	correlation := inventoryFixture(t)
+	correlation.Download.ContentOwnership = controller.DownloadContentOutputTree
+	assertInventoryError(t, New(), correlation, "must not contain a source manifest")
+}
+
 func TestInventoryRejectsMismatchedSingleFileManifest(t *testing.T) {
 	t.Parallel()
 
