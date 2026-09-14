@@ -255,12 +255,15 @@ func joinExecutionAssembly(t *testing.T) (casebuilder.Assembly, decisionpolicy.A
 				DownloadID: downloadID, OutputPath: "/downloads/Movie.Release",
 				MovieID: &movieID,
 			},
-			Transmission: controller.TransmissionTorrent{
-				Hash: downloadID, Name: "Movie.Release", TotalSizeBytes: 300,
-				DownloadDirectory: "/downloads",
-				Files: []controller.TransmissionFile{
-					{Index: 0, Name: "Movie.Release/Movie.CD1.mkv", LengthBytes: 100, BytesCompleted: 100, Wanted: true},
-					{Index: 1, Name: "Movie.Release/Movie.CD2.mkv", LengthBytes: 200, BytesCompleted: 200, Wanted: true},
+			Download: controller.Download{
+				Client: controller.DownloadClientTransmission, SourceType: controller.DownloadSourceTorrent,
+				ID: downloadID, IDComparison: controller.DownloadIDASCIIInsensitive,
+				Name: "Movie.Release", Stable: true, Complete: true,
+				OutputPath: "/downloads/Movie.Release", TotalSizeBytes: 300,
+				ContentOwnership: controller.DownloadContentManifest,
+				Files: []controller.DownloadFile{
+					{Index: 0, HasIndex: true, Path: "/downloads/Movie.Release/Movie.CD1.mkv", LengthBytes: 100, BytesCompleted: 100, Selected: true},
+					{Index: 1, HasIndex: true, Path: "/downloads/Movie.Release/Movie.CD2.mkv", LengthBytes: 200, BytesCompleted: 200, Selected: true},
 				},
 				Labels: []string{},
 			},
@@ -341,8 +344,8 @@ func joinExecutionFile(
 		Fingerprint: controller.FileFingerprint{
 			Device: 1, Inode: uint64(index + 2), SizeBytes: size, MTimeNS: 3,
 		},
-		TorrentFile: &controller.TorrentFileReference{
-			Index: index, LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			Index: index, LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }

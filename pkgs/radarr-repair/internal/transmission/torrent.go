@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,13 +31,13 @@ var torrentFields = []string{
 // Existing tagged Go clients target Transmission's deprecated pre-4.1 RPC
 // envelope. The available 4.1-specific client has no tagged release and needs
 // a newer Go toolchain, so this package keeps its one read operation local.
-func (client *Client) FindTorrent(
+func (client *Client) FindDownload(
 	ctx context.Context,
 	downloadID string,
-) (controller.TransmissionTorrent, bool, error) {
+) (controller.Download, bool, error) {
 	if downloadID == "" || strings.TrimSpace(downloadID) != downloadID ||
-		strings.ContainsRune(downloadID, '\x00') {
-		return controller.TransmissionTorrent{}, false, fmt.Errorf("Transmission torrent ID is invalid")
+		strings.ContainsRune(downloadID, '\x00') || !validInfoHash(downloadID) {
+		return controller.Download{}, false, fmt.Errorf("Transmission torrent ID is invalid")
 	}
 
 	result, err := client.rpc(ctx, "torrent_get", torrentGetRequest{
@@ -44,30 +45,44 @@ func (client *Client) FindTorrent(
 		Fields: torrentFields,
 	})
 	if err != nil {
-		return controller.TransmissionTorrent{}, false, err
+		return controller.Download{}, false, err
 	}
 	var response torrentGetResponse
 	if err := decodeOneJSON(result, &response); err != nil {
-		return controller.TransmissionTorrent{}, false, fmt.Errorf("decode Transmission torrent result: %w", err)
+		return controller.Download{}, false, fmt.Errorf("decode Transmission torrent result: %w", err)
 	}
 	if response.Torrents == nil {
-		return controller.TransmissionTorrent{}, false, fmt.Errorf("Transmission torrent result is missing torrents")
+		return controller.Download{}, false, fmt.Errorf("Transmission torrent result is missing torrents")
 	}
 	switch len(response.Torrents) {
 	case 0:
-		return controller.TransmissionTorrent{}, false, nil
+		return controller.Download{}, false, nil
 	case 1:
 		torrent, err := mapTorrent(response.Torrents[0])
 		if err != nil {
-			return controller.TransmissionTorrent{}, false, err
+			return controller.Download{}, false, err
 		}
 		return torrent, true, nil
 	default:
-		return controller.TransmissionTorrent{}, false, fmt.Errorf(
+		return controller.Download{}, false, fmt.Errorf(
 			"Transmission returned %d torrents for one ID",
 			len(response.Torrents),
 		)
 	}
+}
+
+func validInfoHash(value string) bool {
+	if len(value) != 40 {
+		return false
+	}
+	for _, character := range value {
+		if !((character >= '0' && character <= '9') ||
+			(character >= 'a' && character <= 'f') ||
+			(character >= 'A' && character <= 'F')) {
+			return false
+		}
+	}
+	return true
 }
 
 type torrentGetResponse struct {
@@ -103,34 +118,34 @@ type torrentFileStatResponse struct {
 	Priority       *int   `json:"priority"`
 }
 
-func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
+func mapTorrent(raw *torrentResponse) (controller.Download, error) {
 	if raw == nil {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent is null")
+		return controller.Download{}, fmt.Errorf("Transmission torrent is null")
 	}
 	if raw.HashString == nil || strings.TrimSpace(*raw.HashString) == "" {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent hash is missing")
+		return controller.Download{}, fmt.Errorf("Transmission torrent hash is missing")
 	}
 	if raw.Name == nil || strings.TrimSpace(*raw.Name) == "" {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent name is missing")
+		return controller.Download{}, fmt.Errorf("Transmission torrent name is missing")
 	}
 	if raw.Status == nil || raw.PercentDone == nil || raw.LeftUntilDone == nil ||
 		raw.IsFinished == nil || raw.DownloadDir == nil || raw.TotalSize == nil {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent is missing required fields")
+		return controller.Download{}, fmt.Errorf("Transmission torrent is missing required fields")
 	}
 	if !finiteFraction(*raw.PercentDone) {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent completion is invalid")
+		return controller.Download{}, fmt.Errorf("Transmission torrent completion is invalid")
 	}
 	if *raw.LeftUntilDone < 0 || *raw.TotalSize < 0 {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent sizes must not be negative")
+		return controller.Download{}, fmt.Errorf("Transmission torrent sizes must not be negative")
 	}
 	if *raw.DownloadDir == "" || strings.ContainsRune(*raw.DownloadDir, '\x00') {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission download directory is invalid")
+		return controller.Download{}, fmt.Errorf("Transmission download directory is invalid")
 	}
 	if raw.Labels == nil || raw.Files == nil || raw.FileStats == nil {
-		return controller.TransmissionTorrent{}, fmt.Errorf("Transmission torrent is missing required collections")
+		return controller.Download{}, fmt.Errorf("Transmission torrent is missing required collections")
 	}
 	if len(raw.Files) != len(raw.FileStats) {
-		return controller.TransmissionTorrent{}, fmt.Errorf(
+		return controller.Download{}, fmt.Errorf(
 			"Transmission returned %d files and %d file stats",
 			len(raw.Files),
 			len(raw.FileStats),
@@ -139,10 +154,10 @@ func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
 
 	files, totalSize, err := mapFiles(raw.Files, raw.FileStats)
 	if err != nil {
-		return controller.TransmissionTorrent{}, err
+		return controller.Download{}, err
 	}
 	if totalSize != *raw.TotalSize {
-		return controller.TransmissionTorrent{}, fmt.Errorf(
+		return controller.Download{}, fmt.Errorf(
 			"Transmission file sizes total %d but torrent reports %d",
 			totalSize,
 			*raw.TotalSize,
@@ -150,43 +165,48 @@ func mapTorrent(raw *torrentResponse) (controller.TransmissionTorrent, error) {
 	}
 	labels, err := validateLabels(raw.Labels)
 	if err != nil {
-		return controller.TransmissionTorrent{}, err
+		return controller.Download{}, err
 	}
 	createdAt, err := requiredUnixTime("creation", raw.DateCreated)
 	if err != nil {
-		return controller.TransmissionTorrent{}, err
+		return controller.Download{}, err
 	}
 	addedAt, err := requiredUnixTime("added", raw.AddedDate)
 	if err != nil {
-		return controller.TransmissionTorrent{}, err
+		return controller.Download{}, err
 	}
 	completedAt, err := requiredUnixTime("completion", raw.DoneDate)
 	if err != nil {
-		return controller.TransmissionTorrent{}, err
+		return controller.Download{}, err
 	}
 
-	return controller.TransmissionTorrent{
-		Hash:              *raw.HashString,
-		Name:              *raw.Name,
-		Status:            controller.TransmissionStatus(*raw.Status),
-		PercentDone:       *raw.PercentDone,
-		LeftUntilDone:     *raw.LeftUntilDone,
-		Finished:          *raw.IsFinished,
-		DownloadDirectory: *raw.DownloadDir,
-		Labels:            labels,
-		CreatedAt:         createdAt,
-		AddedAt:           addedAt,
-		CompletedAt:       completedAt,
-		TotalSizeBytes:    *raw.TotalSize,
-		Files:             files,
+	for index := range files {
+		files[index].Path = filepath.Join(*raw.DownloadDir, filepath.FromSlash(files[index].Path))
+	}
+	return controller.Download{
+		Client:           controller.DownloadClientTransmission,
+		SourceType:       controller.DownloadSourceTorrent,
+		ID:               strings.ToLower(*raw.HashString),
+		IDComparison:     controller.DownloadIDASCIIInsensitive,
+		Name:             *raw.Name,
+		Stable:           stableTorrentStatus(*raw.Status),
+		Complete:         *raw.PercentDone == 1 && *raw.LeftUntilDone == 0,
+		OutputPath:       transmissionDownloadRoot(*raw.DownloadDir, *raw.Name),
+		Labels:           labels,
+		CreatedAt:        createdAt,
+		AddedAt:          addedAt,
+		CompletedAt:      completedAt,
+		TotalSizeBytes:   *raw.TotalSize,
+		ContentOwnership: controller.DownloadContentManifest,
+		Files:            files,
 	}, nil
 }
 
 func mapFiles(
 	files []*torrentFileResponse,
 	stats []*torrentFileStatResponse,
-) ([]controller.TransmissionFile, int64, error) {
-	result := make([]controller.TransmissionFile, len(files))
+) ([]controller.DownloadFile, int64, error) {
+	result := make([]controller.DownloadFile, len(files))
 	seenNames := make(map[string]struct{}, len(files))
 	var totalSize int64
 	for index := range files {
@@ -216,16 +236,35 @@ func mapFiles(
 			return nil, 0, fmt.Errorf("Transmission file sizes overflow")
 		}
 		totalSize += *file.Length
-		result[index] = controller.TransmissionFile{
+		result[index] = controller.DownloadFile{
 			Index:          index,
-			Name:           *file.Name,
+			HasIndex:       true,
+			Path:           *file.Name,
 			LengthBytes:    *file.Length,
 			BytesCompleted: *file.BytesCompleted,
-			Wanted:         *stat.Wanted,
-			Priority:       *stat.Priority,
+			Selected:       *stat.Wanted,
 		}
 	}
 	return result, totalSize, nil
+}
+
+func stableTorrentStatus(status int) bool {
+	return status == 0 || status == 5 || status == 6
+}
+
+func transmissionDownloadRoot(directory, name string) string {
+	if directory == "" || strings.TrimSpace(directory) != directory ||
+		strings.ContainsRune(directory, '\x00') || !filepath.IsAbs(directory) ||
+		filepath.Clean(directory) != directory {
+		return ""
+	}
+	if name == "" || strings.ContainsRune(name, '\x00') ||
+		strings.ContainsRune(name, filepath.Separator) || filepath.Base(name) != name ||
+		name == "." || name == ".." {
+		return ""
+	}
+	// Radarr replaces colons when it derives Transmission's queue output path.
+	return filepath.Join(directory, strings.ReplaceAll(name, ":", "_"))
 }
 
 func validateLabels(raw []string) ([]string, error) {

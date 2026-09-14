@@ -148,7 +148,7 @@ func TestValidateManualImportRequiresUnchangedLocalEvidence(t *testing.T) {
 		{
 			name: "incomplete torrent file",
 			mutate: func(assembly *casebuilder.Assembly) {
-				assembly.LocalSnapshot.Observation.Inventory.Files[0].TorrentFile.BytesCompleted--
+				assembly.LocalSnapshot.Observation.Inventory.Files[0].DownloadFile.BytesCompleted--
 			},
 			reason: ManualImportFileNotActionable,
 		},
@@ -366,8 +366,8 @@ func manualImportAssembly() casebuilder.Assembly {
 					Files: []controller.InventoryFile{{
 						ID: fileID, PathComponents: []string{"Example.Movie.mkv"},
 						Fingerprint: fingerprint,
-						TorrentFile: &controller.TorrentFileReference{
-							LengthBytes: size, BytesCompleted: size, Wanted: true,
+						DownloadFile: &controller.DownloadFileReference{
+							LengthBytes: size, BytesCompleted: size, Selected: true,
 						},
 					}},
 					Paths: []controller.FilePathMapping{{FileID: fileID, AbsolutePath: path}},

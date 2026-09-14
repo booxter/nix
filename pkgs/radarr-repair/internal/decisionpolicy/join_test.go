@@ -124,7 +124,7 @@ func TestValidateJoinRequiresSelectedLocalEvidence(t *testing.T) {
 		{
 			name: "file no longer actionable in snapshot",
 			mutate: func(assembly *casebuilder.Assembly) {
-				assembly.LocalSnapshot.Observation.Inventory.Files[1].TorrentFile.Wanted = false
+				assembly.LocalSnapshot.Observation.Inventory.Files[1].DownloadFile.Selected = false
 			},
 			reason: JoinFileNotActionable,
 		},
@@ -260,8 +260,8 @@ func joinInventoryFile(id controller.FileID, name string, size int64) controller
 		ID:             id,
 		PathComponents: []string{name},
 		Fingerprint:    controller.FileFingerprint{SizeBytes: size},
-		TorrentFile: &controller.TorrentFileReference{
-			LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }

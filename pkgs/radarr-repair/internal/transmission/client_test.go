@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 const (
@@ -20,7 +22,7 @@ const (
 	testSessionID  = "transmission-session-token"
 )
 
-func TestFindTorrent(t *testing.T) {
+func TestFindDownload(t *testing.T) {
 	t.Parallel()
 
 	requests := 0
@@ -47,17 +49,21 @@ func TestFindTorrent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	torrent, found, err := client.FindTorrent(context.Background(), testDownloadID)
+	torrent, found, err := client.FindDownload(context.Background(), testDownloadID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !found || requests != 2 {
 		t.Fatalf("found = %v, requests = %d", found, requests)
 	}
-	if torrent.Hash != "abcdef0123456789abcdef0123456789abcdef01" ||
-		torrent.Name != "Example.Movie.2026.1080p.BluRay-GROUP" || torrent.Status != 6 ||
-		torrent.PercentDone != 1 || torrent.LeftUntilDone != 0 || !torrent.Finished ||
-		torrent.DownloadDirectory != "/downloads" || torrent.TotalSizeBytes != 3_900_000_000 ||
+	if torrent.ID != "abcdef0123456789abcdef0123456789abcdef01" ||
+		torrent.IDComparison != controller.DownloadIDASCIIInsensitive ||
+		torrent.Client != controller.DownloadClientTransmission ||
+		torrent.SourceType != controller.DownloadSourceTorrent ||
+		torrent.Name != "Example.Movie.2026.1080p.BluRay-GROUP" ||
+		!torrent.Stable || !torrent.Complete ||
+		torrent.OutputPath != "/downloads/Example.Movie.2026.1080p.BluRay-GROUP" ||
+		torrent.TotalSizeBytes != 3_900_000_000 ||
 		!reflect.DeepEqual(torrent.Labels, []string{"radarr", "movies"}) {
 		t.Fatalf("torrent = %#v", torrent)
 	}
@@ -67,34 +73,34 @@ func TestFindTorrent(t *testing.T) {
 		!torrent.CompletedAt.Equal(time.Unix(1_788_706_800, 0)) {
 		t.Fatalf("torrent times = %v, %v, %v", torrent.CreatedAt, torrent.AddedAt, torrent.CompletedAt)
 	}
-	if len(torrent.Files) != 2 || torrent.Files[0].Index != 0 ||
-		torrent.Files[0].Name != "Example.Movie.2026/Example.Movie.2026.CD1.mkv" ||
+	if len(torrent.Files) != 2 || torrent.Files[0].Index != 0 || !torrent.Files[0].HasIndex ||
+		torrent.Files[0].Path != "/downloads/Example.Movie.2026/Example.Movie.2026.CD1.mkv" ||
 		torrent.Files[0].LengthBytes != 2_000_000_000 ||
-		torrent.Files[0].BytesCompleted != 2_000_000_000 || !torrent.Files[0].Wanted ||
-		torrent.Files[1].Index != 1 || torrent.Files[1].Priority != 1 {
+		torrent.Files[0].BytesCompleted != 2_000_000_000 || !torrent.Files[0].Selected ||
+		torrent.Files[1].Index != 1 || !torrent.Files[1].HasIndex {
 		t.Fatalf("files = %#v", torrent.Files)
 	}
 }
 
-func TestFindTorrentReturnsNotFound(t *testing.T) {
+func TestFindDownloadReturnsNotFound(t *testing.T) {
 	t.Parallel()
 
 	client, server := testClient(t, map[string]any{"torrents": []any{}})
 	defer server.Close()
-	_, found, err := client.FindTorrent(context.Background(), testDownloadID)
+	_, found, err := client.FindDownload(context.Background(), testDownloadID)
 	if err != nil || found {
 		t.Fatalf("found = %v, error = %v", found, err)
 	}
 }
 
-func TestFindTorrentRejectsInvalidID(t *testing.T) {
+func TestFindDownloadRejectsInvalidID(t *testing.T) {
 	t.Parallel()
 
 	client, err := New("http://127.0.0.1/transmission/rpc", time.Second, http.DefaultClient)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := client.FindTorrent(context.Background(), " invalid "); err == nil {
+	if _, _, err := client.FindDownload(context.Background(), " invalid "); err == nil {
 		t.Fatal("invalid ID was accepted")
 	}
 }
@@ -125,7 +131,7 @@ func TestNewRejectsInvalidConfiguration(t *testing.T) {
 	}
 }
 
-func TestFindTorrentRejectsInconsistentResult(t *testing.T) {
+func TestFindDownloadRejectsInconsistentResult(t *testing.T) {
 	t.Parallel()
 
 	valid := validTorrentResponse()
@@ -166,7 +172,7 @@ func TestFindTorrentRejectsInconsistentResult(t *testing.T) {
 			t.Parallel()
 			client, server := testClient(t, test.result)
 			defer server.Close()
-			_, _, err := client.FindTorrent(context.Background(), testDownloadID)
+			_, _, err := client.FindDownload(context.Background(), testDownloadID)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -174,7 +180,7 @@ func TestFindTorrentRejectsInconsistentResult(t *testing.T) {
 	}
 }
 
-func TestFindTorrentRejectsInvalidRPCResponses(t *testing.T) {
+func TestFindDownloadRejectsInvalidRPCResponses(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -199,7 +205,7 @@ func TestFindTorrentRejectsInvalidRPCResponses(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, _, err = client.FindTorrent(context.Background(), testDownloadID)
+			_, _, err = client.FindDownload(context.Background(), testDownloadID)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -207,7 +213,7 @@ func TestFindTorrentRejectsInvalidRPCResponses(t *testing.T) {
 	}
 }
 
-func TestFindTorrentSanitizesErrors(t *testing.T) {
+func TestFindDownloadSanitizesErrors(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -233,7 +239,7 @@ func TestFindTorrentSanitizesErrors(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, _, err = client.FindTorrent(context.Background(), testDownloadID)
+			_, _, err = client.FindDownload(context.Background(), testDownloadID)
 			if err == nil || strings.Contains(err.Error(), "secret") {
 				t.Fatalf("error = %v", err)
 			}
@@ -249,7 +255,7 @@ func TestFindTorrentSanitizesErrors(t *testing.T) {
 	}
 }
 
-func TestFindTorrentRejectsOversizedResponse(t *testing.T) {
+func TestFindDownloadRejectsOversizedResponse(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
@@ -262,13 +268,13 @@ func TestFindTorrentRejectsOversizedResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = client.FindTorrent(context.Background(), testDownloadID)
+	_, _, err = client.FindDownload(context.Background(), testDownloadID)
 	if !errors.Is(err, errResponseTooLarge) {
 		t.Fatalf("error = %v", err)
 	}
 }
 
-func TestFindTorrentTimesOut(t *testing.T) {
+func TestFindDownloadTimesOut(t *testing.T) {
 	t.Parallel()
 
 	release := make(chan struct{})
@@ -280,7 +286,7 @@ func TestFindTorrentTimesOut(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = client.FindTorrent(context.Background(), testDownloadID)
+	_, _, err = client.FindDownload(context.Background(), testDownloadID)
 	close(release)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v", err)

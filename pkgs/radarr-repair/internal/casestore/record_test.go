@@ -184,8 +184,8 @@ func recordTestAssembly(t *testing.T) casebuilder.Assembly {
 		Fingerprint: controller.FileFingerprint{
 			Device: 1, Inode: 2, SizeBytes: 100, MTimeNS: 3,
 		},
-		TorrentFile: &controller.TorrentFileReference{
-			Index: 0, LengthBytes: 100, BytesCompleted: 100, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			Index: 0, LengthBytes: 100, BytesCompleted: 100, Selected: true,
 		},
 	}
 	path := "/downloads/PoorlyNamed.mkv"
@@ -199,12 +199,15 @@ func recordTestAssembly(t *testing.T) casebuilder.Assembly {
 				TrackedDownloadState: "importPending", DownloadID: recordTestDownloadID,
 				OutputPath: path,
 			},
-			Transmission: controller.TransmissionTorrent{
-				Hash: recordTestDownloadID, Name: "Poorly Named Feature",
-				TotalSizeBytes: 100,
-				Files: []controller.TransmissionFile{{
-					Index: 0, Name: "PoorlyNamed.mkv", LengthBytes: 100,
-					BytesCompleted: 100, Wanted: true,
+			Download: controller.Download{
+				Client: controller.DownloadClientTransmission, SourceType: controller.DownloadSourceTorrent,
+				ID: recordTestDownloadID, IDComparison: controller.DownloadIDASCIIInsensitive,
+				Name: "Poorly Named Feature", Stable: true, Complete: true,
+				OutputPath: path, TotalSizeBytes: 100,
+				ContentOwnership: controller.DownloadContentManifest,
+				Files: []controller.DownloadFile{{
+					Index: 0, HasIndex: true, Path: path, LengthBytes: 100,
+					BytesCompleted: 100, Selected: true,
 				}},
 				Labels: []string{},
 			},

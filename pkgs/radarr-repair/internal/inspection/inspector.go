@@ -20,7 +20,7 @@ type RadarrReader interface {
 type Dependencies struct {
 	Clock             controller.Clock
 	Radarr            RadarrReader
-	Transmission      controller.TransmissionReader
+	Downloads         controller.DownloadReader
 	Files             controller.FileInventoryReader
 	Probes            controller.MediaProbeReader
 	CollectionTimeout time.Duration
@@ -73,8 +73,8 @@ func newInspector(dependencies Dependencies, assemble assembleFunc) (*Inspector,
 		return nil, fmt.Errorf("inspection clock is required")
 	case dependencies.Radarr == nil:
 		return nil, fmt.Errorf("Radarr reader is required")
-	case dependencies.Transmission == nil:
-		return nil, fmt.Errorf("Transmission reader is required")
+	case dependencies.Downloads == nil:
+		return nil, fmt.Errorf("download reader is required")
 	case dependencies.Files == nil:
 		return nil, fmt.Errorf("file inventory reader is required")
 	case dependencies.Probes == nil:
@@ -164,17 +164,17 @@ func (inspector *Inspector) inspectRecord(
 	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
 
-	torrent, found, err := inspector.dependencies.Transmission.FindTorrent(collectionContext, record.DownloadID)
+	download, found, err := inspector.dependencies.Downloads.FindDownload(collectionContext, record.DownloadID)
 	if err != nil {
-		return casebuilder.Assembly{}, fmt.Errorf("read Transmission torrent: %w", err)
+		return casebuilder.Assembly{}, fmt.Errorf("read download: %w", err)
 	}
 	if !found {
 		return casebuilder.Assembly{}, fmt.Errorf(
-			"Transmission torrent for queue record %d was not found",
+			"download for queue record %d was not found",
 			record.ID,
 		)
 	}
-	correlation := controller.CorrelateDownload(record, torrent)
+	correlation := controller.CorrelateDownload(record, download)
 	if !correlation.Eligible() {
 		return casebuilder.Assembly{}, fmt.Errorf(
 			"queue record %d has an ineligible download correlation: %v",

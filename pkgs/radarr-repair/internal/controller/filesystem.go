@@ -14,11 +14,12 @@ type FileID string
 
 type FileFingerprint = fileidentity.Snapshot
 
-type TorrentFileReference struct {
+type DownloadFileReference struct {
 	Index          int
+	HasIndex       bool
 	LengthBytes    int64
 	BytesCompleted int64
-	Wanted         bool
+	Selected       bool
 }
 
 // InventoryFile contains relative identity and local metadata. Absolute paths
@@ -27,7 +28,7 @@ type InventoryFile struct {
 	ID             FileID
 	PathComponents []string
 	Fingerprint    FileFingerprint
-	TorrentFile    *TorrentFileReference
+	DownloadFile   *DownloadFileReference
 }
 
 type FilePathMapping struct {

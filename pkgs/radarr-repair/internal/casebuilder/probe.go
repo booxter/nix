@@ -32,11 +32,11 @@ func mapFile(
 	var torrentIndex *int64
 	var wanted *bool
 	var bytesCompleted *int64
-	if file.TorrentFile != nil {
-		mappedIndex := int64(file.TorrentFile.Index)
-		mappedWanted := file.TorrentFile.Wanted
-		mappedBytesCompleted := file.TorrentFile.BytesCompleted
+	if file.DownloadFile != nil {
+		mappedIndex := int64(file.DownloadFile.Index)
 		torrentIndex = &mappedIndex
+		mappedWanted := file.DownloadFile.Selected
+		mappedBytesCompleted := file.DownloadFile.BytesCompleted
 		wanted = &mappedWanted
 		bytesCompleted = &mappedBytesCompleted
 	}

@@ -79,19 +79,19 @@ func classifyMediaFile(file InventoryFile) MediaFileAssessment {
 	if supported {
 		assessment.Extension = extension
 	}
-	if file.TorrentFile == nil {
+	if file.DownloadFile == nil {
 		assessment.ExclusionReason = MediaFileUntracked
 		return assessment
 	}
-	if !file.TorrentFile.Wanted {
+	if !file.DownloadFile.Selected {
 		assessment.ExclusionReason = MediaFileUnwanted
 		return assessment
 	}
-	if file.TorrentFile.BytesCompleted != file.TorrentFile.LengthBytes {
+	if file.DownloadFile.BytesCompleted != file.DownloadFile.LengthBytes {
 		assessment.ExclusionReason = MediaFileIncomplete
 		return assessment
 	}
-	if file.Fingerprint.SizeBytes <= 0 || file.TorrentFile.LengthBytes <= 0 {
+	if file.Fingerprint.SizeBytes <= 0 || file.DownloadFile.LengthBytes <= 0 {
 		assessment.ExclusionReason = MediaFileEmpty
 		return assessment
 	}

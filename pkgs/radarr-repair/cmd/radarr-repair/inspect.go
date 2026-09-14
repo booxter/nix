@@ -286,7 +286,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
-		Transmission:      transmissionClient,
+		Downloads:         transmissionClient,
 		Files:             filesource.New(),
 		Probes:            probeClient,
 		CollectionTimeout: config.CollectionTimeout,

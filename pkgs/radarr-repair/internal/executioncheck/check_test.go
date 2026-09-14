@@ -426,8 +426,8 @@ func executionFile(
 		Fingerprint: controller.FileFingerprint{
 			Device: 1, Inode: inode, SizeBytes: size, MTimeNS: 3,
 		},
-		TorrentFile: &controller.TorrentFileReference{
-			LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }

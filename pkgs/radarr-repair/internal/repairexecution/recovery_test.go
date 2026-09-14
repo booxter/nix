@@ -310,8 +310,8 @@ func manualRecoveryScenario(
 					Files: []controller.InventoryFile{{
 						ID: fileID, PathComponents: []string{"Example.Movie.mkv"},
 						Fingerprint: fingerprint,
-						TorrentFile: &controller.TorrentFileReference{
-							LengthBytes: size, BytesCompleted: size, Wanted: true,
+						DownloadFile: &controller.DownloadFileReference{
+							LengthBytes: size, BytesCompleted: size, Selected: true,
 						},
 					}},
 					Paths: []controller.FilePathMapping{{FileID: fileID, AbsolutePath: path}},
@@ -346,8 +346,8 @@ func joinInventoryFile(id controller.FileID, name string, size int64) controller
 	return controller.InventoryFile{
 		ID: id, PathComponents: []string{name},
 		Fingerprint: controller.FileFingerprint{SizeBytes: size},
-		TorrentFile: &controller.TorrentFileReference{
-			LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }

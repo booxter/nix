@@ -283,7 +283,7 @@ func TestInspectRejectsUnsafeOrIncompleteCollection(t *testing.T) {
 		{
 			name: "ineligible correlation",
 			mutate: func(fixture *inspectionTestFixture) {
-				fixture.transmission.torrent.Hash = "abcdef0123456789abcdef0123456789abcdef02"
+				fixture.transmission.torrent.ID = "abcdef0123456789abcdef0123456789abcdef02"
 			},
 			want: "ineligible download correlation",
 		},
@@ -457,12 +457,12 @@ func inspectionFixture() inspectionTestFixture {
 
 func (fixture inspectionTestFixture) dependencies() Dependencies {
 	return Dependencies{
-		Clock: fixture.clock, Radarr: fixture.radarr, Transmission: fixture.transmission,
+		Clock: fixture.clock, Radarr: fixture.radarr, Downloads: fixture.transmission,
 		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
 }
 
-func eligibleDownload() (controller.RadarrQueueRecord, controller.TransmissionTorrent) {
+func eligibleDownload() (controller.RadarrQueueRecord, controller.Download) {
 	movieID := int64(42)
 	record := controller.RadarrQueueRecord{
 		ID: 71, MovieID: &movieID, Title: "Example.Movie.2024", Status: "completed",
@@ -476,12 +476,15 @@ func eligibleDownload() (controller.RadarrQueueRecord, controller.TransmissionTo
 		DownloadID: strings.ToUpper(testDownloadHash), Protocol: "torrent",
 		OutputPath: "/downloads/Example_Movie",
 	}
-	torrent := controller.TransmissionTorrent{
-		Hash: testDownloadHash, Name: "Example:Movie", Status: 6,
-		PercentDone: 1, DownloadDirectory: "/downloads", TotalSizeBytes: 3_000,
-		Files: []controller.TransmissionFile{
-			{Index: 0, Name: "Example:Movie/CD1.mkv", LengthBytes: 1_000, BytesCompleted: 1_000, Wanted: true},
-			{Index: 1, Name: "Example:Movie/CD2.mkv", LengthBytes: 2_000, BytesCompleted: 2_000, Wanted: true},
+	torrent := controller.Download{
+		Client: controller.DownloadClientTransmission, SourceType: controller.DownloadSourceTorrent,
+		ID: testDownloadHash, IDComparison: controller.DownloadIDASCIIInsensitive,
+		Name: "Example:Movie", Stable: true, Complete: true,
+		OutputPath: "/downloads/Example_Movie", TotalSizeBytes: 3_000,
+		ContentOwnership: controller.DownloadContentManifest,
+		Files: []controller.DownloadFile{
+			{Index: 0, HasIndex: true, Path: "/downloads/Example_Movie/CD1.mkv", LengthBytes: 1_000, BytesCompleted: 1_000, Selected: true},
+			{Index: 1, HasIndex: true, Path: "/downloads/Example_Movie/CD2.mkv", LengthBytes: 2_000, BytesCompleted: 2_000, Selected: true},
 		},
 	}
 	return record, torrent
@@ -497,8 +500,8 @@ func inventoryFile(
 	return controller.InventoryFile{
 		ID: id, PathComponents: []string{name},
 		Fingerprint: controller.FileFingerprint{Device: 1, Inode: inode, SizeBytes: size, MTimeNS: 100},
-		TorrentFile: &controller.TorrentFileReference{
-			Index: torrentIndex, LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			Index: torrentIndex, HasIndex: true, LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }
@@ -565,15 +568,15 @@ func (reader *fakeRadarr) ReadManualImports(
 }
 
 type fakeTransmission struct {
-	torrent    controller.TransmissionTorrent
+	torrent    controller.Download
 	found      bool
 	downloadID string
 }
 
-func (reader *fakeTransmission) FindTorrent(
+func (reader *fakeTransmission) FindDownload(
 	_ context.Context,
 	downloadID string,
-) (controller.TransmissionTorrent, bool, error) {
+) (controller.Download, bool, error) {
 	reader.downloadID = downloadID
 	return reader.torrent, reader.found, nil
 }

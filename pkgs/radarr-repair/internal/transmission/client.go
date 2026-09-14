@@ -52,7 +52,7 @@ type Client struct {
 	sessionID      string
 }
 
-var _ controller.TransmissionReader = (*Client)(nil)
+var _ controller.DownloadReader = (*Client)(nil)
 
 func New(endpoint string, requestTimeout time.Duration, httpClient *http.Client) (*Client, error) {
 	if httpClient == nil {

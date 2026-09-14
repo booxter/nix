@@ -100,7 +100,7 @@ func TestStorePutRejectsDifferentLocalState(t *testing.T) {
 	}
 
 	observation := first.Snapshot.Observation
-	observation.Correlation.Transmission.Files[0].Priority++
+	observation.Correlation.Download.Files[0].BytesCompleted--
 	changedAssembly, err := casebuilder.Assemble(observation)
 	if err != nil {
 		t.Fatal(err)

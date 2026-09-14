@@ -54,21 +54,21 @@ func TestClassifyMediaFilesRetainsExcludedFilesAsEvidence(t *testing.T) {
 		{
 			name: "untracked",
 			mutate: func(file *InventoryFile) {
-				file.TorrentFile = nil
+				file.DownloadFile = nil
 			},
 			want: MediaFileUntracked, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "unwanted",
 			mutate: func(file *InventoryFile) {
-				file.TorrentFile.Wanted = false
+				file.DownloadFile.Selected = false
 			},
 			want: MediaFileUnwanted, wantExtension: MediaExtensionMKV,
 		},
 		{
 			name: "incomplete",
 			mutate: func(file *InventoryFile) {
-				file.TorrentFile.BytesCompleted--
+				file.DownloadFile.BytesCompleted--
 			},
 			want: MediaFileIncomplete, wantExtension: MediaExtensionMKV,
 		},
@@ -76,8 +76,8 @@ func TestClassifyMediaFilesRetainsExcludedFilesAsEvidence(t *testing.T) {
 			name: "empty",
 			mutate: func(file *InventoryFile) {
 				file.Fingerprint.SizeBytes = 0
-				file.TorrentFile.LengthBytes = 0
-				file.TorrentFile.BytesCompleted = 0
+				file.DownloadFile.LengthBytes = 0
+				file.DownloadFile.BytesCompleted = 0
 			},
 			want: MediaFileEmpty, wantExtension: MediaExtensionMKV,
 		},
@@ -127,7 +127,7 @@ func TestClassifyMediaFilesPreservesInventoryOrder(t *testing.T) {
 
 	first := completeInventoryFile("file:first", []string{"Movie-part1.mkv"})
 	second := completeInventoryFile("file:second", []string{"README.txt"})
-	second.TorrentFile = nil
+	second.DownloadFile = nil
 	third := completeInventoryFile("file:third", []string{"Movie-part2.mkv"})
 
 	assessments := ClassifyMediaFiles(FileInventory{Files: []InventoryFile{first, second, third}})
@@ -178,11 +178,11 @@ func completeInventoryFile(id FileID, pathComponents []string) InventoryFile {
 		Fingerprint: FileFingerprint{
 			SizeBytes: 100,
 		},
-		TorrentFile: &TorrentFileReference{
+		DownloadFile: &DownloadFileReference{
 			Index:          0,
 			LengthBytes:    100,
 			BytesCompleted: 100,
-			Wanted:         true,
+			Selected:       true,
 		},
 	}
 }

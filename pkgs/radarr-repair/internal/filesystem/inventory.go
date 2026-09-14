@@ -208,7 +208,7 @@ func resolveInventoryScope(downloadRoot string) (inventoryScope, controller.File
 }
 
 type manifestFile struct {
-	file  controller.TransmissionFile
+	file  controller.DownloadFile
 	found bool
 }
 
@@ -216,23 +216,23 @@ func buildManifest(
 	correlation controller.DownloadCorrelation,
 	inventoryRoot string,
 ) (map[string]*manifestFile, error) {
-	manifest := make(map[string]*manifestFile, len(correlation.Transmission.Files))
-	seenIndices := make(map[int]struct{}, len(correlation.Transmission.Files))
-	for _, file := range correlation.Transmission.Files {
+	manifest := make(map[string]*manifestFile, len(correlation.Download.Files))
+	seenIndices := make(map[int]struct{}, len(correlation.Download.Files))
+	for _, file := range correlation.Download.Files {
 		if file.Index < 0 {
-			return nil, fmt.Errorf("Transmission file index %d is invalid", file.Index)
+			return nil, fmt.Errorf("download file index %d is invalid", file.Index)
 		}
 		if _, exists := seenIndices[file.Index]; exists {
-			return nil, fmt.Errorf("Transmission file index %d is duplicated", file.Index)
+			return nil, fmt.Errorf("download file index %d is duplicated", file.Index)
 		}
 		seenIndices[file.Index] = struct{}{}
 
-		relative, err := manifestRelativePath(correlation, inventoryRoot, file.Name)
+		relative, err := manifestRelativePath(inventoryRoot, file.Path)
 		if err != nil {
-			return nil, fmt.Errorf("Transmission file %d: %w", file.Index, err)
+			return nil, fmt.Errorf("download file %d: %w", file.Index, err)
 		}
 		if _, exists := manifest[relative]; exists {
-			return nil, fmt.Errorf("Transmission path %q is duplicated", relative)
+			return nil, fmt.Errorf("download path %q is duplicated", relative)
 		}
 		manifest[relative] = &manifestFile{file: file}
 	}
@@ -244,28 +244,22 @@ func validateManifestScope(manifest map[string]*manifestFile, scope inventorySco
 		return nil
 	}
 	if len(manifest) != 1 {
-		return fmt.Errorf("single-file download has %d Transmission files", len(manifest))
+		return fmt.Errorf("single-file download has %d manifest files", len(manifest))
 	}
 	if _, exists := manifest[filepath.ToSlash(scope.walkPath)]; !exists {
-		return fmt.Errorf("Transmission manifest does not match single-file download")
+		return fmt.Errorf("download manifest does not match single-file download")
 	}
 	return nil
 }
 
-func manifestRelativePath(
-	correlation controller.DownloadCorrelation,
-	inventoryRoot string,
-	name string,
-) (string, error) {
-	if name == "" || strings.ContainsRune(name, '\x00') || filepath.IsAbs(name) {
+func manifestRelativePath(inventoryRoot, name string) (string, error) {
+	if name == "" || strings.ContainsRune(name, '\x00') || !filepath.IsAbs(name) {
 		return "", fmt.Errorf("path is invalid")
 	}
-	nativeName := filepath.FromSlash(name)
-	if filepath.Clean(nativeName) != nativeName || nativeName == "." {
+	if filepath.Clean(name) != name {
 		return "", fmt.Errorf("path is not canonical")
 	}
-	absolute := filepath.Join(correlation.Transmission.DownloadDirectory, nativeName)
-	relative, err := filepath.Rel(inventoryRoot, absolute)
+	relative, err := filepath.Rel(inventoryRoot, name)
 	if err != nil || relative == "." || filepath.IsAbs(relative) ||
 		relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("path is outside the download root")
@@ -401,33 +395,34 @@ func assembleInventory(
 				err,
 			)
 		}
-		fileID := opaqueFileID(correlation.Transmission.Hash, observedFile.path)
+		fileID := opaqueFileID(correlation.Download.ID, observedFile.path)
 		if _, exists := seenIDs[fileID]; exists {
 			return controller.FileInventory{}, fmt.Errorf("opaque file ID collision")
 		}
 		seenIDs[fileID] = struct{}{}
 
-		var reference *controller.TorrentFileReference
+		var reference *controller.DownloadFileReference
 		if expected, exists := manifest[observedFile.path]; exists {
 			if fingerprint.SizeBytes != expected.file.LengthBytes {
 				return controller.FileInventory{}, fmt.Errorf(
-					"filesystem entry %q size does not match Transmission",
+					"filesystem entry %q size does not match download manifest",
 					observedFile.path,
 				)
 			}
 			expected.found = true
-			reference = &controller.TorrentFileReference{
+			reference = &controller.DownloadFileReference{
 				Index:          expected.file.Index,
+				HasIndex:       expected.file.HasIndex,
 				LengthBytes:    expected.file.LengthBytes,
 				BytesCompleted: expected.file.BytesCompleted,
-				Wanted:         expected.file.Wanted,
+				Selected:       expected.file.Selected,
 			}
 		}
 		inventory.Files = append(inventory.Files, controller.InventoryFile{
 			ID:             fileID,
 			PathComponents: strings.Split(observedFile.path, "/"),
 			Fingerprint:    fingerprint,
-			TorrentFile:    reference,
+			DownloadFile:   reference,
 		})
 		inventory.Paths = append(inventory.Paths, controller.FilePathMapping{
 			FileID:       fileID,
@@ -442,9 +437,9 @@ func assembleInventory(
 	sort.Strings(manifestPaths)
 	for _, relative := range manifestPaths {
 		expected := manifest[relative]
-		if expected.file.Wanted && !expected.found {
+		if expected.file.Selected && !expected.found {
 			return controller.FileInventory{}, fmt.Errorf(
-				"wanted Transmission file %q is missing",
+				"selected download file %q is missing",
 				relative,
 			)
 		}
@@ -452,9 +447,9 @@ func assembleInventory(
 	return inventory, nil
 }
 
-func opaqueFileID(torrentHash, relativePath string) controller.FileID {
+func opaqueFileID(downloadID, relativePath string) controller.FileID {
 	digest := sha256.Sum256([]byte(
-		"radarr-repair-file-v1\x00" + strings.ToLower(torrentHash) + "\x00" + relativePath,
+		"radarr-repair-file-v1\x00" + downloadID + "\x00" + relativePath,
 	))
 	return controller.FileID(fmt.Sprintf("file:%x", digest))
 }

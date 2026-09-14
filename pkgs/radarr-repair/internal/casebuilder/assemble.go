@@ -92,7 +92,7 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, fmt.Errorf("probe outcomes do not exactly match inventory files")
 	}
 
-	downloadRef := opaqueID("download", strings.ToLower(observation.Correlation.Transmission.Hash))
+	downloadRef := opaqueID("download", observation.Correlation.Download.ID)
 	manualImports, err := matchManualImports(observation.ManualImports, inventoryFiles, paths)
 	if err != nil {
 		return Assembly{}, err
@@ -114,7 +114,7 @@ func Assemble(observation Observation) (Assembly, error) {
 		SchemaVersion: contracts.RadarrRepairV1,
 		ObservedAt:    observation.ObservedAt.UTC(),
 		Radarr:        radarrEvidence,
-		Download:      mapDownload(observation.Correlation.Transmission, downloadRef),
+		Download:      mapDownload(observation.Correlation.Download, downloadRef),
 		Files:         files,
 		Capabilities:  capabilities,
 	}
@@ -270,18 +270,18 @@ func indexProbes(probes []FileProbe) (map[controller.FileID]controller.MediaProb
 	return indexed, nil
 }
 
-func mapDownload(torrent controller.TransmissionTorrent, downloadRef string) contracts.Download {
-	completedAt := utcTime(torrent.CompletedAt)
+func mapDownload(download controller.Download, downloadRef string) contracts.Download {
+	completedAt := utcTime(download.CompletedAt)
 	return contracts.Download{
 		SourceType:     contracts.Torrent,
 		Client:         contracts.Transmission,
 		DownloadRef:    downloadRef,
-		Name:           torrent.Name,
-		TotalSizeBytes: torrent.TotalSizeBytes,
-		FileCount:      int64(len(torrent.Files)),
+		Name:           download.Name,
+		TotalSizeBytes: download.TotalSizeBytes,
+		FileCount:      int64(len(download.Files)),
 		IsComplete:     true,
 		CompletedAt:    completedAt,
-		Labels:         clone(torrent.Labels),
+		Labels:         clone(download.Labels),
 	}
 }
 
@@ -311,7 +311,7 @@ func rejectLocalValues(request contracts.RepairCaseV1, observation Observation) 
 	}
 	for _, identifier := range []string{
 		observation.Correlation.Radarr.DownloadID,
-		observation.Correlation.Transmission.Hash,
+		observation.Correlation.Download.ID,
 	} {
 		if identifier != "" && strings.Contains(strings.ToLower(encoded), strings.ToLower(identifier)) {
 			return fmt.Errorf("planner request contains a raw download identifier")
@@ -324,7 +324,10 @@ func localPaths(observation Observation) []string {
 	paths := []string{
 		observation.Correlation.DownloadRoot,
 		observation.Correlation.Radarr.OutputPath,
-		observation.Correlation.Transmission.DownloadDirectory,
+		observation.Correlation.Download.OutputPath,
+	}
+	for _, file := range observation.Correlation.Download.Files {
+		paths = append(paths, file.Path)
 	}
 	for _, mapping := range observation.Inventory.Paths {
 		paths = append(paths, mapping.AbsolutePath)

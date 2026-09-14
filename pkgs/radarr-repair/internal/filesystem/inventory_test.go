@@ -52,15 +52,15 @@ func TestInventoryReconcilesRegularFiles(t *testing.T) {
 			t.Fatalf("path %d = %q, want %q", index, inventory.Paths[index].AbsolutePath, wantPath)
 		}
 	}
-	if inventory.Files[0].TorrentFile == nil || inventory.Files[0].TorrentFile.Index != 0 ||
-		!inventory.Files[0].TorrentFile.Wanted || inventory.Files[0].TorrentFile.LengthBytes != 3 {
-		t.Fatalf("first torrent reference = %#v", inventory.Files[0].TorrentFile)
+	if inventory.Files[0].DownloadFile == nil || inventory.Files[0].DownloadFile.Index != 0 ||
+		!inventory.Files[0].DownloadFile.Selected || inventory.Files[0].DownloadFile.LengthBytes != 3 {
+		t.Fatalf("first torrent reference = %#v", inventory.Files[0].DownloadFile)
 	}
-	if inventory.Files[1].TorrentFile == nil || inventory.Files[1].TorrentFile.Index != 1 {
-		t.Fatalf("second torrent reference = %#v", inventory.Files[1].TorrentFile)
+	if inventory.Files[1].DownloadFile == nil || inventory.Files[1].DownloadFile.Index != 1 {
+		t.Fatalf("second torrent reference = %#v", inventory.Files[1].DownloadFile)
 	}
-	if inventory.Files[2].TorrentFile != nil {
-		t.Fatalf("extra file has torrent reference %#v", inventory.Files[2].TorrentFile)
+	if inventory.Files[2].DownloadFile != nil {
+		t.Fatalf("extra file has torrent reference %#v", inventory.Files[2].DownloadFile)
 	}
 
 	again, err := reader.Inventory(context.Background(), correlation)
@@ -85,16 +85,16 @@ func TestInventoryReconcilesSingleFileTorrent(t *testing.T) {
 	}
 	correlation := controller.DownloadCorrelation{
 		DownloadRoot: path,
-		Transmission: controller.TransmissionTorrent{
-			Hash:              inventoryTorrentHash,
-			DownloadDirectory: parent,
-			Files: []controller.TransmissionFile{
+		Download: controller.Download{
+			ID: inventoryTorrentHash, ContentOwnership: controller.DownloadContentManifest,
+			Files: []controller.DownloadFile{
 				{
 					Index:          0,
-					Name:           name,
+					HasIndex:       true,
+					Path:           path,
 					LengthBytes:    5,
 					BytesCompleted: 5,
-					Wanted:         true,
+					Selected:       true,
 				},
 			},
 		},
@@ -107,8 +107,8 @@ func TestInventoryReconcilesSingleFileTorrent(t *testing.T) {
 		t.Fatalf("inventory = %#v", inventory)
 	}
 	if !reflect.DeepEqual(inventory.Files[0].PathComponents, []string{name}) ||
-		inventory.Files[0].TorrentFile == nil ||
-		inventory.Files[0].TorrentFile.Index != 0 ||
+		inventory.Files[0].DownloadFile == nil ||
+		inventory.Files[0].DownloadFile.Index != 0 ||
 		inventory.Paths[0].AbsolutePath != path {
 		t.Fatalf("inventory = %#v", inventory)
 	}
@@ -124,11 +124,10 @@ func TestInventoryRejectsMismatchedSingleFileManifest(t *testing.T) {
 	}
 	correlation := controller.DownloadCorrelation{
 		DownloadRoot: path,
-		Transmission: controller.TransmissionTorrent{
-			Hash:              inventoryTorrentHash,
-			DownloadDirectory: parent,
-			Files: []controller.TransmissionFile{
-				{Index: 0, Name: "Other.Movie.mkv", LengthBytes: 5, BytesCompleted: 5, Wanted: true},
+		Download: controller.Download{
+			ID: inventoryTorrentHash, ContentOwnership: controller.DownloadContentManifest,
+			Files: []controller.DownloadFile{
+				{Index: 0, HasIndex: true, Path: filepath.Join(parent, "Other.Movie.mkv"), LengthBytes: 5, BytesCompleted: 5, Selected: true},
 			},
 		},
 	}
@@ -144,7 +143,7 @@ func TestInventoryRequiresWantedFilesAndMatchingSizes(t *testing.T) {
 		if err := os.Remove(filepath.Join(correlation.DownloadRoot, "CD1.mkv")); err != nil {
 			t.Fatal(err)
 		}
-		assertInventoryError(t, New(), correlation, "wanted Transmission file \"CD1.mkv\" is missing")
+		assertInventoryError(t, New(), correlation, "selected download file \"CD1.mkv\" is missing")
 	})
 
 	t.Run("missing unwanted", func(t *testing.T) {
@@ -161,7 +160,7 @@ func TestInventoryRequiresWantedFilesAndMatchingSizes(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(correlation.DownloadRoot, "CD1.mkv"), []byte("changed"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		assertInventoryError(t, New(), correlation, "size does not match Transmission")
+		assertInventoryError(t, New(), correlation, "size does not match download manifest")
 	})
 }
 
@@ -176,42 +175,42 @@ func TestInventoryRejectsInvalidManifest(t *testing.T) {
 		{
 			name: "negative index",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[0].Index = -1
+				correlation.Download.Files[0].Index = -1
 			},
 			want: "index -1 is invalid",
 		},
 		{
 			name: "duplicate index",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[1].Index = 0
+				correlation.Download.Files[1].Index = 0
 			},
 			want: "index 0 is duplicated",
 		},
 		{
-			name: "absolute path",
+			name: "relative path",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[0].Name = "/tmp/CD1.mkv"
+				correlation.Download.Files[0].Path = "CD1.mkv"
 			},
 			want: "path is invalid",
 		},
 		{
 			name: "unclean path",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[0].Name = "Example.Movie/disc/../CD1.mkv"
+				correlation.Download.Files[0].Path = filepath.Join(correlation.DownloadRoot, "disc", "..", "CD1.mkv") + "/../CD1.mkv"
 			},
 			want: "path is not canonical",
 		},
 		{
 			name: "outside root",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[0].Name = "Other.Movie/CD1.mkv"
+				correlation.Download.Files[0].Path = filepath.Join(filepath.Dir(correlation.DownloadRoot), "Other.Movie", "CD1.mkv")
 			},
 			want: "path is outside the download root",
 		},
 		{
 			name: "duplicate path",
 			mutate: func(correlation *controller.DownloadCorrelation) {
-				correlation.Transmission.Files[1].Name = correlation.Transmission.Files[0].Name
+				correlation.Download.Files[1].Path = correlation.Download.Files[0].Path
 			},
 			want: "path \"CD1.mkv\" is duplicated",
 		},
@@ -269,14 +268,6 @@ func TestInventoryRejectsUnsafeFilesystemEntries(t *testing.T) {
 			t.Fatal(err)
 		}
 		correlation.DownloadRoot = link
-		for index := range correlation.Transmission.Files {
-			correlation.Transmission.Files[index].Name = strings.Replace(
-				correlation.Transmission.Files[index].Name,
-				"Example.Movie/",
-				"linked-root/",
-				1,
-			)
-		}
 		assertInventoryError(t, New(), correlation, "download target is not a regular file or directory")
 	})
 }
@@ -307,7 +298,7 @@ func TestInventoryRejectsInvalidInputs(t *testing.T) {
 
 	correlation := inventoryFixture(t)
 	correlation.RejectionReasons = []controller.CorrelationRejectionReason{
-		controller.CorrelationIncompleteTorrent,
+		controller.CorrelationIncompleteDownload,
 	}
 	assertInventoryError(t, New(), correlation, "download correlation is ineligible")
 
@@ -358,30 +349,32 @@ func inventoryFixture(t *testing.T) controller.DownloadCorrelation {
 	}
 	return controller.DownloadCorrelation{
 		DownloadRoot: root,
-		Transmission: controller.TransmissionTorrent{
-			Hash:              inventoryTorrentHash,
-			DownloadDirectory: parent,
-			Files: []controller.TransmissionFile{
+		Download: controller.Download{
+			ID: inventoryTorrentHash, ContentOwnership: controller.DownloadContentManifest,
+			Files: []controller.DownloadFile{
 				{
 					Index:          0,
-					Name:           "Example.Movie/CD1.mkv",
+					HasIndex:       true,
+					Path:           filepath.Join(root, "CD1.mkv"),
 					LengthBytes:    3,
 					BytesCompleted: 3,
-					Wanted:         true,
+					Selected:       true,
 				},
 				{
 					Index:          1,
-					Name:           "Example.Movie/disc/CD2.MKV",
+					HasIndex:       true,
+					Path:           filepath.Join(root, "disc", "CD2.MKV"),
 					LengthBytes:    7,
 					BytesCompleted: 7,
-					Wanted:         true,
+					Selected:       true,
 				},
 				{
 					Index:          2,
-					Name:           "Example.Movie/optional.txt",
+					HasIndex:       true,
+					Path:           filepath.Join(root, "optional.txt"),
 					LengthBytes:    10,
 					BytesCompleted: 0,
-					Wanted:         false,
+					Selected:       false,
 				},
 			},
 		},

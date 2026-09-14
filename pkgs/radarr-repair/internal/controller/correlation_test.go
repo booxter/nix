@@ -2,76 +2,70 @@ package controller
 
 import (
 	"reflect"
-	"strconv"
 	"testing"
 )
 
 const (
-	correlationHashUpper = "ABCDEF0123456789ABCDEF0123456789ABCDEF01"
-	correlationHashLower = "abcdef0123456789abcdef0123456789abcdef01"
+	correlationIDUpper = "ABCDEF0123456789ABCDEF0123456789ABCDEF01"
+	correlationIDLower = "abcdef0123456789abcdef0123456789abcdef01"
 )
 
-func TestCorrelateDownloadAcceptsStableCompletedTorrent(t *testing.T) {
+func TestCorrelateDownloadAcceptsStableCompletedDownload(t *testing.T) {
 	t.Parallel()
 
-	for _, status := range []TransmissionStatus{
-		transmissionStatusStopped,
-		transmissionStatusSeedWait,
-		transmissionStatusSeeding,
-	} {
-		t.Run(strconv.Itoa(int(status)), func(t *testing.T) {
-			t.Parallel()
-			record, torrent := correlatedDownloadObservations()
-			torrent.Status = status
-			torrent.Finished = false
-			torrent.Files = append(torrent.Files, TransmissionFile{
-				Index:          2,
-				Name:           "Example:Movie/optional.txt",
-				LengthBytes:    100,
-				BytesCompleted: 0,
-				Wanted:         false,
-			})
+	record, download := correlatedDownloadObservations()
+	download.Files = append(download.Files, DownloadFile{
+		Index: 2, HasIndex: true, Path: "/downloads/Example_Movie/optional.txt",
+		LengthBytes: 100, Selected: false,
+	})
 
-			correlation := CorrelateDownload(record, torrent)
-			if !correlation.Eligible() {
-				t.Fatalf("rejection reasons = %v", correlation.RejectionReasons)
-			}
-			if correlation.DownloadRoot != "/downloads/Example_Movie" {
-				t.Fatalf("download root = %q", correlation.DownloadRoot)
-			}
-			if !reflect.DeepEqual(correlation.Radarr, record) ||
-				!reflect.DeepEqual(correlation.Transmission, torrent) {
-				t.Fatal("correlation changed its observations")
-			}
-		})
+	correlation := CorrelateDownload(record, download)
+	if !correlation.Eligible() {
+		t.Fatalf("rejection reasons = %v", correlation.RejectionReasons)
+	}
+	if correlation.DownloadRoot != "/downloads/Example_Movie" {
+		t.Fatalf("download root = %q", correlation.DownloadRoot)
+	}
+	if !reflect.DeepEqual(correlation.Radarr, record) ||
+		!reflect.DeepEqual(correlation.Download, download) {
+		t.Fatal("correlation changed its observations")
 	}
 }
 
-func TestCorrelateDownloadRejectsInvalidIdentity(t *testing.T) {
+func TestCorrelateDownloadChecksClientIdentityRule(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name        string
 		radarrID    string
-		torrentHash string
+		downloadID  string
+		comparison  DownloadIDComparison
 		wantReasons []CorrelationRejectionReason
 	}{
 		{
-			name:        "invalid Radarr ID",
-			radarrID:    "not-a-hash",
-			torrentHash: correlationHashLower,
+			name: "missing Radarr ID", downloadID: correlationIDLower,
+			comparison:  DownloadIDASCIIInsensitive,
 			wantReasons: []CorrelationRejectionReason{CorrelationInvalidRadarrDownloadID},
 		},
 		{
-			name:        "invalid Transmission hash",
-			radarrID:    correlationHashUpper,
-			torrentHash: "gbcdef0123456789abcdef0123456789abcdef01",
-			wantReasons: []CorrelationRejectionReason{CorrelationInvalidTransmissionHash},
+			name: "missing download ID", radarrID: correlationIDUpper,
+			comparison:  DownloadIDASCIIInsensitive,
+			wantReasons: []CorrelationRejectionReason{CorrelationInvalidDownloadID},
 		},
 		{
-			name:        "different hashes",
-			radarrID:    correlationHashUpper,
-			torrentHash: "abcdef0123456789abcdef0123456789abcdef02",
+			name: "unknown comparison", radarrID: correlationIDUpper,
+			downloadID:  correlationIDLower,
+			wantReasons: []CorrelationRejectionReason{CorrelationInvalidDownloadID},
+		},
+		{
+			name: "different IDs", radarrID: correlationIDUpper,
+			downloadID:  "abcdef0123456789abcdef0123456789abcdef02",
+			comparison:  DownloadIDASCIIInsensitive,
+			wantReasons: []CorrelationRejectionReason{CorrelationDownloadIDMismatch},
+		},
+		{
+			name: "exact comparison rejects different case", radarrID: correlationIDUpper,
+			downloadID: correlationIDLower, comparison: DownloadIDExact,
 			wantReasons: []CorrelationRejectionReason{CorrelationDownloadIDMismatch},
 		},
 	}
@@ -79,10 +73,11 @@ func TestCorrelateDownloadRejectsInvalidIdentity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			record, torrent := correlatedDownloadObservations()
+			record, download := correlatedDownloadObservations()
 			record.DownloadID = test.radarrID
-			torrent.Hash = test.torrentHash
-			correlation := CorrelateDownload(record, torrent)
+			download.ID = test.downloadID
+			download.IDComparison = test.comparison
+			correlation := CorrelateDownload(record, download)
 			if !reflect.DeepEqual(correlation.RejectionReasons, test.wantReasons) {
 				t.Fatalf("rejection reasons = %v, want %v", correlation.RejectionReasons, test.wantReasons)
 			}
@@ -90,61 +85,44 @@ func TestCorrelateDownloadRejectsInvalidIdentity(t *testing.T) {
 	}
 }
 
-func TestCorrelateDownloadRejectsUnstableOrIncompleteTorrent(t *testing.T) {
+func TestCorrelateDownloadRejectsUnstableOrIncompleteDownload(t *testing.T) {
 	t.Parallel()
-
-	for _, status := range []TransmissionStatus{1, 2, 3, 4, 7} {
-		t.Run("status "+strconv.Itoa(int(status)), func(t *testing.T) {
-			t.Parallel()
-			record, torrent := correlatedDownloadObservations()
-			torrent.Status = status
-			assertCorrelationReasons(t, record, torrent, CorrelationUnstableTorrentState)
-		})
-	}
 
 	tests := []struct {
 		name   string
-		mutate func(*TransmissionTorrent)
+		mutate func(*Download)
 		want   []CorrelationRejectionReason
 	}{
 		{
-			name: "percent incomplete",
-			mutate: func(torrent *TransmissionTorrent) {
-				torrent.PercentDone = 0.99
-			},
-			want: []CorrelationRejectionReason{CorrelationIncompleteTorrent},
+			name: "unstable", mutate: func(download *Download) { download.Stable = false },
+			want: []CorrelationRejectionReason{CorrelationUnstableDownload},
 		},
 		{
-			name: "bytes remaining",
-			mutate: func(torrent *TransmissionTorrent) {
-				torrent.LeftUntilDone = 1
-			},
-			want: []CorrelationRejectionReason{CorrelationIncompleteTorrent},
+			name: "incomplete", mutate: func(download *Download) { download.Complete = false },
+			want: []CorrelationRejectionReason{CorrelationIncompleteDownload},
 		},
 		{
-			name: "wanted file incomplete",
-			mutate: func(torrent *TransmissionTorrent) {
-				torrent.Files[0].BytesCompleted--
-			},
-			want: []CorrelationRejectionReason{CorrelationIncompleteTorrent},
+			name:   "selected file incomplete",
+			mutate: func(download *Download) { download.Files[0].BytesCompleted-- },
+			want:   []CorrelationRejectionReason{CorrelationIncompleteDownload},
 		},
 		{
-			name: "no wanted files",
-			mutate: func(torrent *TransmissionTorrent) {
-				for index := range torrent.Files {
-					torrent.Files[index].Wanted = false
+			name: "no selected files",
+			mutate: func(download *Download) {
+				for index := range download.Files {
+					download.Files[index].Selected = false
 				}
 			},
-			want: []CorrelationRejectionReason{CorrelationNoWantedFiles},
+			want: []CorrelationRejectionReason{CorrelationNoSelectedFiles},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			record, torrent := correlatedDownloadObservations()
-			test.mutate(&torrent)
-			correlation := CorrelateDownload(record, torrent)
+			record, download := correlatedDownloadObservations()
+			test.mutate(&download)
+			correlation := CorrelateDownload(record, download)
 			if !reflect.DeepEqual(correlation.RejectionReasons, test.want) {
 				t.Fatalf("rejection reasons = %v, want %v", correlation.RejectionReasons, test.want)
 			}
@@ -157,40 +135,31 @@ func TestCorrelateDownloadRequiresExactSafeRoot(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*RadarrQueueRecord, *TransmissionTorrent)
+		mutate func(*RadarrQueueRecord, *Download)
 		want   CorrelationRejectionReason
 	}{
 		{
-			name: "relative Transmission directory",
-			mutate: func(_ *RadarrQueueRecord, torrent *TransmissionTorrent) {
-				torrent.DownloadDirectory = "downloads"
-			},
-			want: CorrelationInvalidDownloadRoot,
+			name:   "relative client root",
+			mutate: func(_ *RadarrQueueRecord, download *Download) { download.OutputPath = "downloads" },
+			want:   CorrelationInvalidDownloadRoot,
 		},
 		{
-			name: "unclean Transmission directory",
-			mutate: func(_ *RadarrQueueRecord, torrent *TransmissionTorrent) {
-				torrent.DownloadDirectory = "/downloads/../downloads"
-			},
-			want: CorrelationInvalidDownloadRoot,
-		},
-		{
-			name: "torrent name contains a path",
-			mutate: func(_ *RadarrQueueRecord, torrent *TransmissionTorrent) {
-				torrent.Name = "nested/Example.Movie"
+			name: "unclean client root",
+			mutate: func(_ *RadarrQueueRecord, download *Download) {
+				download.OutputPath = "/downloads/../downloads"
 			},
 			want: CorrelationInvalidDownloadRoot,
 		},
 		{
 			name: "invalid Radarr root",
-			mutate: func(record *RadarrQueueRecord, _ *TransmissionTorrent) {
+			mutate: func(record *RadarrQueueRecord, _ *Download) {
 				record.OutputPath = "/downloads/../Example_Movie"
 			},
 			want: CorrelationInvalidDownloadRoot,
 		},
 		{
 			name: "different roots",
-			mutate: func(record *RadarrQueueRecord, _ *TransmissionTorrent) {
+			mutate: func(record *RadarrQueueRecord, _ *Download) {
 				record.OutputPath = "/downloads/Other.Movie"
 			},
 			want: CorrelationDownloadRootMismatch,
@@ -200,9 +169,9 @@ func TestCorrelateDownloadRequiresExactSafeRoot(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			record, torrent := correlatedDownloadObservations()
-			test.mutate(&record, &torrent)
-			correlation := CorrelateDownload(record, torrent)
+			record, download := correlatedDownloadObservations()
+			test.mutate(&record, &download)
+			correlation := CorrelateDownload(record, download)
 			if !reflect.DeepEqual(correlation.RejectionReasons, []CorrelationRejectionReason{test.want}) {
 				t.Fatalf("rejection reasons = %v, want %v", correlation.RejectionReasons, test.want)
 			}
@@ -213,73 +182,19 @@ func TestCorrelateDownloadRequiresExactSafeRoot(t *testing.T) {
 	}
 }
 
-func TestCorrelateDownloadPreservesRejectionOrderAndDeduplicates(t *testing.T) {
-	t.Parallel()
-
-	record, torrent := correlatedDownloadObservations()
-	record.DownloadID = "invalid"
-	torrent.Hash = "also-invalid"
-	torrent.Status = 2
-	torrent.PercentDone = 0.5
-	torrent.LeftUntilDone = 10
-	torrent.Files = nil
-	torrent.DownloadDirectory = "relative"
-
-	correlation := CorrelateDownload(record, torrent)
-	want := []CorrelationRejectionReason{
-		CorrelationInvalidRadarrDownloadID,
-		CorrelationInvalidTransmissionHash,
-		CorrelationUnstableTorrentState,
-		CorrelationIncompleteTorrent,
-		CorrelationNoWantedFiles,
-		CorrelationInvalidDownloadRoot,
-	}
-	if !reflect.DeepEqual(correlation.RejectionReasons, want) {
-		t.Fatalf("rejection reasons = %v, want %v", correlation.RejectionReasons, want)
-	}
-}
-
-func correlatedDownloadObservations() (RadarrQueueRecord, TransmissionTorrent) {
+func correlatedDownloadObservations() (RadarrQueueRecord, Download) {
 	record := eligibleCandidateRecord()
-	record.DownloadID = correlationHashUpper
+	record.DownloadID = correlationIDUpper
 	record.OutputPath = "/downloads/Example_Movie"
-	torrent := TransmissionTorrent{
-		Hash:              correlationHashLower,
-		Name:              "Example:Movie",
-		Status:            transmissionStatusSeeding,
-		PercentDone:       1,
-		LeftUntilDone:     0,
-		Finished:          false,
-		DownloadDirectory: "/downloads",
-		Files: []TransmissionFile{
-			{
-				Index:          0,
-				Name:           "Example:Movie/CD1.mkv",
-				LengthBytes:    100,
-				BytesCompleted: 100,
-				Wanted:         true,
-			},
-			{
-				Index:          1,
-				Name:           "Example:Movie/CD2.mkv",
-				LengthBytes:    200,
-				BytesCompleted: 200,
-				Wanted:         true,
-			},
+	download := Download{
+		Client: DownloadClientTransmission, SourceType: DownloadSourceTorrent,
+		ID: correlationIDLower, IDComparison: DownloadIDASCIIInsensitive,
+		Name: "Example:Movie", Stable: true, Complete: true,
+		OutputPath: "/downloads/Example_Movie", ContentOwnership: DownloadContentManifest,
+		Files: []DownloadFile{
+			{Index: 0, HasIndex: true, Path: "/downloads/Example_Movie/CD1.mkv", LengthBytes: 100, BytesCompleted: 100, Selected: true},
+			{Index: 1, HasIndex: true, Path: "/downloads/Example_Movie/CD2.mkv", LengthBytes: 200, BytesCompleted: 200, Selected: true},
 		},
 	}
-	return record, torrent
-}
-
-func assertCorrelationReasons(
-	t *testing.T,
-	record RadarrQueueRecord,
-	torrent TransmissionTorrent,
-	want ...CorrelationRejectionReason,
-) {
-	t.Helper()
-	correlation := CorrelateDownload(record, torrent)
-	if !reflect.DeepEqual(correlation.RejectionReasons, want) {
-		t.Fatalf("rejection reasons = %v, want %v", correlation.RejectionReasons, want)
-	}
+	return record, download
 }

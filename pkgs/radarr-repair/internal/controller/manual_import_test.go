@@ -114,13 +114,13 @@ func TestBindRadarrManualImportFileRejectsIncompleteBindings(t *testing.T) {
 		{
 			name: "unwanted torrent file",
 			mutate: func(file *InventoryFile, _ *string, _ *RadarrManualImport) {
-				file.TorrentFile.Wanted = false
+				file.DownloadFile.Selected = false
 			},
 		},
 		{
 			name: "incomplete torrent file",
 			mutate: func(file *InventoryFile, _ *string, _ *RadarrManualImport) {
-				file.TorrentFile.BytesCompleted--
+				file.DownloadFile.BytesCompleted--
 			},
 		},
 		{

@@ -91,8 +91,8 @@ func TestAssembleOffersManualImportForOneFile(t *testing.T) {
 	observation := testObservation()
 	observation.Correlation.Radarr.StatusMessages = nil
 	observation.Correlation.Radarr.SizeBytes = 1_000
-	observation.Correlation.Transmission.TotalSizeBytes = 1_000
-	observation.Correlation.Transmission.Files = observation.Correlation.Transmission.Files[:1]
+	observation.Correlation.Download.TotalSizeBytes = 1_000
+	observation.Correlation.Download.Files = observation.Correlation.Download.Files[:1]
 	observation.ManualImports = observation.ManualImports[:1]
 	observation.ManualImports[0].FolderName = ""
 	observation.ManualImports[0].Quality = nil
@@ -417,14 +417,14 @@ func TestAssembleKeepsUsableCandidatesWhenAnotherProbeFails(t *testing.T) {
 			controller.MediaProbeUnsupportedFormat,
 		),
 	})
-	observation.Correlation.Transmission.Files = append(
-		observation.Correlation.Transmission.Files,
-		controller.TransmissionFile{
-			Index: 2, Name: "Example.Movie.2024/Broken.mkv",
-			LengthBytes: 500, BytesCompleted: 500, Wanted: true,
+	observation.Correlation.Download.Files = append(
+		observation.Correlation.Download.Files,
+		controller.DownloadFile{
+			Index: 2, HasIndex: true, Path: "/srv/downloads/Example.Movie.2024/Broken.mkv",
+			LengthBytes: 500, BytesCompleted: 500, Selected: true,
 		},
 	)
-	observation.Correlation.Transmission.TotalSizeBytes += 500
+	observation.Correlation.Download.TotalSizeBytes += 500
 	observation.Correlation.Radarr.SizeBytes += 500
 
 	assembly, err := Assemble(observation)
@@ -477,7 +477,7 @@ func TestAssembleRetainsEvidenceOnlyFiles(t *testing.T) {
 		100,
 		2,
 	)
-	extra.TorrentFile = nil
+	extra.DownloadFile = nil
 	observation.Inventory.Files = append(observation.Inventory.Files, extra)
 	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
 		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/README.txt",
@@ -675,20 +675,22 @@ func testObservation() Observation {
 				SizeBytes:          3_000,
 				SizeRemainingBytes: 0,
 			},
-			Transmission: controller.TransmissionTorrent{
-				Hash:              testDownloadHash,
-				Name:              "Example.Movie.2024",
-				Status:            6,
-				PercentDone:       1,
-				LeftUntilDone:     0,
-				Finished:          true,
-				DownloadDirectory: "/srv/downloads",
-				Labels:            []string{"radarr"},
-				CompletedAt:       &completedAt,
-				TotalSizeBytes:    3_000,
-				Files: []controller.TransmissionFile{
-					{Index: 0, Name: "Example.Movie.2024/CD1.mkv", LengthBytes: 1_000, BytesCompleted: 1_000, Wanted: true},
-					{Index: 1, Name: "Example.Movie.2024/CD2.mkv", LengthBytes: 2_000, BytesCompleted: 2_000, Wanted: true},
+			Download: controller.Download{
+				Client:           controller.DownloadClientTransmission,
+				SourceType:       controller.DownloadSourceTorrent,
+				ID:               testDownloadHash,
+				IDComparison:     controller.DownloadIDASCIIInsensitive,
+				Name:             "Example.Movie.2024",
+				Stable:           true,
+				Complete:         true,
+				OutputPath:       "/srv/downloads/Example.Movie.2024",
+				Labels:           []string{"radarr"},
+				CompletedAt:      &completedAt,
+				TotalSizeBytes:   3_000,
+				ContentOwnership: controller.DownloadContentManifest,
+				Files: []controller.DownloadFile{
+					{Index: 0, HasIndex: true, Path: paths[0].AbsolutePath, LengthBytes: 1_000, BytesCompleted: 1_000, Selected: true},
+					{Index: 1, HasIndex: true, Path: paths[1].AbsolutePath, LengthBytes: 2_000, BytesCompleted: 2_000, Selected: true},
 				},
 			},
 		},
@@ -767,8 +769,8 @@ func testInventoryFile(id controller.FileID, name string, size int64, index int)
 		Fingerprint: controller.FileFingerprint{
 			Device: 1, Inode: uint64(index + 10), SizeBytes: size, MTimeNS: 1_789_000_000_000_000_000,
 		},
-		TorrentFile: &controller.TorrentFileReference{
-			Index: index, LengthBytes: size, BytesCompleted: size, Wanted: true,
+		DownloadFile: &controller.DownloadFileReference{
+			Index: index, LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }
