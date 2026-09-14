@@ -55,6 +55,8 @@ let
       "/var/lib/${serviceName}"
       "--metrics-file"
       metricsFile
+      "--stabilization"
+      controller.stabilization
       "--planner-timeout"
       "${toString plannerTimeoutSeconds}s"
     ]

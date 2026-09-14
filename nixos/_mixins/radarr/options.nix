@@ -17,6 +17,11 @@
       default = "15m";
       description = "Delay between completed controller runs.";
     };
+    stabilization = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "15m";
+      description = "Minimum age of unchanged import-pending evidence before repair.";
+    };
     metricsDirectory = lib.mkOption {
       type = lib.types.strMatching "^/.+";
       default = "/var/lib/prometheus-node-exporter-textfile/radarr-repair";
