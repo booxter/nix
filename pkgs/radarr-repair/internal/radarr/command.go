@@ -48,6 +48,13 @@ type Command struct {
 	Result    CommandResult
 }
 
+type ImportCommandDisposition uint8
+
+const (
+	ImportCommandPending ImportCommandDisposition = iota + 1
+	ImportCommandFailed
+)
+
 type commandResponse struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
@@ -133,6 +140,41 @@ func (client *Client) ReadManualImportCommand(
 	commandID int64,
 ) (Command, error) {
 	return client.readCommand(ctx, commandID, manualImportCommandName)
+}
+
+// ClassifyImportCommand determines whether an import command has failed or
+// whether its imported-file history may still appear. A successful command is
+// pending until that separate history record confirms the exact imported file.
+func ClassifyImportCommand(command Command) (ImportCommandDisposition, error) {
+	switch command.Status {
+	case CommandQueued, CommandStarted:
+		if command.Result != "" && command.Result != CommandResultUnknown {
+			return 0, fmt.Errorf(
+				"active Radarr import command has unexpected result %q",
+				command.Result,
+			)
+		}
+		return ImportCommandPending, nil
+	case CommandCompleted:
+		switch command.Result {
+		case CommandResultSuccessful:
+			return ImportCommandPending, nil
+		case CommandResultUnsuccessful:
+			return ImportCommandFailed, nil
+		default:
+			return 0, fmt.Errorf(
+				"completed Radarr import command has unexpected result %q",
+				command.Result,
+			)
+		}
+	case CommandFailed, CommandAborted, CommandCancelled, CommandOrphaned:
+		return ImportCommandFailed, nil
+	default:
+		return 0, fmt.Errorf(
+			"Radarr import command has unknown status %q",
+			command.Status,
+		)
+	}
 }
 
 func (client *Client) readCommand(

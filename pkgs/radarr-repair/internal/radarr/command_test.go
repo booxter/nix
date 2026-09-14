@@ -116,6 +116,76 @@ func TestReadManualImportCommand(t *testing.T) {
 	}
 }
 
+func TestClassifyImportCommand(t *testing.T) {
+	tests := []struct {
+		name        string
+		command     Command
+		disposition ImportCommandDisposition
+		wantError   bool
+	}{
+		{
+			name: "queued",
+			command: Command{
+				Status: CommandQueued,
+				Result: CommandResultUnknown,
+			},
+			disposition: ImportCommandPending,
+		},
+		{
+			name: "completed successfully pending history confirmation",
+			command: Command{
+				Status: CommandCompleted,
+				Result: CommandResultSuccessful,
+			},
+			disposition: ImportCommandPending,
+		},
+		{
+			name: "completed unsuccessfully",
+			command: Command{
+				Status: CommandCompleted,
+				Result: CommandResultUnsuccessful,
+			},
+			disposition: ImportCommandFailed,
+		},
+		{
+			name:        "failed",
+			command:     Command{Status: CommandFailed},
+			disposition: ImportCommandFailed,
+		},
+		{
+			name: "active with final result",
+			command: Command{
+				Status: CommandStarted,
+				Result: CommandResultSuccessful,
+			},
+			wantError: true,
+		},
+		{
+			name:      "unknown status",
+			command:   Command{Status: "mystery"},
+			wantError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			disposition, err := ClassifyImportCommand(test.command)
+			if test.wantError {
+				if err == nil {
+					t.Fatal("expected classification to fail")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("classify import command: %v", err)
+			}
+			if disposition != test.disposition {
+				t.Fatalf("unexpected disposition %d", disposition)
+			}
+		})
+	}
+}
+
 func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 	t.Parallel()
 

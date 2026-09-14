@@ -71,13 +71,6 @@ type Executor struct {
 	dependencies Dependencies
 }
 
-type commandDisposition uint8
-
-const (
-	commandWaiting commandDisposition = iota + 1
-	commandFailed
-)
-
 type SubmissionUncertainError struct {
 	CaseID string
 	cause  error
@@ -217,11 +210,11 @@ func (executor *Executor) follow(
 		if err != nil {
 			return execution, fmt.Errorf("read Radarr manual-import command: %w", err)
 		}
-		disposition, err := classifyCommand(command)
+		disposition, err := radarr.ClassifyImportCommand(command)
 		if err != nil {
 			return execution, err
 		}
-		if disposition == commandFailed {
+		if disposition == radarr.ImportCommandFailed {
 			failedAt, nowErr := executor.now()
 			if nowErr != nil {
 				return execution, nowErr
@@ -305,36 +298,4 @@ func matchingImport(
 		}
 	}
 	return selected, found
-}
-
-func classifyCommand(command radarr.Command) (commandDisposition, error) {
-	switch command.Status {
-	case radarr.CommandQueued, radarr.CommandStarted:
-		if command.Result != "" && command.Result != radarr.CommandResultUnknown {
-			return 0, fmt.Errorf(
-				"active Radarr manual-import command has unexpected result %q",
-				command.Result,
-			)
-		}
-		return commandWaiting, nil
-	case radarr.CommandCompleted:
-		switch command.Result {
-		case radarr.CommandResultSuccessful:
-			return commandWaiting, nil
-		case radarr.CommandResultUnsuccessful:
-			return commandFailed, nil
-		default:
-			return 0, fmt.Errorf(
-				"completed Radarr manual-import command has unexpected result %q",
-				command.Result,
-			)
-		}
-	case radarr.CommandFailed, radarr.CommandAborted, radarr.CommandCancelled, radarr.CommandOrphaned:
-		return commandFailed, nil
-	default:
-		return 0, fmt.Errorf(
-			"Radarr manual-import command has unknown status %q",
-			command.Status,
-		)
-	}
 }
