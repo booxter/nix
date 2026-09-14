@@ -7,9 +7,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const metricsNamespace = "host_observability_radarr_repair"
+const MetricsNamespace = "host_observability_radarr_repair"
 
-func WriteMetrics(path string, report Report, successful bool, completedAt time.Time) error {
+func WriteMetrics(
+	path string,
+	report Report,
+	successful bool,
+	completedAt time.Time,
+	additional ...prometheus.Collector,
+) error {
 	if completedAt.IsZero() {
 		return fmt.Errorf("metrics completion time is required")
 	}
@@ -127,9 +133,17 @@ func WriteMetrics(path string, report Report, successful bool, completedAt time.
 		"Age of the oldest completed download observed in the latest shadow run.",
 		oldestDownloadAge,
 	)
+	for _, collector := range additional {
+		if collector == nil {
+			return fmt.Errorf("additional metrics collector is required")
+		}
+		if err := registry.Register(collector); err != nil {
+			return fmt.Errorf("register additional metrics: %w", err)
+		}
+	}
 
 	if err := prometheus.WriteToTextfile(path, registry); err != nil {
-		return fmt.Errorf("write shadow metrics: %w", err)
+		return fmt.Errorf("write controller metrics: %w", err)
 	}
 	return nil
 }
@@ -153,7 +167,7 @@ func registerGauge(
 	value float64,
 ) {
 	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: metricsNamespace,
+		Namespace: MetricsNamespace,
 		Name:      name,
 		Help:      help,
 	})
@@ -168,7 +182,7 @@ func newGaugeVector(
 	label string,
 ) *prometheus.GaugeVec {
 	gauge := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: metricsNamespace,
+		Namespace: MetricsNamespace,
 		Name:      name,
 		Help:      help,
 	}, []string{label})

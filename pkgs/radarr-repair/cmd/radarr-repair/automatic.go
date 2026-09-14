@@ -129,6 +129,7 @@ func (app application) runAutomatic(
 		report.Shadow,
 		report.ShadowSucceeded,
 		time.Now().UTC(),
+		automaticMetrics(report, runErr == nil)...,
 	)
 	outputErr := writeAutomaticSummary(stdout, report)
 	return errors.Join(runErr, metricsErr, outputErr)

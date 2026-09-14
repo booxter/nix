@@ -53,45 +53,45 @@ func TestWriteMetricsReportsLatestShadowRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	families := readMetrics(t, path)
-	assertMetric(t, families, metricsNamespace+"_shadow_run_success", nil, 0)
-	assertMetric(t, families, metricsNamespace+"_shadow_collection_success", nil, 0)
+	assertMetric(t, families, MetricsNamespace+"_shadow_run_success", nil, 0)
+	assertMetric(t, families, MetricsNamespace+"_shadow_collection_success", nil, 0)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_cases", map[string]string{"outcome": "observed"}, 2,
+		t, families, MetricsNamespace+"_shadow_cases", map[string]string{"outcome": "observed"}, 2,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_observations",
+		t, families, MetricsNamespace+"_shadow_observations",
 		map[string]string{"state": "importBlocked"}, 1,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_capabilities",
+		t, families, MetricsNamespace+"_shadow_capabilities",
 		map[string]string{"action": "manual_import_file_v1"}, 1,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_planner_decisions",
+		t, families, MetricsNamespace+"_shadow_planner_decisions",
 		map[string]string{"action": "no_repair"}, 1,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_planner_abstentions",
+		t, families, MetricsNamespace+"_shadow_planner_abstentions",
 		map[string]string{"reason": "insufficient_evidence"}, 1,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_planner_failures",
+		t, families, MetricsNamespace+"_shadow_planner_failures",
 		map[string]string{"reason": "planner_timeout"}, 1,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_planner_request_duration_seconds", nil, 4,
+		t, families, MetricsNamespace+"_shadow_planner_request_duration_seconds", nil, 4,
 	)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_oldest_download_age_seconds", nil, 7200,
+		t, families, MetricsNamespace+"_shadow_oldest_download_age_seconds", nil, 7200,
 	)
 
 	if err := WriteMetrics(path, Report{}, true, completedAt.Add(time.Minute)); err != nil {
 		t.Fatal(err)
 	}
 	families = readMetrics(t, path)
-	assertMetric(t, families, metricsNamespace+"_shadow_run_success", nil, 1)
+	assertMetric(t, families, MetricsNamespace+"_shadow_run_success", nil, 1)
 	assertMetric(
-		t, families, metricsNamespace+"_shadow_cases", map[string]string{"outcome": "observed"}, 0,
+		t, families, MetricsNamespace+"_shadow_cases", map[string]string{"outcome": "observed"}, 0,
 	)
 }
 
