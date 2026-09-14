@@ -10,10 +10,12 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
@@ -201,6 +203,41 @@ func (client *Client) Probe(
 	return controller.SuccessfulMediaProbe(EvidenceFromWorker(probeResponse.Success.Evidence)), nil
 }
 
+// ResolvePublishedPath translates the worker's root-relative publication
+// result back to the path visible to Radarr through the same configured roots.
+func (client *Client) ResolvePublishedPath(
+	rootID string,
+	pathComponents []string,
+) (string, error) {
+	if !client.configured() {
+		return "", fmt.Errorf("worker client is not configured")
+	}
+	if len(pathComponents) == 0 || len(pathComponents) > 32 {
+		return "", fmt.Errorf("published media path is invalid")
+	}
+	for _, component := range pathComponents {
+		if !validPublishedPathComponent(component) {
+			return "", fmt.Errorf("published media path is invalid")
+		}
+	}
+
+	for _, root := range client.roots {
+		if root.id != rootID {
+			continue
+		}
+		absolutePath := filepath.Join(
+			root.path,
+			filepath.FromSlash(strings.Join(pathComponents, "/")),
+		)
+		resolvedRoot, resolvedComponents, err := client.resolve(absolutePath)
+		if err != nil || resolvedRoot != rootID || !slices.Equal(resolvedComponents, pathComponents) {
+			return "", fmt.Errorf("published media path does not match its worker root")
+		}
+		return absolutePath, nil
+	}
+	return "", fmt.Errorf("published media path has an unknown worker root")
+}
+
 func (client *Client) configured() bool {
 	return client != nil && client.httpClient != nil && client.requestTimeout > 0
 }
@@ -308,4 +345,17 @@ func validateRootID(rootID string) error {
 		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
 	})
 	return err
+}
+
+func validPublishedPathComponent(component string) bool {
+	if component == "" || component == "." || component == ".." ||
+		utf8.RuneCountInString(component) > 255 {
+		return false
+	}
+	for _, character := range component {
+		if character == '/' || character == '\\' || character <= 0x1f || character == 0x7f {
+			return false
+		}
+	}
+	return true
 }

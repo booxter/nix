@@ -281,6 +281,52 @@ func TestClientRejectsUnmappedAndInvalidTargets(t *testing.T) {
 	}
 }
 
+func TestClientResolvesPublishedPath(t *testing.T) {
+	t.Parallel()
+
+	client := testClient(t, "/run/worker.sock", map[string]string{
+		"root:downloads": "/downloads",
+		"root:movies":    "/downloads/Movies",
+	}, time.Second)
+	path, err := client.ResolvePublishedPath(
+		"root:movies",
+		[]string{"Example", "radarr-repair-join.mkv"},
+	)
+	if err != nil || path != "/downloads/Movies/Example/radarr-repair-join.mkv" {
+		t.Fatalf("path = %q, error = %v", path, err)
+	}
+}
+
+func TestClientRejectsInvalidPublishedPaths(t *testing.T) {
+	t.Parallel()
+
+	client := testClient(t, "/run/worker.sock", map[string]string{
+		"root:downloads": "/downloads",
+		"root:movies":    "/downloads/Movies",
+	}, time.Second)
+	tests := []struct {
+		rootID     string
+		components []string
+	}{
+		{rootID: "root:other", components: []string{"movie.mkv"}},
+		{rootID: "root:downloads"},
+		{rootID: "root:downloads", components: []string{"..", "movie.mkv"}},
+		{rootID: "root:downloads", components: []string{"folder/movie.mkv"}},
+		{
+			rootID: "root:downloads",
+			components: []string{
+				"Movies",
+				"movie.mkv",
+			},
+		},
+	}
+	for _, test := range tests {
+		if path, err := client.ResolvePublishedPath(test.rootID, test.components); err == nil {
+			t.Fatalf("published path %q was accepted as %q", test.components, path)
+		}
+	}
+}
+
 func TestNewRejectsInvalidConfiguration(t *testing.T) {
 	t.Parallel()
 

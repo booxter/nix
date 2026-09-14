@@ -250,7 +250,10 @@ func (executor *Executor) confirm(
 	if err != nil {
 		return execution, fmt.Errorf("read Radarr imported-file history: %w", err)
 	}
-	imported, found := matchingImport(imports, authorized, execution.PreparedAt)
+	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
+		MovieID: authorized.File.MovieID, DownloadID: authorized.File.DownloadID,
+		DroppedPath: authorized.File.Path, After: execution.PreparedAt,
+	})
 	if !found {
 		return execution, nil
 	}
@@ -275,27 +278,4 @@ func (executor *Executor) now() (time.Time, error) {
 		return time.Time{}, fmt.Errorf("clock returned a zero time")
 	}
 	return now, nil
-}
-
-func matchingImport(
-	imports []controller.RadarrImportedFile,
-	authorized decisionpolicy.AuthorizedManualImport,
-	preparedAt time.Time,
-) (controller.RadarrImportedFile, bool) {
-	var selected controller.RadarrImportedFile
-	found := false
-	for _, imported := range imports {
-		if imported.MovieID != authorized.File.MovieID ||
-			imported.DownloadID != authorized.File.DownloadID ||
-			imported.DroppedPath != authorized.File.Path ||
-			!imported.OccurredAt.After(preparedAt) {
-			continue
-		}
-		if !found || imported.OccurredAt.Before(selected.OccurredAt) ||
-			(imported.OccurredAt.Equal(selected.OccurredAt) && imported.HistoryID < selected.HistoryID) {
-			selected = imported
-			found = true
-		}
-	}
-	return selected, found
 }

@@ -6,12 +6,20 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	starrRadarr "golift.io/starr/radarr"
 )
 
 const importedHistoryEvent = "downloadFolderImported"
+
+type ImportedFileMatch struct {
+	MovieID     int64
+	DownloadID  string
+	DroppedPath string
+	After       time.Time
+}
 
 var _ controller.RadarrImportedFileReader = (*Client)(nil)
 
@@ -36,6 +44,28 @@ func (client *Client) ReadImportedFiles(
 		imports = append(imports, imported)
 	}
 	return imports, nil
+}
+
+// FindImportedFile returns the earliest history record that confirms the exact
+// file import after its operation was prepared.
+func FindImportedFile(
+	imports []controller.RadarrImportedFile,
+	match ImportedFileMatch,
+) (controller.RadarrImportedFile, bool) {
+	var selected controller.RadarrImportedFile
+	found := false
+	for _, imported := range imports {
+		if imported.MovieID != match.MovieID || imported.DownloadID != match.DownloadID ||
+			imported.DroppedPath != match.DroppedPath || !imported.OccurredAt.After(match.After) {
+			continue
+		}
+		if !found || imported.OccurredAt.Before(selected.OccurredAt) ||
+			(imported.OccurredAt.Equal(selected.OccurredAt) && imported.HistoryID < selected.HistoryID) {
+			selected = imported
+			found = true
+		}
+	}
+	return selected, found
 }
 
 func mapImportedFile(record *starrRadarr.HistoryRecord) (controller.RadarrImportedFile, error) {
