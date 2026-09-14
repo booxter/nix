@@ -9,9 +9,11 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
+	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 )
 
 type RejectionReason string
@@ -22,7 +24,7 @@ const (
 	CaseUnavailable      RejectionReason = "case_unavailable"
 	CaseChanged          RejectionReason = "case_changed"
 	AuthorizationChanged RejectionReason = "authorization_changed"
-	JoinOutputPresent    RejectionReason = "join_output_present"
+	JoinExecutionPresent RejectionReason = "join_execution_present"
 )
 
 type Rejection struct {
@@ -48,15 +50,18 @@ type FreshCaseReader interface {
 	Inspect(context.Context, inspection.Selection) (casebuilder.Assembly, error)
 }
 
-type JoinOutputStateReader interface {
-	JoinOutputExists(context.Context, decisionpolicy.AuthorizedJoin) (bool, error)
+type JoinExecutionStateReader interface {
+	InspectJoin(
+		context.Context,
+		string,
+	) (workercontracts.InspectJoinResponseV1, error)
 }
 
 type Dependencies struct {
-	Cases         FreshCaseReader
-	Clock         controller.Clock
-	JoinOutputs   JoinOutputStateReader
-	Stabilization time.Duration
+	Cases          FreshCaseReader
+	Clock          controller.Clock
+	JoinExecutions JoinExecutionStateReader
+	Stabilization  time.Duration
 }
 
 type Checker struct {
@@ -69,8 +74,8 @@ func New(dependencies Dependencies) (*Checker, error) {
 		return nil, fmt.Errorf("fresh case reader is required")
 	case dependencies.Clock == nil:
 		return nil, fmt.Errorf("execution check clock is required")
-	case dependencies.JoinOutputs == nil:
-		return nil, fmt.Errorf("join output state reader is required")
+	case dependencies.JoinExecutions == nil:
+		return nil, fmt.Errorf("join execution state reader is required")
 	case dependencies.Stabilization <= 0:
 		return nil, fmt.Errorf("stabilization interval must be positive")
 	default:
@@ -129,15 +134,25 @@ func (checker *Checker) Check(
 		return rejected(CaseChanged), nil
 	}
 	if freshAuthorization.Join != nil {
-		exists, outputErr := checker.dependencies.JoinOutputs.JoinOutputExists(
-			ctx,
-			*freshAuthorization.Join,
-		)
-		if outputErr != nil {
-			return Result{}, fmt.Errorf("inspect join output state: %w", outputErr)
+		executionID, identityErr := casestore.JoinExecutionID(*freshAuthorization.Join)
+		if identityErr != nil {
+			return Result{}, fmt.Errorf("derive join execution ID: %w", identityErr)
 		}
-		if exists {
-			return rejected(JoinOutputPresent), nil
+		response, inspectErr := checker.dependencies.JoinExecutions.InspectJoin(ctx, executionID)
+		if inspectErr != nil {
+			return Result{}, fmt.Errorf("inspect join execution: %w", inspectErr)
+		}
+		if response.Failure != nil {
+			return Result{}, fmt.Errorf(
+				"inspect join execution: worker failed with reason %q",
+				response.Failure.Reason,
+			)
+		}
+		if response.Success == nil {
+			return Result{}, fmt.Errorf("inspect join execution: worker returned no result")
+		}
+		if response.Success.State != workercontracts.InspectJoinAbsent {
+			return rejected(JoinExecutionPresent), nil
 		}
 	}
 	return Result{Authorization: freshAuthorization, Rejections: []Rejection{}}, nil

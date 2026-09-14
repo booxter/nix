@@ -153,7 +153,7 @@ func (store *Store) PrepareJoin(
 			authorized.CaseID,
 		)
 	}
-	executionID, err := joinExecutionID(authorized)
+	executionID, err := JoinExecutionID(authorized)
 	if err != nil {
 		return JoinExecution{}, false, err
 	}
@@ -422,7 +422,7 @@ func validateJoinExecution(record JoinExecution) error {
 	if err := validateJoinAuthorizationShape(record.Authorization); err != nil {
 		return err
 	}
-	executionID, err := joinExecutionID(record.Authorization)
+	executionID, err := JoinExecutionID(record.Authorization)
 	if err != nil {
 		return err
 	}
@@ -636,7 +636,7 @@ func repeatedJoinFailure[T interface {
 	}
 }
 
-func joinExecutionID(authorized decisionpolicy.AuthorizedJoin) (string, error) {
+func JoinExecutionID(authorized decisionpolicy.AuthorizedJoin) (string, error) {
 	data, err := json.Marshal(authorized)
 	if err != nil {
 		return "", fmt.Errorf("encode join execution identity: %w", err)

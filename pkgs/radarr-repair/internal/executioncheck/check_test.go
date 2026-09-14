@@ -8,9 +8,11 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
+	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 )
 
 const (
@@ -25,8 +27,8 @@ func TestCheckReturnsFreshManualImportAuthorization(t *testing.T) {
 	fresh := executionAssembly()
 	advanceObservation(&fresh, time.Minute)
 	cases := &fakeFreshCases{assembly: fresh}
-	outputs := &fakeJoinOutputs{}
-	checker := newTestChecker(t, cases, outputs, stored.Request.ObservedAt.Add(time.Hour))
+	executions := &fakeJoinExecutions{}
+	checker := newTestChecker(t, cases, executions, stored.Request.ObservedAt.Add(time.Hour))
 
 	result, err := checker.Check(
 		context.Background(),
@@ -43,21 +45,25 @@ func TestCheckReturnsFreshManualImportAuthorization(t *testing.T) {
 	if cases.selection.QueueID != 71 {
 		t.Fatalf("selected queue ID = %d", cases.selection.QueueID)
 	}
-	if outputs.calls != 0 {
-		t.Fatalf("join output reads = %d", outputs.calls)
+	if executions.calls != 0 {
+		t.Fatalf("join execution reads = %d", executions.calls)
 	}
 }
 
-func TestCheckRequiresAbsentJoinOutput(t *testing.T) {
+func TestCheckRequiresAbsentJoinExecution(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name     string
-		exists   bool
+		state    workercontracts.InspectJoinState
 		accepted bool
 	}{
-		{name: "absent", accepted: true},
-		{name: "present", exists: true},
+		{name: "absent", state: workercontracts.InspectJoinAbsent, accepted: true},
+		{name: "prepared", state: workercontracts.InspectJoinPrepared},
+		{name: "staged", state: workercontracts.InspectJoinStaged},
+		{name: "published", state: workercontracts.InspectJoinPublished},
+		{name: "discarded", state: workercontracts.InspectJoinDiscarded},
+		{name: "failed", state: workercontracts.InspectJoinFailed},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -65,11 +71,11 @@ func TestCheckRequiresAbsentJoinOutput(t *testing.T) {
 			stored := executionAssembly()
 			fresh := executionAssembly()
 			advanceObservation(&fresh, time.Minute)
-			outputs := &fakeJoinOutputs{exists: test.exists}
+			executions := &fakeJoinExecutions{state: test.state}
 			checker := newTestChecker(
 				t,
 				&fakeFreshCases{assembly: fresh},
-				outputs,
+				executions,
 				stored.Request.ObservedAt.Add(time.Hour),
 			)
 
@@ -85,10 +91,23 @@ func TestCheckRequiresAbsentJoinOutput(t *testing.T) {
 				t.Fatalf("result = %#v", result)
 			}
 			if !test.accepted {
-				assertRejected(t, result, JoinOutputPresent)
+				assertRejected(t, result, JoinExecutionPresent)
 			}
-			if outputs.calls != 1 || outputs.authorization.CaseID != executionCaseID {
-				t.Fatalf("join output query = %#v, calls = %d", outputs.authorization, outputs.calls)
+			validation := decisionpolicy.ValidateJoin(fresh, executionJoinDecision())
+			if !validation.Accepted() {
+				t.Fatalf("join validation = %#v", validation)
+			}
+			wantID, identityErr := casestore.JoinExecutionID(*validation.Authorized)
+			if identityErr != nil {
+				t.Fatal(identityErr)
+			}
+			if executions.calls != 1 || executions.executionID != wantID {
+				t.Fatalf(
+					"join execution ID = %q, want %q; calls = %d",
+					executions.executionID,
+					wantID,
+					executions.calls,
+				)
 			}
 		})
 	}
@@ -121,7 +140,7 @@ func TestCheckWaitsForStableImportPendingEvidence(t *testing.T) {
 			checker := newTestChecker(
 				t,
 				cases,
-				&fakeJoinOutputs{},
+				&fakeJoinExecutions{},
 				stored.Request.ObservedAt.Add(test.elapsed),
 			)
 
@@ -189,7 +208,7 @@ func TestCheckRejectsChangedExecutionState(t *testing.T) {
 			checker := newTestChecker(
 				t,
 				&fakeFreshCases{assembly: fresh},
-				&fakeJoinOutputs{},
+				&fakeJoinExecutions{},
 				stored.Request.ObservedAt.Add(time.Hour),
 			)
 
@@ -216,7 +235,7 @@ func TestCheckRejectsUnavailableOrInvalidCases(t *testing.T) {
 	checker := newTestChecker(
 		t,
 		&fakeFreshCases{err: unavailable},
-		&fakeJoinOutputs{},
+		&fakeJoinExecutions{},
 		stored.Request.ObservedAt.Add(time.Hour),
 	)
 	result, err := checker.Check(
@@ -246,7 +265,7 @@ func TestCheckKeepsReadFailuresDistinctFromRejections(t *testing.T) {
 	checker := newTestChecker(
 		t,
 		&fakeFreshCases{err: readFailure},
-		&fakeJoinOutputs{},
+		&fakeJoinExecutions{},
 		stored.Request.ObservedAt.Add(time.Hour),
 	)
 	if _, err := checker.Check(
@@ -261,7 +280,7 @@ func TestCheckKeepsReadFailuresDistinctFromRejections(t *testing.T) {
 	checker = newTestChecker(
 		t,
 		&fakeFreshCases{assembly: executionAssembly()},
-		&fakeJoinOutputs{err: outputFailure},
+		&fakeJoinExecutions{err: outputFailure},
 		stored.Request.ObservedAt.Add(time.Hour),
 	)
 	if _, err := checker.Check(
@@ -271,17 +290,31 @@ func TestCheckKeepsReadFailuresDistinctFromRejections(t *testing.T) {
 	); !errors.Is(err, outputFailure) {
 		t.Fatalf("error = %v", err)
 	}
+
+	checker = newTestChecker(
+		t,
+		&fakeFreshCases{assembly: executionAssembly()},
+		&fakeJoinExecutions{failure: true},
+		stored.Request.ObservedAt.Add(time.Hour),
+	)
+	if _, err := checker.Check(
+		context.Background(),
+		stored,
+		executionJoinDecision(),
+	); err == nil {
+		t.Fatal("worker inspection failure was accepted")
+	}
 }
 
 func newTestChecker(
 	t *testing.T,
 	cases FreshCaseReader,
-	outputs JoinOutputStateReader,
+	executions JoinExecutionStateReader,
 	now time.Time,
 ) *Checker {
 	t.Helper()
 	checker, err := New(Dependencies{
-		Cases: cases, Clock: fixedClock{now: now}, JoinOutputs: outputs,
+		Cases: cases, Clock: fixedClock{now: now}, JoinExecutions: executions,
 		Stabilization: 30 * time.Minute,
 	})
 	if err != nil {
@@ -464,18 +497,39 @@ func (cases *fakeFreshCases) Inspect(
 	return cases.assembly, cases.err
 }
 
-type fakeJoinOutputs struct {
-	exists        bool
-	err           error
-	authorization decisionpolicy.AuthorizedJoin
-	calls         int
+type fakeJoinExecutions struct {
+	state       workercontracts.InspectJoinState
+	failure     bool
+	err         error
+	executionID string
+	calls       int
 }
 
-func (outputs *fakeJoinOutputs) JoinOutputExists(
+func (executions *fakeJoinExecutions) InspectJoin(
 	_ context.Context,
-	authorization decisionpolicy.AuthorizedJoin,
-) (bool, error) {
-	outputs.calls++
-	outputs.authorization = authorization
-	return outputs.exists, outputs.err
+	executionID string,
+) (workercontracts.InspectJoinResponseV1, error) {
+	executions.calls++
+	executions.executionID = executionID
+	if executions.err != nil {
+		return workercontracts.InspectJoinResponseV1{}, executions.err
+	}
+	if executions.failure {
+		return workercontracts.InspectJoinResponseV1{
+			Kind: workercontracts.ProbeResponseFailed,
+			Failure: &workercontracts.InspectJoinFailureResponseV1{
+				Reason: workercontracts.InspectJoinInternal,
+			},
+		}, nil
+	}
+	state := executions.state
+	if state == "" {
+		state = workercontracts.InspectJoinAbsent
+	}
+	return workercontracts.InspectJoinResponseV1{
+		Kind: workercontracts.ProbeResponseSucceeded,
+		Success: &workercontracts.InspectJoinSuccessResponseV1{
+			State: state,
+		},
+	}, nil
 }
