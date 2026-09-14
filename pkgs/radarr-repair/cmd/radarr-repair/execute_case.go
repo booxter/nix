@@ -10,10 +10,6 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
-	"github.com/booxter/nix-config/radarr-repair/internal/executioncheck"
-	"github.com/booxter/nix-config/radarr-repair/internal/joinexecution"
-	"github.com/booxter/nix-config/radarr-repair/internal/joinimport"
-	"github.com/booxter/nix-config/radarr-repair/internal/manualimport"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 )
@@ -171,61 +167,16 @@ func executeStoredCase(
 	if err != nil {
 		return repairexecution.Result{}, fmt.Errorf("load planned repair case: %w", err)
 	}
-	access, err := configureControllerAccess(config.inspectionConfig())
+	executor, err := configureRepairExecutor(
+		config.inspectionConfig(),
+		store,
+		config.Stabilization,
+		config.PollInterval,
+	)
 	if err != nil {
 		return repairexecution.Result{}, err
 	}
-	defer access.Close()
-
-	clock := wallClock{}
-	checker, err := executioncheck.New(executioncheck.Dependencies{
-		Cases:          access.inspector,
-		Clock:          clock,
-		JoinExecutions: access.worker,
-		Stabilization:  config.Stabilization,
-	})
-	if err != nil {
-		return repairexecution.Result{}, fmt.Errorf("configure execution checker: %w", err)
-	}
-	manualImports, err := manualimport.New(manualimport.Dependencies{
-		Radarr:       access.radarr,
-		Store:        store,
-		Clock:        clock,
-		Waiter:       manualimport.Timer{},
-		PollInterval: config.PollInterval,
-	})
-	if err != nil {
-		return repairexecution.Result{}, fmt.Errorf("configure manual-import executor: %w", err)
-	}
-	joins, err := joinexecution.New(joinexecution.Dependencies{
-		Worker: access.worker,
-		Store:  store,
-		Clock:  clock,
-	})
-	if err != nil {
-		return repairexecution.Result{}, fmt.Errorf("configure join executor: %w", err)
-	}
-	joinedFileImports, err := joinimport.New(joinimport.Dependencies{
-		Radarr:       access.radarr,
-		Store:        store,
-		Paths:        access.worker,
-		Clock:        clock,
-		Waiter:       manualimport.Timer{},
-		PollInterval: config.PollInterval,
-	})
-	if err != nil {
-		return repairexecution.Result{}, fmt.Errorf("configure joined-file import executor: %w", err)
-	}
-	executor, err := repairexecution.New(repairexecution.Dependencies{
-		Store:             store,
-		Checker:           checker,
-		ManualImports:     manualImports,
-		Joins:             joins,
-		JoinedFileImports: joinedFileImports,
-	})
-	if err != nil {
-		return repairexecution.Result{}, fmt.Errorf("configure repair executor: %w", err)
-	}
+	defer executor.Close()
 	return executor.Execute(ctx, planned.Assembly, planned.Decision)
 }
 
