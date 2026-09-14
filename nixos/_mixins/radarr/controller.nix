@@ -187,7 +187,7 @@ in
       description = "Periodically run the Radarr repair controller";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = "5m";
+        OnActiveSec = "5m";
         OnUnitInactiveSec = controller.interval;
         Unit = "${serviceName}.service";
       };
