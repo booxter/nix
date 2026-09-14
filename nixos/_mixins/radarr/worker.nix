@@ -121,7 +121,8 @@ in
         RestrictAddressFamilies = [ "AF_UNIX" ];
         RestrictNamespaces = true;
         RestrictRealtime = true;
-        RestrictSUIDSGID = true;
+        # RestrictSUIDSGID blocks openat2 because seccomp cannot inspect
+        # open_how.mode: https://github.com/systemd/systemd/issues/38711
         SystemCallArchitectures = "native";
       };
     };
