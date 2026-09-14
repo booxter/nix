@@ -40,6 +40,7 @@ let
 
       RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
       RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+      RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
         unformatted="$(gofmt -l cmd contracts internal worker)"
