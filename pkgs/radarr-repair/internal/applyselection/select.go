@@ -28,7 +28,7 @@ func Select(
 	selected := make([]casestore.PlannedCase, 0, min(len(planned), policy.Limit))
 	for _, candidate := range planned {
 		action := candidate.Decision.Kind
-		if action == contracts.ActionNoRepair || !policy.AllowedActions[action] {
+		if !permitted(action, policy) {
 			continue
 		}
 		selected = append(selected, candidate)
@@ -37,6 +37,20 @@ func Select(
 		}
 	}
 	return selected, nil
+}
+
+func Permitted(action contracts.DecisionAction, policy Policy) (bool, error) {
+	if err := validatePolicy(policy); err != nil {
+		return false, err
+	}
+	if err := validateDecisionAction(action); err != nil {
+		return false, err
+	}
+	return permitted(action, policy), nil
+}
+
+func permitted(action contracts.DecisionAction, policy Policy) bool {
+	return action != contracts.ActionNoRepair && policy.AllowedActions[action]
 }
 
 func validatePolicy(policy Policy) error {
