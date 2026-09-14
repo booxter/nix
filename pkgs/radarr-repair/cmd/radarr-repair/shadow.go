@@ -38,6 +38,76 @@ type shadowConfig struct {
 
 type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
 
+type shadowFlags struct {
+	radarrURL         *string
+	radarrAPIKeyFile  *string
+	transmissionURL   *string
+	workerSocket      *string
+	workerRoots       mediaroot.Mappings
+	plannerSocket     *string
+	stateDirectory    *string
+	metricsFile       *string
+	requestTimeout    *time.Duration
+	collectionTimeout *time.Duration
+	plannerTimeout    *time.Duration
+	retryInitial      *time.Duration
+	retryMaximum      *time.Duration
+}
+
+func addShadowFlags(flags *flag.FlagSet) shadowFlags {
+	values := shadowFlags{
+		radarrURL: flags.String("radarr-url", "", "loopback Radarr URL"),
+		radarrAPIKeyFile: flags.String(
+			"radarr-api-key-file", "", "Radarr API-key credential file",
+		),
+		transmissionURL: flags.String(
+			"transmission-url", "", "loopback Transmission RPC URL",
+		),
+		workerSocket:   flags.String("worker-socket", "", "media worker Unix socket"),
+		workerRoots:    mediaroot.NewMappings(),
+		plannerSocket:  flags.String("planner-socket", "", "repair planner Unix socket"),
+		stateDirectory: flags.String("state-directory", "", "private controller state directory"),
+		metricsFile:    flags.String("metrics-file", "", "Prometheus textfile output"),
+		requestTimeout: flags.Duration(
+			"request-timeout", defaultInspectTimeout,
+			"Radarr, Transmission, and worker request timeout",
+		),
+		collectionTimeout: flags.Duration(
+			"collection-timeout", defaultCollectionTimeout,
+			"per-case evidence-collection timeout",
+		),
+		plannerTimeout: flags.Duration(
+			"planner-timeout", defaultPlannerTimeout, "planner request timeout",
+		),
+		retryInitial: flags.Duration(
+			"retry-initial", defaultRetryInitial, "delay after the first planner failure",
+		),
+		retryMaximum: flags.Duration(
+			"retry-maximum", defaultRetryMaximum, "maximum planner retry delay",
+		),
+	}
+	flags.Var(values.workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
+	return values
+}
+
+func (values shadowFlags) Config() shadowConfig {
+	return shadowConfig{
+		RadarrURL:         *values.radarrURL,
+		RadarrAPIKeyFile:  *values.radarrAPIKeyFile,
+		TransmissionURL:   *values.transmissionURL,
+		WorkerSocket:      *values.workerSocket,
+		WorkerRoots:       values.workerRoots.Paths(),
+		PlannerSocket:     *values.plannerSocket,
+		StateDirectory:    *values.stateDirectory,
+		MetricsFile:       *values.metricsFile,
+		RequestTimeout:    *values.requestTimeout,
+		CollectionTimeout: *values.collectionTimeout,
+		PlannerTimeout:    *values.plannerTimeout,
+		RetryInitial:      *values.retryInitial,
+		RetryMaximum:      *values.retryMaximum,
+	}
+}
+
 func (app application) runShadow(
 	ctx context.Context,
 	arguments []string,
@@ -53,32 +123,7 @@ func (app application) runShadow(
 				"--planner-socket PATH --state-directory DIR --metrics-file FILE",
 		)
 	}
-	radarrURL := flags.String("radarr-url", "", "loopback Radarr URL")
-	radarrAPIKeyFile := flags.String(
-		"radarr-api-key-file", "", "Radarr API-key credential file",
-	)
-	transmissionURL := flags.String("transmission-url", "", "loopback Transmission RPC URL")
-	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
-	plannerSocket := flags.String("planner-socket", "", "repair planner Unix socket")
-	stateDirectory := flags.String("state-directory", "", "private controller state directory")
-	metricsFile := flags.String("metrics-file", "", "Prometheus textfile output")
-	requestTimeout := flags.Duration(
-		"request-timeout", defaultInspectTimeout, "Radarr, Transmission, and worker request timeout",
-	)
-	collectionTimeout := flags.Duration(
-		"collection-timeout", defaultCollectionTimeout, "per-case evidence-collection timeout",
-	)
-	plannerTimeout := flags.Duration(
-		"planner-timeout", defaultPlannerTimeout, "planner request timeout",
-	)
-	retryInitial := flags.Duration(
-		"retry-initial", defaultRetryInitial, "delay after the first planner failure",
-	)
-	retryMaximum := flags.Duration(
-		"retry-maximum", defaultRetryMaximum, "maximum planner retry delay",
-	)
-	workerRoots := mediaroot.NewMappings()
-	flags.Var(workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
+	values := addShadowFlags(flags)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -86,21 +131,7 @@ func (app application) runShadow(
 		flags.Usage()
 		return fmt.Errorf("shadow accepts no positional arguments")
 	}
-	config := shadowConfig{
-		RadarrURL:         *radarrURL,
-		RadarrAPIKeyFile:  *radarrAPIKeyFile,
-		TransmissionURL:   *transmissionURL,
-		WorkerSocket:      *workerSocket,
-		WorkerRoots:       workerRoots.Paths(),
-		PlannerSocket:     *plannerSocket,
-		StateDirectory:    *stateDirectory,
-		MetricsFile:       *metricsFile,
-		RequestTimeout:    *requestTimeout,
-		CollectionTimeout: *collectionTimeout,
-		PlannerTimeout:    *plannerTimeout,
-		RetryInitial:      *retryInitial,
-		RetryMaximum:      *retryMaximum,
-	}
+	config := values.Config()
 	if err := validateShadowConfig(config); err != nil {
 		return err
 	}
@@ -117,8 +148,13 @@ func (app application) runShadow(
 		runErr == nil,
 		time.Now().UTC(),
 	)
-	_, outputErr := fmt.Fprintf(
-		stdout,
+	outputErr := writeShadowSummary(stdout, report)
+	return errors.Join(runErr, metricsErr, outputErr)
+}
+
+func writeShadowSummary(writer io.Writer, report shadowrunner.Report) error {
+	_, err := fmt.Fprintf(
+		writer,
 		"observed=%d stored=%d submitted=%d decided=%d already_decided=%d deferred=%d failed=%d\n",
 		report.Observed,
 		report.Stored,
@@ -128,7 +164,7 @@ func (app application) runShadow(
 		report.Deferred,
 		report.Failed,
 	)
-	return errors.Join(runErr, metricsErr, outputErr)
+	return err
 }
 
 func validateShadowConfig(config shadowConfig) error {

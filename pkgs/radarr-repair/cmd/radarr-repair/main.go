@@ -19,13 +19,14 @@ type application struct {
 	inspect     inspectFunc
 	inspectAll  inspectAllFunc
 	shadow      shadowFunc
+	automatic   automaticFunc
 	executeCase executeCaseFunc
 }
 
 func newApplication() application {
 	return application{
 		inspect: inspectCase, inspectAll: inspectAllCases, shadow: runShadowOnce,
-		executeCase: executeStoredCase,
+		automatic: runAutomaticOnce, executeCase: executeStoredCase,
 	}
 }
 
@@ -41,7 +42,7 @@ func (app application) run(
 ) error {
 	if len(arguments) == 0 {
 		writeUsage(stderr)
-		return fmt.Errorf("expected execute-case, inspect, shadow, validate-case, or validate-decision")
+		return fmt.Errorf("expected execute-case, inspect, run, shadow, validate-case, or validate-decision")
 	}
 
 	switch arguments[0] {
@@ -49,6 +50,8 @@ func (app application) run(
 		return app.runExecuteCase(ctx, arguments[1:], stdout, stderr)
 	case "inspect":
 		return app.runInspect(ctx, arguments[1:], stdout, stderr)
+	case "run":
+		return app.runAutomatic(ctx, arguments[1:], stdout, stderr)
 	case "shadow":
 		return app.runShadow(ctx, arguments[1:], stdout, stderr)
 	case "validate-case":
@@ -129,7 +132,7 @@ func readBounded(reader io.Reader) ([]byte, error) {
 func writeUsage(writer io.Writer) {
 	_, _ = fmt.Fprintln(
 		writer,
-		"usage: radarr-repair <execute-case|inspect|shadow|validate-case|validate-decision> ...",
+		"usage: radarr-repair <execute-case|inspect|run|shadow|validate-case|validate-decision> ...",
 	)
 }
 
