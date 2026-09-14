@@ -377,11 +377,11 @@ func (store *Store) updateJoinExecution(
 }
 
 func (store *Store) validateJoinAuthorization(authorized decisionpolicy.AuthorizedJoin) error {
-	assembly, decision, err := store.storedAssemblyAndDecision(authorized.CaseID)
+	planned, err := store.GetPlannedCase(authorized.CaseID)
 	if err != nil {
 		return err
 	}
-	validation := decisionpolicy.ValidateJoin(assembly, decision)
+	validation := decisionpolicy.ValidateJoin(planned.Assembly, planned.Decision)
 	if !validation.Accepted() || validation.Authorized == nil ||
 		!reflect.DeepEqual(*validation.Authorized, authorized) {
 		return fmt.Errorf("join authorization does not match stored case and decision")

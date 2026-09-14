@@ -173,10 +173,11 @@ func (store *Store) validateJoinScanRequest(caseID string, request JoinScanReque
 		strings.ContainsRune(request.DownloadID, '\x00') {
 		return fmt.Errorf("Radarr scan request is invalid")
 	}
-	assembly, _, err := store.storedAssemblyAndDecision(caseID)
+	planned, err := store.GetPlannedCase(caseID)
 	if err != nil {
 		return err
 	}
+	assembly := planned.Assembly
 	observation := assembly.LocalSnapshot.Observation
 	if observation.Movie == nil || observation.Correlation.Radarr.MovieID == nil ||
 		request.MovieID != observation.Movie.ID ||

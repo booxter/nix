@@ -11,8 +11,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/booxter/nix-config/radarr-repair/contracts"
-	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 )
@@ -313,79 +311,16 @@ func (store *Store) updateManualImportExecution(
 func (store *Store) validateManualImportAuthorization(
 	authorized decisionpolicy.AuthorizedManualImport,
 ) error {
-	assembly, decision, err := store.storedAssemblyAndDecision(authorized.CaseID)
+	planned, err := store.GetPlannedCase(authorized.CaseID)
 	if err != nil {
 		return err
 	}
-	validation := decisionpolicy.ValidateManualImport(assembly, decision)
+	validation := decisionpolicy.ValidateManualImport(planned.Assembly, planned.Decision)
 	if !validation.Accepted() || validation.Authorized == nil ||
 		!reflect.DeepEqual(*validation.Authorized, authorized) {
 		return fmt.Errorf("manual import authorization does not match stored case and decision")
 	}
 	return nil
-}
-
-func (store *Store) storedAssemblyAndDecision(
-	caseID string,
-) (casebuilder.Assembly, contracts.RepairDecisionV1, error) {
-	casePath, err := store.recordPath(caseID)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, err
-	}
-	caseRecord, found, err := readRecord(casePath)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, err
-	}
-	if !found {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"case %q is not stored",
-			caseID,
-		)
-	}
-	if caseRecord.CaseID != caseID {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"stored record has unexpected case ID %q",
-			caseRecord.CaseID,
-		)
-	}
-	planningPath, err := store.planningResultPath(caseID)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, err
-	}
-	planning, found, err := readPlanningResult(planningPath)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, err
-	}
-	if !found || !planning.HasDecision() {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"case %q has no stored planning decision",
-			caseID,
-		)
-	}
-	if planning.CaseID != caseID {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"stored planning result has unexpected case ID %q",
-			planning.CaseID,
-		)
-	}
-	decision, err := contracts.DecodeDecision(planning.Decision)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"decode stored planning decision: %w",
-			err,
-		)
-	}
-	request, err := contracts.DecodeCase(caseRecord.Request)
-	if err != nil {
-		return casebuilder.Assembly{}, contracts.RepairDecisionV1{}, fmt.Errorf(
-			"decode stored repair case: %w",
-			err,
-		)
-	}
-	return casebuilder.Assembly{
-		Request: request, EncodedRequest: cloneBytes(caseRecord.Request),
-		LocalSnapshot: caseRecord.Snapshot,
-	}, decision, nil
 }
 
 func (store *Store) executionPath(caseID string) (string, error) {
