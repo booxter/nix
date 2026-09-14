@@ -15,6 +15,7 @@ const (
 	stageJoinPath = "/v1/join/stage"
 	publishPath   = "/v1/join/publish"
 	discardPath   = "/v1/join/discard"
+	inspectPath   = "/v1/join/inspect"
 )
 
 type StageJoinExchange struct {
@@ -151,6 +152,41 @@ func (client *Client) DiscardJoin(
 		request.RequestID,
 		workercontracts.DecodeDiscardResponse,
 		func(response workercontracts.DiscardResponseV1) string { return response.RequestID() },
+	)
+}
+
+func (client *Client) InspectJoin(
+	ctx context.Context,
+	executionID string,
+) (workercontracts.InspectJoinResponseV1, error) {
+	if !client.configured() {
+		return workercontracts.InspectJoinResponseV1{}, fmt.Errorf(
+			"worker client is not configured",
+		)
+	}
+	request := workercontracts.InspectJoinRequestV1{
+		ExecutionID:   executionID,
+		Operation:     workercontracts.InspectJoinV1,
+		RequestID:     client.nextID(),
+		SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+	}
+	payload, err := workercontracts.EncodeInspectJoinRequest(request)
+	if err != nil {
+		return workercontracts.InspectJoinResponseV1{}, fmt.Errorf(
+			"construct worker join-inspection request: %w",
+			err,
+		)
+	}
+	return callJoin(
+		client,
+		ctx,
+		inspectPath,
+		payload,
+		request.RequestID,
+		workercontracts.DecodeInspectJoinResponse,
+		func(response workercontracts.InspectJoinResponseV1) string {
+			return response.RequestID()
+		},
 	)
 }
 

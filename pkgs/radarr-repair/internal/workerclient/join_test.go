@@ -189,6 +189,82 @@ func TestClientPublishesAndDiscardsThroughUnixSocket(t *testing.T) {
 	}
 }
 
+func TestClientInspectsJoinThroughUnixSocket(t *testing.T) {
+	t.Parallel()
+
+	requests := make(chan workercontracts.InspectJoinRequestV1, 1)
+	socketPath := serveUnix(t, http.HandlerFunc(func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		inspectRequest, err := readInspectJoinRequest(request)
+		if err != nil {
+			http.Error(writer, "invalid request", http.StatusBadRequest)
+			return
+		}
+		requests <- inspectRequest
+		writeInspectJoinResponse(writer, workercontracts.InspectJoinResponseV1{
+			Kind: workercontracts.ProbeResponseSucceeded,
+			Success: &workercontracts.InspectJoinSuccessResponseV1{
+				Operation:     workercontracts.InspectJoinV1,
+				RequestID:     inspectRequest.RequestID,
+				SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+				State:         workercontracts.InspectJoinStaged,
+				Status:        workercontracts.Ok,
+			},
+		})
+	}))
+	client := testClient(t, socketPath, testRoots(), time.Second)
+
+	response, err := client.InspectJoin(context.Background(), "execution:join:01")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.Success == nil || response.Failure != nil ||
+		response.Success.State != workercontracts.InspectJoinStaged {
+		t.Fatalf("response = %#v", response)
+	}
+	request := <-requests
+	if request.ExecutionID != "execution:join:01" || request.RequestID != "request:1" {
+		t.Fatalf("request = %#v", request)
+	}
+}
+
+func TestClientRetainsJoinInspectionFailure(t *testing.T) {
+	t.Parallel()
+
+	socketPath := serveUnix(t, http.HandlerFunc(func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		inspectRequest, err := readInspectJoinRequest(request)
+		if err != nil {
+			http.Error(writer, "invalid request", http.StatusBadRequest)
+			return
+		}
+		writeInspectJoinResponse(writer, workercontracts.InspectJoinResponseV1{
+			Kind: workercontracts.ProbeResponseFailed,
+			Failure: &workercontracts.InspectJoinFailureResponseV1{
+				Operation:     workercontracts.InspectJoinV1,
+				Reason:        workercontracts.InspectJoinInternal,
+				RequestID:     inspectRequest.RequestID,
+				SchemaVersion: workercontracts.RadarrRepairWorkerV1,
+				Status:        workercontracts.Failed,
+			},
+		})
+	}))
+	client := testClient(t, socketPath, testRoots(), time.Second)
+
+	response, err := client.InspectJoin(context.Background(), "execution:join:01")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.Success != nil || response.Failure == nil ||
+		response.Failure.Reason != workercontracts.InspectJoinInternal {
+		t.Fatalf("response = %#v", response)
+	}
+}
+
 func TestClientRejectsUncorrelatedJoinResponse(t *testing.T) {
 	t.Parallel()
 
@@ -276,6 +352,16 @@ func readDiscardRequest(request *http.Request) (workercontracts.DiscardRequestV1
 	return workercontracts.DecodeDiscardRequest(data)
 }
 
+func readInspectJoinRequest(
+	request *http.Request,
+) (workercontracts.InspectJoinRequestV1, error) {
+	data, err := readJoinRequest(request, inspectPath)
+	if err != nil {
+		return workercontracts.InspectJoinRequestV1{}, err
+	}
+	return workercontracts.DecodeInspectJoinRequest(data)
+}
+
 func readJoinRequest(request *http.Request, path string) ([]byte, error) {
 	if request.Method != http.MethodPost || request.URL.Path != path ||
 		request.Header.Get("Content-Type") != "application/json" {
@@ -305,6 +391,14 @@ func writeDiscardResponse(
 	response workercontracts.DiscardResponseV1,
 ) {
 	data, err := workercontracts.EncodeDiscardResponse(response)
+	writeJoinResponse(writer, data, err)
+}
+
+func writeInspectJoinResponse(
+	writer http.ResponseWriter,
+	response workercontracts.InspectJoinResponseV1,
+) {
+	data, err := workercontracts.EncodeInspectJoinResponse(response)
 	writeJoinResponse(writer, data, err)
 }
 
