@@ -49,7 +49,7 @@ func TestRunProcessesCasesAfterCollectionAndPlannerFailures(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 3, Stored: 3, Submitted: 3, Decided: 2, Failed: 1}
-	if reportSummary(report) != wantReport {
+	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if !reflect.DeepEqual(planner.calls, []string{firstID, secondID, thirdID}) {
@@ -63,6 +63,7 @@ func TestRunProcessesCasesAfterCollectionAndPlannerFailures(t *testing.T) {
 	if !reflect.DeepEqual(store.decisions, []string{firstID, thirdID}) {
 		t.Fatalf("stored decisions = %v", store.decisions)
 	}
+	assertPlannedCaseIDs(t, report.PlannedCases, []string{firstID, thirdID})
 }
 
 func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
@@ -70,17 +71,22 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 
 	decidedID := testCaseID("4")
 	deferredID := testCaseID("5")
+	staleID := testCaseID("a")
 	now := time.Date(2026, time.September, 12, 18, 0, 0, 0, time.UTC)
 	retryAfter := now.Add(time.Minute)
 	store := newFakeStore()
 	store.known[decidedID] = true
 	store.known[deferredID] = true
+	store.known[staleID] = true
 	store.results[decidedID] = casestore.PlanningResult{
-		CaseID: decidedID, Attempts: 1, Decision: []byte(`{"action":"no_repair"}`),
+		CaseID: decidedID, Attempts: 1, Decision: encodedTestDecision(t, decidedID),
 	}
 	store.results[deferredID] = casestore.PlanningResult{
 		CaseID: deferredID, Attempts: 1, RetryAfter: &retryAfter,
 		Failure: &casestore.PlanningFailure{Kind: casestore.PlanningFailureTimeout},
+	}
+	store.results[staleID] = casestore.PlanningResult{
+		CaseID: staleID, Attempts: 1, Decision: encodedTestDecision(t, staleID),
 	}
 	source := &fakeCaseSource{assemblies: []casebuilder.Assembly{
 		testAssembly(decidedID),
@@ -94,11 +100,39 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantReport := Report{Observed: 2, AlreadyDecided: 1, Deferred: 1}
-	if reportSummary(report) != wantReport {
+	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if len(planner.calls) != 0 {
 		t.Fatalf("planner calls = %v", planner.calls)
+	}
+	assertPlannedCaseIDs(t, report.PlannedCases, []string{decidedID})
+}
+
+func TestRunRejectsStoredDecisionForAnotherCase(t *testing.T) {
+	t.Parallel()
+
+	caseID := testCaseID("b")
+	otherID := testCaseID("c")
+	store := newFakeStore()
+	store.known[caseID] = true
+	store.results[caseID] = casestore.PlanningResult{
+		CaseID: caseID, Attempts: 1, Decision: encodedTestDecision(t, otherID),
+	}
+	runner := newTestRunner(
+		t,
+		&fakeCaseSource{assemblies: []casebuilder.Assembly{testAssembly(caseID)}},
+		store,
+		&fakePlanner{},
+		time.Date(2026, time.September, 12, 18, 0, 0, 0, time.UTC),
+	)
+
+	report, err := runner.Run(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "does not match observed case") {
+		t.Fatalf("error = %v", err)
+	}
+	if report.Failed != 1 || len(report.PlannedCases) != 0 {
+		t.Fatalf("report = %#v", report)
 	}
 }
 
@@ -125,7 +159,7 @@ func TestRunDoublesRetryDelayAfterEarlierFailures(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 1, Submitted: 1, Failed: 1}
-	if reportSummary(report) != wantReport {
+	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if len(store.failures) != 1 ||
@@ -158,7 +192,7 @@ func TestRunContinuesAfterCaseStorageFailure(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	wantReport := Report{Observed: 2, Stored: 1, Submitted: 1, Decided: 1, Failed: 1}
-	if reportSummary(report) != wantReport {
+	if !reflect.DeepEqual(reportSummary(report), wantReport) {
 		t.Fatalf("report = %#v, want %#v", report, wantReport)
 	}
 	if !reflect.DeepEqual(planner.calls, []string{workingID}) {
@@ -384,7 +418,26 @@ func testAssembly(caseID string) casebuilder.Assembly {
 
 func reportSummary(report Report) Report {
 	report.metrics = metricData{}
+	report.PlannedCases = nil
 	return report
+}
+
+func assertPlannedCaseIDs(
+	t *testing.T,
+	planned []casestore.PlannedCase,
+	wanted []string,
+) {
+	t.Helper()
+	actual := make([]string, len(planned))
+	for index, current := range planned {
+		actual[index] = current.Assembly.Request.CaseID
+		if current.Decision.CaseID() != actual[index] {
+			t.Fatalf("planned case %q has decision for %q", actual[index], current.Decision.CaseID())
+		}
+	}
+	if !reflect.DeepEqual(actual, wanted) {
+		t.Fatalf("planned case IDs = %v, want %v", actual, wanted)
+	}
 }
 
 func testDecision(t *testing.T, caseID string) contracts.RepairDecisionV1 {
@@ -399,6 +452,15 @@ func testDecision(t *testing.T, caseID string) contracts.RepairDecisionV1 {
 	}
 	decision.NoRepair.CaseID = caseID
 	return decision
+}
+
+func encodedTestDecision(t *testing.T, caseID string) []byte {
+	t.Helper()
+	encoded, err := contracts.EncodeDecision(testDecision(t, caseID))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return encoded
 }
 
 func testCaseID(character string) string {

@@ -56,6 +56,7 @@ type Report struct {
 	AlreadyDecided int
 	Deferred       int
 	Failed         int
+	PlannedCases   []casestore.PlannedCase
 	metrics        metricData
 }
 
@@ -160,7 +161,7 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 			break
 		}
 		result, err := runner.process(ctx, assembly)
-		report.add(result)
+		report.add(assembly, result)
 		if err != nil {
 			runErrors = append(runErrors, fmt.Errorf(
 				"process repair case %q: %w", assembly.Request.CaseID, err,
@@ -188,7 +189,7 @@ type caseResult struct {
 	PlannerDuration time.Duration
 }
 
-func (report *Report) add(result caseResult) {
+func (report *Report) add(assembly casebuilder.Assembly, result caseResult) {
 	if result.Stored {
 		report.Stored++
 	}
@@ -196,7 +197,7 @@ func (report *Report) add(result caseResult) {
 		report.Submitted++
 		report.metrics.plannerDuration += result.PlannerDuration
 	}
-	if result.Decision.Kind != "" {
+	if result.Outcome == caseDecided && result.Decision.Kind != "" {
 		report.observeDecision(result.Decision)
 	}
 	if result.PlannerFailure != nil {
@@ -205,8 +206,14 @@ func (report *Report) add(result caseResult) {
 	switch result.Outcome {
 	case caseDecided:
 		report.Decided++
+		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
+			Assembly: assembly, Decision: result.Decision,
+		})
 	case caseAlreadyDecided:
 		report.AlreadyDecided++
+		report.PlannedCases = append(report.PlannedCases, casestore.PlannedCase{
+			Assembly: assembly, Decision: result.Decision,
+		})
 	case caseDeferred:
 		report.Deferred++
 	case caseFailed:
@@ -230,6 +237,12 @@ func (runner *Runner) process(
 		return result, fmt.Errorf("read planning result: %w", err)
 	}
 	if found && previous.HasDecision() {
+		decision, decodeErr := planningDecision(caseID, previous)
+		if decodeErr != nil {
+			result.Outcome = caseFailed
+			return result, decodeErr
+		}
+		result.Decision = decision
 		result.Outcome = caseAlreadyDecided
 		return result, nil
 	}
@@ -274,8 +287,6 @@ func (runner *Runner) process(
 		}
 		return result, fmt.Errorf("planner failed: %w", planErr)
 	}
-	result.Decision = decision
-
 	stored, changed, err := runner.dependencies.Store.PutPlanningDecision(
 		caseID, decision, completedAt,
 	)
@@ -284,6 +295,11 @@ func (runner *Runner) process(
 		return result, fmt.Errorf("store planning decision: %w", err)
 	}
 	if !changed && stored.HasDecision() {
+		result.Decision, err = planningDecision(caseID, stored)
+		if err != nil {
+			result.Outcome = caseFailed
+			return result, err
+		}
 		result.Outcome = caseAlreadyDecided
 		return result, nil
 	}
@@ -291,8 +307,30 @@ func (runner *Runner) process(
 		result.Outcome = caseFailed
 		return result, fmt.Errorf("result store did not record the planning decision")
 	}
+	result.Decision, err = planningDecision(caseID, stored)
+	if err != nil {
+		result.Outcome = caseFailed
+		return result, err
+	}
 	result.Outcome = caseDecided
 	return result, nil
+}
+
+func planningDecision(
+	caseID string,
+	result casestore.PlanningResult,
+) (contracts.RepairDecisionV1, error) {
+	decision, err := contracts.DecodeDecision(result.Decision)
+	if err != nil {
+		return contracts.RepairDecisionV1{}, fmt.Errorf("decode planning decision: %w", err)
+	}
+	if decision.CaseID() != caseID {
+		return contracts.RepairDecisionV1{}, fmt.Errorf(
+			"planning decision case ID does not match observed case %q",
+			caseID,
+		)
+	}
+	return decision, nil
 }
 
 func (report *Report) observe(assembly casebuilder.Assembly) {
