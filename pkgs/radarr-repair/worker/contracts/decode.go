@@ -71,6 +71,10 @@ func DecodeDiscardRequest(data []byte) (DiscardRequestV1, error) {
 	return decodeJoinRequest[DiscardRequestV1](data, "discard request", "discard_v1")
 }
 
+func DecodeInspectJoinRequest(data []byte) (InspectJoinRequestV1, error) {
+	return decodeJoinRequest[InspectJoinRequestV1](data, "inspect join request", "inspect_join_v1")
+}
+
 func DecodeStageJoinResponse(data []byte) (StageJoinResponseV1, error) {
 	kind, success, failure, err := decodeJoinResponse[
 		StageJoinSuccessResponseV1,
@@ -102,6 +106,17 @@ func DecodeDiscardResponse(data []byte) (DiscardResponseV1, error) {
 		return DiscardResponseV1{}, err
 	}
 	return DiscardResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
+func DecodeInspectJoinResponse(data []byte) (InspectJoinResponseV1, error) {
+	kind, success, failure, err := decodeJoinResponse[
+		InspectJoinSuccessResponseV1,
+		InspectJoinFailureResponseV1,
+	](data, "inspect join response", "inspect_join_v1")
+	if err != nil {
+		return InspectJoinResponseV1{}, err
+	}
+	return InspectJoinResponseV1{Kind: kind, Success: success, Failure: failure}, nil
 }
 
 func decodeJoinRequest[T any](data []byte, name string, operation string) (T, error) {

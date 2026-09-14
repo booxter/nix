@@ -71,6 +71,27 @@ func TestJoinRequestExamplesDecodeAndRoundTrip(t *testing.T) {
 			t.Fatalf("decode round trip: %v", err)
 		}
 	})
+
+	t.Run("inspect", func(t *testing.T) {
+		t.Parallel()
+		request, err := DecodeInspectJoinRequest(
+			readFixture(t, "v1/examples/join-inspect-request.json"),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if request.RequestID != "request:inspect:01" ||
+			request.ExecutionID != "execution:join:01" {
+			t.Fatalf("inspect request = %#v", request)
+		}
+		encoded, err := EncodeInspectJoinRequest(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := DecodeInspectJoinRequest(encoded); err != nil {
+			t.Fatalf("decode round trip: %v", err)
+		}
+	})
 }
 
 func TestJoinResponseExamplesDecodeAndRoundTrip(t *testing.T) {
@@ -196,6 +217,44 @@ func TestJoinResponseExamplesDecodeAndRoundTrip(t *testing.T) {
 			t.Fatalf("discard response = %#v", response)
 		}
 	})
+
+	t.Run("inspect success", func(t *testing.T) {
+		t.Parallel()
+		response, err := DecodeInspectJoinResponse(
+			readFixture(t, "v1/examples/join-inspect-response-ok.json"),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.Kind != ProbeResponseSucceeded ||
+			response.RequestID() != "request:inspect:01" ||
+			response.Success == nil || response.Failure != nil ||
+			response.Success.State != InspectJoinStaged {
+			t.Fatalf("inspect response = %#v", response)
+		}
+		encoded, err := EncodeInspectJoinResponse(response)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := DecodeInspectJoinResponse(encoded); err != nil {
+			t.Fatalf("decode round trip: %v", err)
+		}
+	})
+
+	t.Run("inspect failure", func(t *testing.T) {
+		t.Parallel()
+		response, err := DecodeInspectJoinResponse(
+			readFixture(t, "v1/examples/join-inspect-response-failed.json"),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.Kind != ProbeResponseFailed || response.Success != nil ||
+			response.Failure == nil ||
+			response.Failure.Reason != InspectJoinInternal {
+			t.Fatalf("inspect response = %#v", response)
+		}
+	})
 }
 
 func TestJoinContractsRejectPathAuthority(t *testing.T) {
@@ -216,6 +275,11 @@ func TestJoinContractsRejectPathAuthority(t *testing.T) {
 	); err == nil {
 		t.Fatal("stage response exposing a private path was accepted")
 	}
+	if _, err := DecodeInspectJoinRequest(
+		readFixture(t, "../contract-tests/v1/join-request-inspect-path.json"),
+	); err == nil {
+		t.Fatal("inspect request with a caller-selected path was accepted")
+	}
 }
 
 func TestJoinDecodersRejectAnotherOperation(t *testing.T) {
@@ -230,6 +294,16 @@ func TestJoinDecodersRejectAnotherOperation(t *testing.T) {
 		readFixture(t, "v1/examples/join-publish-response-ok.json"),
 	); err == nil {
 		t.Fatal("publish response decoded as discard")
+	}
+	if _, err := DecodeInspectJoinRequest(
+		readFixture(t, "v1/examples/join-stage-request.json"),
+	); err == nil {
+		t.Fatal("stage request decoded as inspect")
+	}
+	if _, err := DecodeInspectJoinResponse(
+		readFixture(t, "v1/examples/join-discard-response-ok.json"),
+	); err == nil {
+		t.Fatal("discard response decoded as inspect")
 	}
 }
 

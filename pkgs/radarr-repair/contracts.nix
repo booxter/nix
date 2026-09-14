@@ -57,7 +57,8 @@ stdenvNoCC.mkDerivation {
       --schemafile worker/contracts/v1/join-request.schema.json \
       worker/contracts/v1/examples/join-stage-request.json \
       worker/contracts/v1/examples/join-publish-request.json \
-      worker/contracts/v1/examples/join-discard-request.json
+      worker/contracts/v1/examples/join-discard-request.json \
+      worker/contracts/v1/examples/join-inspect-request.json
     check-jsonschema \
       --base-uri "$worker_schema_base/join-response.schema.json" \
       --schemafile worker/contracts/v1/join-response.schema.json \
@@ -66,7 +67,9 @@ stdenvNoCC.mkDerivation {
       worker/contracts/v1/examples/join-publish-response-ok.json \
       worker/contracts/v1/examples/join-publish-response-failed.json \
       worker/contracts/v1/examples/join-discard-response-ok.json \
-      worker/contracts/v1/examples/join-discard-response-failed.json
+      worker/contracts/v1/examples/join-discard-response-failed.json \
+      worker/contracts/v1/examples/join-inspect-response-ok.json \
+      worker/contracts/v1/examples/join-inspect-response-failed.json
 
     expect_invalid() {
       schema="$1"

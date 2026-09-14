@@ -8,6 +8,8 @@ type Reason = ProbeFailureResponseV1Reason
 type ProbeFailureResponseV1Status = DiscardFailureResponseV1Status
 type ProbeSuccessResponseV1Status = DiscardSuccessResponseV1Status
 
+const Failed ProbeFailureResponseV1Status = "failed"
+
 const (
 	FileUnavailable     Reason = "file_unavailable"
 	FingerprintMismatch Reason = "fingerprint_mismatch"
@@ -97,6 +99,22 @@ func (response DiscardResponseV1) RequestID() string {
 	)
 }
 
+type InspectJoinResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *InspectJoinSuccessResponseV1
+	Failure *InspectJoinFailureResponseV1
+}
+
+func (response InspectJoinResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		func(success *InspectJoinSuccessResponseV1) string { return success.RequestID },
+		func(failure *InspectJoinFailureResponseV1) string { return failure.RequestID },
+	)
+}
+
 func operationResponseRequestID[S any, F any](
 	kind ProbeResponseKind,
 	success *S,
@@ -156,4 +174,17 @@ const (
 	DiscardArtifactPublished           DiscardFailureReason = "artifact_published"
 	DiscardErrorReason                 DiscardFailureReason = "discard_error"
 	DiscardInternalError               DiscardFailureReason = "internal_error"
+)
+
+type InspectJoinState = State
+type InspectJoinFailureReason = InspectJoinFailureResponseV1Reason
+
+const (
+	InspectJoinAbsent    InspectJoinState         = "absent"
+	InspectJoinPrepared  InspectJoinState         = "prepared"
+	InspectJoinStaged    InspectJoinState         = "staged"
+	InspectJoinPublished InspectJoinState         = "published"
+	InspectJoinDiscarded InspectJoinState         = "discarded"
+	InspectJoinFailed    InspectJoinState         = "failed"
+	InspectJoinInternal  InspectJoinFailureReason = "internal_error"
 )

@@ -47,6 +47,15 @@ let
         discard_success_response_v1 = {
           "$ref" = "join-response.schema.json#/$defs/discardSuccess";
         };
+        inspect_join_request_v1 = {
+          "$ref" = "join-request.schema.json#/$defs/inspectJoin";
+        };
+        inspect_join_failure_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/inspectJoinFailure";
+        };
+        inspect_join_success_response_v1 = {
+          "$ref" = "join-response.schema.json#/$defs/inspectJoinSuccess";
+        };
         publish_request_v1 = {
           "$ref" = "join-request.schema.json#/$defs/publish";
         };
@@ -79,6 +88,9 @@ let
         "discard_request_v1"
         "discard_failure_response_v1"
         "discard_success_response_v1"
+        "inspect_join_request_v1"
+        "inspect_join_failure_response_v1"
+        "inspect_join_success_response_v1"
         "publish_request_v1"
         "publish_failure_response_v1"
         "publish_success_response_v1"

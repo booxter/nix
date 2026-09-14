@@ -65,6 +65,10 @@ func EncodeDiscardRequest(request DiscardRequestV1) ([]byte, error) {
 	return encodeJoinRequest(request, "discard request")
 }
 
+func EncodeInspectJoinRequest(request InspectJoinRequestV1) ([]byte, error) {
+	return encodeJoinRequest(request, "inspect join request")
+}
+
 func EncodeStageJoinResponse(response StageJoinResponseV1) ([]byte, error) {
 	return encodeJoinResponse(
 		response.Kind,
@@ -89,6 +93,15 @@ func EncodeDiscardResponse(response DiscardResponseV1) ([]byte, error) {
 		response.Success,
 		response.Failure,
 		"discard response",
+	)
+}
+
+func EncodeInspectJoinResponse(response InspectJoinResponseV1) ([]byte, error) {
+	return encodeJoinResponse(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		"inspect join response",
 	)
 }
 

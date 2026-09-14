@@ -28,6 +28,30 @@
       ],
       "type": "object"
     },
+    "inspectJoin": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "operation": {
+          "const": "inspect_join_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "execution_id"
+      ],
+      "type": "object"
+    },
     "part": {
       "additionalProperties": false,
       "properties": {
@@ -169,6 +193,9 @@
     },
     {
       "$ref": "#/$defs/discard"
+    },
+    {
+      "$ref": "#/$defs/inspectJoin"
     }
   ],
   "title": "Radarr repair worker join request version 1"
