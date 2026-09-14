@@ -5,11 +5,13 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 type Policy struct {
-	AllowedActions map[contracts.DecisionAction]bool
-	Limit          int
+	AllowedActions         map[contracts.DecisionAction]bool
+	AllowedDownloadClients map[controller.DownloadClient]bool
+	Limit                  int
 }
 
 func Select(
@@ -27,8 +29,7 @@ func Select(
 
 	selected := make([]casestore.PlannedCase, 0, min(len(planned), policy.Limit))
 	for _, candidate := range planned {
-		action := candidate.Decision.Kind
-		if !permitted(action, policy) {
+		if !permitted(candidate, policy) {
 			continue
 		}
 		selected = append(selected, candidate)
@@ -39,18 +40,21 @@ func Select(
 	return selected, nil
 }
 
-func Permitted(action contracts.DecisionAction, policy Policy) (bool, error) {
+func Permitted(candidate casestore.PlannedCase, policy Policy) (bool, error) {
 	if err := validatePolicy(policy); err != nil {
 		return false, err
 	}
-	if err := validateDecisionAction(action); err != nil {
+	if err := validateDecisionAction(candidate.Decision.Kind); err != nil {
 		return false, err
 	}
-	return permitted(action, policy), nil
+	return permitted(candidate, policy), nil
 }
 
-func permitted(action contracts.DecisionAction, policy Policy) bool {
-	return action != contracts.ActionNoRepair && policy.AllowedActions[action]
+func permitted(candidate casestore.PlannedCase, policy Policy) bool {
+	action := candidate.Decision.Kind
+	client := candidate.Assembly.LocalSnapshot.Observation.Correlation.Download.Client
+	return action != contracts.ActionNoRepair &&
+		policy.AllowedActions[action] && policy.AllowedDownloadClients[client]
 }
 
 func validatePolicy(policy Policy) error {
@@ -65,6 +69,16 @@ func validatePolicy(policy Policy) error {
 		case contracts.ActionJoinParts, contracts.ActionManualImportFile:
 		default:
 			return fmt.Errorf("action %q cannot be allowed for repair", action)
+		}
+	}
+	for client, allowed := range policy.AllowedDownloadClients {
+		if !allowed {
+			continue
+		}
+		switch client {
+		case controller.DownloadClientTransmission, controller.DownloadClientSABnzbd:
+		default:
+			return fmt.Errorf("download client %q cannot be allowed for repair", client)
 		}
 	}
 	return nil

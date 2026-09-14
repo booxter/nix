@@ -78,7 +78,7 @@ func (runner *Runner) Run(
 	report := Report{}
 	unfinished := make([]casestore.PlannedCase, 0, len(planned))
 	for _, candidate := range planned {
-		permitted, err := applyselection.Permitted(candidate.Decision.Kind, policy)
+		permitted, err := applyselection.Permitted(candidate, policy)
 		if err != nil {
 			return report, fmt.Errorf("check repair permission: %w", err)
 		}

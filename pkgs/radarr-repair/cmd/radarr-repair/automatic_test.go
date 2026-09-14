@@ -15,6 +15,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/executioncheck"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 	shadowrunner "github.com/booxter/nix-config/radarr-repair/internal/shadow"
@@ -59,6 +60,10 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 		len(gotConfig.AllowedActions) != 2 {
 		t.Fatalf("allowed actions = %#v", gotConfig.AllowedActions)
 	}
+	if !gotConfig.AllowedDownloadClients[controller.DownloadClientTransmission] ||
+		len(gotConfig.AllowedDownloadClients) != 1 {
+		t.Fatalf("allowed download clients = %#v", gotConfig.AllowedDownloadClients)
+	}
 	if gotConfig.KillSwitchFile != "/run/radarr-repair/disable-apply" ||
 		gotConfig.Stabilization != 20*time.Minute ||
 		gotConfig.PollInterval != 3*time.Second {
@@ -76,6 +81,7 @@ func TestAutomaticRunRejectsUnsafeConfigurationBeforeRunning(t *testing.T) {
 	}{
 		{name: "missing apply acknowledgement", arguments: removeArgument(valid, "--apply")},
 		{name: "missing allowed actions", arguments: removeArguments(valid, "--allow-action", 2)},
+		{name: "missing allowed download client", arguments: removeArgumentPair(valid, "--allow-download-client")},
 		{
 			name: "no repair action",
 			arguments: replaceArgument(
@@ -327,6 +333,7 @@ func validAutomaticArguments(t *testing.T) ([]string, string, string, string) {
 		"--apply",
 		"--allow-action", string(contracts.ActionJoinParts),
 		"--allow-action", string(contracts.ActionManualImportFile),
+		"--allow-download-client", string(controller.DownloadClientTransmission),
 		"--kill-switch-file", "/run/radarr-repair/disable-apply",
 		"--stabilization", "20m",
 		"--poll-interval", "3s",

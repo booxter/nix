@@ -40,6 +40,16 @@
         default = [ ];
         description = "Repair actions the automatic controller may apply.";
       };
+      allowedDownloadClients = lib.mkOption {
+        type =
+          with lib.types;
+          listOf (enum [
+            "transmission"
+            "sabnzbd"
+          ]);
+        default = [ ];
+        description = "Download clients whose cases the automatic controller may repair.";
+      };
     };
   };
 

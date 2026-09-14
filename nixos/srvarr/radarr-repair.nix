@@ -13,6 +13,7 @@
         "join_parts_v1"
         "manual_import_file_v1"
       ];
+      allowedDownloadClients = [ "transmission" ];
     };
   };
 

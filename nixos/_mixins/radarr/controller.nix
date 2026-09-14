@@ -21,6 +21,10 @@ let
     "--allow-action"
     action
   ]) controller.apply.allowedActions;
+  downloadClientArguments = lib.concatMap (client: [
+    "--allow-download-client"
+    client
+  ]) controller.apply.allowedDownloadClients;
   modeArguments =
     if controller.apply.enable then
       [
@@ -30,6 +34,7 @@ let
         killSwitchFile
       ]
       ++ actionArguments
+      ++ downloadClientArguments
     else
       [ "shadow" ];
   joinAllowed = builtins.elem "join_parts_v1" controller.apply.allowedActions;
@@ -83,14 +88,28 @@ in
         message = "Radarr repair apply mode requires at least one allowed action.";
       }
       {
+        assertion = !controller.apply.enable || controller.apply.allowedDownloadClients != [ ];
+        message = "Radarr repair apply mode requires at least one allowed download client.";
+      }
+      {
         assertion = controller.apply.enable || controller.apply.allowedActions == [ ];
         message = "Radarr repair actions can be allowed only when apply mode is enabled.";
+      }
+      {
+        assertion = controller.apply.enable || controller.apply.allowedDownloadClients == [ ];
+        message = "Radarr repair download clients can be allowed only when apply mode is enabled.";
       }
       {
         assertion =
           builtins.length controller.apply.allowedActions
           == builtins.length (lib.unique controller.apply.allowedActions);
         message = "Radarr repair allowed actions must be unique.";
+      }
+      {
+        assertion =
+          builtins.length controller.apply.allowedDownloadClients
+          == builtins.length (lib.unique controller.apply.allowedDownloadClients);
+        message = "Radarr repair allowed download clients must be unique.";
       }
       {
         assertion =

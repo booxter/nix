@@ -37,6 +37,7 @@ pkgs.testers.runNixOSTest {
           apply = {
             enable = true;
             allowedActions = [ "manual_import_file_v1" ];
+            allowedDownloadClients = [ "transmission" ];
           };
         };
         planner.enable = true;

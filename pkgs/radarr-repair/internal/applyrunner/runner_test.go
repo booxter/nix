@@ -11,6 +11,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/applyselection"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 )
 
@@ -45,7 +46,8 @@ func TestRunExecutesFirstPermittedUnfinishedRepair(t *testing.T) {
 		AllowedActions: map[contracts.DecisionAction]bool{
 			contracts.ActionJoinParts: true,
 		},
-		Limit: 1,
+		AllowedDownloadClients: transmissionClients(),
+		Limit:                  1,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +81,8 @@ func TestRunResumesUnfinishedRepair(t *testing.T) {
 			AllowedActions: map[contracts.DecisionAction]bool{
 				contracts.ActionManualImportFile: true,
 			},
-			Limit: 1,
+			AllowedDownloadClients: transmissionClients(),
+			Limit:                  1,
 		},
 	)
 	if err != nil {
@@ -123,7 +126,8 @@ func TestRunStopsAfterExecutionFailureAndReleasesLease(t *testing.T) {
 		AllowedActions: map[contracts.DecisionAction]bool{
 			contracts.ActionJoinParts: true,
 		},
-		Limit: 2,
+		AllowedDownloadClients: transmissionClients(),
+		Limit:                  2,
 	})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
@@ -152,7 +156,8 @@ func TestRunFailsBeforeExecutionWhenProgressCannotBeRead(t *testing.T) {
 			AllowedActions: map[contracts.DecisionAction]bool{
 				contracts.ActionJoinParts: true,
 			},
-			Limit: 1,
+			AllowedDownloadClients: transmissionClients(),
+			Limit:                  1,
 		},
 	)
 	if !errors.Is(err, wantErr) {
@@ -177,7 +182,8 @@ func TestRunFailsBeforeExecutionWhenLeaseCannotBeAcquired(t *testing.T) {
 			AllowedActions: map[contracts.DecisionAction]bool{
 				contracts.ActionJoinParts: true,
 			},
-			Limit: 1,
+			AllowedDownloadClients: transmissionClients(),
+			Limit:                  1,
 		},
 	)
 	if !errors.Is(err, wantErr) {
@@ -314,6 +320,11 @@ func runnerPlan(caseID string, action contracts.DecisionAction) casestore.Planne
 	planned := casestore.PlannedCase{
 		Assembly: casebuilder.Assembly{
 			Request: contracts.RepairCaseV1{CaseID: caseID},
+			LocalSnapshot: casebuilder.LocalSnapshot{Observation: casebuilder.Observation{
+				Correlation: controller.DownloadCorrelation{Download: controller.Download{
+					Client: controller.DownloadClientTransmission,
+				}},
+			}},
 		},
 		Decision: contracts.RepairDecisionV1{Kind: action},
 	}
@@ -326,4 +337,8 @@ func runnerPlan(caseID string, action contracts.DecisionAction) casestore.Planne
 		planned.Decision.JoinParts = &contracts.JoinDecision{CaseID: caseID}
 	}
 	return planned
+}
+
+func transmissionClients() map[controller.DownloadClient]bool {
+	return map[controller.DownloadClient]bool{controller.DownloadClientTransmission: true}
 }

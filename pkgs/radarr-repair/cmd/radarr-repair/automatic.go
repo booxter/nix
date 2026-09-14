@@ -13,17 +13,19 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/applyrunner"
 	"github.com/booxter/nix-config/radarr-repair/internal/applyselection"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	shadowrunner "github.com/booxter/nix-config/radarr-repair/internal/shadow"
 )
 
 const automaticRepairLimit = 1
 
 type automaticConfig struct {
-	Shadow         shadowConfig
-	AllowedActions map[contracts.DecisionAction]bool
-	KillSwitchFile string
-	Stabilization  time.Duration
-	PollInterval   time.Duration
+	Shadow                 shadowConfig
+	AllowedActions         map[contracts.DecisionAction]bool
+	AllowedDownloadClients map[controller.DownloadClient]bool
+	KillSwitchFile         string
+	Stabilization          time.Duration
+	PollInterval           time.Duration
 }
 
 type automaticReport struct {
@@ -55,6 +57,25 @@ type allowedActionsValue struct {
 	actions map[contracts.DecisionAction]bool
 }
 
+type allowedDownloadClientsValue struct {
+	clients map[controller.DownloadClient]bool
+}
+
+func (value *allowedDownloadClientsValue) String() string {
+	return ""
+}
+
+func (value *allowedDownloadClientsValue) Set(raw string) error {
+	client := controller.DownloadClient(raw)
+	switch client {
+	case controller.DownloadClientTransmission, controller.DownloadClientSABnzbd:
+		value.clients[client] = true
+		return nil
+	default:
+		return fmt.Errorf("download client %q cannot be allowed for automatic repair", raw)
+	}
+}
+
 func (value *allowedActionsValue) String() string {
 	return ""
 }
@@ -81,6 +102,7 @@ func (app application) runAutomatic(
 		_, _ = fmt.Fprintln(
 			stderr,
 			"usage: radarr-repair run --apply --allow-action ACTION "+
+				"--allow-download-client CLIENT "+
 				"--kill-switch-file FILE --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
 				"--planner-socket PATH --state-directory DIR --metrics-file FILE",
@@ -90,6 +112,12 @@ func (app application) runAutomatic(
 	apply := flags.Bool("apply", false, "acknowledge that one permitted repair may be applied")
 	allowed := allowedActionsValue{actions: make(map[contracts.DecisionAction]bool)}
 	flags.Var(&allowed, "allow-action", "repair action to permit; repeatable")
+	allowedClients := allowedDownloadClientsValue{clients: make(map[controller.DownloadClient]bool)}
+	flags.Var(
+		&allowedClients,
+		"allow-download-client",
+		"download client whose cases may be repaired; repeatable",
+	)
 	killSwitchFile := flags.String(
 		"kill-switch-file", "", "existing filesystem entry disables repair application",
 	)
@@ -108,11 +136,12 @@ func (app application) runAutomatic(
 		return fmt.Errorf("run accepts no positional arguments")
 	}
 	config := automaticConfig{
-		Shadow:         shadowValues.Config(),
-		AllowedActions: allowed.actions,
-		KillSwitchFile: *killSwitchFile,
-		Stabilization:  *stabilization,
-		PollInterval:   *pollInterval,
+		Shadow:                 shadowValues.Config(),
+		AllowedActions:         allowed.actions,
+		AllowedDownloadClients: allowedClients.clients,
+		KillSwitchFile:         *killSwitchFile,
+		Stabilization:          *stabilization,
+		PollInterval:           *pollInterval,
 	}
 	if err := validateAutomaticConfig(config, *apply); err != nil {
 		return err
@@ -144,6 +173,9 @@ func validateAutomaticConfig(config automaticConfig, apply bool) error {
 	}
 	if len(config.AllowedActions) == 0 {
 		return fmt.Errorf("at least one --allow-action is required")
+	}
+	if len(config.AllowedDownloadClients) == 0 {
+		return fmt.Errorf("at least one --allow-download-client is required")
 	}
 	if err := validateAbsolutePath("kill-switch file", config.KillSwitchFile, false); err != nil {
 		return err
@@ -339,7 +371,8 @@ func applyCurrentCases(
 		return applyrunner.Report{}, fmt.Errorf("configure apply runner: %w", err)
 	}
 	return runner.Run(ctx, planned, applyselection.Policy{
-		AllowedActions: config.AllowedActions,
-		Limit:          automaticRepairLimit,
+		AllowedActions:         config.AllowedActions,
+		AllowedDownloadClients: config.AllowedDownloadClients,
+		Limit:                  automaticRepairLimit,
 	})
 }

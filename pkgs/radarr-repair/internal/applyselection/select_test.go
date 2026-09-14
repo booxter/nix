@@ -8,6 +8,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 func TestSelectPermittedRepairsInObservedOrder(t *testing.T) {
@@ -22,6 +23,9 @@ func TestSelectPermittedRepairsInObservedOrder(t *testing.T) {
 	selected, err := Select(planned, Policy{
 		AllowedActions: map[contracts.DecisionAction]bool{
 			contracts.ActionManualImportFile: true,
+		},
+		AllowedDownloadClients: map[controller.DownloadClient]bool{
+			controller.DownloadClientTransmission: true,
 		},
 		Limit: 2,
 	})
@@ -46,6 +50,9 @@ func TestSelectStopsAtRepairLimit(t *testing.T) {
 			contracts.ActionJoinParts:        true,
 			contracts.ActionManualImportFile: true,
 		},
+		AllowedDownloadClients: map[controller.DownloadClient]bool{
+			controller.DownloadClientTransmission: true,
+		},
 		Limit: 1,
 	})
 	if err != nil {
@@ -66,6 +73,29 @@ func TestSelectsNoRepairsWithEmptyAllowlist(t *testing.T) {
 		},
 		Policy{Limit: 1},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(selected) != 0 {
+		t.Fatalf("selected cases = %v", caseIDs(selected))
+	}
+}
+
+func TestSelectRejectsCaseFromUnallowedDownloadClient(t *testing.T) {
+	t.Parallel()
+
+	candidate := testPlannedCase("sab", contracts.ActionManualImportFile)
+	candidate.Assembly.LocalSnapshot.Observation.Correlation.Download.Client =
+		controller.DownloadClientSABnzbd
+	selected, err := Select([]casestore.PlannedCase{candidate}, Policy{
+		AllowedActions: map[contracts.DecisionAction]bool{
+			contracts.ActionManualImportFile: true,
+		},
+		AllowedDownloadClients: map[controller.DownloadClient]bool{
+			controller.DownloadClientTransmission: true,
+		},
+		Limit: 1,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,6 +131,14 @@ func TestSelectRejectsInvalidPolicy(t *testing.T) {
 			},
 			want: "cannot be allowed",
 		},
+		{
+			name: "unknown download client allowed",
+			policy: Policy{
+				AllowedDownloadClients: map[controller.DownloadClient]bool{"other": true},
+				Limit:                  1,
+			},
+			want: "cannot be allowed",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -129,6 +167,11 @@ func testPlannedCase(caseID string, action contracts.DecisionAction) casestore.P
 	return casestore.PlannedCase{
 		Assembly: casebuilder.Assembly{
 			Request: contracts.RepairCaseV1{CaseID: caseID},
+			LocalSnapshot: casebuilder.LocalSnapshot{Observation: casebuilder.Observation{
+				Correlation: controller.DownloadCorrelation{Download: controller.Download{
+					Client: controller.DownloadClientTransmission,
+				}},
+			}},
 		},
 		Decision: contracts.RepairDecisionV1{Kind: action},
 	}
