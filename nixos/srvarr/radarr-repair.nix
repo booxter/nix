@@ -7,8 +7,6 @@
   host.radarr.repair.controller = {
     enable = true;
     transmissionUrl = transmissionModel.rpcUrl;
-    # TODO: Restore the 15m default after automatic repair rollout is verified.
-    stabilization = "10s";
     apply = {
       enable = true;
       allowedActions = [
