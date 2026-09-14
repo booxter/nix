@@ -54,10 +54,12 @@ func TestInspectWritesRedactedCaseToNewFile(t *testing.T) {
 		t.Fatalf("output mode = %o", info.Mode().Perm())
 	}
 	wantConfig := inspectConfig{
-		RadarrURL:        "http://127.0.0.1:7878",
-		RadarrAPIKeyFile: apiKeyFile,
-		TransmissionURL:  "http://localhost:9091/transmission/rpc",
-		WorkerSocket:     "/run/radarr-repair/worker.sock",
+		RadarrURL:         "http://127.0.0.1:7878",
+		RadarrAPIKeyFile:  apiKeyFile,
+		TransmissionURL:   "http://localhost:9091/transmission/rpc",
+		SABnzbdURL:        "http://localhost:8080/sabnzbd/api",
+		SABnzbdAPIKeyFile: "/run/credentials/sabnzbd-api-key",
+		WorkerSocket:      "/run/radarr-repair/worker.sock",
 		WorkerRoots: map[string]string{
 			"root:archive":   "/data/archive",
 			"root:downloads": "/data/downloads",
@@ -155,10 +157,12 @@ func TestInspectAllWritesExactCasesToNewPrivateDirectory(t *testing.T) {
 		t.Fatalf("output directory mode = %o", info.Mode().Perm())
 	}
 	wantConfig := inspectConfig{
-		RadarrURL:        "http://127.0.0.1:7878",
-		RadarrAPIKeyFile: apiKeyFile,
-		TransmissionURL:  "http://localhost:9091/transmission/rpc",
-		WorkerSocket:     "/run/radarr-repair/worker.sock",
+		RadarrURL:         "http://127.0.0.1:7878",
+		RadarrAPIKeyFile:  apiKeyFile,
+		TransmissionURL:   "http://localhost:9091/transmission/rpc",
+		SABnzbdURL:        "http://localhost:8080/sabnzbd/api",
+		SABnzbdAPIKeyFile: "/run/credentials/sabnzbd-api-key",
+		WorkerSocket:      "/run/radarr-repair/worker.sock",
 		WorkerRoots: map[string]string{
 			"root:archive":   "/data/archive",
 			"root:downloads": "/data/downloads",
@@ -292,6 +296,18 @@ func TestInspectRejectsInvalidConfigurationBeforeCollection(t *testing.T) {
 			arguments: replaceArgument(valid, "--transmission-url", "http://transmission.example:9091"),
 		},
 		{
+			name:      "remote SABnzbd",
+			arguments: replaceArgument(valid, "--sabnzbd-url", "http://sabnzbd.example:8080"),
+		},
+		{
+			name:      "SABnzbd URL without credential",
+			arguments: replaceArgument(valid, "--sabnzbd-api-key-file", ""),
+		},
+		{
+			name:      "SABnzbd credential without URL",
+			arguments: replaceArgument(valid, "--sabnzbd-url", ""),
+		},
+		{
 			name:      "relative credential",
 			arguments: replaceArgument(valid, "--radarr-api-key-file", "api-key"),
 		},
@@ -382,7 +398,7 @@ func TestReadAPIKeyAcceptsOneOptionalLineEnding(t *testing.T) {
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		key, err := readAPIKey(path)
+		key, err := readAPIKey("Radarr", path)
 		if err != nil {
 			t.Fatalf("content %q: %v", content, err)
 		}
@@ -409,7 +425,7 @@ func TestReadAPIKeyRejectsInvalidCredentialWithoutEchoingIt(t *testing.T) {
 		if err := os.WriteFile(path, content, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		_, err := readAPIKey(path)
+		_, err := readAPIKey("Radarr", path)
 		if err == nil {
 			t.Fatalf("content of length %d was accepted", len(content))
 		}
@@ -456,6 +472,8 @@ func validInspectArguments(t *testing.T, output string) ([]string, string) {
 		"--radarr-url", "http://127.0.0.1:7878",
 		"--radarr-api-key-file", apiKeyFile,
 		"--transmission-url", "http://localhost:9091/transmission/rpc",
+		"--sabnzbd-url", "http://localhost:8080/sabnzbd/api",
+		"--sabnzbd-api-key-file", "/run/credentials/sabnzbd-api-key",
 		"--worker-socket", "/run/radarr-repair/worker.sock",
 		"--worker-root", "root:downloads=/data/downloads",
 		"--worker-root", "root:archive=/data/archive",
@@ -474,6 +492,8 @@ func validInspectAllArguments(t *testing.T, outputDirectory string) ([]string, s
 		"--radarr-url", "http://127.0.0.1:7878",
 		"--radarr-api-key-file", apiKeyFile,
 		"--transmission-url", "http://localhost:9091/transmission/rpc",
+		"--sabnzbd-url", "http://localhost:8080/sabnzbd/api",
+		"--sabnzbd-api-key-file", "/run/credentials/sabnzbd-api-key",
 		"--worker-socket", "/run/radarr-repair/worker.sock",
 		"--worker-root", "root:downloads=/data/downloads",
 		"--worker-root", "root:archive=/data/archive",

@@ -23,6 +23,8 @@ type executeCaseConfig struct {
 	RadarrURL         string
 	RadarrAPIKeyFile  string
 	TransmissionURL   string
+	SABnzbdURL        string
+	SABnzbdAPIKeyFile string
 	WorkerSocket      string
 	WorkerRoots       map[string]string
 	StateDirectory    string
@@ -50,7 +52,8 @@ func (app application) runExecuteCase(
 			stderr,
 			"usage: radarr-repair execute-case --apply --case-id ID "+
 				"--state-directory DIR --radarr-url URL --radarr-api-key-file FILE "+
-				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH",
+				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
+				"[--sabnzbd-url URL --sabnzbd-api-key-file FILE]",
 		)
 	}
 	apply := flags.Bool("apply", false, "acknowledge that this command may modify Radarr and media storage")
@@ -60,10 +63,10 @@ func (app application) runExecuteCase(
 	radarrAPIKeyFile := flags.String(
 		"radarr-api-key-file", "", "Radarr API-key credential file",
 	)
-	transmissionURL := flags.String("transmission-url", "", "loopback Transmission RPC URL")
+	downloadFlags := addDownloadSourceFlags(flags)
 	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
 	requestTimeout := flags.Duration(
-		"request-timeout", defaultInspectTimeout, "Radarr, Transmission, and worker request timeout",
+		"request-timeout", defaultInspectTimeout, "Radarr, download-client, and worker request timeout",
 	)
 	collectionTimeout := flags.Duration(
 		"collection-timeout", defaultCollectionTimeout, "evidence-collection timeout",
@@ -86,7 +89,9 @@ func (app application) runExecuteCase(
 	config := executeCaseConfig{
 		RadarrURL:         *radarrURL,
 		RadarrAPIKeyFile:  *radarrAPIKeyFile,
-		TransmissionURL:   *transmissionURL,
+		TransmissionURL:   *downloadFlags.transmissionURL,
+		SABnzbdURL:        *downloadFlags.sabnzbdURL,
+		SABnzbdAPIKeyFile: *downloadFlags.sabnzbdAPIKeyFile,
 		WorkerSocket:      *workerSocket,
 		WorkerRoots:       workerRoots.Paths(),
 		StateDirectory:    *stateDirectory,
@@ -185,6 +190,8 @@ func (config executeCaseConfig) inspectionConfig() inspectConfig {
 		RadarrURL:         config.RadarrURL,
 		RadarrAPIKeyFile:  config.RadarrAPIKeyFile,
 		TransmissionURL:   config.TransmissionURL,
+		SABnzbdURL:        config.SABnzbdURL,
+		SABnzbdAPIKeyFile: config.SABnzbdAPIKeyFile,
 		WorkerSocket:      config.WorkerSocket,
 		WorkerRoots:       config.WorkerRoots,
 		Timeout:           config.RequestTimeout,

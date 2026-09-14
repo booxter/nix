@@ -24,6 +24,8 @@ type shadowConfig struct {
 	RadarrURL         string
 	RadarrAPIKeyFile  string
 	TransmissionURL   string
+	SABnzbdURL        string
+	SABnzbdAPIKeyFile string
 	WorkerSocket      string
 	WorkerRoots       map[string]string
 	PlannerSocket     string
@@ -41,7 +43,7 @@ type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
 type shadowFlags struct {
 	radarrURL         *string
 	radarrAPIKeyFile  *string
-	transmissionURL   *string
+	downloadSources   downloadSourceFlags
 	workerSocket      *string
 	workerRoots       mediaroot.Mappings
 	plannerSocket     *string
@@ -60,17 +62,15 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 		radarrAPIKeyFile: flags.String(
 			"radarr-api-key-file", "", "Radarr API-key credential file",
 		),
-		transmissionURL: flags.String(
-			"transmission-url", "", "loopback Transmission RPC URL",
-		),
-		workerSocket:   flags.String("worker-socket", "", "media worker Unix socket"),
-		workerRoots:    mediaroot.NewMappings(),
-		plannerSocket:  flags.String("planner-socket", "", "repair planner Unix socket"),
-		stateDirectory: flags.String("state-directory", "", "private controller state directory"),
-		metricsFile:    flags.String("metrics-file", "", "Prometheus textfile output"),
+		downloadSources: addDownloadSourceFlags(flags),
+		workerSocket:    flags.String("worker-socket", "", "media worker Unix socket"),
+		workerRoots:     mediaroot.NewMappings(),
+		plannerSocket:   flags.String("planner-socket", "", "repair planner Unix socket"),
+		stateDirectory:  flags.String("state-directory", "", "private controller state directory"),
+		metricsFile:     flags.String("metrics-file", "", "Prometheus textfile output"),
 		requestTimeout: flags.Duration(
 			"request-timeout", defaultInspectTimeout,
-			"Radarr, Transmission, and worker request timeout",
+			"Radarr, download-client, and worker request timeout",
 		),
 		collectionTimeout: flags.Duration(
 			"collection-timeout", defaultCollectionTimeout,
@@ -94,7 +94,9 @@ func (values shadowFlags) Config() shadowConfig {
 	return shadowConfig{
 		RadarrURL:         *values.radarrURL,
 		RadarrAPIKeyFile:  *values.radarrAPIKeyFile,
-		TransmissionURL:   *values.transmissionURL,
+		TransmissionURL:   *values.downloadSources.transmissionURL,
+		SABnzbdURL:        *values.downloadSources.sabnzbdURL,
+		SABnzbdAPIKeyFile: *values.downloadSources.sabnzbdAPIKeyFile,
 		WorkerSocket:      *values.workerSocket,
 		WorkerRoots:       values.workerRoots.Paths(),
 		PlannerSocket:     *values.plannerSocket,
@@ -120,6 +122,7 @@ func (app application) runShadow(
 			stderr,
 			"usage: radarr-repair shadow --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
+				"[--sabnzbd-url URL --sabnzbd-api-key-file FILE] "+
 				"--planner-socket PATH --state-directory DIR --metrics-file FILE",
 		)
 	}
@@ -232,6 +235,8 @@ func (config shadowConfig) inspectionConfig() inspectConfig {
 		RadarrURL:         config.RadarrURL,
 		RadarrAPIKeyFile:  config.RadarrAPIKeyFile,
 		TransmissionURL:   config.TransmissionURL,
+		SABnzbdURL:        config.SABnzbdURL,
+		SABnzbdAPIKeyFile: config.SABnzbdAPIKeyFile,
 		WorkerSocket:      config.WorkerSocket,
 		WorkerRoots:       config.WorkerRoots,
 		Timeout:           config.RequestTimeout,

@@ -8,7 +8,7 @@ import (
 type CandidateRejectionReason string
 
 const (
-	CandidateUnsupportedProtocol   CandidateRejectionReason = "unsupported_protocol"
+	CandidateUnsupportedSource     CandidateRejectionReason = "unsupported_download_source"
 	CandidateIncompleteDownload    CandidateRejectionReason = "incomplete_download"
 	CandidateUnsupportedQueueState CandidateRejectionReason = "unsupported_queue_state"
 	CandidateMissingDownloadID     CandidateRejectionReason = "missing_download_id"
@@ -43,15 +43,21 @@ var eligibleQueueStates = [...]candidateQueueState{
 	},
 }
 
-func ClassifyRepairCandidates(records []RadarrQueueRecord) []CandidateAssessment {
+func ClassifyRepairCandidates(
+	records []RadarrQueueRecord,
+	downloads DownloadSupport,
+) []CandidateAssessment {
 	assessments := make([]CandidateAssessment, len(records))
 	for index, record := range records {
-		assessments[index] = classifyRepairCandidate(record)
+		assessments[index] = classifyRepairCandidate(record, downloads)
 	}
 	return assessments
 }
 
-func classifyRepairCandidate(record RadarrQueueRecord) CandidateAssessment {
+func classifyRepairCandidate(
+	record RadarrQueueRecord,
+	downloads DownloadSupport,
+) CandidateAssessment {
 	assessment := CandidateAssessment{Record: record}
 	addReason := func(reason CandidateRejectionReason) {
 		for _, existing := range assessment.RejectionReasons {
@@ -62,8 +68,8 @@ func classifyRepairCandidate(record RadarrQueueRecord) CandidateAssessment {
 		assessment.RejectionReasons = append(assessment.RejectionReasons, reason)
 	}
 
-	if record.Protocol != DownloadProtocol("torrent") {
-		addReason(CandidateUnsupportedProtocol)
+	if downloads == nil || !downloads.Supports(record.Protocol, record.DownloadClient) {
+		addReason(CandidateUnsupportedSource)
 	}
 	if record.Status != QueueStatus("completed") || record.SizeRemainingBytes != 0 {
 		addReason(CandidateIncompleteDownload)

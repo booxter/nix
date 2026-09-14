@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
@@ -64,6 +65,75 @@ func TestInspectCollectsOneEligibleCandidate(t *testing.T) {
 	}
 	if !reflect.DeepEqual(fixture.probes.targets, wantTargets) {
 		t.Fatalf("probe targets = %#v, want %#v", fixture.probes.targets, wantTargets)
+	}
+}
+
+func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	const downloadID = "998d2f1f-cb49-4714-be1e-875f03e1f3c2"
+	record := fixture.radarr.records[0]
+	record.DownloadID = downloadID
+	record.Protocol = "usenet"
+	record.DownloadClient = "SABnzbd"
+	record.OutputPath = "/downloads/Robin.Hood"
+	record.SizeBytes = 32_596_371_005
+	fixture.radarr.records = []controller.RadarrQueueRecord{record}
+	fixture.radarr.history = []controller.RadarrHistoryEvent{{
+		ID: 501, MovieID: 42, DownloadID: downloadID, EventType: "grabbed",
+		OccurredAt:  fixture.clock.now.Add(-time.Hour),
+		SourceTitle: "The.Death.Of.Robin.Hood.2026.1080p.BluRay.H264",
+	}}
+	fixture.radarr.imports = nil
+	fixture.transmission = &fakeTransmission{
+		protocol: "usenet", clientName: "SABnzbd", found: true,
+		torrent: controller.Download{
+			Client: controller.DownloadClientSABnzbd, SourceType: controller.DownloadSourceUsenet,
+			ID: downloadID, IDComparison: controller.DownloadIDExact,
+			Name:   "duplicate-the.death.of.robin.hood.2026.1080p.bluray.h264",
+			Stable: true, Complete: true, OutputPath: record.OutputPath,
+			TotalSizeBytes:   34_265_436_989,
+			ContentOwnership: controller.DownloadContentOutputTree,
+			Files:            []controller.DownloadFile{},
+		},
+	}
+	file := inventoryFile(
+		"file:one",
+		"duplicate-the.death.of.robin.hood.2026.1080p.bluray.h264.mkv",
+		32_596_371_005,
+		10,
+		0,
+	)
+	file.DownloadFile.HasIndex = false
+	fixture.files.inventory = controller.FileInventory{
+		Files: []controller.InventoryFile{file},
+		Paths: []controller.FilePathMapping{{
+			FileID:       file.ID,
+			AbsolutePath: record.OutputPath + "/" + file.PathComponents[0],
+		}},
+	}
+	fixture.probes.outcome = controller.FailedMediaProbe(
+		controller.MediaProbeUnsupportedFormat,
+	)
+
+	inspector := newTestInspector(t, fixture.dependencies(), casebuilder.Assemble)
+	assembly, err := inspector.Inspect(context.Background(), Selection{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if assembly.Request.Download.Client != contracts.Sabnzbd ||
+		assembly.Request.Download.SourceType != contracts.Usenet ||
+		assembly.Request.Download.ContentOwnership != contracts.OutputTree {
+		t.Fatalf("download evidence = %#v", assembly.Request.Download)
+	}
+	if len(assembly.Request.Files) != 1 ||
+		assembly.Request.Files[0].DownloadMembership == nil ||
+		assembly.Request.Files[0].DownloadMembership.SourceIndex != nil {
+		t.Fatalf("file evidence = %#v", assembly.Request.Files)
+	}
+	if _, err := contracts.DecodeCase(assembly.EncodedRequest); err != nil {
+		t.Fatalf("decode assembled case: %v", err)
 	}
 }
 
@@ -474,7 +544,8 @@ func eligibleDownload() (controller.RadarrQueueRecord, controller.Download) {
 			},
 		}},
 		DownloadID: strings.ToUpper(testDownloadHash), Protocol: "torrent",
-		OutputPath: "/downloads/Example_Movie",
+		DownloadClient: "Transmission",
+		OutputPath:     "/downloads/Example_Movie",
 	}
 	torrent := controller.Download{
 		Client: controller.DownloadClientTransmission, SourceType: controller.DownloadSourceTorrent,
@@ -571,6 +642,30 @@ type fakeTransmission struct {
 	torrent    controller.Download
 	found      bool
 	downloadID string
+	protocol   controller.DownloadProtocol
+	clientName string
+}
+
+func (reader *fakeTransmission) Supports(
+	protocol controller.DownloadProtocol,
+	clientName string,
+) bool {
+	wantProtocol := reader.protocol
+	if wantProtocol == "" {
+		wantProtocol = "torrent"
+	}
+	wantClientName := reader.clientName
+	if wantClientName == "" {
+		wantClientName = "Transmission"
+	}
+	return protocol == wantProtocol && clientName == wantClientName
+}
+
+func (reader *fakeTransmission) Resolve(
+	ctx context.Context,
+	record controller.RadarrQueueRecord,
+) (controller.Download, bool, error) {
+	return reader.FindDownload(ctx, record.DownloadID)
 }
 
 func (reader *fakeTransmission) FindDownload(

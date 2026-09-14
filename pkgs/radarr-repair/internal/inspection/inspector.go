@@ -20,7 +20,7 @@ type RadarrReader interface {
 type Dependencies struct {
 	Clock             controller.Clock
 	Radarr            RadarrReader
-	Downloads         controller.DownloadReader
+	Downloads         controller.DownloadResolver
 	Files             controller.FileInventoryReader
 	Probes            controller.MediaProbeReader
 	CollectionTimeout time.Duration
@@ -108,7 +108,7 @@ func (inspector *Inspector) Inspect(
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read Radarr queue: %w", err)
 	}
-	record, err := selectCandidate(records, selection)
+	record, err := selectCandidate(records, selection, inspector.dependencies.Downloads)
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
@@ -128,7 +128,10 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 	if err != nil {
 		return nil, fmt.Errorf("read Radarr queue: %w", err)
 	}
-	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(records))
+	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(
+		records,
+		inspector.dependencies.Downloads,
+	))
 	if len(eligible) == 0 {
 		return []casebuilder.Assembly{}, nil
 	}
@@ -164,7 +167,7 @@ func (inspector *Inspector) inspectRecord(
 	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
 
-	download, found, err := inspector.dependencies.Downloads.FindDownload(collectionContext, record.DownloadID)
+	download, found, err := inspector.dependencies.Downloads.Resolve(collectionContext, record)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("read download: %w", err)
 	}
@@ -250,8 +253,9 @@ func eligibleCandidates(
 func selectCandidate(
 	records []controller.RadarrQueueRecord,
 	selection Selection,
+	downloads controller.DownloadSupport,
 ) (controller.RadarrQueueRecord, error) {
-	assessments := controller.ClassifyRepairCandidates(records)
+	assessments := controller.ClassifyRepairCandidates(records, downloads)
 	if selection.QueueID != 0 {
 		for _, assessment := range assessments {
 			if assessment.Record.ID != selection.QueueID {

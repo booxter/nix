@@ -10,6 +10,15 @@ type DownloadReader interface {
 	FindDownload(context.Context, string) (Download, bool, error)
 }
 
+type DownloadSupport interface {
+	Supports(DownloadProtocol, string) bool
+}
+
+type DownloadResolver interface {
+	DownloadSupport
+	Resolve(context.Context, RadarrQueueRecord) (Download, bool, error)
+}
+
 type DownloadClient string
 
 const (

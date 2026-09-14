@@ -105,6 +105,7 @@ func (app application) runAutomatic(
 				"--allow-download-client CLIENT "+
 				"--kill-switch-file FILE --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
+				"[--sabnzbd-url URL --sabnzbd-api-key-file FILE] "+
 				"--planner-socket PATH --state-directory DIR --metrics-file FILE",
 		)
 	}

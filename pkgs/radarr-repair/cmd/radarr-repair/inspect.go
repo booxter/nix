@@ -17,10 +17,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+	downloadsources "github.com/booxter/nix-config/radarr-repair/internal/downloadsource"
 	filesource "github.com/booxter/nix-config/radarr-repair/internal/filesystem"
 	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	radarrsource "github.com/booxter/nix-config/radarr-repair/internal/radarr"
+	sabnzbdsource "github.com/booxter/nix-config/radarr-repair/internal/sabnzbd"
 	transmissionsource "github.com/booxter/nix-config/radarr-repair/internal/transmission"
 	"github.com/booxter/nix-config/radarr-repair/internal/workerclient"
 )
@@ -35,6 +37,8 @@ type inspectConfig struct {
 	RadarrURL         string
 	RadarrAPIKeyFile  string
 	TransmissionURL   string
+	SABnzbdURL        string
+	SABnzbdAPIKeyFile string
 	WorkerSocket      string
 	WorkerRoots       map[string]string
 	Output            string
@@ -48,6 +52,26 @@ type inspectConfig struct {
 type inspectFunc func(context.Context, inspectConfig) (casebuilder.Assembly, error)
 type inspectAllFunc func(context.Context, inspectConfig) ([]casebuilder.Assembly, error)
 
+type downloadSourceFlags struct {
+	transmissionURL   *string
+	sabnzbdURL        *string
+	sabnzbdAPIKeyFile *string
+}
+
+func addDownloadSourceFlags(flags *flag.FlagSet) downloadSourceFlags {
+	return downloadSourceFlags{
+		transmissionURL: flags.String(
+			"transmission-url", "", "loopback Transmission RPC URL",
+		),
+		sabnzbdURL: flags.String(
+			"sabnzbd-url", "", "loopback SABnzbd API URL",
+		),
+		sabnzbdAPIKeyFile: flags.String(
+			"sabnzbd-api-key-file", "", "SABnzbd API-key credential file",
+		),
+	}
+}
+
 func (app application) runInspect(
 	ctx context.Context,
 	arguments []string,
@@ -60,12 +84,13 @@ func (app application) runInspect(
 			stderr,
 			"usage: radarr-repair inspect --radarr-url URL --radarr-api-key-file FILE "+
 				"--transmission-url URL --worker-socket PATH --worker-root ID=PATH "+
+				"[--sabnzbd-url URL --sabnzbd-api-key-file FILE] "+
 				"(--output FILE [--queue-id ID] | --all --output-directory DIR)",
 		)
 	}
 	radarrURL := flags.String("radarr-url", "", "loopback Radarr URL")
 	radarrAPIKeyFile := flags.String("radarr-api-key-file", "", "Radarr API-key credential file")
-	transmissionURL := flags.String("transmission-url", "", "loopback Transmission RPC URL")
+	downloadFlags := addDownloadSourceFlags(flags)
 	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
 	output := flags.String("output", "", "new output file, or - for standard output")
 	outputDirectory := flags.String(
@@ -93,7 +118,9 @@ func (app application) runInspect(
 	config := inspectConfig{
 		RadarrURL:         *radarrURL,
 		RadarrAPIKeyFile:  *radarrAPIKeyFile,
-		TransmissionURL:   *transmissionURL,
+		TransmissionURL:   *downloadFlags.transmissionURL,
+		SABnzbdURL:        *downloadFlags.sabnzbdURL,
+		SABnzbdAPIKeyFile: *downloadFlags.sabnzbdAPIKeyFile,
 		WorkerSocket:      *workerSocket,
 		WorkerRoots:       workerRoots.Paths(),
 		Output:            *output,
@@ -167,6 +194,21 @@ func validateInspectionAccess(config inspectConfig) error {
 	}
 	if err := validateLoopbackHTTP("Transmission", config.TransmissionURL); err != nil {
 		return err
+	}
+	sabnzbdURLSet := config.SABnzbdURL != ""
+	sabnzbdKeySet := config.SABnzbdAPIKeyFile != ""
+	if sabnzbdURLSet != sabnzbdKeySet {
+		return fmt.Errorf("SABnzbd URL and API-key file must be configured together")
+	}
+	if sabnzbdURLSet {
+		if err := validateLoopbackHTTP("SABnzbd", config.SABnzbdURL); err != nil {
+			return err
+		}
+		if err := validateAbsolutePath(
+			"SABnzbd API-key file", config.SABnzbdAPIKeyFile, true,
+		); err != nil {
+			return err
+		}
 	}
 	if err := validateAbsolutePath("Radarr API-key file", config.RadarrAPIKeyFile, true); err != nil {
 		return err
@@ -249,7 +291,7 @@ type controllerAccess struct {
 }
 
 func configureControllerAccess(config inspectConfig) (*controllerAccess, error) {
-	apiKey, err := readAPIKey(config.RadarrAPIKeyFile)
+	apiKey, err := readAPIKey("Radarr", config.RadarrAPIKeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +320,34 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("configure Transmission client: %w", err)
 	}
+	registrations := []downloadsources.Registration{{
+		Protocol: "torrent", ClientName: "Transmission", Reader: transmissionClient,
+	}}
+	if config.SABnzbdURL != "" {
+		sabnzbdAPIKey, keyErr := readAPIKey("SABnzbd", config.SABnzbdAPIKeyFile)
+		if keyErr != nil {
+			transport.CloseIdleConnections()
+			return nil, keyErr
+		}
+		sabnzbdClient, clientErr := sabnzbdsource.New(
+			config.SABnzbdURL,
+			sabnzbdAPIKey,
+			config.Timeout,
+			httpClient,
+		)
+		if clientErr != nil {
+			transport.CloseIdleConnections()
+			return nil, fmt.Errorf("configure SABnzbd client: %w", clientErr)
+		}
+		registrations = append(registrations, downloadsources.Registration{
+			Protocol: "usenet", ClientName: "SABnzbd", Reader: sabnzbdClient,
+		})
+	}
+	downloads, err := downloadsources.New(registrations...)
+	if err != nil {
+		transport.CloseIdleConnections()
+		return nil, fmt.Errorf("configure download sources: %w", err)
+	}
 	probeClient, err := workerclient.New(config.WorkerSocket, config.WorkerRoots, config.Timeout)
 	if err != nil {
 		transport.CloseIdleConnections()
@@ -286,7 +356,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
-		Downloads:         transmissionClient,
+		Downloads:         downloads,
 		Files:             filesource.New(),
 		Probes:            probeClient,
 		CollectionTimeout: config.CollectionTimeout,
@@ -318,31 +388,31 @@ func directHTTPTransport() (*http.Transport, error) {
 		return nil, fmt.Errorf("default HTTP transport has an unexpected type")
 	}
 	transport := base.Clone()
-	// Both HTTP services are required to be on loopback. Ignore proxy environment
-	// variables so their requests and the Radarr API key cannot leave the host.
+	// Radarr and download services are required to be on loopback. Ignore proxy
+	// variables so their requests and API keys cannot leave the host.
 	transport.Proxy = nil
 	return transport, nil
 }
 
-func readAPIKey(path string) (string, error) {
+func readAPIKey(service, path string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return "", fmt.Errorf("open Radarr API-key file: %w", err)
+		return "", fmt.Errorf("open %s API-key file: %w", service, err)
 	}
 	defer file.Close()
 	info, err := file.Stat()
 	if err != nil {
-		return "", fmt.Errorf("inspect Radarr API-key file: %w", err)
+		return "", fmt.Errorf("inspect %s API-key file: %w", service, err)
 	}
 	if !info.Mode().IsRegular() {
-		return "", fmt.Errorf("Radarr API-key file is not a regular file")
+		return "", fmt.Errorf("%s API-key file is not a regular file", service)
 	}
 	data, err := io.ReadAll(io.LimitReader(file, maximumAPIKeySize+1))
 	if err != nil {
-		return "", fmt.Errorf("read Radarr API-key file: %w", err)
+		return "", fmt.Errorf("read %s API-key file: %w", service, err)
 	}
 	if len(data) > maximumAPIKeySize {
-		return "", fmt.Errorf("Radarr API-key file exceeds %d bytes", maximumAPIKeySize)
+		return "", fmt.Errorf("%s API-key file exceeds %d bytes", service, maximumAPIKeySize)
 	}
 	key := string(data)
 	if strings.HasSuffix(key, "\n") {
@@ -350,11 +420,11 @@ func readAPIKey(path string) (string, error) {
 		key = strings.TrimSuffix(key, "\r")
 	}
 	if key == "" || !utf8.ValidString(key) || strings.TrimSpace(key) != key {
-		return "", fmt.Errorf("Radarr API-key file contains an invalid credential")
+		return "", fmt.Errorf("%s API-key file contains an invalid credential", service)
 	}
 	for _, character := range key {
 		if unicode.IsControl(character) {
-			return "", fmt.Errorf("Radarr API-key file contains an invalid credential")
+			return "", fmt.Errorf("%s API-key file contains an invalid credential", service)
 		}
 	}
 	return key, nil
