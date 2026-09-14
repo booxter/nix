@@ -5,12 +5,13 @@
 }:
 stdenvNoCC.mkDerivation {
   pname = "radarr-repair-contracts";
-  version = "1";
+  version = "2";
 
   src = lib.fileset.toSource {
     root = ./.;
     fileset = lib.fileset.unions [
       ./contracts/v1
+      ./contracts/v2
       ./contract-tests
       ./worker/contracts/v1
       ./worker/contract-tests
@@ -30,6 +31,8 @@ stdenvNoCC.mkDerivation {
 
     check-jsonschema --check-metaschema contracts/v1/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
+    check-jsonschema --check-metaschema contracts/v2/repair-case.schema.json
+    check-jsonschema --check-metaschema contracts/v2/repair-decision.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/media-evidence.schema.json
@@ -43,6 +46,12 @@ stdenvNoCC.mkDerivation {
     check-jsonschema \
       --schemafile contracts/v1/repair-decision.schema.json \
       contracts/v1/examples/repair-decision-*.json
+    check-jsonschema \
+      --schemafile contracts/v2/repair-case.schema.json \
+      contracts/v2/examples/repair-case-*.json
+    check-jsonschema \
+      --schemafile contracts/v2/repair-decision.schema.json \
+      contracts/v2/examples/repair-decision-*.json
     check-jsonschema \
       --base-uri "$worker_schema_base/probe-request.schema.json" \
       --schemafile worker/contracts/v1/probe-request.schema.json \
@@ -90,6 +99,12 @@ stdenvNoCC.mkDerivation {
     expect_invalid \
       contracts/v1/repair-case.schema.json \
       contract-tests/v1/request-unknown-field.json
+    for fixture in contract-tests/v2/decision-*.json; do
+      expect_invalid contracts/v2/repair-decision.schema.json "$fixture"
+    done
+    for fixture in contract-tests/v2/request-*.json; do
+      expect_invalid contracts/v2/repair-case.schema.json "$fixture"
+    done
     for fixture in worker/contract-tests/v1/request-*.json; do
       expect_invalid worker/contracts/v1/probe-request.schema.json "$fixture"
     done
@@ -111,8 +126,10 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p "$out/share/radarr-repair/contracts"
     cp -R contracts/v1 "$out/share/radarr-repair/contracts/"
+    cp -R contracts/v2 "$out/share/radarr-repair/contracts/"
     mkdir -p "$out/share/radarr-repair/contract-tests"
     cp -R contract-tests/v1 "$out/share/radarr-repair/contract-tests/"
+    cp -R contract-tests/v2 "$out/share/radarr-repair/contract-tests/"
     mkdir -p "$out/share/radarr-repair/worker-contracts"
     cp -R worker/contracts/v1 "$out/share/radarr-repair/worker-contracts/"
 

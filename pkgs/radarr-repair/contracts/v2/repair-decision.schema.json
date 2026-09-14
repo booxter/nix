@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "evidenceRefs": {
+      "items": {
+        "$ref": "#/$defs/opaqueId"
+      },
+      "maxItems": 32,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "joinParts": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "join_parts_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "ordered_file_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 128,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "radarr-repair/v2"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "ordered_file_ids",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "manualImportFile": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "manual_import_file_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair/v2"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "file_id",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "noRepair": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "no_repair"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "missing_evidence": {
+          "items": {
+            "enum": [
+              "movie_identity",
+              "download_provenance",
+              "file_identity",
+              "part_membership",
+              "part_order",
+              "duration",
+              "stream_layout",
+              "container_compatibility",
+              "file_selection",
+              "movie_runtime",
+              "import_metadata",
+              "disc_playlist",
+              "media_probe"
+            ]
+          },
+          "maxItems": 16,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "reason": {
+          "enum": [
+            "no_repair_needed",
+            "not_a_multipart_release",
+            "ambiguous_part_order",
+            "ambiguous_file_selection",
+            "content_not_single_movie",
+            "raw_disc_unsupported",
+            "missing_import_metadata",
+            "insufficient_evidence",
+            "unsupported_repair",
+            "unsafe_to_repair"
+          ]
+        },
+        "schema_version": {
+          "const": "radarr-repair/v2"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "reason",
+        "missing_evidence",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "opaqueId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "safeExplanation": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "type": "string"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "urn:radarr-repair:schema:repair-decision:v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/noRepair"
+    },
+    {
+      "$ref": "#/$defs/joinParts"
+    },
+    {
+      "$ref": "#/$defs/manualImportFile"
+    }
+  ],
+  "title": "Radarr repair decision version 2"
+}

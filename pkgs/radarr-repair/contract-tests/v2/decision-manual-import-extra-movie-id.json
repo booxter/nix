@@ -1,0 +1,10 @@
+{
+  "action": "manual_import_file_v1",
+  "capability_id": "capability_manual_import_01",
+  "case_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evidence_refs": [],
+  "explanation": "This invalid decision attempts to supply a Radarr movie ID.",
+  "file_id": "file_manual_01",
+  "movie_id": 43,
+  "schema_version": "radarr-repair/v2"
+}

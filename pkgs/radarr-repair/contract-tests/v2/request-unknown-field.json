@@ -1,0 +1,108 @@
+{
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "candidate_file_ids": [
+        "file_01",
+        "file_02"
+      ],
+      "capability_id": "capability_join_01"
+    }
+  ],
+  "case_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "download": {
+    "client": "transmission",
+    "completed_at": null,
+    "content_ownership": "manifest",
+    "download_ref": "download_01",
+    "file_count": 2,
+    "is_complete": true,
+    "labels": [],
+    "name": "Example.Movie.parts",
+    "source_type": "torrent",
+    "total_size_bytes": 200
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 100,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 100
+      },
+      "extension": "mkv",
+      "file_id": "file_01",
+      "fingerprint": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "path_components": [
+        "Example.Movie.parts",
+        "part1.mkv"
+      ],
+      "probe": {
+        "reason": "probe_error",
+        "status": "failed",
+        "summary": "The media probe failed."
+      },
+      "size_bytes": 100
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 100,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 100
+      },
+      "extension": "mkv",
+      "file_id": "file_02",
+      "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "path_components": [
+        "Example.Movie.parts",
+        "part2.mkv"
+      ],
+      "probe": {
+        "reason": "probe_error",
+        "status": "failed",
+        "summary": "The media probe failed."
+      },
+      "size_bytes": 100
+    }
+  ],
+  "observed_at": "2026-09-06T01:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download_01",
+      "error_message": "",
+      "queue_id": 1,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence_queue_01",
+          "messages": [
+            "Import failed"
+          ],
+          "title": "Import failed"
+        }
+      ],
+      "title": "Example.Movie.parts",
+      "tracked_download_state": "importPending",
+      "tracked_download_status": "warning"
+    },
+    "history": [],
+    "manual_imports": [],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": null,
+      "original_title": null,
+      "radarr_id": 1,
+      "runtime_minutes": null,
+      "title": "Example Movie",
+      "tmdb_id": 1,
+      "year": 2024
+    }
+  },
+  "schema_version": "radarr-repair/v2",
+  "unexpected": true
+}
