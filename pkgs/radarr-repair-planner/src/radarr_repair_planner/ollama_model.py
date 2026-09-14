@@ -13,9 +13,9 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
 
-from .case_models import RepairCaseV1
+from .case_models import RepairCaseV2
 from .contracts import decision_schema
-from .decision_models import RepairDecisionV1
+from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .planning import DecisionModelError
 from .structured_decision import (
@@ -178,7 +178,7 @@ class OllamaDecisionModel:
 
     def _trace(
         self,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         raw: object,
         error: str | None,
     ) -> None:
@@ -198,9 +198,9 @@ class OllamaDecisionModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV1:
+    ) -> RepairDecisionV2:
         system_content, case_content = decision_prompt(
             system_instruction,
             repair_case,

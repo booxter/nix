@@ -770,7 +770,7 @@ func testInventoryFile(id controller.FileID, name string, size int64, index int)
 			Device: 1, Inode: uint64(index + 10), SizeBytes: size, MTimeNS: 1_789_000_000_000_000_000,
 		},
 		DownloadFile: &controller.DownloadFileReference{
-			Index: index, LengthBytes: size, BytesCompleted: size, Selected: true,
+			Index: index, HasIndex: true, LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
 	}
 }

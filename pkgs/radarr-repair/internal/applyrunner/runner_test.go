@@ -269,7 +269,7 @@ type runnerExecutor struct {
 func (executor *runnerExecutor) Execute(
 	_ context.Context,
 	assembly casebuilder.Assembly,
-	_ contracts.RepairDecisionV1,
+	_ contracts.RepairDecisionV2,
 ) (repairexecution.Result, error) {
 	caseID := assembly.Request.CaseID
 	executor.calls = append(executor.calls, caseID)
@@ -319,14 +319,14 @@ func assertLease(t *testing.T, locker *runnerLocker, released bool) {
 func runnerPlan(caseID string, action contracts.DecisionAction) casestore.PlannedCase {
 	planned := casestore.PlannedCase{
 		Assembly: casebuilder.Assembly{
-			Request: contracts.RepairCaseV1{CaseID: caseID},
+			Request: contracts.RepairCaseV2{CaseID: caseID},
 			LocalSnapshot: casebuilder.LocalSnapshot{Observation: casebuilder.Observation{
 				Correlation: controller.DownloadCorrelation{Download: controller.Download{
 					Client: controller.DownloadClientTransmission,
 				}},
 			}},
 		},
-		Decision: contracts.RepairDecisionV1{Kind: action},
+		Decision: contracts.RepairDecisionV2{Kind: action},
 	}
 	switch action {
 	case contracts.ActionNoRepair:

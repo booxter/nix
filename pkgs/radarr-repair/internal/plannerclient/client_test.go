@@ -25,7 +25,7 @@ func TestClientPlansThroughUnixSocket(t *testing.T) {
 	repairCase := fixtureCase(t)
 	wantDecision := fixtureDecision(t, repairCase.CaseID)
 	decisionData := fixtureDecisionData(t, repairCase.CaseID)
-	requests := make(chan contracts.RepairCaseV1, 1)
+	requests := make(chan contracts.RepairCaseV2, 1)
 	socketPath := serveUnix(t, http.HandlerFunc(func(
 		writer http.ResponseWriter,
 		request *http.Request,
@@ -253,14 +253,14 @@ func serveUnix(t *testing.T, handler http.Handler) string {
 	return socketPath
 }
 
-func readRepairCase(request *http.Request) (contracts.RepairCaseV1, error) {
-	if request.Method != http.MethodPost || request.URL.Path != "/v1/repair-plans" ||
+func readRepairCase(request *http.Request) (contracts.RepairCaseV2, error) {
+	if request.Method != http.MethodPost || request.URL.Path != "/v2/repair-plans" ||
 		request.Header.Get("Content-Type") != "application/json" {
-		return contracts.RepairCaseV1{}, fmt.Errorf("unexpected request")
+		return contracts.RepairCaseV2{}, fmt.Errorf("unexpected request")
 	}
 	data, err := io.ReadAll(request.Body)
 	if err != nil {
-		return contracts.RepairCaseV1{}, err
+		return contracts.RepairCaseV2{}, err
 	}
 	return contracts.DecodeCase(data)
 }
@@ -270,7 +270,7 @@ func writeJSON(writer http.ResponseWriter, data []byte) {
 	_, _ = writer.Write(data)
 }
 
-func fixtureCase(t *testing.T) contracts.RepairCaseV1 {
+func fixtureCase(t *testing.T) contracts.RepairCaseV2 {
 	t.Helper()
 	repairCase, err := contracts.DecodeCase(readFixture(t, "repair-case-joinable.json"))
 	if err != nil {
@@ -283,7 +283,7 @@ func fixtureCase(t *testing.T) contracts.RepairCaseV1 {
 	return repairCase
 }
 
-func fixtureDecision(t *testing.T, caseID string) contracts.RepairDecisionV1 {
+func fixtureDecision(t *testing.T, caseID string) contracts.RepairDecisionV2 {
 	t.Helper()
 	decision, err := contracts.DecodeDecision(fixtureDecisionData(t, caseID))
 	if err != nil {
@@ -304,7 +304,7 @@ func fixtureDecisionData(t *testing.T, caseID string) []byte {
 
 func readFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "contracts", "v1", "examples", name))
+	data, err := os.ReadFile(filepath.Join("..", "..", "contracts", "v2", "examples", name))
 	if err != nil {
 		t.Fatal(err)
 	}

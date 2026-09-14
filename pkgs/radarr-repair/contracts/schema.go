@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	caseSchemaFile         = "v1/repair-case.schema.json"
-	caseSchemaLocation     = "urn:radarr-repair:schema:repair-case:v1"
-	decisionSchemaFile     = "v1/repair-decision.schema.json"
-	decisionSchemaLocation = "urn:radarr-repair:schema:repair-decision:v1"
+	caseSchemaFile         = "v2/repair-case.schema.json"
+	caseSchemaLocation     = "urn:radarr-repair:schema:repair-case:v2"
+	decisionSchemaFile     = "v2/repair-decision.schema.json"
+	decisionSchemaLocation = "urn:radarr-repair:schema:repair-decision:v2"
 )
 
-//go:embed v1/repair-case.schema.json v1/repair-decision.schema.json
+//go:embed v2/repair-case.schema.json v2/repair-decision.schema.json
 var schemaFiles embed.FS
 
 var caseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {

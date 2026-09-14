@@ -23,7 +23,7 @@ func TestWriteMetricsReportsLatestShadowRun(t *testing.T) {
 	report := Report{
 		Observed: 2, Stored: 1, Submitted: 2, Decided: 1, Failed: 1,
 	}
-	report.observe(casebuilder.Assembly{Request: contracts.RepairCaseV1{
+	report.observe(casebuilder.Assembly{Request: contracts.RepairCaseV2{
 		Radarr: contracts.Radarr{Failure: contracts.Failure{
 			TrackedDownloadState: "importBlocked",
 		}},
@@ -33,12 +33,12 @@ func TestWriteMetricsReportsLatestShadowRun(t *testing.T) {
 			{Action: contracts.CapabilityActionManualImportFile},
 		},
 	}})
-	report.observe(casebuilder.Assembly{Request: contracts.RepairCaseV1{
+	report.observe(casebuilder.Assembly{Request: contracts.RepairCaseV2{
 		Radarr: contracts.Radarr{Failure: contracts.Failure{
 			TrackedDownloadState: "importPending",
 		}},
 	}})
-	report.observeDecision(contracts.RepairDecisionV1{
+	report.observeDecision(contracts.RepairDecisionV2{
 		Kind: contracts.ActionNoRepair,
 		NoRepair: &contracts.NoRepairDecision{
 			Reason: contracts.NoRepairDecisionReason("insufficient_evidence"),

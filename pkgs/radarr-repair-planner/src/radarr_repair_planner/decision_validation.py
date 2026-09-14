@@ -8,9 +8,9 @@ from typing import Any
 
 from jsonschema import Draft202012Validator  # type: ignore[import-untyped]
 
-from .case_models import JoinCapability, ManualImportCapability, RepairCaseV1
+from .case_models import JoinCapability, ManualImportCapability, RepairCaseV2
 from .contracts import decision_schema
-from .decision_models import JoinParts, ManualImportFile, NoRepair, RepairDecisionV1
+from .decision_models import JoinParts, ManualImportFile, NoRepair, RepairDecisionV2
 
 MAX_CORRECTION_VIOLATIONS = 8
 MAX_CORRECTION_VALUES = 4
@@ -43,7 +43,7 @@ class DecisionViolation:
 
 @dataclass(frozen=True)
 class ValidationContext:
-    repair_case: RepairCaseV1
+    repair_case: RepairCaseV2
     decision: JoinParts | ManualImportFile | NoRepair
 
 
@@ -178,7 +178,7 @@ def _case_id(context: ValidationContext) -> tuple[DecisionViolation, ...]:
     )
 
 
-def _reference_ids(repair_case: RepairCaseV1) -> tuple[str, ...]:
+def _reference_ids(repair_case: RepairCaseV2) -> tuple[str, ...]:
     values = {
         *(capability.capability_id.root for capability in repair_case.capabilities),
         *(media_file.file_id.root for media_file in repair_case.files),
@@ -306,8 +306,8 @@ CASE_VALIDATORS: tuple[DecisionValidator, ...] = (
 
 
 def validate_decision_for_case(
-    repair_case: RepairCaseV1,
-    decision: RepairDecisionV1,
+    repair_case: RepairCaseV2,
+    decision: RepairDecisionV2,
 ) -> tuple[DecisionViolation, ...]:
     context = ValidationContext(repair_case=repair_case, decision=decision.root)
     return tuple(violation for validator in CASE_VALIDATORS for violation in validator(context))

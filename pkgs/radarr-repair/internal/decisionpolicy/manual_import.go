@@ -63,7 +63,7 @@ func (validation ManualImportValidation) Accepted() bool {
 
 func ValidateManualImport(
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 ) ManualImportValidation {
 	validation := ManualImportValidation{Rejections: make([]ManualImportRejection, 0)}
 	if decision.Kind != contracts.ActionManualImportFile || decision.ManualImportFile == nil ||

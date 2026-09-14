@@ -17,7 +17,7 @@ type caseIdentity struct {
 	SchemaVersion SchemaVersion `json:"schema_version"`
 }
 
-func CalculateCaseID(repairCase RepairCaseV1) (string, error) {
+func CalculateCaseID(repairCase RepairCaseV2) (string, error) {
 	canonical, err := canonicalCaseIdentity(repairCase)
 	if err != nil {
 		return "", err
@@ -26,7 +26,7 @@ func CalculateCaseID(repairCase RepairCaseV1) (string, error) {
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }
 
-func EncodeCase(repairCase RepairCaseV1) ([]byte, error) {
+func EncodeCase(repairCase RepairCaseV2) ([]byte, error) {
 	expectedID, err := CalculateCaseID(repairCase)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func EncodeCase(repairCase RepairCaseV1) ([]byte, error) {
 	return data, nil
 }
 
-func EncodeDecision(decision RepairDecisionV1) ([]byte, error) {
+func EncodeDecision(decision RepairDecisionV2) ([]byte, error) {
 	value, err := decisionValue(decision)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func EncodeDecision(decision RepairDecisionV1) ([]byte, error) {
 	return data, nil
 }
 
-func decisionValue(decision RepairDecisionV1) (any, error) {
+func decisionValue(decision RepairDecisionV2) (any, error) {
 	set := 0
 	for _, present := range []bool{
 		decision.NoRepair != nil,
@@ -100,7 +100,7 @@ func decisionValue(decision RepairDecisionV1) (any, error) {
 	return nil, fmt.Errorf("repair decision kind %q does not match its action", decision.Kind)
 }
 
-func canonicalCaseIdentity(repairCase RepairCaseV1) ([]byte, error) {
+func canonicalCaseIdentity(repairCase RepairCaseV2) ([]byte, error) {
 	serialized, err := json.Marshal(caseIdentity{
 		Capabilities:  repairCase.Capabilities,
 		Download:      repairCase.Download,

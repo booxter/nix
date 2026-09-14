@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	planningURL             = "http://planner/v1/repair-plans"
+	planningURL             = "http://planner/v2/repair-plans"
 	maxDecisionResponseSize = 64 << 10
 )
 
@@ -103,14 +103,14 @@ func (client *Client) Close() {
 
 func (client *Client) Plan(
 	ctx context.Context,
-	repairCase contracts.RepairCaseV1,
-) (contracts.RepairDecisionV1, error) {
+	repairCase contracts.RepairCaseV2,
+) (contracts.RepairDecisionV2, error) {
 	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
-		return contracts.RepairDecisionV1{}, fmt.Errorf("planner client is not configured")
+		return contracts.RepairDecisionV2{}, fmt.Errorf("planner client is not configured")
 	}
 	payload, err := contracts.EncodeCase(repairCase)
 	if err != nil {
-		return contracts.RepairDecisionV1{}, fmt.Errorf("construct planner request: %w", err)
+		return contracts.RepairDecisionV2{}, fmt.Errorf("construct planner request: %w", err)
 	}
 
 	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
@@ -122,36 +122,36 @@ func (client *Client) Plan(
 		bytes.NewReader(payload),
 	)
 	if err != nil {
-		return contracts.RepairDecisionV1{}, fmt.Errorf("construct planner HTTP request: %w", err)
+		return contracts.RepairDecisionV2{}, fmt.Errorf("construct planner HTTP request: %w", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return contracts.RepairDecisionV1{}, client.requestFailure(ctx, requestContext, err)
+		return contracts.RepairDecisionV2{}, client.requestFailure(ctx, requestContext, err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return contracts.RepairDecisionV1{}, &Failure{
+		return contracts.RepairDecisionV2{}, &Failure{
 			Kind: FailureHTTP, StatusCode: response.StatusCode,
 		}
 	}
 	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {
-		return contracts.RepairDecisionV1{}, &Failure{Kind: FailureInvalidResponse, cause: err}
+		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	data, err := io.ReadAll(io.LimitReader(response.Body, maxDecisionResponseSize+1))
 	if err != nil {
-		return contracts.RepairDecisionV1{}, client.requestFailure(ctx, requestContext, err)
+		return contracts.RepairDecisionV2{}, client.requestFailure(ctx, requestContext, err)
 	}
 	if len(data) > maxDecisionResponseSize {
-		return contracts.RepairDecisionV1{}, &Failure{Kind: FailureInvalidResponse}
+		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	decision, err := contracts.DecodeDecision(data)
 	if err != nil {
-		return contracts.RepairDecisionV1{}, &Failure{Kind: FailureInvalidResponse, cause: err}
+		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	if decision.CaseID() != repairCase.CaseID {
-		return contracts.RepairDecisionV1{}, &Failure{Kind: FailureInvalidResponse}
+		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	return decision, nil
 }

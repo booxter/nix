@@ -6,7 +6,7 @@
   runCommand,
 }:
 let
-  schemaDirectory = "${contracts}/share/radarr-repair/contracts/v1";
+  schemaDirectory = "${contracts}/share/radarr-repair/contracts/v2";
   generate = schema: className: output: ''
     datamodel-codegen \
       --input "${schemaDirectory}/${schema}" \
@@ -23,7 +23,7 @@ let
       --disable-timestamp
   '';
 in
-runCommand "radarr-repair-pydantic-models-v1"
+runCommand "radarr-repair-pydantic-models-v2"
   {
     nativeBuildInputs = [
       python3Packages.datamodel-code-generator
@@ -38,7 +38,7 @@ runCommand "radarr-repair-pydantic-models-v1"
   }
   ''
     mkdir "$out"
-    ${generate "repair-case.schema.json" "RepairCaseV1" "case_models.py"}
-    ${generate "repair-decision.schema.json" "RepairDecisionV1" "decision_models.py"}
+    ${generate "repair-case.schema.json" "RepairCaseV2" "case_models.py"}
+    ${generate "repair-decision.schema.json" "RepairDecisionV2" "decision_models.py"}
     ruff format --config ${../../ruff.toml} "$out"
   ''

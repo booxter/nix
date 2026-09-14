@@ -15,7 +15,7 @@ type Executor interface {
 	Execute(
 		context.Context,
 		casebuilder.Assembly,
-		contracts.RepairDecisionV1,
+		contracts.RepairDecisionV2,
 	) (repairexecution.Result, error)
 }
 

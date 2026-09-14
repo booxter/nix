@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
-from .case_models import RepairCaseV1
+from .case_models import RepairCaseV2
 from .contracts import ContractError, decision_schema, decode_decision, encode_case
-from .decision_models import RepairDecisionV1
+from .decision_models import RepairDecisionV2
 from .decision_validation import (
     DecisionViolation,
     describe_violations,
@@ -40,7 +40,7 @@ def diagnostic(error: BaseException) -> str:
 
 def decision_prompt(
     system_instruction: str,
-    repair_case: RepairCaseV1,
+    repair_case: RepairCaseV2,
     correction: tuple[DecisionViolation, ...],
     schema_instruction: str = SCHEMA_INSTRUCTION,
 ) -> tuple[str, str]:
@@ -56,7 +56,7 @@ def decision_prompt(
     return system_content, encode_case(repair_case).decode()
 
 
-def decode_structured_decision(raw_output: str) -> RepairDecisionV1:
+def decode_structured_decision(raw_output: str) -> RepairDecisionV2:
     try:
         value = json.loads(raw_output)
     except json.JSONDecodeError as error:

@@ -1,9 +1,10 @@
 {
   "capabilities": [],
-  "case_id": "sha256:ae71508c6d8386fc799d12aaccddc107d6645dd12032490ee26caa076f0285e8",
+  "case_id": "sha256:6f63c86b84f462cb98078b263018c3542b51032da66b8428c8335716b4e470a7",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-04T21:59:53Z",
+    "content_ownership": "manifest",
     "download_ref": "download:bf0d9ca70bc83232a989d0127d6542d7ce0a970821529648fa720c3db6ad7e50",
     "file_count": 39,
     "is_complete": true,
@@ -16,9 +17,14 @@
   },
   "files": [
     {
-      "bytes_completed": 37936,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 37936,
+        "selected": true,
+        "source_index": 28,
+        "source_size_bytes": 37936
+      },
       "extension": null,
       "file_id": "file:945a0706f01dbc0c7cd3c022d7e32ec174120209f829c80ceebc0f04ea959f7d",
       "fingerprint": "sha256:7d285928812a3ec88e49c8b810b5250e4ca632b62efd953374915553829b8fc6",
@@ -33,14 +39,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 37936,
-      "torrent_index": 28,
-      "wanted": true
+      "size_bytes": 37936
     },
     {
-      "bytes_completed": 296,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 296,
+        "selected": true,
+        "source_index": 29,
+        "source_size_bytes": 296
+      },
       "extension": null,
       "file_id": "file:d38d3f0650e421f9c904d9d26a49692bc54b17041dcd9fbee6774b4f7391405f",
       "fingerprint": "sha256:b403c41d860a61c442c510850d241ecd3d1ea8d0ed516afc707c82bec8a8c26f",
@@ -55,14 +64,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 296,
-      "torrent_index": 29,
-      "wanted": true
+      "size_bytes": 296
     },
     {
-      "bytes_completed": 3048,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 3048,
+        "selected": true,
+        "source_index": 30,
+        "source_size_bytes": 3048
+      },
       "extension": null,
       "file_id": "file:81ce8c4bc280d898bce29e3a222b2e340f06123ac5b357b2eff7fb3a7b1f2e06",
       "fingerprint": "sha256:7363f2cd8de49674a6505e2c6bc4a79e95e05e0ed4d4c36b87310786093ccdc6",
@@ -77,14 +89,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 3048,
-      "torrent_index": 30,
-      "wanted": true
+      "size_bytes": 3048
     },
     {
-      "bytes_completed": 892,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 892,
+        "selected": true,
+        "source_index": 31,
+        "source_size_bytes": 892
+      },
       "extension": null,
       "file_id": "file:3dcde9029f1292f729846c9ad072afcf184e1c7ca258387cf703d1243d0d54da",
       "fingerprint": "sha256:3653a1b86f9d20c977d61c10ac04f4d15eb6b3559efed349364dcc65354d2de8",
@@ -99,14 +114,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 892,
-      "torrent_index": 31,
-      "wanted": true
+      "size_bytes": 892
     },
     {
-      "bytes_completed": 908,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 908,
+        "selected": true,
+        "source_index": 32,
+        "source_size_bytes": 908
+      },
       "extension": null,
       "file_id": "file:5b8ccf1f32f99dc351b754cd5f0401403f7bba359a7a5dce9863bf0ca26d8304",
       "fingerprint": "sha256:5175bdd1338787146be0ac464b2573133861ef963b4aab4e020a0210d5669f01",
@@ -121,14 +139,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 908,
-      "torrent_index": 32,
-      "wanted": true
+      "size_bytes": 908
     },
     {
-      "bytes_completed": 428,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 428,
+        "selected": true,
+        "source_index": 33,
+        "source_size_bytes": 428
+      },
       "extension": null,
       "file_id": "file:ee3376c260c58cc9786cffb49dc69cff71a1d07af7104c8ec19367bc108f8805",
       "fingerprint": "sha256:419f295e1325be7eddae18d41ddcb05ee414fd03c0fc0280cf7073af70b05eec",
@@ -143,14 +164,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 428,
-      "torrent_index": 33,
-      "wanted": true
+      "size_bytes": 428
     },
     {
-      "bytes_completed": 392,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 392,
+        "selected": true,
+        "source_index": 34,
+        "source_size_bytes": 392
+      },
       "extension": null,
       "file_id": "file:d67587261fb754d088a373525b82f28f55fb586d43b439287582c15f3656bf97",
       "fingerprint": "sha256:5da7108d240292617b0a898c04f239d7cd3b63f70ccc07062340f03b7e798a8d",
@@ -165,14 +189,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 392,
-      "torrent_index": 34,
-      "wanted": true
+      "size_bytes": 392
     },
     {
-      "bytes_completed": 1350,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1350,
+        "selected": true,
+        "source_index": 36,
+        "source_size_bytes": 1350
+      },
       "extension": null,
       "file_id": "file:e28943800f6ae5a9481d526ac209dd0219ca010fd1680713964978d69072c8d4",
       "fingerprint": "sha256:000c3dfa5fbc59ac134372965d22b655de1aa3671d1e4fa5f9e12cb3803c3512",
@@ -186,14 +213,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 1350,
-      "torrent_index": 36,
-      "wanted": true
+      "size_bytes": 1350
     },
     {
-      "bytes_completed": 344,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 344,
+        "selected": true,
+        "source_index": 22,
+        "source_size_bytes": 344
+      },
       "extension": null,
       "file_id": "file:c80b639b566499c0da90ee16010a01f10dd487cb40aacc9da212b5e04b1b10bd",
       "fingerprint": "sha256:199e0aab7cfb3ac3490db25f29b9c7ac6841f63eb98ef9721c51ed7a497adb43",
@@ -208,14 +238,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 344,
-      "torrent_index": 22,
-      "wanted": true
+      "size_bytes": 344
     },
     {
-      "bytes_completed": 198,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 198,
+        "selected": true,
+        "source_index": 23,
+        "source_size_bytes": 198
+      },
       "extension": null,
       "file_id": "file:5f1a148c5f47a0333a994fd516c01d07443ae5fef59015d3149d9c79c2b8d0ed",
       "fingerprint": "sha256:b1e5167b522c96cacba79d209685e2136848f0e8e3265fd65b240020914c45e0",
@@ -230,14 +263,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 198,
-      "torrent_index": 23,
-      "wanted": true
+      "size_bytes": 198
     },
     {
-      "bytes_completed": 186,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 24,
+        "source_size_bytes": 186
+      },
       "extension": null,
       "file_id": "file:231007829a6452431966bf366d8c186fbf990d51df4b79d45cf507befc236267",
       "fingerprint": "sha256:5ab5085f83493e793a5d5f510262031eeefdd1996685fb57137f8991b5d95197",
@@ -252,14 +288,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 186,
-      "torrent_index": 24,
-      "wanted": true
+      "size_bytes": 186
     },
     {
-      "bytes_completed": 186,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 25,
+        "source_size_bytes": 186
+      },
       "extension": null,
       "file_id": "file:01188abb3e7fe30ca88ffdf75cfde8b92ae6a30f65ad9b1b19dfe4ea340d91b6",
       "fingerprint": "sha256:649d38b26660ce0eaa887015de9df314c79a634ab8ce7ec65ea14464f9eb37e1",
@@ -274,14 +313,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 186,
-      "torrent_index": 25,
-      "wanted": true
+      "size_bytes": 186
     },
     {
-      "bytes_completed": 184,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 26,
+        "source_size_bytes": 184
+      },
       "extension": null,
       "file_id": "file:205f5bb6d4756ec3a4dfa0d8d02383dc51a2244cf41678b8b2deef26ca5f4304",
       "fingerprint": "sha256:c1a42628ef17a58a2ef939448e5aa192f68ffb3aca1829891ee52bc9cf2ef605",
@@ -296,14 +338,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 184,
-      "torrent_index": 26,
-      "wanted": true
+      "size_bytes": 184
     },
     {
-      "bytes_completed": 184,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 27,
+        "source_size_bytes": 184
+      },
       "extension": null,
       "file_id": "file:67468e3947a57805719f112bf5994f96474196d7cd2ad24c1dcd0d889cd385ce",
       "fingerprint": "sha256:1b8b5e4cc69c655201e49b30637b74bc4a7a527dd5e68aa8fa926037711127ef",
@@ -318,14 +363,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 184,
-      "torrent_index": 27,
-      "wanted": true
+      "size_bytes": 184
     },
     {
-      "bytes_completed": 192,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 192,
+        "selected": true,
+        "source_index": 35,
+        "source_size_bytes": 192
+      },
       "extension": null,
       "file_id": "file:56d4dc718b4e1a023cad1592a5d7d903ddc0a19a8fa03d9cb85509b953a0a222",
       "fingerprint": "sha256:0ac688737d317317c4f9c4c24baf3651abebcc6b64e4d4baa6d560684f30d10b",
@@ -339,14 +387,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 192,
-      "torrent_index": 35,
-      "wanted": true
+      "size_bytes": 192
     },
     {
-      "bytes_completed": 37936,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 37936,
+        "selected": true,
+        "source_index": 15,
+        "source_size_bytes": 37936
+      },
       "extension": null,
       "file_id": "file:e49450313928d8e81055cb1d10094ebe8a8aeb8d316e1a1dba01b7ce818f1ae3",
       "fingerprint": "sha256:b9f7bd93da661b9f9f3437226907573520b1b61d2acb8d21ca396c5511ac2bc6",
@@ -360,14 +411,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 37936,
-      "torrent_index": 15,
-      "wanted": true
+      "size_bytes": 37936
     },
     {
-      "bytes_completed": 296,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 296,
+        "selected": true,
+        "source_index": 16,
+        "source_size_bytes": 296
+      },
       "extension": null,
       "file_id": "file:d1960469d7469628de6e9c92e22ff645d6d15d31dbd092e7fd215c885fe9ec8c",
       "fingerprint": "sha256:68926f9c5bd10dfdb17d827e97b0e9c488cfb6bbcc69a38e594311c01527dfcc",
@@ -381,14 +435,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 296,
-      "torrent_index": 16,
-      "wanted": true
+      "size_bytes": 296
     },
     {
-      "bytes_completed": 3048,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 3048,
+        "selected": true,
+        "source_index": 17,
+        "source_size_bytes": 3048
+      },
       "extension": null,
       "file_id": "file:39f758db71631dc2f189bbcb10a3ebc70a00c6947fbfe85e16f82a676558ee11",
       "fingerprint": "sha256:6a65ea3cfe905c41d1818bfcacda0c5f9bf540fb2ed89e154476dc856796ed56",
@@ -402,14 +459,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 3048,
-      "torrent_index": 17,
-      "wanted": true
+      "size_bytes": 3048
     },
     {
-      "bytes_completed": 892,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 892,
+        "selected": true,
+        "source_index": 18,
+        "source_size_bytes": 892
+      },
       "extension": null,
       "file_id": "file:1ad5bad9d3b67b0cd30a3f52055a50a80921af18a4f66459947c241ef57362a1",
       "fingerprint": "sha256:a04a1bc80f4a7c17eaca1d61e437573a28cbe81d7aabdcb3c70334383731e053",
@@ -423,14 +483,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 892,
-      "torrent_index": 18,
-      "wanted": true
+      "size_bytes": 892
     },
     {
-      "bytes_completed": 908,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 908,
+        "selected": true,
+        "source_index": 19,
+        "source_size_bytes": 908
+      },
       "extension": null,
       "file_id": "file:3d7fd38e26b09329823f4e81067b12cbefca932491cfba3f81f3f4134d6d11f0",
       "fingerprint": "sha256:6ddeeb33865dec51230ed79acdf5d18b5c23e38e0da7cab5e3f01cb2f4a99bd7",
@@ -444,14 +507,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 908,
-      "torrent_index": 19,
-      "wanted": true
+      "size_bytes": 908
     },
     {
-      "bytes_completed": 428,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 428,
+        "selected": true,
+        "source_index": 20,
+        "source_size_bytes": 428
+      },
       "extension": null,
       "file_id": "file:bb05b9388cb633912837a35cd7da00f3256f10df3d0329cebc1feef31d24d0a1",
       "fingerprint": "sha256:99d52dde070a96a035fb7f965df26092e9b6dc9d48184ee7b9612ef8b4568354",
@@ -465,14 +531,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 428,
-      "torrent_index": 20,
-      "wanted": true
+      "size_bytes": 428
     },
     {
-      "bytes_completed": 392,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 392,
+        "selected": true,
+        "source_index": 21,
+        "source_size_bytes": 392
+      },
       "extension": null,
       "file_id": "file:3295fdc081c7d85a711ae5e37d5a3abb478c8e5d8f86599dc536f414bc990630",
       "fingerprint": "sha256:9e0173d31937ffe133bf1cecb1d3cef4d8ec0703f370bea938e9c97cfaffc47e",
@@ -486,14 +555,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 392,
-      "torrent_index": 21,
-      "wanted": true
+      "size_bytes": 392
     },
     {
-      "bytes_completed": 1350,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1350,
+        "selected": true,
+        "source_index": 38,
+        "source_size_bytes": 1350
+      },
       "extension": null,
       "file_id": "file:816ec40c65ec30afd0c8bbf701024d8832b8e70be4a5496d5d7b644f9e5e0992",
       "fingerprint": "sha256:310d21b543c10baf3030ef49ad94120efafa6946783bdae15ae1c491ca00e56b",
@@ -506,14 +578,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 1350,
-      "torrent_index": 38,
-      "wanted": true
+      "size_bytes": 1350
     },
     {
-      "bytes_completed": 344,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 344,
+        "selected": true,
+        "source_index": 9,
+        "source_size_bytes": 344
+      },
       "extension": null,
       "file_id": "file:09f686ef5b5c7d26e55c15c0274cdfba7a90c80547d2eac18063ba4d7318eaa1",
       "fingerprint": "sha256:ec122886c0763db6ee4bc92b564f095ec8acc9847f3179420ca2cbac3ab58093",
@@ -527,14 +602,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 344,
-      "torrent_index": 9,
-      "wanted": true
+      "size_bytes": 344
     },
     {
-      "bytes_completed": 198,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 198,
+        "selected": true,
+        "source_index": 10,
+        "source_size_bytes": 198
+      },
       "extension": null,
       "file_id": "file:534f4104366ce4f0c4922531c429ba1e83a5af93080169d02ab7225f8a2b0b2e",
       "fingerprint": "sha256:e1691c2d29ce9a320026967b87563dcd59b72b4fb1afe59f3eebe8ae1e288118",
@@ -548,14 +626,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 198,
-      "torrent_index": 10,
-      "wanted": true
+      "size_bytes": 198
     },
     {
-      "bytes_completed": 186,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 11,
+        "source_size_bytes": 186
+      },
       "extension": null,
       "file_id": "file:62b50311a68effb038351230bea8a8ef34e43385ec6ea6119089838e61a91d73",
       "fingerprint": "sha256:6e91ee3cf8db055b23172b436f7753ca964c96ca41fe55a88f123afe77a14fc3",
@@ -569,14 +650,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 186,
-      "torrent_index": 11,
-      "wanted": true
+      "size_bytes": 186
     },
     {
-      "bytes_completed": 186,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 12,
+        "source_size_bytes": 186
+      },
       "extension": null,
       "file_id": "file:61f760895315de0fb5388625154d501b14113ab85844e0de24175219310b979b",
       "fingerprint": "sha256:1af702cd1aaf5ee6b7585a10b74e53e7746fb0b5d9145a02b0bbc79c4e7b314b",
@@ -590,14 +674,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 186,
-      "torrent_index": 12,
-      "wanted": true
+      "size_bytes": 186
     },
     {
-      "bytes_completed": 184,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 13,
+        "source_size_bytes": 184
+      },
       "extension": null,
       "file_id": "file:2154dcb975f2afa686faf479dc18aec1f24c97273bc0297095d8868ac6eefcfc",
       "fingerprint": "sha256:d490d9930f2490a732724885616ad543577feeb8a069664cf39bcf9e44aea81c",
@@ -611,14 +698,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 184,
-      "torrent_index": 13,
-      "wanted": true
+      "size_bytes": 184
     },
     {
-      "bytes_completed": 184,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 14,
+        "source_size_bytes": 184
+      },
       "extension": null,
       "file_id": "file:2da4e0da495cf966dcb9786d818f5365aca4d4824364ccb1d8f6172bb7ea503a",
       "fingerprint": "sha256:e9ee1e8a4558207af38bd9439f1d886f7c74481cd3c8791ef22ef8ac199210c3",
@@ -632,14 +722,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 184,
-      "torrent_index": 14,
-      "wanted": true
+      "size_bytes": 184
     },
     {
-      "bytes_completed": 23197495296,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 23197495296,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 23197495296
+      },
       "extension": "m2ts",
       "file_id": "file:1af116001c67896e16888c8372840fcca518c1a7f2ae658b8681b9a02edc8169",
       "fingerprint": "sha256:7c9d7f0c5f48285e2780b9dbfc353a91bb77b23a732672f24e11fd3b73d06a42",
@@ -787,14 +880,17 @@
           }
         ]
       },
-      "size_bytes": 23197495296,
-      "torrent_index": 2,
-      "wanted": true
+      "size_bytes": 23197495296
     },
     {
-      "bytes_completed": 73728,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 73728,
+        "selected": true,
+        "source_index": 3,
+        "source_size_bytes": 73728
+      },
       "extension": "m2ts",
       "file_id": "file:4a4502876e66971b3872e1f8d36e5fff4619a8276ec5025f1ca2b00229dd2079",
       "fingerprint": "sha256:16688b45d9a425a93d44cf8280c6a7682f8b128bb99dfc2d93872dcf2a7ead31",
@@ -808,14 +904,17 @@
         "status": "failed",
         "summary": "ffprobe omitted metadata required by the planner."
       },
-      "size_bytes": 73728,
-      "torrent_index": 3,
-      "wanted": true
+      "size_bytes": 73728
     },
     {
-      "bytes_completed": 517226496,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 517226496,
+        "selected": true,
+        "source_index": 4,
+        "source_size_bytes": 517226496
+      },
       "extension": "m2ts",
       "file_id": "file:76f5bb16cbb9a353240b36abc8ae83d6b3b8a47ac7916bdabb02a47249d31a89",
       "fingerprint": "sha256:b9970491074e6317bf5001890589a46366b2a50b27375321f3e1864f97f08252",
@@ -892,14 +991,17 @@
           }
         ]
       },
-      "size_bytes": 517226496,
-      "torrent_index": 4,
-      "wanted": true
+      "size_bytes": 517226496
     },
     {
-      "bytes_completed": 118265856,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 118265856,
+        "selected": true,
+        "source_index": 5,
+        "source_size_bytes": 118265856
+      },
       "extension": "m2ts",
       "file_id": "file:9bb0dec1869fee03aa5f731e7c17b0dffdf067a20dcb296800d84a707a31646b",
       "fingerprint": "sha256:07b9b0dbaf079df4c055c9207e6230a41069317f681e24e15fabec543e0e8e54",
@@ -913,14 +1015,17 @@
         "status": "failed",
         "summary": "ffprobe returned invalid structured metadata."
       },
-      "size_bytes": 118265856,
-      "torrent_index": 5,
-      "wanted": true
+      "size_bytes": 118265856
     },
     {
-      "bytes_completed": 90869760,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 90869760,
+        "selected": true,
+        "source_index": 6,
+        "source_size_bytes": 90869760
+      },
       "extension": "m2ts",
       "file_id": "file:569e4a08436edaca4625ff7a0f8db35e04087269565bab20c69319075ec2b1e6",
       "fingerprint": "sha256:340ce81c05cf943e3ca4de9031afe0e41b9e8a86f065598392b008c3da8749f7",
@@ -934,14 +1039,17 @@
         "status": "failed",
         "summary": "ffprobe returned invalid structured metadata."
       },
-      "size_bytes": 90869760,
-      "torrent_index": 6,
-      "wanted": true
+      "size_bytes": 90869760
     },
     {
-      "bytes_completed": 1388544,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1388544,
+        "selected": true,
+        "source_index": 7,
+        "source_size_bytes": 1388544
+      },
       "extension": "m2ts",
       "file_id": "file:1d639e449518ec3b589682aba06eea6b1cc26faf929b936f90051889a207e448",
       "fingerprint": "sha256:79d8b5ca890ec47a6ef5bade9f56cba076a92d11c1687ec28f97b6adaca9178b",
@@ -1018,14 +1126,17 @@
           }
         ]
       },
-      "size_bytes": 1388544,
-      "torrent_index": 7,
-      "wanted": true
+      "size_bytes": 1388544
     },
     {
-      "bytes_completed": 1327104,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1327104,
+        "selected": true,
+        "source_index": 8,
+        "source_size_bytes": 1327104
+      },
       "extension": "m2ts",
       "file_id": "file:56c91970f8705683fab3b1d420eaa714645a690b6ee4e1bb4be6602bc1dc0a7d",
       "fingerprint": "sha256:b00284cb0cb31a7954a4041f08882d8bf3626227e8059f4695c67ee37195262b",
@@ -1102,14 +1213,17 @@
           }
         ]
       },
-      "size_bytes": 1327104,
-      "torrent_index": 8,
-      "wanted": true
+      "size_bytes": 1327104
     },
     {
-      "bytes_completed": 192,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 192,
+        "selected": true,
+        "source_index": 37,
+        "source_size_bytes": 192
+      },
       "extension": null,
       "file_id": "file:c5d37a1a909918bc9bbedeee2b1ea797b33b22ad09dbf8860c861c7a7adbb057",
       "fingerprint": "sha256:1dfa81b88816648f2bfb4c9d10e2816470e3d571e5e86fb6e8518f5cae97c67d",
@@ -1122,14 +1236,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 192,
-      "torrent_index": 37,
-      "wanted": true
+      "size_bytes": 192
     },
     {
-      "bytes_completed": 104,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 104,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 104
+      },
       "extension": null,
       "file_id": "file:1df2c620bf96e2148c8144c58d993145525eb600db2ad1da5c890da9bcbdbe6c",
       "fingerprint": "sha256:2bbca7797ea6d9c0b63e8642d361e6f7054a56405f305abc1714c1807d93e2e6",
@@ -1143,14 +1260,17 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 104,
-      "torrent_index": 0,
-      "wanted": true
+      "size_bytes": 104
     },
     {
-      "bytes_completed": 104,
       "disposition": "evidence_only",
       "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 104,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 104
+      },
       "extension": null,
       "file_id": "file:8c53cac44b1614f5c494cc430eb91e4296af714ec0676cfb79458ec1de0a6596",
       "fingerprint": "sha256:3579711445f03cbd175615532ac1d138945fd5c2bfa1e4b288b78d82c47cb933",
@@ -1163,9 +1283,7 @@
         "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
-      "size_bytes": 104,
-      "torrent_index": 1,
-      "wanted": true
+      "size_bytes": 104
     }
   ],
   "observed_at": "2026-09-12T03:49:28.634716204Z",
@@ -1368,5 +1486,5 @@
       "year": 1981
     }
   },
-  "schema_version": "radarr-repair/v1"
+  "schema_version": "radarr-repair/v2"
 }

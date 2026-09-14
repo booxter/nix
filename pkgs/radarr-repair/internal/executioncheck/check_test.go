@@ -348,7 +348,7 @@ func executionAssembly() casebuilder.Assembly {
 	firstPath := "/downloads/Example/part-1.mkv"
 	secondPath := "/downloads/Example/part-2.mkv"
 	return casebuilder.Assembly{
-		Request: contracts.RepairCaseV1{
+		Request: contracts.RepairCaseV2{
 			CaseID: executionCaseID, ObservedAt: observedAt,
 			Capabilities: []contracts.Capability{
 				{
@@ -453,8 +453,8 @@ func executionProbe(durationMS, size int64) controller.ProbeEvidence {
 	}
 }
 
-func executionManualImportDecision() contracts.RepairDecisionV1 {
-	return contracts.RepairDecisionV1{
+func executionManualImportDecision() contracts.RepairDecisionV2 {
+	return contracts.RepairDecisionV2{
 		Kind: contracts.ActionManualImportFile,
 		ManualImportFile: &contracts.ManualImportFileDecision{
 			Action: contracts.ManualImportFileDecisionAction(contracts.ActionManualImportFile),
@@ -463,8 +463,8 @@ func executionManualImportDecision() contracts.RepairDecisionV1 {
 	}
 }
 
-func executionJoinDecision() contracts.RepairDecisionV1 {
-	return contracts.RepairDecisionV1{
+func executionJoinDecision() contracts.RepairDecisionV2 {
+	return contracts.RepairDecisionV2{
 		Kind: contracts.ActionJoinParts,
 		JoinParts: &contracts.JoinDecision{
 			Action: contracts.JoinDecisionAction(contracts.ActionJoinParts),

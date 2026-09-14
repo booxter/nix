@@ -2,8 +2,8 @@
 
 from .contracts import (
     ContractError,
-    RepairCaseV1,
-    RepairDecisionV1,
+    RepairCaseV2,
+    RepairDecisionV2,
     decode_case,
     decode_decision,
     encode_case,
@@ -21,8 +21,8 @@ __all__ = [
     "OllamaSettings",
     "PlanningGraph",
     "PlanningOutcome",
-    "RepairCaseV1",
-    "RepairDecisionV1",
+    "RepairCaseV2",
+    "RepairDecisionV2",
     "decode_case",
     "decode_decision",
     "encode_case",

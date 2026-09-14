@@ -130,7 +130,7 @@ func (store *Store) PutPlanningFailure(
 
 func (store *Store) PutPlanningDecision(
 	caseID string,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 	attemptedAt time.Time,
 ) (PlanningResult, bool, error) {
 	encoded, err := contracts.EncodeDecision(decision)

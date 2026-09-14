@@ -6,32 +6,32 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
-from radarr_repair_planner.case_models import RepairCaseV1
+from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import (
     ContractError,
     decode_case,
     decode_decision,
     encode_decision,
 )
-from radarr_repair_planner.decision_models import RepairDecisionV1
+from radarr_repair_planner.decision_models import RepairDecisionV2
 from radarr_repair_planner.decision_validation import DecisionViolation, ViolationCode
 from radarr_repair_planner.planning import DecisionModelError, PlanningGraph
 from radarr_repair_planner.prompt import SYSTEM_INSTRUCTION
 
-FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
+FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v2/examples"
 
 
 class ScriptedDecisionModel:
-    def __init__(self, steps: Sequence[RepairDecisionV1 | Exception]) -> None:
+    def __init__(self, steps: Sequence[RepairDecisionV2 | Exception]) -> None:
         self.steps = list(steps)
-        self.calls: list[tuple[str, RepairCaseV1, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, RepairCaseV2, tuple[DecisionViolation, ...]]] = []
 
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV1:
+    ) -> RepairDecisionV2:
         self.calls.append((system_instruction, repair_case, correction))
         step = self.steps.pop(0)
         if isinstance(step, Exception):
@@ -39,11 +39,11 @@ class ScriptedDecisionModel:
         return step
 
 
-def repair_case(name: str = "repair-case-joinable.json") -> RepairCaseV1:
+def repair_case(name: str = "repair-case-joinable.json") -> RepairCaseV2:
     return decode_case((FIXTURES / name).read_bytes())
 
 
-def repair_decision(name: str = "repair-decision-join.json") -> RepairDecisionV1:
+def repair_decision(name: str = "repair-decision-join.json") -> RepairDecisionV2:
     return decode_decision((FIXTURES / name).read_bytes())
 
 

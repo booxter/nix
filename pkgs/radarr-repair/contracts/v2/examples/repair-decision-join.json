@@ -1,7 +1,7 @@
 {
   "action": "join_parts_v1",
   "capability_id": "capability_join_01",
-  "case_id": "sha256:9f9a4af0a4f573de208cc1accc4174080765ddb6839e59c6ad44b2ad8cc90c14",
+  "case_id": "sha256:98955c1223a01fff78d92faa053566472531338777f65931a821338247186af6",
   "evidence_refs": [
     "file_01",
     "file_02",

@@ -103,10 +103,10 @@ let
       ];
     }
   );
-  schemaDirectory = "${contracts}/share/radarr-repair/contracts/v1";
+  schemaDirectory = "${contracts}/share/radarr-repair/contracts/v2";
   workerSchemaDirectory = "${contracts}/share/radarr-repair/worker-contracts/v1";
 in
-runCommand "radarr-repair-go-models-v1"
+runCommand "radarr-repair-go-models-v2"
   {
     nativeBuildInputs = [
       go

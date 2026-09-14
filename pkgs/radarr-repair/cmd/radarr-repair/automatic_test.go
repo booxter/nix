@@ -321,7 +321,7 @@ func (guard *testApplyGuard) Disabled(path string) (bool, error) {
 
 func automaticPlannedCase(caseID string) casestore.PlannedCase {
 	return casestore.PlannedCase{Assembly: casebuilder.Assembly{
-		Request: contracts.RepairCaseV1{CaseID: caseID},
+		Request: contracts.RepairCaseV2{CaseID: caseID},
 	}}
 }
 

@@ -192,7 +192,7 @@ func (fixture *manualWorkflowFixture) executeConfig(caseID string) executeCaseCo
 
 func (fixture *manualWorkflowFixture) storePlannedCase(
 	t *testing.T,
-) (assembly casebuilder.Assembly, decision contracts.RepairDecisionV1) {
+) (assembly casebuilder.Assembly, decision contracts.RepairDecisionV2) {
 	t.Helper()
 	observed, err := inspectCase(context.Background(), fixture.inspectionConfig())
 	if err != nil {
@@ -209,7 +209,7 @@ func (fixture *manualWorkflowFixture) storePlannedCase(
 	if selected == nil || selected.FileID == nil {
 		t.Fatalf("case has no manual-import capability: %#v", observed.Request.Capabilities)
 	}
-	decision = contracts.RepairDecisionV1{
+	decision = contracts.RepairDecisionV2{
 		Kind: contracts.ActionManualImportFile,
 		ManualImportFile: &contracts.ManualImportFileDecision{
 			Action:        contracts.ManualImportFileDecisionAction(contracts.ActionManualImportFile),
@@ -218,7 +218,7 @@ func (fixture *manualWorkflowFixture) storePlannedCase(
 			EvidenceRefs:  []string{*selected.FileID},
 			Explanation:   "Radarr can import this complete movie file with its retained metadata.",
 			FileID:        *selected.FileID,
-			SchemaVersion: contracts.RadarrRepairV1,
+			SchemaVersion: contracts.RadarrRepairV2,
 		},
 	}
 	store, err := casestore.New(fixture.stateDirectory)
@@ -523,7 +523,7 @@ func assertManualImportCommand(
 	t *testing.T,
 	request manualImportCommandObservation,
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 ) {
 	t.Helper()
 	if request.Name != "ManualImport" || request.ImportMode != "copy" || len(request.Files) != 1 {

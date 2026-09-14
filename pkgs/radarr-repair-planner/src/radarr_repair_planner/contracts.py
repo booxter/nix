@@ -12,8 +12,8 @@ from jsonschema.exceptions import (  # type: ignore[import-untyped]
 from pydantic import BaseModel
 from pydantic import ValidationError as ModelValidationError
 
-from .case_models import RepairCaseV1 as RepairCaseV1
-from .decision_models import RepairDecisionV1 as RepairDecisionV1
+from .case_models import RepairCaseV2 as RepairCaseV2
+from .decision_models import RepairDecisionV2 as RepairDecisionV2
 
 
 class ContractError(ValueError):
@@ -64,12 +64,12 @@ def _decode[Model: BaseModel](
         raise ContractError(f"typed model validation failed: {error}") from error
 
 
-def decode_case(payload: bytes) -> RepairCaseV1:
-    return _decode(payload, CASE_VALIDATOR, RepairCaseV1)
+def decode_case(payload: bytes) -> RepairCaseV2:
+    return _decode(payload, CASE_VALIDATOR, RepairCaseV2)
 
 
-def decode_decision(payload: bytes) -> RepairDecisionV1:
-    return _decode(payload, DECISION_VALIDATOR, RepairDecisionV1)
+def decode_decision(payload: bytes) -> RepairDecisionV2:
+    return _decode(payload, DECISION_VALIDATOR, RepairDecisionV2)
 
 
 def _encode(model: BaseModel, validator: Draft202012Validator) -> bytes:
@@ -86,11 +86,11 @@ def _encode(model: BaseModel, validator: Draft202012Validator) -> bytes:
     ).encode()
 
 
-def encode_case(repair_case: RepairCaseV1) -> bytes:
+def encode_case(repair_case: RepairCaseV2) -> bytes:
     return _encode(repair_case, CASE_VALIDATOR)
 
 
-def encode_decision(decision: RepairDecisionV1) -> bytes:
+def encode_decision(decision: RepairDecisionV2) -> bytes:
     return _encode(decision, DECISION_VALIDATOR)
 
 

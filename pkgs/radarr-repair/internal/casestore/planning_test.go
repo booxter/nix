@@ -276,9 +276,9 @@ func newPlanningStore(t *testing.T, root string) (*Store, CaseRecord) {
 	return store, record
 }
 
-func planningDecision(t *testing.T, caseID string) contracts.RepairDecisionV1 {
+func planningDecision(t *testing.T, caseID string) contracts.RepairDecisionV2 {
 	t.Helper()
-	data, err := os.ReadFile("../../contracts/v1/examples/repair-decision-no-repair.json")
+	data, err := os.ReadFile("../../contracts/v2/examples/repair-decision-no-repair.json")
 	if err != nil {
 		t.Fatal(err)
 	}

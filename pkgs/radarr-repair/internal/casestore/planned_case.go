@@ -9,7 +9,7 @@ import (
 
 type PlannedCase struct {
 	Assembly casebuilder.Assembly
-	Decision contracts.RepairDecisionV1
+	Decision contracts.RepairDecisionV2
 }
 
 func (store *Store) GetPlannedCase(caseID string) (PlannedCase, error) {

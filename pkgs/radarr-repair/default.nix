@@ -59,8 +59,8 @@ let
       doInstallCheck = true;
       installCheckPhase = ''
         runHook preInstallCheck
-        "$out/bin/radarr-repair" validate-case contracts/v1/examples/repair-case-joinable.json
-        "$out/bin/radarr-repair" validate-decision contracts/v1/examples/repair-decision-join.json
+        "$out/bin/radarr-repair" validate-case contracts/v2/examples/repair-case-joinable.json
+        "$out/bin/radarr-repair" validate-decision contracts/v2/examples/repair-decision-join.json
         "$out/bin/radarr-repair" inspect -h >/dev/null
         "$out/bin/radarr-repair" run -h >/dev/null
         "$out/bin/radarr-repair" shadow -h >/dev/null

@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints, model_validator
 
-from .case_models import RepairCaseV1
+from .case_models import RepairCaseV2
 from .contracts import decode_case, encode_decision
 from .decision_models import Reason
 from .decision_validation import describe_violation, validate_decision_for_case
@@ -61,7 +61,7 @@ class EvaluationCaseSpec(StrictModel):
 
 
 class EvaluationManifest(StrictModel):
-    schema_version: Literal["radarr-repair-evaluation/v1"]
+    schema_version: Literal["radarr-repair-evaluation/v2"]
     cases: list[EvaluationCaseSpec] = Field(min_length=1, max_length=64)
 
     @model_validator(mode="after")
@@ -75,12 +75,12 @@ class EvaluationManifest(StrictModel):
 @dataclass(frozen=True)
 class EvaluationCase:
     spec: EvaluationCaseSpec
-    repair_case: RepairCaseV1
+    repair_case: RepairCaseV2
 
 
 def _validate_expected_capability(
     spec: EvaluationCaseSpec,
-    repair_case: RepairCaseV1,
+    repair_case: RepairCaseV2,
 ) -> None:
     expected = spec.expected
     if isinstance(expected, ExpectedNoRepair):
@@ -185,7 +185,7 @@ def _replace_pointer(value: JsonValue, pointer: str, replacement: JsonValue) -> 
 
 
 def load_evaluation_cases() -> list[EvaluationCase]:
-    root = files(__package__).joinpath("evaluations", "v1")
+    root = files(__package__).joinpath("evaluations", "v2")
     manifest = EvaluationManifest.model_validate_json(
         root.joinpath("manifest.json").read_text(encoding="utf-8")
     )

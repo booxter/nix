@@ -16,7 +16,7 @@ type Checker interface {
 	Check(
 		context.Context,
 		casebuilder.Assembly,
-		contracts.RepairDecisionV1,
+		contracts.RepairDecisionV2,
 	) (executioncheck.Result, error)
 }
 
@@ -85,7 +85,7 @@ func New(dependencies Dependencies) (*Executor, error) {
 func (executor *Executor) Execute(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 ) (Result, error) {
 	if executor == nil {
 		return Result{}, fmt.Errorf("repair executor is not configured")
@@ -114,7 +114,7 @@ func (executor *Executor) Execute(
 func (executor *Executor) resumeExisting(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 ) (Result, bool, error) {
 	caseID := assembly.Request.CaseID
 	switch decision.Kind {

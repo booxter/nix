@@ -16,7 +16,7 @@ import trustme
 from langchain_core.language_models import LanguageModelInput
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.runnables import RunnableConfig
-from radarr_repair_planner.case_models import RepairCaseV1
+from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import (
     decision_schema,
     decode_case,
@@ -37,10 +37,10 @@ from radarr_repair_planner.planning import DecisionModelError
 from radarr_repair_planner.structured_decision import SCHEMA_INSTRUCTION
 from radarr_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 
-FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
+FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v2/examples"
 
 
-def repair_case() -> RepairCaseV1:
+def repair_case() -> RepairCaseV2:
     return decode_case((FIXTURES / "repair-case-joinable.json").read_bytes())
 
 

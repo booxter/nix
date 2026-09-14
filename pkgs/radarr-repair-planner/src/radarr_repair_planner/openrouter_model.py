@@ -8,8 +8,8 @@ from typing import Literal, Protocol, cast
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
 
-from .case_models import RepairCaseV1
-from .decision_models import RepairDecisionV1
+from .case_models import RepairCaseV2
+from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
     SCHEMA_INSTRUCTION,
@@ -212,7 +212,7 @@ class OpenRouterDecisionModel:
 
     def _trace(
         self,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         response: OpenRouterResponse | None,
         error: str | None,
     ) -> None:
@@ -231,9 +231,9 @@ class OpenRouterDecisionModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV1:
+    ) -> RepairDecisionV2:
         system_content, case_content = decision_prompt(
             system_instruction,
             repair_case,

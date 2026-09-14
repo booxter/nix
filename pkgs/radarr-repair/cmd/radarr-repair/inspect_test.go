@@ -110,8 +110,8 @@ func TestInspectAllWritesExactCasesToNewPrivateDirectory(t *testing.T) {
 	) ([]casebuilder.Assembly, error) {
 		gotConfig = config
 		return []casebuilder.Assembly{
-			{Request: contracts.RepairCaseV1{CaseID: firstID}, EncodedRequest: first},
-			{Request: contracts.RepairCaseV1{CaseID: secondID}, EncodedRequest: second},
+			{Request: contracts.RepairCaseV2{CaseID: firstID}, EncodedRequest: first},
+			{Request: contracts.RepairCaseV2{CaseID: secondID}, EncodedRequest: second},
 		}, nil
 	}}
 	var stdout bytes.Buffer

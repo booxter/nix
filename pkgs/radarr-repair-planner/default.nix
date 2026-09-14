@@ -18,13 +18,13 @@ python3Packages.buildPythonApplication {
     cp ${pydanticModels}/decision_models.py \
       src/radarr_repair_planner/decision_models.py
     mkdir -p src/radarr_repair_planner/schemas
-    cp ${contracts}/share/radarr-repair/contracts/v1/*.schema.json \
+    cp ${contracts}/share/radarr-repair/contracts/v2/*.schema.json \
       src/radarr_repair_planner/schemas/
-    mkdir -p src/radarr_repair_planner/evaluations/v1/cases
-    cp ${contracts}/share/radarr-repair/contracts/v1/examples/repair-case-*.json \
-      src/radarr_repair_planner/evaluations/v1/cases/
+    mkdir -p src/radarr_repair_planner/evaluations/v2/cases
+    cp ${contracts}/share/radarr-repair/contracts/v2/examples/repair-case-*.json \
+      src/radarr_repair_planner/evaluations/v2/cases/
     cp corpus-review/*/*.json \
-      src/radarr_repair_planner/evaluations/v1/cases/
+      src/radarr_repair_planner/evaluations/v2/cases/
   '';
 
   build-system = [ python3Packages.setuptools ];
@@ -57,9 +57,9 @@ python3Packages.buildPythonApplication {
   '';
   postCheck = ''
     "$out/bin/radarr-repair-planner" validate-case \
-      ${contracts}/share/radarr-repair/contracts/v1/examples/repair-case-joinable.json
+      ${contracts}/share/radarr-repair/contracts/v2/examples/repair-case-joinable.json
     "$out/bin/radarr-repair-planner" validate-decision \
-      ${contracts}/share/radarr-repair/contracts/v1/examples/repair-decision-join.json
+      ${contracts}/share/radarr-repair/contracts/v2/examples/repair-decision-join.json
     "$out/bin/radarr-repair-planner-evaluate" --help >/dev/null
     "$out/bin/radarr-repair-planner-serve" --help >/dev/null
   '';

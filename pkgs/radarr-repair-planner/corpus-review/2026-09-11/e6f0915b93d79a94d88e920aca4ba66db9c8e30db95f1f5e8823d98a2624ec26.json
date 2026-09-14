@@ -19,10 +19,11 @@
       "file_id": "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747"
     }
   ],
-  "case_id": "sha256:e1c3933d03e26f608ee4b08eb586d0990b41a3044994604aa825d3d492673ba4",
+  "case_id": "sha256:e6f0915b93d79a94d88e920aca4ba66db9c8e30db95f1f5e8823d98a2624ec26",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-09T11:54:24Z",
+    "content_ownership": "manifest",
     "download_ref": "download:f8cd3af82273975123b3feee77e730a34159817fdd6a227a9d5700c92a4cb85b",
     "file_count": 2,
     "is_complete": true,
@@ -35,9 +36,14 @@
   },
   "files": [
     {
-      "bytes_completed": 6969563152,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 6969563152,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 6969563152
+      },
       "extension": "mkv",
       "file_id": "file:8b950dfc902d7739d17f41a6cae9122a6a52113ceeb067c3d54cf9341624b94f",
       "fingerprint": "sha256:af98caafd0895aea172e555b490d76a1437319c9458d8b61e9b03a5c7267f43e",
@@ -113,14 +119,17 @@
           }
         ]
       },
-      "size_bytes": 6969563152,
-      "torrent_index": 0,
-      "wanted": true
+      "size_bytes": 6969563152
     },
     {
-      "bytes_completed": 1687116905,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1687116905,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 1687116905
+      },
       "extension": "mkv",
       "file_id": "file:0089b559cf8ef5f9300946414cfde2f7c8b2d0c68f912ccc696c316939faa747",
       "fingerprint": "sha256:0bbf76cdd7df6d11f7567b6f83f9a19649f9dca83d31d8f5e425691adcb1a177",
@@ -196,9 +205,7 @@
           }
         ]
       },
-      "size_bytes": 1687116905,
-      "torrent_index": 1,
-      "wanted": true
+      "size_bytes": 1687116905
     }
   ],
   "observed_at": "2026-09-12T03:49:33.770912987Z",
@@ -314,5 +321,5 @@
       "year": 1985
     }
   },
-  "schema_version": "radarr-repair/v1"
+  "schema_version": "radarr-repair/v2"
 }

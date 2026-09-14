@@ -22,8 +22,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 radarr_repair_planner = [
-  "evaluations/v1/*.json",
-  "evaluations/v1/cases/*.json",
+  "evaluations/v2/*.json",
+  "evaluations/v2/cases/*.json",
   "schemas/*.json",
 ]
 

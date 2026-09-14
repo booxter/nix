@@ -10,53 +10,53 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-func DecodeCase(data []byte) (RepairCaseV1, error) {
-	var repairCase RepairCaseV1
+func DecodeCase(data []byte) (RepairCaseV2, error) {
+	var repairCase RepairCaseV2
 	if err := validateAndDecode(data, caseSchema, &repairCase); err != nil {
-		return RepairCaseV1{}, fmt.Errorf("invalid repair case: %w", err)
+		return RepairCaseV2{}, fmt.Errorf("invalid repair case: %w", err)
 	}
 	return repairCase, nil
 }
 
-func DecodeDecision(data []byte) (RepairDecisionV1, error) {
+func DecodeDecision(data []byte) (RepairDecisionV2, error) {
 	schema, err := decisionSchema()
 	if err != nil {
-		return RepairDecisionV1{}, err
+		return RepairDecisionV2{}, err
 	}
 	if err := validateJSON(data, schema); err != nil {
-		return RepairDecisionV1{}, fmt.Errorf("invalid repair decision: %w", err)
+		return RepairDecisionV2{}, fmt.Errorf("invalid repair decision: %w", err)
 	}
 
 	var envelope struct {
 		Action string `json:"action"`
 	}
 	if err := json.Unmarshal(data, &envelope); err != nil {
-		return RepairDecisionV1{}, fmt.Errorf("decode repair decision action: %w", err)
+		return RepairDecisionV2{}, fmt.Errorf("decode repair decision action: %w", err)
 	}
 
 	switch DecisionAction(envelope.Action) {
 	case ActionNoRepair:
 		var decision NoRepairDecision
 		if err := decodeStrict(data, &decision); err != nil {
-			return RepairDecisionV1{}, fmt.Errorf("decode no-repair decision: %w", err)
+			return RepairDecisionV2{}, fmt.Errorf("decode no-repair decision: %w", err)
 		}
-		return RepairDecisionV1{Kind: ActionNoRepair, NoRepair: &decision}, nil
+		return RepairDecisionV2{Kind: ActionNoRepair, NoRepair: &decision}, nil
 	case ActionJoinParts:
 		var decision JoinDecision
 		if err := decodeStrict(data, &decision); err != nil {
-			return RepairDecisionV1{}, fmt.Errorf("decode join-parts decision: %w", err)
+			return RepairDecisionV2{}, fmt.Errorf("decode join-parts decision: %w", err)
 		}
-		return RepairDecisionV1{Kind: ActionJoinParts, JoinParts: &decision}, nil
+		return RepairDecisionV2{Kind: ActionJoinParts, JoinParts: &decision}, nil
 	case ActionManualImportFile:
 		var decision ManualImportFileDecision
 		if err := decodeStrict(data, &decision); err != nil {
-			return RepairDecisionV1{}, fmt.Errorf("decode manual-import-file decision: %w", err)
+			return RepairDecisionV2{}, fmt.Errorf("decode manual-import-file decision: %w", err)
 		}
-		return RepairDecisionV1{
+		return RepairDecisionV2{
 			Kind: ActionManualImportFile, ManualImportFile: &decision,
 		}, nil
 	default:
-		return RepairDecisionV1{}, fmt.Errorf("unsupported repair decision action %q", envelope.Action)
+		return RepairDecisionV2{}, fmt.Errorf("unsupported repair decision action %q", envelope.Action)
 	}
 }
 

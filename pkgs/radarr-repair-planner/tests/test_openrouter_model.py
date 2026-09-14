@@ -11,7 +11,7 @@ from threading import Thread
 from typing import Any
 
 import pytest
-from radarr_repair_planner.case_models import RepairCaseV1
+from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import decision_schema, decode_case, encode_case
 from radarr_repair_planner.decision_validation import (
     DecisionViolation,
@@ -35,10 +35,10 @@ from radarr_repair_planner.openrouter_model import (
 from radarr_repair_planner.planning import DecisionModelError
 from radarr_repair_planner.tracing import JsonlTraceWriter
 
-FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
+FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v2/examples"
 
 
-def repair_case() -> RepairCaseV1:
+def repair_case() -> RepairCaseV2:
     return decode_case((FIXTURES / "repair-case-joinable.json").read_bytes())
 
 

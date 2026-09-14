@@ -4,7 +4,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict
 
-from .decision_models import RepairDecisionV1
+from .decision_models import RepairDecisionV2
 
 DECISION_FIELD = "decision"
 SCHEMA_INSTRUCTION = """\
@@ -21,7 +21,7 @@ class OpenAIStructuredOutputError(ValueError):
 class OpenAIDecisionEnvelope(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    decision: RepairDecisionV1
+    decision: RepairDecisionV2
 
 
 def unwrap_openai_decision(raw_output: str) -> str:

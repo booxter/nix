@@ -6,10 +6,11 @@
       "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f"
     }
   ],
-  "case_id": "sha256:22d24e039d24f04037b77d7e0bbfa57c3c3cce5049f7d4992f78d948cbc4ea81",
+  "case_id": "sha256:d686c5126b95ae8400fb53ffa0a4ddc500907701beeb698b99d436d23f6625c7",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T08:32:56Z",
+    "content_ownership": "manifest",
     "download_ref": "download:04cb09c3c704273c6ea565a2679ea7548124aef81c8b0cb54917529354b9b4fb",
     "file_count": 1,
     "is_complete": true,
@@ -22,9 +23,14 @@
   },
   "files": [
     {
-      "bytes_completed": 19242247071,
       "disposition": "probe_candidate",
       "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 19242247071,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 19242247071
+      },
       "extension": "mkv",
       "file_id": "file:a0cb8e9e3c4b88116e0408d9741cb4bd6d4641e969b67664a5c5284d4ba7267f",
       "fingerprint": "sha256:4c8e0cf7667be21f48361da8ba4f7d049222a529ab40ccfb80ccd192d240f151",
@@ -100,9 +106,7 @@
           }
         ]
       },
-      "size_bytes": 19242247071,
-      "torrent_index": 0,
-      "wanted": true
+      "size_bytes": 19242247071
     }
   ],
   "observed_at": "2026-09-12T03:49:28.759715181Z",
@@ -166,5 +170,5 @@
       "year": 2011
     }
   },
-  "schema_version": "radarr-repair/v1"
+  "schema_version": "radarr-repair/v2"
 }

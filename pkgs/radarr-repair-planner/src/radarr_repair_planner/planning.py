@@ -6,13 +6,13 @@ from typing import Literal, Protocol, TypedDict, cast
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from .case_models import RepairCaseV1
+from .case_models import RepairCaseV2
 from .contracts import ContractError, decode_case, decode_decision, encode_case, encode_decision
 from .decision_models import (
     EvidenceRefs,
     NoRepair,
     Reason,
-    RepairDecisionV1,
+    RepairDecisionV2,
     SafeExplanation,
     Sha256Id,
 )
@@ -43,16 +43,16 @@ class DecisionModel(Protocol):
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV1,
+        repair_case: RepairCaseV2,
         correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV1: ...
+    ) -> RepairDecisionV2: ...
 
 
 class PlanningState(TypedDict):
-    repair_case: RepairCaseV1
+    repair_case: RepairCaseV2
     attempts: int
     attempt_errors: list[str]
-    decision: RepairDecisionV1 | None
+    decision: RepairDecisionV2 | None
     correction: tuple[DecisionViolation, ...]
     used_fallback: bool
 
@@ -60,7 +60,7 @@ class PlanningState(TypedDict):
 class PlanningUpdate(TypedDict, total=False):
     attempts: int
     attempt_errors: list[str]
-    decision: RepairDecisionV1 | None
+    decision: RepairDecisionV2 | None
     correction: tuple[DecisionViolation, ...]
     used_fallback: bool
 
@@ -70,7 +70,7 @@ Route = Literal["done", "retry", "fallback"]
 
 @dataclass(frozen=True)
 class PlanningOutcome:
-    decision: RepairDecisionV1
+    decision: RepairDecisionV2
     attempts: int
     used_fallback: bool
     attempt_errors: tuple[str, ...] = ()
@@ -102,10 +102,10 @@ class PlanningGraph:
             builder.compile(name="radarr-repair-planner")
         )
 
-    async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
+    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
         return (await self.plan_with_outcome(repair_case)).decision
 
-    async def plan_with_outcome(self, repair_case: RepairCaseV1) -> PlanningOutcome:
+    async def plan_with_outcome(self, repair_case: RepairCaseV2) -> PlanningOutcome:
         validated_case = decode_case(encode_case(repair_case))
         result = cast(
             PlanningState,
@@ -184,7 +184,7 @@ class PlanningGraph:
     def _fallback(state: PlanningState) -> PlanningUpdate:
         case_id = Sha256Id(root=state["repair_case"].case_id.root)
         return {
-            "decision": RepairDecisionV1(
+            "decision": RepairDecisionV2(
                 root=NoRepair(
                     action="no_repair",
                     case_id=case_id,
@@ -197,7 +197,7 @@ class PlanningGraph:
                     ),
                     missing_evidence=[],
                     reason=Reason.unsafe_to_repair,
-                    schema_version="radarr-repair/v1",
+                    schema_version="radarr-repair/v2",
                 )
             ),
             "used_fallback": True,

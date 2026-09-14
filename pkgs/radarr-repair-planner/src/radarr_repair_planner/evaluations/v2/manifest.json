@@ -57,10 +57,10 @@
       "replacements": {
         "/case_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "/download/name": "Example Movie split files",
+        "/files/0/download_membership/source_index": 7,
         "/files/0/path_components/1": "clip-red.mkv",
-        "/files/0/torrent_index": 7,
+        "/files/1/download_membership/source_index": 2,
         "/files/1/path_components/1": "clip-blue.mkv",
-        "/files/1/torrent_index": 2,
         "/radarr/failure/title": "Example Movie split files",
         "/radarr/history/0/source_title": "Example Movie split files"
       }
@@ -146,7 +146,7 @@
       }
     },
     {
-      "base_case": "189bc9071c81cea1d62dc2879ff315ba3ed9fb77f1dbc523c56d350d45b87569.json",
+      "base_case": "e5546b035d131329df7c0ec44079839d35733327b616b944dc348255c57bac1d.json",
       "expected": {
         "action": "no_repair",
         "allowed_reasons": [
@@ -157,7 +157,7 @@
       "name": "real_anime_season"
     },
     {
-      "base_case": "1ba980d5999ecc37c4eb10b2cada8eb7bd91bff05e3c961365549562c5285fd4.json",
+      "base_case": "4ee12727861f249b572a27163f5e32c0c7ed95a56b192b6884096036f0db78c0.json",
       "expected": {
         "action": "no_repair",
         "allowed_reasons": [
@@ -167,7 +167,7 @@
       "name": "real_xconfessions_raw_bluray"
     },
     {
-      "base_case": "22d24e039d24f04037b77d7e0bbfa57c3c3cce5049f7d4992f78d948cbc4ea81.json",
+      "base_case": "d686c5126b95ae8400fb53ffa0a4ddc500907701beeb698b99d436d23f6625c7.json",
       "expected": {
         "action": "manual_import_file_v1",
         "capability_id": "capability:ba19fb9719c46971047d8cdf53ac3fa8210cf3cf880631b85072387a9a30c90c",
@@ -176,7 +176,7 @@
       "name": "real_portrait_manual_import"
     },
     {
-      "base_case": "ae71508c6d8386fc799d12aaccddc107d6645dd12032490ee26caa076f0285e8.json",
+      "base_case": "6f63c86b84f462cb98078b263018c3542b51032da66b8428c8335716b4e470a7.json",
       "expected": {
         "action": "no_repair",
         "allowed_reasons": [
@@ -186,7 +186,7 @@
       "name": "real_pandoras_mirror_raw_bluray"
     },
     {
-      "base_case": "af68a060d5582b353a48623438dcc8cf4d516d7faf4663a8a9623e1a5c29d8f5.json",
+      "base_case": "f948a71e15ef5f7883e3c364ce20d9c54da9c84de59cc06c917db1a07b90675f.json",
       "expected": {
         "action": "manual_import_file_v1",
         "capability_id": "capability:088c4f9eed55ec7fe4ee9cc22e0a41a64bb509ad6660e60d9f7f5d69049d83fc",
@@ -195,7 +195,7 @@
       "name": "real_expendables_manual_import"
     },
     {
-      "base_case": "d6a3ffd1d9e97fdcbe24e36705e27d34ce7de2564fda21bcf5181088b2862182.json",
+      "base_case": "7c9d8e9a83bff6988c33d2ff1d98145d3bc989aac3eaf7499635c7aaaf429699.json",
       "expected": {
         "action": "no_repair",
         "allowed_reasons": [
@@ -205,7 +205,7 @@
       "name": "real_double_exposure_raw_bluray"
     },
     {
-      "base_case": "e1c3933d03e26f608ee4b08eb586d0990b41a3044994604aa825d3d492673ba4.json",
+      "base_case": "e6f0915b93d79a94d88e920aca4ba66db9c8e30db95f1f5e8823d98a2624ec26.json",
       "expected": {
         "action": "no_repair",
         "allowed_reasons": [
@@ -217,7 +217,7 @@
       "name": "real_grafenberg_ambiguous"
     },
     {
-      "base_case": "db879def0949a0f6f813cfd5489dc5e242e91311ee1565b23731deb500e4901e.json",
+      "base_case": "c047411feb4074408815364569af5c69da7045d2b4b09337b0ec8afa48bbc3fc.json",
       "expected": {
         "action": "manual_import_file_v1",
         "capability_id": "capability:e48621ff3c46b3aa83f49d062014351e987c596575d85f7bda039439fbca56c6",
@@ -226,5 +226,5 @@
       "name": "real_traci_manual_import"
     }
   ],
-  "schema_version": "radarr-repair-evaluation/v1"
+  "schema_version": "radarr-repair-evaluation/v2"
 }

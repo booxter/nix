@@ -8,21 +8,21 @@ from pathlib import Path
 import httpx
 import pytest
 from radarr_repair_planner.api import ApiLimits, Planner, create_app
-from radarr_repair_planner.case_models import RepairCaseV1
+from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import decode_decision
-from radarr_repair_planner.decision_models import RepairDecisionV1
+from radarr_repair_planner.decision_models import RepairDecisionV2
 
-FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v1/examples"
+FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v2/examples"
 CASE_BYTES = (FIXTURES / "repair-case-joinable.json").read_bytes()
 DECISION = decode_decision((FIXTURES / "repair-decision-join.json").read_bytes())
 
 
 class StaticPlanner:
-    def __init__(self, decision: RepairDecisionV1 = DECISION) -> None:
+    def __init__(self, decision: RepairDecisionV2 = DECISION) -> None:
         self.decision = decision
-        self.cases: list[RepairCaseV1] = []
+        self.cases: list[RepairCaseV2] = []
 
-    async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
+    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
         self.cases.append(repair_case)
         return self.decision
 
@@ -32,14 +32,14 @@ class BlockingPlanner:
         self.started = asyncio.Event()
         self.release = asyncio.Event()
 
-    async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
+    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
         self.started.set()
         await self.release.wait()
         return DECISION
 
 
 class FailingPlanner:
-    async def plan(self, repair_case: RepairCaseV1) -> RepairDecisionV1:
+    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
         raise RuntimeError("private model failure")
 
 
@@ -62,7 +62,7 @@ async def test_plans_a_valid_case() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
@@ -77,7 +77,7 @@ async def test_rejects_wrong_media_type_before_planning() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "text/plain"},
         )
@@ -94,7 +94,7 @@ async def test_rejects_invalid_contract_without_echoing_input() -> None:
     planner = StaticPlanner()
     async with client_for(planner) as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=b'{"private":"do not echo"}',
             headers={"Content-Type": "application/json"},
         )
@@ -111,7 +111,7 @@ async def test_rejects_body_over_content_length_limit() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "application/json"},
         )
@@ -131,7 +131,7 @@ async def test_rejects_streamed_body_over_limit() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=oversized_body(),
             headers={"Content-Type": "application/json"},
         )
@@ -146,7 +146,7 @@ async def test_allows_only_one_generation_at_a_time() -> None:
     async with client_for(planner) as client:
         first = asyncio.create_task(
             client.post(
-                "/v1/repair-plans",
+                "/v2/repair-plans",
                 content=CASE_BYTES,
                 headers={"Content-Type": "application/json"},
             )
@@ -154,7 +154,7 @@ async def test_allows_only_one_generation_at_a_time() -> None:
         await planner.started.wait()
 
         second = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "application/json"},
         )
@@ -172,7 +172,7 @@ async def test_times_out_generation() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "application/json"},
         )
@@ -184,7 +184,7 @@ async def test_times_out_generation() -> None:
 async def test_hides_unexpected_planner_failure() -> None:
     async with client_for(FailingPlanner()) as client:
         response = await client.post(
-            "/v1/repair-plans",
+            "/v2/repair-plans",
             content=CASE_BYTES,
             headers={"Content-Type": "application/json"},
         )

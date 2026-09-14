@@ -53,33 +53,33 @@ func TestValidateManualImportRequiresGrantedFile(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*casebuilder.Assembly, *contracts.RepairDecisionV1)
+		mutate func(*casebuilder.Assembly, *contracts.RepairDecisionV2)
 		reason ManualImportRejectionReason
 	}{
 		{
 			name: "different case",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV1) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
 				decision.ManualImportFile.CaseID = "sha256:different"
 			},
 			reason: ManualImportCaseMismatch,
 		},
 		{
 			name: "unknown capability",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV1) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
 				decision.ManualImportFile.CapabilityID = "capability:unknown"
 			},
 			reason: ManualImportCapabilityNotFound,
 		},
 		{
 			name: "capability for another action",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV1) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
 				assembly.Request.Capabilities[0].Action = contracts.CapabilityActionJoinParts
 			},
 			reason: ManualImportCapabilityWrongAction,
 		},
 		{
 			name: "different capability file",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV1) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
 				fileID := "file:different"
 				assembly.Request.Capabilities[0].FileID = &fileID
 			},
@@ -87,21 +87,21 @@ func TestValidateManualImportRequiresGrantedFile(t *testing.T) {
 		},
 		{
 			name: "different decision file",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV1) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
 				decision.ManualImportFile.FileID = "file:different"
 			},
 			reason: ManualImportFileMismatch,
 		},
 		{
 			name: "missing binding",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV1) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
 				delete(assembly.LocalSnapshot.ManualImportBindings, "capability:manual")
 			},
 			reason: ManualImportBindingNotFound,
 		},
 		{
 			name: "binding for another file",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV1) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
 				binding := assembly.LocalSnapshot.ManualImportBindings["capability:manual"]
 				binding.FileID = "file:different"
 				assembly.LocalSnapshot.ManualImportBindings["capability:manual"] = binding
@@ -283,7 +283,7 @@ func TestValidateManualImportAllowsSilentVideo(t *testing.T) {
 func TestValidateManualImportRejectsAnotherDecisionVariant(t *testing.T) {
 	t.Parallel()
 
-	validation := ValidateManualImport(manualImportAssembly(), contracts.RepairDecisionV1{
+	validation := ValidateManualImport(manualImportAssembly(), contracts.RepairDecisionV2{
 		Kind: contracts.ActionNoRepair,
 		NoRepair: &contracts.NoRepairDecision{
 			Action: contracts.NoRepair,
@@ -343,7 +343,7 @@ func manualImportAssembly() casebuilder.Assembly {
 		},
 	}
 	return casebuilder.Assembly{
-		Request: contracts.RepairCaseV1{
+		Request: contracts.RepairCaseV2{
 			CaseID: caseID,
 			Capabilities: []contracts.Capability{{
 				Action:       contracts.CapabilityActionManualImportFile,
@@ -386,8 +386,8 @@ func manualImportAssembly() casebuilder.Assembly {
 	}
 }
 
-func manualImportDecision(caseID string) contracts.RepairDecisionV1 {
-	return contracts.RepairDecisionV1{
+func manualImportDecision(caseID string) contracts.RepairDecisionV2 {
+	return contracts.RepairDecisionV2{
 		Kind: contracts.ActionManualImportFile,
 		ManualImportFile: &contracts.ManualImportFileDecision{
 			Action:       contracts.ManualImportFileDecisionAction(contracts.ActionManualImportFile),

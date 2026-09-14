@@ -39,7 +39,7 @@ type LocalSnapshot struct {
 }
 
 type Assembly struct {
-	Request        contracts.RepairCaseV1
+	Request        contracts.RepairCaseV2
 	EncodedRequest []byte
 	LocalSnapshot  LocalSnapshot
 }
@@ -110,11 +110,11 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, err
 	}
 	capabilities := append(joinCapabilities(candidateFileIDs), manualImportCapabilities...)
-	request := contracts.RepairCaseV1{
-		SchemaVersion: contracts.RadarrRepairV1,
+	request := contracts.RepairCaseV2{
+		SchemaVersion: contracts.RadarrRepairV2,
 		ObservedAt:    observation.ObservedAt.UTC(),
 		Radarr:        radarrEvidence,
-		Download:      mapDownload(observation.Correlation.Download, downloadRef),
+		Download:      mapDownload(observation.Correlation.Download, downloadRef, len(files)),
 		Files:         files,
 		Capabilities:  capabilities,
 	}
@@ -270,18 +270,19 @@ func indexProbes(probes []FileProbe) (map[controller.FileID]controller.MediaProb
 	return indexed, nil
 }
 
-func mapDownload(download controller.Download, downloadRef string) contracts.Download {
+func mapDownload(download controller.Download, downloadRef string, fileCount int) contracts.Download {
 	completedAt := utcTime(download.CompletedAt)
 	return contracts.Download{
-		SourceType:     contracts.Torrent,
-		Client:         contracts.Transmission,
-		DownloadRef:    downloadRef,
-		Name:           download.Name,
-		TotalSizeBytes: download.TotalSizeBytes,
-		FileCount:      int64(len(download.Files)),
-		IsComplete:     true,
-		CompletedAt:    completedAt,
-		Labels:         clone(download.Labels),
+		SourceType:       contracts.SourceType(download.SourceType),
+		Client:           contracts.Client(download.Client),
+		ContentOwnership: contracts.ContentOwnership(download.ContentOwnership),
+		DownloadRef:      downloadRef,
+		Name:             download.Name,
+		TotalSizeBytes:   download.TotalSizeBytes,
+		FileCount:        int64(fileCount),
+		IsComplete:       download.Complete,
+		CompletedAt:      completedAt,
+		Labels:           clone(download.Labels),
 	}
 }
 
@@ -298,7 +299,7 @@ func opaqueID(kind string, values ...string) string {
 	return kind + ":" + hex.EncodeToString(digest.Sum(nil))
 }
 
-func rejectLocalValues(request contracts.RepairCaseV1, observation Observation) error {
+func rejectLocalValues(request contracts.RepairCaseV2, observation Observation) error {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("inspect planner request for local values: %w", err)

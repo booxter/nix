@@ -29,16 +29,19 @@ func mapFile(
 		return contracts.FileElement{}, fmt.Errorf("evidence-only file has an invalid probe outcome")
 	}
 
-	var torrentIndex *int64
-	var wanted *bool
-	var bytesCompleted *int64
+	var membership *contracts.DownloadMembershipClass
 	if file.DownloadFile != nil {
-		mappedIndex := int64(file.DownloadFile.Index)
-		torrentIndex = &mappedIndex
-		mappedWanted := file.DownloadFile.Selected
-		mappedBytesCompleted := file.DownloadFile.BytesCompleted
-		wanted = &mappedWanted
-		bytesCompleted = &mappedBytesCompleted
+		var sourceIndex *int64
+		if file.DownloadFile.HasIndex {
+			mapped := int64(file.DownloadFile.Index)
+			sourceIndex = &mapped
+		}
+		membership = &contracts.DownloadMembershipClass{
+			SourceIndex:     sourceIndex,
+			Selected:        file.DownloadFile.Selected,
+			SourceSizeBytes: file.DownloadFile.LengthBytes,
+			AvailableBytes:  file.DownloadFile.BytesCompleted,
+		}
 	}
 	var extension *contracts.Extension
 	if assessment.Extension != "" {
@@ -51,17 +54,15 @@ func mapFile(
 		dispositionReason = &mapped
 	}
 	return contracts.FileElement{
-		FileID:            string(file.ID),
-		PathComponents:    clone(file.PathComponents),
-		SizeBytes:         file.Fingerprint.SizeBytes,
-		TorrentIndex:      torrentIndex,
-		Wanted:            wanted,
-		BytesCompleted:    bytesCompleted,
-		Fingerprint:       file.Fingerprint.Fingerprint(),
-		Extension:         extension,
-		Disposition:       contracts.DispositionEnum(assessment.Disposition),
-		DispositionReason: dispositionReason,
-		Probe:             probe,
+		FileID:             string(file.ID),
+		PathComponents:     clone(file.PathComponents),
+		SizeBytes:          file.Fingerprint.SizeBytes,
+		DownloadMembership: membership,
+		Fingerprint:        file.Fingerprint.Fingerprint(),
+		Extension:          extension,
+		Disposition:        contracts.DispositionEnum(assessment.Disposition),
+		DispositionReason:  dispositionReason,
+		Probe:              probe,
 	}, nil
 }
 

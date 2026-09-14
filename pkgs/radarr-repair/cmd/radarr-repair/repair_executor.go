@@ -92,7 +92,7 @@ func configureRepairExecutor(
 func (configured *configuredRepairExecutor) Execute(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV1,
+	decision contracts.RepairDecisionV2,
 ) (repairexecution.Result, error) {
 	if configured == nil || configured.executor == nil {
 		return repairexecution.Result{}, fmt.Errorf("repair executor is not configured")

@@ -1,6 +1,6 @@
 package contracts
 
-type RepairCaseV1 = RadarrRepairCaseVersion1
+type RepairCaseV2 = RadarrRepairCaseVersion2
 
 type DecisionAction string
 
@@ -13,14 +13,14 @@ const (
 	ActionManualImportFile DecisionAction = "manual_import_file_v1"
 )
 
-type RepairDecisionV1 struct {
+type RepairDecisionV2 struct {
 	Kind             DecisionAction
 	NoRepair         *NoRepairDecision
 	JoinParts        *JoinDecision
 	ManualImportFile *ManualImportFileDecision
 }
 
-func (decision RepairDecisionV1) CaseID() string {
+func (decision RepairDecisionV2) CaseID() string {
 	switch decision.Kind {
 	case ActionNoRepair:
 		if decision.NoRepair != nil {
