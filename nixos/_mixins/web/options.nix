@@ -169,6 +169,12 @@ in
                                   description = "Whether the ${name} public route proxies WebSocket connections.";
                                 };
 
+                                locationExtraConfig = lib.mkOption {
+                                  type = lib.types.lines;
+                                  default = "";
+                                  description = "Additional nginx configuration for the ${name} public route.";
+                                };
+
                                 bandwidthLimit = lib.mkOption {
                                   type = lib.types.nullOr (
                                     lib.types.submodule {

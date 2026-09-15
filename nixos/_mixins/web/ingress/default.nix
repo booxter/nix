@@ -32,30 +32,47 @@ let
       service = contribution.value;
       mtls = service.internal != null;
       client = config.host.pki.clients.${contribution.id}.materializations.default;
+      proxyEndpoint = if mtls then service.internal.url else service.upstream;
+      commonProxyConfig = {
+        proxyPass = proxyEndpoint;
+        proxyWebsockets = true;
+        recommendedProxySettings = false;
+      };
+      commonExtraConfig =
+        proxyHeaders (if mtls then service.internal.serverName else "$host")
+        + lib.optionalString mtls ''
+          proxy_ssl_certificate ${client.certificatePath};
+          proxy_ssl_certificate_key ${client.keyPath};
+          proxy_ssl_trusted_certificate ${pkiRootCaPath};
+          proxy_ssl_verify on;
+          proxy_ssl_server_name on;
+          proxy_ssl_name ${service.internal.serverName};
+
+          # Backends may emit their internal canonical URL in absolute redirects.
+          proxy_redirect https://${service.internal.serverName}/ $scheme://$host/;
+          proxy_redirect http://${service.internal.serverName}/ $scheme://$host/;
+        '';
+      directRoutes = lib.filterAttrs (_: route: route.bandwidthLimit == null) service.public.routes;
     in
     {
       forceSSL = true;
       enableACME = true;
-      locations."/" = {
-        proxyPass = if mtls then service.internal.url else service.upstream;
-        proxyWebsockets = true;
-        recommendedProxySettings = false;
-        extraConfig =
-          proxyHeaders (if mtls then service.internal.serverName else "$host")
-          + lib.optionalString mtls ''
-            proxy_ssl_certificate ${client.certificatePath};
-            proxy_ssl_certificate_key ${client.keyPath};
-            proxy_ssl_trusted_certificate ${pkiRootCaPath};
-            proxy_ssl_verify on;
-            proxy_ssl_server_name on;
-            proxy_ssl_name ${service.internal.serverName};
-
-            # Backends may emit their internal canonical URL in absolute redirects.
-            proxy_redirect https://${service.internal.serverName}/ $scheme://$host/;
-            proxy_redirect http://${service.internal.serverName}/ $scheme://$host/;
-          ''
-          + service.public.locationExtraConfig;
-      };
+      locations = {
+        "/" = commonProxyConfig // {
+          extraConfig = commonExtraConfig + service.public.locationExtraConfig;
+        };
+      }
+      // lib.mapAttrs' (
+        _: route:
+        lib.nameValuePair route.location (
+          commonProxyConfig
+          // {
+            proxyPass = if route.upstream == null then proxyEndpoint else route.upstream;
+            inherit (route) proxyWebsockets;
+            extraConfig = commonExtraConfig + route.locationExtraConfig;
+          }
+        )
+      ) directRoutes;
     };
 in
 {

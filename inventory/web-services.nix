@@ -6,6 +6,56 @@
         observability.importance = "important";
       };
     };
+    attic-cache = {
+      declaration = {
+        displayName = "Attic Cache";
+        upstream = "http://127.0.0.1:8082";
+        internal = null;
+        public = {
+          hostName = "cache.ihar.dev";
+          locationExtraConfig = ''
+            return 404;
+          '';
+          routes = {
+            github = {
+              location = "^~ /github/";
+              locationExtraConfig = ''
+                limit_except GET HEAD {
+                  deny all;
+                }
+                proxy_buffering off;
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+              '';
+            };
+            missingPaths = {
+              location = "= /_api/v1/get-missing-paths";
+              locationExtraConfig = ''
+                limit_except POST {
+                  deny all;
+                }
+                client_max_body_size 0;
+              '';
+            };
+            uploadPath = {
+              location = "= /_api/v1/upload-path";
+              locationExtraConfig = ''
+                limit_except PUT {
+                  deny all;
+                }
+                client_max_body_size 0;
+                proxy_request_buffering off;
+                proxy_buffering off;
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+              '';
+            };
+          };
+        };
+        health.frontend.path = "/github/nix-cache-info";
+        observability.importance = "important";
+      };
+    };
     jellyfin = {
       declaration = {
         upstream = "http://127.0.0.1:8096";
