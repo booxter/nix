@@ -232,6 +232,32 @@ func TestCheckRejectsChangedExecutionState(t *testing.T) {
 	}
 }
 
+func TestCheckRejectsRepairWhenMovieAlreadyHasFile(t *testing.T) {
+	t.Parallel()
+
+	for _, decision := range []contracts.RepairDecisionV2{
+		executionManualImportDecision(),
+		executionJoinDecision(),
+	} {
+		stored := executionAssembly()
+		fresh := executionAssembly()
+		advanceObservation(&fresh, time.Minute)
+		fresh.LocalSnapshot.Observation.Movie.HasFile = true
+		checker := newTestChecker(
+			t,
+			&fakeFreshCases{assembly: fresh},
+			&fakeJoinExecutions{},
+			stored.Request.ObservedAt.Add(time.Hour),
+		)
+
+		result, err := checker.Check(context.Background(), stored, decision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertRejected(t, result, ExistingMovieFile)
+	}
+}
+
 func TestCheckRejectsUnavailableOrInvalidCases(t *testing.T) {
 	t.Parallel()
 

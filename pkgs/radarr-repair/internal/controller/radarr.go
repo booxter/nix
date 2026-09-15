@@ -71,6 +71,7 @@ type RadarrQueueRecord struct {
 type RadarrMovie struct {
 	ID              int64
 	TMDBID          int64
+	HasFile         bool
 	IMDbID          *string
 	Title           string
 	OriginalTitle   *string

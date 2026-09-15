@@ -37,7 +37,8 @@ func TestReadMovie(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if movie.ID != 42 || movie.TMDBID != 123456 || movie.Title != "Example Movie" ||
+	if movie.ID != 42 || movie.TMDBID != 123456 || !movie.HasFile ||
+		movie.Title != "Example Movie" ||
 		movie.Year != 2026 || movie.IMDbID == nil || *movie.IMDbID != "tt1234567" ||
 		movie.OriginalTitle == nil || *movie.OriginalTitle != "Le film original" ||
 		movie.RuntimeMinutes == nil || *movie.RuntimeMinutes != 123 {

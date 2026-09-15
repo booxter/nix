@@ -90,6 +90,7 @@ func mapMovie(movie *starrRadarr.Movie, requestedID int64) (controller.RadarrMov
 	result := controller.RadarrMovie{
 		ID:              movie.ID,
 		TMDBID:          movie.TmdbID,
+		HasFile:         movie.HasFile,
 		Title:           movie.Title,
 		AlternateTitles: alternateTitles,
 		Year:            movie.Year,
