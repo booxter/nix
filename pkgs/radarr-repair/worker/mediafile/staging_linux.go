@@ -187,12 +187,11 @@ func (artifact *stagedArtifact) Retain() error {
 	if err := artifact.file.Sync(); err != nil {
 		return &Failure{Kind: FailureInternal, cause: err}
 	}
-	if err := unix.Renameat2(
-		int(artifact.directory.Fd()),
+	if err := moveNoReplace(
+		artifact.directory,
 		artifact.name,
-		int(artifact.directory.Fd()),
+		artifact.directory,
 		artifact.completedName,
-		unix.RENAME_NOREPLACE,
 	); err != nil {
 		if errors.Is(err, unix.EEXIST) {
 			return &Failure{Kind: FailureArtifactExists, cause: err}
@@ -200,9 +199,6 @@ func (artifact *stagedArtifact) Retain() error {
 		return &Failure{Kind: FailureInternal, cause: err}
 	}
 	artifact.name = artifact.completedName
-	if err := unix.Fsync(int(artifact.directory.Fd())); err != nil {
-		return &Failure{Kind: FailureInternal, cause: err}
-	}
 	artifact.closed = true
 	_ = artifact.file.Close()
 	_ = artifact.directory.Close()
@@ -403,12 +399,11 @@ func (rootSet *RootSet) PublishCompleted(
 		if publishedFound {
 			return nil, &Failure{Kind: FailureDestinationExists}
 		}
-		if err := unix.Renameat2(
-			int(stagedDirectory.Fd()),
+		if err := moveNoReplace(
+			stagedDirectory,
 			stagedName(artifactID, extension),
-			int(destinationDirectory.Fd()),
+			destinationDirectory,
 			name,
-			unix.RENAME_NOREPLACE,
 		); err != nil {
 			switch {
 			case errors.Is(err, unix.EEXIST):
@@ -803,6 +798,39 @@ func requireAvailableSpace(directory *os.File, requiredBytes int64) error {
 		return &Failure{Kind: FailureInsufficientSpace}
 	}
 	return nil
+}
+
+// NFS may reject renameat2 with RENAME_NOREPLACE. A hard link reserves the
+// destination atomically without allowing an existing file to be replaced.
+func moveNoReplace(
+	sourceDirectory *os.File,
+	sourceName string,
+	destinationDirectory *os.File,
+	destinationName string,
+) error {
+	if err := unix.Linkat(
+		int(sourceDirectory.Fd()),
+		sourceName,
+		int(destinationDirectory.Fd()),
+		destinationName,
+		0,
+	); err != nil {
+		return err
+	}
+	rollback := func() error {
+		unlinkErr := unix.Unlinkat(int(destinationDirectory.Fd()), destinationName, 0)
+		if errors.Is(unlinkErr, unix.ENOENT) {
+			unlinkErr = nil
+		}
+		return errors.Join(unlinkErr, syncDirectory(destinationDirectory))
+	}
+	if err := syncDirectory(destinationDirectory); err != nil {
+		return errors.Join(err, rollback())
+	}
+	if err := unix.Unlinkat(int(sourceDirectory.Fd()), sourceName, 0); err != nil {
+		return errors.Join(err, rollback())
+	}
+	return syncDirectory(sourceDirectory)
 }
 
 func syncAndCloseDirectory(directory *os.File) error {
