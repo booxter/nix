@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  storageIdentities,
   utils,
   ...
 }:
 let
+  storageIdentities = import ../storage/identities.nix;
   worker = if config.host.radarr == null then null else config.host.radarr.repair.worker;
   serviceName = "radarr-repair-worker";
   serviceUser = serviceName;
