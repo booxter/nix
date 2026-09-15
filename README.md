@@ -79,7 +79,7 @@ nix run .#sops-update
 nix run .#sops-cat -- mair
 nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
-printf %s "$flakehub_token" | nix run .#sops-set -- --realm home --all flakehub/token
+printf %s "$attic_token" | nix run .#sops-set -- --realm home --all attic/token
 nix run .#sops-pass -- beast root
 nix run .#sops-pass -- --gen gw root
 nix run .#sops-pass -- --gen gw both
@@ -87,7 +87,6 @@ nix run .#sops-pass -- beast ihrachyshka
 
 # Copy one section between host secrets
 nix run .#sops-copy -- mair prx1-lab attic
-nix run .#sops-copy -- mair prx1-lab flakehub
 ```
 
 Run `sops-update` when a host secret should receive missing template keys.

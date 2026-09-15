@@ -16,7 +16,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
   actions: read
   pull-requests: read
 
@@ -34,6 +33,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Format
         run: nix fmt .
@@ -91,6 +92,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}

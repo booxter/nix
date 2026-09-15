@@ -56,11 +56,6 @@
 
     vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
 
-    determinate-nix-installer = {
-      url = "github:DeterminateSystems/nix-installer";
-      flake = false;
-    };
-
     lolek = {
       url = "github:dziaineka/lolek";
       inputs.nixpkgs.follows = "nixpkgs";
