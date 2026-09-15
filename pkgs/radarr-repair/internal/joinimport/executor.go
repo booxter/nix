@@ -12,20 +12,20 @@ import (
 )
 
 type Radarr interface {
-	RequestDownloadedMoviesScan(context.Context, radarr.DownloadedMoviesScan) (radarr.Command, error)
-	ReadDownloadedMoviesScanCommand(context.Context, int64) (radarr.Command, error)
+	RequestManualImport(context.Context, controller.RadarrManualImportCommand) (radarr.Command, error)
+	ReadManualImportCommand(context.Context, int64) (radarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
 }
 
 type Store interface {
 	Get(string) (casestore.CaseRecord, bool, error)
 	GetJoinExecution(string) (casestore.JoinExecution, bool, error)
-	PrepareJoinScan(
+	PrepareJoinImport(
 		string,
-		casestore.JoinScanRequest,
+		casestore.JoinImportRequest,
 		time.Time,
 	) (casestore.JoinExecution, bool, error)
-	MarkJoinScanRequested(string, int64, time.Time) (casestore.JoinExecution, bool, error)
+	MarkJoinImportRequested(string, int64, time.Time) (casestore.JoinExecution, bool, error)
 	MarkJoinImported(
 		string,
 		controller.RadarrImportedFile,
@@ -62,7 +62,7 @@ type SubmissionUncertainError struct {
 
 func (failure *SubmissionUncertainError) Error() string {
 	message := fmt.Sprintf(
-		"Radarr joined-file scan for case %q may have succeeded; refusing to repeat it",
+		"Radarr joined-file import for case %q may have succeeded; refusing to repeat it",
 		failure.CaseID,
 	)
 	if failure.cause != nil {
@@ -115,9 +115,9 @@ func (executor *Executor) Execute(
 	switch execution.State {
 	case casestore.JoinPublished:
 		return executor.prepareAndSubmit(ctx, caseID, execution)
-	case casestore.JoinScanPrepared:
+	case casestore.JoinImportPrepared:
 		return executor.resumePrepared(ctx, execution)
-	case casestore.JoinScanRequested:
+	case casestore.JoinImportRequested:
 		return executor.follow(ctx, execution)
 	case casestore.JoinImported, casestore.JoinImportFailed:
 		return execution, nil
@@ -134,18 +134,18 @@ func (executor *Executor) prepareAndSubmit(
 	caseID string,
 	execution casestore.JoinExecution,
 ) (casestore.JoinExecution, error) {
-	request, err := executor.scanRequest(caseID, execution)
+	request, err := executor.importRequest(caseID, execution)
 	if err != nil {
 		return execution, err
 	}
 	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
 		ctx,
-		request.MovieID,
-		request.DownloadID,
+		request.Command.File.MovieID,
+		request.Command.File.DownloadID,
 	)
 	if err != nil {
 		return execution, fmt.Errorf(
-			"read Radarr imported-file history before joined-file scan: %w",
+			"read Radarr imported-file history before joined-file import: %w",
 			err,
 		)
 	}
@@ -154,22 +154,19 @@ func (executor *Executor) prepareAndSubmit(
 	if err != nil {
 		return execution, err
 	}
-	execution, prepared, err := executor.dependencies.Store.PrepareJoinScan(
+	execution, prepared, err := executor.dependencies.Store.PrepareJoinImport(
 		caseID,
 		request,
 		preparedAt,
 	)
 	if err != nil {
-		return execution, fmt.Errorf("prepare Radarr joined-file scan: %w", err)
+		return execution, fmt.Errorf("prepare Radarr joined-file import: %w", err)
 	}
 	if !prepared {
 		return executor.resume(ctx, execution)
 	}
 
-	command, err := executor.dependencies.Radarr.RequestDownloadedMoviesScan(
-		ctx,
-		radarr.DownloadedMoviesScan{Path: request.Path, DownloadID: request.DownloadID},
-	)
+	command, err := executor.dependencies.Radarr.RequestManualImport(ctx, request.Command)
 	if err != nil {
 		confirmed, confirmErr := executor.confirm(ctx, execution)
 		if confirmed.State == casestore.JoinImported {
@@ -178,7 +175,7 @@ func (executor *Executor) prepareAndSubmit(
 		return execution, &SubmissionUncertainError{
 			CaseID: caseID,
 			cause: errors.Join(
-				fmt.Errorf("request Radarr joined-file scan: %w", err),
+				fmt.Errorf("request Radarr joined-file import: %w", err),
 				confirmErr,
 			),
 		}
@@ -187,7 +184,7 @@ func (executor *Executor) prepareAndSubmit(
 	if err != nil {
 		return execution, &SubmissionUncertainError{CaseID: caseID, cause: err}
 	}
-	execution, _, err = executor.dependencies.Store.MarkJoinScanRequested(
+	execution, _, err = executor.dependencies.Store.MarkJoinImportRequested(
 		caseID,
 		command.ID,
 		requestedAt,
@@ -195,7 +192,7 @@ func (executor *Executor) prepareAndSubmit(
 	if err != nil {
 		return execution, &SubmissionUncertainError{
 			CaseID: caseID,
-			cause:  fmt.Errorf("record Radarr joined-file scan command: %w", err),
+			cause:  fmt.Errorf("record Radarr joined-file import command: %w", err),
 		}
 	}
 	return executor.follow(ctx, execution)
@@ -208,9 +205,9 @@ func (executor *Executor) resume(
 	switch execution.State {
 	case casestore.JoinImported, casestore.JoinImportFailed:
 		return execution, nil
-	case casestore.JoinScanRequested:
+	case casestore.JoinImportRequested:
 		return executor.follow(ctx, execution)
-	case casestore.JoinScanPrepared:
+	case casestore.JoinImportPrepared:
 		return executor.resumePrepared(ctx, execution)
 	default:
 		return execution, fmt.Errorf("unknown joined-file import state %q", execution.State)
@@ -235,8 +232,8 @@ func (executor *Executor) follow(
 	ctx context.Context,
 	execution casestore.JoinExecution,
 ) (casestore.JoinExecution, error) {
-	if execution.Scan == nil || execution.Scan.CommandID == nil {
-		return execution, fmt.Errorf("requested joined-file scan has no Radarr command ID")
+	if execution.Import == nil || execution.Import.CommandID == nil {
+		return execution, fmt.Errorf("requested joined-file import has no Radarr command ID")
 	}
 	for {
 		confirmed, err := executor.confirm(ctx, execution)
@@ -244,12 +241,12 @@ func (executor *Executor) follow(
 			return confirmed, err
 		}
 
-		command, err := executor.dependencies.Radarr.ReadDownloadedMoviesScanCommand(
+		command, err := executor.dependencies.Radarr.ReadManualImportCommand(
 			ctx,
-			*execution.Scan.CommandID,
+			*execution.Import.CommandID,
 		)
 		if err != nil {
-			return execution, fmt.Errorf("read Radarr joined-file scan command: %w", err)
+			return execution, fmt.Errorf("read Radarr joined-file import command: %w", err)
 		}
 		disposition, err := radarr.ClassifyImportCommand(command)
 		if err != nil {
@@ -265,7 +262,7 @@ func (executor *Executor) follow(
 				failedAt,
 			)
 			if err != nil {
-				return execution, fmt.Errorf("record failed Radarr joined-file scan: %w", err)
+				return execution, fmt.Errorf("record failed Radarr joined-file import: %w", err)
 			}
 			return execution, nil
 		}
@@ -282,21 +279,22 @@ func (executor *Executor) confirm(
 	ctx context.Context,
 	execution casestore.JoinExecution,
 ) (casestore.JoinExecution, error) {
-	if execution.Scan == nil {
-		return execution, fmt.Errorf("joined-file import has no prepared Radarr scan")
+	if execution.Import == nil {
+		return execution, fmt.Errorf("joined-file import has no prepared Radarr request")
 	}
+	file := execution.Import.Command.File
 	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
 		ctx,
-		execution.Scan.MovieID,
-		execution.Scan.DownloadID,
+		file.MovieID,
+		file.DownloadID,
 	)
 	if err != nil {
 		return execution, fmt.Errorf("read Radarr imported-file history: %w", err)
 	}
 	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
-		MovieID: execution.Scan.MovieID, DownloadID: execution.Scan.DownloadID,
-		DroppedPath:    execution.Scan.Path,
-		AfterHistoryID: execution.Scan.HistoryIDBefore,
+		MovieID: file.MovieID, DownloadID: file.DownloadID,
+		DroppedPath:    file.Path,
+		AfterHistoryID: execution.Import.HistoryIDBefore,
 	})
 	if !found {
 		return execution, nil
@@ -316,33 +314,44 @@ func (executor *Executor) confirm(
 	return confirmed, nil
 }
 
-func (executor *Executor) scanRequest(
+func (executor *Executor) importRequest(
 	caseID string,
 	execution casestore.JoinExecution,
-) (casestore.JoinScanRequest, error) {
+) (casestore.JoinImportRequest, error) {
 	if execution.Published == nil {
-		return casestore.JoinScanRequest{}, fmt.Errorf("published join has no destination")
+		return casestore.JoinImportRequest{}, fmt.Errorf("published join has no destination")
 	}
 	record, found, err := executor.dependencies.Store.Get(caseID)
 	if err != nil {
-		return casestore.JoinScanRequest{}, fmt.Errorf("read joined-file case: %w", err)
+		return casestore.JoinImportRequest{}, fmt.Errorf("read joined-file case: %w", err)
 	}
 	if !found {
-		return casestore.JoinScanRequest{}, fmt.Errorf("case %q is not stored", caseID)
+		return casestore.JoinImportRequest{}, fmt.Errorf("case %q is not stored", caseID)
 	}
 	queue := record.Snapshot.Observation.Correlation.Radarr
 	if queue.MovieID == nil || *queue.MovieID <= 0 {
-		return casestore.JoinScanRequest{}, fmt.Errorf("joined-file case has no Radarr movie ID")
+		return casestore.JoinImportRequest{}, fmt.Errorf("joined-file case has no Radarr movie ID")
 	}
 	path, err := executor.dependencies.Paths.ResolvePublishedPath(
 		execution.Published.RootID,
 		execution.Published.PathComponents,
 	)
 	if err != nil {
-		return casestore.JoinScanRequest{}, fmt.Errorf("resolve published joined file: %w", err)
+		return casestore.JoinImportRequest{}, fmt.Errorf("resolve published joined file: %w", err)
 	}
-	return casestore.JoinScanRequest{
-		Path: path, MovieID: *queue.MovieID, DownloadID: queue.DownloadID,
+	command, complete := controller.BuildRadarrJoinedFileImport(
+		path,
+		*queue.MovieID,
+		queue.DownloadID,
+		record.Snapshot.Observation.History,
+	)
+	if !complete {
+		return casestore.JoinImportRequest{}, fmt.Errorf(
+			"joined-file case has no complete matching grab metadata",
+		)
+	}
+	return casestore.JoinImportRequest{
+		Command: command,
 	}, nil
 }
 

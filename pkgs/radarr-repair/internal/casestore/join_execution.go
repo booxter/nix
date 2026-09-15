@@ -12,29 +12,30 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/radarr-repair/internal/joinverification"
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 )
 
 const (
-	JoinExecutionVersionV1 = "radarr-repair-join/v1"
+	JoinExecutionVersionV2 = "radarr-repair-join/v2"
 	joinExecutionDomain    = "radarr-repair-join-execution-v1\x00"
 )
 
 type JoinExecutionState string
 
 const (
-	JoinPrepared       JoinExecutionState = "join_prepared"
-	JoinArtifactReady  JoinExecutionState = "artifact_ready"
-	JoinDiscardPending JoinExecutionState = "artifact_discard_pending"
-	JoinPublished      JoinExecutionState = "artifact_published"
-	JoinDiscarded      JoinExecutionState = "artifact_discarded"
-	JoinFailed         JoinExecutionState = "join_failed"
-	JoinScanPrepared   JoinExecutionState = "scan_prepared"
-	JoinScanRequested  JoinExecutionState = "scan_requested"
-	JoinImported       JoinExecutionState = "imported"
-	JoinImportFailed   JoinExecutionState = "import_failed"
+	JoinPrepared        JoinExecutionState = "join_prepared"
+	JoinArtifactReady   JoinExecutionState = "artifact_ready"
+	JoinDiscardPending  JoinExecutionState = "artifact_discard_pending"
+	JoinPublished       JoinExecutionState = "artifact_published"
+	JoinDiscarded       JoinExecutionState = "artifact_discarded"
+	JoinFailed          JoinExecutionState = "join_failed"
+	JoinImportPrepared  JoinExecutionState = "import_prepared"
+	JoinImportRequested JoinExecutionState = "import_requested"
+	JoinImported        JoinExecutionState = "imported"
+	JoinImportFailed    JoinExecutionState = "import_failed"
 )
 
 type JoinExecution struct {
@@ -48,7 +49,7 @@ type JoinExecution struct {
 	Artifact      *JoinArtifact                 `json:"artifact,omitempty"`
 	Published     *JoinPublishedArtifact        `json:"published,omitempty"`
 	Failure       *JoinFailure                  `json:"failure,omitempty"`
-	Scan          *JoinScan                     `json:"scan,omitempty"`
+	Import        *JoinImport                   `json:"import,omitempty"`
 	Confirmation  *RadarrImportConfirmation     `json:"confirmation,omitempty"`
 }
 
@@ -158,7 +159,7 @@ func (store *Store) PrepareJoin(
 		return JoinExecution{}, false, err
 	}
 	record := JoinExecution{
-		Version:       JoinExecutionVersionV1,
+		Version:       JoinExecutionVersionV2,
 		ExecutionID:   executionID,
 		Authorization: cloneJoinAuthorization(authorized),
 		State:         JoinPrepared,
@@ -413,7 +414,7 @@ func readJoinExecution(path string) (JoinExecution, bool, error) {
 }
 
 func validateJoinExecution(record JoinExecution) error {
-	if record.Version != JoinExecutionVersionV1 {
+	if record.Version != JoinExecutionVersionV2 {
 		return fmt.Errorf("unsupported join execution version %q", record.Version)
 	}
 	if _, err := caseDigest(record.Authorization.CaseID); err != nil {
@@ -436,7 +437,7 @@ func validateJoinExecution(record JoinExecution) error {
 	if record.State == JoinPrepared {
 		if record.Stage != nil || record.Artifact != nil ||
 			record.Published != nil || record.Failure != nil ||
-			record.Scan != nil || record.Confirmation != nil {
+			record.Import != nil || record.Confirmation != nil {
 			return fmt.Errorf("prepared join contains result evidence")
 		}
 		return nil
@@ -459,30 +460,30 @@ func validateJoinExecution(record JoinExecution) error {
 	hasRejections := len(record.Stage.Rejections) != 0
 	switch record.State {
 	case JoinArtifactReady:
-		return requireJoinBeforeScan(record, false, false)
+		return requireJoinBeforeImport(record, false, false)
 	case JoinDiscardPending, JoinDiscarded:
-		return requireJoinBeforeScan(record, true, false)
+		return requireJoinBeforeImport(record, true, false)
 	case JoinPublished:
-		return requireJoinBeforeScan(record, false, true)
-	case JoinScanPrepared:
-		return requireJoinScan(record, false, false)
-	case JoinScanRequested:
-		return requireJoinScan(record, true, false)
+		return requireJoinBeforeImport(record, false, true)
+	case JoinImportPrepared:
+		return requireJoinImport(record, false, false)
+	case JoinImportRequested:
+		return requireJoinImport(record, true, false)
 	case JoinImported:
-		return requireJoinScan(record, false, true)
+		return requireJoinImport(record, false, true)
 	case JoinImportFailed:
-		return requireJoinScan(record, true, false)
+		return requireJoinImport(record, true, false)
 	case JoinFailed:
 		switch record.Failure.Operation {
 		case string(workercontracts.StageJoinV1):
 			if record.Artifact != nil || record.Published != nil || !hasRejections ||
-				record.Scan != nil || record.Confirmation != nil {
+				record.Import != nil || record.Confirmation != nil {
 				return fmt.Errorf("failed staging record is inconsistent")
 			}
 		case string(workercontracts.PublishV1):
-			return requireJoinBeforeScan(record, false, false)
+			return requireJoinBeforeImport(record, false, false)
 		case string(workercontracts.DiscardV1):
-			return requireJoinBeforeScan(record, true, false)
+			return requireJoinBeforeImport(record, true, false)
 		}
 	default:
 		return fmt.Errorf("unknown join execution state %q", record.State)
@@ -490,11 +491,11 @@ func validateJoinExecution(record JoinExecution) error {
 	return nil
 }
 
-func requireJoinBeforeScan(record JoinExecution, rejected, published bool) error {
+func requireJoinBeforeImport(record JoinExecution, rejected, published bool) error {
 	if err := requireJoinArtifact(record, rejected, published); err != nil {
 		return err
 	}
-	if record.Scan != nil || record.Confirmation != nil {
+	if record.Import != nil || record.Confirmation != nil {
 		return fmt.Errorf("join state contains unexpected Radarr import evidence")
 	}
 	return nil
@@ -671,12 +672,20 @@ func cloneJoinExecution(record JoinExecution) JoinExecution {
 		failure := *record.Failure
 		record.Failure = &failure
 	}
-	if record.Scan != nil {
-		scan := *record.Scan
-		if scan.CommandID != nil {
-			scan.CommandID = int64Pointer(*scan.CommandID)
+	if record.Import != nil {
+		joinImport := *record.Import
+		joinImport.Command.File.Languages = append(
+			[]controller.RadarrLanguage(nil),
+			joinImport.Command.File.Languages...,
+		)
+		if revision := joinImport.Command.File.Quality.Revision; revision != nil {
+			cloned := *revision
+			joinImport.Command.File.Quality.Revision = &cloned
 		}
-		record.Scan = &scan
+		if joinImport.CommandID != nil {
+			joinImport.CommandID = int64Pointer(*joinImport.CommandID)
+		}
+		record.Import = &joinImport
 	}
 	if record.Confirmation != nil {
 		confirmation := *record.Confirmation

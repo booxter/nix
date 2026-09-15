@@ -108,6 +108,29 @@ func BindRadarrManualImportFile(
 	return binding, binding.Complete()
 }
 
+func BuildRadarrJoinedFileImport(
+	path string,
+	movieID int64,
+	downloadID string,
+	history []RadarrHistoryEvent,
+) (RadarrManualImportCommand, bool) {
+	grab := latestMatchingGrab(history, movieID, downloadID)
+	if grab == nil || grab.Quality == nil {
+		return RadarrManualImportCommand{}, false
+	}
+	command := RadarrManualImportCommand{
+		ImportMode: RadarrImportModeCopy,
+		File: RadarrManualImportCommandFile{
+			Path:       path,
+			Quality:    *cloneRadarrQuality(grab.Quality),
+			Languages:  cloneRadarrLanguages(grab.Languages),
+			DownloadID: downloadID,
+			MovieID:    movieID,
+		},
+	}
+	return command, command.Complete()
+}
+
 func latestMatchingGrab(
 	history []RadarrHistoryEvent,
 	movieID int64,

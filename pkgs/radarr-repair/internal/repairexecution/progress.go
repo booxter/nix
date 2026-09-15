@@ -85,8 +85,8 @@ func classifyJoinProgress(store ExecutionStore, caseID string) (Progress, error)
 		casestore.JoinArtifactReady,
 		casestore.JoinDiscardPending,
 		casestore.JoinPublished,
-		casestore.JoinScanPrepared,
-		casestore.JoinScanRequested:
+		casestore.JoinImportPrepared,
+		casestore.JoinImportRequested:
 		return ProgressUnfinished, nil
 	case casestore.JoinDiscarded,
 		casestore.JoinFailed,

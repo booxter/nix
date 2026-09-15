@@ -218,8 +218,8 @@ func (executor *Executor) resumeJoin(
 		casestore.JoinDiscardPending:
 		return executor.executeJoin(ctx, result, assembly, authorized)
 	case casestore.JoinPublished,
-		casestore.JoinScanPrepared,
-		casestore.JoinScanRequested:
+		casestore.JoinImportPrepared,
+		casestore.JoinImportRequested:
 		return executor.executeJoinedFileImport(ctx, result, authorized.CaseID)
 	case casestore.JoinDiscarded,
 		casestore.JoinFailed,

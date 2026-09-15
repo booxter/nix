@@ -150,13 +150,18 @@ func TestExecuteStoredCaseJoinsAndImportsAuthorizedParts(t *testing.T) {
 		}
 	}
 
-	scan, writes, polls := radarr.executionObservation()
+	importRequest, writes, polls := radarr.executionObservation()
 	if writes != 1 || polls == 0 {
-		t.Fatalf("Radarr scan writes = %d, command polls = %d", writes, polls)
+		t.Fatalf("Radarr importRequest writes = %d, command polls = %d", writes, polls)
 	}
-	if scan.Name != "DownloadedMoviesScan" || scan.Path != publishedPath ||
-		scan.DownloadClientID != integrationDownloadID || scan.ImportMode != "copy" {
-		t.Fatalf("downloaded-movies scan = %#v", scan)
+	if importRequest.Name != "ManualImport" || importRequest.ImportMode != "copy" ||
+		len(importRequest.Files) != 1 || importRequest.Files[0].Path != publishedPath ||
+		importRequest.Files[0].DownloadID != integrationDownloadID ||
+		importRequest.Files[0].MovieID != integrationMovieID ||
+		importRequest.Files[0].Quality.Quality.Name != "Bluray-1080p" ||
+		len(importRequest.Files[0].Languages) != 1 ||
+		importRequest.Files[0].Languages[0].Name != "English" {
+		t.Fatalf("manual import request = %#v", importRequest)
 	}
 	stored, found, err := store.GetJoinExecution(assembly.Request.CaseID)
 	if err != nil {
@@ -228,18 +233,42 @@ type joinTorrentFile struct {
 	sizeBytes    int64
 }
 
-type downloadedMoviesScanObservation struct {
-	Name             string `json:"name"`
-	Path             string `json:"path"`
-	DownloadClientID string `json:"downloadClientId"`
-	ImportMode       string `json:"importMode"`
+type joinedManualImportObservation struct {
+	Name       string `json:"name"`
+	ImportMode string `json:"importMode"`
+	Files      []struct {
+		Path         string `json:"path"`
+		FolderName   string `json:"folderName"`
+		ReleaseGroup string `json:"releaseGroup"`
+		IndexerFlags int64  `json:"indexerFlags"`
+		DownloadID   string `json:"downloadId"`
+		MovieID      int64  `json:"movieId"`
+		Quality      struct {
+			Quality struct {
+				ID         int64  `json:"id"`
+				Name       string `json:"name"`
+				Source     string `json:"source"`
+				Resolution int    `json:"resolution"`
+				Modifier   string `json:"modifier"`
+			} `json:"quality"`
+			Revision *struct {
+				Version  int64 `json:"version"`
+				Real     int64 `json:"real"`
+				IsRepack bool  `json:"isRepack"`
+			} `json:"revision"`
+		} `json:"quality"`
+		Languages []struct {
+			ID   int64  `json:"id"`
+			Name string `json:"name"`
+		} `json:"languages"`
+	} `json:"files"`
 }
 
 type joinRadarrServer struct {
 	mutex         sync.Mutex
 	downloadRoot  string
 	totalSize     int64
-	scan          downloadedMoviesScanObservation
+	importRequest joinedManualImportObservation
 	commandPosted bool
 	commandPolled bool
 	writes        int
@@ -265,7 +294,7 @@ func (server *joinRadarrServer) ServeHTTP(writer http.ResponseWriter, request *h
 	case request.Method == http.MethodGet && request.URL.Path == "/api/v3/manualimport":
 		writeIntegrationJSON(writer, []any{})
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v3/command":
-		server.acceptScan(writer, request)
+		server.acceptImport(writer, request)
 	case request.Method == http.MethodGet && request.URL.Path == "/api/v3/command/92":
 		server.completeCommand(writer)
 	default:
@@ -294,7 +323,10 @@ func (server *joinRadarrServer) writeQueue(writer http.ResponseWriter) {
 func (server *joinRadarrServer) writeHistory(writer http.ResponseWriter) {
 	server.mutex.Lock()
 	includeImport := server.commandPosted && server.commandPolled
-	scanPath := server.scan.Path
+	importRequestPath := ""
+	if len(server.importRequest.Files) == 1 {
+		importRequestPath = server.importRequest.Files[0].Path
+	}
 	server.mutex.Unlock()
 	records := []any{map[string]any{
 		"id": 501, "movieId": integrationMovieID, "downloadId": integrationDownloadID,
@@ -311,7 +343,7 @@ func (server *joinRadarrServer) writeHistory(writer http.ResponseWriter) {
 			"sourceTitle": "Example.Movie.2026.1080p.BluRay",
 			"quality":     integrationQuality(), "languages": []any{},
 			"data": map[string]any{
-				"fileId": "90210", "droppedPath": scanPath,
+				"fileId": "90210", "droppedPath": importRequestPath,
 				"importedPath": "/movies/Example Movie (2026)/Example Movie.mkv",
 			},
 		})
@@ -322,8 +354,8 @@ func (server *joinRadarrServer) writeHistory(writer http.ResponseWriter) {
 	})
 }
 
-func (server *joinRadarrServer) acceptScan(writer http.ResponseWriter, request *http.Request) {
-	var observed downloadedMoviesScanObservation
+func (server *joinRadarrServer) acceptImport(writer http.ResponseWriter, request *http.Request) {
+	var observed joinedManualImportObservation
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&observed); err != nil {
@@ -331,13 +363,13 @@ func (server *joinRadarrServer) acceptScan(writer http.ResponseWriter, request *
 		return
 	}
 	server.mutex.Lock()
-	server.scan = observed
+	server.importRequest = observed
 	server.commandPosted = true
 	server.writes++
 	server.mutex.Unlock()
 	writer.WriteHeader(http.StatusCreated)
 	writeIntegrationJSON(writer, map[string]any{
-		"id": 92, "name": "DownloadedMoviesScan", "status": "queued", "result": "unknown",
+		"id": 92, "name": "ManualImport", "status": "queued", "result": "unknown",
 	})
 }
 
@@ -347,18 +379,18 @@ func (server *joinRadarrServer) completeCommand(writer http.ResponseWriter) {
 	server.polls++
 	server.mutex.Unlock()
 	writeIntegrationJSON(writer, map[string]any{
-		"id": 92, "name": "DownloadedMoviesScan", "status": "completed", "result": "successful",
+		"id": 92, "name": "ManualImport", "status": "completed", "result": "successful",
 	})
 }
 
 func (server *joinRadarrServer) executionObservation() (
-	downloadedMoviesScanObservation,
+	joinedManualImportObservation,
 	int,
 	int,
 ) {
 	server.mutex.Lock()
 	defer server.mutex.Unlock()
-	return server.scan, server.writes, server.polls
+	return server.importRequest, server.writes, server.polls
 }
 
 func joinTransmissionHandler(downloadDirectory string, files []joinTorrentFile) http.Handler {

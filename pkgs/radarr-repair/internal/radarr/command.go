@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	commandPath                     = starrRadarr.APIver + "/command"
-	manualImportCommandName         = "ManualImport"
-	downloadedMoviesScanCommandName = "DownloadedMoviesScan"
+	commandPath             = starrRadarr.APIver + "/command"
+	manualImportCommandName = "ManualImport"
 )
 
 type CommandStatus string

@@ -302,7 +302,7 @@ func (store *fakeStore) PrepareJoin(
 		return store.execution, false, nil
 	}
 	store.execution = casestore.JoinExecution{
-		Version:       casestore.JoinExecutionVersionV1,
+		Version:       casestore.JoinExecutionVersionV2,
 		ExecutionID:   "execution:join:01",
 		Authorization: authorized,
 		State:         casestore.JoinPrepared,

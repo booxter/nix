@@ -197,6 +197,88 @@ func TestBindRadarrManualImportFileRejectsIncompleteBindings(t *testing.T) {
 	}
 }
 
+func TestBuildRadarrJoinedFileImportUsesLatestGrab(t *testing.T) {
+	t.Parallel()
+
+	older := bindingQuality(3, "WEBDL-1080p")
+	newer := bindingQuality(2, "DVD")
+	history := []RadarrHistoryEvent{
+		{
+			ID: 10, MovieID: 42, DownloadID: "abcdef0123456789",
+			EventType:  RadarrHistoryEventGrabbed,
+			OccurredAt: time.Date(2026, 9, 6, 12, 0, 0, 0, time.UTC),
+			Quality:    older, Languages: []RadarrLanguage{{ID: 2, Name: "French"}},
+		},
+		{
+			ID: 11, MovieID: 42, DownloadID: "ABCDEF0123456789",
+			EventType:  RadarrHistoryEventGrabbed,
+			OccurredAt: time.Date(2026, 9, 6, 13, 0, 0, 0, time.UTC),
+			Quality:    newer, Languages: []RadarrLanguage{{ID: 1, Name: "English"}},
+		},
+	}
+
+	command, ok := BuildRadarrJoinedFileImport(
+		"/downloads/Spellbound/radarr-repair-output.avi",
+		42,
+		"ABCDEF0123456789",
+		history,
+	)
+	if !ok {
+		t.Fatal("complete grab metadata did not produce an import command")
+	}
+	if command.ImportMode != RadarrImportModeCopy ||
+		command.File.Path != "/downloads/Spellbound/radarr-repair-output.avi" ||
+		command.File.MovieID != 42 || command.File.DownloadID != "ABCDEF0123456789" ||
+		!reflect.DeepEqual(command.File.Quality, *newer) ||
+		!reflect.DeepEqual(command.File.Languages, history[1].Languages) {
+		t.Fatalf("command = %#v", command)
+	}
+
+	newer.Quality.Name = "changed"
+	history[1].Languages[0].Name = "changed"
+	if command.File.Quality.Quality.Name != "DVD" ||
+		command.File.Languages[0].Name != "English" {
+		t.Fatalf("command changed with its source history: %#v", command)
+	}
+}
+
+func TestBuildRadarrJoinedFileImportRequiresCompleteGrabMetadata(t *testing.T) {
+	t.Parallel()
+
+	quality := bindingQuality(2, "DVD")
+	history := []RadarrHistoryEvent{{
+		ID: 11, MovieID: 42, DownloadID: "ABCDEF0123456789",
+		EventType:  RadarrHistoryEventGrabbed,
+		OccurredAt: time.Date(2026, 9, 6, 13, 0, 0, 0, time.UTC),
+		Quality:    quality, Languages: []RadarrLanguage{{ID: 1, Name: "English"}},
+	}}
+
+	for name, mutate := range map[string]func(*[]RadarrHistoryEvent){
+		"missing grab": func(events *[]RadarrHistoryEvent) { *events = nil },
+		"missing quality": func(events *[]RadarrHistoryEvent) {
+			(*events)[0].Quality = nil
+		},
+		"invalid language": func(events *[]RadarrHistoryEvent) {
+			(*events)[0].Languages[0].Name = " "
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			candidate := append([]RadarrHistoryEvent(nil), history...)
+			candidate[0].Languages = append([]RadarrLanguage(nil), history[0].Languages...)
+			mutate(&candidate)
+			if command, ok := BuildRadarrJoinedFileImport(
+				"/downloads/Spellbound/output.avi",
+				42,
+				"ABCDEF0123456789",
+				candidate,
+			); ok {
+				t.Fatalf("incomplete history produced command %#v", command)
+			}
+		})
+	}
+}
+
 func manualImportBindingFixture() (InventoryFile, string, RadarrManualImport) {
 	file := completeInventoryFile("file:one", []string{"Example.Movie.2026.mkv"})
 	file.Fingerprint = FileFingerprint{Device: 1, Inode: 2, SizeBytes: 100, MTimeNS: 3}

@@ -2,59 +2,54 @@ package casestore
 
 import (
 	"fmt"
-	"strings"
+	"reflect"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
-type JoinScanRequest struct {
-	Path            string
-	MovieID         int64
-	DownloadID      string
+type JoinImportRequest struct {
+	Command         controller.RadarrManualImportCommand
 	HistoryIDBefore int64
 }
 
-type JoinScan struct {
-	Path       string `json:"path"`
-	MovieID    int64  `json:"movie_id"`
-	DownloadID string `json:"download_id"`
+type JoinImport struct {
+	Command controller.RadarrManualImportCommand `json:"command"`
 	// HistoryIDBefore separates this request from older matching imports.
 	HistoryIDBefore int64     `json:"history_id_before"`
 	PreparedAt      time.Time `json:"prepared_at"`
 	CommandID       *int64    `json:"command_id,omitempty"`
 }
 
-func (store *Store) PrepareJoinScan(
+func (store *Store) PrepareJoinImport(
 	caseID string,
-	request JoinScanRequest,
+	request JoinImportRequest,
 	preparedAt time.Time,
 ) (JoinExecution, bool, error) {
-	if err := store.validateJoinScanRequest(caseID, request); err != nil {
+	if err := store.validateJoinImportRequest(caseID, request); err != nil {
 		return JoinExecution{}, false, err
 	}
 	return store.updateJoinExecution(
 		caseID,
 		preparedAt,
 		func(previous JoinExecution) (JoinExecution, bool, error) {
-			if previous.Scan != nil {
-				if sameJoinScanRequest(*previous.Scan, request) {
+			if previous.Import != nil {
+				if sameJoinImportRequest(*previous.Import, request) {
 					return previous, false, nil
 				}
 				return JoinExecution{}, false, fmt.Errorf(
-					"join is already bound to a different Radarr scan",
+					"join is already bound to a different Radarr import",
 				)
 			}
 			if previous.State != JoinPublished {
 				return JoinExecution{}, false, fmt.Errorf(
-					"cannot prepare Radarr scan from state %q",
+					"cannot prepare Radarr import from state %q",
 					previous.State,
 				)
 			}
-			previous.State = JoinScanPrepared
-			previous.Scan = &JoinScan{
-				Path: request.Path, MovieID: request.MovieID,
-				DownloadID: request.DownloadID, HistoryIDBefore: request.HistoryIDBefore,
+			previous.State = JoinImportPrepared
+			previous.Import = &JoinImport{
+				Command: request.Command, HistoryIDBefore: request.HistoryIDBefore,
 				PreparedAt: preparedAt.UTC(),
 			}
 			return previous, true, nil
@@ -62,7 +57,7 @@ func (store *Store) PrepareJoinScan(
 	)
 }
 
-func (store *Store) MarkJoinScanRequested(
+func (store *Store) MarkJoinImportRequested(
 	caseID string,
 	commandID int64,
 	updatedAt time.Time,
@@ -75,24 +70,24 @@ func (store *Store) MarkJoinScanRequested(
 		updatedAt,
 		func(previous JoinExecution) (JoinExecution, bool, error) {
 			switch previous.State {
-			case JoinScanPrepared:
-				if previous.Scan == nil {
-					return JoinExecution{}, false, fmt.Errorf("prepared Radarr scan is missing")
+			case JoinImportPrepared:
+				if previous.Import == nil {
+					return JoinExecution{}, false, fmt.Errorf("prepared Radarr import is missing")
 				}
-				previous.State = JoinScanRequested
-				previous.Scan.CommandID = int64Pointer(commandID)
+				previous.State = JoinImportRequested
+				previous.Import.CommandID = int64Pointer(commandID)
 				return previous, true, nil
-			case JoinScanRequested:
-				if previous.Scan != nil && previous.Scan.CommandID != nil &&
-					*previous.Scan.CommandID == commandID {
+			case JoinImportRequested:
+				if previous.Import != nil && previous.Import.CommandID != nil &&
+					*previous.Import.CommandID == commandID {
 					return previous, false, nil
 				}
 				return JoinExecution{}, false, fmt.Errorf(
-					"Radarr scan is already bound to a different command",
+					"Radarr import is already bound to a different command",
 				)
 			default:
 				return JoinExecution{}, false, fmt.Errorf(
-					"cannot request Radarr scan from state %q",
+					"cannot request Radarr import from state %q",
 					previous.State,
 				)
 			}
@@ -113,18 +108,19 @@ func (store *Store) MarkJoinImported(
 		caseID,
 		updatedAt,
 		func(previous JoinExecution) (JoinExecution, bool, error) {
-			if previous.Scan == nil || imported.MovieID != previous.Scan.MovieID ||
-				imported.DownloadID != previous.Scan.DownloadID ||
-				imported.DroppedPath != previous.Scan.Path {
+			if previous.Import == nil ||
+				imported.MovieID != previous.Import.Command.File.MovieID ||
+				imported.DownloadID != previous.Import.Command.File.DownloadID ||
+				imported.DroppedPath != previous.Import.Command.File.Path {
 				return JoinExecution{}, false, fmt.Errorf(
 					"Radarr import confirmation does not match the joined file",
 				)
 			}
 			switch previous.State {
-			case JoinScanPrepared, JoinScanRequested:
-				if confirmation.HistoryID <= previous.Scan.HistoryIDBefore {
+			case JoinImportPrepared, JoinImportRequested:
+				if confirmation.HistoryID <= previous.Import.HistoryIDBefore {
 					return JoinExecution{}, false, fmt.Errorf(
-						"Radarr import confirmation predates the scan request",
+						"Radarr import confirmation predates the request",
 					)
 				}
 				previous.State = JoinImported
@@ -156,7 +152,7 @@ func (store *Store) MarkJoinImportFailed(
 		updatedAt,
 		func(previous JoinExecution) (JoinExecution, bool, error) {
 			switch previous.State {
-			case JoinScanRequested:
+			case JoinImportRequested:
 				previous.State = JoinImportFailed
 				return previous, true, nil
 			case JoinImportFailed:
@@ -171,12 +167,9 @@ func (store *Store) MarkJoinImportFailed(
 	)
 }
 
-func (store *Store) validateJoinScanRequest(caseID string, request JoinScanRequest) error {
-	if !validExecutionPath(request.Path) || request.MovieID <= 0 ||
-		request.HistoryIDBefore < 0 ||
-		request.DownloadID == "" || strings.TrimSpace(request.DownloadID) != request.DownloadID ||
-		strings.ContainsRune(request.DownloadID, '\x00') {
-		return fmt.Errorf("Radarr scan request is invalid")
+func (store *Store) validateJoinImportRequest(caseID string, request JoinImportRequest) error {
+	if !request.Command.Complete() || request.HistoryIDBefore < 0 {
+		return fmt.Errorf("Radarr import request is invalid")
 	}
 	planned, err := store.GetPlannedCase(caseID)
 	if err != nil {
@@ -185,15 +178,22 @@ func (store *Store) validateJoinScanRequest(caseID string, request JoinScanReque
 	assembly := planned.Assembly
 	observation := assembly.LocalSnapshot.Observation
 	if observation.Movie == nil || observation.Correlation.Radarr.MovieID == nil ||
-		request.MovieID != observation.Movie.ID ||
-		request.MovieID != *observation.Correlation.Radarr.MovieID ||
-		request.DownloadID != observation.Correlation.Radarr.DownloadID {
-		return fmt.Errorf("Radarr scan does not match the stored case")
+		observation.Movie.ID != *observation.Correlation.Radarr.MovieID {
+		return fmt.Errorf("Radarr import does not match the stored case")
+	}
+	expected, complete := controller.BuildRadarrJoinedFileImport(
+		request.Command.File.Path,
+		observation.Movie.ID,
+		observation.Correlation.Radarr.DownloadID,
+		observation.History,
+	)
+	if !complete || !reflect.DeepEqual(request.Command, expected) {
+		return fmt.Errorf("Radarr import does not match the stored case")
 	}
 	return nil
 }
 
-func requireJoinScan(
+func requireJoinImport(
 	record JoinExecution,
 	commandRequired bool,
 	confirmationRequired bool,
@@ -201,17 +201,17 @@ func requireJoinScan(
 	if err := requireJoinArtifact(record, false, true); err != nil {
 		return err
 	}
-	if record.Scan == nil {
-		return fmt.Errorf("joined-file import lacks its Radarr scan")
+	if record.Import == nil {
+		return fmt.Errorf("joined-file import lacks its Radarr request")
 	}
-	if err := validateStoredJoinScan(*record.Scan, record.PreparedAt, record.UpdatedAt); err != nil {
+	if err := validateStoredJoinImport(*record.Import, record.PreparedAt, record.UpdatedAt); err != nil {
 		return err
 	}
-	if commandRequired && record.Scan.CommandID == nil {
+	if commandRequired && record.Import.CommandID == nil {
 		return fmt.Errorf("joined-file import requires a Radarr command ID")
 	}
-	if record.State == JoinScanPrepared && record.Scan.CommandID != nil {
-		return fmt.Errorf("prepared Radarr scan contains a command ID")
+	if record.State == JoinImportPrepared && record.Import.CommandID != nil {
+		return fmt.Errorf("prepared Radarr import contains a command ID")
 	}
 	if confirmationRequired {
 		if record.Confirmation == nil {
@@ -220,10 +220,10 @@ func requireJoinScan(
 		if err := validateRadarrImportConfirmation(*record.Confirmation); err != nil {
 			return err
 		}
-		if record.Confirmation.MovieID != record.Scan.MovieID ||
-			record.Confirmation.DownloadID != record.Scan.DownloadID ||
-			record.Confirmation.DroppedPath != record.Scan.Path ||
-			record.Confirmation.HistoryID <= record.Scan.HistoryIDBefore {
+		if record.Confirmation.MovieID != record.Import.Command.File.MovieID ||
+			record.Confirmation.DownloadID != record.Import.Command.File.DownloadID ||
+			record.Confirmation.DroppedPath != record.Import.Command.File.Path ||
+			record.Confirmation.HistoryID <= record.Import.HistoryIDBefore {
 			return fmt.Errorf("Radarr import confirmation does not match the joined file")
 		}
 	} else if record.Confirmation != nil {
@@ -232,19 +232,15 @@ func requireJoinScan(
 	return nil
 }
 
-func validateStoredJoinScan(scan JoinScan, executionPreparedAt, updatedAt time.Time) error {
-	if !validExecutionPath(scan.Path) || scan.MovieID <= 0 ||
-		scan.HistoryIDBefore < 0 ||
-		scan.DownloadID == "" || strings.TrimSpace(scan.DownloadID) != scan.DownloadID ||
-		strings.ContainsRune(scan.DownloadID, '\x00') || scan.PreparedAt.IsZero() ||
-		scan.PreparedAt.Before(executionPreparedAt) || scan.PreparedAt.After(updatedAt) ||
-		(scan.CommandID != nil && *scan.CommandID <= 0) {
-		return fmt.Errorf("stored Radarr scan is invalid")
+func validateStoredJoinImport(record JoinImport, executionPreparedAt, updatedAt time.Time) error {
+	if !record.Command.Complete() || record.HistoryIDBefore < 0 || record.PreparedAt.IsZero() ||
+		record.PreparedAt.Before(executionPreparedAt) || record.PreparedAt.After(updatedAt) ||
+		(record.CommandID != nil && *record.CommandID <= 0) {
+		return fmt.Errorf("stored Radarr import is invalid")
 	}
 	return nil
 }
 
-func sameJoinScanRequest(scan JoinScan, request JoinScanRequest) bool {
-	return scan.Path == request.Path && scan.MovieID == request.MovieID &&
-		scan.DownloadID == request.DownloadID
+func sameJoinImportRequest(record JoinImport, request JoinImportRequest) bool {
+	return reflect.DeepEqual(record.Command, request.Command)
 }

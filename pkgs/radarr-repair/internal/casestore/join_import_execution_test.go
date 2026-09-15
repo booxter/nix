@@ -14,42 +14,42 @@ func TestStoreJoinedFileImportLifecycle(t *testing.T) {
 	t.Parallel()
 
 	store, authorized, publishedAt := publishedJoinForImport(t)
-	scan := testJoinScanRequest()
+	importRequest := testJoinImportRequest()
 	preparedAt := publishedAt.Add(time.Minute)
-	prepared, changed, err := store.PrepareJoinScan(authorized.CaseID, scan, preparedAt)
-	if err != nil || !changed || prepared.State != JoinScanPrepared || prepared.Scan == nil ||
-		prepared.Scan.CommandID != nil || !prepared.Scan.PreparedAt.Equal(preparedAt) {
-		t.Fatalf("prepare scan: changed = %t, record = %#v, error = %v", changed, prepared, err)
+	prepared, changed, err := store.PrepareJoinImport(authorized.CaseID, importRequest, preparedAt)
+	if err != nil || !changed || prepared.State != JoinImportPrepared || prepared.Import == nil ||
+		prepared.Import.CommandID != nil || !prepared.Import.PreparedAt.Equal(preparedAt) {
+		t.Fatalf("prepare import: changed = %t, record = %#v, error = %v", changed, prepared, err)
 	}
-	repeated, changed, err := store.PrepareJoinScan(
+	repeated, changed, err := store.PrepareJoinImport(
 		authorized.CaseID,
-		scan,
+		importRequest,
 		preparedAt.Add(time.Minute),
 	)
 	if err != nil || changed || !reflect.DeepEqual(repeated, prepared) {
 		t.Fatalf("repeat prepare: changed = %t, record = %#v, error = %v", changed, repeated, err)
 	}
-	differentScan := scan
-	differentScan.Path = "/downloads/Movie.Release/other.mkv"
-	if _, _, err := store.PrepareJoinScan(
+	differentImport := importRequest
+	differentImport.Command.File.Path = "/downloads/Movie.Release/other.mkv"
+	if _, _, err := store.PrepareJoinImport(
 		authorized.CaseID,
-		differentScan,
+		differentImport,
 		preparedAt.Add(time.Minute),
 	); err == nil {
-		t.Fatal("join was rebound to a different Radarr scan")
+		t.Fatal("join was rebound to a different Radarr import")
 	}
 
 	requestedAt := preparedAt.Add(time.Minute)
-	requested, changed, err := store.MarkJoinScanRequested(
+	requested, changed, err := store.MarkJoinImportRequested(
 		authorized.CaseID,
 		92,
 		requestedAt,
 	)
-	if err != nil || !changed || requested.State != JoinScanRequested ||
-		requested.Scan == nil || requested.Scan.CommandID == nil || *requested.Scan.CommandID != 92 {
-		t.Fatalf("request scan: changed = %t, record = %#v, error = %v", changed, requested, err)
+	if err != nil || !changed || requested.State != JoinImportRequested ||
+		requested.Import == nil || requested.Import.CommandID == nil || *requested.Import.CommandID != 92 {
+		t.Fatalf("request import: changed = %t, record = %#v, error = %v", changed, requested, err)
 	}
-	repeated, changed, err = store.MarkJoinScanRequested(
+	repeated, changed, err = store.MarkJoinImportRequested(
 		authorized.CaseID,
 		92,
 		requestedAt.Add(time.Minute),
@@ -57,15 +57,15 @@ func TestStoreJoinedFileImportLifecycle(t *testing.T) {
 	if err != nil || changed || !reflect.DeepEqual(repeated, requested) {
 		t.Fatalf("repeat request: changed = %t, record = %#v, error = %v", changed, repeated, err)
 	}
-	if _, _, err := store.MarkJoinScanRequested(
+	if _, _, err := store.MarkJoinImportRequested(
 		authorized.CaseID,
 		93,
 		requestedAt.Add(time.Minute),
 	); err == nil {
-		t.Fatal("scan was rebound to a different Radarr command")
+		t.Fatal("import was rebound to a different Radarr command")
 	}
 
-	importedEvidence := testJoinedFileImport(scan, preparedAt.Add(2*time.Minute))
+	importedEvidence := testJoinedFileImport(importRequest, preparedAt.Add(2*time.Minute))
 	imported, changed, err := store.MarkJoinImported(
 		authorized.CaseID,
 		importedEvidence,
@@ -94,18 +94,18 @@ func TestStoreJoinedFileImportRecoversWithoutCommandID(t *testing.T) {
 	t.Parallel()
 
 	store, authorized, publishedAt := publishedJoinForImport(t)
-	scan := testJoinScanRequest()
+	importRequest := testJoinImportRequest()
 	preparedAt := publishedAt.Add(time.Minute)
-	if _, _, err := store.PrepareJoinScan(authorized.CaseID, scan, preparedAt); err != nil {
+	if _, _, err := store.PrepareJoinImport(authorized.CaseID, importRequest, preparedAt); err != nil {
 		t.Fatal(err)
 	}
 	imported, changed, err := store.MarkJoinImported(
 		authorized.CaseID,
-		testJoinedFileImport(scan, preparedAt.Add(time.Minute)),
+		testJoinedFileImport(importRequest, preparedAt.Add(time.Minute)),
 		preparedAt.Add(2*time.Minute),
 	)
 	if err != nil || !changed || imported.State != JoinImported ||
-		imported.Scan == nil || imported.Scan.CommandID != nil {
+		imported.Import == nil || imported.Import.CommandID != nil {
 		t.Fatalf("recovered import: changed = %t, record = %#v, error = %v", changed, imported, err)
 	}
 }
@@ -134,12 +134,12 @@ func TestStoreJoinedFileImportRequiresExactEvidence(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			store, authorized, publishedAt := publishedJoinForImport(t)
-			scan := testJoinScanRequest()
+			importRequest := testJoinImportRequest()
 			preparedAt := publishedAt.Add(time.Minute)
-			if _, _, err := store.PrepareJoinScan(authorized.CaseID, scan, preparedAt); err != nil {
+			if _, _, err := store.PrepareJoinImport(authorized.CaseID, importRequest, preparedAt); err != nil {
 				t.Fatal(err)
 			}
-			imported := testJoinedFileImport(scan, preparedAt.Add(time.Minute))
+			imported := testJoinedFileImport(importRequest, preparedAt.Add(time.Minute))
 			test.change(&imported, preparedAt)
 			if _, changed, err := store.MarkJoinImported(
 				authorized.CaseID,
@@ -156,18 +156,18 @@ func TestStoreJoinedFileImportFailureIsTerminal(t *testing.T) {
 	t.Parallel()
 
 	store, authorized, publishedAt := publishedJoinForImport(t)
-	scan := testJoinScanRequest()
+	importRequest := testJoinImportRequest()
 	preparedAt := publishedAt.Add(time.Minute)
-	if _, _, err := store.PrepareJoinScan(authorized.CaseID, scan, preparedAt); err != nil {
+	if _, _, err := store.PrepareJoinImport(authorized.CaseID, importRequest, preparedAt); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := store.MarkJoinImportFailed(
 		authorized.CaseID,
 		preparedAt.Add(time.Minute),
 	); err == nil {
-		t.Fatal("scan without a known command was marked failed")
+		t.Fatal("import without a known command was marked failed")
 	}
-	if _, _, err := store.MarkJoinScanRequested(
+	if _, _, err := store.MarkJoinImportRequested(
 		authorized.CaseID,
 		92,
 		preparedAt.Add(time.Minute),
@@ -190,14 +190,14 @@ func TestStoreJoinedFileImportFailureIsTerminal(t *testing.T) {
 	}
 	if _, _, err := store.MarkJoinImported(
 		authorized.CaseID,
-		testJoinedFileImport(scan, preparedAt.Add(time.Minute)),
+		testJoinedFileImport(importRequest, preparedAt.Add(time.Minute)),
 		preparedAt.Add(3*time.Minute),
 	); err == nil {
 		t.Fatal("failed import was changed to imported")
 	}
 }
 
-func TestStoreJoinedFileScanRequiresPublishedMatchingCase(t *testing.T) {
+func TestStoreJoinedFileImportRequiresPublishedMatchingCase(t *testing.T) {
 	t.Parallel()
 
 	store, authorized := newJoinExecutionStore(t)
@@ -207,43 +207,44 @@ func TestStoreJoinedFileScanRequiresPublishedMatchingCase(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if _, changed, err := store.PrepareJoinScan(
+	if _, changed, err := store.PrepareJoinImport(
 		authorized.CaseID,
-		testJoinScanRequest(),
+		testJoinImportRequest(),
 		time.Date(2026, time.September, 13, 19, 0, 0, 0, time.UTC),
 	); err == nil || changed {
-		t.Fatalf("unpublished scan: changed = %t, error = %v", changed, err)
+		t.Fatalf("unpublished import: changed = %t, error = %v", changed, err)
 	}
 
-	base := testJoinScanRequest()
-	requests := []JoinScanRequest{
-		{Path: "/downloads/Movie.Release/radarr-repair-join.mkv", MovieID: 43, DownloadID: base.DownloadID},
-		{Path: "/downloads/Movie.Release/radarr-repair-join.mkv", MovieID: 42, DownloadID: "different-download"},
-		{Path: "relative.mkv", MovieID: 42, DownloadID: base.DownloadID},
-	}
+	wrongMovie := testJoinImportRequest()
+	wrongMovie.Command.File.MovieID++
+	wrongDownload := testJoinImportRequest()
+	wrongDownload.Command.File.DownloadID = "different-download"
+	badPath := testJoinImportRequest()
+	badPath.Command.File.Path = "relative.mkv"
+	requests := []JoinImportRequest{wrongMovie, wrongDownload, badPath}
 	for _, request := range requests {
 		candidate, candidateAuthorization, candidatePublishedAt := publishedJoinForImport(t)
-		if _, changed, err := candidate.PrepareJoinScan(
+		if _, changed, err := candidate.PrepareJoinImport(
 			candidateAuthorization.CaseID,
 			request,
 			candidatePublishedAt.Add(time.Minute),
 		); err == nil || changed {
-			t.Fatalf("invalid scan %#v: changed = %t, error = %v", request, changed, err)
+			t.Fatalf("invalid import %#v: changed = %t, error = %v", request, changed, err)
 		}
 	}
 }
 
-func TestDecodeJoinExecutionRejectsInvalidScanState(t *testing.T) {
+func TestDecodeJoinExecutionRejectsInvalidImportState(t *testing.T) {
 	t.Parallel()
 
 	_, _, _, published := publishedJoinRecord(t)
-	published.State = JoinScanRequested
+	published.State = JoinImportRequested
 	data, err := json.Marshal(published)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := DecodeJoinExecution(data); err == nil {
-		t.Fatal("requested scan without bound request was accepted")
+		t.Fatal("requested import without bound request was accepted")
 	}
 }
 
@@ -265,7 +266,7 @@ func publishedJoinRecord(
 	if err != nil {
 		t.Fatal(err)
 	}
-	request, response := successfulJoinStage(prepared, "request:stage:scan")
+	request, response := successfulJoinStage(prepared, "request:stage:import")
 	if _, _, err := store.RecordJoinStage(
 		authorized,
 		request,
@@ -277,7 +278,7 @@ func publishedJoinRecord(
 	publishedAt := preparedAt.Add(2 * time.Minute)
 	published, _, err := store.RecordJoinPublish(
 		authorized.CaseID,
-		publishSuccess("request:publish:scan"),
+		publishSuccess("request:publish:import"),
 		publishedAt,
 	)
 	if err != nil {
@@ -286,22 +287,36 @@ func publishedJoinRecord(
 	return store, authorized, publishedAt, published
 }
 
-func testJoinScanRequest() JoinScanRequest {
-	return JoinScanRequest{
-		Path:            "/downloads/Movie.Release/radarr-repair-join.mkv",
-		MovieID:         42,
-		DownloadID:      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+func testJoinImportRequest() JoinImportRequest {
+	return JoinImportRequest{
+		Command:         testJoinedFileImportCommand(),
 		HistoryIDBefore: 100,
 	}
 }
 
+func testJoinedFileImportCommand() controller.RadarrManualImportCommand {
+	return controller.RadarrManualImportCommand{
+		ImportMode: controller.RadarrImportModeCopy,
+		File: controller.RadarrManualImportCommandFile{
+			Path: "/downloads/Movie.Release/radarr-repair-join.mkv",
+			Quality: controller.RadarrQualityModel{Quality: controller.RadarrQuality{
+				ID: 7, Name: "Bluray-1080p", Source: "bluray",
+				Resolution: 1080, Modifier: "none",
+			}},
+			Languages: []controller.RadarrLanguage{{ID: 1, Name: "English"}},
+			MovieID:   42, DownloadID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		},
+	}
+}
+
 func testJoinedFileImport(
-	scan JoinScanRequest,
+	importRequest JoinImportRequest,
 	occurredAt time.Time,
 ) controller.RadarrImportedFile {
 	return controller.RadarrImportedFile{
-		HistoryID: 101, MovieFileID: 102, MovieID: scan.MovieID,
-		DownloadID: scan.DownloadID, OccurredAt: occurredAt,
-		DroppedPath: scan.Path, ImportedPath: "/library/Movie (2026)/Movie.mkv",
+		HistoryID: 101, MovieFileID: 102, MovieID: importRequest.Command.File.MovieID,
+		DownloadID: importRequest.Command.File.DownloadID, OccurredAt: occurredAt,
+		DroppedPath:  importRequest.Command.File.Path,
+		ImportedPath: "/library/Movie (2026)/Movie.mkv",
 	}
 }

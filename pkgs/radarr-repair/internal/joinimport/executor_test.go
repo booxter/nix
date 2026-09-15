@@ -33,11 +33,11 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 	old.HistoryID--
 	radarrClient := &fakeRadarr{
 		requestCommand: radarr.Command{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandQueued,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
 			Result: radarr.CommandResultUnknown,
 		},
 		commands: []radarr.Command{{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandCompleted,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandCompleted,
 			Result: radarr.CommandResultSuccessful,
 		}},
 		imports: [][]controller.RadarrImportedFile{{old}, {old, mismatch}, {old, exact}},
@@ -53,11 +53,9 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 		execution.Confirmation.HistoryID != exact.HistoryID {
 		t.Fatalf("execution = %#v", execution)
 	}
-	wantScan := radarr.DownloadedMoviesScan{
-		Path: testJoinedPath, DownloadID: testDownloadID,
-	}
-	if !reflect.DeepEqual(radarrClient.requested, wantScan) {
-		t.Fatalf("requested scan = %#v", radarrClient.requested)
+	wantImport := testImportCommand()
+	if !reflect.DeepEqual(radarrClient.requested, wantImport) {
+		t.Fatalf("requested importRequest = %#v", radarrClient.requested)
 	}
 	if radarrClient.requestCalls != 1 || radarrClient.commandReads != 1 ||
 		radarrClient.historyReads != 3 || waiter.waits != 1 {
@@ -71,7 +69,7 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 	}
 }
 
-func TestExecutorNeverRepeatsUncertainScan(t *testing.T) {
+func TestExecutorNeverRepeatsUncertainImport(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, time.September, 13, 20, 0, 0, 0, time.UTC)
@@ -113,15 +111,15 @@ func TestExecutorNeverRepeatsUncertainScan(t *testing.T) {
 	}
 }
 
-func TestExecutorResumesRequestedScan(t *testing.T) {
+func TestExecutorResumesRequestedImport(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, time.September, 13, 20, 0, 0, 0, time.UTC)
 	store := newFakeStore(now)
 	commandID := int64(92)
-	store.execution.State = casestore.JoinScanRequested
-	store.execution.Scan = &casestore.JoinScan{
-		Path: testJoinedPath, MovieID: 42, DownloadID: testDownloadID,
+	store.execution.State = casestore.JoinImportRequested
+	store.execution.Import = &casestore.JoinImport{
+		Command:         testImportCommand(),
 		HistoryIDBefore: 92, PreparedAt: now.Add(-time.Minute), CommandID: &commandID,
 	}
 	radarrClient := &fakeRadarr{imports: [][]controller.RadarrImportedFile{{
@@ -142,18 +140,18 @@ func TestExecutorResumesRequestedScan(t *testing.T) {
 	}
 }
 
-func TestExecutorRecordsDefiniteScanFailure(t *testing.T) {
+func TestExecutorRecordsDefiniteImportFailure(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, time.September, 13, 20, 0, 0, 0, time.UTC)
 	store := newFakeStore(now)
 	radarrClient := &fakeRadarr{
 		requestCommand: radarr.Command{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandQueued,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
 			Result: radarr.CommandResultUnknown,
 		},
 		commands: []radarr.Command{{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandFailed,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandFailed,
 			Result: radarr.CommandResultUnsuccessful,
 		}},
 	}
@@ -177,11 +175,11 @@ func TestExecutorLeavesMismatchedHistoryUnconfirmed(t *testing.T) {
 	mismatch.MovieID++
 	radarrClient := &fakeRadarr{
 		requestCommand: radarr.Command{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandQueued,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
 			Result: radarr.CommandResultUnknown,
 		},
 		commands: []radarr.Command{{
-			ID: 92, Name: "DownloadedMoviesScan", Status: radarr.CommandCompleted,
+			ID: 92, Name: "ManualImport", Status: radarr.CommandCompleted,
 			Result: radarr.CommandResultSuccessful,
 		}},
 		imports: [][]controller.RadarrImportedFile{{mismatch}},
@@ -193,7 +191,7 @@ func TestExecutorLeavesMismatchedHistoryUnconfirmed(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v", err)
 	}
-	if execution.State != casestore.JoinScanRequested || store.importedCalls != 0 {
+	if execution.State != casestore.JoinImportRequested || store.importedCalls != 0 {
 		t.Fatalf("execution = %#v, imported transitions = %d", execution, store.importedCalls)
 	}
 }
@@ -208,8 +206,8 @@ func assertUncertainSubmission(
 	if !errors.As(err, &uncertain) {
 		t.Fatalf("error = %v", err)
 	}
-	if execution.State != casestore.JoinScanPrepared || execution.Scan == nil ||
-		execution.Scan.CommandID != nil {
+	if execution.State != casestore.JoinImportPrepared || execution.Import == nil ||
+		execution.Import.CommandID != nil {
 		t.Fatalf("execution = %#v", execution)
 	}
 }
@@ -274,7 +272,7 @@ func (waiter *fakeWaiter) Wait(context.Context, time.Duration) error {
 type fakeRadarr struct {
 	requestCommand radarr.Command
 	requestErr     error
-	requested      radarr.DownloadedMoviesScan
+	requested      controller.RadarrManualImportCommand
 	requestCalls   int
 	commands       []radarr.Command
 	commandReads   int
@@ -282,16 +280,16 @@ type fakeRadarr struct {
 	historyReads   int
 }
 
-func (client *fakeRadarr) RequestDownloadedMoviesScan(
+func (client *fakeRadarr) RequestManualImport(
 	_ context.Context,
-	scan radarr.DownloadedMoviesScan,
+	importRequest controller.RadarrManualImportCommand,
 ) (radarr.Command, error) {
 	client.requestCalls++
-	client.requested = scan
+	client.requested = importRequest
 	return client.requestCommand, client.requestErr
 }
 
-func (client *fakeRadarr) ReadDownloadedMoviesScanCommand(
+func (client *fakeRadarr) ReadManualImportCommand(
 	context.Context,
 	int64,
 ) (radarr.Command, error) {
@@ -338,6 +336,8 @@ func newFakeStore(now time.Time) *fakeStore {
 				Correlation: controller.DownloadCorrelation{Radarr: controller.RadarrQueueRecord{
 					MovieID: &movieID, DownloadID: testDownloadID,
 				}},
+				Movie:   &controller.RadarrMovie{ID: 42},
+				History: []controller.RadarrHistoryEvent{testGrab()},
 			}},
 		},
 		execution: casestore.JoinExecution{
@@ -364,30 +364,57 @@ func (store *fakeStore) GetJoinExecution(string) (casestore.JoinExecution, bool,
 	return store.execution, true, nil
 }
 
-func (store *fakeStore) PrepareJoinScan(
+func (store *fakeStore) PrepareJoinImport(
 	_ string,
-	request casestore.JoinScanRequest,
+	request casestore.JoinImportRequest,
 	preparedAt time.Time,
 ) (casestore.JoinExecution, bool, error) {
 	if store.execution.State != casestore.JoinPublished {
 		return store.execution, false, nil
 	}
-	store.execution.State = casestore.JoinScanPrepared
-	store.execution.Scan = &casestore.JoinScan{
-		Path: request.Path, MovieID: request.MovieID, DownloadID: request.DownloadID,
+	store.execution.State = casestore.JoinImportPrepared
+	store.execution.Import = &casestore.JoinImport{
+		Command:         request.Command,
 		HistoryIDBefore: request.HistoryIDBefore, PreparedAt: preparedAt,
 	}
 	store.execution.UpdatedAt = preparedAt
 	return store.execution, true, nil
 }
 
-func (store *fakeStore) MarkJoinScanRequested(
+func testImportCommand() controller.RadarrManualImportCommand {
+	return controller.RadarrManualImportCommand{
+		ImportMode: controller.RadarrImportModeCopy,
+		File: controller.RadarrManualImportCommandFile{
+			Path: testJoinedPath,
+			Quality: controller.RadarrQualityModel{Quality: controller.RadarrQuality{
+				ID: 7, Name: "Bluray-1080p", Source: "bluray",
+				Resolution: 1080, Modifier: "none",
+			}},
+			Languages:  []controller.RadarrLanguage{{ID: 1, Name: "English"}},
+			DownloadID: testDownloadID,
+			MovieID:    42,
+		},
+	}
+}
+
+func testGrab() controller.RadarrHistoryEvent {
+	command := testImportCommand()
+	return controller.RadarrHistoryEvent{
+		ID: 91, MovieID: command.File.MovieID, DownloadID: command.File.DownloadID,
+		EventType:  controller.RadarrHistoryEventGrabbed,
+		OccurredAt: time.Date(2026, time.September, 1, 12, 0, 0, 0, time.UTC),
+		Quality:    &command.File.Quality,
+		Languages:  command.File.Languages,
+	}
+}
+
+func (store *fakeStore) MarkJoinImportRequested(
 	_ string,
 	commandID int64,
 	updatedAt time.Time,
 ) (casestore.JoinExecution, bool, error) {
-	store.execution.State = casestore.JoinScanRequested
-	store.execution.Scan.CommandID = &commandID
+	store.execution.State = casestore.JoinImportRequested
+	store.execution.Import.CommandID = &commandID
 	store.execution.UpdatedAt = updatedAt
 	return store.execution, true, nil
 }

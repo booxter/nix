@@ -271,7 +271,17 @@ func joinExecutionAssembly(t *testing.T) (casebuilder.Assembly, decisionpolicy.A
 		Movie: &controller.RadarrMovie{
 			ID: 42, TMDBID: 100, Title: "Movie", Year: 2026,
 		},
-		History:       []controller.RadarrHistoryEvent{},
+		History: []controller.RadarrHistoryEvent{{
+			ID: 1, MovieID: movieID, DownloadID: downloadID,
+			EventType:   controller.RadarrHistoryEventGrabbed,
+			OccurredAt:  time.Date(2026, time.September, 1, 12, 0, 0, 0, time.UTC),
+			SourceTitle: "Movie.Release.2026.1080p.BluRay",
+			Quality: &controller.RadarrQualityModel{Quality: controller.RadarrQuality{
+				ID: 7, Name: "Bluray-1080p", Source: "bluray",
+				Resolution: 1080, Modifier: "none",
+			}},
+			Languages: []controller.RadarrLanguage{{ID: 1, Name: "English"}},
+		}},
 		ManualImports: []controller.RadarrManualImport{},
 		Inventory: controller.FileInventory{
 			Files: []controller.InventoryFile{first, second},
