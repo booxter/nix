@@ -69,7 +69,7 @@ pkgs.testers.runNixOSTest {
         sabnzbd = {
           kind = "usenet";
           implementation = "sabnzbd";
-          endpoint = "http://127.0.0.1:8080";
+          endpoint = "http://127.0.0.1:8080/api";
           authentication = {
             type = "api-key";
             secret = "sabnzbd/apiKey";
