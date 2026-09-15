@@ -110,6 +110,41 @@ func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
 	assertPlannedCaseIDs(t, report.PlannedCases, []string{decidedID})
 }
 
+func TestRunStoresButDoesNotPlanSupersededCases(t *testing.T) {
+	t.Parallel()
+
+	newID := testCaseID("e")
+	decidedID := testCaseID("f")
+	newCase := supersededTestAssembly(newID)
+	decidedCase := supersededTestAssembly(decidedID)
+	store := newFakeStore()
+	store.known[decidedID] = true
+	store.assemblies[decidedID] = decidedCase
+	store.results[decidedID] = casestore.PlanningResult{
+		CaseID: decidedID, Attempts: 1, Decision: encodedTestDecision(t, decidedID),
+	}
+	planner := &fakePlanner{}
+	runner := newTestRunner(
+		t,
+		&fakeCaseSource{assemblies: []casebuilder.Assembly{newCase, decidedCase}},
+		store,
+		planner,
+		time.Date(2026, time.September, 12, 18, 0, 0, 0, time.UTC),
+	)
+
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantReport := Report{Observed: 2, Stored: 1, Superseded: 2}
+	if !reflect.DeepEqual(reportSummary(report), wantReport) {
+		t.Fatalf("report = %#v, want %#v", report, wantReport)
+	}
+	if len(planner.calls) != 0 || len(report.PlannedCases) != 0 {
+		t.Fatalf("planner calls = %v, planned cases = %#v", planner.calls, report.PlannedCases)
+	}
+}
+
 func TestRunKeepsFirstObservationForAlreadyDecidedCase(t *testing.T) {
 	t.Parallel()
 
@@ -471,6 +506,17 @@ func classifyTestFailure(error) casestore.PlanningFailure {
 
 func testAssembly(caseID string) casebuilder.Assembly {
 	return casebuilder.Assembly{Request: contracts.RepairCaseV2{CaseID: caseID}}
+}
+
+func supersededTestAssembly(caseID string) casebuilder.Assembly {
+	assembly := testAssembly(caseID)
+	assembly.LocalSnapshot.Observation.Movie = &controller.RadarrMovie{HasFile: true}
+	assembly.LocalSnapshot.Observation.ManualImports = []controller.RadarrManualImport{{
+		Rejections: []controller.RadarrManualImportRejection{{
+			Code: controller.RejectionNotQualityUpgrade,
+		}},
+	}}
+	return assembly
 }
 
 func reportSummary(report Report) Report {

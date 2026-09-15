@@ -49,7 +49,7 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if stdout.String() != "observed=2 stored=0 submitted=0 decided=1 "+
+	if stdout.String() != "observed=2 stored=0 superseded=0 submitted=0 decided=1 "+
 		"already_decided=0 deferred=0 failed=0\n"+
 		"apply=completed case_id=case-1 action=join_parts_v1 "+
 		"state=imported execution_id=join-1\n" || stderr.Len() != 0 {
@@ -152,7 +152,7 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 	if err := writeAutomaticSummary(&output, report); err != nil {
 		t.Fatal(err)
 	}
-	want := "observed=0 stored=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0\n" +
+	want := "observed=0 stored=0 superseded=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0\n" +
 		"apply=precondition_rejected case_id=case-1 action=manual_import_file_v1 " +
 		"reason=stabilization_pending observed_at=2026-09-14T19:03:52Z " +
 		"checked_at=2026-09-14T19:15:52Z required_age=15m0s actual_age=12m0s\n"

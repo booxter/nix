@@ -23,7 +23,7 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 	arguments, apiKeyFile, stateDirectory, metricsFile := validShadowArguments(t)
 	var gotConfig shadowConfig
 	wantReport := shadowrunner.Report{
-		Observed: 12, Stored: 3, Submitted: 4, Decided: 3,
+		Observed: 12, Stored: 3, Superseded: 2, Submitted: 4, Decided: 3,
 		AlreadyDecided: 5, Deferred: 3, Failed: 1,
 	}
 	app := application{shadow: func(
@@ -40,7 +40,7 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if stdout.String() != "observed=12 stored=3 submitted=4 decided=3 "+
+	if stdout.String() != "observed=12 stored=3 superseded=2 submitted=4 decided=3 "+
 		"already_decided=5 deferred=3 failed=1\n" || stderr.Len() != 0 {
 		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
 	}
@@ -85,7 +85,7 @@ func TestShadowPrintsSummaryWhenRunFails(t *testing.T) {
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v", err)
 	}
-	if stdout.String() != "observed=2 stored=0 submitted=0 decided=1 "+
+	if stdout.String() != "observed=2 stored=0 superseded=0 submitted=0 decided=1 "+
 		"already_decided=0 deferred=0 failed=1\n" {
 		t.Fatalf("stdout = %q", stdout.String())
 	}

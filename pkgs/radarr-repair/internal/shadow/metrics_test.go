@@ -21,7 +21,7 @@ func TestWriteMetricsReportsLatestShadowRun(t *testing.T) {
 	completedAt := time.Date(2026, time.September, 13, 18, 0, 0, 0, time.UTC)
 	downloadCompletedAt := completedAt.Add(-2 * time.Hour)
 	report := Report{
-		Observed: 2, Stored: 1, Submitted: 2, Decided: 1, Failed: 1,
+		Observed: 2, Stored: 1, Superseded: 1, Submitted: 2, Decided: 1, Failed: 1,
 	}
 	report.observe(casebuilder.Assembly{Request: contracts.RepairCaseV2{
 		Radarr: contracts.Radarr{Failure: contracts.Failure{
@@ -57,6 +57,9 @@ func TestWriteMetricsReportsLatestShadowRun(t *testing.T) {
 	assertMetric(t, families, MetricsNamespace+"_shadow_collection_success", nil, 0)
 	assertMetric(
 		t, families, MetricsNamespace+"_shadow_cases", map[string]string{"outcome": "observed"}, 2,
+	)
+	assertMetric(
+		t, families, MetricsNamespace+"_shadow_cases", map[string]string{"outcome": "superseded"}, 1,
 	)
 	assertMetric(
 		t, families, MetricsNamespace+"_shadow_observations",

@@ -52,6 +52,7 @@ type Dependencies struct {
 type Report struct {
 	Observed       int
 	Stored         int
+	Superseded     int
 	Submitted      int
 	Decided        int
 	AlreadyDecided int
@@ -179,6 +180,7 @@ const (
 	caseDecided
 	caseAlreadyDecided
 	caseDeferred
+	caseSuperseded
 )
 
 type caseResult struct {
@@ -218,6 +220,8 @@ func (report *Report) add(result caseResult) {
 		})
 	case caseDeferred:
 		report.Deferred++
+	case caseSuperseded:
+		report.Superseded++
 	case caseFailed:
 		report.Failed++
 	}
@@ -232,6 +236,14 @@ func (runner *Runner) process(
 		return caseResult{Outcome: caseFailed}, fmt.Errorf("store repair case: %w", err)
 	}
 	result := caseResult{Stored: created, Assembly: assembly}
+	observation := assembly.LocalSnapshot.Observation
+	if controller.AllReplacementsSuperseded(
+		observation.Movie,
+		observation.ManualImports,
+	) {
+		result.Outcome = caseSuperseded
+		return result, nil
+	}
 	caseID := assembly.Request.CaseID
 	previous, found, err := runner.dependencies.Store.GetPlanningResult(caseID)
 	if err != nil {

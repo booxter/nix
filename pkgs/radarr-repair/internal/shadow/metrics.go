@@ -44,6 +44,7 @@ func WriteMetrics(
 	setGaugeValues(cases, []labeledValue{
 		{label: "observed", value: report.Observed},
 		{label: "stored", value: report.Stored},
+		{label: "superseded", value: report.Superseded},
 		{label: "submitted", value: report.Submitted},
 		{label: "decided", value: report.Decided},
 		{label: "already_decided", value: report.AlreadyDecided},

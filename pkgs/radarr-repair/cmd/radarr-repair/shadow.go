@@ -158,9 +158,11 @@ func (app application) runShadow(
 func writeShadowSummary(writer io.Writer, report shadowrunner.Report) error {
 	_, err := fmt.Fprintf(
 		writer,
-		"observed=%d stored=%d submitted=%d decided=%d already_decided=%d deferred=%d failed=%d\n",
+		"observed=%d stored=%d superseded=%d submitted=%d decided=%d "+
+			"already_decided=%d deferred=%d failed=%d\n",
 		report.Observed,
 		report.Stored,
+		report.Superseded,
 		report.Submitted,
 		report.Decided,
 		report.AlreadyDecided,
