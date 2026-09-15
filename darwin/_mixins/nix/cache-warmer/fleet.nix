@@ -21,7 +21,7 @@ let
   ) (builtins.attrNames outputs.checks);
   warmTargets = fleetTargets ++ checkTargets;
   atticCaches = lib.mapAttrsToList (
-    name: server: "${name}:${server.cacheName}"
+    name: server: "${name}:${server.defaultCache}"
   ) config.host.attic.realmServers;
   package = pkgs.callPackage ./pkgs/fleet-cache-warmer {
     inherit pushToAttic warmTargets;
