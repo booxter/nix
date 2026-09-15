@@ -19,13 +19,14 @@ import (
 type RejectionReason string
 
 const (
-	DecisionRejected     RejectionReason = "decision_rejected"
-	StabilizationPending RejectionReason = "stabilization_pending"
-	CaseUnavailable      RejectionReason = "case_unavailable"
-	CaseChanged          RejectionReason = "case_changed"
-	AuthorizationChanged RejectionReason = "authorization_changed"
-	ExistingMovieFile    RejectionReason = "existing_movie_file"
-	JoinExecutionPresent RejectionReason = "join_execution_present"
+	DecisionRejected      RejectionReason = "decision_rejected"
+	StabilizationPending  RejectionReason = "stabilization_pending"
+	CaseUnavailable       RejectionReason = "case_unavailable"
+	CaseChanged           RejectionReason = "case_changed"
+	AuthorizationChanged  RejectionReason = "authorization_changed"
+	SupersededReplacement RejectionReason = "superseded_replacement"
+	UnprovedReplacement   RejectionReason = "unproved_replacement"
+	JoinExecutionPresent  RejectionReason = "join_execution_present"
 )
 
 type Rejection struct {
@@ -142,15 +143,14 @@ func (checker *Checker) Check(
 	if fresh.Request.CaseID != stored.Request.CaseID {
 		return rejected(CaseChanged), nil
 	}
-	// The planner cannot prove Radarr's full upgrade policy from a repair case.
-	// Never let it replace an already imported movie file.
-	if fresh.LocalSnapshot.Observation.Movie != nil &&
-		fresh.LocalSnapshot.Observation.Movie.HasFile {
-		return rejected(ExistingMovieFile), nil
-	}
-
 	freshAuthorization, ok := authorize(fresh, decision)
-	if !ok || !reflect.DeepEqual(freshAuthorization, storedAuthorization) {
+	if !ok {
+		return rejected(AuthorizationChanged), nil
+	}
+	if reason, unsafe := replacementRejection(fresh, freshAuthorization); unsafe {
+		return rejected(reason), nil
+	}
+	if !reflect.DeepEqual(freshAuthorization, storedAuthorization) {
 		return rejected(AuthorizationChanged), nil
 	}
 	if !casebuilder.SameCaseState(stored, fresh) {

@@ -232,7 +232,7 @@ func TestCheckRejectsChangedExecutionState(t *testing.T) {
 	}
 }
 
-func TestCheckRejectsRepairWhenMovieAlreadyHasFile(t *testing.T) {
+func TestCheckAllowsReplacementAfterRadarrCompletedComparison(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -245,13 +245,16 @@ func TestCheckRejectsRepairWhenMovieAlreadyHasFile(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			stored := executionAssembly()
-			stored.LocalSnapshot.Observation.Correlation.Download.Client =
-				controller.DownloadClientSABnzbd
+			setReplacementEvidence(&stored, map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:first":  {controller.RejectionMultiPartMovie},
+				"file:second": {controller.RejectionMultiPartMovie},
+			})
 			fresh := executionAssembly()
-			fresh.LocalSnapshot.Observation.Correlation.Download.Client =
-				controller.DownloadClientSABnzbd
+			setReplacementEvidence(&fresh, map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:first":  {controller.RejectionMultiPartMovie},
+				"file:second": {controller.RejectionMultiPartMovie},
+			})
 			advanceObservation(&fresh, time.Minute)
-			fresh.LocalSnapshot.Observation.Movie.HasFile = true
 			checker := newTestChecker(
 				t,
 				&fakeFreshCases{assembly: fresh},
@@ -263,7 +266,71 @@ func TestCheckRejectsRepairWhenMovieAlreadyHasFile(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			assertRejected(t, result, ExistingMovieFile)
+			if !result.Accepted() {
+				t.Fatalf("result = %#v", result)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsUnsafeReplacement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		decision contracts.RepairDecisionV2
+		evidence map[controller.FileID][]controller.RadarrManualImportRejectionReason
+		reason   RejectionReason
+	}{
+		{
+			name: "manual import downgrade", decision: executionManualImportDecision(),
+			evidence: map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:first": {controller.RejectionNotQualityUpgrade},
+			},
+			reason: SupersededReplacement,
+		},
+		{
+			name: "manual import incomplete comparison", decision: executionManualImportDecision(),
+			evidence: map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:first": {controller.RejectionUnableToParse},
+			},
+			reason: UnprovedReplacement,
+		},
+		{
+			name: "join part missing comparison", decision: executionJoinDecision(),
+			evidence: map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:first": {controller.RejectionMultiPartMovie},
+			},
+			reason: UnprovedReplacement,
+		},
+		{
+			name: "join downgrade takes priority", decision: executionJoinDecision(),
+			evidence: map[controller.FileID][]controller.RadarrManualImportRejectionReason{
+				"file:second": {controller.RejectionNotCustomFormatUpgrade},
+			},
+			reason: SupersededReplacement,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			stored := executionAssembly()
+			setReplacementEvidence(&stored, test.evidence)
+			fresh := executionAssembly()
+			setReplacementEvidence(&fresh, test.evidence)
+			advanceObservation(&fresh, time.Minute)
+			checker := newTestChecker(
+				t,
+				&fakeFreshCases{assembly: fresh},
+				&fakeJoinExecutions{},
+				stored.Request.ObservedAt.Add(time.Hour),
+			)
+
+			result, err := checker.Check(context.Background(), stored, test.decision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertRejected(t, result, test.reason)
 		})
 	}
 }
@@ -465,6 +532,30 @@ func executionFile(
 		DownloadFile: &controller.DownloadFileReference{
 			LengthBytes: size, BytesCompleted: size, Selected: true,
 		},
+	}
+}
+
+func setReplacementEvidence(
+	assembly *casebuilder.Assembly,
+	evidence map[controller.FileID][]controller.RadarrManualImportRejectionReason,
+) {
+	assembly.LocalSnapshot.Observation.Movie.HasFile = true
+	assembly.LocalSnapshot.Observation.ManualImports = nil
+	for _, mapping := range assembly.LocalSnapshot.Observation.Inventory.Paths {
+		reasons, included := evidence[mapping.FileID]
+		if !included {
+			continue
+		}
+		rejections := make([]controller.RadarrManualImportRejection, len(reasons))
+		for index, reason := range reasons {
+			rejections[index] = controller.RadarrManualImportRejection{
+				Code: reason, Reason: string(reason),
+			}
+		}
+		assembly.LocalSnapshot.Observation.ManualImports = append(
+			assembly.LocalSnapshot.Observation.ManualImports,
+			controller.RadarrManualImport{Path: mapping.AbsolutePath, Rejections: rejections},
+		)
 	}
 }
 

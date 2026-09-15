@@ -13,7 +13,8 @@ var automaticRejectionReasons = [...]executioncheck.RejectionReason{
 	executioncheck.CaseUnavailable,
 	executioncheck.CaseChanged,
 	executioncheck.AuthorizationChanged,
-	executioncheck.ExistingMovieFile,
+	executioncheck.SupersededReplacement,
+	executioncheck.UnprovedReplacement,
 	executioncheck.JoinExecutionPresent,
 }
 
