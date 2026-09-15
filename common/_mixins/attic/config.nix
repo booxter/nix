@@ -26,7 +26,7 @@ let
     }) servers;
   };
   pushCommands = lib.mapAttrsToList (name: server: ''
-    ${lib.getExe pkgs.attic-client} push --jobs 1 ${lib.escapeShellArg "${name}:${server.cacheName}"} $OUT_PATHS || true
+    ${lib.getExe pkgs.attic-client} push --jobs 1 ${lib.escapeShellArg "${name}:${server.defaultCache}"} $OUT_PATHS || true
   '') servers;
   postBuildHook = pkgs.writeShellScript "attic-push-hook" ''
     set -eu
