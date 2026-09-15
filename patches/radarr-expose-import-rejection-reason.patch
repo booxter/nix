@@ -1,0 +1,48 @@
+diff --git a/src/NzbDrone.Api.Test/v3/ManualImport/ManualImportResourceMapperFixture.cs b/src/NzbDrone.Api.Test/v3/ManualImport/ManualImportResourceMapperFixture.cs
+new file mode 100644
+index 000000000..8acb6fcc1
+--- /dev/null
++++ b/src/NzbDrone.Api.Test/v3/ManualImport/ManualImportResourceMapperFixture.cs
+@@ -0,0 +1,24 @@
++using FluentAssertions;
++using NUnit.Framework;
++using NzbDrone.Core.MediaFiles.MovieImport;
++using Radarr.Api.V3.ManualImport;
++
++namespace NzbDrone.Api.Test.v3.ManualImport
++{
++    [TestFixture]
++    public class ManualImportResourceMapperFixture
++    {
++        [Test]
++        public void should_expose_machine_readable_rejection_reason()
++        {
++            var rejection = new ImportRejection(
++                ImportRejectionReason.NotQualityUpgrade,
++                "Not an upgrade for existing movie file");
++
++            var resource = rejection.ToResource();
++
++            resource.ReasonCode.Should().Be(ImportRejectionReason.NotQualityUpgrade);
++            resource.Reason.Should().Be("Not an upgrade for existing movie file");
++        }
++    }
++}
+diff --git a/src/Radarr.Api.V3/ManualImport/ManualImportResource.cs b/src/Radarr.Api.V3/ManualImport/ManualImportResource.cs
+index ddbc34a97..bf4cc9941 100644
+--- a/src/Radarr.Api.V3/ManualImport/ManualImportResource.cs
++++ b/src/Radarr.Api.V3/ManualImport/ManualImportResource.cs
+@@ -76,5 +76,6 @@ namespace Radarr.Api.V3.ManualImport
+     public class ImportRejectionResource
+     {
++        public ImportRejectionReason ReasonCode { get; set; }
+         public string Reason { get; set; }
+         public RejectionType Type { get; set; }
+     }
+@@ -90,5 +91,6 @@ namespace Radarr.Api.V3.ManualImport
+             return new ImportRejectionResource
+             {
++                ReasonCode = rejection.Reason,
+                 Reason = rejection.Message,
+                 Type = rejection.Type
+             };

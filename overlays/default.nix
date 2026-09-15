@@ -30,6 +30,14 @@
       # the release branch. Keep the base and ROCm variants on one revision.
       inherit (pkgsNixpkgsUnstable) ollama ollama-rocm;
 
+      # Expose Radarr's stable manual-import rejection reason beside its human
+      # message so local API consumers do not have to match mutable text.
+      radarr = prev.radarr.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../patches/radarr-expose-import-rejection-reason.patch
+        ];
+      });
+
       # Keep Telegram Desktop fresh until the update reaches 26.05.
       # https://github.com/NixOS/nixpkgs/pull/543925
       inherit (pkgsNixpkgsUnstable) telegram-desktop;
