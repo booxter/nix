@@ -35,6 +35,7 @@
       radarr = prev.radarr.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/radarr-expose-import-rejection-reason.patch
+          ../patches/radarr-use-grab-history-for-ambiguous-title.patch
         ];
       });
 

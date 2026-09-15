@@ -1,0 +1,60 @@
+diff --git a/src/NzbDrone.Core.Test/Download/CompletedDownloadServiceTests/ProcessFixture.cs b/src/NzbDrone.Core.Test/Download/CompletedDownloadServiceTests/ProcessFixture.cs
+index cb431be53..532dc3d7e 100644
+--- a/src/NzbDrone.Core.Test/Download/CompletedDownloadServiceTests/ProcessFixture.cs
++++ b/src/NzbDrone.Core.Test/Download/CompletedDownloadServiceTests/ProcessFixture.cs
+@@ -139,6 +139,33 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
+             AssertReadyToImport();
+         }
+ 
++        [Test]
++        public void should_use_grab_history_when_download_title_matches_multiple_movies()
++        {
++            var movie = _trackedDownload.RemoteMovie.Movie;
++            movie.Id = 42;
++            Mocker.GetMock<IHistoryService>()
++                  .Setup(s => s.FindByDownloadId(_trackedDownload.DownloadItem.DownloadId))
++                  .Returns(new List<MovieHistory>
++                  {
++                      new MovieHistory
++                      {
++                          EventType = MovieHistoryEventType.Grabbed,
++                          MovieId = movie.Id
++                      }
++                  });
++            Mocker.GetMock<IParsingService>()
++                  .Setup(s => s.GetMovie(_trackedDownload.DownloadItem.Title))
++                  .Throws(new MultipleMoviesFoundException(new List<Movie>(), "Ambiguous title"));
++            Mocker.GetMock<IMovieService>()
++                  .Setup(s => s.GetMovie(movie.Id))
++                  .Returns(movie);
++
++            Subject.Check(_trackedDownload);
++
++            AssertReadyToImport();
++        }
++
+         [Test]
+         public void should_not_process_if_output_path_is_empty()
+         {
+diff --git a/src/NzbDrone.Core/Download/CompletedDownloadService.cs b/src/NzbDrone.Core/Download/CompletedDownloadService.cs
+index a71ee830f..1da1e2151 100644
+--- a/src/NzbDrone.Core/Download/CompletedDownloadService.cs
++++ b/src/NzbDrone.Core/Download/CompletedDownloadService.cs
+@@ -86,7 +86,16 @@ namespace NzbDrone.Core.Download
+                 return;
+             }
+ 
+-            var movie = _parsingService.GetMovie(trackedDownload.DownloadItem.Title);
++            Movie movie;
++            try
++            {
++                movie = _parsingService.GetMovie(trackedDownload.DownloadItem.Title);
++            }
++            catch (MultipleMoviesFoundException)
++            {
++                // The recorded grab still identifies the intended movie.
++                movie = null;
++            }
+ 
+             if (movie == null)
+             {
