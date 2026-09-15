@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/repairartifact"
 )
 
 type rootHandle interface {
@@ -411,6 +412,12 @@ func assembleInventory(
 	}
 	seenIDs := make(map[controller.FileID]struct{}, len(observed))
 	for _, observedFile := range observed {
+		expected, inManifest := manifest[observedFile.path]
+		// Published repair outputs are not source evidence. Excluding them when
+		// they are absent from the download manifest keeps retries on one case ID.
+		if !inManifest && repairartifact.IsPublishedName(filepath.Base(observedFile.path)) {
+			continue
+		}
 		fingerprint, err := snapshot(observedFile.info)
 		if err != nil {
 			return controller.FileInventory{}, fmt.Errorf(
@@ -432,7 +439,7 @@ func assembleInventory(
 				BytesCompleted: fingerprint.SizeBytes,
 				Selected:       true,
 			}
-		} else if expected, exists := manifest[observedFile.path]; exists {
+		} else if inManifest {
 			if fingerprint.SizeBytes != expected.file.LengthBytes {
 				return controller.FileInventory{}, fmt.Errorf(
 					"filesystem entry %q size does not match download manifest",

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/booxter/nix-config/radarr-repair/internal/repairartifact"
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 	"golang.org/x/sys/unix"
 )
@@ -16,7 +17,6 @@ const (
 	workerDirectoryName = ".radarr-repair"
 	stagedDirectoryName = "staged"
 	stagedNameDomain    = "radarr-repair-worker-staged-name-v1\x00"
-	publishedNameDomain = "radarr-repair-worker-published-name-v1\x00"
 )
 
 type StagedArtifact interface {
@@ -356,7 +356,7 @@ func (rootSet *RootSet) PublishCompleted(
 	if err != nil {
 		return nil, err
 	}
-	name := publishedName(artifactID, extension)
+	name := repairartifact.PublishedName(artifactID, extension)
 	location := append(append([]string(nil), directoryComponents...), name)
 
 	stagedDirectory, found, err := openStagedDirectory(root)
@@ -534,13 +534,6 @@ func stagedName(artifactID string, extension string) string {
 	_, _ = digest.Write([]byte(stagedNameDomain))
 	_, _ = digest.Write([]byte(artifactID))
 	return hex.EncodeToString(digest.Sum(nil)) + extension
-}
-
-func publishedName(artifactID string, extension string) string {
-	digest := sha256.New()
-	_, _ = digest.Write([]byte(publishedNameDomain))
-	_, _ = digest.Write([]byte(artifactID))
-	return "radarr-repair-" + hex.EncodeToString(digest.Sum(nil)) + extension
 }
 
 func commonInputDirectory(inputPaths [][]string) ([]string, error) {

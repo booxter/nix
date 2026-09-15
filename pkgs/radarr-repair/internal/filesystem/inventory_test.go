@@ -154,6 +154,70 @@ func TestInventoryOwnsEveryFileInCompletedOutputTree(t *testing.T) {
 	}
 }
 
+func TestInventoryOmitsPublishedRepairArtifacts(t *testing.T) {
+	t.Parallel()
+
+	correlation := inventoryFixture(t)
+	repairName := "radarr-repair-" + strings.Repeat("a", 64) + ".mkv"
+	if err := os.WriteFile(
+		filepath.Join(correlation.DownloadRoot, repairName),
+		[]byte("repair output"),
+		0o600,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	inventory, err := New().Inventory(context.Background(), correlation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inventory.Files) != 3 {
+		t.Fatalf("files = %#v", inventory.Files)
+	}
+	for _, file := range inventory.Files {
+		if strings.Join(file.PathComponents, "/") == repairName {
+			t.Fatalf("repair output was included: %#v", file)
+		}
+	}
+}
+
+func TestInventoryKeepsPublishedNameFromDownloadManifest(t *testing.T) {
+	t.Parallel()
+
+	correlation := inventoryFixture(t)
+	repairName := "radarr-repair-" + strings.Repeat("a", 64) + ".mkv"
+	contents := []byte("download content")
+	path := filepath.Join(correlation.DownloadRoot, repairName)
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	correlation.Download.Files = append(correlation.Download.Files, controller.DownloadFile{
+		Index:          3,
+		HasIndex:       true,
+		Path:           path,
+		LengthBytes:    int64(len(contents)),
+		BytesCompleted: int64(len(contents)),
+		Selected:       true,
+	})
+
+	inventory, err := New().Inventory(context.Background(), correlation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inventory.Files) != 4 {
+		t.Fatalf("files = %#v", inventory.Files)
+	}
+	found := false
+	for _, file := range inventory.Files {
+		if strings.Join(file.PathComponents, "/") == repairName {
+			found = file.DownloadFile != nil && file.DownloadFile.Index == 3
+		}
+	}
+	if !found {
+		t.Fatalf("manifest file %q was not included", repairName)
+	}
+}
+
 func TestInventoryRejectsManifestForOutputTree(t *testing.T) {
 	t.Parallel()
 
