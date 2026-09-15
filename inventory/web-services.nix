@@ -28,6 +28,14 @@
                 proxy_send_timeout 3600s;
               '';
             };
+            githubConfig = {
+              location = "= /_api/v1/cache-config/github";
+              locationExtraConfig = ''
+                limit_except GET {
+                  deny all;
+                }
+              '';
+            };
             missingPaths = {
               location = "= /_api/v1/get-missing-paths";
               locationExtraConfig = ''
