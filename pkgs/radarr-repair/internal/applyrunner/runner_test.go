@@ -65,6 +65,35 @@ func TestRunExecutesFirstPermittedUnfinishedRepair(t *testing.T) {
 	assertLease(t, locker, true)
 }
 
+func TestRunExecutesPermittedSABnzbdRepair(t *testing.T) {
+	t.Parallel()
+
+	planned := runnerPlan("sab", contracts.ActionManualImportFile)
+	planned.Assembly.LocalSnapshot.Observation.Correlation.Download.Client =
+		controller.DownloadClientSABnzbd
+	executor := &runnerExecutor{}
+	runner := newTestRunner(t, &runnerStore{}, executor, newRunnerLocker())
+	report, err := runner.Run(
+		context.Background(),
+		[]casestore.PlannedCase{planned},
+		applyselection.Policy{
+			AllowedActions: map[contracts.DecisionAction]bool{
+				contracts.ActionManualImportFile: true,
+			},
+			AllowedDownloadClients: map[controller.DownloadClient]bool{
+				controller.DownloadClientSABnzbd: true,
+			},
+			Limit: 1,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Selected != 1 || !reflect.DeepEqual(executor.calls, []string{"sab"}) {
+		t.Fatalf("report = %#v, executed cases = %v", report, executor.calls)
+	}
+}
+
 func TestRunResumesUnfinishedRepair(t *testing.T) {
 	t.Parallel()
 

@@ -235,26 +235,36 @@ func TestCheckRejectsChangedExecutionState(t *testing.T) {
 func TestCheckRejectsRepairWhenMovieAlreadyHasFile(t *testing.T) {
 	t.Parallel()
 
-	for _, decision := range []contracts.RepairDecisionV2{
-		executionManualImportDecision(),
-		executionJoinDecision(),
+	for _, test := range []struct {
+		name     string
+		decision contracts.RepairDecisionV2
+	}{
+		{"manual import", executionManualImportDecision()},
+		{"join", executionJoinDecision()},
 	} {
-		stored := executionAssembly()
-		fresh := executionAssembly()
-		advanceObservation(&fresh, time.Minute)
-		fresh.LocalSnapshot.Observation.Movie.HasFile = true
-		checker := newTestChecker(
-			t,
-			&fakeFreshCases{assembly: fresh},
-			&fakeJoinExecutions{},
-			stored.Request.ObservedAt.Add(time.Hour),
-		)
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			stored := executionAssembly()
+			stored.LocalSnapshot.Observation.Correlation.Download.Client =
+				controller.DownloadClientSABnzbd
+			fresh := executionAssembly()
+			fresh.LocalSnapshot.Observation.Correlation.Download.Client =
+				controller.DownloadClientSABnzbd
+			advanceObservation(&fresh, time.Minute)
+			fresh.LocalSnapshot.Observation.Movie.HasFile = true
+			checker := newTestChecker(
+				t,
+				&fakeFreshCases{assembly: fresh},
+				&fakeJoinExecutions{},
+				stored.Request.ObservedAt.Add(time.Hour),
+			)
 
-		result, err := checker.Check(context.Background(), stored, decision)
-		if err != nil {
-			t.Fatal(err)
-		}
-		assertRejected(t, result, ExistingMovieFile)
+			result, err := checker.Check(context.Background(), stored, test.decision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertRejected(t, result, ExistingMovieFile)
+		})
 	}
 }
 

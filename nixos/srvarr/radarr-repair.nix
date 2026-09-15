@@ -19,7 +19,10 @@ in
         "join_parts_v1"
         "manual_import_file_v1"
       ];
-      allowedDownloadClients = [ "transmission" ];
+      allowedDownloadClients = [
+        "transmission"
+        "sabnzbd"
+      ];
     };
   };
 
@@ -33,7 +36,10 @@ in
       "root:downloads" = config.services.transmission.settings.download-dir;
       "root:usenet-manual" = downloads.routes.radarr-usenet.path;
     };
-    writableRoots = [ "root:downloads" ];
+    writableRoots = [
+      "root:downloads"
+      "root:usenet-manual"
+    ];
   };
 
   host.pki.clients.radarr-repair-planner = {
