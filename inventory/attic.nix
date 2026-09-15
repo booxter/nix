@@ -11,6 +11,7 @@ in
     caches.github = {
       endpoint = "https://cache.ihar.dev";
       public = true;
+      trustedPublicKey = readPublicKey ../nixos/beast/attic-github-signing.pub;
     };
   };
 }

@@ -89,12 +89,20 @@ in
             {
               substituter = "${cache.endpoint}/${cacheName}";
               trustedPublicKeys = [ cache.trustedPublicKey ];
-              requiredNetwork = config.host.realm;
-              priorities = {
-                default = 30;
-                lan = 10;
-                wan = 30;
-              };
+              requiredNetwork = if cache.public then null else config.host.realm;
+              priorities =
+                if cache.public then
+                  {
+                    default = 30;
+                    lan = 30;
+                    wan = 10;
+                  }
+                else
+                  {
+                    default = 30;
+                    lan = 10;
+                    wan = 30;
+                  };
             }
         ) (lib.filterAttrs (_: cache: cache.trustedPublicKey != null) server.caches)
       ) config.host.attic.realmServers
