@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  storageIdentities,
   utils,
   ...
 }:
@@ -46,6 +47,7 @@ in
       isSystemUser = true;
       group = worker.clientGroup;
       home = "/var/empty";
+      uid = storageIdentities.users.${serviceUser}.uid;
     };
 
     systemd.services.${serviceName} = {

@@ -18,6 +18,10 @@
       uid = 296;
       group = null;
     };
+    radarr-repair-worker = {
+      uid = 300;
+      group = null;
+    };
     romm = {
       uid = 295;
       group = null;
