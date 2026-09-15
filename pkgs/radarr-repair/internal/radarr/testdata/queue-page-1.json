@@ -11,7 +11,7 @@
       "id": 101,
       "indexer": "Example Indexer",
       "movieId": 42,
-      "outputPath": "/downloads/Example.Movie.2026",
+      "outputPath": "/downloads/Example.Movie.2026/",
       "protocol": "torrent",
       "size": 4294967296,
       "sizeleft": 0,

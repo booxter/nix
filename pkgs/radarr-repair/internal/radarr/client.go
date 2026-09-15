@@ -225,7 +225,7 @@ func mapQueueRecord(record *starrRadarr.QueueRecord) (controller.RadarrQueueReco
 		Protocol:                      controller.DownloadProtocol(record.Protocol),
 		DownloadClient:                record.DownloadClient,
 		Indexer:                       record.Indexer,
-		OutputPath:                    record.OutputPath,
+		OutputPath:                    normalizeQueueOutputPath(record.OutputPath),
 		DownloadClientHasPostCategory: record.HasPostImportCategory,
 	}
 	// Starr represents Radarr's nullable movie ID and completion time as zero
@@ -240,6 +240,17 @@ func mapQueueRecord(record *starrRadarr.QueueRecord) (controller.RadarrQueueReco
 	}
 
 	return result, nil
+}
+
+func normalizeQueueOutputPath(path string) string {
+	// Radarr may retain a directory's trailing separator in queue records. Drop
+	// only trailing separators here; later validation still rejects other
+	// non-canonical or unsafe paths instead of silently cleaning them.
+	trimmed := strings.TrimRight(path, "/")
+	if trimmed == "" {
+		return path
+	}
+	return trimmed
 }
 
 func invalidSize(value float64) bool {
