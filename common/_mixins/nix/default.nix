@@ -38,6 +38,7 @@ in
   imports = [
     ./cache
     ./flakehub
+    ./netrc.nix
   ];
 
   nix = {

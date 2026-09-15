@@ -22,8 +22,6 @@ let
     lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
 in
 lib.mkIf (config.host.realm == "home") {
-  nix.settings.netrc-file = config.sops.templates."flakehub-netrc".path;
-
   host.nix.caches.flakehub = {
     substituter = "https://cache.flakehub.com";
     trustedPublicKeys = flakehubCacheKeys;
@@ -33,18 +31,20 @@ lib.mkIf (config.host.realm == "home") {
     };
   };
 
-  sops = {
-    secrets."flakehub/token" = { };
-    templates."flakehub-netrc" = {
-      owner = "root";
-      # macOS names gid 0 "wheel"; there is no root group.
-      group = if config.nixpkgs.hostPlatform.isDarwin then "wheel" else "root";
-      mode = "0400";
-      content = ''
-        machine flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-        machine api.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-        machine cache.flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
-      '';
+  host.nix.netrcMachines = {
+    "flakehub.com" = {
+      login = "flakehub";
+      password = config.sops.placeholder."flakehub/token";
+    };
+    "api.flakehub.com" = {
+      login = "flakehub";
+      password = config.sops.placeholder."flakehub/token";
+    };
+    "cache.flakehub.com" = {
+      login = "flakehub";
+      password = config.sops.placeholder."flakehub/token";
     };
   };
+
+  sops.secrets."flakehub/token" = { };
 }
