@@ -18,6 +18,8 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     imports = [
       inputs.sops-nix.nixosModules.sops
+      ../../nixos/_mixins/downloads/default.nix
+      ../../nixos/_mixins/radarr/assertions.nix
       ../../nixos/_mixins/radarr/controller.nix
       ../../nixos/_mixins/radarr/repair.nix
       ../../nixos/_mixins/radarr/worker.nix
@@ -28,12 +30,19 @@ pkgs.testers.runNixOSTest {
       type = lib.types.nullOr (lib.types.submodule { options = radarrOptions; });
       default = null;
     };
+    options.host.storage.claims = lib.mkOption {
+      type = lib.types.attrsOf lib.types.anything;
+      default = { };
+    };
 
     config = {
       host.radarr.repair = {
         controller = {
           enable = true;
-          transmissionUrl = "http://127.0.0.1:9091/transmission/rpc";
+          downloadClients = [
+            "transmission"
+            "sabnzbd"
+          ];
           apply = {
             enable = true;
             allowedActions = [ "manual_import_file_v1" ];
@@ -47,11 +56,34 @@ pkgs.testers.runNixOSTest {
         };
       };
 
+      host.downloads.clients = {
+        transmission = {
+          kind = "torrent";
+          implementation = "transmission";
+          endpoint = "http://127.0.0.1:9091/transmission/rpc";
+          authentication = {
+            type = "none";
+            secret = null;
+          };
+        };
+        sabnzbd = {
+          kind = "usenet";
+          implementation = "sabnzbd";
+          endpoint = "http://127.0.0.1:8080";
+          authentication = {
+            type = "api-key";
+            secret = "sabnzbd/apiKey";
+          };
+        };
+      };
+
       testSupport.sops.values = {
         "radarr/apiKey" = "test-radarr-key";
         "radarr-repair/openrouter-api-key" = "test-openrouter-key";
+        "sabnzbd/apiKey" = "test-sabnzbd-key";
       };
       sops.secrets."radarr/apiKey" = { };
+      sops.secrets."sabnzbd/apiKey" = { };
 
       users.groups.media = { };
       systemd.tmpfiles.rules = [ "d ${mediaRoot} 0750 root media -" ];
@@ -84,6 +116,14 @@ pkgs.testers.runNixOSTest {
           };
         };
         transmission = {
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.coreutils}/bin/true";
+            RemainAfterExit = true;
+          };
+        };
+        sabnzbd = {
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             Type = "oneshot";

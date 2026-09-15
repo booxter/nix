@@ -9,7 +9,10 @@ pkgs.testers.runNixOSTest {
   name = "radarr-repair-worker";
 
   nodes.machine = {
-    imports = [ ../../nixos/_mixins/radarr/worker.nix ];
+    imports = [
+      ../../nixos/_mixins/radarr/assertions.nix
+      ../../nixos/_mixins/radarr/worker.nix
+    ];
 
     options.host.radarr = lib.mkOption {
       type = lib.types.nullOr (lib.types.submodule { options = radarrOptions; });

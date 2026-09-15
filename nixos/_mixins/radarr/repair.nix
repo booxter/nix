@@ -11,13 +11,6 @@ let
 in
 {
   config = lib.mkIf (planner != null && planner.enable) {
-    assertions = [
-      {
-        assertion = planner.planningTimeoutSeconds > 2 * planner.attemptTimeoutSeconds;
-        message = "Radarr repair planning timeout must cover both model attempts.";
-      }
-    ];
-
     users.groups = {
       ${serviceUser} = { };
       ${planner.clientGroup} = { };

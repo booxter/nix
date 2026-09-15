@@ -38,38 +38,9 @@ let
     ]
     ++ rootArguments
   );
-  validRootID = rootID: builtins.match "^[a-z][a-z0-9_:-]{0,127}$" rootID != null;
 in
 {
   config = lib.mkIf (worker != null && worker.enable) {
-    assertions = [
-      {
-        assertion = worker.roots != { };
-        message = "Radarr repair worker requires at least one media root.";
-      }
-      {
-        assertion = builtins.all validRootID rootIDs;
-        message = "Radarr repair worker root IDs must be valid opaque identifiers.";
-      }
-      {
-        assertion = builtins.length rootPaths == builtins.length (lib.unique rootPaths);
-        message = "Radarr repair worker root paths must be unique.";
-      }
-      {
-        assertion = builtins.all (path: builtins.dirOf path != path) rootPaths;
-        message = "Radarr repair worker cannot expose the filesystem root.";
-      }
-      {
-        assertion =
-          builtins.length worker.writableRoots == builtins.length (lib.unique worker.writableRoots);
-        message = "Radarr repair worker writable root identifiers must be unique.";
-      }
-      {
-        assertion = builtins.all (rootID: builtins.hasAttr rootID worker.roots) worker.writableRoots;
-        message = "Radarr repair worker writable roots must name configured worker roots.";
-      }
-    ];
-
     users.groups.${worker.clientGroup} = { };
     users.users.${serviceUser} = {
       isSystemUser = true;

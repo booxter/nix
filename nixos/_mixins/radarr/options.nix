@@ -7,10 +7,10 @@
       default = pkgs.radarr-repair;
       description = "Radarr repair controller package.";
     };
-    transmissionUrl = lib.mkOption {
-      type = lib.types.nullOr lib.types.nonEmptyStr;
-      default = null;
-      description = "Loopback Transmission RPC URL.";
+    downloadClients = lib.mkOption {
+      type = with lib.types; listOf nonEmptyStr;
+      default = [ ];
+      description = "Registered download clients inspected by the controller.";
     };
     interval = lib.mkOption {
       type = lib.types.nonEmptyStr;

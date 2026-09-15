@@ -8,6 +8,7 @@ in
       name = "radarr";
       extraOptions = radarrOptions;
     })
+    ./assertions.nix
     ./controller.nix
     ./letterboxd-list.nix
     ./repair.nix

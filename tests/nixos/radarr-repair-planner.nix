@@ -10,6 +10,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     imports = [
       inputs.sops-nix.nixosModules.sops
+      ../../nixos/_mixins/radarr/assertions.nix
       ../../nixos/_mixins/radarr/repair.nix
       ./lib/sops.nix
     ];

@@ -4,13 +4,34 @@
   ...
 }:
 let
-  radarr = config.host.radarr;
-  controller = if radarr == null then null else radarr.repair.controller;
-  planner = if radarr == null then null else radarr.repair.planner;
-  worker = if radarr == null then null else radarr.repair.worker;
+  model = import ./model.nix { inherit config lib; };
+  inherit (model)
+    controller
+    planner
+    sabnzbd
+    selectedDownloadClients
+    transmission
+    worker
+    ;
   serviceName = "radarr-repair-controller";
   killSwitchFile = "/run/radarr-repair-disable-apply";
   metricsFile = "${controller.metricsDirectory}/radarr-repair.prom";
+  sabnzbdSecret = if sabnzbd == null then null else sabnzbd.authentication.secret;
+  downloadClientArguments =
+    lib.optionals (transmission != null) [
+      "--transmission-url"
+      transmission.endpoint
+    ]
+    ++ lib.optionals (sabnzbd != null) [
+      "--sabnzbd-url"
+      sabnzbd.endpoint
+      "--sabnzbd-api-key-file"
+      "%d/sabnzbd-api-key"
+    ];
+  downloadClientUnits = map (client: "${client.implementation}.service") selectedDownloadClients;
+  downloadClientCredentials = lib.optionals (sabnzbdSecret != null) [
+    "sabnzbd-api-key:${config.sops.secrets.${sabnzbdSecret}.path}"
+  ];
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;
   rootPaths = if worker == null then [ ] else builtins.attrValues worker.roots;
   rootArguments = lib.concatMap (rootID: [
@@ -21,7 +42,7 @@ let
     "--allow-action"
     action
   ]) controller.apply.allowedActions;
-  downloadClientArguments = lib.concatMap (client: [
+  allowedDownloadClientArguments = lib.concatMap (client: [
     "--allow-download-client"
     client
   ]) controller.apply.allowedDownloadClients;
@@ -34,11 +55,9 @@ let
         killSwitchFile
       ]
       ++ actionArguments
-      ++ downloadClientArguments
+      ++ allowedDownloadClientArguments
     else
       [ "shadow" ];
-  joinAllowed = builtins.elem "join_parts_v1" controller.apply.allowedActions;
-  transmissionURL = if controller.transmissionUrl == null then "" else controller.transmissionUrl;
   plannerTimeoutSeconds = planner.planningTimeoutSeconds + 30;
   command = lib.escapeShellArgs (
     [
@@ -50,8 +69,6 @@ let
       "http://127.0.0.1:${toString config.services.radarr.settings.server.port}"
       "--radarr-api-key-file"
       "%d/radarr-api-key"
-      "--transmission-url"
-      transmissionURL
       "--worker-socket"
       worker.socketPath
       "--planner-socket"
@@ -65,59 +82,12 @@ let
       "--planner-timeout"
       "${toString plannerTimeoutSeconds}s"
     ]
+    ++ downloadClientArguments
     ++ rootArguments
   );
 in
 {
   config = lib.mkIf (controller != null && controller.enable) {
-    assertions = [
-      {
-        assertion = controller.transmissionUrl != null;
-        message = "Radarr repair controller requires a Transmission RPC URL.";
-      }
-      {
-        assertion = worker.enable;
-        message = "Radarr repair controller requires the media probe worker.";
-      }
-      {
-        assertion = planner.enable;
-        message = "Radarr repair controller requires the repair planner.";
-      }
-      {
-        assertion = !controller.apply.enable || controller.apply.allowedActions != [ ];
-        message = "Radarr repair apply mode requires at least one allowed action.";
-      }
-      {
-        assertion = !controller.apply.enable || controller.apply.allowedDownloadClients != [ ];
-        message = "Radarr repair apply mode requires at least one allowed download client.";
-      }
-      {
-        assertion = controller.apply.enable || controller.apply.allowedActions == [ ];
-        message = "Radarr repair actions can be allowed only when apply mode is enabled.";
-      }
-      {
-        assertion = controller.apply.enable || controller.apply.allowedDownloadClients == [ ];
-        message = "Radarr repair download clients can be allowed only when apply mode is enabled.";
-      }
-      {
-        assertion =
-          builtins.length controller.apply.allowedActions
-          == builtins.length (lib.unique controller.apply.allowedActions);
-        message = "Radarr repair allowed actions must be unique.";
-      }
-      {
-        assertion =
-          builtins.length controller.apply.allowedDownloadClients
-          == builtins.length (lib.unique controller.apply.allowedDownloadClients);
-        message = "Radarr repair allowed download clients must be unique.";
-      }
-      {
-        assertion =
-          !joinAllowed || builtins.all (rootID: builtins.elem rootID worker.writableRoots) rootIDs;
-        message = "Automatic joins require every worker root to permit staged media writes.";
-      }
-    ];
-
     users.groups.${serviceName} = { };
     users.users.${serviceName} = {
       isSystemUser = true;
@@ -128,6 +98,10 @@ in
     systemd.tmpfiles.rules = [
       "d ${controller.metricsDirectory} 0755 ${serviceName} ${serviceName} - -"
     ];
+
+    sops.secrets = lib.optionalAttrs (sabnzbdSecret != null) {
+      ${sabnzbdSecret}.restartUnits = [ "${serviceName}.service" ];
+    };
 
     systemd.services.${serviceName} = {
       description =
@@ -140,8 +114,8 @@ in
         "radarr-repair-worker.service"
         "radarr.service"
         "sops-install-secrets.service"
-        "transmission.service"
-      ];
+      ]
+      ++ downloadClientUnits;
       wants = [ "network-online.target" ];
       after = [
         "network-online.target"
@@ -149,14 +123,17 @@ in
         "radarr-repair-worker.service"
         "radarr.service"
         "sops-install-secrets.service"
-        "transmission.service"
-      ];
+      ]
+      ++ downloadClientUnits;
       unitConfig.RequiresMountsFor = rootPaths;
       serviceConfig = {
         Type = "oneshot";
         # %d expands to this service's private credentials directory.
         ExecStart = command;
-        LoadCredential = "radarr-api-key:${config.sops.secrets."radarr/apiKey".path}";
+        LoadCredential = [
+          "radarr-api-key:${config.sops.secrets."radarr/apiKey".path}"
+        ]
+        ++ downloadClientCredentials;
         User = serviceName;
         Group = serviceName;
         SupplementaryGroups = [

@@ -1,12 +1,18 @@
 {
   config,
-  transmissionModel,
+  lib,
   ...
 }:
+let
+  downloads = import ../_mixins/downloads/model.nix { inherit config lib; };
+in
 {
   host.radarr.repair.controller = {
     enable = true;
-    transmissionUrl = transmissionModel.rpcUrl;
+    downloadClients = [
+      "transmission"
+      "sabnzbd"
+    ];
     apply = {
       enable = true;
       allowedActions = [
@@ -23,7 +29,10 @@
   host.radarr.repair.planner.enable = true;
   host.radarr.repair.worker = {
     enable = true;
-    roots."root:downloads" = config.services.transmission.settings.download-dir;
+    roots = {
+      "root:downloads" = config.services.transmission.settings.download-dir;
+      "root:usenet-manual" = downloads.routes.radarr-usenet.path;
+    };
     writableRoots = [ "root:downloads" ];
   };
 
