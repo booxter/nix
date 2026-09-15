@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,14 +23,21 @@ func TestRunnerJoinsRealMediaInCallerOrder(t *testing.T) {
 		name            string
 		container       workercontracts.OutputContainer
 		extension       string
-		includeAudio    bool
+		audioStreams    int
 		expectedStreams []controller.ProbeStreamKind
 	}{
+		{
+			name:            "AVI with audio",
+			container:       workercontracts.OutputContainerAVI,
+			extension:       "avi",
+			audioStreams:    2,
+			expectedStreams: []controller.ProbeStreamKind{controller.ProbeStreamVideo, controller.ProbeStreamAudio, controller.ProbeStreamAudio},
+		},
 		{
 			name:            "matroska with audio",
 			container:       workercontracts.OutputContainerMKV,
 			extension:       "mkv",
-			includeAudio:    true,
+			audioStreams:    1,
 			expectedStreams: []controller.ProbeStreamKind{controller.ProbeStreamVideo, controller.ProbeStreamAudio},
 		},
 		{
@@ -46,8 +54,8 @@ func TestRunnerJoinsRealMediaInCallerOrder(t *testing.T) {
 			directory := t.TempDir()
 			redPath := filepath.Join(directory, "01-red."+test.extension)
 			bluePath := filepath.Join(directory, "02-blue."+test.extension)
-			makeJoinPart(t, redPath, "red", test.container, test.includeAudio)
-			makeJoinPart(t, bluePath, "blue", test.container, test.includeAudio)
+			makeJoinPart(t, redPath, "red", test.container, test.audioStreams)
+			makeJoinPart(t, bluePath, "blue", test.container, test.audioStreams)
 			red := openTestFile(t, redPath, os.O_RDONLY)
 			blue := openTestFile(t, bluePath, os.O_RDONLY)
 
@@ -230,7 +238,7 @@ func TestRunnerRejectsInvalidInputs(t *testing.T) {
 		context.Background(),
 		[]*os.File{first, second},
 		output,
-		workercontracts.OutputContainer("avi"),
+		workercontracts.OutputContainer("webm"),
 	); err == nil {
 		t.Fatal("unsupported output container was accepted")
 	}
@@ -252,7 +260,7 @@ func makeJoinPart(
 	path string,
 	color string,
 	container workercontracts.OutputContainer,
-	includeAudio bool,
+	audioStreams int,
 ) {
 	t.Helper()
 	arguments := []string{
@@ -262,21 +270,33 @@ func makeJoinPart(
 		"-f", "lavfi",
 		"-i", "color=c=" + color + ":s=16x16:r=25:d=0.4",
 	}
-	if includeAudio {
+	if audioStreams > 0 {
+		for index := range audioStreams {
+			arguments = append(
+				arguments,
+				"-f", "lavfi",
+				"-i", "sine=frequency="+strconv.Itoa(440+index*110)+":sample_rate=48000:d=0.4",
+			)
+		}
 		arguments = append(
 			arguments,
-			"-f", "lavfi",
-			"-i", "sine=frequency=440:sample_rate=48000:d=0.4",
 			"-map", "0:v:0",
-			"-map", "1:a:0",
 		)
+		for index := range audioStreams {
+			arguments = append(arguments, "-map", strconv.Itoa(index+1)+":a:0")
+		}
 	} else {
 		arguments = append(arguments, "-map", "0:v:0")
 	}
 	switch container {
+	case workercontracts.OutputContainerAVI:
+		arguments = append(arguments, "-c:v", "mpeg4", "-vtag", "XVID", "-q:v", "2")
+		if audioStreams > 0 {
+			arguments = append(arguments, "-c:a", "mp3")
+		}
 	case workercontracts.OutputContainerMKV:
 		arguments = append(arguments, "-c:v", "ffv1")
-		if includeAudio {
+		if audioStreams > 0 {
 			arguments = append(arguments, "-c:a", "pcm_s16le")
 		}
 	case workercontracts.OutputContainerMP4:

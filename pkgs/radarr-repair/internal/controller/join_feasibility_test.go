@@ -141,11 +141,11 @@ func TestAssessJoinFeasibilityRejectsInvalidStructure(t *testing.T) {
 func TestAssessJoinFeasibilityRequiresSupportedComponentAssessments(t *testing.T) {
 	t.Parallel()
 
-	firstProbe := joinableProbe(InputContainerAVI, 10_000)
-	secondProbe := joinableProbe(InputContainerAVI, 20_000)
+	firstProbe := joinableProbe(InputContainerMPEGTS, 10_000)
+	secondProbe := joinableProbe(InputContainerMPEGTS, 20_000)
 	got := AssessJoinFeasibility([]JoinPartEvidence{
-		joinPart("file:first", MediaExtensionAVI, 100, &firstProbe),
-		joinPart("file:second", MediaExtensionAVI, 200, &secondProbe),
+		joinPart("file:first", MediaExtensionTS, 100, &firstProbe),
+		joinPart("file:second", MediaExtensionTS, 200, &secondProbe),
 	})
 
 	if got.Eligible() || got.StructuralIssue != nil || got.OutputContainer.Issue == nil ||

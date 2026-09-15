@@ -323,6 +323,36 @@ func TestPublishCompletedMovesArtifactToInputCommonParent(t *testing.T) {
 	}
 }
 
+func TestPublishCompletedPreservesAVIExtension(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	if err := os.Mkdir(filepath.Join(rootPath, "Movie"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	rootSet := testRootSet(t, rootPath)
+	fingerprint := retainTestArtifact(
+		t,
+		rootSet,
+		"artifact:avi",
+		workercontracts.OutputContainerAVI,
+		"joined media",
+	)
+	location, err := rootSet.PublishCompleted(
+		"downloads",
+		"artifact:avi",
+		workercontracts.OutputContainerAVI,
+		fingerprint,
+		[][]string{{"Movie", "first.avi"}, {"Movie", "second.avi"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(location) != 2 || !strings.HasSuffix(location[1], ".avi") {
+		t.Fatalf("published location = %#v", location)
+	}
+}
+
 func TestPublishCompletedDoesNotReplaceExistingDestination(t *testing.T) {
 	t.Parallel()
 

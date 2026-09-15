@@ -154,6 +154,8 @@ func withinTolerance(actual int64, expected int64, tolerance int64) bool {
 func matchesContainer(expected controller.OutputContainer, names []string) bool {
 	want := ""
 	switch expected {
+	case controller.OutputContainerAVI:
+		want = "avi"
 	case controller.OutputContainerMKV:
 		want = "matroska"
 	case controller.OutputContainerMP4:

@@ -523,6 +523,8 @@ func (rootSet *RootSet) removeStagedName(
 
 func stagedExtension(container workercontracts.OutputContainer) (string, error) {
 	switch container {
+	case workercontracts.OutputContainerAVI:
+		return ".avi", nil
 	case workercontracts.OutputContainerMKV:
 		return ".mkv", nil
 	case workercontracts.OutputContainerMP4:

@@ -5,6 +5,7 @@ type OutputContainer string
 const (
 	OutputContainerMP4 OutputContainer = "mp4"
 	OutputContainerMKV OutputContainer = "mkv"
+	OutputContainerAVI OutputContainer = "avi"
 )
 
 type OutputContainerIssueReason string
@@ -34,7 +35,9 @@ func SelectOutputContainer(input InputContainerAssessment) OutputContainerAssess
 		return OutputContainerAssessment{Container: outputContainerValue(OutputContainerMP4)}
 	case InputContainerMatroska:
 		return OutputContainerAssessment{Container: outputContainerValue(OutputContainerMKV)}
-	case InputContainerMPEGTS, InputContainerAVI:
+	case InputContainerAVI:
+		return OutputContainerAssessment{Container: outputContainerValue(OutputContainerAVI)}
+	case InputContainerMPEGTS:
 		// Cross-container remuxing needs explicit codec and metadata compatibility rules.
 		return outputContainerFailure(OutputContainerCrossContainerPolicyUndefined)
 	default:

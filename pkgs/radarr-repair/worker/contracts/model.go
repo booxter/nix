@@ -151,6 +151,7 @@ const (
 	StageJoinProbeError          StageJoinFailureReason = "probe_error"
 	StageJoinInvalidOutput       StageJoinFailureReason = "invalid_output"
 	StageJoinInternalError       StageJoinFailureReason = "internal_error"
+	OutputContainerAVI           OutputContainer        = "avi"
 	OutputContainerMKV           OutputContainer        = "mkv"
 	OutputContainerMP4           OutputContainer        = "mp4"
 )

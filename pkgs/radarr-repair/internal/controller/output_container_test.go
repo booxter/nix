@@ -15,6 +15,7 @@ func TestSelectOutputContainerPreservesContainerFamily(t *testing.T) {
 	}{
 		{name: "MP4", input: InputContainerMP4, want: OutputContainerMP4},
 		{name: "Matroska", input: InputContainerMatroska, want: OutputContainerMKV},
+		{name: "AVI", input: InputContainerAVI, want: OutputContainerAVI},
 	}
 
 	for _, test := range tests {
@@ -32,7 +33,7 @@ func TestSelectOutputContainerPreservesContainerFamily(t *testing.T) {
 func TestSelectOutputContainerRejectsUndefinedCrossContainerRemuxing(t *testing.T) {
 	t.Parallel()
 
-	for _, input := range []InputContainer{InputContainerMPEGTS, InputContainerAVI} {
+	for _, input := range []InputContainer{InputContainerMPEGTS} {
 		input := input
 		t.Run(string(input), func(t *testing.T) {
 			t.Parallel()

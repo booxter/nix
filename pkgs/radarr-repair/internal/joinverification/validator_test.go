@@ -46,6 +46,20 @@ func TestValidateStagedJoinAcceptsMP4Output(t *testing.T) {
 	}
 }
 
+func TestValidateStagedJoinAcceptsAVIOutput(t *testing.T) {
+	t.Parallel()
+
+	authorized, request, response := validStage()
+	authorized.OutputContainer = controller.OutputContainerAVI
+	request.OutputContainer = workercontracts.OutputContainerAVI
+	evidence := joinedEvidence()
+	evidence.Format.Names = []string{"avi"}
+	response.Success.Evidence = mediaevidence.FromProbe(evidence)
+	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
+		t.Fatalf("validation = %#v", validation)
+	}
+}
+
 func TestValidateStagedJoinRequiresAuthorizedRequest(t *testing.T) {
 	t.Parallel()
 

@@ -94,6 +94,29 @@ func TestJoinRequestExamplesDecodeAndRoundTrip(t *testing.T) {
 	})
 }
 
+func TestStageJoinRequestAcceptsAVIOutput(t *testing.T) {
+	t.Parallel()
+
+	request, err := DecodeStageJoinRequest(
+		readFixture(t, "v1/examples/join-stage-request.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.OutputContainer = OutputContainerAVI
+	encoded, err := EncodeStageJoinRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeStageJoinRequest(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.OutputContainer != OutputContainerAVI {
+		t.Fatalf("output container = %q", decoded.OutputContainer)
+	}
+}
+
 func TestJoinResponseExamplesDecodeAndRoundTrip(t *testing.T) {
 	t.Parallel()
 

@@ -142,6 +142,7 @@
         },
         "output_container": {
           "enum": [
+            "avi",
             "mkv",
             "mp4"
           ]

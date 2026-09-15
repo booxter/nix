@@ -181,6 +181,8 @@ func validateRunner(ctx context.Context, runner *Runner) error {
 
 func outputFormat(container workercontracts.OutputContainer) (string, error) {
 	switch container {
+	case workercontracts.OutputContainerAVI:
+		return "avi", nil
 	case workercontracts.OutputContainerMKV:
 		return "matroska", nil
 	case workercontracts.OutputContainerMP4:
