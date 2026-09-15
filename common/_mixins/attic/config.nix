@@ -9,6 +9,15 @@ let
   serverNames = builtins.attrNames servers;
   rootDir = if pkgs.stdenv.isDarwin then "/private/var/root" else "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
+  endpointHost =
+    endpoint:
+    let
+      match = builtins.match "https://([^/:]+)(:[0-9]+)?(/.*)?" endpoint;
+    in
+    if match == null then
+      throw "Attic endpoint must be an HTTPS URL: ${endpoint}"
+    else
+      builtins.elemAt match 0;
   clientConfig = (pkgs.formats.toml { }).generate "attic-client-config.toml" {
     default-server = builtins.head serverNames;
     servers = lib.mapAttrs (_: server: {
@@ -33,6 +42,13 @@ let
 in
 {
   config = lib.mkIf (servers != { }) {
+    host.nix.netrcMachines = lib.mapAttrs' (
+      _: server:
+      lib.nameValuePair (endpointHost server.endpoint) {
+        password = config.sops.placeholder."attic/token";
+      }
+    ) servers;
+
     nix.settings.post-build-hook = postBuildHook;
 
     sops = {

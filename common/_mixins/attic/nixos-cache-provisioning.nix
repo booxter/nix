@@ -43,13 +43,12 @@ let
     cacheName
   ]
   ++ cacheSettingsArgs
-  ++ [ "--public" ]
   ++ upstreamCacheArgs;
   configureArgs = [
     "cache"
     "configure"
     cacheName
-    "--public"
+    "--private"
   ]
   ++ cacheSettingsArgs
   ++ upstreamCacheArgs
