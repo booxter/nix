@@ -128,6 +128,8 @@ func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
 	}
 	legacy := newRecordWithMovieForTest(t, false)
 	legacy.Version = RecordVersionV1
+	estimate := legacy.Snapshot.Observation.ObservedAt.Add(time.Minute)
+	legacy.Snapshot.Observation.Correlation.Radarr.EstimatedCompletionTime = &estimate
 	if created, err := store.Put(legacy); err != nil || !created {
 		t.Fatalf("legacy put: created = %t, error = %v", created, err)
 	}

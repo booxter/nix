@@ -244,13 +244,15 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 	leftAssembly := casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot}
 	rightAssembly := casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot}
 	if left.Version == RecordVersionV1 && right.Version == RecordVersionV2 {
-		// V1 predates the private HasFile observation. Match an old immutable
-		// record without pretending that its zero value was observed from Radarr.
+		// V1 predates HasFile and retained Radarr's moving completion estimate.
+		// Match those old values without weakening comparisons between V2 records.
 		if rightAssembly.LocalSnapshot.Observation.Movie != nil {
 			movie := *rightAssembly.LocalSnapshot.Observation.Movie
 			movie.HasFile = false
 			rightAssembly.LocalSnapshot.Observation.Movie = &movie
 		}
+		rightAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime =
+			leftAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime
 	} else if left.Version != right.Version {
 		return false, nil
 	}

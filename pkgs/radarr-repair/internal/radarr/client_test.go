@@ -86,9 +86,8 @@ func TestReadQueue(t *testing.T) {
 	if first.ID != 101 || first.MovieID == nil || *first.MovieID != 42 {
 		t.Fatalf("first identity = ID %d, MovieID %v", first.ID, first.MovieID)
 	}
-	if first.EstimatedCompletionTime == nil ||
-		!first.EstimatedCompletionTime.Equal(time.Date(2026, 9, 6, 12, 0, 0, 0, time.UTC)) {
-		t.Fatalf("completion time = %v", first.EstimatedCompletionTime)
+	if first.EstimatedCompletionTime != nil {
+		t.Fatalf("completed record has estimated completion time %v", first.EstimatedCompletionTime)
 	}
 	if first.Title != "Example.Movie.2026.Part1.mkv" ||
 		first.SizeBytes != 4294967296 ||
@@ -120,6 +119,11 @@ func TestReadQueue(t *testing.T) {
 		records[2].TrackedDownloadState != controller.TrackedDownloadState("futureTrackedState") ||
 		records[2].Protocol != controller.DownloadProtocol("futureProtocol") {
 		t.Fatalf("future values were not preserved: %#v", records[2])
+	}
+	wantEstimate := time.Date(2026, 9, 6, 12, 1, 0, 0, time.UTC)
+	if records[2].EstimatedCompletionTime == nil ||
+		!records[2].EstimatedCompletionTime.Equal(wantEstimate) {
+		t.Fatalf("active completion estimate = %v", records[2].EstimatedCompletionTime)
 	}
 }
 

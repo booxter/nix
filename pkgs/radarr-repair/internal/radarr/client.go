@@ -234,7 +234,9 @@ func mapQueueRecord(record *starrRadarr.QueueRecord) (controller.RadarrQueueReco
 		movieID := record.MovieID
 		result.MovieID = &movieID
 	}
-	if !record.EstimatedCompletionTime.IsZero() {
+	// Radarr recalculates this as now + timeleft, including for completed
+	// records whose timeleft is zero. That moving value is not a completion fact.
+	if record.Status != "completed" && !record.EstimatedCompletionTime.IsZero() {
 		completion := record.EstimatedCompletionTime
 		result.EstimatedCompletionTime = &completion
 	}
