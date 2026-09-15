@@ -73,6 +73,7 @@ runs:
           https://cache.ihar.dev \
           "${ATTIC_TOKEN}"
         chmod -R go-rwx "${RUNNER_TEMP}/attic-home"
+        sudo chown -R root "${RUNNER_TEMP}/attic-home"
 
     - name: Verify required Nix daemon settings
       shell: bash
