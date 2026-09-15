@@ -75,7 +75,7 @@ func TestDecodeRecordRejectsInvalidEnvelope(t *testing.T) {
 		{
 			name: "unsupported version",
 			mutate: func(record *CaseRecord) {
-				record.Version = "radarr-repair-state/v2"
+				record.Version = "radarr-repair-state/v3"
 			},
 			want: "unsupported case record version",
 		},

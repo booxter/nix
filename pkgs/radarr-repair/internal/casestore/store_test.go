@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
 func TestStorePutAndGet(t *testing.T) {
@@ -116,6 +117,70 @@ func TestStorePutRejectsDifferentLocalState(t *testing.T) {
 		!strings.Contains(err.Error(), "different local state") {
 		t.Fatalf("put: created = %t, error = %v", created, err)
 	}
+}
+
+func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
+	t.Parallel()
+
+	store, err := New(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := newRecordWithMovieForTest(t, false)
+	legacy.Version = RecordVersionV1
+	if created, err := store.Put(legacy); err != nil || !created {
+		t.Fatalf("legacy put: created = %t, error = %v", created, err)
+	}
+
+	current := newRecordWithMovieForTest(t, true)
+	if created, err := store.Put(current); err != nil || created {
+		t.Fatalf("current put: created = %t, error = %v", created, err)
+	}
+
+	stored, found, err := store.Get(legacy.CaseID)
+	if err != nil || !found {
+		t.Fatalf("get: found = %t, error = %v", found, err)
+	}
+	if !reflect.DeepEqual(stored, legacy) {
+		t.Fatal("compatible put replaced the legacy record")
+	}
+}
+
+func TestStoreRejectsChangedMovieFileObservationInV2(t *testing.T) {
+	t.Parallel()
+
+	store, err := New(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := newRecordWithMovieForTest(t, false)
+	if created, err := store.Put(first); err != nil || !created {
+		t.Fatalf("first put: created = %t, error = %v", created, err)
+	}
+
+	second := newRecordWithMovieForTest(t, true)
+	if created, err := store.Put(second); err == nil || created ||
+		!strings.Contains(err.Error(), "different local state") {
+		t.Fatalf("second put: created = %t, error = %v", created, err)
+	}
+}
+
+func newRecordWithMovieForTest(t *testing.T, hasFile bool) CaseRecord {
+	t.Helper()
+	observation := recordTestAssembly(t).LocalSnapshot.Observation
+	observation.Movie = &controller.RadarrMovie{
+		ID: 42, TMDBID: 1234, HasFile: hasFile,
+		Title: "Poorly Named Feature", Year: 2026,
+	}
+	assembly, err := casebuilder.Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := NewRecord(assembly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return record
 }
 
 func TestStoreConcurrentPutCreatesOneRecord(t *testing.T) {

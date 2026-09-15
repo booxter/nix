@@ -12,7 +12,10 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 )
 
-const RecordVersionV1 = "radarr-repair-state/v1"
+const (
+	RecordVersionV1 = "radarr-repair-state/v1"
+	RecordVersionV2 = "radarr-repair-state/v2"
+)
 
 // CaseRecord keeps the planner-visible request together with the local facts
 // that give its opaque identifiers meaning. It is private controller state,
@@ -33,7 +36,7 @@ func NewRecord(assembly casebuilder.Assembly) (CaseRecord, error) {
 		return CaseRecord{}, fmt.Errorf("assembly request bytes do not match its typed request")
 	}
 	record := CaseRecord{
-		Version:  RecordVersionV1,
+		Version:  RecordVersionV2,
 		CaseID:   assembly.Request.CaseID,
 		Request:  cloneBytes(assembly.EncodedRequest),
 		Snapshot: assembly.LocalSnapshot,
@@ -76,7 +79,7 @@ func DecodeRecord(data []byte) (CaseRecord, error) {
 }
 
 func validateRecord(record CaseRecord) error {
-	if record.Version != RecordVersionV1 {
+	if record.Version != RecordVersionV1 && record.Version != RecordVersionV2 {
 		return fmt.Errorf("unsupported case record version %q", record.Version)
 	}
 	request, err := contracts.DecodeCase(record.Request)

@@ -241,12 +241,21 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("decode new repair case: %w", err)
 	}
-	return left.Version == right.Version &&
-		left.CaseID == right.CaseID &&
-		casebuilder.SameCaseState(
-			casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot},
-			casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot},
-		), nil
+	leftAssembly := casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot}
+	rightAssembly := casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot}
+	if left.Version == RecordVersionV1 && right.Version == RecordVersionV2 {
+		// V1 predates the private HasFile observation. Match an old immutable
+		// record without pretending that its zero value was observed from Radarr.
+		if rightAssembly.LocalSnapshot.Observation.Movie != nil {
+			movie := *rightAssembly.LocalSnapshot.Observation.Movie
+			movie.HasFile = false
+			rightAssembly.LocalSnapshot.Observation.Movie = &movie
+		}
+	} else if left.Version != right.Version {
+		return false, nil
+	}
+	return left.CaseID == right.CaseID &&
+		casebuilder.SameCaseState(leftAssembly, rightAssembly), nil
 }
 
 func caseDigest(caseID string) (string, error) {
