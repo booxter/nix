@@ -21,7 +21,14 @@ type manualImportOutput struct {
 	starrRadarr.ManualImportOutput
 	// Starr omits this field even though Radarr returns it and requires it in
 	// the later ManualImport command.
-	IndexerFlags int64 `json:"indexerFlags"`
+	IndexerFlags int64                    `json:"indexerFlags"`
+	Rejections   []*manualImportRejection `json:"rejections"`
+}
+
+type manualImportRejection struct {
+	ReasonCode string `json:"reasonCode"`
+	Reason     string `json:"reason"`
+	Type       string `json:"type"`
 }
 
 func (client *Client) ReadManualImports(
@@ -138,10 +145,18 @@ func mapManualImport(
 		if strings.TrimSpace(rejection.Type) == "" {
 			return controller.RadarrManualImport{}, fmt.Errorf("rejection %d type is missing", index)
 		}
+		if rejection.ReasonCode == "" ||
+			strings.TrimSpace(rejection.ReasonCode) != rejection.ReasonCode ||
+			strings.ContainsRune(rejection.ReasonCode, '\x00') {
+			return controller.RadarrManualImport{}, fmt.Errorf(
+				"rejection %d reason code is missing or invalid", index,
+			)
+		}
 		if strings.TrimSpace(rejection.Reason) == "" {
 			return controller.RadarrManualImport{}, fmt.Errorf("rejection %d reason is missing", index)
 		}
 		rejections[index] = controller.RadarrManualImportRejection{
+			Code:   controller.RadarrManualImportRejectionReason(rejection.ReasonCode),
 			Type:   controller.RadarrManualImportRejectionType(rejection.Type),
 			Reason: rejection.Reason,
 		}

@@ -15,6 +15,7 @@ import (
 const (
 	RecordVersionV1 = "radarr-repair-state/v1"
 	RecordVersionV2 = "radarr-repair-state/v2"
+	RecordVersionV3 = "radarr-repair-state/v3"
 )
 
 // CaseRecord keeps the planner-visible request together with the local facts
@@ -36,7 +37,7 @@ func NewRecord(assembly casebuilder.Assembly) (CaseRecord, error) {
 		return CaseRecord{}, fmt.Errorf("assembly request bytes do not match its typed request")
 	}
 	record := CaseRecord{
-		Version:  RecordVersionV2,
+		Version:  RecordVersionV3,
 		CaseID:   assembly.Request.CaseID,
 		Request:  cloneBytes(assembly.EncodedRequest),
 		Snapshot: assembly.LocalSnapshot,
@@ -79,7 +80,8 @@ func DecodeRecord(data []byte) (CaseRecord, error) {
 }
 
 func validateRecord(record CaseRecord) error {
-	if record.Version != RecordVersionV1 && record.Version != RecordVersionV2 {
+	if record.Version != RecordVersionV1 && record.Version != RecordVersionV2 &&
+		record.Version != RecordVersionV3 {
 		return fmt.Errorf("unsupported case record version %q", record.Version)
 	}
 	request, err := contracts.DecodeCase(record.Request)

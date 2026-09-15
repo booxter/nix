@@ -148,7 +148,48 @@ func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
 	}
 }
 
-func TestStoreRejectsChangedMovieFileObservationInV2(t *testing.T) {
+func TestStoreMatchesV2RecordWithoutRejectionCodes(t *testing.T) {
+	t.Parallel()
+
+	store, err := New(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	current := newRecordForTest(t)
+	current.Snapshot.Observation.ManualImports[0].Rejections =
+		[]controller.RadarrManualImportRejection{{
+			Code: "notQualityUpgrade", Type: "permanent",
+			Reason: "Not an upgrade for existing movie file",
+		}}
+	assembly, err := casebuilder.Assemble(current.Snapshot.Observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, err = NewRecord(assembly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := cloneRecord(t, current)
+	legacy.Version = RecordVersionV2
+	legacy.Snapshot = withoutRejectionCodes(legacy.Snapshot)
+	if created, err := store.Put(legacy); err != nil || !created {
+		t.Fatalf("legacy put: created = %t, error = %v", created, err)
+	}
+	if created, err := store.Put(current); err != nil || created {
+		t.Fatalf("current put: created = %t, error = %v", created, err)
+	}
+}
+
+func withoutRejectionCodes(snapshot casebuilder.LocalSnapshot) casebuilder.LocalSnapshot {
+	for importIndex := range snapshot.Observation.ManualImports {
+		for rejectionIndex := range snapshot.Observation.ManualImports[importIndex].Rejections {
+			snapshot.Observation.ManualImports[importIndex].Rejections[rejectionIndex].Code = ""
+		}
+	}
+	return snapshot
+}
+
+func TestStoreRejectsChangedMovieFileObservation(t *testing.T) {
 	t.Parallel()
 
 	store, err := New(filepath.Join(t.TempDir(), "state"))

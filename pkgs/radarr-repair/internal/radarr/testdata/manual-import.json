@@ -35,6 +35,7 @@
     "rejections": [
       {
         "reason": "File is suspected multi-part file, Radarr doesn't support this",
+        "reasonCode": "multiPartMovie",
         "type": "permanent"
       }
     ],
@@ -56,6 +57,7 @@
     "rejections": [
       {
         "reason": "A rejection introduced by a future Radarr version",
+        "reasonCode": "futureRejectionReason",
         "type": "futureRejectionType"
       }
     ],

@@ -63,13 +63,15 @@ func TestReadManualImports(t *testing.T) {
 			},
 		}) ||
 		!reflect.DeepEqual(first.Languages, []controller.RadarrLanguage{{ID: 1, Name: "English"}}) ||
-		len(first.Rejections) != 1 || first.Rejections[0].Type != "permanent" ||
+		len(first.Rejections) != 1 || first.Rejections[0].Code != "multiPartMovie" ||
+		first.Rejections[0].Type != "permanent" ||
 		first.Rejections[0].Reason != "File is suspected multi-part file, Radarr doesn't support this" {
 		t.Fatalf("first manual import = %#v", first)
 	}
 	second := imports[1]
 	if second.Quality != nil || second.ReleaseGroup != "" || second.Languages == nil ||
 		len(second.Languages) != 0 || len(second.Rejections) != 1 ||
+		second.Rejections[0].Code != "futureRejectionReason" ||
 		second.Rejections[0].Type != "futureRejectionType" {
 		t.Fatalf("nullable/future fields = %#v", second)
 	}
@@ -120,6 +122,19 @@ func TestReadManualImportsRejectsInconsistentResponse(t *testing.T) {
 				validManualImportResponse(42, testHistoryDownloadID, "/downloads/movie.mkv"),
 			},
 			want: "duplicate path",
+		},
+		{
+			name: "missing rejection reason code",
+			response: func() []any {
+				response := validManualImportResponse(
+					42, testHistoryDownloadID, "/downloads/movie.mkv",
+				)
+				response["rejections"] = []any{map[string]any{
+					"reason": "Unable to parse file", "type": "permanent",
+				}}
+				return []any{response}
+			}(),
+			want: "reason code is missing or invalid",
 		},
 	}
 

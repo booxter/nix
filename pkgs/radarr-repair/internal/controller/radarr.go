@@ -33,6 +33,7 @@ type TrackedDownloadState string
 type DownloadProtocol string
 type RadarrHistoryEventType string
 type RadarrManualImportRejectionType string
+type RadarrManualImportRejectionReason string
 
 type RadarrManualImportQuery struct {
 	MovieID    int64
@@ -143,6 +144,7 @@ type RadarrManualImport struct {
 }
 
 type RadarrManualImportRejection struct {
+	Code   RadarrManualImportRejectionReason
 	Type   RadarrManualImportRejectionType
 	Reason string
 }

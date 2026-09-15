@@ -25,6 +25,9 @@ func TestCaseRecordRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if record.Version != RecordVersionV3 {
+		t.Fatalf("record version = %q", record.Version)
+	}
 	data, err := EncodeRecord(record)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +78,7 @@ func TestDecodeRecordRejectsInvalidEnvelope(t *testing.T) {
 		{
 			name: "unsupported version",
 			mutate: func(record *CaseRecord) {
-				record.Version = "radarr-repair-state/v3"
+				record.Version = "radarr-repair-state/v4"
 			},
 			want: "unsupported case record version",
 		},

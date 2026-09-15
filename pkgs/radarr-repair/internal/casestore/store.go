@@ -243,9 +243,9 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 	}
 	leftAssembly := casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot}
 	rightAssembly := casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot}
-	if left.Version == RecordVersionV1 && right.Version == RecordVersionV2 {
+	if left.Version == RecordVersionV1 && right.Version == RecordVersionV3 {
 		// V1 predates HasFile and retained Radarr's moving completion estimate.
-		// Match those old values without weakening comparisons between V2 records.
+		// Match those old values without weakening comparisons between current records.
 		if rightAssembly.LocalSnapshot.Observation.Movie != nil {
 			movie := *rightAssembly.LocalSnapshot.Observation.Movie
 			movie.HasFile = false
@@ -253,6 +253,9 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 		}
 		rightAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime =
 			leftAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime
+	} else if left.Version == RecordVersionV2 && right.Version == RecordVersionV3 {
+		// V2 predates structured manual-import rejection reasons. SameCaseState
+		// compares their human evidence while fresh policy uses the live codes.
 	} else if left.Version != right.Version {
 		return false, nil
 	}
