@@ -25,11 +25,13 @@ runs:
         hook_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
         attic="${hook_directory}/attic"
         attic_home="${hook_directory}/attic-home"
-        if [[ ! -x "${attic}" || ! -d "${attic_home}" ]]; then
+        attic_config_home="${attic_home}/.config"
+        if [[ ! -x "${attic}" || ! -f "${attic_config_home}/attic/config.toml" ]]; then
           exit 0
         fi
 
         export HOME="${attic_home}"
+        export XDG_CONFIG_HOME="${attic_config_home}"
         export NIX_REMOTE=daemon
         # shellcheck disable=SC2153 # Nix supplies OUT_PATHS to post-build hooks.
         read -r -a out_paths <<< "${OUT_PATHS}"
@@ -68,6 +70,7 @@ runs:
         ln -s "${attic_package}/bin/attic" "${RUNNER_TEMP}/attic"
         mkdir -p "${RUNNER_TEMP}/attic-home"
         HOME="${RUNNER_TEMP}/attic-home" \
+          XDG_CONFIG_HOME="${RUNNER_TEMP}/attic-home/.config" \
           "${RUNNER_TEMP}/attic" login \
           github \
           https://cache.ihar.dev \
