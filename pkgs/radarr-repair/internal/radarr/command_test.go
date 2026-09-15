@@ -17,6 +17,10 @@ func TestRequestManualImport(t *testing.T) {
 	t.Parallel()
 
 	authorized := testAuthorizedManualImport()
+	commandRequest := controller.RadarrManualImportCommand{
+		ImportMode: authorized.ImportMode,
+		File:       authorized.File,
+	}
 	wantRequest := map[string]any{
 		"name":       "ManualImport",
 		"importMode": "copy",
@@ -74,7 +78,7 @@ func TestRequestManualImport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	command, err := client.RequestManualImport(context.Background(), authorized)
+	command, err := client.RequestManualImport(context.Background(), commandRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +199,13 @@ func TestManualImportCommandsRejectInvalidInputAndResponses(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.RequestManualImport(context.Background(), authorized); err == nil {
+	if _, err := client.RequestManualImport(
+		context.Background(),
+		controller.RadarrManualImportCommand{
+			ImportMode: authorized.ImportMode,
+			File:       authorized.File,
+		},
+	); err == nil {
 		t.Fatal("incomplete authorization was accepted")
 	}
 	if _, err := client.ReadManualImportCommand(context.Background(), 0); err == nil {

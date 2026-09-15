@@ -15,7 +15,7 @@ import (
 type Radarr interface {
 	RequestManualImport(
 		context.Context,
-		decisionpolicy.AuthorizedManualImport,
+		controller.RadarrManualImportCommand,
 	) (radarr.Command, error)
 	ReadManualImportCommand(context.Context, int64) (radarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
@@ -146,7 +146,13 @@ func (executor *Executor) Execute(
 		return executor.resume(ctx, authorized, execution)
 	}
 
-	command, err := executor.dependencies.Radarr.RequestManualImport(ctx, authorized)
+	command, err := executor.dependencies.Radarr.RequestManualImport(
+		ctx,
+		controller.RadarrManualImportCommand{
+			ImportMode: authorized.ImportMode,
+			File:       authorized.File,
+		},
+	)
 	if err != nil {
 		confirmed, confirmErr := executor.confirm(ctx, authorized, execution)
 		if confirmed.State == casestore.ManualImportImported {

@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
-	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 	"golift.io/starr"
 	starrRadarr "golift.io/starr/radarr"
 )
@@ -112,16 +111,16 @@ type manualImportLanguage struct {
 // gap would be better fixed upstream than expanded into more local API models.
 func (client *Client) RequestManualImport(
 	ctx context.Context,
-	authorized decisionpolicy.AuthorizedManualImport,
+	command controller.RadarrManualImportCommand,
 ) (Command, error) {
-	if err := validateAuthorizedManualImport(authorized); err != nil {
-		return Command{}, err
+	if !command.Complete() {
+		return Command{}, fmt.Errorf("Radarr manual-import command is incomplete")
 	}
 
 	request := manualImportCommandRequest{
 		Name:       manualImportCommandName,
-		Files:      []manualImportCommandFile{mapManualImportCommandFile(authorized.File)},
-		ImportMode: authorized.ImportMode,
+		Files:      []manualImportCommandFile{mapManualImportCommandFile(command.File)},
+		ImportMode: command.ImportMode,
 	}
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(request); err != nil {
@@ -192,19 +191,6 @@ func (client *Client) readCommand(
 		return Command{}, normalizeRequestError("read Radarr command", err)
 	}
 	return mapCommand(response, commandID, expectedName)
-}
-
-func validateAuthorizedManualImport(authorized decisionpolicy.AuthorizedManualImport) error {
-	binding := controller.RadarrManualImportBinding{
-		FileID:              authorized.FileID,
-		ExpectedFingerprint: authorized.ExpectedFingerprint,
-		ImportMode:          authorized.ImportMode,
-		File:                authorized.File,
-	}
-	if authorized.CaseID == "" || authorized.CapabilityID == "" || !binding.Complete() {
-		return fmt.Errorf("authorized Radarr manual import is incomplete")
-	}
-	return nil
 }
 
 func mapManualImportCommandFile(file controller.RadarrManualImportCommandFile) manualImportCommandFile {

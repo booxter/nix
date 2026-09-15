@@ -22,6 +22,22 @@ type RadarrManualImportCommandFile struct {
 	MovieID      int64
 }
 
+type RadarrManualImportCommand struct {
+	ImportMode RadarrImportMode
+	File       RadarrManualImportCommandFile
+}
+
+func (command RadarrManualImportCommand) Complete() bool {
+	return command.ImportMode == RadarrImportModeCopy &&
+		usableOutputPath(command.File.Path) &&
+		(command.File.FolderName == "" || completeText(command.File.FolderName)) &&
+		completeText(command.File.Quality.Quality.Name) &&
+		validLanguages(command.File.Languages) &&
+		(command.File.ReleaseGroup == "" || completeText(command.File.ReleaseGroup)) &&
+		completeText(command.File.DownloadID) &&
+		command.File.MovieID > 0
+}
+
 // RadarrManualImportBinding gives an opaque file choice one fixed meaning for
 // later decision validation and execution.
 type RadarrManualImportBinding struct {
@@ -36,14 +52,10 @@ type RadarrManualImportBinding struct {
 func (binding RadarrManualImportBinding) Complete() bool {
 	return binding.FileID != "" &&
 		binding.ExpectedFingerprint.SizeBytes > 0 &&
-		binding.ImportMode == RadarrImportModeCopy &&
-		usableOutputPath(binding.File.Path) &&
-		(binding.File.FolderName == "" || completeText(binding.File.FolderName)) &&
-		completeText(binding.File.Quality.Quality.Name) &&
-		validLanguages(binding.File.Languages) &&
-		(binding.File.ReleaseGroup == "" || completeText(binding.File.ReleaseGroup)) &&
-		completeText(binding.File.DownloadID) &&
-		binding.File.MovieID > 0
+		(RadarrManualImportCommand{
+			ImportMode: binding.ImportMode,
+			File:       binding.File,
+		}).Complete()
 }
 
 // BindRadarrManualImportFile returns a binding only when the controller can

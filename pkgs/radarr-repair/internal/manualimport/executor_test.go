@@ -59,8 +59,12 @@ func TestExecutorConfirmsExactImportedFile(t *testing.T) {
 			waiter.waits,
 		)
 	}
-	if !reflect.DeepEqual(radarrClient.requested, authorized) {
-		t.Fatalf("requested authorization = %#v", radarrClient.requested)
+	wantRequest := controller.RadarrManualImportCommand{
+		ImportMode: authorized.ImportMode,
+		File:       authorized.File,
+	}
+	if !reflect.DeepEqual(radarrClient.requested, wantRequest) {
+		t.Fatalf("requested command = %#v", radarrClient.requested)
 	}
 }
 
@@ -291,7 +295,7 @@ func (waiter *fakeWaiter) Wait(context.Context, time.Duration) error {
 type fakeRadarr struct {
 	requestCommand radarr.Command
 	requestErr     error
-	requested      decisionpolicy.AuthorizedManualImport
+	requested      controller.RadarrManualImportCommand
 	requestCalls   int
 	commands       []radarr.Command
 	commandReads   int
@@ -301,10 +305,10 @@ type fakeRadarr struct {
 
 func (client *fakeRadarr) RequestManualImport(
 	_ context.Context,
-	authorized decisionpolicy.AuthorizedManualImport,
+	command controller.RadarrManualImportCommand,
 ) (radarr.Command, error) {
 	client.requestCalls++
-	client.requested = authorized
+	client.requested = command
 	return client.requestCommand, client.requestErr
 }
 
