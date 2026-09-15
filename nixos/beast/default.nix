@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 {
   system.stateVersion = "25.11";
 
@@ -53,6 +53,4 @@
       backupStagingDirectory = "/volume2/backups/staging/watchstate";
     };
   };
-
-  environment.systemPackages = [ pkgs.join-media-parts ];
 }
