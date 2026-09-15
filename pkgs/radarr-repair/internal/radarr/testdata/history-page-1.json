@@ -1,0 +1,53 @@
+{
+  "page": 1,
+  "pageSize": 250,
+  "records": [
+    {
+      "data": {
+        "downloadUrl": "https://tracker.example/secret-passkey/download",
+        "guid": "secret-guid",
+        "indexer": "Example Indexer"
+      },
+      "date": "2026-09-06T12:00:00-04:00",
+      "downloadId": "ABCDEF0123456789",
+      "eventType": "grabbed",
+      "id": 501,
+      "languages": [
+        {
+          "id": 1,
+          "name": "English"
+        }
+      ],
+      "movieId": 42,
+      "quality": {
+        "quality": {
+          "id": 7,
+          "modifier": "none",
+          "name": "Bluray-1080p",
+          "resolution": 1080,
+          "source": "bluray"
+        },
+        "revision": {
+          "isRepack": false,
+          "real": 0,
+          "version": 1
+        }
+      },
+      "sourceTitle": "Example.Movie.2026.1080p.BluRay"
+    },
+    {
+      "data": {},
+      "date": "2026-09-06T18:00:00Z",
+      "downloadId": "ABCDEF0123456789",
+      "eventType": "futureEventType",
+      "id": 503,
+      "languages": [],
+      "movieId": 42,
+      "quality": null,
+      "sourceTitle": "Example.Movie.2026.1080p.BluRay"
+    }
+  ],
+  "sortDirection": "ascending",
+  "sortKey": "date",
+  "totalRecords": 3
+}

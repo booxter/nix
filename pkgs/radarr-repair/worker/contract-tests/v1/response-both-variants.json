@@ -1,0 +1,24 @@
+{
+  "evidence": {
+    "chapters": [],
+    "format": {
+      "bit_rate_bps": null,
+      "duration_ms": null,
+      "long_name": null,
+      "names": [],
+      "probe_score": null,
+      "program_count": null,
+      "size_bytes": null,
+      "start_time_ms": null,
+      "stream_count": null,
+      "tags": []
+    },
+    "programs": [],
+    "streams": []
+  },
+  "operation": "probe_v1",
+  "reason": "probe_error",
+  "request_id": "request:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "ok"
+}

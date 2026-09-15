@@ -1,0 +1,111 @@
+{
+  "capabilities": [],
+  "case_id": "sha256:fd95793fe960d729feabe39a448c1f0c888c08a7065384a3cc5fbc064410bd80",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-07T12:00:00Z",
+    "download_ref": "download_single_01",
+    "file_count": 1,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Poorly Named Feature",
+    "source_type": "torrent",
+    "total_size_bytes": 1500000000
+  },
+  "files": [
+    {
+      "bytes_completed": 1500000000,
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "extension": "mkv",
+      "file_id": "file_single_01",
+      "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "path_components": [
+        "Poorly Named Feature.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 3333333,
+          "effective_duration_ms": 3600000,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 3600000,
+          "longest_stream_duration_ms": 3600000,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 1500000000
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 3000000,
+            "codec_name": "h264",
+            "codec_tag": null,
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 3600000,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "High",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 1500000000,
+      "torrent_index": 0,
+      "wanted": true
+    }
+  ],
+  "observed_at": "2026-09-07T13:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download_single_01",
+      "error_message": "Import failed",
+      "queue_id": 101,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence_single_queue_01",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "Poorly Named Feature.mkv"
+        }
+      ],
+      "title": "Poorly Named Feature",
+      "tracked_download_state": "importPending",
+      "tracked_download_status": "warning"
+    },
+    "history": [],
+    "manual_imports": [
+      {
+        "file_id": "file_single_01",
+        "languages": [],
+        "quality": null,
+        "rejections": [],
+        "release_group": null
+      }
+    ],
+    "movie": null
+  },
+  "schema_version": "radarr-repair/v1"
+}

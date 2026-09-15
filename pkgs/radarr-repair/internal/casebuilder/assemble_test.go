@@ -1,0 +1,806 @@
+package casebuilder
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/contracts"
+	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+)
+
+const (
+	testDownloadHash = "abcdef0123456789abcdef0123456789abcdef01"
+	testFileOneID    = controller.FileID("file:1111111111111111111111111111111111111111111111111111111111111111")
+	testFileTwoID    = controller.FileID("file:2222222222222222222222222222222222222222222222222222222222222222")
+	testFileThreeID  = controller.FileID("file:3333333333333333333333333333333333333333333333333333333333333333")
+)
+
+func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := contracts.DecodeCase(assembly.EncodedRequest); err != nil {
+		t.Fatalf("decode assembled case: %v", err)
+	}
+	if assembly.LocalSnapshot.CaseID != assembly.Request.CaseID {
+		t.Fatalf("local case ID = %q, request case ID = %q", assembly.LocalSnapshot.CaseID, assembly.Request.CaseID)
+	}
+	if assembly.LocalSnapshot.Observation.Correlation.DownloadRoot != "/srv/downloads/Example.Movie.2024" {
+		t.Fatal("local snapshot did not retain the download root")
+	}
+	if len(assembly.LocalSnapshot.ManualImportBindings) != 2 {
+		t.Fatalf("manual import bindings = %#v", assembly.LocalSnapshot.ManualImportBindings)
+	}
+	for _, localOnly := range []string{
+		testDownloadHash,
+		"/srv/downloads",
+		"/srv/downloads/Example.Movie.2024/CD1.mkv",
+	} {
+		if bytes.Contains(bytes.ToLower(assembly.EncodedRequest), []byte(strings.ToLower(localOnly))) {
+			t.Fatalf("planner request contains local-only value %q", localOnly)
+		}
+	}
+
+	want, err := os.ReadFile(filepath.Join("testdata", "repair-case.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pretty bytes.Buffer
+	if err := json.Indent(&pretty, assembly.EncodedRequest, "", "  "); err != nil {
+		t.Fatal(err)
+	}
+	pretty.WriteByte('\n')
+	if !bytes.Equal(pretty.Bytes(), want) {
+		t.Fatalf("assembled case differs from golden file:\n%s", pretty.Bytes())
+	}
+}
+
+func TestAssembleCaseIdentityIgnoresObservationTime(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	first, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	observation.ObservedAt = observation.ObservedAt.Add(time.Hour)
+	second, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Request.CaseID != second.Request.CaseID {
+		t.Fatalf("case ID changed from %q to %q", first.Request.CaseID, second.Request.CaseID)
+	}
+}
+
+func TestAssembleOffersManualImportForOneFile(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.StatusMessages = nil
+	observation.Correlation.Radarr.SizeBytes = 1_000
+	observation.Correlation.Download.TotalSizeBytes = 1_000
+	observation.Correlation.Download.Files = observation.Correlation.Download.Files[:1]
+	observation.ManualImports = observation.ManualImports[:1]
+	observation.ManualImports[0].FolderName = ""
+	observation.ManualImports[0].Quality = nil
+	observation.ManualImports[0].Languages = nil
+	observation.Inventory.Files = observation.Inventory.Files[:1]
+	observation.Inventory.Paths = observation.Inventory.Paths[:1]
+	observation.Probes = observation.Probes[:1]
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Files) != 1 || len(assembly.Request.Capabilities) != 1 {
+		t.Fatalf("planner request = %#v", assembly.Request)
+	}
+	capability := assembly.Request.Capabilities[0]
+	if capability.Action != contracts.CapabilityActionManualImportFile ||
+		capability.FileID == nil || *capability.FileID != string(testFileOneID) {
+		t.Fatalf("manual import capability = %#v", capability)
+	}
+	binding, ok := assembly.LocalSnapshot.ManualImportBindings[capability.CapabilityID]
+	if !ok || binding.FileID != testFileOneID ||
+		binding.File.Path != "/srv/downloads/Example.Movie.2024/CD1.mkv" {
+		t.Fatalf("manual import binding = %#v, present = %t", binding, ok)
+	}
+	if len(assembly.LocalSnapshot.Observation.Inventory.Paths) != 1 {
+		t.Fatalf("local snapshot = %#v", assembly.LocalSnapshot)
+	}
+}
+
+func TestAssembleProducesMissingMovieCaseWithCandidates(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.MovieID = nil
+	observation.Movie = nil
+	observation.History = nil
+	observation.ManualImports = nil
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if assembly.Request.Radarr.Movie != nil {
+		t.Fatalf("movie = %#v", assembly.Request.Radarr.Movie)
+	}
+	if len(assembly.Request.Capabilities) != 1 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+}
+
+func TestAssembleOffersJoinCandidatePool(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.StatusMessages[0].Messages = []string{"Unable to parse file"}
+	for index, name := range []string{"Alpha.mkv", "Unrelated.mkv"} {
+		observation.Inventory.Files[index].PathComponents = []string{name}
+		path := "/srv/downloads/Example.Movie.2024/" + name
+		observation.Inventory.Paths[index].AbsolutePath = path
+		observation.ManualImports[index].Path = path
+		observation.ManualImports[index].RelativePath = name
+	}
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Capabilities) != 3 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	capability := assembly.Request.Capabilities[0]
+	if capability.Action != contracts.CapabilityActionJoinParts {
+		t.Fatalf("action = %q", capability.Action)
+	}
+	wantFileIDs := []string{string(testFileOneID), string(testFileTwoID)}
+	if !reflect.DeepEqual(capability.CandidateFileIDS, wantFileIDs) {
+		t.Fatalf("candidate file IDs = %#v, want %#v", capability.CandidateFileIDS, wantFileIDs)
+	}
+	if capability.CapabilityID == "" {
+		t.Fatal("capability ID is empty")
+	}
+}
+
+func TestAssembleRejectsInconsistentObservations(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		mutate func(*Observation)
+		want   string
+	}{
+		{
+			name: "missing probe",
+			mutate: func(observation *Observation) {
+				observation.Probes = observation.Probes[:1]
+			},
+			want: "has no probe outcome",
+		},
+		{
+			name: "extra probe",
+			mutate: func(observation *Observation) {
+				observation.Probes = append(observation.Probes, FileProbe{
+					FileID: "file:3333333333333333333333333333333333333333333333333333333333333333",
+				})
+			},
+			want: "do not exactly match",
+		},
+		{
+			name: "duplicate inventory ID",
+			mutate: func(observation *Observation) {
+				observation.Inventory.Files[1].ID = testFileOneID
+			},
+			want: "duplicate file ID",
+		},
+		{
+			name: "history movie mismatch",
+			mutate: func(observation *Observation) {
+				observation.History[0].MovieID++
+			},
+			want: "refers to another movie",
+		},
+		{
+			name: "unknown manual import path",
+			mutate: func(observation *Observation) {
+				observation.ManualImports[0].Path = "/srv/downloads/elsewhere/CD1.mkv"
+			},
+			want: "does not match the inventory",
+		},
+		{
+			name: "manual import size mismatch",
+			mutate: func(observation *Observation) {
+				observation.ManualImports[0].SizeBytes++
+			},
+			want: "manual import size does not match",
+		},
+		{
+			name: "local value in retained text",
+			mutate: func(observation *Observation) {
+				observation.Movie.Title = "Example " + testDownloadHash
+			},
+			want: "raw download identifier",
+		},
+		{
+			name: "local path in retained text",
+			mutate: func(observation *Observation) {
+				observation.Movie.Title = observation.Inventory.Paths[0].AbsolutePath
+			},
+			want: "contains a local path",
+		},
+		{
+			name: "contract limit",
+			mutate: func(observation *Observation) {
+				observation.Movie.AlternateTitles = make([]string, 1_025)
+				for index := range observation.Movie.AlternateTitles {
+					observation.Movie.AlternateTitles[index] = "title " + strconv.Itoa(index)
+				}
+			},
+			want: "invalid repair case",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			test.mutate(&observation)
+			_, err := Assemble(observation)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %v, want substring %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestAssembleRetainsIncompleteProbeMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		mutate func(*controller.ProbeEvidence)
+	}{
+		{
+			name: "missing format size",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Format.SizeBytes = nil
+			},
+		},
+		{
+			name: "missing stream kind",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams[0].Kind = nil
+			},
+		},
+		{
+			name: "incomplete stream disposition",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams[0].Disposition.Forced = nil
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			test.mutate(observation.Probes[0].Outcome.Evidence)
+			assembly, err := Assemble(observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			probe := assembly.Request.Files[0].Probe
+			if probe.Status != contracts.Failed || probe.Reason == nil ||
+				*probe.Reason != contracts.ProbeReason(controller.MediaProbeIncompleteMetadata) {
+				t.Fatalf("probe = %#v", probe)
+			}
+			if capabilityCount(
+				assembly.Request.Capabilities,
+				contracts.CapabilityActionJoinParts,
+			) != 0 || capabilityCount(
+				assembly.Request.Capabilities,
+				contracts.CapabilityActionManualImportFile,
+			) != 2 {
+				t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+			}
+		})
+	}
+}
+
+func TestAssembleRejectsInconsistentSuccessfulProbeEvidence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		mutate func(*controller.ProbeEvidence)
+		want   string
+	}{
+		{
+			name: "changed file size",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				*evidence.Format.SizeBytes++
+			},
+			want: "does not match inventory size",
+		},
+		{
+			name: "duplicate stream index",
+			mutate: func(evidence *controller.ProbeEvidence) {
+				evidence.Streams = append(evidence.Streams, evidence.Streams[0])
+			},
+			want: "duplicate stream index",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			test.mutate(observation.Probes[0].Outcome.Evidence)
+			_, err := Assemble(observation)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %v, want substring %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestAssembleWithholdsJoinForIncompleteProbeEvidence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		outcome controller.MediaProbeOutcome
+	}{
+		{
+			name:    "failed",
+			outcome: controller.FailedMediaProbe(controller.MediaProbeUnsupportedFormat),
+		},
+		{
+			name: "collection limit",
+			outcome: controller.UncollectedMediaProbe(
+				controller.MediaProbeCollectionLimit,
+			),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			observation := testObservation()
+			observation.Probes[1].Outcome = test.outcome
+			assembly, err := Assemble(observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if capabilityCount(
+				assembly.Request.Capabilities,
+				contracts.CapabilityActionJoinParts,
+			) != 0 || capabilityCount(
+				assembly.Request.Capabilities,
+				contracts.CapabilityActionManualImportFile,
+			) != 2 {
+				t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+			}
+			if assembly.Request.Files[1].Probe.Status == contracts.Ok {
+				t.Fatalf("probe = %#v", assembly.Request.Files[1].Probe)
+			}
+		})
+	}
+}
+
+func TestAssembleKeepsUsableCandidatesWhenAnotherProbeFails(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	extra := testInventoryFile(testFileThreeID, "Broken.mkv", 500, 2)
+	observation.Inventory.Files = append(observation.Inventory.Files, extra)
+	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
+		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/Broken.mkv",
+	})
+	observation.Probes = append(observation.Probes, FileProbe{
+		FileID: extra.ID,
+		Outcome: controller.FailedMediaProbe(
+			controller.MediaProbeUnsupportedFormat,
+		),
+	})
+	observation.Correlation.Download.Files = append(
+		observation.Correlation.Download.Files,
+		controller.DownloadFile{
+			Index: 2, HasIndex: true, Path: "/srv/downloads/Example.Movie.2024/Broken.mkv",
+			LengthBytes: 500, BytesCompleted: 500, Selected: true,
+		},
+	)
+	observation.Correlation.Download.TotalSizeBytes += 500
+	observation.Correlation.Radarr.SizeBytes += 500
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Capabilities) != 3 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	wantFileIDs := []string{string(testFileOneID), string(testFileTwoID)}
+	if got := assembly.Request.Capabilities[0].CandidateFileIDS; !reflect.DeepEqual(got, wantFileIDs) {
+		t.Fatalf("candidate file IDs = %#v, want %#v", got, wantFileIDs)
+	}
+	if len(assembly.Request.Files) != 3 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
+	}
+}
+
+func TestAssembleExcludesRawDiscFilesFromJoinCandidates(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	for index := range observation.Inventory.Files {
+		name := fmt.Sprintf("%05d.m2ts", index)
+		observation.Inventory.Files[index].PathComponents = []string{"BDMV", "STREAM", name}
+		path := "/srv/downloads/Example.Movie.2024/BDMV/STREAM/" + name
+		observation.Inventory.Paths[index].AbsolutePath = path
+		observation.ManualImports[index].Path = path
+	}
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Capabilities) != 0 {
+		t.Fatalf("capabilities = %#v", assembly.Request.Capabilities)
+	}
+	if len(assembly.Request.Files) != 2 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
+	}
+}
+
+func TestAssembleRetainsEvidenceOnlyFiles(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	extra := testInventoryFile(
+		"file:3333333333333333333333333333333333333333333333333333333333333333",
+		"README.txt",
+		100,
+		2,
+	)
+	extra.DownloadFile = nil
+	observation.Inventory.Files = append(observation.Inventory.Files, extra)
+	observation.Inventory.Paths = append(observation.Inventory.Paths, controller.FilePathMapping{
+		FileID: extra.ID, AbsolutePath: "/srv/downloads/Example.Movie.2024/README.txt",
+	})
+	observation.Probes = append(observation.Probes, FileProbe{
+		FileID: extra.ID,
+		Outcome: controller.UncollectedMediaProbe(
+			controller.MediaProbeNotCandidate,
+		),
+	})
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assembly.Request.Files) != 3 {
+		t.Fatalf("files = %d", len(assembly.Request.Files))
+	}
+	file := assembly.Request.Files[2]
+	if file.Disposition != contracts.EvidenceOnly ||
+		file.DispositionReason == nil || *file.DispositionReason != contracts.Untracked ||
+		file.Probe.Status != contracts.NotProbed {
+		t.Fatalf("evidence-only file = %#v", file)
+	}
+}
+
+func TestManualImportCapabilityIdentityIncludesEntireBinding(t *testing.T) {
+	t.Parallel()
+
+	binding := controller.RadarrManualImportBinding{
+		FileID: "file:one",
+		ExpectedFingerprint: controller.FileFingerprint{
+			Device: 1, Inode: 2, SizeBytes: 3, MTimeNS: 4,
+		},
+		ImportMode: controller.RadarrImportModeCopy,
+		File: controller.RadarrManualImportCommandFile{
+			Path:       "/downloads/Movie.mkv",
+			FolderName: "Movie",
+			Quality: controller.RadarrQualityModel{
+				Quality: controller.RadarrQuality{
+					ID: 5, Name: "Bluray-1080p", Source: "bluray",
+					Resolution: 1080, Modifier: "none",
+				},
+				Revision: &controller.RadarrQualityRevision{
+					Version: 2, Real: 1, IsRepack: true,
+				},
+			},
+			Languages:    []controller.RadarrLanguage{{ID: 1, Name: "English"}},
+			ReleaseGroup: "GROUP",
+			IndexerFlags: 4,
+			DownloadID:   "download",
+			MovieID:      42,
+		},
+	}
+	originalID := manualImportCapabilityID(binding)
+	tests := []struct {
+		name   string
+		mutate func(*controller.RadarrManualImportBinding)
+	}{
+		{name: "file ID", mutate: func(value *controller.RadarrManualImportBinding) { value.FileID += "x" }},
+		{name: "fingerprint", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.ExpectedFingerprint.MTimeNS++
+		}},
+		{name: "import mode", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.ImportMode = "move"
+		}},
+		{name: "path", mutate: func(value *controller.RadarrManualImportBinding) { value.File.Path += "x" }},
+		{name: "folder name", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.FolderName += "x"
+		}},
+		{name: "quality ID", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Quality.ID++
+		}},
+		{name: "quality name", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Quality.Name += "x"
+		}},
+		{name: "quality source", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Quality.Source += "x"
+		}},
+		{name: "quality resolution", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Quality.Resolution++
+		}},
+		{name: "quality modifier", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Quality.Modifier += "x"
+		}},
+		{name: "missing revision", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Revision = nil
+		}},
+		{name: "revision version", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Revision.Version++
+		}},
+		{name: "revision real", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Revision.Real++
+		}},
+		{name: "revision repack", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Quality.Revision.IsRepack = false
+		}},
+		{name: "language count", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Languages = append(value.File.Languages, controller.RadarrLanguage{ID: 2, Name: "French"})
+		}},
+		{name: "language ID", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Languages[0].ID++
+		}},
+		{name: "language name", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.Languages[0].Name += "x"
+		}},
+		{name: "release group", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.ReleaseGroup += "x"
+		}},
+		{name: "indexer flags", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.IndexerFlags++
+		}},
+		{name: "download ID", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.DownloadID += "x"
+		}},
+		{name: "movie ID", mutate: func(value *controller.RadarrManualImportBinding) {
+			value.File.MovieID++
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			changed := cloneManualImportBinding(binding)
+			test.mutate(&changed)
+			if changedID := manualImportCapabilityID(changed); changedID == originalID {
+				t.Fatalf("capability ID did not change from %q", originalID)
+			}
+		})
+	}
+}
+
+func capabilityCount(capabilities []contracts.Capability, action contracts.CapabilityAction) int {
+	count := 0
+	for _, capability := range capabilities {
+		if capability.Action == action {
+			count++
+		}
+	}
+	return count
+}
+
+func cloneManualImportBinding(
+	binding controller.RadarrManualImportBinding,
+) controller.RadarrManualImportBinding {
+	cloned := binding
+	if binding.File.Quality.Revision != nil {
+		revision := *binding.File.Quality.Revision
+		cloned.File.Quality.Revision = &revision
+	}
+	cloned.File.Languages = clone(binding.File.Languages)
+	return cloned
+}
+
+func testObservation() Observation {
+	observedAt := time.Date(2026, time.September, 7, 14, 0, 0, 0, time.FixedZone("EDT", -4*60*60))
+	completedAt := observedAt.Add(-2 * time.Hour)
+	movieID := int64(42)
+	runtime := 120
+	originalTitle := "Example Original"
+	imdbID := "tt12345678"
+	qualityName := "Bluray-1080p"
+	quality := &controller.RadarrQualityModel{
+		Quality: controller.RadarrQuality{ID: 7, Name: qualityName},
+	}
+	languages := []controller.RadarrLanguage{{ID: 1, Name: "English"}}
+
+	files := []controller.InventoryFile{
+		testInventoryFile(testFileOneID, "CD1.mkv", 1_000, 0),
+		testInventoryFile(testFileTwoID, "CD2.mkv", 2_000, 1),
+	}
+	paths := []controller.FilePathMapping{
+		{FileID: testFileOneID, AbsolutePath: "/srv/downloads/Example.Movie.2024/CD1.mkv"},
+		{FileID: testFileTwoID, AbsolutePath: "/srv/downloads/Example.Movie.2024/CD2.mkv"},
+	}
+	return Observation{
+		ObservedAt: observedAt,
+		Correlation: controller.DownloadCorrelation{
+			DownloadRoot: "/srv/downloads/Example.Movie.2024",
+			Radarr: controller.RadarrQueueRecord{
+				ID:                    71,
+				MovieID:               &movieID,
+				Title:                 "Example.Movie.2024.1080p.BluRay-GROUP",
+				Status:                "completed",
+				TrackedDownloadStatus: "warning",
+				TrackedDownloadState:  "importBlocked",
+				StatusMessages: []controller.RadarrStatusMessage{{
+					Title: "Import failed",
+					Messages: []string{
+						"File is suspected multi-part file, Radarr doesn't support this",
+					},
+				}},
+				DownloadID:         strings.ToUpper(testDownloadHash),
+				Protocol:           "torrent",
+				OutputPath:         "/srv/downloads/Example.Movie.2024",
+				SizeBytes:          3_000,
+				SizeRemainingBytes: 0,
+			},
+			Download: controller.Download{
+				Client:           controller.DownloadClientTransmission,
+				SourceType:       controller.DownloadSourceTorrent,
+				ID:               testDownloadHash,
+				IDComparison:     controller.DownloadIDASCIIInsensitive,
+				Name:             "Example.Movie.2024",
+				Stable:           true,
+				Complete:         true,
+				OutputPath:       "/srv/downloads/Example.Movie.2024",
+				Labels:           []string{"radarr"},
+				CompletedAt:      &completedAt,
+				TotalSizeBytes:   3_000,
+				ContentOwnership: controller.DownloadContentManifest,
+				Files: []controller.DownloadFile{
+					{Index: 0, HasIndex: true, Path: paths[0].AbsolutePath, LengthBytes: 1_000, BytesCompleted: 1_000, Selected: true},
+					{Index: 1, HasIndex: true, Path: paths[1].AbsolutePath, LengthBytes: 2_000, BytesCompleted: 2_000, Selected: true},
+				},
+			},
+		},
+		Movie: &controller.RadarrMovie{
+			ID:              movieID,
+			TMDBID:          1234,
+			IMDbID:          &imdbID,
+			Title:           "Example Movie",
+			OriginalTitle:   &originalTitle,
+			AlternateTitles: []string{"Another Example"},
+			Year:            2024,
+			RuntimeMinutes:  &runtime,
+		},
+		History: []controller.RadarrHistoryEvent{{
+			ID:          501,
+			MovieID:     movieID,
+			DownloadID:  strings.ToUpper(testDownloadHash),
+			EventType:   "grabbed",
+			OccurredAt:  observedAt.Add(-3 * time.Hour),
+			SourceTitle: "Example.Movie.2024.1080p.BluRay-GROUP",
+			Quality:     quality,
+			Languages:   languages,
+		}},
+		ManualImports: []controller.RadarrManualImport{
+			{
+				Path:         paths[0].AbsolutePath,
+				RelativePath: "CD1.mkv",
+				FolderName:   "Example.Movie.2024",
+				SizeBytes:    1_000,
+				MovieID:      movieID,
+				DownloadID:   strings.ToUpper(testDownloadHash),
+				Quality:      quality,
+				Languages:    languages,
+				ReleaseGroup: "GROUP",
+				Rejections: []controller.RadarrManualImportRejection{{
+					Type: "permanent", Reason: "File is suspected multi-part file, Radarr doesn't support this",
+				}},
+			},
+			{
+				Path:         paths[1].AbsolutePath,
+				RelativePath: "CD2.mkv",
+				FolderName:   "Example.Movie.2024",
+				SizeBytes:    2_000,
+				MovieID:      movieID,
+				DownloadID:   strings.ToUpper(testDownloadHash),
+				Quality:      quality,
+				Languages:    languages,
+				ReleaseGroup: "GROUP",
+				Rejections: []controller.RadarrManualImportRejection{{
+					Type: "permanent", Reason: "File is suspected multi-part file, Radarr doesn't support this",
+				}},
+			},
+		},
+		Inventory: controller.FileInventory{Files: files, Paths: paths},
+		Probes: []FileProbe{
+			{
+				FileID: testFileOneID,
+				Outcome: controller.SuccessfulMediaProbe(
+					testProbe(1_000, 3_600_000),
+				),
+			},
+			{
+				FileID: testFileTwoID,
+				Outcome: controller.SuccessfulMediaProbe(
+					testProbe(2_000, 3_600_000),
+				),
+			},
+		},
+	}
+}
+
+func testInventoryFile(id controller.FileID, name string, size int64, index int) controller.InventoryFile {
+	return controller.InventoryFile{
+		ID:             id,
+		PathComponents: []string{name},
+		Fingerprint: controller.FileFingerprint{
+			Device: 1, Inode: uint64(index + 10), SizeBytes: size, MTimeNS: 1_789_000_000_000_000_000,
+		},
+		DownloadFile: &controller.DownloadFileReference{
+			Index: index, HasIndex: true, LengthBytes: size, BytesCompleted: size, Selected: true,
+		},
+	}
+}
+
+func testProbe(size int64, duration int64) controller.ProbeEvidence {
+	kind := controller.ProbeStreamVideo
+	codec := "h264"
+	profile := "High"
+	pixelFormat := "yuv420p"
+	width := int64(1920)
+	height := int64(1080)
+	start := int64(0)
+	bitRate := int64(8_500_000)
+	defaultDisposition := true
+	falseValue := false
+	return controller.ProbeEvidence{
+		Format: controller.ProbeFormat{
+			Names: []string{"matroska", "webm"}, DurationMS: &duration,
+			SizeBytes: &size, BitRateBPS: &bitRate,
+		},
+		Streams: []controller.ProbeStream{{
+			Index: 0, Kind: &kind, CodecName: &codec, Profile: &profile,
+			Width: &width, Height: &height, PixelFormat: &pixelFormat,
+			AverageRate: &controller.Rational{Numerator: 24_000, Denominator: 1_001},
+			TimeBase:    &controller.Rational{Numerator: 1, Denominator: 1_000},
+			StartTimeMS: &start, DurationMS: &duration, BitRateBPS: &bitRate,
+			Disposition: &controller.ProbeDisposition{
+				Default: &defaultDisposition, Forced: &falseValue,
+				HearingImpaired: &falseValue, VisualImpaired: &falseValue,
+			},
+		}},
+	}
+}

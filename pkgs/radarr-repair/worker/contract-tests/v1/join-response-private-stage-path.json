@@ -1,0 +1,8 @@
+{
+  "operation": "stage_join_v1",
+  "reason": "join_error",
+  "request_id": "request:join:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "staging_path": "/data/downloads/.radarr-repair/private.mkv",
+  "status": "failed"
+}

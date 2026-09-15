@@ -1,0 +1,17 @@
+{
+  "action": "join_parts_v1",
+  "capability_id": "capability_join_01",
+  "case_id": "sha256:98955c1223a01fff78d92faa053566472531338777f65931a821338247186af6",
+  "evidence_refs": [
+    "file_01",
+    "file_02",
+    "evidence_import_01",
+    "evidence_import_02"
+  ],
+  "explanation": "The CD1 and CD2 names, torrent order, compatible streams, and combined duration identify two ordered parts of the same movie.",
+  "ordered_file_ids": [
+    "file_01",
+    "file_02"
+  ],
+  "schema_version": "radarr-repair/v2"
+}

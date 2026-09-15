@@ -1,0 +1,14 @@
+{
+  "action": "no_repair",
+  "capability_id": "capability_join_01",
+  "case_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evidence_refs": [],
+  "explanation": "This invalid decision mixes fields from both action variants.",
+  "missing_evidence": [],
+  "ordered_file_ids": [
+    "file_01",
+    "file_02"
+  ],
+  "reason": "no_repair_needed",
+  "schema_version": "radarr-repair/v2"
+}

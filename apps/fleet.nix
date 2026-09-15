@@ -123,7 +123,6 @@ in
     seerr-update-user-tags = seerrUpdateUserTagsPackage;
     pki-rotation = pkiRotationPackage;
     reset-oidc = resetOidc;
-    join-media-parts = pkgs.join-media-parts;
     hba-flash = hbaFlash;
     wg-home-client-config = wgHomeClientConfig;
   };

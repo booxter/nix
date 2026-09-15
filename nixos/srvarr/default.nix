@@ -72,6 +72,7 @@ in
     ./aurral.nix
     ./glance.nix
     ./pinepods.nix
+    ./radarr-repair.nix
     ./romm.nix
     ./sabnzbd.nix
     ./shelfmark

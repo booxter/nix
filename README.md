@@ -79,6 +79,7 @@ nix run .#sops-update
 nix run .#sops-cat -- mair
 nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
+printf %s "$flakehub_token" | nix run .#sops-set -- --realm home --all flakehub/token
 nix run .#sops-pass -- beast root
 nix run .#sops-pass -- --gen gw root
 nix run .#sops-pass -- --gen gw both
@@ -91,6 +92,8 @@ nix run .#sops-copy -- mair prx1-lab flakehub
 
 Run `sops-update` when a host secret should receive missing template keys.
 `sops-edit` only opens the selected secret for editing.
+`sops-set --all` updates every host secret in the selected realm and reports
+completed and remaining hosts if an update fails partway through.
 
 ## Tests
 

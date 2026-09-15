@@ -1,0 +1,14 @@
+{
+  "action": "no_repair",
+  "case_id": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "evidence_refs": [
+    "file_01",
+    "file_02"
+  ],
+  "explanation": "The filenames and durations do not establish a reliable part order.",
+  "missing_evidence": [
+    "part_order"
+  ],
+  "reason": "ambiguous_part_order",
+  "schema_version": "radarr-repair/v1"
+}

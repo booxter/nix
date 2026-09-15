@@ -1,0 +1,29 @@
+{
+  "page": 2,
+  "pageSize": 250,
+  "records": [
+    {
+      "downloadClient": "Future Client",
+      "downloadClientHasPostImportCategory": false,
+      "downloadId": "FEDCBA9876543210",
+      "errorMessage": "",
+      "estimatedCompletionTime": "2026-09-06T12:01:00Z",
+      "id": 103,
+      "indexer": "Future Indexer",
+      "movieId": 84,
+      "outputPath": "/downloads/Future.Values",
+      "protocol": "futureProtocol",
+      "size": 2048,
+      "sizeleft": 1024,
+      "status": "futureQueueStatus",
+      "statusMessages": [],
+      "timeleft": "00:01:00",
+      "title": "Future.Values.mkv",
+      "trackedDownloadState": "futureTrackedState",
+      "trackedDownloadStatus": "futureTrackedStatus"
+    }
+  ],
+  "sortDirection": "ascending",
+  "sortKey": "added",
+  "totalRecords": 3
+}

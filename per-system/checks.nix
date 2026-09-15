@@ -37,4 +37,9 @@ appSet.packages
 // inputNixosTests
 // {
   python-quality = pythonQualityCheck;
+  radarr-repair-contracts = pkgs.radarr-repair-contracts;
+}
+// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+  radarr-repair = pkgs.radarr-repair;
+  radarr-repair-planner = pkgs.radarr-repair-planner;
 }

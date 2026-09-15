@@ -6,6 +6,123 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
+      - series: 'host_observability_radarr_repair_shadow_run_success{instance="srvarr",job="node-mtls"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairShadowRunFailing
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_shadow_run_success{instance="srvarr",job="node-mtls"}'
+        values: "0x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: RadarrRepairShadowRunFailing
+      - eval_time: 30m
+        alertname: RadarrRepairShadowRunFailing
+        exp_alerts:
+          - exp_labels:
+              alertname: RadarrRepairShadowRunFailing
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Radarr repair shadow runs failing on srvarr"
+              description: "The Radarr repair controller has reported unsuccessful shadow runs for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_run_success{instance="srvarr",job="node-mtls"}'
+        values: "1x62"
+      - series: 'host_observability_radarr_repair_apply_disabled{instance="srvarr",job="node-mtls"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairApplyRunFailing
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_run_success{instance="srvarr",job="node-mtls"}'
+        values: "0x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: RadarrRepairApplyRunFailing
+      - eval_time: 30m
+        alertname: RadarrRepairApplyRunFailing
+        exp_alerts:
+          - exp_labels:
+              alertname: RadarrRepairApplyRunFailing
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Radarr repair apply runs failing on srvarr"
+              description: "The Radarr repair controller has reported unsuccessful apply runs for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_run_success{instance="srvarr",job="node-mtls"}'
+        values: "0x59 1x3"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairApplyRunFailing
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/radarr-repair/radarr-repair.prom"}'
+        values: "0x122"
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: RadarrRepairApplyMetricsStale
+      - eval_time: 60m30s
+        alertname: RadarrRepairApplyMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: RadarrRepairApplyMetricsStale
+              category: media
+              file: /var/lib/prometheus-node-exporter-textfile/radarr-repair/radarr-repair.prom
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Radarr repair metrics stale on srvarr"
+              description: "The Radarr repair controller metrics have not been refreshed for more than one hour."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_executions{instance="srvarr",job="node-mtls",action="join_parts_v1",state="artifact_published"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: RadarrRepairPublishedArtifactStuck
+      - eval_time: 30m
+        alertname: RadarrRepairPublishedArtifactStuck
+        exp_alerts:
+          - exp_labels:
+              action: join_parts_v1
+              alertname: RadarrRepairPublishedArtifactStuck
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+              state: artifact_published
+            exp_annotations:
+              summary: "Radarr repair joined artifact stuck on srvarr"
+              description: "A joined artifact has remained published without a confirmed Radarr import for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_executions{instance="srvarr",job="node-mtls",action="join_parts_v1",state="artifact_published"}'
+        values: "1x59 0x3"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairPublishedArtifactStuck
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_transmission_exporter_ok{instance="srvarr"}'
         values: "1x22"
     alert_rule_test:

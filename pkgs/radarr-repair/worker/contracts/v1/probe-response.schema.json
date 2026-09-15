@@ -1,0 +1,82 @@
+{
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "probe_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "not_regular_file",
+            "fingerprint_mismatch",
+            "unsupported_format",
+            "timeout",
+            "probe_error",
+            "invalid_output",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "media-evidence.schema.json#/$defs/evidence"
+        },
+        "operation": {
+          "const": "probe_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "evidence"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "probe-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker probe response version 1"
+}

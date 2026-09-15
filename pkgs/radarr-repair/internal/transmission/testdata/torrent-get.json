@@ -1,0 +1,49 @@
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "torrents": [
+      {
+        "added_date": 1788703200,
+        "date_created": 1788600000,
+        "done_date": 1788706800,
+        "download_dir": "/downloads",
+        "file_stats": [
+          {
+            "bytes_completed": 2000000000,
+            "priority": 0,
+            "wanted": true
+          },
+          {
+            "bytes_completed": 1900000000,
+            "priority": 1,
+            "wanted": true
+          }
+        ],
+        "files": [
+          {
+            "bytes_completed": 2000000000,
+            "length": 2000000000,
+            "name": "Example.Movie.2026/Example.Movie.2026.CD1.mkv"
+          },
+          {
+            "bytes_completed": 1900000000,
+            "length": 1900000000,
+            "name": "Example.Movie.2026/Example.Movie.2026.CD2.mkv"
+          }
+        ],
+        "hash_string": "abcdef0123456789abcdef0123456789abcdef01",
+        "is_finished": true,
+        "labels": [
+          "radarr",
+          "movies"
+        ],
+        "left_until_done": 0,
+        "name": "Example.Movie.2026.1080p.BluRay-GROUP",
+        "percent_done": 1.0,
+        "status": 6,
+        "total_size": 3900000000
+      }
+    ]
+  }
+}

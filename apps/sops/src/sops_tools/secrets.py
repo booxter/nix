@@ -118,6 +118,22 @@ class SecretService:
         self.sops.set_value(secret, key_path, value)
         return secret
 
+    def set_all_text(self, key_path: KeyPath, value: str) -> tuple[str, ...]:
+        hosts = self.repository.hosts()
+        if not hosts:
+            raise ToolError(f"No host secrets found in {self.repository.directory}")
+
+        for index, host in enumerate(hosts):
+            try:
+                self.set_text(host, key_path, value)
+            except ToolError as error:
+                updated = ", ".join(hosts[:index]) or "none"
+                remaining = ", ".join(hosts[index:])
+                raise ToolError(
+                    f"{error}\nBulk update stopped. Updated: {updated}. Not updated: {remaining}."
+                ) from error
+        return hosts
+
     def copy(
         self,
         source_host: str,

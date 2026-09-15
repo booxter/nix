@@ -1,0 +1,7 @@
+{
+  "operation": "stage_join_v1",
+  "reason": "fingerprint_mismatch",
+  "request_id": "request:join:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

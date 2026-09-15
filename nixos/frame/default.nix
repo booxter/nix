@@ -62,7 +62,10 @@ in
     ollama = {
       contextLength = 65536;
       models = {
+        "gemma3:27b" = { };
+        "gpt-oss:20b" = { };
         "granite4:32b-a9b-h" = { };
+        "qwen3.8:27b-mtp-q4_K_M" = { };
         "qwen3-vl:8b-instruct".capabilities = [
           "text"
           "vision"

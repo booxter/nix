@@ -49,17 +49,7 @@ in
             authentication.apiKey = {
               source = lib.mkOption {
                 type = lib.types.strMatching "^/.*";
-                description = "File from which systemd may load the API credential source.";
-              };
-
-              format = lib.mkOption {
-                type = lib.types.enum [ "xml-element" ];
-                default = "xml-element";
-              };
-
-              field = lib.mkOption {
-                type = lib.types.nonEmptyStr;
-                description = "Field containing the API key in the credential source.";
+                description = "File containing the API key.";
               };
             };
           };

@@ -163,16 +163,14 @@ def desired(*, policy: object = None) -> DesiredInstance:
             "interface": "lidarr",
             "url": "https://lidarr.services.example:9443",
             "enabled": True,
-            "credential": {"name": "api-catalog", "format": "xml-element", "field": "ApiKey"},
+            "credential": {"name": "api-catalog"},
             "policy": policy,
         }
     )
 
 
 def write_credential(directory: Path, value: str = "secret-key") -> None:
-    (directory / "api-catalog").write_text(
-        f"<Config><ApiKey>{value}</ApiKey></Config>", encoding="utf-8"
-    )
+    (directory / "api-catalog").write_text(value, encoding="utf-8")
 
 
 def run(store: FakeStore, item: DesiredInstance, credentials: Path) -> int:
@@ -186,6 +184,14 @@ def test_reconcile_creates_connection_without_claiming_policy(tmp_path: Path) ->
     assert run(store, desired(), tmp_path) == 1
     assert store.created[0][1:] == ("secret-key", {})
     assert store.closed
+
+
+def test_reconcile_strips_api_credential_whitespace(tmp_path: Path) -> None:
+    (tmp_path / "api-catalog").write_text(" raw-secret\n", encoding="utf-8")
+    store = FakeStore()
+
+    assert run(store, desired(), tmp_path) == 1
+    assert store.created[0][1] == "raw-secret"
 
 
 def test_reconcile_adopts_endpoint_and_updates_only_owned_fields(tmp_path: Path) -> None:
@@ -240,7 +246,7 @@ def test_reconcile_reports_unavailable_backend_and_bad_credential(tmp_path: Path
     with pytest.raises(BackendUnavailable, match="did not become ready"):
         run(FakeStore(reachable=False), desired(), tmp_path)
 
-    (tmp_path / "api-catalog").write_text("<Config/>", encoding="utf-8")
+    (tmp_path / "api-catalog").write_text("", encoding="utf-8")
     with pytest.raises(ReconcileError, match="is empty"):
         run(FakeStore(), desired(), tmp_path)
 

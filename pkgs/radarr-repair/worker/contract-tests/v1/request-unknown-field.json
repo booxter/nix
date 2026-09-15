@@ -1,0 +1,11 @@
+{
+  "executable": "/run/current-system/sw/bin/ffprobe",
+  "expected_fingerprint": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "operation": "probe_v1",
+  "path_components": [
+    "Example.Movie.2024.CD1.mkv"
+  ],
+  "request_id": "request:01",
+  "root_id": "root:downloads",
+  "schema_version": "radarr-repair-worker/v1"
+}

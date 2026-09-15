@@ -1,0 +1,8 @@
+{
+  "artifact_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "artifact_id": "artifact:join:01",
+  "operation": "discard_v1",
+  "request_id": "request:discard:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "ok"
+}

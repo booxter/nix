@@ -4,6 +4,16 @@ let
   appPackages = import ../apps/packages.nix { inherit pkgs; };
   atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
+  radarrRepairContracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
+  radarrRepairGoModels = pkgs.callPackage ./radarr-repair/go-models.nix {
+    contracts = radarrRepairContracts;
+  };
+  radarrRepairPydanticModels = pkgs.callPackage ./radarr-repair/pydantic-models.nix {
+    contracts = radarrRepairContracts;
+  };
+  radarrRepair = pkgs.callPackage ./radarr-repair {
+    goModels = radarrRepairGoModels;
+  };
 in
 {
   aiosqlitepool = pkgs.callPackage ./aiosqlitepool { };
@@ -22,8 +32,6 @@ in
 
   git-command-runner = gitCommandRunner;
 
-  join-media-parts = pkgs.callPackage ./join-media-parts { };
-
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
     inherit atomicFileWrites;
   };
@@ -31,6 +39,19 @@ in
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
+
+  radarr-repair = radarrRepair.controller;
+
+  radarr-repair-worker = radarrRepair.worker;
+
+  radarr-repair-planner = pkgs.callPackage ./radarr-repair-planner {
+    contracts = radarrRepairContracts;
+    pydanticModels = radarrRepairPydanticModels;
+  };
+
+  radarr-repair-contracts = radarrRepairContracts;
+
+  radarr-repair-go-models = radarrRepairGoModels;
 
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;

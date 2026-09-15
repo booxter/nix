@@ -1,0 +1,109 @@
+{
+  "chapters": [
+    {
+      "end": 900000,
+      "end_time": "900.000000",
+      "id": 0,
+      "start": 0,
+      "start_time": "0.000000",
+      "tags": {
+        "title": "First half"
+      },
+      "time_base": "1/1000"
+    }
+  ],
+  "format": {
+    "bit_rate": "5333333",
+    "duration": "1800.000000",
+    "format_long_name": "MPEG-TS (MPEG-2 Transport Stream)",
+    "format_name": "mpegts",
+    "nb_programs": 1,
+    "nb_streams": 2,
+    "probe_score": 50,
+    "size": "1200000000",
+    "start_time": "1.400000",
+    "tags": {
+      "encoder": "fixture encoder"
+    }
+  },
+  "programs": [
+    {
+      "nb_streams": 2,
+      "pcr_pid": 256,
+      "pmt_pid": 4096,
+      "program_id": 1,
+      "program_num": 1,
+      "streams": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "tags": {
+        "service_name": "Example Movie",
+        "service_provider": "Example Provider"
+      }
+    }
+  ],
+  "streams": [
+    {
+      "avg_frame_rate": "24000/1001",
+      "bit_rate": "4500000",
+      "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+      "codec_name": "h264",
+      "codec_tag_string": "[27][0][0][0]",
+      "codec_type": "video",
+      "disposition": {
+        "default": 1,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0
+      },
+      "duration": "1800.000000",
+      "duration_ts": 162000000,
+      "height": 1080,
+      "index": 0,
+      "nb_frames": "43157",
+      "pix_fmt": "yuv420p",
+      "profile": "High",
+      "r_frame_rate": "24000/1001",
+      "start_pts": 126000,
+      "start_time": "1.400000",
+      "tags": {
+        "language": "eng",
+        "title": "Main video"
+      },
+      "time_base": "1/90000",
+      "width": 1920
+    },
+    {
+      "bit_rate": "640000",
+      "channel_layout": "5.1(side)",
+      "channels": 6,
+      "codec_long_name": "ATSC A/52A (AC-3)",
+      "codec_name": "ac3",
+      "codec_tag_string": "[129][0][0][0]",
+      "codec_type": "audio",
+      "disposition": {
+        "default": 1,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0
+      },
+      "duration": "1800.000000",
+      "duration_ts": 162000000,
+      "index": 1,
+      "sample_fmt": "fltp",
+      "sample_rate": "48000",
+      "start_pts": 126000,
+      "start_time": "1.400000",
+      "tags": {
+        "handler_name": "Main audio",
+        "language": "eng"
+      },
+      "time_base": "1/90000"
+    }
+  ]
+}

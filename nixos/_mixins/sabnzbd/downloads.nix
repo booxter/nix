@@ -12,7 +12,7 @@ in
     host.downloads.clients.sabnzbd = {
       kind = "usenet";
       implementation = "sabnzbd";
-      endpoint = "http://127.0.0.1:${toString sabnzbdModel.port}";
+      endpoint = "http://127.0.0.1:${toString sabnzbdModel.port}/api";
       authentication = {
         type = "api-key";
         secret = "sabnzbd/apiKey";

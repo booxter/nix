@@ -1,0 +1,56 @@
+{
+  "page": 1,
+  "pageSize": 250,
+  "records": [
+    {
+      "downloadClient": "Transmission",
+      "downloadClientHasPostImportCategory": true,
+      "downloadId": "ABCDEF0123456789",
+      "errorMessage": "Import failed",
+      "estimatedCompletionTime": "2026-09-06T12:00:00Z",
+      "id": 101,
+      "indexer": "Example Indexer",
+      "movieId": 42,
+      "outputPath": "/downloads/Example.Movie.2026/",
+      "protocol": "torrent",
+      "size": 4294967296,
+      "sizeleft": 0,
+      "status": "completed",
+      "statusMessages": [
+        {
+          "messages": [
+            "No files found are eligible for import"
+          ],
+          "title": "Import failed"
+        }
+      ],
+      "timeleft": "00:00:00",
+      "title": "Example.Movie.2026.Part1.mkv",
+      "trackedDownloadState": "importBlocked",
+      "trackedDownloadStatus": "warning"
+    },
+    {
+      "downloadClient": "Transmission",
+      "downloadClientHasPostImportCategory": false,
+      "downloadId": "0123456789ABCDEF",
+      "errorMessage": "Movie association is unknown",
+      "estimatedCompletionTime": null,
+      "id": 102,
+      "indexer": "",
+      "movieId": null,
+      "outputPath": "/downloads/Unknown.Movie",
+      "protocol": "torrent",
+      "size": 1024,
+      "sizeleft": 0,
+      "status": "warning",
+      "statusMessages": [],
+      "timeleft": "00:00:00",
+      "title": "Unknown.Movie.Part1.mkv",
+      "trackedDownloadState": "importPending",
+      "trackedDownloadStatus": "warning"
+    }
+  ],
+  "sortDirection": "ascending",
+  "sortKey": "added",
+  "totalRecords": 3
+}

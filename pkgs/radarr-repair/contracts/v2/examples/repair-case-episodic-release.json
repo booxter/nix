@@ -1,0 +1,105 @@
+{
+  "capabilities": [],
+  "case_id": "sha256:7bc05a47bab2fb418a1978e7fcbe49a01d98a6c29171ec9bf9584574255f3e39",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-07T12:00:00Z",
+    "content_ownership": "manifest",
+    "download_ref": "download_episodes_01",
+    "file_count": 24,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Example Feature Episodes",
+    "source_type": "torrent",
+    "total_size_bytes": 3600000000
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 150000000,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 150000000
+      },
+      "extension": "mkv",
+      "file_id": "file_episode_01",
+      "fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "path_components": [
+        "Example Feature - 01.mkv"
+      ],
+      "probe": {
+        "reason": "collection_limit",
+        "status": "not_probed",
+        "summary": "The bounded observation ended before this file was probed."
+      },
+      "size_bytes": 150000000
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 155000000,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 155000000
+      },
+      "extension": "mkv",
+      "file_id": "file_episode_02",
+      "fingerprint": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "path_components": [
+        "Example Feature - 02.mkv"
+      ],
+      "probe": {
+        "reason": "collection_limit",
+        "status": "not_probed",
+        "summary": "The bounded observation ended before this file was probed."
+      },
+      "size_bytes": 155000000
+    }
+  ],
+  "observed_at": "2026-09-07T13:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download_episodes_01",
+      "error_message": "Import failed",
+      "queue_id": 103,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence_episode_queue_01",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "Example Feature - 01.mkv"
+        },
+        {
+          "evidence_id": "evidence_episode_queue_02",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "Example Feature - 02.mkv"
+        }
+      ],
+      "title": "Example Feature Episodes",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [],
+    "manual_imports": [],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": null,
+      "original_title": null,
+      "radarr_id": 42,
+      "runtime_minutes": 120,
+      "title": "Example Feature",
+      "tmdb_id": 1234,
+      "year": 2024
+    }
+  },
+  "schema_version": "radarr-repair/v2"
+}

@@ -1,4 +1,5 @@
 {
+  extraOptions ? { },
   media ? true,
   name,
 }:
@@ -10,15 +11,20 @@
 let
   cfg = config.host.${name};
   port = config.services.${name}.settings.server.port;
+  apiKeySecret = "${name}/apiKey";
+  apiKeyEnvironment = "${name}-api-key.env";
 in
 {
   options.host.${name} = lib.mkOption {
     type = lib.types.nullOr (
       lib.types.submodule {
-        options.stateDir = lib.mkOption {
-          type = lib.types.strMatching "^/.+";
-          default = "/var/lib/${name}";
-        };
+        options = {
+          stateDir = lib.mkOption {
+            type = lib.types.strMatching "^/.+";
+            default = "/var/lib/${name}";
+          };
+        }
+        // extraOptions;
       }
     );
     default = null;
@@ -55,16 +61,25 @@ in
           interface = name;
           localUnit = "${name}.service";
           allowedCidrs = [ "${config.host.network.ipAddress}/32" ];
-          authentication.apiKey = {
-            source = "${cfg.stateDir}/config.xml";
-            field = "ApiKey";
-          };
+          authentication.apiKey.source = config.sops.secrets.${apiKeySecret}.path;
         };
 
         host.backups.sources.${name} = {
           title = lib.strings.toSentenceCase name;
           paths = [ "${cfg.stateDir}/Backups" ];
         };
+      }
+      {
+        sops.secrets.${apiKeySecret} = { };
+
+        sops.templates.${apiKeyEnvironment} = {
+          content = ''
+            ${lib.toUpper name}__AUTH__APIKEY=${config.sops.placeholder.${apiKeySecret}}
+          '';
+          restartUnits = [ "${name}.service" ];
+        };
+
+        services.${name}.environmentFiles = [ config.sops.templates.${apiKeyEnvironment}.path ];
       }
       (lib.optionalAttrs media {
         services.${name} = {

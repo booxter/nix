@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
-from sops_tools.errors import CommandError
+from sops_tools.errors import CommandError, ToolError
 from sops_tools.model import JsonValue, KeyPath
 from sops_tools.passwords import PasswordHasher, PasswordStore
 from sops_tools.repository import Realm
@@ -58,6 +58,7 @@ class MemorySopsBackend:
     set_calls: list[tuple[Path, KeyPath, JsonValue]] = field(default_factory=list)
     edits: list[Path] = field(default_factory=list)
     encryptions: list[tuple[Path, JsonValue]] = field(default_factory=list)
+    failing_set_paths: set[Path] = field(default_factory=set)
 
     def decrypt_text(self, path: Path) -> str:
         return yaml.safe_dump(self.documents[path], sort_keys=False)
@@ -69,6 +70,8 @@ class MemorySopsBackend:
         self.edits.append(path)
 
     def set_value(self, path: Path, key_path: KeyPath, value: JsonValue) -> None:
+        if path in self.failing_set_paths:
+            raise ToolError(f"Unable to update {path}")
         self.set_calls.append((path, key_path, copy.deepcopy(value)))
         current: JsonValue = self.documents[path]
         for index, segment in enumerate(key_path.segments[:-1]):

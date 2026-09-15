@@ -1,0 +1,7 @@
+{
+  "operation": "inspect_join_v1",
+  "reason": "internal_error",
+  "request_id": "request:inspect:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

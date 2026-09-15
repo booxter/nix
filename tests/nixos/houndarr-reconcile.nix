@@ -5,9 +5,7 @@ let
   arrPort = 9443;
   apiKey = "integration-test-api-key";
   serverName = "lidarr.example.test";
-  credential = pkgs.writeText "houndarr-test-lidarr.xml" ''
-    <Config><ApiKey>${apiKey}</ApiKey></Config>
-  '';
+  credential = pkgs.writeText "houndarr-test-lidarr-api-key" apiKey;
   testPki = import ./lib/tls-pki.nix { inherit pkgs serverName; };
 in
 pkgs.testers.runNixOSTest {
@@ -67,10 +65,7 @@ pkgs.testers.runNixOSTest {
               service = "lidarr";
               interface = "lidarr";
               allowedCidrs = [ "${arrAddress}/32" ];
-              authentication.apiKey = {
-                source = "${credential}";
-                field = "ApiKey";
-              };
+              authentication.apiKey.source = "${credential}";
             };
           };
         };

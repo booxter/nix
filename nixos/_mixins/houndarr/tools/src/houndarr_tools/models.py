@@ -35,8 +35,6 @@ class ApiKeyCredential(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     name: str = Field(min_length=1)
-    format: Literal["xml-element"]
-    field: str = Field(min_length=1)
 
 
 class ManagedPolicy(BaseModel):

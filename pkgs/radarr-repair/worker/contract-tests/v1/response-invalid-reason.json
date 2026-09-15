@@ -1,0 +1,7 @@
+{
+  "operation": "probe_v1",
+  "reason": "raw ffprobe error",
+  "request_id": "request:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

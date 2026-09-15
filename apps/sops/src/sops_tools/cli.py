@@ -113,17 +113,31 @@ def edit_main(argv: Sequence[str] | None = None, *, application: Application | N
 
 def set_main(argv: Sequence[str] | None = None, *, application: Application | None = None) -> int:
     def command() -> int:
-        parser = _parser("Set a host secret value from stdin.")
-        parser.add_argument("host")
+        parser = _parser("Set a secret value from stdin for one host or every host in a realm.")
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="update every host secret in the selected realm",
+        )
+        parser.add_argument("host", nargs="?")
         parser.add_argument("key_path")
         args = parser.parse_args(argv)
+        if args.all and args.host is not None:
+            parser.error("--all cannot be combined with HOST")
+        if not args.all and args.host is None:
+            parser.error("HOST is required unless --all is passed")
         if sys.stdin.isatty():
             raise ToolError(
                 "Refusing to read secret value from terminal; pipe or redirect the value on stdin."
             )
         service = (application or Application.discover()).secrets(args.realm)
-        service.set_text(args.host, KeyPath.parse(args.key_path), sys.stdin.read())
-        print(f"Updated {args.host}:{args.key_path}.")
+        value = sys.stdin.read()
+        if args.all:
+            hosts = service.set_all_text(KeyPath.parse(args.key_path), value)
+            print(f"Updated {args.key_path} for {len(hosts)} hosts: {', '.join(hosts)}.")
+        else:
+            service.set_text(args.host, KeyPath.parse(args.key_path), value)
+            print(f"Updated {args.host}:{args.key_path}.")
         return 0
 
     return _run(command)

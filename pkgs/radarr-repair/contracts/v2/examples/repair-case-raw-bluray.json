@@ -1,0 +1,109 @@
+{
+  "capabilities": [],
+  "case_id": "sha256:ec18a7c4afe266d27a66321bf107d161e682c03a752d3521a555d8d62a362aff",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-07T12:00:00Z",
+    "content_ownership": "manifest",
+    "download_ref": "download_bluray_01",
+    "file_count": 7,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Example Feature BLURAY",
+    "source_type": "torrent",
+    "total_size_bytes": 24000000000
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 22000000000,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 22000000000
+      },
+      "extension": "m2ts",
+      "file_id": "file_bluray_00000",
+      "fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00000.m2ts"
+      ],
+      "probe": {
+        "reason": "collection_limit",
+        "status": "not_probed",
+        "summary": "The collection deadline was reached before the file could be probed."
+      },
+      "size_bytes": 22000000000
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 500000000,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 500000000
+      },
+      "extension": "m2ts",
+      "file_id": "file_bluray_00002",
+      "fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00002.m2ts"
+      ],
+      "probe": {
+        "reason": "collection_limit",
+        "status": "not_probed",
+        "summary": "The collection deadline was reached before the file could be probed."
+      },
+      "size_bytes": 500000000
+    }
+  ],
+  "observed_at": "2026-09-07T13:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download_bluray_01",
+      "error_message": "Import failed",
+      "queue_id": 102,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence_bluray_queue_01",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "BDMV/STREAM/00000.m2ts"
+        },
+        {
+          "evidence_id": "evidence_bluray_queue_02",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "BDMV/STREAM/00002.m2ts"
+        }
+      ],
+      "title": "Example Feature BLURAY",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [],
+    "manual_imports": [],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": null,
+      "original_title": null,
+      "radarr_id": 42,
+      "runtime_minutes": 120,
+      "title": "Example Feature",
+      "tmdb_id": 1234,
+      "year": 2024
+    }
+  },
+  "schema_version": "radarr-repair/v2"
+}

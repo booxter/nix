@@ -1,0 +1,6 @@
+{
+  "execution_id": "execution:join:01",
+  "operation": "inspect_join_v1",
+  "request_id": "request:inspect:01",
+  "schema_version": "radarr-repair-worker/v1"
+}
