@@ -171,8 +171,8 @@ func TestNixBuildersDashboardIdentity(t *testing.T) {
 	if model.Uid == nil || *model.Uid != "fana-nix-builders" {
 		t.Fatalf("NixBuildersOverview() UID = %v", model.Uid)
 	}
-	if len(model.Panels) != 22 {
-		t.Fatalf("NixBuildersOverview() panels = %d, want 22", len(model.Panels))
+	if len(model.Panels) != 18 {
+		t.Fatalf("NixBuildersOverview() panels = %d, want 18", len(model.Panels))
 	}
 }
 

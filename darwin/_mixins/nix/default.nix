@@ -10,7 +10,6 @@ in
   imports = [
     ./builder-observability.nix
     ./cache-preference.nix
-    ./cache-warmer
     ./linux-builder.nix
     ./nixpkgs-review.nix
     ./open.nix
