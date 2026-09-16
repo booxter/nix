@@ -1,13 +1,44 @@
 name: Prepare Nix environment
-description: Checkout the repo, install Determinate Nix, and configure FlakeHub Cache.
+description: Install Determinate Nix and configure binary caches.
 inputs:
   extra-conf:
     description: Additional nix.conf entries passed to the Nix installer.
     required: false
     default: ""
+  attic-token:
+    description: Optional token used to push builds to the public Attic cache.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
+    - name: Prepare Attic post-build hook
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cat >"${RUNNER_TEMP}/attic-post-build-hook" <<'EOF'
+        #!/usr/bin/env bash
+        set -u
+        set -f
+
+        hook_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+        attic="${hook_directory}/attic"
+        attic_home="${hook_directory}/attic-home"
+        attic_config_home="${attic_home}/.config"
+        if [[ ! -x "${attic}" || ! -f "${attic_config_home}/attic/config.toml" ]]; then
+          exit 0
+        fi
+
+        export HOME="${attic_home}"
+        export XDG_CONFIG_HOME="${attic_config_home}"
+        export NIX_REMOTE=daemon
+        # shellcheck disable=SC2153 # Nix supplies OUT_PATHS to post-build hooks.
+        read -r -a out_paths <<< "${OUT_PATHS}"
+        "${attic}" push --jobs 1 github:github "${out_paths[@]}" || true
+        EOF
+        chmod 0755 "${RUNNER_TEMP}/attic-post-build-hook"
+
     - name: Install Determinate Nix
       uses: DeterminateSystems/determinate-nix-action@4eea0b33e3d1f02ecfe37cf16e7204c424009606 # v3
       with:
@@ -18,10 +49,37 @@ runs:
           ${{ runner.os == 'macOS' && 'sandbox = relaxed' || '' }}
           extra-substituters = https://cache.saumon.network/proxmox-nixos
           extra-trusted-public-keys = proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=
+          post-build-hook = ${{ runner.temp }}/attic-post-build-hook
           ${{ inputs.extra-conf }}
 
     - name: Setup FlakeHub Cache
       uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1
+
+    - name: Configure Attic uploads
+      if: inputs.attic-token != ''
+      shell: bash
+      env:
+        ATTIC_TOKEN: ${{ inputs.attic-token }}
+      run: |
+        set -euo pipefail
+
+        attic_package="$(
+          nix build \
+            --inputs-from . \
+            --no-link \
+            --print-out-paths \
+            nixpkgs#attic-client
+        )"
+        ln -s "${attic_package}/bin/attic" "${RUNNER_TEMP}/attic"
+        mkdir -p "${RUNNER_TEMP}/attic-home"
+        HOME="${RUNNER_TEMP}/attic-home" \
+          XDG_CONFIG_HOME="${RUNNER_TEMP}/attic-home/.config" \
+          "${RUNNER_TEMP}/attic" login \
+          github \
+          https://cache.ihar.dev \
+          "${ATTIC_TOKEN}"
+        chmod -R go-rwx "${RUNNER_TEMP}/attic-home"
+        sudo chown -R root "${RUNNER_TEMP}/attic-home"
 
     - name: Verify required Nix daemon settings
       shell: bash
@@ -34,6 +92,9 @@ runs:
         required_public_keys=(
           "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
         )
+        forbidden_substituters=(
+          "https://cache.ihar.dev/github"
+        )
 
         substituters="$(nix config show substituters)"
         trusted_keys="$(nix config show trusted-public-keys)"
@@ -41,6 +102,14 @@ runs:
         for substituter in "${required_substituters[@]}"; do
           if ! grep -Fq "${substituter}" <<< "${substituters}"; then
             echo "Missing required substituter: ${substituter}"
+            echo "Configured substituters: ${substituters}"
+            exit 1
+          fi
+        done
+
+        for substituter in "${forbidden_substituters[@]}"; do
+          if grep -Fq "${substituter}" <<< "${substituters}"; then
+            echo "Forbidden substituter: ${substituter}"
             echo "Configured substituters: ${substituters}"
             exit 1
           fi

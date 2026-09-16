@@ -21,6 +21,7 @@ let
     inherit (route) location;
     upstream = route.upstream or null;
     proxyWebsockets = route.proxyWebsockets or false;
+    locationExtraConfig = route.locationExtraConfig or "";
     bandwidthLimit = route.bandwidthLimit or null;
   };
   normalize =

@@ -38,6 +38,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Plan targets
         id: plan
@@ -123,6 +125,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Update package sources
         id: update_packages
@@ -170,6 +174,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Update OCI image tags
         id: update_oci_images

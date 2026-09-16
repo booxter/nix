@@ -13,6 +13,7 @@ let
   listenAddress = "127.0.0.1:8082";
   localAliases = [ "attic" ];
   webService = config.host.web.services.atticd;
+  publicWebService = config.host.web.services."attic-cache";
 in
 {
   config = lib.mkIf isServer {
@@ -48,11 +49,13 @@ in
         settings = {
           allowed-hosts = [
             webService.internal.serverName
+            publicWebService.public.hostName
           ]
           ++ localAliases
           ++ map (alias: "${alias}.local") localAliases
           ++ [ listenAddress ];
-          api-endpoint = "${webService.internal.url}/";
+          api-endpoint = "${publicWebService.public.url}/";
+          substituter-endpoint = "${publicWebService.public.url}/";
           listen = listenAddress;
           jwt = { };
 

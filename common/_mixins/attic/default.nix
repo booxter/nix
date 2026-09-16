@@ -25,13 +25,34 @@ let
         type = lib.types.nonEmptyStr;
         description = "HTTPS endpoint of this realm Attic server.";
       };
-      cacheName = lib.mkOption {
+      defaultCache = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        description = "Attic cache hosted by this server.";
+        description = "Attic cache receiving builds from hosts in this realm.";
       };
-      trustedPublicKey = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        description = "Nix signing public key for this Attic cache.";
+      caches = lib.mkOption {
+        type = lib.types.attrsOf (
+          lib.types.submodule {
+            options = {
+              cacheName = lib.mkOption {
+                type = lib.types.nonEmptyStr;
+                description = "Attic cache name.";
+              };
+              endpoint = lib.mkOption {
+                type = lib.types.nonEmptyStr;
+                description = "HTTPS endpoint exposing this Attic cache.";
+              };
+              public = lib.mkOption {
+                type = lib.types.bool;
+                description = "Whether anonymous cache reads are allowed.";
+              };
+              trustedPublicKey = lib.mkOption {
+                type = lib.types.nullOr lib.types.nonEmptyStr;
+                description = "Nix signing public key, or null until the cache is bootstrapped.";
+              };
+            };
+          }
+        );
+        description = "Attic caches hosted by this server.";
       };
     };
   };
@@ -58,15 +79,33 @@ in
   config = {
     environment.systemPackages = lib.optional (config.host.attic.realmServers != { }) pkgs.attic-client;
 
-    host.nix.caches = lib.mapAttrs (_: server: {
-      substituter = "${server.endpoint}/${server.cacheName}";
-      trustedPublicKeys = [ server.trustedPublicKey ];
-      requiredNetwork = config.host.realm;
-      priorities = {
-        default = 30;
-        lan = 10;
-        wan = 30;
-      };
-    }) config.host.attic.realmServers;
+    host.nix.caches = lib.mergeAttrsList (
+      lib.mapAttrsToList (
+        serverName: server:
+        lib.mapAttrs' (
+          cacheName: cache:
+          lib.nameValuePair
+            (if cacheName == server.defaultCache then serverName else "${serverName}-${cacheName}")
+            {
+              substituter = "${cache.endpoint}/${cacheName}";
+              trustedPublicKeys = [ cache.trustedPublicKey ];
+              requiredNetwork = if cache.public then null else config.host.realm;
+              priorities =
+                if cache.public then
+                  {
+                    default = 30;
+                    lan = 30;
+                    wan = 10;
+                  }
+                else
+                  {
+                    default = 30;
+                    lan = 10;
+                    wan = 30;
+                  };
+            }
+        ) (lib.filterAttrs (_: cache: cache.trustedPublicKey != null) server.caches)
+      ) config.host.attic.realmServers
+    );
   };
 }

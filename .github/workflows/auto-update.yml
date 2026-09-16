@@ -24,6 +24,8 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Save current flake lock
         run: cp flake.lock "$RUNNER_TEMP/flake.lock.before"

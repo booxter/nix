@@ -48,9 +48,12 @@ in
           proxyPass = "http://127.0.0.1:${toString route.bandwidthLimit.listenPort}";
           inherit (route) proxyWebsockets;
           recommendedProxySettings = false;
-          extraConfig = proxyHeaders + ''
-            proxy_buffering off;
-          '';
+          extraConfig =
+            proxyHeaders
+            + ''
+              proxy_buffering off;
+            ''
+            + route.locationExtraConfig;
         };
       }) routes
     );
