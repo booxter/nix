@@ -34,8 +34,6 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
-        with:
-          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
 
       - name: Format
         run: nix fmt .
@@ -94,10 +92,20 @@ jobs:
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
         with:
-          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
+          record-built-paths: "true"
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
+
+      - name: Record target outputs
+        shell: bash
+        env:
+          TARGET_ATTR: ${{ matrix.attr }}
+        run: |
+          nix build ".#${TARGET_ATTR}" \
+            --no-link \
+            --print-out-paths \
+            >>"${RUNNER_TEMP}/attic-built-paths"
 
       - name: Resolve checked-out revision
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
@@ -284,6 +292,16 @@ jobs:
           name: config-diff-${{ matrix.diff_order }}-${{ matrix.diff_machine }}
           path: diff-output/*
           if-no-files-found: warn
+
+      - name: Upload built path manifest
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attic-built-paths-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/attic-built-paths
+          if-no-files-found: ignore
+          retention-days: 1
 
   post-config-diffs:
     name: post config diffs
@@ -767,3 +785,109 @@ jobs:
             exit 1
           fi
           echo "All CI jobs passed."
+
+  publish-attic:
+    name: publish Attic cache
+    needs:
+      - ci-success
+    if: ${{ always() && !cancelled() }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    env:
+      ATTIC_TOKEN: ${{ secrets.ATTIC_GITHUB_TOKEN }}
+    steps:
+      - name: Check publication credentials
+        id: credentials
+        shell: bash
+        run: |
+          if [ -n "${ATTIC_TOKEN}" ]; then
+            echo 'available=true' >>"${GITHUB_OUTPUT}"
+          else
+            echo 'Attic credentials are unavailable; skipping publication.'
+            echo 'available=false' >>"${GITHUB_OUTPUT}"
+          fi
+
+      - name: Download built path manifests
+        if: steps.credentials.outputs.available == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: attic-built-paths-*
+          path: attic-built-paths
+
+      - name: Checkout
+        if: steps.credentials.outputs.available == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+
+      - name: Prepare Nix environment
+        if: steps.credentials.outputs.available == 'true'
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Publish to Attic
+        if: steps.credentials.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifests="${RUNNER_TEMP}/attic-built-path-manifests"
+          paths="${RUNNER_TEMP}/attic-built-paths"
+          available_paths="${RUNNER_TEMP}/attic-available-paths"
+          if [ ! -d attic-built-paths ]; then
+            echo 'No built path manifests were uploaded; skipping publication.'
+            exit 0
+          fi
+          find attic-built-paths -type f -print0 \
+            | xargs -0 cat \
+            | sort -u >"${manifests}"
+          while IFS= read -r path; do
+            if [[ "${path}" =~ ^/nix/store/[0-9a-z]{32}-[^[:space:]]+$ ]]; then
+              printf '%s\n' "${path}"
+            fi
+          done <"${manifests}" >"${paths}"
+
+          if [ ! -s "${paths}" ]; then
+            echo 'No built paths were recorded; skipping publication.'
+            exit 0
+          fi
+
+          xargs -n 100 nix-store --realise --ignore-unknown --keep-going \
+            <"${paths}" || true
+          while IFS= read -r path; do
+            if nix-store --check-validity "${path}" >/dev/null 2>&1; then
+              printf '%s\n' "${path}"
+            fi
+          done <"${paths}" >"${available_paths}"
+
+          if [ ! -s "${available_paths}" ]; then
+            echo 'None of the recorded paths are available from FlakeHub.'
+            exit 0
+          fi
+
+          attic_package="$(
+            nix build \
+              --inputs-from . \
+              --no-link \
+              --print-out-paths \
+              nixpkgs#attic-client
+          )"
+          attic_home="${RUNNER_TEMP}/attic-home"
+          mkdir -p "${attic_home}"
+          HOME="${attic_home}" \
+            XDG_CONFIG_HOME="${attic_home}/.config" \
+            "${attic_package}/bin/attic" login \
+            github \
+            https://cache.ihar.dev \
+            "${ATTIC_TOKEN}"
+          HOME="${attic_home}" \
+            XDG_CONFIG_HOME="${attic_home}/.config" \
+            "${attic_package}/bin/attic" push \
+            --jobs 5 \
+            --stdin \
+            github:github \
+            <"${available_paths}"

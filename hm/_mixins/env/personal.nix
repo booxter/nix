@@ -15,10 +15,7 @@
       };
       dev = {
         act.enable = true;
-        codex = {
-          enable = true;
-          usage.warmer.enable = true;
-        };
+        codex.enable = true;
         go.enable = true;
       };
       pass.enable = true;

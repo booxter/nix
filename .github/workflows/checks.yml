@@ -52,7 +52,6 @@ jobs:
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
         with:
-          attic-token: ${{ secrets.ATTIC_GITHUB_TOKEN }}
           extra-conf: ${{ matrix.extra_conf }}
 
       - name: Run regular checks

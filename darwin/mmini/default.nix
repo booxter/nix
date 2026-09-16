@@ -5,10 +5,6 @@ in
 {
   system.stateVersion = 5;
 
-  imports = [
-    ./cache-warmer.nix
-  ];
-
   host.nix.builderClient = { };
 
   host.network.interfaces.en0 = { };

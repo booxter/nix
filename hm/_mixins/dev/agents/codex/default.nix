@@ -101,8 +101,6 @@ let
   };
 in
 {
-  imports = [ ./codex-warmer.nix ];
-
   options.host.hm.dev.codex.mcp = {
     stdioServers = lib.mkOption {
       type = lib.types.attrsOf stdioServerType;
@@ -144,13 +142,6 @@ in
     host.hm.sketchybar.codex.enable = lib.mkDefault (
       isDarwin && cfg.enable && config.host.hm.sketchybar.enable
     );
-
-    assertions = [
-      {
-        assertion = !cfg.usage.warmer.enable || cfg.usage.account == "personal";
-        message = "host.hm.dev.codex.usage.warmer is only supported for personal accounts.";
-      }
-    ];
 
     programs.codex = lib.mkIf (config.host.hm.env.roles.developer && cfg.enable) {
       enable = true;

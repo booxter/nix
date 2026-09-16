@@ -20,8 +20,6 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		` / ` + builder("node_filesystem_size_bytes", `mountpoint="/"`, `fstype!=""`) + `))`
 	daemonActive := `max by(instance) (` + builder("node_systemd_unit_state", `name="nix-daemon.service"`, `state="active"`) +
 		` or ` + builder("host_observability_darwin_launchd_job_running", `domain="system"`, `name="org.nixos.nix-daemon"`) + `)`
-	fleetWarmerJob := builder("host_observability_darwin_launchd_job_running", `domain="system"`, `name="org.nixos.fleet-cache-warmer"`)
-	fleetWarmerFallback := `on(instance) (-1 + 0 * ` + fleetWarmerJob + `)`
 
 	summary := layout.row(5, 12, 12)
 	model := newDashboard(DashboardOptions{
@@ -162,49 +160,9 @@ func NixBuildersOverview(config Config) (dashboard.Dashboard, error) {
 		}
 	}
 
-	fleetWarmer := layout.row(5, 6, 6, 6, 6)
-	model.
-		WithPanel(valueStat(ValueStatOptions{
-			ID: fleetWarmer[0].ID, Grid: fleetWarmer[0].Grid, Title: "Fleet Warmer Running",
-			Expression: builder("host_observability_fleet_cache_warmer_running") + ` or on(instance) ` + fleetWarmerJob,
-			Legend:     "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource,
-			Min: ptr(0.0), Max: ptr(1.0), Background: true,
-			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
-				"0": mappedValue("Idle", "green", 0),
-				"1": mappedValue("Running", "blue", 1),
-			})},
-		})).
-		WithPanel(valueStat(ValueStatOptions{
-			ID: fleetWarmer[1].ID, Grid: fleetWarmer[1].Grid, Title: "Fleet Warmer Last Attempt",
-			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_success") + ` or ` + fleetWarmerFallback,
-			Legend:     "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource,
-			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
-				"-1": mappedValue("Never", "gray", 0),
-				"0":  mappedValue("Failed", "red", 1),
-				"1":  mappedValue("Succeeded", "green", 2),
-			})},
-		})).
-		WithPanel(valueStat(ValueStatOptions{
-			ID: fleetWarmer[2].ID, Grid: fleetWarmer[2].Grid, Title: "Fleet Warmer Duration",
-			Expression: builder("host_observability_fleet_cache_warmer_last_attempt_duration_seconds") + ` or ` + fleetWarmerFallback,
-			Legend:     "{{instance}}", Unit: units.DurationInDaysHoursMinutesSeconds,
-			DataSource: prometheusDatasource, Min: ptr(0.0),
-			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
-				"-1": mappedValue("Never", "gray", 0),
-			})},
-		})).
-		WithPanel(valueStat(ValueStatOptions{
-			ID: fleetWarmer[3].ID, Grid: fleetWarmer[3].Grid, Title: "Fleet Output Paths",
-			Expression: builder("host_observability_fleet_cache_warmer_output_paths") + ` or ` + fleetWarmerFallback,
-			Legend:     "{{instance}}", Unit: units.Short, DataSource: prometheusDatasource, Min: ptr(0.0),
-			Mappings: []dashboard.ValueMapping{exactValueMapping(map[string]dashboard.ValueMappingResult{
-				"-1": mappedValue("Never", "gray", 0),
-			})},
-		}))
-
 	logs := layout.row(12, 24)[0]
-	model.WithPanel(logsPanel(logs.ID, "Recent Nix And Warmer Logs",
-		`{job=~"systemd-journal|darwin-file-log"} | (systemd_unit=~"nix-daemon.service|nix-builder-metrics.service" or service_name=~"nix-daemon|nix-builder-metrics|nixpkgs-cache-warmer|fleet-cache-warmer")`,
+	model.WithPanel(logsPanel(logs.ID, "Recent Nix Logs",
+		`{job=~"systemd-journal|darwin-file-log"} | (systemd_unit=~"nix-daemon.service|nix-builder-metrics.service" or service_name=~"nix-daemon|nix-builder-metrics")`,
 		logs.Grid, lokiDatasource))
 
 	return model.Build()
