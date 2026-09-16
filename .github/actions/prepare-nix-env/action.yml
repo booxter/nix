@@ -47,10 +47,13 @@ runs:
           allowed-users = root runner
           allow-import-from-derivation = false
           ${{ runner.os == 'macOS' && 'sandbox = relaxed' || '' }}
-          extra-substituters = https://cache.saumon.network/proxmox-nixos https://cache.ihar.dev/github
-          extra-trusted-public-keys = proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM= github:Tbt30DkfV7op0gpB5AKOYQmVi2b1dsgo/bNcgerP3rM=
+          extra-substituters = https://cache.saumon.network/proxmox-nixos
+          extra-trusted-public-keys = proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=
           post-build-hook = ${{ runner.temp }}/attic-post-build-hook
           ${{ inputs.extra-conf }}
+
+    - name: Setup FlakeHub Cache
+      uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1
 
     - name: Configure Attic uploads
       if: inputs.attic-token != ''
@@ -85,11 +88,12 @@ runs:
 
         required_substituters=(
           "https://cache.saumon.network/proxmox-nixos"
-          "https://cache.ihar.dev/github"
         )
         required_public_keys=(
           "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
-          "github:Tbt30DkfV7op0gpB5AKOYQmVi2b1dsgo/bNcgerP3rM="
+        )
+        forbidden_substituters=(
+          "https://cache.ihar.dev/github"
         )
 
         substituters="$(nix config show substituters)"
@@ -98,6 +102,14 @@ runs:
         for substituter in "${required_substituters[@]}"; do
           if ! grep -Fq "${substituter}" <<< "${substituters}"; then
             echo "Missing required substituter: ${substituter}"
+            echo "Configured substituters: ${substituters}"
+            exit 1
+          fi
+        done
+
+        for substituter in "${forbidden_substituters[@]}"; do
+          if grep -Fq "${substituter}" <<< "${substituters}"; then
+            echo "Forbidden substituter: ${substituter}"
             echo "Configured substituters: ${substituters}"
             exit 1
           fi
