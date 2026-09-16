@@ -33,6 +33,7 @@ function toBuildMatrixEntries(targets) {
     }
 
     return {
+      attr: target.attr,
       name: target.name,
       cmd: nixBuildCmd(target.attr),
       diff_machine: shouldDiff ? machine : "",
