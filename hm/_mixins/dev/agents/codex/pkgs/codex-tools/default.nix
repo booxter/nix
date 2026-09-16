@@ -16,7 +16,6 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
-    openai
     pydantic
   ];
 
