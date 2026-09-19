@@ -323,6 +323,42 @@ func TestPublishCompletedMovesArtifactToInputCommonParent(t *testing.T) {
 	}
 }
 
+func TestPublishCompletedAtPlacesBluRayOutputBesideBDMV(t *testing.T) {
+	t.Parallel()
+	rootPath := t.TempDir()
+	if err := os.Mkdir(filepath.Join(rootPath, "Movie"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	rootSet := testRootSet(t, rootPath)
+	fingerprint := retainTestArtifact(
+		t, rootSet, "artifact:bluray", workercontracts.OutputContainerMKV, "remuxed media",
+	)
+	location, err := rootSet.PublishCompletedAt(
+		"downloads", "artifact:bluray", workercontracts.OutputContainerMKV,
+		fingerprint, []string{"Movie"},
+	)
+	if err != nil || len(location) != 2 || location[0] != "Movie" {
+		t.Fatalf("published Blu-ray location = %#v, error = %v", location, err)
+	}
+	data, err := os.ReadFile(filepath.Join(rootPath, filepath.Join(location...)))
+	if err != nil || string(data) != "remuxed media" {
+		t.Fatalf("published Blu-ray = %q, error = %v", data, err)
+	}
+	recovered, err := rootSet.PublishCompletedAt(
+		"downloads", "artifact:bluray", workercontracts.OutputContainerMKV,
+		fingerprint, []string{"Movie"},
+	)
+	if err != nil || !reflect.DeepEqual(recovered, location) {
+		t.Fatalf("recovered Blu-ray location = %#v, error = %v", recovered, err)
+	}
+	if _, err := rootSet.PublishCompletedAt(
+		"downloads", "artifact:bluray", workercontracts.OutputContainerMKV,
+		fingerprint, []string{".radarr-repair", "staged"},
+	); err == nil {
+		t.Fatal("accepted private worker directory as a publish destination")
+	}
+}
+
 func TestPublishCompletedPreservesAVIExtension(t *testing.T) {
 	t.Parallel()
 
