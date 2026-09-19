@@ -125,16 +125,12 @@ in
       environmentFile = config.sops.templates."aurral-slskd.env".path;
       environment = {
         DOWNLOAD_FOLDER = model.flowDir;
-        WEEKLY_FLOW_FOLDER = model.flowDir;
         TRUST_PROXY = "2";
         AURRAL_SLSKD_MANAGED = "true";
         AURRAL_SLSKD_URL = selected.apiUrl;
-        AURRAL_SLSKD_PRIORITY = "10";
         AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
-        AUTH_PROXY_ENABLED = "true";
         AUTH_PROXY_HEADER = "x-forwarded-user";
         AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;
-        AUTH_PROXY_DEFAULT_ROLE = "user";
         AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
         DISABLE_LOCAL_AUTH = "true";
       };
