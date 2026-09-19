@@ -37,15 +37,10 @@ in
       pkgs.noto-fonts-color-emoji
     ];
 
-    users.groups.${model.user} = { };
-    users.users.${model.user} = {
-      isSystemUser = true;
-      group = model.user;
-      extraGroups = lib.unique [
-        model.group
-        selected.group
-      ];
-    };
+    users.users.${model.user}.extraGroups = lib.unique [
+      model.group
+      selected.group
+    ];
 
     sops.templates."aurral-slskd.env" = {
       owner = model.user;
@@ -117,9 +112,36 @@ in
       };
     };
 
+    services.aurral = {
+      enable = true;
+      package = pkgs.callPackage ./package { };
+      dataDir = cfg.stateDir;
+      port = model.port;
+      user = model.user;
+      group = model.user;
+      directories = [
+        model.flowDir
+        selected.completedDir
+      ];
+      environmentFile = config.sops.templates."aurral-slskd.env".path;
+      environment = {
+        DOWNLOAD_FOLDER = model.flowDir;
+        WEEKLY_FLOW_FOLDER = model.flowDir;
+        TRUST_PROXY = "2";
+        AURRAL_SLSKD_MANAGED = "true";
+        AURRAL_SLSKD_URL = selected.apiUrl;
+        AURRAL_SLSKD_PRIORITY = "10";
+        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
+        AUTH_PROXY_ENABLED = "true";
+        AUTH_PROXY_HEADER = "x-forwarded-user";
+        AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;
+        AUTH_PROXY_DEFAULT_ROLE = "user";
+        AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
+        DISABLE_LOCAL_AUTH = "true";
+      };
+    };
+
     systemd.services.aurral = {
-      description = "Aurral music discovery and flow download service";
-      wantedBy = [ "multi-user.target" ];
       unitConfig = {
         Wants = [ "network-online.target" ];
         After = [
@@ -133,64 +155,14 @@ in
         pkgs.ffmpeg
         pkgs.yt-dlp
       ];
-      environment = {
-        AURRAL_DATA_DIR = cfg.stateDir;
-        DOWNLOAD_FOLDER = model.flowDir;
-        WEEKLY_FLOW_FOLDER = model.flowDir;
-        PORT = toString model.port;
-        TRUST_PROXY = "2";
-        AURRAL_SLSKD_MANAGED = "true";
-        AURRAL_SLSKD_URL = selected.apiUrl;
-        AURRAL_SLSKD_PRIORITY = "10";
-        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
-        AUTH_PROXY_ENABLED = "true";
-        AUTH_PROXY_HEADER = "x-forwarded-user";
-        AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;
-        AUTH_PROXY_DEFAULT_ROLE = "user";
-        AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
-        DISABLE_LOCAL_AUTH = "true";
-      };
       serviceConfig = {
-        ExecStart = lib.getExe (pkgs.callPackage ./package { });
-        EnvironmentFile = [ config.sops.templates."aurral-slskd.env".path ];
-        User = model.user;
-        Group = model.user;
-        WorkingDirectory = cfg.stateDir;
-        UMask = "0007";
-        Restart = "on-failure";
         RestartSec = "5s";
         LimitNOFILE = 65536;
-        NoNewPrivileges = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        ProtectSystem = "strict";
-        ReadWritePaths = [
-          cfg.stateDir
-          model.flowDir
-          selected.completedDir
-        ];
-        ProtectHome = true;
-        ProtectHostname = true;
-        ProtectClock = true;
         ProtectControlGroups = true;
-        ProtectKernelLogs = true;
         ProtectKernelModules = true;
         ProtectKernelTunables = true;
-        ProtectProc = "invisible";
-        ProcSubset = "pid";
-        LockPersonality = true;
-        CapabilityBoundingSet = "";
-        AmbientCapabilities = "";
-        RestrictAddressFamilies = [
-          "AF_UNIX"
-          "AF_INET"
-          "AF_INET6"
-        ];
-        RestrictNamespaces = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        SystemCallArchitectures = "native";
-        RemoveIPC = true;
       };
     };
   };
