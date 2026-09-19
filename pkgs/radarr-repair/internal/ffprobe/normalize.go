@@ -86,10 +86,7 @@ func normalizeFormat(format Format) (controller.ProbeFormat, error) {
 	if err != nil {
 		return controller.ProbeFormat{}, err
 	}
-	tags, err := normalizeTags(format.Tags)
-	if err != nil {
-		return controller.ProbeFormat{}, err
-	}
+	tags := normalizeTags(format.Tags)
 	return controller.ProbeFormat{
 		Names:        names,
 		LongName:     copyString(format.LongName),
@@ -161,10 +158,7 @@ func normalizeStream(stream Stream) (controller.ProbeStream, error) {
 	if err != nil {
 		return controller.ProbeStream{}, err
 	}
-	tags, err := normalizeTags(stream.Tags)
-	if err != nil {
-		return controller.ProbeStream{}, err
-	}
+	tags := normalizeTags(stream.Tags)
 	return controller.ProbeStream{
 		Index:         *stream.Index,
 		Kind:          kind,
@@ -213,10 +207,7 @@ func normalizeProgram(program Program) (controller.ProbeProgram, error) {
 	if err != nil {
 		return controller.ProbeProgram{}, err
 	}
-	tags, err := normalizeTags(program.Tags)
-	if err != nil {
-		return controller.ProbeProgram{}, err
-	}
+	tags := normalizeTags(program.Tags)
 	streamIndexes := make([]int64, len(program.Streams))
 	for index, stream := range program.Streams {
 		streamIndexes[index] = *stream.Index
@@ -253,10 +244,7 @@ func normalizeChapter(chapter Chapter) (controller.ProbeChapter, error) {
 	if startTime != nil && endTime != nil && *endTime < *startTime {
 		return controller.ProbeChapter{}, fmt.Errorf("end time precedes start time")
 	}
-	tags, err := normalizeTags(chapter.Tags)
-	if err != nil {
-		return controller.ProbeChapter{}, err
-	}
+	tags := normalizeTags(chapter.Tags)
 	return controller.ProbeChapter{
 		ID:          *chapter.ID,
 		TimeBase:    timeBase,
@@ -339,9 +327,9 @@ func normalizeDisposition(value *Disposition) (*controller.ProbeDisposition, err
 	}, nil
 }
 
-func normalizeTags(tags *Tags) ([]controller.ProbeTag, error) {
+func normalizeTags(tags *Tags) []controller.ProbeTag {
 	if tags == nil {
-		return nil, nil
+		return nil
 	}
 	values := []struct {
 		name  string
@@ -361,7 +349,8 @@ func normalizeTags(tags *Tags) ([]controller.ProbeTag, error) {
 			continue
 		}
 		if err := validateTagValue(*item.value); err != nil {
-			return nil, fmt.Errorf("tag %q: %w", item.name, err)
+			// Optional metadata must not invalidate otherwise usable media evidence.
+			continue
 		}
 		normalized = append(normalized, controller.ProbeTag{
 			Name:  item.name,
@@ -371,7 +360,7 @@ func normalizeTags(tags *Tags) ([]controller.ProbeTag, error) {
 	sort.Slice(normalized, func(left, right int) bool {
 		return normalized[left].Name < normalized[right].Name
 	})
-	return normalized, nil
+	return normalized
 }
 
 func validateTagValue(value string) error {
