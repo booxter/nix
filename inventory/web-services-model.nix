@@ -32,7 +32,6 @@ let
       publicDeclaration = service.public or null;
       internalDeclaration = service.internal or { };
       health = service.health or { };
-      observability = service.observability or { };
       ingress = webIngress.${hosts.${owner}.realm} or null;
       ingressHost = if ingress == null then null else ingress.host;
       public =
@@ -101,8 +100,6 @@ let
         metrics = lib.mapAttrs normalizeMetric (service.metrics or { });
         observability = {
           availability = entry.availability or "always";
-          importance = observability.importance or "normal";
-          externalProbe.requirement = (observability.externalProbe or { }).requirement or "eligible";
         };
         dashboard =
           if dashboardDeclaration == null then
