@@ -88,24 +88,8 @@
         }
       );
 
-      # Build passthru.tests for all changed packages with --tests. Drop when
-      # https://github.com/Mic92/nixpkgs-review/pull/397 lands in nixpkgs-review.
-      nixpkgs-review = prev.nixpkgs-review.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            # Commit 47f4647, rebased after its first two prerequisite commits
-            # landed on main.
-            url = "https://github.com/user-attachments/files/29713758/rebased.patch";
-            hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
-          })
-          # Merge dependent PRs into the reviewed worktree with --include-pr.
-          # https://github.com/Mic92/nixpkgs-review/pull/562
-          (prev.fetchpatch {
-            url = "https://github.com/Mic92/nixpkgs-review/commit/1bf8762fcc5c3a3d8b5219ab340f4a3a83608f13.patch";
-            hash = "sha256-RQJvXwRLZ47vHi4VhuvKLk8UHYQJfo3SmzUsV9dpNR0=";
-          })
-        ];
-      });
+      # Support complete --tests coverage and dependent PRs.
+      inherit (pkgsNixpkgsUnstable) nixpkgs-review;
 
       # Support Kubernetes 1.36 and fix apiserver connection loss after an
       # envoy load balancer container restart.
