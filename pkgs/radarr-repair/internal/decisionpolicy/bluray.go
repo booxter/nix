@@ -36,7 +36,7 @@ type AuthorizedRemux struct {
 	SourceBytes        int64
 	ExpectedDurationMS int64
 	ExpectedChapters   int64
-	ExpectedTracks     int
+	ExpectedTracks     []mkvmerge.Track
 }
 
 type RemuxValidation struct {
@@ -123,7 +123,7 @@ func ValidateRemux(
 		Clips:              make([]AuthorizedRemuxFile, 0, len(playlist.ClipFileIDs)),
 		ExpectedDurationMS: playlist.Details.DurationMS,
 		ExpectedChapters:   int64(playlist.Details.Chapters),
-		ExpectedTracks:     len(playlist.Details.Tracks),
+		ExpectedTracks:     append([]mkvmerge.Track(nil), playlist.Details.Tracks...),
 	}
 	for position, clipID := range playlist.ClipFileIDs {
 		clip, ok := availableRemuxFile(files, paths, clipID)
