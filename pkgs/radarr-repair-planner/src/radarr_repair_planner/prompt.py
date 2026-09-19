@@ -21,6 +21,14 @@ absent when the files otherwise establish a complete, ordered,
 stream-compatible multipart movie.
 
 Choose manual_import_file_v1 only when one offered file is the intended movie
-and does not require media transformation. Otherwise choose no_repair and state
-the uncertainty or unsupported repair plainly.
+and does not require media transformation.
+
+Choose remux_bluray_v1 only when an offered Blu-ray playlist identifies the
+complete intended movie. Compare playlist duration, referenced clips, chapters,
+and tracks with the movie and the other offered playlists. When two playlists
+reference the same complete clips, prefer the one carrying useful chapter marks.
+If the runtime or title remains uncertain, choose no_repair and explain why.
+
+Otherwise choose no_repair and state the uncertainty or unsupported repair
+plainly.
 """

@@ -88,7 +88,8 @@ func validateDecisionAction(action contracts.DecisionAction) error {
 	switch action {
 	case contracts.ActionNoRepair,
 		contracts.ActionJoinParts,
-		contracts.ActionManualImportFile:
+		contracts.ActionManualImportFile,
+		contracts.ActionRemuxBluray:
 		return nil
 	default:
 		return fmt.Errorf("planned case has unknown action %q", action)

@@ -23,11 +23,15 @@ let
         no_repair_decision = {
           "$ref" = "repair-decision.schema.json#/$defs/noRepair";
         };
+        remux_bluray_decision = {
+          "$ref" = "repair-decision.schema.json#/$defs/remuxBluray";
+        };
       };
       required = [
         "join_decision"
         "manual_import_file_decision"
         "no_repair_decision"
+        "remux_bluray_decision"
       ];
     }
   );

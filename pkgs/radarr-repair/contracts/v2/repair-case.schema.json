@@ -8,6 +8,87 @@
       "type": "array",
       "uniqueItems": true
     },
+    "blurayCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "remux_bluray_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "chapter_count": {
+          "maximum": 4096,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "clip_file_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array"
+        },
+        "duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "playlist_file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "tracks": {
+          "items": {
+            "$ref": "#/$defs/blurayTrack"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "capability_id",
+        "playlist_file_id",
+        "clip_file_ids",
+        "duration_ms",
+        "chapter_count",
+        "tracks"
+      ],
+      "type": "object"
+    },
+    "blurayTrack": {
+      "additionalProperties": false,
+      "properties": {
+        "codec": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "kind": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitles"
+          ]
+        },
+        "language": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "codec",
+        "language"
+      ],
+      "type": "object"
+    },
     "downloadEvidence": {
       "additionalProperties": false,
       "allOf": [
@@ -1011,10 +1092,13 @@
           },
           {
             "$ref": "#/$defs/manualImportCapability"
+          },
+          {
+            "$ref": "#/$defs/blurayCapability"
           }
         ]
       },
-      "maxItems": 129,
+      "maxItems": 257,
       "type": "array"
     },
     "case_id": {

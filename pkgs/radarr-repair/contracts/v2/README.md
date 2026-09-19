@@ -22,8 +22,9 @@ canonical JSON representation after removing `case_id` and `observed_at`.
 Schema validation cannot establish reference membership or compare a decision
 with its request; the controller performs those semantic checks independently.
 
-The decision actions remain `no_repair`, `join_parts_v1`, and
-`manual_import_file_v1`. Their operation versions did not change merely because
-the surrounding evidence schema changed. The planner still cannot choose a
-path, output name, executable, command argument, movie ID, quality, language,
-release group, or import mode.
+The decision actions are `no_repair`, `join_parts_v1`,
+`manual_import_file_v1`, and `remux_bluray_v1`. The Blu-ray action selects one
+offered playlist capability. Its clip order, duration, chapters, and tracks
+come from MKVToolNix identification and are bound to inventoried files. The
+planner cannot choose a path, output name, executable, command argument, movie
+ID, quality, language, release group, or import mode.
