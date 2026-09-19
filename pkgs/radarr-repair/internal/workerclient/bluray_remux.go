@@ -3,6 +3,7 @@ package workerclient
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
@@ -11,6 +12,7 @@ import (
 
 const blurayRemuxPath = "/v1/bluray/remux"
 const blurayPublishPath = "/v1/bluray/publish"
+const blurayRemuxTimeout = 31 * time.Minute
 
 type BlurayRemuxExchange struct {
 	Request  workercontracts.BlurayRemuxRequestV1
@@ -66,8 +68,9 @@ func (client *Client) StageBlurayRemux(
 	if err != nil {
 		return BlurayRemuxExchange{}, fmt.Errorf("construct worker Blu-ray remux request: %w", err)
 	}
-	data, err := client.post(
+	data, err := client.postWithTimeout(
 		ctx, blurayRemuxPath, payload, workercontracts.MaxBlurayRemuxResponseBytes,
+		max(client.requestTimeout, blurayRemuxTimeout),
 	)
 	if err != nil {
 		return BlurayRemuxExchange{}, err

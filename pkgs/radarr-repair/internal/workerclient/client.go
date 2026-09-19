@@ -252,7 +252,17 @@ func (client *Client) post(
 	payload []byte,
 	responseLimit int,
 ) ([]byte, error) {
-	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	return client.postWithTimeout(ctx, path, payload, responseLimit, client.requestTimeout)
+}
+
+func (client *Client) postWithTimeout(
+	ctx context.Context,
+	path string,
+	payload []byte,
+	responseLimit int,
+	timeout time.Duration,
+) ([]byte, error) {
+	requestContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	request, err := http.NewRequestWithContext(
 		requestContext,

@@ -35,6 +35,8 @@ func TestClientStagesAuthorizedBluRayThroughUnixSocket(t *testing.T) {
 			return
 		}
 		requests <- staged
+		// Remux staging must outlive the short timeout used for media probes.
+		time.Sleep(50 * time.Millisecond)
 		evidence := completeEvidence()
 		response := workercontracts.BlurayRemuxResponseV1{
 			Kind: workercontracts.ProbeResponseSucceeded,
@@ -59,7 +61,7 @@ func TestClientStagesAuthorizedBluRayThroughUnixSocket(t *testing.T) {
 	}))
 	client := testClient(t, socketPath, map[string]string{
 		"root:downloads": "/downloads",
-	}, time.Second)
+	}, 10*time.Millisecond)
 	playlist := decisionpolicy.AuthorizedRemuxFile{
 		FileID: "playlist", Fingerprint: controller.FileFingerprint{
 			Device: 1, Inode: 2, SizeBytes: 4096, MTimeNS: 3,
