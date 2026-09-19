@@ -9,6 +9,7 @@ func NewRouter(
 	probe *Handler,
 	blurayIdentify *BlurayIdentifyHandler,
 	blurayRemux *BlurayRemuxHandler,
+	blurayPublish *BlurayPublishHandler,
 	stageJoin *StageJoinHandler,
 	publish *PublishHandler,
 	discard *DiscardHandler,
@@ -22,6 +23,9 @@ func NewRouter(
 	}
 	if blurayRemux == nil {
 		return nil, fmt.Errorf("Blu-ray remux handler is required")
+	}
+	if blurayPublish == nil {
+		return nil, fmt.Errorf("Blu-ray publish handler is required")
 	}
 	if stageJoin == nil {
 		return nil, fmt.Errorf("stage join handler is required")
@@ -39,6 +43,7 @@ func NewRouter(
 	router.Handle(probePath, probe)
 	router.Handle(blurayIdentifyPath, blurayIdentify)
 	router.Handle(blurayRemuxPath, blurayRemux)
+	router.Handle(blurayPublishPath, blurayPublish)
 	router.Handle(stageJoinPath, stageJoin)
 	router.Handle(publishPath, publish)
 	router.Handle(discardPath, discard)

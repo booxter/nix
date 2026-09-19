@@ -36,7 +36,7 @@ func (executor *Executor) Execute(
 	if executor == nil || ctx == nil {
 		return failure(request.RequestID, "internal_error")
 	}
-	result, err := executor.stager.StageOrRecover(ctx, specification(request))
+	result, err := executor.stager.StageOrRecover(ctx, Specification(request))
 	if err != nil {
 		return failure(request.RequestID, failureReason(err))
 	}
@@ -55,7 +55,7 @@ func (executor *Executor) Execute(
 	}
 }
 
-func specification(request workercontracts.BlurayRemuxRequestV1) bluraystage.Specification {
+func Specification(request workercontracts.BlurayRemuxRequestV1) bluraystage.Specification {
 	clips := make([]bluraystage.Source, 0, len(request.Clips))
 	for _, clip := range request.Clips {
 		clips = append(clips, source(clip))

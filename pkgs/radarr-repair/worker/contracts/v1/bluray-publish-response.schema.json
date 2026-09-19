@@ -46,7 +46,7 @@
             "$ref": "wire-types.schema.json#/$defs/pathComponent"
           },
           "maxItems": 32,
-          "minItems": 2,
+          "minItems": 1,
           "type": "array"
         },
         "request_id": {

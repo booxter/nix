@@ -19,6 +19,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 	"github.com/booxter/nix-config/radarr-repair/worker/blurayidentify"
+	"github.com/booxter/nix-config/radarr-repair/worker/bluraypublish"
 	"github.com/booxter/nix-config/radarr-repair/worker/blurayrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/bluraystage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
@@ -163,6 +164,16 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	blurayPublisher, err := bluraypublish.NewExecutor(rootSet)
+	if err != nil {
+		return err
+	}
+	blurayPublishHandler, err := workerserver.NewBlurayPublishHandler(
+		blurayPublisher, *joinTimeout,
+	)
+	if err != nil {
+		return err
+	}
 	state, err := joinstate.New(*stateDirectory)
 	if err != nil {
 		return err
@@ -211,6 +222,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		probeHandler,
 		blurayHandler,
 		blurayRemuxHandler,
+		blurayPublishHandler,
 		stageJoinHandler,
 		publishHandler,
 		discardHandler,

@@ -357,8 +357,8 @@ func (rootSet *RootSet) PublishCompletedAt(
 	expectedFingerprint string,
 	directoryComponents []string,
 ) ([]string, error) {
-	if len(directoryComponents) == 0 || !validComponents(directoryComponents) ||
-		directoryComponents[0] == workerDirectoryName {
+	if len(directoryComponents) > 0 && (!validComponents(directoryComponents) ||
+		directoryComponents[0] == workerDirectoryName) {
 		return nil, &Failure{Kind: FailureInvalidPath}
 	}
 	return rootSet.publishCompletedAt(
