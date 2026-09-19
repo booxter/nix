@@ -4,7 +4,9 @@
   realmsByHost ? { },
 }:
 let
-  atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes { };
+  atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
   sopsTools = import ./sops/package.nix { inherit pkgs realmsByHost; };
   certificateTools = pkgs.callPackage ./pki-certificates {
     inherit atomicFileWrites sopsTools;

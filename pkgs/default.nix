@@ -2,8 +2,12 @@
 pkgs:
 let
   appPackages = import ../apps/packages.nix { inherit pkgs; };
-  atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
-  gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
+  atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
+  gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
   radarrRepairContracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
   radarrRepairGoModels = pkgs.callPackage ./radarr-repair/go-models.nix {
     contracts = radarrRepairContracts;
