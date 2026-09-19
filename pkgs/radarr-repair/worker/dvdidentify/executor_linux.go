@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/dvdvideo"
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
@@ -49,7 +48,9 @@ func (executor *Executor) Execute(
 	if err != nil {
 		return failure(request.RequestID, reasonForError(err))
 	}
-	titles, identifyErr := executor.identifier.Identify(ctx, filepath.Dir(path))
+	titles, identifyErr := executor.identifier.IdentifyDVD(ctx, dvdvideo.Target{
+		NavigationPath: path, ExpectedFingerprint: request.ExpectedFingerprint,
+	})
 	if err := executor.files.Verify(media, request.ExpectedFingerprint); err != nil {
 		return failure(request.RequestID, reasonForError(err))
 	}

@@ -8,6 +8,7 @@ const (
 	CapabilityActionJoinParts        CapabilityAction = "join_parts_v1"
 	CapabilityActionManualImportFile CapabilityAction = "manual_import_file_v1"
 	CapabilityActionRemuxBluray      CapabilityAction = "remux_bluray_v1"
+	CapabilityActionRemuxDVD         CapabilityAction = "remux_dvd_v1"
 
 	ActionNoRepair         DecisionAction = "no_repair"
 	ActionJoinParts        DecisionAction = "join_parts_v1"

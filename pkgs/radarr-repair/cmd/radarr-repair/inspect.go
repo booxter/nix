@@ -368,6 +368,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		Files:             filesource.New(),
 		Probes:            probeClient,
 		Playlists:         probeClient,
+		DVDs:              probeClient,
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {

@@ -32,14 +32,21 @@ type Title struct {
 }
 
 type Identifier interface {
-	Identify(context.Context, string) ([]Title, error)
+	IdentifyDVD(context.Context, Target) ([]Title, error)
+}
+
+type Target struct {
+	NavigationPath      string
+	ExpectedFingerprint string
 }
 
 type Runner struct{ Executable string }
 
-func (runner Runner) Identify(ctx context.Context, directory string) ([]Title, error) {
+func (runner Runner) IdentifyDVD(ctx context.Context, target Target) ([]Title, error) {
+	directory := filepath.Dir(target.NavigationPath)
 	if !filepath.IsAbs(runner.Executable) || filepath.Clean(runner.Executable) != runner.Executable ||
-		!filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
+		!filepath.IsAbs(target.NavigationPath) || filepath.Clean(target.NavigationPath) != target.NavigationPath ||
+		filepath.Base(target.NavigationPath) != "VIDEO_TS.IFO" {
 		return nil, fmt.Errorf("lsdvd executable and DVD directory must be absolute and clean")
 	}
 	var output bytes.Buffer

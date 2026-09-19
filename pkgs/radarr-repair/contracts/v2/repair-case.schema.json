@@ -229,6 +229,81 @@
       ],
       "type": "object"
     },
+    "dvdCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "remux_dvd_v1"
+        },
+        "angle_count": {
+          "maximum": 9,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "chapter_count": {
+          "maximum": 4096,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "navigation_file_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "source_file_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "title_in_set": {
+          "maximum": 99,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "title_number": {
+          "maximum": 128,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "title_set": {
+          "maximum": 99,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "tracks": {
+          "items": {
+            "$ref": "#/$defs/blurayTrack"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "capability_id",
+        "navigation_file_id",
+        "source_file_ids",
+        "title_number",
+        "title_set",
+        "title_in_set",
+        "angle_count",
+        "duration_ms",
+        "chapter_count",
+        "tracks"
+      ],
+      "type": "object"
+    },
     "failedProbe": {
       "additionalProperties": false,
       "properties": {
@@ -1095,10 +1170,13 @@
           },
           {
             "$ref": "#/$defs/blurayCapability"
+          },
+          {
+            "$ref": "#/$defs/dvdCapability"
           }
         ]
       },
-      "maxItems": 257,
+      "maxItems": 385,
       "type": "array"
     },
     "case_id": {

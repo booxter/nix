@@ -27,8 +27,8 @@ type testIdentifier struct {
 	path   string
 }
 
-func (identifier *testIdentifier) Identify(_ context.Context, path string) ([]dvdvideo.Title, error) {
-	identifier.path = path
+func (identifier *testIdentifier) IdentifyDVD(_ context.Context, target dvdvideo.Target) ([]dvdvideo.Title, error) {
+	identifier.path = target.NavigationPath
 	return identifier.titles, nil
 }
 
@@ -63,8 +63,8 @@ func TestIdentifyDVDReturnsBoundedTitleEvidence(t *testing.T) {
 		response.Success.Titles[0].DurationMS != 9_779_000 ||
 		response.Success.Titles[0].ChapterCount != 12 ||
 		len(response.Success.Titles[0].Tracks) != 2 ||
-		identifier.path != filepath.Dir(ifo) {
-		t.Fatalf("DVD identification = %#v, directory = %q", response, identifier.path)
+		identifier.path != ifo {
+		t.Fatalf("DVD identification = %#v, navigation path = %q", response, identifier.path)
 	}
 	if _, err := workercontracts.EncodeDVDIdentifyResponse(response); err != nil {
 		t.Fatalf("DVD identification does not satisfy wire contract: %v", err)
