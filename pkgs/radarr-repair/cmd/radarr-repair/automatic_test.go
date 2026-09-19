@@ -161,6 +161,43 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 	}
 }
 
+func TestAutomaticSummaryReportsRejectionAndFollowingImport(t *testing.T) {
+	t.Parallel()
+
+	report := automaticReport{
+		ShadowSucceeded: true,
+		Apply: applyrunner.Report{Executions: []applyrunner.CaseResult{
+			{
+				CaseID: "short-file",
+				Action: contracts.ActionManualImportFile,
+				Result: repairexecution.Result{Check: executioncheck.Result{
+					Rejections: []executioncheck.Rejection{{
+						Reason:         executioncheck.DecisionRejected,
+						DecisionReason: "runtime_mismatch",
+					}},
+				}},
+			},
+			{
+				CaseID: "ready-file",
+				Action: contracts.ActionManualImportFile,
+				Result: repairexecution.Result{ManualImport: &casestore.ManualImportExecution{
+					State: casestore.ManualImportImported,
+				}},
+			},
+		}},
+	}
+	var output bytes.Buffer
+	if err := writeAutomaticSummary(&output, report); err != nil {
+		t.Fatal(err)
+	}
+	want := "observed=0 stored=0 superseded=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0\n" +
+		"apply=precondition_rejected case_id=short-file action=manual_import_file_v1 reason=decision_rejected decision_reason=runtime_mismatch\n" +
+		"apply=completed case_id=ready-file action=manual_import_file_v1 state=imported\n"
+	if output.String() != want {
+		t.Fatalf("summary = %q, want %q", output.String(), want)
+	}
+}
+
 func TestAutomaticRunPlansBeforeCheckingKillSwitchOrApplying(t *testing.T) {
 	t.Parallel()
 

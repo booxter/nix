@@ -211,11 +211,18 @@ func writeAutomaticSummary(writer io.Writer, report automaticReport) error {
 		)
 		return err
 	}
-	execution := report.Apply.Executions[0]
-	if len(execution.Result.Check.Rejections) != 0 {
-		return writeAutomaticRejection(writer, execution)
+	for _, execution := range report.Apply.Executions {
+		var err error
+		if len(execution.Result.Check.Rejections) != 0 {
+			err = writeAutomaticRejection(writer, execution)
+		} else {
+			err = writeAutomaticExecution(writer, execution)
+		}
+		if err != nil {
+			return err
+		}
 	}
-	return writeAutomaticExecution(writer, execution)
+	return nil
 }
 
 func writeAutomaticRejection(writer io.Writer, execution applyrunner.CaseResult) error {
@@ -233,6 +240,17 @@ func writeAutomaticRejection(writer io.Writer, execution applyrunner.CaseResult)
 			assessment.CheckedAt.UTC().Format(time.RFC3339Nano),
 			assessment.RequiredAge,
 			assessment.ActualAge,
+		)
+		return err
+	}
+	if rejection.DecisionReason != "" {
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=precondition_rejected case_id=%s action=%s reason=%s decision_reason=%s\n",
+			execution.CaseID,
+			execution.Action,
+			rejection.Reason,
+			rejection.DecisionReason,
 		)
 		return err
 	}
