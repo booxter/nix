@@ -118,6 +118,9 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
     assert {evaluation_case.spec.name for evaluation_case in cases} == {
         "ambiguous_part_order",
         "clear_ordered_join",
+        "current_double_exposure_raw_bluray",
+        "current_pandoras_mirror_raw_bluray",
+        "current_xconfessions_raw_bluray",
         "episodic_release_with_join_pool",
         "incompatible_parts",
         "missing_movie_identity",
@@ -203,7 +206,7 @@ async def test_matching_decisions_pass_the_corpus() -> None:
     assert report.passed, [
         (result.case_name, result.violations) for result in report.results if not result.passed
     ]
-    assert len(report.results) == 34
+    assert len(report.results) == 40
     assert all(result.passed for result in report.results)
     assert all(result.attempts == 1 for result in report.results)
     assert all(result.attempt_errors == [] for result in report.results)

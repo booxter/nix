@@ -1,0 +1,1490 @@
+{
+  "capabilities": [],
+  "case_id": "sha256:92fb72f423e897ec74ca538a2d6309c97e84c54385517989bf2c15eb7b0868de",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-04T21:59:53Z",
+    "content_ownership": "manifest",
+    "download_ref": "download:bf0d9ca70bc83232a989d0127d6542d7ce0a970821529648fa720c3db6ad7e50",
+    "file_count": 39,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Pandoras.Mirror.BLURAY 1080p",
+    "source_type": "torrent",
+    "total_size_bytes": 23926740440
+  },
+  "files": [
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 37936,
+        "selected": true,
+        "source_index": 28,
+        "source_size_bytes": 37936
+      },
+      "extension": null,
+      "file_id": "file:945a0706f01dbc0c7cd3c022d7e32ec174120209f829c80ceebc0f04ea959f7d",
+      "fingerprint": "sha256:3df2fca767339bf1ad447bc7c7abbfd6a721607e189714b786b4653b4e3b6ab3",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00000.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 37936
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 296,
+        "selected": true,
+        "source_index": 29,
+        "source_size_bytes": 296
+      },
+      "extension": null,
+      "file_id": "file:d38d3f0650e421f9c904d9d26a49692bc54b17041dcd9fbee6774b4f7391405f",
+      "fingerprint": "sha256:2740ebafc133877215477f527c5ae9db6298e333b3a755b058322c1a80fa7426",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00001.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 296
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 3048,
+        "selected": true,
+        "source_index": 30,
+        "source_size_bytes": 3048
+      },
+      "extension": null,
+      "file_id": "file:81ce8c4bc280d898bce29e3a222b2e340f06123ac5b357b2eff7fb3a7b1f2e06",
+      "fingerprint": "sha256:3b55423e86a8e287524a494db87e18fc8363e2f09697b00dbb76c21769311819",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00002.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 3048
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 892,
+        "selected": true,
+        "source_index": 31,
+        "source_size_bytes": 892
+      },
+      "extension": null,
+      "file_id": "file:3dcde9029f1292f729846c9ad072afcf184e1c7ca258387cf703d1243d0d54da",
+      "fingerprint": "sha256:d3fd5a54fd7b5f63f0372dd6c6e160ed2974201632eb79019b8a36b51265b09a",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00003.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 892
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 908,
+        "selected": true,
+        "source_index": 32,
+        "source_size_bytes": 908
+      },
+      "extension": null,
+      "file_id": "file:5b8ccf1f32f99dc351b754cd5f0401403f7bba359a7a5dce9863bf0ca26d8304",
+      "fingerprint": "sha256:7c482f5e2fe59ce48c06a6f8203df4a9c710a15b5f85bfe8053102d6fc8ac351",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00004.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 908
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 428,
+        "selected": true,
+        "source_index": 33,
+        "source_size_bytes": 428
+      },
+      "extension": null,
+      "file_id": "file:ee3376c260c58cc9786cffb49dc69cff71a1d07af7104c8ec19367bc108f8805",
+      "fingerprint": "sha256:ba1053ccd6ed1620d09469d15a9a99a8c02f1cc42c32b39ce3ebd441f4ba42e5",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00005.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 428
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 392,
+        "selected": true,
+        "source_index": 34,
+        "source_size_bytes": 392
+      },
+      "extension": null,
+      "file_id": "file:d67587261fb754d088a373525b82f28f55fb586d43b439287582c15f3656bf97",
+      "fingerprint": "sha256:e8e5a855b26f36d2f5adc22462e16523651d26cd4fc235914087ab5b968c82cb",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "CLIPINF",
+        "00006.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 392
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1350,
+        "selected": true,
+        "source_index": 36,
+        "source_size_bytes": 1350
+      },
+      "extension": null,
+      "file_id": "file:e28943800f6ae5a9481d526ac209dd0219ca010fd1680713964978d69072c8d4",
+      "fingerprint": "sha256:ed2a5374de49bc656079baf66b61a7ee9c321489e1792a3738f52119a56d869e",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "MovieObject.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1350
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 344,
+        "selected": true,
+        "source_index": 22,
+        "source_size_bytes": 344
+      },
+      "extension": null,
+      "file_id": "file:c80b639b566499c0da90ee16010a01f10dd487cb40aacc9da212b5e04b1b10bd",
+      "fingerprint": "sha256:513295e0635b1fee9fc638d0f982ad4623dc9285e8d8d1b83d2c897d6c2ff418",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00000.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 344
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 198,
+        "selected": true,
+        "source_index": 23,
+        "source_size_bytes": 198
+      },
+      "extension": null,
+      "file_id": "file:5f1a148c5f47a0333a994fd516c01d07443ae5fef59015d3149d9c79c2b8d0ed",
+      "fingerprint": "sha256:3d04eba30f44212d02c43a2fb6adab4c4573fa4725a4e74f15b9cd0cd2b9741f",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00001.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 198
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 24,
+        "source_size_bytes": 186
+      },
+      "extension": null,
+      "file_id": "file:231007829a6452431966bf366d8c186fbf990d51df4b79d45cf507befc236267",
+      "fingerprint": "sha256:cf18754109385efc5a5cfdf15388d5dae98a6feb647c4dac9df04cb1c0c1672f",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00002.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 25,
+        "source_size_bytes": 186
+      },
+      "extension": null,
+      "file_id": "file:01188abb3e7fe30ca88ffdf75cfde8b92ae6a30f65ad9b1b19dfe4ea340d91b6",
+      "fingerprint": "sha256:28f61db7f8c01b504b84f41c8c85f8403bebc153854cf11d0439662dee3c8278",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00003.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 26,
+        "source_size_bytes": 184
+      },
+      "extension": null,
+      "file_id": "file:205f5bb6d4756ec3a4dfa0d8d02383dc51a2244cf41678b8b2deef26ca5f4304",
+      "fingerprint": "sha256:e2e645ddcefb8d3394feb7cb39ccc6d35003eea7c15a19ab751c48add1a79bff",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00004.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 27,
+        "source_size_bytes": 184
+      },
+      "extension": null,
+      "file_id": "file:67468e3947a57805719f112bf5994f96474196d7cd2ad24c1dcd0d889cd385ce",
+      "fingerprint": "sha256:03d78136f45f2354bd5cd3dc8cc88c0a517c76ab3e2d4a6ccdf0fe4f1d891028",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "PLAYLIST",
+        "00005.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 192,
+        "selected": true,
+        "source_index": 35,
+        "source_size_bytes": 192
+      },
+      "extension": null,
+      "file_id": "file:56d4dc718b4e1a023cad1592a5d7d903ddc0a19a8fa03d9cb85509b953a0a222",
+      "fingerprint": "sha256:c444771950f3f4e4b004c186bb232e7036216f40f909b006ffefbd2c12d6f622",
+      "path_components": [
+        "BDMV",
+        "BACKUP",
+        "index.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 192
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 37936,
+        "selected": true,
+        "source_index": 15,
+        "source_size_bytes": 37936
+      },
+      "extension": null,
+      "file_id": "file:e49450313928d8e81055cb1d10094ebe8a8aeb8d316e1a1dba01b7ce818f1ae3",
+      "fingerprint": "sha256:cdedd969a5b72529d6e05d433e0011461b636ddbfa0ceb61b6b47fc322d4201d",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00000.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 37936
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 296,
+        "selected": true,
+        "source_index": 16,
+        "source_size_bytes": 296
+      },
+      "extension": null,
+      "file_id": "file:d1960469d7469628de6e9c92e22ff645d6d15d31dbd092e7fd215c885fe9ec8c",
+      "fingerprint": "sha256:ebdb8c12e28e3016ff50d7590fb44235ae64cff9a7585b4919d8d8e9b2707e8b",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00001.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 296
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 3048,
+        "selected": true,
+        "source_index": 17,
+        "source_size_bytes": 3048
+      },
+      "extension": null,
+      "file_id": "file:39f758db71631dc2f189bbcb10a3ebc70a00c6947fbfe85e16f82a676558ee11",
+      "fingerprint": "sha256:b7d9c957944444c6a43eda991f9e868a199293cf7eb0cc53897510b7b295a0d6",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00002.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 3048
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 892,
+        "selected": true,
+        "source_index": 18,
+        "source_size_bytes": 892
+      },
+      "extension": null,
+      "file_id": "file:1ad5bad9d3b67b0cd30a3f52055a50a80921af18a4f66459947c241ef57362a1",
+      "fingerprint": "sha256:8a07f30b189df0b79468cce3b5d977a1334981786ce0422a34fb48ed190744b1",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00003.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 892
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 908,
+        "selected": true,
+        "source_index": 19,
+        "source_size_bytes": 908
+      },
+      "extension": null,
+      "file_id": "file:3d7fd38e26b09329823f4e81067b12cbefca932491cfba3f81f3f4134d6d11f0",
+      "fingerprint": "sha256:bcfd857083555a65ed8e8fad2e4b99eff10a2e598179e841e5d2a87eaa7db8e8",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00004.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 908
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 428,
+        "selected": true,
+        "source_index": 20,
+        "source_size_bytes": 428
+      },
+      "extension": null,
+      "file_id": "file:bb05b9388cb633912837a35cd7da00f3256f10df3d0329cebc1feef31d24d0a1",
+      "fingerprint": "sha256:57c0e6ee85e12924eca2c5c23094915566858207561828301ce709a644c421c0",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00005.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 428
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 392,
+        "selected": true,
+        "source_index": 21,
+        "source_size_bytes": 392
+      },
+      "extension": null,
+      "file_id": "file:3295fdc081c7d85a711ae5e37d5a3abb478c8e5d8f86599dc536f414bc990630",
+      "fingerprint": "sha256:532b5d2af8e826a21e80933bcb26f06a5a53511ab3b0714162a84089afb6ef25",
+      "path_components": [
+        "BDMV",
+        "CLIPINF",
+        "00006.clpi"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 392
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1350,
+        "selected": true,
+        "source_index": 38,
+        "source_size_bytes": 1350
+      },
+      "extension": null,
+      "file_id": "file:816ec40c65ec30afd0c8bbf701024d8832b8e70be4a5496d5d7b644f9e5e0992",
+      "fingerprint": "sha256:b7a117113f1a5930027dca02130afdc9c53d25ef6958e3ea684145a27041340f",
+      "path_components": [
+        "BDMV",
+        "MovieObject.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1350
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 344,
+        "selected": true,
+        "source_index": 9,
+        "source_size_bytes": 344
+      },
+      "extension": null,
+      "file_id": "file:09f686ef5b5c7d26e55c15c0274cdfba7a90c80547d2eac18063ba4d7318eaa1",
+      "fingerprint": "sha256:8f6c1a4245ec33b107bdc51362496f37af73bed13979c5d303697584be872cff",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00000.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 344
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 198,
+        "selected": true,
+        "source_index": 10,
+        "source_size_bytes": 198
+      },
+      "extension": null,
+      "file_id": "file:534f4104366ce4f0c4922531c429ba1e83a5af93080169d02ab7225f8a2b0b2e",
+      "fingerprint": "sha256:35d8797b7d636984570160bdb7d5c8cc1fb312a347e6b0f2b4804b6d6388a9e8",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00001.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 198
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 11,
+        "source_size_bytes": 186
+      },
+      "extension": null,
+      "file_id": "file:62b50311a68effb038351230bea8a8ef34e43385ec6ea6119089838e61a91d73",
+      "fingerprint": "sha256:4cbffc2724f5ed78b6bbc65263ce8ccef592e84729ef2a4c8aa5fcc7f56ca330",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00002.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 186,
+        "selected": true,
+        "source_index": 12,
+        "source_size_bytes": 186
+      },
+      "extension": null,
+      "file_id": "file:61f760895315de0fb5388625154d501b14113ab85844e0de24175219310b979b",
+      "fingerprint": "sha256:3bc3832bc11edc92f3175b8db4b84cbac3267994471b9c0b20d34a7952365f98",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00003.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 186
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 13,
+        "source_size_bytes": 184
+      },
+      "extension": null,
+      "file_id": "file:2154dcb975f2afa686faf479dc18aec1f24c97273bc0297095d8868ac6eefcfc",
+      "fingerprint": "sha256:a66575de061183ced4b389e96c4ed2b6a13cfca457939dccafcc8264278ce179",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00004.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 184,
+        "selected": true,
+        "source_index": 14,
+        "source_size_bytes": 184
+      },
+      "extension": null,
+      "file_id": "file:2da4e0da495cf966dcb9786d818f5365aca4d4824364ccb1d8f6172bb7ea503a",
+      "fingerprint": "sha256:54fc5b6b1ea6a2e34412e67975dd8a512a530f009dedd5aa77a59f3a41fecf0e",
+      "path_components": [
+        "BDMV",
+        "PLAYLIST",
+        "00005.mpls"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 184
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 23197495296,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 23197495296
+      },
+      "extension": "m2ts",
+      "file_id": "file:1af116001c67896e16888c8372840fcca518c1a7f2ae658b8681b9a02edc8169",
+      "fingerprint": "sha256:b7264aae302431cda52de213e3efd23a18a8b32a0ac7049704b3a07a0f9479d0",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00000.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 32965627,
+          "effective_duration_ms": 5629499,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 5629499,
+          "longest_stream_duration_ms": 5629499,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 23197495296
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629499,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": null,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "dts",
+            "codec_tag": "[134][0][0][0]",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": "60",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": 96000,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 2,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": 96000,
+            "channel_layout": "mono",
+            "channels": 1,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 5629440,
+            "index": 3,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          },
+          {
+            "bit_rate_bps": null,
+            "codec_name": "hdmv_pgs_subtitle",
+            "codec_tag": "[144][0][0][0]",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": null,
+            "height": 1080,
+            "index": 4,
+            "kind": "subtitle",
+            "language": null,
+            "profile": null,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 23197495296
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 73728,
+        "selected": true,
+        "source_index": 3,
+        "source_size_bytes": 73728
+      },
+      "extension": "m2ts",
+      "file_id": "file:4a4502876e66971b3872e1f8d36e5fff4619a8276ec5025f1ca2b00229dd2079",
+      "fingerprint": "sha256:9ec4772d17d21ce570d9eab5fb74969f8ec91e3e016d3e763e4793179f667969",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00001.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "incomplete_metadata",
+        "summary": "ffprobe omitted metadata required by the planner."
+      },
+      "size_bytes": 73728
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 517226496,
+        "selected": true,
+        "source_index": 4,
+        "source_size_bytes": 517226496
+      },
+      "extension": "m2ts",
+      "file_id": "file:76f5bb16cbb9a353240b36abc8ae83d6b3b8a47ac7916bdabb02a47249d31a89",
+      "fingerprint": "sha256:41fec7aa13e3f402a0355415864601767121dfe29bd704944f3c486ecfd08ca2",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00002.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 16105240,
+          "effective_duration_ms": 256923,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 256923,
+          "longest_stream_duration_ms": 256923,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 517226496
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 256923,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 320000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 256864,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 517226496
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 118265856,
+        "selected": true,
+        "source_index": 5,
+        "source_size_bytes": 118265856
+      },
+      "extension": "m2ts",
+      "file_id": "file:9bb0dec1869fee03aa5f731e7c17b0dffdf067a20dcb296800d84a707a31646b",
+      "fingerprint": "sha256:262896bcc758d53dcffbb98cbc123e0ee13a573497aba4b33f4f8b3fd0f5b25c",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00003.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "invalid_output",
+        "summary": "ffprobe returned invalid structured metadata."
+      },
+      "size_bytes": 118265856
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 90869760,
+        "selected": true,
+        "source_index": 6,
+        "source_size_bytes": 90869760
+      },
+      "extension": "m2ts",
+      "file_id": "file:569e4a08436edaca4625ff7a0f8db35e04087269565bab20c69319075ec2b1e6",
+      "fingerprint": "sha256:cce36517306f5cfaaecb0fb35b1d17678a0edd7fe4c70a1aff89ed6f9496883e",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00004.m2ts"
+      ],
+      "probe": {
+        "status": "failed",
+        "reason": "invalid_output",
+        "summary": "ffprobe returned invalid structured metadata."
+      },
+      "size_bytes": 90869760
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1388544,
+        "selected": true,
+        "source_index": 7,
+        "source_size_bytes": 1388544
+      },
+      "extension": "m2ts",
+      "file_id": "file:1d639e449518ec3b589682aba06eea6b1cc26faf929b936f90051889a207e448",
+      "fingerprint": "sha256:1acb563de009b5bdc605adc8c08277527f79f69a9d517340fce576a7ab0447d8",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00005.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 1387158,
+          "effective_duration_ms": 8008,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 8008,
+          "longest_stream_duration_ms": 8008,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 1388544
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 8008,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 192000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 7936,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1388544
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1327104,
+        "selected": true,
+        "source_index": 8,
+        "source_size_bytes": 1327104
+      },
+      "extension": "m2ts",
+      "file_id": "file:56c91970f8705683fab3b1d420eaa714645a690b6ee4e1bb4be6602bc1dc0a7d",
+      "fingerprint": "sha256:e46ef88558daae898fa9620cfa76139a6f919a2aced7b51e7f10890ef75a25c1",
+      "path_components": [
+        "BDMV",
+        "STREAM",
+        "00006.m2ts"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 2356944,
+          "effective_duration_ms": 4504,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 4504,
+          "longest_stream_duration_ms": 4504,
+          "names": [
+            "mpegts"
+          ],
+          "size_bytes": 1327104
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": null,
+            "codec_name": "h264",
+            "codec_tag": "HDMV",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 4504,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 192000,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "ac3",
+            "codec_tag": "AC-3",
+            "disposition": {
+              "default": false,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 4448,
+            "index": 1,
+            "kind": "audio",
+            "language": null,
+            "profile": null,
+            "sample_rate_hz": 48000,
+            "start_time_ms": 600000,
+            "time_base": {
+              "denominator": 90000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1327104
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 192,
+        "selected": true,
+        "source_index": 37,
+        "source_size_bytes": 192
+      },
+      "extension": null,
+      "file_id": "file:c5d37a1a909918bc9bbedeee2b1ea797b33b22ad09dbf8860c861c7a7adbb057",
+      "fingerprint": "sha256:341779e7b1d1c488d76716f89f9bf2079ec05882cbd9754678228a8daae4ebe9",
+      "path_components": [
+        "BDMV",
+        "index.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 192
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 104,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 104
+      },
+      "extension": null,
+      "file_id": "file:1df2c620bf96e2148c8144c58d993145525eb600db2ad1da5c890da9bcbdbe6c",
+      "fingerprint": "sha256:25198bbe305eb14af22e5569bc375f76f353b4af5c0d714dc81ece20c3596bc3",
+      "path_components": [
+        "CERTIFICATE",
+        "BACKUP",
+        "id.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 104
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 104,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 104
+      },
+      "extension": null,
+      "file_id": "file:8c53cac44b1614f5c494cc430eb91e4296af714ec0676cfb79458ec1de0a6596",
+      "fingerprint": "sha256:9666c9d05c5dee09abbb184d53fdb8f01db63b5b816a97d2c66b5d625c8944cf",
+      "path_components": [
+        "CERTIFICATE",
+        "id.bdmv"
+      ],
+      "probe": {
+        "status": "not_probed",
+        "reason": "not_probe_candidate",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 104
+    }
+  ],
+  "observed_at": "2026-09-19T02:04:04.646724543Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:bf0d9ca70bc83232a989d0127d6542d7ce0a970821529648fa720c3db6ad7e50",
+      "error_message": "",
+      "queue_id": 58927337,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:e5f19abfae32d818aae8550ce685e4ba5a96623fc2a0e350354f401be6cae20e",
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:e1b681531aa187342a0c684de4c4b69a7be4de14656f5a26ed339d0c00e642d3",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00000.m2ts"
+        },
+        {
+          "evidence_id": "evidence:6328d40f36b0030444d4771d4a9b1c9aa08bd316d835a5764ce41b6917511001",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00001.m2ts"
+        },
+        {
+          "evidence_id": "evidence:a35eebea485da89e552eea020e0a016f986307b73504eedaf28b8da0cb4da845",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00002.m2ts"
+        },
+        {
+          "evidence_id": "evidence:0e44cc53f9a6d34d55cabc56833fa4d7d4dd285d41ad372f1aeee5847c4b19d4",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00003.m2ts"
+        },
+        {
+          "evidence_id": "evidence:c187c66f4966c272d139b1c34262c5cc2e03a6bcd33785efc53c15e04b6f39cf",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00004.m2ts"
+        },
+        {
+          "evidence_id": "evidence:40a531da4474db32a476da0d6bb6fa6a4686254af7db1cfde958d6fef5fa0e32",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00005.m2ts"
+        },
+        {
+          "evidence_id": "evidence:2196c8ecee5da4f3fbd147f7adbac086b47200699fcd84eee53dd7759f3dcec5",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "00006.m2ts"
+        }
+      ],
+      "title": "Pandoras.Mirror.BLURAY 1080p",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:ca2bc61a65a425f4d8ecd3c224414771c8f34b0157f2d67cc1e9afef9ad60a9e",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-08-08T09:41:21Z",
+        "quality": "Bluray-1080p",
+        "source_title": "Pandora's Mirror / Зеркало Пандоры(Shaun Costello, Vinegar Syndrome) [1981 г., Feature, Classic ,Straight All Sex ,Hardcore, Blu-Ray, 1080p] (Veronica Hart, Jamie Gillis, Tiffany Clark, Marlene Willoughby, Kandi Barbour, Annie Sprinkle, Hillary Summers, Jerry Butler)"
+      },
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:1ccb18fa984e39768b09e7a7f882557139a3dbcac773bd3dacbf4d8c678ccb19",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-04T21:15:09Z",
+        "quality": "Bluray-1080p",
+        "source_title": "Pandora's Mirror / Зеркало Пандоры(Shaun Costello, Vinegar Syndrome) [1981 г., Feature, Classic ,Straight All Sex ,Hardcore, Blu-Ray, 1080p] (Veronica Hart, Jamie Gillis, Tiffany Clark, Marlene Willoughby, Kandi Barbour, Annie Sprinkle, Hillary Summers, Jerry Butler)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:1af116001c67896e16888c8372840fcca518c1a7f2ae658b8681b9a02edc8169",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:d8ef36934dcdf5fb6340032a5332b99154487154fe06036594f520f5b6bce595",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:4a4502876e66971b3872e1f8d36e5fff4619a8276ec5025f1ca2b00229dd2079",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:463be5d8a1991765698a4865cc6af7ae42ac81ff2c480d5edc93ebe0676ccbde",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:76f5bb16cbb9a353240b36abc8ae83d6b3b8a47ac7916bdabb02a47249d31a89",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:0633efc4ac1088b7d47db3758f04ed6d870314aa6cd9fc0d60a98c4261039ed0",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:9bb0dec1869fee03aa5f731e7c17b0dffdf067a20dcb296800d84a707a31646b",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:90bddc547da3b703799e500628e6ee270d06e4c8c61ff767a5bcd04059f17d42",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:569e4a08436edaca4625ff7a0f8db35e04087269565bab20c69319075ec2b1e6",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:1cd4603258b3f513439f15da87b6119d0c6035ffa19b4f373616f36fcd48d7f6",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:1d639e449518ec3b589682aba06eea6b1cc26faf929b936f90051889a207e448",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:f523fca0814da2ef5d05c06b34bea5963364c57b82a7a903624dd8eafb91d8a9",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:56c91970f8705683fab3b1d420eaa714645a690b6ee4e1bb4be6602bc1dc0a7d",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:31dfaefaff9213fe4f5d8cdc3cd6b4c5cadd7ee8077301b26b3fce095fad5815",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "Le miroir obscène de Pandora",
+        "De obscene spiegel van Pandorra",
+        "Det forsexede spejl",
+        "Pandora... il sapore della carne",
+        "O Espelho do Desejo",
+        "ＳＭミラージュ／肉奴隷"
+      ],
+      "imdb_id": "tt0082879",
+      "original_title": "Pandora's Mirror",
+      "radarr_id": 3222,
+      "runtime_minutes": 94,
+      "title": "Pandora's Mirror",
+      "tmdb_id": 27608,
+      "year": 1981
+    }
+  },
+  "schema_version": "radarr-repair/v2"
+}

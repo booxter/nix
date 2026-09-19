@@ -224,6 +224,36 @@
         "file_id": "file:c5063d72e1c1dc2d88c70fd60b12e5524bd342dc73dca5ae612678da6bf649f2"
       },
       "name": "real_traci_manual_import"
+    },
+    {
+      "base_case": "92fb72f423e897ec74ca538a2d6309c97e84c54385517989bf2c15eb7b0868de.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "current_pandoras_mirror_raw_bluray"
+    },
+    {
+      "base_case": "1dec5593fe42d2ad825436d16caf726edd6bb983b9950bd7f952cda94ca9389c.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "current_xconfessions_raw_bluray"
+    },
+    {
+      "base_case": "3269e56f2d5e43a1d8b7f3f62865b35f57bc0beddcc5cd9b0b56f4386f054741.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "raw_disc_unsupported"
+        ]
+      },
+      "name": "current_double_exposure_raw_bluray"
     }
   ],
   "schema_version": "radarr-repair-evaluation/v2"
