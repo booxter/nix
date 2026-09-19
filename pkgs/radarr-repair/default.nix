@@ -1,8 +1,9 @@
 {
   buildGoModule,
-  ffmpeg,
+  ffmpeg-full,
   goModels,
   lib,
+  lsdvd,
   makeWrapper,
   mkvtoolnixCli,
 }:
@@ -39,9 +40,10 @@ let
       pname = "radarr-repair";
       subPackages = [ "cmd/radarr-repair" ];
 
-      RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
-      RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+      RADARR_REPAIR_TEST_FFMPEG = lib.getExe' ffmpeg-full "ffmpeg";
+      RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg-full "ffprobe";
       RADARR_REPAIR_TEST_MKVMERGE = lib.getExe' mkvtoolnixCli "mkvmerge";
+      RADARR_REPAIR_TEST_LSDVD = lib.getExe' lsdvd "lsdvd";
       RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
@@ -70,7 +72,7 @@ let
         runHook postInstallCheck
       '';
 
-      disallowedReferences = [ (lib.getBin ffmpeg) ];
+      disallowedReferences = [ (lib.getBin ffmpeg-full) ];
 
       meta = common.meta // {
         description = "Deterministic controller for repairing failed Radarr imports";
@@ -88,8 +90,8 @@ let
       nativeBuildInputs = [ makeWrapper ];
       postInstall = ''
         wrapProgram "$out/bin/radarr-repair-worker" \
-          --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg "ffprobe"}"} \
-          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe ffmpeg}"} \
+          --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg-full "ffprobe"}"} \
+          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe' ffmpeg-full "ffmpeg"}"} \
           --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"}
       '';
 
