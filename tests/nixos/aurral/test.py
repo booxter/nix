@@ -110,6 +110,14 @@ with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
     machine.succeed("runuser --user slskd -- touch /srv/media/slskd/complete/slskd")
     machine.succeed("runuser --user aurral -- test -r /srv/media/slskd/complete/slskd")
+    machine.succeed("touch /srv/media/library/music/aurral-source")
+    machine.succeed("runuser --user aurral -- test -r /srv/media/library/music/aurral-source")
+    service_pid = machine.succeed(
+        "systemctl show --property MainPID --value aurral.service"
+    ).strip()
+    service_library = f"/proc/{service_pid}/root/srv/media/library/music"
+    machine.succeed(command(["test", "-r", f"{service_library}/aurral-source"]))
+    machine.fail(command(["touch", f"{service_library}/aurral-unexpected-write"]))
     machine.succeed("test -f /var/lib/aurral/aurral.db")
 
 with subtest("configuration and state survive restart"):

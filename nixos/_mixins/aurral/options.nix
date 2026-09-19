@@ -17,6 +17,12 @@ let
         description = "Storage claim containing Aurral flows and slskd downloads.";
       };
 
+      libraryRoots = lib.mkOption {
+        type = lib.types.listOf absolutePath;
+        default = [ ];
+        description = "Music library roots exposed read-only for local scanning and file reuse.";
+      };
+
       slskd = {
         vpnNamespace = lib.mkOption {
           type = lib.types.nonEmptyStr;

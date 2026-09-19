@@ -40,6 +40,7 @@ pkgs.testers.runNixOSTest {
       site.timeZone = "Etc/UTC";
       aurral = {
         storageClaim = "media";
+        libraryRoots = [ "/srv/media/library/music" ];
         publicHostName = "music.example.invalid";
         slskd = {
           vpnNamespace = "wg";
@@ -51,6 +52,10 @@ pkgs.testers.runNixOSTest {
           provider = "aurral-node";
           resource = "media";
           mountPoint = "/srv/media";
+          directories."library/music" = {
+            group = "media";
+            mode = "0755";
+          };
         };
         resources.media = {
           volume = "durable";

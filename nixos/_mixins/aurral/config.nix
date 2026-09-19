@@ -155,6 +155,7 @@ in
         pkgs.yt-dlp
       ];
       serviceConfig = {
+        BindReadOnlyPaths = cfg.libraryRoots;
         RestartSec = "5s";
         LimitNOFILE = 65536;
         PrivateTmp = true;
