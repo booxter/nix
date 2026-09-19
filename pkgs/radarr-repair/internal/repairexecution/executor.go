@@ -39,9 +39,19 @@ type JoinedFileImporter interface {
 	Execute(context.Context, string) (casestore.JoinExecution, error)
 }
 
+type RemuxExecutor interface {
+	Execute(context.Context, decisionpolicy.AuthorizedRemux,
+		map[controller.FileID]string) (casestore.RemuxExecution, error)
+}
+
+type RemuxFileImporter interface {
+	Execute(context.Context, string) (casestore.RemuxExecution, error)
+}
+
 type ExecutionStore interface {
 	GetManualImportExecution(string) (casestore.ManualImportExecution, bool, error)
 	GetJoinExecution(string) (casestore.JoinExecution, bool, error)
+	GetRemuxExecution(string) (casestore.RemuxExecution, bool, error)
 }
 
 type Dependencies struct {
@@ -50,6 +60,8 @@ type Dependencies struct {
 	ManualImports     ManualImporter
 	Joins             JoinExecutor
 	JoinedFileImports JoinedFileImporter
+	Remuxes           RemuxExecutor
+	RemuxFileImports  RemuxFileImporter
 }
 
 type Executor struct {
@@ -60,6 +72,7 @@ type Result struct {
 	Check        executioncheck.Result
 	ManualImport *casestore.ManualImportExecution
 	Join         *casestore.JoinExecution
+	Remux        *casestore.RemuxExecution
 	Resumed      bool
 }
 
@@ -77,6 +90,10 @@ func New(dependencies Dependencies) (*Executor, error) {
 		return nil, fmt.Errorf("join executor is required")
 	case dependencies.JoinedFileImports == nil:
 		return nil, fmt.Errorf("joined-file import executor is required")
+	case dependencies.Remuxes == nil:
+		return nil, fmt.Errorf("Blu-ray remux executor is required")
+	case dependencies.RemuxFileImports == nil:
+		return nil, fmt.Errorf("Blu-ray remux import executor is required")
 	default:
 		return &Executor{dependencies: dependencies}, nil
 	}
@@ -107,6 +124,9 @@ func (executor *Executor) Execute(
 	}
 	if checked.Authorization.ManualImport != nil {
 		return executor.executeManualImport(ctx, result, *checked.Authorization.ManualImport)
+	}
+	if checked.Authorization.Remux != nil {
+		return executor.executeRemux(ctx, result, assembly, *checked.Authorization.Remux)
 	}
 	return executor.executeJoin(ctx, result, assembly, *checked.Authorization.Join)
 }
@@ -154,6 +174,25 @@ func (executor *Executor) resumeExisting(
 			return result, true, fmt.Errorf("stored join does not match the authorized join")
 		}
 		resumed, err := executor.resumeJoin(ctx, result, assembly, *validation.Authorized)
+		return resumed, true, err
+	case contracts.ActionRemuxBluray:
+		execution, found, err := executor.dependencies.Store.GetRemuxExecution(caseID)
+		result := Result{Remux: &execution, Resumed: found}
+		if err != nil {
+			return Result{}, false, fmt.Errorf("read Blu-ray remux execution: %w", err)
+		}
+		if !found {
+			return Result{}, false, nil
+		}
+		validation := decisionpolicy.ValidateRemux(assembly, decision)
+		if !validation.Accepted() {
+			return result, true, fmt.Errorf("stored Blu-ray remux is no longer authorized")
+		}
+		executionID, err := casestore.RemuxExecutionID(*validation.Authorized)
+		if err != nil || execution.ExecutionID != executionID {
+			return result, true, fmt.Errorf("stored Blu-ray remux does not match authorization")
+		}
+		resumed, err := executor.resumeRemux(ctx, result, assembly, *validation.Authorized)
 		return resumed, true, err
 	default:
 		return Result{}, false, nil
@@ -267,6 +306,87 @@ func selectedPaths(
 			return nil, fmt.Errorf("authorized join file %q has no stored path", part.FileID)
 		}
 		selected[part.FileID] = path
+	}
+	return selected, nil
+}
+
+func (executor *Executor) executeRemux(
+	ctx context.Context,
+	result Result,
+	assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedRemux,
+) (Result, error) {
+	paths, err := selectedRemuxPaths(assembly, authorized)
+	if err != nil {
+		return result, err
+	}
+	execution, err := executor.dependencies.Remuxes.Execute(ctx, authorized, paths)
+	result.Remux = &execution
+	if err != nil {
+		return result, fmt.Errorf("execute Blu-ray remux: %w", err)
+	}
+	switch execution.State {
+	case casestore.RemuxFailed:
+		return result, nil
+	case casestore.RemuxPublished:
+		return executor.executeRemuxFileImport(ctx, result, authorized.CaseID)
+	default:
+		return result, fmt.Errorf("Blu-ray remux returned state %q", execution.State)
+	}
+}
+
+func (executor *Executor) resumeRemux(
+	ctx context.Context,
+	result Result,
+	assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedRemux,
+) (Result, error) {
+	switch result.Remux.State {
+	case casestore.RemuxPrepared, casestore.RemuxStaged:
+		return executor.executeRemux(ctx, result, assembly, authorized)
+	case casestore.RemuxPublished,
+		casestore.RemuxImportPrepared, casestore.RemuxImportRequested:
+		return executor.executeRemuxFileImport(ctx, result, authorized.CaseID)
+	case casestore.RemuxFailed, casestore.RemuxImported, casestore.RemuxImportFailed:
+		return result, nil
+	default:
+		return result, fmt.Errorf("cannot resume Blu-ray remux from state %q", result.Remux.State)
+	}
+}
+
+func (executor *Executor) executeRemuxFileImport(
+	ctx context.Context,
+	result Result,
+	caseID string,
+) (Result, error) {
+	execution, err := executor.dependencies.RemuxFileImports.Execute(ctx, caseID)
+	result.Remux = &execution
+	if err != nil {
+		return result, fmt.Errorf("import Blu-ray remux: %w", err)
+	}
+	switch execution.State {
+	case casestore.RemuxImported, casestore.RemuxImportFailed:
+		return result, nil
+	default:
+		return result, fmt.Errorf("Blu-ray remux import returned state %q", execution.State)
+	}
+}
+
+func selectedRemuxPaths(
+	assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedRemux,
+) (map[controller.FileID]string, error) {
+	available := make(map[controller.FileID]string)
+	for _, mapping := range assembly.LocalSnapshot.Observation.Inventory.Paths {
+		available[mapping.FileID] = mapping.AbsolutePath
+	}
+	selected := make(map[controller.FileID]string, len(authorized.Clips)+1)
+	for _, source := range append([]decisionpolicy.AuthorizedRemuxFile{authorized.Playlist}, authorized.Clips...) {
+		path, found := available[source.FileID]
+		if !found {
+			return nil, fmt.Errorf("authorized Blu-ray input %q has no stored path", source.FileID)
+		}
+		selected[source.FileID] = path
 	}
 	return selected, nil
 }

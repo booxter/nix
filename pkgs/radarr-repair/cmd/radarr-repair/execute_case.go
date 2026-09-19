@@ -200,7 +200,8 @@ func (config executeCaseConfig) inspectionConfig() inspectConfig {
 }
 
 func emptyExecutionResult(result repairexecution.Result) bool {
-	return len(result.Check.Rejections) == 0 && result.ManualImport == nil && result.Join == nil
+	return len(result.Check.Rejections) == 0 && result.ManualImport == nil &&
+		result.Join == nil && result.Remux == nil
 }
 
 func writeExecutionResult(writer io.Writer, result repairexecution.Result) error {
@@ -230,6 +231,14 @@ func writeExecutionResult(writer io.Writer, result repairexecution.Result) error
 			writer,
 			"action=join_parts_v1 state=%s resumed=%t\n",
 			result.Join.State,
+			result.Resumed,
+		)
+		return err
+	case result.Remux != nil:
+		_, err := fmt.Fprintf(
+			writer,
+			"action=remux_bluray_v1 state=%s resumed=%t\n",
+			result.Remux.State,
 			result.Resumed,
 		)
 		return err

@@ -16,6 +16,7 @@ func TestClassifyProgressWithoutStoredExecution(t *testing.T) {
 	for _, action := range []contracts.DecisionAction{
 		contracts.ActionManualImportFile,
 		contracts.ActionJoinParts,
+		contracts.ActionRemuxBluray,
 	} {
 		t.Run(string(action), func(t *testing.T) {
 			t.Parallel()
@@ -176,6 +177,12 @@ func (store *progressStore) GetJoinExecution(
 	return *store.join, true, nil
 }
 
+func (store *progressStore) GetRemuxExecution(
+	string,
+) (casestore.RemuxExecution, bool, error) {
+	return casestore.RemuxExecution{}, false, store.err
+}
+
 func progressCase(
 	action contracts.DecisionAction,
 	decisionCaseID string,
@@ -195,6 +202,8 @@ func progressCase(
 		}
 	case contracts.ActionJoinParts:
 		planned.Decision.JoinParts = &contracts.JoinDecision{CaseID: decisionCaseID}
+	case contracts.ActionRemuxBluray:
+		planned.Decision.RemuxBluray = &contracts.RemuxBlurayDecision{CaseID: decisionCaseID}
 	}
 	return planned
 }

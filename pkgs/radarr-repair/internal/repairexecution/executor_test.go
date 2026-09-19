@@ -126,6 +126,39 @@ func TestExecutorDoesNotImportUnpublishedJoin(t *testing.T) {
 	}
 }
 
+func TestExecutorImportsPublishedBluRayRemux(t *testing.T) {
+	t.Parallel()
+	authorized := decisionpolicy.AuthorizedRemux{
+		CaseID:   "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Playlist: decisionpolicy.AuthorizedRemuxFile{FileID: "file:first"},
+		Clips:    []decisionpolicy.AuthorizedRemuxFile{{FileID: "file:second"}},
+	}
+	remuxes := &fakeRemuxExecutor{execution: casestore.RemuxExecution{State: casestore.RemuxPublished}}
+	imports := &fakeRemuxFileImporter{execution: casestore.RemuxExecution{State: casestore.RemuxImported}}
+	executor, err := New(Dependencies{
+		Store: &fakeExecutionStore{},
+		Checker: &fakeChecker{result: executioncheck.Result{
+			Authorization: executioncheck.Authorization{Remux: &authorized},
+		}},
+		ManualImports: &fakeManualImporter{}, Joins: &fakeJoinExecutor{},
+		JoinedFileImports: &fakeJoinedFileImporter{},
+		Remuxes:           remuxes, RemuxFileImports: imports,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV2{})
+	if err != nil || result.Remux == nil || result.Remux.State != casestore.RemuxImported ||
+		remuxes.calls != 1 || imports.calls != 1 || imports.caseID != authorized.CaseID ||
+		!reflect.DeepEqual(remuxes.paths, map[controller.FileID]string{
+			"file:first":  "/downloads/Movie/first.mkv",
+			"file:second": "/downloads/Movie/second.mkv",
+		}) {
+		t.Fatalf("result = %#v, remux paths = %#v, import calls = %d, error = %v",
+			result, remuxes.paths, imports.calls, err)
+	}
+}
+
 func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 	t.Parallel()
 
@@ -192,6 +225,7 @@ func TestNewRequiresDependencies(t *testing.T) {
 	valid := Dependencies{
 		Store: &fakeExecutionStore{}, Checker: &fakeChecker{}, ManualImports: &fakeManualImporter{},
 		Joins: &fakeJoinExecutor{}, JoinedFileImports: &fakeJoinedFileImporter{},
+		Remuxes: &fakeRemuxExecutor{}, RemuxFileImports: &fakeRemuxFileImporter{},
 	}
 	tests := []Dependencies{
 		{Checker: valid.Checker, ManualImports: valid.ManualImports, Joins: valid.Joins, JoinedFileImports: valid.JoinedFileImports},
@@ -242,6 +276,12 @@ func (store *fakeExecutionStore) GetJoinExecution(
 	return store.join, store.joinFound, store.err
 }
 
+func (store *fakeExecutionStore) GetRemuxExecution(
+	string,
+) (casestore.RemuxExecution, bool, error) {
+	return casestore.RemuxExecution{}, false, store.err
+}
+
 type fakeManualImporter struct {
 	execution  casestore.ManualImportExecution
 	authorized decisionpolicy.AuthorizedManualImport
@@ -284,6 +324,37 @@ type fakeJoinedFileImporter struct {
 	calls     int
 }
 
+type fakeRemuxExecutor struct {
+	execution casestore.RemuxExecution
+	paths     map[controller.FileID]string
+	calls     int
+}
+
+func (executor *fakeRemuxExecutor) Execute(
+	_ context.Context,
+	_ decisionpolicy.AuthorizedRemux,
+	paths map[controller.FileID]string,
+) (casestore.RemuxExecution, error) {
+	executor.calls++
+	executor.paths = paths
+	return executor.execution, nil
+}
+
+type fakeRemuxFileImporter struct {
+	execution casestore.RemuxExecution
+	caseID    string
+	calls     int
+}
+
+func (importer *fakeRemuxFileImporter) Execute(
+	_ context.Context,
+	caseID string,
+) (casestore.RemuxExecution, error) {
+	importer.calls++
+	importer.caseID = caseID
+	return importer.execution, nil
+}
+
 func (importer *fakeJoinedFileImporter) Execute(
 	_ context.Context,
 	caseID string,
@@ -323,6 +394,7 @@ func testExecutorWithStore(
 	executor, err := New(Dependencies{
 		Store: store, Checker: checker, ManualImports: manual, Joins: joins,
 		JoinedFileImports: imports,
+		Remuxes:           &fakeRemuxExecutor{}, RemuxFileImports: &fakeRemuxFileImporter{},
 	})
 	if err != nil {
 		t.Fatal(err)

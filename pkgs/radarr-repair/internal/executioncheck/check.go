@@ -45,6 +45,7 @@ type StabilizationAssessment struct {
 type Authorization struct {
 	Join         *decisionpolicy.AuthorizedJoin
 	ManualImport *decisionpolicy.AuthorizedManualImport
+	Remux        *decisionpolicy.AuthorizedRemux
 }
 
 type Result struct {
@@ -53,8 +54,17 @@ type Result struct {
 }
 
 func (result Result) Accepted() bool {
-	return len(result.Rejections) == 0 &&
-		(result.Authorization.Join != nil) != (result.Authorization.ManualImport != nil)
+	count := 0
+	for _, selected := range []bool{
+		result.Authorization.Join != nil,
+		result.Authorization.ManualImport != nil,
+		result.Authorization.Remux != nil,
+	} {
+		if selected {
+			count++
+		}
+	}
+	return len(result.Rejections) == 0 && count == 1
 }
 
 type FreshCaseReader interface {
@@ -202,6 +212,14 @@ func authorize(
 		}
 		if len(validation.Rejections) != 0 {
 			return Authorization{}, string(validation.Rejections[0].Reason), false
+		}
+	case contracts.ActionRemuxBluray:
+		validation := decisionpolicy.ValidateRemux(assembly, decision)
+		if validation.Accepted() {
+			return Authorization{Remux: validation.Authorized}, "", true
+		}
+		if len(validation.Rejections) != 0 {
+			return Authorization{}, string(validation.Rejections[0]), false
 		}
 	}
 	return Authorization{}, "", false

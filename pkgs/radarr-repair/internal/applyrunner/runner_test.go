@@ -325,6 +325,12 @@ func (store *runnerStore) GetJoinExecution(
 	return execution, found, nil
 }
 
+func (store *runnerStore) GetRemuxExecution(
+	caseID string,
+) (casestore.RemuxExecution, bool, error) {
+	return casestore.RemuxExecution{}, false, store.errors[caseID]
+}
+
 type runnerExecutor struct {
 	calls   []string
 	errors  map[string]error

@@ -26,7 +26,8 @@ func ClassifyProgress(
 	switch planned.Decision.Kind {
 	case contracts.ActionNoRepair,
 		contracts.ActionManualImportFile,
-		contracts.ActionJoinParts:
+		contracts.ActionJoinParts,
+		contracts.ActionRemuxBluray:
 	default:
 		return ProgressNotApplicable, fmt.Errorf(
 			"planned case has unknown action %q",
@@ -47,8 +48,29 @@ func ClassifyProgress(
 		return classifyManualImportProgress(store, caseID)
 	case contracts.ActionJoinParts:
 		return classifyJoinProgress(store, caseID)
+	case contracts.ActionRemuxBluray:
+		return classifyRemuxProgress(store, caseID)
 	}
 	return ProgressNotApplicable, nil
+}
+
+func classifyRemuxProgress(store ExecutionStore, caseID string) (Progress, error) {
+	execution, found, err := store.GetRemuxExecution(caseID)
+	if err != nil {
+		return ProgressNotApplicable, fmt.Errorf("read Blu-ray remux execution: %w", err)
+	}
+	if !found {
+		return ProgressNotStarted, nil
+	}
+	switch execution.State {
+	case casestore.RemuxPrepared, casestore.RemuxStaged, casestore.RemuxPublished,
+		casestore.RemuxImportPrepared, casestore.RemuxImportRequested:
+		return ProgressUnfinished, nil
+	case casestore.RemuxFailed, casestore.RemuxImported, casestore.RemuxImportFailed:
+		return ProgressFinished, nil
+	default:
+		return ProgressNotApplicable, fmt.Errorf("stored Blu-ray remux has unknown state %q", execution.State)
+	}
 }
 
 func classifyManualImportProgress(store ExecutionStore, caseID string) (Progress, error) {

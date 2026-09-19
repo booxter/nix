@@ -12,6 +12,8 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/joinexecution"
 	"github.com/booxter/nix-config/radarr-repair/internal/joinimport"
 	"github.com/booxter/nix-config/radarr-repair/internal/manualimport"
+	"github.com/booxter/nix-config/radarr-repair/internal/remuxexecution"
+	"github.com/booxter/nix-config/radarr-repair/internal/remuximport"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 )
 
@@ -75,12 +77,33 @@ func configureRepairExecutor(
 	if err != nil {
 		return nil, fmt.Errorf("configure joined-file import executor: %w", err)
 	}
+	remuxes, err := remuxexecution.New(remuxexecution.Dependencies{
+		Worker: access.worker,
+		Store:  store,
+		Clock:  clock,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("configure Blu-ray remux executor: %w", err)
+	}
+	remuxFileImports, err := remuximport.New(remuximport.Dependencies{
+		Radarr:       access.radarr,
+		Store:        store,
+		Paths:        access.worker,
+		Clock:        clock,
+		Waiter:       manualimport.Timer{},
+		PollInterval: pollInterval,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("configure Blu-ray remux importer: %w", err)
+	}
 	executor, err := repairexecution.New(repairexecution.Dependencies{
 		Store:             store,
 		Checker:           checker,
 		ManualImports:     manualImports,
 		Joins:             joins,
 		JoinedFileImports: joinedFileImports,
+		Remuxes:           remuxes,
+		RemuxFileImports:  remuxFileImports,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("configure repair executor: %w", err)
