@@ -71,6 +71,13 @@
             };
             perlpls.enable = true; # perl
             pyright.enable = true; # python
+            rust_analyzer = {
+              enable = true;
+              # Project development shells provide the Rust toolchain.
+              installCargo = false;
+              installRustc = false;
+              installRustfmt = false;
+            };
             sqls.enable = true; # SQL
             taplo.enable = true; # toml
             yamlls.enable = true; # toml
