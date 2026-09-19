@@ -15,5 +15,8 @@ passed the corpus expectation on its first attempt:
 - XConfessions 2: abstain (both feature playlists are 100.6 min;
   Radarr 116 min). Result: 4/4.
 
-These results validate the model's playlist choices for the captured cases.
-They do not validate remux output or a live worker integration.
+The isolated Blu-ray worker was also run against each live queue item without
+activating a new system. Its case IDs and playlist capability IDs matched the
+captured corpus for all three items. These results validate the model's
+playlist choices and worker identification for these cases. Remux output and
+live service integration remain untested.
