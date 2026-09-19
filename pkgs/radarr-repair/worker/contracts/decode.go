@@ -48,6 +48,44 @@ func DecodeDVDIdentifyResponse(data []byte) (DVDIdentifyResponseV1, error) {
 	return DVDIdentifyResponseV1{Kind: kind, Success: success, Failure: failure}, nil
 }
 
+func DecodeDVDRemuxRequest(data []byte) (DVDRemuxRequestV1, error) {
+	var request DVDRemuxRequestV1
+	if err := validateAndDecode(data, MaxDVDRemuxRequestBytes, "DVD remux request",
+		dvdRemuxRequestSchema, &request); err != nil {
+		return DVDRemuxRequestV1{}, err
+	}
+	return request, nil
+}
+
+func DecodeDVDRemuxResponse(data []byte) (DVDRemuxResponseV1, error) {
+	kind, success, failure, err := decodeOperationResponse[DVDRemuxSuccessV1, DVDRemuxFailureV1](
+		data, "DVD remux response", "stage_dvd_remux_v1", MaxDVDRemuxResponseBytes,
+		dvdRemuxResponseSchema)
+	if err != nil {
+		return DVDRemuxResponseV1{}, err
+	}
+	return DVDRemuxResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
+func DecodeDVDPublishRequest(data []byte) (DVDPublishRequestV1, error) {
+	var request DVDPublishRequestV1
+	if err := validateAndDecode(data, MaxDVDPublishRequestBytes, "DVD publish request",
+		dvdPublishRequestSchema, &request); err != nil {
+		return DVDPublishRequestV1{}, err
+	}
+	return request, nil
+}
+
+func DecodeDVDPublishResponse(data []byte) (DVDPublishResponseV1, error) {
+	kind, success, failure, err := decodeOperationResponse[DVDPublishSuccessV1, DVDPublishFailureV1](
+		data, "DVD publish response", "publish_dvd_remux_v1", MaxDVDPublishResponseBytes,
+		dvdPublishResponseSchema)
+	if err != nil {
+		return DVDPublishResponseV1{}, err
+	}
+	return DVDPublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
 func DecodeBlurayIdentifyRequest(data []byte) (BlurayIdentifyRequestV1, error) {
 	var request BlurayIdentifyRequestV1
 	if err := validateAndDecode(

@@ -13,6 +13,39 @@ type DVDIdentifyResponseV1 struct {
 	Failure *DVDIdentifyFailureV1
 }
 
+type DVDRemuxRequestV1 = RadarrRepairWorkerDVDRemuxStageRequest
+type DVDRemuxSourceV1 = Navigation
+type DVDRemuxTrackV1 = DVDRemuxRequestSchema
+type DVDRemuxSuccessV1 = DVDRemuxSuccessResponseV1Class
+type DVDRemuxFailureV1 = DVDRemuxFailureResponseV1Class
+type DVDPublishRequestV1 = RadarrRepairWorkerDVDRemuxPublishRequest
+type DVDPublishSuccessV1 = DVDPublishSuccessResponseV1Class
+type DVDPublishFailureV1 = DVDPublishFailureResponseV1Class
+
+type DVDRemuxResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *DVDRemuxSuccessV1
+	Failure *DVDRemuxFailureV1
+}
+
+func (response DVDRemuxResponseV1) RequestID() string {
+	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
+		func(success *DVDRemuxSuccessV1) string { return success.RequestID },
+		func(failure *DVDRemuxFailureV1) string { return failure.RequestID })
+}
+
+type DVDPublishResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *DVDPublishSuccessV1
+	Failure *DVDPublishFailureV1
+}
+
+func (response DVDPublishResponseV1) RequestID() string {
+	return operationResponseRequestID(response.Kind, response.Success, response.Failure,
+		func(success *DVDPublishSuccessV1) string { return success.RequestID },
+		func(failure *DVDPublishFailureV1) string { return failure.RequestID })
+}
+
 func (response DVDIdentifyResponseV1) RequestID() string {
 	return operationResponseRequestID(
 		response.Kind, response.Success, response.Failure,

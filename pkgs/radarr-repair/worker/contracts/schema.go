@@ -21,6 +21,10 @@ const MaxBlurayIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxBlurayIdentifyResponseBytes = 256 << 10
 const MaxDVDIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxDVDIdentifyResponseBytes = 256 << 10
+const MaxDVDRemuxRequestBytes = 16 << 20
+const MaxDVDRemuxResponseBytes = MaxProbeResponseBytes
+const MaxDVDPublishRequestBytes = MaxDVDRemuxRequestBytes + MaxProbeRequestBytes
+const MaxDVDPublishResponseBytes = MaxProbeRequestBytes
 const MaxBlurayRemuxRequestBytes = 16 << 20
 const MaxBlurayRemuxResponseBytes = MaxProbeResponseBytes
 const MaxBlurayPublishRequestBytes = MaxBlurayRemuxRequestBytes + MaxProbeRequestBytes
@@ -41,6 +45,14 @@ const (
 	dvdIdentifyRequestSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/dvd-identify-request.schema.json"
 	dvdIdentifyResponseSchemaFile        = "v1/dvd-identify-response.schema.json"
 	dvdIdentifyResponseSchemaLocation    = "file:///radarr-repair-worker/contracts/v1/dvd-identify-response.schema.json"
+	dvdRemuxRequestSchemaFile            = "v1/dvd-remux-request.schema.json"
+	dvdRemuxRequestSchemaLocation        = "file:///radarr-repair-worker/contracts/v1/dvd-remux-request.schema.json"
+	dvdRemuxResponseSchemaFile           = "v1/dvd-remux-response.schema.json"
+	dvdRemuxResponseSchemaLocation       = "file:///radarr-repair-worker/contracts/v1/dvd-remux-response.schema.json"
+	dvdPublishRequestSchemaFile          = "v1/dvd-publish-request.schema.json"
+	dvdPublishRequestSchemaLocation      = "file:///radarr-repair-worker/contracts/v1/dvd-publish-request.schema.json"
+	dvdPublishResponseSchemaFile         = "v1/dvd-publish-response.schema.json"
+	dvdPublishResponseSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/dvd-publish-response.schema.json"
 	blurayIdentifyRequestSchemaFile      = "v1/bluray-identify-request.schema.json"
 	blurayIdentifyRequestSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/bluray-identify-request.schema.json"
 	blurayIdentifyResponseSchemaFile     = "v1/bluray-identify-response.schema.json"
@@ -86,6 +98,10 @@ var (
 		fileName: blurayRemuxRequestSchemaFile,
 		location: blurayRemuxRequestSchemaLocation,
 	}
+	dvdRemuxRequestSchemaResource = schemaResource{
+		fileName: dvdRemuxRequestSchemaFile,
+		location: dvdRemuxRequestSchemaLocation,
+	}
 )
 
 var probeRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
@@ -108,6 +124,26 @@ var dvdIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, erro
 		dvdIdentifyResponseSchemaFile, dvdIdentifyResponseSchemaLocation,
 		wireTypesSchemaResource,
 	)
+})
+
+var dvdRemuxRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdRemuxRequestSchemaFile, dvdRemuxRequestSchemaLocation,
+		wireTypesSchemaResource)
+})
+
+var dvdRemuxResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdRemuxResponseSchemaFile, dvdRemuxResponseSchemaLocation,
+		wireTypesSchemaResource, mediaEvidenceSchemaResource)
+})
+
+var dvdPublishRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdPublishRequestSchemaFile, dvdPublishRequestSchemaLocation,
+		wireTypesSchemaResource, dvdRemuxRequestSchemaResource)
+})
+
+var dvdPublishResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(dvdPublishResponseSchemaFile, dvdPublishResponseSchemaLocation,
+		wireTypesSchemaResource)
 })
 
 var blurayIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {

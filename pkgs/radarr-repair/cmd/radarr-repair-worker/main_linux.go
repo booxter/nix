@@ -24,6 +24,10 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/worker/blurayrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/bluraystage"
 	"github.com/booxter/nix-config/radarr-repair/worker/dvdidentify"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdpublish"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdremux"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdrequest"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdstage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/radarr-repair/worker/joininspect"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
@@ -145,6 +149,31 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	dvdRemuxRunner, err := dvdremux.NewRunner(*ffmpegPath, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	dvdStager, err := dvdstage.NewExecutor(rootSet, rootSet,
+		dvdvideo.Runner{Executable: *lsdvdPath}, dvdRemuxRunner, probeRunner)
+	if err != nil {
+		return err
+	}
+	dvdRequest, err := dvdrequest.NewExecutor(dvdStager)
+	if err != nil {
+		return err
+	}
+	dvdRemuxHandler, err := workerserver.NewDVDRemuxHandler(dvdRequest, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	dvdPublisher, err := dvdpublish.NewExecutor(rootSet)
+	if err != nil {
+		return err
+	}
+	dvdPublishHandler, err := workerserver.NewDVDPublishHandler(dvdPublisher, *joinTimeout)
+	if err != nil {
+		return err
+	}
 	blurayExecutor, err := blurayidentify.NewExecutor(
 		rootSet, mkvmerge.Runner{Executable: *mkvmergePath},
 	)
@@ -235,6 +264,8 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	router, err := workerserver.NewRouter(
 		probeHandler,
 		dvdHandler,
+		dvdRemuxHandler,
+		dvdPublishHandler,
 		blurayHandler,
 		blurayRemuxHandler,
 		blurayPublishHandler,

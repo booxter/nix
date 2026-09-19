@@ -110,7 +110,7 @@ func discFiles(
 		if filepath.Dir(path) != directory {
 			continue
 		}
-		if !validDVDFileName(filepath.Base(path)) || !available(file) {
+		if !ValidFileName(filepath.Base(path)) || !available(file) {
 			return nil, false
 		}
 		files = append(files, file)
@@ -124,7 +124,7 @@ func discFiles(
 	return files, true
 }
 
-func validDVDFileName(name string) bool {
+func ValidFileName(name string) bool {
 	switch name {
 	case "VIDEO_TS.IFO", "VIDEO_TS.BUP", "VIDEO_TS.VOB":
 		return true
