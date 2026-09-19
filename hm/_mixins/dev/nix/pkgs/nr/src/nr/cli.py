@@ -8,9 +8,6 @@ from typing import Protocol
 
 DEFAULT_SYSTEMS = ("x86_64-linux", "aarch64-darwin")
 AARCH64_LINUX_SYSTEMS = ("x86_64-linux", "aarch64-linux", "aarch64-darwin")
-# Larger than nixpkgs-review's auto limit, which can fail whole-system evals.
-# See https://github.com/Mic92/nixpkgs-review/issues/702 for the empty report.
-DEFAULT_MAX_MEMORY_SIZE_MIB = 8192
 
 
 class ReviewExecutor(Protocol):
@@ -33,7 +30,6 @@ class ReviewOptions:
     approve: bool
     tests: bool
     cuda: bool
-    max_memory_size: int
     builders: str
 
 
@@ -65,7 +61,6 @@ def review_arguments(options: ReviewOptions) -> list[str]:
     if options.tests:
         arguments.append("--tests")
     arguments.append(f"--systems={options.systems}")
-    arguments.append(f"--max-memory-size={options.max_memory_size}")
     if options.builders:
         build_arguments = shlex.join(["--builders", options.builders])
         arguments.append(f"--build-args={build_arguments}")
@@ -83,13 +78,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-i", "--include-pr", action="append", default=[])
     parser.add_argument("-s", "--systems")
     parser.add_argument("-C", "--cuda", action="store_true")
-    parser.add_argument(
-        "--max-memory-size",
-        type=int,
-        default=DEFAULT_MAX_MEMORY_SIZE_MIB,
-        metavar="MIB",
-        help="Maximum memory per nix-eval-jobs worker in MiB (default: 8192)",
-    )
     parser.add_argument("pull_requests", nargs="+")
     return parser
 
@@ -112,7 +100,6 @@ def main(
         approve=arguments.approve,
         tests=arguments.tests,
         cuda=arguments.cuda,
-        max_memory_size=arguments.max_memory_size,
         builders=builders,
     )
     return (executor or NixpkgsReviewExecutor()).run(review_arguments(options))
