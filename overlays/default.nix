@@ -75,19 +75,6 @@
         )
       ];
 
-      # Perl has no package-extension list like Python. Override its recursive
-      # package scope directly so package references within the scope see the
-      # modified package too.
-      perlPackages = prev.perlPackages.overrideScope (
-        _perlFinal: perlPrev: {
-          FileSlurp = perlPrev.FileSlurp.overrideAttrs (old: {
-            passthru = (old.passthru or { }) // {
-              overlaid = true;
-            };
-          });
-        }
-      );
-
       # Support complete --tests coverage and dependent PRs.
       inherit (pkgsNixpkgsUnstable) nixpkgs-review;
 
