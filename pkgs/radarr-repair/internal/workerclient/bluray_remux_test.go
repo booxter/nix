@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -98,5 +99,70 @@ func TestClientStagesAuthorizedBluRayThroughUnixSocket(t *testing.T) {
 		request.ExpectedDurationMS != authorized.ExpectedDurationMS ||
 		request.ExpectedTracks[0].Kind != "video" {
 		t.Fatalf("worker remux request = %#v", request)
+	}
+}
+
+func TestClientPublishesBluRayThroughUnixSocket(t *testing.T) {
+	t.Parallel()
+	requests := make(chan workercontracts.BlurayPublishRequestV1, 1)
+	socketPath := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != blurayPublishPath {
+			http.NotFound(writer, request)
+			return
+		}
+		body, err := io.ReadAll(request.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		published, err := workercontracts.DecodeBlurayPublishRequest(body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		requests <- published
+		response := workercontracts.BlurayPublishResponseV1{
+			Kind: workercontracts.ProbeResponseSucceeded,
+			Success: &workercontracts.BlurayPublishSuccessV1{
+				SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+				Operation:           workercontracts.PublishBlurayRemuxV1,
+				RequestID:           published.RequestID,
+				Status:              workercontracts.Ok,
+				ArtifactID:          published.ArtifactID,
+				ArtifactFingerprint: published.ArtifactFingerprint,
+				RootID:              published.StageRequest.RootID,
+				PathComponents: []string{"Movie", "radarr-repair-" +
+					"5555555555555555555555555555555555555555555555555555555555555555.mkv"},
+			},
+		}
+		data, err := workercontracts.EncodeBlurayPublishResponse(response)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write(data)
+	}))
+	client := testClient(t, socketPath, map[string]string{
+		"root:downloads": "/downloads",
+	}, time.Second)
+	data, err := os.ReadFile("../../worker/contracts/v1/examples/bluray-remux-request.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stageRequest, err := workercontracts.DecodeBlurayRemuxRequest(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifact := Artifact{ID: "artifact:remux:01", Fingerprint: testArtifactFingerprint}
+	response, err := client.PublishBlurayRemux(context.Background(), stageRequest, artifact)
+	if err != nil || response.Success == nil || response.Success.ArtifactID != artifact.ID {
+		t.Fatalf("publish response = %#v, error = %v", response, err)
+	}
+	request := <-requests
+	if request.StageRequest.CaseID != stageRequest.CaseID ||
+		request.ArtifactFingerprint != artifact.Fingerprint ||
+		request.ArtifactID != artifact.ID {
+		t.Fatalf("worker publish request = %#v", request)
 	}
 }

@@ -10,6 +10,7 @@ import (
 )
 
 const blurayRemuxPath = "/v1/bluray/remux"
+const blurayPublishPath = "/v1/bluray/publish"
 
 type BlurayRemuxExchange struct {
 	Request  workercontracts.BlurayRemuxRequestV1
@@ -87,4 +88,41 @@ func remuxSource(
 		ExpectedFingerprint: source.Fingerprint.Fingerprint(),
 		SizeBytes:           source.Fingerprint.SizeBytes,
 	}
+}
+
+func (client *Client) PublishBlurayRemux(
+	ctx context.Context,
+	stageRequest workercontracts.BlurayRemuxRequestV1,
+	artifact Artifact,
+) (workercontracts.BlurayPublishResponseV1, error) {
+	if !client.configured() {
+		return workercontracts.BlurayPublishResponseV1{}, fmt.Errorf("worker client is not configured")
+	}
+	request := workercontracts.BlurayPublishRequestV1{
+		SchemaVersion:       workercontracts.RadarrRepairWorkerV1,
+		Operation:           workercontracts.PublishBlurayRemuxV1,
+		RequestID:           client.nextID(),
+		StageRequest:        stageRequest,
+		ArtifactID:          artifact.ID,
+		ArtifactFingerprint: artifact.Fingerprint,
+	}
+	payload, err := workercontracts.EncodeBlurayPublishRequest(request)
+	if err != nil {
+		return workercontracts.BlurayPublishResponseV1{}, fmt.Errorf(
+			"construct worker Blu-ray publish request: %w", err,
+		)
+	}
+	data, err := client.post(
+		ctx, blurayPublishPath, payload, workercontracts.MaxBlurayPublishResponseBytes,
+	)
+	if err != nil {
+		return workercontracts.BlurayPublishResponseV1{}, err
+	}
+	response, err := workercontracts.DecodeBlurayPublishResponse(data)
+	if err != nil || response.RequestID() != request.RequestID {
+		return workercontracts.BlurayPublishResponseV1{}, &Failure{
+			Kind: FailureInvalidResponse, cause: err,
+		}
+	}
+	return response, nil
 }
