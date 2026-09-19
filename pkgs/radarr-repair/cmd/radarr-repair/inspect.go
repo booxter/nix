@@ -21,6 +21,7 @@ import (
 	filesource "github.com/booxter/nix-config/radarr-repair/internal/filesystem"
 	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
+	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 	radarrsource "github.com/booxter/nix-config/radarr-repair/internal/radarr"
 	sabnzbdsource "github.com/booxter/nix-config/radarr-repair/internal/sabnzbd"
 	transmissionsource "github.com/booxter/nix-config/radarr-repair/internal/transmission"
@@ -353,12 +354,22 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("configure media worker client: %w", err)
 	}
+	var playlistIdentifier mkvmerge.Identifier
+	if executable := os.Getenv("RADARR_REPAIR_MKVMERGE"); executable != "" {
+		if err := validateAbsolutePath("mkvmerge executable", executable, false); err != nil {
+			probeClient.Close()
+			transport.CloseIdleConnections()
+			return nil, err
+		}
+		playlistIdentifier = mkvmerge.Runner{Executable: executable}
+	}
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
 		Downloads:         downloads,
 		Files:             filesource.New(),
 		Probes:            probeClient,
+		Playlists:         playlistIdentifier,
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {

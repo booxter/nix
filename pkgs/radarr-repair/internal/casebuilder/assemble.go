@@ -11,6 +11,7 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 )
 
 const opaqueIDDomain = "radarr-repair-opaque-id-v1\x00"
@@ -21,13 +22,14 @@ type FileProbe struct {
 }
 
 type Observation struct {
-	ObservedAt    time.Time
-	Correlation   controller.DownloadCorrelation
-	Movie         *controller.RadarrMovie
-	History       []controller.RadarrHistoryEvent
-	ManualImports []controller.RadarrManualImport
-	Inventory     controller.FileInventory
-	Probes        []FileProbe
+	ObservedAt      time.Time
+	Correlation     controller.DownloadCorrelation
+	Movie           *controller.RadarrMovie
+	History         []controller.RadarrHistoryEvent
+	ManualImports   []controller.RadarrManualImport
+	Inventory       controller.FileInventory
+	Probes          []FileProbe
+	BluRayPlaylists []mkvmerge.Candidate
 }
 
 // LocalSnapshot retains controller-only observations needed to audit and later
@@ -109,7 +111,12 @@ func Assemble(observation Observation) (Assembly, error) {
 	if err != nil {
 		return Assembly{}, err
 	}
+	bluRayCapabilities, err := bindBluRayCapabilities(observation.BluRayPlaylists, inventoryFiles)
+	if err != nil {
+		return Assembly{}, err
+	}
 	capabilities := append(joinCapabilities(candidateFileIDs), manualImportCapabilities...)
+	capabilities = append(capabilities, bluRayCapabilities...)
 	request := contracts.RepairCaseV2{
 		SchemaVersion: contracts.RadarrRepairV2,
 		ObservedAt:    observation.ObservedAt.UTC(),
