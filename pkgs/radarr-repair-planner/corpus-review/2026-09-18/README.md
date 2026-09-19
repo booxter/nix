@@ -17,6 +17,17 @@ passed the corpus expectation on its first attempt:
 
 The isolated Blu-ray worker was also run against each live queue item without
 activating a new system. Its case IDs and playlist capability IDs matched the
-captured corpus for all three items. These results validate the model's
-playlist choices and worker identification for these cases. Remux output and
-live service integration remain untested.
+captured corpus for all three items.
+
+On 2026-09-19, MKVToolNix remuxed each positive case's chosen playlist into a
+temporary MKV on srvarr. FFprobe found the expected Matroska output, chapters,
+and stream types in both files:
+
+- Pandora's Mirror: 5629.499 seconds, 5 chapters, 1 video, 3 audio,
+  1 subtitle stream; 22,006,977,393 bytes.
+- The Double Exposure of Holly: 4490.570 seconds, 4 chapters, 1 video,
+  1 audio, 1 subtitle stream; 20,154,156,930 bytes.
+
+Both temporary MKVs were removed after inspection. The negative XConfessions 2
+case was not remuxed. The controller's staged artifact and Radarr import flow
+still requires live integration validation before automatic rollout.
