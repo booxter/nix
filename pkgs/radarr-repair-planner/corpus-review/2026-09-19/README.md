@@ -38,3 +38,8 @@ temporary 6,635,524,147-byte MP4 with one H.264 video stream, one AAC audio
 stream, and a 7,381.88-second duration. FFmpeg emitted no warnings. The
 temporary output was removed; no import or publication occurred during these
 checks.
+
+After deploying the probe fix, the controller built the same case and completed
+the five-scene join. Radarr confirmed movie file 10860 and cleared the queue
+record. The imported MP4 is 6,635,524,147 bytes; a fresh FFprobe read found
+H.264 video, AAC audio, and a 7,381.88-second duration.
