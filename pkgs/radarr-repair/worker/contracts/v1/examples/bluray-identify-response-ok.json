@@ -1,0 +1,23 @@
+{
+  "chapter_count": 5,
+  "clip_names": [
+    "00000.m2ts"
+  ],
+  "duration_ms": 5629498,
+  "operation": "identify_bluray_v1",
+  "request_id": "request:bluray:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "ok",
+  "tracks": [
+    {
+      "codec": "AVC/H.264/MPEG-4p10",
+      "kind": "video",
+      "language": null
+    },
+    {
+      "codec": "DTS-HD Master Audio",
+      "kind": "audio",
+      "language": "eng"
+    }
+  ]
+}

@@ -91,7 +91,7 @@ func convertChapter(chapter workercontracts.ChapterElement) controller.ProbeChap
 	}
 }
 
-func convertKind(kind *workercontracts.Kind) *controller.ProbeStreamKind {
+func convertKind(kind *workercontracts.StreamKind) *controller.ProbeStreamKind {
 	if kind == nil {
 		return nil
 	}

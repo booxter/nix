@@ -5,8 +5,8 @@ type ProbeSuccessResponseV1 = ProbeSuccessResponseV1Class
 type ProbeFailureResponseV1 = ProbeFailureResponseV1Class
 type Operation = ProbeFailureResponseV1Operation
 type Reason = ProbeFailureResponseV1Reason
-type ProbeFailureResponseV1Status = DiscardFailureResponseV1Status
-type ProbeSuccessResponseV1Status = DiscardSuccessResponseV1Status
+type ProbeFailureResponseV1Status = BlurayIdentifyFailureResponseV1Status
+type ProbeSuccessResponseV1Status = BlurayIdentifySuccessResponseV1Status
 
 const Failed ProbeFailureResponseV1Status = "failed"
 

@@ -35,6 +35,8 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema contracts/v2/repair-decision.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-request.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/media-evidence.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/probe-response.schema.json
@@ -56,6 +58,15 @@ stdenvNoCC.mkDerivation {
       --base-uri "$worker_schema_base/probe-request.schema.json" \
       --schemafile worker/contracts/v1/probe-request.schema.json \
       worker/contracts/v1/examples/probe-request.json
+    check-jsonschema \
+      --base-uri "$worker_schema_base/bluray-identify-request.schema.json" \
+      --schemafile worker/contracts/v1/bluray-identify-request.schema.json \
+      worker/contracts/v1/examples/bluray-identify-request.json
+    check-jsonschema \
+      --base-uri "$worker_schema_base/bluray-identify-response.schema.json" \
+      --schemafile worker/contracts/v1/bluray-identify-response.schema.json \
+      worker/contracts/v1/examples/bluray-identify-response-ok.json \
+      worker/contracts/v1/examples/bluray-identify-response-failed.json
     check-jsonschema \
       --base-uri "$worker_schema_base/probe-response.schema.json" \
       --schemafile worker/contracts/v1/probe-response.schema.json \
