@@ -36,14 +36,22 @@
           "type": "string"
         },
         "kind": {
-          "enum": ["video", "audio", "subtitles"]
+          "enum": [
+            "video",
+            "audio",
+            "subtitles"
+          ]
         },
         "language": {
           "maxLength": 32,
           "type": "string"
         }
       },
-      "required": ["kind", "codec", "language"],
+      "required": [
+        "kind",
+        "codec",
+        "language"
+      ],
       "type": "object"
     }
   },

@@ -26,7 +26,13 @@
           "const": "failed"
         }
       },
-      "required": ["schema_version", "operation", "request_id", "status", "reason"],
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
       "type": "object"
     },
     "success": {
@@ -63,8 +69,14 @@
         }
       },
       "required": [
-        "schema_version", "operation", "request_id", "status",
-        "artifact_id", "artifact_fingerprint", "root_id", "path_components"
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint",
+        "root_id",
+        "path_components"
       ],
       "type": "object"
     }
@@ -72,8 +84,12 @@
   "$id": "bluray-publish-response.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
-    { "$ref": "#/$defs/success" },
-    { "$ref": "#/$defs/failure" }
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
   ],
   "title": "Radarr repair worker Blu-ray remux publish response"
 }
