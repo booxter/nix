@@ -1,0 +1,168 @@
+{
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "identify_dvd_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "not_regular_file",
+            "fingerprint_mismatch",
+            "timeout",
+            "identification_error",
+            "invalid_output",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "identify_dvd_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        },
+        "titles": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "angle_count": {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "chapter_count": {
+                "maximum": 4096,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "duration_ms": {
+                "maximum": 604800000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "number": {
+                "maximum": 128,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "title_in_set": {
+                "maximum": 99,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "title_set": {
+                "maximum": 99,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "tracks": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "codec": {
+                      "maxLength": 128,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "video",
+                        "audio",
+                        "subtitles"
+                      ]
+                    },
+                    "language": {
+                      "oneOf": [
+                        {
+                          "maxLength": 32,
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "codec",
+                    "language"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 32,
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": [
+              "number",
+              "duration_ms",
+              "chapter_count",
+              "angle_count",
+              "title_set",
+              "title_in_set",
+              "tracks"
+            ],
+            "type": "object"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "titles"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "dvd-identify-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker DVD identification response"
+}

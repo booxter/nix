@@ -42,6 +42,15 @@ let
       type = "object";
       additionalProperties = false;
       properties = {
+        dvd_identify_request_v1 = {
+          "$ref" = "dvd-identify-request.schema.json";
+        };
+        dvd_identify_failure_response_v1 = {
+          "$ref" = "dvd-identify-response.schema.json#/$defs/failure";
+        };
+        dvd_identify_success_response_v1 = {
+          "$ref" = "dvd-identify-response.schema.json#/$defs/success";
+        };
         bluray_identify_request_v1 = {
           "$ref" = "bluray-identify-request.schema.json";
         };
@@ -116,6 +125,9 @@ let
         };
       };
       required = [
+        "dvd_identify_request_v1"
+        "dvd_identify_failure_response_v1"
+        "dvd_identify_success_response_v1"
         "bluray_identify_request_v1"
         "bluray_identify_failure_response_v1"
         "bluray_identify_success_response_v1"
@@ -166,6 +178,8 @@ runCommand "radarr-repair-go-models-v2"
     ln -s "${workerSchemaDirectory}/join-request.schema.json" work/join-request.schema.json
     ln -s "${workerSchemaDirectory}/bluray-identify-request.schema.json" work/bluray-identify-request.schema.json
     ln -s "${workerSchemaDirectory}/bluray-identify-response.schema.json" work/bluray-identify-response.schema.json
+    ln -s "${workerSchemaDirectory}/dvd-identify-request.schema.json" work/dvd-identify-request.schema.json
+    ln -s "${workerSchemaDirectory}/dvd-identify-response.schema.json" work/dvd-identify-response.schema.json
     ln -s "${workerSchemaDirectory}/bluray-remux-request.schema.json" work/bluray-remux-request.schema.json
     ln -s "${workerSchemaDirectory}/bluray-remux-response.schema.json" work/bluray-remux-response.schema.json
     ln -s "${workerSchemaDirectory}/bluray-publish-request.schema.json" work/bluray-publish-request.schema.json

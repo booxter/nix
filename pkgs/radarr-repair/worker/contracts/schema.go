@@ -19,6 +19,8 @@ const MaxProbeResponseBytes = 4 << 20
 
 const MaxBlurayIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxBlurayIdentifyResponseBytes = 256 << 10
+const MaxDVDIdentifyRequestBytes = MaxProbeRequestBytes
+const MaxDVDIdentifyResponseBytes = 256 << 10
 const MaxBlurayRemuxRequestBytes = 16 << 20
 const MaxBlurayRemuxResponseBytes = MaxProbeResponseBytes
 const MaxBlurayPublishRequestBytes = MaxBlurayRemuxRequestBytes + MaxProbeRequestBytes
@@ -35,6 +37,10 @@ const MaxJoinResponseBytes = 4 << 20
 const (
 	wireTypesSchemaFile                  = "v1/wire-types.schema.json"
 	wireTypesSchemaLocation              = "file:///radarr-repair-worker/contracts/v1/wire-types.schema.json"
+	dvdIdentifyRequestSchemaFile         = "v1/dvd-identify-request.schema.json"
+	dvdIdentifyRequestSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/dvd-identify-request.schema.json"
+	dvdIdentifyResponseSchemaFile        = "v1/dvd-identify-response.schema.json"
+	dvdIdentifyResponseSchemaLocation    = "file:///radarr-repair-worker/contracts/v1/dvd-identify-response.schema.json"
 	blurayIdentifyRequestSchemaFile      = "v1/bluray-identify-request.schema.json"
 	blurayIdentifyRequestSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/bluray-identify-request.schema.json"
 	blurayIdentifyResponseSchemaFile     = "v1/bluray-identify-response.schema.json"
@@ -86,6 +92,20 @@ var probeRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
 	return compileSchema(
 		probeRequestSchemaFile,
 		probeRequestSchemaLocation,
+		wireTypesSchemaResource,
+	)
+})
+
+var dvdIdentifyRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		dvdIdentifyRequestSchemaFile, dvdIdentifyRequestSchemaLocation,
+		wireTypesSchemaResource,
+	)
+})
+
+var dvdIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		dvdIdentifyResponseSchemaFile, dvdIdentifyResponseSchemaLocation,
 		wireTypesSchemaResource,
 	)
 })

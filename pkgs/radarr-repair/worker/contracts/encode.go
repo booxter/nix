@@ -7,6 +7,28 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
+func EncodeDVDIdentifyRequest(request DVDIdentifyRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode DVD identification request: %w", err)
+	}
+	if err := validateMessage(
+		data, MaxDVDIdentifyRequestBytes, "DVD identification request",
+		dvdIdentifyRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeDVDIdentifyResponse(response DVDIdentifyResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind, response.Success, response.Failure,
+		"DVD identification response", MaxDVDIdentifyResponseBytes,
+		dvdIdentifyResponseSchema,
+	)
+}
+
 func EncodeBlurayIdentifyRequest(request BlurayIdentifyRequestV1) ([]byte, error) {
 	data, err := json.Marshal(request)
 	if err != nil {

@@ -24,6 +24,30 @@ func DecodeProbeRequest(data []byte) (ProbeRequestV1, error) {
 	return request, nil
 }
 
+func DecodeDVDIdentifyRequest(data []byte) (DVDIdentifyRequestV1, error) {
+	var request DVDIdentifyRequestV1
+	if err := validateAndDecode(
+		data, MaxDVDIdentifyRequestBytes, "DVD identification request",
+		dvdIdentifyRequestSchema, &request,
+	); err != nil {
+		return DVDIdentifyRequestV1{}, err
+	}
+	return request, nil
+}
+
+func DecodeDVDIdentifyResponse(data []byte) (DVDIdentifyResponseV1, error) {
+	kind, success, failure, err := decodeOperationResponse[
+		DVDIdentifySuccessV1, DVDIdentifyFailureV1,
+	](
+		data, "DVD identification response", "identify_dvd_v1",
+		MaxDVDIdentifyResponseBytes, dvdIdentifyResponseSchema,
+	)
+	if err != nil {
+		return DVDIdentifyResponseV1{}, err
+	}
+	return DVDIdentifyResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
 func DecodeBlurayIdentifyRequest(data []byte) (BlurayIdentifyRequestV1, error) {
 	var request BlurayIdentifyRequestV1
 	if err := validateAndDecode(

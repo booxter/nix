@@ -1,5 +1,26 @@
 package workercontracts
 
+type DVDIdentifyRequestV1 = RadarrRepairWorkerDVDIdentificationRequest
+type DVDIdentifySuccessV1 = DVDIdentifySuccessResponseV1Class
+type DVDIdentifyFailureV1 = DVDIdentifyFailureResponseV1Class
+type DVDTitleV1 = TitleElement
+type DVDTrackV1 = TitleTrack
+type Track = BlurayIdentifySuccessResponseV1Track
+
+type DVDIdentifyResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *DVDIdentifySuccessV1
+	Failure *DVDIdentifyFailureV1
+}
+
+func (response DVDIdentifyResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind, response.Success, response.Failure,
+		func(success *DVDIdentifySuccessV1) string { return success.RequestID },
+		func(failure *DVDIdentifyFailureV1) string { return failure.RequestID },
+	)
+}
+
 type BlurayIdentifyRequestV1 = RadarrRepairWorkerBluRayIdentificationRequest
 type BlurayIdentifySuccessV1 = BlurayIdentifySuccessResponseV1Class
 type BlurayIdentifyFailureV1 = BlurayIdentifyFailureResponseV1Class
