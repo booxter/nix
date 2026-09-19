@@ -1,0 +1,47 @@
+{
+  "artifact_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "artifact_id": "artifact:remux:01",
+  "operation": "publish_bluray_remux_v1",
+  "request_id": "request:publish-remux:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "stage_request": {
+    "capability_id": "capability:remux:01",
+    "case_id": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "clips": [
+      {
+        "expected_fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "path_components": [
+          "Example.Movie",
+          "BDMV",
+          "STREAM",
+          "00000.m2ts"
+        ],
+        "size_bytes": 8390000000
+      }
+    ],
+    "execution_id": "execution:remux:01",
+    "expected_chapter_count": 0,
+    "expected_duration_ms": 7200000,
+    "expected_tracks": [
+      {
+        "codec": "AVC/H.264/MPEG-4p10",
+        "kind": "video",
+        "language": ""
+      }
+    ],
+    "operation": "stage_bluray_remux_v1",
+    "playlist": {
+      "expected_fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "path_components": [
+        "Example.Movie",
+        "BDMV",
+        "PLAYLIST",
+        "00000.mpls"
+      ],
+      "size_bytes": 4096
+    },
+    "request_id": "request:remux:01",
+    "root_id": "root:downloads",
+    "schema_version": "radarr-repair-worker/v1"
+  }
+}

@@ -60,6 +60,15 @@ let
         bluray_remux_success_response_v1 = {
           "$ref" = "bluray-remux-response.schema.json#/$defs/success";
         };
+        bluray_publish_request_v1 = {
+          "$ref" = "bluray-publish-request.schema.json";
+        };
+        bluray_publish_failure_response_v1 = {
+          "$ref" = "bluray-publish-response.schema.json#/$defs/failure";
+        };
+        bluray_publish_success_response_v1 = {
+          "$ref" = "bluray-publish-response.schema.json#/$defs/success";
+        };
         discard_request_v1 = {
           "$ref" = "join-request.schema.json#/$defs/discard";
         };
@@ -113,6 +122,9 @@ let
         "bluray_remux_request_v1"
         "bluray_remux_failure_response_v1"
         "bluray_remux_success_response_v1"
+        "bluray_publish_request_v1"
+        "bluray_publish_failure_response_v1"
+        "bluray_publish_success_response_v1"
         "discard_request_v1"
         "discard_failure_response_v1"
         "discard_success_response_v1"
@@ -156,6 +168,8 @@ runCommand "radarr-repair-go-models-v2"
     ln -s "${workerSchemaDirectory}/bluray-identify-response.schema.json" work/bluray-identify-response.schema.json
     ln -s "${workerSchemaDirectory}/bluray-remux-request.schema.json" work/bluray-remux-request.schema.json
     ln -s "${workerSchemaDirectory}/bluray-remux-response.schema.json" work/bluray-remux-response.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-publish-request.schema.json" work/bluray-publish-request.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-publish-response.schema.json" work/bluray-publish-response.schema.json
     ln -s "${workerSchemaDirectory}/join-response.schema.json" work/join-response.schema.json
     ln -s "${workerSchemaDirectory}/media-evidence.schema.json" work/media-evidence.schema.json
     ln -s "${workerSchemaDirectory}/probe-request.schema.json" work/probe-request.schema.json

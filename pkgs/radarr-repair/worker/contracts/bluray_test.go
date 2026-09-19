@@ -104,3 +104,39 @@ func TestBlurayRemuxRejectsUnsafePath(t *testing.T) {
 		t.Fatal("accepted an unsafe Blu-ray clip path")
 	}
 }
+
+func TestBlurayPublishExamplesRoundTrip(t *testing.T) {
+	t.Parallel()
+	request, err := DecodeBlurayPublishRequest(
+		readFixture(t, "v1/examples/bluray-publish-request.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedRequest, err := EncodeBlurayPublishRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeBlurayPublishRequest(encodedRequest); err != nil {
+		t.Fatal(err)
+	}
+	for _, fixture := range []string{
+		"v1/examples/bluray-publish-response-ok.json",
+		"v1/examples/bluray-publish-response-failed.json",
+	} {
+		response, err := DecodeBlurayPublishResponse(readFixture(t, fixture))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.RequestID() != request.RequestID {
+			t.Errorf("%s: mismatched request ID", fixture)
+		}
+		encodedResponse, err := EncodeBlurayPublishResponse(response)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := DecodeBlurayPublishResponse(encodedResponse); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

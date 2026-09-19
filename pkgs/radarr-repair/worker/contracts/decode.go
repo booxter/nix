@@ -86,6 +86,31 @@ func DecodeBlurayRemuxResponse(data []byte) (BlurayRemuxResponseV1, error) {
 	return BlurayRemuxResponseV1{Kind: kind, Success: success, Failure: failure}, nil
 }
 
+func DecodeBlurayPublishRequest(data []byte) (BlurayPublishRequestV1, error) {
+	var request BlurayPublishRequestV1
+	if err := validateAndDecode(
+		data, MaxBlurayPublishRequestBytes, "Blu-ray publish request",
+		blurayPublishRequestSchema, &request,
+	); err != nil {
+		return BlurayPublishRequestV1{}, err
+	}
+	return request, nil
+}
+
+func DecodeBlurayPublishResponse(data []byte) (BlurayPublishResponseV1, error) {
+	kind, success, failure, err := decodeOperationResponse[
+		BlurayPublishSuccessV1,
+		BlurayPublishFailureV1,
+	](
+		data, "Blu-ray publish response", "publish_bluray_remux_v1",
+		MaxBlurayPublishResponseBytes, blurayPublishResponseSchema,
+	)
+	if err != nil {
+		return BlurayPublishResponseV1{}, err
+	}
+	return BlurayPublishResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
 func DecodeProbeResponse(data []byte) (ProbeResponseV1, error) {
 	if err := validateMessage(
 		data,
