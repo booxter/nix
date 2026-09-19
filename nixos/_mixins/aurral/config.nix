@@ -149,11 +149,6 @@ in
         ];
         Requires = [ "${selected.unitName}.service" ];
       };
-      path = [
-        pkgs.coreutils
-        pkgs.ffmpeg
-        pkgs.yt-dlp
-      ];
       serviceConfig = {
         BindReadOnlyPaths = cfg.libraryRoots;
         RestartSec = "5s";
