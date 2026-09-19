@@ -9,7 +9,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
-	"github.com/booxter/nix-config/radarr-repair/internal/joinimport"
+	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
 	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
 )
 
@@ -56,7 +56,7 @@ func TestPreparedRemuxImportRecoversFromRadarrHistoryWithoutResubmission(t *test
 					t.Fatalf("confirmed: state = %q, confirmations = %d, error = %v", execution.State, store.confirmations, err)
 				}
 			} else {
-				var uncertain *joinimport.SubmissionUncertainError
+				var uncertain *publishedimport.SubmissionUncertainError
 				if !errors.As(err, &uncertain) || execution.State != casestore.RemuxImportPrepared {
 					t.Fatalf("uncertain: state = %q, error = %v", execution.State, err)
 				}

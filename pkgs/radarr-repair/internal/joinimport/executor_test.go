@@ -11,6 +11,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
+	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
 	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
 )
 
@@ -202,7 +203,7 @@ func assertUncertainSubmission(
 	err error,
 ) {
 	t.Helper()
-	var uncertain *SubmissionUncertainError
+	var uncertain *publishedimport.SubmissionUncertainError
 	if !errors.As(err, &uncertain) {
 		t.Fatalf("error = %v", err)
 	}

@@ -8,13 +8,9 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
-	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
-	"github.com/booxter/nix-config/radarr-repair/internal/joinimport"
+	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
 )
 
-// The published-file import workflow is shared with joins. This adapter maps
-// remux state to that workflow without duplicating its uncertain-submission
-// and Radarr history recovery rules.
 type Store interface {
 	Get(string) (casestore.CaseRecord, bool, error)
 	GetRemuxExecution(string) (casestore.RemuxExecution, bool, error)
@@ -25,24 +21,24 @@ type Store interface {
 }
 
 type Dependencies struct {
-	Radarr       joinimport.Radarr
+	Radarr       publishedimport.Radarr
 	Store        Store
-	Paths        joinimport.PublishedPathResolver
+	Paths        publishedimport.PublishedPathResolver
 	Clock        controller.Clock
-	Waiter       joinimport.Waiter
+	Waiter       publishedimport.Waiter
 	PollInterval time.Duration
 }
 
 type Executor struct {
 	store Store
-	core  *joinimport.Executor
+	core  *publishedimport.Executor
 }
 
 func New(dependencies Dependencies) (*Executor, error) {
 	if dependencies.Store == nil {
 		return nil, fmt.Errorf("Blu-ray remux import store is required")
 	}
-	core, err := joinimport.New(joinimport.Dependencies{
+	core, err := publishedimport.New(publishedimport.Dependencies{
 		Radarr:       dependencies.Radarr,
 		Store:        &storeAdapter{Store: dependencies.Store},
 		Paths:        dependencies.Paths,
@@ -75,83 +71,82 @@ type storeAdapter struct {
 	Store
 }
 
-func (adapter *storeAdapter) GetJoinExecution(caseID string) (casestore.JoinExecution, bool, error) {
+func (adapter *storeAdapter) GetExecution(caseID string) (publishedimport.Execution, bool, error) {
 	execution, found, err := adapter.GetRemuxExecution(caseID)
 	if err != nil || !found {
-		return casestore.JoinExecution{}, found, err
+		return publishedimport.Execution{}, found, err
 	}
-	return asJoinExecution(execution)
+	mapped, err := asPublishedExecution(execution)
+	return mapped, true, err
 }
 
-func (adapter *storeAdapter) PrepareJoinImport(
+func (adapter *storeAdapter) PrepareImport(
 	caseID string, request casestore.JoinImportRequest, at time.Time,
-) (casestore.JoinExecution, bool, error) {
+) (publishedimport.Execution, bool, error) {
 	execution, changed, err := adapter.PrepareRemuxImport(caseID, request, at)
-	if err != nil {
-		return casestore.JoinExecution{}, changed, err
-	}
-	joined, _, err := asJoinExecution(execution)
-	return joined, changed, err
+	return mapResult(execution, changed, err)
 }
 
-func (adapter *storeAdapter) MarkJoinImportRequested(
+func (adapter *storeAdapter) MarkImportRequested(
 	caseID string, commandID int64, at time.Time,
-) (casestore.JoinExecution, bool, error) {
+) (publishedimport.Execution, bool, error) {
 	execution, changed, err := adapter.MarkRemuxImportRequested(caseID, commandID, at)
-	if err != nil {
-		return casestore.JoinExecution{}, changed, err
-	}
-	joined, _, err := asJoinExecution(execution)
-	return joined, changed, err
+	return mapResult(execution, changed, err)
 }
 
-func (adapter *storeAdapter) MarkJoinImported(
+func (adapter *storeAdapter) MarkImported(
 	caseID string, imported controller.RadarrImportedFile, at time.Time,
-) (casestore.JoinExecution, bool, error) {
+) (publishedimport.Execution, bool, error) {
 	execution, changed, err := adapter.MarkRemuxImported(caseID, imported, at)
-	if err != nil {
-		return casestore.JoinExecution{}, changed, err
-	}
-	joined, _, err := asJoinExecution(execution)
-	return joined, changed, err
+	return mapResult(execution, changed, err)
 }
 
-func (adapter *storeAdapter) MarkJoinImportFailed(
+func (adapter *storeAdapter) MarkImportFailed(
 	caseID string, at time.Time,
-) (casestore.JoinExecution, bool, error) {
+) (publishedimport.Execution, bool, error) {
 	execution, changed, err := adapter.MarkRemuxImportFailed(caseID, at)
-	if err != nil {
-		return casestore.JoinExecution{}, changed, err
-	}
-	joined, _, err := asJoinExecution(execution)
-	return joined, changed, err
+	return mapResult(execution, changed, err)
 }
 
-func asJoinExecution(execution casestore.RemuxExecution) (casestore.JoinExecution, bool, error) {
-	var state casestore.JoinExecutionState
+func mapResult(
+	execution casestore.RemuxExecution, changed bool, err error,
+) (publishedimport.Execution, bool, error) {
+	if err != nil {
+		return publishedimport.Execution{}, changed, err
+	}
+	mapped, err := asPublishedExecution(execution)
+	return mapped, changed, err
+}
+
+func asPublishedExecution(execution casestore.RemuxExecution) (publishedimport.Execution, error) {
+	var state publishedimport.State
 	switch execution.State {
 	case casestore.RemuxPublished:
-		state = casestore.JoinPublished
+		state = publishedimport.Published
 	case casestore.RemuxImportPrepared:
-		state = casestore.JoinImportPrepared
+		state = publishedimport.ImportPrepared
 	case casestore.RemuxImportRequested:
-		state = casestore.JoinImportRequested
+		state = publishedimport.ImportRequested
 	case casestore.RemuxImported:
-		state = casestore.JoinImported
+		state = publishedimport.Imported
 	case casestore.RemuxImportFailed:
-		state = casestore.JoinImportFailed
+		state = publishedimport.ImportFailed
 	default:
-		return casestore.JoinExecution{}, true, fmt.Errorf("remux state %q is not ready for import", execution.State)
+		return publishedimport.Execution{}, fmt.Errorf(
+			"remux state %q is not ready for import", execution.State,
+		)
 	}
-	joined := casestore.JoinExecution{
-		Authorization: decisionpolicy.AuthorizedJoin{CaseID: execution.Authorization.CaseID},
-		State:         state, Import: execution.Import, Confirmation: execution.Confirmation,
+	mapped := publishedimport.Execution{
+		CaseID:       execution.Authorization.CaseID,
+		State:        state,
+		Import:       execution.Import,
+		Confirmation: execution.Confirmation,
 	}
 	if execution.Published != nil {
-		joined.Published = &casestore.JoinPublishedArtifact{
+		mapped.Published = &publishedimport.Artifact{
 			RootID:         execution.Published.RootID,
 			PathComponents: execution.Published.PathComponents,
 		}
 	}
-	return joined, true, nil
+	return mapped, nil
 }

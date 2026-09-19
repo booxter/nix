@@ -11,11 +11,6 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
 )
 
-type Radarr = publishedimport.Radarr
-type PublishedPathResolver = publishedimport.PublishedPathResolver
-type Waiter = publishedimport.Waiter
-type SubmissionUncertainError = publishedimport.SubmissionUncertainError
-
 type Store interface {
 	Get(string) (casestore.CaseRecord, bool, error)
 	GetJoinExecution(string) (casestore.JoinExecution, bool, error)
@@ -26,11 +21,11 @@ type Store interface {
 }
 
 type Dependencies struct {
-	Radarr       Radarr
+	Radarr       publishedimport.Radarr
 	Store        Store
-	Paths        PublishedPathResolver
+	Paths        publishedimport.PublishedPathResolver
 	Clock        controller.Clock
-	Waiter       Waiter
+	Waiter       publishedimport.Waiter
 	PollInterval time.Duration
 }
 
