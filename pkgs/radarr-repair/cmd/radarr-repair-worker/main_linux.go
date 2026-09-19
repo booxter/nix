@@ -19,6 +19,8 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 	"github.com/booxter/nix-config/radarr-repair/worker/blurayidentify"
+	"github.com/booxter/nix-config/radarr-repair/worker/blurayrequest"
+	"github.com/booxter/nix-config/radarr-repair/worker/bluraystage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/radarr-repair/worker/joininspect"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
@@ -26,6 +28,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstate"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediafile"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediajoin"
+	"github.com/booxter/nix-config/radarr-repair/worker/mediaremux"
 	workerprobe "github.com/booxter/nix-config/radarr-repair/worker/probe"
 	workerserver "github.com/booxter/nix-config/radarr-repair/worker/server"
 )
@@ -139,6 +142,27 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	remuxRunner, err := mediaremux.NewRunner(*mkvmergePath, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	blurayStager, err := bluraystage.NewExecutor(
+		rootSet, rootSet, mkvmerge.Runner{Executable: *mkvmergePath},
+		remuxRunner, probeRunner,
+	)
+	if err != nil {
+		return err
+	}
+	blurayRequest, err := blurayrequest.NewExecutor(blurayStager)
+	if err != nil {
+		return err
+	}
+	blurayRemuxHandler, err := workerserver.NewBlurayRemuxHandler(
+		blurayRequest, *joinTimeout,
+	)
+	if err != nil {
+		return err
+	}
 	state, err := joinstate.New(*stateDirectory)
 	if err != nil {
 		return err
@@ -186,6 +210,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	router, err := workerserver.NewRouter(
 		probeHandler,
 		blurayHandler,
+		blurayRemuxHandler,
 		stageJoinHandler,
 		publishHandler,
 		discardHandler,
