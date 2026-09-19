@@ -140,12 +140,6 @@ in
       };
     };
 
-    systemd.services.aurral = {
-      unitConfig = {
-        Wants = [ "network-online.target" ];
-        After = [ "network-online.target" ];
-      };
-      serviceConfig.BindReadOnlyPaths = cfg.libraryRoots;
-    };
+    systemd.services.aurral.serviceConfig.BindReadOnlyPaths = cfg.libraryRoots;
   };
 }
