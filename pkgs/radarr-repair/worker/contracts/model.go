@@ -4,6 +4,28 @@ type BlurayIdentifyRequestV1 = RadarrRepairWorkerBluRayIdentificationRequest
 type BlurayIdentifySuccessV1 = BlurayIdentifySuccessResponseV1Class
 type BlurayIdentifyFailureV1 = BlurayIdentifyFailureResponseV1Class
 
+type BlurayRemuxRequestV1 = RadarrRepairWorkerBluRayRemuxStageRequest
+type BlurayRemuxSourceV1 = BlurayRemuxRequestSchema
+type BlurayRemuxTrackV1 = ExpectedTrackElement
+type BlurayRemuxSuccessV1 = BlurayRemuxSuccessResponseV1Class
+type BlurayRemuxFailureV1 = BlurayRemuxFailureResponseV1Class
+
+type BlurayRemuxResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *BlurayRemuxSuccessV1
+	Failure *BlurayRemuxFailureV1
+}
+
+func (response BlurayRemuxResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		func(success *BlurayRemuxSuccessV1) string { return success.RequestID },
+		func(failure *BlurayRemuxFailureV1) string { return failure.RequestID },
+	)
+}
+
 type BlurayIdentifyResponseV1 struct {
 	Kind    ProbeResponseKind
 	Success *BlurayIdentifySuccessV1

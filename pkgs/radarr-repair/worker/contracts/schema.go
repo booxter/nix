@@ -19,6 +19,8 @@ const MaxProbeResponseBytes = 4 << 20
 
 const MaxBlurayIdentifyRequestBytes = MaxProbeRequestBytes
 const MaxBlurayIdentifyResponseBytes = 256 << 10
+const MaxBlurayRemuxRequestBytes = 16 << 20
+const MaxBlurayRemuxResponseBytes = MaxProbeResponseBytes
 
 // MaxJoinRequestBytes bounds the worst-case 128-part request with 32 full-size
 // path components per part.
@@ -35,6 +37,10 @@ const (
 	blurayIdentifyRequestSchemaLocation  = "file:///radarr-repair-worker/contracts/v1/bluray-identify-request.schema.json"
 	blurayIdentifyResponseSchemaFile     = "v1/bluray-identify-response.schema.json"
 	blurayIdentifyResponseSchemaLocation = "file:///radarr-repair-worker/contracts/v1/bluray-identify-response.schema.json"
+	blurayRemuxRequestSchemaFile         = "v1/bluray-remux-request.schema.json"
+	blurayRemuxRequestSchemaLocation     = "file:///radarr-repair-worker/contracts/v1/bluray-remux-request.schema.json"
+	blurayRemuxResponseSchemaFile        = "v1/bluray-remux-response.schema.json"
+	blurayRemuxResponseSchemaLocation    = "file:///radarr-repair-worker/contracts/v1/bluray-remux-response.schema.json"
 	probeRequestSchemaFile               = "v1/probe-request.schema.json"
 	probeRequestSchemaLocation           = "file:///radarr-repair-worker/contracts/v1/probe-request.schema.json"
 	mediaEvidenceSchemaFile              = "v1/media-evidence.schema.json"
@@ -87,6 +93,23 @@ var blurayIdentifyResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, e
 		blurayIdentifyResponseSchemaFile,
 		blurayIdentifyResponseSchemaLocation,
 		wireTypesSchemaResource,
+	)
+})
+
+var blurayRemuxRequestSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		blurayRemuxRequestSchemaFile,
+		blurayRemuxRequestSchemaLocation,
+		wireTypesSchemaResource,
+	)
+})
+
+var blurayRemuxResponseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(
+		blurayRemuxResponseSchemaFile,
+		blurayRemuxResponseSchemaLocation,
+		wireTypesSchemaResource,
+		mediaEvidenceSchemaResource,
 	)
 })
 

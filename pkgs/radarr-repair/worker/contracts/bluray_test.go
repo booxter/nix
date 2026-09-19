@@ -54,3 +54,53 @@ func TestBlurayIdentificationRejectsInvalidClipName(t *testing.T) {
 		t.Fatal("accepted a clip name outside the Blu-ray stream directory")
 	}
 }
+
+func TestBlurayRemuxExamplesRoundTrip(t *testing.T) {
+	t.Parallel()
+	request, err := DecodeBlurayRemuxRequest(
+		readFixture(t, "v1/examples/bluray-remux-request.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedRequest, err := EncodeBlurayRemuxRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeBlurayRemuxRequest(encodedRequest); err != nil {
+		t.Fatal(err)
+	}
+	for _, fixture := range []string{
+		"v1/examples/bluray-remux-response-ok.json",
+		"v1/examples/bluray-remux-response-failed.json",
+	} {
+		response, err := DecodeBlurayRemuxResponse(readFixture(t, fixture))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.RequestID() != request.RequestID {
+			t.Errorf("%s: mismatched request ID", fixture)
+		}
+		encodedResponse, err := EncodeBlurayRemuxResponse(response)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := DecodeBlurayRemuxResponse(encodedResponse); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestBlurayRemuxRejectsUnsafePath(t *testing.T) {
+	t.Parallel()
+	request, err := DecodeBlurayRemuxRequest(
+		readFixture(t, "v1/examples/bluray-remux-request.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Clips[0].PathComponents[0] = ".."
+	if _, err := EncodeBlurayRemuxRequest(request); err == nil {
+		t.Fatal("accepted an unsafe Blu-ray clip path")
+	}
+}

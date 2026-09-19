@@ -34,6 +34,26 @@ func EncodeBlurayIdentifyResponse(response BlurayIdentifyResponseV1) ([]byte, er
 	)
 }
 
+func EncodeBlurayRemuxRequest(request BlurayRemuxRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode Blu-ray remux request: %w", err)
+	}
+	if err := validateMessage(
+		data, MaxBlurayRemuxRequestBytes, "Blu-ray remux request", blurayRemuxRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeBlurayRemuxResponse(response BlurayRemuxResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind, response.Success, response.Failure,
+		"Blu-ray remux response", MaxBlurayRemuxResponseBytes, blurayRemuxResponseSchema,
+	)
+}
+
 func EncodeProbeRequest(request ProbeRequestV1) ([]byte, error) {
 	data, err := json.Marshal(request)
 	if err != nil {
