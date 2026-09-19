@@ -154,7 +154,6 @@ PeerCounts = dict[PriorityClass, dict[str, int]]
 class IterationState:
     tracker_hosts_count: int
     preferred_torrent_count: int
-    preferred_bootstrap_active: bool
     preferred_upload_active: bool
     preferred_upload_bytes_per_second: int
     torrent_counts: PriorityCounts
@@ -164,7 +163,6 @@ class IterationState:
     download_bytes_per_second: PriorityCounts
     upload_bytes_per_second: PriorityCounts
     high_priority_hashes: list[str]
-    normal_priority_hashes: list[str]
     low_priority_hashes: list[str]
     stop_hashes: list[str]
 
@@ -214,20 +212,16 @@ def torrent_is_complete(torrent: Torrent) -> bool:
 def torrent_desired_priority(
     torrent: Torrent,
     is_preferred: bool,
-    preferred_bootstrap_active: bool,
     non_preferred_low_priority_ratio_threshold: float,
 ) -> int:
     if is_preferred:
         return TR_PRI_HIGH
-    baseline = TR_PRI_NORMAL
     if (
         torrent.upload_ratio is not None
         and torrent.upload_ratio >= non_preferred_low_priority_ratio_threshold
     ):
-        baseline = TR_PRI_LOW
-    if preferred_bootstrap_active:
-        return baseline
-    return TR_PRI_HIGH if baseline == TR_PRI_NORMAL else TR_PRI_LOW
+        return TR_PRI_LOW
+    return TR_PRI_HIGH
 
 
 def collect_iteration_state(
@@ -256,9 +250,6 @@ def collect_iteration_state(
             preferred_hashes.add(torrent.hash_string)
         entries.append((torrent, is_preferred))
 
-    preferred_bootstrap_active = any(
-        is_preferred and torrent.peers_getting_from_us > 0 for torrent, is_preferred in entries
-    )
     torrent_counts: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     activity_counts = {
         "seeding": {"active": 0, "inactive": 0},
@@ -274,7 +265,6 @@ def collect_iteration_state(
     downloads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     uploads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     high: list[str] = []
-    normal: list[str] = []
     low: list[str] = []
     stop: list[str] = []
     preferred_upload_active = False
@@ -311,7 +301,6 @@ def collect_iteration_state(
         desired = torrent_desired_priority(
             torrent,
             is_preferred,
-            preferred_bootstrap_active,
             policy.non_preferred_low_priority_ratio_threshold,
         )
         if is_preferred:
@@ -319,15 +308,12 @@ def collect_iteration_state(
             preferred_upload_active |= torrent.peers_getting_from_us > 0
         if desired == TR_PRI_HIGH and torrent.bandwidth_priority != TR_PRI_HIGH:
             high.append(torrent.hash_string)
-        elif desired == TR_PRI_NORMAL and torrent.bandwidth_priority != TR_PRI_NORMAL:
-            normal.append(torrent.hash_string)
         elif desired == TR_PRI_LOW and torrent.bandwidth_priority != TR_PRI_LOW:
             low.append(torrent.hash_string)
 
     return f"loaded:{len(tracker_hosts)}", IterationState(
         tracker_hosts_count=len(tracker_hosts),
         preferred_torrent_count=len(preferred_hashes),
-        preferred_bootstrap_active=preferred_bootstrap_active,
         preferred_upload_active=preferred_upload_active,
         preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
         torrent_counts=torrent_counts,
@@ -337,7 +323,6 @@ def collect_iteration_state(
         download_bytes_per_second=downloads,
         upload_bytes_per_second=uploads,
         high_priority_hashes=sorted(high),
-        normal_priority_hashes=sorted(normal),
         low_priority_hashes=sorted(low),
         stop_hashes=sorted(stop),
     )
@@ -345,7 +330,6 @@ def collect_iteration_state(
 
 def apply_priority_updates(client: TorrentClient, state: IterationState) -> None:
     client.set_priority(state.high_priority_hashes, TR_PRI_HIGH)
-    client.set_priority(state.normal_priority_hashes, TR_PRI_NORMAL)
     client.set_priority(state.low_priority_hashes, TR_PRI_LOW)
     client.stop(state.stop_hashes)
 
@@ -467,11 +451,6 @@ def success_registry(state: IterationState, timestamp: float) -> CollectorRegist
             "host_observability_transmission_preferred_upload_active",
             "Whether any preferred torrent is actively uploading to peers.",
             int(state.preferred_upload_active),
-        ),
-        (
-            "host_observability_transmission_preferred_bootstrap_active",
-            "Whether a preferred torrent has peers actively downloading from us.",
-            int(state.preferred_bootstrap_active),
         ),
         (
             "host_observability_transmission_preferred_upload_bytes_per_second",

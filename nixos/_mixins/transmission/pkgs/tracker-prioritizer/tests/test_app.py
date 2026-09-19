@@ -84,22 +84,15 @@ def collect(tmp_path: Path, torrents: list[core.Torrent]) -> core.IterationState
 
 
 @pytest.mark.parametrize(
-    ("is_preferred", "bootstrap", "ratio", "expected"),
+    ("is_preferred", "ratio", "expected"),
     [
-        (True, True, 99.0, core.TR_PRI_HIGH),
-        (False, True, 2.9, core.TR_PRI_NORMAL),
-        (False, True, 3.0, core.TR_PRI_LOW),
-        (False, False, 2.9, core.TR_PRI_HIGH),
-        (False, False, 3.0, core.TR_PRI_LOW),
+        (True, 99.0, core.TR_PRI_HIGH),
+        (False, 2.9, core.TR_PRI_HIGH),
+        (False, 3.0, core.TR_PRI_LOW),
     ],
 )
-def test_desired_priority_policy(
-    is_preferred: bool, bootstrap: bool, ratio: float, expected: int
-) -> None:
-    assert (
-        core.torrent_desired_priority(torrent(upload_ratio=ratio), is_preferred, bootstrap, 3.0)
-        == expected
-    )
+def test_desired_priority_policy(is_preferred: bool, ratio: float, expected: int) -> None:
+    assert core.torrent_desired_priority(torrent(upload_ratio=ratio), is_preferred, 3.0) == expected
 
 
 def test_public_torrent_is_promoted_without_preferred_upload_peers(tmp_path: Path) -> None:
@@ -115,12 +108,11 @@ def test_public_torrent_is_promoted_without_preferred_upload_peers(tmp_path: Pat
         ],
     )
 
-    assert not state.preferred_bootstrap_active
     assert not state.preferred_upload_active
     assert state.high_priority_hashes == ["public"]
 
 
-def test_public_torrent_is_lowered_while_preferred_peer_downloads(tmp_path: Path) -> None:
+def test_public_torrent_is_promoted_while_preferred_peer_downloads(tmp_path: Path) -> None:
     state = collect(
         tmp_path,
         [
@@ -133,16 +125,14 @@ def test_public_torrent_is_lowered_while_preferred_peer_downloads(tmp_path: Path
             ),
             torrent(
                 hash_string="public",
-                bandwidth_priority=core.TR_PRI_HIGH,
                 upload_ratio=2.9,
             ),
         ],
     )
 
-    assert state.preferred_bootstrap_active
     assert state.preferred_upload_active
     assert state.preferred_upload_bytes_per_second == 123
-    assert state.normal_priority_hashes == ["public"]
+    assert state.high_priority_hashes == ["public"]
 
 
 def test_pause_policy_only_stops_running_complete_public_torrents(tmp_path: Path) -> None:
