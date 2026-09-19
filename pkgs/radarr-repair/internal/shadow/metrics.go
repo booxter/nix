@@ -77,6 +77,7 @@ func WriteMetrics(
 			value: report.metrics.capabilities[capabilityManualImportFile],
 		},
 		{label: "remux_bluray_v1", value: report.metrics.capabilities[capabilityRemuxBluray]},
+		{label: "remux_dvd_v1", value: report.metrics.capabilities[capabilityRemuxDVD]},
 	})
 
 	decisions := newGaugeVector(
@@ -93,6 +94,7 @@ func WriteMetrics(
 			value: report.metrics.decisions[decisionManualImportFile],
 		},
 		{label: "remux_bluray_v1", value: report.metrics.decisions[decisionRemuxBluray]},
+		{label: "remux_dvd_v1", value: report.metrics.decisions[decisionRemuxDVD]},
 	})
 
 	abstentions := newGaugeVector(

@@ -84,7 +84,7 @@ func (value *allowedActionsValue) Set(raw string) error {
 	action := contracts.DecisionAction(raw)
 	switch action {
 	case contracts.ActionJoinParts, contracts.ActionManualImportFile,
-		contracts.ActionRemuxBluray:
+		contracts.ActionRemuxBluray, contracts.ActionRemuxDVD:
 		value.actions[action] = true
 		return nil
 	default:

@@ -44,6 +44,11 @@ type RemuxExecutor interface {
 		map[controller.FileID]string) (casestore.RemuxExecution, error)
 }
 
+type DVDExecutor interface {
+	Execute(context.Context, decisionpolicy.AuthorizedDVD,
+		map[controller.FileID]string) (casestore.RemuxExecution, error)
+}
+
 type RemuxFileImporter interface {
 	Execute(context.Context, string) (casestore.RemuxExecution, error)
 }
@@ -61,6 +66,7 @@ type Dependencies struct {
 	Joins             JoinExecutor
 	JoinedFileImports JoinedFileImporter
 	Remuxes           RemuxExecutor
+	DVDRemuxes        DVDExecutor
 	RemuxFileImports  RemuxFileImporter
 }
 
@@ -128,6 +134,9 @@ func (executor *Executor) Execute(
 	if checked.Authorization.Remux != nil {
 		return executor.executeRemux(ctx, result, assembly, *checked.Authorization.Remux)
 	}
+	if checked.Authorization.DVD != nil {
+		return executor.executeDVD(ctx, result, assembly, *checked.Authorization.DVD)
+	}
 	return executor.executeJoin(ctx, result, assembly, *checked.Authorization.Join)
 }
 
@@ -193,6 +202,26 @@ func (executor *Executor) resumeExisting(
 			return result, true, fmt.Errorf("stored Blu-ray remux does not match authorization")
 		}
 		resumed, err := executor.resumeRemux(ctx, result, assembly, *validation.Authorized)
+		return resumed, true, err
+	case contracts.ActionRemuxDVD:
+		execution, found, err := executor.dependencies.Store.GetRemuxExecution(caseID)
+		result := Result{Remux: &execution, Resumed: found}
+		if err != nil {
+			return Result{}, false, fmt.Errorf("read DVD remux execution: %w", err)
+		}
+		if !found {
+			return Result{}, false, nil
+		}
+		validation := decisionpolicy.ValidateDVD(assembly, decision)
+		if !validation.Accepted() {
+			return result, true, fmt.Errorf("stored DVD remux is no longer authorized")
+		}
+		executionID, err := casestore.DVDExecutionID(*validation.Authorized)
+		if err != nil || execution.Version != casestore.DVDExecutionVersionV1 ||
+			execution.ExecutionID != executionID {
+			return result, true, fmt.Errorf("stored DVD remux does not match authorization")
+		}
+		resumed, err := executor.resumeDVD(ctx, result, assembly, *validation.Authorized)
 		return resumed, true, err
 	default:
 		return Result{}, false, nil
@@ -389,4 +418,51 @@ func selectedRemuxPaths(
 		selected[source.FileID] = path
 	}
 	return selected, nil
+}
+
+func (executor *Executor) executeDVD(
+	ctx context.Context, result Result, assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedDVD,
+) (Result, error) {
+	if executor.dependencies.DVDRemuxes == nil {
+		return result, fmt.Errorf("DVD remux executor is not configured")
+	}
+	paths := make(map[controller.FileID]string)
+	for _, mapping := range assembly.LocalSnapshot.Observation.Inventory.Paths {
+		paths[mapping.FileID] = mapping.AbsolutePath
+	}
+	for _, source := range append([]decisionpolicy.AuthorizedRemuxFile{authorized.Navigation}, authorized.Sources...) {
+		if paths[source.FileID] == "" {
+			return result, fmt.Errorf("authorized DVD input %q has no stored path", source.FileID)
+		}
+	}
+	execution, err := executor.dependencies.DVDRemuxes.Execute(ctx, authorized, paths)
+	result.Remux = &execution
+	if err != nil {
+		return result, fmt.Errorf("execute DVD remux: %w", err)
+	}
+	switch execution.State {
+	case casestore.RemuxFailed:
+		return result, nil
+	case casestore.RemuxPublished:
+		return executor.executeRemuxFileImport(ctx, result, authorized.CaseID)
+	default:
+		return result, fmt.Errorf("DVD remux returned state %q", execution.State)
+	}
+}
+
+func (executor *Executor) resumeDVD(
+	ctx context.Context, result Result, assembly casebuilder.Assembly,
+	authorized decisionpolicy.AuthorizedDVD,
+) (Result, error) {
+	switch result.Remux.State {
+	case casestore.RemuxPrepared, casestore.RemuxStaged:
+		return executor.executeDVD(ctx, result, assembly, authorized)
+	case casestore.RemuxPublished, casestore.RemuxImportPrepared, casestore.RemuxImportRequested:
+		return executor.executeRemuxFileImport(ctx, result, authorized.CaseID)
+	case casestore.RemuxFailed, casestore.RemuxImported, casestore.RemuxImportFailed:
+		return result, nil
+	default:
+		return result, fmt.Errorf("cannot resume DVD remux from state %q", result.Remux.State)
+	}
 }

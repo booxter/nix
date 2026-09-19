@@ -7,6 +7,62 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
+func EncodeDVDIdentifyRequest(request DVDIdentifyRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode DVD identification request: %w", err)
+	}
+	if err := validateMessage(
+		data, MaxDVDIdentifyRequestBytes, "DVD identification request",
+		dvdIdentifyRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeDVDIdentifyResponse(response DVDIdentifyResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind, response.Success, response.Failure,
+		"DVD identification response", MaxDVDIdentifyResponseBytes,
+		dvdIdentifyResponseSchema,
+	)
+}
+
+func EncodeDVDRemuxRequest(request DVDRemuxRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode DVD remux request: %w", err)
+	}
+	if err := validateMessage(data, MaxDVDRemuxRequestBytes, "DVD remux request",
+		dvdRemuxRequestSchema); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeDVDRemuxResponse(response DVDRemuxResponseV1) ([]byte, error) {
+	return encodeOperationResponse(response.Kind, response.Success, response.Failure,
+		"DVD remux response", MaxDVDRemuxResponseBytes, dvdRemuxResponseSchema)
+}
+
+func EncodeDVDPublishRequest(request DVDPublishRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode DVD publish request: %w", err)
+	}
+	if err := validateMessage(data, MaxDVDPublishRequestBytes, "DVD publish request",
+		dvdPublishRequestSchema); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeDVDPublishResponse(response DVDPublishResponseV1) ([]byte, error) {
+	return encodeOperationResponse(response.Kind, response.Success, response.Failure,
+		"DVD publish response", MaxDVDPublishResponseBytes, dvdPublishResponseSchema)
+}
+
 func EncodeBlurayIdentifyRequest(request BlurayIdentifyRequestV1) ([]byte, error) {
 	data, err := json.Marshal(request)
 	if err != nil {

@@ -37,6 +37,8 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-response.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/dvd-identify-request.schema.json
+    check-jsonschema --check-metaschema worker/contracts/v1/dvd-identify-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-remux-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-remux-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-publish-request.schema.json

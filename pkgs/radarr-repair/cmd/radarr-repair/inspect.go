@@ -28,25 +28,27 @@ import (
 )
 
 const (
-	defaultInspectTimeout    = 30 * time.Second
-	defaultCollectionTimeout = 2 * time.Minute
-	maximumAPIKeySize        = 4 << 10
+	defaultInspectTimeout     = 30 * time.Second
+	defaultCollectionTimeout  = 2 * time.Minute
+	defaultWorkerStageTimeout = 31 * time.Minute
+	maximumAPIKeySize         = 4 << 10
 )
 
 type inspectConfig struct {
-	RadarrURL         string
-	RadarrAPIKeyFile  string
-	TransmissionURL   string
-	SABnzbdURL        string
-	SABnzbdAPIKeyFile string
-	WorkerSocket      string
-	WorkerRoots       map[string]string
-	Output            string
-	OutputDirectory   string
-	QueueID           int64
-	All               bool
-	Timeout           time.Duration
-	CollectionTimeout time.Duration
+	RadarrURL          string
+	RadarrAPIKeyFile   string
+	TransmissionURL    string
+	SABnzbdURL         string
+	SABnzbdAPIKeyFile  string
+	WorkerSocket       string
+	WorkerRoots        map[string]string
+	Output             string
+	OutputDirectory    string
+	QueueID            int64
+	All                bool
+	Timeout            time.Duration
+	WorkerStageTimeout time.Duration
+	CollectionTimeout  time.Duration
 }
 
 type inspectFunc func(context.Context, inspectConfig) (casebuilder.Assembly, error)
@@ -348,7 +350,13 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("configure download sources: %w", err)
 	}
-	probeClient, err := workerclient.New(config.WorkerSocket, config.WorkerRoots, config.Timeout)
+	stageTimeout := config.WorkerStageTimeout
+	if stageTimeout == 0 {
+		stageTimeout = defaultWorkerStageTimeout
+	}
+	probeClient, err := workerclient.New(
+		config.WorkerSocket, config.WorkerRoots, config.Timeout, stageTimeout,
+	)
 	if err != nil {
 		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("configure media worker client: %w", err)
@@ -360,6 +368,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		Files:             filesource.New(),
 		Probes:            probeClient,
 		Playlists:         probeClient,
+		DVDs:              probeClient,
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {

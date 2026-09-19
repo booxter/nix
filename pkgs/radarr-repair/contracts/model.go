@@ -8,11 +8,13 @@ const (
 	CapabilityActionJoinParts        CapabilityAction = "join_parts_v1"
 	CapabilityActionManualImportFile CapabilityAction = "manual_import_file_v1"
 	CapabilityActionRemuxBluray      CapabilityAction = "remux_bluray_v1"
+	CapabilityActionRemuxDVD         CapabilityAction = "remux_dvd_v1"
 
 	ActionNoRepair         DecisionAction = "no_repair"
 	ActionJoinParts        DecisionAction = "join_parts_v1"
 	ActionManualImportFile DecisionAction = "manual_import_file_v1"
 	ActionRemuxBluray      DecisionAction = "remux_bluray_v1"
+	ActionRemuxDVD         DecisionAction = "remux_dvd_v1"
 )
 
 type RepairDecisionV2 struct {
@@ -21,6 +23,7 @@ type RepairDecisionV2 struct {
 	JoinParts        *JoinDecision
 	ManualImportFile *ManualImportFileDecision
 	RemuxBluray      *RemuxBlurayDecision
+	RemuxDVD         *RemuxDVDDecision
 }
 
 func (decision RepairDecisionV2) CaseID() string {
@@ -40,6 +43,10 @@ func (decision RepairDecisionV2) CaseID() string {
 	case ActionRemuxBluray:
 		if decision.RemuxBluray != nil {
 			return decision.RemuxBluray.CaseID
+		}
+	case ActionRemuxDVD:
+		if decision.RemuxDVD != nil {
+			return decision.RemuxDVD.CaseID
 		}
 	}
 	return ""

@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "publish_dvd_remux_v1"
+        },
+        "reason": {
+          "enum": [
+            "artifact_not_found",
+            "fingerprint_mismatch",
+            "destination_exists",
+            "invalid_request",
+            "timeout",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_fingerprint": {
+          "$ref": "wire-types.schema.json#/$defs/sha256Id"
+        },
+        "artifact_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "operation": {
+          "const": "publish_dvd_remux_v1"
+        },
+        "path_components": {
+          "items": {
+            "$ref": "wire-types.schema.json#/$defs/pathComponent"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "root_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint",
+        "root_id",
+        "path_components"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "dvd-publish-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker DVD remux publish response"
+}

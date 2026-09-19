@@ -130,38 +130,15 @@ func (executor *Executor) StageOrRecover(
 	}
 	defer closeFiles(inputs)
 
-	status, completed, err := executor.artifacts.InspectStaged(
+	completed, err := mediafile.PrepareStage(
+		executor.artifacts,
 		spec.RootID, artifactID, workercontracts.OutputContainerMKV,
 	)
 	if err != nil {
 		return Result{}, err
 	}
-	switch status {
-	case mediafile.StagedComplete:
-		if completed == nil {
-			return Result{}, fmt.Errorf("completed Blu-ray artifact is unavailable")
-		}
+	if completed != nil {
 		return executor.recover(ctx, spec, artifactID, inputs, completed)
-	case mediafile.StagedPartial:
-		removed, err := executor.artifacts.RemovePartial(
-			spec.RootID, artifactID, workercontracts.OutputContainerMKV,
-		)
-		if err != nil {
-			return Result{}, fmt.Errorf("remove incomplete Blu-ray artifact: %w", err)
-		}
-		if !removed {
-			return Result{}, fmt.Errorf("incomplete Blu-ray artifact disappeared")
-		}
-	case mediafile.StagedMissing:
-		if completed != nil {
-			_ = completed.Close()
-			return Result{}, fmt.Errorf("unexpected completed Blu-ray artifact")
-		}
-	default:
-		if completed != nil {
-			_ = completed.Close()
-		}
-		return Result{}, fmt.Errorf("unknown Blu-ray staging state")
 	}
 	return executor.stage(ctx, spec, artifactID, playlistPath, inputs)
 }

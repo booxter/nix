@@ -81,6 +81,8 @@ let
       controller.stabilization
       "--planner-timeout"
       "${toString plannerTimeoutSeconds}s"
+      "--worker-stage-timeout"
+      "${toString (worker.joinTimeoutSeconds + 30)}s"
     ]
     ++ downloadClientArguments
     ++ rootArguments

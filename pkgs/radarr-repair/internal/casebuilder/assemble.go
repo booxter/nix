@@ -11,6 +11,7 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 )
 
@@ -30,6 +31,7 @@ type Observation struct {
 	Inventory       controller.FileInventory
 	Probes          []FileProbe
 	BluRayPlaylists []mkvmerge.Candidate
+	DVDTitles       []dvdvideo.Candidate
 }
 
 // LocalSnapshot retains controller-only observations needed to audit and later
@@ -117,6 +119,11 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, err
 	}
 	capabilities = append(capabilities, bluRayCapabilities...)
+	dvdCapabilities, err := bindDVDCapabilities(observation.DVDTitles, inventoryFiles)
+	if err != nil {
+		return Assembly{}, err
+	}
+	capabilities = append(capabilities, dvdCapabilities...)
 	request := contracts.RepairCaseV2{
 		SchemaVersion: contracts.RadarrRepairV2,
 		ObservedAt:    observation.ObservedAt.UTC(),

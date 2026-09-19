@@ -22,7 +22,9 @@ import (
 
 const (
 	RemuxExecutionVersionV1 = "radarr-repair-bluray-remux/v1"
+	DVDExecutionVersionV1   = "radarr-repair-dvd-remux/v1"
 	remuxExecutionDomain    = "radarr-repair-bluray-remux-execution-v1\x00"
+	dvdExecutionDomain      = "radarr-repair-dvd-remux-execution-v1\x00"
 )
 
 type RemuxExecutionState string
@@ -55,18 +57,20 @@ type RemuxFailure struct {
 }
 
 type RemuxExecution struct {
-	Version       string                                `json:"version"`
-	ExecutionID   string                                `json:"execution_id"`
-	Authorization decisionpolicy.AuthorizedRemux        `json:"authorization"`
-	State         RemuxExecutionState                   `json:"state"`
-	PreparedAt    time.Time                             `json:"prepared_at"`
-	UpdatedAt     time.Time                             `json:"updated_at"`
-	StageRequest  *workercontracts.BlurayRemuxRequestV1 `json:"stage_request,omitempty"`
-	Artifact      *RemuxArtifact                        `json:"artifact,omitempty"`
-	Published     *RemuxPublishedArtifact               `json:"published,omitempty"`
-	Failure       *RemuxFailure                         `json:"failure,omitempty"`
-	Import        *JoinImport                           `json:"import,omitempty"`
-	Confirmation  *RadarrImportConfirmation             `json:"confirmation,omitempty"`
+	Version          string                                `json:"version"`
+	ExecutionID      string                                `json:"execution_id"`
+	Authorization    decisionpolicy.AuthorizedRemux        `json:"authorization"`
+	DVDAuthorization *decisionpolicy.AuthorizedDVD         `json:"dvd_authorization,omitempty"`
+	State            RemuxExecutionState                   `json:"state"`
+	PreparedAt       time.Time                             `json:"prepared_at"`
+	UpdatedAt        time.Time                             `json:"updated_at"`
+	StageRequest     *workercontracts.BlurayRemuxRequestV1 `json:"stage_request,omitempty"`
+	DVDStageRequest  *workercontracts.DVDRemuxRequestV1    `json:"dvd_stage_request,omitempty"`
+	Artifact         *RemuxArtifact                        `json:"artifact,omitempty"`
+	Published        *RemuxPublishedArtifact               `json:"published,omitempty"`
+	Failure          *RemuxFailure                         `json:"failure,omitempty"`
+	Import           *JoinImport                           `json:"import,omitempty"`
+	Confirmation     *RadarrImportConfirmation             `json:"confirmation,omitempty"`
 }
 
 func RemuxExecutionID(authorized decisionpolicy.AuthorizedRemux) (string, error) {
@@ -84,7 +88,7 @@ func RemuxExecutionID(authorized decisionpolicy.AuthorizedRemux) (string, error)
 }
 
 func EncodeRemuxExecution(record RemuxExecution) ([]byte, error) {
-	if err := validateRemuxExecution(record); err != nil {
+	if err := validateDiscExecution(record); err != nil {
 		return nil, err
 	}
 	data, err := json.Marshal(record)
@@ -107,7 +111,7 @@ func DecodeRemuxExecution(data []byte) (RemuxExecution, error) {
 		}
 		return RemuxExecution{}, fmt.Errorf("remux execution has trailing JSON: %w", err)
 	}
-	if err := validateRemuxExecution(record); err != nil {
+	if err := validateDiscExecution(record); err != nil {
 		return RemuxExecution{}, err
 	}
 	return cloneRemuxExecution(record), nil
@@ -122,7 +126,7 @@ func (store *Store) GetRemuxExecution(caseID string) (RemuxExecution, bool, erro
 	if err != nil {
 		return RemuxExecution{}, false, err
 	}
-	if found && record.Authorization.CaseID != caseID {
+	if found && record.CaseID() != caseID {
 		return RemuxExecution{}, false, fmt.Errorf("stored remux has an unexpected case ID")
 	}
 	return record, found, nil
@@ -333,7 +337,7 @@ func (store *Store) updateRemuxExecution(
 	if err != nil {
 		return RemuxExecution{}, false, err
 	}
-	if !found || previous.Authorization.CaseID != caseID {
+	if !found || previous.CaseID() != caseID {
 		return RemuxExecution{}, false, fmt.Errorf("remux for case is not prepared")
 	}
 	if updatedAt.Before(previous.UpdatedAt) {
@@ -353,6 +357,9 @@ func (store *Store) updateRemuxExecution(
 func validateRemuxExecution(record RemuxExecution) error {
 	if record.Version != RemuxExecutionVersionV1 {
 		return fmt.Errorf("unsupported remux execution version")
+	}
+	if record.DVDAuthorization != nil || record.DVDStageRequest != nil {
+		return fmt.Errorf("Blu-ray remux contains DVD evidence")
 	}
 	identity, err := RemuxExecutionID(record.Authorization)
 	if err != nil {
@@ -486,6 +493,22 @@ func cloneRemuxAuthorization(authorized decisionpolicy.AuthorizedRemux) decision
 
 func cloneRemuxExecution(record RemuxExecution) RemuxExecution {
 	record.Authorization = cloneRemuxAuthorization(record.Authorization)
+	if record.DVDAuthorization != nil {
+		authorized := *record.DVDAuthorization
+		authorized.Sources = slices.Clone(authorized.Sources)
+		authorized.ExpectedTracks = slices.Clone(authorized.ExpectedTracks)
+		record.DVDAuthorization = &authorized
+	}
+	if record.DVDStageRequest != nil {
+		request := *record.DVDStageRequest
+		request.Navigation.PathComponents = slices.Clone(request.Navigation.PathComponents)
+		request.Sources = slices.Clone(request.Sources)
+		for index := range request.Sources {
+			request.Sources[index].PathComponents = slices.Clone(request.Sources[index].PathComponents)
+		}
+		request.ExpectedTracks = slices.Clone(request.ExpectedTracks)
+		record.DVDStageRequest = &request
+	}
 	if record.StageRequest != nil {
 		request := *record.StageRequest
 		request.Playlist.PathComponents = append([]string(nil), request.Playlist.PathComponents...)

@@ -17,6 +17,7 @@ func TestClassifyProgressWithoutStoredExecution(t *testing.T) {
 		contracts.ActionManualImportFile,
 		contracts.ActionJoinParts,
 		contracts.ActionRemuxBluray,
+		contracts.ActionRemuxDVD,
 	} {
 		t.Run(string(action), func(t *testing.T) {
 			t.Parallel()
@@ -204,6 +205,8 @@ func progressCase(
 		planned.Decision.JoinParts = &contracts.JoinDecision{CaseID: decisionCaseID}
 	case contracts.ActionRemuxBluray:
 		planned.Decision.RemuxBluray = &contracts.RemuxBlurayDecision{CaseID: decisionCaseID}
+	case contracts.ActionRemuxDVD:
+		planned.Decision.RemuxDVD = &contracts.RemuxDVDDecision{CaseID: decisionCaseID}
 	}
 	return planned
 }

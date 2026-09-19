@@ -311,6 +311,7 @@ func startTestWorker(t *testing.T, rootPath string) testWorker {
 		"--ffprobe", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFPROBE"),
 		"--ffmpeg", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
 		"--mkvmerge", requiredEnvironment(t, "RADARR_REPAIR_TEST_MKVMERGE"),
+		"--lsdvd", requiredEnvironment(t, "RADARR_REPAIR_TEST_LSDVD"),
 		"--root", "root:downloads=" + rootPath,
 		"--timeout", "10s",
 		"--join-timeout", "10s",

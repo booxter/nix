@@ -46,6 +46,7 @@ type Authorization struct {
 	Join         *decisionpolicy.AuthorizedJoin
 	ManualImport *decisionpolicy.AuthorizedManualImport
 	Remux        *decisionpolicy.AuthorizedRemux
+	DVD          *decisionpolicy.AuthorizedDVD
 }
 
 type Result struct {
@@ -59,6 +60,7 @@ func (result Result) Accepted() bool {
 		result.Authorization.Join != nil,
 		result.Authorization.ManualImport != nil,
 		result.Authorization.Remux != nil,
+		result.Authorization.DVD != nil,
 	} {
 		if selected {
 			count++
@@ -217,6 +219,14 @@ func authorize(
 		validation := decisionpolicy.ValidateRemux(assembly, decision)
 		if validation.Accepted() {
 			return Authorization{Remux: validation.Authorized}, "", true
+		}
+		if len(validation.Rejections) != 0 {
+			return Authorization{}, string(validation.Rejections[0]), false
+		}
+	case contracts.ActionRemuxDVD:
+		validation := decisionpolicy.ValidateDVD(assembly, decision)
+		if validation.Accepted() {
+			return Authorization{DVD: validation.Authorized}, "", true
 		}
 		if len(validation.Rejections) != 0 {
 			return Authorization{}, string(validation.Rejections[0]), false

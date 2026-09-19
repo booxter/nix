@@ -27,7 +27,8 @@ func ClassifyProgress(
 	case contracts.ActionNoRepair,
 		contracts.ActionManualImportFile,
 		contracts.ActionJoinParts,
-		contracts.ActionRemuxBluray:
+		contracts.ActionRemuxBluray,
+		contracts.ActionRemuxDVD:
 	default:
 		return ProgressNotApplicable, fmt.Errorf(
 			"planned case has unknown action %q",
@@ -48,7 +49,7 @@ func ClassifyProgress(
 		return classifyManualImportProgress(store, caseID)
 	case contracts.ActionJoinParts:
 		return classifyJoinProgress(store, caseID)
-	case contracts.ActionRemuxBluray:
+	case contracts.ActionRemuxBluray, contracts.ActionRemuxDVD:
 		return classifyRemuxProgress(store, caseID)
 	}
 	return ProgressNotApplicable, nil

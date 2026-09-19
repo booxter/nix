@@ -29,6 +29,11 @@ and tracks with the movie and the other offered playlists. When two playlists
 reference the same complete clips, prefer the one carrying useful chapter marks.
 If the runtime or title remains uncertain, choose no_repair and explain why.
 
+Choose remux_dvd_v1 only when an offered DVD title is the complete intended
+movie. Compare its duration, chapters, and tracks with the movie runtime and
+other offered titles. Short menus, extras, and episodes are not the movie.
+If the title remains uncertain, choose no_repair and explain why.
+
 Otherwise choose no_repair and state the uncertainty or unsupported repair
 plainly.
 """

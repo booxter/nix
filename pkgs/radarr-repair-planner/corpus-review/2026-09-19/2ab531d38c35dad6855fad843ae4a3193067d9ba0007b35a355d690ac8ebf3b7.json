@@ -1,0 +1,654 @@
+{
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "candidate_file_ids": [
+        "file:41f12ab312a96337dcd9fdad6bcfb0a153841571fad1f367b9cb98c514af48aa",
+        "file:0604dc0e90ee71e3ce2837cace86b4d740bd0a24533ddbbc111e32a046bd44e5",
+        "file:2a473dd438267ed014da28e4f5a6ef5077f5bfa2fccb96ee8719ebc4fe1d7908",
+        "file:1aff5c6a8bc39debdf26da96efff3ac90499e1aa8f62084bc35dd15a15dfd086",
+        "file:71077b23240c9ccb693b7a0516218ae4d08a3243a6c81b588f95bc4283c96de2"
+      ],
+      "capability_id": "capability:64b916808cb241808f1775a0c768497a55db2f80248819c8f699ad64cdf4c341"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:6dd6fe299ce8c118df1b0e43c7c205459656afb8ce09456d7e77e06c85640cd1",
+      "file_id": "file:41f12ab312a96337dcd9fdad6bcfb0a153841571fad1f367b9cb98c514af48aa"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:9f44bbf75d92bc7cb30fc38d407d2bd565c28bb4dd0ac62cffa18a25164a3b03",
+      "file_id": "file:0604dc0e90ee71e3ce2837cace86b4d740bd0a24533ddbbc111e32a046bd44e5"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:32d432f5f93dbb8e4fcf598fe95d98068c9c179dd9fb1feb66564aebdcaf909f",
+      "file_id": "file:2a473dd438267ed014da28e4f5a6ef5077f5bfa2fccb96ee8719ebc4fe1d7908"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:e6b076c584a56541263fd1ad08ae3d1eb2fb109aa9313e064d269ad35c96768f",
+      "file_id": "file:1aff5c6a8bc39debdf26da96efff3ac90499e1aa8f62084bc35dd15a15dfd086"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:a5822450ef4f2ae51f062ea3eade2855327e6dddf73c7c5b0780147d127125b9",
+      "file_id": "file:71077b23240c9ccb693b7a0516218ae4d08a3243a6c81b588f95bc4283c96de2"
+    }
+  ],
+  "case_id": "sha256:2ab531d38c35dad6855fad843ae4a3193067d9ba0007b35a355d690ac8ebf3b7",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-19T19:46:40Z",
+    "content_ownership": "manifest",
+    "download_ref": "download:22b1787c08f4d843331170b55c1142a0715ae6cc8e5d686a9e88a83f84f75ac6",
+    "file_count": 5,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Malice Before Daylight 1080р",
+    "source_type": "torrent",
+    "total_size_bytes": 6632236736
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1379612279,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 1379612279
+      },
+      "extension": "mp4",
+      "file_id": "file:41f12ab312a96337dcd9fdad6bcfb0a153841571fad1f367b9cb98c514af48aa",
+      "fingerprint": "sha256:5d3668535909bbb08d282f71d68169b243d958c43b9c7f3861761ccbb555aef6",
+      "path_components": [
+        "scene1_full__hd.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 7185293,
+          "effective_duration_ms": 1536040,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1536040,
+          "longest_stream_duration_ms": 1536040,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 1379612279
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 6992065,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1536040,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "77",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 189375,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1536021,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1379612279
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1418712316,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 1418712316
+      },
+      "extension": "mp4",
+      "file_id": "file:0604dc0e90ee71e3ce2837cace86b4d740bd0a24533ddbbc111e32a046bd44e5",
+      "fingerprint": "sha256:188cfe35ab358a8caa9cd4538f90412f730db96069739447b5f0f206983e5903",
+      "path_components": [
+        "scene2_full_hd.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 7188449,
+          "effective_duration_ms": 1578880,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1578880,
+          "longest_stream_duration_ms": 1578880,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 1418712316
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 6995214,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1578880,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "77",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 189375,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1578880,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1418712316
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1360464313,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 1360464313
+      },
+      "extension": "mp4",
+      "file_id": "file:2a473dd438267ed014da28e4f5a6ef5077f5bfa2fccb96ee8719ebc4fe1d7908",
+      "fingerprint": "sha256:c76b486d16fbed91918b127d72f710ce6073fa1392e85bc01322073ede7289ef",
+      "path_components": [
+        "scene3_full_hd.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 7187765,
+          "effective_duration_ms": 1514200,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1514200,
+          "longest_stream_duration_ms": 1514200,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 1360464313
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 6994566,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1514200,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "77",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 189375,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1514197,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1360464313
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 980919671,
+        "selected": true,
+        "source_index": 3,
+        "source_size_bytes": 980919671
+      },
+      "extension": "mp4",
+      "file_id": "file:1aff5c6a8bc39debdf26da96efff3ac90499e1aa8f62084bc35dd15a15dfd086",
+      "fingerprint": "sha256:2a42477498406d2008823a87bf6027d7f5ade4183cbda6ecab3bcc9962c6cc46",
+      "path_components": [
+        "scene4_full_hd.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 7186751,
+          "effective_duration_ms": 1091920,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1091920,
+          "longest_stream_duration_ms": 1091920,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 980919671
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 6993398,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1091920,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "77",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 189375,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1091904,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 980919671
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1492528157,
+        "selected": true,
+        "source_index": 4,
+        "source_size_bytes": 1492528157
+      },
+      "extension": "mp4",
+      "file_id": "file:71077b23240c9ccb693b7a0516218ae4d08a3243a6c81b588f95bc4283c96de2",
+      "fingerprint": "sha256:f1fcd3a54c86a3ecdc8913a7ef13cfc1d7442c7f93a0eeda6389163c4776384d",
+      "path_components": [
+        "scene5_full_hd.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 7189268,
+          "effective_duration_ms": 1660840,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1660840,
+          "longest_stream_duration_ms": 1660840,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 1492528157
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 6996056,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1660840,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "77",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25000,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 189375,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1660821,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 1492528157
+    }
+  ],
+  "observed_at": "2026-09-19T19:47:49.686829133Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:22b1787c08f4d843331170b55c1142a0715ae6cc8e5d686a9e88a83f84f75ac6",
+      "error_message": "",
+      "queue_id": 1796357705,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:2651a5c337eb80b0e004342301382494937aafcba44bf8f3edc1d654ec46ad8e",
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:72eb2997e579668ff0b70d9115f9303ec9a181df41d56f0382730951f68330de",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "scene1_full__hd.mp4"
+        },
+        {
+          "evidence_id": "evidence:eba16edcdbd0614f92369c2373527340509691bd39e6c95e1e61ae39f622e3ba",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "scene2_full_hd.mp4"
+        },
+        {
+          "evidence_id": "evidence:ebe7ab020a7be2468b5fd6ea1a7ef744de559b4e0c5ad764be5ecadec1e5e27a",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "scene3_full_hd.mp4"
+        },
+        {
+          "evidence_id": "evidence:74857daadc15a6b5800b1bf56d22fc78b90e2b33413dd1c6422cc3b53c181355",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "scene4_full_hd.mp4"
+        },
+        {
+          "evidence_id": "evidence:709ac0a008e8aa2b8ec2315df6a283d0ac510a123c758689ad7c9160f9aebcce",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "scene5_full_hd.mp4"
+        }
+      ],
+      "title": "Malice Before Daylight 1080р",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:6d07a357eeac2408697a6f002fb480a17f61dfdab97c2c9009a0a42eeb895795",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-18T13:01:21Z",
+        "quality": "WEBDL-1080p",
+        "source_title": "Malice Before Daylight / Злоупотребление Перед Дневным Светом (Jake Hunter, Harmony) [2018 г., Feature Anal DP, WEB-DL, 1080p] (Split Scenes)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:41f12ab312a96337dcd9fdad6bcfb0a153841571fad1f367b9cb98c514af48aa",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:54095e62f6be99dfb77fdd3e879ef8b3c318c58ca212b16bf4058f5dd38ac1ac",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:0604dc0e90ee71e3ce2837cace86b4d740bd0a24533ddbbc111e32a046bd44e5",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:7832446539cd0fcb811252590abf28d34dbf46f4717b5d7256045890b3d5f51d",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:2a473dd438267ed014da28e4f5a6ef5077f5bfa2fccb96ee8719ebc4fe1d7908",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:19867ca33cd841cd5a71d3042dc7bfdeb06daa769f887472c7c82e89cb3a16f3",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:1aff5c6a8bc39debdf26da96efff3ac90499e1aa8f62084bc35dd15a15dfd086",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:5d7b970803978bd831a4dfa94b585aca3d5f738e8b5ff8e2e4bd0c690f1a566d",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:71077b23240c9ccb693b7a0516218ae4d08a3243a6c81b588f95bc4283c96de2",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:60945bf241c113d1132416278381bbab95478fe5fa62e3ab6b2efaa02bb8ff4a",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "Die Nacht der Verführerinnen",
+        "La nuit des séductrices"
+      ],
+      "imdb_id": "tt8677348",
+      "original_title": "Malice Before Daylight",
+      "radarr_id": 10285,
+      "runtime_minutes": 123,
+      "title": "Malice Before Daylight",
+      "tmdb_id": 533998,
+      "year": 2018
+    }
+  },
+  "schema_version": "radarr-repair/v2"
+}

@@ -361,10 +361,13 @@ func TestNewRejectsInvalidConfiguration(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			if _, err := New(test.socket, test.roots, test.timeout); err == nil {
+			if _, err := New(test.socket, test.roots, test.timeout, time.Minute); err == nil {
 				t.Fatal("invalid configuration was accepted")
 			}
 		})
+	}
+	if _, err := New("/run/worker.sock", testRoots(), time.Second, 0); err == nil {
+		t.Fatal("zero stage timeout was accepted")
 	}
 }
 
@@ -375,7 +378,7 @@ func testClient(
 	timeout time.Duration,
 ) *Client {
 	t.Helper()
-	client, err := New(socketPath, roots, timeout)
+	client, err := New(socketPath, roots, timeout, time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}

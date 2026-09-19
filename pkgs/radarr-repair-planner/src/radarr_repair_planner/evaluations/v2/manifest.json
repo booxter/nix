@@ -251,6 +251,45 @@
         "capability_id": "capability:eb37a9e081f0a837d14785576810f41c25f978edba7e3733f3500d4c50168762"
       },
       "name": "current_double_exposure_bluray"
+    },
+    {
+      "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
+      "expected": {
+        "action": "remux_dvd_v1",
+        "capability_id": "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+      },
+      "name": "current_pink_velvet_2_dvd"
+    },
+    {
+      "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "insufficient_evidence",
+          "ambiguous_file_selection",
+          "unsafe_to_repair"
+        ]
+      },
+      "name": "pink_velvet_2_dvd_runtime_mismatch",
+      "replacements": {
+        "/case_id": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "/radarr/movie/runtime_minutes": 90
+      }
+    },
+    {
+      "base_case": "2ab531d38c35dad6855fad843ae4a3193067d9ba0007b35a355d690ac8ebf3b7.json",
+      "expected": {
+        "action": "join_parts_v1",
+        "capability_id": "capability:64b916808cb241808f1775a0c768497a55db2f80248819c8f699ad64cdf4c341",
+        "ordered_file_ids": [
+          "file:41f12ab312a96337dcd9fdad6bcfb0a153841571fad1f367b9cb98c514af48aa",
+          "file:0604dc0e90ee71e3ce2837cace86b4d740bd0a24533ddbbc111e32a046bd44e5",
+          "file:2a473dd438267ed014da28e4f5a6ef5077f5bfa2fccb96ee8719ebc4fe1d7908",
+          "file:1aff5c6a8bc39debdf26da96efff3ac90499e1aa8f62084bc35dd15a15dfd086",
+          "file:71077b23240c9ccb693b7a0516218ae4d08a3243a6c81b588f95bc4283c96de2"
+        ]
+      },
+      "name": "current_malice_before_daylight_scenes"
     }
   ],
   "schema_version": "radarr-repair-evaluation/v2"

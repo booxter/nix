@@ -7,6 +7,9 @@ import (
 
 func NewRouter(
 	probe *Handler,
+	dvdIdentify *DVDIdentifyHandler,
+	dvdRemux *DVDRemuxHandler,
+	dvdPublish *DVDPublishHandler,
 	blurayIdentify *BlurayIdentifyHandler,
 	blurayRemux *BlurayRemuxHandler,
 	blurayPublish *BlurayPublishHandler,
@@ -17,6 +20,12 @@ func NewRouter(
 ) (http.Handler, error) {
 	if probe == nil {
 		return nil, fmt.Errorf("probe handler is required")
+	}
+	if dvdIdentify == nil {
+		return nil, fmt.Errorf("DVD identification handler is required")
+	}
+	if dvdRemux == nil || dvdPublish == nil {
+		return nil, fmt.Errorf("DVD remux and publish handlers are required")
 	}
 	if blurayIdentify == nil {
 		return nil, fmt.Errorf("Blu-ray identification handler is required")
@@ -41,6 +50,9 @@ func NewRouter(
 	}
 	router := http.NewServeMux()
 	router.Handle(probePath, probe)
+	router.Handle(dvdIdentifyPath, dvdIdentify)
+	router.Handle(dvdRemuxPath, dvdRemux)
+	router.Handle(dvdPublishPath, dvdPublish)
 	router.Handle(blurayIdentifyPath, blurayIdentify)
 	router.Handle(blurayRemuxPath, blurayRemux)
 	router.Handle(blurayPublishPath, blurayPublish)

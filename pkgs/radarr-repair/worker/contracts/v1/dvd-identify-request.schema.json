@@ -1,0 +1,40 @@
+{
+  "$id": "dvd-identify-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "expected_fingerprint": {
+      "$ref": "wire-types.schema.json#/$defs/sha256Id"
+    },
+    "operation": {
+      "const": "identify_dvd_v1"
+    },
+    "path_components": {
+      "items": {
+        "$ref": "wire-types.schema.json#/$defs/pathComponent"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "type": "array"
+    },
+    "request_id": {
+      "$ref": "wire-types.schema.json#/$defs/opaqueId"
+    },
+    "root_id": {
+      "$ref": "wire-types.schema.json#/$defs/opaqueId"
+    },
+    "schema_version": {
+      "const": "radarr-repair-worker/v1"
+    }
+  },
+  "required": [
+    "schema_version",
+    "operation",
+    "request_id",
+    "root_id",
+    "path_components",
+    "expected_fingerprint"
+  ],
+  "title": "Radarr repair worker DVD identification request",
+  "type": "object"
+}

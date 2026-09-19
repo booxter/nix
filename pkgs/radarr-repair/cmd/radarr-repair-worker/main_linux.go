@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/booxter/nix-config/radarr-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
@@ -22,6 +23,11 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/worker/bluraypublish"
 	"github.com/booxter/nix-config/radarr-repair/worker/blurayrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/bluraystage"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdidentify"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdpublish"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdremux"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdrequest"
+	"github.com/booxter/nix-config/radarr-repair/worker/dvdstage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/radarr-repair/worker/joininspect"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
@@ -57,6 +63,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	ffprobePath := flags.String("ffprobe", "", "absolute ffprobe executable path")
 	ffmpegPath := flags.String("ffmpeg", "", "absolute ffmpeg executable path")
 	mkvmergePath := flags.String("mkvmerge", "", "absolute mkvmerge executable path")
+	lsdvdPath := flags.String("lsdvd", "", "absolute lsdvd executable path")
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
 	joinTimeout := flags.Duration(
 		"join-timeout",
@@ -91,6 +98,9 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	if !filepath.IsAbs(*mkvmergePath) || filepath.Clean(*mkvmergePath) != *mkvmergePath {
 		return fmt.Errorf("mkvmerge executable must be an absolute clean path")
+	}
+	if !filepath.IsAbs(*lsdvdPath) || filepath.Clean(*lsdvdPath) != *lsdvdPath {
+		return fmt.Errorf("lsdvd executable must be an absolute clean path")
 	}
 	if *probeTimeout <= 0 {
 		return fmt.Errorf("probe timeout must be positive")
@@ -128,6 +138,39 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		*probeTimeout,
 		*maxConcurrent,
 	)
+	if err != nil {
+		return err
+	}
+	dvdExecutor, err := dvdidentify.NewExecutor(rootSet, dvdvideo.Runner{Executable: *lsdvdPath})
+	if err != nil {
+		return err
+	}
+	dvdHandler, err := workerserver.NewDVDIdentifyHandler(dvdExecutor, *probeTimeout, *maxConcurrent)
+	if err != nil {
+		return err
+	}
+	dvdRemuxRunner, err := dvdremux.NewRunner(*ffmpegPath, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	dvdStager, err := dvdstage.NewExecutor(rootSet, rootSet,
+		dvdvideo.Runner{Executable: *lsdvdPath}, dvdRemuxRunner, probeRunner)
+	if err != nil {
+		return err
+	}
+	dvdRequest, err := dvdrequest.NewExecutor(dvdStager)
+	if err != nil {
+		return err
+	}
+	dvdRemuxHandler, err := workerserver.NewDVDRemuxHandler(dvdRequest, *joinTimeout)
+	if err != nil {
+		return err
+	}
+	dvdPublisher, err := dvdpublish.NewExecutor(rootSet)
+	if err != nil {
+		return err
+	}
+	dvdPublishHandler, err := workerserver.NewDVDPublishHandler(dvdPublisher, *joinTimeout)
 	if err != nil {
 		return err
 	}
@@ -220,6 +263,9 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	router, err := workerserver.NewRouter(
 		probeHandler,
+		dvdHandler,
+		dvdRemuxHandler,
+		dvdPublishHandler,
 		blurayHandler,
 		blurayRemuxHandler,
 		blurayPublishHandler,

@@ -215,20 +215,6 @@ func TestNormalizeRejectsInvalidSemanticValues(t *testing.T) {
 			},
 			want: "invalid stream kind",
 		},
-		{
-			name: "control in tag",
-			mutate: func(document *Document) {
-				document.Format.Tags.Title = stringPointer("bad\nvalue")
-			},
-			want: "control characters",
-		},
-		{
-			name: "oversized tag",
-			mutate: func(document *Document) {
-				document.Format.Tags.Title = stringPointer(strings.Repeat("x", maxTagValueRunes+1))
-			},
-			want: "exceeds 512 characters",
-		},
 	}
 
 	for _, test := range tests {
@@ -242,6 +228,44 @@ func TestNormalizeRejectsInvalidSemanticValues(t *testing.T) {
 			_, err = Normalize(document)
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeDropsMalformedOptionalTags(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "control in handler name", value: "\x1fMainconcept Video Media Handler"},
+		{name: "oversized handler name", value: strings.Repeat("x", maxTagValueRunes+1)},
+		{name: "invalid UTF-8 handler name", value: string([]byte{0xff})},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			document, err := Decode(readProbeFixture(t))
+			if err != nil {
+				t.Fatal(err)
+			}
+			document.Streams[0].Tags = &Tags{
+				HandlerName: stringPointer(test.value),
+				Language:    stringPointer("eng"),
+			}
+			evidence, err := Normalize(document)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(evidence.Streams[0].Tags, []controller.ProbeTag{
+				{Name: "language", Value: "eng"},
+			}) {
+				t.Fatalf("stream tags = %#v", evidence.Streams[0].Tags)
+			}
+			if evidence.Streams[0].CodecName == nil || *evidence.Streams[0].CodecName == "" {
+				t.Fatalf("video evidence lost: %#v", evidence.Streams[0])
 			}
 		})
 	}

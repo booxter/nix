@@ -58,6 +58,9 @@ type Stream struct {
 	FrameCount     *string      `json:"nb_frames"`
 	Disposition    *Disposition `json:"disposition"`
 	Tags           *Tags        `json:"tags"`
+	// FFprobe emits this section for MPEG-2 even when no side-data fields are
+	// requested. Its contents do not contribute to repair decisions.
+	SideDataList []json.RawMessage `json:"side_data_list"`
 }
 
 type Disposition struct {

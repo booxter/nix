@@ -71,6 +71,7 @@ type Client struct {
 	transport      *http.Transport
 	roots          []mediaRoot
 	requestTimeout time.Duration
+	stageTimeout   time.Duration
 	nextRequestID  atomic.Uint64
 }
 
@@ -80,6 +81,7 @@ func New(
 	socketPath string,
 	rootPaths map[string]string,
 	requestTimeout time.Duration,
+	stageTimeout time.Duration,
 ) (*Client, error) {
 	if socketPath == "" || strings.ContainsRune(socketPath, '\x00') ||
 		!filepath.IsAbs(socketPath) || filepath.Clean(socketPath) != socketPath {
@@ -87,6 +89,9 @@ func New(
 	}
 	if requestTimeout <= 0 {
 		return nil, fmt.Errorf("worker request timeout must be positive")
+	}
+	if stageTimeout <= 0 {
+		return nil, fmt.Errorf("worker stage timeout must be positive")
 	}
 	if len(rootPaths) == 0 {
 		return nil, fmt.Errorf("at least one media root is required")
@@ -145,6 +150,7 @@ func New(
 		transport:      transport,
 		roots:          roots,
 		requestTimeout: requestTimeout,
+		stageTimeout:   max(requestTimeout, stageTimeout),
 	}, nil
 }
 

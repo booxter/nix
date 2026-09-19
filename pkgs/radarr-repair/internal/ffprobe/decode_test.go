@@ -65,6 +65,25 @@ func TestDecodeAcceptsEmptyStreamGroupsSection(t *testing.T) {
 	}
 }
 
+func TestDecodeAcceptsUnrequestedMPEG2SideData(t *testing.T) {
+	t.Parallel()
+
+	document, err := Decode([]byte(`{
+		"streams":[{"index":0,"codec_name":"mpeg2video","codec_type":"video",
+			"side_data_list":[{}, {"side_data_type":"CPB properties","max_bitrate":9000000}]}],
+		"format":{"format_name":"matroska,webm","duration":"9788.385000"}
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(document.Streams) != 1 || len(document.Streams[0].SideDataList) != 2 {
+		t.Fatalf("MPEG-2 side data = %#v", document.Streams)
+	}
+	if _, err := Normalize(document); err != nil {
+		t.Fatalf("normalize MPEG-2 stream: %v", err)
+	}
+}
+
 func TestDecodeAcceptsStreamMetadataRepeatedInsidePrograms(t *testing.T) {
 	t.Parallel()
 

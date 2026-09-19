@@ -8,6 +8,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/dvdexecution"
 	"github.com/booxter/nix-config/radarr-repair/internal/executioncheck"
 	"github.com/booxter/nix-config/radarr-repair/internal/joinexecution"
 	"github.com/booxter/nix-config/radarr-repair/internal/joinimport"
@@ -85,6 +86,14 @@ func configureRepairExecutor(
 	if err != nil {
 		return nil, fmt.Errorf("configure Blu-ray remux executor: %w", err)
 	}
+	dvdRemuxes, err := dvdexecution.New(dvdexecution.Dependencies{
+		Worker: access.worker,
+		Store:  store,
+		Clock:  clock,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("configure DVD remux executor: %w", err)
+	}
 	remuxFileImports, err := remuximport.New(remuximport.Dependencies{
 		Radarr:       access.radarr,
 		Store:        store,
@@ -103,6 +112,7 @@ func configureRepairExecutor(
 		Joins:             joins,
 		JoinedFileImports: joinedFileImports,
 		Remuxes:           remuxes,
+		DVDRemuxes:        dvdRemuxes,
 		RemuxFileImports:  remuxFileImports,
 	})
 	if err != nil {

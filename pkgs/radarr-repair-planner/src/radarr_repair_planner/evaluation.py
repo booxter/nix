@@ -52,8 +52,13 @@ class ExpectedRemuxBluray(StrictModel):
     capability_id: str
 
 
+class ExpectedRemuxDVD(StrictModel):
+    action: Literal["remux_dvd_v1"]
+    capability_id: str
+
+
 ExpectedDecision = Annotated[
-    ExpectedNoRepair | ExpectedJoin | ExpectedManualImport | ExpectedRemuxBluray,
+    ExpectedNoRepair | ExpectedJoin | ExpectedManualImport | ExpectedRemuxBluray | ExpectedRemuxDVD,
     Field(discriminator="action"),
 ]
 
@@ -110,7 +115,7 @@ def _validate_expected_capability(
             )
         return
 
-    if isinstance(expected, ExpectedRemuxBluray):
+    if isinstance(expected, (ExpectedRemuxBluray, ExpectedRemuxDVD)):
         return
 
     candidate_ids = set(capability["candidate_file_ids"])
@@ -236,6 +241,10 @@ def _expectation_violations(
         decision_value["capability_id"] != expected.capability_id
     ):
         violations.append("Blu-ray remux selected the wrong playlist")
+    elif isinstance(expected, ExpectedRemuxDVD) and (
+        decision_value["capability_id"] != expected.capability_id
+    ):
+        violations.append("DVD remux selected the wrong title")
     return violations
 
 
