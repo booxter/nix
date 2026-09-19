@@ -197,7 +197,7 @@ func TestBindRadarrManualImportFileRejectsIncompleteBindings(t *testing.T) {
 	}
 }
 
-func TestBuildRadarrJoinedFileImportUsesLatestGrab(t *testing.T) {
+func TestBuildRadarrPublishedFileImportUsesLatestGrab(t *testing.T) {
 	t.Parallel()
 
 	older := bindingQuality(3, "WEBDL-1080p")
@@ -217,7 +217,7 @@ func TestBuildRadarrJoinedFileImportUsesLatestGrab(t *testing.T) {
 		},
 	}
 
-	command, ok := BuildRadarrJoinedFileImport(
+	command, ok := BuildRadarrPublishedFileImport(
 		"/downloads/Spellbound/radarr-repair-output.avi",
 		42,
 		"ABCDEF0123456789",
@@ -242,7 +242,7 @@ func TestBuildRadarrJoinedFileImportUsesLatestGrab(t *testing.T) {
 	}
 }
 
-func TestBuildRadarrJoinedFileImportRequiresCompleteGrabMetadata(t *testing.T) {
+func TestBuildRadarrPublishedFileImportRequiresCompleteGrabMetadata(t *testing.T) {
 	t.Parallel()
 
 	quality := bindingQuality(2, "DVD")
@@ -267,7 +267,7 @@ func TestBuildRadarrJoinedFileImportRequiresCompleteGrabMetadata(t *testing.T) {
 			candidate := append([]RadarrHistoryEvent(nil), history...)
 			candidate[0].Languages = append([]RadarrLanguage(nil), history[0].Languages...)
 			mutate(&candidate)
-			if command, ok := BuildRadarrJoinedFileImport(
+			if command, ok := BuildRadarrPublishedFileImport(
 				"/downloads/Spellbound/output.avi",
 				42,
 				"ABCDEF0123456789",

@@ -339,7 +339,7 @@ func (executor *Executor) importRequest(
 	if err != nil {
 		return casestore.JoinImportRequest{}, fmt.Errorf("resolve published joined file: %w", err)
 	}
-	command, complete := controller.BuildRadarrJoinedFileImport(
+	command, complete := controller.BuildRadarrPublishedFileImport(
 		path,
 		*queue.MovieID,
 		queue.DownloadID,

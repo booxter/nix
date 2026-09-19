@@ -181,7 +181,7 @@ func (store *Store) validateJoinImportRequest(caseID string, request JoinImportR
 		observation.Movie.ID != *observation.Correlation.Radarr.MovieID {
 		return fmt.Errorf("Radarr import does not match the stored case")
 	}
-	expected, complete := controller.BuildRadarrJoinedFileImport(
+	expected, complete := controller.BuildRadarrPublishedFileImport(
 		request.Command.File.Path,
 		observation.Movie.ID,
 		observation.Correlation.Radarr.DownloadID,
