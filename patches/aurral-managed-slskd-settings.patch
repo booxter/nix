@@ -1,0 +1,295 @@
+diff --git a/.tests/settings/managed-slskd.test.js b/.tests/settings/managed-slskd.test.js
+new file mode 100644
+index 0000000..284feb4
+--- /dev/null
++++ b/.tests/settings/managed-slskd.test.js
+@@ -0,0 +1,114 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  applyManagedSlskdSettings,
++  getManagedSlskdSettings,
++  preserveStoredSlskdSettings,
++} from "../../backend/config/managedSlskd.js";
++
++const managedEnvironment = {
++  AURRAL_SLSKD_MANAGED: "true",
++  AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
++  AURRAL_SLSKD_API_KEY: "test-api-key",
++  AURRAL_SLSKD_PRIORITY: "20",
++  AURRAL_SLSKD_CLEANUP_AFTER_RUNS: "true",
++};
++
++test("managed slskd settings are disabled by default", () => {
++  assert.equal(getManagedSlskdSettings({}), null);
++});
++
++test("managed slskd settings require a URL", () => {
++  assert.throws(
++    () =>
++      getManagedSlskdSettings({
++        AURRAL_SLSKD_MANAGED: "true",
++        AURRAL_SLSKD_API_KEY: "test-api-key",
++      }),
++    /AURRAL_SLSKD_URL is required/,
++  );
++});
++
++test("managed slskd settings require an API key", () => {
++  assert.throws(
++    () =>
++      getManagedSlskdSettings({
++        AURRAL_SLSKD_MANAGED: "true",
++        AURRAL_SLSKD_URL: "http://127.0.0.2:5030",
++      }),
++    /AURRAL_SLSKD_API_KEY is required/,
++  );
++});
++
++for (const priority of ["0", "1001", "invalid"]) {
++  test(`managed slskd rejects priority ${priority}`, () => {
++    assert.throws(
++      () =>
++        getManagedSlskdSettings({
++          ...managedEnvironment,
++          AURRAL_SLSKD_PRIORITY: priority,
++        }),
++      /AURRAL_SLSKD_PRIORITY must be between 1 and 1000/,
++    );
++  });
++}
++
++test("managed slskd settings replace only the slskd integration", () => {
++  const result = applyManagedSlskdSettings(
++    {
++      slskd: { apiKey: "stored-api-key" },
++      ytdlp: { enabled: true },
++    },
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, {
++    slskd: {
++      enabled: true,
++      url: "http://127.0.0.2:5030",
++      apiKey: "test-api-key",
++      priority: 20,
++      cleanupAfterRuns: true,
++      managed: true,
++    },
++    ytdlp: { enabled: true },
++  });
++});
++
++test("stored slskd settings are preserved when saving managed settings", () => {
++  const result = preserveStoredSlskdSettings(
++    {
++      slskd: { apiKey: "managed-api-key" },
++      ytdlp: { enabled: true },
++    },
++    { slskd: { apiKey: "stored-api-key" } },
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, {
++    slskd: { apiKey: "stored-api-key" },
++    ytdlp: { enabled: true },
++  });
++});
++
++test("managed slskd settings are not persisted when none were stored", () => {
++  const result = preserveStoredSlskdSettings(
++    {
++      slskd: { apiKey: "managed-api-key" },
++      ytdlp: { enabled: true },
++    },
++    {},
++    managedEnvironment,
++  );
++
++  assert.deepEqual(result, { ytdlp: { enabled: true } });
++});
++
++test("unmanaged slskd settings are persisted normally", () => {
++  const integrations = { slskd: { apiKey: "updated-api-key" } };
++  assert.deepEqual(
++    preserveStoredSlskdSettings(integrations, {}, {}),
++    integrations,
++  );
++});
+diff --git a/backend/config/managedSlskd.js b/backend/config/managedSlskd.js
+new file mode 100644
+index 0000000..9548bb2
+--- /dev/null
++++ b/backend/config/managedSlskd.js
+@@ -0,0 +1,53 @@
++function parseBoolean(value) {
++  return String(value || "").trim().toLowerCase() === "true";
++}
++
++function parsePriority(value) {
++  const parsed = Number.parseInt(value, 10);
++  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 1000) {
++    throw new Error("AURRAL_SLSKD_PRIORITY must be between 1 and 1000");
++  }
++  return parsed;
++}
++
++export function getManagedSlskdSettings(env = process.env) {
++  if (!parseBoolean(env.AURRAL_SLSKD_MANAGED)) return null;
++
++  const url = String(env.AURRAL_SLSKD_URL || "").trim();
++  const apiKey = String(env.AURRAL_SLSKD_API_KEY || "").trim();
++  if (!url) throw new Error("AURRAL_SLSKD_URL is required for managed slskd");
++  if (!apiKey) {
++    throw new Error("AURRAL_SLSKD_API_KEY is required for managed slskd");
++  }
++
++  return {
++    enabled: true,
++    url,
++    apiKey,
++    priority: parsePriority(env.AURRAL_SLSKD_PRIORITY || "10"),
++    cleanupAfterRuns: parseBoolean(env.AURRAL_SLSKD_CLEANUP_AFTER_RUNS),
++    managed: true,
++  };
++}
++
++export function applyManagedSlskdSettings(integrations, env = process.env) {
++  const managed = getManagedSlskdSettings(env);
++  if (!managed) return integrations;
++  return { ...integrations, slskd: managed };
++}
++
++export function preserveStoredSlskdSettings(
++  integrations,
++  storedIntegrations,
++  env = process.env,
++) {
++  if (!getManagedSlskdSettings(env)) return integrations;
++
++  const preserved = { ...integrations };
++  if (storedIntegrations.slskd === undefined) {
++    delete preserved.slskd;
++  } else {
++    preserved.slskd = storedIntegrations.slskd;
++  }
++  return preserved;
++}
+diff --git a/backend/db/helpers/settings.js b/backend/db/helpers/settings.js
+index 37728b9..ce93c69 100644
+--- a/backend/db/helpers/settings.js
++++ b/backend/db/helpers/settings.js
+@@ -1,6 +1,10 @@
+ import crypto from "crypto";
+ import { db, dbHelpers } from "../../config/db-sqlite.js";
+ import { decryptIntegrations, encryptIntegrations } from "../../config/encryption.js";
++import {
++  applyManagedSlskdSettings,
++  preserveStoredSlskdSettings,
++} from "../../config/managedSlskd.js";
+ import {
+   normalizePathMappings,
+   syncPathMappings,
+@@ -186,7 +190,7 @@ export const dbOps = {
+       );
+     }
+     const result = {
+-      integrations: decryptedIntegrations,
++      integrations: applyManagedSlskdSettings(decryptedIntegrations),
+       quality: quality || "standard",
+       dateTimeFormat: normalizeDateTimeFormat(dateTimeFormat),
+       qualityProfile,
+@@ -239,7 +243,10 @@ export const dbOps = {
+             dbHelpers.parseJSON(getSettingStmt.get("integrations")?.value),
+             encKey,
+           ) || {};
+-        const nextIntegrations = { ...settings.integrations };
++        const nextIntegrations = preserveStoredSlskdSettings(
++          { ...settings.integrations },
++          existingIntegrations,
++        );
+         if (
+           existingIntegrations.soulseek &&
+           nextIntegrations.soulseek === undefined
+diff --git a/frontend/src/pages/Settings/components/SettingsAdapterFields.jsx b/frontend/src/pages/Settings/components/SettingsAdapterFields.jsx
+index 6ccac9e..5a5d3ba 100644
+--- a/frontend/src/pages/Settings/components/SettingsAdapterFields.jsx
++++ b/frontend/src/pages/Settings/components/SettingsAdapterFields.jsx
+@@ -33,7 +33,7 @@ function groupFields(fields, advanced) {
+   return groups;
+ }
+ 
+-export function SettingsAdapterFields({ definition, settings, onChange }) {
++export function SettingsAdapterFields({ definition, settings, onChange, disabled = false }) {
+   const [showAdvanced, setShowAdvanced] = useState(false);
+   const fields = (definition?.fields || []).filter((field) => !field.hidden);
+   const advancedGroups = groupFields(fields, true);
+@@ -48,6 +48,7 @@ export function SettingsAdapterFields({ definition, settings, onChange }) {
+           key={field.key}
+           label={field.label}
+           checked={value === true}
++          disabled={disabled}
+           onChange={(event) => updateValue(event.target.checked)}
+         />
+       );
+@@ -60,6 +61,7 @@ export function SettingsAdapterFields({ definition, settings, onChange }) {
+           <DownloadFolderField
+             id={id}
+             value={value}
++            disabled={disabled}
+             autoApplySuggestion={false}
+             onChange={updateValue}
+           />
+@@ -74,6 +76,7 @@ export function SettingsAdapterFields({ definition, settings, onChange }) {
+             id={id}
+             required={field.required === true}
+             value={value}
++            disabled={disabled}
+             onChange={(event) => updateValue(event.target.value)}
+           >
+             {(field.options || []).map((option) => {
+@@ -100,6 +103,7 @@ export function SettingsAdapterFields({ definition, settings, onChange }) {
+           placeholder={field.placeholder}
+           autoComplete={field.secret ? "new-password" : "off"}
+           value={value}
++          disabled={disabled}
+           onChange={(event) => {
+             const nextValue = event.target.value;
+             updateValue(
+diff --git a/frontend/src/pages/Settings/components/SettingsDownloadClientsSection.jsx b/frontend/src/pages/Settings/components/SettingsDownloadClientsSection.jsx
+index c9de579..7a24b96 100644
+--- a/frontend/src/pages/Settings/components/SettingsDownloadClientsSection.jsx
++++ b/frontend/src/pages/Settings/components/SettingsDownloadClientsSection.jsx
+@@ -6,6 +6,7 @@ import { DotLoader } from "../../../components/DotLoader";
+ import DownloadFolderField from "../../../components/DownloadFolderField";
+ import { IntegrationCard, SettingsIntegrationModal } from "./SettingsIntegrationCards";
+ import { SettingsAdapterFields } from "./SettingsAdapterFields";
++import { SettingsModalCallout } from "./SettingsModalLayout";
+ import { SettingsArrFieldSet, SettingsArrFormGroup } from "./arr/SettingsArrLayout";
+ import { getProviderStatus } from "../utils/integrationStatus";
+ import { PATH_MAPPING_SOURCE_OPTIONS, PathMappingModal } from "./PathMappingModal";
+@@ -93,6 +94,7 @@ export function SettingsDownloadClientsSection({
+     ? Object.values(downloadClientSettings)
+     : [];
+   const activeClient = downloadClientSettings?.[activeModal] || null;
++  const activeClientManaged = activeClient?.key === "slskd" && integrations.slskd?.managed === true;
+ 
+   const updateIntegration = (key, patch) => {
+     setTestStatus(null);
+@@ -378,10 +380,14 @@ export function SettingsDownloadClientsSection({
+             </button>
+           }
+         >
++          {activeClientManaged ? (
++            <SettingsModalCallout>Managed by the host configuration.</SettingsModalCallout>
++          ) : null}
+           <SettingsAdapterFields
+             key={activeClient.key}
+             definition={activeClient}
+             settings={integrations[activeClient.key] || {}}
++            disabled={activeClientManaged}
+             onChange={(patch) => updateIntegration(activeClient.key, patch)}
+           />
+         </SettingsIntegrationModal>

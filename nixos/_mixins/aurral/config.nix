@@ -114,7 +114,6 @@ in
 
     services.aurral = {
       enable = true;
-      package = pkgs.callPackage ./package { };
       dataDir = cfg.stateDir;
       port = model.port;
       user = model.user;

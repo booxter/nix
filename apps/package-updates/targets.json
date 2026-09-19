@@ -6,14 +6,6 @@
       "system": "x86_64-linux"
     },
     {
-      "attr": "aurral",
-      "nixUpdateArgs": [
-        "--src-only",
-        "--use-github-releases"
-      ],
-      "system": "x86_64-linux"
-    },
-    {
       "attr": "degoog",
       "nixUpdateArgs": [
         "--use-github-releases"
