@@ -14,6 +14,7 @@ from radarr_repair_planner.evaluation import (
     ExpectedJoin,
     ExpectedManualImport,
     ExpectedNoRepair,
+    ExpectedRemuxBluray,
     OllamaEvaluationSettings,
     _validate_expected_capability,
     evaluate_outcome,
@@ -51,6 +52,8 @@ def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV2:
             capability_id=expected.capability_id,
             file_id=expected.file_id,
         )
+    elif isinstance(expected, ExpectedRemuxBluray):
+        value.update(capability_id=expected.capability_id)
     return decode_decision(json.dumps(value).encode())
 
 
@@ -118,9 +121,9 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
     assert {evaluation_case.spec.name for evaluation_case in cases} == {
         "ambiguous_part_order",
         "clear_ordered_join",
-        "current_double_exposure_raw_bluray",
-        "current_pandoras_mirror_raw_bluray",
-        "current_xconfessions_raw_bluray",
+        "current_double_exposure_bluray",
+        "current_pandoras_mirror_bluray",
+        "current_xconfessions_bluray_runtime_mismatch",
         "episodic_release_with_join_pool",
         "incompatible_parts",
         "missing_movie_identity",

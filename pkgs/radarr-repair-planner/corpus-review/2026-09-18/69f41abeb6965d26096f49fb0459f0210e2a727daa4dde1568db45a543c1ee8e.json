@@ -1,6 +1,61 @@
 {
-  "capabilities": [],
-  "case_id": "sha256:1dec5593fe42d2ad825436d16caf726edd6bb983b9950bd7f952cda94ca9389c",
+  "capabilities": [
+    {
+      "action": "remux_bluray_v1",
+      "capability_id": "capability:27d963e194b6a32ee9bf5d9911ae89cc63a6d2cc537e5800e3d23f6ffe81bbc7",
+      "chapter_count": 1,
+      "clip_file_ids": [
+        "file:a514c2893095a3937c440a05f264ee90b548156a271cf5ab216f6d09c0ba6ff4"
+      ],
+      "duration_ms": 6033166,
+      "playlist_file_id": "file:9cb8ba7dfa7b04bbbdd33cd90b322385afcea9c69209548e19cd207441792828",
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "kind": "video",
+          "language": null
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "kind": "audio",
+          "language": "ger"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "kind": "audio",
+          "language": "eng"
+        }
+      ]
+    },
+    {
+      "action": "remux_bluray_v1",
+      "capability_id": "capability:0be5a8d1127e74cb1f05b82a065a2ab3c8a3357aec052250f32efe804a6634c5",
+      "chapter_count": 10,
+      "clip_file_ids": [
+        "file:a514c2893095a3937c440a05f264ee90b548156a271cf5ab216f6d09c0ba6ff4"
+      ],
+      "duration_ms": 6033166,
+      "playlist_file_id": "file:b17608b476cfa7057a6bcbcbc710c809ed04e48564ccb8fa32640b12b1225c58",
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "kind": "video",
+          "language": null
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "kind": "audio",
+          "language": "ger"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "kind": "audio",
+          "language": "eng"
+        }
+      ]
+    }
+  ],
+  "case_id": "sha256:69f41abeb6965d26096f49fb0459f0210e2a727daa4dde1568db45a543c1ee8e",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-11T19:05:19Z",
@@ -34,8 +89,8 @@
         "_dsa_version_"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 3
@@ -58,8 +113,8 @@
         "bdtmdlist.xml"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 74
@@ -83,8 +138,8 @@
         "00000.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 396
@@ -108,8 +163,8 @@
         "00001.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 372
@@ -133,8 +188,8 @@
         "00002.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 368
@@ -158,8 +213,8 @@
         "00003.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 672
@@ -183,8 +238,8 @@
         "00004.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 36244
@@ -208,8 +263,8 @@
         "00005.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 692
@@ -233,8 +288,8 @@
         "00006.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 568
@@ -258,8 +313,8 @@
         "00007.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 848
@@ -283,8 +338,8 @@
         "00008.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1140
@@ -308,8 +363,8 @@
         "00009.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 816
@@ -333,8 +388,8 @@
         "00010.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 808
@@ -358,8 +413,8 @@
         "00011.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 656
@@ -383,8 +438,8 @@
         "00012.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 748
@@ -408,8 +463,8 @@
         "00013.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 772
@@ -433,8 +488,8 @@
         "00014.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 808
@@ -458,8 +513,8 @@
         "00015.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 932
@@ -483,8 +538,8 @@
         "00016.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1296
@@ -508,8 +563,8 @@
         "00017.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1344
@@ -533,8 +588,8 @@
         "00018.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 4452
@@ -558,8 +613,8 @@
         "00019.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 296
@@ -583,8 +638,8 @@
         "00020.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 296
@@ -609,8 +664,8 @@
         "main.0.aca"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 4020
@@ -635,8 +690,8 @@
         "main.1.png"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 120
@@ -661,8 +716,8 @@
         "map.txt"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 18
@@ -685,8 +740,8 @@
         "MovieObject.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 5034
@@ -710,8 +765,8 @@
         "00000.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -735,8 +790,8 @@
         "00001.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 158
@@ -760,8 +815,8 @@
         "00002.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 158
@@ -785,8 +840,8 @@
         "00003.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -810,8 +865,8 @@
         "00004.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 190
@@ -835,8 +890,8 @@
         "00005.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -860,8 +915,8 @@
         "00006.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -885,8 +940,8 @@
         "00007.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -910,8 +965,8 @@
         "00008.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -935,8 +990,8 @@
         "00009.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -960,8 +1015,8 @@
         "00010.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -985,8 +1040,8 @@
         "00011.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1010,8 +1065,8 @@
         "00012.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1035,8 +1090,8 @@
         "00013.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1060,8 +1115,8 @@
         "00014.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1085,8 +1140,8 @@
         "00015.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1110,8 +1165,8 @@
         "00016.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1135,8 +1190,8 @@
         "00017.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1160,8 +1215,8 @@
         "00018.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -1185,8 +1240,8 @@
         "01000.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 334
@@ -1210,8 +1265,8 @@
         "01001.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1235,8 +1290,8 @@
         "01002.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 372
@@ -1260,8 +1315,8 @@
         "01003.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1285,8 +1340,8 @@
         "01004.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1310,8 +1365,8 @@
         "01005.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1335,8 +1390,8 @@
         "01006.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1360,8 +1415,8 @@
         "01007.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1385,8 +1440,8 @@
         "01008.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1410,8 +1465,8 @@
         "01009.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1435,8 +1490,8 @@
         "01010.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1460,8 +1515,8 @@
         "01011.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1485,8 +1540,8 @@
         "01012.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1510,8 +1565,8 @@
         "01013.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1535,8 +1590,8 @@
         "01014.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1560,8 +1615,8 @@
         "01015.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1585,8 +1640,8 @@
         "01016.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -1609,8 +1664,8 @@
         "index.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 316
@@ -1633,8 +1688,8 @@
         "00000.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 396
@@ -1657,8 +1712,8 @@
         "00001.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 372
@@ -1681,8 +1736,8 @@
         "00002.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 368
@@ -1705,8 +1760,8 @@
         "00003.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 672
@@ -1729,8 +1784,8 @@
         "00004.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 36244
@@ -1753,8 +1808,8 @@
         "00005.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 692
@@ -1777,8 +1832,8 @@
         "00006.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 568
@@ -1801,8 +1856,8 @@
         "00007.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 848
@@ -1825,8 +1880,8 @@
         "00008.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1140
@@ -1849,8 +1904,8 @@
         "00009.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 816
@@ -1873,8 +1928,8 @@
         "00010.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 808
@@ -1897,8 +1952,8 @@
         "00011.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 656
@@ -1921,8 +1976,8 @@
         "00012.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 748
@@ -1945,8 +2000,8 @@
         "00013.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 772
@@ -1969,8 +2024,8 @@
         "00014.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 808
@@ -1993,8 +2048,8 @@
         "00015.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 932
@@ -2017,8 +2072,8 @@
         "00016.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1296
@@ -2041,8 +2096,8 @@
         "00017.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 1344
@@ -2065,8 +2120,8 @@
         "00018.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 4452
@@ -2089,8 +2144,8 @@
         "00019.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 296
@@ -2113,8 +2168,8 @@
         "00020.clpi"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 296
@@ -2138,8 +2193,8 @@
         "main.0.aca"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 4020
@@ -2163,8 +2218,8 @@
         "main.1.png"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 120
@@ -2188,8 +2243,8 @@
         "map.txt"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 18
@@ -2211,8 +2266,8 @@
         "MovieObject.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 5034
@@ -2235,8 +2290,8 @@
         "00000.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2259,8 +2314,8 @@
         "00001.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 158
@@ -2283,8 +2338,8 @@
         "00002.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 158
@@ -2307,8 +2362,8 @@
         "00003.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2331,8 +2386,8 @@
         "00004.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 190
@@ -2355,8 +2410,8 @@
         "00005.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2379,8 +2434,8 @@
         "00006.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2403,8 +2458,8 @@
         "00007.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2427,8 +2482,8 @@
         "00008.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2451,8 +2506,8 @@
         "00009.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2475,8 +2530,8 @@
         "00010.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2499,8 +2554,8 @@
         "00011.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2523,8 +2578,8 @@
         "00012.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2547,8 +2602,8 @@
         "00013.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2571,8 +2626,8 @@
         "00014.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2595,8 +2650,8 @@
         "00015.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2619,8 +2674,8 @@
         "00016.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2643,8 +2698,8 @@
         "00017.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2667,8 +2722,8 @@
         "00018.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 174
@@ -2691,8 +2746,8 @@
         "01000.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 334
@@ -2715,8 +2770,8 @@
         "01001.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2739,8 +2794,8 @@
         "01002.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 372
@@ -2763,8 +2818,8 @@
         "01003.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2787,8 +2842,8 @@
         "01004.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2811,8 +2866,8 @@
         "01005.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2835,8 +2890,8 @@
         "01006.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2859,8 +2914,8 @@
         "01007.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2883,8 +2938,8 @@
         "01008.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2907,8 +2962,8 @@
         "01009.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2931,8 +2986,8 @@
         "01010.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2955,8 +3010,8 @@
         "01011.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -2979,8 +3034,8 @@
         "01012.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -3003,8 +3058,8 @@
         "01013.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -3027,8 +3082,8 @@
         "01014.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -3051,8 +3106,8 @@
         "01015.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -3075,8 +3130,8 @@
         "01016.mpls"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 230
@@ -4728,8 +4783,8 @@
         "00019.m2ts"
       ],
       "probe": {
-        "status": "failed",
         "reason": "invalid_output",
+        "status": "failed",
         "summary": "ffprobe returned invalid structured metadata."
       },
       "size_bytes": 2906112
@@ -4752,8 +4807,8 @@
         "00020.m2ts"
       ],
       "probe": {
-        "status": "failed",
         "reason": "invalid_output",
+        "status": "failed",
         "summary": "ffprobe returned invalid structured metadata."
       },
       "size_bytes": 2906112
@@ -4775,8 +4830,8 @@
         "index.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 316
@@ -4799,8 +4854,8 @@
         "id.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 104
@@ -4822,14 +4877,14 @@
         "id.bdmv"
       ],
       "probe": {
-        "status": "not_probed",
         "reason": "not_probe_candidate",
+        "status": "not_probed",
         "summary": "The file was retained as evidence but was not eligible for probing."
       },
       "size_bytes": 104
     }
   ],
-  "observed_at": "2026-09-19T02:04:20.359490813Z",
+  "observed_at": "2026-09-19T02:54:38.67452873Z",
   "radarr": {
     "failure": {
       "download_ref": "download:54335f441beb311bc83f0e517413c98dd585a4c8ea14fda1190634271649605b",
