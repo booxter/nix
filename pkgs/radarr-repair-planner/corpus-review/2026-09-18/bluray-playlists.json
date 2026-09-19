@@ -1,0 +1,1157 @@
+{
+  "Pandoras.Mirror.BLURAY 1080p": [
+    {
+      "chapters": 5,
+      "clips": [
+        "00000.m2ts"
+      ],
+      "duration_ns": 5629498866666,
+      "errors": [],
+      "playlist": "00000.mpls",
+      "size_bytes": 23197495296,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "eng",
+          "type": "audio"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        },
+        {
+          "codec": "HDMV PGS",
+          "language": "eng",
+          "type": "subtitles"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 2,
+      "clips": [
+        "00002.m2ts"
+      ],
+      "duration_ns": 256923333333,
+      "errors": [],
+      "playlist": "00001.mpls",
+      "size_bytes": 517226496,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00003.m2ts"
+      ],
+      "duration_ns": 51926866666,
+      "errors": [],
+      "playlist": "00002.mpls",
+      "size_bytes": 118265856,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00004.m2ts"
+      ],
+      "duration_ns": 53803733333,
+      "errors": [],
+      "playlist": "00003.mpls",
+      "size_bytes": 90869760,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00005.m2ts"
+      ],
+      "duration_ns": 8008000000,
+      "errors": [],
+      "playlist": "00004.mpls",
+      "size_bytes": 1388544,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00006.m2ts"
+      ],
+      "duration_ns": 4504488888,
+      "errors": [],
+      "playlist": "00005.mpls",
+      "size_bytes": 1327104,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "The.Double.Exposure.Of.Holly.BLURAY": [
+    {
+      "chapters": 4,
+      "clips": [
+        "00000.m2ts"
+      ],
+      "duration_ns": 4490569400000,
+      "errors": [],
+      "playlist": "00000.mpls",
+      "size_bytes": 21212024832,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "eng",
+          "type": "audio"
+        },
+        {
+          "codec": "HDMV PGS",
+          "language": "eng",
+          "type": "subtitles"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00002.m2ts"
+      ],
+      "duration_ns": 1027026000000,
+      "errors": [],
+      "playlist": "00001.mpls",
+      "size_bytes": 2049398784,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00003.m2ts"
+      ],
+      "duration_ns": 302135155555,
+      "errors": [],
+      "playlist": "00002.mpls",
+      "size_bytes": 799782912,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00004.m2ts"
+      ],
+      "duration_ns": 40248533333,
+      "errors": [],
+      "playlist": "00003.mpls",
+      "size_bytes": 107513856,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00005.m2ts"
+      ],
+      "duration_ns": 42834466666,
+      "errors": [],
+      "playlist": "00004.mpls",
+      "size_bytes": 114425856,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00006.m2ts"
+      ],
+      "duration_ns": 8008000000,
+      "errors": [],
+      "playlist": "00005.mpls",
+      "size_bytes": 1431552,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00007.m2ts"
+      ],
+      "duration_ns": 4504488888,
+      "errors": [],
+      "playlist": "00006.mpls",
+      "size_bytes": 1327104,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "XConfessions 2": [
+    {
+      "chapters": 1,
+      "clips": [
+        "00000.m2ts"
+      ],
+      "duration_ns": 7000000000,
+      "errors": [],
+      "playlist": "00000.mpls",
+      "size_bytes": 5965824,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00001.m2ts"
+      ],
+      "duration_ns": 10041666667,
+      "errors": [],
+      "playlist": "00001.mpls",
+      "size_bytes": 3416064,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00002.m2ts"
+      ],
+      "duration_ns": 10041666667,
+      "errors": [],
+      "playlist": "00002.mpls",
+      "size_bytes": 3194880,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00003.m2ts"
+      ],
+      "duration_ns": 60916666667,
+      "errors": [],
+      "playlist": "00003.mpls",
+      "size_bytes": 71632896,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00004.m2ts"
+      ],
+      "duration_ns": 6033166666667,
+      "errors": [],
+      "playlist": "00004.mpls",
+      "size_bytes": 12726933504,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "ger",
+          "type": "audio"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00005.m2ts"
+      ],
+      "duration_ns": 53250000000,
+      "errors": [],
+      "playlist": "00005.mpls",
+      "size_bytes": 133029888,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00006.m2ts"
+      ],
+      "duration_ns": 35125000000,
+      "errors": [],
+      "playlist": "00006.mpls",
+      "size_bytes": 91447296,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00007.m2ts"
+      ],
+      "duration_ns": 81208333334,
+      "errors": [],
+      "playlist": "00007.mpls",
+      "size_bytes": 240629760,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00008.m2ts"
+      ],
+      "duration_ns": 111833333334,
+      "errors": [],
+      "playlist": "00008.mpls",
+      "size_bytes": 301049856,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00009.m2ts"
+      ],
+      "duration_ns": 75708333334,
+      "errors": [],
+      "playlist": "00009.mpls",
+      "size_bytes": 175872000,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00010.m2ts"
+      ],
+      "duration_ns": 72583333334,
+      "errors": [],
+      "playlist": "00010.mpls",
+      "size_bytes": 115322880,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00011.m2ts"
+      ],
+      "duration_ns": 49360000000,
+      "errors": [],
+      "playlist": "00011.mpls",
+      "size_bytes": 141717504,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00012.m2ts"
+      ],
+      "duration_ns": 68208333334,
+      "errors": [],
+      "playlist": "00012.mpls",
+      "size_bytes": 136611840,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00013.m2ts"
+      ],
+      "duration_ns": 65791666667,
+      "errors": [],
+      "playlist": "00013.mpls",
+      "size_bytes": 218806272,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00014.m2ts"
+      ],
+      "duration_ns": 73125000000,
+      "errors": [],
+      "playlist": "00014.mpls",
+      "size_bytes": 166225920,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00015.m2ts"
+      ],
+      "duration_ns": 86958333334,
+      "errors": [],
+      "playlist": "00015.mpls",
+      "size_bytes": 216311808,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00016.m2ts"
+      ],
+      "duration_ns": 149291666667,
+      "errors": [],
+      "playlist": "00016.mpls",
+      "size_bytes": 416434176,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00017.m2ts"
+      ],
+      "duration_ns": 157083333334,
+      "errors": [],
+      "playlist": "00017.mpls",
+      "size_bytes": 354871296,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00018.m2ts"
+      ],
+      "duration_ns": 655375000000,
+      "errors": [],
+      "playlist": "00018.mpls",
+      "size_bytes": 1847304192,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 3,
+      "clips": [
+        "00000.m2ts",
+        "00001.m2ts",
+        "00002.m2ts"
+      ],
+      "duration_ns": 27083333334,
+      "errors": [],
+      "playlist": "01000.mpls",
+      "size_bytes": 12576768,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00003.m2ts"
+      ],
+      "duration_ns": 60916666667,
+      "errors": [],
+      "playlist": "01001.mpls",
+      "size_bytes": 71632896,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "AC-3",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 10,
+      "clips": [
+        "00004.m2ts"
+      ],
+      "duration_ns": 6033166666667,
+      "errors": [],
+      "playlist": "01002.mpls",
+      "size_bytes": 12726933504,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "ger",
+          "type": "audio"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00005.m2ts"
+      ],
+      "duration_ns": 53250000000,
+      "errors": [],
+      "playlist": "01003.mpls",
+      "size_bytes": 133029888,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00006.m2ts"
+      ],
+      "duration_ns": 35125000000,
+      "errors": [],
+      "playlist": "01004.mpls",
+      "size_bytes": 91447296,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00007.m2ts"
+      ],
+      "duration_ns": 81208333334,
+      "errors": [],
+      "playlist": "01005.mpls",
+      "size_bytes": 240629760,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00008.m2ts"
+      ],
+      "duration_ns": 111833333334,
+      "errors": [],
+      "playlist": "01006.mpls",
+      "size_bytes": 301049856,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00009.m2ts"
+      ],
+      "duration_ns": 75708333334,
+      "errors": [],
+      "playlist": "01007.mpls",
+      "size_bytes": 175872000,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00010.m2ts"
+      ],
+      "duration_ns": 72583333334,
+      "errors": [],
+      "playlist": "01008.mpls",
+      "size_bytes": 115322880,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00011.m2ts"
+      ],
+      "duration_ns": 49360000000,
+      "errors": [],
+      "playlist": "01009.mpls",
+      "size_bytes": 141717504,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00012.m2ts"
+      ],
+      "duration_ns": 68208333334,
+      "errors": [],
+      "playlist": "01010.mpls",
+      "size_bytes": 136611840,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00013.m2ts"
+      ],
+      "duration_ns": 65791666667,
+      "errors": [],
+      "playlist": "01011.mpls",
+      "size_bytes": 218806272,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00014.m2ts"
+      ],
+      "duration_ns": 73125000000,
+      "errors": [],
+      "playlist": "01012.mpls",
+      "size_bytes": 166225920,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00015.m2ts"
+      ],
+      "duration_ns": 86958333334,
+      "errors": [],
+      "playlist": "01013.mpls",
+      "size_bytes": 216311808,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00016.m2ts"
+      ],
+      "duration_ns": 149291666667,
+      "errors": [],
+      "playlist": "01014.mpls",
+      "size_bytes": 416434176,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00017.m2ts"
+      ],
+      "duration_ns": 157083333334,
+      "errors": [],
+      "playlist": "01015.mpls",
+      "size_bytes": 354871296,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "chapters": 1,
+      "clips": [
+        "00018.m2ts"
+      ],
+      "duration_ns": 655375000000,
+      "errors": [],
+      "playlist": "01016.mpls",
+      "size_bytes": 1847304192,
+      "tracks": [
+        {
+          "codec": "AVC/H.264/MPEG-4p10",
+          "language": null,
+          "type": "video"
+        },
+        {
+          "codec": "DTS-HD Master Audio",
+          "language": "und",
+          "type": "audio"
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}
