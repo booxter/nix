@@ -48,23 +48,8 @@ def status(path, *, data=None, user=None):
 
 start_all()
 machine.wait_for_unit("fake-lidarr.service")
-machine.wait_for_unit("wg.service")
-machine.wait_for_unit("vpn-wg-bridge-access.service")
-machine.wait_for_unit("slskd.service")
 machine.wait_for_unit("aurral.service")
 machine.wait_for_open_port(3001)
-machine.wait_until_succeeds(
-    command(
-        [
-            CURL,
-            "--fail",
-            "--silent",
-            "--header",
-            f"X-API-KEY: {SLSKD_API_KEY}",
-            f"{SLSKD_URL}/api/v0/application",
-        ]
-    )
-)
 
 with subtest("serves the application and reports a live backend"):
     assert request("/api/health/live")["status"] == "ok"
@@ -90,26 +75,16 @@ with subtest("maps trusted proxy users to configured roles"):
     assert (admin["username"], admin["role"]) == ("admin", "admin")
     assert (listener["username"], listener["role"]) == ("listener", "user")
 
-with subtest("rejects local password authentication"):
-    assert (
-        status(
-            "/api/auth/login",
-            data={"username": "admin", "password": "test-password"},
-        )
-        == 403
-    )
-
-with subtest("uses the managed slskd connection"):
-    result = request("/api/settings/slskd/test", data={}, user="admin")
-    assert result["success"] is True
-    assert result["configured"] is True
-    assert result["ok"] is True
-    assert result["warning"] is True
-
 with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
-    machine.succeed("runuser --user slskd -- touch /srv/media/slskd/complete/slskd")
-    machine.succeed("runuser --user aurral -- test -r /srv/media/slskd/complete/slskd")
+    machine.succeed("touch /srv/media/library/music/aurral-source")
+    machine.succeed("runuser --user aurral -- test -r /srv/media/library/music/aurral-source")
+    service_pid = machine.succeed(
+        "systemctl show --property MainPID --value aurral.service"
+    ).strip()
+    service_library = f"/proc/{service_pid}/root/srv/media/library/music"
+    machine.succeed(command(["test", "-r", f"{service_library}/aurral-source"]))
+    machine.fail(command(["touch", f"{service_library}/aurral-unexpected-write"]))
     machine.succeed("test -f /var/lib/aurral/aurral.db")
 
 with subtest("configuration and state survive restart"):

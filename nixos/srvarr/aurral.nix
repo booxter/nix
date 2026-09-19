@@ -3,10 +3,7 @@
   host.aurral = {
     stateDir = "/data/.state/nixarr/aurral";
     storageClaim = "media";
-    slskd = {
-      vpnNamespace = "wg";
-      peerPort = 13869;
-    };
+    libraryRoots = [ "/data/media/library/music" ];
     publicHostName = "mu.${config.host.network.publicDomain}";
   };
 }

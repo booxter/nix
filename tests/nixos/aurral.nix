@@ -3,23 +3,10 @@ let
   fixtures = ./aurral;
   inherit (pkgs) lib;
   lidarrApiKey = "lidarr-test-api-key";
-  slskdApiKey = "slskd-test-api-key";
-  wireguardConfig = pkgs.writeText "aurral-test-wireguard.conf" ''
-    [Interface]
-    PrivateKey = 8PZQ8felOfsPGDaAPdHaJlkf0hcCn6JGhU1DJq5Ts3M=
-    Address = 10.100.0.2/24
-    DNS = 1.1.1.1
-
-    [Peer]
-    PublicKey = ObYLOQ9jBDhE2a/Jxgzg3f+Navp0rXjkctKCelb0xEI=
-    AllowedIPs = 0.0.0.0/0
-    Endpoint = 127.0.0.1:51820
-  '';
 in
 pkgs.testers.runNixOSTest {
   name = "aurral";
   node.specialArgs = { inherit inputs; };
-
   nodes.machine = {
     imports = [
       inputs.sops-nix.nixosModules.sops
@@ -40,17 +27,18 @@ pkgs.testers.runNixOSTest {
       site.timeZone = "Etc/UTC";
       aurral = {
         storageClaim = "media";
+        libraryRoots = [ "/srv/media/library/music" ];
         publicHostName = "music.example.invalid";
-        slskd = {
-          vpnNamespace = "wg";
-          peerPort = 13869;
-        };
       };
       storage = {
         claims.media = {
           provider = "aurral-node";
           resource = "media";
           mountPoint = "/srv/media";
+          directories."library/music" = {
+            group = "media";
+            mode = "0755";
+          };
         };
         resources.media = {
           volume = "durable";
@@ -84,12 +72,6 @@ pkgs.testers.runNixOSTest {
           listener.groups = [ "media-users" ];
         };
       };
-      vpn.namespaces.wg = {
-        accessibleFrom = [ "127.0.0.1" ];
-        bridgeAddress = "192.168.50.5";
-        namespaceAddress = "192.168.50.1";
-        wireguardConfigFile = "${wireguardConfig}";
-      };
     };
 
     # NixOS tests replace normal host filesystems with their VM root disk.
@@ -111,22 +93,6 @@ pkgs.testers.runNixOSTest {
     };
 
     services.nginx.enable = true;
-
-    sops.placeholder = {
-      "slskd/soulseek/username" = "test-user";
-      "slskd/soulseek/password" = "test-password";
-      "slskd/web/username" = "test-admin";
-      "slskd/web/password" = "test-password";
-      "slskd/web/apiKey" = slskdApiKey;
-    };
-
-    testSupport.sops.values = {
-      "slskd/soulseek/username" = "test-user";
-      "slskd/soulseek/password" = "test-password";
-      "slskd/web/username" = "test-admin";
-      "slskd/web/password" = "test-password";
-      "slskd/web/apiKey" = slskdApiKey;
-    };
 
     systemd.services.fake-lidarr = {
       wantedBy = [ "multi-user.target" ];
@@ -152,8 +118,6 @@ pkgs.testers.runNixOSTest {
     CURL = ${builtins.toJSON (lib.getExe pkgs.curl)}
     LIDARR_API_KEY = ${builtins.toJSON lidarrApiKey}
     LIDARR_URL = "http://127.0.0.1:8686"
-    SLSKD_API_KEY = ${builtins.toJSON slskdApiKey}
-    SLSKD_URL = "http://192.168.50.1:5030"
   ''
   + builtins.readFile "${fixtures}/test.py";
 }

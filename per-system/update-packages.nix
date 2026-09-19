@@ -14,7 +14,6 @@ lib.optionalAttrs (lib.hasSuffix "-darwin" system) {
 }
 // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
   inherit (sharedPackages) aiosqlitepool firefox-devtools-mcp;
-  aurral = pkgs.callPackage ../nixos/_mixins/aurral/package { };
   inherit (degoogPackages) degoog;
   degoog-devinside-extensions = degoogPackages.devinsideExtensions;
   degoog-georgvwt-extensions = degoogPackages.georgvwtExtensions;

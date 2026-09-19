@@ -14,19 +14,13 @@ let
 
       storageClaim = lib.mkOption {
         type = lib.types.nonEmptyStr;
-        description = "Storage claim containing Aurral flows and slskd downloads.";
+        description = "Storage claim containing Aurral flows.";
       };
 
-      slskd = {
-        vpnNamespace = lib.mkOption {
-          type = lib.types.nonEmptyStr;
-          description = "VPN namespace containing slskd.";
-        };
-
-        peerPort = lib.mkOption {
-          type = lib.types.port;
-          description = "VPN-provider port forwarded to the Soulseek listener.";
-        };
+      libraryRoots = lib.mkOption {
+        type = lib.types.listOf absolutePath;
+        default = [ ];
+        description = "Music library roots exposed read-only for local scanning and file reuse.";
       };
 
       publicHostName = lib.mkOption {

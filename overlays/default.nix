@@ -171,7 +171,7 @@
       vikunja = prev.vikunja.overrideAttrs (
         old:
         let
-          frontend = old.passthru.frontend.overrideAttrs (frontendOld: {
+          frontend = prev.vikunja.frontend.overrideAttrs (frontendOld: {
             patches = (frontendOld.patches or [ ]) ++ [
               # TODO: send upstream.
               # Confirm label creation from the multiselect input.
