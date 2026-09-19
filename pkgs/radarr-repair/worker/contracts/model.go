@@ -1,5 +1,25 @@
 package workercontracts
 
+type BlurayIdentifyRequestV1 = RadarrRepairWorkerBluRayIdentificationRequest
+type BlurayIdentifySuccessV1 = BlurayIdentifySuccessResponseV1Class
+type BlurayIdentifyFailureV1 = BlurayIdentifyFailureResponseV1Class
+
+type BlurayIdentifyResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *BlurayIdentifySuccessV1
+	Failure *BlurayIdentifyFailureV1
+}
+
+func (response BlurayIdentifyResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		func(success *BlurayIdentifySuccessV1) string { return success.RequestID },
+		func(failure *BlurayIdentifyFailureV1) string { return failure.RequestID },
+	)
+}
+
 type ProbeRequestV1 = RadarrRepairWorkerProbeRequestVersion1
 type ProbeSuccessResponseV1 = ProbeSuccessResponseV1Class
 type ProbeFailureResponseV1 = ProbeFailureResponseV1Class

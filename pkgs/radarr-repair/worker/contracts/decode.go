@@ -24,6 +24,37 @@ func DecodeProbeRequest(data []byte) (ProbeRequestV1, error) {
 	return request, nil
 }
 
+func DecodeBlurayIdentifyRequest(data []byte) (BlurayIdentifyRequestV1, error) {
+	var request BlurayIdentifyRequestV1
+	if err := validateAndDecode(
+		data,
+		MaxBlurayIdentifyRequestBytes,
+		"Blu-ray identification request",
+		blurayIdentifyRequestSchema,
+		&request,
+	); err != nil {
+		return BlurayIdentifyRequestV1{}, err
+	}
+	return request, nil
+}
+
+func DecodeBlurayIdentifyResponse(data []byte) (BlurayIdentifyResponseV1, error) {
+	kind, success, failure, err := decodeOperationResponse[
+		BlurayIdentifySuccessV1,
+		BlurayIdentifyFailureV1,
+	](
+		data,
+		"Blu-ray identification response",
+		"identify_bluray_v1",
+		MaxBlurayIdentifyResponseBytes,
+		blurayIdentifyResponseSchema,
+	)
+	if err != nil {
+		return BlurayIdentifyResponseV1{}, err
+	}
+	return BlurayIdentifyResponseV1{Kind: kind, Success: success, Failure: failure}, nil
+}
+
 func DecodeProbeResponse(data []byte) (ProbeResponseV1, error) {
 	if err := validateMessage(
 		data,
@@ -148,7 +179,19 @@ func decodeJoinResponse[S any, F any](
 	name string,
 	operation string,
 ) (ProbeResponseKind, *S, *F, error) {
-	if err := validateMessage(data, MaxJoinResponseBytes, name, joinResponseSchema); err != nil {
+	return decodeOperationResponse[S, F](
+		data, name, operation, MaxJoinResponseBytes, joinResponseSchema,
+	)
+}
+
+func decodeOperationResponse[S any, F any](
+	data []byte,
+	name string,
+	operation string,
+	limit int,
+	loadSchema func() (*jsonschema.Schema, error),
+) (ProbeResponseKind, *S, *F, error) {
+	if err := validateMessage(data, limit, name, loadSchema); err != nil {
 		return "", nil, nil, err
 	}
 	var envelope struct {

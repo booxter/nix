@@ -11,11 +11,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
+	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/radarr-repair/worker/blurayidentify"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/radarr-repair/worker/joininspect"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
@@ -49,6 +52,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	stateDirectory := flags.String("state-directory", "", "private state directory")
 	ffprobePath := flags.String("ffprobe", "", "absolute ffprobe executable path")
 	ffmpegPath := flags.String("ffmpeg", "", "absolute ffmpeg executable path")
+	mkvmergePath := flags.String("mkvmerge", "", "absolute mkvmerge executable path")
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
 	joinTimeout := flags.Duration(
 		"join-timeout",
@@ -80,6 +84,9 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	if *ffmpegPath == "" {
 		return fmt.Errorf("ffmpeg executable is required")
+	}
+	if !filepath.IsAbs(*mkvmergePath) || filepath.Clean(*mkvmergePath) != *mkvmergePath {
+		return fmt.Errorf("mkvmerge executable must be an absolute clean path")
 	}
 	if *probeTimeout <= 0 {
 		return fmt.Errorf("probe timeout must be positive")
@@ -116,6 +123,18 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		probeExecutor,
 		*probeTimeout,
 		*maxConcurrent,
+	)
+	if err != nil {
+		return err
+	}
+	blurayExecutor, err := blurayidentify.NewExecutor(
+		rootSet, mkvmerge.Runner{Executable: *mkvmergePath},
+	)
+	if err != nil {
+		return err
+	}
+	blurayHandler, err := workerserver.NewBlurayIdentifyHandler(
+		blurayExecutor, *probeTimeout, *maxConcurrent,
 	)
 	if err != nil {
 		return err
@@ -166,6 +185,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	router, err := workerserver.NewRouter(
 		probeHandler,
+		blurayHandler,
 		stageJoinHandler,
 		publishHandler,
 		discardHandler,

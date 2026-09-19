@@ -49,7 +49,9 @@ func ListFeaturePlaylists(
 			continue
 		}
 		path := paths[file.ID]
-		details, err := identifier.Identify(ctx, path)
+		details, err := identifier.Identify(ctx, Target{
+			Path: path, ExpectedFingerprint: file.Fingerprint.Fingerprint(),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("identify %q: %w", path, err)
 		}
@@ -104,7 +106,7 @@ func playlistFiles(files map[string]controller.InventoryFile) []controller.Inven
 			continue
 		}
 		if parts[len(parts)-3] != "BDMV" || parts[len(parts)-2] != "PLAYLIST" ||
-			!numberedPlaylist(parts[len(parts)-1]) {
+			!NumberedPlaylist(parts[len(parts)-1]) {
 			continue
 		}
 		playlists = append(playlists, file)
@@ -116,8 +118,16 @@ func playlistFiles(files map[string]controller.InventoryFile) []controller.Inven
 	return playlists
 }
 
-func numberedPlaylist(name string) bool {
-	if len(name) != len("00000.mpls") || !strings.HasSuffix(name, ".mpls") {
+func NumberedPlaylist(name string) bool {
+	return numberedFile(name, ".mpls")
+}
+
+func NumberedClip(name string) bool {
+	return numberedFile(name, ".m2ts")
+}
+
+func numberedFile(name, extension string) bool {
+	if len(name) != 5+len(extension) || !strings.HasSuffix(name, extension) {
 		return false
 	}
 	for _, digit := range name[:5] {
@@ -136,7 +146,8 @@ func inventoryClips(
 	streamDir := filepath.Join(filepath.Dir(filepath.Dir(playlistPath)), "STREAM")
 	clipIDs := make([]controller.FileID, 0, len(clipPaths))
 	for _, path := range clipPaths {
-		if !cleanAbsolute(path) || filepath.Dir(path) != streamDir || filepath.Ext(path) != ".m2ts" {
+		if !cleanAbsolute(path) || filepath.Dir(path) != streamDir ||
+			!NumberedClip(filepath.Base(path)) {
 			return nil, false
 		}
 		file, exists := files[path]

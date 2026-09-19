@@ -12,10 +12,10 @@ import (
 
 type fixtureIdentifier map[string]Playlist
 
-func (fixture fixtureIdentifier) Identify(_ context.Context, path string) (Playlist, error) {
-	playlist, exists := fixture[path]
+func (fixture fixtureIdentifier) Identify(_ context.Context, target Target) (Playlist, error) {
+	playlist, exists := fixture[target.Path]
 	if !exists {
-		return Playlist{}, fmt.Errorf("unexpected playlist %q", path)
+		return Playlist{}, fmt.Errorf("unexpected playlist %q", target.Path)
 	}
 	return playlist, nil
 }

@@ -25,22 +25,27 @@ type Playlist struct {
 	Tracks     []Track
 }
 
+type Target struct {
+	Path                string
+	ExpectedFingerprint string
+}
+
 type Identifier interface {
-	Identify(context.Context, string) (Playlist, error)
+	Identify(context.Context, Target) (Playlist, error)
 }
 
 type Runner struct {
 	Executable string
 }
 
-func (runner Runner) Identify(ctx context.Context, path string) (Playlist, error) {
-	if !cleanAbsolute(runner.Executable) || !cleanAbsolute(path) {
+func (runner Runner) Identify(ctx context.Context, target Target) (Playlist, error) {
+	if !cleanAbsolute(runner.Executable) || !cleanAbsolute(target.Path) {
 		return Playlist{}, fmt.Errorf("mkvmerge and playlist paths must be absolute and clean")
 	}
 
 	var output bytes.Buffer
 	command := exec.CommandContext(
-		ctx, runner.Executable, "--identification-format", "json", "--identify", path,
+		ctx, runner.Executable, "--identification-format", "json", "--identify", target.Path,
 	)
 	command.Stdout = &limitedWriter{buffer: &output, limit: maximumOutputBytes}
 	if err := command.Run(); err != nil {
