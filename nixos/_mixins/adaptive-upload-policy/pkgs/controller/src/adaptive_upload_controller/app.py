@@ -7,7 +7,7 @@ from typing import NoReturn
 
 from .config import ControllerConfig, load_config
 from .errors import ControllerError
-from .policy import DecisionConfig
+from .policy import DecisionConfig, NightRateSchedule
 from .runtime import (
     DeciderRuntimeConfig,
     QosRuntimeConfig,
@@ -50,6 +50,15 @@ def decision_config(config: ControllerConfig) -> DecisionConfig:
         client_key_file=source.client_key_file,
         media_types=source.media_types,
         no_streams_mbit=source.idle_rate_mbit,
+        night=(
+            None
+            if source.night is None
+            else NightRateSchedule(
+                start=source.night.start,
+                end=source.night.end,
+                rate_mbit=source.night.rate_mbit,
+            )
+        ),
         minimum_streams_mbit=source.minimum_rate_mbit,
         fallback_mbit=config.fallback_rate_mbit,
         relaxation_hold_seconds=source.relaxation_hold_seconds,

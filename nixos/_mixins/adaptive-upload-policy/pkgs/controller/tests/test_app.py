@@ -14,10 +14,12 @@ from adaptive_upload_controller.jellyfin import (
 from adaptive_upload_controller.metrics import render_metrics_text
 from adaptive_upload_controller.policy import (
     DecisionConfig,
+    NightRateSchedule,
     calculate_transmission_upload_limit_kbps,
     decide_effective_policy,
     decide_observed_policy,
     default_policy_state,
+    load_decider_state,
     load_policy_state,
     observed_policy_from_stream_stats,
     save_policy_state,
@@ -39,6 +41,7 @@ def policy_args(**overrides):
         "client_key_file": "",
         "media_types": DEFAULT_MEDIA_TYPES,
         "no_streams_mbit": 25.0,
+        "night": None,
         "minimum_streams_mbit": 0.5,
         "fallback_mbit": 8.0,
         "relaxation_hold_seconds": 90.0,
@@ -132,6 +135,49 @@ def test_missing_external_bitrate_uses_minimum_target():
 
     assert state.target_mbit == 0.5
     assert state.reason == "active_media_streams_missing_bitrate"
+
+
+def test_night_target_follows_local_window_and_reserves_media_bandwidth():
+    args = policy_args(
+        night=NightRateSchedule(
+            start=datetime.time(0),
+            end=datetime.time(6),
+            rate_mbit=30,
+        )
+    )
+
+    def target_at(hour, *, streams=0, bitrate=0):
+        return observed_policy_from_stream_stats(
+            args,
+            total_media_streams=streams,
+            active_external_media_streams=streams,
+            active_external_media_bitrate_bits_per_second=bitrate,
+            missing_external_media_bitrate_sessions=0,
+            local_time=datetime.time(hour),
+        ).target_mbit
+
+    assert target_at(23) == 25
+    assert target_at(0) == 30
+    assert target_at(5, streams=1, bitrate=4_000_000) == 26
+    assert target_at(6) == 25
+
+
+def test_previous_night_target_remains_valid_for_day_transition(tmp_path):
+    state_file = tmp_path / "state.json"
+    save_policy_state(state_file, default_policy_state(30, "night", True, 0))
+    args = policy_args(
+        night=NightRateSchedule(
+            start=datetime.time(0),
+            end=datetime.time(6),
+            rate_mbit=30,
+        )
+    )
+
+    current, pending, pending_since = load_decider_state(state_file, args)
+
+    assert current == 30
+    assert pending is None
+    assert pending_since is None
 
 
 def test_policy_relaxes_only_after_stable_hold(tmp_path):
@@ -238,6 +284,7 @@ def test_loads_shared_controller_configuration(tmp_path):
                     "request_timeout_seconds": 10,
                     "media_types": ["movie", "episode"],
                     "idle_rate_mbit": 25,
+                    "night": {"start": "00:00", "end": "06:00", "rate_mbit": 30},
                     "minimum_rate_mbit": 0.5,
                     "relaxation_hold_seconds": 90,
                 },
@@ -260,6 +307,8 @@ def test_loads_shared_controller_configuration(tmp_path):
 
     assert config.fallback_rate_mbit == 8
     assert config.jellyfin.media_types == frozenset({"movie", "episode"})
+    assert config.jellyfin.night is not None
+    assert config.jellyfin.night.rate_mbit == 30
     assert config.transmission is not None
     assert config.transmission.headroom_fraction == 0.95
     assert config.qos is not None

@@ -75,6 +75,35 @@ in
       with lib.types;
       nullOr (submodule {
         options = {
+          idleRateMbit = lib.mkOption {
+            type = ints.positive;
+            default = 25;
+            description = "Upload target when no external Jellyfin streams are active.";
+          };
+
+          night = lib.mkOption {
+            type = nullOr (submodule {
+              options = {
+                start = lib.mkOption {
+                  type = strMatching "([01][0-9]|2[0-3]):[0-5][0-9]";
+                  description = "Start of the nightly rate window in local time.";
+                };
+
+                end = lib.mkOption {
+                  type = strMatching "([01][0-9]|2[0-3]):[0-5][0-9]";
+                  description = "End of the nightly rate window in local time.";
+                };
+
+                rateMbit = lib.mkOption {
+                  type = ints.positive;
+                  description = "Upload target during the nightly rate window.";
+                };
+              };
+            });
+            default = null;
+            description = "Optional local-time upload target schedule.";
+          };
+
           fallbackRateMbit = lib.mkOption {
             type = ints.positive;
             description = "Conservative upload rate used when policy state is unavailable.";
