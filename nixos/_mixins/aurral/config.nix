@@ -143,11 +143,7 @@ in
     systemd.services.aurral = {
       unitConfig = {
         Wants = [ "network-online.target" ];
-        After = [
-          "network-online.target"
-          "${selected.unitName}.service"
-        ];
-        Requires = [ "${selected.unitName}.service" ];
+        After = [ "network-online.target" ];
       };
       serviceConfig = {
         BindReadOnlyPaths = cfg.libraryRoots;

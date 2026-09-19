@@ -23,7 +23,6 @@ in
         vpn.peerPort = slskd.peerPort;
         user = "slskd";
         group = "media";
-        unitName = "slskd";
         incompleteDir = if rootDir == null then null else "${rootDir}/incomplete";
         completedDir = if rootDir == null then null else "${rootDir}/complete";
         apiUrl = if namespace == null then null else "http://${namespace.namespaceAddress}:5030";

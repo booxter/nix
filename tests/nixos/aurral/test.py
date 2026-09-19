@@ -106,6 +106,13 @@ with subtest("uses the managed slskd connection"):
     assert result["ok"] is True
     assert result["warning"] is True
 
+with subtest("stays available when slskd stops"):
+    machine.succeed("systemctl stop slskd.service")
+    machine.succeed("systemctl is-active --quiet aurral.service")
+    assert request("/api/health/live")["status"] == "ok"
+    machine.succeed("systemctl start slskd.service")
+    machine.wait_for_unit("slskd.service")
+
 with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
     machine.succeed("runuser --user slskd -- touch /srv/media/slskd/complete/slskd")
