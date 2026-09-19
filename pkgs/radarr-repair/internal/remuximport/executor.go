@@ -137,7 +137,7 @@ func asPublishedExecution(execution casestore.RemuxExecution) (publishedimport.E
 		)
 	}
 	mapped := publishedimport.Execution{
-		CaseID:       execution.Authorization.CaseID,
+		CaseID:       execution.CaseID(),
 		State:        state,
 		Import:       execution.Import,
 		Confirmation: execution.Confirmation,
