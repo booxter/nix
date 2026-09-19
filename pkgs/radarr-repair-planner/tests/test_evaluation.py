@@ -123,6 +123,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "ambiguous_part_order",
         "clear_ordered_join",
         "current_double_exposure_bluray",
+        "current_malice_before_daylight_scenes",
         "current_pandoras_mirror_bluray",
         "current_pink_velvet_2_dvd",
         "current_xconfessions_bluray_runtime_mismatch",
