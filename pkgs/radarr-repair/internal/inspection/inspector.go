@@ -8,7 +8,6 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
-	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
 )
 
 type RadarrReader interface {
@@ -24,7 +23,6 @@ type Dependencies struct {
 	Downloads         controller.DownloadResolver
 	Files             controller.FileInventoryReader
 	Probes            controller.MediaProbeReader
-	Playlists         mkvmerge.Identifier
 	CollectionTimeout time.Duration
 }
 
@@ -224,25 +222,15 @@ func (inspector *Inspector) inspectRecord(
 	if err != nil {
 		return casebuilder.Assembly{}, err
 	}
-	var playlists []mkvmerge.Candidate
-	if inspector.dependencies.Playlists != nil {
-		playlists, err = mkvmerge.ListFeaturePlaylists(
-			collectionContext, inventory, inspector.dependencies.Playlists,
-		)
-		if err != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("identify Blu-ray playlists: %w", err)
-		}
-	}
 
 	assembly, err := inspector.assemble(casebuilder.Observation{
-		ObservedAt:      inspector.dependencies.Clock.Now(),
-		Correlation:     correlation,
-		Movie:           movie,
-		History:         history,
-		ManualImports:   manualImports,
-		Inventory:       inventory,
-		Probes:          probes,
-		BluRayPlaylists: playlists,
+		ObservedAt:    inspector.dependencies.Clock.Now(),
+		Correlation:   correlation,
+		Movie:         movie,
+		History:       history,
+		ManualImports: manualImports,
+		Inventory:     inventory,
+		Probes:        probes,
 	})
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("assemble repair case: %w", err)

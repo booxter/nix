@@ -4,7 +4,6 @@
   goModels,
   lib,
   makeWrapper,
-  mkvtoolnixCli,
 }:
 let
   version = "0.1.0";
@@ -38,12 +37,6 @@ let
     // {
       pname = "radarr-repair";
       subPackages = [ "cmd/radarr-repair" ];
-
-      nativeBuildInputs = [ makeWrapper ];
-      postInstall = ''
-        wrapProgram "$out/bin/radarr-repair" \
-          --set RADARR_REPAIR_MKVMERGE ${lib.escapeShellArg (lib.getExe' mkvtoolnixCli "mkvmerge")}
-      '';
 
       RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
       RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";

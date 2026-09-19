@@ -17,7 +17,6 @@ let
   };
   radarrRepair = pkgs.callPackage ./radarr-repair {
     goModels = radarrRepairGoModels;
-    mkvtoolnixCli = pkgs.mkvtoolnix-cli;
   };
 in
 {
