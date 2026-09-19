@@ -30,10 +30,6 @@
       uid = 38;
       group = null;
     };
-    slskd = {
-      uid = 297;
-      group = null;
-    };
     transmission = {
       uid = 70;
       group = null;

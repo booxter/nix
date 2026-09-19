@@ -48,23 +48,8 @@ def status(path, *, data=None, user=None):
 
 start_all()
 machine.wait_for_unit("fake-lidarr.service")
-machine.wait_for_unit("wg.service")
-machine.wait_for_unit("vpn-wg-bridge-access.service")
-machine.wait_for_unit("slskd.service")
 machine.wait_for_unit("aurral.service")
 machine.wait_for_open_port(3001)
-machine.wait_until_succeeds(
-    command(
-        [
-            CURL,
-            "--fail",
-            "--silent",
-            "--header",
-            f"X-API-KEY: {SLSKD_API_KEY}",
-            f"{SLSKD_URL}/api/v0/application",
-        ]
-    )
-)
 
 with subtest("serves the application and reports a live backend"):
     assert request("/api/health/live")["status"] == "ok"
@@ -99,24 +84,8 @@ with subtest("rejects local password authentication"):
         == 403
     )
 
-with subtest("uses the managed slskd connection"):
-    result = request("/api/settings/slskd/test", data={}, user="admin")
-    assert result["success"] is True
-    assert result["configured"] is True
-    assert result["ok"] is True
-    assert result["warning"] is True
-
-with subtest("stays available when slskd stops"):
-    machine.succeed("systemctl stop slskd.service")
-    machine.succeed("systemctl is-active --quiet aurral.service")
-    assert request("/api/health/live")["status"] == "ok"
-    machine.succeed("systemctl start slskd.service")
-    machine.wait_for_unit("slskd.service")
-
 with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
-    machine.succeed("runuser --user slskd -- touch /srv/media/slskd/complete/slskd")
-    machine.succeed("runuser --user aurral -- test -r /srv/media/slskd/complete/slskd")
     machine.succeed("touch /srv/media/library/music/aurral-source")
     machine.succeed("runuser --user aurral -- test -r /srv/media/library/music/aurral-source")
     service_pid = machine.succeed(

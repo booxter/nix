@@ -42,15 +42,12 @@
       aurral = prev.aurral.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../patches/aurral-disable-local-auth.patch
-          ../patches/aurral-managed-slskd-settings.patch
         ];
         doCheck = true;
         checkPhase = ''
           runHook preCheck
           export LD_LIBRARY_PATH=${lib.makeLibraryPath [ prev.sqlite ]}
-          node --test \
-            .tests/auth/local-auth.test.js \
-            .tests/settings/managed-slskd.test.js
+          node --test .tests/auth/local-auth.test.js
           runHook postCheck
         '';
       });

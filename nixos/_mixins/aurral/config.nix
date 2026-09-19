@@ -6,7 +6,7 @@
 }:
 let
   model = import ./model.nix { inherit config; };
-  inherit (model) cfg selected;
+  inherit (model) cfg;
   adminGroup = if model.ssoApplication == null then null else model.ssoApplication.roles.admin;
   adminUsers = lib.attrNames (
     lib.filterAttrs (
@@ -37,20 +37,7 @@ in
       pkgs.noto-fonts-color-emoji
     ];
 
-    users.users.${model.user}.extraGroups = lib.unique [
-      model.group
-      selected.group
-    ];
-
-    sops.templates."aurral-slskd.env" = {
-      owner = model.user;
-      group = model.user;
-      mode = "0400";
-      restartUnits = [ "aurral.service" ];
-      content = ''
-        AURRAL_SLSKD_API_KEY=${config.sops.placeholder."${selected.secretPrefix}/web/apiKey"}
-      '';
-    };
+    users.users.${model.user}.extraGroups = [ model.group ];
 
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0750 ${model.user} ${model.user} - -"
@@ -118,17 +105,10 @@ in
       port = model.port;
       user = model.user;
       group = model.user;
-      directories = [
-        model.flowDir
-        selected.completedDir
-      ];
-      environmentFile = config.sops.templates."aurral-slskd.env".path;
+      directories = [ model.flowDir ];
       environment = {
         DOWNLOAD_FOLDER = model.flowDir;
         TRUST_PROXY = "2";
-        AURRAL_SLSKD_MANAGED = "true";
-        AURRAL_SLSKD_URL = selected.apiUrl;
-        AURRAL_SLSKD_CLEANUP_AFTER_RUNS = "true";
         AUTH_PROXY_HEADER = "x-forwarded-user";
         AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;
         AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
