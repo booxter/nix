@@ -370,27 +370,6 @@ in
                 description = "Availability policy inherited by this service's metrics and probes.";
               };
 
-              importance = lib.mkOption {
-                type = lib.types.enum [
-                  "critical"
-                  "important"
-                  "normal"
-                  "best-effort"
-                ];
-                default = "normal";
-                description = "Operational importance used to prioritize capacity-limited monitoring.";
-              };
-
-              externalProbe = {
-                requirement = lib.mkOption {
-                  type = lib.types.enum [
-                    "required"
-                    "eligible"
-                  ];
-                  default = "eligible";
-                  description = "Whether an external-probe planner must or may select this service.";
-                };
-              };
             };
 
             auth = {

@@ -23,8 +23,6 @@ in
 
   host.sso.provider = { };
 
-  host.observability.uptimeRobot.controller.enable = true;
-
   host.network.ipController = { };
 
 }

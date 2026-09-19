@@ -3,7 +3,6 @@
     atticd = {
       declaration = {
         internal.serverName = "attic.home.arpa";
-        observability.importance = "important";
       };
     };
     attic-cache = {
@@ -61,7 +60,6 @@
           };
         };
         health.frontend.path = "/github/nix-cache-info";
-        observability.importance = "important";
       };
     };
     jellyfin = {
@@ -90,7 +88,6 @@
           port = 9594;
           scrapeInterval = "5s";
         };
-        observability.importance = "important";
         dashboard.section = "user";
       };
     };
@@ -153,7 +150,6 @@
           frontend.path = "/oauth2/sign_in";
           backend.path = "/readyz";
         };
-        observability.importance = "best-effort";
         dashboard = {
           icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
           section = "user";
@@ -211,10 +207,6 @@
         displayName = "SSO";
         public.hostName = "id.ihar.dev";
         health.frontend.path = "/status";
-        observability = {
-          importance = "critical";
-          externalProbe.requirement = "required";
-        };
       };
     };
   };
@@ -276,7 +268,6 @@
       declaration = {
         public.hostName = "au.ihar.dev";
         health.frontend.path = "";
-        observability.importance = "important";
         dashboard.section = "user";
       };
     };
@@ -292,7 +283,6 @@
           frontend.path = "/oauth2/sign_in";
           backend.path = "/api/health/live";
         };
-        observability.importance = "important";
         dashboard.section = "user";
       };
     };
@@ -314,10 +304,6 @@
           splitDnsHost = "srvarr";
         };
         health.frontend = { };
-        observability = {
-          importance = "critical";
-          externalProbe.requirement = "required";
-        };
       };
     };
     glance = {
@@ -358,7 +344,6 @@
           frontend.path = "/api/health";
           backend.path = "/api/health";
         };
-        observability.importance = "best-effort";
         dashboard.section = "user";
       };
     };
@@ -405,7 +390,6 @@
       declaration = {
         public.hostName = "js.ihar.dev";
         health.frontend.path = "/login";
-        observability.importance = "important";
         dashboard.section = "user";
       };
     };
@@ -414,7 +398,6 @@
         internal.serverName = "shelfmark.home.arpa";
         public.hostName = "shelf.ihar.dev";
         health.frontend.path = "/api/health";
-        observability.importance = "important";
         dashboard.section = "user";
       };
     };
