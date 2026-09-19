@@ -55,7 +55,7 @@ in
 
     x11.enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.host.hm.xquartz.enable;
+      default = isDarwin && osConfig.services.xquartz.enable;
       description = "Whether AeroSpace actions should support X11 windows.";
     };
 
@@ -137,8 +137,8 @@ in
           message = "host.hm.aerospace is only supported on Darwin.";
         }
         {
-          assertion = !cfg.x11.enable || config.host.hm.xquartz.enable;
-          message = "host.hm.aerospace.x11 requires host.hm.xquartz.";
+          assertion = !cfg.x11.enable || (isDarwin && osConfig.services.xquartz.enable);
+          message = "host.hm.aerospace.x11 requires services.xquartz.";
         }
       ];
 
