@@ -29,5 +29,17 @@ and stream types in both files:
   1 audio, 1 subtitle stream; 20,154,156,930 bytes.
 
 Both temporary MKVs were removed after inspection. The negative XConfessions 2
-case was not remuxed. The controller's staged artifact and Radarr import flow
-still requires live integration validation before automatic rollout.
+case was not remuxed.
+
+The deployed controller then made fresh shadow decisions for all three queue
+cases. It chose `00000.mpls` for both positive cases and `no_repair` for
+XConfessions 2, matching every corpus expectation. A single-case canary remuxed
+Pandora's Mirror and imported it through Radarr. After enabling automatic
+Blu-ray apply, the next controller cycle remuxed and imported The Double
+Exposure of Holly. FFprobe of the imported library files confirmed the same
+durations, chapter counts, and stream types listed above. Radarr recorded one
+import for each positive case.
+
+XConfessions 2 remained without a movie file or import event. Its release was
+no longer in Radarr's queue or Transmission when the automatic cycle finished,
+so that cycle did not re-evaluate the negative case.
