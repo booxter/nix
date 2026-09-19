@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "stage_bluray_remux_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "fingerprint_mismatch",
+            "insufficient_space",
+            "identification_error",
+            "remux_error",
+            "probe_error",
+            "invalid_output",
+            "timeout",
+            "execution_conflict",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_fingerprint": {
+          "$ref": "wire-types.schema.json#/$defs/sha256Id"
+        },
+        "artifact_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "evidence": {
+          "$ref": "media-evidence.schema.json#/$defs/evidence"
+        },
+        "operation": {
+          "const": "stage_bluray_remux_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "size_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "artifact_id",
+        "artifact_fingerprint",
+        "size_bytes",
+        "evidence"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "bluray-remux-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker Blu-ray remux stage response"
+}

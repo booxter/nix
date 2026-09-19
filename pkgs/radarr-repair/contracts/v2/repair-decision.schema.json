@@ -158,6 +158,38 @@
       "pattern": "^[a-z][a-z0-9_:-]*$",
       "type": "string"
     },
+    "remuxBluray": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "remux_bluray_v1"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "explanation": {
+          "$ref": "#/$defs/safeExplanation"
+        },
+        "schema_version": {
+          "const": "radarr-repair/v2"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
     "safeExplanation": {
       "maxLength": 1200,
       "minLength": 1,
@@ -180,6 +212,9 @@
     },
     {
       "$ref": "#/$defs/manualImportFile"
+    },
+    {
+      "$ref": "#/$defs/remuxBluray"
     }
   ],
   "title": "Radarr repair decision version 2"

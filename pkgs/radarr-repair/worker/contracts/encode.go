@@ -3,7 +3,78 @@ package workercontracts
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/santhosh-tekuri/jsonschema/v6"
 )
+
+func EncodeBlurayIdentifyRequest(request BlurayIdentifyRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode Blu-ray identification request: %w", err)
+	}
+	if err := validateMessage(
+		data,
+		MaxBlurayIdentifyRequestBytes,
+		"Blu-ray identification request",
+		blurayIdentifyRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeBlurayIdentifyResponse(response BlurayIdentifyResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		"Blu-ray identification response",
+		MaxBlurayIdentifyResponseBytes,
+		blurayIdentifyResponseSchema,
+	)
+}
+
+func EncodeBlurayRemuxRequest(request BlurayRemuxRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode Blu-ray remux request: %w", err)
+	}
+	if err := validateMessage(
+		data, MaxBlurayRemuxRequestBytes, "Blu-ray remux request", blurayRemuxRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeBlurayRemuxResponse(response BlurayRemuxResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind, response.Success, response.Failure,
+		"Blu-ray remux response", MaxBlurayRemuxResponseBytes, blurayRemuxResponseSchema,
+	)
+}
+
+func EncodeBlurayPublishRequest(request BlurayPublishRequestV1) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("encode Blu-ray publish request: %w", err)
+	}
+	if err := validateMessage(
+		data, MaxBlurayPublishRequestBytes, "Blu-ray publish request",
+		blurayPublishRequestSchema,
+	); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func EncodeBlurayPublishResponse(response BlurayPublishResponseV1) ([]byte, error) {
+	return encodeOperationResponse(
+		response.Kind, response.Success, response.Failure,
+		"Blu-ray publish response", MaxBlurayPublishResponseBytes,
+		blurayPublishResponseSchema,
+	)
+}
 
 func EncodeProbeRequest(request ProbeRequestV1) ([]byte, error) {
 	data, err := json.Marshal(request)
@@ -127,6 +198,19 @@ func encodeJoinResponse[S any, F any](
 	failure *F,
 	name string,
 ) ([]byte, error) {
+	return encodeOperationResponse(
+		kind, success, failure, name, MaxJoinResponseBytes, joinResponseSchema,
+	)
+}
+
+func encodeOperationResponse[S any, F any](
+	kind ProbeResponseKind,
+	success *S,
+	failure *F,
+	name string,
+	limit int,
+	loadSchema func() (*jsonschema.Schema, error),
+) ([]byte, error) {
 	var message any
 	switch kind {
 	case ProbeResponseSucceeded:
@@ -147,12 +231,7 @@ func encodeJoinResponse[S any, F any](
 	if err != nil {
 		return nil, fmt.Errorf("encode %s: %w", name, err)
 	}
-	if err := validateMessage(
-		data,
-		MaxJoinResponseBytes,
-		name,
-		joinResponseSchema,
-	); err != nil {
+	if err := validateMessage(data, limit, name, loadSchema); err != nil {
 		return nil, err
 	}
 	return data, nil

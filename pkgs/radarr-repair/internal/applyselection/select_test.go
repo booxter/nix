@@ -81,6 +81,32 @@ func TestSelectsNoRepairsWithEmptyAllowlist(t *testing.T) {
 	}
 }
 
+func TestBluRayDecisionRequiresExplicitAllowlist(t *testing.T) {
+	t.Parallel()
+	candidate := testPlannedCase("disc", contracts.ActionRemuxBluray)
+	policy := Policy{
+		AllowedActions: map[contracts.DecisionAction]bool{
+			contracts.ActionJoinParts: true,
+		},
+		AllowedDownloadClients: map[controller.DownloadClient]bool{
+			controller.DownloadClientTransmission: true,
+		},
+		Limit: 1,
+	}
+	selected, err := Select([]casestore.PlannedCase{candidate}, policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(selected) != 0 {
+		t.Fatalf("selected an unsupported Blu-ray apply: %v", caseIDs(selected))
+	}
+	policy.AllowedActions[contracts.ActionRemuxBluray] = true
+	selected, err = Select([]casestore.PlannedCase{candidate}, policy)
+	if err != nil || len(selected) != 1 {
+		t.Fatalf("allowed Blu-ray case: selected = %v, error = %v", caseIDs(selected), err)
+	}
+}
+
 func TestSelectRejectsCaseFromUnallowedDownloadClient(t *testing.T) {
 	t.Parallel()
 

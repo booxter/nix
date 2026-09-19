@@ -1,0 +1,94 @@
+{
+  "attachments": [],
+  "chapters": [
+    {
+      "num_entries": 5
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 22,
+      "is_providing_timestamps": true,
+      "playlist": true,
+      "playlist_chapters": 5,
+      "playlist_duration": 5629498866666,
+      "playlist_file": [
+        "/disc/BDMV/STREAM/00000.m2ts"
+      ],
+      "playlist_size": 23197495296
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "MPEG transport stream"
+  },
+  "errors": [],
+  "file_name": "/disc/BDMV/PLAYLIST/00000.mpls",
+  "global_tags": [],
+  "identification_format_version": 20,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "AVC/H.264/MPEG-4p10",
+      "id": 0,
+      "properties": {
+        "number": 4113,
+        "pixel_dimensions": "1920x1080",
+        "program_number": 1,
+        "stream_id": 4113
+      },
+      "type": "video"
+    },
+    {
+      "codec": "DTS-HD Master Audio",
+      "id": 1,
+      "properties": {
+        "audio_channels": 1,
+        "audio_sampling_frequency": 48000,
+        "language": "eng",
+        "number": 4352,
+        "program_number": 1,
+        "stream_id": 4352
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "AC-3",
+      "id": 2,
+      "properties": {
+        "audio_channels": 1,
+        "audio_sampling_frequency": 48000,
+        "language": "eng",
+        "number": 4353,
+        "program_number": 1,
+        "stream_id": 4353
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "AC-3",
+      "id": 3,
+      "properties": {
+        "audio_channels": 1,
+        "audio_sampling_frequency": 48000,
+        "language": "eng",
+        "number": 4354,
+        "program_number": 1,
+        "stream_id": 4354
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "HDMV PGS",
+      "id": 4,
+      "properties": {
+        "language": "eng",
+        "number": 4608,
+        "program_number": 1,
+        "stream_id": 4608,
+        "text_subtitles": false
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

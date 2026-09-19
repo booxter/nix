@@ -48,6 +48,20 @@ func TestRootSetOpensNestedRegularFile(t *testing.T) {
 	}
 }
 
+func TestRootSetAbsolutePathUsesValidatedComponents(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	rootSet := testRootSet(t, rootPath)
+	path, err := rootSet.AbsolutePath("downloads", []string{"Movie", "BDMV", "PLAYLIST", "00000.mpls"})
+	if err != nil || path != filepath.Join(rootPath, "Movie", "BDMV", "PLAYLIST", "00000.mpls") {
+		t.Fatalf("absolute path = %q, %v", path, err)
+	}
+	if _, err := rootSet.AbsolutePath("downloads", []string{"..", "secret"}); err == nil {
+		t.Fatal("accepted parent traversal")
+	}
+}
+
 func TestRootSetRejectsUnsafeAndUnavailablePaths(t *testing.T) {
 	t.Parallel()
 

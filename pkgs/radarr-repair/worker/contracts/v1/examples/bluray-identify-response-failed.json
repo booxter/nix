@@ -1,0 +1,7 @@
+{
+  "operation": "identify_bluray_v1",
+  "reason": "identification_error",
+  "request_id": "request:bluray:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

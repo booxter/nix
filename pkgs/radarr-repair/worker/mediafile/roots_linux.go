@@ -60,6 +60,7 @@ func (failure *Failure) Unwrap() error {
 
 type RootSet struct {
 	roots map[string]*os.File
+	paths map[string]string
 }
 
 func NewRootSet(rootPaths map[string]string) (*RootSet, error) {
@@ -69,7 +70,10 @@ func NewRootSet(rootPaths map[string]string) (*RootSet, error) {
 	}
 	sort.Strings(rootIDs)
 
-	rootSet := &RootSet{roots: make(map[string]*os.File, len(rootPaths))}
+	rootSet := &RootSet{
+		roots: make(map[string]*os.File, len(rootPaths)),
+		paths: make(map[string]string, len(rootPaths)),
+	}
 	for _, rootID := range rootIDs {
 		rootPath := rootPaths[rootID]
 		if rootID == "" {
@@ -92,6 +96,7 @@ func NewRootSet(rootPaths map[string]string) (*RootSet, error) {
 			return nil, fmt.Errorf("open media root %q: %w", rootID, err)
 		}
 		rootSet.roots[rootID] = os.NewFile(uintptr(fd), "media-root:"+rootID)
+		rootSet.paths[rootID] = rootPath
 	}
 	return rootSet, nil
 }
@@ -107,7 +112,24 @@ func (rootSet *RootSet) Close() error {
 		}
 	}
 	rootSet.roots = nil
+	rootSet.paths = nil
 	return errors.Join(closeErrors...)
+}
+
+// AbsolutePath is for tools that must resolve Blu-ray sibling files by name.
+// Call Open before and after using it to verify the requested playlist.
+func (rootSet *RootSet) AbsolutePath(rootID string, components []string) (string, error) {
+	if rootSet == nil || rootSet.paths == nil {
+		return "", &Failure{Kind: FailureInternal}
+	}
+	rootPath, found := rootSet.paths[rootID]
+	if !found {
+		return "", &Failure{Kind: FailureUnknownRoot}
+	}
+	if !validComponents(components) {
+		return "", &Failure{Kind: FailureInvalidPath}
+	}
+	return filepath.Join(append([]string{rootPath}, components...)...), nil
 }
 
 func (rootSet *RootSet) Open(

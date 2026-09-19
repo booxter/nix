@@ -107,11 +107,14 @@ func (runner *Runner) Run(
 		}
 	}
 
-	selected, err := applyselection.Select(unfinished, policy)
+	// Inspect every unfinished candidate in order. A rejected precondition did
+	// not start a repair, so it must not consume the per-run repair limit.
+	scanPolicy := policy
+	scanPolicy.Limit = max(policy.Limit, len(unfinished))
+	selected, err := applyselection.Select(unfinished, scanPolicy)
 	if err != nil {
 		return report, fmt.Errorf("select repairs: %w", err)
 	}
-	report.Selected = len(selected)
 	if len(selected) == 0 {
 		return report, nil
 	}
@@ -124,7 +127,9 @@ func (runner *Runner) Run(
 	}
 	defer lease.Release()
 
+	started := 0
 	for _, candidate := range selected {
+		report.Selected++
 		result, executeErr := runner.dependencies.Executor.Execute(
 			ctx,
 			candidate.Assembly,
@@ -141,6 +146,13 @@ func (runner *Runner) Run(
 				candidate.Assembly.Request.CaseID,
 				executeErr,
 			)
+		}
+		if len(result.Check.Rejections) != 0 {
+			continue
+		}
+		started++
+		if started == policy.Limit {
+			break
 		}
 	}
 	return report, nil

@@ -128,7 +128,7 @@ func completeWireEvidence() workercontracts.Evidence {
 		Streams: []workercontracts.StreamElement{
 			{
 				Index:         0,
-				Kind:          pointer(workercontracts.Video),
+				Kind:          pointer(workercontracts.StreamKind("video")),
 				CodecName:     pointer("h264"),
 				CodecLongName: pointer("H.264"),
 				Profile:       pointer("High"),

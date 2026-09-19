@@ -359,6 +359,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		Downloads:         downloads,
 		Files:             filesource.New(),
 		Probes:            probeClient,
+		Playlists:         probeClient,
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {

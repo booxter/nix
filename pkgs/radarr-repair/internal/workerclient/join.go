@@ -230,7 +230,7 @@ func (client *Client) resolveTogether(paths []string) (string, [][]string, error
 			return root.id, components, nil
 		}
 	}
-	return "", nil, fmt.Errorf("join parts do not share a configured media root")
+	return "", nil, fmt.Errorf("media files do not share a configured root")
 }
 
 func relativeToRoot(root, absolutePath string) (string, bool) {

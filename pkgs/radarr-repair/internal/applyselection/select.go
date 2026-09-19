@@ -66,7 +66,8 @@ func validatePolicy(policy Policy) error {
 			continue
 		}
 		switch action {
-		case contracts.ActionJoinParts, contracts.ActionManualImportFile:
+		case contracts.ActionJoinParts, contracts.ActionManualImportFile,
+			contracts.ActionRemuxBluray:
 		default:
 			return fmt.Errorf("action %q cannot be allowed for repair", action)
 		}
@@ -88,7 +89,8 @@ func validateDecisionAction(action contracts.DecisionAction) error {
 	switch action {
 	case contracts.ActionNoRepair,
 		contracts.ActionJoinParts,
-		contracts.ActionManualImportFile:
+		contracts.ActionManualImportFile,
+		contracts.ActionRemuxBluray:
 		return nil
 	default:
 		return fmt.Errorf("planned case has unknown action %q", action)

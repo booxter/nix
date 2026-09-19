@@ -1,12 +1,71 @@
 package workercontracts
 
+type BlurayIdentifyRequestV1 = RadarrRepairWorkerBluRayIdentificationRequest
+type BlurayIdentifySuccessV1 = BlurayIdentifySuccessResponseV1Class
+type BlurayIdentifyFailureV1 = BlurayIdentifyFailureResponseV1Class
+
+type BlurayRemuxRequestV1 = RadarrRepairWorkerBluRayRemuxStageRequest
+type BlurayRemuxSourceV1 = BlurayRemuxRequestSchema
+type BlurayRemuxTrackV1 = ExpectedTrackElement
+type BlurayRemuxSuccessV1 = BlurayRemuxSuccessResponseV1Class
+type BlurayRemuxFailureV1 = BlurayRemuxFailureResponseV1Class
+type BlurayPublishRequestV1 = RadarrRepairWorkerBluRayRemuxPublishRequest
+type BlurayPublishSuccessV1 = BlurayPublishSuccessResponseV1Class
+type BlurayPublishFailureV1 = BlurayPublishFailureResponseV1Class
+
+type BlurayPublishResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *BlurayPublishSuccessV1
+	Failure *BlurayPublishFailureV1
+}
+
+func (response BlurayPublishResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind, response.Success, response.Failure,
+		func(success *BlurayPublishSuccessV1) string { return success.RequestID },
+		func(failure *BlurayPublishFailureV1) string { return failure.RequestID },
+	)
+}
+
+type BlurayRemuxResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *BlurayRemuxSuccessV1
+	Failure *BlurayRemuxFailureV1
+}
+
+func (response BlurayRemuxResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		func(success *BlurayRemuxSuccessV1) string { return success.RequestID },
+		func(failure *BlurayRemuxFailureV1) string { return failure.RequestID },
+	)
+}
+
+type BlurayIdentifyResponseV1 struct {
+	Kind    ProbeResponseKind
+	Success *BlurayIdentifySuccessV1
+	Failure *BlurayIdentifyFailureV1
+}
+
+func (response BlurayIdentifyResponseV1) RequestID() string {
+	return operationResponseRequestID(
+		response.Kind,
+		response.Success,
+		response.Failure,
+		func(success *BlurayIdentifySuccessV1) string { return success.RequestID },
+		func(failure *BlurayIdentifyFailureV1) string { return failure.RequestID },
+	)
+}
+
 type ProbeRequestV1 = RadarrRepairWorkerProbeRequestVersion1
 type ProbeSuccessResponseV1 = ProbeSuccessResponseV1Class
 type ProbeFailureResponseV1 = ProbeFailureResponseV1Class
 type Operation = ProbeFailureResponseV1Operation
 type Reason = ProbeFailureResponseV1Reason
-type ProbeFailureResponseV1Status = DiscardFailureResponseV1Status
-type ProbeSuccessResponseV1Status = DiscardSuccessResponseV1Status
+type ProbeFailureResponseV1Status = BlurayIdentifyFailureResponseV1Status
+type ProbeSuccessResponseV1Status = BlurayIdentifySuccessResponseV1Status
 
 const Failed ProbeFailureResponseV1Status = "failed"
 

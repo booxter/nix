@@ -1,0 +1,7 @@
+{
+  "operation": "stage_bluray_remux_v1",
+  "reason": "fingerprint_mismatch",
+  "request_id": "request:remux:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "failed"
+}

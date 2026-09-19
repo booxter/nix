@@ -1,0 +1,35 @@
+{
+  "$id": "bluray-publish-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifact_fingerprint": {
+      "$ref": "wire-types.schema.json#/$defs/sha256Id"
+    },
+    "artifact_id": {
+      "$ref": "wire-types.schema.json#/$defs/opaqueId"
+    },
+    "operation": {
+      "const": "publish_bluray_remux_v1"
+    },
+    "request_id": {
+      "$ref": "wire-types.schema.json#/$defs/opaqueId"
+    },
+    "schema_version": {
+      "const": "radarr-repair-worker/v1"
+    },
+    "stage_request": {
+      "$ref": "bluray-remux-request.schema.json"
+    }
+  },
+  "required": [
+    "schema_version",
+    "operation",
+    "request_id",
+    "stage_request",
+    "artifact_id",
+    "artifact_fingerprint"
+  ],
+  "title": "Radarr repair worker Blu-ray remux publish request",
+  "type": "object"
+}

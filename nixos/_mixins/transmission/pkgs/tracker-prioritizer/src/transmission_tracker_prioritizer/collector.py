@@ -73,17 +73,15 @@ def run(
                 last_success = timestamp
                 LOG.info(
                     "iteration complete: tracker_hosts=%s preferred_torrents=%s "
-                    "preferred_bootstrap_active=%s preferred_upload_active=%s "
+                    "preferred_upload_active=%s "
                     "preferred_upload_bytes_per_second=%s observed_high_priority_changes=%s "
-                    "observed_normal_priority_changes=%s observed_low_priority_changes=%s "
+                    "observed_low_priority_changes=%s "
                     "observed_stop_actions=%s",
                     state.tracker_hosts_count,
                     state.preferred_torrent_count,
-                    state.preferred_bootstrap_active,
                     state.preferred_upload_active,
                     state.preferred_upload_bytes_per_second,
                     len(state.high_priority_hashes),
-                    len(state.normal_priority_hashes),
                     len(state.low_priority_hashes),
                     len(state.stop_hashes),
                 )

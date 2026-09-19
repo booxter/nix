@@ -1,0 +1,70 @@
+{
+  "artifact_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "artifact_id": "artifact:remux:01",
+  "evidence": {
+    "chapters": [],
+    "format": {
+      "bit_rate_bps": 9333333,
+      "duration_ms": 7200000,
+      "long_name": "Matroska / WebM",
+      "names": [
+        "matroska",
+        "webm"
+      ],
+      "probe_score": 100,
+      "program_count": 0,
+      "size_bytes": 8390000000,
+      "start_time_ms": 0,
+      "stream_count": 1,
+      "tags": []
+    },
+    "programs": [],
+    "streams": [
+      {
+        "average_rate": {
+          "denominator": 1001,
+          "numerator": 24000
+        },
+        "bit_rate_bps": 8500000,
+        "channel_layout": null,
+        "channels": null,
+        "codec_long_name": "H.264 / AVC / MPEG-4 AVC",
+        "codec_name": "h264",
+        "codec_tag": "[0][0][0][0]",
+        "disposition": {
+          "default": true,
+          "forced": false,
+          "hearing_impaired": false,
+          "visual_impaired": false
+        },
+        "duration_ms": 7200000,
+        "duration_ticks": 7200000,
+        "frame_count": 172628,
+        "frame_rate": {
+          "denominator": 1001,
+          "numerator": 24000
+        },
+        "height": 1080,
+        "index": 0,
+        "kind": "video",
+        "pixel_format": "yuv420p",
+        "profile": "High",
+        "sample_format": null,
+        "sample_rate_hz": null,
+        "start_ticks": 0,
+        "start_time_ms": 0,
+        "tags": [],
+        "time_base": {
+          "denominator": 1000,
+          "numerator": 1
+        },
+        "width": 1920
+      }
+    ]
+  },
+  "operation": "stage_bluray_remux_v1",
+  "request_id": "request:remux:01",
+  "schema_version": "radarr-repair-worker/v1",
+  "size_bytes": 8390000000,
+  "status": "ok"
+}

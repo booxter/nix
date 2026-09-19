@@ -23,11 +23,15 @@ let
         no_repair_decision = {
           "$ref" = "repair-decision.schema.json#/$defs/noRepair";
         };
+        remux_bluray_decision = {
+          "$ref" = "repair-decision.schema.json#/$defs/remuxBluray";
+        };
       };
       required = [
         "join_decision"
         "manual_import_file_decision"
         "no_repair_decision"
+        "remux_bluray_decision"
       ];
     }
   );
@@ -38,6 +42,33 @@ let
       type = "object";
       additionalProperties = false;
       properties = {
+        bluray_identify_request_v1 = {
+          "$ref" = "bluray-identify-request.schema.json";
+        };
+        bluray_identify_failure_response_v1 = {
+          "$ref" = "bluray-identify-response.schema.json#/$defs/failure";
+        };
+        bluray_identify_success_response_v1 = {
+          "$ref" = "bluray-identify-response.schema.json#/$defs/success";
+        };
+        bluray_remux_request_v1 = {
+          "$ref" = "bluray-remux-request.schema.json";
+        };
+        bluray_remux_failure_response_v1 = {
+          "$ref" = "bluray-remux-response.schema.json#/$defs/failure";
+        };
+        bluray_remux_success_response_v1 = {
+          "$ref" = "bluray-remux-response.schema.json#/$defs/success";
+        };
+        bluray_publish_request_v1 = {
+          "$ref" = "bluray-publish-request.schema.json";
+        };
+        bluray_publish_failure_response_v1 = {
+          "$ref" = "bluray-publish-response.schema.json#/$defs/failure";
+        };
+        bluray_publish_success_response_v1 = {
+          "$ref" = "bluray-publish-response.schema.json#/$defs/success";
+        };
         discard_request_v1 = {
           "$ref" = "join-request.schema.json#/$defs/discard";
         };
@@ -85,6 +116,15 @@ let
         };
       };
       required = [
+        "bluray_identify_request_v1"
+        "bluray_identify_failure_response_v1"
+        "bluray_identify_success_response_v1"
+        "bluray_remux_request_v1"
+        "bluray_remux_failure_response_v1"
+        "bluray_remux_success_response_v1"
+        "bluray_publish_request_v1"
+        "bluray_publish_failure_response_v1"
+        "bluray_publish_success_response_v1"
         "discard_request_v1"
         "discard_failure_response_v1"
         "discard_success_response_v1"
@@ -124,6 +164,12 @@ runCommand "radarr-repair-go-models-v2"
     ln -s "${schemaDirectory}/repair-decision.schema.json" work/repair-decision.schema.json
     cp "${decisionVariants}" work/decision-variants.schema.json
     ln -s "${workerSchemaDirectory}/join-request.schema.json" work/join-request.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-identify-request.schema.json" work/bluray-identify-request.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-identify-response.schema.json" work/bluray-identify-response.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-remux-request.schema.json" work/bluray-remux-request.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-remux-response.schema.json" work/bluray-remux-response.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-publish-request.schema.json" work/bluray-publish-request.schema.json
+    ln -s "${workerSchemaDirectory}/bluray-publish-response.schema.json" work/bluray-publish-response.schema.json
     ln -s "${workerSchemaDirectory}/join-response.schema.json" work/join-response.schema.json
     ln -s "${workerSchemaDirectory}/media-evidence.schema.json" work/media-evidence.schema.json
     ln -s "${workerSchemaDirectory}/probe-request.schema.json" work/probe-request.schema.json

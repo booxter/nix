@@ -1,0 +1,13 @@
+{
+  "artifact_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "artifact_id": "artifact:remux:01",
+  "operation": "publish_bluray_remux_v1",
+  "path_components": [
+    "Example.Movie",
+    "radarr-repair-5555555555555555555555555555555555555555555555555555555555555555.mkv"
+  ],
+  "request_id": "request:publish-remux:01",
+  "root_id": "root:downloads",
+  "schema_version": "radarr-repair-worker/v1",
+  "status": "ok"
+}

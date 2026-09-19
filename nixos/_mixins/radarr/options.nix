@@ -36,6 +36,7 @@
           listOf (enum [
             "join_parts_v1"
             "manual_import_file_v1"
+            "remux_bluray_v1"
           ]);
         default = [ ];
         description = "Repair actions the automatic controller may apply.";

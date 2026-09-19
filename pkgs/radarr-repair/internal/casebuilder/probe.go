@@ -222,7 +222,7 @@ func mapStream(stream controller.ProbeStream) (contracts.StreamElement, error) {
 
 	return contracts.StreamElement{
 		Index:       stream.Index,
-		Kind:        contracts.Kind(*stream.Kind),
+		Kind:        contracts.StreamKind(*stream.Kind),
 		CodecName:   *stream.CodecName,
 		CodecTag:    stream.CodecTag,
 		Profile:     stream.Profile,

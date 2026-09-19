@@ -51,17 +51,15 @@ def run(
                 apply_priority_updates(client, state)
                 LOG.info(
                     "iteration complete: tracker_hosts=%s preferred_torrents=%s "
-                    "preferred_bootstrap_active=%s preferred_upload_active=%s "
+                    "preferred_upload_active=%s "
                     "preferred_upload_bytes_per_second=%s applied_high_priority_changes=%s "
-                    "applied_normal_priority_changes=%s applied_low_priority_changes=%s "
+                    "applied_low_priority_changes=%s "
                     "applied_stop_actions=%s",
                     state.tracker_hosts_count,
                     state.preferred_torrent_count,
-                    state.preferred_bootstrap_active,
                     state.preferred_upload_active,
                     state.preferred_upload_bytes_per_second,
                     len(state.high_priority_hashes),
-                    len(state.normal_priority_hashes),
                     len(state.low_priority_hashes),
                     len(state.stop_hashes),
                 )

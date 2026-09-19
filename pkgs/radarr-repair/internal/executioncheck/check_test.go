@@ -50,6 +50,25 @@ func TestCheckReturnsFreshManualImportAuthorization(t *testing.T) {
 	}
 }
 
+func TestCheckExplainsRejectedManualImportDecision(t *testing.T) {
+	t.Parallel()
+
+	stored := executionAssembly()
+	runtimeMinutes := 97
+	stored.LocalSnapshot.Observation.Movie.RuntimeMinutes = &runtimeMinutes
+	checker := newTestChecker(
+		t, &fakeFreshCases{}, &fakeJoinExecutions{}, stored.Request.ObservedAt.Add(time.Hour),
+	)
+	result, err := checker.Check(context.Background(), stored, executionManualImportDecision())
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertRejected(t, result, DecisionRejected)
+	if got := result.Rejections[0].DecisionReason; got != "runtime_mismatch" {
+		t.Fatalf("decision reason = %q, want runtime_mismatch", got)
+	}
+}
+
 func TestCheckRequiresAbsentJoinExecution(t *testing.T) {
 	t.Parallel()
 

@@ -4,6 +4,7 @@
   goModels,
   lib,
   makeWrapper,
+  mkvtoolnixCli,
 }:
 let
   version = "0.1.0";
@@ -40,6 +41,7 @@ let
 
       RADARR_REPAIR_TEST_FFMPEG = lib.getExe ffmpeg;
       RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg "ffprobe";
+      RADARR_REPAIR_TEST_MKVMERGE = lib.getExe' mkvtoolnixCli "mkvmerge";
       RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
@@ -87,7 +89,8 @@ let
       postInstall = ''
         wrapProgram "$out/bin/radarr-repair-worker" \
           --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg "ffprobe"}"} \
-          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe ffmpeg}"}
+          --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe ffmpeg}"} \
+          --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"}
       '';
 
       doCheck = false;

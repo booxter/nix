@@ -47,8 +47,13 @@ class ExpectedManualImport(StrictModel):
     file_id: str
 
 
+class ExpectedRemuxBluray(StrictModel):
+    action: Literal["remux_bluray_v1"]
+    capability_id: str
+
+
 ExpectedDecision = Annotated[
-    ExpectedNoRepair | ExpectedJoin | ExpectedManualImport,
+    ExpectedNoRepair | ExpectedJoin | ExpectedManualImport | ExpectedRemuxBluray,
     Field(discriminator="action"),
 ]
 
@@ -103,6 +108,9 @@ def _validate_expected_capability(
             raise EvaluationDataError(
                 f"evaluation case {spec.name} expects the wrong manual-import file"
             )
+        return
+
+    if isinstance(expected, ExpectedRemuxBluray):
         return
 
     candidate_ids = set(capability["candidate_file_ids"])
@@ -224,6 +232,10 @@ def _expectation_violations(
             violations.append("manual import selected the wrong capability")
         if decision_value["file_id"] != expected.file_id:
             violations.append("manual import selected the wrong file")
+    elif isinstance(expected, ExpectedRemuxBluray) and (
+        decision_value["capability_id"] != expected.capability_id
+    ):
+        violations.append("Blu-ray remux selected the wrong playlist")
     return violations
 
 

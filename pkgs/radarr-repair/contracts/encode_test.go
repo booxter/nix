@@ -127,6 +127,7 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 		"v2/examples/repair-decision-no-repair.json",
 		"v2/examples/repair-decision-join.json",
 		"v2/examples/repair-decision-manual-import.json",
+		"v2/examples/repair-decision-remux-bluray.json",
 	} {
 		path := path
 		t.Run(path, func(t *testing.T) {

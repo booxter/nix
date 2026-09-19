@@ -71,6 +71,20 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 	}
 }
 
+func TestAutomaticExecutionPrintsBluRayRemuxState(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	err := writeAutomaticExecution(&output, applyrunner.CaseResult{
+		CaseID: "disc-case", Action: contracts.ActionRemuxBluray,
+		Result: repairexecution.Result{Remux: &casestore.RemuxExecution{
+			ExecutionID: "execution:disc", State: casestore.RemuxImported,
+		}},
+	})
+	if err != nil || output.String() != "apply=completed case_id=disc-case action=remux_bluray_v1 state=imported execution_id=execution:disc\n" {
+		t.Fatalf("output = %q, error = %v", output.String(), err)
+	}
+}
+
 func TestAutomaticRunRejectsUnsafeConfigurationBeforeRunning(t *testing.T) {
 	t.Parallel()
 
@@ -156,6 +170,43 @@ func TestAutomaticSummaryExplainsPendingStabilization(t *testing.T) {
 		"apply=precondition_rejected case_id=case-1 action=manual_import_file_v1 " +
 		"reason=stabilization_pending observed_at=2026-09-14T19:03:52Z " +
 		"checked_at=2026-09-14T19:15:52Z required_age=15m0s actual_age=12m0s\n"
+	if output.String() != want {
+		t.Fatalf("summary = %q, want %q", output.String(), want)
+	}
+}
+
+func TestAutomaticSummaryReportsRejectionAndFollowingImport(t *testing.T) {
+	t.Parallel()
+
+	report := automaticReport{
+		ShadowSucceeded: true,
+		Apply: applyrunner.Report{Executions: []applyrunner.CaseResult{
+			{
+				CaseID: "short-file",
+				Action: contracts.ActionManualImportFile,
+				Result: repairexecution.Result{Check: executioncheck.Result{
+					Rejections: []executioncheck.Rejection{{
+						Reason:         executioncheck.DecisionRejected,
+						DecisionReason: "runtime_mismatch",
+					}},
+				}},
+			},
+			{
+				CaseID: "ready-file",
+				Action: contracts.ActionManualImportFile,
+				Result: repairexecution.Result{ManualImport: &casestore.ManualImportExecution{
+					State: casestore.ManualImportImported,
+				}},
+			},
+		}},
+	}
+	var output bytes.Buffer
+	if err := writeAutomaticSummary(&output, report); err != nil {
+		t.Fatal(err)
+	}
+	want := "observed=0 stored=0 superseded=0 submitted=0 decided=0 already_decided=0 deferred=0 failed=0\n" +
+		"apply=precondition_rejected case_id=short-file action=manual_import_file_v1 reason=decision_rejected decision_reason=runtime_mismatch\n" +
+		"apply=completed case_id=ready-file action=manual_import_file_v1 state=imported\n"
 	if output.String() != want {
 		t.Fatalf("summary = %q, want %q", output.String(), want)
 	}

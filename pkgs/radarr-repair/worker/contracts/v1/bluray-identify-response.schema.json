@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "identify_bluray_v1"
+        },
+        "reason": {
+          "enum": [
+            "unknown_root",
+            "invalid_path",
+            "file_unavailable",
+            "not_regular_file",
+            "fingerprint_mismatch",
+            "timeout",
+            "identification_error",
+            "invalid_output",
+            "internal_error"
+          ]
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "failed"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "success": {
+      "additionalProperties": false,
+      "properties": {
+        "chapter_count": {
+          "maximum": 4096,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "clip_names": {
+          "items": {
+            "pattern": "^[0-9]{5}\\.m2ts$",
+            "type": "string"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array"
+        },
+        "duration_ms": {
+          "maximum": 604800000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "operation": {
+          "const": "identify_bluray_v1"
+        },
+        "request_id": {
+          "$ref": "wire-types.schema.json#/$defs/opaqueId"
+        },
+        "schema_version": {
+          "const": "radarr-repair-worker/v1"
+        },
+        "status": {
+          "const": "ok"
+        },
+        "tracks": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "codec": {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "video",
+                  "audio",
+                  "subtitles"
+                ]
+              },
+              "language": {
+                "oneOf": [
+                  {
+                    "maxLength": 32,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "codec",
+              "language"
+            ],
+            "type": "object"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "request_id",
+        "status",
+        "duration_ms",
+        "chapter_count",
+        "clip_names",
+        "tracks"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "bluray-identify-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "title": "Radarr repair worker Blu-ray identification response"
+}

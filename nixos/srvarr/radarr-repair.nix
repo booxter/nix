@@ -28,6 +28,7 @@ in
       allowedActions = [
         "join_parts_v1"
         "manual_import_file_v1"
+        "remux_bluray_v1"
       ];
       allowedDownloadClients = [
         "transmission"

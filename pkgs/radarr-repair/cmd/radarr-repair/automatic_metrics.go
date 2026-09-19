@@ -90,6 +90,8 @@ func automaticExecutionState(execution applyrunner.CaseResult) string {
 		return string(result.ManualImport.State)
 	case result.Join != nil:
 		return string(result.Join.State)
+	case result.Remux != nil:
+		return string(result.Remux.State)
 	default:
 		return "executor_error"
 	}

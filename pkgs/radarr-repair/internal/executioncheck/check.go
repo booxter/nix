@@ -30,8 +30,9 @@ const (
 )
 
 type Rejection struct {
-	Reason        RejectionReason
-	Stabilization *StabilizationAssessment
+	Reason         RejectionReason
+	DecisionReason string
+	Stabilization  *StabilizationAssessment
 }
 
 type StabilizationAssessment struct {
@@ -44,6 +45,7 @@ type StabilizationAssessment struct {
 type Authorization struct {
 	Join         *decisionpolicy.AuthorizedJoin
 	ManualImport *decisionpolicy.AuthorizedManualImport
+	Remux        *decisionpolicy.AuthorizedRemux
 }
 
 type Result struct {
@@ -52,8 +54,17 @@ type Result struct {
 }
 
 func (result Result) Accepted() bool {
-	return len(result.Rejections) == 0 &&
-		(result.Authorization.Join != nil) != (result.Authorization.ManualImport != nil)
+	count := 0
+	for _, selected := range []bool{
+		result.Authorization.Join != nil,
+		result.Authorization.ManualImport != nil,
+		result.Authorization.Remux != nil,
+	} {
+		if selected {
+			count++
+		}
+	}
+	return len(result.Rejections) == 0 && count == 1
 }
 
 type FreshCaseReader interface {
@@ -105,9 +116,9 @@ func (checker *Checker) Check(
 		return Result{}, err
 	}
 
-	storedAuthorization, ok := authorize(stored, decision)
+	storedAuthorization, decisionReason, ok := authorize(stored, decision)
 	if !ok {
-		return rejected(DecisionRejected), nil
+		return rejectedDecision(DecisionRejected, decisionReason), nil
 	}
 	now := checker.dependencies.Clock.Now().UTC()
 	if now.IsZero() {
@@ -143,9 +154,9 @@ func (checker *Checker) Check(
 	if fresh.Request.CaseID != stored.Request.CaseID {
 		return rejected(CaseChanged), nil
 	}
-	freshAuthorization, ok := authorize(fresh, decision)
+	freshAuthorization, decisionReason, ok := authorize(fresh, decision)
 	if !ok {
-		return rejected(AuthorizationChanged), nil
+		return rejectedDecision(AuthorizationChanged, decisionReason), nil
 	}
 	if reason, unsafe := replacementRejection(fresh, freshAuthorization); unsafe {
 		return rejected(reason), nil
@@ -184,22 +195,42 @@ func (checker *Checker) Check(
 func authorize(
 	assembly casebuilder.Assembly,
 	decision contracts.RepairDecisionV2,
-) (Authorization, bool) {
+) (Authorization, string, bool) {
 	switch decision.Kind {
 	case contracts.ActionJoinParts:
 		validation := decisionpolicy.ValidateJoin(assembly, decision)
 		if validation.Accepted() {
-			return Authorization{Join: validation.Authorized}, true
+			return Authorization{Join: validation.Authorized}, "", true
+		}
+		if len(validation.Rejections) != 0 {
+			return Authorization{}, string(validation.Rejections[0].Reason), false
 		}
 	case contracts.ActionManualImportFile:
 		validation := decisionpolicy.ValidateManualImport(assembly, decision)
 		if validation.Accepted() {
-			return Authorization{ManualImport: validation.Authorized}, true
+			return Authorization{ManualImport: validation.Authorized}, "", true
+		}
+		if len(validation.Rejections) != 0 {
+			return Authorization{}, string(validation.Rejections[0].Reason), false
+		}
+	case contracts.ActionRemuxBluray:
+		validation := decisionpolicy.ValidateRemux(assembly, decision)
+		if validation.Accepted() {
+			return Authorization{Remux: validation.Authorized}, "", true
+		}
+		if len(validation.Rejections) != 0 {
+			return Authorization{}, string(validation.Rejections[0]), false
 		}
 	}
-	return Authorization{}, false
+	return Authorization{}, "", false
 }
 
 func rejected(reason RejectionReason) Result {
 	return Result{Rejections: []Rejection{{Reason: reason}}}
+}
+
+func rejectedDecision(reason RejectionReason, decisionReason string) Result {
+	return Result{Rejections: []Rejection{{
+		Reason: reason, DecisionReason: decisionReason,
+	}}}
 }

@@ -55,6 +55,12 @@ func DecodeDecision(data []byte) (RepairDecisionV2, error) {
 		return RepairDecisionV2{
 			Kind: ActionManualImportFile, ManualImportFile: &decision,
 		}, nil
+	case ActionRemuxBluray:
+		var decision RemuxBlurayDecision
+		if err := decodeStrict(data, &decision); err != nil {
+			return RepairDecisionV2{}, fmt.Errorf("decode Blu-ray remux decision: %w", err)
+		}
+		return RepairDecisionV2{Kind: ActionRemuxBluray, RemuxBluray: &decision}, nil
 	default:
 		return RepairDecisionV2{}, fmt.Errorf("unsupported repair decision action %q", envelope.Action)
 	}

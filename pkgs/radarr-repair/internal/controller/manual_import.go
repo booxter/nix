@@ -108,7 +108,7 @@ func BindRadarrManualImportFile(
 	return binding, binding.Complete()
 }
 
-func BuildRadarrJoinedFileImport(
+func BuildRadarrPublishedFileImport(
 	path string,
 	movieID int64,
 	downloadID string,

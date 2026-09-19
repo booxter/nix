@@ -338,6 +338,41 @@ func (rootSet *RootSet) PublishCompleted(
 	expectedFingerprint string,
 	inputPaths [][]string,
 ) ([]string, error) {
+	directoryComponents, err := commonInputDirectory(inputPaths)
+	if err != nil {
+		return nil, err
+	}
+	return rootSet.publishCompletedAt(
+		rootID, artifactID, container, expectedFingerprint, directoryComponents,
+	)
+}
+
+// PublishCompletedAt places a verified artifact in a selected release
+// directory. Blu-ray playlists and clips live in different BDMV subdirectories,
+// so their common parent is not the release root.
+func (rootSet *RootSet) PublishCompletedAt(
+	rootID string,
+	artifactID string,
+	container workercontracts.OutputContainer,
+	expectedFingerprint string,
+	directoryComponents []string,
+) ([]string, error) {
+	if len(directoryComponents) > 0 && (!validComponents(directoryComponents) ||
+		directoryComponents[0] == workerDirectoryName) {
+		return nil, &Failure{Kind: FailureInvalidPath}
+	}
+	return rootSet.publishCompletedAt(
+		rootID, artifactID, container, expectedFingerprint, directoryComponents,
+	)
+}
+
+func (rootSet *RootSet) publishCompletedAt(
+	rootID string,
+	artifactID string,
+	container workercontracts.OutputContainer,
+	expectedFingerprint string,
+	directoryComponents []string,
+) ([]string, error) {
 	if rootSet == nil || rootSet.roots == nil {
 		return nil, &Failure{Kind: FailureInternal}
 	}
@@ -349,10 +384,6 @@ func (rootSet *RootSet) PublishCompleted(
 		return nil, &Failure{Kind: FailureInternal}
 	}
 	extension, err := stagedExtension(container)
-	if err != nil {
-		return nil, err
-	}
-	directoryComponents, err := commonInputDirectory(inputPaths)
 	if err != nil {
 		return nil, err
 	}

@@ -224,6 +224,33 @@
         "file_id": "file:c5063d72e1c1dc2d88c70fd60b12e5524bd342dc73dca5ae612678da6bf649f2"
       },
       "name": "real_traci_manual_import"
+    },
+    {
+      "base_case": "f1ab9ba1d2b4509c99a4cb4eca87818f45fee0c91da5aaafc4748f7525cd5db1.json",
+      "expected": {
+        "action": "remux_bluray_v1",
+        "capability_id": "capability:57fca824962ca40d591f70fb59984039d521893925a326f48de5e8b1c74687fd"
+      },
+      "name": "current_pandoras_mirror_bluray"
+    },
+    {
+      "base_case": "69f41abeb6965d26096f49fb0459f0210e2a727daa4dde1568db45a543c1ee8e.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "insufficient_evidence",
+          "unsafe_to_repair"
+        ]
+      },
+      "name": "current_xconfessions_bluray_runtime_mismatch"
+    },
+    {
+      "base_case": "be51b65d13f0f81b790b9664c5f3f98ecbf2d4b896cef735ad1e33734cc746d0.json",
+      "expected": {
+        "action": "remux_bluray_v1",
+        "capability_id": "capability:eb37a9e081f0a837d14785576810f41c25f978edba7e3733f3500d4c50168762"
+      },
+      "name": "current_double_exposure_bluray"
     }
   ],
   "schema_version": "radarr-repair-evaluation/v2"

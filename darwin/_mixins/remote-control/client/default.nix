@@ -25,9 +25,13 @@
   };
 
   config = lib.mkIf (config.host.remote-control.client.x11 != null) {
+    services.xquartz = {
+      enable = true;
+      configureSsh = true;
+    };
+
     home-manager.users.${config.host.username} = {
       programs.remote-control.client.x11 = { };
-      host.hm.xquartz.enable = true;
     };
   };
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/executioncheck"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
 )
 
@@ -123,6 +124,41 @@ func TestRunResumesUnfinishedRepair(t *testing.T) {
 	assertLease(t, locker, true)
 }
 
+func TestRunSkipsRejectedPreconditionBeforeStartingOneRepair(t *testing.T) {
+	t.Parallel()
+
+	executor := &runnerExecutor{results: map[string]repairexecution.Result{
+		"rejected": {Check: executioncheck.Result{Rejections: []executioncheck.Rejection{{
+			Reason: executioncheck.DecisionRejected,
+		}}}},
+	}}
+	locker := newRunnerLocker()
+	runner := newTestRunner(t, &runnerStore{}, executor, locker)
+	report, err := runner.Run(context.Background(), []casestore.PlannedCase{
+		runnerPlan("rejected", contracts.ActionManualImportFile),
+		runnerPlan("ready", contracts.ActionManualImportFile),
+		runnerPlan("later", contracts.ActionManualImportFile),
+	}, applyselection.Policy{
+		AllowedActions: map[contracts.DecisionAction]bool{
+			contracts.ActionManualImportFile: true,
+		},
+		AllowedDownloadClients: transmissionClients(),
+		Limit:                  1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := executor.calls, []string{"rejected", "ready"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("executed cases = %v, want %v", got, want)
+	}
+	if report.Permitted != 3 || report.Selected != 2 || len(report.Executions) != 2 ||
+		len(report.Executions[0].Result.Check.Rejections) != 1 ||
+		report.Executions[1].CaseID != "ready" {
+		t.Fatalf("report = %#v", report)
+	}
+	assertLease(t, locker, true)
+}
+
 func TestRunDoesNotLockWithoutSelectedRepair(t *testing.T) {
 	t.Parallel()
 
@@ -164,7 +200,7 @@ func TestRunStopsAfterExecutionFailureAndReleasesLease(t *testing.T) {
 	if got, want := executor.calls, []string{"first"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("executed cases = %v, want %v", got, want)
 	}
-	if report.Selected != 2 || len(report.Executions) != 1 {
+	if report.Selected != 1 || len(report.Executions) != 1 {
 		t.Fatalf("report = %#v", report)
 	}
 	assertLease(t, locker, true)
@@ -289,10 +325,17 @@ func (store *runnerStore) GetJoinExecution(
 	return execution, found, nil
 }
 
+func (store *runnerStore) GetRemuxExecution(
+	caseID string,
+) (casestore.RemuxExecution, bool, error) {
+	return casestore.RemuxExecution{}, false, store.errors[caseID]
+}
+
 type runnerExecutor struct {
-	calls  []string
-	errors map[string]error
-	during func()
+	calls   []string
+	errors  map[string]error
+	results map[string]repairexecution.Result
+	during  func()
 }
 
 func (executor *runnerExecutor) Execute(
@@ -305,7 +348,7 @@ func (executor *runnerExecutor) Execute(
 	if executor.during != nil {
 		executor.during()
 	}
-	return repairexecution.Result{}, executor.errors[caseID]
+	return executor.results[caseID], executor.errors[caseID]
 }
 
 type runnerLease struct {

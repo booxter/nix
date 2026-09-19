@@ -1,0 +1,13 @@
+{
+  "expected_fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "operation": "identify_bluray_v1",
+  "path_components": [
+    "Example.Movie",
+    "BDMV",
+    "PLAYLIST",
+    "00000.mpls"
+  ],
+  "request_id": "request:bluray:01",
+  "root_id": "root:downloads",
+  "schema_version": "radarr-repair-worker/v1"
+}
