@@ -21,39 +21,41 @@ const (
 )
 
 type shadowConfig struct {
-	RadarrURL         string
-	RadarrAPIKeyFile  string
-	TransmissionURL   string
-	SABnzbdURL        string
-	SABnzbdAPIKeyFile string
-	WorkerSocket      string
-	WorkerRoots       map[string]string
-	PlannerSocket     string
-	StateDirectory    string
-	MetricsFile       string
-	RequestTimeout    time.Duration
-	CollectionTimeout time.Duration
-	PlannerTimeout    time.Duration
-	RetryInitial      time.Duration
-	RetryMaximum      time.Duration
+	RadarrURL          string
+	RadarrAPIKeyFile   string
+	TransmissionURL    string
+	SABnzbdURL         string
+	SABnzbdAPIKeyFile  string
+	WorkerSocket       string
+	WorkerRoots        map[string]string
+	PlannerSocket      string
+	StateDirectory     string
+	MetricsFile        string
+	RequestTimeout     time.Duration
+	WorkerStageTimeout time.Duration
+	CollectionTimeout  time.Duration
+	PlannerTimeout     time.Duration
+	RetryInitial       time.Duration
+	RetryMaximum       time.Duration
 }
 
 type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
 
 type shadowFlags struct {
-	radarrURL         *string
-	radarrAPIKeyFile  *string
-	downloadSources   downloadSourceFlags
-	workerSocket      *string
-	workerRoots       mediaroot.Mappings
-	plannerSocket     *string
-	stateDirectory    *string
-	metricsFile       *string
-	requestTimeout    *time.Duration
-	collectionTimeout *time.Duration
-	plannerTimeout    *time.Duration
-	retryInitial      *time.Duration
-	retryMaximum      *time.Duration
+	radarrURL          *string
+	radarrAPIKeyFile   *string
+	downloadSources    downloadSourceFlags
+	workerSocket       *string
+	workerRoots        mediaroot.Mappings
+	plannerSocket      *string
+	stateDirectory     *string
+	metricsFile        *string
+	requestTimeout     *time.Duration
+	workerStageTimeout *time.Duration
+	collectionTimeout  *time.Duration
+	plannerTimeout     *time.Duration
+	retryInitial       *time.Duration
+	retryMaximum       *time.Duration
 }
 
 func addShadowFlags(flags *flag.FlagSet) shadowFlags {
@@ -71,6 +73,10 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 		requestTimeout: flags.Duration(
 			"request-timeout", defaultInspectTimeout,
 			"Radarr, download-client, and worker request timeout",
+		),
+		workerStageTimeout: flags.Duration(
+			"worker-stage-timeout", defaultWorkerStageTimeout,
+			"maximum duration of a worker media stage request",
 		),
 		collectionTimeout: flags.Duration(
 			"collection-timeout", defaultCollectionTimeout,
@@ -92,21 +98,22 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 
 func (values shadowFlags) Config() shadowConfig {
 	return shadowConfig{
-		RadarrURL:         *values.radarrURL,
-		RadarrAPIKeyFile:  *values.radarrAPIKeyFile,
-		TransmissionURL:   *values.downloadSources.transmissionURL,
-		SABnzbdURL:        *values.downloadSources.sabnzbdURL,
-		SABnzbdAPIKeyFile: *values.downloadSources.sabnzbdAPIKeyFile,
-		WorkerSocket:      *values.workerSocket,
-		WorkerRoots:       values.workerRoots.Paths(),
-		PlannerSocket:     *values.plannerSocket,
-		StateDirectory:    *values.stateDirectory,
-		MetricsFile:       *values.metricsFile,
-		RequestTimeout:    *values.requestTimeout,
-		CollectionTimeout: *values.collectionTimeout,
-		PlannerTimeout:    *values.plannerTimeout,
-		RetryInitial:      *values.retryInitial,
-		RetryMaximum:      *values.retryMaximum,
+		RadarrURL:          *values.radarrURL,
+		RadarrAPIKeyFile:   *values.radarrAPIKeyFile,
+		TransmissionURL:    *values.downloadSources.transmissionURL,
+		SABnzbdURL:         *values.downloadSources.sabnzbdURL,
+		SABnzbdAPIKeyFile:  *values.downloadSources.sabnzbdAPIKeyFile,
+		WorkerSocket:       *values.workerSocket,
+		WorkerRoots:        values.workerRoots.Paths(),
+		PlannerSocket:      *values.plannerSocket,
+		StateDirectory:     *values.stateDirectory,
+		MetricsFile:        *values.metricsFile,
+		RequestTimeout:     *values.requestTimeout,
+		WorkerStageTimeout: *values.workerStageTimeout,
+		CollectionTimeout:  *values.collectionTimeout,
+		PlannerTimeout:     *values.plannerTimeout,
+		RetryInitial:       *values.retryInitial,
+		RetryMaximum:       *values.retryMaximum,
 	}
 }
 
@@ -234,15 +241,16 @@ func runShadowOnce(
 
 func (config shadowConfig) inspectionConfig() inspectConfig {
 	return inspectConfig{
-		RadarrURL:         config.RadarrURL,
-		RadarrAPIKeyFile:  config.RadarrAPIKeyFile,
-		TransmissionURL:   config.TransmissionURL,
-		SABnzbdURL:        config.SABnzbdURL,
-		SABnzbdAPIKeyFile: config.SABnzbdAPIKeyFile,
-		WorkerSocket:      config.WorkerSocket,
-		WorkerRoots:       config.WorkerRoots,
-		Timeout:           config.RequestTimeout,
-		CollectionTimeout: config.CollectionTimeout,
+		RadarrURL:          config.RadarrURL,
+		RadarrAPIKeyFile:   config.RadarrAPIKeyFile,
+		TransmissionURL:    config.TransmissionURL,
+		SABnzbdURL:         config.SABnzbdURL,
+		SABnzbdAPIKeyFile:  config.SABnzbdAPIKeyFile,
+		WorkerSocket:       config.WorkerSocket,
+		WorkerRoots:        config.WorkerRoots,
+		Timeout:            config.RequestTimeout,
+		WorkerStageTimeout: config.WorkerStageTimeout,
+		CollectionTimeout:  config.CollectionTimeout,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
@@ -80,6 +81,7 @@ func (client *Client) StageJoin(
 		client,
 		ctx,
 		stageJoinPath,
+		client.stageTimeout,
 		payload,
 		request.RequestID,
 		workercontracts.DecodeStageJoinResponse,
@@ -116,6 +118,7 @@ func (client *Client) PublishJoin(
 		client,
 		ctx,
 		publishPath,
+		client.requestTimeout,
 		payload,
 		request.RequestID,
 		workercontracts.DecodePublishResponse,
@@ -148,6 +151,7 @@ func (client *Client) DiscardJoin(
 		client,
 		ctx,
 		discardPath,
+		client.requestTimeout,
 		payload,
 		request.RequestID,
 		workercontracts.DecodeDiscardResponse,
@@ -181,6 +185,7 @@ func (client *Client) InspectJoin(
 		client,
 		ctx,
 		inspectPath,
+		client.requestTimeout,
 		payload,
 		request.RequestID,
 		workercontracts.DecodeInspectJoinResponse,
@@ -194,13 +199,16 @@ func callJoin[T any](
 	client *Client,
 	ctx context.Context,
 	path string,
+	timeout time.Duration,
 	payload []byte,
 	requestID string,
 	decode func([]byte) (T, error),
 	responseRequestID func(T) string,
 ) (T, error) {
 	var zero T
-	data, err := client.post(ctx, path, payload, workercontracts.MaxJoinResponseBytes)
+	data, err := client.postWithTimeout(
+		ctx, path, payload, workercontracts.MaxJoinResponseBytes, timeout,
+	)
 	if err != nil {
 		return zero, err
 	}

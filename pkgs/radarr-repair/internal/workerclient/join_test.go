@@ -36,6 +36,8 @@ func TestClientStagesAuthorizedJoinThroughUnixSocket(t *testing.T) {
 			return
 		}
 		requests <- stageRequest
+		// Staging can take longer than a normal probe request.
+		time.Sleep(50 * time.Millisecond)
 		evidence := completeEvidence()
 		writeStageJoinResponse(writer, joinrequest.SuccessResponse(
 			stageRequest.RequestID,
@@ -50,7 +52,7 @@ func TestClientStagesAuthorizedJoinThroughUnixSocket(t *testing.T) {
 	client := testClient(t, socketPath, map[string]string{
 		"root:downloads": "/downloads",
 		"root:release":   "/downloads/Movie.Release",
-	}, time.Second)
+	}, 10*time.Millisecond)
 	authorized, paths := authorizedJoin()
 
 	exchange, err := client.StageJoin(

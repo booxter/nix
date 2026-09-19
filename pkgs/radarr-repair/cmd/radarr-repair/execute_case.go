@@ -20,19 +20,20 @@ const (
 )
 
 type executeCaseConfig struct {
-	RadarrURL         string
-	RadarrAPIKeyFile  string
-	TransmissionURL   string
-	SABnzbdURL        string
-	SABnzbdAPIKeyFile string
-	WorkerSocket      string
-	WorkerRoots       map[string]string
-	StateDirectory    string
-	CaseID            string
-	RequestTimeout    time.Duration
-	CollectionTimeout time.Duration
-	Stabilization     time.Duration
-	PollInterval      time.Duration
+	RadarrURL          string
+	RadarrAPIKeyFile   string
+	TransmissionURL    string
+	SABnzbdURL         string
+	SABnzbdAPIKeyFile  string
+	WorkerSocket       string
+	WorkerRoots        map[string]string
+	StateDirectory     string
+	CaseID             string
+	RequestTimeout     time.Duration
+	WorkerStageTimeout time.Duration
+	CollectionTimeout  time.Duration
+	Stabilization      time.Duration
+	PollInterval       time.Duration
 }
 
 type executeCaseFunc func(
@@ -68,6 +69,10 @@ func (app application) runExecuteCase(
 	requestTimeout := flags.Duration(
 		"request-timeout", defaultInspectTimeout, "Radarr, download-client, and worker request timeout",
 	)
+	workerStageTimeout := flags.Duration(
+		"worker-stage-timeout", defaultWorkerStageTimeout,
+		"maximum duration of a worker media stage request",
+	)
 	collectionTimeout := flags.Duration(
 		"collection-timeout", defaultCollectionTimeout, "evidence-collection timeout",
 	)
@@ -87,19 +92,20 @@ func (app application) runExecuteCase(
 		return fmt.Errorf("execute-case accepts no positional arguments")
 	}
 	config := executeCaseConfig{
-		RadarrURL:         *radarrURL,
-		RadarrAPIKeyFile:  *radarrAPIKeyFile,
-		TransmissionURL:   *downloadFlags.transmissionURL,
-		SABnzbdURL:        *downloadFlags.sabnzbdURL,
-		SABnzbdAPIKeyFile: *downloadFlags.sabnzbdAPIKeyFile,
-		WorkerSocket:      *workerSocket,
-		WorkerRoots:       workerRoots.Paths(),
-		StateDirectory:    *stateDirectory,
-		CaseID:            *caseID,
-		RequestTimeout:    *requestTimeout,
-		CollectionTimeout: *collectionTimeout,
-		Stabilization:     *stabilization,
-		PollInterval:      *pollInterval,
+		RadarrURL:          *radarrURL,
+		RadarrAPIKeyFile:   *radarrAPIKeyFile,
+		TransmissionURL:    *downloadFlags.transmissionURL,
+		SABnzbdURL:         *downloadFlags.sabnzbdURL,
+		SABnzbdAPIKeyFile:  *downloadFlags.sabnzbdAPIKeyFile,
+		WorkerSocket:       *workerSocket,
+		WorkerRoots:        workerRoots.Paths(),
+		StateDirectory:     *stateDirectory,
+		CaseID:             *caseID,
+		RequestTimeout:     *requestTimeout,
+		WorkerStageTimeout: *workerStageTimeout,
+		CollectionTimeout:  *collectionTimeout,
+		Stabilization:      *stabilization,
+		PollInterval:       *pollInterval,
 	}
 	if !*apply {
 		return fmt.Errorf("--apply is required to execute a repair")
@@ -187,15 +193,16 @@ func executeStoredCase(
 
 func (config executeCaseConfig) inspectionConfig() inspectConfig {
 	return inspectConfig{
-		RadarrURL:         config.RadarrURL,
-		RadarrAPIKeyFile:  config.RadarrAPIKeyFile,
-		TransmissionURL:   config.TransmissionURL,
-		SABnzbdURL:        config.SABnzbdURL,
-		SABnzbdAPIKeyFile: config.SABnzbdAPIKeyFile,
-		WorkerSocket:      config.WorkerSocket,
-		WorkerRoots:       config.WorkerRoots,
-		Timeout:           config.RequestTimeout,
-		CollectionTimeout: config.CollectionTimeout,
+		RadarrURL:          config.RadarrURL,
+		RadarrAPIKeyFile:   config.RadarrAPIKeyFile,
+		TransmissionURL:    config.TransmissionURL,
+		SABnzbdURL:         config.SABnzbdURL,
+		SABnzbdAPIKeyFile:  config.SABnzbdAPIKeyFile,
+		WorkerSocket:       config.WorkerSocket,
+		WorkerRoots:        config.WorkerRoots,
+		Timeout:            config.RequestTimeout,
+		WorkerStageTimeout: config.WorkerStageTimeout,
+		CollectionTimeout:  config.CollectionTimeout,
 	}
 }
 
