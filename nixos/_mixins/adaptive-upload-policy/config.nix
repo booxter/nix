@@ -64,6 +64,14 @@ let
       client_key_file = if mtls == null || mtls.keyFile == null then "" else mtls.keyFile;
       media_types = jellyfin.mediaTypes;
       idle_rate_mbit = policy.idleRateMbit;
+      night =
+        if policy.night == null then
+          null
+        else
+          {
+            inherit (policy.night) start end;
+            rate_mbit = policy.night.rateMbit;
+          };
       minimum_rate_mbit = policy.minimumRateMbit;
       relaxation_hold_seconds = policy.relaxationHoldSeconds;
     };

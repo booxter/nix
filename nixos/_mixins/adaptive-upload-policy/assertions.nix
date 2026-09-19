@@ -22,6 +22,10 @@ in
 {
   config.assertions = lib.optionals (cfg != null) [
     {
+      assertion = cfg.night == null || cfg.night.start != cfg.night.end;
+      message = "host.adaptiveUploadPolicy night start and end must differ";
+    }
+    {
       assertion = cfg.source.jellyfin.host != null || cfg.source.jellyfin.exporterUrl != null;
       message = "host.adaptiveUploadPolicy requires a Jellyfin metrics source";
     }

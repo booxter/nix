@@ -62,7 +62,7 @@ in
   group = "adaptive-upload-policy";
 
   policy = {
-    idleRateMbit = 25;
+    inherit (cfg) idleRateMbit night;
     minimumRateMbit = 1;
     relaxationHoldSeconds = 90;
   };

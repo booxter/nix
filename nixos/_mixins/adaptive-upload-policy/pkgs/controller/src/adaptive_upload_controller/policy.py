@@ -22,6 +22,18 @@ TARGET_MBIT_EPSILON = 0.05
 
 
 @dataclass(frozen=True)
+class NightRateSchedule:
+    start: datetime.time
+    end: datetime.time
+    rate_mbit: float
+
+    def applies_at(self, local_time: datetime.time) -> bool:
+        if self.start < self.end:
+            return self.start <= local_time < self.end
+        return local_time >= self.start or local_time < self.end
+
+
+@dataclass(frozen=True)
 class DecisionConfig:
     exporter_url: str
     request_timeout_seconds: float
@@ -30,6 +42,7 @@ class DecisionConfig:
     client_key_file: str
     media_types: frozenset[str]
     no_streams_mbit: float
+    night: NightRateSchedule | None
     minimum_streams_mbit: float
     fallback_mbit: float
     relaxation_hold_seconds: float
@@ -142,9 +155,17 @@ def observed_policy_from_stream_stats(
     active_external_media_streams: int,
     active_external_media_bitrate_bits_per_second: int,
     missing_external_media_bitrate_sessions: int,
+    local_time: datetime.time | None = None,
 ) -> ObservedPolicy:
+    if local_time is None:
+        local_time = datetime.datetime.now().astimezone().time()
+    idle_rate_mbit = (
+        config.night.rate_mbit
+        if config.night is not None and config.night.applies_at(local_time)
+        else config.no_streams_mbit
+    )
     if active_external_media_streams == 0:
-        target_mbit = config.no_streams_mbit
+        target_mbit = idle_rate_mbit
         reason = "no_active_media_streams"
         reserved_mbit = 0.0
     elif missing_external_media_bitrate_sessions > 0:
@@ -157,8 +178,8 @@ def observed_policy_from_stream_stats(
         )
         target_mbit = round_target_mbit(
             min(
-                config.no_streams_mbit,
-                max(config.minimum_streams_mbit, config.no_streams_mbit - reserved_mbit),
+                idle_rate_mbit,
+                max(config.minimum_streams_mbit, idle_rate_mbit - reserved_mbit),
             )
         )
         reason = "bitrate_based_active_media_streams"
@@ -199,12 +220,16 @@ def load_decider_state(
     except (OSError, ValidationError):
         return None, None, None
 
+    maximum_rate_mbit = max(
+        config.no_streams_mbit,
+        config.night.rate_mbit if config.night is not None else config.no_streams_mbit,
+    )
     effective_target_value = round_target_mbit(state.target_mbit)
     effective_target: float | None = (
         effective_target_value
         if config.minimum_streams_mbit - TARGET_MBIT_EPSILON
         <= effective_target_value
-        <= config.no_streams_mbit + TARGET_MBIT_EPSILON
+        <= maximum_rate_mbit + TARGET_MBIT_EPSILON
         else None
     )
 
@@ -216,7 +241,7 @@ def load_decider_state(
     if (
         not config.minimum_streams_mbit - TARGET_MBIT_EPSILON
         <= pending_target
-        <= (config.no_streams_mbit + TARGET_MBIT_EPSILON)
+        <= (maximum_rate_mbit + TARGET_MBIT_EPSILON)
     ):
         return effective_target, None, None
     return effective_target, pending_target, pending_since
@@ -256,7 +281,11 @@ def build_policy_state(
     )
 
 
-def decide_observed_policy(config: DecisionConfig) -> ObservedPolicy:
+def decide_observed_policy(
+    config: DecisionConfig,
+    *,
+    local_time: datetime.time | None = None,
+) -> ObservedPolicy:
     try:
         metrics_text = fetch_url_text(
             config.exporter_url,
@@ -272,6 +301,7 @@ def decide_observed_policy(config: DecisionConfig) -> ObservedPolicy:
             active_external_media_streams=stats.external,
             active_external_media_bitrate_bits_per_second=stats.external_bitrate_bps,
             missing_external_media_bitrate_sessions=stats.external_missing_bitrate,
+            local_time=local_time,
         )
     except ControllerError as error:
         LOG.warning("using conservative fallback after exporter failure: %s", error)
@@ -284,9 +314,9 @@ def decide_effective_policy(
     *,
     now: datetime.datetime | None = None,
 ) -> PolicyState:
-    observed = decide_observed_policy(config)
-    current_target, pending_target, pending_since = load_decider_state(state_file, config)
     decision_time = now or utc_now()
+    observed = decide_observed_policy(config, local_time=decision_time.astimezone().time())
+    current_target, pending_target, pending_since = load_decider_state(state_file, config)
 
     if current_target is None or observed.target_mbit < current_target - TARGET_MBIT_EPSILON:
         return build_policy_state(

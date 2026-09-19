@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -11,6 +12,18 @@ class ConfigModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class NightRateConfig(ConfigModel):
+    start: datetime.time
+    end: datetime.time
+    rate_mbit: float = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_window(self) -> NightRateConfig:
+        if self.start == self.end:
+            raise ValueError("night start and end must differ")
+        return self
+
+
 class JellyfinSourceConfig(ConfigModel):
     exporter_url: str
     request_timeout_seconds: float = Field(gt=0)
@@ -19,6 +32,7 @@ class JellyfinSourceConfig(ConfigModel):
     client_key_file: str = ""
     media_types: frozenset[str] = Field(min_length=1)
     idle_rate_mbit: float = Field(gt=0)
+    night: NightRateConfig | None = None
     minimum_rate_mbit: float = Field(gt=0)
     relaxation_hold_seconds: float = Field(ge=0)
 
@@ -28,6 +42,8 @@ class JellyfinSourceConfig(ConfigModel):
             raise ValueError("client_cert_file and client_key_file must be provided together")
         if self.minimum_rate_mbit > self.idle_rate_mbit:
             raise ValueError("minimum_rate_mbit must not exceed idle_rate_mbit")
+        if self.night is not None and self.minimum_rate_mbit > self.night.rate_mbit:
+            raise ValueError("minimum_rate_mbit must not exceed night rate_mbit")
         return self
 
 
