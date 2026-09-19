@@ -129,7 +129,7 @@
       lolek =
         let
           lolekPackage = inputs.lolek.packages.${system}.lolek;
-          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
+          lolekYtDlp = pkgsNixpkgsUnstable.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
               ../patches/yt-dlp-twitter-only-own-status-media.patch
             ];
