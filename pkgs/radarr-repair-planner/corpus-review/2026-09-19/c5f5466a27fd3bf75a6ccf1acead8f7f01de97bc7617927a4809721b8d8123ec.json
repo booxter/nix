@@ -1,0 +1,1175 @@
+{
+  "capabilities": [
+    {
+      "action": "remux_dvd_v1",
+      "angle_count": 1,
+      "capability_id": "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867",
+      "chapter_count": 12,
+      "duration_ms": 9779000,
+      "navigation_file_id": "file:f352891fb00e0d5435afe0b960a9beecb09bc315abf8ac153e783b051b62f8e7",
+      "source_file_ids": [
+        "file:c9b79535863bdda5132a04eed30cf8067875ba299b6d591086700e456af687db",
+        "file:f352891fb00e0d5435afe0b960a9beecb09bc315abf8ac153e783b051b62f8e7",
+        "file:3ce45b4924cc851b43d26ab7137635dc73c2a0b0ef99ff6e3f5bff6e2849c3ea",
+        "file:a5891d4cfa9f29c699bc19f6ee2bdb2d72572cbbf8e5484082eb1d0e008a7422",
+        "file:f5c5dccb294b90ff680b00631ac43e7c392483682be67a82589e059891986210",
+        "file:88d8da560a434dd482fffcc956fc19fe1806733834101946297e956b2c55756a",
+        "file:d910193094e1b2add7ed8d88e69a4e10c44eb70f2f709277186bd78a2605d880",
+        "file:ae0560cf176d9793aa6361ce33fd2db3503892d58543ef419d40e3377c98f915",
+        "file:9f3d1231350bdc07189cc624d721f268f9a8974e88c4401257ffb29c48161d57",
+        "file:b5e790ce369f13c280ce291ab35060b67940602668dd1257b95c8d60e9800a0e",
+        "file:e6d508f2bcb9a123b1ea0a7f6bb59b8b03afc4c31706e15fbdbe50dc58178335",
+        "file:236ba4b81b82cbd7d44223f3cbecb4f040c5d46aa918f13a8fa2f2c8253b0109",
+        "file:9cd2f544b89c789c8dffa34533270712fdcf085b12a05db6c2664f8830017c5d",
+        "file:9489a681a18e950e34ebbebe3d5251df63ad86f5fee41b6178e66c7d48c4329a",
+        "file:c5a7ad535f64714ba68c09a667794a7422094cef94ec56b26bb522e7d385e22e",
+        "file:ee4607ced1f43782b3b9c92e579f8bb04b96ebbf9bacf93f661ba7101f21b1d4",
+        "file:7fa11d5cff99fa5921926cc024eb9edc619712cf3b26a4db203d093debd88635"
+      ],
+      "title_in_set": 1,
+      "title_number": 1,
+      "title_set": 1,
+      "tracks": [
+        {
+          "codec": "mpeg2video",
+          "kind": "video",
+          "language": null
+        },
+        {
+          "codec": "ac3",
+          "kind": "audio",
+          "language": null
+        }
+      ]
+    }
+  ],
+  "case_id": "sha256:c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-19T20:33:19Z",
+    "content_ownership": "manifest",
+    "download_ref": "download:de9bce7a23563fc1f4eb77ca7194a63aaa5916c0c8e904630b2040dd98cf069d",
+    "file_count": 33,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "PINK_VELVET_2",
+    "source_type": "torrent",
+    "total_size_bytes": 7189013994
+  },
+  "files": [
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 12288,
+        "selected": true,
+        "source_index": 30,
+        "source_size_bytes": 12288
+      },
+      "extension": null,
+      "file_id": "file:c9b79535863bdda5132a04eed30cf8067875ba299b6d591086700e456af687db",
+      "fingerprint": "sha256:6d44f06f844b77aeaddb1e05ea00a35aee7b7cb6a398243131468af26d93032d",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VIDEO_TS.BUP"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 12288
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 12288,
+        "selected": true,
+        "source_index": 31,
+        "source_size_bytes": 12288
+      },
+      "extension": null,
+      "file_id": "file:f352891fb00e0d5435afe0b960a9beecb09bc315abf8ac153e783b051b62f8e7",
+      "fingerprint": "sha256:d8780f9c577dfe41f11e237b3ef7059c3251b68f686512bca22e5f050bbede97",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VIDEO_TS.IFO"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 12288
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 499712,
+        "selected": true,
+        "source_index": 11,
+        "source_size_bytes": 499712
+      },
+      "extension": null,
+      "file_id": "file:3ce45b4924cc851b43d26ab7137635dc73c2a0b0ef99ff6e3f5bff6e2849c3ea",
+      "fingerprint": "sha256:32f923b2d8b912890d27009b874ccfbbe0905abcc963003707b3e3e1991232f3",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VIDEO_TS.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 499712
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 69632,
+        "selected": true,
+        "source_index": 16,
+        "source_size_bytes": 69632
+      },
+      "extension": null,
+      "file_id": "file:a5891d4cfa9f29c699bc19f6ee2bdb2d72572cbbf8e5484082eb1d0e008a7422",
+      "fingerprint": "sha256:70a756e491a72c9cc361cda3468c5f9cd5cb04b9983f980ebc618498b24b99a3",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_0.BUP"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 69632
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 69632,
+        "selected": true,
+        "source_index": 17,
+        "source_size_bytes": 69632
+      },
+      "extension": null,
+      "file_id": "file:f5c5dccb294b90ff680b00631ac43e7c392483682be67a82589e059891986210",
+      "fingerprint": "sha256:80314e3da01df15193fd83d786fca5fcca11c9519687ccb6e79ad013beb54d46",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_0.IFO"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 69632
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 49551360,
+        "selected": true,
+        "source_index": 7,
+        "source_size_bytes": 49551360
+      },
+      "extension": null,
+      "file_id": "file:88d8da560a434dd482fffcc956fc19fe1806733834101946297e956b2c55756a",
+      "fingerprint": "sha256:0f4519bad60a0d261fa7bb4525d91fd8aa75d2fa682cee00957a6c54152e17da",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_0.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 49551360
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 4,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:d910193094e1b2add7ed8d88e69a4e10c44eb70f2f709277186bd78a2605d880",
+      "fingerprint": "sha256:d636631cf6de967072c0c3048df6aeb376aae0c334d5686b2d3069a0e64d9a44",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_1.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 5,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:ae0560cf176d9793aa6361ce33fd2db3503892d58543ef419d40e3377c98f915",
+      "fingerprint": "sha256:b8006732e168ef156c5f69f31c93cdb4481b535d0bf3f4951c478793430cccfe",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_2.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:9f3d1231350bdc07189cc624d721f268f9a8974e88c4401257ffb29c48161d57",
+      "fingerprint": "sha256:0887d21273a5b0a1e07a762e6f97176750fa94a2836b09a04cfe4d8fec4fcb7c",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_3.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:b5e790ce369f13c280ce291ab35060b67940602668dd1257b95c8d60e9800a0e",
+      "fingerprint": "sha256:5d8ee231ff06da600b903ed8c8038c9cb45135dd394c07ffaaf6af7bea3bec85",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_4.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 3,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:e6d508f2bcb9a123b1ea0a7f6bb59b8b03afc4c31706e15fbdbe50dc58178335",
+      "fingerprint": "sha256:1ff1ffaeb501927e00bef42ae671ba2b0b307e5e5862e812d0df4e1ec45f1cd8",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_5.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1073709056,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 1073709056
+      },
+      "extension": null,
+      "file_id": "file:236ba4b81b82cbd7d44223f3cbecb4f040c5d46aa918f13a8fa2f2c8253b0109",
+      "fingerprint": "sha256:91fd61d94f8a4e522300b0e20fffad30621660be41cc41109780b7527d0a1615",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_6.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1073709056
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 691329024,
+        "selected": true,
+        "source_index": 6,
+        "source_size_bytes": 691329024
+      },
+      "extension": null,
+      "file_id": "file:9cd2f544b89c789c8dffa34533270712fdcf085b12a05db6c2664f8830017c5d",
+      "fingerprint": "sha256:b81232ad51db5706cfbe0bb94829636ca2f105a478b19687549c3d27843216cf",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_01_7.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 691329024
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 18432,
+        "selected": true,
+        "source_index": 29,
+        "source_size_bytes": 18432
+      },
+      "extension": null,
+      "file_id": "file:9489a681a18e950e34ebbebe3d5251df63ad86f5fee41b6178e66c7d48c4329a",
+      "fingerprint": "sha256:78ec58eb51e2b16642927a5be57068e16e42acac448c036336db7aa1dfd8c608",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_02_0.BUP"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 18432
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 18432,
+        "selected": true,
+        "source_index": 28,
+        "source_size_bytes": 18432
+      },
+      "extension": null,
+      "file_id": "file:c5a7ad535f64714ba68c09a667794a7422094cef94ec56b26bb522e7d385e22e",
+      "fingerprint": "sha256:d28063118bfbab67cd7b870d697e052be9e07d840a949c2c210469540cd1ac13",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_02_0.IFO"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 18432
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1400832,
+        "selected": true,
+        "source_index": 9,
+        "source_size_bytes": 1400832
+      },
+      "extension": null,
+      "file_id": "file:ee4607ced1f43782b3b9c92e579f8bb04b96ebbf9bacf93f661ba7101f21b1d4",
+      "fingerprint": "sha256:554c1ff56a63261e456e2d14bedeae7eb605e8ef3c8f30ac494d63938787c0bf",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_02_0.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1400832
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 262144,
+        "selected": true,
+        "source_index": 12,
+        "source_size_bytes": 262144
+      },
+      "extension": null,
+      "file_id": "file:7fa11d5cff99fa5921926cc024eb9edc619712cf3b26a4db203d093debd88635",
+      "fingerprint": "sha256:bdf00bb1f56ff6d80a0a88cfd08891e7b7ffa4e5e8b30697b5d5a8c3b0f8d72f",
+      "path_components": [
+        "PINK VELVET II",
+        "VIDEO_TS",
+        "VTS_02_1.VOB"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 262144
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 171383,
+        "selected": true,
+        "source_index": 15,
+        "source_size_bytes": 171383
+      },
+      "extension": null,
+      "file_id": "file:35d1e86db7511249b2ea411cf03e5989bbda91616f5b563f2614e4cb08723b32",
+      "fingerprint": "sha256:4f83c9655ff11d4d3e1658e3e64a1385922c78d76941d3b2c7e8f2a716dc763c",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "VTS_01_1.VOB_thumbs_[2013.02.12_08.53.57].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 171383
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 193974,
+        "selected": true,
+        "source_index": 14,
+        "source_size_bytes": 193974
+      },
+      "extension": null,
+      "file_id": "file:6f9361a3c967e7298b9c2a1ed86b6cf9c3bd15d8861842c14c92524492c68759",
+      "fingerprint": "sha256:66afe109c68b9e8083c83352a6f342e069c312db6e90ab0ec51f68d001d158ca",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "VTS_01_2.VOB_thumbs_[2013.02.12_08.54.23].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 193974
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 207836,
+        "selected": true,
+        "source_index": 13,
+        "source_size_bytes": 207836
+      },
+      "extension": null,
+      "file_id": "file:6c30af451d05cf9cd54438c0f5298bf82fb853bc1734ad53a259922ef42119f5",
+      "fingerprint": "sha256:f3246216f0cf5d76c6f63451c130bd3ab8adec1f23696e283f4c588a631851ad",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "VTS_01_3.VOB_thumbs_[2013.02.12_08.54.39].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 207836
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 61473,
+        "selected": true,
+        "source_index": 20,
+        "source_size_bytes": 61473
+      },
+      "extension": null,
+      "file_id": "file:d251cbb9575425f6e73036c63c57eef90cea06f36f2c6a2fc7975cf7e185a402",
+      "fingerprint": "sha256:22b782eb38cc943eca3c68b72359116d42b0c8c9e21861af615debdbf34c2498",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_00.00_[2013.02.12_08.53.10].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 61473
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 60694,
+        "selected": true,
+        "source_index": 21,
+        "source_size_bytes": 60694
+      },
+      "extension": null,
+      "file_id": "file:e0551c1799eadeb5df5213c935fefdf29991a73bb9ece6ac80fe0ff61580d896",
+      "fingerprint": "sha256:d47b63900e6053ede72bcb0aec59b3b2f73ca6819dea6ea42407ded753bb43f0",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_00.00_[2013.02.12_08.53.17].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 60694
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 54663,
+        "selected": true,
+        "source_index": 22,
+        "source_size_bytes": 54663
+      },
+      "extension": null,
+      "file_id": "file:cf611f6e62a9eb052cc85c2d4495e8a69ff09c090b5b5630730bcc6152915d4b",
+      "fingerprint": "sha256:6f59dd88b59128b8487bcff44bf38c3cd727734b3c3649a3b6fa430d59b89004",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_00.31.46_[2013.02.12_08.56.26].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 54663
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 65587,
+        "selected": true,
+        "source_index": 19,
+        "source_size_bytes": 65587
+      },
+      "extension": null,
+      "file_id": "file:d5c94d5fa174bae9fd269c149a254e4f4d62034acc571679799d00d4fe1df1ea",
+      "fingerprint": "sha256:1bc30409539cb3c01cd0ad8ea466097f7085a7f1d9c15486d2f6270ac843e72a",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_00.47.06_[2013.02.12_08.58.13].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 65587
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 36791,
+        "selected": true,
+        "source_index": 26,
+        "source_size_bytes": 36791
+      },
+      "extension": null,
+      "file_id": "file:b295a89fcf3135052fbc66bbee56298fb7b0cea1fccd5a345c05bcea2893dc4f",
+      "fingerprint": "sha256:ae2deb54d2cfff5e835a10ffe2449be2690aa3201580f9ed893ce457a5d3209e",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_00.47.56_[2013.02.12_08.56.52].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 36791
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 42098,
+        "selected": true,
+        "source_index": 25,
+        "source_size_bytes": 42098
+      },
+      "extension": null,
+      "file_id": "file:03b9d4aae26c2a5261430f6f408ea449ffaf6797b349cddf32e7e58542041485",
+      "fingerprint": "sha256:51ec11c7ef2c7bbfd21d8e4c26f7f31e2ee8fc9c147edaec24e6cd7ddfa949a0",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_01.08.23_[2013.02.12_08.58.02].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 42098
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 51325,
+        "selected": true,
+        "source_index": 24,
+        "source_size_bytes": 51325
+      },
+      "extension": null,
+      "file_id": "file:c65a0b02b3033c5db47c986beefda339fc6df0da6129ad11efd398d4cc23466d",
+      "fingerprint": "sha256:7f0ba85d67723506738f1f84be89fe48ce6a60cb99d835a4ba3d37de383f2353",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_01.23.07_[2013.02.12_08.57.43].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 51325
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 69275,
+        "selected": true,
+        "source_index": 18,
+        "source_size_bytes": 69275
+      },
+      "extension": null,
+      "file_id": "file:b33e3fa1bd1c23426936b17a17fcf5d32240faf91b246cd5d45ed6c20bba2314",
+      "fingerprint": "sha256:4cb90c6f4fdb5845d65aef7a5cab1a722fb62df60a60f8299f27d50e0eba42d8",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_01.34.11_[2013.02.12_08.58.37].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 69275
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 52550,
+        "selected": true,
+        "source_index": 23,
+        "source_size_bytes": 52550
+      },
+      "extension": null,
+      "file_id": "file:0bd5267a0f5b127399d7a86be05f8ec83f925da211580065ac189d68ef51880c",
+      "fingerprint": "sha256:04527d5cfac8f5d173b19b17ba32afdefa4199f3d90d1b29bfc9ba89c8e45dfb",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_02.02.11_[2013.02.12_08.59.14].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 52550
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 31712,
+        "selected": true,
+        "source_index": 27,
+        "source_size_bytes": 31712
+      },
+      "extension": null,
+      "file_id": "file:a48a5e4b8ee63b4b9036b618dbbe5638c2e15a3c7c93b1f95674b784b7f3db40",
+      "fingerprint": "sha256:f4ca5c950dac5849ba4843a6f52576364fcf6307eaae8cd13ab92a60e248ce37",
+      "path_components": [
+        "PINK VELVET II",
+        "screenshot",
+        "snapshot_dvd_02.28.17_[2013.02.12_09.00.41].jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 31712
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 8414,
+        "selected": true,
+        "source_index": 32,
+        "source_size_bytes": 8414
+      },
+      "extension": null,
+      "file_id": "file:57da976343da21769203ac29d4a3dbaf200fad7d5bd659a0506ab9e0b0b20eff",
+      "fingerprint": "sha256:d5b1a102c48cf086e61d1f9cb34b3a721b889480f749985fa0b5083935c52f56",
+      "path_components": [
+        "PINK VELVET II.MDS"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 8414
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 1736780,
+        "selected": true,
+        "source_index": 8,
+        "source_size_bytes": 1736780
+      },
+      "extension": null,
+      "file_id": "file:179d41d698c2e9ed7d7f821a27945d33cff261228a585ca24e21e53e0ce884cd",
+      "fingerprint": "sha256:057e51633e5353d824a4a066f28617d53b38d7da003c4dbe7dd297a6b68cc5fb",
+      "path_components": [
+        "Pink Velvet 2-c.jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 1736780
+    },
+    {
+      "disposition": "evidence_only",
+      "disposition_reason": "unsupported_extension",
+      "download_membership": {
+        "available_bytes": 671327,
+        "selected": true,
+        "source_index": 10,
+        "source_size_bytes": 671327
+      },
+      "extension": null,
+      "file_id": "file:4489fcabaa6c069e6f32b61ffdfa68506ed6f73dfe6360b9a79e75d93245c846",
+      "fingerprint": "sha256:2ca55ac73fe2596fa4e97f528e1ed558745f96e1049cc13904afb52dba6b92f5",
+      "path_components": [
+        "Pink Velvet 2-d.jpg"
+      ],
+      "probe": {
+        "reason": "not_probe_candidate",
+        "status": "not_probed",
+        "summary": "The file was retained as evidence but was not eligible for probing."
+      },
+      "size_bytes": 671327
+    }
+  ],
+  "observed_at": "2026-09-19T21:18:19.410429038Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:de9bce7a23563fc1f4eb77ca7194a63aaa5916c0c8e904630b2040dd98cf069d",
+      "error_message": "",
+      "queue_id": 1064302078,
+      "status": "completed",
+      "status_messages": [
+        {
+          "evidence_id": "evidence:3d67831bac645059ffaaeb16db0236f1d067268eb85dedc660854002e3febc52",
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:9bf82de3f3914efd93436888e29deb3cc9c6af172894304c0a3ffc2fb9b71874",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VIDEO_TS.IFO"
+        },
+        {
+          "evidence_id": "evidence:46cee213bc953487b72daaf4f3ae905baa1b0bfc5de823cc0c8c36c2d6a443b6",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VIDEO_TS.VOB"
+        },
+        {
+          "evidence_id": "evidence:6b007c452f52531c729ded41ff4009fb8d19368876402e584ae332c17b62de69",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_0.IFO"
+        },
+        {
+          "evidence_id": "evidence:da6baf5218fde993fa317f53409504c533b95c3933f6905f6e375fe320ebdf03",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_0.VOB"
+        },
+        {
+          "evidence_id": "evidence:b37e35e8905253bf0cbc3f82ac6b485773120c8049b04a96fbb6f9d9d76dad07",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_1.VOB"
+        },
+        {
+          "evidence_id": "evidence:93173e4ea982818247be64b679c3fad6fd5364a4b5ed9a5de016e8b0b830e122",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_2.VOB"
+        },
+        {
+          "evidence_id": "evidence:cae6c6b8b3b2eb5c41fd1c3345804593880dac6d7b31b908a7c0309e32986ec7",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_3.VOB"
+        },
+        {
+          "evidence_id": "evidence:a7d3e4cf532629dddc13b480fd97bdbb9716867d2b57d8a1dd837afc5321d650",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_4.VOB"
+        },
+        {
+          "evidence_id": "evidence:607af9da6356fc7dfd7315442fe59ea1d001c0f8533b23f13e74f3ccf887248a",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_5.VOB"
+        },
+        {
+          "evidence_id": "evidence:700169e659e8bd58e69bd6011842757c9c1455459f7fc83a9be931a68ac958e8",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_6.VOB"
+        },
+        {
+          "evidence_id": "evidence:5cbf99dc1751ebaff59acd1da9b57014261d9a58ed9734fc324c7de3dbdf549c",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_01_7.VOB"
+        },
+        {
+          "evidence_id": "evidence:ab47960171d53470c135b6f7d89bb1538a1976589f91d99323ffbce85b1c69da",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_02_0.IFO"
+        },
+        {
+          "evidence_id": "evidence:a0d8e3628d993cce68914984930e26fde74fd583a6597b631c9f0cb1c0685d33",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_02_0.VOB"
+        },
+        {
+          "evidence_id": "evidence:437b2ed12008e458c27f7e220b02b907b81b04ea77ac0b81b0951c9e01f027d8",
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "VTS_02_1.VOB"
+        }
+      ],
+      "title": "PINK_VELVET_2",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:8ba26de692c0b0a7ee20ca85ddd6385d58194b5d9c98b828836ac89e93b51910",
+        "languages": [
+          "English"
+        ],
+        "occurred_at": "2026-09-19T20:02:54Z",
+        "quality": "DVD-R",
+        "source_title": "Pink Velvet 2 / Розовый Бархат 2 (Viv Thomas, Viv Thomas) [2004 г., All Girl / Lesbian, Vignettes, DVD9] (Anoushka, Ella, Jamie, Jo, Peaches, Vera)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:f352891fb00e0d5435afe0b960a9beecb09bc315abf8ac153e783b051b62f8e7",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:7c307d51daff344b96a316fedc551cfbcfe6ab426ce557406f148f54288faa84",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:3ce45b4924cc851b43d26ab7137635dc73c2a0b0ef99ff6e3f5bff6e2849c3ea",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:e35f91257295f37c2835a0f5d729bb4d3a592aa0ffdbd43479c3b144fa7927bd",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:f5c5dccb294b90ff680b00631ac43e7c392483682be67a82589e059891986210",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:056d6aff299479cde9d52f36892a6f3746eeb00e2b825faf7fe24bfeb1733988",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:88d8da560a434dd482fffcc956fc19fe1806733834101946297e956b2c55756a",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:17da55b02b1f10067dd258bc20cbe0737990c308e66dccab4fc5c53ae7070950",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:d910193094e1b2add7ed8d88e69a4e10c44eb70f2f709277186bd78a2605d880",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:7b2d0939d33731dacecf29fceaa229e2ebac25f6b6689a8342664da1249a7a72",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:ae0560cf176d9793aa6361ce33fd2db3503892d58543ef419d40e3377c98f915",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:ae8fa7ad055be70a04669962bd5b17eae71f942b3d684b835b937374eb1daa50",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:9f3d1231350bdc07189cc624d721f268f9a8974e88c4401257ffb29c48161d57",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:6a182520012df389c1b02872f3854b01fe8ab95ae74f8fd7a5e5a0dc067a841f",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:b5e790ce369f13c280ce291ab35060b67940602668dd1257b95c8d60e9800a0e",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:f883aeea40240ac4dfaf44ca9ec6c7cad8f330d01886592b1ea301b00993e130",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:e6d508f2bcb9a123b1ea0a7f6bb59b8b03afc4c31706e15fbdbe50dc58178335",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:f45eb82c5d7d3fc28abad9d5772580aa94c25d0de56932ebc33c2eefd42a451b",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:236ba4b81b82cbd7d44223f3cbecb4f040c5d46aa918f13a8fa2f2c8253b0109",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:9c69c5c4757b5db887b36f2b46547333a8fedf22b6ba185f0945dbf1bb27c2b1",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:9cd2f544b89c789c8dffa34533270712fdcf085b12a05db6c2664f8830017c5d",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:6b7812d1e990e6375b9c2a11cf522cf7fd8f6d92a297f4ca07f1b9fb2366d7e7",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:c5a7ad535f64714ba68c09a667794a7422094cef94ec56b26bb522e7d385e22e",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:2d1087f83a6ff2c98d3ee7abc1c73f7dbebac2e3044ba462a2efd4b3b24e5e83",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:ee4607ced1f43782b3b9c92e579f8bb04b96ebbf9bacf93f661ba7101f21b1d4",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:7002eef79b22c19fdbd278439b31bab23508b8ed7e0f6486292dacd20df3fc30",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:7fa11d5cff99fa5921926cc024eb9edc619712cf3b26a4db203d093debd88635",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:b9478933058ad3de152a0fcf1574221ff13b5e96bbd794b3b6c70486481a2ea4",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [
+        "Pink Velvet 2: Loss of Innocence"
+      ],
+      "imdb_id": "tt0378570",
+      "original_title": "Pink Velvet 2",
+      "radarr_id": 9082,
+      "runtime_minutes": 163,
+      "title": "Pink Velvet 2",
+      "tmdb_id": 191814,
+      "year": 2004
+    }
+  },
+  "schema_version": "radarr-repair/v2"
+}
