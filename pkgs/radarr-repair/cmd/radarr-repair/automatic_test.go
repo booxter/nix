@@ -71,6 +71,20 @@ func TestAutomaticRunRequiresPermissionAndPrintsExecution(t *testing.T) {
 	}
 }
 
+func TestAutomaticExecutionPrintsBluRayRemuxState(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	err := writeAutomaticExecution(&output, applyrunner.CaseResult{
+		CaseID: "disc-case", Action: contracts.ActionRemuxBluray,
+		Result: repairexecution.Result{Remux: &casestore.RemuxExecution{
+			ExecutionID: "execution:disc", State: casestore.RemuxImported,
+		}},
+	})
+	if err != nil || output.String() != "apply=completed case_id=disc-case action=remux_bluray_v1 state=imported execution_id=execution:disc\n" {
+		t.Fatalf("output = %q, error = %v", output.String(), err)
+	}
+}
+
 func TestAutomaticRunRejectsUnsafeConfigurationBeforeRunning(t *testing.T) {
 	t.Parallel()
 

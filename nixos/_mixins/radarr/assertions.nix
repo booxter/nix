@@ -13,7 +13,12 @@ let
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;
   rootPaths = if worker == null then [ ] else builtins.attrValues worker.roots;
   validRootID = rootID: builtins.match "^[a-z][a-z0-9_:-]{0,127}$" rootID != null;
-  joinAllowed = controller != null && builtins.elem "join_parts_v1" controller.apply.allowedActions;
+  mediaWriteAllowed =
+    controller != null
+    && builtins.any (action: builtins.elem action controller.apply.allowedActions) [
+      "join_parts_v1"
+      "remux_bluray_v1"
+    ];
 in
 {
   config.assertions =
@@ -96,8 +101,8 @@ in
         message = "Radarr repair allowed download clients must be unique.";
       }
       {
-        assertion = !joinAllowed || worker.writableRoots != [ ];
-        message = "Automatic joins require a writable worker root.";
+        assertion = !mediaWriteAllowed || worker.writableRoots != [ ];
+        message = "Automatic media repairs require a writable worker root.";
       }
     ]
     ++ lib.optionals (planner != null && planner.enable) [

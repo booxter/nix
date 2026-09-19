@@ -23,9 +23,9 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 
 	report := automaticReport{
 		Apply: applyrunner.Report{
-			Permitted: 4,
+			Permitted: 5,
 			Finished:  1,
-			Selected:  3,
+			Selected:  4,
 			Executions: []applyrunner.CaseResult{
 				{
 					CaseID: "private-case-id",
@@ -52,6 +52,13 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 						State: casestore.JoinFailed,
 					}},
 				},
+				{
+					CaseID: "published-remux",
+					Action: contracts.ActionRemuxBluray,
+					Result: repairexecution.Result{Remux: &casestore.RemuxExecution{
+						State: casestore.RemuxPublished,
+					}},
+				},
 			},
 		},
 	}
@@ -61,10 +68,10 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 	assertAutomaticMetric(t, families, prefix+"_apply_run_success", nil, 0)
 	assertAutomaticMetric(t, families, prefix+"_apply_disabled", nil, 0)
 	assertAutomaticMetric(
-		t, families, prefix+"_apply_cases", map[string]string{"outcome": "permitted"}, 4,
+		t, families, prefix+"_apply_cases", map[string]string{"outcome": "permitted"}, 5,
 	)
 	assertAutomaticMetric(
-		t, families, prefix+"_apply_cases", map[string]string{"outcome": "attempted"}, 3,
+		t, families, prefix+"_apply_cases", map[string]string{"outcome": "attempted"}, 4,
 	)
 	assertAutomaticMetric(
 		t,
@@ -100,6 +107,16 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 		map[string]string{
 			"action": string(contracts.ActionJoinParts),
 			"state":  string(casestore.JoinFailed),
+		},
+		1,
+	)
+	assertAutomaticMetric(
+		t,
+		families,
+		prefix+"_apply_executions",
+		map[string]string{
+			"action": string(contracts.ActionRemuxBluray),
+			"state":  string(casestore.RemuxPublished),
 		},
 		1,
 	)

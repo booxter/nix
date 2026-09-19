@@ -83,7 +83,8 @@ func (value *allowedActionsValue) String() string {
 func (value *allowedActionsValue) Set(raw string) error {
 	action := contracts.DecisionAction(raw)
 	switch action {
-	case contracts.ActionJoinParts, contracts.ActionManualImportFile:
+	case contracts.ActionJoinParts, contracts.ActionManualImportFile,
+		contracts.ActionRemuxBluray:
 		value.actions[action] = true
 		return nil
 	default:
@@ -295,6 +296,16 @@ func writeAutomaticExecution(writer io.Writer, execution applyrunner.CaseResult)
 			execution.Action,
 			result.Join.State,
 			result.Join.ExecutionID,
+		)
+		return err
+	case result.Remux != nil:
+		_, err := fmt.Fprintf(
+			writer,
+			"apply=completed case_id=%s action=%s state=%s execution_id=%s\n",
+			execution.CaseID,
+			execution.Action,
+			result.Remux.State,
+			result.Remux.ExecutionID,
 		)
 		return err
 	default:

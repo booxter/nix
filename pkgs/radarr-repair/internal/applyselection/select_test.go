@@ -81,7 +81,7 @@ func TestSelectsNoRepairsWithEmptyAllowlist(t *testing.T) {
 	}
 }
 
-func TestBluRayDecisionStaysInShadowUntilApplyIsSupported(t *testing.T) {
+func TestBluRayDecisionRequiresExplicitAllowlist(t *testing.T) {
 	t.Parallel()
 	candidate := testPlannedCase("disc", contracts.ActionRemuxBluray)
 	policy := Policy{
@@ -101,8 +101,9 @@ func TestBluRayDecisionStaysInShadowUntilApplyIsSupported(t *testing.T) {
 		t.Fatalf("selected an unsupported Blu-ray apply: %v", caseIDs(selected))
 	}
 	policy.AllowedActions[contracts.ActionRemuxBluray] = true
-	if _, err := Select([]casestore.PlannedCase{candidate}, policy); err == nil {
-		t.Fatal("accepted Blu-ray apply before its executor exists")
+	selected, err = Select([]casestore.PlannedCase{candidate}, policy)
+	if err != nil || len(selected) != 1 {
+		t.Fatalf("allowed Blu-ray case: selected = %v, error = %v", caseIDs(selected), err)
 	}
 }
 

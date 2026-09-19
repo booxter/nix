@@ -110,8 +110,28 @@ tests:
               severity: warning
               state: artifact_published
             exp_annotations:
-              summary: "Radarr repair joined artifact stuck on srvarr"
-              description: "A joined artifact has remained published without a confirmed Radarr import for 30 minutes."
+              summary: "Radarr repair artifact stuck on srvarr"
+              description: "A media artifact has remained published without a confirmed Radarr import for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_radarr_repair_apply_executions{instance="srvarr",job="node-mtls",action="remux_bluray_v1",state="artifact_published"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RadarrRepairPublishedArtifactStuck
+        exp_alerts:
+          - exp_labels:
+              action: remux_bluray_v1
+              alertname: RadarrRepairPublishedArtifactStuck
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+              state: artifact_published
+            exp_annotations:
+              summary: "Radarr repair artifact stuck on srvarr"
+              description: "A media artifact has remained published without a confirmed Radarr import for 30 minutes."
 
   - interval: 30s
     input_series:
