@@ -145,16 +145,7 @@ in
         Wants = [ "network-online.target" ];
         After = [ "network-online.target" ];
       };
-      serviceConfig = {
-        BindReadOnlyPaths = cfg.libraryRoots;
-        RestartSec = "5s";
-        LimitNOFILE = 65536;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectControlGroups = true;
-        ProtectKernelModules = true;
-        ProtectKernelTunables = true;
-      };
+      serviceConfig.BindReadOnlyPaths = cfg.libraryRoots;
     };
   };
 }
