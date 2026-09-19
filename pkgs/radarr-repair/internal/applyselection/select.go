@@ -67,7 +67,7 @@ func validatePolicy(policy Policy) error {
 		}
 		switch action {
 		case contracts.ActionJoinParts, contracts.ActionManualImportFile,
-			contracts.ActionRemuxBluray:
+			contracts.ActionRemuxBluray, contracts.ActionRemuxDVD:
 		default:
 			return fmt.Errorf("action %q cannot be allowed for repair", action)
 		}

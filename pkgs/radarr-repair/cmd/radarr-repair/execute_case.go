@@ -242,9 +242,14 @@ func writeExecutionResult(writer io.Writer, result repairexecution.Result) error
 		)
 		return err
 	case result.Remux != nil:
+		action := "remux_bluray_v1"
+		if result.Remux.Version == casestore.DVDExecutionVersionV1 {
+			action = "remux_dvd_v1"
+		}
 		_, err := fmt.Fprintf(
 			writer,
-			"action=remux_bluray_v1 state=%s resumed=%t\n",
+			"action=%s state=%s resumed=%t\n",
+			action,
 			result.Remux.State,
 			result.Resumed,
 		)

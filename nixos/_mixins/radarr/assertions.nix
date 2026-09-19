@@ -18,6 +18,7 @@ let
     && builtins.any (action: builtins.elem action controller.apply.allowedActions) [
       "join_parts_v1"
       "remux_bluray_v1"
+      "remux_dvd_v1"
     ];
 in
 {

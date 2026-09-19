@@ -107,6 +107,27 @@ func TestBluRayDecisionRequiresExplicitAllowlist(t *testing.T) {
 	}
 }
 
+func TestDVDDecisionRequiresExplicitAllowlist(t *testing.T) {
+	t.Parallel()
+	candidate := testPlannedCase("dvd", contracts.ActionRemuxDVD)
+	policy := Policy{
+		AllowedActions: map[contracts.DecisionAction]bool{contracts.ActionRemuxBluray: true},
+		AllowedDownloadClients: map[controller.DownloadClient]bool{
+			controller.DownloadClientTransmission: true,
+		},
+		Limit: 1,
+	}
+	selected, err := Select([]casestore.PlannedCase{candidate}, policy)
+	if err != nil || len(selected) != 0 {
+		t.Fatalf("DVD selected without allowlist: %v, error = %v", caseIDs(selected), err)
+	}
+	policy.AllowedActions[contracts.ActionRemuxDVD] = true
+	selected, err = Select([]casestore.PlannedCase{candidate}, policy)
+	if err != nil || len(selected) != 1 {
+		t.Fatalf("allowed DVD case: %v, error = %v", caseIDs(selected), err)
+	}
+}
+
 func TestSelectRejectsCaseFromUnallowedDownloadClient(t *testing.T) {
 	t.Parallel()
 
