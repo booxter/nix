@@ -9,3 +9,6 @@ minutes. Four shorter titles were filtered out before planning.
 The controller's first shadow decision selected the offered DVD title. The
 evaluation manifest also includes a synthetic 90-minute runtime mismatch
 based on this case; the expected decision for that variant is `no_repair`.
+The configured model abstained in all three approved high-reasoning runs of
+the negative case: twice for insufficient evidence and once for ambiguous
+file selection. No run chose a remux.

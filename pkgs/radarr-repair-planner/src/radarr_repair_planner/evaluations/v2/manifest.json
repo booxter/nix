@@ -266,6 +266,7 @@
         "action": "no_repair",
         "allowed_reasons": [
           "insufficient_evidence",
+          "ambiguous_file_selection",
           "unsafe_to_repair"
         ]
       },
