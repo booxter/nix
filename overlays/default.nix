@@ -39,19 +39,6 @@
         ];
       });
 
-      aurral = prev.aurral.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../patches/aurral-disable-local-auth.patch
-        ];
-        doCheck = true;
-        checkPhase = ''
-          runHook preCheck
-          export LD_LIBRARY_PATH=${lib.makeLibraryPath [ prev.sqlite ]}
-          node --test .tests/auth/local-auth.test.js
-          runHook postCheck
-        '';
-      });
-
       # CI renders two-revision config diffs by calling standalone dix, not
       # nh's internal dix library. Stable dix 1.4.x omits the per-package size
       # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI

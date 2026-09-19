@@ -112,7 +112,6 @@ in
         AUTH_PROXY_HEADER = "x-forwarded-user";
         AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," adminUsers;
         AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
-        DISABLE_LOCAL_AUTH = "true";
       };
     };
 

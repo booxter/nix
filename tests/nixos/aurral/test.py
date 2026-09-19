@@ -75,15 +75,6 @@ with subtest("maps trusted proxy users to configured roles"):
     assert (admin["username"], admin["role"]) == ("admin", "admin")
     assert (listener["username"], listener["role"]) == ("listener", "user")
 
-with subtest("rejects local password authentication"):
-    assert (
-        status(
-            "/api/auth/login",
-            data={"username": "admin", "password": "test-password"},
-        )
-        == 403
-    )
-
 with subtest("service identities can access shared storage"):
     machine.succeed("runuser --user aurral -- touch /srv/media/library/flows/aurral")
     machine.succeed("touch /srv/media/library/music/aurral-source")
