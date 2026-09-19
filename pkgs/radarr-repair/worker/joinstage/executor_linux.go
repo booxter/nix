@@ -115,7 +115,8 @@ func (executor *Executor) StageOrRecover(
 	if err := validateExecution(ctx, executor, execution); err != nil {
 		return Result{}, err
 	}
-	status, completed, err := executor.artifacts.InspectStaged(
+	completed, err := mediafile.PrepareStage(
+		executor.artifacts,
 		execution.Specification.RootID,
 		execution.ArtifactID,
 		execution.Specification.OutputContainer,
@@ -123,34 +124,8 @@ func (executor *Executor) StageOrRecover(
 	if err != nil {
 		return Result{}, failureFor(err, mediajoin.Diagnostics{})
 	}
-	switch status {
-	case mediafile.StagedComplete:
-		if completed == nil {
-			return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
-		}
+	if completed != nil {
 		return executor.recoverCompleted(ctx, execution, completed)
-	case mediafile.StagedPartial:
-		removed, err := executor.artifacts.RemovePartial(
-			execution.Specification.RootID,
-			execution.ArtifactID,
-			execution.Specification.OutputContainer,
-		)
-		if err != nil {
-			return Result{}, failureFor(err, mediajoin.Diagnostics{})
-		}
-		if !removed {
-			return Result{}, &Failure{Reason: workercontracts.StageJoinExecutionConflict}
-		}
-	case mediafile.StagedMissing:
-		if completed != nil {
-			_ = completed.Close()
-			return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
-		}
-	default:
-		if completed != nil {
-			_ = completed.Close()
-		}
-		return Result{}, &Failure{Reason: workercontracts.StageJoinInternalError}
 	}
 	return executor.Stage(ctx, execution)
 }
