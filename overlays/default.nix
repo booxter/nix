@@ -46,33 +46,17 @@
       inherit (pkgsNixpkgsUnstable) dix;
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-        (
-          pythonFinal: pythonPrev:
-          {
-            pythonRuffCheckHook = final.pythonRuffCheckHook;
+        (pythonFinal: pythonPrev: {
+          pythonRuffCheckHook = final.pythonRuffCheckHook;
 
-            # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
-            # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
-            pystemd = pythonPrev.pystemd.overrideAttrs (old: {
-              postInstall = (old.postInstall or "") + ''
-                touch "$out/${pythonFinal.python.sitePackages}/pystemd/py.typed"
-              '';
-            });
-          }
-          // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-            # PyArrow's test suite fails in the Darwin sandbox.
-            # https://github.com/NixOS/nixpkgs/pull/553144
-            # https://github.com/NixOS/nixpkgs/pull/553050
-            pyarrow = pythonPrev.pyarrow.overrideAttrs {
-              doInstallCheck = false;
-            };
-
-            # https://github.com/NixOS/nixpkgs/pull/555598
-            mlx = pythonPrev.mlx.overrideAttrs {
-              doInstallCheck = false;
-            };
-          }
-        )
+          # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
+          # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
+          pystemd = pythonPrev.pystemd.overrideAttrs (old: {
+            postInstall = (old.postInstall or "") + ''
+              touch "$out/${pythonFinal.python.sitePackages}/pystemd/py.typed"
+            '';
+          });
+        })
       ];
 
       # Support complete --tests coverage and dependent PRs.
