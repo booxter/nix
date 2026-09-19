@@ -75,6 +75,7 @@ func decisionValue(decision RepairDecisionV2) (any, error) {
 		decision.JoinParts != nil,
 		decision.ManualImportFile != nil,
 		decision.RemuxBluray != nil,
+		decision.RemuxDVD != nil,
 	} {
 		if present {
 			set++
@@ -100,6 +101,10 @@ func decisionValue(decision RepairDecisionV2) (any, error) {
 	case ActionRemuxBluray:
 		if decision.RemuxBluray != nil {
 			return decision.RemuxBluray, nil
+		}
+	case ActionRemuxDVD:
+		if decision.RemuxDVD != nil {
+			return decision.RemuxDVD, nil
 		}
 	}
 	return nil, fmt.Errorf("repair decision kind %q does not match its action", decision.Kind)

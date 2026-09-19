@@ -73,6 +73,7 @@ const (
 	capabilityJoinParts = iota
 	capabilityManualImportFile
 	capabilityRemuxBluray
+	capabilityRemuxDVD
 	capabilityCount
 )
 
@@ -81,6 +82,7 @@ const (
 	decisionJoinParts
 	decisionManualImportFile
 	decisionRemuxBluray
+	decisionRemuxDVD
 	decisionCount
 )
 
@@ -383,6 +385,8 @@ func (report *Report) observe(assembly casebuilder.Assembly) {
 			report.metrics.capabilities[capabilityManualImportFile]++
 		case contracts.CapabilityActionRemuxBluray:
 			report.metrics.capabilities[capabilityRemuxBluray]++
+		case contracts.CapabilityActionRemuxDVD:
+			report.metrics.capabilities[capabilityRemuxDVD]++
 		}
 	}
 	if completedAt := assembly.Request.Download.CompletedAt; completedAt != nil &&
@@ -411,6 +415,8 @@ func (report *Report) observeDecision(decision contracts.RepairDecisionV2) {
 		report.metrics.decisions[decisionManualImportFile]++
 	case contracts.ActionRemuxBluray:
 		report.metrics.decisions[decisionRemuxBluray]++
+	case contracts.ActionRemuxDVD:
+		report.metrics.decisions[decisionRemuxDVD]++
 	}
 }
 

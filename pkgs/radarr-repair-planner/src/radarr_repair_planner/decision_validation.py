@@ -8,9 +8,22 @@ from typing import Any
 
 from jsonschema import Draft202012Validator  # type: ignore[import-untyped]
 
-from .case_models import BlurayCapability, JoinCapability, ManualImportCapability, RepairCaseV2
+from .case_models import (
+    BlurayCapability,
+    DvdCapability,
+    JoinCapability,
+    ManualImportCapability,
+    RepairCaseV2,
+)
 from .contracts import decision_schema
-from .decision_models import JoinParts, ManualImportFile, NoRepair, RemuxBluray, RepairDecisionV2
+from .decision_models import (
+    JoinParts,
+    ManualImportFile,
+    NoRepair,
+    RemuxBluray,
+    RemuxDVD,
+    RepairDecisionV2,
+)
 
 MAX_CORRECTION_VIOLATIONS = 8
 MAX_CORRECTION_VALUES = 4
@@ -44,11 +57,11 @@ class DecisionViolation:
 @dataclass(frozen=True)
 class ValidationContext:
     repair_case: RepairCaseV2
-    decision: JoinParts | ManualImportFile | NoRepair | RemuxBluray
+    decision: JoinParts | ManualImportFile | NoRepair | RemuxBluray | RemuxDVD
 
 
 DecisionValidator = Callable[[ValidationContext], tuple[DecisionViolation, ...]]
-Capability = JoinCapability | ManualImportCapability | BlurayCapability
+Capability = JoinCapability | ManualImportCapability | BlurayCapability | DvdCapability
 
 
 def parsing_violation(*, extra_output: bool = False) -> DecisionViolation:
@@ -67,6 +80,7 @@ def _branch_schema(action: str) -> dict[str, Any] | None:
         "join_parts_v1": "joinParts",
         "manual_import_file_v1": "manualImportFile",
         "remux_bluray_v1": "remuxBluray",
+        "remux_dvd_v1": "remuxDVD",
         "no_repair": "noRepair",
     }
     branch_name = branch_names.get(action)
@@ -109,6 +123,7 @@ def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolatio
                     "join_parts_v1",
                     "manual_import_file_v1",
                     "remux_bluray_v1",
+                    "remux_dvd_v1",
                     "no_repair",
                 ),
             ),
@@ -272,7 +287,7 @@ def _selected_files(context: ValidationContext) -> tuple[DecisionViolation, ...]
     capability = _selected_capability(context)
     if capability is None or capability.action != context.decision.action:
         return ()
-    if isinstance(context.decision, RemuxBluray):
+    if isinstance(context.decision, (RemuxBluray, RemuxDVD)):
         return ()
     if isinstance(context.decision, JoinParts):
         assert isinstance(capability, JoinCapability)

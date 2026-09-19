@@ -26,12 +26,16 @@ let
         remux_bluray_decision = {
           "$ref" = "repair-decision.schema.json#/$defs/remuxBluray";
         };
+        remux_dvd_decision = {
+          "$ref" = "repair-decision.schema.json#/$defs/remuxDVD";
+        };
       };
       required = [
         "join_decision"
         "manual_import_file_decision"
         "no_repair_decision"
         "remux_bluray_decision"
+        "remux_dvd_decision"
       ];
     }
   );
