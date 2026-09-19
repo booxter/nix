@@ -17,16 +17,14 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/ffprobe"
 	"github.com/booxter/nix-config/radarr-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/radarr-repair/internal/remuxverification"
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediafile"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediaremux"
 	"github.com/gowebpki/jcs"
 )
 
-const (
-	artifactDomain      = "radarr-repair-worker-bluray-artifact-v1\x00"
-	durationToleranceMS = 5_000
-)
+const artifactDomain = "radarr-repair-worker-bluray-artifact-v1\x00"
 
 type Source struct {
 	PathComponents      []string `json:"path_components"`
@@ -205,7 +203,9 @@ func (executor *Executor) stage(
 	if err != nil {
 		return Result{}, err
 	}
-	if err := validateOutput(spec, evidence); err != nil {
+	if err := remuxverification.ValidateOutput(
+		spec.ExpectedDurationMS, spec.ExpectedChapterCount, spec.ExpectedTracks, evidence,
+	); err != nil {
 		return Result{}, err
 	}
 	fingerprint, snapshotSize, err := artifact.Snapshot()
@@ -241,7 +241,9 @@ func (executor *Executor) recover(
 	if err != nil {
 		return Result{}, err
 	}
-	if err := validateOutput(spec, evidence); err != nil {
+	if err := remuxverification.ValidateOutput(
+		spec.ExpectedDurationMS, spec.ExpectedChapterCount, spec.ExpectedTracks, evidence,
+	); err != nil {
 		removed, removeErr := executor.artifacts.RemoveCompleted(
 			spec.RootID, artifactID, workercontracts.OutputContainerMKV, before,
 		)
@@ -388,40 +390,6 @@ func validSource(source Source) bool {
 		}
 	}
 	return true
-}
-
-func validateOutput(spec Specification, evidence controller.ProbeEvidence) error {
-	if !slices.Contains(evidence.Format.Names, "matroska") ||
-		evidence.Format.DurationMS == nil ||
-		len(evidence.Chapters) != spec.ExpectedChapterCount {
-		return fmt.Errorf("Blu-ray remux output format or chapters differ from playlist")
-	}
-	difference := *evidence.Format.DurationMS - spec.ExpectedDurationMS
-	if difference < 0 {
-		difference = -difference
-	}
-	if difference > durationToleranceMS {
-		return fmt.Errorf("Blu-ray remux output duration differs from playlist")
-	}
-	want := map[controller.ProbeStreamKind]int{}
-	for _, track := range spec.ExpectedTracks {
-		kind := controller.ProbeStreamKind(track.Kind)
-		if kind == "subtitles" {
-			kind = controller.ProbeStreamSubtitle
-		}
-		want[kind]++
-	}
-	got := map[controller.ProbeStreamKind]int{}
-	for _, stream := range evidence.Streams {
-		if stream.Kind == nil {
-			return fmt.Errorf("Blu-ray remux output stream kind is unknown")
-		}
-		got[*stream.Kind]++
-	}
-	if !reflect.DeepEqual(got, want) || got[controller.ProbeStreamVideo] == 0 {
-		return fmt.Errorf("Blu-ray remux output streams differ from playlist")
-	}
-	return nil
 }
 
 func closeFiles(files []*os.File) {
