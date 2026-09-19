@@ -9,7 +9,9 @@ let
   jellyfin = config.host.jellyfin;
   libraryPath = if jellyfin == null then null else "${jellyfin.media.mountPoint}/library";
   absolutePath = lib.types.strMatching "^/.*";
-  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
+  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
   port = 8080;
 in
 {

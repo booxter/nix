@@ -4,7 +4,9 @@
 }:
 let
   pythonPackages = pkgs.python3Packages;
-  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
   realmsByHostFile = pkgs.writeText "realms-by-host.json" (builtins.toJSON realmsByHost);
   source = pkgs.lib.fileset.toSource {
     root = ../..;

@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    final: prev:
+    _final: prev:
     let
       inherit (prev) lib;
       system = prev.stdenv.hostPlatform.system;
@@ -46,90 +46,28 @@
       inherit (pkgsNixpkgsUnstable) dix;
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-        (
-          pythonFinal: pythonPrev:
-          {
-            pythonRuffCheckHook = final.pythonRuffCheckHook;
-
-            # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
-            # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
-            pystemd = pythonPrev.pystemd.overrideAttrs (old: {
-              postInstall = (old.postInstall or "") + ''
-                touch "$out/${pythonFinal.python.sitePackages}/pystemd/py.typed"
-              '';
-            });
-          }
-          // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-            # PyArrow's test suite fails in the Darwin sandbox.
-            # https://github.com/NixOS/nixpkgs/pull/553144
-            # https://github.com/NixOS/nixpkgs/pull/553050
-            pyarrow = pythonPrev.pyarrow.overrideAttrs {
-              doInstallCheck = false;
-            };
-
-            # https://github.com/NixOS/nixpkgs/pull/555598
-            mlx = pythonPrev.mlx.overrideAttrs {
-              doInstallCheck = false;
-            };
-          }
-        )
+        (pythonFinal: pythonPrev: {
+          # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
+          # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
+          pystemd = pythonPrev.pystemd.overrideAttrs (old: {
+            postInstall = (old.postInstall or "") + ''
+              touch "$out/${pythonFinal.python.sitePackages}/pystemd/py.typed"
+            '';
+          });
+        })
       ];
 
-      # Perl has no package-extension list like Python. Override its recursive
-      # package scope directly so package references within the scope see the
-      # modified package too.
-      perlPackages = prev.perlPackages.overrideScope (
-        _perlFinal: perlPrev: {
-          FileSlurp = perlPrev.FileSlurp.overrideAttrs (old: {
-            passthru = (old.passthru or { }) // {
-              overlaid = true;
-            };
-          });
-        }
-      );
+      # Support complete --tests coverage and dependent PRs.
+      inherit (pkgsNixpkgsUnstable) nixpkgs-review;
 
-      # Build passthru.tests for all changed packages with --tests. Drop when
-      # https://github.com/Mic92/nixpkgs-review/pull/397 lands in nixpkgs-review.
-      nixpkgs-review = prev.nixpkgs-review.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            # Commit 47f4647, rebased after its first two prerequisite commits
-            # landed on main.
-            url = "https://github.com/user-attachments/files/29713758/rebased.patch";
-            hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
-          })
-          # Merge dependent PRs into the reviewed worktree with --include-pr.
-          # https://github.com/Mic92/nixpkgs-review/pull/562
-          (prev.fetchpatch {
-            url = "https://github.com/Mic92/nixpkgs-review/commit/1bf8762fcc5c3a3d8b5219ab340f4a3a83608f13.patch";
-            hash = "sha256-RQJvXwRLZ47vHi4VhuvKLk8UHYQJfo3SmzUsV9dpNR0=";
-          })
-        ];
-      });
-
-      # Support Kubernetes 1.36 while carrying the nixpkgs update.
-      # https://github.com/NixOS/nixpkgs/pull/539773
-      kind = prev.kind.overrideAttrs (old: {
-        version = "0.32.0";
-        src = prev.fetchFromGitHub {
-          owner = "kubernetes-sigs";
-          repo = "kind";
-          rev = "v0.32.0";
-          hash = "sha256-ii0VhS1Nib+r2ZFIIkRvkcGY1fLxev6WnhbqvaZW7j8=";
-        };
-        patches = (old.patches or [ ]) ++ [
-          # Fix apiserver connection loss after envoy lb container restart.
-          (prev.fetchpatch {
-            url = "https://github.com/kubernetes-sigs/kind/commit/9a24e6c1ae3d59f8de052ee5c3842820450a369a.patch";
-            hash = "sha256-BP2Ub8b1GA7V0CGvhcoGuHRm7u+IMRTmN3mDc2rePnY=";
-          })
-        ];
-      });
+      # Support Kubernetes 1.36 and fix apiserver connection loss after an
+      # envoy load balancer container restart.
+      inherit (pkgsNixpkgsUnstable) kind;
 
       lolek =
         let
           lolekPackage = inputs.lolek.packages.${system}.lolek;
-          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
+          lolekYtDlp = pkgsNixpkgsUnstable.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
               ../patches/yt-dlp-twitter-only-own-status-media.patch
             ];

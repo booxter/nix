@@ -1,7 +1,9 @@
 { pkgs }:
 let
   pythonPackages = pkgs.python3.pkgs;
-  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes {
+    inherit (pkgs) pythonRuffCheckHook;
+  };
 in
 pythonPackages.buildPythonApplication {
   pname = "package-update-tools";
