@@ -1,8 +1,8 @@
 # Current Blu-ray queue review
 
 The three case JSON files are fresh read-only inspections of the unprocessed
-srvarr queue items. `bluray-playlists.json` records MKVToolNix identification
-for every primary playlist on those discs.
+srvarr queue items. `identification/bluray-playlists.json` records MKVToolNix
+identification for every primary playlist on those discs.
 
 On 2026-09-18, the configured OpenRouter model `openai/gpt-5.6-sol` was run
 four times per case with high reasoning and 4096 output tokens. Each decision
