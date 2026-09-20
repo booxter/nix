@@ -22,7 +22,15 @@ done < <(git ls-files -z -- '*.json')
 actionlint .github/workflows/*.yml
 git ls-files -z -- '*.yaml' '*.yml' ':(exclude)secrets/*/*.yaml' |
   xargs -0 -r prettier --write --log-level warn
-git ls-files -z -- '*.md' | xargs -0 -r markdownlint-cli2
+markdown_lint_excludes=(hm/_mixins/dev/agents/codex/context.md)
+markdown_lint_exclude_pathspecs=()
+for file in "${markdown_lint_excludes[@]}"; do
+  markdown_lint_exclude_pathspecs+=(":(exclude)$file")
+done
+git ls-files -z -- '*.md' "${markdown_lint_exclude_pathspecs[@]}" |
+  xargs -0 -r markdownlint-cli2
+markdownlint-cli2 --config ./fmt/codex-context.markdownlint.json \
+  "${markdown_lint_excludes[@]}"
 git ls-files -z -- '*.py' | xargs -0 -r ruff format --config ./ruff.toml
 git ls-files -z -- '*.py' | xargs -0 -r ruff check --config ./ruff.toml
 git ls-files -z -- '*.js' | xargs -0 -r eslint \
