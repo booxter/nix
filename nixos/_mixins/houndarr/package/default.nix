@@ -10,14 +10,14 @@
 }:
 python313Packages.buildPythonApplication (finalAttrs: {
   pname = "houndarr";
-  version = "1.13.2";
+  version = "1.13.3";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "av1155";
     repo = "houndarr";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-zvKT5ZTnQ7E6Fjt892Y/GpBF04Q1SyGX24HLJ+nZZzE=";
+    hash = "sha256-ozIyfuvNYl1PxN/jd4J4ghDzGald4ai1hIWgh2muzI4=";
   };
 
   pnpmDeps = fetchPnpmDeps {
