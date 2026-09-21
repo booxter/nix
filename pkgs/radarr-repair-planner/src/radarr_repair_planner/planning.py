@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol, TypedDict, cast
-
-from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from typing import Protocol
 
 from .case_models import RepairCaseV2
 from .contracts import ContractError, decode_case, decode_decision, encode_case, encode_decision
@@ -48,26 +45,6 @@ class DecisionModel(Protocol):
     ) -> RepairDecisionV2: ...
 
 
-class PlanningState(TypedDict):
-    repair_case: RepairCaseV2
-    attempts: int
-    attempt_errors: list[str]
-    decision: RepairDecisionV2 | None
-    correction: tuple[DecisionViolation, ...]
-    used_fallback: bool
-
-
-class PlanningUpdate(TypedDict, total=False):
-    attempts: int
-    attempt_errors: list[str]
-    decision: RepairDecisionV2 | None
-    correction: tuple[DecisionViolation, ...]
-    used_fallback: bool
-
-
-Route = Literal["done", "retry", "fallback"]
-
-
 @dataclass(frozen=True)
 class PlanningOutcome:
     decision: RepairDecisionV2
@@ -81,124 +58,73 @@ def _attempt_error(attempt: int, detail: str) -> str:
     return f"attempt {attempt}: {normalized}"[:ATTEMPT_ERROR_LIMIT]
 
 
-class PlanningGraph:
+class Planner:
     def __init__(self, model: DecisionModel) -> None:
         self._model = model
-        builder = StateGraph[PlanningState, None, PlanningState, PlanningState](PlanningState)
-        builder.add_node("attempt", self._attempt)
-        builder.add_node("fallback", self._fallback)
-        builder.add_edge(START, "attempt")
-        builder.add_conditional_edges(
-            "attempt",
-            self._route,
-            {
-                "done": END,
-                "retry": "attempt",
-                "fallback": "fallback",
-            },
-        )
-        builder.add_edge("fallback", END)
-        self._graph: CompiledStateGraph[PlanningState, None, PlanningState, PlanningState] = (
-            builder.compile(name="radarr-repair-planner")
-        )
 
     async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
         return (await self.plan_with_outcome(repair_case)).decision
 
     async def plan_with_outcome(self, repair_case: RepairCaseV2) -> PlanningOutcome:
         validated_case = decode_case(encode_case(repair_case))
-        result = cast(
-            PlanningState,
-            await self._graph.ainvoke(
-                {
-                    "repair_case": validated_case,
-                    "attempts": 0,
-                    "attempt_errors": [],
-                    "decision": None,
-                    "correction": (),
-                    "used_fallback": False,
-                }
-            ),
-        )
-        decision = result["decision"]
-        if decision is None:
-            raise RuntimeError("planning graph completed without a decision")
+        correction: tuple[DecisionViolation, ...] = ()
+        attempt_errors: list[str] = []
+        for attempt in range(1, ATTEMPT_LIMIT + 1):
+            decision, correction, error = await self._attempt(validated_case, correction)
+            if decision is not None:
+                return PlanningOutcome(
+                    decision=decision,
+                    attempts=attempt,
+                    used_fallback=False,
+                    attempt_errors=tuple(attempt_errors),
+                )
+            if error is None:
+                raise RuntimeError("planning attempt failed without an error")
+            attempt_errors.append(_attempt_error(attempt, error))
+
         return PlanningOutcome(
-            decision=decode_decision(encode_decision(decision)),
-            attempts=result["attempts"],
-            used_fallback=result["used_fallback"],
-            attempt_errors=tuple(result["attempt_errors"]),
+            decision=self._fallback(validated_case),
+            attempts=ATTEMPT_LIMIT,
+            used_fallback=True,
+            attempt_errors=tuple(attempt_errors),
         )
 
-    async def _attempt(self, state: PlanningState) -> PlanningUpdate:
-        attempts = state["attempts"] + 1
+    async def _attempt(
+        self,
+        repair_case: RepairCaseV2,
+        correction: tuple[DecisionViolation, ...],
+    ) -> tuple[RepairDecisionV2 | None, tuple[DecisionViolation, ...], str | None]:
         try:
             proposed = await self._model.decide(
                 SYSTEM_INSTRUCTION,
-                state["repair_case"],
-                state["correction"],
+                repair_case,
+                correction,
             )
             decision = decode_decision(encode_decision(proposed))
         except ContractError as error:
-            return {
-                "attempts": attempts,
-                "attempt_errors": [
-                    *state["attempt_errors"],
-                    _attempt_error(attempts, f"decision contract failed: {error}"),
-                ],
-                "correction": (),
-                "decision": None,
-            }
+            return None, (), f"decision contract failed: {error}"
         except DecisionModelError as error:
-            return {
-                "attempts": attempts,
-                "attempt_errors": [
-                    *state["attempt_errors"],
-                    _attempt_error(attempts, str(error)),
-                ],
-                "correction": error.violations,
-                "decision": None,
-            }
-        violations = validate_decision_for_case(state["repair_case"], decision)
+            return None, error.violations, str(error)
+        violations = validate_decision_for_case(repair_case, decision)
         if violations:
-            return {
-                "attempts": attempts,
-                "attempt_errors": [
-                    *state["attempt_errors"],
-                    _attempt_error(attempts, describe_violations(violations)),
-                ],
-                "correction": violations,
-                "decision": None,
-            }
-        return {"attempts": attempts, "correction": (), "decision": decision}
+            return None, violations, describe_violations(violations)
+        return decision, (), None
 
     @staticmethod
-    def _route(state: PlanningState) -> Route:
-        if state["decision"] is not None:
-            return "done"
-        if state["attempts"] < ATTEMPT_LIMIT:
-            return "retry"
-        return "fallback"
-
-    @staticmethod
-    def _fallback(state: PlanningState) -> PlanningUpdate:
-        case_id = Sha256Id(root=state["repair_case"].case_id.root)
-        return {
-            "decision": RepairDecisionV2(
-                root=NoRepair(
-                    action="no_repair",
-                    case_id=case_id,
-                    evidence_refs=EvidenceRefs(root=[]),
-                    explanation=SafeExplanation(
-                        root=(
-                            "The planner could not produce a valid decision within "
-                            "its attempt limit."
-                        )
-                    ),
-                    missing_evidence=[],
-                    reason=Reason.unsafe_to_repair,
-                    schema_version="radarr-repair/v2",
-                )
-            ),
-            "used_fallback": True,
-        }
+    def _fallback(repair_case: RepairCaseV2) -> RepairDecisionV2:
+        decision = RepairDecisionV2(
+            root=NoRepair(
+                action="no_repair",
+                case_id=Sha256Id(root=repair_case.case_id.root),
+                evidence_refs=EvidenceRefs(root=[]),
+                explanation=SafeExplanation(
+                    root=(
+                        "The planner could not produce a valid decision within its attempt limit."
+                    )
+                ),
+                missing_evidence=[],
+                reason=Reason.unsafe_to_repair,
+                schema_version="radarr-repair/v2",
+            )
+        )
+        return decode_decision(encode_decision(decision))

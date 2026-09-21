@@ -19,7 +19,7 @@ from .model_runtime import (
     create_model,
     settings_from_arguments,
 )
-from .planning import DecisionModel, PlanningGraph
+from .planning import DecisionModel, Planner
 
 
 class Arguments(ModelArguments):
@@ -100,7 +100,7 @@ async def _serve(
     model: DecisionModel | None = None
     try:
         model = model_factory(settings, None)
-        app = create_app(PlanningGraph(model), limits)
+        app = create_app(Planner(model), limits)
         await server_runner.serve(app, arguments.socket_fd)
     finally:
         await close_model(model)

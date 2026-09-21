@@ -34,7 +34,6 @@ python3Packages.buildPythonApplication {
     jsonschema
     langchain-core
     langchain-ollama
-    langgraph
     openai
     pydantic
     uvicorn

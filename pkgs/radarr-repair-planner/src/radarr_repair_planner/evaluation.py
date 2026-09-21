@@ -13,7 +13,7 @@ from .contracts import decode_case, encode_decision
 from .decision_models import Reason
 from .decision_validation import describe_violation, validate_decision_for_case
 from .openrouter_model import ReasoningEffort
-from .planning import PlanningGraph, PlanningOutcome
+from .planning import Planner, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
 CaseFilename = Annotated[
@@ -285,7 +285,7 @@ def evaluate_outcome(
 
 
 async def run_evaluation(
-    graph: PlanningGraph,
+    planner: Planner,
     settings: EvaluationSettings,
 ) -> EvaluationReport:
     results: list[EvaluationResult] = []
@@ -300,7 +300,7 @@ async def run_evaluation(
             raise EvaluationDataError(f"unknown evaluation case: {settings.case}")
     for evaluation_case in evaluation_cases:
         for run in range(1, settings.runs + 1):
-            outcome = await graph.plan_with_outcome(evaluation_case.repair_case)
+            outcome = await planner.plan_with_outcome(evaluation_case.repair_case)
             results.append(evaluate_outcome(evaluation_case, run, outcome))
     return EvaluationReport(
         settings=settings,

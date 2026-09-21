@@ -25,7 +25,7 @@ from .model_runtime import (
     settings_from_arguments,
 )
 from .ollama_model import OllamaSettings
-from .planning import DecisionModel, PlanningGraph
+from .planning import DecisionModel, Planner
 from .tracing import JsonlTraceWriter
 
 
@@ -93,7 +93,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
                 },
             )
         model = model_factory(backend_settings, trace_writer)
-        return await run_evaluation(PlanningGraph(model), evaluation_settings)
+        return await run_evaluation(Planner(model), evaluation_settings)
     finally:
         try:
             await close_model(model)

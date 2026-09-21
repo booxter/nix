@@ -25,7 +25,7 @@ from radarr_repair_planner.evaluation import (
 from radarr_repair_planner.evaluation_cli import main
 from radarr_repair_planner.ollama_model import MODEL_NAME, OllamaSettings
 from radarr_repair_planner.openrouter_model import OpenRouterSettings
-from radarr_repair_planner.planning import PlanningGraph, PlanningOutcome
+from radarr_repair_planner.planning import Planner, PlanningOutcome
 from radarr_repair_planner.tracing import TraceSink
 
 
@@ -208,7 +208,7 @@ def test_corpus_rejects_unavailable_expected_join_file() -> None:
 
 
 async def test_matching_decisions_pass_the_corpus() -> None:
-    report = await run_evaluation(PlanningGraph(ExpectedDecisionModel()), settings(runs=2))
+    report = await run_evaluation(Planner(ExpectedDecisionModel()), settings(runs=2))
 
     assert report.passed, [
         (result.case_name, result.violations) for result in report.results if not result.passed
@@ -221,7 +221,7 @@ async def test_matching_decisions_pass_the_corpus() -> None:
 
 async def test_evaluation_can_select_one_case() -> None:
     report = await run_evaluation(
-        PlanningGraph(ExpectedDecisionModel()),
+        Planner(ExpectedDecisionModel()),
         settings(case="clear_ordered_join"),
     )
 
@@ -232,7 +232,7 @@ async def test_evaluation_can_select_one_case() -> None:
 async def test_evaluation_rejects_unknown_case() -> None:
     with pytest.raises(ValueError, match="unknown evaluation case: missing"):
         await run_evaluation(
-            PlanningGraph(ExpectedDecisionModel()),
+            Planner(ExpectedDecisionModel()),
             settings(case="missing"),
         )
 
