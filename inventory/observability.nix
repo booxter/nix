@@ -1,11 +1,14 @@
 {
   realms.home.prometheusServer = "fana";
 
-  blackboxSources = [
-    "beast"
-    "frame"
-    "srvarr"
-  ];
+  blackboxSources = {
+    beast = { };
+    frame = { };
+    srvarr = {
+      networkScope = "vpn";
+      dnsResolver = "10.128.0.1";
+    };
+  };
 
   dashboardOverrides = {
     beast = {

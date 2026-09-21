@@ -9,7 +9,7 @@
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
-  remoteEnabled = builtins.elem config.networking.hostName fleetInventory.observability.blackboxSources;
+  remoteEnabled = builtins.hasAttr config.networking.hostName fleetInventory.observability.blackboxSources;
   vpnOptionsAvailable = options.host ? vpn;
   networkNamespace =
     if cfg.networkNamespace == null || !vpnOptionsAvailable then
@@ -128,6 +128,10 @@ in
           bridgeTcpPorts = [ cfg.port ];
         };
       };
+
+      systemd.services.prometheus-blackbox-exporter.serviceConfig.CapabilityBoundingSet = [
+        "CAP_NET_RAW"
+      ];
     })
     (lib.mkIf remoteEnabled {
       host.observability = {

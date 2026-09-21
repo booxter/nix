@@ -155,11 +155,13 @@ let
       pveTarget = contribution.value.internal.serverName;
     };
   proxmoxExporters = lib.mapAttrsToList proxmoxExporterFor proxmoxNodes;
-  blackboxSources = map (name: {
+  blackboxSources = lib.mapAttrsToList (name: source: {
     host = name;
     exporter = "${name}:9115";
     scheme = "https";
     source = name;
+    networkScope = source.networkScope or "lan";
+    dnsResolver = source.dnsResolver or null;
   }) observability.blackboxSources;
 in
 {

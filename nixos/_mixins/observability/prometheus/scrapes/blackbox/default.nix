@@ -137,9 +137,39 @@ let
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
       scheme = "http";
       source = config.services.avahi.hostName;
+      networkScope = "lan";
+      dnsResolver = null;
     }
   ]
   ++ remoteBlackboxProbeSourceConfigs;
+  networkProbesFor =
+    source: probes:
+    let
+      isVpnSource = source.networkScope == "vpn";
+    in
+    if probes == "icmp" then
+      if isVpnSource then
+        builtins.filter (probe: probe.probe != "gateway") wanIcmpProbeTargets
+      else
+        wanIcmpProbeTargets
+    else if probes == "tcp" then
+      if isVpnSource then
+        builtins.filter (probe: probe.probe != "gateway-dns") wanTcpProbeTargets
+      else
+        wanTcpProbeTargets
+    else if probes == "dns" && source.dnsResolver != null then
+      [
+        {
+          probe = "vpn-dns";
+          probe_protocol = "dns";
+          probe_title = "VPN DNS ${source.dnsResolver}:53";
+          target = "${source.dnsResolver}:53";
+        }
+      ]
+    else if probes == "dns" then
+      wanDnsProbeTargets
+    else
+      wanHttpProbeTargets;
   mkBlackboxStaticConfigs =
     sources: probes:
     lib.concatMap (
@@ -156,7 +186,7 @@ let
           inherit (probe) probe probe_protocol probe_title;
         };
         targets = [ probe.target ];
-      }) probes
+      }) (networkProbesFor source probes)
     ) sources;
   publicDnsStaticConfigs = lib.concatMap (
     resolver:
@@ -393,7 +423,7 @@ in
       params.module = [ "icmp_ipv4" ];
       scrape_interval = "5s";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanIcmpProbeTargets;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs "icmp";
       relabel_configs = blackboxProbeRelabelConfigs;
     }
     {
@@ -402,7 +432,7 @@ in
       params.module = [ "tcp_connect_ipv4" ];
       scrape_interval = "5s";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanTcpProbeTargets;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs "tcp";
       relabel_configs = blackboxProbeRelabelConfigs;
     }
     {
@@ -411,7 +441,7 @@ in
       params.module = [ "dns_udp" ];
       scrape_interval = "5s";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanDnsProbeTargets;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs "dns";
       relabel_configs = blackboxProbeRelabelConfigs;
     }
     {
@@ -420,7 +450,7 @@ in
       params.module = [ "http_service" ];
       scrape_interval = "5s";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanHttpProbeTargets;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs "http";
       relabel_configs = blackboxProbeRelabelConfigs;
     }
   ];

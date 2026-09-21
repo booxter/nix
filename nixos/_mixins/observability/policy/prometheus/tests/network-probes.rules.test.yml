@@ -96,7 +96,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-network-dns",instance="srvarr:cloudflare-dns",source="srvarr",probe="cloudflare-dns",probe_title="Cloudflare DNS 1.1.1.1:53",target="1.1.1.1:53"}'
+      - series: 'probe_success{job="blackbox-network-dns",instance="srvarr:vpn-dns",source="srvarr",probe="vpn-dns",probe_title="VPN DNS 10.128.0.1:53",target="10.128.0.1:53"}'
         values: "0x5"
       - series: 'probe_success{job="blackbox-http",instance="srvarr:example-http",source="srvarr",probe="example-http",probe_title="Example.com HTTPS",target="https://example.com/"}'
         values: "0x5"
@@ -107,16 +107,16 @@ tests:
           - exp_labels:
               alertname: NetworkProbeDown
               category: network
-              instance: srvarr:cloudflare-dns
+              instance: srvarr:vpn-dns
               job: blackbox-network-dns
-              probe: cloudflare-dns
-              probe_title: "Cloudflare DNS 1.1.1.1:53"
+              probe: vpn-dns
+              probe_title: "VPN DNS 10.128.0.1:53"
               severity: warning
               source: srvarr
-              target: "1.1.1.1:53"
+              target: "10.128.0.1:53"
             exp_annotations:
-              summary: "Network probe down: srvarr -> cloudflare-dns"
-              description: "The blackbox-network-dns probe from srvarr to Cloudflare DNS 1.1.1.1:53 (1.1.1.1:53) has been failing for 2 minutes."
+              summary: "Network probe down: srvarr -> vpn-dns"
+              description: "The blackbox-network-dns probe from srvarr to VPN DNS 10.128.0.1:53 (10.128.0.1:53) has been failing for 2 minutes."
           - exp_labels:
               alertname: NetworkProbeDown
               category: network

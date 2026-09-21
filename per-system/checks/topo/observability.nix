@@ -20,7 +20,7 @@ let
   observedHostNames = builtins.attrNames catalog.nodes;
   invalidBlackboxSources = builtins.filter (
     name: !builtins.elem name observedHostNames || hosts.${name}.platform != "nixos"
-  ) observability.blackboxSources;
+  ) (builtins.attrNames observability.blackboxSources);
   unknownDashboardOverrides = builtins.filter (name: !builtins.hasAttr name hosts) (
     builtins.attrNames observability.dashboardOverrides
   );
