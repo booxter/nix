@@ -6,15 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	downloadsources "github.com/booxter/nix-config/radarr-repair/internal/downloadsource"
@@ -23,6 +19,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
 	radarrsource "github.com/booxter/nix-config/radarr-repair/internal/radarr"
 	sabnzbdsource "github.com/booxter/nix-config/radarr-repair/internal/sabnzbd"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 	transmissionsource "github.com/booxter/nix-config/radarr-repair/internal/transmission"
 	"github.com/booxter/nix-config/radarr-repair/internal/workerclient"
 )
@@ -31,7 +28,7 @@ const (
 	defaultInspectTimeout     = 30 * time.Second
 	defaultCollectionTimeout  = 2 * time.Minute
 	defaultWorkerStageTimeout = 31 * time.Minute
-	maximumAPIKeySize         = 4 << 10
+	maximumAPIKeySize         = servarr.MaximumAPIKeySize
 )
 
 type inspectConfig struct {
@@ -240,23 +237,7 @@ func validateAbsolutePath(name, path string, allowFilesystemRoot bool) error {
 }
 
 func validateLoopbackHTTP(name, endpoint string) error {
-	parsed, err := url.Parse(endpoint)
-	if err != nil {
-		return fmt.Errorf("%s URL is invalid", name)
-	}
-	if parsed.Scheme != "http" || parsed.Host == "" || parsed.User != nil ||
-		parsed.RawQuery != "" || parsed.Fragment != "" || !isLoopbackHost(parsed.Hostname()) {
-		return fmt.Errorf("%s URL must use loopback HTTP without credentials, query, or fragment", name)
-	}
-	return nil
-}
-
-func isLoopbackHost(host string) bool {
-	if strings.EqualFold(strings.TrimSuffix(host, "."), "localhost") {
-		return true
-	}
-	address := net.ParseIP(host)
-	return address != nil && address.IsLoopback()
+	return servarr.ValidateLoopbackHTTP(name, endpoint)
 }
 
 func inspectCase(ctx context.Context, config inspectConfig) (casebuilder.Assembly, error) {
@@ -393,51 +374,11 @@ func (access *controllerAccess) Close() {
 }
 
 func directHTTPTransport() (*http.Transport, error) {
-	base, ok := http.DefaultTransport.(*http.Transport)
-	if !ok {
-		return nil, fmt.Errorf("default HTTP transport has an unexpected type")
-	}
-	transport := base.Clone()
-	// Radarr and download services are required to be on loopback. Ignore proxy
-	// variables so their requests and API keys cannot leave the host.
-	transport.Proxy = nil
-	return transport, nil
+	return servarr.DirectHTTPTransport()
 }
 
 func readAPIKey(service, path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return "", fmt.Errorf("open %s API-key file: %w", service, err)
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		return "", fmt.Errorf("inspect %s API-key file: %w", service, err)
-	}
-	if !info.Mode().IsRegular() {
-		return "", fmt.Errorf("%s API-key file is not a regular file", service)
-	}
-	data, err := io.ReadAll(io.LimitReader(file, maximumAPIKeySize+1))
-	if err != nil {
-		return "", fmt.Errorf("read %s API-key file: %w", service, err)
-	}
-	if len(data) > maximumAPIKeySize {
-		return "", fmt.Errorf("%s API-key file exceeds %d bytes", service, maximumAPIKeySize)
-	}
-	key := string(data)
-	if strings.HasSuffix(key, "\n") {
-		key = strings.TrimSuffix(key, "\n")
-		key = strings.TrimSuffix(key, "\r")
-	}
-	if key == "" || !utf8.ValidString(key) || strings.TrimSpace(key) != key {
-		return "", fmt.Errorf("%s API-key file contains an invalid credential", service)
-	}
-	for _, character := range key {
-		if unicode.IsControl(character) {
-			return "", fmt.Errorf("%s API-key file contains an invalid credential", service)
-		}
-	}
-	return key, nil
+	return servarr.ReadAPIKey(service, path)
 }
 
 func ensureOutputDoesNotExist(path string) error {
