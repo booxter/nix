@@ -32,8 +32,7 @@ python3Packages.buildPythonApplication {
   dependencies = with python3Packages; [
     fastapi
     jsonschema
-    langchain-core
-    langchain-ollama
+    ollama
     openai
     pydantic
     uvicorn
