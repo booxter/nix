@@ -44,6 +44,7 @@ in
 
   host.lidarr = {
     stateDir = "/data/.state/nixarr/lidarr";
+    repair.controller.enable = true;
   };
 
   host.prowlarr = {
