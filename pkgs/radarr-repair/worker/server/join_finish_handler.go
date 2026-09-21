@@ -3,7 +3,6 @@ package workerserver
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
@@ -28,10 +27,10 @@ type DiscardExecutor interface {
 	) workercontracts.DiscardResponseV1
 }
 
-type PublishHandler struct {
-	executor PublishExecutor
-	settings operationSettings
-}
+type PublishHandler = operationHandler[
+	workercontracts.PublishRequestV1,
+	workercontracts.PublishResponseV1,
+]
 
 func NewPublishHandler(
 	executor PublishExecutor,
@@ -40,38 +39,18 @@ func NewPublishHandler(
 	if executor == nil {
 		return nil, fmt.Errorf("join publish executor is required")
 	}
-	if timeout <= 0 {
-		return nil, fmt.Errorf("join publish request timeout must be positive")
-	}
-	return &PublishHandler{
-		executor: executor,
-		settings: operationSettings{
-			path:            publishPath,
-			maxRequestBytes: workercontracts.MaxJoinRequestBytes,
-			timeout:         timeout,
-			slots:           make(chan struct{}, 1),
-		},
-	}, nil
-}
-
-func (handler *PublishHandler) ServeHTTP(
-	writer http.ResponseWriter,
-	request *http.Request,
-) {
-	serveOperation(
-		writer,
-		request,
-		handler.settings,
+	return newOperationHandler(
+		"join publish", publishPath, workercontracts.MaxJoinRequestBytes, timeout, 1,
 		workercontracts.DecodePublishRequest,
-		handler.executor.Publish,
+		executor.Publish,
 		workercontracts.EncodePublishResponse,
 	)
 }
 
-type DiscardHandler struct {
-	executor DiscardExecutor
-	settings operationSettings
-}
+type DiscardHandler = operationHandler[
+	workercontracts.DiscardRequestV1,
+	workercontracts.DiscardResponseV1,
+]
 
 func NewDiscardHandler(
 	executor DiscardExecutor,
@@ -80,30 +59,10 @@ func NewDiscardHandler(
 	if executor == nil {
 		return nil, fmt.Errorf("join discard executor is required")
 	}
-	if timeout <= 0 {
-		return nil, fmt.Errorf("join discard request timeout must be positive")
-	}
-	return &DiscardHandler{
-		executor: executor,
-		settings: operationSettings{
-			path:            discardPath,
-			maxRequestBytes: workercontracts.MaxJoinRequestBytes,
-			timeout:         timeout,
-			slots:           make(chan struct{}, 1),
-		},
-	}, nil
-}
-
-func (handler *DiscardHandler) ServeHTTP(
-	writer http.ResponseWriter,
-	request *http.Request,
-) {
-	serveOperation(
-		writer,
-		request,
-		handler.settings,
+	return newOperationHandler(
+		"join discard", discardPath, workercontracts.MaxJoinRequestBytes, timeout, 1,
 		workercontracts.DecodeDiscardRequest,
-		handler.executor.Discard,
+		executor.Discard,
 		workercontracts.EncodeDiscardResponse,
 	)
 }

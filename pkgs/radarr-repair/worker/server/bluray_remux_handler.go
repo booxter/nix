@@ -3,7 +3,6 @@ package workerserver
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
@@ -15,34 +14,23 @@ type BlurayRemuxExecutor interface {
 	Execute(context.Context, workercontracts.BlurayRemuxRequestV1) workercontracts.BlurayRemuxResponseV1
 }
 
-type BlurayRemuxHandler struct {
-	executor BlurayRemuxExecutor
-	settings operationSettings
-}
+type BlurayRemuxHandler = operationHandler[
+	workercontracts.BlurayRemuxRequestV1,
+	workercontracts.BlurayRemuxResponseV1,
+]
 
 func NewBlurayRemuxHandler(
 	executor BlurayRemuxExecutor,
 	timeout time.Duration,
 ) (*BlurayRemuxHandler, error) {
-	if executor == nil || timeout <= 0 {
-		return nil, fmt.Errorf("Blu-ray remux handler needs an executor and timeout")
+	if executor == nil {
+		return nil, fmt.Errorf("Blu-ray remux executor is required")
 	}
-	return &BlurayRemuxHandler{
-		executor: executor,
-		settings: operationSettings{
-			path:            blurayRemuxPath,
-			maxRequestBytes: workercontracts.MaxBlurayRemuxRequestBytes,
-			timeout:         timeout,
-			slots:           make(chan struct{}, 1),
-		},
-	}, nil
-}
-
-func (handler *BlurayRemuxHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	serveOperation(
-		writer, request, handler.settings,
+	return newOperationHandler(
+		"Blu-ray remux", blurayRemuxPath,
+		workercontracts.MaxBlurayRemuxRequestBytes, timeout, 1,
 		workercontracts.DecodeBlurayRemuxRequest,
-		handler.executor.Execute,
+		executor.Execute,
 		workercontracts.EncodeBlurayRemuxResponse,
 	)
 }

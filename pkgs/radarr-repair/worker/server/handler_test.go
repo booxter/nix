@@ -221,6 +221,51 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	}
 }
 
+func TestRouterRegistersTypedOperations(t *testing.T) {
+	t.Parallel()
+
+	handler := testHandler(t, &fakeExecutor{execute: func(
+		_ context.Context,
+		request workercontracts.ProbeRequestV1,
+	) workercontracts.ProbeResponseV1 {
+		return workerprobe.FailureResponse(request.RequestID, workercontracts.ProbeError)
+	}}, time.Second, 1)
+	router, err := NewRouter(handler)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, validRequest(t))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d", recorder.Code)
+	}
+
+	missing := httptest.NewRecorder()
+	router.ServeHTTP(missing, httptest.NewRequest(http.MethodPost, "/v1/missing", nil))
+	if missing.Code != http.StatusNotFound {
+		t.Fatalf("missing status = %d", missing.Code)
+	}
+}
+
+func TestRouterRejectsInvalidOperationSets(t *testing.T) {
+	t.Parallel()
+
+	handler := testHandler(t, &fakeExecutor{}, time.Second, 1)
+	var missing *Handler
+	for name, operations := range map[string][]Operation{
+		"empty":     nil,
+		"nil":       {missing},
+		"duplicate": {handler, handler},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			if _, err := NewRouter(operations...); err == nil {
+				t.Fatal("invalid operation set was accepted")
+			}
+		})
+	}
+}
+
 type fakeExecutor struct {
 	execute func(context.Context, workercontracts.ProbeRequestV1) workercontracts.ProbeResponseV1
 	calls   int
