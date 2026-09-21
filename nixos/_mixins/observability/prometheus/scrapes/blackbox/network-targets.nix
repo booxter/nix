@@ -58,4 +58,22 @@ in
       target = "1.1.1.1:443";
     }
   ];
+
+  wanDnsProbeTargets = [
+    {
+      probe = "cloudflare-dns";
+      probe_protocol = "dns";
+      probe_title = "Cloudflare DNS 1.1.1.1:53";
+      target = "1.1.1.1:53";
+    }
+  ];
+
+  wanHttpProbeTargets = [
+    {
+      probe = "example-http";
+      probe_protocol = "http";
+      probe_title = "Example.com HTTPS";
+      target = "https://example.com/";
+    }
+  ];
 }

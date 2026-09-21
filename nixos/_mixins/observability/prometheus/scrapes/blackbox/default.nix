@@ -12,6 +12,8 @@ let
   inherit (networkTargets)
     dnsProbeTargets
     publicDnsProbeTargets
+    wanDnsProbeTargets
+    wanHttpProbeTargets
     wanIcmpProbeTargets
     wanTcpProbeTargets
     ;
@@ -401,6 +403,24 @@ in
       scrape_interval = "5s";
       tls_config = prometheusMtlsTlsConfig;
       static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanTcpProbeTargets;
+      relabel_configs = blackboxProbeRelabelConfigs;
+    }
+    {
+      job_name = "blackbox-network-dns";
+      metrics_path = "/probe";
+      params.module = [ "dns_udp" ];
+      scrape_interval = "5s";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanDnsProbeTargets;
+      relabel_configs = blackboxProbeRelabelConfigs;
+    }
+    {
+      job_name = "blackbox-http";
+      metrics_path = "/probe";
+      params.module = [ "http_service" ];
+      scrape_interval = "5s";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanHttpProbeTargets;
       relabel_configs = blackboxProbeRelabelConfigs;
     }
   ];

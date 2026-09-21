@@ -4,6 +4,7 @@
   blackboxSources = [
     "beast"
     "frame"
+    "srvarr"
   ];
 
   dashboardOverrides = {

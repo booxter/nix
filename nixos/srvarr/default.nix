@@ -71,6 +71,7 @@ in
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
+    ./observability.nix
     ./pinepods.nix
     ./radarr-repair.nix
     ./romm.nix

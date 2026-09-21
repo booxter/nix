@@ -87,12 +87,28 @@ func NetworkOverview(config Config) (dashboard.Dashboard, error) {
 			expression: `probe_duration_seconds{probe_family="network",probe_protocol="tcp"} * 1000`,
 		},
 		{
+			title: "DNS Probe Latency", unit: units.Milliseconds, legend: "{{probe_title}} / {{source}}",
+			expression: `probe_duration_seconds{probe_family="network",probe_protocol="dns"} * 1000`,
+		},
+		{
+			title: "HTTP Probe Latency", unit: units.Milliseconds, legend: "{{probe_title}} / {{source}}",
+			expression: `probe_duration_seconds{probe_family="network",probe_protocol="http"} * 1000`,
+		},
+		{
 			title: "Ping Loss (5m)", unit: units.Percent, legend: "{{probe_title}} / {{source}}",
 			expression: `100 * (1 - avg_over_time(probe_success{probe_family="network",probe_protocol="icmp"}[5m]))`,
 		},
 		{
 			title: "TCP Connect Loss (5m)", unit: units.Percent, legend: "{{probe_title}} / {{source}}",
 			expression: `100 * (1 - avg_over_time(probe_success{probe_family="network",probe_protocol="tcp"}[5m]))`,
+		},
+		{
+			title: "DNS Probe Loss (5m)", unit: units.Percent, legend: "{{probe_title}} / {{source}}",
+			expression: `100 * (1 - avg_over_time(probe_success{probe_family="network",probe_protocol="dns"}[5m]))`,
+		},
+		{
+			title: "HTTP Probe Loss (5m)", unit: units.Percent, legend: "{{probe_title}} / {{source}}",
+			expression: `100 * (1 - avg_over_time(probe_success{probe_family="network",probe_protocol="http"}[5m]))`,
 		},
 	}
 
