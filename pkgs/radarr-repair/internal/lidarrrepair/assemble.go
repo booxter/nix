@@ -59,6 +59,77 @@ func Assemble(
 		bindings = append(bindings, bindingFromImport(artifact.ArtifactID, item, queue.DownloadID))
 		artifactIDs = append(artifactIDs, artifact.ArtifactID)
 	}
+	return assembleCase(
+		observedAt, queue, album, tracks, artifacts, assessments, bindings, artifactIDs,
+	)
+}
+
+func AssembleStored(
+	observedAt time.Time,
+	queue lidarr.QueueRecord,
+	album lidarr.Album,
+	tracks []lidarr.Track,
+	workspaceRoot string,
+	artifacts []lidarrcontracts.Artifact,
+	manualImports []lidarr.ManualImport,
+) (lidarrcontracts.Case, []ImportBinding, error) {
+	if workspaceRoot == "" || !filepath.IsAbs(workspaceRoot) ||
+		filepath.Clean(workspaceRoot) != workspaceRoot || len(artifacts) == 0 {
+		return lidarrcontracts.Case{}, nil, fmt.Errorf("stored Lidarr repair evidence is incomplete")
+	}
+	importsByPath := make(map[string]lidarr.ManualImport, len(manualImports))
+	for _, item := range manualImports {
+		importsByPath[item.Path] = item
+	}
+	assessments := make([]lidarrcontracts.Assessment, 0, len(artifacts))
+	bindings := make([]ImportBinding, 0, len(artifacts))
+	artifactIDs := make([]string, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		relativePath := filepath.FromSlash(artifact.RelativePath)
+		if relativePath == "." || filepath.IsAbs(relativePath) ||
+			filepath.Clean(relativePath) != relativePath || relativePath == ".." ||
+			strings.HasPrefix(relativePath, ".."+string(filepath.Separator)) {
+			return lidarrcontracts.Case{}, nil, fmt.Errorf(
+				"stored Lidarr artifact %q has an unsafe path", artifact.ArtifactID,
+			)
+		}
+		path := filepath.Join(workspaceRoot, relativePath)
+		item, found := importsByPath[path]
+		if !found {
+			return lidarrcontracts.Case{}, nil, fmt.Errorf(
+				"Lidarr did not reassess stored artifact %q", artifact.ArtifactID,
+			)
+		}
+		assessments = append(assessments, contractAssessment(artifact.ArtifactID, item))
+		bindings = append(bindings, bindingFromImport(artifact.ArtifactID, item, queue.DownloadID))
+		artifactIDs = append(artifactIDs, artifact.ArtifactID)
+	}
+	return assembleCase(
+		observedAt,
+		queue,
+		album,
+		tracks,
+		append([]lidarrcontracts.Artifact(nil), artifacts...),
+		assessments,
+		bindings,
+		artifactIDs,
+	)
+}
+
+func assembleCase(
+	observedAt time.Time,
+	queue lidarr.QueueRecord,
+	album lidarr.Album,
+	tracks []lidarr.Track,
+	artifacts []lidarrcontracts.Artifact,
+	assessments []lidarrcontracts.Assessment,
+	bindings []ImportBinding,
+	artifactIDs []string,
+) (lidarrcontracts.Case, []ImportBinding, error) {
+	if queue.AlbumID == nil || queue.ArtistID == nil || album.ID != *queue.AlbumID ||
+		album.ArtistID != *queue.ArtistID || len(artifacts) == 0 {
+		return lidarrcontracts.Case{}, nil, fmt.Errorf("Lidarr repair evidence is incomplete")
+	}
 
 	releases := make([]lidarrcontracts.Release, len(album.Releases))
 	releaseTrackCounts := make(map[int64]int, len(album.Releases))

@@ -13,6 +13,13 @@ func ValidateDecision(
 	if decision.CaseID() != repairCase.CaseID {
 		return fmt.Errorf("Lidarr decision case ID does not match")
 	}
+	return validateDecisionSelection(repairCase, decision)
+}
+
+func validateDecisionSelection(
+	repairCase lidarrcontracts.Case,
+	decision lidarrcontracts.Decision,
+) error {
 	if decision.Kind == lidarrcontracts.ActionNoRepair && decision.NoRepair != nil {
 		return validateEvidenceReferences(repairCase, decision.NoRepair.EvidenceRefs)
 	}

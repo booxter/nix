@@ -162,6 +162,9 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Remove(archive); err != nil {
+		t.Fatal(err)
+	}
 	second, err := runner.Run(context.Background())
 	if err != nil {
 		t.Fatal(err)

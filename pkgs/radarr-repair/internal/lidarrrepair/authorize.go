@@ -48,13 +48,19 @@ func AuthorizeImport(
 	if planned.QueueID != current.Queue.ID || planned.QueueID != current.Case.Queue.QueueID ||
 		planned.ArchivePath != current.ArchivePath ||
 		planned.ArchiveFingerprint != current.ArchiveFingerprint ||
-		planned.WorkspaceRoot != current.WorkspaceRoot || plannedCase.CaseID != current.Case.CaseID {
+		planned.WorkspaceRoot != current.WorkspaceRoot {
 		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr evidence does not match the planned case")
 	}
 	if !reflect.DeepEqual(planned.Bindings, current.Bindings) {
 		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr import bindings changed after planning")
 	}
-	if err := ValidateDecision(current.Case, decision); err != nil {
+	validate := ValidateDecision
+	if current.Recovered {
+		validate = validateDecisionSelection
+	} else if plannedCase.CaseID != current.Case.CaseID {
+		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr evidence does not match the planned case")
+	}
+	if err := validate(current.Case, decision); err != nil {
 		return AuthorizedImport{}, false, fmt.Errorf("revalidate planned Lidarr repair: %w", err)
 	}
 	selected := decision.ImportMissingTracks
@@ -76,7 +82,7 @@ func AuthorizeImport(
 	}
 
 	authorized := AuthorizedImport{
-		CaseID: current.Case.CaseID, CapabilityID: selected.CapabilityID,
+		CaseID: plannedCase.CaseID, CapabilityID: selected.CapabilityID,
 		QueueID: current.Queue.ID, ArtistID: current.Case.Album.ArtistID,
 		AlbumID: selected.AlbumID, ReleaseID: selected.ReleaseID,
 		Tracks: make([]AuthorizedTrack, len(selected.Mappings)),

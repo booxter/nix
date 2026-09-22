@@ -38,6 +38,26 @@ func TestAuthorizeImportRejectsChangedBinding(t *testing.T) {
 	}
 }
 
+func TestAuthorizeImportRevalidatesRecoveredWorkspaceAgainstCurrentCapabilities(t *testing.T) {
+	t.Parallel()
+	planned, current := testPlannedImport(t, false)
+	plannedCase, err := lidarrcontracts.DecodeCase(planned.Case)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current.Recovered = true
+	current.Case.CaseID = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
+	authorized, found, err := AuthorizeImport(planned, current)
+	if err != nil || !found || authorized.CaseID != plannedCase.CaseID {
+		t.Fatalf("authorization = %#v, found = %v, error = %v", authorized, found, err)
+	}
+	current.Case.Capabilities = nil
+	if _, _, err := AuthorizeImport(planned, current); err == nil {
+		t.Fatal("recovered workspace without a current capability was accepted")
+	}
+}
+
 func TestStorePersistsImportExecutionTransitions(t *testing.T) {
 	t.Parallel()
 	planned, current := testPlannedImport(t, false)
