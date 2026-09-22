@@ -56,7 +56,7 @@ func (validation JoinValidation) Accepted() bool {
 
 func ValidateJoin(
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV2,
+	decision contracts.RepairDecisionV3,
 ) JoinValidation {
 	validation := JoinValidation{Rejections: make([]JoinRejection, 0)}
 	if decision.Kind != contracts.ActionJoinParts || decision.JoinParts == nil ||

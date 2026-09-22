@@ -327,9 +327,9 @@ func joinExecutionDecision(
 	caseID string,
 	capabilityID string,
 	fileIDs []string,
-) contracts.RepairDecisionV2 {
+) contracts.RepairDecisionV3 {
 	t.Helper()
-	data, err := os.ReadFile("../../contracts/v2/examples/repair-decision-join.json")
+	data, err := os.ReadFile("../../contracts/v3/examples/repair-decision-join.json")
 	if err != nil {
 		t.Fatal(err)
 	}

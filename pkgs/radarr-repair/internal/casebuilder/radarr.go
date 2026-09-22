@@ -9,18 +9,32 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
 
+const (
+	maximumStatusMessages = 32
+	maximumMessageDetails = 16
+)
+
 func mapRadarr(
 	observation Observation,
 	downloadRef string,
 	manualImports []manualImportMatch,
 ) (contracts.Radarr, error) {
 	failure := observation.Correlation.Radarr
-	statusMessages := make([]contracts.StatusMessageElement, len(failure.StatusMessages))
-	for index, status := range failure.StatusMessages {
+	includedStatuses := failure.StatusMessages
+	if len(includedStatuses) > maximumStatusMessages {
+		includedStatuses = includedStatuses[:maximumStatusMessages]
+	}
+	statusMessages := make([]contracts.StatusMessageElement, len(includedStatuses))
+	for index, status := range includedStatuses {
+		includedMessages := status.Messages
+		if len(includedMessages) > maximumMessageDetails {
+			includedMessages = includedMessages[:maximumMessageDetails]
+		}
 		statusMessages[index] = contracts.StatusMessageElement{
-			EvidenceID: opaqueID("evidence", "queue", strconv.FormatInt(failure.ID, 10), strconv.Itoa(index)),
-			Title:      status.Title,
-			Messages:   clone(status.Messages),
+			EvidenceID:   opaqueID("evidence", "queue", strconv.FormatInt(failure.ID, 10), strconv.Itoa(index)),
+			Title:        status.Title,
+			Messages:     clone(includedMessages),
+			MessageCount: int64(len(status.Messages)),
 		}
 	}
 
@@ -52,6 +66,7 @@ func mapRadarr(
 			TrackedDownloadStatus: string(failure.TrackedDownloadStatus),
 			TrackedDownloadState:  string(failure.TrackedDownloadState),
 			StatusMessages:        statusMessages,
+			StatusMessageCount:    int64(len(failure.StatusMessages)),
 		},
 		Movie:         mapMovie(observation.Movie),
 		History:       history,

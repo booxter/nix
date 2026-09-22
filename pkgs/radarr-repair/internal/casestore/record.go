@@ -106,7 +106,19 @@ func validateRecord(record CaseRecord) error {
 	if err != nil {
 		return fmt.Errorf("reassemble stored observation: %w", err)
 	}
-	if !bytes.Equal(rebuilt.EncodedRequest, record.Request) {
+	rebuiltRequest := rebuilt.Request
+	if request.SchemaVersion == contracts.RadarrRepairV2 {
+		rebuiltRequest.SchemaVersion = contracts.RadarrRepairV2
+		rebuiltRequest.CaseID, err = contracts.CalculateCaseID(rebuiltRequest)
+		if err != nil {
+			return fmt.Errorf("calculate legacy repair case ID: %w", err)
+		}
+	}
+	rebuiltEncoded, err := contracts.EncodeCase(rebuiltRequest)
+	if err != nil {
+		return fmt.Errorf("encode reassembled repair case: %w", err)
+	}
+	if !bytes.Equal(rebuiltEncoded, record.Request) {
 		return fmt.Errorf("stored observation does not reproduce its repair case")
 	}
 	if !reflect.DeepEqual(

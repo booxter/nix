@@ -10,21 +10,33 @@ import (
 )
 
 const (
-	caseSchemaFile         = "v2/repair-case.schema.json"
-	caseSchemaLocation     = "urn:radarr-repair:schema:repair-case:v2"
-	decisionSchemaFile     = "v2/repair-decision.schema.json"
-	decisionSchemaLocation = "urn:radarr-repair:schema:repair-decision:v2"
+	caseSchemaV2File         = "v2/repair-case.schema.json"
+	caseSchemaV2Location     = "urn:radarr-repair:schema:repair-case:v2"
+	decisionSchemaV2File     = "v2/repair-decision.schema.json"
+	decisionSchemaV2Location = "urn:radarr-repair:schema:repair-decision:v2"
+	caseSchemaV3File         = "v3/repair-case.schema.json"
+	caseSchemaV3Location     = "urn:radarr-repair:schema:repair-case:v3"
+	decisionSchemaV3File     = "v3/repair-decision.schema.json"
+	decisionSchemaV3Location = "urn:radarr-repair:schema:repair-decision:v3"
 )
 
-//go:embed v2/repair-case.schema.json v2/repair-decision.schema.json
+//go:embed v2/repair-case.schema.json v2/repair-decision.schema.json v3/repair-case.schema.json v3/repair-decision.schema.json
 var schemaFiles embed.FS
 
-var caseSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(caseSchemaFile, caseSchemaLocation)
+var caseSchemaV2 = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(caseSchemaV2File, caseSchemaV2Location)
 })
 
-var decisionSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
-	return compileSchema(decisionSchemaFile, decisionSchemaLocation)
+var decisionSchemaV2 = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(decisionSchemaV2File, decisionSchemaV2Location)
+})
+
+var caseSchemaV3 = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(caseSchemaV3File, caseSchemaV3Location)
+})
+
+var decisionSchemaV3 = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	return compileSchema(decisionSchemaV3File, decisionSchemaV3Location)
 })
 
 func compileSchema(fileName, location string) (*jsonschema.Schema, error) {

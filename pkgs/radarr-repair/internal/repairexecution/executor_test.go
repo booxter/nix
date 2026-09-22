@@ -25,7 +25,7 @@ func TestExecutorReturnsPreconditionRejectionWithoutMutation(t *testing.T) {
 	imports := &fakeJoinedFileImporter{}
 	executor := testExecutor(t, checker, manual, joins, imports)
 
-	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV2{})
+	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV3{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestExecutorRunsAuthorizedManualImport(t *testing.T) {
 	imports := &fakeJoinedFileImporter{}
 	executor := testExecutor(t, checker, manual, joins, imports)
 
-	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV2{})
+	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV3{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestExecutorRunsPublishedJoinImport(t *testing.T) {
 	}}
 	executor := testExecutor(t, checker, manual, joins, imports)
 
-	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV2{})
+	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV3{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +116,7 @@ func TestExecutorDoesNotImportUnpublishedJoin(t *testing.T) {
 			result, err := executor.Execute(
 				context.Background(),
 				caseAssembly(),
-				contracts.RepairDecisionV2{},
+				contracts.RepairDecisionV3{},
 			)
 			if err != nil || result.Join == nil || result.Join.State != state ||
 				imports.calls != 0 {
@@ -147,7 +147,7 @@ func TestExecutorImportsPublishedBluRayRemux(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV2{})
+	result, err := executor.Execute(context.Background(), caseAssembly(), contracts.RepairDecisionV3{})
 	if err != nil || result.Remux == nil || result.Remux.State != casestore.RemuxImported ||
 		remuxes.calls != 1 || imports.calls != 1 || imports.caseID != authorized.CaseID ||
 		!reflect.DeepEqual(remuxes.paths, map[controller.FileID]string{
@@ -173,7 +173,7 @@ func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 			&fakeJoinedFileImporter{},
 		)
 		if _, err := executor.Execute(
-			context.Background(), caseAssembly(), contracts.RepairDecisionV2{},
+			context.Background(), caseAssembly(), contracts.RepairDecisionV3{},
 		); !errors.Is(err, failure) {
 			t.Fatalf("error = %v", err)
 		}
@@ -192,7 +192,7 @@ func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 			imports,
 		)
 		result, err := executor.Execute(
-			context.Background(), caseAssembly(), contracts.RepairDecisionV2{},
+			context.Background(), caseAssembly(), contracts.RepairDecisionV3{},
 		)
 		if !errors.Is(err, failure) || result.Join == nil || imports.calls != 0 {
 			t.Fatalf("result = %#v, error = %v, import calls = %d", result, err, imports.calls)
@@ -212,7 +212,7 @@ func TestExecutorStopsAfterDependencyFailure(t *testing.T) {
 			&fakeJoinedFileImporter{},
 		)
 		if _, err := executor.Execute(
-			context.Background(), caseAssembly(), contracts.RepairDecisionV2{},
+			context.Background(), caseAssembly(), contracts.RepairDecisionV3{},
 		); err == nil || joins.calls != 0 {
 			t.Fatalf("error = %v, join calls = %d", err, joins.calls)
 		}
@@ -250,7 +250,7 @@ type fakeChecker struct {
 func (checker *fakeChecker) Check(
 	context.Context,
 	casebuilder.Assembly,
-	contracts.RepairDecisionV2,
+	contracts.RepairDecisionV3,
 ) (executioncheck.Result, error) {
 	checker.calls++
 	return checker.result, checker.err

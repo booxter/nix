@@ -45,47 +45,47 @@ func TestValidateJoinRejectsSelectionsOutsideGrantedAuthority(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*casebuilder.Assembly, *contracts.RepairDecisionV2)
+		mutate func(*casebuilder.Assembly, *contracts.RepairDecisionV3)
 		reason JoinRejectionReason
 	}{
 		{
 			name: "different case",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV3) {
 				decision.JoinParts.CaseID = "sha256:different"
 			},
 			reason: JoinCaseMismatch,
 		},
 		{
 			name: "unknown capability",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV3) {
 				decision.JoinParts.CapabilityID = "capability:unknown"
 			},
 			reason: JoinCapabilityNotFound,
 		},
 		{
 			name: "capability for another action",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV3) {
 				assembly.Request.Capabilities[0].Action = contracts.CapabilityActionManualImportFile
 			},
 			reason: JoinCapabilityWrongAction,
 		},
 		{
 			name: "one selected file",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV3) {
 				decision.JoinParts.OrderedFileIDS = []string{"file:first"}
 			},
 			reason: JoinTooFewSelectedFiles,
 		},
 		{
 			name: "duplicate selected file",
-			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV2) {
+			mutate: func(_ *casebuilder.Assembly, decision *contracts.RepairDecisionV3) {
 				decision.JoinParts.OrderedFileIDS = []string{"file:first", "file:first"}
 			},
 			reason: JoinDuplicateSelectedFile,
 		},
 		{
 			name: "file outside pool",
-			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV2) {
+			mutate: func(assembly *casebuilder.Assembly, _ *contracts.RepairDecisionV3) {
 				assembly.Request.Capabilities[0].CandidateFileIDS = []string{"file:first"}
 			},
 			reason: JoinFileNotOffered,
@@ -174,7 +174,7 @@ func TestValidateJoinRejectsTechnicallyIncompatibleSelection(t *testing.T) {
 func TestValidateJoinRejectsAnotherDecisionVariant(t *testing.T) {
 	t.Parallel()
 
-	validation := ValidateJoin(joinAssembly(), contracts.RepairDecisionV2{
+	validation := ValidateJoin(joinAssembly(), contracts.RepairDecisionV3{
 		Kind: contracts.ActionNoRepair,
 		NoRepair: &contracts.NoRepairDecision{
 			Action: contracts.NoRepair,
@@ -204,7 +204,7 @@ func joinAssembly() casebuilder.Assembly {
 		joinInventoryFile("file:unselected", "bonus.mkv", 300),
 	}
 	return casebuilder.Assembly{
-		Request: contracts.RepairCaseV2{
+		Request: contracts.RepairCaseV3{
 			CaseID: caseID,
 			Capabilities: []contracts.Capability{{
 				Action:       contracts.CapabilityActionJoinParts,
@@ -243,8 +243,8 @@ func joinAssembly() casebuilder.Assembly {
 	}
 }
 
-func joinDecision(caseID string, orderedFileIDs ...string) contracts.RepairDecisionV2 {
-	return contracts.RepairDecisionV2{
+func joinDecision(caseID string, orderedFileIDs ...string) contracts.RepairDecisionV3 {
+	return contracts.RepairDecisionV3{
 		Kind: contracts.ActionJoinParts,
 		JoinParts: &contracts.JoinDecision{
 			Action:         contracts.JoinDecisionAction(contracts.ActionJoinParts),

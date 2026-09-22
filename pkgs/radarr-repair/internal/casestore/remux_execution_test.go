@@ -109,7 +109,7 @@ func TestPrepareRemuxRequiresStoredDecision(t *testing.T) {
 			capabilityID = capability.CapabilityID
 		}
 	}
-	decisionData, err := os.ReadFile("../../contracts/v2/examples/repair-decision-remux-bluray.json")
+	decisionData, err := os.ReadFile("../../contracts/v3/examples/repair-decision-remux-bluray.json")
 	if err != nil {
 		t.Fatal(err)
 	}

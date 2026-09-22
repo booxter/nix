@@ -213,14 +213,14 @@ func TestSelectRejectsUnknownPlannedAction(t *testing.T) {
 func testPlannedCase(caseID string, action contracts.DecisionAction) casestore.PlannedCase {
 	return casestore.PlannedCase{
 		Assembly: casebuilder.Assembly{
-			Request: contracts.RepairCaseV2{CaseID: caseID},
+			Request: contracts.RepairCaseV3{CaseID: caseID},
 			LocalSnapshot: casebuilder.LocalSnapshot{Observation: casebuilder.Observation{
 				Correlation: controller.DownloadCorrelation{Download: controller.Download{
 					Client: controller.DownloadClientTransmission,
 				}},
 			}},
 		},
-		Decision: contracts.RepairDecisionV2{Kind: action},
+		Decision: contracts.RepairDecisionV3{Kind: action},
 	}
 }
 

@@ -52,7 +52,7 @@ func (validation RemuxValidation) Accepted() bool {
 // snapshot and checks it against Radarr's movie runtime.
 func ValidateRemux(
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV2,
+	decision contracts.RepairDecisionV3,
 ) RemuxValidation {
 	if decision.Kind != contracts.ActionRemuxBluray || decision.RemuxBluray == nil ||
 		string(decision.RemuxBluray.Action) != string(contracts.ActionRemuxBluray) {

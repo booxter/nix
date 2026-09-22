@@ -42,12 +42,12 @@ func TestValidateDVDRejectsChangedTitleAndRuntime(t *testing.T) {
 	}
 }
 
-func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV2) {
+func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV3) {
 	const caseID, capabilityID = "case:dvd", "capability:dvd"
 	navigationPath := filepath.Join("/media/movie", "VIDEO_TS", "VIDEO_TS.IFO")
 	vobPath := filepath.Join("/media/movie", "VIDEO_TS", "VTS_01_1.VOB")
 	runtime := 163
-	request := contracts.RepairCaseV2{
+	request := contracts.RepairCaseV3{
 		CaseID: caseID,
 		Capabilities: []contracts.Capability{{
 			Action: contracts.CapabilityActionRemuxDVD, CapabilityID: capabilityID,
@@ -86,7 +86,7 @@ func dvdCase() (casebuilder.Assembly, contracts.RepairDecisionV2) {
 		Request:       request,
 		LocalSnapshot: casebuilder.LocalSnapshot{CaseID: caseID, Observation: observation},
 	}
-	decision := contracts.RepairDecisionV2{
+	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionRemuxDVD,
 		RemuxDVD: &contracts.RemuxDVDDecision{
 			Action: "remux_dvd_v1", CaseID: caseID, CapabilityID: capabilityID,

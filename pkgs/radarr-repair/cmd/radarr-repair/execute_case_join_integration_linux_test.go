@@ -81,7 +81,7 @@ func TestExecuteStoredCaseJoinsAndImportsAuthorizedParts(t *testing.T) {
 		t.Fatal(err)
 	}
 	capability := joinCapability(t, assembly.Request.Capabilities)
-	decision := contracts.RepairDecisionV2{
+	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionJoinParts,
 		JoinParts: &contracts.JoinDecision{
 			Action:         contracts.JoinDecisionAction(contracts.ActionJoinParts),
@@ -90,7 +90,7 @@ func TestExecuteStoredCaseJoinsAndImportsAuthorizedParts(t *testing.T) {
 			EvidenceRefs:   append([]string(nil), capability.CandidateFileIDS...),
 			Explanation:    "The two numbered files are compatible consecutive movie parts.",
 			OrderedFileIDS: append([]string(nil), capability.CandidateFileIDS...),
-			SchemaVersion:  contracts.RadarrRepairV2,
+			SchemaVersion:  contracts.RadarrRepairV3,
 		},
 	}
 	store, err := casestore.New(stateDirectory)

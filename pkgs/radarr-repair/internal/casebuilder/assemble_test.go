@@ -67,6 +67,42 @@ func TestAssembleProducesRedactedValidatedCase(t *testing.T) {
 	}
 }
 
+func TestAssembleBoundsRadarrStatusEvidence(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	statuses := make([]controller.RadarrStatusMessage, 45)
+	for statusIndex := range statuses {
+		messages := make([]string, 20)
+		for messageIndex := range messages {
+			messages[messageIndex] = fmt.Sprintf("diagnostic %d.%d", statusIndex, messageIndex)
+		}
+		statuses[statusIndex] = controller.RadarrStatusMessage{
+			Title:    fmt.Sprintf("status %d", statusIndex),
+			Messages: messages,
+		}
+	}
+	observation.Correlation.Radarr.StatusMessages = statuses
+
+	assembly, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	failure := assembly.Request.Radarr.Failure
+	if failure.StatusMessageCount != 45 || len(failure.StatusMessages) != maximumStatusMessages {
+		t.Fatalf("status evidence = %#v", failure)
+	}
+	for _, status := range failure.StatusMessages {
+		if status.MessageCount != 20 || len(status.Messages) != maximumMessageDetails {
+			t.Fatalf("bounded status = %#v", status)
+		}
+	}
+	if len(assembly.LocalSnapshot.Observation.Correlation.Radarr.StatusMessages) != 45 ||
+		len(assembly.LocalSnapshot.Observation.Correlation.Radarr.StatusMessages[0].Messages) != 20 {
+		t.Fatal("local snapshot did not retain complete Radarr diagnostics")
+	}
+}
+
 func TestAssembleCaseIdentityIgnoresObservationTime(t *testing.T) {
 	t.Parallel()
 

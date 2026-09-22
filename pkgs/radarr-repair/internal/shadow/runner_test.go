@@ -426,7 +426,7 @@ func (store *fakeStore) PutPlanningFailure(
 
 func (store *fakeStore) PutPlanningDecision(
 	caseID string,
-	decision contracts.RepairDecisionV2,
+	decision contracts.RepairDecisionV3,
 	attemptedAt time.Time,
 ) (casestore.PlanningResult, bool, error) {
 	if store.decisionErr != nil {
@@ -446,7 +446,7 @@ func (store *fakeStore) PutPlanningDecision(
 }
 
 type plannerResponse struct {
-	decision contracts.RepairDecisionV2
+	decision contracts.RepairDecisionV3
 	err      error
 }
 
@@ -457,12 +457,12 @@ type fakePlanner struct {
 
 func (planner *fakePlanner) Plan(
 	_ context.Context,
-	repairCase contracts.RepairCaseV2,
-) (contracts.RepairDecisionV2, error) {
+	repairCase contracts.RepairCaseV3,
+) (contracts.RepairDecisionV3, error) {
 	planner.calls = append(planner.calls, repairCase.CaseID)
 	response, found := planner.responses[repairCase.CaseID]
 	if !found {
-		return contracts.RepairDecisionV2{}, errors.New("unexpected planner call")
+		return contracts.RepairDecisionV3{}, errors.New("unexpected planner call")
 	}
 	return response.decision, response.err
 }
@@ -505,7 +505,7 @@ func classifyTestFailure(error) casestore.PlanningFailure {
 }
 
 func testAssembly(caseID string) casebuilder.Assembly {
-	return casebuilder.Assembly{Request: contracts.RepairCaseV2{CaseID: caseID}}
+	return casebuilder.Assembly{Request: contracts.RepairCaseV3{CaseID: caseID}}
 }
 
 func supersededTestAssembly(caseID string) casebuilder.Assembly {
@@ -543,9 +543,9 @@ func assertPlannedCaseIDs(
 	}
 }
 
-func testDecision(t *testing.T, caseID string) contracts.RepairDecisionV2 {
+func testDecision(t *testing.T, caseID string) contracts.RepairDecisionV3 {
 	t.Helper()
-	data, err := os.ReadFile("../../contracts/v2/examples/repair-decision-no-repair.json")
+	data, err := os.ReadFile("../../contracts/v3/examples/repair-decision-no-repair.json")
 	if err != nil {
 		t.Fatal(err)
 	}

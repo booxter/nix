@@ -65,7 +65,7 @@ func TestCaseIdentityCanonicalizesJSONStrings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "sha256:1332d5788e37454c4b275c14420f183be857eb4c4fe34910d5a66bc99782d87e"
+	const want = "sha256:9be41b25237363eaedf1a49e3c0ef087d778f1b0f9b5731258ac40109685ece0"
 	if caseID != want {
 		t.Fatalf("case ID = %q, want %q", caseID, want)
 	}
@@ -124,10 +124,10 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{
-		"v2/examples/repair-decision-no-repair.json",
-		"v2/examples/repair-decision-join.json",
-		"v2/examples/repair-decision-manual-import.json",
-		"v2/examples/repair-decision-remux-bluray.json",
+		"v3/examples/repair-decision-no-repair.json",
+		"v3/examples/repair-decision-join.json",
+		"v3/examples/repair-decision-manual-import.json",
+		"v3/examples/repair-decision-remux-bluray.json",
 	} {
 		path := path
 		t.Run(path, func(t *testing.T) {
@@ -158,11 +158,11 @@ func TestEncodeDecisionRoundTripsExamples(t *testing.T) {
 func TestEncodeDecisionRejectsInconsistentUnion(t *testing.T) {
 	t.Parallel()
 
-	valid, err := DecodeDecision(readFixture(t, "v2/examples/repair-decision-no-repair.json"))
+	valid, err := DecodeDecision(readFixture(t, "v3/examples/repair-decision-no-repair.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, decision := range map[string]RepairDecisionV2{
+	for name, decision := range map[string]RepairDecisionV3{
 		"empty": {},
 		"wrong kind": {
 			Kind:     ActionJoinParts,
@@ -184,9 +184,9 @@ func TestEncodeDecisionRejectsInconsistentUnion(t *testing.T) {
 	}
 }
 
-func exampleCase(t *testing.T) RepairCaseV2 {
+func exampleCase(t *testing.T) RepairCaseV3 {
 	t.Helper()
-	repairCase, err := DecodeCase(readFixture(t, "v2/examples/repair-case-joinable.json"))
+	repairCase, err := DecodeCase(readFixture(t, "v3/examples/repair-case-joinable.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

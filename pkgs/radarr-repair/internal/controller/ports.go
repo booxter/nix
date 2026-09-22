@@ -12,5 +12,5 @@ type Clock interface {
 }
 
 type Planner interface {
-	Plan(context.Context, contracts.RepairCaseV2) (contracts.RepairDecisionV2, error)
+	Plan(context.Context, contracts.RepairCaseV3) (contracts.RepairDecisionV3, error)
 }

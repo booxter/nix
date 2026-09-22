@@ -20,20 +20,58 @@ func readFixture(t *testing.T, path string) []byte {
 }
 
 func TestEmbeddedSchemasCompile(t *testing.T) {
-	if _, err := caseSchema(); err != nil {
-		t.Fatalf("case schema: %v", err)
+	loaders := map[string]schemaLoader{
+		"case v2":     caseSchemaV2,
+		"case v3":     caseSchemaV3,
+		"decision v2": decisionSchemaV2,
+		"decision v3": decisionSchemaV3,
 	}
-	if _, err := decisionSchema(); err != nil {
-		t.Fatalf("decision schema: %v", err)
+	for name, load := range loaders {
+		if _, err := load(); err != nil {
+			t.Fatalf("%s schema: %v", name, err)
+		}
 	}
 }
 
-func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
+func TestVersionTwoDocumentsRemainReadable(t *testing.T) {
 	repairCase, err := DecodeCase(readFixture(t, "v2/examples/repair-case-joinable.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if repairCase.SchemaVersion != RadarrRepairV2 {
+		t.Fatalf("case schema version = %q", repairCase.SchemaVersion)
+	}
+	caseID, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if caseID != repairCase.CaseID {
+		t.Fatalf("case ID = %q, want %q", caseID, repairCase.CaseID)
+	}
+	encodedCase, err := EncodeCase(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeCase(encodedCase); err != nil {
+		t.Fatalf("decode re-encoded v2 case: %v", err)
+	}
+
+	decision, err := DecodeDecision(readFixture(t, "v2/examples/repair-decision-join.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.JoinParts == nil ||
+		decision.JoinParts.SchemaVersion != RadarrRepairV2 {
+		t.Fatalf("decision = %#v", decision)
+	}
+}
+
+func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
+	repairCase, err := DecodeCase(readFixture(t, "v3/examples/repair-case-joinable.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repairCase.SchemaVersion != RadarrRepairV3 {
 		t.Fatalf("schema version = %q", repairCase.SchemaVersion)
 	}
 	if len(repairCase.Files) != 2 {
@@ -57,7 +95,7 @@ func TestRepairCaseExampleDecodesAndRoundTrips(t *testing.T) {
 }
 
 func TestAllRepairCaseExamplesDecode(t *testing.T) {
-	paths, err := filepath.Glob("v2/examples/repair-case-*.json")
+	paths, err := filepath.Glob("v3/examples/repair-case-*.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +122,7 @@ func TestAllRepairCaseExamplesDecode(t *testing.T) {
 func TestGeneralizedRepairCaseExamples(t *testing.T) {
 	t.Parallel()
 
-	single, err := DecodeCase(readFixture(t, "v2/examples/repair-case-single-unparseable.json"))
+	single, err := DecodeCase(readFixture(t, "v3/examples/repair-case-single-unparseable.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +133,7 @@ func TestGeneralizedRepairCaseExamples(t *testing.T) {
 		t.Fatalf("manual imports = %#v", single.Radarr.ManualImports)
 	}
 
-	rawDisc, err := DecodeCase(readFixture(t, "v2/examples/repair-case-raw-bluray.json"))
+	rawDisc, err := DecodeCase(readFixture(t, "v3/examples/repair-case-raw-bluray.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +143,7 @@ func TestGeneralizedRepairCaseExamples(t *testing.T) {
 		t.Fatalf("raw-disc file = %#v", rawDisc.Files[0])
 	}
 
-	episodic, err := DecodeCase(readFixture(t, "v2/examples/repair-case-episodic-release.json"))
+	episodic, err := DecodeCase(readFixture(t, "v3/examples/repair-case-episodic-release.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +151,7 @@ func TestGeneralizedRepairCaseExamples(t *testing.T) {
 		t.Fatalf("episodic shape = %#v", episodic)
 	}
 
-	manualImportable, err := DecodeCase(readFixture(t, "v2/examples/repair-case-manual-importable.json"))
+	manualImportable, err := DecodeCase(readFixture(t, "v3/examples/repair-case-manual-importable.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +192,7 @@ func TestJoinCandidatePoolHasIndependentBound(t *testing.T) {
 
 	var document map[string]any
 	if err := json.Unmarshal(
-		readFixture(t, "v2/examples/repair-case-joinable.json"),
+		readFixture(t, "v3/examples/repair-case-joinable.json"),
 		&document,
 	); err != nil {
 		t.Fatal(err)
@@ -183,9 +221,9 @@ func TestJoinCandidatePoolHasIndependentBound(t *testing.T) {
 	}
 }
 
-func repairCaseWithFileCount(t *testing.T, count int) RepairCaseV2 {
+func repairCaseWithFileCount(t *testing.T, count int) RepairCaseV3 {
 	t.Helper()
-	repairCase, err := DecodeCase(readFixture(t, "v2/examples/repair-case-single-unparseable.json"))
+	repairCase, err := DecodeCase(readFixture(t, "v3/examples/repair-case-single-unparseable.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +255,7 @@ func TestGeneralizedCaseDispositionRules(t *testing.T) {
 
 	var document map[string]any
 	if err := json.Unmarshal(
-		readFixture(t, "v2/examples/repair-case-single-unparseable.json"),
+		readFixture(t, "v3/examples/repair-case-single-unparseable.json"),
 		&document,
 	); err != nil {
 		t.Fatal(err)
@@ -261,7 +299,7 @@ func TestGeneralizedCaseAllowsEmptyRadarrMessages(t *testing.T) {
 
 	var document map[string]any
 	if err := json.Unmarshal(
-		readFixture(t, "v2/examples/repair-case-single-unparseable.json"),
+		readFixture(t, "v3/examples/repair-case-single-unparseable.json"),
 		&document,
 	); err != nil {
 		t.Fatal(err)
@@ -281,7 +319,7 @@ func TestGeneralizedCaseAllowsEmptyRadarrMessages(t *testing.T) {
 func TestNullableCaseFields(t *testing.T) {
 	var document map[string]any
 	if err := json.Unmarshal(
-		readFixture(t, "v2/examples/repair-case-joinable.json"),
+		readFixture(t, "v3/examples/repair-case-joinable.json"),
 		&document,
 	); err != nil {
 		t.Fatal(err)
@@ -310,9 +348,9 @@ func TestDecisionExamplesDecodeToOneVariant(t *testing.T) {
 		path string
 		kind DecisionAction
 	}{
-		{"v2/examples/repair-decision-join.json", ActionJoinParts},
-		{"v2/examples/repair-decision-manual-import.json", ActionManualImportFile},
-		{"v2/examples/repair-decision-no-repair.json", ActionNoRepair},
+		{"v3/examples/repair-decision-join.json", ActionJoinParts},
+		{"v3/examples/repair-decision-manual-import.json", ActionManualImportFile},
+		{"v3/examples/repair-decision-no-repair.json", ActionNoRepair},
 	}
 	for _, test := range tests {
 		t.Run(string(test.kind), func(t *testing.T) {
@@ -344,7 +382,7 @@ func TestDecisionExamplesDecodeToOneVariant(t *testing.T) {
 }
 
 func TestAllDecisionExamplesDecode(t *testing.T) {
-	paths, err := filepath.Glob("v2/examples/repair-decision-*.json")
+	paths, err := filepath.Glob("v3/examples/repair-decision-*.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +399,7 @@ func TestAllDecisionExamplesDecode(t *testing.T) {
 }
 
 func TestNegativeContractFixturesAreRejected(t *testing.T) {
-	paths, err := filepath.Glob("../contract-tests/v2/decision-*.json")
+	paths, err := filepath.Glob("../contract-tests/v3/decision-*.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -376,7 +414,7 @@ func TestNegativeContractFixturesAreRejected(t *testing.T) {
 		})
 	}
 
-	invalidCase := readFixture(t, "../contract-tests/v2/request-unknown-field.json")
+	invalidCase := readFixture(t, "../contract-tests/v3/request-unknown-field.json")
 	if _, err := DecodeCase(invalidCase); err == nil {
 		t.Fatal("repair case with an unknown field was accepted")
 	}
@@ -411,7 +449,7 @@ func TestRetiredJoinCapabilityFieldsAreRejected(t *testing.T) {
 			t.Parallel()
 			var document map[string]any
 			if err := json.Unmarshal(
-				readFixture(t, "v2/examples/repair-case-joinable.json"),
+				readFixture(t, "v3/examples/repair-case-joinable.json"),
 				&document,
 			); err != nil {
 				t.Fatal(err)
@@ -437,7 +475,7 @@ func TestRetiredJoinCapabilityFieldsAreRejected(t *testing.T) {
 }
 
 func TestDecodeRejectsInvalidFormatAndTrailingJSON(t *testing.T) {
-	validCase := readFixture(t, "v2/examples/repair-case-joinable.json")
+	validCase := readFixture(t, "v3/examples/repair-case-joinable.json")
 	invalidTime := bytes.Replace(
 		validCase,
 		[]byte("2026-09-06T01:00:00Z"),
@@ -451,14 +489,14 @@ func TestDecodeRejectsInvalidFormatAndTrailingJSON(t *testing.T) {
 		t.Fatal("repair case with trailing JSON was accepted")
 	}
 
-	validDecision := readFixture(t, "v2/examples/repair-decision-join.json")
+	validDecision := readFixture(t, "v3/examples/repair-decision-join.json")
 	if _, err := DecodeDecision(append(validDecision, []byte("\nnull")...)); err == nil {
 		t.Fatal("repair decision with trailing JSON was accepted")
 	}
 }
 
 func TestDecodeRejectsControlCharacters(t *testing.T) {
-	validDecision := readFixture(t, "v2/examples/repair-decision-no-repair.json")
+	validDecision := readFixture(t, "v3/examples/repair-decision-no-repair.json")
 	withTab := strings.Replace(
 		string(validDecision),
 		"The filenames",

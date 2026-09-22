@@ -28,7 +28,7 @@ type ResultStore interface {
 	) (casestore.PlanningResult, bool, error)
 	PutPlanningDecision(
 		string,
-		contracts.RepairDecisionV2,
+		contracts.RepairDecisionV3,
 		time.Time,
 	) (casestore.PlanningResult, bool, error)
 }
@@ -192,7 +192,7 @@ type caseResult struct {
 	Stored          bool
 	Submitted       bool
 	Assembly        casebuilder.Assembly
-	Decision        contracts.RepairDecisionV2
+	Decision        contracts.RepairDecisionV3
 	PlannerFailure  *casestore.PlanningFailure
 	PlannerDuration time.Duration
 }
@@ -354,13 +354,13 @@ func (runner *Runner) loadPlannedCase(caseID string) (casestore.PlannedCase, err
 func planningDecision(
 	caseID string,
 	result casestore.PlanningResult,
-) (contracts.RepairDecisionV2, error) {
+) (contracts.RepairDecisionV3, error) {
 	decision, err := contracts.DecodeDecision(result.Decision)
 	if err != nil {
-		return contracts.RepairDecisionV2{}, fmt.Errorf("decode planning decision: %w", err)
+		return contracts.RepairDecisionV3{}, fmt.Errorf("decode planning decision: %w", err)
 	}
 	if decision.CaseID() != caseID {
-		return contracts.RepairDecisionV2{}, fmt.Errorf(
+		return contracts.RepairDecisionV3{}, fmt.Errorf(
 			"planning decision case ID does not match observed case %q",
 			caseID,
 		)
@@ -395,7 +395,7 @@ func (report *Report) observe(assembly casebuilder.Assembly) {
 	}
 }
 
-func (report *Report) observeDecision(decision contracts.RepairDecisionV2) {
+func (report *Report) observeDecision(decision contracts.RepairDecisionV3) {
 	switch decision.Kind {
 	case contracts.ActionNoRepair:
 		report.metrics.decisions[decisionNoRepair]++

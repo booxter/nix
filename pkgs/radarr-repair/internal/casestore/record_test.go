@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/booxter/nix-config/radarr-repair/contracts"
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 )
@@ -41,6 +42,37 @@ func TestCaseRecordRoundTrip(t *testing.T) {
 	}
 	if !bytes.Contains(data, []byte(`"request":{"capabilities"`)) {
 		t.Fatalf("repair case was not embedded as JSON: %s", data)
+	}
+}
+
+func TestVersionTwoCaseRecordRemainsReadable(t *testing.T) {
+	t.Parallel()
+
+	assembly := recordTestAssembly(t)
+	legacyRequest := assembly.Request
+	legacyRequest.SchemaVersion = contracts.RadarrRepairV2
+	var err error
+	legacyRequest.CaseID, err = contracts.CalculateCaseID(legacyRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedRequest, err := contracts.EncodeCase(legacyRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := CaseRecord{
+		Version:  RecordVersionV2,
+		CaseID:   legacyRequest.CaseID,
+		Request:  encodedRequest,
+		Snapshot: assembly.LocalSnapshot,
+	}
+	record.Snapshot.CaseID = legacyRequest.CaseID
+	data, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeRecord(data); err != nil {
+		t.Fatal(err)
 	}
 }
 

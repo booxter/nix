@@ -256,7 +256,7 @@ func TestCheckAllowsReplacementAfterRadarrCompletedComparison(t *testing.T) {
 
 	for _, test := range []struct {
 		name     string
-		decision contracts.RepairDecisionV2
+		decision contracts.RepairDecisionV3
 	}{
 		{"manual import", executionManualImportDecision()},
 		{"join", executionJoinDecision()},
@@ -297,7 +297,7 @@ func TestCheckRejectsUnsafeReplacement(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		decision contracts.RepairDecisionV2
+		decision contracts.RepairDecisionV3
 		evidence map[controller.FileID][]controller.RadarrManualImportRejectionReason
 		reason   RejectionReason
 	}{
@@ -470,7 +470,7 @@ func executionAssembly() casebuilder.Assembly {
 	firstPath := "/downloads/Example/part-1.mkv"
 	secondPath := "/downloads/Example/part-2.mkv"
 	return casebuilder.Assembly{
-		Request: contracts.RepairCaseV2{
+		Request: contracts.RepairCaseV3{
 			CaseID: executionCaseID, ObservedAt: observedAt,
 			Capabilities: []contracts.Capability{
 				{
@@ -599,8 +599,8 @@ func executionProbe(durationMS, size int64) controller.ProbeEvidence {
 	}
 }
 
-func executionManualImportDecision() contracts.RepairDecisionV2 {
-	return contracts.RepairDecisionV2{
+func executionManualImportDecision() contracts.RepairDecisionV3 {
+	return contracts.RepairDecisionV3{
 		Kind: contracts.ActionManualImportFile,
 		ManualImportFile: &contracts.ManualImportFileDecision{
 			Action: contracts.ManualImportFileDecisionAction(contracts.ActionManualImportFile),
@@ -609,8 +609,8 @@ func executionManualImportDecision() contracts.RepairDecisionV2 {
 	}
 }
 
-func executionJoinDecision() contracts.RepairDecisionV2 {
-	return contracts.RepairDecisionV2{
+func executionJoinDecision() contracts.RepairDecisionV3 {
+	return contracts.RepairDecisionV3{
 		Kind: contracts.ActionJoinParts,
 		JoinParts: &contracts.JoinDecision{
 			Action: contracts.JoinDecisionAction(contracts.ActionJoinParts),

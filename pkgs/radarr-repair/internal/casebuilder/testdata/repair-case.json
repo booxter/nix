@@ -19,7 +19,7 @@
       "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222"
     }
   ],
-  "case_id": "sha256:2161a6216474056582c96696434cb432371ef6b3bb0ab68029f1ead839572453",
+  "case_id": "sha256:e2079816379f4be26e21a59bb86914f206dac607aafd18db41dfc04f20cee19d",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",
@@ -167,9 +167,11 @@
       "error_message": "",
       "queue_id": 71,
       "status": "completed",
+      "status_message_count": 1,
       "status_messages": [
         {
           "evidence_id": "evidence:da16364de893372f1b68997540a57623ecf8f136b72f0600746d7fe1f592ff76",
+          "message_count": 1,
           "messages": [
             "File is suspected multi-part file, Radarr doesn't support this"
           ],
@@ -237,5 +239,5 @@
       "year": 2024
     }
   },
-  "schema_version": "radarr-repair/v2"
+  "schema_version": "radarr-repair/v3"
 }

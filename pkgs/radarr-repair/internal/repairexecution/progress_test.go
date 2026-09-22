@@ -190,9 +190,9 @@ func progressCase(
 ) casestore.PlannedCase {
 	planned := casestore.PlannedCase{
 		Assembly: casebuilder.Assembly{
-			Request: contracts.RepairCaseV2{CaseID: decisionCaseID},
+			Request: contracts.RepairCaseV3{CaseID: decisionCaseID},
 		},
-		Decision: contracts.RepairDecisionV2{Kind: action},
+		Decision: contracts.RepairDecisionV3{Kind: action},
 	}
 	switch action {
 	case contracts.ActionNoRepair:

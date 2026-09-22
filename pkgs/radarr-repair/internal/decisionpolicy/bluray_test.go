@@ -68,7 +68,7 @@ func assertRemuxRejection(
 	}
 }
 
-func remuxCase() (casebuilder.Assembly, contracts.RepairDecisionV2) {
+func remuxCase() (casebuilder.Assembly, contracts.RepairDecisionV3) {
 	const (
 		caseID       = "case:bluray"
 		capabilityID = "capability:bluray"
@@ -78,7 +78,7 @@ func remuxCase() (casebuilder.Assembly, contracts.RepairDecisionV2) {
 	playlistFingerprint := controller.FileFingerprint{Device: 1, Inode: 2, SizeBytes: 100, MTimeNS: 3}
 	clipFingerprint := controller.FileFingerprint{Device: 1, Inode: 4, SizeBytes: 1_000_000, MTimeNS: 3}
 	runtime := 94
-	request := contracts.RepairCaseV2{
+	request := contracts.RepairCaseV3{
 		CaseID: caseID,
 		Capabilities: []contracts.Capability{{
 			Action:         contracts.CapabilityActionRemuxBluray,
@@ -133,7 +133,7 @@ func remuxCase() (casebuilder.Assembly, contracts.RepairDecisionV2) {
 			CaseID: caseID, Observation: observation,
 		},
 	}
-	decision := contracts.RepairDecisionV2{
+	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionRemuxBluray,
 		RemuxBluray: &contracts.RemuxBlurayDecision{
 			Action: "remux_bluray_v1", CaseID: caseID, CapabilityID: capabilityID,

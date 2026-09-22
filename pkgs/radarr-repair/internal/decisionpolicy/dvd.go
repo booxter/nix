@@ -38,7 +38,7 @@ func rejectDVD(reason RemuxRejectionReason) DVDValidation {
 
 // ValidateDVD binds the chosen title to every file in its inventoried VIDEO_TS
 // tree and checks its duration against Radarr's movie runtime.
-func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisionV2) DVDValidation {
+func ValidateDVD(assembly casebuilder.Assembly, decision contracts.RepairDecisionV3) DVDValidation {
 	if decision.Kind != contracts.ActionRemuxDVD || decision.RemuxDVD == nil ||
 		string(decision.RemuxDVD.Action) != string(contracts.ActionRemuxDVD) {
 		return rejectDVD(RemuxWrongDecision)

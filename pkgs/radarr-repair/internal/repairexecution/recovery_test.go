@@ -210,7 +210,7 @@ func storedJoin(
 
 func joinRecoveryScenario(
 	t *testing.T,
-) (casebuilder.Assembly, contracts.RepairDecisionV2, decisionpolicy.AuthorizedJoin) {
+) (casebuilder.Assembly, contracts.RepairDecisionV3, decisionpolicy.AuthorizedJoin) {
 	t.Helper()
 	const caseID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	files := []controller.InventoryFile{
@@ -218,7 +218,7 @@ func joinRecoveryScenario(
 		joinInventoryFile("file:second", "second.mkv", 200),
 	}
 	assembly := casebuilder.Assembly{
-		Request: contracts.RepairCaseV2{
+		Request: contracts.RepairCaseV3{
 			CaseID: caseID,
 			Capabilities: []contracts.Capability{{
 				Action:           contracts.CapabilityActionJoinParts,
@@ -243,7 +243,7 @@ func joinRecoveryScenario(
 			},
 		},
 	}
-	decision := contracts.RepairDecisionV2{
+	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionJoinParts,
 		JoinParts: &contracts.JoinDecision{
 			Action:         contracts.JoinDecisionAction(contracts.ActionJoinParts),
@@ -261,7 +261,7 @@ func joinRecoveryScenario(
 
 func manualRecoveryScenario(
 	t *testing.T,
-) (casebuilder.Assembly, contracts.RepairDecisionV2, decisionpolicy.AuthorizedManualImport) {
+) (casebuilder.Assembly, contracts.RepairDecisionV3, decisionpolicy.AuthorizedManualImport) {
 	t.Helper()
 	const (
 		caseID     = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -292,7 +292,7 @@ func manualRecoveryScenario(
 		},
 	}
 	assembly := casebuilder.Assembly{
-		Request: contracts.RepairCaseV2{
+		Request: contracts.RepairCaseV3{
 			CaseID: caseID,
 			Capabilities: []contracts.Capability{{
 				Action: contracts.CapabilityActionManualImportFile, CapabilityID: "capability:manual",
@@ -326,7 +326,7 @@ func manualRecoveryScenario(
 			},
 		},
 	}
-	decision := contracts.RepairDecisionV2{
+	decision := contracts.RepairDecisionV3{
 		Kind: contracts.ActionManualImportFile,
 		ManualImportFile: &contracts.ManualImportFileDecision{
 			Action:       contracts.ManualImportFileDecisionAction(contracts.ActionManualImportFile),

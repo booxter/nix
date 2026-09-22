@@ -109,7 +109,7 @@ func New(dependencies Dependencies) (*Checker, error) {
 func (checker *Checker) Check(
 	ctx context.Context,
 	stored casebuilder.Assembly,
-	decision contracts.RepairDecisionV2,
+	decision contracts.RepairDecisionV3,
 ) (Result, error) {
 	if checker == nil {
 		return Result{}, fmt.Errorf("execution checker is not configured")
@@ -196,7 +196,7 @@ func (checker *Checker) Check(
 
 func authorize(
 	assembly casebuilder.Assembly,
-	decision contracts.RepairDecisionV2,
+	decision contracts.RepairDecisionV3,
 ) (Authorization, string, bool) {
 	switch decision.Kind {
 	case contracts.ActionJoinParts:

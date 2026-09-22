@@ -359,9 +359,9 @@ func manualImportExecutionDecision(
 	caseID string,
 	capabilityID string,
 	fileID string,
-) contracts.RepairDecisionV2 {
+) contracts.RepairDecisionV3 {
 	t.Helper()
-	data, err := os.ReadFile("../../contracts/v2/examples/repair-decision-manual-import.json")
+	data, err := os.ReadFile("../../contracts/v3/examples/repair-decision-manual-import.json")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	radarrPlanningURL       = "http://planner/v2/repair-plans"
+	radarrPlanningURL       = "http://planner/v3/repair-plans"
 	lidarrPlanningURL       = "http://planner/lidarr/v2/repair-plans"
 	maxDecisionResponseSize = 64 << 10
 )
@@ -104,26 +104,26 @@ func (client *Client) Close() {
 
 func (client *Client) Plan(
 	ctx context.Context,
-	repairCase contracts.RepairCaseV2,
-) (contracts.RepairDecisionV2, error) {
+	repairCase contracts.RepairCaseV3,
+) (contracts.RepairDecisionV3, error) {
 	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
-		return contracts.RepairDecisionV2{}, fmt.Errorf("planner client is not configured")
+		return contracts.RepairDecisionV3{}, fmt.Errorf("planner client is not configured")
 	}
 	payload, err := contracts.EncodeCase(repairCase)
 	if err != nil {
-		return contracts.RepairDecisionV2{}, fmt.Errorf("construct planner request: %w", err)
+		return contracts.RepairDecisionV3{}, fmt.Errorf("construct planner request: %w", err)
 	}
 
 	data, err := client.postPlan(ctx, radarrPlanningURL, payload)
 	if err != nil {
-		return contracts.RepairDecisionV2{}, err
+		return contracts.RepairDecisionV3{}, err
 	}
 	decision, err := contracts.DecodeDecision(data)
 	if err != nil {
-		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse, cause: err}
+		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse, cause: err}
 	}
 	if decision.CaseID() != repairCase.CaseID {
-		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse}
+		return contracts.RepairDecisionV3{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	return decision, nil
 }

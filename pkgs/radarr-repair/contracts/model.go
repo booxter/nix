@@ -1,6 +1,8 @@
 package contracts
 
-type RepairCaseV2 = RadarrRepairCaseVersion2
+type RepairCaseV3 = RadarrRepairCaseVersion3
+
+const RadarrRepairV2 SchemaVersion = "radarr-repair/v2"
 
 type DecisionAction string
 
@@ -17,7 +19,7 @@ const (
 	ActionRemuxDVD         DecisionAction = "remux_dvd_v1"
 )
 
-type RepairDecisionV2 struct {
+type RepairDecisionV3 struct {
 	Kind             DecisionAction
 	NoRepair         *NoRepairDecision
 	JoinParts        *JoinDecision
@@ -26,7 +28,7 @@ type RepairDecisionV2 struct {
 	RemuxDVD         *RemuxDVDDecision
 }
 
-func (decision RepairDecisionV2) CaseID() string {
+func (decision RepairDecisionV3) CaseID() string {
 	switch decision.Kind {
 	case ActionNoRepair:
 		if decision.NoRepair != nil {

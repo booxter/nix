@@ -1,7 +1,7 @@
 {
   "action": "manual_import_file_v1",
   "capability_id": "capability_manual_import_01",
-  "case_id": "sha256:89287518e3bc53da6e5ba84536fa78f8fed0e3e199c2b28fd2a812319b924ded",
+  "case_id": "sha256:ed6719dc68bd093a1dc54fff6b97307d2972c214e1bd10134e3592eb8b22761a",
   "evidence_refs": [
     "file_manual_01",
     "evidence_manual_queue_01"

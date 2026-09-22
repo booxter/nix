@@ -43,7 +43,7 @@ type LocalSnapshot struct {
 }
 
 type Assembly struct {
-	Request        contracts.RepairCaseV2
+	Request        contracts.RepairCaseV3
 	EncodedRequest []byte
 	LocalSnapshot  LocalSnapshot
 }
@@ -124,8 +124,8 @@ func Assemble(observation Observation) (Assembly, error) {
 		return Assembly{}, err
 	}
 	capabilities = append(capabilities, dvdCapabilities...)
-	request := contracts.RepairCaseV2{
-		SchemaVersion: contracts.RadarrRepairV2,
+	request := contracts.RepairCaseV3{
+		SchemaVersion: contracts.RadarrRepairV3,
 		ObservedAt:    observation.ObservedAt.UTC(),
 		Radarr:        radarrEvidence,
 		Download:      mapDownload(observation.Correlation.Download, downloadRef, len(files)),
@@ -313,7 +313,7 @@ func opaqueID(kind string, values ...string) string {
 	return kind + ":" + hex.EncodeToString(digest.Sum(nil))
 }
 
-func rejectLocalValues(request contracts.RepairCaseV2, observation Observation) error {
+func rejectLocalValues(request contracts.RepairCaseV3, observation Observation) error {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("inspect planner request for local values: %w", err)
