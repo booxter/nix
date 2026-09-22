@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
   mediaRoot = "/var/lib/radarr-repair-test-media";
   socketPath = "/run/radarr-repair-worker/worker.sock";
@@ -8,6 +8,7 @@ pkgs.testers.runNixOSTest {
 
   nodes.machine = {
     imports = [
+      inputs.sops-nix.nixosModules.sops
       ../../nixos/_mixins/media-repair
     ];
 
