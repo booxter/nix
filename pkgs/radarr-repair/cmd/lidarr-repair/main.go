@@ -14,20 +14,37 @@ import (
 	"time"
 
 	lidarrsource "github.com/booxter/nix-config/radarr-repair/internal/lidarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/lidarrrepair"
+	"github.com/booxter/nix-config/radarr-repair/internal/mediaroot"
+	"github.com/booxter/nix-config/radarr-repair/internal/plannerclient"
 	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/workerclient"
 )
 
-const defaultRequestTimeout = 30 * time.Second
+const (
+	defaultRequestTimeout = 30 * time.Second
+	defaultStageTimeout   = 30 * time.Minute
+	defaultPlannerTimeout = 21 * time.Minute
+)
 
 type config struct {
-	LidarrURL    string
-	APIKeyFile   string
-	StateDir     string
-	RequestLimit time.Duration
+	LidarrURL     string
+	APIKeyFile    string
+	StateDir      string
+	WorkerSocket  string
+	WorkerRoots   map[string]string
+	PlannerSocket string
+	RequestLimit  time.Duration
+	StageLimit    time.Duration
+	PlannerLimit  time.Duration
 }
 
 type report struct {
-	Observed int
+	Observed   int
+	Candidates int
+	Planned    int
+	Cached     int
+	NoRepair   int
 }
 
 type observeFunc func(context.Context, config) (report, error)
@@ -37,7 +54,7 @@ type application struct {
 }
 
 func run(ctx context.Context, arguments []string, stdout, stderr io.Writer) error {
-	return application{observe: observeQueue}.run(ctx, arguments, stdout, stderr)
+	return application{observe: runShadow}.run(ctx, arguments, stdout, stderr)
 }
 
 func (app application) run(
@@ -51,13 +68,21 @@ func (app application) run(
 	flags.Usage = func() {
 		_, _ = fmt.Fprintln(
 			stderr,
-			"usage: lidarr-repair --lidarr-url URL --lidarr-api-key-file FILE --state-directory DIR",
+			"usage: lidarr-repair --lidarr-url URL --lidarr-api-key-file FILE "+
+				"--worker-socket PATH --worker-root ID=PATH --planner-socket PATH "+
+				"--state-directory DIR",
 		)
 	}
 	lidarrURL := flags.String("lidarr-url", "", "loopback Lidarr URL")
 	apiKeyFile := flags.String("lidarr-api-key-file", "", "Lidarr API-key credential file")
 	stateDirectory := flags.String("state-directory", "", "private controller state directory")
+	workerSocket := flags.String("worker-socket", "", "media worker Unix socket")
+	workerRoots := mediaroot.NewMappings()
+	flags.Var(workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
+	plannerSocket := flags.String("planner-socket", "", "repair planner Unix socket")
 	timeout := flags.Duration("request-timeout", defaultRequestTimeout, "Lidarr request timeout")
+	stageTimeout := flags.Duration("worker-stage-timeout", defaultStageTimeout, "worker stage timeout")
+	plannerTimeout := flags.Duration("planner-timeout", defaultPlannerTimeout, "planner request timeout")
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -67,7 +92,9 @@ func (app application) run(
 	}
 	configuration := config{
 		LidarrURL: *lidarrURL, APIKeyFile: *apiKeyFile,
-		StateDir: *stateDirectory, RequestLimit: *timeout,
+		StateDir: *stateDirectory, WorkerSocket: *workerSocket,
+		WorkerRoots: workerRoots.Paths(), PlannerSocket: *plannerSocket,
+		RequestLimit: *timeout, StageLimit: *stageTimeout, PlannerLimit: *plannerTimeout,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -82,7 +109,11 @@ func (app application) run(
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(stdout, "observed=%d actions=0\n", result.Observed)
+	_, err = fmt.Fprintf(
+		stdout,
+		"observed=%d candidates=%d planned=%d cached=%d no_repair=%d actions=0\n",
+		result.Observed, result.Candidates, result.Planned, result.Cached, result.NoRepair,
+	)
 	return err
 }
 
@@ -99,13 +130,25 @@ func validateConfig(configuration config) error {
 		filepath.Dir(configuration.StateDir) == configuration.StateDir {
 		return fmt.Errorf("state directory must be an absolute clean path")
 	}
-	if configuration.RequestLimit <= 0 {
-		return fmt.Errorf("request timeout must be positive")
+	for name, path := range map[string]string{
+		"worker socket":  configuration.WorkerSocket,
+		"planner socket": configuration.PlannerSocket,
+	} {
+		if !filepath.IsAbs(path) || filepath.Clean(path) != path {
+			return fmt.Errorf("%s must be an absolute clean path", name)
+		}
+	}
+	if len(configuration.WorkerRoots) == 0 {
+		return fmt.Errorf("at least one worker root is required")
+	}
+	if configuration.RequestLimit <= 0 || configuration.StageLimit <= 0 ||
+		configuration.PlannerLimit <= 0 {
+		return fmt.Errorf("request timeouts must be positive")
 	}
 	return nil
 }
 
-func observeQueue(ctx context.Context, configuration config) (report, error) {
+func runShadow(ctx context.Context, configuration config) (report, error) {
 	apiKey, err := servarr.ReadAPIKey("Lidarr", configuration.APIKeyFile)
 	if err != nil {
 		return report{}, err
@@ -126,11 +169,32 @@ func observeQueue(ctx context.Context, configuration config) (report, error) {
 	if err != nil {
 		return report{}, fmt.Errorf("configure Lidarr client: %w", err)
 	}
-	records, err := client.ReadQueue(ctx)
+	worker, err := workerclient.New(
+		configuration.WorkerSocket, configuration.WorkerRoots,
+		configuration.RequestLimit, configuration.StageLimit,
+	)
 	if err != nil {
-		return report{}, fmt.Errorf("observe Lidarr queue: %w", err)
+		return report{}, fmt.Errorf("configure media worker client: %w", err)
 	}
-	return report{Observed: len(records)}, nil
+	defer worker.Close()
+	planner, err := plannerclient.New(configuration.PlannerSocket, configuration.PlannerLimit)
+	if err != nil {
+		return report{}, fmt.Errorf("configure repair planner client: %w", err)
+	}
+	defer planner.Close()
+	store, err := lidarrrepair.NewStore(configuration.StateDir)
+	if err != nil {
+		return report{}, err
+	}
+	runner, err := lidarrrepair.NewRunner(client, worker, planner, store)
+	if err != nil {
+		return report{}, err
+	}
+	result, err := runner.Run(ctx)
+	return report{
+		Observed: result.Observed, Candidates: result.Candidates,
+		Planned: result.Planned, Cached: result.Cached, NoRepair: result.NoRepair,
+	}, err
 }
 
 func main() {

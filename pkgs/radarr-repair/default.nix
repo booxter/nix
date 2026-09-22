@@ -89,16 +89,16 @@ let
       subPackages = [ "cmd/lidarr-repair" ];
 
       preCheck = ''
-        unformatted="$(gofmt -l cmd/lidarr-repair internal/lidarr internal/servarr lidarrcontracts)"
+        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
         if test -n "$unformatted"; then
-          gofmt -d cmd/lidarr-repair internal/lidarr internal/servarr lidarrcontracts >&2
+          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
           exit 1
         fi
-        go vet ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr ./lidarrcontracts
+        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
       '';
       checkPhase = ''
         runHook preCheck
-        go test ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr ./lidarrcontracts -cover
+        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
         runHook postCheck
       '';
 
@@ -110,7 +110,7 @@ let
       '';
 
       meta = common.meta // {
-        description = "Inert controller foundation for Lidarr import repair";
+        description = "Shadow-mode controller for Lidarr import repair";
         mainProgram = "lidarr-repair";
       };
     }
