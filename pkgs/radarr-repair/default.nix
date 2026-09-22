@@ -16,6 +16,7 @@ let
       ./contract-tests
       ./contracts
       ./internal
+      ./lidarrcontracts
       ./worker
       ./go.mod
       ./go.sum
@@ -23,7 +24,7 @@ let
   };
   common = {
     inherit src version;
-    vendorHash = "sha256-k8ZD+en3FYpJ7tlPkmuLm7jtGMPH84IBEFaEi+F0Wv4=";
+    vendorHash = "sha256-d1IeUVUYDXIwqT+Wq8SYJGw02oR3d0YWv8gl4pN9Kec=";
     postPatch = ''
       cp ${goModels}/models.gen.go contracts/models.gen.go
       cp ${goModels}/worker-models.gen.go worker/contracts/models.gen.go
@@ -81,6 +82,40 @@ let
     }
   );
 
+  lidarrController = buildGoModule (
+    common
+    // {
+      pname = "lidarr-repair";
+      subPackages = [ "cmd/lidarr-repair" ];
+
+      preCheck = ''
+        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
+        if test -n "$unformatted"; then
+          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
+          exit 1
+        fi
+        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
+      '';
+      checkPhase = ''
+        runHook preCheck
+        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
+        runHook postCheck
+      '';
+
+      doInstallCheck = true;
+      installCheckPhase = ''
+        runHook preInstallCheck
+        "$out/bin/lidarr-repair" -h >/dev/null
+        runHook postInstallCheck
+      '';
+
+      meta = common.meta // {
+        description = "Shadow-mode controller for Lidarr import repair";
+        mainProgram = "lidarr-repair";
+      };
+    }
+  );
+
   worker = buildGoModule (
     common
     // {
@@ -112,5 +147,5 @@ let
   );
 in
 {
-  inherit controller worker;
+  inherit controller lidarrController worker;
 }

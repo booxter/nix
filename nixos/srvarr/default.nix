@@ -44,6 +44,13 @@ in
 
   host.lidarr = {
     stateDir = "/data/.state/nixarr/lidarr";
+    repair.controller = {
+      enable = true;
+      apply = {
+        enable = true;
+        allowedActions = [ "import_missing_tracks_v1" ];
+      };
+    };
   };
 
   host.prowlarr = {
@@ -71,6 +78,7 @@ in
     ./audiobookshelf.nix
     ./aurral.nix
     ./glance.nix
+    ./observability.nix
     ./pinepods.nix
     ./radarr-repair.nix
     ./romm.nix

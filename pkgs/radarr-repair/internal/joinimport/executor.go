@@ -9,6 +9,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 type Store interface {
@@ -25,7 +26,7 @@ type Dependencies struct {
 	Store        Store
 	Paths        publishedimport.PublishedPathResolver
 	Clock        controller.Clock
-	Waiter       publishedimport.Waiter
+	Waiter       servarr.Waiter
 	PollInterval time.Duration
 }
 

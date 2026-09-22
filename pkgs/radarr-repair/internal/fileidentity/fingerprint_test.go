@@ -1,6 +1,9 @@
 package fileidentity
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestSnapshotFingerprintHasStableEncoding(t *testing.T) {
 	t.Parallel()
@@ -14,6 +17,32 @@ func TestSnapshotFingerprintHasStableEncoding(t *testing.T) {
 	const want = "sha256:0cd0308142123f17781c577fb8ad2abb4d4462d57c7e61cbc90898660d8eb87b"
 	if got := snapshot.Fingerprint(); got != want {
 		t.Fatalf("fingerprint = %q, want %q", got, want)
+	}
+}
+
+func TestSnapshotFromFileInfo(t *testing.T) {
+	t.Parallel()
+	file, err := os.CreateTemp(t.TempDir(), "media")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := file.WriteString("audio"); err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Lstat(file.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := FromFileInfo(info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Device == 0 || snapshot.Inode == 0 || snapshot.SizeBytes != 5 ||
+		snapshot.MTimeNS == 0 {
+		t.Fatalf("snapshot = %#v", snapshot)
 	}
 }
 

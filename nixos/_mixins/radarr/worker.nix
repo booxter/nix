@@ -6,7 +6,7 @@
 }:
 let
   storageIdentities = import ../storage/identities.nix;
-  worker = if config.host.radarr == null then null else config.host.radarr.repair.worker;
+  worker = config.host.mediaRepair.worker;
   serviceName = "radarr-repair-worker";
   serviceUser = serviceName;
   rootIDs = if worker == null then [ ] else builtins.attrNames worker.roots;

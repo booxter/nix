@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "radarr-repair-planner"
 version = "0.1.0"
-description = "Agentic planner for Radarr import repair"
+description = "Agentic planner for media import repair"
 requires-python = ">=3.13"
-dependencies = ["fastapi", "jsonschema", "langchain-core", "langchain-ollama", "langgraph", "openai", "pydantic", "uvicorn"]
+dependencies = ["fastapi", "jsonschema", "ollama", "openai", "pydantic", "uvicorn"]
 
 [project.scripts]
 radarr-repair-planner = "radarr_repair_planner.cli:entrypoint"
@@ -36,7 +36,12 @@ testpaths = ["tests"]
 precision = 2
 
 [tool.coverage.run]
-omit = ["*/case_models.py", "*/decision_models.py"]
+omit = [
+  "*/case_models.py",
+  "*/decision_models.py",
+  "*/lidarr_case_models.py",
+  "*/lidarr_decision_models.py",
+]
 
 [tool.mypy]
 files = ["src/radarr_repair_planner"]

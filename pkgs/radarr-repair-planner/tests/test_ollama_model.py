@@ -13,9 +13,7 @@ from typing import Any
 
 import pytest
 import trustme
-from langchain_core.language_models import LanguageModelInput
-from langchain_core.messages import AIMessage, BaseMessage
-from langchain_core.runnables import RunnableConfig
+from ollama import ChatResponse, Message
 from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import (
     decision_schema,
@@ -29,6 +27,7 @@ from radarr_repair_planner.decision_validation import (
 )
 from radarr_repair_planner.ollama_model import (
     MODEL_NAME,
+    ChatRequest,
     OllamaConfigurationError,
     OllamaDecisionModel,
     OllamaSettings,
@@ -53,39 +52,78 @@ def decision_value() -> dict[str, Any]:
 class ScriptedResponseModel:
     def __init__(self, result: object | Exception) -> None:
         self.result = result
-        self.calls: list[tuple[LanguageModelInput, dict[str, Any]]] = []
+        self.calls: list[ChatRequest] = []
+        self.closed = False
 
-    async def ainvoke(
-        self,
-        input: LanguageModelInput,
-        config: RunnableConfig | None = None,
-        **kwargs: Any,
-    ) -> object:
-        del config
-        self.calls.append((input, kwargs))
+    async def complete(self, request: ChatRequest) -> object:
+        self.calls.append(request)
         if isinstance(self.result, Exception):
             raise self.result
         return self.result
 
+    async def close(self) -> None:
+        self.closed = True
+
+
+def test_settings() -> OllamaSettings:
+    return OllamaSettings(
+        base_url="https://ollama.example",
+        ca_file=None,
+        client_cert_file=Path("client.pem"),
+        client_key_file=Path("client-key.pem"),
+        context_tokens=32768,
+        output_tokens=4096,
+        reasoning=True,
+        timeout_seconds=5,
+    )
+
+
+def chat_response(
+    content: object,
+    *,
+    reasoning: str | None = None,
+    done_reason: str | None = None,
+    eval_count: int | None = None,
+) -> ChatResponse:
+    message = Message.model_construct(
+        role="assistant",
+        content=content,
+        thinking=reasoning,
+    )
+    return ChatResponse(
+        message=message,
+        done_reason=done_reason,
+        eval_count=eval_count,
+    )
+
 
 async def test_decision_model_sends_case_as_messages() -> None:
-    chat = ScriptedResponseModel(AIMessage(content=json.dumps(decision_value())))
+    chat = ScriptedResponseModel(chat_response(json.dumps(decision_value())))
     case = repair_case()
 
-    result = await OllamaDecisionModel(chat).decide("system instruction", case)
+    result = await OllamaDecisionModel(chat, test_settings()).decide("system instruction", case)
 
     assert result.root.case_id.root == case.case_id.root
-    messages, kwargs = chat.calls[0]
-    assert isinstance(messages, list)
-    assert all(isinstance(message, BaseMessage) for message in messages)
-    assert [message.type for message in messages] == ["system", "human"]
-    system_content = messages[0].content
-    assert isinstance(system_content, str)
+    request = chat.calls[0]
+    assert request.model == MODEL_NAME
+    system_content = request.messages[0]["content"]
     prefix = "system instruction\n\n" + SCHEMA_INSTRUCTION
     assert system_content.startswith(prefix)
     assert json.loads(system_content.removeprefix(prefix)) == decision_schema()
-    assert messages[1].content == encode_case(case).decode()
-    assert kwargs == {"stream": False}
+    assert request.messages[1] == {"role": "user", "content": encode_case(case).decode()}
+    assert request.schema == decision_schema()
+    assert request.context_tokens == 32768
+    assert request.output_tokens == 4096
+    assert request.reasoning
+
+
+async def test_decision_model_closes_client() -> None:
+    chat = ScriptedResponseModel(chat_response(json.dumps(decision_value())))
+    model = OllamaDecisionModel(chat, test_settings())
+
+    await model.close()
+
+    assert chat.closed
 
 
 async def test_decision_model_wraps_runnable_failure() -> None:
@@ -95,19 +133,19 @@ async def test_decision_model_wraps_runnable_failure() -> None:
         DecisionModelError,
         match=r"Ollama request.*RuntimeError: transport failed",
     ):
-        await OllamaDecisionModel(chat).decide("system instruction", repair_case())
+        await OllamaDecisionModel(chat, test_settings()).decide("system instruction", repair_case())
 
 
 @pytest.mark.parametrize(
     ("result", "message", "violation_code"),
     [
-        (None, "response was not a message", None),
-        (AIMessage(content=[]), "output was not text", None),
-        (AIMessage(content="[]"), "output was not an object", ViolationCode.NON_OBJECT_JSON),
-        (AIMessage(content="not JSON"), "decoding failed", ViolationCode.INVALID_JSON),
-        (AIMessage(content="{}"), "decision contract failed", ViolationCode.MISSING_FIELD),
+        (None, "response was not a chat response", None),
+        (chat_response([]), "output was not text", None),
+        (chat_response("[]"), "output was not an object", ViolationCode.NON_OBJECT_JSON),
+        (chat_response("not JSON"), "decoding failed", ViolationCode.INVALID_JSON),
+        (chat_response("{}"), "decision contract failed", ViolationCode.MISSING_FIELD),
         (
-            AIMessage(content='{"action":"no_repair"}{"action":"no_repair"}'),
+            chat_response('{"action":"no_repair"}{"action":"no_repair"}'),
             "decoding failed",
             ViolationCode.EXTRA_OUTPUT,
         ),
@@ -121,7 +159,7 @@ async def test_decision_model_rejects_invalid_response(
     chat = ScriptedResponseModel(result)
 
     with pytest.raises(DecisionModelError, match=message) as raised:
-        await OllamaDecisionModel(chat).decide("system instruction", repair_case())
+        await OllamaDecisionModel(chat, test_settings()).decide("system instruction", repair_case())
 
     assert tuple(violation.code for violation in raised.value.violations) == (
         () if violation_code is None else (violation_code,)
@@ -129,7 +167,7 @@ async def test_decision_model_rejects_invalid_response(
 
 
 async def test_decision_model_adds_correction_to_trusted_instruction() -> None:
-    chat = ScriptedResponseModel(AIMessage(content=json.dumps(decision_value())))
+    chat = ScriptedResponseModel(chat_response(json.dumps(decision_value())))
     correction = (
         DecisionViolation(
             ViolationCode.UNKNOWN_EVIDENCE,
@@ -139,30 +177,24 @@ async def test_decision_model_adds_correction_to_trusted_instruction() -> None:
         ),
     )
 
-    await OllamaDecisionModel(chat).decide(
+    await OllamaDecisionModel(chat, test_settings()).decide(
         "system instruction",
         repair_case(),
         correction,
     )
 
-    messages, _kwargs = chat.calls[0]
-    assert isinstance(messages, list)
-    content = messages[0].content
-    assert isinstance(content, str)
+    content = chat.calls[0].messages[0]["content"]
     assert content.endswith(format_correction(correction))
 
 
 async def test_decision_model_traces_raw_parse_failure(tmp_path: Path) -> None:
     path = tmp_path / "trace.jsonl"
     case = repair_case()
-    raw = AIMessage(
-        content='{"action":',
-        additional_kwargs={"reasoning_content": "I should join the ordered parts."},
-        response_metadata={
-            "done_reason": "length",
-            "eval_count": 4096,
-            "ignored": "value",
-        },
+    raw = chat_response(
+        '{"action":',
+        reasoning="I should join the ordered parts.",
+        done_reason="length",
+        eval_count=4096,
     )
     chat = ScriptedResponseModel(raw)
 
@@ -170,7 +202,7 @@ async def test_decision_model_traces_raw_parse_failure(tmp_path: Path) -> None:
         JsonlTraceWriter(path, {case.case_id.root: "clear_ordered_join"}) as trace,
         pytest.raises(DecisionModelError, match="structured decoding failed"),
     ):
-        await OllamaDecisionModel(chat, trace).decide("system instruction", case)
+        await OllamaDecisionModel(chat, test_settings(), trace).decide("system instruction", case)
 
     value = json.loads(path.read_text())
     assert value["case_name"] == "clear_ordered_join"
@@ -302,10 +334,11 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
             timeout_seconds=5,
         )
 
-        result = await OllamaDecisionModel.from_settings(settings).decide(
-            "system instruction",
-            case,
-        )
+        model = OllamaDecisionModel.from_settings(settings)
+        try:
+            result = await model.decide("system instruction", case)
+        finally:
+            await model.close()
 
     assert result.root.case_id.root == case.case_id.root
     request = requests.get_nowait()
@@ -361,10 +394,11 @@ async def test_real_client_uses_bearer_token_without_client_certificate(tmp_path
             timeout_seconds=5,
         )
 
-        result = await OllamaDecisionModel.from_settings(settings).decide(
-            "system instruction",
-            case,
-        )
+        model = OllamaDecisionModel.from_settings(settings)
+        try:
+            result = await model.decide("system instruction", case)
+        finally:
+            await model.close()
 
     assert result.root.case_id.root == case.case_id.root
     request = requests.get_nowait()

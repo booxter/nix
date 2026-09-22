@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
+from typing import Any
 
 from .case_models import RepairCaseV2
 from .contracts import ContractError, decision_schema, decode_decision, encode_case
@@ -44,8 +46,24 @@ def decision_prompt(
     correction: tuple[DecisionViolation, ...],
     schema_instruction: str = SCHEMA_INSTRUCTION,
 ) -> tuple[str, str]:
-    schema = json.dumps(
+    return structured_prompt(
+        system_instruction,
+        encode_case(repair_case).decode(),
         decision_schema(),
+        correction,
+        schema_instruction,
+    )
+
+
+def structured_prompt(
+    system_instruction: str,
+    case_content: str,
+    schema_value: dict[str, Any],
+    correction: tuple[DecisionViolation, ...],
+    schema_instruction: str = SCHEMA_INSTRUCTION,
+) -> tuple[str, str]:
+    schema = json.dumps(
+        schema_value,
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
@@ -53,10 +71,18 @@ def decision_prompt(
     system_content = f"{system_instruction.rstrip()}\n\n{schema_instruction}{schema}"
     if correction:
         system_content += "\n\n" + format_correction(correction)
-    return system_content, encode_case(repair_case).decode()
+    return system_content, case_content
 
 
 def decode_structured_decision(raw_output: str) -> RepairDecisionV2:
+    return decode_structured_output(raw_output, decode_decision, validate_decision_object)
+
+
+def decode_structured_output[DecisionT](
+    raw_output: str,
+    decoder: Callable[[bytes], DecisionT],
+    validate_object: Callable[[dict[str, object]], tuple[DecisionViolation, ...]],
+) -> DecisionT:
     try:
         value = json.loads(raw_output)
     except json.JSONDecodeError as error:
@@ -75,9 +101,9 @@ def decode_structured_decision(raw_output: str) -> RepairDecisionV2:
     except (TypeError, ValueError) as error:
         raise StructuredDecisionError("structured output was not JSON") from error
     try:
-        return decode_decision(payload)
+        return decoder(payload)
     except ContractError as error:
-        violations = validate_decision_object(value)
+        violations = validate_object(value)
         detail = describe_violations(violations) if violations else diagnostic(error)
         raise StructuredDecisionError(
             "decision contract failed: " + detail,

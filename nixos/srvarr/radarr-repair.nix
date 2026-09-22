@@ -14,7 +14,15 @@ in
 {
   host.storage.claims.media.directories = {
     "${config.host.transmission.storage.relativePath}/.radarr-repair" = stagingDirectory;
+    "${config.host.transmission.storage.relativePath}/.media-repair" = stagingDirectory // {
+      group = "media";
+      mode = "2750";
+    };
     "${downloads.routes.radarr-usenet.storage.relativePath}/.radarr-repair" = stagingDirectory;
+    "${downloads.routes.radarr-usenet.storage.relativePath}/.media-repair" = stagingDirectory // {
+      group = "media";
+      mode = "2750";
+    };
   };
 
   host.radarr.repair.controller = {
@@ -41,8 +49,8 @@ in
   host.observability.nodeExporter.textfile.directories.radarr-repair =
     config.host.radarr.repair.controller.metricsDirectory;
 
-  host.radarr.repair.planner.enable = true;
-  host.radarr.repair.worker = {
+  host.mediaRepair.planner.enable = true;
+  host.mediaRepair.worker = {
     enable = true;
     roots = {
       "root:downloads" = config.services.transmission.settings.download-dir;

@@ -2,8 +2,8 @@
 let
   radarr = config.host.radarr;
   controller = if radarr == null then null else radarr.repair.controller;
-  planner = if radarr == null then null else radarr.repair.planner;
-  worker = if radarr == null then null else radarr.repair.worker;
+  planner = config.host.mediaRepair.planner;
+  worker = config.host.mediaRepair.worker;
   registeredDownloadClients = config.host.downloads.clients or { };
   selectedDownloadClientNames =
     if controller == null then

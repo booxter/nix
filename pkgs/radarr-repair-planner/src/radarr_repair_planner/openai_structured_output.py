@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
+from functools import cache
 
-from pydantic import BaseModel, ConfigDict
-
-from .decision_models import RepairDecisionV2
+from pydantic import BaseModel, ConfigDict, create_model
 
 DECISION_FIELD = "decision"
 SCHEMA_INSTRUCTION = """\
@@ -18,10 +17,13 @@ class OpenAIStructuredOutputError(ValueError):
     """An OpenAI structured response that does not contain a decision."""
 
 
-class OpenAIDecisionEnvelope(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    decision: RepairDecisionV2
+@cache
+def decision_envelope_model(decision_model: type[BaseModel]) -> type[BaseModel]:
+    return create_model(
+        decision_model.__name__ + "Envelope",
+        __config__=ConfigDict(extra="forbid"),
+        decision=(decision_model, ...),
+    )
 
 
 def unwrap_openai_decision(raw_output: str) -> str:

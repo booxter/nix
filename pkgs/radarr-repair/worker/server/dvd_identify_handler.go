@@ -3,7 +3,6 @@ package workerserver
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	workercontracts "github.com/booxter/nix-config/radarr-repair/worker/contracts"
@@ -15,31 +14,22 @@ type DVDIdentifyExecutor interface {
 	Execute(context.Context, workercontracts.DVDIdentifyRequestV1) workercontracts.DVDIdentifyResponseV1
 }
 
-type DVDIdentifyHandler struct {
-	executor DVDIdentifyExecutor
-	settings operationSettings
-}
+type DVDIdentifyHandler = operationHandler[
+	workercontracts.DVDIdentifyRequestV1,
+	workercontracts.DVDIdentifyResponseV1,
+]
 
 func NewDVDIdentifyHandler(
 	executor DVDIdentifyExecutor, timeout time.Duration, maxConcurrent int,
 ) (*DVDIdentifyHandler, error) {
-	if executor == nil || timeout <= 0 || maxConcurrent <= 0 {
-		return nil, fmt.Errorf("DVD identification handler needs an executor, timeout, and concurrency limit")
+	if executor == nil {
+		return nil, fmt.Errorf("DVD identification executor is required")
 	}
-	return &DVDIdentifyHandler{
-		executor: executor,
-		settings: operationSettings{
-			path: dvdIdentifyPath, maxRequestBytes: workercontracts.MaxDVDIdentifyRequestBytes,
-			timeout: timeout, slots: make(chan struct{}, maxConcurrent),
-		},
-	}, nil
-}
-
-func (handler *DVDIdentifyHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	serveOperation(
-		writer, request, handler.settings,
+	return newOperationHandler(
+		"DVD identification", dvdIdentifyPath,
+		workercontracts.MaxDVDIdentifyRequestBytes, timeout, maxConcurrent,
 		workercontracts.DecodeDVDIdentifyRequest,
-		handler.executor.Execute,
+		executor.Execute,
 		workercontracts.EncodeDVDIdentifyResponse,
 	)
 }

@@ -10,16 +10,20 @@ from typing import NoReturn, Protocol
 import uvicorn
 from fastapi import FastAPI
 
-from .api import ApiLimits, create_app
+from .api import ApiLimits, ContractEndpoint, create_app
+from .lidarr_contracts import decode_case as decode_lidarr_case
+from .lidarr_contracts import encode_decision as encode_lidarr_decision
+from .lidarr_planning import LidarrPlanner
 from .model_runtime import (
     ModelArguments,
     ModelFactory,
+    RuntimeDecisionModel,
     add_model_arguments,
     close_model,
     create_model,
     settings_from_arguments,
 )
-from .planning import DecisionModel, PlanningGraph
+from .planning import Planner
 
 
 class Arguments(ModelArguments):
@@ -97,10 +101,20 @@ async def _serve(
 ) -> None:
     settings = settings_from_arguments(arguments)
     limits = ApiLimits(planning_timeout_seconds=arguments.planning_timeout_seconds)
-    model: DecisionModel | None = None
+    model: RuntimeDecisionModel | None = None
     try:
         model = model_factory(settings, None)
-        app = create_app(PlanningGraph(model), limits)
+        app = create_app(
+            Planner(model),
+            limits,
+            {
+                "/lidarr/v2/repair-plans": ContractEndpoint(
+                    planner=LidarrPlanner(model),
+                    decode_case=decode_lidarr_case,
+                    encode_decision=encode_lidarr_decision,
+                )
+            },
+        )
         await server_runner.serve(app, arguments.socket_fd)
     finally:
         await close_model(model)

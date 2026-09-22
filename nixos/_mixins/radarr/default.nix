@@ -11,7 +11,5 @@ in
     ./assertions.nix
     ./controller.nix
     ./letterboxd-list.nix
-    ./repair.nix
-    ./worker.nix
   ];
 }

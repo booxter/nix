@@ -10,7 +10,7 @@ from .contracts import (
     encode_decision,
 )
 from .ollama_model import OllamaConfigurationError, OllamaDecisionModel, OllamaSettings
-from .planning import DecisionModel, DecisionModelError, PlanningGraph, PlanningOutcome
+from .planning import DecisionModel, DecisionModelError, Planner, PlanningOutcome
 
 __all__ = [
     "ContractError",
@@ -19,7 +19,7 @@ __all__ = [
     "OllamaConfigurationError",
     "OllamaDecisionModel",
     "OllamaSettings",
-    "PlanningGraph",
+    "Planner",
     "PlanningOutcome",
     "RepairCaseV2",
     "RepairDecisionV2",

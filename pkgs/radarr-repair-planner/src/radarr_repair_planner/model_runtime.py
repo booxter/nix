@@ -13,10 +13,17 @@ from .openrouter_model import (
     ReasoningEffort,
 )
 from .planning import DecisionModel
+from .structured_model import StructuredDecisionModel
 from .tracing import TraceSink
 
 BackendSettings = OllamaSettings | OpenRouterSettings
-ModelFactory = Callable[[BackendSettings, TraceSink | None], DecisionModel]
+
+
+class RuntimeDecisionModel(DecisionModel, StructuredDecisionModel, Protocol):
+    pass
+
+
+ModelFactory = Callable[[BackendSettings, TraceSink | None], RuntimeDecisionModel]
 
 
 class ModelArguments(argparse.Namespace):
@@ -142,12 +149,15 @@ def settings_from_arguments(arguments: ModelArguments) -> BackendSettings:
     raise AssertionError(f"unsupported backend parsed: {arguments.backend}")
 
 
-def create_model(settings: BackendSettings, trace_sink: TraceSink | None) -> DecisionModel:
+def create_model(
+    settings: BackendSettings,
+    trace_sink: TraceSink | None,
+) -> RuntimeDecisionModel:
     if isinstance(settings, OllamaSettings):
         return OllamaDecisionModel.from_settings(settings, trace_sink)
     return OpenRouterDecisionModel.from_settings(settings, trace_sink)
 
 
-async def close_model(model: DecisionModel | None) -> None:
+async def close_model(model: RuntimeDecisionModel | None) -> None:
     if isinstance(model, CloseableDecisionModel):
         await model.close()

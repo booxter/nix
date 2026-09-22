@@ -21,7 +21,7 @@ groups:
           summary: "TCP probe scrape down"
           description: "Prometheus has been unable to scrape any blackbox-tcp probe targets for 5 minutes."
       - alert: NetworkProbeDown
-        expr: probe_success{job=~"blackbox-icmp|blackbox-tcp"} < 1
+        expr: probe_success{job=~"blackbox-icmp|blackbox-tcp|blackbox-network-dns|blackbox-http"} < 1
         for: 2m
         labels:
           severity: warning

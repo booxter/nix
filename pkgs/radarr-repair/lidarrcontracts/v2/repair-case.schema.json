@@ -1,0 +1,521 @@
+{
+  "$defs": {
+    "album": {
+      "additionalProperties": false,
+      "properties": {
+        "album_id": {
+          "$ref": "#/$defs/id"
+        },
+        "artist": {
+          "$ref": "#/$defs/text"
+        },
+        "artist_id": {
+          "$ref": "#/$defs/id"
+        },
+        "monitored": {
+          "type": "boolean"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "album_id",
+        "artist_id",
+        "artist",
+        "title",
+        "monitored"
+      ],
+      "type": "object"
+    },
+    "artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "duration_ms": {
+          "maximum": 86400000,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "formats": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 32,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "relative_path": {
+          "$ref": "#/$defs/text"
+        },
+        "size_bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "streams": {
+          "items": {
+            "$ref": "#/$defs/stream"
+          },
+          "maxItems": 32,
+          "type": "array"
+        },
+        "tags": {
+          "items": {
+            "$ref": "#/$defs/tag"
+          },
+          "maxItems": 64,
+          "type": "array"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "relative_path",
+        "fingerprint",
+        "size_bytes",
+        "duration_ms",
+        "formats",
+        "tags",
+        "streams"
+      ],
+      "type": "object"
+    },
+    "assessment": {
+      "additionalProperties": false,
+      "properties": {
+        "album_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifact_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "rejections": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 32,
+          "type": "array"
+        },
+        "release_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tag_album": {
+          "maxLength": 2048,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tag_artist": {
+          "maxLength": 2048,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tag_title": {
+          "maxLength": 2048,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tag_track_numbers": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 32,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "track_ids": {
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "maxItems": 32,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "artifact_id",
+        "album_id",
+        "release_id",
+        "track_ids",
+        "tag_title",
+        "tag_artist",
+        "tag_album",
+        "tag_track_numbers",
+        "rejections"
+      ],
+      "type": "object"
+    },
+    "capability": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "import_missing_tracks_v1"
+        },
+        "album_id": {
+          "$ref": "#/$defs/id"
+        },
+        "artifact_ids": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "release_id": {
+          "$ref": "#/$defs/id"
+        },
+        "track_ids": {
+          "$ref": "#/$defs/idList"
+        }
+      },
+      "required": [
+        "action",
+        "capability_id",
+        "album_id",
+        "artifact_ids",
+        "release_id",
+        "track_ids"
+      ],
+      "type": "object"
+    },
+    "id": {
+      "maximum": 9007199254740991,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "idList": {
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "maxItems": 1024,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "opaqueId": {
+      "pattern": "^[a-z][a-z0-9_:-]{0,127}$",
+      "type": "string"
+    },
+    "queue": {
+      "additionalProperties": false,
+      "properties": {
+        "download_ref": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 256,
+          "type": "array"
+        },
+        "queue_id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "queue_id",
+        "title",
+        "download_ref",
+        "messages"
+      ],
+      "type": "object"
+    },
+    "release": {
+      "additionalProperties": false,
+      "properties": {
+        "countries": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "disambiguation": {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        "foreign_release_id": {
+          "$ref": "#/$defs/text"
+        },
+        "format": {
+          "maxLength": 128,
+          "type": "string"
+        },
+        "labels": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "medium_count": {
+          "maximum": 128,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "monitored": {
+          "type": "boolean"
+        },
+        "release_id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "track_count": {
+          "maximum": 1024,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "release_id",
+        "foreign_release_id",
+        "title",
+        "disambiguation",
+        "format",
+        "countries",
+        "labels",
+        "track_count",
+        "medium_count",
+        "monitored"
+      ],
+      "type": "object"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "stream": {
+      "additionalProperties": false,
+      "properties": {
+        "bit_rate_bps": {
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "channels": {
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "codec": {
+          "maxLength": 128,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "audio",
+            "video",
+            "subtitle",
+            "data",
+            "attachment",
+            "other"
+          ]
+        },
+        "sample_rate_hz": {
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "codec",
+        "sample_rate_hz",
+        "channels",
+        "bit_rate_bps"
+      ],
+      "type": "object"
+    },
+    "tag": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "value": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "text": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "pattern": "^[^\\x00]+$",
+      "type": "string"
+    },
+    "track": {
+      "additionalProperties": false,
+      "properties": {
+        "absolute_number": {
+          "maximum": 4096,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "duration_ms": {
+          "maximum": 86400000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "has_file": {
+          "type": "boolean"
+        },
+        "medium_number": {
+          "maximum": 128,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "number": {
+          "$ref": "#/$defs/text"
+        },
+        "release_id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "track_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "track_id",
+        "release_id",
+        "number",
+        "absolute_number",
+        "medium_number",
+        "title",
+        "duration_ms",
+        "has_file"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:lidarr-repair:schema:repair-case:v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "album": {
+      "$ref": "#/$defs/album"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "maxItems": 1024,
+      "minItems": 1,
+      "type": "array"
+    },
+    "assessments": {
+      "items": {
+        "$ref": "#/$defs/assessment"
+      },
+      "maxItems": 1024,
+      "type": "array"
+    },
+    "capabilities": {
+      "items": {
+        "$ref": "#/$defs/capability"
+      },
+      "maxItems": 256,
+      "minItems": 0,
+      "type": "array"
+    },
+    "case_id": {
+      "$ref": "#/$defs/sha256Id"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "queue": {
+      "$ref": "#/$defs/queue"
+    },
+    "releases": {
+      "items": {
+        "$ref": "#/$defs/release"
+      },
+      "maxItems": 256,
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "lidarr-repair/v2"
+    },
+    "tracks": {
+      "items": {
+        "$ref": "#/$defs/track"
+      },
+      "maxItems": 1024,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "observed_at",
+    "queue",
+    "album",
+    "releases",
+    "tracks",
+    "artifacts",
+    "assessments",
+    "capabilities"
+  ],
+  "title": "Lidarr repair case version 2",
+  "type": "object"
+}

@@ -13,7 +13,7 @@ in
 pkgs.testers.runNixOSTest {
   name = "blackbox";
 
-  node.specialArgs.fleetInventory.observability.blackboxSources = [ "blackbox" ];
+  node.specialArgs.fleetInventory.observability.blackboxSources.blackbox = { };
 
   nodes.machine =
     { lib, ... }:

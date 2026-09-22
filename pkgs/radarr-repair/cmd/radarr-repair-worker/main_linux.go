@@ -33,6 +33,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/worker/joinrequest"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstage"
 	"github.com/booxter/nix-config/radarr-repair/worker/joinstate"
+	"github.com/booxter/nix-config/radarr-repair/worker/materialize"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediafile"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediajoin"
 	"github.com/booxter/nix-config/radarr-repair/worker/mediaremux"
@@ -137,6 +138,16 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		probeExecutor,
 		*probeTimeout,
 		*maxConcurrent,
+	)
+	if err != nil {
+		return err
+	}
+	materializeExecutor, err := materialize.NewExecutor(rootSet, probeRunner)
+	if err != nil {
+		return err
+	}
+	materializeHandler, err := workerserver.NewMaterializeHandler(
+		materializeExecutor, *joinTimeout, 1,
 	)
 	if err != nil {
 		return err
@@ -263,6 +274,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	router, err := workerserver.NewRouter(
 		probeHandler,
+		materializeHandler,
 		dvdHandler,
 		dvdRemuxHandler,
 		dvdPublishHandler,

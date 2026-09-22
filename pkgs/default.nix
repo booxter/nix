@@ -37,6 +37,8 @@ in
 
   git-command-runner = gitCommandRunner;
 
+  lidarr-repair = radarrRepair.lidarrController;
+
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
     inherit atomicFileWrites;
   };

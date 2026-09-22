@@ -9,8 +9,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
-	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
-	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 const testCaseID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -56,7 +55,7 @@ func TestPreparedRemuxImportRecoversFromRadarrHistoryWithoutResubmission(t *test
 					t.Fatalf("confirmed: state = %q, confirmations = %d, error = %v", execution.State, store.confirmations, err)
 				}
 			} else {
-				var uncertain *publishedimport.SubmissionUncertainError
+				var uncertain *servarr.SubmissionUncertainError
 				if !errors.As(err, &uncertain) || execution.State != casestore.RemuxImportPrepared {
 					t.Fatalf("uncertain: state = %q, error = %v", execution.State, err)
 				}
@@ -111,13 +110,13 @@ type fakeRadarr struct {
 
 func (client *fakeRadarr) RequestManualImport(
 	context.Context, controller.RadarrManualImportCommand,
-) (radarr.Command, error) {
+) (servarr.Command, error) {
 	client.requests++
-	return radarr.Command{}, nil
+	return servarr.Command{}, nil
 }
 
-func (client *fakeRadarr) ReadManualImportCommand(context.Context, int64) (radarr.Command, error) {
-	return radarr.Command{}, errors.New("unexpected command read")
+func (client *fakeRadarr) ReadManualImportCommand(context.Context, int64) (servarr.Command, error) {
+	return servarr.Command{}, errors.New("unexpected command read")
 }
 
 func (client *fakeRadarr) ReadImportedFiles(

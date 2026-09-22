@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	planningURL             = "http://planner/v2/repair-plans"
+	radarrPlanningURL       = "http://planner/v2/repair-plans"
+	lidarrPlanningURL       = "http://planner/lidarr/v2/repair-plans"
 	maxDecisionResponseSize = 64 << 10
 )
 
@@ -113,38 +114,9 @@ func (client *Client) Plan(
 		return contracts.RepairDecisionV2{}, fmt.Errorf("construct planner request: %w", err)
 	}
 
-	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-	request, err := http.NewRequestWithContext(
-		requestContext,
-		http.MethodPost,
-		planningURL,
-		bytes.NewReader(payload),
-	)
+	data, err := client.postPlan(ctx, radarrPlanningURL, payload)
 	if err != nil {
-		return contracts.RepairDecisionV2{}, fmt.Errorf("construct planner HTTP request: %w", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	response, err := client.httpClient.Do(request)
-	if err != nil {
-		return contracts.RepairDecisionV2{}, client.requestFailure(ctx, requestContext, err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return contracts.RepairDecisionV2{}, &Failure{
-			Kind: FailureHTTP, StatusCode: response.StatusCode,
-		}
-	}
-	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || mediaType != "application/json" {
-		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse, cause: err}
-	}
-	data, err := io.ReadAll(io.LimitReader(response.Body, maxDecisionResponseSize+1))
-	if err != nil {
-		return contracts.RepairDecisionV2{}, client.requestFailure(ctx, requestContext, err)
-	}
-	if len(data) > maxDecisionResponseSize {
-		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse}
+		return contracts.RepairDecisionV2{}, err
 	}
 	decision, err := contracts.DecodeDecision(data)
 	if err != nil {
@@ -154,6 +126,41 @@ func (client *Client) Plan(
 		return contracts.RepairDecisionV2{}, &Failure{Kind: FailureInvalidResponse}
 	}
 	return decision, nil
+}
+
+func (client *Client) postPlan(ctx context.Context, endpoint string, payload []byte) ([]byte, error) {
+	if client == nil || client.httpClient == nil || client.requestTimeout <= 0 {
+		return nil, fmt.Errorf("planner client is not configured")
+	}
+	requestContext, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(
+		requestContext, http.MethodPost, endpoint, bytes.NewReader(payload),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("construct planner HTTP request: %w", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := client.httpClient.Do(request)
+	if err != nil {
+		return nil, client.requestFailure(ctx, requestContext, err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, &Failure{Kind: FailureHTTP, StatusCode: response.StatusCode}
+	}
+	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/json" {
+		return nil, &Failure{Kind: FailureInvalidResponse, cause: err}
+	}
+	data, err := io.ReadAll(io.LimitReader(response.Body, maxDecisionResponseSize+1))
+	if err != nil {
+		return nil, client.requestFailure(ctx, requestContext, err)
+	}
+	if len(data) > maxDecisionResponseSize {
+		return nil, &Failure{Kind: FailureInvalidResponse}
+	}
+	return data, nil
 }
 
 func (client *Client) requestFailure(

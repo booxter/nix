@@ -11,6 +11,7 @@ import (
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 func TestRequestManualImport(t *testing.T) {
@@ -82,8 +83,8 @@ func TestRequestManualImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if command.ID != 81 || command.Name != "ManualImport" || command.Status != CommandQueued ||
-		command.Result != CommandResultUnknown {
+	if command.ID != 81 || command.Name != "ManualImport" || command.Status != servarr.CommandQueued ||
+		command.Result != servarr.CommandResultUnknown {
 		t.Fatalf("command = %#v", command)
 	}
 }
@@ -115,7 +116,7 @@ func TestReadManualImportCommand(t *testing.T) {
 	}
 	if command.ID != 81 || command.Name != "ManualImport" ||
 		command.Message != "Imported movie.mkv" || command.Exception != "" ||
-		command.Status != CommandCompleted || command.Result != CommandResultSuccessful {
+		command.Status != servarr.CommandCompleted || command.Result != servarr.CommandResultSuccessful {
 		t.Fatalf("command = %#v", command)
 	}
 }
@@ -123,57 +124,57 @@ func TestReadManualImportCommand(t *testing.T) {
 func TestClassifyImportCommand(t *testing.T) {
 	tests := []struct {
 		name        string
-		command     Command
-		disposition ImportCommandDisposition
+		command     servarr.Command
+		disposition servarr.ImportCommandDisposition
 		wantError   bool
 	}{
 		{
 			name: "queued",
-			command: Command{
-				Status: CommandQueued,
-				Result: CommandResultUnknown,
+			command: servarr.Command{
+				Status: servarr.CommandQueued,
+				Result: servarr.CommandResultUnknown,
 			},
-			disposition: ImportCommandPending,
+			disposition: servarr.ImportCommandPending,
 		},
 		{
-			name: "completed successfully pending history confirmation",
-			command: Command{
-				Status: CommandCompleted,
-				Result: CommandResultSuccessful,
+			name: "completed successfully",
+			command: servarr.Command{
+				Status: servarr.CommandCompleted,
+				Result: servarr.CommandResultSuccessful,
 			},
-			disposition: ImportCommandPending,
+			disposition: servarr.ImportCommandCompleted,
 		},
 		{
 			name: "completed unsuccessfully",
-			command: Command{
-				Status: CommandCompleted,
-				Result: CommandResultUnsuccessful,
+			command: servarr.Command{
+				Status: servarr.CommandCompleted,
+				Result: servarr.CommandResultUnsuccessful,
 			},
-			disposition: ImportCommandFailed,
+			disposition: servarr.ImportCommandFailed,
 		},
 		{
 			name:        "failed",
-			command:     Command{Status: CommandFailed},
-			disposition: ImportCommandFailed,
+			command:     servarr.Command{Status: servarr.CommandFailed},
+			disposition: servarr.ImportCommandFailed,
 		},
 		{
 			name: "active with final result",
-			command: Command{
-				Status: CommandStarted,
-				Result: CommandResultSuccessful,
+			command: servarr.Command{
+				Status: servarr.CommandStarted,
+				Result: servarr.CommandResultSuccessful,
 			},
 			wantError: true,
 		},
 		{
 			name:      "unknown status",
-			command:   Command{Status: "mystery"},
+			command:   servarr.Command{Status: "mystery"},
 			wantError: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			disposition, err := ClassifyImportCommand(test.command)
+			disposition, err := servarr.ClassifyImportCommand("Radarr", test.command, true)
 			if test.wantError {
 				if err == nil {
 					t.Fatal("expected classification to fail")

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import math
 import ssl
 from dataclasses import dataclass
@@ -8,21 +7,19 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit
 
-from langchain_core.language_models import LanguageModelInput
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from langchain_core.runnables import RunnableConfig
-from langchain_ollama import ChatOllama
+from ollama import AsyncClient, ChatResponse
+from pydantic import BaseModel
 
 from .case_models import RepairCaseV2
-from .contracts import decision_schema
+from .contracts import decision_schema, encode_case
 from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .planning import DecisionModelError
 from .structured_decision import (
     StructuredDecisionError,
-    decision_prompt,
     decode_structured_decision,
     diagnostic,
+    structured_prompt,
 )
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
@@ -83,13 +80,42 @@ class OllamaSettings:
             raise OllamaConfigurationError("Ollama timeout must be finite and positive")
 
 
-class ChatResponseModel(Protocol):
-    async def ainvoke(
-        self,
-        input: LanguageModelInput,
-        config: RunnableConfig | None = None,
-        **kwargs: Any,
-    ) -> object: ...
+@dataclass(frozen=True)
+class ChatRequest:
+    model: str
+    messages: tuple[dict[str, str], ...]
+    schema: dict[str, Any]
+    context_tokens: int
+    output_tokens: int
+    reasoning: bool
+
+
+class ChatClient(Protocol):
+    async def complete(self, request: ChatRequest) -> object: ...
+
+    async def close(self) -> None: ...
+
+
+class NativeChatClient:
+    def __init__(self, client: AsyncClient) -> None:
+        self._client = client
+
+    async def complete(self, request: ChatRequest) -> object:
+        return await self._client.chat(
+            model=request.model,
+            messages=request.messages,
+            stream=False,
+            think=request.reasoning,
+            format=request.schema,
+            options={
+                "num_ctx": request.context_tokens,
+                "num_predict": request.output_tokens,
+                "temperature": 0.0,
+            },
+        )
+
+    async def close(self) -> None:
+        await self._client.close()  # type: ignore[no-untyped-call]
 
 
 def _tls_context(settings: OllamaSettings) -> ssl.SSLContext:
@@ -119,10 +145,12 @@ def _api_key(path: Path) -> str:
 class OllamaDecisionModel:
     def __init__(
         self,
-        response_model: ChatResponseModel,
+        client: ChatClient,
+        settings: OllamaSettings,
         trace_sink: TraceSink | None = None,
     ) -> None:
-        self._response_model = response_model
+        self._client = client
+        self._settings = settings
         self._trace_sink = trace_sink
 
     @classmethod
@@ -135,50 +163,36 @@ class OllamaDecisionModel:
             "timeout": settings.timeout_seconds,
             "trust_env": False,
             "verify": _tls_context(settings),
+            "follow_redirects": False,
         }
         if settings.api_key_file is not None:
             client_kwargs["headers"] = {
                 "Authorization": "Bearer " + _api_key(settings.api_key_file)
             }
-        chat = ChatOllama(
-            model=settings.model,
-            base_url=settings.base_url,
-            client_kwargs=client_kwargs,
-            disable_streaming=True,
-            num_ctx=settings.context_tokens,
-            num_predict=settings.output_tokens,
-            reasoning=settings.reasoning,
-            temperature=0.0,
-            validate_model_on_init=False,
-        )
-        # Bind the schema without LangChain's include_raw wrapper. That wrapper
-        # changes async invocations to streaming, while this boundary needs both
-        # an explicit non-streaming request and the raw response on parse failure.
-        response_model = chat.bind(format=decision_schema())
-        return cls(response_model, trace_sink)
+        client = NativeChatClient(AsyncClient(host=settings.base_url, **client_kwargs))
+        return cls(client, settings, trace_sink)
 
     @staticmethod
     def _raw_fields(
         raw: object,
     ) -> tuple[str | None, str | None, dict[str, MetadataValue]]:
-        if not isinstance(raw, BaseMessage):
+        if not isinstance(raw, ChatResponse):
             return None, None, {}
-        content = raw.content
-        raw_output = content if isinstance(content, str) else json.dumps(content, allow_nan=False)
-        reasoning_value = raw.additional_kwargs.get("reasoning_content")
-        reasoning = reasoning_value if isinstance(reasoning_value, str) else None
+        raw_output = raw.message.content if isinstance(raw.message.content, str) else None
+        reasoning = raw.message.thinking if isinstance(raw.message.thinking, str) else None
         metadata: dict[str, MetadataValue] = {}
         for key in TRACE_METADATA_FIELDS:
-            if key not in raw.response_metadata:
-                continue
-            value = raw.response_metadata.get(key)
-            if value is None or isinstance(value, str | int | float | bool):
+            value = getattr(raw, key, None)
+            if value is not None and isinstance(value, str | int | float | bool):
                 metadata[key] = value
         return raw_output, reasoning, metadata
 
+    async def close(self) -> None:
+        await self._client.close()
+
     def _trace(
         self,
-        repair_case: RepairCaseV2,
+        case_id: str,
         raw: object,
         error: str | None,
     ) -> None:
@@ -187,7 +201,7 @@ class OllamaDecisionModel:
         raw_output, reasoning, response_metadata = self._raw_fields(raw)
         self._trace_sink.record(
             ModelTrace(
-                case_id=repair_case.case_id.root,
+                case_id=case_id,
                 raw_output=raw_output,
                 reasoning=reasoning,
                 response_metadata=response_metadata,
@@ -195,46 +209,91 @@ class OllamaDecisionModel:
             )
         )
 
+    async def _generate(
+        self,
+        system_instruction: str,
+        case_content: str,
+        schema: dict[str, Any],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> tuple[str, ChatResponse]:
+        system_content, case_content = structured_prompt(
+            system_instruction,
+            case_content,
+            schema,
+            correction,
+        )
+        request = ChatRequest(
+            model=self._settings.model,
+            messages=(
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": case_content},
+            ),
+            schema=schema,
+            context_tokens=self._settings.context_tokens,
+            output_tokens=self._settings.output_tokens,
+            reasoning=self._settings.reasoning,
+        )
+        try:
+            result = await self._client.complete(request)
+        # Transport and Ollama protocol failures are retryable. Parsing and
+        # contract failures below remain visible to the correction attempt.
+        except Exception as error:
+            detail = diagnostic(error)
+            self._trace(case_id, None, "request failed: " + detail)
+            raise DecisionModelError(
+                "Ollama request or structured decoding failed: " + detail
+            ) from error
+        if not isinstance(result, ChatResponse):
+            self._trace(case_id, None, "Ollama response was not a chat response")
+            raise DecisionModelError("Ollama response was not a chat response")
+        raw = result
+        if not isinstance(raw.message.content, str):
+            self._trace(case_id, raw, "structured output was not text")
+            raise DecisionModelError("Ollama structured output was not text")
+        return raw.message.content, raw
+
+    async def decide_json(
+        self,
+        system_instruction: str,
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> str:
+        del decision_model
+        decision_output, raw = await self._generate(
+            system_instruction,
+            case_content,
+            decision_schema,
+            case_id,
+            correction,
+        )
+        self._trace(case_id, raw, None)
+        return decision_output
+
     async def decide(
         self,
         system_instruction: str,
         repair_case: RepairCaseV2,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> RepairDecisionV2:
-        system_content, case_content = decision_prompt(
+        case_id = repair_case.case_id.root
+        decision_output, raw = await self._generate(
             system_instruction,
-            repair_case,
+            encode_case(repair_case).decode(),
+            decision_schema(),
+            case_id,
             correction,
         )
-        messages = [
-            SystemMessage(content=system_content),
-            HumanMessage(content=case_content),
-        ]
         try:
-            result = await self._response_model.ainvoke(messages, stream=False)
-        # The runnable combines HTTP and Ollama protocol failures without a stable
-        # common exception type. Failures raised by that boundary are retryable;
-        # our parsing and contract validation below remain visible.
-        except Exception as error:
-            detail = diagnostic(error)
-            self._trace(repair_case, None, "request failed: " + detail)
-            raise DecisionModelError(
-                "Ollama request or structured decoding failed: " + detail
-            ) from error
-        if not isinstance(result, BaseMessage):
-            self._trace(repair_case, None, "Ollama response was not a message")
-            raise DecisionModelError("Ollama response was not a message")
-        raw = result
-        if not isinstance(raw.content, str):
-            self._trace(repair_case, raw, "structured output was not text")
-            raise DecisionModelError("Ollama structured output was not text")
-        try:
-            decision = decode_structured_decision(raw.content)
+            decision = decode_structured_decision(decision_output)
         except StructuredDecisionError as error:
-            self._trace(repair_case, raw, str(error))
+            self._trace(case_id, raw, str(error))
             raise DecisionModelError(
                 "Ollama " + str(error),
                 error.violations,
             ) from error
-        self._trace(repair_case, raw, None)
+        self._trace(case_id, raw, None)
         return decision

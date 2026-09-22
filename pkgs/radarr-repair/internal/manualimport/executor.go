@@ -2,7 +2,6 @@ package manualimport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,14 +9,15 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
 	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 type Radarr interface {
 	RequestManualImport(
 		context.Context,
 		controller.RadarrManualImportCommand,
-	) (radarr.Command, error)
-	ReadManualImportCommand(context.Context, int64) (radarr.Command, error)
+	) (servarr.Command, error)
+	ReadManualImportCommand(context.Context, int64) (servarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
 }
 
@@ -43,53 +43,16 @@ type Store interface {
 	) (casestore.ManualImportExecution, bool, error)
 }
 
-type Waiter interface {
-	Wait(context.Context, time.Duration) error
-}
-
-type Timer struct{}
-
-func (Timer) Wait(ctx context.Context, delay time.Duration) error {
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-timer.C:
-		return nil
-	}
-}
-
 type Dependencies struct {
 	Radarr       Radarr
 	Store        Store
 	Clock        controller.Clock
-	Waiter       Waiter
+	Waiter       servarr.Waiter
 	PollInterval time.Duration
 }
 
 type Executor struct {
 	dependencies Dependencies
-}
-
-type SubmissionUncertainError struct {
-	CaseID string
-	cause  error
-}
-
-func (failure *SubmissionUncertainError) Error() string {
-	message := fmt.Sprintf(
-		"Radarr manual-import submission for case %q may have succeeded; refusing to repeat it",
-		failure.CaseID,
-	)
-	if failure.cause != nil {
-		return fmt.Sprintf("%s: %v", message, failure.cause)
-	}
-	return message
-}
-
-func (failure *SubmissionUncertainError) Unwrap() error {
-	return failure.cause
 }
 
 func New(dependencies Dependencies) (*Executor, error) {
@@ -142,117 +105,88 @@ func (executor *Executor) Execute(
 	if err != nil {
 		return casestore.ManualImportExecution{}, fmt.Errorf("prepare manual import: %w", err)
 	}
-	if !prepared {
-		return executor.resume(ctx, authorized, execution)
-	}
+	return executor.run(ctx, authorized, execution, prepared)
+}
 
-	command, err := executor.dependencies.Radarr.RequestManualImport(
-		ctx,
-		controller.RadarrManualImportCommand{
-			ImportMode: authorized.ImportMode,
-			File:       authorized.File,
+func (executor *Executor) run(
+	ctx context.Context,
+	authorized decisionpolicy.AuthorizedManualImport,
+	execution casestore.ManualImportExecution,
+	newlyPrepared bool,
+) (casestore.ManualImportExecution, error) {
+	flow, err := servarr.NewImportExecution(
+		servarr.ImportExecutionDependencies[casestore.ManualImportExecution]{
+			Service: "Radarr", Operation: "manual-import", Clock: executor.dependencies.Clock,
+			Waiter: executor.dependencies.Waiter, PollInterval: executor.dependencies.PollInterval,
+			RequireCompletionResult: true,
+			CaseID:                  func(current casestore.ManualImportExecution) string { return current.CaseID },
+			State:                   manualImportState,
+			CommandID: func(current casestore.ManualImportExecution) (int64, bool) {
+				if current.CommandID == nil {
+					return 0, false
+				}
+				return *current.CommandID, true
+			},
+			Submit: func(ctx context.Context) (servarr.Command, error) {
+				return executor.dependencies.Radarr.RequestManualImport(
+					ctx,
+					controller.RadarrManualImportCommand{
+						ImportMode: authorized.ImportMode,
+						File:       authorized.File,
+					},
+				)
+			},
+			ReadCommand: executor.dependencies.Radarr.ReadManualImportCommand,
+			Confirm: func(
+				ctx context.Context,
+				current casestore.ManualImportExecution,
+			) (casestore.ManualImportExecution, bool, error) {
+				return executor.confirm(ctx, authorized, current)
+			},
+			MarkRequested: func(
+				current casestore.ManualImportExecution,
+				commandID int64,
+				at time.Time,
+			) (casestore.ManualImportExecution, error) {
+				updated, _, markErr := executor.dependencies.Store.MarkManualImportRequested(
+					current.CaseID,
+					commandID,
+					at,
+				)
+				return updated, markErr
+			},
+			MarkFailed: func(
+				current casestore.ManualImportExecution,
+				at time.Time,
+			) (casestore.ManualImportExecution, error) {
+				updated, _, markErr := executor.dependencies.Store.MarkManualImportFailed(
+					current.CaseID,
+					at,
+				)
+				return updated, markErr
+			},
 		},
 	)
 	if err != nil {
-		confirmed, confirmErr := executor.confirm(ctx, authorized, execution)
-		if confirmed.State == casestore.ManualImportImported {
-			return confirmed, confirmErr
-		}
-		return execution, &SubmissionUncertainError{
-			CaseID: authorized.CaseID,
-			cause: errors.Join(
-				fmt.Errorf("request Radarr manual import: %w", err),
-				confirmErr,
-			),
-		}
+		return execution, err
 	}
-	requestedAt, err := executor.now()
-	if err != nil {
-		return execution, &SubmissionUncertainError{CaseID: authorized.CaseID, cause: err}
-	}
-	execution, _, err = executor.dependencies.Store.MarkManualImportRequested(
-		authorized.CaseID,
-		command.ID,
-		requestedAt,
-	)
-	if err != nil {
-		return execution, &SubmissionUncertainError{
-			CaseID: authorized.CaseID,
-			cause:  fmt.Errorf("record Radarr manual-import command: %w", err),
-		}
-	}
-	return executor.follow(ctx, authorized, execution)
+	return flow.Run(ctx, execution, newlyPrepared)
 }
 
-func (executor *Executor) resume(
-	ctx context.Context,
-	authorized decisionpolicy.AuthorizedManualImport,
+func manualImportState(
 	execution casestore.ManualImportExecution,
-) (casestore.ManualImportExecution, error) {
+) (servarr.ImportExecutionState, error) {
 	switch execution.State {
-	case casestore.ManualImportImported, casestore.ManualImportFailed:
-		return execution, nil
-	case casestore.ManualImportRequested:
-		return executor.follow(ctx, authorized, execution)
 	case casestore.ManualImportPrepared:
-		confirmed, err := executor.confirm(ctx, authorized, execution)
-		if confirmed.State == casestore.ManualImportImported {
-			return confirmed, err
-		}
-		return execution, &SubmissionUncertainError{
-			CaseID: authorized.CaseID,
-			cause:  err,
-		}
+		return servarr.ImportPrepared, nil
+	case casestore.ManualImportRequested:
+		return servarr.ImportRequested, nil
+	case casestore.ManualImportImported:
+		return servarr.ImportConfirmed, nil
+	case casestore.ManualImportFailed:
+		return servarr.ImportFailed, nil
 	default:
-		return execution, fmt.Errorf("unknown manual-import execution state %q", execution.State)
-	}
-}
-
-func (executor *Executor) follow(
-	ctx context.Context,
-	authorized decisionpolicy.AuthorizedManualImport,
-	execution casestore.ManualImportExecution,
-) (casestore.ManualImportExecution, error) {
-	if execution.CommandID == nil {
-		return execution, fmt.Errorf("requested manual import has no Radarr command ID")
-	}
-	for {
-		confirmed, err := executor.confirm(ctx, authorized, execution)
-		if err != nil || confirmed.State == casestore.ManualImportImported {
-			return confirmed, err
-		}
-
-		command, err := executor.dependencies.Radarr.ReadManualImportCommand(
-			ctx,
-			*execution.CommandID,
-		)
-		if err != nil {
-			return execution, fmt.Errorf("read Radarr manual-import command: %w", err)
-		}
-		disposition, err := radarr.ClassifyImportCommand(command)
-		if err != nil {
-			return execution, err
-		}
-		if disposition == radarr.ImportCommandFailed {
-			failedAt, nowErr := executor.now()
-			if nowErr != nil {
-				return execution, nowErr
-			}
-			execution, _, err = executor.dependencies.Store.MarkManualImportFailed(
-				authorized.CaseID,
-				failedAt,
-			)
-			if err != nil {
-				return execution, fmt.Errorf("record failed Radarr manual import: %w", err)
-			}
-			return execution, nil
-		}
-		if err := executor.dependencies.Waiter.Wait(
-			ctx,
-			executor.dependencies.PollInterval,
-		); err != nil {
-			return execution, err
-		}
+		return 0, fmt.Errorf("unknown manual-import execution state %q", execution.State)
 	}
 }
 
@@ -260,25 +194,25 @@ func (executor *Executor) confirm(
 	ctx context.Context,
 	authorized decisionpolicy.AuthorizedManualImport,
 	execution casestore.ManualImportExecution,
-) (casestore.ManualImportExecution, error) {
+) (casestore.ManualImportExecution, bool, error) {
 	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
 		ctx,
 		authorized.File.MovieID,
 		authorized.File.DownloadID,
 	)
 	if err != nil {
-		return execution, fmt.Errorf("read Radarr imported-file history: %w", err)
+		return execution, false, fmt.Errorf("read Radarr imported-file history: %w", err)
 	}
 	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
 		MovieID: authorized.File.MovieID, DownloadID: authorized.File.DownloadID,
 		DroppedPath: authorized.File.Path, AfterHistoryID: execution.HistoryIDBefore,
 	})
 	if !found {
-		return execution, nil
+		return execution, false, nil
 	}
 	confirmedAt, err := executor.now()
 	if err != nil {
-		return execution, err
+		return execution, false, err
 	}
 	confirmed, _, err := executor.dependencies.Store.MarkManualImportImported(
 		authorized,
@@ -286,9 +220,9 @@ func (executor *Executor) confirm(
 		confirmedAt,
 	)
 	if err != nil {
-		return execution, fmt.Errorf("record confirmed Radarr manual import: %w", err)
+		return execution, false, fmt.Errorf("record confirmed Radarr manual import: %w", err)
 	}
-	return confirmed, nil
+	return confirmed, true, nil
 }
 
 func (executor *Executor) now() (time.Time, error) {

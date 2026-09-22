@@ -4,7 +4,7 @@
   ...
 }:
 let
-  planner = if config.host.radarr == null then null else config.host.radarr.repair.planner;
+  planner = config.host.mediaRepair.planner;
   serviceName = "radarr-repair-planner";
   serviceUser = serviceName;
   secretName = "radarr-repair/openrouter-api-key";

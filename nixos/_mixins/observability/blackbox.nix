@@ -2,13 +2,23 @@
   config,
   fleetInventory,
   lib,
+  options,
   pkgs,
   ...
 }:
 let
   observabilityCfg = config.host.observability;
   cfg = observabilityCfg.blackbox;
-  remoteEnabled = builtins.elem config.networking.hostName fleetInventory.observability.blackboxSources;
+  remoteEnabled = builtins.hasAttr config.networking.hostName fleetInventory.observability.blackboxSources;
+  vpnOptionsAvailable = options.host ? vpn;
+  networkNamespace =
+    if cfg.networkNamespace == null || !vpnOptionsAvailable then
+      null
+    else
+      config.host.vpn.namespaces.${cfg.networkNamespace} or null;
+  exporterListenAddress = if networkNamespace == null then cfg.listenAddress else "0.0.0.0";
+  exporterUpstreamAddress =
+    if networkNamespace == null then cfg.listenAddress else networkNamespace.namespaceAddress;
   remotePort = 9115;
   httpService = {
     http = {
@@ -33,6 +43,12 @@ in
       type = lib.types.port;
       default = 19115;
       description = "Loopback port for the local Prometheus blackbox exporter.";
+    };
+
+    networkNamespace = lib.mkOption {
+      type = with lib.types; nullOr nonEmptyStr;
+      default = null;
+      description = "Optional VPN network namespace in which probes run.";
     };
 
     modules = lib.mkOption {
@@ -91,11 +107,31 @@ in
     (lib.mkIf (observabilityCfg.enable && cfg.enable) {
       services.prometheus.exporters.blackbox = {
         enable = true;
-        inherit (cfg) listenAddress port;
+        listenAddress = exporterListenAddress;
+        inherit (cfg) port;
         configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
           inherit (cfg) modules;
         };
       };
+    })
+    (lib.mkIf (observabilityCfg.enable && cfg.enable && cfg.networkNamespace != null) {
+      assertions = [
+        {
+          assertion = vpnOptionsAvailable && networkNamespace != null;
+          message = "host.observability.blackbox.networkNamespace must select a configured VPN namespace";
+        }
+      ];
+
+      host = lib.optionalAttrs vpnOptionsAvailable {
+        vpn.clients.prometheus-blackbox-exporter = lib.mkIf (networkNamespace != null) {
+          namespace = cfg.networkNamespace;
+          bridgeTcpPorts = [ cfg.port ];
+        };
+      };
+
+      systemd.services.prometheus-blackbox-exporter.serviceConfig.CapabilityBoundingSet = [
+        "CAP_NET_RAW"
+      ];
     })
     (lib.mkIf remoteEnabled {
       host.observability = {
@@ -103,7 +139,7 @@ in
         prometheusEndpoints.blackbox = {
           port = remotePort;
           path = "/probe";
-          upstream = "http://${cfg.listenAddress}:${toString cfg.port}/probe";
+          upstream = "http://${exporterUpstreamAddress}:${toString cfg.port}/probe";
         };
       };
     })

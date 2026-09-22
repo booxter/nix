@@ -134,9 +134,22 @@ in
         })
       ];
 
-      systemd.services.nginx = lib.mkIf (mtlsPublicServices != [ ]) {
-        wants = [ "sops-install-secrets.service" ];
-        after = [ "sops-install-secrets.service" ];
+      systemd.services.nginx = {
+        # Generation switches can restart dhcpcd and nginx together. Nginx
+        # resolves backend hostnames such as audiobookshelf.home.arpa during its
+        # config test, so starting it while dhcpcd is replacing the DNS route
+        # makes the otherwise valid config fail. network-online.target covers
+        # boot; direct dhcpcd ordering covers switches where that target is
+        # already active.
+        wants = [
+          "network-online.target"
+        ]
+        ++ lib.optional (mtlsPublicServices != [ ]) "sops-install-secrets.service";
+        after = [
+          "dhcpcd.service"
+          "network-online.target"
+        ]
+        ++ lib.optional (mtlsPublicServices != [ ]) "sops-install-secrets.service";
       };
 
       networking.firewall.allowedTCPPorts = lib.optionals (publicServices != [ ]) [

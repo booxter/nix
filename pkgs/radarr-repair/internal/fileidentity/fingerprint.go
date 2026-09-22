@@ -4,6 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
+	"os"
+	"syscall"
 )
 
 const fingerprintDomain = "radarr-repair-file-metadata-v1\x00"
@@ -13,6 +16,20 @@ type Snapshot struct {
 	Inode     uint64
 	SizeBytes int64
 	MTimeNS   int64
+}
+
+func FromFileInfo(info os.FileInfo) (Snapshot, error) {
+	if info == nil {
+		return Snapshot{}, fmt.Errorf("filesystem metadata is absent")
+	}
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return Snapshot{}, fmt.Errorf("unsupported filesystem metadata")
+	}
+	return Snapshot{
+		Device: uint64(stat.Dev), Inode: uint64(stat.Ino),
+		SizeBytes: info.Size(), MTimeNS: info.ModTime().UnixNano(),
+	}, nil
 }
 
 // Fingerprint returns a versioned metadata fingerprint without reading file

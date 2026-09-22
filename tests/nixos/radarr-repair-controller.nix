@@ -19,10 +19,9 @@ pkgs.testers.runNixOSTest {
     imports = [
       inputs.sops-nix.nixosModules.sops
       ../../nixos/_mixins/downloads/default.nix
+      ../../nixos/_mixins/media-repair
       ../../nixos/_mixins/radarr/assertions.nix
       ../../nixos/_mixins/radarr/controller.nix
-      ../../nixos/_mixins/radarr/repair.nix
-      ../../nixos/_mixins/radarr/worker.nix
       ./lib/sops.nix
     ];
 
@@ -36,19 +35,19 @@ pkgs.testers.runNixOSTest {
     };
 
     config = {
-      host.radarr.repair = {
-        controller = {
+      host.radarr.repair.controller = {
+        enable = true;
+        downloadClients = [
+          "transmission"
+          "sabnzbd"
+        ];
+        apply = {
           enable = true;
-          downloadClients = [
-            "transmission"
-            "sabnzbd"
-          ];
-          apply = {
-            enable = true;
-            allowedActions = [ "manual_import_file_v1" ];
-            allowedDownloadClients = [ "transmission" ];
-          };
+          allowedActions = [ "manual_import_file_v1" ];
+          allowedDownloadClients = [ "transmission" ];
         };
+      };
+      host.mediaRepair = {
         planner.enable = true;
         worker = {
           enable = true;
