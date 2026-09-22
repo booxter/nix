@@ -160,27 +160,6 @@
             url = "https://github.com/booxter/jellyfin/commit/3b63ec92420305d24e0fe90a452f0cdcbb624872.patch";
             hash = "sha256-X5qv8+R2s/zk411gQHyNhRaf9VRFSG+47W8Fy0N+96U=";
           })
-          # Prevent SSRF, local file disclosure, and DoS via external references
-          # in SVG rendering. There is no public upstream PR.
-          (prev.fetchpatch {
-            url = "https://github.com/jellyfin/jellyfin/commit/cefa78fc1de2410e5c5c6da5062c98fe98b22d17.patch";
-            hash = "sha256-TxGo+sLLG+C9omxrwvO6byzw+iRqONVLXrQKwkrY22s=";
-          })
-          # Honor the configured maximum login attempt count.
-          # https://github.com/jellyfin/jellyfin/pull/17274
-          (prev.fetchpatch {
-            url = "https://github.com/jellyfin/jellyfin/commit/8b826d981bcfec22063d6008e38016f4b77790d0.patch";
-            hash = "sha256-Nav05TcpjBJABybU0BVyJ0UyxKi+6nDNBQ6tjY0DPT8=";
-          })
-          # GHSA-9x85-gx46-6522: reject user impersonation when retrieving
-          # private playlist items. There is no public upstream PR.
-          (prev.fetchpatch {
-            url = "https://github.com/jellyfin/jellyfin/commit/911ac3769cdcce50a8f6e0b3c0739d509bd9a23f.patch";
-            hash = "sha256-MwaTwqhuBc7yWW3cL6htlyDQ9O1wt5iFCOM/oVTi6P0=";
-          })
-          # Prevent unauthorized users from listing another user's private
-          # playlists. https://github.com/jellyfin/jellyfin/pull/17025
-          ../patches/jellyfin-fix-playlist-visibility.patch
         ];
       });
 
