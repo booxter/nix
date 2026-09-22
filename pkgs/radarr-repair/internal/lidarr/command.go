@@ -74,7 +74,7 @@ func (client *Client) RequestManualImport(
 	response, err := client.api.SendManualImportCommandContext(
 		ctx,
 		&starrLidarr.ManualImportCommandRequest{
-			Name: manualImportCommandName, Files: files, ImportMode: "auto",
+			Name: manualImportCommandName, Files: files, ImportMode: "copy",
 			ReplaceExistingFiles: false,
 		},
 	)

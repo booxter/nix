@@ -50,7 +50,7 @@ func TestRequestManualImportUsesExactSelectedTracks(t *testing.T) {
 		t.Fatal(err)
 	}
 	if command.ID != 81 || command.Status != servarr.CommandQueued ||
-		observed.Name != "ManualImport" || observed.ImportMode != "auto" ||
+		observed.Name != "ManualImport" || observed.ImportMode != "copy" ||
 		observed.ReplaceExistingFiles || len(observed.Files) != 2 {
 		t.Fatalf("command = %#v, request = %#v", command, observed)
 	}
