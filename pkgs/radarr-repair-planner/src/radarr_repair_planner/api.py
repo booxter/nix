@@ -144,7 +144,7 @@ def create_app(
 
     limits = limits if limits is not None else ApiLimits()
     app = FastAPI(
-        title="Radarr repair planner",
+        title="Media repair planner",
         docs_url=None,
         openapi_url=None,
         redoc_url=None,

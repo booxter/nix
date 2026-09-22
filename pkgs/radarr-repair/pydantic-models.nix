@@ -6,8 +6,9 @@
   runCommand,
 }:
 let
-  schemaDirectory = "${contracts}/share/radarr-repair/contracts/v2";
-  generate = schema: className: output: ''
+  radarrSchemaDirectory = "${contracts}/share/radarr-repair/contracts/v2";
+  lidarrSchemaDirectory = "${contracts}/share/lidarr-repair/contracts/v1";
+  generate = schemaDirectory: schema: className: output: ''
     datamodel-codegen \
       --input "${schemaDirectory}/${schema}" \
       --input-file-type jsonschema \
@@ -38,7 +39,15 @@ runCommand "radarr-repair-pydantic-models-v2"
   }
   ''
     mkdir "$out"
-    ${generate "repair-case.schema.json" "RepairCaseV2" "case_models.py"}
-    ${generate "repair-decision.schema.json" "RepairDecisionV2" "decision_models.py"}
+    ${generate radarrSchemaDirectory "repair-case.schema.json" "RepairCaseV2" "case_models.py"}
+    ${generate radarrSchemaDirectory "repair-decision.schema.json" "RepairDecisionV2"
+      "decision_models.py"
+    }
+    ${generate lidarrSchemaDirectory "repair-case.schema.json" "LidarrRepairCaseV1"
+      "lidarr_case_models.py"
+    }
+    ${generate lidarrSchemaDirectory "repair-decision.schema.json" "LidarrRepairDecisionV1"
+      "lidarr_decision_models.py"
+    }
     ruff format --config ${../../ruff.toml} "$out"
   ''

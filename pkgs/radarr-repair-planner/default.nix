@@ -17,9 +17,17 @@ python3Packages.buildPythonApplication {
       src/radarr_repair_planner/case_models.py
     cp ${pydanticModels}/decision_models.py \
       src/radarr_repair_planner/decision_models.py
+    cp ${pydanticModels}/lidarr_case_models.py \
+      src/radarr_repair_planner/lidarr_case_models.py
+    cp ${pydanticModels}/lidarr_decision_models.py \
+      src/radarr_repair_planner/lidarr_decision_models.py
     mkdir -p src/radarr_repair_planner/schemas
     cp ${contracts}/share/radarr-repair/contracts/v2/*.schema.json \
       src/radarr_repair_planner/schemas/
+    cp ${contracts}/share/lidarr-repair/contracts/v1/repair-case.schema.json \
+      src/radarr_repair_planner/schemas/lidarr-repair-case.schema.json
+    cp ${contracts}/share/lidarr-repair/contracts/v1/repair-decision.schema.json \
+      src/radarr_repair_planner/schemas/lidarr-repair-decision.schema.json
     mkdir -p src/radarr_repair_planner/evaluations/v2/cases
     cp ${contracts}/share/radarr-repair/contracts/v2/examples/repair-case-*.json \
       src/radarr_repair_planner/evaluations/v2/cases/
@@ -65,7 +73,7 @@ python3Packages.buildPythonApplication {
   pythonImportsCheck = [ "radarr_repair_planner" ];
 
   meta = {
-    description = "Agentic planner for Radarr import repair";
+    description = "Agentic planner for media import repair";
     license = lib.licenses.mit;
     mainProgram = "radarr-repair-planner";
     platforms = lib.platforms.linux;
