@@ -1,7 +1,5 @@
 { inputs, pkgs, ... }:
 let
-  inherit (pkgs) lib;
-  radarrOptions = import ../../nixos/_mixins/radarr/options.nix { inherit lib pkgs; };
   socketPath = "/run/radarr-repair-planner.sock";
 in
 pkgs.testers.runNixOSTest {
@@ -10,18 +8,12 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     imports = [
       inputs.sops-nix.nixosModules.sops
-      ../../nixos/_mixins/radarr/assertions.nix
-      ../../nixos/_mixins/radarr/repair.nix
+      ../../nixos/_mixins/media-repair
       ./lib/sops.nix
     ];
 
-    options.host.radarr = lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule { options = radarrOptions; });
-      default = null;
-    };
-
     config = {
-      host.radarr.repair.planner.enable = true;
+      host.mediaRepair.planner.enable = true;
 
       testSupport.sops.values."radarr-repair/openrouter-api-key" = "test-openrouter-key";
 
