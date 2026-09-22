@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 
 import pytest
-from radarr_repair_planner.case_models import RepairCaseV2
+from radarr_repair_planner.case_models import RepairCaseV3
 from radarr_repair_planner.contracts import decode_decision
-from radarr_repair_planner.decision_models import RepairDecisionV2
+from radarr_repair_planner.decision_models import RepairDecisionV3
 from radarr_repair_planner.decision_validation import DecisionViolation
 from radarr_repair_planner.evaluation import (
     EvaluationCase,
@@ -29,10 +29,10 @@ from radarr_repair_planner.planning import Planner, PlanningOutcome
 from radarr_repair_planner.tracing import TraceSink
 
 
-def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV2:
+def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV3:
     expected = evaluation_case.spec.expected
     value: dict[str, object] = {
-        "schema_version": "radarr-repair/v2",
+        "schema_version": "radarr-repair/v3",
         "case_id": evaluation_case.repair_case.case_id.root,
         "action": expected.action,
         "evidence_refs": [],
@@ -68,9 +68,9 @@ class ExpectedDecisionModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        repair_case: RepairCaseV3,
         correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV2:
+    ) -> RepairDecisionV3:
         del system_instruction, correction
         return self.decisions[repair_case.case_id.root]
 
@@ -88,12 +88,12 @@ class AlwaysNoRepairModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        repair_case: RepairCaseV3,
         correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV2:
+    ) -> RepairDecisionV3:
         del system_instruction, correction
         value = {
-            "schema_version": "radarr-repair/v2",
+            "schema_version": "radarr-repair/v3",
             "case_id": repair_case.case_id.root,
             "action": "no_repair",
             "reason": "unsafe_to_repair",

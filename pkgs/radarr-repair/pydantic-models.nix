@@ -6,7 +6,7 @@
   runCommand,
 }:
 let
-  radarrSchemaDirectory = "${contracts}/share/radarr-repair/contracts/v2";
+  radarrSchemaDirectory = "${contracts}/share/radarr-repair/contracts/v3";
   lidarrSchemaDirectory = "${contracts}/share/lidarr-repair/contracts/v2";
   generate = schemaDirectory: schema: className: output: ''
     datamodel-codegen \
@@ -24,7 +24,7 @@ let
       --disable-timestamp
   '';
 in
-runCommand "radarr-repair-pydantic-models-v2"
+runCommand "radarr-repair-pydantic-models-v3"
   {
     nativeBuildInputs = [
       python3Packages.datamodel-code-generator
@@ -39,8 +39,8 @@ runCommand "radarr-repair-pydantic-models-v2"
   }
   ''
     mkdir "$out"
-    ${generate radarrSchemaDirectory "repair-case.schema.json" "RepairCaseV2" "case_models.py"}
-    ${generate radarrSchemaDirectory "repair-decision.schema.json" "RepairDecisionV2"
+    ${generate radarrSchemaDirectory "repair-case.schema.json" "RepairCaseV3" "case_models.py"}
+    ${generate radarrSchemaDirectory "repair-decision.schema.json" "RepairDecisionV3"
       "decision_models.py"
     }
     ${generate lidarrSchemaDirectory "repair-case.schema.json" "LidarrRepairCaseV2"

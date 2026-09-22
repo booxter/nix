@@ -7,8 +7,8 @@ import httpx
 import pytest
 import uvicorn
 from fastapi import FastAPI
-from radarr_repair_planner.case_models import RepairCaseV2
-from radarr_repair_planner.decision_models import RepairDecisionV2
+from radarr_repair_planner.case_models import RepairCaseV3
+from radarr_repair_planner.decision_models import RepairDecisionV3
 from radarr_repair_planner.decision_validation import DecisionViolation
 from radarr_repair_planner.model_runtime import BackendSettings
 from radarr_repair_planner.openrouter_model import OpenRouterSettings
@@ -23,9 +23,9 @@ class CloseableModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        repair_case: RepairCaseV3,
         correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV2:
+    ) -> RepairDecisionV3:
         del system_instruction, repair_case, correction
         raise AssertionError("readiness must not invoke the model")
 

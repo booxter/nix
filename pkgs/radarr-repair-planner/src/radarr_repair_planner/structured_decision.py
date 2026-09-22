@@ -4,9 +4,9 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-from .case_models import RepairCaseV2
+from .case_models import RepairCaseV3
 from .contracts import ContractError, decision_schema, decode_decision, encode_case
-from .decision_models import RepairDecisionV2
+from .decision_models import RepairDecisionV3
 from .decision_validation import (
     DecisionViolation,
     describe_violations,
@@ -42,7 +42,7 @@ def diagnostic(error: BaseException) -> str:
 
 def decision_prompt(
     system_instruction: str,
-    repair_case: RepairCaseV2,
+    repair_case: RepairCaseV3,
     correction: tuple[DecisionViolation, ...],
     schema_instruction: str = SCHEMA_INSTRUCTION,
 ) -> tuple[str, str]:
@@ -74,7 +74,7 @@ def structured_prompt(
     return system_content, case_content
 
 
-def decode_structured_decision(raw_output: str) -> RepairDecisionV2:
+def decode_structured_decision(raw_output: str) -> RepairDecisionV3:
     return decode_structured_output(raw_output, decode_decision, validate_decision_object)
 
 

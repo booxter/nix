@@ -7,8 +7,8 @@ import httpx
 import pytest
 from pydantic import BaseModel
 from radarr_repair_planner.api import ContractEndpoint, create_app
-from radarr_repair_planner.case_models import RepairCaseV2
-from radarr_repair_planner.decision_models import RepairDecisionV2
+from radarr_repair_planner.case_models import RepairCaseV3
+from radarr_repair_planner.decision_models import RepairDecisionV3
 from radarr_repair_planner.decision_validation import DecisionViolation, ViolationCode
 from radarr_repair_planner.lidarr_case_models import LidarrRepairCaseV2
 from radarr_repair_planner.lidarr_contracts import (
@@ -330,7 +330,7 @@ def test_lidarr_object_validation_explains_missing_and_unknown_action() -> None:
 
 
 class NeverRadarrPlanner:
-    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2:
+    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3:
         del repair_case
         raise AssertionError("wrong endpoint")
 

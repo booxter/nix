@@ -10,9 +10,9 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
-from .case_models import RepairCaseV2
+from .case_models import RepairCaseV3
 from .contracts import ContractError, decode_case, encode_decision
-from .decision_models import RepairDecisionV2
+from .decision_models import RepairDecisionV3
 
 # Keep the API bound aligned with the controller's maximum JSON document size.
 MAX_REQUEST_BYTES = 8 << 20
@@ -20,7 +20,7 @@ PLANNING_TIMEOUT_SECONDS = 600.0
 
 
 class Planner(Protocol):
-    async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2: ...
+    async def plan(self, repair_case: RepairCaseV3) -> RepairDecisionV3: ...
 
 
 class TypedPlanner[CaseT, DecisionT](Protocol):
@@ -121,7 +121,7 @@ def _planning_endpoints(
     additional_endpoints: Mapping[str, PlanningEndpoint] | None = None,
 ) -> dict[str, PlanningEndpoint]:
     endpoints: dict[str, PlanningEndpoint] = {
-        "/v2/repair-plans": ContractEndpoint(
+        "/v3/repair-plans": ContractEndpoint(
             planner=planner,
             decode_case=decode_case,
             encode_decision=encode_decision,

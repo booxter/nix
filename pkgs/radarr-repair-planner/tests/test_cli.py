@@ -15,8 +15,8 @@ from radarr_repair_planner.contracts import (
 )
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"])
-VALID_CASES = sorted((FIXTURES / "contracts/v2/examples").glob("repair-case-*.json"))
-VALID_DECISIONS = sorted((FIXTURES / "contracts/v2/examples").glob("repair-decision-*.json"))
+VALID_CASES = sorted((FIXTURES / "contracts/v3/examples").glob("repair-case-*.json"))
+VALID_DECISIONS = sorted((FIXTURES / "contracts/v3/examples").glob("repair-decision-*.json"))
 INVALID_CASES = sorted((FIXTURES / "contract-tests/v1").glob("request-*.json"))
 INVALID_DECISIONS = sorted((FIXTURES / "contract-tests/v1").glob("decision-*.json"))
 
@@ -32,7 +32,7 @@ def test_shared_fixture_sets_are_present() -> None:
 def test_valid_case_examples_materialize(path: Path) -> None:
     repair_case = decode_case(path.read_bytes())
 
-    assert repair_case.schema_version == "radarr-repair/v2"
+    assert repair_case.schema_version == "radarr-repair/v3"
     assert repair_case.case_id.root.startswith("sha256:")
     assert decode_case(encode_case(repair_case)) == repair_case
 
@@ -44,7 +44,7 @@ def test_valid_decision_examples_round_trip(path: Path) -> None:
     encoded = encode_decision(decision)
     decoded = decode_decision(encoded)
     assert decoded == decision
-    assert json.loads(encoded)["schema_version"] == "radarr-repair/v2"
+    assert json.loads(encoded)["schema_version"] == "radarr-repair/v3"
 
 
 @pytest.mark.parametrize("path", INVALID_CASES, ids=lambda path: path.name)

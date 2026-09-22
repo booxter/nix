@@ -8,9 +8,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints, model_validator
 
-from .case_models import RepairCaseV2
+from .case_models import RepairCaseV3
 from .contracts import decode_case, encode_decision
-from .decision_models import Reason, RepairDecisionV2
+from .decision_models import Reason, RepairDecisionV3
 from .decision_validation import describe_violation, validate_decision_for_case
 from .openrouter_model import ReasoningEffort
 from .planning import Planner, PlanningOutcome
@@ -85,12 +85,12 @@ class EvaluationManifest(StrictModel):
 @dataclass(frozen=True)
 class EvaluationCase:
     spec: EvaluationCaseSpec
-    repair_case: RepairCaseV2
+    repair_case: RepairCaseV3
 
 
 def _validate_expected_capability(
     spec: EvaluationCaseSpec,
-    repair_case: RepairCaseV2,
+    repair_case: RepairCaseV3,
 ) -> None:
     expected = spec.expected
     if isinstance(expected, ExpectedNoRepair):
@@ -198,7 +198,7 @@ def _replace_pointer(value: JsonValue, pointer: str, replacement: JsonValue) -> 
 
 
 def load_evaluation_cases() -> list[EvaluationCase]:
-    root = files(__package__).joinpath("evaluations", "v2")
+    root = files(__package__).joinpath("evaluations", "v3")
     manifest = EvaluationManifest.model_validate_json(
         root.joinpath("manifest.json").read_text(encoding="utf-8")
     )
@@ -250,7 +250,7 @@ def _expectation_violations(
 
 def _semantic_violations(
     evaluation_case: EvaluationCase,
-    outcome: PlanningOutcome[RepairDecisionV2],
+    outcome: PlanningOutcome[RepairDecisionV3],
 ) -> list[str]:
     decision_value = json.loads(encode_decision(outcome.decision))
     violations = ["planner exhausted its attempts"] if outcome.used_fallback else []
@@ -268,7 +268,7 @@ def _semantic_violations(
 def evaluate_outcome(
     evaluation_case: EvaluationCase,
     run: int,
-    outcome: PlanningOutcome[RepairDecisionV2],
+    outcome: PlanningOutcome[RepairDecisionV3],
 ) -> EvaluationResult:
     decision_value = json.loads(encode_decision(outcome.decision))
     violations = _semantic_violations(evaluation_case, outcome)

@@ -9,9 +9,9 @@ from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
-from .case_models import RepairCaseV2
+from .case_models import RepairCaseV3
 from .contracts import decision_schema, encode_case
-from .decision_models import RepairDecisionV2
+from .decision_models import RepairDecisionV3
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
     SCHEMA_INSTRUCTION,
@@ -300,15 +300,15 @@ class OpenRouterDecisionModel:
     async def decide(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        repair_case: RepairCaseV3,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV2:
+    ) -> RepairDecisionV3:
         case_id = repair_case.case_id.root
         decision_output, response = await self._generate(
             system_instruction,
             encode_case(repair_case).decode(),
             decision_schema(),
-            RepairDecisionV2,
+            RepairDecisionV3,
             case_id,
             correction,
         )

@@ -13,7 +13,7 @@ from .case_models import (
     DvdCapability,
     JoinCapability,
     ManualImportCapability,
-    RepairCaseV2,
+    RepairCaseV3,
 )
 from .contracts import decision_schema
 from .decision_models import (
@@ -22,7 +22,7 @@ from .decision_models import (
     NoRepair,
     RemuxBluray,
     RemuxDVD,
-    RepairDecisionV2,
+    RepairDecisionV3,
 )
 
 MAX_CORRECTION_VIOLATIONS = 8
@@ -56,7 +56,7 @@ class DecisionViolation:
 
 @dataclass(frozen=True)
 class ValidationContext:
-    repair_case: RepairCaseV2
+    repair_case: RepairCaseV3
     decision: JoinParts | ManualImportFile | NoRepair | RemuxBluray | RemuxDVD
 
 
@@ -206,7 +206,7 @@ def _case_id(context: ValidationContext) -> tuple[DecisionViolation, ...]:
     )
 
 
-def _reference_ids(repair_case: RepairCaseV2) -> tuple[str, ...]:
+def _reference_ids(repair_case: RepairCaseV3) -> tuple[str, ...]:
     values = {
         *(capability.capability_id.root for capability in repair_case.capabilities),
         *(media_file.file_id.root for media_file in repair_case.files),
@@ -336,8 +336,8 @@ CASE_VALIDATORS: tuple[DecisionValidator, ...] = (
 
 
 def validate_decision_for_case(
-    repair_case: RepairCaseV2,
-    decision: RepairDecisionV2,
+    repair_case: RepairCaseV3,
+    decision: RepairDecisionV3,
 ) -> tuple[DecisionViolation, ...]:
     context = ValidationContext(repair_case=repair_case, decision=decision.root)
     return tuple(violation for validator in CASE_VALIDATORS for violation in validator(context))

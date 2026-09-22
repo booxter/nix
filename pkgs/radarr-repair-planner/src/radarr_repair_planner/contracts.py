@@ -4,8 +4,8 @@ import json
 from importlib.resources import files
 from typing import Any, cast
 
-from .case_models import RepairCaseV2 as RepairCaseV2
-from .decision_models import RepairDecisionV2 as RepairDecisionV2
+from .case_models import RepairCaseV3 as RepairCaseV3
+from .decision_models import RepairDecisionV3 as RepairDecisionV3
 from .json_contract import ContractError as ContractError
 from .json_contract import JsonContract
 
@@ -21,23 +21,23 @@ def _load_schema(name: str) -> dict[str, Any]:
 CASE_SCHEMA = _load_schema("repair-case.schema.json")
 DECISION_SCHEMA = _load_schema("repair-decision.schema.json")
 
-CASE_CONTRACT = JsonContract(CASE_SCHEMA, RepairCaseV2)
-DECISION_CONTRACT = JsonContract(DECISION_SCHEMA, RepairDecisionV2)
+CASE_CONTRACT = JsonContract(CASE_SCHEMA, RepairCaseV3)
+DECISION_CONTRACT = JsonContract(DECISION_SCHEMA, RepairDecisionV3)
 
 
-def decode_case(payload: bytes) -> RepairCaseV2:
+def decode_case(payload: bytes) -> RepairCaseV3:
     return CASE_CONTRACT.decode(payload)
 
 
-def decode_decision(payload: bytes) -> RepairDecisionV2:
+def decode_decision(payload: bytes) -> RepairDecisionV3:
     return DECISION_CONTRACT.decode(payload)
 
 
-def encode_case(repair_case: RepairCaseV2) -> bytes:
+def encode_case(repair_case: RepairCaseV3) -> bytes:
     return CASE_CONTRACT.encode(repair_case)
 
 
-def encode_decision(decision: RepairDecisionV2) -> bytes:
+def encode_decision(decision: RepairDecisionV3) -> bytes:
     return DECISION_CONTRACT.encode(decision)
 
 

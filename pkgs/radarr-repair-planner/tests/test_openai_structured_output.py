@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from radarr_repair_planner.decision_models import RepairDecisionV2
+from radarr_repair_planner.decision_models import RepairDecisionV3
 from radarr_repair_planner.lidarr_decision_models import LidarrRepairDecisionV2
 from radarr_repair_planner.openai_structured_output import (
     DECISION_FIELD,
@@ -22,7 +22,7 @@ def keywords(value: object) -> set[str]:
 
 
 def test_openai_envelope_schema_has_explicit_const_types() -> None:
-    schema = decision_envelope_model(RepairDecisionV2).model_json_schema()
+    schema = decision_envelope_model(RepairDecisionV3).model_json_schema()
 
     assert schema["type"] == "object"
     assert schema["required"] == [DECISION_FIELD]
@@ -51,7 +51,7 @@ def test_builds_lidarr_specific_openai_envelope() -> None:
     assert schema["required"] == [DECISION_FIELD]
     assert schema["additionalProperties"] is False
     assert "lidarr-repair/v2" in json.dumps(schema)
-    assert "radarr-repair/v2" not in json.dumps(schema)
+    assert "radarr-repair/v3" not in json.dumps(schema)
 
 
 def test_unwrap_openai_decision_returns_inner_json() -> None:

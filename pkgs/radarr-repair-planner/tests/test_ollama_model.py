@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 import trustme
 from ollama import ChatResponse, Message
-from radarr_repair_planner.case_models import RepairCaseV2
+from radarr_repair_planner.case_models import RepairCaseV3
 from radarr_repair_planner.contracts import (
     decision_schema,
     decode_case,
@@ -36,10 +36,10 @@ from radarr_repair_planner.planning import DecisionModelError
 from radarr_repair_planner.structured_decision import SCHEMA_INSTRUCTION
 from radarr_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 
-FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v2/examples"
+FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 
 
-def repair_case() -> RepairCaseV2:
+def repair_case() -> RepairCaseV3:
     return decode_case((FIXTURES / "repair-case-joinable.json").read_bytes())
 
 
