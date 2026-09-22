@@ -17,6 +17,7 @@ in
       };
     };
     network.knownProxies = [ "127.0.0.1" ];
+    metadata.useFileCreationTimeForDateAdded = false;
     encoding = {
       # TODO: revisit subtitle hardcoding policy once jellarr exposes
       # explicit subtitle-mode/burn-in options declaratively.
