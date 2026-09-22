@@ -1,0 +1,134 @@
+{
+  "capabilities": [
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability_manual_import_01",
+      "file_id": "file_manual_01"
+    }
+  ],
+  "case_id": "sha256:53a62912bf72681f385aff986f1a7aa216cb8e35a9ae9c7f4a6a0e35bec7d261",
+  "download": {
+    "client": "sabnzbd",
+    "completed_at": "2026-09-07T12:00:00Z",
+    "content_ownership": "output_tree",
+    "download_ref": "download_manual_01",
+    "file_count": 1,
+    "is_complete": true,
+    "labels": [
+      "movies"
+    ],
+    "name": "Poorly.Named.Feature",
+    "source_type": "usenet",
+    "total_size_bytes": 1500000000
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 1500000000,
+        "selected": true,
+        "source_index": null,
+        "source_size_bytes": 1500000000
+      },
+      "extension": "mkv",
+      "file_id": "file_manual_01",
+      "fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "path_components": [
+        "Poorly Named Feature.mkv"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 3333333,
+          "effective_duration_ms": 3600000,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 3600000,
+          "longest_stream_duration_ms": 3600000,
+          "names": [
+            "matroska",
+            "webm"
+          ],
+          "size_bytes": 1500000000
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 3000000,
+            "codec_name": "h264",
+            "codec_tag": null,
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 3600000,
+            "frame_rate": {
+              "denominator": 1001,
+              "numerator": 24000
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": null,
+            "pixel_format": "yuv420p",
+            "profile": "High",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 1000,
+              "numerator": 1
+            },
+            "width": 1920
+          }
+        ]
+      },
+      "size_bytes": 1500000000
+    }
+  ],
+  "observed_at": "2026-09-07T13:00:00Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download_manual_01",
+      "error_message": "Import failed",
+      "queue_id": 102,
+      "status": "completed",
+      "status_message_count": 1,
+      "status_messages": [
+        {
+          "evidence_id": "evidence_manual_queue_01",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "Poorly Named Feature.mkv"
+        }
+      ],
+      "title": "Poorly Named Feature",
+      "tracked_download_state": "importPending",
+      "tracked_download_status": "warning"
+    },
+    "history": [],
+    "manual_imports": [
+      {
+        "file_id": "file_manual_01",
+        "languages": [
+          "English"
+        ],
+        "quality": "WEBDL-1080p",
+        "rejections": [],
+        "release_group": "GROUP"
+      }
+    ],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": null,
+      "original_title": null,
+      "radarr_id": 43,
+      "runtime_minutes": 60,
+      "title": "Example Feature",
+      "tmdb_id": 5678,
+      "year": 2024
+    }
+  },
+  "schema_version": "radarr-repair/v3"
+}
