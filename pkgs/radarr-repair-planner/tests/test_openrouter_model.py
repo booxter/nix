@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.contracts import decision_schema, decode_case, encode_case
+from radarr_repair_planner.decision_models import RepairDecisionV2
 from radarr_repair_planner.decision_validation import (
     DecisionViolation,
     ViolationCode,
@@ -20,9 +21,6 @@ from radarr_repair_planner.decision_validation import (
 )
 from radarr_repair_planner.openai_structured_output import (
     SCHEMA_INSTRUCTION as OPENAI_SCHEMA_INSTRUCTION,
-)
-from radarr_repair_planner.openai_structured_output import (
-    OpenAIDecisionEnvelope,
 )
 from radarr_repair_planner.openrouter_model import (
     OpenRouterChatTransport,
@@ -309,6 +307,7 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
         reasoning_effort="medium",
         system_content="system instruction",
         case_content="case JSON",
+        decision_model=RepairDecisionV2,
     )
     with openrouter_server() as (base_url, requests):
         transport = OpenRouterChatTransport(
@@ -324,7 +323,7 @@ async def test_chat_transport_uses_pinned_private_request() -> None:
     value = requests.get_nowait()
     response_format = value.pop("response_format")
     assert response_format["type"] == "json_schema"
-    assert response_format["json_schema"]["name"] == OpenAIDecisionEnvelope.__name__
+    assert response_format["json_schema"]["name"] == "RepairDecisionV2Envelope"
     assert response_format["json_schema"]["strict"] is True
     schema = response_format["json_schema"]["schema"]
     assert schema["type"] == "object"

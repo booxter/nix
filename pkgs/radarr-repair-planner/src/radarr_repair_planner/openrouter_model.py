@@ -7,6 +7,7 @@ from typing import Any, Literal, Protocol, cast
 
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
+from pydantic import BaseModel
 
 from .case_models import RepairCaseV2
 from .contracts import decision_schema, encode_case
@@ -14,8 +15,8 @@ from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
     SCHEMA_INSTRUCTION,
-    OpenAIDecisionEnvelope,
     OpenAIStructuredOutputError,
+    decision_envelope_model,
     unwrap_openai_decision,
 )
 from .planning import DecisionModelError
@@ -84,6 +85,7 @@ class OpenRouterRequest:
     reasoning_effort: ReasoningEffort
     system_content: str
     case_content: str
+    decision_model: type[BaseModel]
 
 
 @dataclass(frozen=True)
@@ -136,7 +138,7 @@ class OpenRouterChatTransport:
             messages=messages,
             model=request.model,
             max_tokens=request.output_tokens,
-            response_format=OpenAIDecisionEnvelope,
+            response_format=decision_envelope_model(request.decision_model),
             store=False,
             extra_body={
                 "provider": {
@@ -234,6 +236,7 @@ class OpenRouterDecisionModel:
         system_instruction: str,
         case_content: str,
         schema: dict[str, Any],
+        decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> tuple[str, OpenRouterResponse]:
@@ -251,6 +254,7 @@ class OpenRouterDecisionModel:
             reasoning_effort=self._settings.reasoning_effort,
             system_content=system_content,
             case_content=case_content,
+            decision_model=decision_model,
         )
         try:
             response = await self._transport.complete(request)
@@ -278,6 +282,7 @@ class OpenRouterDecisionModel:
         system_instruction: str,
         case_content: str,
         decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> str:
@@ -285,6 +290,7 @@ class OpenRouterDecisionModel:
             system_instruction,
             case_content,
             decision_schema,
+            decision_model,
             case_id,
             correction,
         )
@@ -302,6 +308,7 @@ class OpenRouterDecisionModel:
             system_instruction,
             encode_case(repair_case).decode(),
             decision_schema(),
+            RepairDecisionV2,
             case_id,
             correction,
         )

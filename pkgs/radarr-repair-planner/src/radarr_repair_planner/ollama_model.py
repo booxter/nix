@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from urllib.parse import urlsplit
 
 from ollama import AsyncClient, ChatResponse
+from pydantic import BaseModel
 
 from .case_models import RepairCaseV2
 from .contracts import decision_schema, encode_case
@@ -257,9 +258,11 @@ class OllamaDecisionModel:
         system_instruction: str,
         case_content: str,
         decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> str:
+        del decision_model
         decision_output, raw = await self._generate(
             system_instruction,
             case_content,

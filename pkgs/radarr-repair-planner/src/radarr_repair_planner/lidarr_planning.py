@@ -37,6 +37,7 @@ class LidarrDecisionGenerator:
                 SYSTEM_INSTRUCTION,
                 encode_case(repair_case).decode(),
                 decision_schema(),
+                LidarrRepairDecisionV1,
                 repair_case.case_id.root,
                 correction,
             )

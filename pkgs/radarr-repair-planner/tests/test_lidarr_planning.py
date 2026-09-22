@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 import pytest
+from pydantic import BaseModel
 from radarr_repair_planner.api import ContractEndpoint, create_app
 from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.decision_models import RepairDecisionV2
@@ -163,9 +164,11 @@ class ScriptedModel:
         system_instruction: str,
         case_content: str,
         decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> str:
+        assert decision_model is LidarrRepairDecisionV1
         self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
