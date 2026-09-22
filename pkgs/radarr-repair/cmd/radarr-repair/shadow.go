@@ -166,7 +166,7 @@ func writeShadowSummary(writer io.Writer, report shadowrunner.Report) error {
 	_, err := fmt.Fprintf(
 		writer,
 		"observed=%d stored=%d superseded=%d submitted=%d decided=%d "+
-			"already_decided=%d deferred=%d failed=%d\n",
+			"already_decided=%d deferred=%d failed=%d rejected=%d\n",
 		report.Observed,
 		report.Stored,
 		report.Superseded,
@@ -175,8 +175,22 @@ func writeShadowSummary(writer io.Writer, report shadowrunner.Report) error {
 		report.AlreadyDecided,
 		report.Deferred,
 		report.Failed,
+		report.Rejected,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	for _, rejection := range report.Rejections {
+		if _, err := fmt.Fprintf(
+			writer,
+			"rejected queue_id=%d reason=%s\n",
+			rejection.QueueID,
+			rejection.Reason,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validateShadowConfig(config shadowConfig) error {

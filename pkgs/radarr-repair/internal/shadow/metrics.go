@@ -50,6 +50,7 @@ func WriteMetrics(
 		{label: "already_decided", value: report.AlreadyDecided},
 		{label: "deferred", value: report.Deferred},
 		{label: "failed", value: report.Failed},
+		{label: "rejected", value: report.Rejected},
 	})
 
 	states := newGaugeVector(

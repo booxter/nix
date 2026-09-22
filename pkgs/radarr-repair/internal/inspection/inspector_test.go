@@ -175,10 +175,11 @@ func TestInspectAllCollectsEveryEligibleCandidateFromOneQueueRead(t *testing.T) 
 		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
 	})
 
-	assemblies, err := inspector.InspectAll(context.Background())
+	result, err := inspector.InspectAll(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
+	assemblies := result.Assemblies
 	if len(assemblies) != 2 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
 		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
 	}
@@ -206,12 +207,43 @@ func TestInspectAllReturnsSuccessfulCasesAlongsideCollectionErrors(t *testing.T)
 		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
 	})
 
-	assemblies, err := inspector.InspectAll(context.Background())
+	result, err := inspector.InspectAll(context.Background())
+	assemblies := result.Assemblies
 	if err == nil || !strings.Contains(err.Error(), "queue record 71") {
 		t.Fatalf("error = %v", err)
 	}
 	if len(assemblies) != 1 || !reflect.DeepEqual(selectedQueueIDs, []int64{71, 72}) {
 		t.Fatalf("assemblies = %d, queue IDs = %v", len(assemblies), selectedQueueIDs)
+	}
+}
+
+func TestInspectAllRejectsInvalidEvidenceWithoutFailingCollection(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	other := fixture.radarr.records[0]
+	other.ID = 72
+	fixture.radarr.records = append(fixture.radarr.records, other)
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		if observation.Correlation.Radarr.ID == 71 {
+			return casebuilder.Assembly{}, &casebuilder.InvalidEvidenceError{
+				Err: errors.New("does not conform to the planner contract"),
+			}
+		}
+		return casebuilder.Assembly{EncodedRequest: []byte("assembled")}, nil
+	})
+
+	result, err := inspector.InspectAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Assemblies) != 1 || !reflect.DeepEqual(result.Rejections, []Rejection{{
+		QueueID: 71,
+		Reason:  RejectionInvalidEvidence,
+	}}) {
+		t.Fatalf("result = %#v", result)
 	}
 }
 
@@ -221,10 +253,11 @@ func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
 	fixture := inspectionFixture()
 	fixture.radarr.records[0].Protocol = "usenet"
 	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
-	assemblies, err := inspector.InspectAll(context.Background())
+	result, err := inspector.InspectAll(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
+	assemblies := result.Assemblies
 	if len(assemblies) != 0 {
 		t.Fatalf("assemblies = %d", len(assemblies))
 	}

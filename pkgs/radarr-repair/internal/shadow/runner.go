@@ -10,10 +10,11 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
 )
 
 type CaseSource interface {
-	InspectAll(context.Context) ([]casebuilder.Assembly, error)
+	InspectAll(context.Context) (inspection.Result, error)
 }
 
 type ResultStore interface {
@@ -58,6 +59,8 @@ type Report struct {
 	AlreadyDecided int
 	Deferred       int
 	Failed         int
+	Rejected       int
+	Rejections     []inspection.Rejection
 	PlannedCases   []casestore.PlannedCase
 	metrics        metricData
 }
@@ -151,8 +154,13 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		return Report{}, err
 	}
 
-	assemblies, collectionErr := runner.dependencies.Cases.InspectAll(ctx)
-	report := Report{Observed: len(assemblies)}
+	collection, collectionErr := runner.dependencies.Cases.InspectAll(ctx)
+	assemblies := collection.Assemblies
+	report := Report{
+		Observed:   len(assemblies),
+		Rejected:   len(collection.Rejections),
+		Rejections: append([]inspection.Rejection(nil), collection.Rejections...),
+	}
 	for _, assembly := range assemblies {
 		report.observe(assembly)
 	}

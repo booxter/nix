@@ -36,6 +36,20 @@ type Selection struct {
 	QueueID int64
 }
 
+type RejectionReason string
+
+const RejectionInvalidEvidence RejectionReason = "invalid_case_evidence"
+
+type Rejection struct {
+	QueueID int64
+	Reason  RejectionReason
+}
+
+type Result struct {
+	Assemblies []casebuilder.Assembly
+	Rejections []Rejection
+}
+
 type CandidateUnavailableReason string
 
 const (
@@ -119,28 +133,29 @@ func (inspector *Inspector) Inspect(
 	return inspector.inspectRecord(ctx, collectionContext, record)
 }
 
-func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assembly, error) {
+func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 	if inspector == nil || inspector.assemble == nil {
-		return nil, fmt.Errorf("inspector is not configured")
+		return Result{}, fmt.Errorf("inspector is not configured")
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	queueContext, cancel := context.WithTimeout(ctx, inspector.dependencies.CollectionTimeout)
 	records, err := inspector.dependencies.Radarr.ReadQueue(queueContext)
 	cancel()
 	if err != nil {
-		return nil, fmt.Errorf("read Radarr queue: %w", err)
+		return Result{}, fmt.Errorf("read Radarr queue: %w", err)
 	}
 	eligible := eligibleCandidates(controller.ClassifyRepairCandidates(
 		records,
 		inspector.dependencies.Downloads,
 	))
 	if len(eligible) == 0 {
-		return []casebuilder.Assembly{}, nil
+		return Result{Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{}}, nil
 	}
 
 	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
+	rejections := make([]Rejection, 0)
 	var inspectionErrors []error
 	for _, record := range eligible {
 		if err := ctx.Err(); err != nil {
@@ -154,6 +169,14 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
 		collectionCancel()
 		if inspectErr != nil {
+			var invalidEvidence *casebuilder.InvalidEvidenceError
+			if errors.As(inspectErr, &invalidEvidence) {
+				rejections = append(rejections, Rejection{
+					QueueID: record.ID,
+					Reason:  RejectionInvalidEvidence,
+				})
+				continue
+			}
 			inspectionErrors = append(
 				inspectionErrors,
 				fmt.Errorf("inspect Radarr queue record %d: %w", record.ID, inspectErr),
@@ -162,7 +185,7 @@ func (inspector *Inspector) InspectAll(ctx context.Context) ([]casebuilder.Assem
 		}
 		assemblies = append(assemblies, assembly)
 	}
-	return assemblies, errors.Join(inspectionErrors...)
+	return Result{Assemblies: assemblies, Rejections: rejections}, errors.Join(inspectionErrors...)
 }
 
 func (inspector *Inspector) inspectRecord(

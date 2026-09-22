@@ -48,6 +48,18 @@ type Assembly struct {
 	LocalSnapshot  LocalSnapshot
 }
 
+type InvalidEvidenceError struct {
+	Err error
+}
+
+func (failure *InvalidEvidenceError) Error() string {
+	return fmt.Sprintf("invalid repair case evidence: %v", failure.Err)
+}
+
+func (failure *InvalidEvidenceError) Unwrap() error {
+	return failure.Err
+}
+
 func Assemble(observation Observation) (Assembly, error) {
 	if observation.ObservedAt.IsZero() {
 		return Assembly{}, fmt.Errorf("observation time is missing")
@@ -133,7 +145,7 @@ func Assemble(observation Observation) (Assembly, error) {
 		Capabilities:  capabilities,
 	}
 	if err := rejectLocalValues(request, observation); err != nil {
-		return Assembly{}, err
+		return Assembly{}, &InvalidEvidenceError{Err: err}
 	}
 	request.CaseID, err = contracts.CalculateCaseID(request)
 	if err != nil {
@@ -141,7 +153,9 @@ func Assemble(observation Observation) (Assembly, error) {
 	}
 	encoded, err := contracts.EncodeCase(request)
 	if err != nil {
-		return Assembly{}, fmt.Errorf("encode repair case: %w", err)
+		return Assembly{}, &InvalidEvidenceError{
+			Err: fmt.Errorf("encode repair case: %w", err),
+		}
 	}
 
 	return Assembly{

@@ -255,7 +255,8 @@ func inspectAllCases(ctx context.Context, config inspectConfig) ([]casebuilder.A
 		return nil, err
 	}
 	defer closeInspector()
-	return inspector.InspectAll(ctx)
+	result, err := inspector.InspectAll(ctx)
+	return result.Assemblies, err
 }
 
 func configureInspector(config inspectConfig) (*inspection.Inspector, func(), error) {

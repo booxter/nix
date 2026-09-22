@@ -13,6 +13,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
 )
 
 const (
@@ -64,6 +65,38 @@ func TestRunProcessesCasesAfterCollectionAndPlannerFailures(t *testing.T) {
 		t.Fatalf("stored decisions = %v", store.decisions)
 	}
 	assertPlannedCaseIDs(t, report.PlannedCases, []string{firstID, thirdID})
+}
+
+func TestRunReportsRejectedEvidenceWithoutFailing(t *testing.T) {
+	t.Parallel()
+
+	caseID := testCaseID("9")
+	source := &fakeCaseSource{
+		assemblies: []casebuilder.Assembly{testAssembly(caseID)},
+		rejections: []inspection.Rejection{{
+			QueueID: 71,
+			Reason:  inspection.RejectionInvalidEvidence,
+		}},
+	}
+	runner := newTestRunner(
+		t,
+		source,
+		newFakeStore(),
+		&fakePlanner{responses: map[string]plannerResponse{
+			caseID: {decision: testDecision(t, caseID)},
+		}},
+		time.Date(2026, time.September, 12, 18, 0, 0, 0, time.UTC),
+	)
+
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Report{Observed: 1, Rejected: 1, Stored: 1, Submitted: 1, Decided: 1}
+	if !reflect.DeepEqual(reportSummary(report), want) ||
+		!reflect.DeepEqual(report.Rejections, source.rejections) {
+		t.Fatalf("report = %#v", report)
+	}
 }
 
 func TestRunSkipsDecidedAndDeferredCases(t *testing.T) {
@@ -334,11 +367,15 @@ func TestNewRejectsIncompleteDependencies(t *testing.T) {
 
 type fakeCaseSource struct {
 	assemblies []casebuilder.Assembly
+	rejections []inspection.Rejection
 	err        error
 }
 
-func (source *fakeCaseSource) InspectAll(context.Context) ([]casebuilder.Assembly, error) {
-	return source.assemblies, source.err
+func (source *fakeCaseSource) InspectAll(context.Context) (inspection.Result, error) {
+	return inspection.Result{
+		Assemblies: source.assemblies,
+		Rejections: source.rejections,
+	}, source.err
 }
 
 type storedFailure struct {
@@ -522,6 +559,7 @@ func supersededTestAssembly(caseID string) casebuilder.Assembly {
 func reportSummary(report Report) Report {
 	report.metrics = metricData{}
 	report.PlannedCases = nil
+	report.Rejections = nil
 	return report
 }
 

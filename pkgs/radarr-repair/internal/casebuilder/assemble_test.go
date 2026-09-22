@@ -3,6 +3,7 @@ package casebuilder
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -100,6 +101,18 @@ func TestAssembleBoundsRadarrStatusEvidence(t *testing.T) {
 	if len(assembly.LocalSnapshot.Observation.Correlation.Radarr.StatusMessages) != 45 ||
 		len(assembly.LocalSnapshot.Observation.Correlation.Radarr.StatusMessages[0].Messages) != 20 {
 		t.Fatal("local snapshot did not retain complete Radarr diagnostics")
+	}
+}
+
+func TestAssembleMarksNonconformingEvidenceAsInvalid(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	observation.Correlation.Radarr.Title = strings.Repeat("x", 513)
+	_, err := Assemble(observation)
+	var invalidEvidence *InvalidEvidenceError
+	if !errors.As(err, &invalidEvidence) {
+		t.Fatalf("error = %v", err)
 	}
 }
 

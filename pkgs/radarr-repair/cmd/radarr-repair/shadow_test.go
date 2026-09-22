@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
+	"github.com/booxter/nix-config/radarr-repair/internal/inspection"
 	"github.com/booxter/nix-config/radarr-repair/internal/plannerclient"
 	shadowrunner "github.com/booxter/nix-config/radarr-repair/internal/shadow"
 )
@@ -24,7 +25,11 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 	var gotConfig shadowConfig
 	wantReport := shadowrunner.Report{
 		Observed: 12, Stored: 3, Superseded: 2, Submitted: 4, Decided: 3,
-		AlreadyDecided: 5, Deferred: 3, Failed: 1,
+		AlreadyDecided: 5, Deferred: 3, Failed: 1, Rejected: 1,
+		Rejections: []inspection.Rejection{{
+			QueueID: 284460917,
+			Reason:  inspection.RejectionInvalidEvidence,
+		}},
 	}
 	app := application{shadow: func(
 		_ context.Context,
@@ -41,7 +46,8 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 		t.Fatal(err)
 	}
 	if stdout.String() != "observed=12 stored=3 superseded=2 submitted=4 decided=3 "+
-		"already_decided=5 deferred=3 failed=1\n" || stderr.Len() != 0 {
+		"already_decided=5 deferred=3 failed=1 rejected=1\n"+
+		"rejected queue_id=284460917 reason=invalid_case_evidence\n" || stderr.Len() != 0 {
 		t.Fatalf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
 	}
 	wantConfig := shadowConfig{
@@ -66,6 +72,19 @@ func TestShadowRunsOnceAndPrintsSummary(t *testing.T) {
 	if !reflect.DeepEqual(gotConfig, wantConfig) {
 		t.Fatalf("config = %#v, want %#v", gotConfig, wantConfig)
 	}
+	metrics, err := os.ReadFile(metricsFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(
+		string(metrics),
+		"host_observability_radarr_repair_shadow_run_success 1",
+	) || !strings.Contains(
+		string(metrics),
+		`host_observability_radarr_repair_shadow_cases{outcome="rejected"} 1`,
+	) {
+		t.Fatalf("successful rejection metrics = %s", metrics)
+	}
 }
 
 func TestShadowPrintsSummaryWhenRunFails(t *testing.T) {
@@ -87,7 +106,7 @@ func TestShadowPrintsSummaryWhenRunFails(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 	if stdout.String() != "observed=2 stored=0 superseded=0 submitted=0 decided=1 "+
-		"already_decided=0 deferred=0 failed=1\n" {
+		"already_decided=0 deferred=0 failed=1 rejected=0\n" {
 		t.Fatalf("stdout = %q", stdout.String())
 	}
 	data, readErr := os.ReadFile(metricsFile)
