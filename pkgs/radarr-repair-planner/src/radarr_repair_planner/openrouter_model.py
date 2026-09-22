@@ -3,12 +3,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Any, Literal, Protocol, cast
 
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
 
 from .case_models import RepairCaseV2
+from .contracts import decision_schema, encode_case
 from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
@@ -20,9 +21,9 @@ from .openai_structured_output import (
 from .planning import DecisionModelError
 from .structured_decision import (
     StructuredDecisionError,
-    decision_prompt,
     decode_structured_decision,
     diagnostic,
+    structured_prompt,
 )
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
@@ -212,7 +213,7 @@ class OpenRouterDecisionModel:
 
     def _trace(
         self,
-        repair_case: RepairCaseV2,
+        case_id: str,
         response: OpenRouterResponse | None,
         error: str | None,
     ) -> None:
@@ -220,7 +221,7 @@ class OpenRouterDecisionModel:
             return
         self._trace_sink.record(
             ModelTrace(
-                case_id=repair_case.case_id.root,
+                case_id=case_id,
                 raw_output=None if response is None else response.content,
                 reasoning=None,
                 response_metadata={} if response is None else response.metadata,
@@ -228,15 +229,18 @@ class OpenRouterDecisionModel:
             )
         )
 
-    async def decide(
+    async def _generate(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        case_content: str,
+        schema: dict[str, Any],
+        case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV2:
-        system_content, case_content = decision_prompt(
+    ) -> tuple[str, OpenRouterResponse]:
+        system_content, case_content = structured_prompt(
             system_instruction,
-            repair_case,
+            case_content,
+            schema,
             correction,
             schema_instruction=SCHEMA_INSTRUCTION,
         )
@@ -252,7 +256,7 @@ class OpenRouterDecisionModel:
             response = await self._transport.complete(request)
         except Exception as error:
             detail = diagnostic(error)
-            self._trace(repair_case, None, "request failed: " + detail)
+            self._trace(case_id, None, "request failed: " + detail)
             raise DecisionModelError("OpenRouter request failed: " + detail) from error
         if response.content is None:
             detail = (
@@ -260,19 +264,54 @@ class OpenRouterDecisionModel:
                 if response.refused
                 else "OpenRouter response did not contain text"
             )
-            self._trace(repair_case, response, detail)
+            self._trace(case_id, response, detail)
             raise DecisionModelError(detail)
         try:
             decision_output = unwrap_openai_decision(response.content)
-            decision = decode_structured_decision(decision_output)
         except OpenAIStructuredOutputError as error:
-            self._trace(repair_case, response, str(error))
+            self._trace(case_id, response, str(error))
             raise DecisionModelError("OpenRouter " + str(error)) from error
+        return decision_output, response
+
+    async def decide_json(
+        self,
+        system_instruction: str,
+        case_content: str,
+        decision_schema: dict[str, Any],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> str:
+        decision_output, response = await self._generate(
+            system_instruction,
+            case_content,
+            decision_schema,
+            case_id,
+            correction,
+        )
+        self._trace(case_id, response, None)
+        return decision_output
+
+    async def decide(
+        self,
+        system_instruction: str,
+        repair_case: RepairCaseV2,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> RepairDecisionV2:
+        case_id = repair_case.case_id.root
+        decision_output, response = await self._generate(
+            system_instruction,
+            encode_case(repair_case).decode(),
+            decision_schema(),
+            case_id,
+            correction,
+        )
+        try:
+            decision = decode_structured_decision(decision_output)
         except StructuredDecisionError as error:
-            self._trace(repair_case, response, str(error))
+            self._trace(case_id, response, str(error))
             raise DecisionModelError(
                 "OpenRouter " + str(error),
                 error.violations,
             ) from error
-        self._trace(repair_case, response, None)
+        self._trace(case_id, response, None)
         return decision

@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints,
 
 from .case_models import RepairCaseV2
 from .contracts import decode_case, encode_decision
-from .decision_models import Reason
+from .decision_models import Reason, RepairDecisionV2
 from .decision_validation import describe_violation, validate_decision_for_case
 from .openrouter_model import ReasoningEffort
 from .planning import Planner, PlanningOutcome
@@ -250,7 +250,7 @@ def _expectation_violations(
 
 def _semantic_violations(
     evaluation_case: EvaluationCase,
-    outcome: PlanningOutcome,
+    outcome: PlanningOutcome[RepairDecisionV2],
 ) -> list[str]:
     decision_value = json.loads(encode_decision(outcome.decision))
     violations = ["planner exhausted its attempts"] if outcome.used_fallback else []
@@ -268,7 +268,7 @@ def _semantic_violations(
 def evaluate_outcome(
     evaluation_case: EvaluationCase,
     run: int,
-    outcome: PlanningOutcome,
+    outcome: PlanningOutcome[RepairDecisionV2],
 ) -> EvaluationResult:
     decision_value = json.loads(encode_decision(outcome.decision))
     violations = _semantic_violations(evaluation_case, outcome)

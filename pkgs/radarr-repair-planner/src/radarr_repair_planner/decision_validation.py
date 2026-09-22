@@ -75,18 +75,14 @@ def non_object_violation() -> DecisionViolation:
     return DecisionViolation(code=ViolationCode.NON_OBJECT_JSON, path=())
 
 
-def _branch_schema(action: str) -> dict[str, Any] | None:
-    branch_names = {
-        "join_parts_v1": "joinParts",
-        "manual_import_file_v1": "manualImportFile",
-        "remux_bluray_v1": "remuxBluray",
-        "remux_dvd_v1": "remuxDVD",
-        "no_repair": "noRepair",
-    }
+def _branch_schema(
+    action: str,
+    schema: dict[str, Any],
+    branch_names: dict[str, str],
+) -> dict[str, Any] | None:
     branch_name = branch_names.get(action)
     if branch_name is None:
         return None
-    schema = decision_schema()
     return {
         "$schema": schema["$schema"],
         "$defs": schema["$defs"],
@@ -94,17 +90,11 @@ def _branch_schema(action: str) -> dict[str, Any] | None:
     }
 
 
-def _safe_unknown_fields(value: dict[str, object], properties: object) -> tuple[str, ...]:
-    if not isinstance(properties, dict):
-        return ()
-    return tuple(
-        sorted(
-            key for key in value.keys() - properties.keys() if SAFE_NAME.fullmatch(key) is not None
-        )
-    )
-
-
-def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolation, ...]:
+def validate_object_against_action_schema(
+    value: dict[str, object],
+    contract_schema: dict[str, Any],
+    branch_names: dict[str, str],
+) -> tuple[DecisionViolation, ...]:
     action = value.get("action")
     if action is None:
         return (
@@ -113,19 +103,15 @@ def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolatio
                 path=("action",),
             ),
         )
-    schema = _branch_schema(action) if isinstance(action, str) else None
+    schema = (
+        _branch_schema(action, contract_schema, branch_names) if isinstance(action, str) else None
+    )
     if schema is None:
         return (
             DecisionViolation(
                 code=ViolationCode.INVALID_FIELD,
                 path=("action",),
-                allowed_values=(
-                    "join_parts_v1",
-                    "manual_import_file_v1",
-                    "remux_bluray_v1",
-                    "remux_dvd_v1",
-                    "no_repair",
-                ),
+                allowed_values=tuple(branch_names),
             ),
         )
 
@@ -180,6 +166,27 @@ def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolatio
                     violation.allowed_values,
                 ),
             )
+        )
+    )
+
+
+def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolation, ...]:
+    branch_names = {
+        "join_parts_v1": "joinParts",
+        "manual_import_file_v1": "manualImportFile",
+        "remux_bluray_v1": "remuxBluray",
+        "remux_dvd_v1": "remuxDVD",
+        "no_repair": "noRepair",
+    }
+    return validate_object_against_action_schema(value, decision_schema(), branch_names)
+
+
+def _safe_unknown_fields(value: dict[str, object], properties: object) -> tuple[str, ...]:
+    if not isinstance(properties, dict):
+        return ()
+    return tuple(
+        sorted(
+            key for key in value.keys() - properties.keys() if SAFE_NAME.fullmatch(key) is not None
         )
     )
 

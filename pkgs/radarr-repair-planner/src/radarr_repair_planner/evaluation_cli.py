@@ -19,13 +19,14 @@ from .model_runtime import (
     BackendSettings,
     ModelArguments,
     ModelFactory,
+    RuntimeDecisionModel,
     add_model_arguments,
     close_model,
     create_model,
     settings_from_arguments,
 )
 from .ollama_model import OllamaSettings
-from .planning import DecisionModel, Planner
+from .planning import Planner
 from .tracing import JsonlTraceWriter
 
 
@@ -82,7 +83,7 @@ async def _evaluate(arguments: Arguments, model_factory: ModelFactory) -> Evalua
     backend_settings = settings_from_arguments(arguments)
     evaluation_settings = _evaluation_settings(backend_settings, arguments)
     trace_writer: JsonlTraceWriter | None = None
-    model: DecisionModel | None = None
+    model: RuntimeDecisionModel | None = None
     try:
         if arguments.trace_output is not None:
             trace_writer = JsonlTraceWriter(

@@ -10,15 +10,15 @@ from urllib.parse import urlsplit
 from ollama import AsyncClient, ChatResponse
 
 from .case_models import RepairCaseV2
-from .contracts import decision_schema
+from .contracts import decision_schema, encode_case
 from .decision_models import RepairDecisionV2
 from .decision_validation import DecisionViolation
 from .planning import DecisionModelError
 from .structured_decision import (
     StructuredDecisionError,
-    decision_prompt,
     decode_structured_decision,
     diagnostic,
+    structured_prompt,
 )
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
@@ -191,7 +191,7 @@ class OllamaDecisionModel:
 
     def _trace(
         self,
-        repair_case: RepairCaseV2,
+        case_id: str,
         raw: object,
         error: str | None,
     ) -> None:
@@ -200,7 +200,7 @@ class OllamaDecisionModel:
         raw_output, reasoning, response_metadata = self._raw_fields(raw)
         self._trace_sink.record(
             ModelTrace(
-                case_id=repair_case.case_id.root,
+                case_id=case_id,
                 raw_output=raw_output,
                 reasoning=reasoning,
                 response_metadata=response_metadata,
@@ -208,15 +208,18 @@ class OllamaDecisionModel:
             )
         )
 
-    async def decide(
+    async def _generate(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV2,
+        case_content: str,
+        schema: dict[str, Any],
+        case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV2:
-        system_content, case_content = decision_prompt(
+    ) -> tuple[str, ChatResponse]:
+        system_content, case_content = structured_prompt(
             system_instruction,
-            repair_case,
+            case_content,
+            schema,
             correction,
         )
         request = ChatRequest(
@@ -225,7 +228,7 @@ class OllamaDecisionModel:
                 {"role": "system", "content": system_content},
                 {"role": "user", "content": case_content},
             ),
-            schema=decision_schema(),
+            schema=schema,
             context_tokens=self._settings.context_tokens,
             output_tokens=self._settings.output_tokens,
             reasoning=self._settings.reasoning,
@@ -236,24 +239,58 @@ class OllamaDecisionModel:
         # contract failures below remain visible to the correction attempt.
         except Exception as error:
             detail = diagnostic(error)
-            self._trace(repair_case, None, "request failed: " + detail)
+            self._trace(case_id, None, "request failed: " + detail)
             raise DecisionModelError(
                 "Ollama request or structured decoding failed: " + detail
             ) from error
         if not isinstance(result, ChatResponse):
-            self._trace(repair_case, None, "Ollama response was not a chat response")
+            self._trace(case_id, None, "Ollama response was not a chat response")
             raise DecisionModelError("Ollama response was not a chat response")
         raw = result
         if not isinstance(raw.message.content, str):
-            self._trace(repair_case, raw, "structured output was not text")
+            self._trace(case_id, raw, "structured output was not text")
             raise DecisionModelError("Ollama structured output was not text")
+        return raw.message.content, raw
+
+    async def decide_json(
+        self,
+        system_instruction: str,
+        case_content: str,
+        decision_schema: dict[str, Any],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> str:
+        decision_output, raw = await self._generate(
+            system_instruction,
+            case_content,
+            decision_schema,
+            case_id,
+            correction,
+        )
+        self._trace(case_id, raw, None)
+        return decision_output
+
+    async def decide(
+        self,
+        system_instruction: str,
+        repair_case: RepairCaseV2,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> RepairDecisionV2:
+        case_id = repair_case.case_id.root
+        decision_output, raw = await self._generate(
+            system_instruction,
+            encode_case(repair_case).decode(),
+            decision_schema(),
+            case_id,
+            correction,
+        )
         try:
-            decision = decode_structured_decision(raw.message.content)
+            decision = decode_structured_decision(decision_output)
         except StructuredDecisionError as error:
-            self._trace(repair_case, raw, str(error))
+            self._trace(case_id, raw, str(error))
             raise DecisionModelError(
                 "Ollama " + str(error),
                 error.violations,
             ) from error
-        self._trace(repair_case, raw, None)
+        self._trace(case_id, raw, None)
         return decision
