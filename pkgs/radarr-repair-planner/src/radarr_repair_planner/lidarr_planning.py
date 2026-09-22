@@ -81,4 +81,5 @@ class LidarrPlanner(ContractPlanner[LidarrRepairCaseV1, LidarrRepairDecisionV1])
             roundtrip_decision=_roundtrip_decision,
             validate_decision=validate_decision_for_case,
             fallback=_fallback,
+            case_id=lambda repair_case: repair_case.case_id.root,
         )

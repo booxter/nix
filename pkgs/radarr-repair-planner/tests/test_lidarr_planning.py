@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 import httpx
+import pytest
 from radarr_repair_planner.api import ContractEndpoint, create_app
 from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.decision_models import RepairDecisionV2
@@ -203,6 +204,35 @@ async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None
     assert outcome.decision.root.case_id.root == CASE_ID
     assert len(model.calls[1][4]) == 2
     assert all(item.code == ViolationCode.INVALID_FIELD for item in model.calls[1][4])
+
+
+async def test_lidarr_planner_logs_bounded_fallback_evidence(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    invalid = json.dumps(
+        decision_value(
+            mappings=[
+                {"artifact_id": "artifact:1", "track_id": 5},
+                {"artifact_id": "artifact:1", "track_id": 5},
+            ]
+        )
+    )
+    model = ScriptedModel([invalid, invalid])
+
+    decision = await LidarrPlanner(model).plan(repair_case())
+
+    assert decision.root.action == "no_repair"
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "WARNING"
+    assert (
+        caplog.records[0]
+        .getMessage()
+        .startswith(f"planner used fallback case_id={CASE_ID} attempts=2 errors=")
+    )
+    assert (
+        "decision field does not satisfy the schema at mappings.artifact_id"
+        in caplog.records[0].getMessage()
+    )
 
 
 async def test_lidarr_planner_corrects_malformed_output() -> None:

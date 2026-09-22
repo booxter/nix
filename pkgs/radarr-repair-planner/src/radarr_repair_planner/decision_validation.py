@@ -352,11 +352,11 @@ def describe_violation(violation: DecisionViolation) -> str:
         case ViolationCode.NON_OBJECT_JSON:
             return "response JSON is not an object"
         case ViolationCode.MISSING_FIELD:
-            return "decision is missing a required field"
+            return f"decision is missing required field at {_path(violation.path)}"
         case ViolationCode.UNKNOWN_FIELD:
-            return "decision contains a field the schema does not allow"
+            return f"decision contains a field the schema does not allow at {_path(violation.path)}"
         case ViolationCode.INVALID_FIELD:
-            return "decision field does not satisfy the schema"
+            return f"decision field does not satisfy the schema at {_path(violation.path)}"
         case ViolationCode.CASE_ID_MISMATCH:
             return "decision case_id does not match the case"
         case ViolationCode.UNKNOWN_EVIDENCE:

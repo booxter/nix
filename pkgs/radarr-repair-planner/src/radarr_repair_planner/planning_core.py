@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
@@ -9,6 +10,7 @@ from .json_contract import ContractError
 
 ATTEMPT_LIMIT = 2
 ATTEMPT_ERROR_LIMIT = 512
+LOGGER = logging.getLogger(__name__)
 
 
 class DecisionModelError(Exception):
@@ -52,15 +54,25 @@ class ContractPlanner[CaseT, DecisionT]:
         roundtrip_decision: Callable[[DecisionT], DecisionT],
         validate_decision: Callable[[CaseT, DecisionT], tuple[DecisionViolation, ...]],
         fallback: Callable[[CaseT], DecisionT],
+        case_id: Callable[[CaseT], str],
     ) -> None:
         self._generator = generator
         self._roundtrip_case = roundtrip_case
         self._roundtrip_decision = roundtrip_decision
         self._validate_decision = validate_decision
         self._fallback = fallback
+        self._case_id = case_id
 
     async def plan(self, repair_case: CaseT) -> DecisionT:
-        return (await self.plan_with_outcome(repair_case)).decision
+        outcome = await self.plan_with_outcome(repair_case)
+        if outcome.used_fallback:
+            LOGGER.warning(
+                "planner used fallback case_id=%s attempts=%d errors=%s",
+                self._case_id(repair_case),
+                outcome.attempts,
+                "; ".join(outcome.attempt_errors),
+            )
+        return outcome.decision
 
     async def plan_with_outcome(self, repair_case: CaseT) -> PlanningOutcome[DecisionT]:
         validated_case = self._roundtrip_case(repair_case)
