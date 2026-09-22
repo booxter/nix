@@ -1,7 +1,7 @@
 { lib, pkgs }:
 {
   repair.controller = {
-    enable = lib.mkEnableOption "scheduled inert Lidarr repair controller";
+    enable = lib.mkEnableOption "scheduled shadow-mode Lidarr repair controller";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.lidarr-repair;

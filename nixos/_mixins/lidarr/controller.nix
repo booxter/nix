@@ -6,25 +6,51 @@
 let
   lidarr = config.host.lidarr;
   controller = if lidarr == null then null else lidarr.repair.controller;
+  planner = config.host.mediaRepair.planner;
+  worker = config.host.mediaRepair.worker;
   serviceName = "lidarr-repair-controller";
+  rootIDs = builtins.attrNames worker.roots;
+  rootPaths = builtins.attrValues worker.roots;
+  rootArguments = lib.concatMap (rootID: [
+    "--worker-root"
+    "${rootID}=${worker.roots.${rootID}}"
+  ]) rootIDs;
   command =
     if controller == null then
       ""
     else
-      lib.escapeShellArgs [
-        (lib.getExe controller.package)
-        "--lidarr-url"
-        "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
-        "--lidarr-api-key-file"
-        "%d/lidarr-api-key"
-        "--state-directory"
-        "/var/lib/${serviceName}"
-        "--request-timeout"
-        "${toString controller.requestTimeoutSeconds}s"
-      ];
+      lib.escapeShellArgs (
+        [
+          (lib.getExe controller.package)
+          "--lidarr-url"
+          "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}"
+          "--lidarr-api-key-file"
+          "%d/lidarr-api-key"
+          "--worker-socket"
+          worker.socketPath
+          "--planner-socket"
+          planner.socketPath
+          "--state-directory"
+          "/var/lib/${serviceName}"
+          "--request-timeout"
+          "${toString controller.requestTimeoutSeconds}s"
+          "--worker-stage-timeout"
+          "${toString (worker.joinTimeoutSeconds + 30)}s"
+          "--planner-timeout"
+          "${toString (planner.planningTimeoutSeconds + 30)}s"
+        ]
+        ++ rootArguments
+      );
 in
 {
   config = lib.mkIf (controller != null && controller.enable) {
+    assertions = [
+      {
+        assertion = worker.enable && planner.enable && worker.roots != { };
+        message = "Lidarr repair requires the shared media worker and planner with roots.";
+      }
+    ];
+
     users.groups.${serviceName} = { };
     users.users.${serviceName} = {
       isSystemUser = true;
@@ -33,15 +59,20 @@ in
     };
 
     systemd.services.${serviceName} = {
-      description = "Observe Lidarr import queue without applying repairs";
+      description = "Plan Lidarr import repairs in shadow mode";
       requires = [
+        "radarr-repair-planner.socket"
+        "radarr-repair-worker.service"
         "lidarr.service"
         "sops-install-secrets.service"
       ];
       after = [
+        "radarr-repair-planner.socket"
+        "radarr-repair-worker.service"
         "lidarr.service"
         "sops-install-secrets.service"
       ];
+      unitConfig.RequiresMountsFor = rootPaths;
       serviceConfig = {
         Type = "oneshot";
         ExecStart = command;
@@ -50,9 +81,14 @@ in
         ];
         User = serviceName;
         Group = serviceName;
+        SupplementaryGroups = [
+          "media"
+          planner.clientGroup
+          worker.clientGroup
+        ];
         StateDirectory = serviceName;
         StateDirectoryMode = "0700";
-        TimeoutStartSec = controller.requestTimeoutSeconds + 10;
+        TimeoutStartSec = "infinity";
         TimeoutStopSec = "10s";
         UMask = "0077";
         AmbientCapabilities = "";
@@ -75,10 +111,12 @@ in
         ProtectProc = "invisible";
         ProtectSystem = "strict";
         ProcSubset = "pid";
+        ReadOnlyPaths = rootPaths;
         RemoveIPC = true;
         RestrictAddressFamilies = [
           "AF_INET"
           "AF_INET6"
+          "AF_UNIX"
         ];
         RestrictNamespaces = true;
         RestrictRealtime = true;
@@ -88,7 +126,7 @@ in
     };
 
     systemd.timers.${serviceName} = {
-      description = "Periodically observe the Lidarr import queue";
+      description = "Periodically plan Lidarr import repairs in shadow mode";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnActiveSec = "5m";
