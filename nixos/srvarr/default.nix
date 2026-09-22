@@ -44,7 +44,13 @@ in
 
   host.lidarr = {
     stateDir = "/data/.state/nixarr/lidarr";
-    repair.controller.enable = true;
+    repair.controller = {
+      enable = true;
+      apply = {
+        enable = true;
+        allowedActions = [ "import_missing_tracks_v1" ];
+      };
+    };
   };
 
   host.prowlarr = {
