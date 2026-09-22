@@ -73,7 +73,6 @@ func Assemble(
 		releaseTrackCounts[release.ID] = release.TrackCount
 	}
 	contractTracks := make([]lidarrcontracts.Track, len(tracks))
-	trackIDsByRelease := make(map[int64][]int64, len(album.Releases))
 	for index, track := range tracks {
 		if _, found := releaseTrackCounts[track.ReleaseID]; !found {
 			return lidarrcontracts.Case{}, nil, fmt.Errorf(
@@ -85,26 +84,13 @@ func Assemble(
 			AbsoluteNumber: track.AbsoluteTrackNumber, MediumNumber: track.MediumNumber,
 			Title: track.Title, DurationMS: track.DurationMS, HasFile: track.HasFile,
 		}
-		trackIDsByRelease[track.ReleaseID] = append(trackIDsByRelease[track.ReleaseID], track.ID)
 	}
 	if len(releases) == 0 || len(contractTracks) == 0 {
 		return lidarrcontracts.Case{}, nil, fmt.Errorf("Lidarr album has no release or track candidates")
 	}
-	capabilities := make([]lidarrcontracts.Capability, len(releases))
-	for index, release := range releases {
-		trackIDs := trackIDsByRelease[release.ReleaseID]
-		if len(trackIDs) != release.TrackCount {
-			return lidarrcontracts.Case{}, nil, fmt.Errorf(
-				"Lidarr release %d advertises %d tracks but returned %d",
-				release.ReleaseID, release.TrackCount, len(trackIDs),
-			)
-		}
-		capabilities[index] = lidarrcontracts.Capability{
-			Action:       string(lidarrcontracts.ActionImportTrackSet),
-			CapabilityID: fmt.Sprintf("capability:import_track_set:%d", release.ReleaseID),
-			AlbumID:      album.ID, ArtifactIDs: append([]string(nil), artifactIDs...),
-			ReleaseID: release.ReleaseID, TrackIDs: append([]int64(nil), trackIDs...),
-		}
+	capabilities, err := buildImportCapabilities(album.ID, releases, contractTracks, artifactIDs)
+	if err != nil {
+		return lidarrcontracts.Case{}, nil, err
 	}
 
 	repairCase := lidarrcontracts.Case{
@@ -130,6 +116,50 @@ func Assemble(
 		return lidarrcontracts.Case{}, nil, err
 	}
 	return repairCase, bindings, nil
+}
+
+func buildImportCapabilities(
+	albumID int64,
+	releases []lidarrcontracts.Release,
+	tracks []lidarrcontracts.Track,
+	artifactIDs []string,
+) ([]lidarrcontracts.Capability, error) {
+	trackCountByRelease := make(map[int64]int, len(releases))
+	missingTrackIDsByRelease := make(map[int64][]int64, len(releases))
+	albumHasFiles := false
+	for _, track := range tracks {
+		trackCountByRelease[track.ReleaseID]++
+		if track.HasFile {
+			albumHasFiles = true
+		} else {
+			missingTrackIDsByRelease[track.ReleaseID] = append(
+				missingTrackIDsByRelease[track.ReleaseID], track.TrackID,
+			)
+		}
+	}
+
+	capabilities := make([]lidarrcontracts.Capability, 0, len(releases))
+	for _, release := range releases {
+		if trackCountByRelease[release.ReleaseID] != release.TrackCount {
+			return nil, fmt.Errorf(
+				"Lidarr release %d advertises %d tracks but returned %d",
+				release.ReleaseID, release.TrackCount, trackCountByRelease[release.ReleaseID],
+			)
+		}
+		missingTrackIDs := missingTrackIDsByRelease[release.ReleaseID]
+		if len(missingTrackIDs) == 0 || (albumHasFiles && !release.Monitored) {
+			continue
+		}
+		capabilities = append(capabilities, lidarrcontracts.Capability{
+			Action:       string(lidarrcontracts.ActionImportMissingTracks),
+			CapabilityID: fmt.Sprintf("capability:import_missing_tracks:%d", release.ReleaseID),
+			AlbumID:      albumID,
+			ArtifactIDs:  append([]string(nil), artifactIDs...),
+			ReleaseID:    release.ReleaseID,
+			TrackIDs:     append([]int64(nil), missingTrackIDs...),
+		})
+	}
+	return capabilities, nil
 }
 
 func contractArtifact(artifact materialize.Artifact) lidarrcontracts.Artifact {

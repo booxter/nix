@@ -49,10 +49,10 @@ func TestDecodeCaseRejectsIdentityMismatch(t *testing.T) {
 func TestDecisionRoundTrip(t *testing.T) {
 	repairCase := testCase(t)
 	decision := Decision{
-		Kind: ActionImportTrackSet,
-		ImportTrackSet: &ImportTrackSetDecision{
+		Kind: ActionImportMissingTracks,
+		ImportMissingTracks: &ImportMissingTracksDecision{
 			SchemaVersion: SchemaVersion, CaseID: repairCase.CaseID,
-			Action: string(ActionImportTrackSet), CapabilityID: "capability:one",
+			Action: string(ActionImportMissingTracks), CapabilityID: "capability:one",
 			AlbumID: 3, ReleaseID: 4,
 			Mappings:     []TrackMapping{{ArtifactID: "artifact:one", TrackID: 5}},
 			EvidenceRefs: []string{"artifact:one"}, Explanation: "The tags and duration agree.",
@@ -66,7 +66,7 @@ func TestDecisionRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decoded.CaseID() != repairCase.CaseID || decoded.ImportTrackSet.ReleaseID != 4 {
+	if decoded.CaseID() != repairCase.CaseID || decoded.ImportMissingTracks.ReleaseID != 4 {
 		t.Fatalf("unexpected decoded decision: %#v", decoded)
 	}
 }
@@ -110,7 +110,7 @@ func testCase(t *testing.T) Case {
 			TagTrackNumbers: []int{1}, Rejections: []string{},
 		}},
 		Capabilities: []Capability{{
-			Action: string(ActionImportTrackSet), CapabilityID: "capability:one", AlbumID: 3,
+			Action: string(ActionImportMissingTracks), CapabilityID: "capability:one", AlbumID: 3,
 			ArtifactIDs: []string{"artifact:one"}, ReleaseID: 4, TrackIDs: []int64{5},
 		}},
 	}

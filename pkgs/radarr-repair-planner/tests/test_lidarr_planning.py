@@ -120,7 +120,7 @@ def case_value() -> dict[str, object]:
         "assessments": assessments,
         "capabilities": [
             {
-                "action": "import_track_set_v1",
+                "action": "import_missing_tracks_v1",
                 "capability_id": "capability:one",
                 "album_id": 3,
                 "artifact_ids": ["artifact:1", "artifact:2"],
@@ -135,7 +135,7 @@ def decision_value(**changes: object) -> dict[str, object]:
     value: dict[str, object] = {
         "schema_version": "lidarr-repair/v2",
         "case_id": CASE_ID,
-        "action": "import_track_set_v1",
+        "action": "import_missing_tracks_v1",
         "capability_id": "capability:one",
         "album_id": 3,
         "release_id": 4,
@@ -275,6 +275,24 @@ def test_lidarr_semantic_validation_rejects_album_and_release() -> None:
     assert [item.path for item in violations] == [("album_id",), ("release_id",)]
 
 
+def test_lidarr_semantic_validation_allows_unused_existing_track_artifact() -> None:
+    value = case_value()
+    tracks = value["tracks"]
+    assert isinstance(tracks, list)
+    assert isinstance(tracks[0], dict)
+    tracks[0]["has_file"] = True
+    capabilities = value["capabilities"]
+    assert isinstance(capabilities, list)
+    assert isinstance(capabilities[0], dict)
+    capabilities[0]["track_ids"] = [6]
+    repair_case = decode_case(json.dumps(value).encode())
+    decision = repair_decision(
+        mappings=[{"artifact_id": "artifact:2", "track_id": 6}],
+    )
+
+    assert validate_decision_for_case(repair_case, decision) == ()
+
+
 def test_lidarr_no_repair_is_valid() -> None:
     decision = decode_decision(
         json.dumps(
@@ -308,7 +326,7 @@ def test_lidarr_object_validation_explains_missing_and_unknown_action() -> None:
     unknown = validate_decision_object({"action": "run_command"})
 
     assert missing[0].code == ViolationCode.MISSING_FIELD
-    assert unknown[0].allowed_values == ("no_repair", "import_track_set_v1")
+    assert unknown[0].allowed_values == ("no_repair", "import_missing_tracks_v1")
 
 
 class NeverRadarrPlanner:

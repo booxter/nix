@@ -11,11 +11,11 @@
       "minimum": 1,
       "type": "integer"
     },
-    "importTrackSet": {
+    "importMissingTracks": {
       "additionalProperties": false,
       "properties": {
         "action": {
-          "const": "import_track_set_v1"
+          "const": "import_missing_tracks_v1"
         },
         "album_id": {
           "$ref": "#/$defs/id"
@@ -142,7 +142,7 @@
       "$ref": "#/$defs/noRepair"
     },
     {
-      "$ref": "#/$defs/importTrackSet"
+      "$ref": "#/$defs/importMissingTracks"
     }
   ],
   "title": "Lidarr repair decision version 2"

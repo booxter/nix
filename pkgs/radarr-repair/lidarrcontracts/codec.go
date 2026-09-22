@@ -97,19 +97,19 @@ func DecodeDecision(data []byte) (Decision, error) {
 			return Decision{}, fmt.Errorf("decode Lidarr no-repair decision: %w", err)
 		}
 		return Decision{Kind: ActionNoRepair, NoRepair: &value}, nil
-	case ActionImportTrackSet:
-		var value ImportTrackSetDecision
+	case ActionImportMissingTracks:
+		var value ImportMissingTracksDecision
 		if err := decodeStrict(data, &value); err != nil {
 			return Decision{}, fmt.Errorf("decode Lidarr import-track-set decision: %w", err)
 		}
-		return Decision{Kind: ActionImportTrackSet, ImportTrackSet: &value}, nil
+		return Decision{Kind: ActionImportMissingTracks, ImportMissingTracks: &value}, nil
 	default:
 		return Decision{}, fmt.Errorf("unsupported Lidarr repair decision action %q", envelope.Action)
 	}
 }
 
 func decisionValue(decision Decision) (any, error) {
-	if (decision.NoRepair == nil) == (decision.ImportTrackSet == nil) {
+	if (decision.NoRepair == nil) == (decision.ImportMissingTracks == nil) {
 		return nil, fmt.Errorf("Lidarr repair decision must contain exactly one action")
 	}
 	switch decision.Kind {
@@ -117,9 +117,9 @@ func decisionValue(decision Decision) (any, error) {
 		if decision.NoRepair != nil {
 			return decision.NoRepair, nil
 		}
-	case ActionImportTrackSet:
-		if decision.ImportTrackSet != nil {
-			return decision.ImportTrackSet, nil
+	case ActionImportMissingTracks:
+		if decision.ImportMissingTracks != nil {
+			return decision.ImportMissingTracks, nil
 		}
 	}
 	return nil, fmt.Errorf("Lidarr repair decision kind %q does not match its action", decision.Kind)

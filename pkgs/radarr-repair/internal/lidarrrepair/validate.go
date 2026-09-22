@@ -16,10 +16,10 @@ func ValidateDecision(
 	if decision.Kind == lidarrcontracts.ActionNoRepair && decision.NoRepair != nil {
 		return validateEvidenceReferences(repairCase, decision.NoRepair.EvidenceRefs)
 	}
-	if decision.Kind != lidarrcontracts.ActionImportTrackSet || decision.ImportTrackSet == nil {
+	if decision.Kind != lidarrcontracts.ActionImportMissingTracks || decision.ImportMissingTracks == nil {
 		return fmt.Errorf("Lidarr decision action is inconsistent")
 	}
-	selected := decision.ImportTrackSet
+	selected := decision.ImportMissingTracks
 	if err := validateEvidenceReferences(repairCase, selected.EvidenceRefs); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func ValidateDecision(
 			break
 		}
 	}
-	if capability == nil || capability.Action != string(lidarrcontracts.ActionImportTrackSet) {
+	if capability == nil || capability.Action != string(lidarrcontracts.ActionImportMissingTracks) {
 		return fmt.Errorf("Lidarr decision selects an unknown capability")
 	}
 	if selected.AlbumID != capability.AlbumID || selected.ReleaseID != capability.ReleaseID {
@@ -52,8 +52,8 @@ func ValidateDecision(
 		artifacts[mapping.ArtifactID] = struct{}{}
 		tracks[mapping.TrackID] = struct{}{}
 	}
-	if len(artifacts) != len(capability.ArtifactIDs) || len(tracks) != len(capability.TrackIDs) {
-		return fmt.Errorf("Lidarr decision does not map the complete capability")
+	if len(tracks) != len(capability.TrackIDs) {
+		return fmt.Errorf("Lidarr decision does not map every missing track")
 	}
 	return nil
 }

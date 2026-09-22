@@ -104,14 +104,14 @@ type Capability struct {
 type DecisionAction string
 
 const (
-	ActionNoRepair       DecisionAction = "no_repair"
-	ActionImportTrackSet DecisionAction = "import_track_set_v1"
+	ActionNoRepair            DecisionAction = "no_repair"
+	ActionImportMissingTracks DecisionAction = "import_missing_tracks_v1"
 )
 
 type Decision struct {
-	Kind           DecisionAction
-	NoRepair       *NoRepairDecision
-	ImportTrackSet *ImportTrackSetDecision
+	Kind                DecisionAction
+	NoRepair            *NoRepairDecision
+	ImportMissingTracks *ImportMissingTracksDecision
 }
 
 func (decision Decision) CaseID() string {
@@ -120,9 +120,9 @@ func (decision Decision) CaseID() string {
 		if decision.NoRepair != nil {
 			return decision.NoRepair.CaseID
 		}
-	case ActionImportTrackSet:
-		if decision.ImportTrackSet != nil {
-			return decision.ImportTrackSet.CaseID
+	case ActionImportMissingTracks:
+		if decision.ImportMissingTracks != nil {
+			return decision.ImportMissingTracks.CaseID
 		}
 	}
 	return ""
@@ -142,7 +142,7 @@ type TrackMapping struct {
 	TrackID    int64  `json:"track_id"`
 }
 
-type ImportTrackSetDecision struct {
+type ImportMissingTracksDecision struct {
 	SchemaVersion string         `json:"schema_version"`
 	CaseID        string         `json:"case_id"`
 	Action        string         `json:"action"`

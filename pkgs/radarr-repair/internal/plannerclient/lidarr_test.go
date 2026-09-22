@@ -69,7 +69,7 @@ func plannerLidarrCase(t *testing.T) lidarrcontracts.Case {
 		}},
 		Assessments: []lidarrcontracts.Assessment{},
 		Capabilities: []lidarrcontracts.Capability{{
-			Action: string(lidarrcontracts.ActionImportTrackSet), CapabilityID: "capability:one",
+			Action: string(lidarrcontracts.ActionImportMissingTracks), CapabilityID: "capability:one",
 			AlbumID: 3, ArtifactIDs: []string{"artifact:one"},
 			ReleaseID: 4, TrackIDs: []int64{5},
 		}},

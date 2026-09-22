@@ -8,7 +8,7 @@ from .decision_validation import (
 from .lidarr_case_models import LidarrRepairCaseV2
 from .lidarr_contracts import decision_schema
 from .lidarr_decision_models import (
-    ImportTrackSet,
+    ImportMissingTracks,
     LidarrRepairDecisionV2,
     NoRepair,
 )
@@ -20,7 +20,7 @@ def validate_decision_object(value: dict[str, object]) -> tuple[DecisionViolatio
         decision_schema(),
         {
             "no_repair": "noRepair",
-            "import_track_set_v1": "importTrackSet",
+            "import_missing_tracks_v1": "importMissingTracks",
         },
     )
 
@@ -83,7 +83,7 @@ def validate_decision_for_case(
     if isinstance(value, NoRepair):
         return tuple(violations)
 
-    assert isinstance(value, ImportTrackSet)
+    assert isinstance(value, ImportMissingTracks)
     capability = next(
         (
             item
@@ -115,7 +115,7 @@ def validate_decision_for_case(
 
     artifacts = tuple(mapping.artifact_id.root for mapping in value.mappings)
     allowed_artifacts = tuple(item.root for item in capability.artifact_ids)
-    if len(set(artifacts)) != len(artifacts) or set(artifacts) != set(allowed_artifacts):
+    if len(set(artifacts)) != len(artifacts) or not set(artifacts).issubset(allowed_artifacts):
         violations.append(_invalid(("mappings", "artifact_id"), artifacts, allowed_artifacts))
 
     tracks = tuple(str(mapping.track_id.root) for mapping in value.mappings)
