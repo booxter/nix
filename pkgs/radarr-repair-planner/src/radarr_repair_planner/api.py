@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
@@ -20,6 +21,42 @@ PLANNING_TIMEOUT_SECONDS = 600.0
 
 class Planner(Protocol):
     async def plan(self, repair_case: RepairCaseV2) -> RepairDecisionV2: ...
+
+
+class TypedPlanner[CaseT, DecisionT](Protocol):
+    async def plan(self, repair_case: CaseT) -> DecisionT: ...
+
+
+class PreparedPlan(Protocol):
+    async def execute(self) -> bytes: ...
+
+
+class PlanningEndpoint(Protocol):
+    def prepare(self, payload: bytes) -> PreparedPlan: ...
+
+
+@dataclass(frozen=True)
+class ContractPlan[CaseT, DecisionT]:
+    repair_case: CaseT
+    planner: TypedPlanner[CaseT, DecisionT]
+    encode_decision: Callable[[DecisionT], bytes]
+
+    async def execute(self) -> bytes:
+        return self.encode_decision(await self.planner.plan(self.repair_case))
+
+
+@dataclass(frozen=True)
+class ContractEndpoint[CaseT, DecisionT]:
+    planner: TypedPlanner[CaseT, DecisionT]
+    decode_case: Callable[[bytes], CaseT]
+    encode_decision: Callable[[DecisionT], bytes]
+
+    def prepare(self, payload: bytes) -> PreparedPlan:
+        return ContractPlan(
+            repair_case=self.decode_case(payload),
+            planner=self.planner,
+            encode_decision=self.encode_decision,
+        )
 
 
 class ErrorCode(StrEnum):
@@ -79,7 +116,32 @@ async def _read_body(request: Request, maximum: int) -> bytes:
     return bytes(body)
 
 
-def create_app(planner: Planner, limits: ApiLimits | None = None) -> FastAPI:
+def _planning_endpoints(
+    planner: Planner,
+    additional_endpoints: Mapping[str, PlanningEndpoint] | None = None,
+) -> dict[str, PlanningEndpoint]:
+    endpoints: dict[str, PlanningEndpoint] = {
+        "/v2/repair-plans": ContractEndpoint(
+            planner=planner,
+            decode_case=decode_case,
+            encode_decision=encode_decision,
+        )
+    }
+    if additional_endpoints is not None:
+        overlap = endpoints.keys() & additional_endpoints.keys()
+        if overlap:
+            raise ValueError(f"duplicate planning endpoint: {min(overlap)}")
+        endpoints.update(additional_endpoints)
+    return endpoints
+
+
+def create_app(
+    planner: Planner,
+    limits: ApiLimits | None = None,
+    additional_endpoints: Mapping[str, PlanningEndpoint] | None = None,
+) -> FastAPI:
+    endpoints = _planning_endpoints(planner, additional_endpoints)
+
     limits = limits if limits is not None else ApiLimits()
     app = FastAPI(
         title="Radarr repair planner",
@@ -93,8 +155,7 @@ def create_app(planner: Planner, limits: ApiLimits | None = None) -> FastAPI:
     async def ready() -> dict[str, str]:
         return {"status": "ready"}
 
-    @app.post("/v2/repair-plans")
-    async def plan(request: Request) -> Response:
+    async def plan(endpoint: PlanningEndpoint, request: Request) -> Response:
         media_type = request.headers.get("content-type", "").partition(";")[0].strip().lower()
         if media_type != "application/json":
             return _error(
@@ -115,7 +176,7 @@ def create_app(planner: Planner, limits: ApiLimits | None = None) -> FastAPI:
             return _error(413, ErrorCode.REQUEST_TOO_LARGE, "Request body is too large.")
 
         try:
-            repair_case = decode_case(body)
+            prepared = endpoint.prepare(body)
         except ContractError:
             return _error(
                 422,
@@ -129,8 +190,7 @@ def create_app(planner: Planner, limits: ApiLimits | None = None) -> FastAPI:
         try:
             async with generation_lock:
                 async with asyncio.timeout(limits.planning_timeout_seconds):
-                    decision = await planner.plan(repair_case)
-            encoded = encode_decision(decision)
+                    encoded = await prepared.execute()
         except TimeoutError:
             return _error(504, ErrorCode.PLANNING_TIMEOUT, "Plan generation timed out.")
         # This service boundary must not expose provider failures or model output.
@@ -138,5 +198,14 @@ def create_app(planner: Planner, limits: ApiLimits | None = None) -> FastAPI:
             return _error(500, ErrorCode.PLANNING_FAILED, "Plan generation failed.")
 
         return Response(content=encoded, media_type="application/json")
+
+    def planning_route(endpoint: PlanningEndpoint) -> Callable[[Request], Awaitable[Response]]:
+        async def route(request: Request) -> Response:
+            return await plan(endpoint, request)
+
+        return route
+
+    for path, endpoint in endpoints.items():
+        app.add_api_route(path, planning_route(endpoint), methods=["POST"])
 
     return app
