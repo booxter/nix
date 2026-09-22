@@ -44,6 +44,15 @@ type Report struct {
 	NoRepair   int
 }
 
+type Evidence struct {
+	Queue              lidarr.QueueRecord
+	ArchivePath        string
+	ArchiveFingerprint string
+	WorkspaceRoot      string
+	Case               lidarrcontracts.Case
+	Bindings           []ImportBinding
+}
+
 type Runner struct {
 	lidarr  Lidarr
 	worker  Worker
@@ -116,50 +125,18 @@ func (runner *Runner) process(
 		return true, decision, err
 	}
 
-	materialized, err := runner.worker.MaterializeTarAudio(
-		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
-	)
+	evidence, err := runner.buildEvidence(ctx, queue, archivePath, snapshot)
 	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("materialize archive evidence: %w", err)
+		return false, lidarrcontracts.Decision{}, err
 	}
-	root, err := workspaceRoot(runner.worker, materialized)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("resolve materialized workspace: %w", err)
-	}
-	album, err := runner.lidarr.ReadAlbum(ctx, *queue.AlbumID)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("read album: %w", err)
-	}
-	var tracks []lidarr.Track
-	for _, release := range album.Releases {
-		releaseTracks, readErr := runner.lidarr.ReadReleaseTracks(ctx, album.ID, release.ID)
-		if readErr != nil {
-			return false, lidarrcontracts.Decision{}, fmt.Errorf(
-				"read release %d tracks: %w", release.ID, readErr,
-			)
-		}
-		tracks = append(tracks, releaseTracks...)
-	}
-	manualImports, err := runner.lidarr.ReadManualImports(ctx, lidarr.ManualImportQuery{
-		Folder: root, ArtistID: *queue.ArtistID,
-	})
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("read manual imports: %w", err)
-	}
-	repairCase, bindings, err := Assemble(
-		runner.now(), queue, album, tracks, materialized, manualImports, runner.worker,
-	)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("assemble complete case: %w", err)
-	}
-	decision, err := runner.planner.PlanLidarr(ctx, repairCase)
+	decision, err := runner.planner.PlanLidarr(ctx, evidence.Case)
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("plan complete case: %w", err)
 	}
-	if err := ValidateDecision(repairCase, decision); err != nil {
+	if err := ValidateDecision(evidence.Case, decision); err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("validate planned repair: %w", err)
 	}
-	caseData, err := lidarrcontracts.EncodeCase(repairCase)
+	caseData, err := lidarrcontracts.EncodeCase(evidence.Case)
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, err
 	}
@@ -169,12 +146,75 @@ func (runner *Runner) process(
 	}
 	if err := runner.store.Put(Record{
 		Version: stateVersion, QueueID: queue.ID, ArchivePath: archivePath,
-		ArchiveFingerprint: fingerprint, WorkspaceRoot: root,
-		Case: caseData, Decision: decisionData, Bindings: bindings,
+		ArchiveFingerprint: fingerprint, WorkspaceRoot: evidence.WorkspaceRoot,
+		Case: caseData, Decision: decisionData, Bindings: evidence.Bindings,
 	}); err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("store shadow decision: %w", err)
 	}
 	return false, decision, nil
+}
+
+func (runner *Runner) BuildCurrentEvidence(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+) (Evidence, error) {
+	if !eligibleQueue(queue) {
+		return Evidence{}, fmt.Errorf("Lidarr queue item is not eligible for repair")
+	}
+	archivePath, snapshot, err := findArchive(queue.OutputPath)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("discover tar archive: %w", err)
+	}
+	return runner.buildEvidence(ctx, queue, archivePath, snapshot)
+}
+
+func (runner *Runner) buildEvidence(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+	archivePath string,
+	snapshot fileidentity.Snapshot,
+) (Evidence, error) {
+	fingerprint := snapshot.Fingerprint()
+	materialized, err := runner.worker.MaterializeTarAudio(
+		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+	)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("materialize archive evidence: %w", err)
+	}
+	root, err := workspaceRoot(runner.worker, materialized)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("resolve materialized workspace: %w", err)
+	}
+	album, err := runner.lidarr.ReadAlbum(ctx, *queue.AlbumID)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("read album: %w", err)
+	}
+	var tracks []lidarr.Track
+	for _, release := range album.Releases {
+		releaseTracks, readErr := runner.lidarr.ReadReleaseTracks(ctx, album.ID, release.ID)
+		if readErr != nil {
+			return Evidence{}, fmt.Errorf(
+				"read release %d tracks: %w", release.ID, readErr,
+			)
+		}
+		tracks = append(tracks, releaseTracks...)
+	}
+	manualImports, err := runner.lidarr.ReadManualImports(ctx, lidarr.ManualImportQuery{
+		Folder: root, ArtistID: *queue.ArtistID,
+	})
+	if err != nil {
+		return Evidence{}, fmt.Errorf("read manual imports: %w", err)
+	}
+	repairCase, bindings, err := Assemble(
+		runner.now(), queue, album, tracks, materialized, manualImports, runner.worker,
+	)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("assemble complete case: %w", err)
+	}
+	return Evidence{
+		Queue: queue, ArchivePath: archivePath, ArchiveFingerprint: fingerprint,
+		WorkspaceRoot: root, Case: repairCase, Bindings: bindings,
+	}, nil
 }
 
 func eligibleQueue(queue lidarr.QueueRecord) bool {
