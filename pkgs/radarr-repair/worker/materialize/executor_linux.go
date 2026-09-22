@@ -5,12 +5,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -22,6 +24,8 @@ import (
 
 const (
 	workspaceDirectory = ".media-repair"
+	workspaceManifest  = ".materialization.json"
+	manifestVersion    = "media-repair-workspace/v1"
 	maximumEntries     = 4096
 	maximumFileBytes   = 8 << 30
 	maximumTotalBytes  = 32 << 30
@@ -45,6 +49,12 @@ type Prober interface {
 type Executor struct {
 	files  Files
 	prober Prober
+}
+
+type manifest struct {
+	Version            string  `json:"version"`
+	ArchiveFingerprint string  `json:"archive_fingerprint"`
+	Success            Success `json:"success"`
 }
 
 func NewExecutor(files Files, prober Prober) (*Executor, error) {
@@ -82,6 +92,14 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	if err != nil {
 		return fail("workspace_error")
 	}
+	if success, found, err := loadWorkspace(workspacePath, request, workspaceComponents); err != nil {
+		return fail("workspace_error")
+	} else if found {
+		if err := executor.files.Verify(archive, request.ExpectedFingerprint); err != nil {
+			return fail(reasonForError(err))
+		}
+		return Response{Status: "ok", Success: &success}
+	}
 	if err := prepareWorkspace(rootPath, partialPath, workspacePath, groupID); err != nil {
 		return fail("workspace_error")
 	}
@@ -96,15 +114,83 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 		_ = os.RemoveAll(partialPath)
 		return fail(reasonForError(err))
 	}
+	success := Success{
+		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
+		Operation: OperationMaterializeTar, RootID: request.RootID,
+		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
+	}
+	if err := writeManifest(partialPath, request.ExpectedFingerprint, success); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
 	if err := os.Rename(partialPath, workspacePath); err != nil {
 		_ = os.RemoveAll(partialPath)
 		return fail("workspace_error")
 	}
-	return Response{Status: "ok", Success: &Success{
-		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
-		Operation: OperationMaterializeTar, RootID: request.RootID,
-		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
-	}}
+	return Response{Status: "ok", Success: &success}
+}
+
+func loadWorkspace(
+	workspacePath string,
+	request Request,
+	workspaceComponents []string,
+) (Success, bool, error) {
+	info, err := os.Lstat(workspacePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return Success{}, false, nil
+	}
+	if err != nil {
+		return Success{}, false, err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return Success{}, false, fmt.Errorf("completed workspace is unsafe")
+	}
+	data, err := os.ReadFile(filepath.Join(workspacePath, workspaceManifest))
+	if err != nil {
+		return Success{}, false, fmt.Errorf("read workspace manifest: %w", err)
+	}
+	var stored manifest
+	if err := json.Unmarshal(data, &stored); err != nil {
+		return Success{}, false, fmt.Errorf("decode workspace manifest: %w", err)
+	}
+	if stored.Version != manifestVersion || stored.ArchiveFingerprint != request.ExpectedFingerprint ||
+		stored.Success.RootID != request.RootID ||
+		!slices.Equal(stored.Success.WorkspaceComponents, workspaceComponents) {
+		return Success{}, false, fmt.Errorf("workspace manifest identity does not match request")
+	}
+	for _, artifact := range stored.Success.Artifacts {
+		name, err := safeArchiveName(artifact.RelativePath, false)
+		if err != nil || !slices.Equal(
+			artifact.PathComponents,
+			append(append([]string(nil), workspaceComponents...), strings.Split(name, "/")...),
+		) {
+			return Success{}, false, fmt.Errorf("workspace artifact identity is invalid")
+		}
+		info, err := os.Lstat(filepath.Join(workspacePath, filepath.FromSlash(name)))
+		if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 ||
+			info.Size() != artifact.SizeBytes {
+			return Success{}, false, fmt.Errorf("workspace artifact is unavailable")
+		}
+	}
+	stored.Success.RequestID = request.RequestID
+	if _, err := EncodeResponse(Response{Status: "ok", Success: &stored.Success}); err != nil {
+		return Success{}, false, fmt.Errorf("validate workspace manifest: %w", err)
+	}
+	return stored.Success, true, nil
+}
+
+func writeManifest(workspacePath, archiveFingerprint string, success Success) error {
+	data, err := json.Marshal(manifest{
+		Version: manifestVersion, ArchiveFingerprint: archiveFingerprint, Success: success,
+	})
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(workspacePath, workspaceManifest)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return err
+	}
+	return os.Chmod(path, 0o600)
 }
 
 func workspaceGroup(rootPath string) (int, error) {

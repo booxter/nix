@@ -63,7 +63,13 @@ func TestMaterializeTarAudio(t *testing.T) {
 	if response.Success == nil || response.Failure != nil {
 		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
 	}
-	if files.verifyCalls != 1 || len(response.Success.Artifacts) != 2 || len(prober.paths) != 2 {
+	retry := validRequest()
+	retry.RequestID = "request:retry"
+	retried := executor.Execute(context.Background(), retry)
+	if retried.Success == nil || retried.Success.RequestID != retry.RequestID || retried.Failure != nil {
+		t.Fatalf("retried response = %#v, failure = %#v", retried, retried.Failure)
+	}
+	if files.verifyCalls != 2 || len(response.Success.Artifacts) != 2 || len(prober.paths) != 2 {
 		t.Fatalf("verify calls = %d, response = %#v, probes = %v", files.verifyCalls, response, prober.paths)
 	}
 	if response.Success.Artifacts[0].RelativePath != "release/01.flac" ||
