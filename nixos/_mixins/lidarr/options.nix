@@ -17,5 +17,13 @@
       default = 30;
       description = "Maximum duration of one Lidarr queue request.";
     };
+    apply = {
+      enable = lib.mkEnableOption "automatic application of Lidarr repairs";
+      allowedActions = lib.mkOption {
+        type = with lib.types; listOf (enum [ "import_missing_tracks_v1" ]);
+        default = [ ];
+        description = "Repair actions the automatic controller may apply.";
+      };
+    };
   };
 }

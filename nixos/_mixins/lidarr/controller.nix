@@ -9,12 +9,27 @@ let
   planner = config.host.mediaRepair.planner;
   worker = config.host.mediaRepair.worker;
   serviceName = "lidarr-repair-controller";
+  killSwitchFile = "/run/lidarr-repair-disable-apply";
   rootIDs = builtins.attrNames worker.roots;
   rootPaths = builtins.attrValues worker.roots;
   rootArguments = lib.concatMap (rootID: [
     "--worker-root"
     "${rootID}=${worker.roots.${rootID}}"
   ]) rootIDs;
+  actionArguments = lib.concatMap (action: [
+    "--allow-action"
+    action
+  ]) controller.apply.allowedActions;
+  modeArguments =
+    if controller.apply.enable then
+      [
+        "--apply"
+        "--kill-switch-file"
+        killSwitchFile
+      ]
+      ++ actionArguments
+    else
+      [ ];
   command =
     if controller == null then
       ""
@@ -39,6 +54,7 @@ let
           "--planner-timeout"
           "${toString (planner.planningTimeoutSeconds + 30)}s"
         ]
+        ++ modeArguments
         ++ rootArguments
       );
 in
@@ -48,6 +64,20 @@ in
       {
         assertion = worker.enable && planner.enable && worker.roots != { };
         message = "Lidarr repair requires the shared media worker and planner with roots.";
+      }
+      {
+        assertion = !controller.apply.enable || controller.apply.allowedActions != [ ];
+        message = "Lidarr repair apply mode requires at least one allowed action.";
+      }
+      {
+        assertion = controller.apply.enable || controller.apply.allowedActions == [ ];
+        message = "Lidarr repair actions can be allowed only when apply mode is enabled.";
+      }
+      {
+        assertion =
+          builtins.length controller.apply.allowedActions
+          == builtins.length (lib.unique controller.apply.allowedActions);
+        message = "Lidarr repair allowed actions must be unique.";
       }
     ];
 
@@ -59,7 +89,11 @@ in
     };
 
     systemd.services.${serviceName} = {
-      description = "Plan Lidarr import repairs in shadow mode";
+      description =
+        if controller.apply.enable then
+          "Plan and apply permitted Lidarr import repairs"
+        else
+          "Plan Lidarr import repairs in shadow mode";
       requires = [
         "radarr-repair-planner.socket"
         "radarr-repair-worker.service"
@@ -126,7 +160,7 @@ in
     };
 
     systemd.timers.${serviceName} = {
-      description = "Periodically plan Lidarr import repairs in shadow mode";
+      description = "Periodically run the Lidarr repair controller";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnActiveSec = "5m";

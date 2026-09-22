@@ -19,6 +19,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/plannerclient"
 	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 	"github.com/booxter/nix-config/radarr-repair/internal/workerclient"
+	"github.com/booxter/nix-config/radarr-repair/lidarrcontracts"
 )
 
 const (
@@ -28,23 +29,31 @@ const (
 )
 
 type config struct {
-	LidarrURL     string
-	APIKeyFile    string
-	StateDir      string
-	WorkerSocket  string
-	WorkerRoots   map[string]string
-	PlannerSocket string
-	RequestLimit  time.Duration
-	StageLimit    time.Duration
-	PlannerLimit  time.Duration
+	LidarrURL      string
+	APIKeyFile     string
+	StateDir       string
+	WorkerSocket   string
+	WorkerRoots    map[string]string
+	PlannerSocket  string
+	RequestLimit   time.Duration
+	StageLimit     time.Duration
+	PlannerLimit   time.Duration
+	Apply          bool
+	AllowedActions map[lidarrcontracts.DecisionAction]bool
+	KillSwitchFile string
+	PollInterval   time.Duration
 }
 
 type report struct {
-	Observed   int
-	Candidates int
-	Planned    int
-	Cached     int
-	NoRepair   int
+	Observed      int
+	Candidates    int
+	Planned       int
+	Cached        int
+	NoRepair      int
+	Actions       int
+	Imported      int
+	Failed        int
+	ApplyDisabled bool
 }
 
 type observeFunc func(context.Context, config) (report, error)
@@ -54,7 +63,22 @@ type application struct {
 }
 
 func run(ctx context.Context, arguments []string, stdout, stderr io.Writer) error {
-	return application{observe: runShadow}.run(ctx, arguments, stdout, stderr)
+	return application{observe: runController}.run(ctx, arguments, stdout, stderr)
+}
+
+type allowedActionsValue struct {
+	actions map[lidarrcontracts.DecisionAction]bool
+}
+
+func (value *allowedActionsValue) String() string { return "" }
+
+func (value *allowedActionsValue) Set(raw string) error {
+	action := lidarrcontracts.DecisionAction(raw)
+	if action != lidarrcontracts.ActionImportMissingTracks {
+		return fmt.Errorf("action %q cannot be allowed for automatic Lidarr repair", raw)
+	}
+	value.actions[action] = true
+	return nil
 }
 
 func (app application) run(
@@ -70,7 +94,8 @@ func (app application) run(
 			stderr,
 			"usage: lidarr-repair --lidarr-url URL --lidarr-api-key-file FILE "+
 				"--worker-socket PATH --worker-root ID=PATH --planner-socket PATH "+
-				"--state-directory DIR",
+				"--state-directory DIR [--apply --allow-action ACTION "+
+				"--kill-switch-file FILE]",
 		)
 	}
 	lidarrURL := flags.String("lidarr-url", "", "loopback Lidarr URL")
@@ -83,6 +108,15 @@ func (app application) run(
 	timeout := flags.Duration("request-timeout", defaultRequestTimeout, "Lidarr request timeout")
 	stageTimeout := flags.Duration("worker-stage-timeout", defaultStageTimeout, "worker stage timeout")
 	plannerTimeout := flags.Duration("planner-timeout", defaultPlannerTimeout, "planner request timeout")
+	apply := flags.Bool("apply", false, "acknowledge that one permitted repair may be applied")
+	allowed := allowedActionsValue{actions: make(map[lidarrcontracts.DecisionAction]bool)}
+	flags.Var(&allowed, "allow-action", "repair action to permit; repeatable")
+	killSwitchFile := flags.String(
+		"kill-switch-file", "", "existing filesystem entry disables repair application",
+	)
+	pollInterval := flags.Duration(
+		"poll-interval", 2*time.Second, "Lidarr import confirmation poll interval",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -95,6 +129,8 @@ func (app application) run(
 		StateDir: *stateDirectory, WorkerSocket: *workerSocket,
 		WorkerRoots: workerRoots.Paths(), PlannerSocket: *plannerSocket,
 		RequestLimit: *timeout, StageLimit: *stageTimeout, PlannerLimit: *plannerTimeout,
+		Apply: *apply, AllowedActions: allowed.actions, KillSwitchFile: *killSwitchFile,
+		PollInterval: *pollInterval,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -111,8 +147,10 @@ func (app application) run(
 	}
 	_, err = fmt.Fprintf(
 		stdout,
-		"observed=%d candidates=%d planned=%d cached=%d no_repair=%d actions=0\n",
+		"observed=%d candidates=%d planned=%d cached=%d no_repair=%d "+
+			"actions=%d imported=%d failed=%d apply_disabled=%t\n",
 		result.Observed, result.Candidates, result.Planned, result.Cached, result.NoRepair,
+		result.Actions, result.Imported, result.Failed, result.ApplyDisabled,
 	)
 	return err
 }
@@ -142,13 +180,24 @@ func validateConfig(configuration config) error {
 		return fmt.Errorf("at least one worker root is required")
 	}
 	if configuration.RequestLimit <= 0 || configuration.StageLimit <= 0 ||
-		configuration.PlannerLimit <= 0 {
+		configuration.PlannerLimit <= 0 || configuration.PollInterval <= 0 {
 		return fmt.Errorf("request timeouts must be positive")
+	}
+	if configuration.Apply {
+		if len(configuration.AllowedActions) == 0 {
+			return fmt.Errorf("at least one --allow-action is required in apply mode")
+		}
+		if !filepath.IsAbs(configuration.KillSwitchFile) ||
+			filepath.Clean(configuration.KillSwitchFile) != configuration.KillSwitchFile {
+			return fmt.Errorf("kill-switch file must be an absolute clean path")
+		}
+	} else if len(configuration.AllowedActions) != 0 || configuration.KillSwitchFile != "" {
+		return fmt.Errorf("apply guards require --apply")
 	}
 	return nil
 }
 
-func runShadow(ctx context.Context, configuration config) (report, error) {
+func runController(ctx context.Context, configuration config) (report, error) {
 	apiKey, err := servarr.ReadAPIKey("Lidarr", configuration.APIKeyFile)
 	if err != nil {
 		return report{}, err
@@ -191,10 +240,84 @@ func runShadow(ctx context.Context, configuration config) (report, error) {
 		return report{}, err
 	}
 	result, err := runner.Run(ctx)
-	return report{
+	controllerReport := report{
 		Observed: result.Observed, Candidates: result.Candidates,
 		Planned: result.Planned, Cached: result.Cached, NoRepair: result.NoRepair,
-	}, err
+	}
+	if err != nil || !configuration.Apply {
+		return controllerReport, err
+	}
+	disabled, err := applyDisabled(configuration.KillSwitchFile)
+	if err != nil {
+		return controllerReport, err
+	}
+	if disabled {
+		controllerReport.ApplyDisabled = true
+		return controllerReport, nil
+	}
+	importer, err := lidarrrepair.NewImportExecutor(lidarrrepair.ImportExecutorDependencies{
+		Lidarr: client, Store: store, Clock: wallClock{}, Waiter: servarr.Timer{},
+		PollInterval: configuration.PollInterval,
+	})
+	if err != nil {
+		return controllerReport, err
+	}
+	queues, err := client.ReadQueue(ctx)
+	if err != nil {
+		return controllerReport, fmt.Errorf("refresh Lidarr queue before apply: %w", err)
+	}
+	for _, queue := range queues {
+		planned, found, readErr := store.Get(queue.ID)
+		if readErr != nil {
+			return controllerReport, readErr
+		}
+		if !found {
+			continue
+		}
+		decision, decodeErr := lidarrcontracts.DecodeDecision(planned.Decision)
+		if decodeErr != nil {
+			return controllerReport, decodeErr
+		}
+		if !configuration.AllowedActions[decision.Kind] {
+			continue
+		}
+		current, buildErr := runner.BuildCurrentEvidence(ctx, queue)
+		if buildErr != nil {
+			return controllerReport, fmt.Errorf("queue %d: refresh repair evidence: %w", queue.ID, buildErr)
+		}
+		authorized, accepted, authorizeErr := lidarrrepair.AuthorizeImport(planned, current)
+		if authorizeErr != nil {
+			return controllerReport, fmt.Errorf("queue %d: authorize repair: %w", queue.ID, authorizeErr)
+		}
+		if !accepted {
+			continue
+		}
+		execution, executeErr := importer.Execute(ctx, authorized)
+		controllerReport.Actions++
+		switch execution.State {
+		case lidarrrepair.Imported:
+			controllerReport.Imported++
+		case lidarrrepair.ImportFailed:
+			controllerReport.Failed++
+		}
+		return controllerReport, executeErr
+	}
+	return controllerReport, nil
+}
+
+type wallClock struct{}
+
+func (wallClock) Now() time.Time { return time.Now() }
+
+func applyDisabled(path string) (bool, error) {
+	_, err := os.Lstat(path)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, fmt.Errorf("inspect Lidarr repair kill switch: %w", err)
 }
 
 func main() {
