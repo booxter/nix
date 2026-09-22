@@ -83,6 +83,39 @@ func TestImportExecutorNeverRepeatsUncertainSubmission(t *testing.T) {
 	}
 }
 
+func TestImportExecutorFailsWhenCompletedCommandHasNoImportHistory(t *testing.T) {
+	t.Parallel()
+	authorized := testAuthorizedImport()
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	client := &fakeImportClient{
+		command: servarr.Command{ID: 81, Name: "ManualImport", Status: servarr.CommandQueued},
+		commands: []servarr.Command{{
+			ID: 81, Name: "ManualImport", Status: servarr.CommandCompleted,
+		}},
+	}
+	store := &fakeImportStore{}
+	waiter := &fakeImportWaiter{}
+	executor, err := NewImportExecutor(ImportExecutorDependencies{
+		Lidarr: client, Store: store, Clock: importFixedClock{now: now},
+		Waiter: waiter, PollInterval: time.Second,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	execution, err := executor.Execute(context.Background(), authorized)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution.State != ImportFailed || client.requests != 1 ||
+		client.commandReads <= 1 || waiter.waits <= 0 {
+		t.Fatalf(
+			"execution=%#v requests=%d commands=%d waits=%d",
+			execution, client.requests, client.commandReads, waiter.waits,
+		)
+	}
+}
+
 func testAuthorizedImport() AuthorizedImport {
 	quality := &starr.Quality{Quality: &starr.BaseQuality{ID: 6, Name: "FLAC"}}
 	return AuthorizedImport{

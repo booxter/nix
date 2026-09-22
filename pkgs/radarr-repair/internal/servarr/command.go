@@ -35,13 +35,14 @@ type ImportCommandDisposition uint8
 
 const (
 	ImportCommandPending ImportCommandDisposition = iota + 1
+	ImportCommandCompleted
 	ImportCommandFailed
 )
 
-// ClassifyImportCommand determines whether an import command has definitely
-// failed. A completed command remains pending until history confirms every
-// imported file. Some Servarr applications do not expose a command result;
-// callers choose whether a completed command must include one.
+// ClassifyImportCommand distinguishes active, completed, and definitely failed
+// commands. History remains the authority for whether each file was imported.
+// Some Servarr applications do not expose a command result; callers choose
+// whether a completed command must include one.
 func ClassifyImportCommand(
 	service string,
 	command Command,
@@ -60,12 +61,12 @@ func ClassifyImportCommand(
 	case CommandCompleted:
 		switch command.Result {
 		case CommandResultSuccessful:
-			return ImportCommandPending, nil
+			return ImportCommandCompleted, nil
 		case CommandResultUnsuccessful:
 			return ImportCommandFailed, nil
 		case "":
 			if !requireCompletionResult {
-				return ImportCommandPending, nil
+				return ImportCommandCompleted, nil
 			}
 		}
 		return 0, fmt.Errorf(

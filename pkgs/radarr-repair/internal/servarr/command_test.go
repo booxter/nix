@@ -7,7 +7,7 @@ func TestCompletedImportWithoutResult(t *testing.T) {
 	command := Command{Status: CommandCompleted}
 
 	disposition, err := ClassifyImportCommand("Lidarr", command, false)
-	if err != nil || disposition != ImportCommandPending {
+	if err != nil || disposition != ImportCommandCompleted {
 		t.Fatalf("disposition = %d, error = %v", disposition, err)
 	}
 	if _, err := ClassifyImportCommand("Radarr", command, true); err == nil {

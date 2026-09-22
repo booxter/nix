@@ -137,12 +137,12 @@ func TestClassifyImportCommand(t *testing.T) {
 			disposition: servarr.ImportCommandPending,
 		},
 		{
-			name: "completed successfully pending history confirmation",
+			name: "completed successfully",
 			command: servarr.Command{
 				Status: servarr.CommandCompleted,
 				Result: servarr.CommandResultSuccessful,
 			},
-			disposition: servarr.ImportCommandPending,
+			disposition: servarr.ImportCommandCompleted,
 		},
 		{
 			name: "completed unsuccessfully",

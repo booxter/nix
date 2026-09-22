@@ -9,6 +9,8 @@ import (
 
 type ImportExecutionState uint8
 
+const completedConfirmationChecks = 12
+
 const (
 	ImportPrepared ImportExecutionState = iota + 1
 	ImportRequested
@@ -194,6 +196,7 @@ func (flow *ImportExecution[Execution]) follow(
 			flow.dependencies.Operation,
 		)
 	}
+	completedChecks := 0
 	for {
 		confirmed, found, err := flow.dependencies.Confirm(ctx, execution)
 		if err != nil || found {
@@ -218,25 +221,37 @@ func (flow *ImportExecution[Execution]) follow(
 			return execution, err
 		}
 		if disposition == ImportCommandFailed {
-			failedAt, nowErr := flow.now()
-			if nowErr != nil {
-				return execution, nowErr
+			return flow.fail(execution)
+		}
+		if disposition == ImportCommandCompleted {
+			completedChecks++
+			if completedChecks >= completedConfirmationChecks {
+				return flow.fail(execution)
 			}
-			execution, err = flow.dependencies.MarkFailed(execution, failedAt)
-			if err != nil {
-				return execution, fmt.Errorf(
-					"record failed %s %s: %w",
-					flow.dependencies.Service,
-					flow.dependencies.Operation,
-					err,
-				)
-			}
-			return execution, nil
+		} else {
+			completedChecks = 0
 		}
 		if err := flow.dependencies.Waiter.Wait(ctx, flow.dependencies.PollInterval); err != nil {
 			return execution, err
 		}
 	}
+}
+
+func (flow *ImportExecution[Execution]) fail(execution Execution) (Execution, error) {
+	failedAt, err := flow.now()
+	if err != nil {
+		return execution, err
+	}
+	execution, err = flow.dependencies.MarkFailed(execution, failedAt)
+	if err != nil {
+		return execution, fmt.Errorf(
+			"record failed %s %s: %w",
+			flow.dependencies.Service,
+			flow.dependencies.Operation,
+			err,
+		)
+	}
+	return execution, nil
 }
 
 func (flow *ImportExecution[Execution]) uncertain(
