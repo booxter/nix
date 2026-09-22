@@ -8,15 +8,15 @@ let
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner {
     inherit (pkgs) pythonRuffCheckHook;
   };
-  radarrRepairContracts = pkgs.callPackage ./radarr-repair/contracts.nix { };
-  radarrRepairGoModels = pkgs.callPackage ./radarr-repair/go-models.nix {
-    contracts = radarrRepairContracts;
+  mediaRepairContracts = pkgs.callPackage ./media-repair/contracts.nix { };
+  mediaRepairGoModels = pkgs.callPackage ./media-repair/go-models.nix {
+    contracts = mediaRepairContracts;
   };
-  radarrRepairPydanticModels = pkgs.callPackage ./radarr-repair/pydantic-models.nix {
-    contracts = radarrRepairContracts;
+  mediaRepairPydanticModels = pkgs.callPackage ./media-repair/pydantic-models.nix {
+    contracts = mediaRepairContracts;
   };
-  radarrRepair = pkgs.callPackage ./radarr-repair {
-    goModels = radarrRepairGoModels;
+  mediaRepair = pkgs.callPackage ./media-repair {
+    goModels = mediaRepairGoModels;
     mkvtoolnixCli = pkgs.mkvtoolnix-cli;
   };
 in
@@ -37,7 +37,18 @@ in
 
   git-command-runner = gitCommandRunner;
 
-  lidarr-repair = radarrRepair.lidarrController;
+  lidarr-repair = mediaRepair.lidarrController;
+
+  media-repair-contracts = mediaRepairContracts;
+
+  media-repair-go-models = mediaRepairGoModels;
+
+  media-repair-planner = pkgs.callPackage ./media-repair-planner {
+    contracts = mediaRepairContracts;
+    pydanticModels = mediaRepairPydanticModels;
+  };
+
+  media-repair-worker = mediaRepair.worker;
 
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {
     inherit atomicFileWrites;
@@ -47,18 +58,7 @@ in
 
   pythonRuffCheckHook = pkgs.callPackage ./python-ruff-check-hook { };
 
-  radarr-repair = radarrRepair.controller;
-
-  radarr-repair-worker = radarrRepair.worker;
-
-  radarr-repair-planner = pkgs.callPackage ./radarr-repair-planner {
-    contracts = radarrRepairContracts;
-    pydanticModels = radarrRepairPydanticModels;
-  };
-
-  radarr-repair-contracts = radarrRepairContracts;
-
-  radarr-repair-go-models = radarrRepairGoModels;
+  radarr-repair = mediaRepair.controller;
 
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;

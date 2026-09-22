@@ -95,14 +95,14 @@ in
         else
           "Plan Lidarr import repairs in shadow mode";
       requires = [
-        "radarr-repair-planner.socket"
-        "radarr-repair-worker.service"
+        "media-repair-planner.socket"
+        "media-repair-worker.service"
         "lidarr.service"
         "sops-install-secrets.service"
       ];
       after = [
-        "radarr-repair-planner.socket"
-        "radarr-repair-worker.service"
+        "media-repair-planner.socket"
+        "media-repair-worker.service"
         "lidarr.service"
         "sops-install-secrets.service"
       ];

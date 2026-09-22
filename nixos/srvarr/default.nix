@@ -80,7 +80,7 @@ in
     ./glance.nix
     ./observability.nix
     ./pinepods.nix
-    ./radarr-repair.nix
+    ./media-repair.nix
     ./romm.nix
     ./sabnzbd.nix
     ./shelfmark

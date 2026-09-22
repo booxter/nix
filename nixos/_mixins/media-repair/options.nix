@@ -4,18 +4,18 @@
     enable = lib.mkEnableOption "isolated media repair worker";
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.radarr-repair-worker;
+      default = pkgs.media-repair-worker;
       description = "Shared media repair worker package.";
     };
     socketPath = lib.mkOption {
       type = lib.types.strMatching "^/.+";
-      default = "/run/radarr-repair-worker/worker.sock";
+      default = "/run/media-repair-worker/worker.sock";
       readOnly = true;
       description = "Local media repair worker socket.";
     };
     clientGroup = lib.mkOption {
       type = lib.types.str;
-      default = "radarr-repair-worker-clients";
+      default = "media-repair-worker-clients";
       readOnly = true;
       description = "Group allowed to call the media repair worker.";
     };
@@ -50,18 +50,18 @@
     enable = lib.mkEnableOption "shared Servarr repair planning service";
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.radarr-repair-planner;
+      default = pkgs.media-repair-planner;
       description = "Shared Servarr repair planner package.";
     };
     socketPath = lib.mkOption {
       type = lib.types.strMatching "^/.+";
-      default = "/run/radarr-repair-planner.sock";
+      default = "/run/media-repair-planner.sock";
       readOnly = true;
       description = "Local repair planner API socket.";
     };
     clientGroup = lib.mkOption {
       type = lib.types.str;
-      default = "radarr-repair-planner-clients";
+      default = "media-repair-planner-clients";
       readOnly = true;
       description = "Group allowed to call the local repair planner API.";
     };

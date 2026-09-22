@@ -18,7 +18,7 @@
       uid = 296;
       group = null;
     };
-    radarr-repair-worker = {
+    media-repair-worker = {
       uid = 300;
       group = null;
     };
