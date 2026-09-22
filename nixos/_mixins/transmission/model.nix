@@ -37,7 +37,7 @@ let
   };
   torrentPolicy = {
     preferred = {
-      priority = mkRatioPriority "high";
+      priority = mkRatioPriority "normal";
       stop = null;
       cleanup = null;
     };

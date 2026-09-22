@@ -75,7 +75,7 @@ def ratio_policy(after: Priority) -> RatioPriorityPolicy:
 def policy() -> TorrentPolicy:
     return TorrentPolicy(
         preferred=TorrentClassPolicy(
-            priority=ratio_policy(Priority.HIGH),
+            priority=ratio_policy(Priority.NORMAL),
             stop=None,
             cleanup=None,
         ),
@@ -110,7 +110,7 @@ def test_over_age_incomplete_torrent_is_deleted(tmp_path: Path) -> None:
             torrent(
                 hash_string="old-public",
                 name="old-public",
-                added_date=int(NOW) - 366 * DAY_SECONDS,
+                added_date=int(NOW) - 365 * DAY_SECONDS,
                 left_until_done=1024,
                 percent_done=0.5,
                 done_date=0,
@@ -171,12 +171,20 @@ def test_preferred_torrent_is_exempt_by_host_or_announce(tmp_path: Path) -> None
                 hash_string="preferred-host",
                 name="preferred-host",
                 added_date=int(NOW) - 366 * DAY_SECONDS,
+                done_date=int(NOW) - 366 * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=99.0,
                 tracker_stats=[{"host": "preferred.example"}],
             ),
             torrent(
                 hash_string="preferred-announce",
                 name="preferred-announce",
                 added_date=int(NOW) - 366 * DAY_SECONDS,
+                done_date=int(NOW) - 366 * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=99.0,
                 tracker_stats=[{"announce": "https://preferred.example/announce"}],
             ),
         ],
@@ -204,6 +212,37 @@ def test_old_complete_high_ratio_torrent_is_deleted(tmp_path: Path) -> None:
 
     assert result == 0
     assert client.removed == [(["old-high-ratio"], True)]
+
+
+@pytest.mark.parametrize(
+    ("completion_age_days", "expected_removed"),
+    [
+        (29, False),
+        (30, True),
+    ],
+)
+def test_completed_age_boundary(
+    tmp_path: Path,
+    completion_age_days: int,
+    expected_removed: bool,
+) -> None:
+    result, client = run_cleaner(
+        tmp_path,
+        [
+            torrent(
+                hash_string="ratio-target",
+                name="ratio-target",
+                added_date=int(NOW) - (completion_age_days + 1) * DAY_SECONDS,
+                done_date=int(NOW) - completion_age_days * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=3.0,
+            )
+        ],
+    )
+
+    assert result == 0
+    assert bool(client.removed) is expected_removed
 
 
 def test_dry_run_orders_candidates_without_removing(tmp_path: Path) -> None:

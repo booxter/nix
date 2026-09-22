@@ -81,7 +81,7 @@ def ratio_policy(after: Priority) -> RatioPriorityPolicy:
 def policy() -> TorrentPolicy:
     return TorrentPolicy(
         preferred=TorrentClassPolicy(
-            priority=ratio_policy(Priority.HIGH),
+            priority=ratio_policy(Priority.NORMAL),
             stop=None,
             cleanup=None,
         ),
@@ -123,7 +123,9 @@ def collect(tmp_path: Path, torrents: list[core.Torrent]) -> core.IterationState
 @pytest.mark.parametrize(
     ("is_preferred", "ratio", "expected"),
     [
-        (True, 99.0, core.TR_PRI_HIGH),
+        (True, 2.9, core.TR_PRI_HIGH),
+        (True, 3.0, core.TR_PRI_NORMAL),
+        (True, 6.0, core.TR_PRI_NORMAL),
         (False, 2.9, core.TR_PRI_HIGH),
         (False, 3.0, core.TR_PRI_LOW),
     ],
@@ -184,6 +186,7 @@ def test_pause_policy_only_stops_running_complete_public_torrents(tmp_path: Path
             torrent(hash_string="incomplete", upload_ratio=6.0, left_until_done=1),
             torrent(
                 hash_string="preferred",
+                bandwidth_priority=core.TR_PRI_HIGH,
                 upload_ratio=6.0,
                 tracker_stats=[{"host": "preferred.example"}],
             ),
@@ -191,6 +194,7 @@ def test_pause_policy_only_stops_running_complete_public_torrents(tmp_path: Path
     )
 
     assert state.stop_hashes == ["running"]
+    assert state.normal_priority_hashes == ["preferred"]
     assert state.low_priority_hashes == ["incomplete", "running", "stopped"]
 
 
