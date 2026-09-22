@@ -817,7 +817,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: attic-built-paths-*
-          path: attic-built-paths
+          path: ${{ runner.temp }}/attic-built-path-manifests
 
       - name: Checkout
         if: steps.credentials.outputs.available == 'true'
@@ -835,14 +835,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          manifests="${RUNNER_TEMP}/attic-built-path-manifests"
+          manifest_directory="${RUNNER_TEMP}/attic-built-path-manifests"
+          manifests="${RUNNER_TEMP}/attic-built-path-manifests.txt"
           paths="${RUNNER_TEMP}/attic-built-paths"
           available_paths="${RUNNER_TEMP}/attic-available-paths"
-          if [ ! -d attic-built-paths ]; then
+          if [ ! -d "${manifest_directory}" ]; then
             echo 'No built path manifests were uploaded; skipping publication.'
             exit 0
           fi
-          find attic-built-paths -type f -print0 \
+          find "${manifest_directory}" -type f -print0 \
             | xargs -0 cat \
             | sort -u >"${manifests}"
           while IFS= read -r path; do
