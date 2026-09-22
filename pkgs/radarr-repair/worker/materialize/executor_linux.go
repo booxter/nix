@@ -174,7 +174,7 @@ func (executor *Executor) extractAndProbe(
 		if entries > maximumEntries {
 			return nil, fmt.Errorf("archive contains too many entries")
 		}
-		name, err := safeArchiveName(header.Name)
+		name, err := safeArchiveName(header.Name, header.Typeflag == tar.TypeDir)
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +272,10 @@ func ensureWorkspaceDirectory(directory string, groupID int) error {
 	return os.Chmod(directory, 0o750)
 }
 
-func safeArchiveName(name string) (string, error) {
+func safeArchiveName(name string, directory bool) (string, error) {
+	if directory {
+		name = strings.TrimSuffix(name, "/")
+	}
 	if name == "" || strings.ContainsAny(name, "\\\x00") || strings.HasPrefix(name, "/") {
 		return "", fmt.Errorf("archive path is unsafe")
 	}

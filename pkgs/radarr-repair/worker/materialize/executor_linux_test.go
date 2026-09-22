@@ -47,6 +47,7 @@ func TestMaterializeTarAudio(t *testing.T) {
 	}
 	archive := filepath.Join(root, "release.tar")
 	writeTar(t, archive, []tarEntry{
+		{name: "release/", typeflag: tar.TypeDir},
 		{name: "release/cover.jpg", body: "cover"},
 		{name: "release/02.flac", body: "second"},
 		{name: "release/01.flac", body: "first"},
@@ -132,18 +133,25 @@ func probeWorkspaceSetup(t *testing.T, root string) {
 func TestSafeArchiveName(t *testing.T) {
 	t.Parallel()
 	for _, name := range []string{"../track.flac", "/track.flac", "dir/../track.flac", "dir\\track.flac"} {
-		if _, err := safeArchiveName(name); err == nil {
+		if _, err := safeArchiveName(name, false); err == nil {
 			t.Fatalf("unsafe path accepted: %q", name)
 		}
 	}
-	if got, err := safeArchiveName("album/01.flac"); err != nil || got != "album/01.flac" {
+	if got, err := safeArchiveName("album/01.flac", false); err != nil || got != "album/01.flac" {
 		t.Fatalf("safe path = %q, %v", got, err)
+	}
+	if got, err := safeArchiveName("album/", true); err != nil || got != "album" {
+		t.Fatalf("safe directory = %q, %v", got, err)
+	}
+	if _, err := safeArchiveName("album/", false); err == nil {
+		t.Fatal("file path with trailing slash accepted")
 	}
 }
 
 type tarEntry struct {
-	name string
-	body string
+	name     string
+	body     string
+	typeflag byte
 }
 
 func writeTar(t *testing.T, path string, entries []tarEntry) {
@@ -154,8 +162,12 @@ func writeTar(t *testing.T, path string, entries []tarEntry) {
 	}
 	writer := tar.NewWriter(output)
 	for _, entry := range entries {
+		typeflag := entry.typeflag
+		if typeflag == 0 {
+			typeflag = tar.TypeReg
+		}
 		if err := writer.WriteHeader(&tar.Header{
-			Name: entry.name, Mode: 0o644, Size: int64(len(entry.body)), Typeflag: tar.TypeReg,
+			Name: entry.name, Mode: 0o644, Size: int64(len(entry.body)), Typeflag: typeflag,
 		}); err != nil {
 			t.Fatal(err)
 		}
