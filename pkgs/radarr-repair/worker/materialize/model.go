@@ -74,6 +74,24 @@ func DecodeRequest(data []byte) (Request, error) {
 	return request, nil
 }
 
+func EncodeRequest(request Request) ([]byte, error) {
+	if err := validateRequest(request); err != nil {
+		return nil, err
+	}
+	return json.Marshal(request)
+}
+
+func DecodeResponse(data []byte) (Response, error) {
+	var response Response
+	if err := decodeStrict(data, &response); err != nil {
+		return Response{}, err
+	}
+	if err := validateResponse(response); err != nil {
+		return Response{}, err
+	}
+	return response, nil
+}
+
 func EncodeResponse(response Response) ([]byte, error) {
 	if err := validateResponse(response); err != nil {
 		return nil, err
@@ -112,9 +130,34 @@ func validateRequest(request Request) error {
 
 func validateResponse(response Response) error {
 	if response.Status == "ok" && response.Success != nil && response.Failure == nil {
+		if response.Success.SchemaVersion != SchemaVersion ||
+			response.Success.Operation != OperationMaterializeTar ||
+			!opaqueID.MatchString(response.Success.RequestID) ||
+			!opaqueID.MatchString(response.Success.RootID) ||
+			!validComponents(response.Success.WorkspaceComponents) ||
+			len(response.Success.Artifacts) == 0 {
+			return fmt.Errorf("materialization success is incomplete")
+		}
+		seen := make(map[string]struct{}, len(response.Success.Artifacts))
+		for _, artifact := range response.Success.Artifacts {
+			if !opaqueID.MatchString(artifact.ArtifactID) ||
+				!fingerprint.MatchString(artifact.Fingerprint) || artifact.SizeBytes <= 0 ||
+				artifact.RelativePath == "" || !validComponents(artifact.PathComponents) {
+				return fmt.Errorf("materialization artifact is incomplete")
+			}
+			if _, duplicate := seen[artifact.ArtifactID]; duplicate {
+				return fmt.Errorf("materialization artifact is duplicated")
+			}
+			seen[artifact.ArtifactID] = struct{}{}
+		}
 		return nil
 	}
 	if response.Status == "failed" && response.Success == nil && response.Failure != nil {
+		if response.Failure.SchemaVersion != SchemaVersion ||
+			response.Failure.Operation != OperationMaterializeTar ||
+			!opaqueID.MatchString(response.Failure.RequestID) || response.Failure.Reason == "" {
+			return fmt.Errorf("materialization failure is incomplete")
+		}
 		return nil
 	}
 	return fmt.Errorf("materialization response must contain exactly one result")

@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairartifact"
 )
 
@@ -356,16 +356,7 @@ func newEntrySnapshot(path string, info os.FileInfo) (entrySnapshot, error) {
 }
 
 func snapshot(info os.FileInfo) (controller.FileFingerprint, error) {
-	stat, ok := info.Sys().(*syscall.Stat_t)
-	if !ok {
-		return controller.FileFingerprint{}, fmt.Errorf("unsupported filesystem metadata")
-	}
-	return controller.FileFingerprint{
-		Device:    uint64(stat.Dev),
-		Inode:     uint64(stat.Ino),
-		SizeBytes: info.Size(),
-		MTimeNS:   info.ModTime().UnixNano(),
-	}, nil
+	return fileidentity.FromFileInfo(info)
 }
 
 func sameSnapshot(left, right controller.FileFingerprint) bool {
