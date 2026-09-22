@@ -63,6 +63,17 @@ type RootSet struct {
 	paths map[string]string
 }
 
+func (rootSet *RootSet) Path(rootID string) (string, error) {
+	if rootSet == nil || rootSet.paths == nil {
+		return "", &Failure{Kind: FailureInternal}
+	}
+	path, found := rootSet.paths[rootID]
+	if !found {
+		return "", &Failure{Kind: FailureUnknownRoot}
+	}
+	return path, nil
+}
+
 func NewRootSet(rootPaths map[string]string) (*RootSet, error) {
 	rootIDs := make([]string, 0, len(rootPaths))
 	for rootID := range rootPaths {

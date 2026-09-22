@@ -34,7 +34,10 @@ pkgs.testers.runNixOSTest {
         };
       };
 
-      systemd.tmpfiles.rules = [ "d ${mediaRoot} 0750 root media -" ];
+      systemd.tmpfiles.rules = [
+        "d ${mediaRoot} 0750 root media -"
+        "d ${mediaRoot}/.media-repair 2750 radarr-repair-worker media -"
+      ];
     };
   };
 

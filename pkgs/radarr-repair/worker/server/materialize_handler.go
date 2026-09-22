@@ -1,0 +1,37 @@
+package workerserver
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/booxter/nix-config/radarr-repair/worker/materialize"
+)
+
+const materializeTarPath = "/v1/materialize/tar-audio"
+
+type MaterializeExecutor interface {
+	Execute(context.Context, materialize.Request) materialize.Response
+}
+
+type MaterializeHandler = operationHandler[materialize.Request, materialize.Response]
+
+func NewMaterializeHandler(
+	executor MaterializeExecutor,
+	timeout time.Duration,
+	maxConcurrent int,
+) (*MaterializeHandler, error) {
+	if executor == nil {
+		return nil, fmt.Errorf("materialization executor is required")
+	}
+	return newOperationHandler(
+		"materialize tar audio",
+		materializeTarPath,
+		materialize.MaxRequestBytes,
+		timeout,
+		maxConcurrent,
+		materialize.DecodeRequest,
+		executor.Execute,
+		materialize.EncodeResponse,
+	)
+}

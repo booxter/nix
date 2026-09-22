@@ -14,7 +14,15 @@ in
 {
   host.storage.claims.media.directories = {
     "${config.host.transmission.storage.relativePath}/.radarr-repair" = stagingDirectory;
+    "${config.host.transmission.storage.relativePath}/.media-repair" = stagingDirectory // {
+      group = "media";
+      mode = "2750";
+    };
     "${downloads.routes.radarr-usenet.storage.relativePath}/.radarr-repair" = stagingDirectory;
+    "${downloads.routes.radarr-usenet.storage.relativePath}/.media-repair" = stagingDirectory // {
+      group = "media";
+      mode = "2750";
+    };
   };
 
   host.radarr.repair.controller = {
