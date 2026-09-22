@@ -16,6 +16,7 @@ let
       ./contract-tests
       ./contracts
       ./internal
+      ./lidarrcontracts
       ./worker
       ./go.mod
       ./go.sum
@@ -88,16 +89,16 @@ let
       subPackages = [ "cmd/lidarr-repair" ];
 
       preCheck = ''
-        unformatted="$(gofmt -l cmd/lidarr-repair internal/lidarr internal/servarr)"
+        unformatted="$(gofmt -l cmd/lidarr-repair internal/lidarr internal/servarr lidarrcontracts)"
         if test -n "$unformatted"; then
-          gofmt -d cmd/lidarr-repair internal/lidarr internal/servarr >&2
+          gofmt -d cmd/lidarr-repair internal/lidarr internal/servarr lidarrcontracts >&2
           exit 1
         fi
-        go vet ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr
+        go vet ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr ./lidarrcontracts
       '';
       checkPhase = ''
         runHook preCheck
-        go test ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr -cover
+        go test ./cmd/lidarr-repair ./internal/lidarr ./internal/servarr ./lidarrcontracts -cover
         runHook postCheck
       '';
 
