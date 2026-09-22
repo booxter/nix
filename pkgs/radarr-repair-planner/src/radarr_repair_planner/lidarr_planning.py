@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .decision_validation import DecisionViolation
-from .lidarr_case_models import LidarrRepairCaseV1
+from .lidarr_case_models import LidarrRepairCaseV2
 from .lidarr_contracts import (
     decision_schema,
     decode_case,
@@ -11,7 +11,7 @@ from .lidarr_contracts import (
 )
 from .lidarr_decision_models import (
     Explanation,
-    LidarrRepairDecisionV1,
+    LidarrRepairDecisionV2,
     NoRepair,
     Reason,
     Sha256Id,
@@ -29,15 +29,15 @@ class LidarrDecisionGenerator:
 
     async def generate(
         self,
-        repair_case: LidarrRepairCaseV1,
+        repair_case: LidarrRepairCaseV2,
         correction: tuple[DecisionViolation, ...],
-    ) -> LidarrRepairDecisionV1:
+    ) -> LidarrRepairDecisionV2:
         try:
             raw = await self._model.decide_json(
                 SYSTEM_INSTRUCTION,
                 encode_case(repair_case).decode(),
                 decision_schema(),
-                LidarrRepairDecisionV1,
+                LidarrRepairDecisionV2,
                 repair_case.case_id.root,
                 correction,
             )
@@ -49,17 +49,17 @@ class LidarrDecisionGenerator:
             ) from error
 
 
-def _roundtrip_case(repair_case: LidarrRepairCaseV1) -> LidarrRepairCaseV1:
+def _roundtrip_case(repair_case: LidarrRepairCaseV2) -> LidarrRepairCaseV2:
     return decode_case(encode_case(repair_case))
 
 
-def _roundtrip_decision(decision: LidarrRepairDecisionV1) -> LidarrRepairDecisionV1:
+def _roundtrip_decision(decision: LidarrRepairDecisionV2) -> LidarrRepairDecisionV2:
     return decode_decision(encode_decision(decision))
 
 
-def _fallback(repair_case: LidarrRepairCaseV1) -> LidarrRepairDecisionV1:
+def _fallback(repair_case: LidarrRepairCaseV2) -> LidarrRepairDecisionV2:
     return _roundtrip_decision(
-        LidarrRepairDecisionV1(
+        LidarrRepairDecisionV2(
             root=NoRepair(
                 action="no_repair",
                 case_id=Sha256Id(root=repair_case.case_id.root),
@@ -68,13 +68,13 @@ def _fallback(repair_case: LidarrRepairCaseV1) -> LidarrRepairDecisionV1:
                     root="The planner could not produce a valid decision within its attempt limit."
                 ),
                 reason=Reason.unsafe_to_repair,
-                schema_version="lidarr-repair/v1",
+                schema_version="lidarr-repair/v2",
             )
         )
     )
 
 
-class LidarrPlanner(ContractPlanner[LidarrRepairCaseV1, LidarrRepairDecisionV1]):
+class LidarrPlanner(ContractPlanner[LidarrRepairCaseV2, LidarrRepairDecisionV2]):
     def __init__(self, model: StructuredDecisionModel) -> None:
         super().__init__(
             generator=LidarrDecisionGenerator(model),

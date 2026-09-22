@@ -24,7 +24,7 @@ func TestClientPlansLidarrCaseThroughSharedTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 	socketPath := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/lidarr/v1/repair-plans" {
+		if request.URL.Path != "/lidarr/v2/repair-plans" {
 			http.NotFound(writer, request)
 			return
 		}
@@ -54,10 +54,11 @@ func plannerLidarrCase(t *testing.T) lidarrcontracts.Case {
 			AlbumID: 3, ArtistID: 2, Artist: "Artist", Title: "Album", Monitored: true,
 		},
 		Releases: []lidarrcontracts.Release{{
-			ReleaseID: 4, Title: "Album", TrackCount: 1, MediumCount: 1, Monitored: true,
+			ReleaseID: 4, ForeignReleaseID: "release", Title: "Album",
+			Countries: []string{}, Labels: []string{}, TrackCount: 1, MediumCount: 1, Monitored: true,
 		}},
 		Tracks: []lidarrcontracts.Track{{
-			TrackID: 5, Number: "1", AbsoluteNumber: 1, MediumNumber: 1,
+			TrackID: 5, ReleaseID: 4, Number: "1", AbsoluteNumber: 1, MediumNumber: 1,
 			Title: "Track", DurationMS: 1000,
 		}},
 		Artifacts: []lidarrcontracts.Artifact{{
@@ -70,7 +71,7 @@ func plannerLidarrCase(t *testing.T) lidarrcontracts.Case {
 		Capabilities: []lidarrcontracts.Capability{{
 			Action: string(lidarrcontracts.ActionImportTrackSet), CapabilityID: "capability:one",
 			AlbumID: 3, ArtifactIDs: []string{"artifact:one"},
-			ReleaseIDs: []int64{4}, TrackIDs: []int64{5},
+			ReleaseID: 4, TrackIDs: []int64{5},
 		}},
 	}
 	caseID, err := lidarrcontracts.CalculateCaseID(repairCase)

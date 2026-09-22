@@ -12,7 +12,7 @@ stdenvNoCC.mkDerivation {
     fileset = lib.fileset.unions [
       ./contracts/v1
       ./contracts/v2
-      ./lidarrcontracts/v1
+      ./lidarrcontracts/v2
       ./contract-tests
       ./worker/contracts/v1
       ./worker/contract-tests
@@ -34,8 +34,8 @@ stdenvNoCC.mkDerivation {
     check-jsonschema --check-metaschema contracts/v1/repair-decision.schema.json
     check-jsonschema --check-metaschema contracts/v2/repair-case.schema.json
     check-jsonschema --check-metaschema contracts/v2/repair-decision.schema.json
-    check-jsonschema --check-metaschema lidarrcontracts/v1/repair-case.schema.json
-    check-jsonschema --check-metaschema lidarrcontracts/v1/repair-decision.schema.json
+    check-jsonschema --check-metaschema lidarrcontracts/v2/repair-case.schema.json
+    check-jsonschema --check-metaschema lidarrcontracts/v2/repair-decision.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-request.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/join-response.schema.json
     check-jsonschema --check-metaschema worker/contracts/v1/bluray-identify-request.schema.json
@@ -166,7 +166,7 @@ stdenvNoCC.mkDerivation {
     cp -R contracts/v1 "$out/share/radarr-repair/contracts/"
     cp -R contracts/v2 "$out/share/radarr-repair/contracts/"
     mkdir -p "$out/share/lidarr-repair/contracts"
-    cp -R lidarrcontracts/v1 "$out/share/lidarr-repair/contracts/"
+    cp -R lidarrcontracts/v2 "$out/share/lidarr-repair/contracts/"
     mkdir -p "$out/share/radarr-repair/contract-tests"
     cp -R contract-tests/v1 "$out/share/radarr-repair/contract-tests/"
     cp -R contract-tests/v2 "$out/share/radarr-repair/contract-tests/"

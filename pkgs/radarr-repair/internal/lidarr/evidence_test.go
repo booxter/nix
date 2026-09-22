@@ -20,12 +20,14 @@ func TestReadCatalogAndManualImportEvidence(t *testing.T) {
 				"artist": map[string]any{"id": 7, "artistName": "Wovenhand"},
 				"releases": []map[string]any{{
 					"id": 81, "albumId": 1380, "title": "The Threshingfloor",
+					"foreignReleaseId": "release-mbid", "country": []string{"Germany"},
+					"label":      []string{"Glitterhouse Records"},
 					"trackCount": 12, "mediumCount": 1, "format": "Vinyl", "monitored": true,
 				}},
 			})
 		case "/api/v1/track":
-			if request.URL.Query().Get("albumId") != "1380" {
-				http.Error(writer, "bad album", http.StatusBadRequest)
+			if request.URL.Query().Get("albumReleaseId") != "81" {
+				http.Error(writer, "bad release", http.StatusBadRequest)
 				return
 			}
 			_ = json.NewEncoder(writer).Encode([]map[string]any{{
@@ -73,11 +75,11 @@ func TestReadCatalogAndManualImportEvidence(t *testing.T) {
 	if album.ArtistName != "Wovenhand" || len(album.Releases) != 1 || album.Releases[0].ID != 81 {
 		t.Fatalf("album = %#v", album)
 	}
-	tracks, err := client.ReadTracks(context.Background(), 1380)
+	tracks, err := client.ReadReleaseTracks(context.Background(), 1380, 81)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tracks) != 1 || tracks[0].ID != 101 || tracks[0].HasFile {
+	if len(tracks) != 1 || tracks[0].ID != 101 || tracks[0].ReleaseID != 81 || tracks[0].HasFile {
 		t.Fatalf("tracks = %#v", tracks)
 	}
 	imports, err := client.ReadManualImports(context.Background(), ManualImportQuery{

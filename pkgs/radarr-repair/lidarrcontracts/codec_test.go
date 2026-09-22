@@ -86,11 +86,12 @@ func testCase(t *testing.T) Case {
 		},
 		Album: Album{AlbumID: 3, ArtistID: 2, Artist: "Artist", Title: "An Album", Monitored: true},
 		Releases: []Release{{
-			ReleaseID: 4, Title: "An Album", Disambiguation: "", Format: "Album",
+			ReleaseID: 4, ForeignReleaseID: "release", Title: "An Album",
+			Disambiguation: "", Format: "Album", Countries: []string{}, Labels: []string{},
 			TrackCount: 1, MediumCount: 1, Monitored: true,
 		}},
 		Tracks: []Track{{
-			TrackID: 5, Number: "1", AbsoluteNumber: 1, MediumNumber: 1,
+			TrackID: 5, ReleaseID: 4, Number: "1", AbsoluteNumber: 1, MediumNumber: 1,
 			Title: "A Track", DurationMS: 180000, HasFile: false,
 		}},
 		Artifacts: []Artifact{{
@@ -110,7 +111,7 @@ func testCase(t *testing.T) Case {
 		}},
 		Capabilities: []Capability{{
 			Action: string(ActionImportTrackSet), CapabilityID: "capability:one", AlbumID: 3,
-			ArtifactIDs: []string{"artifact:one"}, ReleaseIDs: []int64{4}, TrackIDs: []int64{5},
+			ArtifactIDs: []string{"artifact:one"}, ReleaseID: 4, TrackIDs: []int64{5},
 		}},
 	}
 	caseID, err := CalculateCaseID(repairCase)

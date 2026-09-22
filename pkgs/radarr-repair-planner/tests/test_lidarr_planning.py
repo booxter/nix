@@ -10,7 +10,7 @@ from radarr_repair_planner.api import ContractEndpoint, create_app
 from radarr_repair_planner.case_models import RepairCaseV2
 from radarr_repair_planner.decision_models import RepairDecisionV2
 from radarr_repair_planner.decision_validation import DecisionViolation, ViolationCode
-from radarr_repair_planner.lidarr_case_models import LidarrRepairCaseV1
+from radarr_repair_planner.lidarr_case_models import LidarrRepairCaseV2
 from radarr_repair_planner.lidarr_contracts import (
     ContractError,
     decode_case,
@@ -18,7 +18,7 @@ from radarr_repair_planner.lidarr_contracts import (
     encode_case,
     encode_decision,
 )
-from radarr_repair_planner.lidarr_decision_models import LidarrRepairDecisionV1
+from radarr_repair_planner.lidarr_decision_models import LidarrRepairDecisionV2
 from radarr_repair_planner.lidarr_planning import LidarrPlanner
 from radarr_repair_planner.lidarr_validation import (
     validate_decision_for_case,
@@ -75,6 +75,7 @@ def case_value() -> dict[str, object]:
         tracks.append(
             {
                 "track_id": number + 4,
+                "release_id": 4,
                 "number": str(number),
                 "absolute_number": number,
                 "medium_number": 1,
@@ -84,7 +85,7 @@ def case_value() -> dict[str, object]:
             }
         )
     return {
-        "schema_version": "lidarr-repair/v1",
+        "schema_version": "lidarr-repair/v2",
         "case_id": CASE_ID,
         "observed_at": "2026-09-21T12:00:00Z",
         "queue": {
@@ -103,9 +104,12 @@ def case_value() -> dict[str, object]:
         "releases": [
             {
                 "release_id": 4,
+                "foreign_release_id": "release",
                 "title": "Album",
                 "disambiguation": "",
                 "format": "Album",
+                "countries": [],
+                "labels": [],
                 "track_count": 2,
                 "medium_count": 1,
                 "monitored": True,
@@ -120,7 +124,7 @@ def case_value() -> dict[str, object]:
                 "capability_id": "capability:one",
                 "album_id": 3,
                 "artifact_ids": ["artifact:1", "artifact:2"],
-                "release_ids": [4],
+                "release_id": 4,
                 "track_ids": [5, 6],
             }
         ],
@@ -129,7 +133,7 @@ def case_value() -> dict[str, object]:
 
 def decision_value(**changes: object) -> dict[str, object]:
     value: dict[str, object] = {
-        "schema_version": "lidarr-repair/v1",
+        "schema_version": "lidarr-repair/v2",
         "case_id": CASE_ID,
         "action": "import_track_set_v1",
         "capability_id": "capability:one",
@@ -146,11 +150,11 @@ def decision_value(**changes: object) -> dict[str, object]:
     return value
 
 
-def repair_case() -> LidarrRepairCaseV1:
+def repair_case() -> LidarrRepairCaseV2:
     return decode_case(json.dumps(case_value()).encode())
 
 
-def repair_decision(**changes: object) -> LidarrRepairDecisionV1:
+def repair_decision(**changes: object) -> LidarrRepairDecisionV2:
     return decode_decision(json.dumps(decision_value(**changes)).encode())
 
 
@@ -168,7 +172,7 @@ class ScriptedModel:
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> str:
-        assert decision_model is LidarrRepairDecisionV1
+        assert decision_model is LidarrRepairDecisionV2
         self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
@@ -275,7 +279,7 @@ def test_lidarr_no_repair_is_valid() -> None:
     decision = decode_decision(
         json.dumps(
             {
-                "schema_version": "lidarr-repair/v1",
+                "schema_version": "lidarr-repair/v2",
                 "case_id": CASE_ID,
                 "action": "no_repair",
                 "reason": "ambiguous_tracks",
@@ -314,7 +318,7 @@ class NeverRadarrPlanner:
 
 
 class StaticLidarrPlanner:
-    async def plan(self, repair_case: LidarrRepairCaseV1) -> LidarrRepairDecisionV1:
+    async def plan(self, repair_case: LidarrRepairCaseV2) -> LidarrRepairDecisionV2:
         assert repair_case.case_id.root == CASE_ID
         return repair_decision()
 
@@ -327,12 +331,12 @@ async def test_lidarr_endpoint_uses_shared_http_boundary() -> None:
     )
     app = create_app(
         NeverRadarrPlanner(),
-        additional_endpoints={"/lidarr/v1/repair-plans": endpoint},
+        additional_endpoints={"/lidarr/v2/repair-plans": endpoint},
     )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/lidarr/v1/repair-plans",
+            "/lidarr/v2/repair-plans",
             content=encode_case(repair_case()),
             headers={"Content-Type": "application/json"},
         )

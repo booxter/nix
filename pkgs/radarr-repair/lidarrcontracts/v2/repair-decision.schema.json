@@ -49,7 +49,7 @@
           "$ref": "#/$defs/id"
         },
         "schema_version": {
-          "const": "lidarr-repair/v1"
+          "const": "lidarr-repair/v2"
         }
       },
       "required": [
@@ -113,7 +113,7 @@
           ]
         },
         "schema_version": {
-          "const": "lidarr-repair/v1"
+          "const": "lidarr-repair/v2"
         }
       },
       "required": [
@@ -135,7 +135,7 @@
       "type": "string"
     }
   },
-  "$id": "urn:lidarr-repair:schema:repair-decision:v1",
+  "$id": "urn:lidarr-repair:schema:repair-decision:v2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
@@ -145,5 +145,5 @@
       "$ref": "#/$defs/importTrackSet"
     }
   ],
-  "title": "Lidarr repair decision version 1"
+  "title": "Lidarr repair decision version 2"
 }

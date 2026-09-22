@@ -33,7 +33,7 @@ func ValidateDecision(
 	if capability == nil || capability.Action != string(lidarrcontracts.ActionImportTrackSet) {
 		return fmt.Errorf("Lidarr decision selects an unknown capability")
 	}
-	if selected.AlbumID != capability.AlbumID || !contains(capability.ReleaseIDs, selected.ReleaseID) {
+	if selected.AlbumID != capability.AlbumID || selected.ReleaseID != capability.ReleaseID {
 		return fmt.Errorf("Lidarr decision selects an album or release outside its capability")
 	}
 	artifacts := make(map[string]struct{}, len(selected.Mappings))

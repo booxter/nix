@@ -5,11 +5,11 @@ from .decision_validation import (
     ViolationCode,
     validate_object_against_action_schema,
 )
-from .lidarr_case_models import LidarrRepairCaseV1
+from .lidarr_case_models import LidarrRepairCaseV2
 from .lidarr_contracts import decision_schema
 from .lidarr_decision_models import (
     ImportTrackSet,
-    LidarrRepairDecisionV1,
+    LidarrRepairDecisionV2,
     NoRepair,
 )
 
@@ -38,7 +38,7 @@ def _invalid(
     )
 
 
-def _reference_ids(repair_case: LidarrRepairCaseV1) -> tuple[str, ...]:
+def _reference_ids(repair_case: LidarrRepairCaseV2) -> tuple[str, ...]:
     return tuple(
         sorted(
             {
@@ -50,8 +50,8 @@ def _reference_ids(repair_case: LidarrRepairCaseV1) -> tuple[str, ...]:
 
 
 def validate_decision_for_case(
-    repair_case: LidarrRepairCaseV1,
-    decision: LidarrRepairDecisionV1,
+    repair_case: LidarrRepairCaseV2,
+    decision: LidarrRepairDecisionV2,
 ) -> tuple[DecisionViolation, ...]:
     value = decision.root
     violations: list[DecisionViolation] = []
@@ -109,7 +109,7 @@ def validate_decision_for_case(
         violations.append(_invalid(("album_id",), (album_id,), allowed_album))
 
     release_id = str(value.release_id.root)
-    allowed_releases = tuple(str(item.root) for item in capability.release_ids.root)
+    allowed_releases = (str(capability.release_id.root),)
     if release_id not in allowed_releases:
         violations.append(_invalid(("release_id",), (release_id,), allowed_releases))
 

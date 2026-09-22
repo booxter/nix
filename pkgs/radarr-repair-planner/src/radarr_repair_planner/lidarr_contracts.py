@@ -6,8 +6,8 @@ from typing import Any, cast
 
 from .json_contract import ContractError as ContractError
 from .json_contract import JsonContract
-from .lidarr_case_models import LidarrRepairCaseV1 as LidarrRepairCaseV1
-from .lidarr_decision_models import LidarrRepairDecisionV1 as LidarrRepairDecisionV1
+from .lidarr_case_models import LidarrRepairCaseV2 as LidarrRepairCaseV2
+from .lidarr_decision_models import LidarrRepairDecisionV2 as LidarrRepairDecisionV2
 
 
 def _load_schema(name: str) -> dict[str, Any]:
@@ -20,27 +20,27 @@ def _load_schema(name: str) -> dict[str, Any]:
 
 CASE_CONTRACT = JsonContract(
     _load_schema("lidarr-repair-case.schema.json"),
-    LidarrRepairCaseV1,
+    LidarrRepairCaseV2,
 )
 DECISION_CONTRACT = JsonContract(
     _load_schema("lidarr-repair-decision.schema.json"),
-    LidarrRepairDecisionV1,
+    LidarrRepairDecisionV2,
 )
 
 
-def decode_case(payload: bytes) -> LidarrRepairCaseV1:
+def decode_case(payload: bytes) -> LidarrRepairCaseV2:
     return CASE_CONTRACT.decode(payload)
 
 
-def decode_decision(payload: bytes) -> LidarrRepairDecisionV1:
+def decode_decision(payload: bytes) -> LidarrRepairDecisionV2:
     return DECISION_CONTRACT.decode(payload)
 
 
-def encode_case(repair_case: LidarrRepairCaseV1) -> bytes:
+def encode_case(repair_case: LidarrRepairCaseV2) -> bytes:
     return CASE_CONTRACT.encode(repair_case)
 
 
-def encode_decision(decision: LidarrRepairDecisionV1) -> bytes:
+def encode_decision(decision: LidarrRepairDecisionV2) -> bytes:
     return DECISION_CONTRACT.encode(decision)
 
 

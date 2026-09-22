@@ -27,15 +27,22 @@ func (fake *fakeLidarr) ReadAlbum(context.Context, int64) (lidarr.Album, error) 
 	return lidarr.Album{
 		ID: 3, ArtistID: 2, ArtistName: "Artist", Title: "Album", Monitored: true,
 		Releases: []lidarr.Release{{
-			ID: 4, Title: "Album", Format: "Album", TrackCount: 1,
+			ID: 4, ForeignReleaseID: "release", Title: "Album", Format: "Album", TrackCount: 1,
 			MediumCount: 1, Monitored: true,
 		}},
 	}, nil
 }
 
-func (fake *fakeLidarr) ReadTracks(context.Context, int64) ([]lidarr.Track, error) {
+func (fake *fakeLidarr) ReadReleaseTracks(
+	_ context.Context,
+	albumID int64,
+	releaseID int64,
+) ([]lidarr.Track, error) {
+	if albumID != 3 || releaseID != 4 {
+		panic("unexpected release-track query")
+	}
 	return []lidarr.Track{{
-		ID: 5, AlbumID: 3, ArtistID: 2, AbsoluteTrackNumber: 1,
+		ID: 5, AlbumID: 3, ReleaseID: 4, ArtistID: 2, AbsoluteTrackNumber: 1,
 		TrackNumber: "1", MediumNumber: 1, Title: "Track", DurationMS: 1000,
 	}}, nil
 }

@@ -2,7 +2,7 @@ package lidarrcontracts
 
 import "time"
 
-const SchemaVersion = "lidarr-repair/v1"
+const SchemaVersion = "lidarr-repair/v2"
 
 type Case struct {
 	SchemaVersion string       `json:"schema_version"`
@@ -33,17 +33,21 @@ type Album struct {
 }
 
 type Release struct {
-	ReleaseID      int64  `json:"release_id"`
-	Title          string `json:"title"`
-	Disambiguation string `json:"disambiguation"`
-	Format         string `json:"format"`
-	TrackCount     int    `json:"track_count"`
-	MediumCount    int    `json:"medium_count"`
-	Monitored      bool   `json:"monitored"`
+	ReleaseID        int64    `json:"release_id"`
+	ForeignReleaseID string   `json:"foreign_release_id"`
+	Title            string   `json:"title"`
+	Disambiguation   string   `json:"disambiguation"`
+	Format           string   `json:"format"`
+	Countries        []string `json:"countries"`
+	Labels           []string `json:"labels"`
+	TrackCount       int      `json:"track_count"`
+	MediumCount      int      `json:"medium_count"`
+	Monitored        bool     `json:"monitored"`
 }
 
 type Track struct {
 	TrackID        int64  `json:"track_id"`
+	ReleaseID      int64  `json:"release_id"`
 	Number         string `json:"number"`
 	AbsoluteNumber int    `json:"absolute_number"`
 	MediumNumber   int    `json:"medium_number"`
@@ -93,7 +97,7 @@ type Capability struct {
 	CapabilityID string   `json:"capability_id"`
 	AlbumID      int64    `json:"album_id"`
 	ArtifactIDs  []string `json:"artifact_ids"`
-	ReleaseIDs   []int64  `json:"release_ids"`
+	ReleaseID    int64    `json:"release_id"`
 	TrackIDs     []int64  `json:"track_ids"`
 }
 

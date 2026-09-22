@@ -61,27 +61,50 @@ func Assemble(
 	}
 
 	releases := make([]lidarrcontracts.Release, len(album.Releases))
-	releaseIDs := make([]int64, len(album.Releases))
+	releaseTrackCounts := make(map[int64]int, len(album.Releases))
 	for index, release := range album.Releases {
 		releases[index] = lidarrcontracts.Release{
-			ReleaseID: release.ID, Title: release.Title, Disambiguation: release.Disambiguation,
-			Format: release.Format, TrackCount: release.TrackCount,
+			ReleaseID: release.ID, ForeignReleaseID: release.ForeignReleaseID,
+			Title: release.Title, Disambiguation: release.Disambiguation,
+			Format: release.Format, Countries: append([]string{}, release.Countries...),
+			Labels: append([]string{}, release.Labels...), TrackCount: release.TrackCount,
 			MediumCount: release.MediumCount, Monitored: release.Monitored,
 		}
-		releaseIDs[index] = release.ID
+		releaseTrackCounts[release.ID] = release.TrackCount
 	}
 	contractTracks := make([]lidarrcontracts.Track, len(tracks))
-	trackIDs := make([]int64, len(tracks))
+	trackIDsByRelease := make(map[int64][]int64, len(album.Releases))
 	for index, track := range tracks {
+		if _, found := releaseTrackCounts[track.ReleaseID]; !found {
+			return lidarrcontracts.Case{}, nil, fmt.Errorf(
+				"Lidarr track %d belongs to unknown release %d", track.ID, track.ReleaseID,
+			)
+		}
 		contractTracks[index] = lidarrcontracts.Track{
-			TrackID: track.ID, Number: track.TrackNumber,
+			TrackID: track.ID, ReleaseID: track.ReleaseID, Number: track.TrackNumber,
 			AbsoluteNumber: track.AbsoluteTrackNumber, MediumNumber: track.MediumNumber,
 			Title: track.Title, DurationMS: track.DurationMS, HasFile: track.HasFile,
 		}
-		trackIDs[index] = track.ID
+		trackIDsByRelease[track.ReleaseID] = append(trackIDsByRelease[track.ReleaseID], track.ID)
 	}
-	if len(releaseIDs) == 0 || len(trackIDs) == 0 {
+	if len(releases) == 0 || len(contractTracks) == 0 {
 		return lidarrcontracts.Case{}, nil, fmt.Errorf("Lidarr album has no release or track candidates")
+	}
+	capabilities := make([]lidarrcontracts.Capability, len(releases))
+	for index, release := range releases {
+		trackIDs := trackIDsByRelease[release.ReleaseID]
+		if len(trackIDs) != release.TrackCount {
+			return lidarrcontracts.Case{}, nil, fmt.Errorf(
+				"Lidarr release %d advertises %d tracks but returned %d",
+				release.ReleaseID, release.TrackCount, len(trackIDs),
+			)
+		}
+		capabilities[index] = lidarrcontracts.Capability{
+			Action:       string(lidarrcontracts.ActionImportTrackSet),
+			CapabilityID: fmt.Sprintf("capability:import_track_set:%d", release.ReleaseID),
+			AlbumID:      album.ID, ArtifactIDs: append([]string(nil), artifactIDs...),
+			ReleaseID: release.ReleaseID, TrackIDs: append([]int64(nil), trackIDs...),
+		}
 	}
 
 	repairCase := lidarrcontracts.Case{
@@ -95,12 +118,8 @@ func Assemble(
 			Title: album.Title, Monitored: album.Monitored,
 		},
 		Releases: releases, Tracks: contractTracks, Artifacts: artifacts,
-		Assessments: assessments,
-		Capabilities: []lidarrcontracts.Capability{{
-			Action:       string(lidarrcontracts.ActionImportTrackSet),
-			CapabilityID: "capability:import_track_set", AlbumID: album.ID,
-			ArtifactIDs: artifactIDs, ReleaseIDs: releaseIDs, TrackIDs: trackIDs,
-		}},
+		Assessments:  assessments,
+		Capabilities: capabilities,
 	}
 	caseID, err := lidarrcontracts.CalculateCaseID(repairCase)
 	if err != nil {

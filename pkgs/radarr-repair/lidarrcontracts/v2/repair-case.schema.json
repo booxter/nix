@@ -193,8 +193,8 @@
         "capability_id": {
           "$ref": "#/$defs/opaqueId"
         },
-        "release_ids": {
-          "$ref": "#/$defs/idList"
+        "release_id": {
+          "$ref": "#/$defs/id"
         },
         "track_ids": {
           "$ref": "#/$defs/idList"
@@ -205,7 +205,7 @@
         "capability_id",
         "album_id",
         "artifact_ids",
-        "release_ids",
+        "release_id",
         "track_ids"
       ],
       "type": "object"
@@ -259,13 +259,32 @@
     "release": {
       "additionalProperties": false,
       "properties": {
+        "countries": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
+        },
         "disambiguation": {
           "maxLength": 1024,
           "type": "string"
         },
+        "foreign_release_id": {
+          "$ref": "#/$defs/text"
+        },
         "format": {
           "maxLength": 128,
           "type": "string"
+        },
+        "labels": {
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
         },
         "medium_count": {
           "maximum": 128,
@@ -289,9 +308,12 @@
       },
       "required": [
         "release_id",
+        "foreign_release_id",
         "title",
         "disambiguation",
         "format",
+        "countries",
+        "labels",
         "track_count",
         "medium_count",
         "monitored"
@@ -399,6 +421,9 @@
         "number": {
           "$ref": "#/$defs/text"
         },
+        "release_id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/text"
         },
@@ -408,6 +433,7 @@
       },
       "required": [
         "track_id",
+        "release_id",
         "number",
         "absolute_number",
         "medium_number",
@@ -418,7 +444,7 @@
       "type": "object"
     }
   },
-  "$id": "urn:lidarr-repair:schema:repair-case:v1",
+  "$id": "urn:lidarr-repair:schema:repair-case:v2",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -444,7 +470,7 @@
       "items": {
         "$ref": "#/$defs/capability"
       },
-      "maxItems": 16,
+      "maxItems": 256,
       "minItems": 1,
       "type": "array"
     },
@@ -467,7 +493,7 @@
       "type": "array"
     },
     "schema_version": {
-      "const": "lidarr-repair/v1"
+      "const": "lidarr-repair/v2"
     },
     "tracks": {
       "items": {
@@ -490,6 +516,6 @@
     "assessments",
     "capabilities"
   ],
-  "title": "Lidarr repair case version 1",
+  "title": "Lidarr repair case version 2",
   "type": "object"
 }

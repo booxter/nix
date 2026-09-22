@@ -18,7 +18,7 @@ import (
 type Lidarr interface {
 	ReadQueue(context.Context) ([]lidarr.QueueRecord, error)
 	ReadAlbum(context.Context, int64) (lidarr.Album, error)
-	ReadTracks(context.Context, int64) ([]lidarr.Track, error)
+	ReadReleaseTracks(context.Context, int64, int64) ([]lidarr.Track, error)
 	ReadManualImports(context.Context, lidarr.ManualImportQuery) ([]lidarr.ManualImport, error)
 }
 
@@ -130,9 +130,15 @@ func (runner *Runner) process(
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("read album: %w", err)
 	}
-	tracks, err := runner.lidarr.ReadTracks(ctx, *queue.AlbumID)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("read tracks: %w", err)
+	var tracks []lidarr.Track
+	for _, release := range album.Releases {
+		releaseTracks, readErr := runner.lidarr.ReadReleaseTracks(ctx, album.ID, release.ID)
+		if readErr != nil {
+			return false, lidarrcontracts.Decision{}, fmt.Errorf(
+				"read release %d tracks: %w", release.ID, readErr,
+			)
+		}
+		tracks = append(tracks, releaseTracks...)
 	}
 	manualImports, err := runner.lidarr.ReadManualImports(ctx, lidarr.ManualImportQuery{
 		Folder: root, ArtistID: *queue.ArtistID,
