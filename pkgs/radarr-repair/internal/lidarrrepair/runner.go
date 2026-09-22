@@ -52,6 +52,8 @@ type Runner struct {
 	now     func() time.Time
 }
 
+var errNoTarArchive = errors.New("download contains no tar archive")
+
 func NewRunner(client Lidarr, worker Worker, planner Planner, store *Store) (*Runner, error) {
 	if client == nil || worker == nil || planner == nil || store == nil {
 		return nil, fmt.Errorf("Lidarr shadow runner dependencies are incomplete")
@@ -69,11 +71,19 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 	report := Report{Observed: len(records)}
 	var failures []error
 	for _, queue := range records {
-		if !archiveCandidate(queue) {
+		if !eligibleQueue(queue) {
+			continue
+		}
+		archivePath, snapshot, err := findArchive(queue.OutputPath)
+		if errors.Is(err, errNoTarArchive) {
 			continue
 		}
 		report.Candidates++
-		cached, decision, err := runner.process(ctx, queue)
+		if err != nil {
+			failures = append(failures, fmt.Errorf("queue %d: discover tar archive: %w", queue.ID, err))
+			continue
+		}
+		cached, decision, err := runner.process(ctx, queue, archivePath, snapshot)
 		if err != nil {
 			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
 			continue
@@ -93,11 +103,9 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 func (runner *Runner) process(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
+	archivePath string,
+	snapshot fileidentity.Snapshot,
 ) (bool, lidarrcontracts.Decision, error) {
-	archivePath, snapshot, err := findArchive(queue.OutputPath)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
-	}
 	fingerprint := snapshot.Fingerprint()
 	previous, found, err := runner.store.Get(queue.ID)
 	if err != nil {
@@ -163,20 +171,13 @@ func (runner *Runner) process(
 	return false, decision, nil
 }
 
-func archiveCandidate(queue lidarr.QueueRecord) bool {
+func eligibleQueue(queue lidarr.QueueRecord) bool {
 	if queue.AlbumID == nil || queue.ArtistID == nil || queue.OutputPath == "" ||
 		queue.DownloadID == "" || queue.Status != "completed" ||
 		queue.TrackedDownloadStatus != "warning" {
 		return false
 	}
-	for _, status := range queue.StatusMessages {
-		for _, message := range status.Messages {
-			if strings.Contains(strings.ToLower(message), "archive file") {
-				return true
-			}
-		}
-	}
-	return false
+	return true
 }
 
 func findArchive(outputPath string) (string, fileidentity.Snapshot, error) {
@@ -214,7 +215,7 @@ func findArchive(outputPath string) (string, fileidentity.Snapshot, error) {
 		archiveInfo = info
 	}
 	if archivePath == "" {
-		return "", fileidentity.Snapshot{}, fmt.Errorf("download contains no tar archive")
+		return "", fileidentity.Snapshot{}, errNoTarArchive
 	}
 	snapshot, err := fileidentity.FromFileInfo(archiveInfo)
 	if err != nil {

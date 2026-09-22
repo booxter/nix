@@ -199,7 +199,7 @@ func effectiveDuration(evidence workercontracts.Evidence) *int64 {
 }
 
 func queueMessages(queue lidarr.QueueRecord) []string {
-	var result []string
+	result := make([]string, 0)
 	for _, status := range queue.StatusMessages {
 		if title := strings.TrimSpace(status.Title); title != "" {
 			result = append(result, title)

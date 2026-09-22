@@ -124,10 +124,11 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 		queue: []lidarr.QueueRecord{{
 			ID: 1, AlbumID: &albumID, ArtistID: &artistID, Title: "Artist - Album",
 			Status: "completed", TrackedDownloadStatus: "warning",
-			StatusMessages: []lidarr.StatusMessage{{
-				Messages: []string{"Found archive file, might need to be extracted"},
-			}},
 			DownloadID: "download", OutputPath: download,
+		}, {
+			ID: 2, AlbumID: &albumID, ArtistID: &artistID, Title: "Ordinary warning",
+			Status: "completed", TrackedDownloadStatus: "warning",
+			DownloadID: "ordinary", OutputPath: t.TempDir(),
 		}},
 		imports: []lidarr.ManualImport{{
 			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
@@ -158,7 +159,8 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Planned != 1 || first.NoRepair != 1 || second.Cached != 1 ||
+	if first.Observed != 2 || first.Candidates != 1 || first.Planned != 1 ||
+		first.NoRepair != 1 || second.Candidates != 1 || second.Cached != 1 ||
 		worker.calls != 1 || planner.calls != 1 {
 		t.Fatalf(
 			"first=%#v second=%#v worker=%d planner=%d",
