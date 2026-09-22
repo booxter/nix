@@ -16,6 +16,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/remuxexecution"
 	"github.com/booxter/nix-config/radarr-repair/internal/remuximport"
 	"github.com/booxter/nix-config/radarr-repair/internal/repairexecution"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 type configuredRepairExecutor struct {
@@ -53,7 +54,7 @@ func configureRepairExecutor(
 		Radarr:       access.radarr,
 		Store:        store,
 		Clock:        clock,
-		Waiter:       manualimport.Timer{},
+		Waiter:       servarr.Timer{},
 		PollInterval: pollInterval,
 	})
 	if err != nil {
@@ -72,7 +73,7 @@ func configureRepairExecutor(
 		Store:        store,
 		Paths:        access.worker,
 		Clock:        clock,
-		Waiter:       manualimport.Timer{},
+		Waiter:       servarr.Timer{},
 		PollInterval: pollInterval,
 	})
 	if err != nil {
@@ -99,7 +100,7 @@ func configureRepairExecutor(
 		Store:        store,
 		Paths:        access.worker,
 		Clock:        clock,
-		Waiter:       manualimport.Timer{},
+		Waiter:       servarr.Timer{},
 		PollInterval: pollInterval,
 	})
 	if err != nil {

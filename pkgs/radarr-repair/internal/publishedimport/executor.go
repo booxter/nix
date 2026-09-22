@@ -2,13 +2,13 @@ package publishedimport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 type State string
@@ -35,8 +35,8 @@ type Execution struct {
 }
 
 type Radarr interface {
-	RequestManualImport(context.Context, controller.RadarrManualImportCommand) (radarr.Command, error)
-	ReadManualImportCommand(context.Context, int64) (radarr.Command, error)
+	RequestManualImport(context.Context, controller.RadarrManualImportCommand) (servarr.Command, error)
+	ReadManualImportCommand(context.Context, int64) (servarr.Command, error)
 	ReadImportedFiles(context.Context, int64, string) ([]controller.RadarrImportedFile, error)
 }
 
@@ -61,41 +61,17 @@ type PublishedPathResolver interface {
 	ResolvePublishedPath(string, []string) (string, error)
 }
 
-type Waiter interface {
-	Wait(context.Context, time.Duration) error
-}
-
 type Dependencies struct {
 	Radarr       Radarr
 	Store        Store
 	Paths        PublishedPathResolver
 	Clock        controller.Clock
-	Waiter       Waiter
+	Waiter       servarr.Waiter
 	PollInterval time.Duration
 }
 
 type Executor struct {
 	dependencies Dependencies
-}
-
-type SubmissionUncertainError struct {
-	CaseID string
-	cause  error
-}
-
-func (failure *SubmissionUncertainError) Error() string {
-	message := fmt.Sprintf(
-		"Radarr published-file import for case %q may have succeeded; refusing to repeat it",
-		failure.CaseID,
-	)
-	if failure.cause != nil {
-		return fmt.Sprintf("%s: %v", message, failure.cause)
-	}
-	return message
-}
-
-func (failure *SubmissionUncertainError) Unwrap() error {
-	return failure.cause
 }
 
 func New(dependencies Dependencies) (*Executor, error) {
@@ -138,12 +114,8 @@ func (executor *Executor) Execute(
 	switch execution.State {
 	case Published:
 		return executor.prepareAndSubmit(ctx, caseID, execution)
-	case ImportPrepared:
-		return executor.resumePrepared(ctx, execution)
-	case ImportRequested:
-		return executor.follow(ctx, execution)
-	case Imported, ImportFailed:
-		return execution, nil
+	case ImportPrepared, ImportRequested, Imported, ImportFailed:
+		return executor.run(ctx, execution, false)
 	default:
 		return execution, fmt.Errorf(
 			"published artifact state %q is not ready for Radarr import",
@@ -185,125 +157,79 @@ func (executor *Executor) prepareAndSubmit(
 	if err != nil {
 		return execution, fmt.Errorf("prepare Radarr published-file import: %w", err)
 	}
-	if !prepared {
-		return executor.resume(ctx, execution)
-	}
+	return executor.run(ctx, execution, prepared)
+}
 
-	command, err := executor.dependencies.Radarr.RequestManualImport(ctx, request.Command)
-	if err != nil {
-		confirmed, confirmErr := executor.confirm(ctx, execution)
-		if confirmed.State == Imported {
-			return confirmed, confirmErr
-		}
-		return execution, &SubmissionUncertainError{
-			CaseID: caseID,
-			cause: errors.Join(
-				fmt.Errorf("request Radarr published-file import: %w", err),
-				confirmErr,
-			),
-		}
+func (executor *Executor) run(
+	ctx context.Context,
+	execution Execution,
+	newlyPrepared bool,
+) (Execution, error) {
+	if execution.Import == nil {
+		return execution, fmt.Errorf("published-file import has no prepared Radarr request")
 	}
-	requestedAt, err := executor.now()
-	if err != nil {
-		return execution, &SubmissionUncertainError{CaseID: caseID, cause: err}
-	}
-	execution, _, err = executor.dependencies.Store.MarkImportRequested(
-		caseID,
-		command.ID,
-		requestedAt,
+	flow, err := servarr.NewImportExecution(
+		servarr.ImportExecutionDependencies[Execution]{
+			Service: "Radarr", Operation: "published-file import",
+			Clock: executor.dependencies.Clock, Waiter: executor.dependencies.Waiter,
+			PollInterval: executor.dependencies.PollInterval, RequireCompletionResult: true,
+			CaseID: func(current Execution) string { return current.CaseID },
+			State:  publishedImportState,
+			CommandID: func(current Execution) (int64, bool) {
+				if current.Import == nil || current.Import.CommandID == nil {
+					return 0, false
+				}
+				return *current.Import.CommandID, true
+			},
+			Submit: func(ctx context.Context) (servarr.Command, error) {
+				return executor.dependencies.Radarr.RequestManualImport(
+					ctx,
+					execution.Import.Command,
+				)
+			},
+			ReadCommand: executor.dependencies.Radarr.ReadManualImportCommand,
+			Confirm:     executor.confirm,
+			MarkRequested: func(current Execution, commandID int64, at time.Time) (Execution, error) {
+				updated, _, markErr := executor.dependencies.Store.MarkImportRequested(
+					current.CaseID,
+					commandID,
+					at,
+				)
+				return updated, markErr
+			},
+			MarkFailed: func(current Execution, at time.Time) (Execution, error) {
+				updated, _, markErr := executor.dependencies.Store.MarkImportFailed(current.CaseID, at)
+				return updated, markErr
+			},
+		},
 	)
 	if err != nil {
-		return execution, &SubmissionUncertainError{
-			CaseID: caseID,
-			cause:  fmt.Errorf("record Radarr published-file import command: %w", err),
-		}
+		return execution, err
 	}
-	return executor.follow(ctx, execution)
+	return flow.Run(ctx, execution, newlyPrepared)
 }
 
-func (executor *Executor) resume(
-	ctx context.Context,
-	execution Execution,
-) (Execution, error) {
+func publishedImportState(execution Execution) (servarr.ImportExecutionState, error) {
 	switch execution.State {
-	case Imported, ImportFailed:
-		return execution, nil
-	case ImportRequested:
-		return executor.follow(ctx, execution)
 	case ImportPrepared:
-		return executor.resumePrepared(ctx, execution)
+		return servarr.ImportPrepared, nil
+	case ImportRequested:
+		return servarr.ImportRequested, nil
+	case Imported:
+		return servarr.ImportConfirmed, nil
+	case ImportFailed:
+		return servarr.ImportFailed, nil
 	default:
-		return execution, fmt.Errorf("unknown published-file import state %q", execution.State)
-	}
-}
-
-func (executor *Executor) resumePrepared(
-	ctx context.Context,
-	execution Execution,
-) (Execution, error) {
-	confirmed, err := executor.confirm(ctx, execution)
-	if confirmed.State == Imported {
-		return confirmed, err
-	}
-	return execution, &SubmissionUncertainError{
-		CaseID: execution.CaseID,
-		cause:  err,
-	}
-}
-
-func (executor *Executor) follow(
-	ctx context.Context,
-	execution Execution,
-) (Execution, error) {
-	if execution.Import == nil || execution.Import.CommandID == nil {
-		return execution, fmt.Errorf("requested published-file import has no Radarr command ID")
-	}
-	for {
-		confirmed, err := executor.confirm(ctx, execution)
-		if err != nil || confirmed.State == Imported {
-			return confirmed, err
-		}
-
-		command, err := executor.dependencies.Radarr.ReadManualImportCommand(
-			ctx,
-			*execution.Import.CommandID,
-		)
-		if err != nil {
-			return execution, fmt.Errorf("read Radarr published-file import command: %w", err)
-		}
-		disposition, err := radarr.ClassifyImportCommand(command)
-		if err != nil {
-			return execution, err
-		}
-		if disposition == radarr.ImportCommandFailed {
-			failedAt, nowErr := executor.now()
-			if nowErr != nil {
-				return execution, nowErr
-			}
-			execution, _, err = executor.dependencies.Store.MarkImportFailed(
-				execution.CaseID,
-				failedAt,
-			)
-			if err != nil {
-				return execution, fmt.Errorf("record failed Radarr published-file import: %w", err)
-			}
-			return execution, nil
-		}
-		if err := executor.dependencies.Waiter.Wait(
-			ctx,
-			executor.dependencies.PollInterval,
-		); err != nil {
-			return execution, err
-		}
+		return 0, fmt.Errorf("unknown published-file import state %q", execution.State)
 	}
 }
 
 func (executor *Executor) confirm(
 	ctx context.Context,
 	execution Execution,
-) (Execution, error) {
+) (Execution, bool, error) {
 	if execution.Import == nil {
-		return execution, fmt.Errorf("published-file import has no prepared Radarr request")
+		return execution, false, fmt.Errorf("published-file import has no prepared Radarr request")
 	}
 	file := execution.Import.Command.File
 	imports, err := executor.dependencies.Radarr.ReadImportedFiles(
@@ -312,7 +238,7 @@ func (executor *Executor) confirm(
 		file.DownloadID,
 	)
 	if err != nil {
-		return execution, fmt.Errorf("read Radarr imported-file history: %w", err)
+		return execution, false, fmt.Errorf("read Radarr imported-file history: %w", err)
 	}
 	imported, found := radarr.FindImportedFile(imports, radarr.ImportedFileMatch{
 		MovieID: file.MovieID, DownloadID: file.DownloadID,
@@ -320,11 +246,11 @@ func (executor *Executor) confirm(
 		AfterHistoryID: execution.Import.HistoryIDBefore,
 	})
 	if !found {
-		return execution, nil
+		return execution, false, nil
 	}
 	confirmedAt, err := executor.now()
 	if err != nil {
-		return execution, err
+		return execution, false, err
 	}
 	confirmed, _, err := executor.dependencies.Store.MarkImported(
 		execution.CaseID,
@@ -332,9 +258,9 @@ func (executor *Executor) confirm(
 		confirmedAt,
 	)
 	if err != nil {
-		return execution, fmt.Errorf("record confirmed Radarr published-file import: %w", err)
+		return execution, false, fmt.Errorf("record confirmed Radarr published-file import: %w", err)
 	}
-	return confirmed, nil
+	return confirmed, true, nil
 }
 
 func (executor *Executor) importRequest(

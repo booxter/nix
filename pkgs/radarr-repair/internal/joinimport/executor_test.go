@@ -11,8 +11,7 @@ import (
 	"github.com/booxter/nix-config/radarr-repair/internal/casestore"
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
 	"github.com/booxter/nix-config/radarr-repair/internal/decisionpolicy"
-	"github.com/booxter/nix-config/radarr-repair/internal/publishedimport"
-	"github.com/booxter/nix-config/radarr-repair/internal/radarr"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 )
 
 const (
@@ -33,13 +32,13 @@ func TestExecutorConfirmsExactJoinedFileImport(t *testing.T) {
 	old := exact
 	old.HistoryID--
 	radarrClient := &fakeRadarr{
-		requestCommand: radarr.Command{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
-			Result: radarr.CommandResultUnknown,
+		requestCommand: servarr.Command{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandQueued,
+			Result: servarr.CommandResultUnknown,
 		},
-		commands: []radarr.Command{{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandCompleted,
-			Result: radarr.CommandResultSuccessful,
+		commands: []servarr.Command{{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandCompleted,
+			Result: servarr.CommandResultSuccessful,
 		}},
 		imports: [][]controller.RadarrImportedFile{{old}, {old, mismatch}, {old, exact}},
 	}
@@ -147,13 +146,13 @@ func TestExecutorRecordsDefiniteImportFailure(t *testing.T) {
 	now := time.Date(2026, time.September, 13, 20, 0, 0, 0, time.UTC)
 	store := newFakeStore(now)
 	radarrClient := &fakeRadarr{
-		requestCommand: radarr.Command{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
-			Result: radarr.CommandResultUnknown,
+		requestCommand: servarr.Command{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandQueued,
+			Result: servarr.CommandResultUnknown,
 		},
-		commands: []radarr.Command{{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandFailed,
-			Result: radarr.CommandResultUnsuccessful,
+		commands: []servarr.Command{{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandFailed,
+			Result: servarr.CommandResultUnsuccessful,
 		}},
 	}
 	executor := newTestExecutor(t, store, radarrClient, &fakeWaiter{}, now)
@@ -175,13 +174,13 @@ func TestExecutorLeavesMismatchedHistoryUnconfirmed(t *testing.T) {
 	mismatch := importedFile(now.Add(time.Second))
 	mismatch.MovieID++
 	radarrClient := &fakeRadarr{
-		requestCommand: radarr.Command{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandQueued,
-			Result: radarr.CommandResultUnknown,
+		requestCommand: servarr.Command{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandQueued,
+			Result: servarr.CommandResultUnknown,
 		},
-		commands: []radarr.Command{{
-			ID: 92, Name: "ManualImport", Status: radarr.CommandCompleted,
-			Result: radarr.CommandResultSuccessful,
+		commands: []servarr.Command{{
+			ID: 92, Name: "ManualImport", Status: servarr.CommandCompleted,
+			Result: servarr.CommandResultSuccessful,
 		}},
 		imports: [][]controller.RadarrImportedFile{{mismatch}},
 	}
@@ -203,7 +202,7 @@ func assertUncertainSubmission(
 	err error,
 ) {
 	t.Helper()
-	var uncertain *publishedimport.SubmissionUncertainError
+	var uncertain *servarr.SubmissionUncertainError
 	if !errors.As(err, &uncertain) {
 		t.Fatalf("error = %v", err)
 	}
@@ -271,11 +270,11 @@ func (waiter *fakeWaiter) Wait(context.Context, time.Duration) error {
 }
 
 type fakeRadarr struct {
-	requestCommand radarr.Command
+	requestCommand servarr.Command
 	requestErr     error
 	requested      controller.RadarrManualImportCommand
 	requestCalls   int
-	commands       []radarr.Command
+	commands       []servarr.Command
 	commandReads   int
 	imports        [][]controller.RadarrImportedFile
 	historyReads   int
@@ -284,7 +283,7 @@ type fakeRadarr struct {
 func (client *fakeRadarr) RequestManualImport(
 	_ context.Context,
 	importRequest controller.RadarrManualImportCommand,
-) (radarr.Command, error) {
+) (servarr.Command, error) {
 	client.requestCalls++
 	client.requested = importRequest
 	return client.requestCommand, client.requestErr
@@ -293,11 +292,11 @@ func (client *fakeRadarr) RequestManualImport(
 func (client *fakeRadarr) ReadManualImportCommand(
 	context.Context,
 	int64,
-) (radarr.Command, error) {
+) (servarr.Command, error) {
 	index := client.commandReads
 	client.commandReads++
 	if len(client.commands) == 0 {
-		return radarr.Command{}, errors.New("unexpected command read")
+		return servarr.Command{}, errors.New("unexpected command read")
 	}
 	if index >= len(client.commands) {
 		index = len(client.commands) - 1

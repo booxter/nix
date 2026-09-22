@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/booxter/nix-config/radarr-repair/internal/controller"
+	"github.com/booxter/nix-config/radarr-repair/internal/servarr"
 	"golift.io/starr"
 	starrRadarr "golift.io/starr/radarr"
 )
@@ -15,42 +16,6 @@ import (
 const (
 	commandPath             = starrRadarr.APIver + "/command"
 	manualImportCommandName = "ManualImport"
-)
-
-type CommandStatus string
-
-const (
-	CommandQueued    CommandStatus = "queued"
-	CommandStarted   CommandStatus = "started"
-	CommandCompleted CommandStatus = "completed"
-	CommandFailed    CommandStatus = "failed"
-	CommandAborted   CommandStatus = "aborted"
-	CommandCancelled CommandStatus = "cancelled"
-	CommandOrphaned  CommandStatus = "orphaned"
-)
-
-type CommandResult string
-
-const (
-	CommandResultUnknown      CommandResult = "unknown"
-	CommandResultSuccessful   CommandResult = "successful"
-	CommandResultUnsuccessful CommandResult = "unsuccessful"
-)
-
-type Command struct {
-	ID        int64
-	Name      string
-	Message   string
-	Exception string
-	Status    CommandStatus
-	Result    CommandResult
-}
-
-type ImportCommandDisposition uint8
-
-const (
-	ImportCommandPending ImportCommandDisposition = iota + 1
-	ImportCommandFailed
 )
 
 type commandResponse struct {
@@ -111,9 +76,9 @@ type manualImportLanguage struct {
 func (client *Client) RequestManualImport(
 	ctx context.Context,
 	command controller.RadarrManualImportCommand,
-) (Command, error) {
+) (servarr.Command, error) {
 	if !command.Complete() {
-		return Command{}, fmt.Errorf("Radarr manual-import command is incomplete")
+		return servarr.Command{}, fmt.Errorf("Radarr manual-import command is incomplete")
 	}
 
 	request := manualImportCommandRequest{
@@ -123,12 +88,12 @@ func (client *Client) RequestManualImport(
 	}
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(request); err != nil {
-		return Command{}, fmt.Errorf("encode Radarr manual-import command: %w", err)
+		return servarr.Command{}, fmt.Errorf("encode Radarr manual-import command: %w", err)
 	}
 
 	var response commandResponse
 	if err := client.api.PostInto(ctx, starr.Request{URI: commandPath, Body: &body}, &response); err != nil {
-		return Command{}, normalizeRequestError("request Radarr manual import", err)
+		return servarr.Command{}, normalizeRequestError("request Radarr manual import", err)
 	}
 	return mapCommand(response, 0, manualImportCommandName)
 }
@@ -136,58 +101,23 @@ func (client *Client) RequestManualImport(
 func (client *Client) ReadManualImportCommand(
 	ctx context.Context,
 	commandID int64,
-) (Command, error) {
+) (servarr.Command, error) {
 	return client.readCommand(ctx, commandID, manualImportCommandName)
-}
-
-// ClassifyImportCommand determines whether an import command has failed or
-// whether its imported-file history may still appear. A successful command is
-// pending until that separate history record confirms the exact imported file.
-func ClassifyImportCommand(command Command) (ImportCommandDisposition, error) {
-	switch command.Status {
-	case CommandQueued, CommandStarted:
-		if command.Result != "" && command.Result != CommandResultUnknown {
-			return 0, fmt.Errorf(
-				"active Radarr import command has unexpected result %q",
-				command.Result,
-			)
-		}
-		return ImportCommandPending, nil
-	case CommandCompleted:
-		switch command.Result {
-		case CommandResultSuccessful:
-			return ImportCommandPending, nil
-		case CommandResultUnsuccessful:
-			return ImportCommandFailed, nil
-		default:
-			return 0, fmt.Errorf(
-				"completed Radarr import command has unexpected result %q",
-				command.Result,
-			)
-		}
-	case CommandFailed, CommandAborted, CommandCancelled, CommandOrphaned:
-		return ImportCommandFailed, nil
-	default:
-		return 0, fmt.Errorf(
-			"Radarr import command has unknown status %q",
-			command.Status,
-		)
-	}
 }
 
 func (client *Client) readCommand(
 	ctx context.Context,
 	commandID int64,
 	expectedName string,
-) (Command, error) {
+) (servarr.Command, error) {
 	if commandID <= 0 {
-		return Command{}, fmt.Errorf("Radarr command ID must be positive")
+		return servarr.Command{}, fmt.Errorf("Radarr command ID must be positive")
 	}
 
 	var response commandResponse
 	path := commandPath + "/" + strconv.FormatInt(commandID, 10)
 	if err := client.api.GetInto(ctx, starr.Request{URI: path}, &response); err != nil {
-		return Command{}, normalizeRequestError("read Radarr command", err)
+		return servarr.Command{}, normalizeRequestError("read Radarr command", err)
 	}
 	return mapCommand(response, commandID, expectedName)
 }
@@ -217,30 +147,34 @@ func mapManualImportCommandFile(file controller.RadarrManualImportCommandFile) m
 	}
 }
 
-func mapCommand(response commandResponse, expectedID int64, expectedName string) (Command, error) {
+func mapCommand(
+	response commandResponse,
+	expectedID int64,
+	expectedName string,
+) (servarr.Command, error) {
 	if response.ID <= 0 {
-		return Command{}, fmt.Errorf("Radarr command response has invalid ID %d", response.ID)
+		return servarr.Command{}, fmt.Errorf("Radarr command response has invalid ID %d", response.ID)
 	}
 	if expectedID != 0 && response.ID != expectedID {
-		return Command{}, fmt.Errorf(
+		return servarr.Command{}, fmt.Errorf(
 			"Radarr returned command ID %d for requested ID %d",
 			response.ID,
 			expectedID,
 		)
 	}
 	if response.Name != expectedName {
-		return Command{}, fmt.Errorf(
+		return servarr.Command{}, fmt.Errorf(
 			"Radarr returned command %q instead of %q",
 			response.Name,
 			expectedName,
 		)
 	}
 	if response.Status == "" {
-		return Command{}, fmt.Errorf("Radarr command response has no status")
+		return servarr.Command{}, fmt.Errorf("Radarr command response has no status")
 	}
-	return Command{
+	return servarr.Command{
 		ID: response.ID, Name: response.Name, Message: response.Message,
-		Exception: response.Exception, Status: CommandStatus(response.Status),
-		Result: CommandResult(response.Result),
+		Exception: response.Exception, Status: servarr.CommandStatus(response.Status),
+		Result: servarr.CommandResult(response.Result),
 	}, nil
 }
