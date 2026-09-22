@@ -15,6 +15,10 @@ python3.pkgs.buildPythonPackage {
     python3.pkgs.setuptools
   ];
 
+  dependencies = [
+    python3.pkgs.pydantic
+  ];
+
   nativeCheckInputs = [
     python3.pkgs.mypy
     pythonRuffCheckHook

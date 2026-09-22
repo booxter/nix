@@ -9,10 +9,11 @@ from typing import Literal, Protocol
 from prometheus_client import CollectorRegistry, Gauge, write_to_textfile
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from transmission_common.transmission import (
+    Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
-    normalize_tracker_host,
     read_tracker_hosts,
+    trackers_match_hosts,
 )
 
 LOG = logging.getLogger("transmission-tracker-common")
@@ -39,13 +40,6 @@ TORRENT_FIELDS = [
     "rate_upload",
     "tracker_stats",
 ]
-
-
-class Tracker(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
-
-    host: str | None = None
-    announce: str | None = None
 
 
 class Torrent(BaseModel):
@@ -182,17 +176,6 @@ def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
         return None
 
 
-def tracker_matches(torrent: Torrent, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.tracker_stats:
-        for raw_host in (tracker.host, tracker.announce):
-            if raw_host is None:
-                continue
-            host = normalize_tracker_host(raw_host)
-            if host and host in tracker_hosts:
-                return True
-    return False
-
-
 def nonnegative(value: int) -> int:
     return max(0, value)
 
@@ -245,7 +228,7 @@ def collect_iteration_state(
     for torrent in client.list_torrents():
         if not torrent.hash_string:
             continue
-        is_preferred = tracker_matches(torrent, tracker_hosts)
+        is_preferred = trackers_match_hosts(torrent.tracker_stats, tracker_hosts)
         if is_preferred:
             preferred_hashes.add(torrent.hash_string)
         entries.append((torrent, is_preferred))

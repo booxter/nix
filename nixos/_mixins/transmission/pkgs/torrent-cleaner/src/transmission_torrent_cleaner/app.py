@@ -9,10 +9,11 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from transmission_common.transmission import (
+    Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
-    normalize_tracker_host,
     read_tracker_hosts,
+    trackers_match_hosts,
 )
 
 LOG = logging.getLogger("transmission-torrent-cleaner")
@@ -29,13 +30,6 @@ TORRENT_FIELDS = [
     "tracker_stats",
     "upload_ratio",
 ]
-
-
-class Tracker(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
-
-    host: str | None = None
-    announce: str | None = None
 
 
 class Torrent(BaseModel):
@@ -155,17 +149,6 @@ def torrent_added_timestamp(torrent: Torrent) -> int | None:
     return None
 
 
-def torrent_matches_tracker_hosts(torrent: Torrent, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.tracker_stats:
-        for raw_host in (tracker.host, tracker.announce):
-            if raw_host is None:
-                continue
-            host = normalize_tracker_host(raw_host)
-            if host and host in tracker_hosts:
-                return True
-    return False
-
-
 def select_candidates(
     torrents: Sequence[Torrent], tracker_hosts: set[str], policy: Policy, now: float
 ) -> list[Candidate]:
@@ -176,7 +159,7 @@ def select_candidates(
     for torrent in torrents:
         if not torrent.hash_string or not torrent.name:
             continue
-        if torrent_matches_tracker_hosts(torrent, tracker_hosts):
+        if trackers_match_hosts(torrent.tracker_stats, tracker_hosts):
             continue
 
         age_days: float | None = None

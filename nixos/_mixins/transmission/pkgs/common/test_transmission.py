@@ -7,11 +7,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 from transmission_common.transmission import (
+    Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
     normalize_tracker_host,
     read_tracker_hosts,
-    torrent_matches_tracker_hosts,
+    trackers_match_hosts,
 )
 
 
@@ -161,24 +162,24 @@ class TrackerHostTests(unittest.TestCase):
         )
         self.assertEqual(empty_lines, [3])
 
-    def test_torrent_matches_tracker_hosts_from_host_or_announce(self) -> None:
+    def test_trackers_match_hosts_from_host_or_announce(self) -> None:
         tracker_hosts = {"preferred.example", "announce.example"}
 
         self.assertTrue(
-            torrent_matches_tracker_hosts(
-                {"tracker_stats": [{"host": "preferred.example"}]},
+            trackers_match_hosts(
+                [Tracker(host="preferred.example")],
                 tracker_hosts,
             )
         )
         self.assertTrue(
-            torrent_matches_tracker_hosts(
-                {"tracker_stats": [{"announce": "https://announce.example/announce"}]},
+            trackers_match_hosts(
+                [Tracker(announce="https://announce.example/announce")],
                 tracker_hosts,
             )
         )
         self.assertFalse(
-            torrent_matches_tracker_hosts(
-                {"tracker_stats": [{"host": "public.example"}]},
+            trackers_match_hosts(
+                [Tracker(host="public.example")],
                 tracker_hosts,
             )
         )
