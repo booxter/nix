@@ -135,7 +135,7 @@ func (runner *Runner) process(
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("read tracks: %w", err)
 	}
 	manualImports, err := runner.lidarr.ReadManualImports(ctx, lidarr.ManualImportQuery{
-		Folder: root, DownloadID: queue.DownloadID, ArtistID: *queue.ArtistID,
+		Folder: root, ArtistID: *queue.ArtistID,
 	})
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("read manual imports: %w", err)

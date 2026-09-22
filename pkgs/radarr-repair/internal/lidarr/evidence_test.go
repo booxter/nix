@@ -36,14 +36,15 @@ func TestReadCatalogAndManualImportEvidence(t *testing.T) {
 			}})
 		case "/api/v1/manualimport":
 			query := request.URL.Query()
-			if query.Get("folder") != "/downloads/stage" || query.Get("downloadId") != "download" ||
-				query.Get("artistId") != "7" || query.Get("filterExistingFiles") != "false" {
+			if query.Get("folder") != "/downloads/stage" || query.Get("downloadId") != "" ||
+				query.Get("artistId") != "7" || query.Get("filterExistingFiles") != "false" ||
+				query.Get("replaceExistingFiles") != "true" {
 				http.Error(writer, "bad query", http.StatusBadRequest)
 				return
 			}
 			_ = json.NewEncoder(writer).Encode([]map[string]any{{
 				"id": 0, "path": "/downloads/stage/01.flac", "name": "01.flac",
-				"size": 1234, "downloadId": "download", "albumReleaseId": 81,
+				"size": 1234, "albumReleaseId": 81,
 				"artist": map[string]any{"id": 7}, "album": map[string]any{"id": 1380},
 				"tracks":  []map[string]any{{"id": 101}},
 				"quality": map[string]any{"quality": map[string]any{"id": 1, "name": "FLAC"}},
@@ -80,15 +81,38 @@ func TestReadCatalogAndManualImportEvidence(t *testing.T) {
 		t.Fatalf("tracks = %#v", tracks)
 	}
 	imports, err := client.ReadManualImports(context.Background(), ManualImportQuery{
-		Folder: "/downloads/stage", DownloadID: "download", ArtistID: 7,
+		Folder: "/downloads/stage", ArtistID: 7,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(imports) != 1 || imports[0].AlbumID != 1380 || imports[0].AlbumReleaseID != 81 ||
 		len(imports[0].TrackIDs) != 1 || imports[0].TrackIDs[0] != 101 ||
-		imports[0].AudioTags == nil || imports[0].AudioTags.DurationMS != 180000 ||
+		imports[0].DownloadID != "" || imports[0].AudioTags == nil ||
+		imports[0].AudioTags.DurationMS != 180000 ||
 		len(imports[0].Rejections) != 1 {
 		t.Fatalf("imports = %#v", imports)
+	}
+}
+
+func TestReadManualImportsRejectsResultOutsideFolder(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode([]map[string]any{{
+			"id": 1, "path": "/library/Artist/Album/01.flac", "name": "01.flac", "size": 1234,
+		}})
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.ReadManualImports(context.Background(), ManualImportQuery{
+		Folder: "/downloads/stage", ArtistID: 7,
+	})
+	if err == nil {
+		t.Fatal("manual-import result outside the requested folder was accepted")
 	}
 }

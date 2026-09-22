@@ -147,10 +147,14 @@ func validateRecord(record Record) error {
 	return nil
 }
 
-func bindingFromImport(artifactID string, item lidarr.ManualImport) ImportBinding {
+func bindingFromImport(
+	artifactID string,
+	item lidarr.ManualImport,
+	downloadID string,
+) ImportBinding {
 	return ImportBinding{
 		ArtifactID: artifactID, Path: item.Path, Quality: item.Quality,
-		IndexerFlags: item.IndexerFlags, DownloadID: item.DownloadID,
+		IndexerFlags: item.IndexerFlags, DownloadID: downloadID,
 		DisableReleaseSwitching: item.DisableReleaseSwitching,
 	}
 }

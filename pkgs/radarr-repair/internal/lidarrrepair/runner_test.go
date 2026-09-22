@@ -44,7 +44,7 @@ func (fake *fakeLidarr) ReadManualImports(
 	_ context.Context,
 	query lidarr.ManualImportQuery,
 ) ([]lidarr.ManualImport, error) {
-	if query.Folder != "/downloads/.media-repair/workspaces/workspace:test" {
+	if query.Folder != "/downloads/.media-repair/workspaces/workspace:test" || query.ArtistID != 2 {
 		panic("unexpected manual-import workspace")
 	}
 	return fake.imports, nil
@@ -133,7 +133,7 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 		imports: []lidarr.ManualImport{{
 			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
 			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
-			AlbumReleaseID: 4, TrackIDs: []int64{5}, DownloadID: "download",
+			AlbumReleaseID: 4, TrackIDs: []int64{5},
 			AudioTags: &lidarr.AudioTags{
 				Title: "Track", Artist: "Artist", Album: "Album", TrackNumbers: []int{1},
 			},
@@ -170,6 +170,9 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	record, found, err := store.Get(1)
 	if err != nil || !found || len(record.Bindings) != 1 {
 		t.Fatalf("record=%#v found=%v error=%v", record, found, err)
+	}
+	if record.Bindings[0].DownloadID != "download" {
+		t.Fatalf("binding=%#v", record.Bindings[0])
 	}
 }
 

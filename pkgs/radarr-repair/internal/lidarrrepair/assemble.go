@@ -56,7 +56,7 @@ func Assemble(
 		}
 		artifacts = append(artifacts, contractArtifact(artifact))
 		assessments = append(assessments, contractAssessment(artifact.ArtifactID, item))
-		bindings = append(bindings, bindingFromImport(artifact.ArtifactID, item))
+		bindings = append(bindings, bindingFromImport(artifact.ArtifactID, item, queue.DownloadID))
 		artifactIDs = append(artifactIDs, artifact.ArtifactID)
 	}
 

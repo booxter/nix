@@ -3,6 +3,7 @@ package lidarr
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -12,9 +13,8 @@ import (
 )
 
 type ManualImportQuery struct {
-	Folder     string
-	DownloadID string
-	ArtistID   int64
+	Folder   string
+	ArtistID int64
 }
 
 type AudioTags struct {
@@ -59,21 +59,30 @@ func (client *Client) ReadManualImports(
 	ctx context.Context,
 	query ManualImportQuery,
 ) ([]ManualImport, error) {
-	if query.Folder == "" || strings.ContainsRune(query.Folder, '\x00') ||
-		query.DownloadID == "" || strings.ContainsRune(query.DownloadID, '\x00') || query.ArtistID <= 0 {
+	if query.Folder == "" || !filepath.IsAbs(query.Folder) || filepath.Clean(query.Folder) != query.Folder ||
+		strings.ContainsRune(query.Folder, '\x00') || query.ArtistID <= 0 {
 		return nil, fmt.Errorf("Lidarr manual-import query is incomplete")
 	}
 	items, err := client.api.ManualImportContext(ctx, &starrLidarr.ManualImportParams{
-		Folder: query.Folder, DownloadID: query.DownloadID, ArtistID: query.ArtistID,
-		ReplaceExistingFiles: false, FilterExistingFiles: false,
+		Folder: query.Folder, ArtistID: query.ArtistID,
+		ReplaceExistingFiles: true, FilterExistingFiles: false,
 	})
 	if err != nil {
 		return nil, servarr.NormalizeRequestError("Lidarr", "inspect Lidarr manual imports", err)
 	}
-	imports := make([]ManualImport, len(items))
+	imports := make([]ManualImport, 0, len(items))
 	seen := make(map[string]struct{}, len(items))
 	for index, item := range items {
-		mapped, mapErr := mapManualImport(item, query)
+		inside, pathErr := manualImportInFolder(item, query.Folder)
+		if pathErr != nil {
+			return nil, fmt.Errorf("Lidarr manual-import item %d: %w", index, pathErr)
+		}
+		if !inside {
+			return nil, fmt.Errorf(
+				"Lidarr manual-import item %d is outside the requested folder", index,
+			)
+		}
+		mapped, mapErr := mapManualImport(item)
 		if mapErr != nil {
 			return nil, fmt.Errorf("Lidarr manual-import item %d: %w", index, mapErr)
 		}
@@ -81,16 +90,27 @@ func (client *Client) ReadManualImports(
 			return nil, fmt.Errorf("Lidarr manual imports contain duplicate path %q", mapped.Path)
 		}
 		seen[mapped.Path] = struct{}{}
-		imports[index] = mapped
+		imports = append(imports, mapped)
 	}
 	sort.Slice(imports, func(left, right int) bool { return imports[left].Path < imports[right].Path })
 	return imports, nil
 }
 
-func mapManualImport(item *starrLidarr.ManualImportOutput, query ManualImportQuery) (ManualImport, error) {
+func manualImportInFolder(item *starrLidarr.ManualImportOutput, folder string) (bool, error) {
+	if item == nil || item.Path == "" || !filepath.IsAbs(item.Path) ||
+		filepath.Clean(item.Path) != item.Path || strings.ContainsRune(item.Path, '\x00') {
+		return false, fmt.Errorf("manual-import path is invalid")
+	}
+	relative, err := filepath.Rel(folder, item.Path)
+	if err != nil {
+		return false, fmt.Errorf("compare manual-import path: %w", err)
+	}
+	return relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)), nil
+}
+
+func mapManualImport(item *starrLidarr.ManualImportOutput) (ManualImport, error) {
 	if item == nil || item.ID < 0 || item.Path == "" || strings.ContainsRune(item.Path, '\x00') ||
-		item.Name == "" || strings.ContainsRune(item.Name, '\x00') || item.Size <= 0 ||
-		item.DownloadID != query.DownloadID {
+		item.Name == "" || strings.ContainsRune(item.Name, '\x00') || item.Size <= 0 {
 		return ManualImport{}, fmt.Errorf("manual-import identity is incomplete")
 	}
 	result := ManualImport{
