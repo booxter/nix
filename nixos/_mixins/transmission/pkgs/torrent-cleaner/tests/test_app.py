@@ -2,6 +2,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
+from transmission_common.policy import (
+    CleanupPolicy,
+    CompletedCleanupPolicy,
+    Priority,
+    RatioPriorityPolicy,
+    StopPolicy,
+    TorrentClassPolicy,
+    TorrentPolicy,
+)
 from transmission_torrent_cleaner import app
 
 NOW = 2_000_000_000.0
@@ -50,12 +59,37 @@ def settings(trackers_file: Path, *, delete: bool = True) -> app.Settings:
         rpc_url="http://127.0.0.1:9091/transmission/rpc",
         trackers_file=trackers_file,
         request_timeout_seconds=20.0,
-        policy=app.Policy(
-            minimum_age_days=30.0,
-            minimum_ratio=3.0,
-            maximum_age_days=365.0,
-        ),
+        policy=policy(),
         delete=delete,
+    )
+
+
+def ratio_policy(after: Priority) -> RatioPriorityPolicy:
+    return RatioPriorityPolicy(
+        target_ratio=3.0,
+        below_target=Priority.HIGH,
+        at_or_above_target=after,
+    )
+
+
+def policy() -> TorrentPolicy:
+    return TorrentPolicy(
+        preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.HIGH),
+            stop=None,
+            cleanup=None,
+        ),
+        non_preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.LOW),
+            stop=StopPolicy(minimum_ratio=6.0, require_complete=True),
+            cleanup=CleanupPolicy(
+                completed=CompletedCleanupPolicy(
+                    minimum_ratio=3.0,
+                    minimum_age_days=30.0,
+                ),
+                maximum_age_days=365.0,
+            ),
+        ),
     )
 
 
@@ -244,6 +278,15 @@ def test_timestamp_fallbacks_preserve_cleanup_policy() -> None:
 
 
 def test_main_reports_missing_tracker_file(tmp_path: Path) -> None:
-    result = app.main(["--trackers-file", str(tmp_path / "missing")])
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(policy().model_dump_json(), encoding="utf-8")
+    result = app.main(
+        [
+            "--trackers-file",
+            str(tmp_path / "missing"),
+            "--policy-file",
+            str(policy_path),
+        ]
+    )
 
     assert result == 1

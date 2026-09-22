@@ -26,6 +26,7 @@ python3.pkgs.buildPythonPackage {
 
   pythonRuffCheckPaths = [
     "transmission_common"
+    "test_policy.py"
     "test_transmission.py"
   ];
 

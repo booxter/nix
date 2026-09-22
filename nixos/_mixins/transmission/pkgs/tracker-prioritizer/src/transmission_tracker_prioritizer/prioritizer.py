@@ -4,6 +4,7 @@ import sys
 from collections.abc import Sequence
 from typing import Protocol
 
+from transmission_common.policy import PolicyConfigError
 from transmission_common.transmission import TransmissionRpcError
 
 from .core import (
@@ -53,6 +54,7 @@ def run(
                     "iteration complete: tracker_hosts=%s preferred_torrents=%s "
                     "preferred_upload_active=%s "
                     "preferred_upload_bytes_per_second=%s applied_high_priority_changes=%s "
+                    "applied_normal_priority_changes=%s "
                     "applied_low_priority_changes=%s "
                     "applied_stop_actions=%s",
                     state.tracker_hosts_count,
@@ -60,6 +62,7 @@ def run(
                     state.preferred_upload_active,
                     state.preferred_upload_bytes_per_second,
                     len(state.high_priority_hashes),
+                    len(state.normal_priority_hashes),
                     len(state.low_priority_hashes),
                     len(state.stop_hashes),
                 )
@@ -87,9 +90,11 @@ def main(argv: Sequence[str] | None = None, runner: Runner | None = None) -> int
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    settings = settings_from_args(args)
     try:
+        settings = settings_from_args(args)
         (runner or run)(settings, build_client(settings), SystemClock())
+    except PolicyConfigError as exc:
+        raise SystemExit(str(exc)) from exc
     except KeyboardInterrupt:
         print(file=sys.stderr)
     return 0

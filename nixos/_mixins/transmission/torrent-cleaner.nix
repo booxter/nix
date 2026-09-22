@@ -3,6 +3,7 @@
   lib,
   transmissionModel,
   pkgs,
+  transmissionPolicyFile,
   utils,
   ...
 }:
@@ -10,7 +11,7 @@ let
   model = transmissionModel;
   inherit (model) cfg;
   package = (import ./pkgs pkgs).torrentCleaner;
-  policy = model.torrentCleaner;
+  policy = model.torrentPolicy;
   command = utils.escapeSystemdExecArgs (
     [
       (lib.getExe package)
@@ -18,20 +19,16 @@ let
       model.rpcUrl
       "--trackers-file"
       config.sops.secrets.transmissionTrackerHosts.path
-      "--minimum-age-days"
-      (toString policy.minimumAgeDays)
-      "--minimum-ratio"
-      (toString policy.minimumRatio)
-      "--maximum-age-days"
-      (toString policy.maximumAgeDays)
+      "--policy-file"
+      transmissionPolicyFile
       "--request-timeout-seconds"
-      (toString model.trackerPolicy.requestTimeoutSeconds)
+      (toString policy.requestTimeoutSeconds)
     ]
-    ++ lib.optional policy.delete "--delete"
+    ++ lib.optional policy.deleteOnCleanup "--delete"
   );
 in
 {
-  config = lib.mkIf (cfg != null && cfg.torrentCleaner != null) {
+  config = lib.mkIf (cfg != null && cfg.torrentPolicy != null) {
     systemd.services.transmission-torrent-cleaner = {
       description = "Cleanup for old public Transmission torrents";
       after = [
@@ -58,8 +55,8 @@ in
       description = "Periodic cleanup scan for old public Transmission torrents";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = policy.schedule;
-        OnUnitActiveSec = policy.schedule;
+        OnBootSec = policy.cleanupSchedule;
+        OnUnitActiveSec = policy.cleanupSchedule;
         Persistent = true;
         Unit = "transmission-torrent-cleaner.service";
       };
