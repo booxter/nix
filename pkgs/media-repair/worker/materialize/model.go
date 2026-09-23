@@ -12,11 +12,27 @@ import (
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
+const FailureNoSupportedAudio = "no_supported_audio"
+
+type Rejection struct {
+	Reason string
+}
+
+func (rejection *Rejection) Error() string {
+	return "media worker rejected materialization: " + rejection.Reason
+}
+
+func IsNoSupportedAudio(err error) bool {
+	var rejection *Rejection
+	return errors.As(err, &rejection) && rejection.Reason == FailureNoSupportedAudio
+}
+
 const (
-	SchemaVersion                 = "media-repair-worker/v1"
-	OperationMaterializeTar       = "materialize_tar_audio_v1"
-	MaxRequestBytes         int64 = 64 << 10
-	MaxResponseBytes              = 8 << 20
+	SchemaVersion                       = "media-repair-worker/v1"
+	OperationMaterializeTar             = "materialize_tar_audio_v1"
+	OperationMaterializeDirectory       = "materialize_directory_audio_v1"
+	MaxRequestBytes               int64 = 64 << 10
+	MaxResponseBytes                    = 8 << 20
 )
 
 var opaqueID = regexp.MustCompile(`^[a-z][a-z0-9_:-]{0,127}$`)
@@ -27,8 +43,8 @@ type Request struct {
 	RequestID           string   `json:"request_id"`
 	Operation           string   `json:"operation"`
 	RootID              string   `json:"root_id"`
-	ArchiveComponents   []string `json:"archive_path_components"`
-	ExpectedFingerprint string   `json:"expected_fingerprint"`
+	SourceComponents    []string `json:"source_path_components"`
+	ExpectedFingerprint string   `json:"expected_fingerprint,omitempty"`
 	WorkspaceID         string   `json:"workspace_id"`
 }
 
@@ -46,6 +62,7 @@ type Success struct {
 	RequestID           string     `json:"request_id"`
 	Operation           string     `json:"operation"`
 	RootID              string     `json:"root_id"`
+	SourceFingerprint   string     `json:"source_fingerprint"`
 	WorkspaceComponents []string   `json:"workspace_path_components"`
 	Artifacts           []Artifact `json:"artifacts"`
 }
@@ -115,15 +132,24 @@ func decodeStrict(data []byte, target any) error {
 }
 
 func validateRequest(request Request) error {
-	if request.SchemaVersion != SchemaVersion || request.Operation != OperationMaterializeTar {
+	if request.SchemaVersion != SchemaVersion ||
+		(request.Operation != OperationMaterializeTar &&
+			request.Operation != OperationMaterializeDirectory) {
 		return fmt.Errorf("unsupported materialization contract")
 	}
 	if !opaqueID.MatchString(request.RequestID) || !opaqueID.MatchString(request.RootID) ||
-		!opaqueID.MatchString(request.WorkspaceID) || !fingerprint.MatchString(request.ExpectedFingerprint) {
+		!opaqueID.MatchString(request.WorkspaceID) {
 		return fmt.Errorf("invalid materialization identity")
 	}
-	if !validComponents(request.ArchiveComponents) {
-		return fmt.Errorf("invalid archive path")
+	if !validComponents(request.SourceComponents) {
+		return fmt.Errorf("invalid source path")
+	}
+	if request.Operation == OperationMaterializeTar {
+		if !fingerprint.MatchString(request.ExpectedFingerprint) {
+			return fmt.Errorf("invalid materialization identity")
+		}
+	} else if request.ExpectedFingerprint != "" {
+		return fmt.Errorf("directory materialization cannot supply a fingerprint")
 	}
 	return nil
 }
@@ -131,9 +157,11 @@ func validateRequest(request Request) error {
 func validateResponse(response Response) error {
 	if response.Status == "ok" && response.Success != nil && response.Failure == nil {
 		if response.Success.SchemaVersion != SchemaVersion ||
-			response.Success.Operation != OperationMaterializeTar ||
+			(response.Success.Operation != OperationMaterializeTar &&
+				response.Success.Operation != OperationMaterializeDirectory) ||
 			!opaqueID.MatchString(response.Success.RequestID) ||
 			!opaqueID.MatchString(response.Success.RootID) ||
+			!fingerprint.MatchString(response.Success.SourceFingerprint) ||
 			!validComponents(response.Success.WorkspaceComponents) ||
 			len(response.Success.Artifacts) == 0 {
 			return fmt.Errorf("materialization success is incomplete")
@@ -154,7 +182,8 @@ func validateResponse(response Response) error {
 	}
 	if response.Status == "failed" && response.Success == nil && response.Failure != nil {
 		if response.Failure.SchemaVersion != SchemaVersion ||
-			response.Failure.Operation != OperationMaterializeTar ||
+			(response.Failure.Operation != OperationMaterializeTar &&
+				response.Failure.Operation != OperationMaterializeDirectory) ||
 			!opaqueID.MatchString(response.Failure.RequestID) || response.Failure.Reason == "" {
 			return fmt.Errorf("materialization failure is incomplete")
 		}

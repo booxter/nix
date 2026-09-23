@@ -152,6 +152,12 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	directoryMaterializeHandler, err := workerserver.NewDirectoryMaterializeHandler(
+		materializeExecutor, *joinTimeout, 1,
+	)
+	if err != nil {
+		return err
+	}
 	dvdExecutor, err := dvdidentify.NewExecutor(rootSet, dvdvideo.Runner{Executable: *lsdvdPath})
 	if err != nil {
 		return err
@@ -275,6 +281,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	router, err := workerserver.NewRouter(
 		probeHandler,
 		materializeHandler,
+		directoryMaterializeHandler,
 		dvdHandler,
 		dvdRemuxHandler,
 		dvdPublishHandler,

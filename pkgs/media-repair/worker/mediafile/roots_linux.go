@@ -191,6 +191,38 @@ func (rootSet *RootSet) Open(
 	return media, nil
 }
 
+func (rootSet *RootSet) OpenDirectory(
+	rootID string,
+	pathComponents []string,
+) (*os.File, error) {
+	if rootSet == nil || rootSet.roots == nil {
+		return nil, &Failure{Kind: FailureInternal}
+	}
+	root, found := rootSet.roots[rootID]
+	if !found {
+		return nil, &Failure{Kind: FailureUnknownRoot}
+	}
+	if !validComponents(pathComponents) {
+		return nil, &Failure{Kind: FailureInvalidPath}
+	}
+	fd, err := unix.Openat2(
+		int(root.Fd()),
+		strings.Join(pathComponents, "/"),
+		&unix.OpenHow{
+			Flags: uint64(
+				unix.O_RDONLY | unix.O_DIRECTORY | unix.O_CLOEXEC | unix.O_NOFOLLOW,
+			),
+			Resolve: unix.RESOLVE_BENEATH |
+				unix.RESOLVE_NO_SYMLINKS |
+				unix.RESOLVE_NO_MAGICLINKS,
+		},
+	)
+	if err != nil {
+		return nil, classifyOpenFailure(err)
+	}
+	return os.NewFile(uintptr(fd), "media-directory"), nil
+}
+
 // Verify compares current descriptor metadata with the expected fingerprint.
 // Calling it both before and after ffprobe detects ordinary concurrent writes.
 func (rootSet *RootSet) Verify(media *os.File, expectedFingerprint string) error {

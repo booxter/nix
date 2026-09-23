@@ -12,7 +12,7 @@ func TestRequestAndResponseRoundTrip(t *testing.T) {
 	request := Request{
 		SchemaVersion: SchemaVersion, RequestID: "request:one",
 		Operation: OperationMaterializeTar, RootID: "usenet",
-		ArchiveComponents:   []string{"Album", "audio.tar"},
+		SourceComponents:    []string{"Album", "audio.tar"},
 		ExpectedFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		WorkspaceID:         "workspace:one",
 	}
@@ -28,6 +28,7 @@ func TestRequestAndResponseRoundTrip(t *testing.T) {
 	response := Response{Status: "ok", Success: &Success{
 		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
 		Operation: OperationMaterializeTar, RootID: request.RootID,
+		SourceFingerprint:   request.ExpectedFingerprint,
 		WorkspaceComponents: []string{".media-repair", "workspaces", request.WorkspaceID},
 		Artifacts: []Artifact{{
 			ArtifactID: "artifact:one", PathComponents: []string{
@@ -45,5 +46,26 @@ func TestRequestAndResponseRoundTrip(t *testing.T) {
 	decodedResponse, err := DecodeResponse(data)
 	if err != nil || !reflect.DeepEqual(decodedResponse, response) {
 		t.Fatalf("response = %#v, error = %v", decodedResponse, err)
+	}
+}
+
+func TestDirectoryRequestRoundTrip(t *testing.T) {
+	t.Parallel()
+	request := Request{
+		SchemaVersion: SchemaVersion, RequestID: "request:directory",
+		Operation: OperationMaterializeDirectory, RootID: "downloads",
+		SourceComponents: []string{"Artist", "Album"}, WorkspaceID: "workspace:directory",
+	}
+	data, err := EncodeRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeRequest(data)
+	if err != nil || !reflect.DeepEqual(decoded, request) {
+		t.Fatalf("request = %#v, error = %v", decoded, err)
+	}
+	request.ExpectedFingerprint = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	if _, err := EncodeRequest(request); err == nil {
+		t.Fatal("directory request with caller fingerprint was accepted")
 	}
 }

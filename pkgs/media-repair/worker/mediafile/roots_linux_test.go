@@ -48,6 +48,40 @@ func TestRootSetOpensNestedRegularFile(t *testing.T) {
 	}
 }
 
+func TestRootSetOpensDirectoryWithoutFollowingSymlinks(t *testing.T) {
+	t.Parallel()
+
+	rootPath := t.TempDir()
+	directoryPath := filepath.Join(rootPath, "Artist", "Album")
+	if err := os.MkdirAll(directoryPath, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directoryPath, "01.flac"), []byte("audio"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("Artist", filepath.Join(rootPath, "link")); err != nil {
+		t.Fatal(err)
+	}
+
+	rootSet := testRootSet(t, rootPath)
+	directory, err := rootSet.OpenDirectory("downloads", []string{"Artist", "Album"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, readErr := directory.ReadDir(-1)
+	closeErr := directory.Close()
+	if readErr != nil || closeErr != nil || len(entries) != 1 || entries[0].Name() != "01.flac" {
+		t.Fatalf("entries = %#v, read error = %v, close error = %v", entries, readErr, closeErr)
+	}
+
+	opened, err := rootSet.OpenDirectory("downloads", []string{"link", "Album"})
+	if opened != nil {
+		_ = opened.Close()
+		t.Fatal("directory through symlink was opened")
+	}
+	assertFailureKind(t, err, FailureInvalidPath)
+}
+
 func TestRootSetAbsolutePathUsesValidatedComponents(t *testing.T) {
 	t.Parallel()
 

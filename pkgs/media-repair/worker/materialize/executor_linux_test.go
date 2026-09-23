@@ -17,8 +17,102 @@ type fakeFiles struct {
 	verifyCalls int
 }
 
-func (files *fakeFiles) Open(_ string, _ []string, _ string) (*os.File, error) {
-	return os.Open(files.archive)
+func (files *fakeFiles) Open(_ string, components []string, _ string) (*os.File, error) {
+	if files.archive != "" {
+		return os.Open(files.archive)
+	}
+	return os.Open(filepath.Join(append([]string{files.root}, components...)...))
+}
+
+func TestMaterializeDirectoryAudio(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join(root, "Artist", "Album")
+	if err := os.MkdirAll(filepath.Join(source, "Disc 1"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	for name, contents := range map[string]string{
+		"02.flac":        "second",
+		"Disc 1/01.flac": "first",
+		"cover.jpg":      "cover",
+	} {
+		if err := os.WriteFile(filepath.Join(source, name), []byte(contents), 0o640); err != nil {
+			t.Fatal(err)
+		}
+	}
+	probeWorkspaceSetup(t, root)
+	files := &fakeFiles{root: root}
+	prober := &fakeProber{}
+	executor, err := NewExecutor(files, prober)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := Request{
+		SchemaVersion: SchemaVersion, RequestID: "request:directory",
+		Operation: OperationMaterializeDirectory, RootID: "root:test",
+		SourceComponents: []string{"Artist", "Album"}, WorkspaceID: "workspace:directory",
+	}
+	response := executor.ExecuteDirectory(context.Background(), request)
+	if response.Success == nil || response.Failure != nil {
+		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+	}
+	if response.Success.SourceFingerprint == "" || len(response.Success.Artifacts) != 2 ||
+		response.Success.Artifacts[0].RelativePath != "02.flac" ||
+		response.Success.Artifacts[1].RelativePath != "Disc 1/01.flac" {
+		t.Fatalf("success = %#v", response.Success)
+	}
+	retry := request
+	retry.RequestID = "request:retry"
+	retried := executor.ExecuteDirectory(context.Background(), retry)
+	if retried.Success == nil || retried.Success.RequestID != retry.RequestID ||
+		len(prober.paths) != 2 {
+		t.Fatalf("retried response = %#v, probes = %v", retried, prober.paths)
+	}
+	if err := os.WriteFile(filepath.Join(source, "03.flac"), []byte("third"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	changed := request
+	changed.RequestID = "request:changed"
+	changedResponse := executor.ExecuteDirectory(context.Background(), changed)
+	if changedResponse.Success == nil || len(changedResponse.Success.Artifacts) != 3 ||
+		changedResponse.Success.SourceFingerprint == response.Success.SourceFingerprint {
+		t.Fatalf("changed response = %#v", changedResponse)
+	}
+}
+
+func TestMaterializeDirectoryRejectsSymlink(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join(root, "Album")
+	if err := os.Mkdir(source, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("elsewhere.flac", filepath.Join(source, "track.flac")); err != nil {
+		t.Fatal(err)
+	}
+	probeWorkspaceSetup(t, root)
+	executor, err := NewExecutor(&fakeFiles{root: root}, &fakeProber{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := executor.ExecuteDirectory(context.Background(), Request{
+		SchemaVersion: SchemaVersion, RequestID: "request:directory",
+		Operation: OperationMaterializeDirectory, RootID: "root:test",
+		SourceComponents: []string{"Album"}, WorkspaceID: "workspace:directory",
+	})
+	if response.Failure == nil || response.Failure.Reason != "invalid_directory" {
+		t.Fatalf("response = %#v", response)
+	}
+}
+
+func (files *fakeFiles) OpenDirectory(_ string, components []string) (*os.File, error) {
+	return os.Open(filepath.Join(append([]string{files.root}, components...)...))
 }
 
 func (files *fakeFiles) Path(_ string) (string, error) {
@@ -195,7 +289,7 @@ func validRequest() Request {
 		RequestID:           "request:test",
 		Operation:           OperationMaterializeTar,
 		RootID:              "root:test",
-		ArchiveComponents:   []string{"release.tar"},
+		SourceComponents:    []string{"release.tar"},
 		ExpectedFingerprint: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 		WorkspaceID:         "workspace:test",
 	}

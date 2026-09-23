@@ -9,12 +9,17 @@ import (
 )
 
 const materializeTarPath = "/v1/materialize/tar-audio"
+const materializeDirectoryPath = "/v1/materialize/directory-audio"
 
 type MaterializeExecutor interface {
 	Execute(context.Context, materialize.Request) materialize.Response
 }
 
 type MaterializeHandler = operationHandler[materialize.Request, materialize.Response]
+
+type DirectoryMaterializeExecutor interface {
+	ExecuteDirectory(context.Context, materialize.Request) materialize.Response
+}
 
 func NewMaterializeHandler(
 	executor MaterializeExecutor,
@@ -32,6 +37,26 @@ func NewMaterializeHandler(
 		maxConcurrent,
 		materialize.DecodeRequest,
 		executor.Execute,
+		materialize.EncodeResponse,
+	)
+}
+
+func NewDirectoryMaterializeHandler(
+	executor DirectoryMaterializeExecutor,
+	timeout time.Duration,
+	maxConcurrent int,
+) (*MaterializeHandler, error) {
+	if executor == nil {
+		return nil, fmt.Errorf("directory materialization executor is required")
+	}
+	return newOperationHandler(
+		"materialize directory audio",
+		materializeDirectoryPath,
+		materialize.MaxRequestBytes,
+		timeout,
+		maxConcurrent,
+		materialize.DecodeRequest,
+		executor.ExecuteDirectory,
 		materialize.EncodeResponse,
 	)
 }

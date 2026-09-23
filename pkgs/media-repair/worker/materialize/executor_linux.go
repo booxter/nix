@@ -18,6 +18,7 @@ import (
 	"syscall"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/worker/mediaevidence"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 )
@@ -25,7 +26,7 @@ import (
 const (
 	workspaceDirectory = ".media-repair"
 	workspaceManifest  = ".materialization.json"
-	manifestVersion    = "media-repair-workspace/v1"
+	manifestVersion    = "media-repair-workspace/v2"
 	maximumEntries     = 4096
 	maximumFileBytes   = 8 << 30
 	maximumTotalBytes  = 32 << 30
@@ -36,8 +37,11 @@ var audioExtensions = map[string]struct{}{
 	".mp3": {}, ".ogg": {}, ".opus": {},
 }
 
+var errNoSupportedAudio = errors.New("source contains no supported audio")
+
 type Files interface {
 	Open(string, []string, string) (*os.File, error)
+	OpenDirectory(string, []string) (*os.File, error)
 	Path(string) (string, error)
 	Verify(*os.File, string) error
 }
@@ -52,9 +56,10 @@ type Executor struct {
 }
 
 type manifest struct {
-	Version            string  `json:"version"`
-	ArchiveFingerprint string  `json:"archive_fingerprint"`
-	Success            Success `json:"success"`
+	Version           string  `json:"version"`
+	SourceOperation   string  `json:"source_operation"`
+	SourceFingerprint string  `json:"source_fingerprint"`
+	Success           Success `json:"success"`
 }
 
 func NewExecutor(files Files, prober Prober) (*Executor, error) {
@@ -75,7 +80,7 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 		return fail("timeout")
 	}
 	archive, err := executor.files.Open(
-		request.RootID, request.ArchiveComponents, request.ExpectedFingerprint,
+		request.RootID, request.SourceComponents, request.ExpectedFingerprint,
 	)
 	if err != nil {
 		return fail(reasonForError(err))
@@ -92,7 +97,9 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	if err != nil {
 		return fail("workspace_error")
 	}
-	if success, found, err := loadWorkspace(workspacePath, request, workspaceComponents); err != nil {
+	if success, found, err := loadWorkspace(
+		workspacePath, request, workspaceComponents, request.ExpectedFingerprint,
+	); err != nil {
 		return fail("workspace_error")
 	} else if found {
 		if err := executor.files.Verify(archive, request.ExpectedFingerprint); err != nil {
@@ -117,9 +124,12 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	success := Success{
 		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
 		Operation: OperationMaterializeTar, RootID: request.RootID,
+		SourceFingerprint:   request.ExpectedFingerprint,
 		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
 	}
-	if err := writeManifest(partialPath, request.ExpectedFingerprint, success); err != nil {
+	if err := writeManifest(
+		partialPath, request.Operation, request.ExpectedFingerprint, success,
+	); err != nil {
 		_ = os.RemoveAll(partialPath)
 		return fail("workspace_error")
 	}
@@ -134,6 +144,7 @@ func loadWorkspace(
 	workspacePath string,
 	request Request,
 	workspaceComponents []string,
+	sourceFingerprint string,
 ) (Success, bool, error) {
 	info, err := os.Lstat(workspacePath)
 	if errors.Is(err, os.ErrNotExist) {
@@ -153,7 +164,10 @@ func loadWorkspace(
 	if err := json.Unmarshal(data, &stored); err != nil {
 		return Success{}, false, fmt.Errorf("decode workspace manifest: %w", err)
 	}
-	if stored.Version != manifestVersion || stored.ArchiveFingerprint != request.ExpectedFingerprint ||
+	if stored.Version != manifestVersion || stored.SourceOperation != request.Operation ||
+		stored.SourceFingerprint != sourceFingerprint ||
+		stored.Success.Operation != request.Operation ||
+		stored.Success.SourceFingerprint != sourceFingerprint ||
 		stored.Success.RootID != request.RootID ||
 		!slices.Equal(stored.Success.WorkspaceComponents, workspaceComponents) {
 		return Success{}, false, fmt.Errorf("workspace manifest identity does not match request")
@@ -179,9 +193,15 @@ func loadWorkspace(
 	return stored.Success, true, nil
 }
 
-func writeManifest(workspacePath, archiveFingerprint string, success Success) error {
+func writeManifest(
+	workspacePath string,
+	sourceOperation string,
+	sourceFingerprint string,
+	success Success,
+) error {
 	data, err := json.Marshal(manifest{
-		Version: manifestVersion, ArchiveFingerprint: archiveFingerprint, Success: success,
+		Version: manifestVersion, SourceOperation: sourceOperation,
+		SourceFingerprint: sourceFingerprint, Success: success,
 	})
 	if err != nil {
 		return err
@@ -191,6 +211,275 @@ func writeManifest(workspacePath, archiveFingerprint string, success Success) er
 		return err
 	}
 	return os.Chmod(path, 0o600)
+}
+
+type directorySource struct {
+	files       []directoryFile
+	fingerprint string
+	bytes       int64
+}
+
+type directoryFile struct {
+	components []string
+	relative   string
+	snapshot   fileidentity.Snapshot
+}
+
+func (executor *Executor) ExecuteDirectory(ctx context.Context, request Request) Response {
+	fail := func(reason string) Response {
+		return Response{Status: "failed", Failure: &Failure{
+			SchemaVersion: SchemaVersion, RequestID: request.RequestID,
+			Operation: OperationMaterializeDirectory, Reason: reason,
+		}}
+	}
+	if err := ctx.Err(); err != nil {
+		return fail("timeout")
+	}
+	source, err := executor.scanDirectory(ctx, request.RootID, request.SourceComponents)
+	if err != nil {
+		return fail(reasonForDirectoryError(err))
+	}
+	rootPath, err := executor.files.Path(request.RootID)
+	if err != nil {
+		return fail(reasonForDirectoryError(err))
+	}
+	workspaceComponents := []string{workspaceDirectory, "workspaces", request.WorkspaceID}
+	workspacePath := filepath.Join(append([]string{rootPath}, workspaceComponents...)...)
+	partialPath := workspacePath + ".partial"
+	groupID, err := workspaceGroup(rootPath)
+	if err != nil {
+		return fail("workspace_error")
+	}
+	if success, found, loadErr := loadWorkspace(
+		workspacePath, request, workspaceComponents, source.fingerprint,
+	); loadErr == nil && found {
+		return Response{Status: "ok", Success: &success}
+	} else if loadErr != nil {
+		if clearErr := clearWorkspace(workspacePath); clearErr != nil {
+			return fail("workspace_error")
+		}
+	}
+	if err := prepareWorkspace(rootPath, partialPath, workspacePath, groupID); err != nil {
+		return fail("workspace_error")
+	}
+	artifacts, err := executor.copyAndProbeDirectory(
+		ctx, request, source, partialPath, workspaceComponents, groupID,
+	)
+	if err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail(reasonForDirectoryError(err))
+	}
+	current, err := executor.scanDirectory(ctx, request.RootID, request.SourceComponents)
+	if err != nil || current.fingerprint != source.fingerprint {
+		_ = os.RemoveAll(partialPath)
+		if err == nil {
+			err = fmt.Errorf("source directory changed")
+		}
+		return fail(reasonForDirectoryError(err))
+	}
+	success := Success{
+		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
+		Operation: OperationMaterializeDirectory, RootID: request.RootID,
+		SourceFingerprint:   source.fingerprint,
+		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
+	}
+	if err := writeManifest(
+		partialPath, request.Operation, source.fingerprint, success,
+	); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	if err := os.Rename(partialPath, workspacePath); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	return Response{Status: "ok", Success: &success}
+}
+
+func clearWorkspace(workspacePath string) error {
+	info, err := os.Lstat(workspacePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("completed workspace is unsafe")
+	}
+	return os.RemoveAll(workspacePath)
+}
+
+func (executor *Executor) scanDirectory(
+	ctx context.Context,
+	rootID string,
+	sourceComponents []string,
+) (directorySource, error) {
+	result := directorySource{}
+	entries := 0
+	var visit func([]string, []string) error
+	visit = func(absoluteComponents, relativeComponents []string) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		directory, err := executor.files.OpenDirectory(rootID, absoluteComponents)
+		if err != nil {
+			return err
+		}
+		children, readErr := directory.ReadDir(-1)
+		closeErr := directory.Close()
+		if readErr != nil || closeErr != nil {
+			return errors.Join(readErr, closeErr)
+		}
+		sort.Slice(children, func(left, right int) bool {
+			return children[left].Name() < children[right].Name()
+		})
+		for _, child := range children {
+			entries++
+			if entries > maximumEntries {
+				return fmt.Errorf("source directory contains too many entries")
+			}
+			name, err := safeArchiveName(child.Name(), child.IsDir())
+			if err != nil || strings.Contains(name, "/") {
+				return fmt.Errorf("source directory path is unsafe")
+			}
+			absolute := appendCopy(absoluteComponents, name)
+			relative := appendCopy(relativeComponents, name)
+			if child.IsDir() {
+				if len(relative) > 64 {
+					return fmt.Errorf("source directory is too deep")
+				}
+				if err := visit(absolute, relative); err != nil {
+					return err
+				}
+				continue
+			}
+			if child.Type()&os.ModeSymlink != 0 {
+				return fmt.Errorf("source directory contains a symbolic link")
+			}
+			info, err := child.Info()
+			if err != nil {
+				return err
+			}
+			if !info.Mode().IsRegular() {
+				return fmt.Errorf("source directory contains a special file")
+			}
+			if _, audio := audioExtensions[strings.ToLower(filepath.Ext(name))]; !audio {
+				continue
+			}
+			if info.Size() <= 0 || info.Size() > maximumFileBytes ||
+				result.bytes > maximumTotalBytes-info.Size() {
+				return fmt.Errorf("source directory exceeds limits")
+			}
+			snapshot, err := fileidentity.FromFileInfo(info)
+			if err != nil {
+				return err
+			}
+			result.bytes += info.Size()
+			result.files = append(result.files, directoryFile{
+				components: absolute,
+				relative:   strings.Join(relative, "/"),
+				snapshot:   snapshot,
+			})
+		}
+		return nil
+	}
+	if err := visit(sourceComponents, nil); err != nil {
+		return directorySource{}, err
+	}
+	if len(result.files) == 0 {
+		return directorySource{}, errNoSupportedAudio
+	}
+	hash := sha256.New()
+	for _, file := range result.files {
+		_, _ = io.WriteString(hash, file.relative)
+		_, _ = hash.Write([]byte{0})
+		_, _ = io.WriteString(hash, file.snapshot.Fingerprint())
+		_, _ = hash.Write([]byte{0})
+	}
+	result.fingerprint = "sha256:" + hex.EncodeToString(hash.Sum(nil))
+	return result, nil
+}
+
+func (executor *Executor) copyAndProbeDirectory(
+	ctx context.Context,
+	request Request,
+	source directorySource,
+	workspacePath string,
+	workspaceComponents []string,
+	groupID int,
+) ([]Artifact, error) {
+	artifacts := make([]Artifact, 0, len(source.files))
+	for _, sourceFile := range source.files {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		input, err := executor.files.Open(
+			request.RootID, sourceFile.components, sourceFile.snapshot.Fingerprint(),
+		)
+		if err != nil {
+			return nil, err
+		}
+		artifact, copyErr := copyDirectoryFile(
+			input, workspacePath, workspaceComponents, sourceFile, groupID,
+		)
+		verifyErr := executor.files.Verify(input, sourceFile.snapshot.Fingerprint())
+		closeErr := input.Close()
+		if copyErr != nil || verifyErr != nil || closeErr != nil {
+			return nil, errors.Join(copyErr, verifyErr, closeErr)
+		}
+		evidence, err := executor.prober.Probe(
+			ctx, filepath.Join(workspacePath, filepath.FromSlash(sourceFile.relative)),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("probe copied audio: %w", err)
+		}
+		artifact.Evidence = mediaevidence.FromProbe(evidence)
+		artifacts = append(artifacts, artifact)
+	}
+	return artifacts, nil
+}
+
+func copyDirectoryFile(
+	input *os.File,
+	workspacePath string,
+	workspaceComponents []string,
+	source directoryFile,
+	groupID int,
+) (Artifact, error) {
+	destination := filepath.Join(workspacePath, filepath.FromSlash(source.relative))
+	if err := ensureWorkspaceDirectory(filepath.Dir(destination), groupID); err != nil {
+		return Artifact{}, err
+	}
+	output, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o640)
+	if err != nil {
+		return Artifact{}, err
+	}
+	hash := sha256.New()
+	written, copyErr := io.Copy(io.MultiWriter(output, hash), input)
+	closeErr := output.Close()
+	if copyErr != nil || closeErr != nil || written != source.snapshot.SizeBytes {
+		return Artifact{}, errors.Join(copyErr, closeErr, fmt.Errorf("short source file"))
+	}
+	if err := os.Chmod(destination, 0o640); err != nil {
+		return Artifact{}, err
+	}
+	if err := os.Chown(destination, -1, groupID); err != nil {
+		return Artifact{}, err
+	}
+	digest := hex.EncodeToString(hash.Sum(nil))
+	components := appendCopy(workspaceComponents, strings.Split(source.relative, "/")...)
+	return Artifact{
+		ArtifactID: "artifact:" + digest, PathComponents: components,
+		RelativePath: source.relative, SizeBytes: written,
+		Fingerprint: "sha256:" + digest,
+	}, nil
+}
+
+func appendCopy(base []string, values ...string) []string {
+	result := make([]string, 0, len(base)+len(values))
+	result = append(result, base...)
+	return append(result, values...)
 }
 
 func workspaceGroup(rootPath string) (int, error) {
@@ -397,4 +686,29 @@ func reasonForError(err error) string {
 		return "timeout"
 	}
 	return "invalid_archive"
+}
+
+func reasonForDirectoryError(err error) string {
+	if errors.Is(err, errNoSupportedAudio) {
+		return FailureNoSupportedAudio
+	}
+	var fileFailure *mediafile.Failure
+	if errors.As(err, &fileFailure) {
+		switch fileFailure.Kind {
+		case mediafile.FailureUnknownRoot:
+			return "unknown_root"
+		case mediafile.FailureInvalidPath:
+			return "invalid_path"
+		case mediafile.FailureFileUnavailable:
+			return "file_unavailable"
+		case mediafile.FailureNotRegularFile:
+			return "not_regular_file"
+		case mediafile.FailureFingerprintMismatch:
+			return "fingerprint_mismatch"
+		}
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
+	}
+	return "invalid_directory"
 }
