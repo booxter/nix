@@ -69,3 +69,13 @@ func TestDirectoryRequestRoundTrip(t *testing.T) {
 		t.Fatal("directory request with caller fingerprint was accepted")
 	}
 }
+
+func TestArtifactIDIncludesRelativePath(t *testing.T) {
+	t.Parallel()
+	fingerprint := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	first := ArtifactID("disc-1/01.flac", fingerprint)
+	second := ArtifactID("disc-2/01.flac", fingerprint)
+	if first == second || first != ArtifactID("disc-1/01.flac", fingerprint) {
+		t.Fatalf("artifact IDs are not stable and path-specific: %q %q", first, second)
+	}
+}

@@ -38,9 +38,10 @@ func TestMaterializeDirectoryAudio(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, contents := range map[string]string{
-		"02.flac":        "second",
-		"Disc 1/01.flac": "first",
-		"cover.jpg":      "cover",
+		"02.flac":              "second",
+		"Disc 1/01.flac":       "first",
+		"cover.jpg":            "cover",
+		"[private] \\junk.txt": "ignored",
 	} {
 		if err := os.WriteFile(filepath.Join(source, name), []byte(contents), 0o640); err != nil {
 			t.Fatal(err)

@@ -2,6 +2,8 @@ package materialize
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +15,15 @@ import (
 )
 
 const FailureNoSupportedAudio = "no_supported_audio"
+
+const artifactIdentityDomain = "media-repair-artifact-v2\x00"
+
+func ArtifactID(relativePath string, contentFingerprint string) string {
+	digest := sha256.Sum256([]byte(
+		artifactIdentityDomain + relativePath + "\x00" + contentFingerprint,
+	))
+	return "artifact:" + hex.EncodeToString(digest[:])
+}
 
 type Rejection struct {
 	Reason string

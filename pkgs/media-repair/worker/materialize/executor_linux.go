@@ -357,8 +357,9 @@ func (executor *Executor) scanDirectory(
 			if entries > maximumEntries {
 				return errDirectoryLimit
 			}
-			name, err := safeArchiveName(child.Name(), false)
-			if err != nil || strings.Contains(name, "/") {
+			name := child.Name()
+			if name == "" || name == "." || name == ".." ||
+				strings.ContainsAny(name, "/\x00") || len(name) > 255 {
 				return errDirectoryEntry
 			}
 			var stat unix.Stat_t
@@ -371,6 +372,9 @@ func (executor *Executor) scanDirectory(
 			relative := appendCopy(relativeComponents, name)
 			fileType := stat.Mode & unix.S_IFMT
 			if fileType == unix.S_IFDIR {
+				if _, err := safeArchiveName(name, false); err != nil {
+					return errDirectoryEntry
+				}
 				if len(relative) > 64 {
 					return errDirectoryLimit
 				}
@@ -387,6 +391,9 @@ func (executor *Executor) scanDirectory(
 			}
 			if _, audio := audioExtensions[strings.ToLower(filepath.Ext(name))]; !audio {
 				continue
+			}
+			if _, err := safeArchiveName(name, false); err != nil {
+				return errDirectoryEntry
 			}
 			if stat.Size <= 0 || stat.Size > maximumFileBytes ||
 				result.bytes > maximumTotalBytes-stat.Size {
@@ -491,11 +498,12 @@ func copyDirectoryFile(
 		return Artifact{}, err
 	}
 	digest := hex.EncodeToString(hash.Sum(nil))
+	fingerprint := "sha256:" + digest
 	components := appendCopy(workspaceComponents, strings.Split(source.relative, "/")...)
 	return Artifact{
-		ArtifactID: "artifact:" + digest, PathComponents: components,
+		ArtifactID: ArtifactID(source.relative, fingerprint), PathComponents: components,
 		RelativePath: source.relative, SizeBytes: written,
-		Fingerprint: "sha256:" + digest,
+		Fingerprint: fingerprint,
 	}, nil
 }
 
@@ -652,11 +660,12 @@ func extractFile(
 		return Artifact{}, false, err
 	}
 	digest := hex.EncodeToString(hash.Sum(nil))
+	fingerprint := "sha256:" + digest
 	components := append(append([]string(nil), workspaceComponents...), strings.Split(name, "/")...)
 	_, audio := audioExtensions[strings.ToLower(path.Ext(name))]
 	return Artifact{
-		ArtifactID: "artifact:" + digest, PathComponents: components,
-		RelativePath: name, SizeBytes: size, Fingerprint: "sha256:" + digest,
+		ArtifactID: ArtifactID(name, fingerprint), PathComponents: components,
+		RelativePath: name, SizeBytes: size, Fingerprint: fingerprint,
 	}, audio, nil
 }
 

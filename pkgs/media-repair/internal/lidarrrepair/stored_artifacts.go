@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 func verifyStoredArtifacts(
@@ -91,7 +92,10 @@ func verifyStoredArtifact(
 		)
 	}
 	digest := hex.EncodeToString(hash.Sum(nil))
-	if "sha256:"+digest != artifact.Fingerprint || artifact.ArtifactID != "artifact:"+digest {
+	legacyID := "artifact:" + digest
+	currentID := materialize.ArtifactID(artifact.RelativePath, artifact.Fingerprint)
+	if "sha256:"+digest != artifact.Fingerprint ||
+		(artifact.ArtifactID != legacyID && artifact.ArtifactID != currentID) {
 		return fmt.Errorf("stored Lidarr artifact %q changed contents", artifact.ArtifactID)
 	}
 	return nil

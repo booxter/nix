@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
@@ -29,6 +30,13 @@ func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
 		Fingerprint: "sha256:" + fingerprint, SizeBytes: int64(len(body)),
 	}}
 	bindings := []ImportBinding{{ArtifactID: artifacts[0].ArtifactID, Path: path}}
+	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
+		t.Fatal(err)
+	}
+	artifacts[0].ArtifactID = materialize.ArtifactID(
+		artifacts[0].RelativePath, artifacts[0].Fingerprint,
+	)
+	bindings[0].ArtifactID = artifacts[0].ArtifactID
 	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
 		t.Fatal(err)
 	}
