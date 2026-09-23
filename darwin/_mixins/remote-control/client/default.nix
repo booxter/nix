@@ -3,6 +3,11 @@
   lib,
   ...
 }:
+let
+  username = config.host.username;
+  agentLogPath = "/var/log/nix-darwin/xquartz-startx.log";
+  daemonLogPath = "/var/log/nix-darwin/xquartz-privileged-startx.log";
+in
 {
   imports = [
     ./vnc.nix
@@ -30,7 +35,26 @@
       configureSsh = true;
     };
 
-    home-manager.users.${config.host.username} = {
+    launchd.agents.xquartz-startx.serviceConfig = {
+      StandardOutPath = agentLogPath;
+      StandardErrorPath = agentLogPath;
+    };
+
+    launchd.daemons.xquartz-privileged-startx.serviceConfig = {
+      StandardOutPath = daemonLogPath;
+      StandardErrorPath = daemonLogPath;
+    };
+
+    system.activationScripts.launchd.text = lib.mkBefore ''
+      install -d -m 0755 -o root -g wheel /var/log/nix-darwin
+      if [[ ! -e ${lib.escapeShellArg agentLogPath} ]]; then
+        install -m 0644 -o ${lib.escapeShellArg username} -g staff /dev/null ${lib.escapeShellArg agentLogPath}
+      fi
+      chown ${lib.escapeShellArg "${username}:staff"} ${lib.escapeShellArg agentLogPath}
+      chmod 0644 ${lib.escapeShellArg agentLogPath}
+    '';
+
+    home-manager.users.${username} = {
       programs.remote-control.client.x11 = { };
     };
   };

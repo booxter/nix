@@ -41,7 +41,6 @@ in
     ./_mixins/ssh
     ./_mixins/thermal-accounting
     ./_mixins/ups-client
-    ./_mixins/xquartz
     ./_mixins/browser
   ];
 
