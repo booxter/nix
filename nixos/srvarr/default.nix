@@ -47,9 +47,9 @@ in
     repair.controller = {
       enable = true;
       apply = {
-        enable = true;
-        allowedActions = [ "import_missing_tracks_v1" ];
-        allowedSources = [ "tar_audio_v1" ];
+        enable = false;
+        allowedActions = [ ];
+        allowedSources = [ ];
       };
     };
   };
