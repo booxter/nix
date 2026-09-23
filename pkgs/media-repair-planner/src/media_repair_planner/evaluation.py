@@ -12,7 +12,15 @@ from .case_models import RepairCaseV3
 from .contracts import decode_case, encode_decision
 from .decision_models import Reason, RepairDecisionV3
 from .decision_validation import describe_violation, validate_decision_for_case
-from .openrouter_model import ReasoningEffort
+from .evaluation_runtime import (
+    EvaluationSettings as EvaluationSettings,
+)
+from .evaluation_runtime import (
+    OllamaEvaluationSettings as OllamaEvaluationSettings,
+)
+from .evaluation_runtime import (
+    OpenRouterEvaluationSettings as OpenRouterEvaluationSettings,
+)
 from .planning import Planner, PlanningOutcome
 
 EvaluationName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$")]
@@ -123,32 +131,6 @@ def _validate_expected_capability(
         expected.ordered_file_ids
     ).issubset(candidate_ids):
         raise EvaluationDataError(f"evaluation case {spec.name} expects unavailable join files")
-
-
-class CommonEvaluationSettings(StrictModel):
-    model: str
-    output_tokens: int
-    timeout_seconds: float
-    runs: int
-    case: EvaluationName | None = None
-
-
-class OllamaEvaluationSettings(CommonEvaluationSettings):
-    backend: Literal["ollama"] = "ollama"
-    context_tokens: int
-    reasoning: bool
-
-
-class OpenRouterEvaluationSettings(CommonEvaluationSettings):
-    backend: Literal["openrouter"] = "openrouter"
-    provider: str
-    reasoning_effort: ReasoningEffort
-
-
-EvaluationSettings = Annotated[
-    OllamaEvaluationSettings | OpenRouterEvaluationSettings,
-    Field(discriminator="backend"),
-]
 
 
 class EvaluationResult(StrictModel):

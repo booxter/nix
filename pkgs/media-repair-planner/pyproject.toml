@@ -11,7 +11,8 @@ dependencies = ["fastapi", "jsonschema", "ollama", "openai", "pydantic", "uvicor
 
 [project.scripts]
 media-repair-planner = "media_repair_planner.cli:entrypoint"
-media-repair-planner-evaluate = "media_repair_planner.evaluation_cli:entrypoint"
+media-repair-planner-evaluate-radarr = "media_repair_planner.evaluation_cli:entrypoint"
+media-repair-planner-evaluate-lidarr = "media_repair_planner.lidarr_evaluation_cli:entrypoint"
 media-repair-planner-serve = "media_repair_planner.server_cli:entrypoint"
 
 [tool.setuptools]

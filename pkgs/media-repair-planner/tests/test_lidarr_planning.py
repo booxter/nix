@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -9,6 +10,7 @@ from media_repair_planner.api import ContractEndpoint, create_app
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
+from media_repair_planner.evaluation_runtime import OpenRouterEvaluationSettings
 from media_repair_planner.lidarr_case_models import LidarrRepairCaseV2
 from media_repair_planner.lidarr_contracts import (
     ContractError,
@@ -18,11 +20,20 @@ from media_repair_planner.lidarr_contracts import (
     encode_decision,
 )
 from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV2
+from media_repair_planner.lidarr_evaluation import (
+    CorpusCase,
+    LidarrEvaluationDataError,
+    evaluate_outcome,
+    load_cases,
+    run_evaluation,
+)
+from media_repair_planner.lidarr_evaluation_cli import main as evaluation_main
 from media_repair_planner.lidarr_planning import LidarrPlanner
 from media_repair_planner.lidarr_validation import (
     validate_decision_for_case,
     validate_decision_object,
 )
+from media_repair_planner.planning_core import PlanningOutcome
 from pydantic import BaseModel
 
 CASE_ID = "sha256:" + "a" * 64
@@ -361,3 +372,138 @@ async def test_lidarr_endpoint_uses_shared_http_boundary() -> None:
 
     assert response.status_code == 200
     assert decode_decision(response.content) == repair_decision()
+
+
+def write_lidarr_case(directory: Path, value: dict[str, object] | None = None) -> Path:
+    path = directory / ("a" * 64 + ".json")
+    path.write_text(json.dumps(value or case_value()), encoding="utf-8")
+    return path
+
+
+def lidarr_evaluation_settings(case: str | None = None) -> OpenRouterEvaluationSettings:
+    return OpenRouterEvaluationSettings(
+        model="openai/gpt-5.6-sol",
+        provider="OpenAI",
+        output_tokens=4096,
+        reasoning_effort="high",
+        timeout_seconds=30,
+        runs=1,
+        case=case,
+    )
+
+
+def test_lidarr_review_corpus_loads_contract_cases(tmp_path: Path) -> None:
+    write_lidarr_case(tmp_path)
+
+    corpus = load_cases(tmp_path)
+
+    assert len(corpus) == 1
+    assert corpus[0].name == "a" * 64
+    assert corpus[0].repair_case.case_id.root == CASE_ID
+
+
+def test_lidarr_review_corpus_rejects_bad_identity(tmp_path: Path) -> None:
+    value = case_value()
+    value["case_id"] = "sha256:" + "b" * 64
+    write_lidarr_case(tmp_path, value)
+
+    with pytest.raises(LidarrEvaluationDataError, match="does not match"):
+        load_cases(tmp_path)
+
+
+async def test_lidarr_review_runs_structured_planner(tmp_path: Path) -> None:
+    write_lidarr_case(tmp_path)
+    model = ScriptedModel([json.dumps(decision_value())])
+
+    report = await run_evaluation(
+        LidarrPlanner(model),
+        lidarr_evaluation_settings(),
+        load_cases(tmp_path),
+    )
+
+    assert report.passed
+    assert report.results[0].artist == "Artist"
+    assert report.results[0].album == "Album"
+    assert report.results[0].decision["action"] == "import_missing_tracks_v1"
+
+
+async def test_lidarr_review_rejects_unknown_case(tmp_path: Path) -> None:
+    write_lidarr_case(tmp_path)
+
+    with pytest.raises(LidarrEvaluationDataError, match="unknown Lidarr evaluation case"):
+        await run_evaluation(
+            LidarrPlanner(ScriptedModel([])),
+            lidarr_evaluation_settings(case="b" * 64),
+            load_cases(tmp_path),
+        )
+
+
+def test_lidarr_review_marks_fallback_as_failed() -> None:
+    corpus_case = CorpusCase(name="a" * 64, repair_case=repair_case())
+    result = evaluate_outcome(
+        corpus_case,
+        1,
+        PlanningOutcome(
+            decision=decode_decision(
+                json.dumps(
+                    {
+                        "schema_version": "lidarr-repair/v2",
+                        "case_id": CASE_ID,
+                        "action": "no_repair",
+                        "reason": "unsafe_to_repair",
+                        "evidence_refs": [],
+                        "explanation": "The planner exhausted its attempts.",
+                    }
+                ).encode()
+            ),
+            attempts=2,
+            used_fallback=True,
+            attempt_errors=("attempt 1: invalid", "attempt 2: invalid"),
+        ),
+    )
+
+    assert not result.passed
+    assert result.violations == ["planner exhausted its attempts"]
+
+
+def test_lidarr_review_cli_writes_openrouter_report(tmp_path: Path) -> None:
+    write_lidarr_case(tmp_path)
+    output = tmp_path / "report.json"
+    trace = tmp_path / "trace.jsonl"
+
+    def model_factory(settings: object, trace_sink: object) -> ScriptedModel:
+        del settings, trace_sink
+        return ScriptedModel([json.dumps(decision_value())])
+
+    result = evaluation_main(
+        [
+            "--backend",
+            "openrouter",
+            "--model",
+            "openai/gpt-5.6-sol",
+            "--openrouter-provider",
+            "OpenAI",
+            "--openrouter-api-key-file",
+            str(tmp_path / "api-key"),
+            "--output-tokens",
+            "4096",
+            "--reasoning",
+            "high",
+            "--timeout-seconds",
+            "30",
+            "--case-directory",
+            str(tmp_path),
+            "--trace-output",
+            str(trace),
+            "--output",
+            str(output),
+        ],
+        model_factory=model_factory,
+    )
+
+    report = json.loads(output.read_bytes())
+    assert result == 0
+    assert report["schema_version"] == "lidarr-repair-review-report/v1"
+    assert report["settings"]["backend"] == "openrouter"
+    assert report["results"][0]["decision"]["action"] == "import_missing_tracks_v1"
+    assert trace.stat().st_mode & 0o777 == 0o600

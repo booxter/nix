@@ -1,14 +1,11 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 from typing import NoReturn
 
-from .evaluation import (
-    EvaluationReport,
-    load_evaluation_cases,
-    run_evaluation,
-)
 from .evaluation_runtime import (
     EvaluationArguments,
     EvaluationSettings,
@@ -16,39 +13,50 @@ from .evaluation_runtime import (
     run_model_evaluation,
     write_report,
 )
+from .lidarr_evaluation import (
+    CorpusCase,
+    EvaluationReport,
+    load_cases,
+    run_evaluation,
+)
+from .lidarr_planning import LidarrPlanner
 from .model_runtime import (
     ModelFactory,
     RuntimeDecisionModel,
     create_model,
 )
-from .planning import Planner
 
 
 class Arguments(EvaluationArguments):
-    pass
+    case_directory: Path
+
+
+def parser() -> argparse.ArgumentParser:
+    result = evaluation_parser("media-repair-planner-evaluate-lidarr")
+    result.add_argument("--case-directory", required=True, type=Path)
+    return result
 
 
 async def _evaluate(
     model: RuntimeDecisionModel,
     settings: EvaluationSettings,
+    corpus: list[CorpusCase],
 ) -> EvaluationReport:
-    return await run_evaluation(Planner(model), settings)
+    return await run_evaluation(LidarrPlanner(model), settings, corpus)
 
 
 def main(
     argv: Sequence[str] | None = None,
     model_factory: ModelFactory = create_model,
 ) -> int:
-    arguments = evaluation_parser("media-repair-planner-evaluate-radarr").parse_args(
-        argv, namespace=Arguments()
-    )
+    arguments = parser().parse_args(argv, namespace=Arguments())
     try:
-        cases = load_evaluation_cases()
+        corpus = load_cases(arguments.case_directory)
         report = run_model_evaluation(
             arguments,
             model_factory,
-            {item.repair_case.case_id.root: item.spec.name for item in cases},
-            _evaluate,
+            {item.repair_case.case_id.root: item.name for item in corpus},
+            lambda model, settings: _evaluate(model, settings, corpus),
         )
         write_report(report, arguments.output)
     except (OSError, ValueError) as error:

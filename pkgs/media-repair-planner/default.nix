@@ -77,7 +77,8 @@ python3Packages.buildPythonApplication {
       ${contracts}/share/radarr-repair/contracts/v3/examples/repair-case-joinable.json
     "$out/bin/media-repair-planner" validate-decision \
       ${contracts}/share/radarr-repair/contracts/v3/examples/repair-decision-join.json
-    "$out/bin/media-repair-planner-evaluate" --help >/dev/null
+    "$out/bin/media-repair-planner-evaluate-radarr" --help >/dev/null
+    "$out/bin/media-repair-planner-evaluate-lidarr" --help >/dev/null
     "$out/bin/media-repair-planner-serve" --help >/dev/null
   '';
 
