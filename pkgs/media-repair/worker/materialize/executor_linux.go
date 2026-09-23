@@ -37,7 +37,12 @@ var audioExtensions = map[string]struct{}{
 	".mp3": {}, ".ogg": {}, ".opus": {},
 }
 
-var errNoSupportedAudio = errors.New("source contains no supported audio")
+var (
+	errNoSupportedAudio = errors.New("source contains no supported audio")
+	errDirectoryCopy    = errors.New("copy directory audio")
+	errDirectoryProbe   = errors.New("probe directory audio")
+	errDirectoryChanged = errors.New("source directory changed")
+)
 
 type Files interface {
 	Open(string, []string, string) (*os.File, error)
@@ -273,7 +278,9 @@ func (executor *Executor) ExecuteDirectory(ctx context.Context, request Request)
 	if err != nil || current.fingerprint != source.fingerprint {
 		_ = os.RemoveAll(partialPath)
 		if err == nil {
-			err = fmt.Errorf("source directory changed")
+			err = errDirectoryChanged
+		} else {
+			err = fmt.Errorf("%w: %v", errDirectoryChanged, err)
 		}
 		return fail(reasonForDirectoryError(err))
 	}
@@ -426,13 +433,15 @@ func (executor *Executor) copyAndProbeDirectory(
 		verifyErr := executor.files.Verify(input, sourceFile.snapshot.Fingerprint())
 		closeErr := input.Close()
 		if copyErr != nil || verifyErr != nil || closeErr != nil {
-			return nil, errors.Join(copyErr, verifyErr, closeErr)
+			return nil, fmt.Errorf(
+				"%w: %v", errDirectoryCopy, errors.Join(copyErr, verifyErr, closeErr),
+			)
 		}
 		evidence, err := executor.prober.Probe(
 			ctx, filepath.Join(workspacePath, filepath.FromSlash(sourceFile.relative)),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("probe copied audio: %w", err)
+			return nil, fmt.Errorf("%w: %v", errDirectoryProbe, err)
 		}
 		artifact.Evidence = mediaevidence.FromProbe(evidence)
 		artifacts = append(artifacts, artifact)
@@ -689,8 +698,15 @@ func reasonForError(err error) string {
 }
 
 func reasonForDirectoryError(err error) string {
-	if errors.Is(err, errNoSupportedAudio) {
+	switch {
+	case errors.Is(err, errNoSupportedAudio):
 		return FailureNoSupportedAudio
+	case errors.Is(err, errDirectoryCopy):
+		return "copy_failed"
+	case errors.Is(err, errDirectoryProbe):
+		return "probe_failed"
+	case errors.Is(err, errDirectoryChanged):
+		return "source_changed"
 	}
 	var fileFailure *mediafile.Failure
 	if errors.As(err, &fileFailure) {

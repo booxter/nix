@@ -3,6 +3,8 @@ package materialize
 import (
 	"archive/tar"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -108,6 +110,25 @@ func TestMaterializeDirectoryRejectsSymlink(t *testing.T) {
 	})
 	if response.Failure == nil || response.Failure.Reason != "invalid_directory" {
 		t.Fatalf("response = %#v", response)
+	}
+}
+
+func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		err  error
+		want string
+	}{
+		{err: fmt.Errorf("%w: detail", errDirectoryCopy), want: "copy_failed"},
+		{err: fmt.Errorf("%w: detail", errDirectoryProbe), want: "probe_failed"},
+		{err: fmt.Errorf("%w: detail", errDirectoryChanged), want: "source_changed"},
+		{err: errors.New("other"), want: "invalid_directory"},
+	}
+	for _, test := range tests {
+		if got := reasonForDirectoryError(test.err); got != test.want {
+			t.Errorf("reason = %q, want %q", got, test.want)
+		}
 	}
 }
 
