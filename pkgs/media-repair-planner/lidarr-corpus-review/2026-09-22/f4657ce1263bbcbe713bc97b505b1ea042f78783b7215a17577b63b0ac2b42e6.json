@@ -413,7 +413,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -424,14 +424,14 @@
         1
       ],
       "track_ids": [
-        92920
+        92922
       ]
     },
     {
       "album_id": 1750,
       "artifact_id": "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -447,7 +447,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -463,7 +463,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -479,7 +479,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -495,7 +495,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -513,7 +513,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -531,7 +531,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -549,7 +549,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -565,7 +565,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -583,7 +583,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -601,7 +601,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -619,7 +619,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -629,13 +629,15 @@
       "tag_track_numbers": [
         13
       ],
-      "track_ids": []
+      "track_ids": [
+        92920
+      ]
     },
     {
       "album_id": 1750,
       "artifact_id": "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -653,7 +655,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -671,7 +673,7 @@
       "album_id": 1750,
       "artifact_id": "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
       "rejections": [
-        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
       ],
       "release_id": 7666,
@@ -681,9 +683,7 @@
       "tag_track_numbers": [
         16
       ],
-      "track_ids": [
-        92922
-      ]
+      "track_ids": []
     }
   ],
   "capabilities": [
@@ -729,8 +729,8 @@
       ]
     }
   ],
-  "case_id": "sha256:7a2865e60ae90fb79f1e08054d5ca89e48c6a0a9a013358676acb23eea446716",
-  "observed_at": "2026-09-23T02:24:11.761139896Z",
+  "case_id": "sha256:f4657ce1263bbcbe713bc97b505b1ea042f78783b7215a17577b63b0ac2b42e6",
+  "observed_at": "2026-09-23T03:22:00.021472151Z",
   "queue": {
     "download_ref": "download:d4b52b69c695722a095a4bd6a09921b1aac80b96adda8933e8e68be0f5dae6e5",
     "messages": [

@@ -123,16 +123,14 @@
       ]
     }
   ],
-  "case_id": "sha256:f09691b183596c5eaff036586aa4e654a2c299e50ad1324cd409d4faa83fa099",
-  "observed_at": "2026-09-23T02:00:19.922553262Z",
+  "case_id": "sha256:c7898e410479f42d5309c2523c9fec622c640d36c60d90b426ffe90a917c90ae",
+  "observed_at": "2026-09-23T03:23:22.138025021Z",
   "queue": {
     "download_ref": "download:87fd9c6dd28638c43416c35111c75a94dcc0d11109085c0fd597bb2ba9bb279c",
     "messages": [
       "01-irmin_schmidt-part_1-543eefd3.flac",
       "02-irmin_schmidt-part_2-9a4874ca.flac",
       "Album match is not close enough: 67.3% vs 80% [country, tracks, missing tracks]",
-      "Album match is not close enough: 67.3% vs 80% [country, tracks, missing tracks]",
-      "Has missing tracks",
       "Has missing tracks",
       "One or more tracks expected in this release were not imported or missing from the release"
     ],

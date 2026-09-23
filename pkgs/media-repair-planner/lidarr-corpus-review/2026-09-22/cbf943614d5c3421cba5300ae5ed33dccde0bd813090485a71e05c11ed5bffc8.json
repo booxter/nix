@@ -674,8 +674,8 @@
       ]
     }
   ],
-  "case_id": "sha256:f2a209793aef0595e037055ca1ebbed762e60421b164d5560411b0675c7d7445",
-  "observed_at": "2026-09-23T01:59:12.108525636Z",
+  "case_id": "sha256:cbf943614d5c3421cba5300ae5ed33dccde0bd813090485a71e05c11ed5bffc8",
+  "observed_at": "2026-09-23T03:22:19.632697068Z",
   "queue": {
     "download_ref": "download:b40d9cf1b37367b066f2579653e6708c5c4d1c15e8a908739959ce5a4848af3a",
     "messages": [
@@ -691,17 +691,6 @@
       "11.Holy.Water.flac",
       "12.New.Damage.flac",
       "Bulldozers.flac",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
-      "Has fewer tracks than existing release",
       "Has fewer tracks than existing release",
       "One or more tracks expected in this release were not imported or missing from the release"
     ],
@@ -1048,8 +1037,8 @@
     },
     {
       "countries": [
-        "United Kingdom",
-        "Europe"
+        "Europe",
+        "United Kingdom"
       ],
       "disambiguation": "25th Anniversary Remaster",
       "foreign_release_id": "ed2b7805-2e2f-4552-850f-a2f667aa904d",

@@ -509,8 +509,8 @@
       ]
     }
   ],
-  "case_id": "sha256:df0d181b2abf4b5ee2dc969695af987ee204cc17b0074947c1d94521aa244f88",
-  "observed_at": "2026-09-23T01:55:30.44062693Z",
+  "case_id": "sha256:e4bdbb1f90c18af9d10acd1e8c064c2dc9024e338ee467cc8805f943fce4322d",
+  "observed_at": "2026-09-23T03:19:20.757881689Z",
   "queue": {
     "download_ref": "download:4f2440056c0799aa76eea8fe54cd9b1a91a073977f65d7881792d0acbce395c3",
     "messages": [
@@ -523,14 +523,6 @@
       "08-warpaint-altar-2d1b4996.flac",
       "09-warpaint-melting-30229981.flac",
       "10-warpaint-send_nudes-912efea4.flac",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
       "Has missing tracks",
       "One or more tracks expected in this release were not imported or missing from the release"
     ],

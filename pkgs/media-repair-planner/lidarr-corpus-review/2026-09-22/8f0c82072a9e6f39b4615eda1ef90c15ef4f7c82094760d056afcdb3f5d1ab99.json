@@ -824,8 +824,8 @@
       ]
     }
   ],
-  "case_id": "sha256:a090e5d392a0d9e0e0e30140a29e4a0fd80f74c6e3cba5369e13d27388d29c7c",
-  "observed_at": "2026-09-23T01:52:26.853803264Z",
+  "case_id": "sha256:8f0c82072a9e6f39b4615eda1ef90c15ef4f7c82094760d056afcdb3f5d1ab99",
+  "observed_at": "2026-09-23T03:17:05.742196035Z",
   "queue": {
     "download_ref": "download:4ae7cb9d1eaec279eabde2f8a55a43260632aaa2ab9a7843fba1582fd4f8fbd7",
     "messages": [
@@ -841,21 +841,6 @@
       "14.-.IV.flac",
       "15.-.IV.flac",
       "16.-.IV.flac",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
       "Has missing tracks",
       "Junkyard.work.next.to.Dartford.Creek,.rigging.and.reeds.at.Erith.Marina,.The.Bold.Benjamin,.waterfowl.on.the.Darent.flac",
       "One or more tracks expected in this release were not imported or missing from the release",

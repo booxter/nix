@@ -57,7 +57,7 @@
   ],
   "capabilities": [],
   "case_id": "sha256:6d9a9d57573b88f91f57fb854ce3593bf920fa926e601c44b194e7a528ae53ac",
-  "observed_at": "2026-09-23T02:24:26.942860831Z",
+  "observed_at": "2026-09-23T03:22:15.661401307Z",
   "queue": {
     "download_ref": "download:37e3f6819de6c407cd5c02265566b316d439e4493945cb1d7669b46fb194f066",
     "messages": [

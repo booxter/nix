@@ -757,16 +757,14 @@
       ]
     }
   ],
-  "case_id": "sha256:bfce0fbcac36c198c68e7fde1785c2d4341ae19b141c04595c0e8da49205f899",
-  "observed_at": "2026-09-23T01:52:35.634921461Z",
+  "case_id": "sha256:f094d30992f0b65ec13fa066e91a4f4a21695d49a41d779856808c4b550a168d",
+  "observed_at": "2026-09-23T03:17:25.408710852Z",
   "queue": {
     "download_ref": "download:0a27b4e8755b995183e7ee3713d9cc3d41c0123b6f45e5bcdff23437a5fffa70",
     "messages": [
       "67b4ae45a6dd9de3fca4d482a88f6bc9.flac",
       "945c32dd74773a24ac4eec95e3b8e754.flac",
       "Album match is not close enough: 37.8% vs 80% [album, year, tracks, missing tracks]",
-      "Album match is not close enough: 37.8% vs 80% [album, year, tracks, missing tracks]",
-      "Has missing tracks",
       "Has missing tracks",
       "One or more tracks expected in this release were not imported or missing from the release"
     ],

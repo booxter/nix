@@ -1073,8 +1073,8 @@
       ]
     }
   ],
-  "case_id": "sha256:4c2b8275194eb8d806b7136cabccf4966d32e66944bc554ad93050868de1a9ba",
-  "observed_at": "2026-09-23T01:59:50.762269577Z",
+  "case_id": "sha256:e1c1d98aa57521f701ff9ae490c178dcc312d4122303c0ade54a690929f14a7f",
+  "observed_at": "2026-09-23T03:23:10.317678181Z",
   "queue": {
     "download_ref": "download:1aed342afa713a5b0c27580bb08078905ce0b23639d784190fcf65c3376eeaa9",
     "messages": [
@@ -1100,26 +1100,6 @@
       "20..Kanye.West.-.Diamonds.From.flac",
       "21..Kanye.West.-.Late.flac",
       "One or more tracks expected in this release were not imported or missing from the release",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
-      "Worst track match: 58.3% vs 60% [track title]",
       "Worst track match: 58.3% vs 60% [track title]"
     ],
     "queue_id": 271396678,

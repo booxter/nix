@@ -540,8 +540,8 @@
       ]
     }
   ],
-  "case_id": "sha256:bb94ebaf4ff91c145f882ec9cfd7de849614ddfe98b658449ededd7b5c182865",
-  "observed_at": "2026-09-23T01:55:01.287504834Z",
+  "case_id": "sha256:8d74681efaaeb82b203f7a1ae9e4d18e43a087a4c18fb6dd1b31fe9c546845b6",
+  "observed_at": "2026-09-23T03:19:10.657102347Z",
   "queue": {
     "download_ref": "download:28c69b52ce5ddee34c1fdc75f0aa175aca9e60e17d8de8b7f2d239e5f7c7a687",
     "messages": [
@@ -556,16 +556,6 @@
       "09-lorn-dead_dogs.flac",
       "10-lorn-chhurch.flac",
       "11-lorn-i_better.flac",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
-      "Has missing tracks",
       "Has missing tracks",
       "One or more tracks expected in this release were not imported or missing from the release"
     ],
