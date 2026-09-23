@@ -9,7 +9,7 @@ import (
 
 type ImportExecutionState uint8
 
-const completedConfirmationChecks = 12
+const terminalConfirmationChecks = 12
 
 const (
 	ImportPrepared ImportExecutionState = iota + 1
@@ -196,7 +196,7 @@ func (flow *ImportExecution[Execution]) follow(
 			flow.dependencies.Operation,
 		)
 	}
-	completedChecks := 0
+	terminalChecks := 0
 	for {
 		confirmed, found, err := flow.dependencies.Confirm(ctx, execution)
 		if err != nil || found {
@@ -220,16 +220,13 @@ func (flow *ImportExecution[Execution]) follow(
 		if err != nil {
 			return execution, err
 		}
-		if disposition == ImportCommandFailed {
-			return flow.fail(execution)
-		}
-		if disposition == ImportCommandCompleted {
-			completedChecks++
-			if completedChecks >= completedConfirmationChecks {
+		if disposition == ImportCommandFailed || disposition == ImportCommandCompleted {
+			terminalChecks++
+			if terminalChecks >= terminalConfirmationChecks {
 				return flow.fail(execution)
 			}
 		} else {
-			completedChecks = 0
+			terminalChecks = 0
 		}
 		if err := flow.dependencies.Waiter.Wait(ctx, flow.dependencies.PollInterval); err != nil {
 			return execution, err
