@@ -29,6 +29,22 @@ do not rely on a first page or an arbitrary small result limit.
 An explicit user-supplied interval replaces the seven-day core interval but
 retains the 24-hour safety overlap unless the user says otherwise.
 
+## Destination document
+
+At the start of the run, find and read the Google Doc named `Private weekly
+notes`. Use its current report as the style and structure reference for the new
+report. It is not a source of facts: never carry old accomplishments, links,
+people, dates, statuses, or project details forward without current-period
+evidence.
+
+Infer and retain the document's stable report shape, including topic heading
+order, bullet hierarchy, link placement, level of detail, terse phrasing, and
+the convention used for tracked topics with no activity. Treat its existing
+topic headings as the default taxonomy. Add a topic only when substantial
+current work clearly fits none of them, and name it narrowly after the actual
+workstream. Do not invent umbrella topics from source systems, activity types,
+status, or loose thematic similarity.
+
 ## Sources
 
 Use all of the following connected sources. Identify the current user through
@@ -74,21 +90,35 @@ outcome and the user's contribution over a chronology of messages or commits.
 Do not count passive participation, notifications received, assignments with
 no activity, or duplicated mirrors as accomplishments.
 
+Phrase each item as a concrete technical action or result. Preserve useful
+technical nouns and distinctions from the evidence. Avoid generic substitutes
+such as "worked on", "advanced", "supported", "helped with", or "made progress
+on" when the evidence supports a more precise verb. Do not inflate exploratory,
+partial, blocked, or coordination work into a completed outcome.
+
 ## Output
 
 Return Markdown suitable for review and later pasting into a status report.
-Start with the exact core interval and safety-overlap interval. Organize the
-work into short, descriptive topic sections named for the project, product,
-workstream, or technical area. Do not organize sections by state or activity
-type, such as delivered, in progress, helped, or reviewed.
+Start with the exact core interval and safety-overlap interval, then follow the
+destination document's established heading order and hierarchy. Keep its
+stable tracked topics even when a topic has no current activity, using the
+document's existing terse no-progress convention. Do not organize sections by
+state or activity type, such as delivered, in progress, helped, or reviewed.
 
-Omit empty sections. Within each topic, write a flat bullet list of brief,
-outcome-first items. Prefer one short sentence or phrase per bullet and omit
-implementation detail that is not needed to distinguish the result. A bullet
-may contain canonical Markdown links to relevant Jira issues, GitLab
-artifacts, and `ovn-kubernetes` organization GitHub artifacts. Combine related
-work and links in the same bullet rather than creating source-by-source or
-status-by-status duplicates.
+Within each topic, use brief top-level bullets with one concrete contribution
+per bullet. Combine records about the same contribution, but do not combine
+distinct outcomes merely to reduce the bullet count. Use nested bullets only
+for a directly subordinate follow-up or for supporting artifact URLs.
+
+Keep links out of prose. Include only the most direct Jira, GitLab, or
+`ovn-kubernetes` organization GitHub artifacts needed to locate the reported
+work, and put each canonical URL in its own nested bullet immediately under
+the contribution. Do not add Slack or email links, collect links in a separate
+section, label links by source, or dump every cross-referenced artifact.
+
+Before returning the report, remove vague summaries, duplicated work,
+source-by-source narration, invented themes, unnecessary names, and detail
+that does not distinguish the contribution.
 
 Keep carry-over activity in its relevant topic and mark the item `Overlap
 only` when its supporting evidence falls entirely within the safety-overlap
@@ -98,6 +128,7 @@ After the list, add a short coverage note only if a source was unavailable,
 identity was ambiguous, pagination or permissions made results incomplete, or
 the time filtering was necessarily approximate.
 
-After producing the report, use the connected Google Docs tools to update the
-document named `Private weekly notes` with the latest report. Do not post,
-send, comment, or otherwise publish the report anywhere else.
+After producing the report, use the connected Google Docs tools to replace the
+current report in `Private weekly notes` with the latest report while
+preserving the established document shape. Do not post, send, comment, or
+otherwise publish the report anywhere else.
