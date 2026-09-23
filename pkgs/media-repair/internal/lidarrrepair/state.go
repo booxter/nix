@@ -16,7 +16,7 @@ import (
 	"golift.io/starr"
 )
 
-const stateVersion = "lidarr-repair-state/v2"
+const stateVersion = "lidarr-repair-state/v3"
 
 var stateFingerprint = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
@@ -95,7 +95,7 @@ func (store *Store) path(queueID int64) (string, error) {
 	if store == nil || store.directory == "" || queueID <= 0 {
 		return "", fmt.Errorf("Lidarr repair state is not configured")
 	}
-	return filepath.Join(store.directory, fmt.Sprintf("queue-v2-%d.json", queueID)), nil
+	return filepath.Join(store.directory, fmt.Sprintf("queue-v3-%d.json", queueID)), nil
 }
 
 func encodeRecord(record Record) ([]byte, error) {
