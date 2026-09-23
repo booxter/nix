@@ -49,10 +49,7 @@ in
       apply = {
         enable = true;
         allowedActions = [ "import_missing_tracks_v1" ];
-        allowedSources = [
-          "directory_audio_v1"
-          "tar_audio_v1"
-        ];
+        allowedSources = [ "tar_audio_v1" ];
       };
     };
   };
