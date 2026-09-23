@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -168,7 +169,9 @@ func (runner *Runner) processTar(
 	if found && previous.SourceKind == SourceTarAudio && previous.SourcePath == archivePath &&
 		previous.SourceFingerprint == fingerprint {
 		decision, err := lidarrcontracts.DecodeDecision(previous.Decision)
-		return true, decision, err
+		if err != nil || decision.Kind == lidarrcontracts.ActionNoRepair {
+			return true, decision, err
+		}
 	}
 	materialized, err := runner.worker.MaterializeTarAudio(
 		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
@@ -196,7 +199,21 @@ func (runner *Runner) processMaterialized(
 	if found && previous.SourceKind == sourceKind && previous.SourcePath == sourcePath &&
 		previous.SourceFingerprint == materialized.SourceFingerprint {
 		decision, decodeErr := lidarrcontracts.DecodeDecision(previous.Decision)
-		return true, decision, decodeErr
+		if decodeErr != nil || decision.Kind == lidarrcontracts.ActionNoRepair {
+			return true, decision, decodeErr
+		}
+		evidence, assembleErr := runner.assembleMaterializedEvidence(
+			ctx, queue, sourceKind, sourcePath, materialized,
+		)
+		if assembleErr != nil {
+			return false, lidarrcontracts.Decision{}, assembleErr
+		}
+		if decision.CaseID() == evidence.Case.CaseID &&
+			previous.WorkspaceRoot == evidence.WorkspaceRoot &&
+			reflect.DeepEqual(previous.Bindings, evidence.Bindings) {
+			return true, decision, nil
+		}
+		return runner.planEvidence(ctx, evidence)
 	}
 	evidence, err := runner.assembleMaterializedEvidence(
 		ctx, queue, sourceKind, sourcePath, materialized,
@@ -204,6 +221,13 @@ func (runner *Runner) processMaterialized(
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, err
 	}
+	return runner.planEvidence(ctx, evidence)
+}
+
+func (runner *Runner) planEvidence(
+	ctx context.Context,
+	evidence Evidence,
+) (bool, lidarrcontracts.Decision, error) {
 	decision, err := runner.planner.PlanLidarr(ctx, evidence.Case)
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("plan complete case: %w", err)
@@ -220,8 +244,8 @@ func (runner *Runner) processMaterialized(
 		return false, lidarrcontracts.Decision{}, err
 	}
 	if err := runner.store.Put(Record{
-		Version: stateVersion, QueueID: queue.ID, SourceKind: sourceKind,
-		SourcePath: sourcePath, SourceFingerprint: materialized.SourceFingerprint,
+		Version: stateVersion, QueueID: evidence.Queue.ID, SourceKind: evidence.SourceKind,
+		SourcePath: evidence.SourcePath, SourceFingerprint: evidence.SourceFingerprint,
 		WorkspaceRoot: evidence.WorkspaceRoot,
 		Case:          caseData, Decision: decisionData, Bindings: evidence.Bindings,
 	}); err != nil {

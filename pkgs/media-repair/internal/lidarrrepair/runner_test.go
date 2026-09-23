@@ -123,7 +123,9 @@ func (fake *fakeWorker) ResolvePublishedPath(_ string, components []string) (str
 }
 
 type fakePlanner struct {
-	calls int
+	calls    int
+	positive bool
+	cases    []lidarrcontracts.Case
 }
 
 func (fake *fakePlanner) PlanLidarr(
@@ -131,6 +133,24 @@ func (fake *fakePlanner) PlanLidarr(
 	repairCase lidarrcontracts.Case,
 ) (lidarrcontracts.Decision, error) {
 	fake.calls++
+	fake.cases = append(fake.cases, repairCase)
+	if fake.positive {
+		capability := repairCase.Capabilities[0]
+		return lidarrcontracts.Decision{
+			Kind: lidarrcontracts.ActionImportMissingTracks,
+			ImportMissingTracks: &lidarrcontracts.ImportMissingTracksDecision{
+				SchemaVersion: lidarrcontracts.SchemaVersion, CaseID: repairCase.CaseID,
+				Action:       string(lidarrcontracts.ActionImportMissingTracks),
+				CapabilityID: capability.CapabilityID, AlbumID: capability.AlbumID,
+				ReleaseID: capability.ReleaseID,
+				Mappings: []lidarrcontracts.TrackMapping{{
+					ArtifactID: capability.ArtifactIDs[0], TrackID: capability.TrackIDs[0],
+				}},
+				EvidenceRefs: []string{capability.CapabilityID, capability.ArtifactIDs[0]},
+				Explanation:  "The test evidence identifies the missing track.",
+			},
+		}, nil
+	}
 	return lidarrcontracts.Decision{
 		Kind: lidarrcontracts.ActionNoRepair,
 		NoRepair: &lidarrcontracts.NoRepairDecision{
@@ -280,5 +300,89 @@ func TestRunnerPlansDirectoryAudio(t *testing.T) {
 			"first=%#v second=%#v worker=%d planner=%d record=%#v",
 			first, second, worker.directoryCalls, planner.calls, record,
 		)
+	}
+}
+
+func TestRunnerRefreshesPositiveDirectoryPlanWhenCurrentEvidenceChanges(t *testing.T) {
+	t.Parallel()
+	assertRunnerRefreshesPositivePlan(t, false)
+}
+
+func TestRunnerRefreshesPositiveTarPlanWhenCurrentEvidenceChanges(t *testing.T) {
+	t.Parallel()
+	assertRunnerRefreshesPositivePlan(t, true)
+}
+
+func assertRunnerRefreshesPositivePlan(t *testing.T, tarSource bool) {
+	t.Helper()
+	download := t.TempDir()
+	filename := "01.flac"
+	if tarSource {
+		filename = "album.tar"
+	}
+	if err := os.WriteFile(filepath.Join(download, filename), []byte("audio"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	albumID, artistID := int64(3), int64(2)
+	client := &fakeLidarr{
+		queue: []lidarr.QueueRecord{{
+			ID: 9, AlbumID: &albumID, ArtistID: &artistID, Title: "Artist - Album",
+			Status: "completed", TrackedDownloadStatus: "warning",
+			DownloadID: "download", OutputPath: download,
+		}},
+		imports: []lidarr.ManualImport{{
+			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
+			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
+			AlbumReleaseID: 4, TrackIDs: []int64{5},
+			AudioTags: &lidarr.AudioTags{
+				Title: "Track", Artist: "Artist", Album: "Album", TrackNumbers: []int{1},
+			},
+		}},
+	}
+	worker := &fakeWorker{directoryAudio: !tarSource}
+	planner := &fakePlanner{positive: true}
+	store, err := NewStore(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runner, err := NewRunner(client, worker, planner, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	first, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.queue[0].ErrorMessage = "New planning evidence"
+	third, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, found, err := store.Get(9)
+	if err != nil || !found {
+		t.Fatalf("record found = %v, error = %v", found, err)
+	}
+	if first.Planned != 1 || second.Cached != 1 || third.Planned != 1 ||
+		third.Cached != 0 || planner.calls != 2 || len(planner.cases) != 2 ||
+		planner.cases[0].CaseID == planner.cases[1].CaseID {
+		t.Fatalf(
+			"first=%#v second=%#v third=%#v planner=%d cases=%#v",
+			first, second, third, planner.calls, planner.cases,
+		)
+	}
+	decision, err := lidarrcontracts.DecodeDecision(record.Decision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.CaseID() != planner.cases[1].CaseID {
+		t.Fatalf("stored decision case = %q, want %q", decision.CaseID(), planner.cases[1].CaseID)
+	}
+	if tarSource && worker.calls != 3 {
+		t.Fatalf("tar materialization calls = %d, want 3", worker.calls)
 	}
 }
