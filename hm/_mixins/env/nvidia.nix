@@ -27,6 +27,17 @@
         api.enable = false;
       };
     };
+
+    programs.codex.settings.skills.config = [
+      {
+        path = "${config.home.homeDirectory}/.codex/skills/nvinfo-cli";
+        enabled = false;
+      }
+      {
+        path = "${config.home.homeDirectory}/.agents/skills/nvinfo-cli";
+        enabled = false;
+      }
+    ];
   };
 
   workstation = {
