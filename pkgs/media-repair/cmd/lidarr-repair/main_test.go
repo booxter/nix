@@ -52,7 +52,9 @@ func TestApplicationRequiresEveryApplyGuard(t *testing.T) {
 	for _, extra := range [][]string{
 		{"--apply"},
 		{"--apply", "--allow-action", "import_missing_tracks_v1"},
+		{"--apply", "--allow-source", "tar_audio_v1"},
 		{"--allow-action", "import_missing_tracks_v1"},
+		{"--allow-source", "tar_audio_v1"},
 		{"--kill-switch-file", "/run/lidarr-repair-disable-apply"},
 	} {
 		arguments := append(append([]string(nil), base...), extra...)
@@ -69,11 +71,13 @@ func TestApplicationPassesGuardedApplyConfiguration(t *testing.T) {
 	arguments := append(
 		validArguments(t),
 		"--apply", "--allow-action", "import_missing_tracks_v1",
+		"--allow-source", "tar_audio_v1",
 		"--kill-switch-file", "/run/lidarr-repair-disable-apply",
 	)
 	app := application{observe: func(_ context.Context, configuration config) (report, error) {
 		if !configuration.Apply ||
 			!configuration.AllowedActions["import_missing_tracks_v1"] ||
+			!configuration.AllowedSources["tar_audio_v1"] ||
 			configuration.KillSwitchFile != "/run/lidarr-repair-disable-apply" {
 			t.Fatalf("configuration = %#v", configuration)
 		}

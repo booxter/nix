@@ -20,6 +20,10 @@ let
     "--allow-action"
     action
   ]) controller.apply.allowedActions;
+  sourceArguments = lib.concatMap (source: [
+    "--allow-source"
+    source
+  ]) controller.apply.allowedSources;
   modeArguments =
     if controller.apply.enable then
       [
@@ -28,6 +32,7 @@ let
         killSwitchFile
       ]
       ++ actionArguments
+      ++ sourceArguments
     else
       [ ];
   command =
@@ -70,14 +75,26 @@ in
         message = "Lidarr repair apply mode requires at least one allowed action.";
       }
       {
-        assertion = controller.apply.enable || controller.apply.allowedActions == [ ];
-        message = "Lidarr repair actions can be allowed only when apply mode is enabled.";
+        assertion = !controller.apply.enable || controller.apply.allowedSources != [ ];
+        message = "Lidarr repair apply mode requires at least one allowed source.";
+      }
+      {
+        assertion =
+          controller.apply.enable
+          || (controller.apply.allowedActions == [ ] && controller.apply.allowedSources == [ ]);
+        message = "Lidarr repair actions and sources can be allowed only in apply mode.";
       }
       {
         assertion =
           builtins.length controller.apply.allowedActions
           == builtins.length (lib.unique controller.apply.allowedActions);
         message = "Lidarr repair allowed actions must be unique.";
+      }
+      {
+        assertion =
+          builtins.length controller.apply.allowedSources
+          == builtins.length (lib.unique controller.apply.allowedSources);
+        message = "Lidarr repair allowed sources must be unique.";
       }
     ];
 

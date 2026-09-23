@@ -46,8 +46,8 @@ func AuthorizeImport(
 		return AuthorizedImport{}, false, nil
 	}
 	if planned.QueueID != current.Queue.ID || planned.QueueID != current.Case.Queue.QueueID ||
-		planned.ArchivePath != current.ArchivePath ||
-		planned.ArchiveFingerprint != current.ArchiveFingerprint ||
+		planned.SourceKind != current.SourceKind || planned.SourcePath != current.SourcePath ||
+		planned.SourceFingerprint != current.SourceFingerprint ||
 		planned.WorkspaceRoot != current.WorkspaceRoot {
 		return AuthorizedImport{}, false, fmt.Errorf("current Lidarr evidence does not match the planned case")
 	}

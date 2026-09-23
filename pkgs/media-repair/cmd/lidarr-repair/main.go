@@ -40,6 +40,7 @@ type config struct {
 	PlannerLimit   time.Duration
 	Apply          bool
 	AllowedActions map[lidarrcontracts.DecisionAction]bool
+	AllowedSources map[lidarrrepair.SourceKind]bool
 	KillSwitchFile string
 	PollInterval   time.Duration
 }
@@ -70,6 +71,21 @@ type allowedActionsValue struct {
 	actions map[lidarrcontracts.DecisionAction]bool
 }
 
+type allowedSourcesValue struct {
+	sources map[lidarrrepair.SourceKind]bool
+}
+
+func (value *allowedSourcesValue) String() string { return "" }
+
+func (value *allowedSourcesValue) Set(raw string) error {
+	source := lidarrrepair.SourceKind(raw)
+	if source != lidarrrepair.SourceTarAudio && source != lidarrrepair.SourceDirectoryAudio {
+		return fmt.Errorf("source %q cannot be allowed for automatic Lidarr repair", raw)
+	}
+	value.sources[source] = true
+	return nil
+}
+
 func (value *allowedActionsValue) String() string { return "" }
 
 func (value *allowedActionsValue) Set(raw string) error {
@@ -94,7 +110,7 @@ func (app application) run(
 			stderr,
 			"usage: lidarr-repair --lidarr-url URL --lidarr-api-key-file FILE "+
 				"--worker-socket PATH --worker-root ID=PATH --planner-socket PATH "+
-				"--state-directory DIR [--apply --allow-action ACTION "+
+				"--state-directory DIR [--apply --allow-action ACTION --allow-source SOURCE "+
 				"--kill-switch-file FILE]",
 		)
 	}
@@ -111,6 +127,8 @@ func (app application) run(
 	apply := flags.Bool("apply", false, "acknowledge that one permitted repair may be applied")
 	allowed := allowedActionsValue{actions: make(map[lidarrcontracts.DecisionAction]bool)}
 	flags.Var(&allowed, "allow-action", "repair action to permit; repeatable")
+	allowedSources := allowedSourcesValue{sources: make(map[lidarrrepair.SourceKind]bool)}
+	flags.Var(&allowedSources, "allow-source", "repair source to permit; repeatable")
 	killSwitchFile := flags.String(
 		"kill-switch-file", "", "existing filesystem entry disables repair application",
 	)
@@ -129,8 +147,9 @@ func (app application) run(
 		StateDir: *stateDirectory, WorkerSocket: *workerSocket,
 		WorkerRoots: workerRoots.Paths(), PlannerSocket: *plannerSocket,
 		RequestLimit: *timeout, StageLimit: *stageTimeout, PlannerLimit: *plannerTimeout,
-		Apply: *apply, AllowedActions: allowed.actions, KillSwitchFile: *killSwitchFile,
-		PollInterval: *pollInterval,
+		Apply: *apply, AllowedActions: allowed.actions, AllowedSources: allowedSources.sources,
+		KillSwitchFile: *killSwitchFile,
+		PollInterval:   *pollInterval,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -187,11 +206,15 @@ func validateConfig(configuration config) error {
 		if len(configuration.AllowedActions) == 0 {
 			return fmt.Errorf("at least one --allow-action is required in apply mode")
 		}
+		if len(configuration.AllowedSources) == 0 {
+			return fmt.Errorf("at least one --allow-source is required in apply mode")
+		}
 		if !filepath.IsAbs(configuration.KillSwitchFile) ||
 			filepath.Clean(configuration.KillSwitchFile) != configuration.KillSwitchFile {
 			return fmt.Errorf("kill-switch file must be an absolute clean path")
 		}
-	} else if len(configuration.AllowedActions) != 0 || configuration.KillSwitchFile != "" {
+	} else if len(configuration.AllowedActions) != 0 || len(configuration.AllowedSources) != 0 ||
+		configuration.KillSwitchFile != "" {
 		return fmt.Errorf("apply guards require --apply")
 	}
 	return nil
@@ -272,6 +295,9 @@ func runController(ctx context.Context, configuration config) (report, error) {
 			return controllerReport, readErr
 		}
 		if !found {
+			continue
+		}
+		if !configuration.AllowedSources[planned.SourceKind] {
 			continue
 		}
 		decision, decodeErr := lidarrcontracts.DecodeDecision(planned.Decision)

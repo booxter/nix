@@ -24,6 +24,14 @@
         default = [ ];
         description = "Repair actions the automatic controller may apply.";
       };
+      allowedSources = lib.mkOption {
+        type = with lib.types; listOf (enum [
+          "tar_audio_v1"
+          "directory_audio_v1"
+        ]);
+        default = [ ];
+        description = "Evidence sources the automatic controller may apply repairs from.";
+      };
     };
   };
 }

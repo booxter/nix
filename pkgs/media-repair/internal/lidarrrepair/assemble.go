@@ -342,7 +342,11 @@ func opaqueDownloadRef(downloadID string) string {
 }
 
 func workspaceID(queueID int64, fingerprint string) string {
-	return stableID("workspace", fmt.Sprintf("%d\x00%s", queueID, fingerprint))
+	return stableID("workspace", fmt.Sprintf("v2\x00tar\x00%d\x00%s", queueID, fingerprint))
+}
+
+func directoryWorkspaceID(queueID int64, sourcePath string) string {
+	return stableID("workspace", fmt.Sprintf("v2\x00directory\x00%d\x00%s", queueID, sourcePath))
 }
 
 func stableID(kind, value string) string {

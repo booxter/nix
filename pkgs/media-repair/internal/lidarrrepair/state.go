@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/privatefile"
@@ -15,7 +16,16 @@ import (
 	"golift.io/starr"
 )
 
-const stateVersion = "lidarr-repair-state/v1"
+const stateVersion = "lidarr-repair-state/v2"
+
+var stateFingerprint = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+
+type SourceKind string
+
+const (
+	SourceTarAudio       SourceKind = "tar_audio_v1"
+	SourceDirectoryAudio SourceKind = "directory_audio_v1"
+)
 
 type ImportBinding struct {
 	ArtifactID              string         `json:"artifact_id"`
@@ -27,14 +37,15 @@ type ImportBinding struct {
 }
 
 type Record struct {
-	Version            string          `json:"version"`
-	QueueID            int64           `json:"queue_id"`
-	ArchivePath        string          `json:"archive_path"`
-	ArchiveFingerprint string          `json:"archive_fingerprint"`
-	WorkspaceRoot      string          `json:"workspace_root"`
-	Case               json.RawMessage `json:"case"`
-	Decision           json.RawMessage `json:"decision"`
-	Bindings           []ImportBinding `json:"bindings"`
+	Version           string          `json:"version"`
+	QueueID           int64           `json:"queue_id"`
+	SourceKind        SourceKind      `json:"source_kind"`
+	SourcePath        string          `json:"source_path"`
+	SourceFingerprint string          `json:"source_fingerprint"`
+	WorkspaceRoot     string          `json:"workspace_root"`
+	Case              json.RawMessage `json:"case"`
+	Decision          json.RawMessage `json:"decision"`
+	Bindings          []ImportBinding `json:"bindings"`
 }
 
 type Store struct {
@@ -84,7 +95,7 @@ func (store *Store) path(queueID int64) (string, error) {
 	if store == nil || store.directory == "" || queueID <= 0 {
 		return "", fmt.Errorf("Lidarr repair state is not configured")
 	}
-	return filepath.Join(store.directory, fmt.Sprintf("queue-%d.json", queueID)), nil
+	return filepath.Join(store.directory, fmt.Sprintf("queue-v2-%d.json", queueID)), nil
 }
 
 func encodeRecord(record Record) ([]byte, error) {
@@ -116,8 +127,10 @@ func decodeRecord(data []byte) (Record, error) {
 
 func validateRecord(record Record) error {
 	if record.Version != stateVersion || record.QueueID <= 0 ||
-		record.ArchivePath == "" || !filepath.IsAbs(record.ArchivePath) ||
-		filepath.Clean(record.ArchivePath) != record.ArchivePath ||
+		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceDirectoryAudio) ||
+		record.SourcePath == "" || !filepath.IsAbs(record.SourcePath) ||
+		filepath.Clean(record.SourcePath) != record.SourcePath ||
+		!stateFingerprint.MatchString(record.SourceFingerprint) ||
 		record.WorkspaceRoot == "" || !filepath.IsAbs(record.WorkspaceRoot) ||
 		filepath.Clean(record.WorkspaceRoot) != record.WorkspaceRoot {
 		return fmt.Errorf("Lidarr repair state identity is invalid")

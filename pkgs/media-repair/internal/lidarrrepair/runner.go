@@ -30,6 +30,7 @@ type Worker interface {
 		fileidentity.Snapshot,
 		string,
 	) (materialize.Success, error)
+	MaterializeDirectoryAudio(context.Context, string, string) (materialize.Success, error)
 }
 
 type Planner interface {
@@ -45,13 +46,14 @@ type Report struct {
 }
 
 type Evidence struct {
-	Queue              lidarr.QueueRecord
-	ArchivePath        string
-	ArchiveFingerprint string
-	WorkspaceRoot      string
-	Case               lidarrcontracts.Case
-	Bindings           []ImportBinding
-	Recovered          bool
+	Queue             lidarr.QueueRecord
+	SourceKind        SourceKind
+	SourcePath        string
+	SourceFingerprint string
+	WorkspaceRoot     string
+	Case              lidarrcontracts.Case
+	Bindings          []ImportBinding
+	Recovered         bool
 }
 
 type Runner struct {
@@ -84,45 +86,15 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		if !eligibleQueue(queue) {
 			continue
 		}
-		archivePath, snapshot, err := findArchive(queue.OutputPath)
-		if errors.Is(err, errNoTarArchive) {
-			decision, found, cachedErr := runner.cachedDecision(queue.ID)
-			if cachedErr != nil {
-				failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, cachedErr))
-				continue
-			}
-			if !found {
-				continue
-			}
+		candidate, cached, decision, err := runner.processQueue(ctx, queue)
+		if candidate {
 			report.Candidates++
-			report.Cached++
-			if decision.Kind == lidarrcontracts.ActionNoRepair {
-				report.NoRepair++
-			}
-			continue
 		}
-		report.Candidates++
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				decision, found, cachedErr := runner.cachedDecision(queue.ID)
-				if cachedErr != nil {
-					failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, cachedErr))
-					continue
-				}
-				if found {
-					report.Cached++
-					if decision.Kind == lidarrcontracts.ActionNoRepair {
-						report.NoRepair++
-					}
-					continue
-				}
-			}
-			failures = append(failures, fmt.Errorf("queue %d: discover tar archive: %w", queue.ID, err))
-			continue
-		}
-		cached, decision, err := runner.process(ctx, queue, archivePath, snapshot)
 		if err != nil {
 			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
+			continue
+		}
+		if !candidate {
 			continue
 		}
 		if cached {
@@ -137,6 +109,40 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 	return report, errors.Join(failures...)
 }
 
+func (runner *Runner) processQueue(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+) (bool, bool, lidarrcontracts.Decision, error) {
+	archivePath, snapshot, err := findArchive(queue.OutputPath)
+	if err == nil {
+		cached, decision, processErr := runner.processTar(ctx, queue, archivePath, snapshot)
+		return true, cached, decision, processErr
+	}
+	if !errors.Is(err, errNoTarArchive) {
+		if errors.Is(err, os.ErrNotExist) {
+			decision, found, cachedErr := runner.cachedDecision(queue.ID)
+			return found, found, decision, cachedErr
+		}
+		return true, false, lidarrcontracts.Decision{}, fmt.Errorf("discover source: %w", err)
+	}
+
+	materialized, err := runner.worker.MaterializeDirectoryAudio(
+		ctx, queue.OutputPath, directoryWorkspaceID(queue.ID, queue.OutputPath),
+	)
+	if materialize.IsNoSupportedAudio(err) {
+		return false, false, lidarrcontracts.Decision{}, nil
+	}
+	if err != nil {
+		return true, false, lidarrcontracts.Decision{}, fmt.Errorf(
+			"materialize directory evidence: %w", err,
+		)
+	}
+	cached, decision, err := runner.processMaterialized(
+		ctx, queue, SourceDirectoryAudio, queue.OutputPath, materialized,
+	)
+	return true, cached, decision, err
+}
+
 func (runner *Runner) cachedDecision(
 	queueID int64,
 ) (lidarrcontracts.Decision, bool, error) {
@@ -148,7 +154,7 @@ func (runner *Runner) cachedDecision(
 	return decision, true, err
 }
 
-func (runner *Runner) process(
+func (runner *Runner) processTar(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	archivePath string,
@@ -159,12 +165,42 @@ func (runner *Runner) process(
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, err
 	}
-	if found && previous.ArchivePath == archivePath && previous.ArchiveFingerprint == fingerprint {
+	if found && previous.SourceKind == SourceTarAudio && previous.SourcePath == archivePath &&
+		previous.SourceFingerprint == fingerprint {
 		decision, err := lidarrcontracts.DecodeDecision(previous.Decision)
 		return true, decision, err
 	}
+	materialized, err := runner.worker.MaterializeTarAudio(
+		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+	)
+	if err != nil {
+		return false, lidarrcontracts.Decision{}, fmt.Errorf("materialize archive evidence: %w", err)
+	}
+	return runner.processMaterialized(ctx, queue, SourceTarAudio, archivePath, materialized)
+}
 
-	evidence, err := runner.buildEvidence(ctx, queue, archivePath, snapshot)
+func (runner *Runner) processMaterialized(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+	sourceKind SourceKind,
+	sourcePath string,
+	materialized materialize.Success,
+) (bool, lidarrcontracts.Decision, error) {
+	if err := validateMaterializedSource(sourceKind, materialized); err != nil {
+		return false, lidarrcontracts.Decision{}, err
+	}
+	previous, found, err := runner.store.Get(queue.ID)
+	if err != nil {
+		return false, lidarrcontracts.Decision{}, err
+	}
+	if found && previous.SourceKind == sourceKind && previous.SourcePath == sourcePath &&
+		previous.SourceFingerprint == materialized.SourceFingerprint {
+		decision, decodeErr := lidarrcontracts.DecodeDecision(previous.Decision)
+		return true, decision, decodeErr
+	}
+	evidence, err := runner.assembleMaterializedEvidence(
+		ctx, queue, sourceKind, sourcePath, materialized,
+	)
 	if err != nil {
 		return false, lidarrcontracts.Decision{}, err
 	}
@@ -184,9 +220,10 @@ func (runner *Runner) process(
 		return false, lidarrcontracts.Decision{}, err
 	}
 	if err := runner.store.Put(Record{
-		Version: stateVersion, QueueID: queue.ID, ArchivePath: archivePath,
-		ArchiveFingerprint: fingerprint, WorkspaceRoot: evidence.WorkspaceRoot,
-		Case: caseData, Decision: decisionData, Bindings: evidence.Bindings,
+		Version: stateVersion, QueueID: queue.ID, SourceKind: sourceKind,
+		SourcePath: sourcePath, SourceFingerprint: materialized.SourceFingerprint,
+		WorkspaceRoot: evidence.WorkspaceRoot,
+		Case:          caseData, Decision: decisionData, Bindings: evidence.Bindings,
 	}); err != nil {
 		return false, lidarrcontracts.Decision{}, fmt.Errorf("store shadow decision: %w", err)
 	}
@@ -202,10 +239,19 @@ func (runner *Runner) BuildCurrentEvidence(
 	}
 	archivePath, snapshot, err := findArchive(queue.OutputPath)
 	if err == nil {
-		return runner.buildEvidence(ctx, queue, archivePath, snapshot)
+		return runner.buildTarEvidence(ctx, queue, archivePath, snapshot)
 	}
 	if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, errNoTarArchive) {
 		return Evidence{}, fmt.Errorf("discover tar archive: %w", err)
+	}
+	if errors.Is(err, errNoTarArchive) {
+		evidence, directoryErr := runner.buildDirectoryEvidence(ctx, queue)
+		if directoryErr == nil {
+			return evidence, nil
+		}
+		if !materialize.IsNoSupportedAudio(directoryErr) {
+			return Evidence{}, directoryErr
+		}
 	}
 	planned, found, getErr := runner.store.Get(queue.ID)
 	if getErr != nil {
@@ -217,7 +263,7 @@ func (runner *Runner) BuildCurrentEvidence(
 	return runner.buildStoredEvidence(ctx, queue, planned)
 }
 
-func (runner *Runner) buildEvidence(
+func (runner *Runner) buildTarEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	archivePath string,
@@ -229,6 +275,36 @@ func (runner *Runner) buildEvidence(
 	)
 	if err != nil {
 		return Evidence{}, fmt.Errorf("materialize archive evidence: %w", err)
+	}
+	return runner.assembleMaterializedEvidence(
+		ctx, queue, SourceTarAudio, archivePath, materialized,
+	)
+}
+
+func (runner *Runner) buildDirectoryEvidence(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+) (Evidence, error) {
+	materialized, err := runner.worker.MaterializeDirectoryAudio(
+		ctx, queue.OutputPath, directoryWorkspaceID(queue.ID, queue.OutputPath),
+	)
+	if err != nil {
+		return Evidence{}, fmt.Errorf("materialize directory evidence: %w", err)
+	}
+	return runner.assembleMaterializedEvidence(
+		ctx, queue, SourceDirectoryAudio, queue.OutputPath, materialized,
+	)
+}
+
+func (runner *Runner) assembleMaterializedEvidence(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+	sourceKind SourceKind,
+	sourcePath string,
+	materialized materialize.Success,
+) (Evidence, error) {
+	if err := validateMaterializedSource(sourceKind, materialized); err != nil {
+		return Evidence{}, err
 	}
 	root, err := workspaceRoot(runner.worker, materialized)
 	if err != nil {
@@ -251,9 +327,21 @@ func (runner *Runner) buildEvidence(
 		return Evidence{}, fmt.Errorf("assemble complete case: %w", err)
 	}
 	return Evidence{
-		Queue: queue, ArchivePath: archivePath, ArchiveFingerprint: fingerprint,
-		WorkspaceRoot: root, Case: repairCase, Bindings: bindings,
+		Queue: queue, SourceKind: sourceKind, SourcePath: sourcePath,
+		SourceFingerprint: materialized.SourceFingerprint,
+		WorkspaceRoot:     root, Case: repairCase, Bindings: bindings,
 	}, nil
+}
+
+func validateMaterializedSource(sourceKind SourceKind, materialized materialize.Success) error {
+	expected := materialize.OperationMaterializeTar
+	if sourceKind == SourceDirectoryAudio {
+		expected = materialize.OperationMaterializeDirectory
+	}
+	if materialized.Operation != expected {
+		return fmt.Errorf("worker returned the wrong materialization operation")
+	}
+	return nil
 }
 
 func (runner *Runner) buildStoredEvidence(
@@ -298,9 +386,9 @@ func (runner *Runner) buildStoredEvidence(
 		return Evidence{}, fmt.Errorf("assemble stored case: %w", err)
 	}
 	return Evidence{
-		Queue: queue, ArchivePath: planned.ArchivePath,
-		ArchiveFingerprint: planned.ArchiveFingerprint,
-		WorkspaceRoot:      planned.WorkspaceRoot, Case: repairCase,
+		Queue: queue, SourceKind: planned.SourceKind, SourcePath: planned.SourcePath,
+		SourceFingerprint: planned.SourceFingerprint,
+		WorkspaceRoot:     planned.WorkspaceRoot, Case: repairCase,
 		Bindings: bindings, Recovered: true,
 	}, nil
 }
