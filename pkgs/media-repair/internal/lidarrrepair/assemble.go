@@ -19,6 +19,12 @@ type PathResolver interface {
 	ResolvePublishedPath(string, []string) (string, error)
 }
 
+const (
+	maximumAssessmentIDs = 32
+	maximumQueueMessages = 256
+	maximumReleaseNames  = 64
+)
+
 func Assemble(
 	observedAt time.Time,
 	queue lidarr.QueueRecord,
@@ -137,8 +143,10 @@ func assembleCase(
 		releases[index] = lidarrcontracts.Release{
 			ReleaseID: release.ID, ForeignReleaseID: release.ForeignReleaseID,
 			Title: release.Title, Disambiguation: release.Disambiguation,
-			Format: release.Format, Countries: append([]string{}, release.Countries...),
-			Labels: append([]string{}, release.Labels...), TrackCount: release.TrackCount,
+			Format:      release.Format,
+			Countries:   normalizedTextList(release.Countries, maximumReleaseNames),
+			Labels:      normalizedTextList(release.Labels, maximumReleaseNames),
+			TrackCount:  release.TrackCount,
 			MediumCount: release.MediumCount, Monitored: release.Monitored,
 		}
 		releaseTrackCounts[release.ID] = release.TrackCount
@@ -246,7 +254,8 @@ func contractArtifact(artifact materialize.Artifact) lidarrcontracts.Artifact {
 
 func contractAssessment(artifactID string, item lidarr.ManualImport) lidarrcontracts.Assessment {
 	result := lidarrcontracts.Assessment{
-		ArtifactID: artifactID, TrackIDs: append([]int64(nil), item.TrackIDs...),
+		ArtifactID:      artifactID,
+		TrackIDs:        normalizedPositiveInt64List(item.TrackIDs, maximumAssessmentIDs),
 		TagTrackNumbers: []int{}, Rejections: make([]string, len(item.Rejections)),
 	}
 	if item.AlbumID > 0 {
@@ -259,7 +268,9 @@ func contractAssessment(artifactID string, item lidarr.ManualImport) lidarrcontr
 		result.TagTitle = optionalText(item.AudioTags.Title)
 		result.TagArtist = optionalText(item.AudioTags.Artist)
 		result.TagAlbum = optionalText(item.AudioTags.Album)
-		result.TagTrackNumbers = append([]int(nil), item.AudioTags.TrackNumbers...)
+		result.TagTrackNumbers = normalizedPositiveIntList(
+			item.AudioTags.TrackNumbers, maximumAssessmentIDs,
+		)
 	}
 	for index, rejection := range item.Rejections {
 		result.Rejections[index] = rejection.Type + ": " + rejection.Reason
@@ -333,7 +344,65 @@ func queueMessages(queue lidarr.QueueRecord) []string {
 	if message := strings.TrimSpace(queue.ErrorMessage); message != "" {
 		result = append(result, message)
 	}
+	return normalizedTextList(result, maximumQueueMessages)
+}
+
+func normalizedTextList(values []string, maximum int) []string {
+	result := make([]string, 0, min(len(values), maximum))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, duplicate := seen[value]; duplicate {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
 	sort.Strings(result)
+	if len(result) > maximum {
+		result = result[:maximum]
+	}
+	return result
+}
+
+func normalizedPositiveInt64List(values []int64, maximum int) []int64 {
+	result := make([]int64, 0, min(len(values), maximum))
+	seen := make(map[int64]struct{}, len(values))
+	for _, value := range values {
+		if value <= 0 {
+			continue
+		}
+		if _, duplicate := seen[value]; duplicate {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+		if len(result) == maximum {
+			break
+		}
+	}
+	return result
+}
+
+func normalizedPositiveIntList(values []int, maximum int) []int {
+	result := make([]int, 0, min(len(values), maximum))
+	seen := make(map[int]struct{}, len(values))
+	for _, value := range values {
+		if value <= 0 {
+			continue
+		}
+		if _, duplicate := seen[value]; duplicate {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+		if len(result) == maximum {
+			break
+		}
+	}
 	return result
 }
 
