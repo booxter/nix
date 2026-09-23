@@ -1,0 +1,2145 @@
+{
+  "album": {
+    "album_id": 4999,
+    "artist": "Nitzer Ebb",
+    "artist_id": 411,
+    "monitored": true,
+    "title": "That Total Age"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:5049159bc1bd28d73b478ff5ff1fc9791521b5fc460da3cf4bd2617cbc98c354",
+      "duration_ms": 302787,
+      "fingerprint": "sha256:a7a37358c267124d59452e02af5064bcbdf4807a82763a204f6867eb9d271854",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-nitzer_ebb-fitness_to_purpose.flac",
+      "size_bytes": 38166584,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Fitness To Purpose"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5067c68c6496ab68efd6806aaaadbe20c24ebe09d2417e67be46f89cb6e1f54e",
+      "duration_ms": 228640,
+      "fingerprint": "sha256:06e2c6dbc7e8370a74800712763744b2f13abcc7e44556f4042d7842b7a706b2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-nitzer_ebb-warsaw_ghetto.flac",
+      "size_bytes": 29263352,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Warsaw Ghetto"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bad4a580d18bb53bc1f23ff048f9f8a95b5fe79274e590145b6f010ff164cb6b",
+      "duration_ms": 228573,
+      "fingerprint": "sha256:2e3bab8b033eac3d036ce64110fc420873a679e53dbfee16805e2d05584cb142",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-nitzer_ebb-violent_playground.flac",
+      "size_bytes": 28556789,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Violent Playground"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:826d9a1150290c34e2c95d16061cd07a9807c187aed23aadf8bb581757842e91",
+      "duration_ms": 342293,
+      "fingerprint": "sha256:6f7ee9b6301cd1ea7c7d6c865a4db01d96cdfeb2076c09586b290cd5daf13e87",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-nitzer_ebb-murderous.flac",
+      "size_bytes": 46960141,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Murderous"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6b6c6eede3db311f1630c5f9068d88b69a9e243f1f3df6e5d8fa7dd35f99fec6",
+      "duration_ms": 345853,
+      "fingerprint": "sha256:ef806c94648feb644c2324a70f35ffd13f532bb81382d9b1da1b317642841306",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-nitzer_ebb-smear_body.flac",
+      "size_bytes": 45665410,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Smear Body"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5d5559e97a5e95c732c7594bebb59b4b0e53b5863a03f60bd86ec269b989deb5",
+      "duration_ms": 363493,
+      "fingerprint": "sha256:81daa800d3ea99be530ea0c9a290bd8d2f383c3463f56917ca5d77fabf4caed2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-nitzer_ebb-join_in_the_chant.flac",
+      "size_bytes": 46814061,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Join In The Chant"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7c9b44f8b75f8c8fd6d2fb83715b1dc233bc7f2ec9b698af425c8ac3d7b8ec5d",
+      "duration_ms": 221053,
+      "fingerprint": "sha256:cb70372db4d0bf98dfea76944a5e26086d4477ff92c61507ef9c8e72f72f2c7b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-nitzer_ebb-alarm.flac",
+      "size_bytes": 27629672,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Alarm"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:afafc5b2dfcdc32a7c3d02dde702a2ef7091593685243f2d27531e75a1543f76",
+      "duration_ms": 168400,
+      "fingerprint": "sha256:dc65ea0f21c3af6c9b28b2ef9b60296c1e0f8976f78384b7a50d810022613465",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-nitzer_ebb-let_your_body_learn.flac",
+      "size_bytes": 23403247,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Let Your Body Learn"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9d03c386d97a8f6924dae2e7d1a88a400f6bcc668ba69c60340b20a08c220cf6",
+      "duration_ms": 142947,
+      "fingerprint": "sha256:3e3f73d50730847534e9f8a595a7331246cbbbd897cc0c6a5e9c343de862ff4e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-nitzer_ebb-let_beauty_loose.flac",
+      "size_bytes": 16938064,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Let Beauty Loose"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4491f9e360693f9a25891552708663afcd4b37d8ba8b7e575ad70c201ae13831",
+      "duration_ms": 250533,
+      "fingerprint": "sha256:3b81e68c26e4ac72071edfd6c99eeeb70711c1c46ac0c1a3bbca91d767470048",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-nitzer_ebb-into_the_large_air.flac",
+      "size_bytes": 31862397,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Into The Large Air"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:669cb97af7ec80827b27e8edb020774d404361c4a80a6c362be7b1d6ae7519bd",
+      "duration_ms": 302920,
+      "fingerprint": "sha256:7b895cce23ca287ae5ab099dcd1887dcf6011d74a9e7a914dbf599a10420952d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11-nitzer_ebb-murderous_(instrumental).flac",
+      "size_bytes": 41196687,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Murderous (Instrumental)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f5b7bc30612a28e10998ccdc80adf21c91e1217f5db5c71bf150677ea6ecfd8f",
+      "duration_ms": 294120,
+      "fingerprint": "sha256:caf42f208f832ae69e26ee4541eda8808e810fb59a53c11222454b92b23775f6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12-nitzer_ebb-fitness_to_purpose_(mix_two).flac",
+      "size_bytes": 37283037,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Fitness To Purpose (Mix Two)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:346ee124903260cc184cb556d4b242ace722db9893e7a2e470bb2b2fdc2108b9",
+      "duration_ms": 391107,
+      "fingerprint": "sha256:169f28a928b9abe624666c4f3501864068d30bac88283f805dc63edd5271e06d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13-nitzer_ebb-let_your_body_learn_(twelve_inch_mix).flac",
+      "size_bytes": 50123589,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Let Your Body Learn (Twelve Inch Mix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7135e6758113fe84848d4eaf5c531ec98222e9285928053d2d5369a0ddd24274",
+      "duration_ms": 315760,
+      "fingerprint": "sha256:d8073e341f5a387c78007e5f345172298264f5c9b146be45935cf16ec4a24d9e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14-nitzer_ebb-join_in_the_chant_(metal_mix).flac",
+      "size_bytes": 37561937,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Join In The Chant (Metal Mix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3c4464b1b187b89906edfafc347d18f8ba91be450904df4a42af9156f54316b7",
+      "duration_ms": 421613,
+      "fingerprint": "sha256:58b2a73c98c20926cefb466a18c97eb30e5797c998f362a9b438f722c5b461d4",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15-nitzer_ebb-warsaw_ghetto_(original_12_mix).flac",
+      "size_bytes": 53963036,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Warsaw Ghetto (Original 12'' Mix)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:5049159bc1bd28d73b478ff5ff1fc9791521b5fc460da3cf4bd2617cbc98c354",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Fitness To Purpose",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        246887
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:5067c68c6496ab68efd6806aaaadbe20c24ebe09d2417e67be46f89cb6e1f54e",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Warsaw Ghetto",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        246888
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:bad4a580d18bb53bc1f23ff048f9f8a95b5fe79274e590145b6f010ff164cb6b",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Violent Playground",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        246889
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:826d9a1150290c34e2c95d16061cd07a9807c187aed23aadf8bb581757842e91",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Murderous",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        246890
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:6b6c6eede3db311f1630c5f9068d88b69a9e243f1f3df6e5d8fa7dd35f99fec6",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Smear Body",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        246891
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:5d5559e97a5e95c732c7594bebb59b4b0e53b5863a03f60bd86ec269b989deb5",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Join In The Chant",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        246892
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:7c9b44f8b75f8c8fd6d2fb83715b1dc233bc7f2ec9b698af425c8ac3d7b8ec5d",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Alarm",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        246893
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:afafc5b2dfcdc32a7c3d02dde702a2ef7091593685243f2d27531e75a1543f76",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Let Your Body Learn",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        246894
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:9d03c386d97a8f6924dae2e7d1a88a400f6bcc668ba69c60340b20a08c220cf6",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Let Beauty Loose",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        246895
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:4491f9e360693f9a25891552708663afcd4b37d8ba8b7e575ad70c201ae13831",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Into The Large Air",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        246896
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:669cb97af7ec80827b27e8edb020774d404361c4a80a6c362be7b1d6ae7519bd",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Murderous (Instrumental)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        246897
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:f5b7bc30612a28e10998ccdc80adf21c91e1217f5db5c71bf150677ea6ecfd8f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Fitness To Purpose (Mix Two)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        246898
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:346ee124903260cc184cb556d4b242ace722db9893e7a2e470bb2b2fdc2108b9",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Let Your Body Learn (Twelve Inch Mix)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        246900
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:7135e6758113fe84848d4eaf5c531ec98222e9285928053d2d5369a0ddd24274",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Join In The Chant (Metal Mix)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        246901
+      ]
+    },
+    {
+      "album_id": 4999,
+      "artifact_id": "artifact:3c4464b1b187b89906edfafc347d18f8ba91be450904df4a42af9156f54316b7",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 19661,
+      "tag_album": "That Total Age",
+      "tag_artist": "Nitzer Ebb",
+      "tag_title": "Warsaw Ghetto (Original 12'' Mix)",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        246902
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 4999,
+      "artifact_ids": [
+        "artifact:5049159bc1bd28d73b478ff5ff1fc9791521b5fc460da3cf4bd2617cbc98c354",
+        "artifact:5067c68c6496ab68efd6806aaaadbe20c24ebe09d2417e67be46f89cb6e1f54e",
+        "artifact:bad4a580d18bb53bc1f23ff048f9f8a95b5fe79274e590145b6f010ff164cb6b",
+        "artifact:826d9a1150290c34e2c95d16061cd07a9807c187aed23aadf8bb581757842e91",
+        "artifact:6b6c6eede3db311f1630c5f9068d88b69a9e243f1f3df6e5d8fa7dd35f99fec6",
+        "artifact:5d5559e97a5e95c732c7594bebb59b4b0e53b5863a03f60bd86ec269b989deb5",
+        "artifact:7c9b44f8b75f8c8fd6d2fb83715b1dc233bc7f2ec9b698af425c8ac3d7b8ec5d",
+        "artifact:afafc5b2dfcdc32a7c3d02dde702a2ef7091593685243f2d27531e75a1543f76",
+        "artifact:9d03c386d97a8f6924dae2e7d1a88a400f6bcc668ba69c60340b20a08c220cf6",
+        "artifact:4491f9e360693f9a25891552708663afcd4b37d8ba8b7e575ad70c201ae13831",
+        "artifact:669cb97af7ec80827b27e8edb020774d404361c4a80a6c362be7b1d6ae7519bd",
+        "artifact:f5b7bc30612a28e10998ccdc80adf21c91e1217f5db5c71bf150677ea6ecfd8f",
+        "artifact:346ee124903260cc184cb556d4b242ace722db9893e7a2e470bb2b2fdc2108b9",
+        "artifact:7135e6758113fe84848d4eaf5c531ec98222e9285928053d2d5369a0ddd24274",
+        "artifact:3c4464b1b187b89906edfafc347d18f8ba91be450904df4a42af9156f54316b7"
+      ],
+      "capability_id": "capability:import_missing_tracks:19661",
+      "release_id": 19661,
+      "track_ids": [
+        246899
+      ]
+    }
+  ],
+  "case_id": "sha256:e4d35f245cb73294baed7674c60d0bb5f8d125ab2d475cb7fa80b9910d52d0d2",
+  "observed_at": "2026-09-23T02:24:51.933063578Z",
+  "queue": {
+    "download_ref": "download:911ef744faede37d1eaa7bc08125741a481750e3c03d22863d31ba17bc4cda8f",
+    "messages": [
+      "01-nitzer_ebb-fitness_to_purpose.flac",
+      "02-nitzer_ebb-warsaw_ghetto.flac",
+      "03-nitzer_ebb-violent_playground.flac",
+      "04-nitzer_ebb-murderous.flac",
+      "05-nitzer_ebb-smear_body.flac",
+      "06-nitzer_ebb-join_in_the_chant.flac",
+      "07-nitzer_ebb-alarm.flac",
+      "08-nitzer_ebb-let_your_body_learn.flac",
+      "09-nitzer_ebb-let_beauty_loose.flac",
+      "10-nitzer_ebb-into_the_large_air.flac",
+      "11-nitzer_ebb-murderous_(instrumental).flac",
+      "12-nitzer_ebb-fitness_to_purpose_(mix_two).flac",
+      "13-nitzer_ebb-let_your_body_learn_(twelve_inch_mix).flac",
+      "14-nitzer_ebb-join_in_the_chant_(metal_mix).flac",
+      "15-nitzer_ebb-warsaw_ghetto_(original_12_mix).flac",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 987435428,
+    "title": "Nitzer Ebb-That Total Age-(Pylon 42)-LIMITED EDITION-CD-FLAC-2018-WRE-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b5f67d1f-b2c2-49ad-a542-62e671682f33",
+      "format": "CD",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19653,
+      "title": "That Total Age",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d1a9ea48-22d9-494a-b600-03339de60d42",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Geffen Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19654,
+      "title": "That Total Age",
+      "track_count": 10
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5a32f2d3-7bf4-314d-9ddb-4e2f62b46221",
+      "format": "CD",
+      "labels": [
+        "Geffen Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19655,
+      "title": "That Total Age",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "45fe6170-487d-400f-8629-40040b4438a6",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19656,
+      "title": "That Total Age",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "aa0af4a9-2fea-4e2e-972f-b10b46e70112",
+      "format": "CD",
+      "labels": [
+        "Geffen Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19657,
+      "title": "That Total Age",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "68b1aa76-6369-47a7-b724-04c2af29a5bb",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "Pylon Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 19658,
+      "title": "That Total Age",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Canada",
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "afed879e-5aac-4f2d-845e-129b3549edc6",
+      "format": "Digital Media",
+      "labels": [
+        "Geffen Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19659,
+      "title": "That Total Age",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1ed94dfd-4f05-31e9-bacf-16b81ada073a",
+      "format": "CD",
+      "labels": [
+        "Geffen Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19660,
+      "title": "That Total Age",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "bb1d9adb-9a32-466a-94e6-62a6c539cc6a",
+      "format": "CD",
+      "labels": [
+        "Geffen Records",
+        "Pylon Records",
+        "Universal Music Special Markets"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 19661,
+      "title": "That Total Age",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e6d12847-0819-4d54-82b7-80325dba46ca",
+      "format": "Digital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 19662,
+      "title": "That Total Age",
+      "track_count": 12
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 303906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19653,
+      "title": "Fitness to Purpose",
+      "track_id": 246793
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19653,
+      "title": "Violent Playground",
+      "track_id": 246794
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 343840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19653,
+      "title": "Murderous",
+      "track_id": 246795
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19653,
+      "title": "Smear Body",
+      "track_id": 246796
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 364466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19653,
+      "title": "Join in the Chant",
+      "track_id": 246797
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19653,
+      "title": "Alarm",
+      "track_id": 246798
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168640,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19653,
+      "title": "Let Your Body Learn",
+      "track_id": 246799
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19653,
+      "title": "Let Beauty Loose",
+      "track_id": 246800
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19653,
+      "title": "Into the Large Air",
+      "track_id": 246801
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 316400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19653,
+      "title": "Join in the Chant (metal mix)",
+      "track_id": 246802
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19653,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246803
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 304506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19653,
+      "title": "Murderous (instrumental)",
+      "track_id": 246804
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 300000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 19654,
+      "title": "Fitness to Purpose",
+      "track_id": 246805
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 227000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 19654,
+      "title": "Warsaw Ghetto",
+      "track_id": 246806
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 19654,
+      "title": "Violent Playground",
+      "track_id": 246807
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 19654,
+      "title": "Murderous",
+      "track_id": 246808
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 19654,
+      "title": "Smear Body",
+      "track_id": 246809
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 361000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 19654,
+      "title": "Join in the Chant",
+      "track_id": 246810
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 19654,
+      "title": "Alarm",
+      "track_id": 246811
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 167000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 19654,
+      "title": "Let Your Body Learn",
+      "track_id": 246812
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 19654,
+      "title": "Let Beauty Loose",
+      "track_id": 246813
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 19654,
+      "title": "Into the Large Air",
+      "track_id": 246814
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19655,
+      "title": "Fitness to Purpose",
+      "track_id": 246815
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19655,
+      "title": "Violent Playground",
+      "track_id": 246816
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 343466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19655,
+      "title": "Murderous",
+      "track_id": 246817
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19655,
+      "title": "Smear Body",
+      "track_id": 246818
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 365693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19655,
+      "title": "Join in the Chant",
+      "track_id": 246819
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19655,
+      "title": "Alarm",
+      "track_id": 246820
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19655,
+      "title": "Let Your Body Learn",
+      "track_id": 246821
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19655,
+      "title": "Let Beauty Loose",
+      "track_id": 246822
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19655,
+      "title": "Into the Large Air",
+      "track_id": 246823
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 317666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19655,
+      "title": "Join in the Chant (metal mix)",
+      "track_id": 246824
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19655,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246825
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 303226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19655,
+      "title": "Murderous (instrumental)",
+      "track_id": 246826
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 300000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 19656,
+      "title": "Fitness to Purpose",
+      "track_id": 246827
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 19656,
+      "title": "Violent Playground",
+      "track_id": 246828
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 19656,
+      "title": "Murderous",
+      "track_id": 246829
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 19656,
+      "title": "Smear Body",
+      "track_id": 246830
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 361000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 19656,
+      "title": "Join in the Chant",
+      "track_id": 246831
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 19656,
+      "title": "Alarm",
+      "track_id": 246832
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 167000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 19656,
+      "title": "Let Your Body Learn",
+      "track_id": 246833
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 19656,
+      "title": "Let Beauty Loose",
+      "track_id": 246834
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 19656,
+      "title": "Into the Large Air",
+      "track_id": 246835
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19657,
+      "title": "Fitness to Purpose",
+      "track_id": 246836
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19657,
+      "title": "Violent Playground",
+      "track_id": 246837
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 343466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19657,
+      "title": "Murderous",
+      "track_id": 246838
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19657,
+      "title": "Smear Body",
+      "track_id": 246839
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 365693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19657,
+      "title": "Join in the Chant",
+      "track_id": 246840
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19657,
+      "title": "Alarm",
+      "track_id": 246841
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19657,
+      "title": "Let Your Body Learn",
+      "track_id": 246842
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19657,
+      "title": "Let Beauty Loose",
+      "track_id": 246843
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19657,
+      "title": "Into the Large Air",
+      "track_id": 246844
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 317666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19657,
+      "title": "Join in the Chant (metal mix)",
+      "track_id": 246845
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19657,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246846
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 303226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19657,
+      "title": "Murderous (instrumental)",
+      "track_id": 246847
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 19658,
+      "title": "Fitness to Purpose",
+      "track_id": 246848
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 19658,
+      "title": "Let Beauty Loose",
+      "track_id": 246856
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 19658,
+      "title": "Warsaw Ghetto",
+      "track_id": 246849
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 19658,
+      "title": "Into the Large Air",
+      "track_id": 246857
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 19658,
+      "title": "Violent Playground",
+      "track_id": 246850
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 19658,
+      "title": "Murderous (instrumental)",
+      "track_id": 246858
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 19658,
+      "title": "Murderous",
+      "track_id": 246851
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C4",
+      "release_id": 19658,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246859
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 19658,
+      "title": "Smear Body",
+      "track_id": 246852
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 19658,
+      "title": "Join in the Chant (Burn! 12″ mix)",
+      "track_id": 246860
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 19658,
+      "title": "Join in the Chant",
+      "track_id": 246853
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 19658,
+      "title": "Let Your Body Learn (12″ mix)",
+      "track_id": 246861
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 19658,
+      "title": "Alarm",
+      "track_id": 246854
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 19658,
+      "title": "Join in the Chant (Metal mix)",
+      "track_id": 246862
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 19658,
+      "title": "Let Your Body Learn",
+      "track_id": 246855
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19659,
+      "title": "Fitness to Purpose",
+      "track_id": 246863
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19659,
+      "title": "Violent Playground",
+      "track_id": 246864
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 343466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19659,
+      "title": "Murderous",
+      "track_id": 246865
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19659,
+      "title": "Smear Body",
+      "track_id": 246866
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 365693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19659,
+      "title": "Join in the Chant",
+      "track_id": 246867
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19659,
+      "title": "Alarm",
+      "track_id": 246868
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19659,
+      "title": "Let Your Body Learn",
+      "track_id": 246869
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19659,
+      "title": "Let Beauty Loose",
+      "track_id": 246870
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19659,
+      "title": "Into the Large Air",
+      "track_id": 246871
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 317666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19659,
+      "title": "Join in the Chant (Metal mix)",
+      "track_id": 246872
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19659,
+      "title": "Fitness to Purpose (mix Two)",
+      "track_id": 246873
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 303226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19659,
+      "title": "Murderous (instrumental)",
+      "track_id": 246874
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19660,
+      "title": "Fitness to Purpose",
+      "track_id": 246875
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19660,
+      "title": "Violent Playground",
+      "track_id": 246876
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 343466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19660,
+      "title": "Murderous",
+      "track_id": 246877
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19660,
+      "title": "Smear Body",
+      "track_id": 246878
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 365693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19660,
+      "title": "Join in the Chant",
+      "track_id": 246879
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19660,
+      "title": "Alarm",
+      "track_id": 246880
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19660,
+      "title": "Let Your Body Learn",
+      "track_id": 246881
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19660,
+      "title": "Let Beauty Loose",
+      "track_id": 246882
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19660,
+      "title": "Into the Large Air",
+      "track_id": 246883
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 317666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19660,
+      "title": "Join in the Chant (metal mix)",
+      "track_id": 246884
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19660,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246885
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 303226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19660,
+      "title": "Murderous (instrumental)",
+      "track_id": 246886
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 300000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19661,
+      "title": "Fitness to Purpose",
+      "track_id": 246887
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 227000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19661,
+      "title": "Warsaw Ghetto",
+      "track_id": 246888
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 226000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19661,
+      "title": "Violent Playground",
+      "track_id": 246889
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 340000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19661,
+      "title": "Murderous",
+      "track_id": 246890
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 340000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19661,
+      "title": "Smear Body",
+      "track_id": 246891
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 361000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19661,
+      "title": "Join in the Chant",
+      "track_id": 246892
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 222000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19661,
+      "title": "Alarm",
+      "track_id": 246893
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 167000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19661,
+      "title": "Let Your Body Learn",
+      "track_id": 246894
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 144000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19661,
+      "title": "Let Beauty Loose",
+      "track_id": 246895
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 248000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19661,
+      "title": "Into the Large Air",
+      "track_id": 246896
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 302000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19661,
+      "title": "Murderous (instrumental)",
+      "track_id": 246897
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 294000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19661,
+      "title": "Fitness to Purpose (mix two)",
+      "track_id": 246898
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 323000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 19661,
+      "title": "Join in the Chant (Burn)",
+      "track_id": 246899
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 386000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 19661,
+      "title": "Let Your Body Learn (twelve inch mix)",
+      "track_id": 246900
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 313000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 19661,
+      "title": "Join in the Chant (Metal mix)",
+      "track_id": 246901
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 424000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 19661,
+      "title": "Warsaw Ghetto (original 12″ mix)",
+      "track_id": 246902
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 19662,
+      "title": "Fitness to Purpose",
+      "track_id": 246903
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 19662,
+      "title": "Violent Playground",
+      "track_id": 246904
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 19662,
+      "title": "Murderous",
+      "track_id": 246905
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 349840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 19662,
+      "title": "Smear Body",
+      "track_id": 246906
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 364000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 19662,
+      "title": "Join in the Chant",
+      "track_id": 246907
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 19662,
+      "title": "Alarm",
+      "track_id": 246908
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 168666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 19662,
+      "title": "Let Your Body Learn",
+      "track_id": 246909
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 19662,
+      "title": "Let Beauty Loose",
+      "track_id": 246910
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 253893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 19662,
+      "title": "Into the Large Air",
+      "track_id": 246911
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 316000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 19662,
+      "title": "Join in the Chant (Metal mix)",
+      "track_id": 246912
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 296773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 19662,
+      "title": "Fitness to Purpose (mix Two)",
+      "track_id": 246913
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 303226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 19662,
+      "title": "Murderous (instrumental)",
+      "track_id": 246914
+    }
+  ]
+}

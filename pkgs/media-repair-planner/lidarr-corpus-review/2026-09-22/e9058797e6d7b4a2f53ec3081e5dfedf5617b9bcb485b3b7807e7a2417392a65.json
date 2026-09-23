@@ -1,0 +1,2204 @@
+{
+  "album": {
+    "album_id": 252,
+    "artist": "The Fugs",
+    "artist_id": 41,
+    "monitored": true,
+    "title": "Tenderness Junction"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+      "duration_ms": 284040,
+      "fingerprint": "sha256:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-the_fugs-turn_on_tune_in_drop_out.flac",
+      "size_bytes": 28718173,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Turn On, Tune In, Drop Out"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+      "duration_ms": 260893,
+      "fingerprint": "sha256:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-the_fugs-knock_knock.flac",
+      "size_bytes": 22147246,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Knock Knock"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+      "duration_ms": 369973,
+      "fingerprint": "sha256:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-the_fugs-the_garden_is_open.flac",
+      "size_bytes": 34449956,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "The Garden Is Open"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+      "duration_ms": 201493,
+      "fingerprint": "sha256:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-the_fugs-wet_dream.flac",
+      "size_bytes": 18337746,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Wet Dream"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+      "duration_ms": 204240,
+      "fingerprint": "sha256:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-the_fugs-hare_krishna.flac",
+      "size_bytes": 18834261,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Hare Krishna"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+      "duration_ms": 198267,
+      "fingerprint": "sha256:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-the_fugs-exorcising_the_evil_spirits_from_the_pentagon_oct_21_1967.flac",
+      "size_bytes": 16592860,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Exorcising The Evil Spirits From The Pentagon Oct. 21, 1967"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+      "duration_ms": 324427,
+      "fingerprint": "sha256:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-the_fugs-war_song.flac",
+      "size_bytes": 30658421,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "War Song"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+      "duration_ms": 241040,
+      "fingerprint": "sha256:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-the_fugs-dover_beach.flac",
+      "size_bytes": 19779307,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Dover Beach"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+      "duration_ms": 143227,
+      "fingerprint": "sha256:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-the_fugs-fingers_of_the_sun.flac",
+      "size_bytes": 13133268,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Fingers Of The Sun"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+      "duration_ms": 508867,
+      "fingerprint": "sha256:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-the_fugs-aphrodite_mass_(in_five_sections).flac",
+      "size_bytes": 46644732,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Aphrodite Mass (In Five Sections)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+      "duration_ms": 190907,
+      "fingerprint": "sha256:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11-the_fugs-crystal_liaison.flac",
+      "size_bytes": 23066244,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Crystal Liaison"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+      "duration_ms": 170160,
+      "fingerprint": "sha256:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12-the_fugs-ramses_ii_is_dead_my_love.flac",
+      "size_bytes": 19510374,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Ramses II Is Dead, My Love"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+      "duration_ms": 148533,
+      "fingerprint": "sha256:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13-the_fugs-burial_waltz.flac",
+      "size_bytes": 15177501,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Burial Waltz"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+      "duration_ms": 172973,
+      "fingerprint": "sha256:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14-the_fugs-wide_wide_river.flac",
+      "size_bytes": 16097086,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Wide, Wide River"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+      "duration_ms": 157493,
+      "fingerprint": "sha256:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15-the_fugs-life_is_strange.flac",
+      "size_bytes": 15520757,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Life Is Strange"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+      "duration_ms": 272907,
+      "fingerprint": "sha256:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "16-the_fugs-johnny_pissoff_meets_the_red_angel.flac",
+      "size_bytes": 28099279,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Johnny Pissoff Meets The Red Angel"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+      "duration_ms": 96240,
+      "fingerprint": "sha256:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "17-the_fugs-marijuana.flac",
+      "size_bytes": 9038170,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Marijuana"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+      "duration_ms": 11800,
+      "fingerprint": "sha256:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "18-the_fugs-leprechaun.flac",
+      "size_bytes": 837696,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Leprechaun"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+      "duration_ms": 235267,
+      "fingerprint": "sha256:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "19-the_fugs-when_the_mode_of_the_music_changes.flac",
+      "size_bytes": 23704701,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "When The Mode Of The Music Changes"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+      "duration_ms": 21093,
+      "fingerprint": "sha256:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "20-the_fugs-whimpers_from_the_jello.flac",
+      "size_bytes": 2159631,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Whimpers From The Jello"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+      "duration_ms": 37773,
+      "fingerprint": "sha256:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "21-the_fugs-the_divine_toe_(part_i).flac",
+      "size_bytes": 4196143,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "The Divine Toe (Part I)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+      "duration_ms": 15613,
+      "fingerprint": "sha256:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "22-the_fugs-were_both_dead_now_alice.flac",
+      "size_bytes": 1383972,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "We're Both Dead Now, Alice"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+      "duration_ms": 14320,
+      "fingerprint": "sha256:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "23-the_fugs-life_is_funny.flac",
+      "size_bytes": 1003308,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Life Is Funny"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+      "duration_ms": 18453,
+      "fingerprint": "sha256:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "24-the_fugs-grope_need_(part_i).flac",
+      "size_bytes": 1869360,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Grope Need (Part I)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+      "duration_ms": 19947,
+      "fingerprint": "sha256:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "25-the_fugs-tuli_visited_by_the_ghost_of_plontinus_-_more_grope_need_(grope_need_part_ii).flac",
+      "size_bytes": 2051290,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Tuli, Visited By The Ghost Of Plontinus - More Grope Need (Grope Need Part II)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+      "duration_ms": 17773,
+      "fingerprint": "sha256:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "26-the_fugs-robinson_crusoe.flac",
+      "size_bytes": 1426304,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Robinson Crusoe"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+      "duration_ms": 266827,
+      "fingerprint": "sha256:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "27-the_fugs-claude_pelieu_and_jj_lebel_discuss_the_early_verlaine_bread_crust_fragments.flac",
+      "size_bytes": 29575849,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Claude Pelieu & J.J. Lebel Discuss The Early Verlaine Bread Crust Fragments"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+      "duration_ms": 24733,
+      "fingerprint": "sha256:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "28-the_fugs-the_national_haiku_contest.flac",
+      "size_bytes": 2018041,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "The National Haiku Contest"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+      "duration_ms": 47027,
+      "fingerprint": "sha256:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "29-the_fugs-the_divine_toe_(part_ii).flac",
+      "size_bytes": 4527128,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "The Divine Toe (Part II)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48",
+      "duration_ms": 69560,
+      "fingerprint": "sha256:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "30-the_fugs-irene.flac",
+      "size_bytes": 6125928,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Irene"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Turn On, Tune In, Drop Out",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Knock Knock",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "The Garden Is Open",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Wet Dream",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Hare Krishna",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Exorcising The Evil Spirits From The Pentagon Oct. 21, 1967",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "War Song",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Dover Beach",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Fingers Of The Sun",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Aphrodite Mass (In Five Sections)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Crystal Liaison",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        10352
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Ramses II Is Dead, My Love",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        10353
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Burial Waltz",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        10354
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Wide, Wide River",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        10355
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Life Is Strange",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        10356
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Johnny Pissoff Meets The Red Angel",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        10357
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Marijuana",
+      "tag_track_numbers": [
+        17
+      ],
+      "track_ids": [
+        10358
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Leprechaun",
+      "tag_track_numbers": [
+        18
+      ],
+      "track_ids": [
+        10359
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "When The Mode Of The Music Changes",
+      "tag_track_numbers": [
+        19
+      ],
+      "track_ids": [
+        10360
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Whimpers From The Jello",
+      "tag_track_numbers": [
+        20
+      ],
+      "track_ids": [
+        10361
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "The Divine Toe (Part I)",
+      "tag_track_numbers": [
+        21
+      ],
+      "track_ids": [
+        10362
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "We're Both Dead Now, Alice",
+      "tag_track_numbers": [
+        22
+      ],
+      "track_ids": [
+        10363
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Life Is Funny",
+      "tag_track_numbers": [
+        23
+      ],
+      "track_ids": [
+        10364
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Grope Need (Part I)",
+      "tag_track_numbers": [
+        24
+      ],
+      "track_ids": [
+        10365
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Tuli, Visited By The Ghost Of Plontinus - More Grope Need (Grope Need Part II)",
+      "tag_track_numbers": [
+        25
+      ],
+      "track_ids": [
+        10366
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Robinson Crusoe",
+      "tag_track_numbers": [
+        26
+      ],
+      "track_ids": [
+        10367
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Claude Pelieu & J.J. Lebel Discuss The Early Verlaine Bread Crust Fragments",
+      "tag_track_numbers": [
+        27
+      ],
+      "track_ids": [
+        10368
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "The National Haiku Contest",
+      "tag_track_numbers": [
+        28
+      ],
+      "track_ids": [
+        10369
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "The Divine Toe (Part II)",
+      "tag_track_numbers": [
+        29
+      ],
+      "track_ids": [
+        10370
+      ]
+    },
+    {
+      "album_id": 253,
+      "artifact_id": "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 881,
+      "tag_album": "Tenderness Junction / It Crawled Into My Hand Honest",
+      "tag_artist": "The Fugs",
+      "tag_title": "Irene",
+      "tag_track_numbers": [
+        30
+      ],
+      "track_ids": [
+        10371
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 252,
+      "artifact_ids": [
+        "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+        "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+        "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+        "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+        "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+        "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+        "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+        "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+        "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+        "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+        "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+        "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+        "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+        "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+        "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+        "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+        "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+        "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+        "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+        "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+        "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+        "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+        "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+        "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+        "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+        "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+        "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+        "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+        "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+        "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48"
+      ],
+      "capability_id": "capability:import_missing_tracks:876",
+      "release_id": 876,
+      "track_ids": [
+        10276,
+        10277,
+        10278,
+        10279,
+        10280,
+        10281,
+        10282,
+        10283,
+        10284,
+        10285,
+        10286,
+        10287,
+        10288,
+        10289
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 252,
+      "artifact_ids": [
+        "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+        "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+        "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+        "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+        "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+        "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+        "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+        "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+        "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+        "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+        "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+        "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+        "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+        "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+        "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+        "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+        "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+        "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+        "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+        "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+        "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+        "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+        "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+        "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+        "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+        "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+        "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+        "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+        "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+        "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48"
+      ],
+      "capability_id": "capability:import_missing_tracks:877",
+      "release_id": 877,
+      "track_ids": [
+        10290,
+        10291,
+        10292,
+        10293,
+        10294,
+        10295,
+        10296,
+        10297,
+        10298,
+        10299
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 252,
+      "artifact_ids": [
+        "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+        "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+        "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+        "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+        "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+        "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+        "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+        "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+        "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+        "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+        "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+        "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+        "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+        "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+        "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+        "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+        "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+        "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+        "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+        "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+        "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+        "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+        "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+        "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+        "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+        "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+        "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+        "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+        "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+        "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48"
+      ],
+      "capability_id": "capability:import_missing_tracks:878",
+      "release_id": 878,
+      "track_ids": [
+        10300,
+        10301,
+        10302,
+        10303,
+        10304,
+        10305,
+        10306,
+        10307,
+        10308,
+        10309
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 252,
+      "artifact_ids": [
+        "artifact:ea56ad64a4ce25b8697ac53b491758aedd96f28b7baf0ea1ed5557e01d39e4ec",
+        "artifact:f75a00810211f85dd30274f42e5da86b866d51aff0c100a44666336224059489",
+        "artifact:7157c2a0dd4585de9bff40f66db4a93f5be1f0b5e3d2722b3e5285fcad39af18",
+        "artifact:a7737561a3d18065187e24a0e1a9a91fef66ce71b8591b4e8cf370d5a91b5652",
+        "artifact:1ec5608d3c36d94a0427f490169c6932d1c073aa6577e966e0c44cc92f03cc75",
+        "artifact:293057d9d2d76d1558aa7d1ad9eda4ab1cfd5605633e5f3f47d7c16b247abe33",
+        "artifact:6f2400c5e9a3cc29e41255a959c4bd9cc70a96d0055e773b96a152cff74fd704",
+        "artifact:61fcc26d3aec7276cf0f5ddbd51f835d94c01c929d90f9aa860eeb7a573f315d",
+        "artifact:674c53eb5cda13a882e9a4a6c4d5a0101b322f84e5890748e4405fd0cdb38acd",
+        "artifact:7bfbe25c391c84e063e712c910083ce02ed81630d044f78682e670b7b36ae042",
+        "artifact:70159d6055cae5cfab3c4f68d4aa0eb385e78edb9b87f6e631675807eb1b1668",
+        "artifact:475e7765b4cc874903ee8ed1b2d600cbd390c018b18a1b1100f1a7a3c4331c4e",
+        "artifact:f979ec7d891a667cd523417e009c3f5b9e08b884507c004162b7b46441db51c1",
+        "artifact:bb3a5d7665804d4a186d1c0c274dfafe07b80a9615303960102b013ba79d513b",
+        "artifact:6df2bccde35a10d0244534cebe9857ec24d8194f9ce7f4958a2ec390a0906b0d",
+        "artifact:be92234f39a7a0f9046138de51c96b0aed252c1b582fc5c98fe42072d22cc31f",
+        "artifact:eb37eeaae366c624a2769a33842b6f381a096e98228ad1b47f327ad2cfc4d3d5",
+        "artifact:6c7e6ca6aed4afb14f915224424c91672461dce3df590341b212a99db06e0386",
+        "artifact:1da2f9aad2191cb221ac23b65874a1ce06d10ba27a39106ee55a3a9c5d025b5c",
+        "artifact:0bb61c8f59aab7cf113b0a6f3ac5f7180041b6bf7f0f9cd4b910d048c99ee1bc",
+        "artifact:edd2e7b6227a6e915d4bc614a575442d1dc816341c6c1a7593b0ada33df4625a",
+        "artifact:94675c55607870dff1806009712b80c24f2f0aed962a00dcd88f4da50e983b86",
+        "artifact:7c08fb1495e32e892593f32d797ee0eca300a87cde7324cc40bacdc9c5a030bd",
+        "artifact:7cdab960486af16320c57020da835a9a92150d5d702c717104d060a33f51b736",
+        "artifact:3be07ae337f1a962a97b9ab362a7889ec3c8a633dc2eec78904f8007a62fafa8",
+        "artifact:23cb23a1cbad02d9c0cc9aee5242648b23dce86b1ff86950d520a6c47cb718ff",
+        "artifact:1df072ddb57352ebf10a93002353b41e54ab7612dc19fe5557049d652b5467e7",
+        "artifact:99d957e0a278010055c6f5d9569b972558d0451866b24fffb989030171d455be",
+        "artifact:d1a9fb01d7e412fdb88becfdb285bb2f0525ac5b5b86daa663e4f3623242bc48",
+        "artifact:b59ca1430f70c7c03c9bc0e318870677c95a1052a68ea9c7bb54de22733a3c48"
+      ],
+      "capability_id": "capability:import_missing_tracks:14180",
+      "release_id": 14180,
+      "track_ids": [
+        169446,
+        169447,
+        169448,
+        169449,
+        169450,
+        169451,
+        169452,
+        169453,
+        169454,
+        169455,
+        169456,
+        169457,
+        169458,
+        169459
+      ]
+    }
+  ],
+  "case_id": "sha256:e9058797e6d7b4a2f53ec3081e5dfedf5617b9bcb485b3b7807e7a2417392a65",
+  "observed_at": "2026-09-23T02:22:46.165685038Z",
+  "queue": {
+    "download_ref": "download:09c86cfb3fb6b925aeed596e55b5ebe6c8d397c7379c3901f2bcab66db13c1bc",
+    "messages": [
+      "01-the_fugs-turn_on_tune_in_drop_out.flac",
+      "02-the_fugs-knock_knock.flac",
+      "03-the_fugs-the_garden_is_open.flac",
+      "04-the_fugs-wet_dream.flac",
+      "05-the_fugs-hare_krishna.flac",
+      "06-the_fugs-exorcising_the_evil_spirits_from_the_pentagon_oct_21_1967.flac",
+      "07-the_fugs-war_song.flac",
+      "08-the_fugs-dover_beach.flac",
+      "09-the_fugs-fingers_of_the_sun.flac",
+      "10-the_fugs-aphrodite_mass_(in_five_sections).flac",
+      "11-the_fugs-crystal_liaison.flac",
+      "12-the_fugs-ramses_ii_is_dead_my_love.flac",
+      "13-the_fugs-burial_waltz.flac",
+      "14-the_fugs-wide_wide_river.flac",
+      "15-the_fugs-life_is_strange.flac",
+      "16-the_fugs-johnny_pissoff_meets_the_red_angel.flac",
+      "17-the_fugs-marijuana.flac",
+      "18-the_fugs-leprechaun.flac",
+      "19-the_fugs-when_the_mode_of_the_music_changes.flac",
+      "20-the_fugs-whimpers_from_the_jello.flac",
+      "21-the_fugs-the_divine_toe_(part_i).flac",
+      "22-the_fugs-were_both_dead_now_alice.flac",
+      "23-the_fugs-life_is_funny.flac",
+      "24-the_fugs-grope_need_(part_i).flac",
+      "25-the_fugs-tuli_visited_by_the_ghost_of_plontinus_-_more_grope_need_(grope_need_part_ii).flac",
+      "26-the_fugs-robinson_crusoe.flac",
+      "27-the_fugs-claude_pelieu_and_jj_lebel_discuss_the_early_verlaine_bread_crust_fragments.flac",
+      "28-the_fugs-the_national_haiku_contest.flac",
+      "29-the_fugs-the_divine_toe_(part_ii).flac",
+      "30-the_fugs-irene.flac",
+      "Album match is not close enough: 68.5% vs 80% [album, year, tracks, unmatched tracks]",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 193652894,
+    "title": "The Fugs-Tenderness Junction-It Crawled Into My Hand Honest-Remastered-CD-FLAC-2010-ERP"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "9d70eab3-c33b-4a91-aab8-bb26ec977331",
+      "format": "12\" Vinyl",
+      "labels": [
+        "4 Men With Beards"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 876,
+      "title": "Tenderness Junction",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1fdf1e5e-80bd-313d-a6a2-ac59751b3102",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Edsel Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 877,
+      "title": "Tenderness Junction",
+      "track_count": 10
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "3081d909-57dd-4cc5-8e16-68a0932d74c6",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Reprise Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 878,
+      "title": "Tenderness Junction",
+      "track_count": 10
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "962c3e37-7caf-4709-b389-e844bba961e3",
+      "format": "Digital Media",
+      "labels": [
+        "Retroworld"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 14180,
+      "title": "Tenderness Junction",
+      "track_count": 14
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 284413,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 876,
+      "title": "Turn On, Tune In, Drop Out",
+      "track_id": 10276
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 260773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 876,
+      "title": "Knock Knock",
+      "track_id": 10277
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 371026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 876,
+      "title": "The Garden Is Open",
+      "track_id": 10278
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 201680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 876,
+      "title": "Wet Dream",
+      "track_id": 10279
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 199133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 876,
+      "title": "Hare Krishna",
+      "track_id": 10280
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 197933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 876,
+      "title": "Exorcising the Evil Spirits From the Pentagon October 23, 1967",
+      "track_id": 10281
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 320986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 876,
+      "title": "War Song",
+      "track_id": 10282
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 876,
+      "title": "Dover Beach",
+      "track_id": 10283
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 143613,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 876,
+      "title": "Fingers of the Sun",
+      "track_id": 10284
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 74573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 876,
+      "title": "Aphrodite Mass: I. Litany of the Street Grope",
+      "track_id": 10285
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 181200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 876,
+      "title": "Aphrodite Mass: II. Genuflection at the Temple of Squack",
+      "track_id": 10286
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 64533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 876,
+      "title": "Aphrodite Mass: III. Petals in the Sea",
+      "track_id": 10287
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 94813,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 876,
+      "title": "Aphrodite Mass: IV. Sappho's Hymn to Aphrodite",
+      "track_id": 10288
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 90854,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 876,
+      "title": "Aphrodite Mass: V. Homage to Throb Thrills",
+      "track_id": 10289
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 877,
+      "title": "Turn On, Tune In, Drop Out",
+      "track_id": 10290
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 877,
+      "title": "Knock Knock",
+      "track_id": 10291
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 371000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 877,
+      "title": "The Garden Is Open",
+      "track_id": 10292
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 877,
+      "title": "Wet Dream",
+      "track_id": 10293
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 877,
+      "title": "Hare Krishna",
+      "track_id": 10294
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 877,
+      "title": "Exorcising the Evil Spirits From the Pentagon October 23, 1967",
+      "track_id": 10295
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 321000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 877,
+      "title": "War Song",
+      "track_id": 10296
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 877,
+      "title": "Dover Beach",
+      "track_id": 10297
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 877,
+      "title": "Fingers Of The Sun",
+      "track_id": 10298
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 498000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 877,
+      "title": "Aphrodite Mass (In 5 Sections): Litany Of The Street Grope / Genuflection At The Temple Of Squack / Petals In The Sea / Sappho's Hymn To Aphrodite / Homage To Throb Thrills",
+      "track_id": 10299
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 878,
+      "title": "Turn On, Tune In, Drop Out",
+      "track_id": 10300
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 878,
+      "title": "Knock Knock",
+      "track_id": 10301
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 371000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 878,
+      "title": "The Garden Is Open",
+      "track_id": 10302
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 878,
+      "title": "Wet Dream",
+      "track_id": 10303
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 878,
+      "title": "Hare Krishna",
+      "track_id": 10304
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 878,
+      "title": "Exorcising the Evil Spirits From the Pentagon October 23, 1967",
+      "track_id": 10305
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 321000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 878,
+      "title": "War Song",
+      "track_id": 10306
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 878,
+      "title": "Dover Beach",
+      "track_id": 10307
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 878,
+      "title": "Fingers of the Sun",
+      "track_id": 10308
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 498000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 878,
+      "title": "Aphrodite Mass (In 5 Sections): Litany of the Street Grope / Genuflection at the Temple of Squack / Petals in the Sea / Sappho's Hymn to Aphrodite / Homage to Throb Thrills",
+      "track_id": 10309
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 284027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 14180,
+      "title": "Turn On, Tune In, Drop Out",
+      "track_id": 169446
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 260880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 14180,
+      "title": "Knock Knock",
+      "track_id": 169447
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 369960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 14180,
+      "title": "The Garden Is Open",
+      "track_id": 169448
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 201480,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 14180,
+      "title": "Wet Dream",
+      "track_id": 169449
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 204227,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 14180,
+      "title": "Hare Krishna",
+      "track_id": 169450
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 198253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 14180,
+      "title": "Exorcising the Evil Spirits From the Pentagon OCT. 21, 1967",
+      "track_id": 169451
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 324413,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 14180,
+      "title": "War Song",
+      "track_id": 169452
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 14180,
+      "title": "Dover Beach",
+      "track_id": 169453
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 143213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 14180,
+      "title": "Fingers of the Sun",
+      "track_id": 169454
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 508853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 14180,
+      "title": "Aphrodite Mass: I. Litany of the Street Grope",
+      "track_id": 169455
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 190893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 14180,
+      "title": "Aphrodite Mass: II. Genuflection at the Temple of Squack",
+      "track_id": 169456
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 170147,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 14180,
+      "title": "Aphrodite Mass: III. Petals in the Sea",
+      "track_id": 169457
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 148520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 14180,
+      "title": "Aphrodite Mass: IV. Sappho’s Hymn to Aphrodite",
+      "track_id": 169458
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 172960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 14180,
+      "title": "Aphrodite Mass: V. Homage to Throb Thrills",
+      "track_id": 169459
+    }
+  ]
+}

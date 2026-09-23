@@ -1,0 +1,931 @@
+{
+  "album": {
+    "album_id": 1760,
+    "artist": "Johnny Cash",
+    "artist_id": 236,
+    "monitored": true,
+    "title": "Christmas Album"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+      "duration_ms": 169333,
+      "fingerprint": "sha256:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-johnny_cash-christmas_as_i_knew_it.flac",
+      "size_bytes": 15595748,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Christmas As I Knew It"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+      "duration_ms": 135320,
+      "fingerprint": "sha256:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-johnny_cash-christmas_times_a_comin_(with_the_cash_family).flac",
+      "size_bytes": 15066756,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Christmas Time's A Comin' (With The Cash Family)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+      "duration_ms": 134693,
+      "fingerprint": "sha256:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-johnny_cash-that_christmasy_feeling_(with_tommy_cash).flac",
+      "size_bytes": 14013524,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "That Christmasy Feeling (With Tommy Cash)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+      "duration_ms": 126853,
+      "fingerprint": "sha256:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-johnny_cash-christmas_with_you_(with_june_carter_cash).flac",
+      "size_bytes": 12622290,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Christmas With You (With June Carter Cash)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+      "duration_ms": 143920,
+      "fingerprint": "sha256:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-johnny_cash-blue_christmas.flac",
+      "size_bytes": 13953512,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Blue Christmas"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+      "duration_ms": 155667,
+      "fingerprint": "sha256:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-johnny_cash-the_little_drummer_boy.flac",
+      "size_bytes": 14213418,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Little Drummer Boy"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+      "duration_ms": 214053,
+      "fingerprint": "sha256:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-johnny_cash-the_gifts_they_gave.flac",
+      "size_bytes": 19745053,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Gifts They Gave"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+      "duration_ms": 163160,
+      "fingerprint": "sha256:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-johnny_cash-the_king_of_love_(with_the_carter_family_and_the_statler_brothers).flac",
+      "size_bytes": 15499623,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The King Of Love (With The Carter Family And The Statler Brothers)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+      "duration_ms": 117907,
+      "fingerprint": "sha256:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-johnny_cash-merry_christmas_mary.flac",
+      "size_bytes": 10595470,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Merry Christmas Mary"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+      "duration_ms": 150560,
+      "fingerprint": "sha256:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-johnny_cash-i_heard_the_bells_on_christmas_day.flac",
+      "size_bytes": 14622614,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I Heard The Bells On Christmas Day"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+      "duration_ms": 126920,
+      "fingerprint": "sha256:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11-johnny_cash-joy_to_the_world.flac",
+      "size_bytes": 13780537,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Joy To The World"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+      "duration_ms": 219120,
+      "fingerprint": "sha256:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12-johnny_cash-it_came_upon_a_midnight_clear.flac",
+      "size_bytes": 21148226,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "It Came Upon A Midnight Clear"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+      "duration_ms": 166800,
+      "fingerprint": "sha256:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13-johnny_cash-ringing_the_bells_for_jim.flac",
+      "size_bytes": 15139295,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Ringing The Bells For Jim"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+      "duration_ms": 279067,
+      "fingerprint": "sha256:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14-johnny_cash-the_christmas_guest.flac",
+      "size_bytes": 26746338,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Christmas Guest"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+      "duration_ms": 301987,
+      "fingerprint": "sha256:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15-johnny_cash-the_christmas_spirit.flac",
+      "size_bytes": 26829793,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Christmas Spirit"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
+      "duration_ms": 122387,
+      "fingerprint": "sha256:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "16-johnny_cash-silent_night_(with_the_cash_family).flac",
+      "size_bytes": 11211401,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Silent Night (With The Cash Family)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Christmas As I Knew It",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        92920
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Christmas Time's A Comin' (With The Cash Family)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "That Christmasy Feeling (With Tommy Cash)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Christmas With You (With June Carter Cash)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Blue Christmas",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "The Little Drummer Boy",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        92924
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "The Gifts They Gave",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        92921
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "The King Of Love (With The Carter Family And The Statler Brothers)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        92926
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Merry Christmas Mary",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "I Heard The Bells On Christmas Day",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        92925
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Joy To The World",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        92919
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "It Came Upon A Midnight Clear",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        92923
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Ringing The Bells For Jim",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "The Christmas Guest",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        92928
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "The Christmas Spirit",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        92927
+      ]
+    },
+    {
+      "album_id": 1750,
+      "artifact_id": "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
+      "rejections": [
+        "permanent: Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 7666,
+      "tag_album": "The Classic Christmas Album",
+      "tag_artist": "Johnny Cash",
+      "tag_title": "Silent Night (With The Cash Family)",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        92922
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1760,
+      "artifact_ids": [
+        "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+        "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+        "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+        "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+        "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+        "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+        "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+        "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+        "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+        "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+        "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+        "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+        "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+        "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+        "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+        "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a"
+      ],
+      "capability_id": "capability:import_missing_tracks:7697",
+      "release_id": 7697,
+      "track_ids": [
+        93297,
+        93298,
+        93299,
+        93300,
+        93301,
+        93302,
+        93303,
+        93304,
+        93305,
+        93306,
+        93307,
+        93308,
+        93309,
+        93310,
+        93311
+      ]
+    }
+  ],
+  "case_id": "sha256:7a2865e60ae90fb79f1e08054d5ca89e48c6a0a9a013358676acb23eea446716",
+  "observed_at": "2026-09-23T02:24:11.761139896Z",
+  "queue": {
+    "download_ref": "download:d4b52b69c695722a095a4bd6a09921b1aac80b96adda8933e8e68be0f5dae6e5",
+    "messages": [
+      "01-johnny_cash-christmas_as_i_knew_it.flac",
+      "02-johnny_cash-christmas_times_a_comin_(with_the_cash_family).flac",
+      "03-johnny_cash-that_christmasy_feeling_(with_tommy_cash).flac",
+      "04-johnny_cash-christmas_with_you_(with_june_carter_cash).flac",
+      "05-johnny_cash-blue_christmas.flac",
+      "06-johnny_cash-the_little_drummer_boy.flac",
+      "07-johnny_cash-the_gifts_they_gave.flac",
+      "08-johnny_cash-the_king_of_love_(with_the_carter_family_and_the_statler_brothers).flac",
+      "09-johnny_cash-merry_christmas_mary.flac",
+      "10-johnny_cash-i_heard_the_bells_on_christmas_day.flac",
+      "11-johnny_cash-joy_to_the_world.flac",
+      "12-johnny_cash-it_came_upon_a_midnight_clear.flac",
+      "13-johnny_cash-ringing_the_bells_for_jim.flac",
+      "14-johnny_cash-the_christmas_guest.flac",
+      "15-johnny_cash-the_christmas_spirit.flac",
+      "16-johnny_cash-silent_night_(with_the_cash_family).flac",
+      "Album match is not close enough: 49.5% vs 80% [album, year, tracks, unmatched tracks]",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 956342212,
+    "title": "Johnny Cash-The Classic Christmas Album-CD-FLAC-2013-REETKEVER"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "446b1ae1-b4a4-4d34-a935-11956a7300bc",
+      "format": "CD",
+      "labels": [
+        "Noël"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 7697,
+      "title": "Christmas Album",
+      "track_count": 15
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 229960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 7697,
+      "title": "White Christmas",
+      "track_id": 93297
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 206306,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 7697,
+      "title": "Silent Night",
+      "track_id": 93298
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 185266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 7697,
+      "title": "Blue Christmas",
+      "track_id": 93299
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 252826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 7697,
+      "title": "The First Noel",
+      "track_id": 93300
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 163360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 7697,
+      "title": "Joy to the World",
+      "track_id": 93301
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 174880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 7697,
+      "title": "Figgy Puddin'",
+      "track_id": 93302
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 165560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 7697,
+      "title": "Here Was a Man",
+      "track_id": 93303
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 221800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 7697,
+      "title": "O Little Town of Bethlehem",
+      "track_id": 93304
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 256200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 7697,
+      "title": "What Child Is This?",
+      "track_id": 93305
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 206106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 7697,
+      "title": "Away in a Manger",
+      "track_id": 93306
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 212293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 7697,
+      "title": "O Christmas Tree",
+      "track_id": 93307
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 198066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 7697,
+      "title": "O Come All Ye Faithful",
+      "track_id": 93308
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 238906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 7697,
+      "title": "It Came Upon a Midnight Clear",
+      "track_id": 93309
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 231693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 7697,
+      "title": "Hark! The Herald Angels Sing",
+      "track_id": 93310
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 257773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 7697,
+      "title": "I'll Be Home for Christmas",
+      "track_id": 93311
+    }
+  ]
+}

@@ -1,0 +1,1362 @@
+{
+  "album": {
+    "album_id": 722,
+    "artist": "Klaus Mitffoch",
+    "artist_id": 103,
+    "monitored": true,
+    "title": "Klaus Mitffoch"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012",
+      "duration_ms": 2326813,
+      "fingerprint": "sha256:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Klaus.Mitffoch.-.Klaus.Mitffoch.(2003).FLAC.flac",
+      "size_bytes": 266965012,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "fre:ac v1.1 Beta 2"
+        },
+        {
+          "name": "title",
+          "value": "Klaus Mitffoch"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 722,
+      "artifact_id": "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012",
+      "rejections": [
+        "permanent: Album match is not close enough: 77.5% vs 80% [country, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3697,
+      "tag_album": "Klaus Mitffoch",
+      "tag_artist": "Klaus Mitffoch",
+      "tag_title": "Klaus Mitffoch",
+      "tag_track_numbers": [],
+      "track_ids": [
+        46313
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:3696",
+      "release_id": 3696,
+      "track_ids": [
+        46293,
+        46294,
+        46295,
+        46296,
+        46297,
+        46298,
+        46299,
+        46300,
+        46301,
+        46302,
+        46303,
+        46304,
+        46305,
+        46306,
+        46307,
+        46308
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:3697",
+      "release_id": 3697,
+      "track_ids": [
+        46309,
+        46310,
+        46311,
+        46312,
+        46313,
+        46314,
+        46315,
+        46316,
+        46317,
+        46318,
+        46319,
+        46320,
+        46321,
+        46322,
+        46323,
+        46324
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:3698",
+      "release_id": 3698,
+      "track_ids": [
+        46325,
+        46326,
+        46327,
+        46328,
+        46329,
+        46330,
+        46331,
+        46332,
+        46333,
+        46334,
+        46335,
+        46336,
+        46337,
+        46338,
+        46339,
+        46340,
+        46341,
+        46342,
+        46343
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:3699",
+      "release_id": 3699,
+      "track_ids": [
+        46344,
+        46345,
+        46346,
+        46347,
+        46348,
+        46349,
+        46350,
+        46351,
+        46352,
+        46353,
+        46354,
+        46355,
+        46356,
+        46357,
+        46358,
+        46359
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:14194",
+      "release_id": 14194,
+      "track_ids": [
+        169619,
+        169620,
+        169621,
+        169622,
+        169623,
+        169624,
+        169625,
+        169626,
+        169627,
+        169628,
+        169629,
+        169630,
+        169631,
+        169632,
+        169633,
+        169634,
+        169635,
+        169636,
+        169637
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 722,
+      "artifact_ids": [
+        "artifact:2d844967de0442f37242aa7809c73e5d5a1f8443d6f80610e3032e0e1b693012"
+      ],
+      "capability_id": "capability:import_missing_tracks:14195",
+      "release_id": 14195,
+      "track_ids": [
+        169638,
+        169639,
+        169640,
+        169641,
+        169642,
+        169643,
+        169644,
+        169645,
+        169646,
+        169647,
+        169648,
+        169649,
+        169650,
+        169651,
+        169652,
+        169653
+      ]
+    }
+  ],
+  "case_id": "sha256:5688899aba2e2294d82da5cba4fe3a87d9b8a6758d246068548f0b80b317ff99",
+  "observed_at": "2026-09-23T02:24:02.37393803Z",
+  "queue": {
+    "download_ref": "download:b5d1d0bcf84a6f2fac33381d47506cc2b0fc0980dde760739703699a0dc24caf",
+    "messages": [
+      "Album match is not close enough: 77.5% vs 80% [country, tracks, missing tracks]",
+      "Has missing tracks",
+      "Klaus.Mitffoch.-.Klaus.Mitffoch.(2003).FLAC.flac",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 453805362,
+    "title": "Klaus.Mitffoch.-.Klaus.Mitffoch.(2003)"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "ab5fa020-3daf-3490-8837-b7f17654bc65",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Tonpress"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3696,
+      "title": "Klaus Mitffoch",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5439a310-5ce6-4a4f-827f-876ab52aec94",
+      "format": "CD",
+      "labels": [
+        "Agencja Artystyczna MTJ"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3697,
+      "title": "Klaus Mitffoch",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "7fe6d7f8-e916-4064-8773-6a0474e895bf",
+      "format": "CD",
+      "labels": [
+        "Tonpress"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 3698,
+      "title": "Klaus Mitffoch",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "cbe3e3c2-4955-48be-99aa-8569ce86116b",
+      "format": "CD",
+      "labels": [
+        "KOCH International"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3699,
+      "title": "Klaus Mitffoch",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "20f6e289-5b4f-460a-8b20-0f2d79c79eae",
+      "format": "CD",
+      "labels": [
+        "Tonpress"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 14194,
+      "title": "Klaus Mitffoch",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "f13bd00a-1329-41bf-b061-78df17214096",
+      "format": "Digital Media",
+      "labels": [
+        "Agencja Artystyczna MTJ"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 14195,
+      "title": "Klaus Mitffoch",
+      "track_count": 16
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 31946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3696,
+      "title": "Śpij aniele mój",
+      "track_id": 46293
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 142013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3696,
+      "title": "O głowie",
+      "track_id": 46294
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 87626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3696,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 46295
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 135733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3696,
+      "title": "Nie jestem z nikim",
+      "track_id": 46296
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3696,
+      "title": "Klus Mitroh",
+      "track_id": 46297
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 86373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3696,
+      "title": "Wiązanka cz. IV",
+      "track_id": 46298
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 139400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3696,
+      "title": "Jestem tu jestem tam",
+      "track_id": 46299
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 199706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3696,
+      "title": "Muł pancerny",
+      "track_id": 46300
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 127000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3696,
+      "title": "Powinność kurdupelka",
+      "track_id": 46301
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 25920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3696,
+      "title": "Strzelby",
+      "track_id": 46302
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3696,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 46303
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 196146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3696,
+      "title": "Tutaj wesoło",
+      "track_id": 46304
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 150626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3696,
+      "title": "Ewolucja rewolucja i ja",
+      "track_id": 46305
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 210373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3696,
+      "title": "Dla Twojej głowy komfort",
+      "track_id": 46306
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 133786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3696,
+      "title": "Siedzi",
+      "track_id": 46307
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 316266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3696,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 46308
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 31946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3697,
+      "title": "Śpij aniele mój",
+      "track_id": 46309
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 142013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3697,
+      "title": "O głowie",
+      "track_id": 46310
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 87626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3697,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 46311
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 135733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3697,
+      "title": "Nie jestem z nikim",
+      "track_id": 46312
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3697,
+      "title": "Klus Mitroh",
+      "track_id": 46313
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 86373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3697,
+      "title": "Wiązanka, część IV",
+      "track_id": 46314
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 139400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3697,
+      "title": "Jestem tu, jestem tam",
+      "track_id": 46315
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 199706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3697,
+      "title": "Muł pancerny",
+      "track_id": 46316
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 127000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3697,
+      "title": "Powinność kurdupelka",
+      "track_id": 46317
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 25920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3697,
+      "title": "Strzelby",
+      "track_id": 46318
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3697,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 46319
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 196146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3697,
+      "title": "Tutaj wesoło",
+      "track_id": 46320
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 150626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3697,
+      "title": "Ewolucja, rewolucja i ja",
+      "track_id": 46321
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 210373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3697,
+      "title": "Dla Twojej głowy komfort",
+      "track_id": 46322
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 133786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3697,
+      "title": "Siedzi",
+      "track_id": 46323
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 316266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3697,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 46324
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 30000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3698,
+      "title": "Śpij aniele mój",
+      "track_id": 46325
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 143200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3698,
+      "title": "O głowie",
+      "track_id": 46326
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 89200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3698,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 46327
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 136266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3698,
+      "title": "Nie jestem z nikim",
+      "track_id": 46328
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 219573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3698,
+      "title": "Klus Mitroh",
+      "track_id": 46329
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3698,
+      "title": "Wiązanka cz. IV",
+      "track_id": 46330
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 138226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3698,
+      "title": "Jestem tu jestem tam",
+      "track_id": 46331
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 199666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3698,
+      "title": "Muł pancerny",
+      "track_id": 46332
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 125906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3698,
+      "title": "Powinność kurdupelka",
+      "track_id": 46333
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 36800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3698,
+      "title": "Strzelby",
+      "track_id": 46334
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 130226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3698,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 46335
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 199840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3698,
+      "title": "Tutaj wesoło",
+      "track_id": 46336
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 133600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3698,
+      "title": "Ewolucja, rewolucja i ja",
+      "track_id": 46337
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 228666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3698,
+      "title": "Dla twojej głowy komfort",
+      "track_id": 46338
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 134066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3698,
+      "title": "Siedzi",
+      "track_id": 46339
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 318800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3698,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 46340
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 3698,
+      "title": "Ogniowe strzelby",
+      "track_id": 46341
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 211066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 3698,
+      "title": "Śmielej",
+      "track_id": 46342
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 129600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 3698,
+      "title": "Jezu jak się cieszę",
+      "track_id": 46343
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 31946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3699,
+      "title": "Śpij aniele mój",
+      "track_id": 46344
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 142013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3699,
+      "title": "O głowie",
+      "track_id": 46345
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 87626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3699,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 46346
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 135733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3699,
+      "title": "Nie jestem z nikim",
+      "track_id": 46347
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3699,
+      "title": "Klus Mitroh",
+      "track_id": 46348
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 86373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3699,
+      "title": "Wiązanka cz. IV",
+      "track_id": 46349
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 139400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3699,
+      "title": "Jestem tu jestem tam",
+      "track_id": 46350
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 199706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3699,
+      "title": "Muł pancerny",
+      "track_id": 46351
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 127000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3699,
+      "title": "Powinność kurdupelka",
+      "track_id": 46352
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 25920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3699,
+      "title": "Strzelby",
+      "track_id": 46353
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3699,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 46354
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 196146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3699,
+      "title": "Tutaj wesoło",
+      "track_id": 46355
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 150626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3699,
+      "title": "Ewolucja rewolucja i ja",
+      "track_id": 46356
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 210373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3699,
+      "title": "Dla Twojej głowy komfort",
+      "track_id": 46357
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 133786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3699,
+      "title": "Siedzi",
+      "track_id": 46358
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 316266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3699,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 46359
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 30000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 14194,
+      "title": "Śpij aniele mój",
+      "track_id": 169619
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 143000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 14194,
+      "title": "O głowie",
+      "track_id": 169620
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 89000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 14194,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 169621
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 137000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 14194,
+      "title": "Nie jestem z nikim",
+      "track_id": 169622
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 219000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 14194,
+      "title": "Klus Mitroh",
+      "track_id": 169623
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 14194,
+      "title": "Wiązanka cz. IV",
+      "track_id": 169624
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 138000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 14194,
+      "title": "Jestem tu jestem tam",
+      "track_id": 169625
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 200000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 14194,
+      "title": "Muł pancerny",
+      "track_id": 169626
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 126000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 14194,
+      "title": "Powinność kurdupelka",
+      "track_id": 169627
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 37000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 14194,
+      "title": "Strzelby",
+      "track_id": 169628
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 130000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 14194,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 169629
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 200000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 14194,
+      "title": "Tutaj wesoło",
+      "track_id": 169630
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 133000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 14194,
+      "title": "Ewolucja, rewolucja i ja",
+      "track_id": 169631
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 229000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 14194,
+      "title": "Dla twojej głowy komfort",
+      "track_id": 169632
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 134000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 14194,
+      "title": "Siedzi",
+      "track_id": 169633
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 319000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 14194,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 169634
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 14194,
+      "title": "Ogniowe strzelby",
+      "track_id": 169635
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 14194,
+      "title": "Śmielej",
+      "track_id": 169636
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 130000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 14194,
+      "title": "Jezu jak się cieszę",
+      "track_id": 169637
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 31947,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 14195,
+      "title": "Śpij aniele mój",
+      "track_id": 169638
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 142013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 14195,
+      "title": "O głowie",
+      "track_id": 169639
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 87627,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 14195,
+      "title": "Wiązanka pieśni bojowych",
+      "track_id": 169640
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 135733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 14195,
+      "title": "Nie jestem z nikim",
+      "track_id": 169641
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216787,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 14195,
+      "title": "Klus mitroh",
+      "track_id": 169642
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 86373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 14195,
+      "title": "Wiązanka cz. IV",
+      "track_id": 169643
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 139400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 14195,
+      "title": "Jestem tu jestem tam",
+      "track_id": 169644
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 199707,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 14195,
+      "title": "Muł pancerny",
+      "track_id": 169645
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 127000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 14195,
+      "title": "Powinność kurdupelka",
+      "track_id": 169646
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 25920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 14195,
+      "title": "Strzelby",
+      "track_id": 169647
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127107,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 14195,
+      "title": "Nad ranem śmierć się śmieje",
+      "track_id": 169648
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 196147,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 14195,
+      "title": "Tutaj wesoło",
+      "track_id": 169649
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 150627,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 14195,
+      "title": "Ewolucja rewolucja i ja",
+      "track_id": 169650
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 210373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 14195,
+      "title": "Dla twojej głowy komfort",
+      "track_id": 169651
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 133787,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 14195,
+      "title": "Siedzi",
+      "track_id": 169652
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 316267,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 14195,
+      "title": "Strzeż się tych miejsc",
+      "track_id": 169653
+    }
+  ]
+}

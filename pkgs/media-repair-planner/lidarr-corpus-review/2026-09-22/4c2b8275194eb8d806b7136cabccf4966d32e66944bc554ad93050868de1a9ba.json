@@ -1,0 +1,5669 @@
+{
+  "album": {
+    "album_id": 5603,
+    "artist": "Ye",
+    "artist_id": 475,
+    "monitored": true,
+    "title": "Late Registration"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:a7301024aec7132bf3d159f9473add8389dc8f674b19adc724701ced867b8b46",
+      "duration_ms": 41067,
+      "fingerprint": "sha256:a7301024aec7132bf3d159f9473add8389dc8f674b19adc724701ced867b8b46",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01..Kanye.West.-.Wake.Up.Mr..West.flac",
+      "size_bytes": 3120835,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Wake Up Mr. West (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:20d14580c351210f1d79b6e00524d5753a891ce71e5a1587884a99e4bb74b251",
+      "duration_ms": 203733,
+      "fingerprint": "sha256:20d14580c351210f1d79b6e00524d5753a891ce71e5a1587884a99e4bb74b251",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02..Kanye.West.-.Heard.'Em.Say.flac",
+      "size_bytes": 20331060,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Heard 'Em Say (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:68db593c7c4838ebe59e8e5d34324c3267e7576e213cda3928799aec35999c36",
+      "duration_ms": 236600,
+      "fingerprint": "sha256:68db593c7c4838ebe59e8e5d34324c3267e7576e213cda3928799aec35999c36",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03..Kanye.West.-.Touch.The.Sky.flac",
+      "size_bytes": 30682097,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Touch The Sky (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:ae804603ccca2dbe21143dd7e80951a936fdeead7c7988b4e86e328cb1c3f855",
+      "duration_ms": 207627,
+      "fingerprint": "sha256:ae804603ccca2dbe21143dd7e80951a936fdeead7c7988b4e86e328cb1c3f855",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04..Kanye.West.-.Gold.flac",
+      "size_bytes": 22000008,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Gold Digger (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:07aef6cea64fcc1abd8c3a98b9f5b7ced7549bcd0ea194d0651248777ab1cbad",
+      "duration_ms": 33573,
+      "fingerprint": "sha256:07aef6cea64fcc1abd8c3a98b9f5b7ced7549bcd0ea194d0651248777ab1cbad",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05..Kanye.West.-.Skit.flac",
+      "size_bytes": 2810472,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Skit #1 (Kanye West/Late Registration) (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3ac842a179af3b6c729e02b952e0be5219c989f2bfb5318a52295ca0174f7309",
+      "duration_ms": 272227,
+      "fingerprint": "sha256:3ac842a179af3b6c729e02b952e0be5219c989f2bfb5318a52295ca0174f7309",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06..Kanye.West.-.Drive.Slow.flac",
+      "size_bytes": 27774030,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Drive Slow (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:44477232f43090fba6520f0972f52d1a35ec887d3ef265e9292b4d28aee3179e",
+      "duration_ms": 103373,
+      "fingerprint": "sha256:44477232f43090fba6520f0972f52d1a35ec887d3ef265e9292b4d28aee3179e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07..Kanye.West.-.My.Way.Home.flac",
+      "size_bytes": 9976345,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "My Way Home (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8f371ab2bd46f12aa6388ae192deaf534b4a7079e5d833b93c19fe3d00121913",
+      "duration_ms": 270867,
+      "fingerprint": "sha256:8f371ab2bd46f12aa6388ae192deaf534b4a7079e5d833b93c19fe3d00121913",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08..Kanye.West.flac",
+      "size_bytes": 30818070,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Crack Music (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:63edea13661078b794b7b839574a3d859110777e0b2e27ed4f48fcc3aaa0d356",
+      "duration_ms": 245867,
+      "fingerprint": "sha256:63edea13661078b794b7b839574a3d859110777e0b2e27ed4f48fcc3aaa0d356",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09..Kanye.West.flac",
+      "size_bytes": 24528693,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Roses (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:59d94679a0c7a893b3265648a99751a11de4ee7a10bd696670f16c050081a605",
+      "duration_ms": 198973,
+      "fingerprint": "sha256:59d94679a0c7a893b3265648a99751a11de4ee7a10bd696670f16c050081a605",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10..Kanye.West.-.Bring.Me.Down.flac",
+      "size_bytes": 23481341,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bring Me Down (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c7721ad613032d400a0f201f1e51e44d23c9c9d209e74ad8f035080eaa6023fc",
+      "duration_ms": 267067,
+      "fingerprint": "sha256:c7721ad613032d400a0f201f1e51e44d23c9c9d209e74ad8f035080eaa6023fc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11..Kanye.West.flac",
+      "size_bytes": 28788342,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Addiction (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:250150e6768239bc306d144cc4fe62b62e85289749ae1ef70b65257a2f961a02",
+      "duration_ms": 31360,
+      "fingerprint": "sha256:250150e6768239bc306d144cc4fe62b62e85289749ae1ef70b65257a2f961a02",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12..Kanye.West.-.Skit.flac",
+      "size_bytes": 2985199,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Skit #2 (Kanye West/Late Registration) (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c48d735b763bd59f631179609d41ea1443993a0179fe50f1e41f5fdf4e08e46f",
+      "duration_ms": 233400,
+      "fingerprint": "sha256:c48d735b763bd59f631179609d41ea1443993a0179fe50f1e41f5fdf4e08e46f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13..Kanye.West.-.Diamonds.From.flac",
+      "size_bytes": 26433214,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Diamonds From Sierra Leone (Remix - Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1f1f020c05c79f3cea870cbca0740d5e62196ab9ea582695239feadeab4e5c1d",
+      "duration_ms": 448000,
+      "fingerprint": "sha256:1f1f020c05c79f3cea870cbca0740d5e62196ab9ea582695239feadeab4e5c1d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14..Kanye.West.-.We.flac",
+      "size_bytes": 55878851,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "We Major (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3b760a7665c940b846e5ed7f7934369c46ca6810d3910e5c8ca10afb3e8d4f5d",
+      "duration_ms": 24133,
+      "fingerprint": "sha256:3b760a7665c940b846e5ed7f7934369c46ca6810d3910e5c8ca10afb3e8d4f5d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15..Kanye.West.-.Skit.flac",
+      "size_bytes": 1619907,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Skit #3 (Kanye West/Late Registration) (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:638c719d1827c5cc7fb222498a110c2ba718f2a174f16d59a8460f2bd75c14dd",
+      "duration_ms": 305067,
+      "fingerprint": "sha256:638c719d1827c5cc7fb222498a110c2ba718f2a174f16d59a8460f2bd75c14dd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "16..Kanye.West.-.Hey.Mama.flac",
+      "size_bytes": 35837426,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hey Mama (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c92748bde49977a1d8d1d39a2ea294c0d73dee09ff866d994f9d4b00e69d7b54",
+      "duration_ms": 198440,
+      "fingerprint": "sha256:c92748bde49977a1d8d1d39a2ea294c0d73dee09ff866d994f9d4b00e69d7b54",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "17..Kanye.West.flac",
+      "size_bytes": 24265424,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Celebration (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:478b78e5032d60b59c9ea71e0d986212891cfd4d1f73284ea1aacde7a344e282",
+      "duration_ms": 78667,
+      "fingerprint": "sha256:478b78e5032d60b59c9ea71e0d986212891cfd4d1f73284ea1aacde7a344e282",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "18..Kanye.West.-.Skit.flac",
+      "size_bytes": 4958377,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Skit #4 (Kanye West/Late Registration) (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:002a6e5999789b869d3ab9386f28c7e5f5c8fc7d2906256a9842843733f64f67",
+      "duration_ms": 333293,
+      "fingerprint": "sha256:002a6e5999789b869d3ab9386f28c7e5f5c8fc7d2906256a9842843733f64f67",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "19..Kanye.West.-.Gone.flac",
+      "size_bytes": 36609926,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Gone (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:448fbab5e39140cab1f689fe4f63ab5a320356d78d633a25f41cd2967eff25d5",
+      "duration_ms": 238400,
+      "fingerprint": "sha256:448fbab5e39140cab1f689fe4f63ab5a320356d78d633a25f41cd2967eff25d5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "20..Kanye.West.-.Diamonds.From.flac",
+      "size_bytes": 27957528,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Diamonds From Sierra Leone (Album Version (Explicit))"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:b57ba15c28b5fb1a5c4bf8b305585d31d438a2656b50c359a10cb2e5132aa2b2",
+      "duration_ms": 230493,
+      "fingerprint": "sha256:b57ba15c28b5fb1a5c4bf8b305585d31d438a2656b50c359a10cb2e5132aa2b2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "21..Kanye.West.-.Late.flac",
+      "size_bytes": 23279619,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Late (Album Version (Explicit))"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:a7301024aec7132bf3d159f9473add8389dc8f674b19adc724701ced867b8b46",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Wake Up Mr. West (Album Version (Explicit))",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        395660
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:20d14580c351210f1d79b6e00524d5753a891ce71e5a1587884a99e4bb74b251",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Heard 'Em Say (Album Version (Explicit))",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        395661
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:68db593c7c4838ebe59e8e5d34324c3267e7576e213cda3928799aec35999c36",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Touch The Sky (Album Version (Explicit))",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        395662
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:ae804603ccca2dbe21143dd7e80951a936fdeead7c7988b4e86e328cb1c3f855",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Gold Digger (Album Version (Explicit))",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        395663
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:07aef6cea64fcc1abd8c3a98b9f5b7ced7549bcd0ea194d0651248777ab1cbad",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Skit #1 (Kanye West/Late Registration) (Album Version (Explicit))",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        395664
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:3ac842a179af3b6c729e02b952e0be5219c989f2bfb5318a52295ca0174f7309",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Drive Slow (Album Version (Explicit))",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        395665
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:44477232f43090fba6520f0972f52d1a35ec887d3ef265e9292b4d28aee3179e",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "My Way Home (Album Version (Explicit))",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        395666
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:8f371ab2bd46f12aa6388ae192deaf534b4a7079e5d833b93c19fe3d00121913",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Crack Music (Album Version (Explicit))",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        395667
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:63edea13661078b794b7b839574a3d859110777e0b2e27ed4f48fcc3aaa0d356",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Roses (Album Version (Explicit))",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        395668
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:59d94679a0c7a893b3265648a99751a11de4ee7a10bd696670f16c050081a605",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Bring Me Down (Album Version (Explicit))",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        395669
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:c7721ad613032d400a0f201f1e51e44d23c9c9d209e74ad8f035080eaa6023fc",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Addiction (Album Version (Explicit))",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        395670
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:250150e6768239bc306d144cc4fe62b62e85289749ae1ef70b65257a2f961a02",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Skit #2 (Kanye West/Late Registration) (Album Version (Explicit))",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        395671
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:c48d735b763bd59f631179609d41ea1443993a0179fe50f1e41f5fdf4e08e46f",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Diamonds From Sierra Leone (Remix - Album Version (Explicit))",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        395672
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:1f1f020c05c79f3cea870cbca0740d5e62196ab9ea582695239feadeab4e5c1d",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "We Major (Album Version (Explicit))",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        395673
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:3b760a7665c940b846e5ed7f7934369c46ca6810d3910e5c8ca10afb3e8d4f5d",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Skit #3 (Kanye West/Late Registration) (Album Version (Explicit))",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        395674
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:638c719d1827c5cc7fb222498a110c2ba718f2a174f16d59a8460f2bd75c14dd",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Hey Mama (Album Version (Explicit))",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        395675
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:c92748bde49977a1d8d1d39a2ea294c0d73dee09ff866d994f9d4b00e69d7b54",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Celebration (Album Version (Explicit))",
+      "tag_track_numbers": [
+        17
+      ],
+      "track_ids": [
+        395676
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:478b78e5032d60b59c9ea71e0d986212891cfd4d1f73284ea1aacde7a344e282",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Skit #4 (Kanye West/Late Registration) (Album Version (Explicit))",
+      "tag_track_numbers": [
+        18
+      ],
+      "track_ids": [
+        395677
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:002a6e5999789b869d3ab9386f28c7e5f5c8fc7d2906256a9842843733f64f67",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Gone (Album Version (Explicit))",
+      "tag_track_numbers": [
+        19
+      ],
+      "track_ids": [
+        395678
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:448fbab5e39140cab1f689fe4f63ab5a320356d78d633a25f41cd2967eff25d5",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Diamonds From Sierra Leone (Album Version (Explicit))",
+      "tag_track_numbers": [
+        20
+      ],
+      "track_ids": [
+        395679
+      ]
+    },
+    {
+      "album_id": 5603,
+      "artifact_id": "artifact:b57ba15c28b5fb1a5c4bf8b305585d31d438a2656b50c359a10cb2e5132aa2b2",
+      "rejections": [
+        "permanent: Worst track match: 58.3% vs 60% [track title]"
+      ],
+      "release_id": 30492,
+      "tag_album": "Late Registration",
+      "tag_artist": "Ye",
+      "tag_title": "Late (Album Version (Explicit))",
+      "tag_track_numbers": [
+        21
+      ],
+      "track_ids": [
+        395680
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5603,
+      "artifact_ids": [
+        "artifact:a7301024aec7132bf3d159f9473add8389dc8f674b19adc724701ced867b8b46",
+        "artifact:20d14580c351210f1d79b6e00524d5753a891ce71e5a1587884a99e4bb74b251",
+        "artifact:68db593c7c4838ebe59e8e5d34324c3267e7576e213cda3928799aec35999c36",
+        "artifact:ae804603ccca2dbe21143dd7e80951a936fdeead7c7988b4e86e328cb1c3f855",
+        "artifact:07aef6cea64fcc1abd8c3a98b9f5b7ced7549bcd0ea194d0651248777ab1cbad",
+        "artifact:3ac842a179af3b6c729e02b952e0be5219c989f2bfb5318a52295ca0174f7309",
+        "artifact:44477232f43090fba6520f0972f52d1a35ec887d3ef265e9292b4d28aee3179e",
+        "artifact:8f371ab2bd46f12aa6388ae192deaf534b4a7079e5d833b93c19fe3d00121913",
+        "artifact:63edea13661078b794b7b839574a3d859110777e0b2e27ed4f48fcc3aaa0d356",
+        "artifact:59d94679a0c7a893b3265648a99751a11de4ee7a10bd696670f16c050081a605",
+        "artifact:c7721ad613032d400a0f201f1e51e44d23c9c9d209e74ad8f035080eaa6023fc",
+        "artifact:250150e6768239bc306d144cc4fe62b62e85289749ae1ef70b65257a2f961a02",
+        "artifact:c48d735b763bd59f631179609d41ea1443993a0179fe50f1e41f5fdf4e08e46f",
+        "artifact:1f1f020c05c79f3cea870cbca0740d5e62196ab9ea582695239feadeab4e5c1d",
+        "artifact:3b760a7665c940b846e5ed7f7934369c46ca6810d3910e5c8ca10afb3e8d4f5d",
+        "artifact:638c719d1827c5cc7fb222498a110c2ba718f2a174f16d59a8460f2bd75c14dd",
+        "artifact:c92748bde49977a1d8d1d39a2ea294c0d73dee09ff866d994f9d4b00e69d7b54",
+        "artifact:478b78e5032d60b59c9ea71e0d986212891cfd4d1f73284ea1aacde7a344e282",
+        "artifact:002a6e5999789b869d3ab9386f28c7e5f5c8fc7d2906256a9842843733f64f67",
+        "artifact:448fbab5e39140cab1f689fe4f63ab5a320356d78d633a25f41cd2967eff25d5",
+        "artifact:b57ba15c28b5fb1a5c4bf8b305585d31d438a2656b50c359a10cb2e5132aa2b2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30485",
+      "release_id": 30485,
+      "track_ids": [
+        395518
+      ]
+    }
+  ],
+  "case_id": "sha256:4c2b8275194eb8d806b7136cabccf4966d32e66944bc554ad93050868de1a9ba",
+  "observed_at": "2026-09-23T01:59:50.762269577Z",
+  "queue": {
+    "download_ref": "download:1aed342afa713a5b0c27580bb08078905ce0b23639d784190fcf65c3376eeaa9",
+    "messages": [
+      "01..Kanye.West.-.Wake.Up.Mr..West.flac",
+      "02..Kanye.West.-.Heard.'Em.Say.flac",
+      "03..Kanye.West.-.Touch.The.Sky.flac",
+      "04..Kanye.West.-.Gold.flac",
+      "05..Kanye.West.-.Skit.flac",
+      "06..Kanye.West.-.Drive.Slow.flac",
+      "07..Kanye.West.-.My.Way.Home.flac",
+      "08..Kanye.West.flac",
+      "09..Kanye.West.flac",
+      "10..Kanye.West.-.Bring.Me.Down.flac",
+      "11..Kanye.West.flac",
+      "12..Kanye.West.-.Skit.flac",
+      "13..Kanye.West.-.Diamonds.From.flac",
+      "14..Kanye.West.-.We.flac",
+      "15..Kanye.West.-.Skit.flac",
+      "16..Kanye.West.-.Hey.Mama.flac",
+      "17..Kanye.West.flac",
+      "18..Kanye.West.-.Skit.flac",
+      "19..Kanye.West.-.Gone.flac",
+      "20..Kanye.West.-.Diamonds.From.flac",
+      "21..Kanye.West.-.Late.flac",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]",
+      "Worst track match: 58.3% vs 60% [track title]"
+    ],
+    "queue_id": 271396678,
+    "title": "Ye-Late.Registration-2005-WEB-FLAC-16bit-PLZRWD-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5129112b-777d-4411-88b3-92de26afa301",
+      "format": "SHM-CD",
+      "labels": [
+        "Universal Music"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30481,
+      "title": "Late Registration",
+      "track_count": 22
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "05b67f03-9593-4bef-bb61-01b28ec1600e",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30482,
+      "title": "Late Registration",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "49175ba0-330f-3a95-8156-72f4dcd4d656",
+      "format": "CD",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30483,
+      "title": "Late Registration",
+      "track_count": 22
+    },
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "755c8536-f9c4-4c13-beef-9ba4b087e2a3",
+      "format": "CD",
+      "labels": [
+        "Universal Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30484,
+      "title": "Late Registration",
+      "track_count": 23
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "122942f8-6c9e-4a44-b42c-f34560502d7f",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records, LLC"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 30485,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b3880f46-7ff8-46b8-86dc-57f5ffa5aea4",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30486,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1ec0d3bf-954e-4e32-b2d4-6834071d04b9",
+      "format": "CD",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30487,
+      "title": "Late Registration",
+      "track_count": 22
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "428e7920-b3e6-45d2-a61d-aa75101dfe5e",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30488,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "13412baa-58b1-42fb-a8ed-2236a9792621",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30489,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "clean version",
+      "foreign_release_id": "9e0b2cbd-d0b7-4db8-8e30-4a2ab5baeedd",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30490,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "3003d4ef-c623-469a-977a-d65ee311e578",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 30491,
+      "title": "Late Registration",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "explicit",
+      "foreign_release_id": "0dc6b658-de04-43d3-8780-3e754141d0b8",
+      "format": "Digital Media",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30492,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "Japanese Import CD with Two Extra Tracks: \"Back to Basics\" & \"We Can Make It Better\"",
+      "foreign_release_id": "0efc4c73-071c-4388-8456-963d6a62d8c5",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30493,
+      "title": "Late Registration",
+      "track_count": 23
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "518a1625-91e3-401c-bb8a-5f7daf965bce",
+      "format": "CD",
+      "labels": [
+        "Hip‐O Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30494,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "New Zealand"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "df27afd9-857f-4219-a7f0-9f257aa8fc03",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30495,
+      "title": "Late Registration",
+      "track_count": 23
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d6f9a7a4-d291-44a5-be15-66101e094190",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30496,
+      "title": "Late Registration",
+      "track_count": 22
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "deluxe limited edition with bonus DVD",
+      "foreign_release_id": "c961be0b-44fa-4296-8bce-e4f2d5ec0597",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30497,
+      "title": "Late Registration",
+      "track_count": 22
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "789b10b1-944b-4b73-8a9e-b318119124b1",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30498,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [],
+      "disambiguation": "explicit",
+      "foreign_release_id": "7cf99d09-51e9-4ad3-9c57-b8425f34f3ef",
+      "format": "Digital Media",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30499,
+      "title": "Late Registration",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1b1331f8-2f48-42e0-b612-b589a8fc0d95",
+      "format": "Digital Media",
+      "labels": [
+        "[no label]"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30500,
+      "title": "Late Registration (JP Bonus Tracks)",
+      "track_count": 3
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c4a2e331-9b7d-429f-8117-7749e64f75e8",
+      "format": "CD",
+      "labels": [
+        "Roc‐A‐Fella Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30501,
+      "title": "Late Registration",
+      "track_count": 22
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30481,
+      "title": "Wake Up Mr. West",
+      "track_id": 395438
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30481,
+      "title": "Heard 'em Say",
+      "track_id": 395439
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30481,
+      "title": "Touch the Sky",
+      "track_id": 395440
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30481,
+      "title": "Gold Digger",
+      "track_id": 395441
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 32000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30481,
+      "title": "Skit #1",
+      "track_id": 395442
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30481,
+      "title": "Drive Slow",
+      "track_id": 395443
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30481,
+      "title": "My Way Home",
+      "track_id": 395444
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30481,
+      "title": "Crack Music",
+      "track_id": 395445
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30481,
+      "title": "Roses",
+      "track_id": 395446
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30481,
+      "title": "Bring Me Down",
+      "track_id": 395447
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30481,
+      "title": "Addiction",
+      "track_id": 395448
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 30000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30481,
+      "title": "Skit #2",
+      "track_id": 395449
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30481,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395450
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30481,
+      "title": "We Major",
+      "track_id": 395451
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 22000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30481,
+      "title": "Skit #3",
+      "track_id": 395452
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30481,
+      "title": "Hey Mama",
+      "track_id": 395453
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30481,
+      "title": "Celebration",
+      "track_id": 395454
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30481,
+      "title": "Skit #4",
+      "track_id": 395455
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30481,
+      "title": "Gone",
+      "track_id": 395456
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30481,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395457
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 97000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30481,
+      "title": "Back to Basics",
+      "track_id": 395458
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30481,
+      "title": "We Can Make It Better",
+      "track_id": 395459
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30482,
+      "title": "Gorgeous",
+      "track_id": 395460
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30482,
+      "title": "Hey Mama",
+      "track_id": 395461
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30482,
+      "title": "I Need to Know",
+      "track_id": 395462
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30482,
+      "title": "Improvise",
+      "track_id": 395463
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30482,
+      "title": "Livin’ a Movie",
+      "track_id": 395464
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30482,
+      "title": "Niggas Gossip",
+      "track_id": 395465
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30482,
+      "title": "Out of Your Mind",
+      "track_id": 395466
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30482,
+      "title": "Peace",
+      "track_id": 395467
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30482,
+      "title": "Wow",
+      "track_id": 395468
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30483,
+      "title": "Wake Up Mr. West",
+      "track_id": 395469
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30483,
+      "title": "Heard 'em Say",
+      "track_id": 395470
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30483,
+      "title": "Touch the Sky",
+      "track_id": 395471
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30483,
+      "title": "Gold Digger",
+      "track_id": 395472
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 32000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30483,
+      "title": "Can't Afford No Gas (skit)",
+      "track_id": 395473
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30483,
+      "title": "Drive Slow",
+      "track_id": 395474
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30483,
+      "title": "My Way Home",
+      "track_id": 395475
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30483,
+      "title": "Crack Music",
+      "track_id": 395476
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30483,
+      "title": "Roses",
+      "track_id": 395477
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30483,
+      "title": "Bring Me Down",
+      "track_id": 395478
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30483,
+      "title": "Addiction",
+      "track_id": 395479
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 30000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30483,
+      "title": "We Broke (skit)",
+      "track_id": 395480
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30483,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395481
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30483,
+      "title": "We Major",
+      "track_id": 395482
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 22000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30483,
+      "title": "Years Ago (skit)",
+      "track_id": 395483
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30483,
+      "title": "Hey Mama",
+      "track_id": 395484
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30483,
+      "title": "Celebration",
+      "track_id": 395485
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30483,
+      "title": "Imposter (skit)",
+      "track_id": 395486
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30483,
+      "title": "Gone",
+      "track_id": 395487
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30483,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395488
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 97000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30483,
+      "title": "Back to Basics",
+      "track_id": 395489
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30483,
+      "title": "We Can Make It Better",
+      "track_id": 395490
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30484,
+      "title": "Wake Up Mr. West",
+      "track_id": 395491
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30484,
+      "title": "Heard ’em Say",
+      "track_id": 395492
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30484,
+      "title": "Touch the Sky",
+      "track_id": 395493
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30484,
+      "title": "Gold Digger",
+      "track_id": 395494
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30484,
+      "title": "Can’t Afford No Gas (skit)",
+      "track_id": 395495
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30484,
+      "title": "Drive Slow",
+      "track_id": 395496
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30484,
+      "title": "My Way Home",
+      "track_id": 395497
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30484,
+      "title": "Crack Music",
+      "track_id": 395498
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30484,
+      "title": "Roses",
+      "track_id": 395499
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30484,
+      "title": "Bring Me Down",
+      "track_id": 395500
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 266986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30484,
+      "title": "Addiction",
+      "track_id": 395501
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30484,
+      "title": "We Broke (skit)",
+      "track_id": 395502
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30484,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395503
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30484,
+      "title": "We Major",
+      "track_id": 395504
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30484,
+      "title": "Years Ago (skit)",
+      "track_id": 395505
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30484,
+      "title": "Hey Mama",
+      "track_id": 395506
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30484,
+      "title": "Celebration",
+      "track_id": 395507
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30484,
+      "title": "Imposter (skit)",
+      "track_id": 395508
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 362600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30484,
+      "title": "Gone",
+      "track_id": 395509
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30484,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395510
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 99120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30484,
+      "title": "Back to Basics",
+      "track_id": 395511
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 232360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30484,
+      "title": "We Can Make It Better",
+      "track_id": 395512
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 230400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 30484,
+      "title": "Late",
+      "track_id": 395513
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30485,
+      "title": "Wake Up Mr. West",
+      "track_id": 395514
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30485,
+      "title": "Heard ’Em Say",
+      "track_id": 395515
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30485,
+      "title": "Touch the Sky",
+      "track_id": 395516
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30485,
+      "title": "Gold Digger",
+      "track_id": 395517
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30485,
+      "title": "Skit #1",
+      "track_id": 395518
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30485,
+      "title": "Drive Slow",
+      "track_id": 395519
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30485,
+      "title": "My Way Home",
+      "track_id": 395520
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30485,
+      "title": "Crack Music",
+      "track_id": 395521
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30485,
+      "title": "Roses",
+      "track_id": 395522
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30485,
+      "title": "Bring Me Down",
+      "track_id": 395523
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30485,
+      "title": "Addiction",
+      "track_id": 395524
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30485,
+      "title": "Skit #2",
+      "track_id": 395525
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30485,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395526
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30485,
+      "title": "We Major",
+      "track_id": 395527
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30485,
+      "title": "Skit #3",
+      "track_id": 395528
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30485,
+      "title": "Hey Mama",
+      "track_id": 395529
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30485,
+      "title": "Celebration",
+      "track_id": 395530
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30485,
+      "title": "Skit #4",
+      "track_id": 395531
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30485,
+      "title": "Gone",
+      "track_id": 395532
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30485,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395533
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30485,
+      "title": "Late",
+      "track_id": 395534
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30486,
+      "title": "Wake Up Mr. West",
+      "track_id": 395535
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30486,
+      "title": "Heard ’Em Say",
+      "track_id": 395536
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30486,
+      "title": "Touch the Sky",
+      "track_id": 395537
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30486,
+      "title": "Gold Digger",
+      "track_id": 395538
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30486,
+      "title": "Skit #1",
+      "track_id": 395539
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30486,
+      "title": "Drive Slow",
+      "track_id": 395540
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30486,
+      "title": "My Way Home",
+      "track_id": 395541
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30486,
+      "title": "Crack Music",
+      "track_id": 395542
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30486,
+      "title": "Roses",
+      "track_id": 395543
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 198973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30486,
+      "title": "Bring Me Down",
+      "track_id": 395544
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30486,
+      "title": "Addiction",
+      "track_id": 395545
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30486,
+      "title": "Skit #2",
+      "track_id": 395546
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30486,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395547
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30486,
+      "title": "We Major",
+      "track_id": 395548
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30486,
+      "title": "Skit #3",
+      "track_id": 395549
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30486,
+      "title": "Hey Mama",
+      "track_id": 395550
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30486,
+      "title": "Celebration",
+      "track_id": 395551
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30486,
+      "title": "Skit #4",
+      "track_id": 395552
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 362600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30486,
+      "title": "Gone",
+      "track_id": 395553
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30486,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395554
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30486,
+      "title": "Late",
+      "track_id": 395555
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30487,
+      "title": "Wake Up Mr. West",
+      "track_id": 395556
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30487,
+      "title": "Heard 'em Say",
+      "track_id": 395557
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30487,
+      "title": "Touch the Sky",
+      "track_id": 395558
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30487,
+      "title": "Gold Digger",
+      "track_id": 395559
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30487,
+      "title": "Can't Afford No Gas (skit)",
+      "track_id": 395560
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30487,
+      "title": "Drive Slow",
+      "track_id": 395561
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30487,
+      "title": "My Way Home",
+      "track_id": 395562
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30487,
+      "title": "Crack Music",
+      "track_id": 395563
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30487,
+      "title": "Roses",
+      "track_id": 395564
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30487,
+      "title": "Bring Me Down",
+      "track_id": 395565
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30487,
+      "title": "Addiction",
+      "track_id": 395566
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30487,
+      "title": "We Broke (skit)",
+      "track_id": 395567
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30487,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395568
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30487,
+      "title": "We Major",
+      "track_id": 395569
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30487,
+      "title": "Years Ago (skit)",
+      "track_id": 395570
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30487,
+      "title": "Hey Mama",
+      "track_id": 395571
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30487,
+      "title": "Celebration",
+      "track_id": 395572
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30487,
+      "title": "Imposter (skit)",
+      "track_id": 395573
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30487,
+      "title": "Gone",
+      "track_id": 395574
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30487,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395575
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30487,
+      "title": "Back to Basics",
+      "track_id": 395576
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30487,
+      "title": "We Can Make It Better",
+      "track_id": 395577
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30488,
+      "title": "Wake Up Mr. West",
+      "track_id": 395578
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30488,
+      "title": "Heard ’Em Say",
+      "track_id": 395579
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30488,
+      "title": "Touch the Sky",
+      "track_id": 395580
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30488,
+      "title": "Gold Digger",
+      "track_id": 395581
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30488,
+      "title": "Skit #1",
+      "track_id": 395582
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30488,
+      "title": "Drive Slow",
+      "track_id": 395583
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30488,
+      "title": "My Way Home",
+      "track_id": 395584
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30488,
+      "title": "Crack Music",
+      "track_id": 395585
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30488,
+      "title": "Roses",
+      "track_id": 395586
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30488,
+      "title": "Bring Me Down",
+      "track_id": 395587
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30488,
+      "title": "Addiction",
+      "track_id": 395588
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30488,
+      "title": "Skit #2",
+      "track_id": 395589
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30488,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395590
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30488,
+      "title": "We Major",
+      "track_id": 395591
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30488,
+      "title": "Skit #3",
+      "track_id": 395592
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30488,
+      "title": "Hey Mama",
+      "track_id": 395593
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30488,
+      "title": "Celebration",
+      "track_id": 395594
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30488,
+      "title": "Skit #4",
+      "track_id": 395595
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30488,
+      "title": "Gone",
+      "track_id": 395596
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30488,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395597
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30488,
+      "title": "Late",
+      "track_id": 395598
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30489,
+      "title": "Wake Up Mr. West",
+      "track_id": 395599
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30489,
+      "title": "Heard ’Em Say",
+      "track_id": 395600
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30489,
+      "title": "Touch the Sky",
+      "track_id": 395601
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30489,
+      "title": "Gold Digger",
+      "track_id": 395602
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30489,
+      "title": "Skit #1",
+      "track_id": 395603
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30489,
+      "title": "Drive Slow",
+      "track_id": 395604
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30489,
+      "title": "My Way Home",
+      "track_id": 395605
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30489,
+      "title": "Crack Music",
+      "track_id": 395606
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30489,
+      "title": "Roses",
+      "track_id": 395607
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30489,
+      "title": "Bring Me Down",
+      "track_id": 395608
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30489,
+      "title": "Addiction",
+      "track_id": 395609
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30489,
+      "title": "Skit #2",
+      "track_id": 395610
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30489,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395611
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30489,
+      "title": "We Major",
+      "track_id": 395612
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30489,
+      "title": "Skit #3",
+      "track_id": 395613
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30489,
+      "title": "Hey Mama",
+      "track_id": 395614
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30489,
+      "title": "Celebration",
+      "track_id": 395615
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30489,
+      "title": "Skit #4",
+      "track_id": 395616
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30489,
+      "title": "Gone",
+      "track_id": 395617
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30489,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395618
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30489,
+      "title": "Late",
+      "track_id": 395619
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30490,
+      "title": "Wake Up Mr. West",
+      "track_id": 395620
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30490,
+      "title": "Heard ’Em Say",
+      "track_id": 395621
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30490,
+      "title": "Touch the Sky",
+      "track_id": 395622
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30490,
+      "title": "Gold Digger",
+      "track_id": 395623
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30490,
+      "title": "Skit #1",
+      "track_id": 395624
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30490,
+      "title": "Drive Slow",
+      "track_id": 395625
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30490,
+      "title": "My Way Home",
+      "track_id": 395626
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30490,
+      "title": "Crack Music",
+      "track_id": 395627
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30490,
+      "title": "Roses",
+      "track_id": 395628
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30490,
+      "title": "Bring Me Down",
+      "track_id": 395629
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30490,
+      "title": "Addiction",
+      "track_id": 395630
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30490,
+      "title": "Skit #2",
+      "track_id": 395631
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30490,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395632
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30490,
+      "title": "We Major",
+      "track_id": 395633
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30490,
+      "title": "Skit #3",
+      "track_id": 395634
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30490,
+      "title": "Hey Mama",
+      "track_id": 395635
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30490,
+      "title": "Celebration",
+      "track_id": 395636
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30490,
+      "title": "Skit #4",
+      "track_id": 395637
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30490,
+      "title": "Gone",
+      "track_id": 395638
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30490,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395639
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30490,
+      "title": "Late",
+      "track_id": 395640
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30491,
+      "title": "Wake Up Mr. West",
+      "track_id": 395641
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 30491,
+      "title": "Addiction",
+      "track_id": 395651
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30491,
+      "title": "Heard ’Em Say",
+      "track_id": 395642
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 30491,
+      "title": "Skit #2",
+      "track_id": 395652
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 236000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30491,
+      "title": "Touch the Sky",
+      "track_id": 395643
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 30491,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395653
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30491,
+      "title": "Gold Digger",
+      "track_id": 395644
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 448000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C4",
+      "release_id": 30491,
+      "title": "We Major",
+      "track_id": 395654
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 30491,
+      "title": "Skit #1",
+      "track_id": 395645
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 30491,
+      "title": "Skit #3",
+      "track_id": 395655
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 30491,
+      "title": "Drive Slow",
+      "track_id": 395646
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 30491,
+      "title": "Hey Mama",
+      "track_id": 395656
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30491,
+      "title": "My Way Home",
+      "track_id": 395647
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 30491,
+      "title": "Celebration",
+      "track_id": 395657
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30491,
+      "title": "Crack Music",
+      "track_id": 395648
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D4",
+      "release_id": 30491,
+      "title": "Skit #4",
+      "track_id": 395658
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30491,
+      "title": "Roses",
+      "track_id": 395649
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 333000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D5",
+      "release_id": 30491,
+      "title": "Gone",
+      "track_id": 395659
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 30491,
+      "title": "Bring Me Down",
+      "track_id": 395650
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30492,
+      "title": "Wake Up Mr. West",
+      "track_id": 395660
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30492,
+      "title": "Heard ’Em Say",
+      "track_id": 395661
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 236600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30492,
+      "title": "Touch the Sky",
+      "track_id": 395662
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 207627,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30492,
+      "title": "Gold Digger",
+      "track_id": 395663
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30492,
+      "title": "Skit #1",
+      "track_id": 395664
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272227,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30492,
+      "title": "Drive Slow",
+      "track_id": 395665
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30492,
+      "title": "My Way Home",
+      "track_id": 395666
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 270867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30492,
+      "title": "Crack Music",
+      "track_id": 395667
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30492,
+      "title": "Roses",
+      "track_id": 395668
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 198973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30492,
+      "title": "Bring Me Down",
+      "track_id": 395669
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30492,
+      "title": "Addiction",
+      "track_id": 395670
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30492,
+      "title": "Skit #2",
+      "track_id": 395671
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30492,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395672
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30492,
+      "title": "We Major",
+      "track_id": 395673
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30492,
+      "title": "Skit #3",
+      "track_id": 395674
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30492,
+      "title": "Hey Mama",
+      "track_id": 395675
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30492,
+      "title": "Celebration",
+      "track_id": 395676
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78667,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30492,
+      "title": "Skit #4",
+      "track_id": 395677
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 333293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30492,
+      "title": "Gone",
+      "track_id": 395678
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30492,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395679
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30492,
+      "title": "Late",
+      "track_id": 395680
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30493,
+      "title": "Wake Up Mr. West",
+      "track_id": 395681
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30493,
+      "title": "Heard 'em Say",
+      "track_id": 395682
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30493,
+      "title": "Touch the Sky",
+      "track_id": 395683
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30493,
+      "title": "Gold Digger",
+      "track_id": 395684
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30493,
+      "title": "Skit #1",
+      "track_id": 395685
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30493,
+      "title": "Drive Slow",
+      "track_id": 395686
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30493,
+      "title": "My Way Home",
+      "track_id": 395687
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30493,
+      "title": "Crack Music",
+      "track_id": 395688
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30493,
+      "title": "Roses",
+      "track_id": 395689
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30493,
+      "title": "Bring Me Down",
+      "track_id": 395690
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30493,
+      "title": "Addiction",
+      "track_id": 395691
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30493,
+      "title": "Skit #2",
+      "track_id": 395692
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30493,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395693
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30493,
+      "title": "We Major",
+      "track_id": 395694
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30493,
+      "title": "Skit #3",
+      "track_id": 395695
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30493,
+      "title": "Hey Mama",
+      "track_id": 395696
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30493,
+      "title": "Celebration",
+      "track_id": 395697
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30493,
+      "title": "Skit #4",
+      "track_id": 395698
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30493,
+      "title": "Gone",
+      "track_id": 395699
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30493,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395700
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 99000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30493,
+      "title": "Back to Basics",
+      "track_id": 395701
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 232360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30493,
+      "title": "We Can Make It Better",
+      "track_id": 395702
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 30493,
+      "title": "Late",
+      "track_id": 395703
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30494,
+      "title": "Wake Up Mr. West",
+      "track_id": 395704
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30494,
+      "title": "Heard ’em Say",
+      "track_id": 395705
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30494,
+      "title": "Touch the Sky",
+      "track_id": 395706
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30494,
+      "title": "Gold Digger",
+      "track_id": 395707
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30494,
+      "title": "Skit #1",
+      "track_id": 395708
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30494,
+      "title": "Drive Slow",
+      "track_id": 395709
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30494,
+      "title": "My Way Home",
+      "track_id": 395710
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30494,
+      "title": "Crack Music",
+      "track_id": 395711
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30494,
+      "title": "Roses",
+      "track_id": 395712
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30494,
+      "title": "Bring Me Down",
+      "track_id": 395713
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30494,
+      "title": "Addiction",
+      "track_id": 395714
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30494,
+      "title": "Skit #2",
+      "track_id": 395715
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30494,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395716
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30494,
+      "title": "We Major",
+      "track_id": 395717
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30494,
+      "title": "Skit #3",
+      "track_id": 395718
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30494,
+      "title": "Hey Mama",
+      "track_id": 395719
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30494,
+      "title": "Celebration",
+      "track_id": 395720
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30494,
+      "title": "Skit #4",
+      "track_id": 395721
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30494,
+      "title": "Gone",
+      "track_id": 395722
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30494,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395723
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30494,
+      "title": "Late",
+      "track_id": 395724
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30495,
+      "title": "Wake Up Mr. West",
+      "track_id": 395725
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30495,
+      "title": "Heard ’em Say",
+      "track_id": 395726
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30495,
+      "title": "Touch the Sky",
+      "track_id": 395727
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30495,
+      "title": "Gold Digger",
+      "track_id": 395728
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30495,
+      "title": "Skit #1",
+      "track_id": 395729
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30495,
+      "title": "Drive Slow",
+      "track_id": 395730
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30495,
+      "title": "My Way Home",
+      "track_id": 395731
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30495,
+      "title": "Crack Music",
+      "track_id": 395732
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30495,
+      "title": "Roses",
+      "track_id": 395733
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30495,
+      "title": "Bring Me Down",
+      "track_id": 395734
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30495,
+      "title": "Addiction",
+      "track_id": 395735
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30495,
+      "title": "Skit #2",
+      "track_id": 395736
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30495,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395737
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30495,
+      "title": "We Major",
+      "track_id": 395738
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30495,
+      "title": "Skit #3",
+      "track_id": 395739
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30495,
+      "title": "Hey Mama",
+      "track_id": 395740
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30495,
+      "title": "Celebration",
+      "track_id": 395741
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30495,
+      "title": "Skit #4",
+      "track_id": 395742
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 362000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30495,
+      "title": "Gone",
+      "track_id": 395743
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30495,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395744
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30495,
+      "title": "Back to Basics",
+      "track_id": 395745
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30495,
+      "title": "We Can Make It Better",
+      "track_id": 395746
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 30495,
+      "title": "Late",
+      "track_id": 395747
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30496,
+      "title": "Wake Up Mr. West",
+      "track_id": 395748
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30496,
+      "title": "Heard 'Em Say",
+      "track_id": 395749
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30496,
+      "title": "Touch the Sky",
+      "track_id": 395750
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30496,
+      "title": "Gold Digger",
+      "track_id": 395751
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30496,
+      "title": "Skit #1",
+      "track_id": 395752
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30496,
+      "title": "Drive Slow",
+      "track_id": 395753
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30496,
+      "title": "My Way Home",
+      "track_id": 395754
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30496,
+      "title": "Crack Music",
+      "track_id": 395755
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30496,
+      "title": "Roses",
+      "track_id": 395756
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30496,
+      "title": "Bring Me Down",
+      "track_id": 395757
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30496,
+      "title": "Addiction",
+      "track_id": 395758
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30496,
+      "title": "Skit #2",
+      "track_id": 395759
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30496,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395760
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30496,
+      "title": "We Major",
+      "track_id": 395761
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30496,
+      "title": "Skit #3",
+      "track_id": 395762
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30496,
+      "title": "Hey Mama",
+      "track_id": 395763
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30496,
+      "title": "Celebration",
+      "track_id": 395764
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30496,
+      "title": "Skit #4",
+      "track_id": 395765
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 362600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30496,
+      "title": "Gone",
+      "track_id": 395766
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30496,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395767
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 232360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30496,
+      "title": "We Can Make It Better",
+      "track_id": 395768
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 230493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30496,
+      "title": "Late",
+      "track_id": 395769
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30497,
+      "title": "Wake Up Mr. West",
+      "track_id": 395770
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30497,
+      "title": "Heard ’Em Say",
+      "track_id": 395771
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30497,
+      "title": "Touch the Sky",
+      "track_id": 395772
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30497,
+      "title": "Gold Digger",
+      "track_id": 395773
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30497,
+      "title": "Can’t Afford No Gas (skit)",
+      "track_id": 395774
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30497,
+      "title": "Drive Slow",
+      "track_id": 395775
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30497,
+      "title": "My Way Home",
+      "track_id": 395776
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30497,
+      "title": "Crack Music",
+      "track_id": 395777
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30497,
+      "title": "Roses",
+      "track_id": 395778
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30497,
+      "title": "Bring Me Down",
+      "track_id": 395779
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30497,
+      "title": "Addiction",
+      "track_id": 395780
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30497,
+      "title": "We Broke (skit)",
+      "track_id": 395781
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30497,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395782
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30497,
+      "title": "We Major",
+      "track_id": 395783
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30497,
+      "title": "Years Ago (skit)",
+      "track_id": 395784
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30497,
+      "title": "Hey Mama",
+      "track_id": 395785
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30497,
+      "title": "Celebration",
+      "track_id": 395786
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30497,
+      "title": "Imposter (skit)",
+      "track_id": 395787
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30497,
+      "title": "Gone",
+      "track_id": 395788
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30497,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395789
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 232000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30497,
+      "title": "We Can Make It Better",
+      "track_id": 395790
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30497,
+      "title": "Late",
+      "track_id": 395791
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30498,
+      "title": "Wake Up Mr. West",
+      "track_id": 395792
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30498,
+      "title": "Heard ’Em Say",
+      "track_id": 395793
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30498,
+      "title": "Touch the Sky",
+      "track_id": 395794
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30498,
+      "title": "Gold Digger",
+      "track_id": 395795
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30498,
+      "title": "Skit #1",
+      "track_id": 395796
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30498,
+      "title": "Drive Slow",
+      "track_id": 395797
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30498,
+      "title": "My Way Home",
+      "track_id": 395798
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30498,
+      "title": "Crack Music",
+      "track_id": 395799
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30498,
+      "title": "Roses",
+      "track_id": 395800
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 198973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30498,
+      "title": "Bring Me Down",
+      "track_id": 395801
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30498,
+      "title": "Addiction",
+      "track_id": 395802
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30498,
+      "title": "Skit #2",
+      "track_id": 395803
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30498,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395804
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30498,
+      "title": "We Major",
+      "track_id": 395805
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30498,
+      "title": "Skit #3",
+      "track_id": 395806
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30498,
+      "title": "Hey Mama",
+      "track_id": 395807
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30498,
+      "title": "Celebration",
+      "track_id": 395808
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30498,
+      "title": "Skit #4",
+      "track_id": 395809
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 362600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30498,
+      "title": "Gone",
+      "track_id": 395810
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30498,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395811
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30498,
+      "title": "Late",
+      "track_id": 395812
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30499,
+      "title": "Wake Up Mr. West",
+      "track_id": 395813
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 203733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30499,
+      "title": "Heard ’Em Say",
+      "track_id": 395814
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 236600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30499,
+      "title": "Touch the Sky",
+      "track_id": 395815
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 207627,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30499,
+      "title": "Gold Digger",
+      "track_id": 395816
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 33573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30499,
+      "title": "Skit #1",
+      "track_id": 395817
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 272227,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30499,
+      "title": "Drive Slow",
+      "track_id": 395818
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 103373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30499,
+      "title": "My Way Home",
+      "track_id": 395819
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 270867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30499,
+      "title": "Crack Music",
+      "track_id": 395820
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 245867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30499,
+      "title": "Roses",
+      "track_id": 395821
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 198973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30499,
+      "title": "Bring Me Down",
+      "track_id": 395822
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30499,
+      "title": "Addiction",
+      "track_id": 395823
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30499,
+      "title": "Skit #2",
+      "track_id": 395824
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30499,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395825
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 448000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30499,
+      "title": "We Major",
+      "track_id": 395826
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30499,
+      "title": "Skit #3",
+      "track_id": 395827
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30499,
+      "title": "Hey Mama",
+      "track_id": 395828
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30499,
+      "title": "Celebration",
+      "track_id": 395829
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 78667,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30499,
+      "title": "Skit #4",
+      "track_id": 395830
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 333293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30499,
+      "title": "Gone",
+      "track_id": 395831
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 238400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30499,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395832
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 230493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30499,
+      "title": "Late",
+      "track_id": 395833
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 238000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30500,
+      "title": "Diamonds From Sierra Leone",
+      "track_id": 395834
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 232000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30500,
+      "title": "We Can Make It Better",
+      "track_id": 395835
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 99000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30500,
+      "title": "Back to Basics",
+      "track_id": 395836
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 41000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30501,
+      "title": "Wake Up Mr. West",
+      "track_id": 395837
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30501,
+      "title": "Heard ’Em Say",
+      "track_id": 395838
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30501,
+      "title": "Touch the Sky",
+      "track_id": 395839
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30501,
+      "title": "Gold Digger",
+      "track_id": 395840
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 34000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30501,
+      "title": "Skit #1",
+      "track_id": 395841
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 273000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30501,
+      "title": "Drive Slow",
+      "track_id": 395842
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 104000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30501,
+      "title": "My Way Home",
+      "track_id": 395843
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30501,
+      "title": "Crack Music",
+      "track_id": 395844
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30501,
+      "title": "Roses",
+      "track_id": 395845
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30501,
+      "title": "Bring Me Down",
+      "track_id": 395846
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 267000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30501,
+      "title": "Addiction",
+      "track_id": 395847
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 31000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30501,
+      "title": "Skit #2",
+      "track_id": 395848
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30501,
+      "title": "Diamonds From Sierra Leone (remix)",
+      "track_id": 395849
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 449000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30501,
+      "title": "We Major",
+      "track_id": 395850
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 24000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30501,
+      "title": "Skit #3",
+      "track_id": 395851
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 305000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30501,
+      "title": "Hey Mama",
+      "track_id": 395852
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30501,
+      "title": "Celebration",
+      "track_id": 395853
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 79000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30501,
+      "title": "Skit #4",
+      "track_id": 395854
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30501,
+      "title": "Gone",
+      "track_id": 395855
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30501,
+      "title": "Diamonds From Sierra Leone (original version)",
+      "track_id": 395856
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 233000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30501,
+      "title": "We Can Make It Better",
+      "track_id": 395857
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 99000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30501,
+      "title": "Back to the Basics",
+      "track_id": 395858
+    }
+  ]
+}

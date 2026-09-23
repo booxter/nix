@@ -1,0 +1,1961 @@
+{
+  "album": {
+    "album_id": 6243,
+    "artist": "In Strict Confidence",
+    "artist_id": 548,
+    "monitored": true,
+    "title": "Love Kills!"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+      "duration_ms": 472747,
+      "fingerprint": "sha256:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01_in_strict_confidence-zauberschloss.flac",
+      "size_bytes": 60275752,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Zauberschloss"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+      "duration_ms": 332587,
+      "fingerprint": "sha256:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02_in_strict_confidence-heaven_is_the_place_to_be.flac",
+      "size_bytes": 44266457,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Heaven Is The Place To Be"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+      "duration_ms": 356000,
+      "fingerprint": "sha256:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03_in_strict_confidence-stern.flac",
+      "size_bytes": 41445756,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Stern"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+      "duration_ms": 306653,
+      "fingerprint": "sha256:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04_in_strict_confidence-the_truth_inside_of_me.flac",
+      "size_bytes": 38934916,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Truth Inside Of Me"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+      "duration_ms": 324240,
+      "fingerprint": "sha256:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05_in_strict_confidence-spread_your_wings_(part_i).flac",
+      "size_bytes": 39472461,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Spread Your Wings (Part I)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+      "duration_ms": 241400,
+      "fingerprint": "sha256:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06_in_strict_confidence-kiss_your_shadow.flac",
+      "size_bytes": 31275374,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Kiss Your Shadow"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+      "duration_ms": 247267,
+      "fingerprint": "sha256:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07_in_strict_confidence-silent_memorial.flac",
+      "size_bytes": 29367901,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Silent Memorial"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+      "duration_ms": 392053,
+      "fingerprint": "sha256:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08_in_strict_confidence-wenn_ich_die_augean_schliesse.flac",
+      "size_bytes": 48878483,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Wenn Ich Die Augean Schliesse…"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+      "duration_ms": 283547,
+      "fingerprint": "sha256:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09_in_strict_confidence-weltuntergang.flac",
+      "size_bytes": 28809413,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Weltuntergang"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+      "duration_ms": 219987,
+      "fingerprint": "sha256:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10_in_strict_confidence-the_setting_of_the_sun.flac",
+      "size_bytes": 24464450,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Setting Of The Sun"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+      "duration_ms": 215693,
+      "fingerprint": "sha256:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11_in_strict_confidence-spread_your_wings_(part_ii).flac",
+      "size_bytes": 24560314,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Spread Your Wings (Part II)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+      "duration_ms": 376560,
+      "fingerprint": "sha256:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12_in_strict_confidence-kiss_your_shadow_(french_kiss_version).flac",
+      "size_bytes": 41900672,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Kiss Your Shadow (French Kiss Version)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+      "duration_ms": 298587,
+      "fingerprint": "sha256:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13_in_strict_confidence-come_down.flac",
+      "size_bytes": 37259518,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Come Down"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+      "duration_ms": 200707,
+      "fingerprint": "sha256:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14_in_strict_confidence-illusion.flac",
+      "size_bytes": 25165666,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Illusion"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651",
+      "duration_ms": 360840,
+      "fingerprint": "sha256:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15_in_strict_confidence-never_surrender.flac",
+      "size_bytes": 49636257,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Never Surrender"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Zauberschloss",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        431070
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Heaven Is The Place To Be",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        431071
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Stern",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        431072
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "The Truth Inside Of Me",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        431073
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Spread Your Wings (Part I)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        431074
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Kiss Your Shadow",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        431075
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Silent Memorial",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        431076
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Wenn Ich Die Augean Schliesse…",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        431077
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Weltuntergang",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        431078
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "The Setting Of The Sun",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        431079
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Spread Your Wings (Part II)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        431080
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Kiss Your Shadow (French Kiss Version)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        431081
+      ]
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Come Down",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Illusion",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 6243,
+      "artifact_id": "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651",
+      "rejections": [
+        "permanent: Worst track match: 10.5% vs 60% [track length, track title, recording id]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 33154,
+      "tag_album": "Love Kills!",
+      "tag_artist": "In Strict Confidence",
+      "tag_title": "Never Surrender",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": []
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33151",
+      "release_id": 33151,
+      "track_ids": [
+        431033,
+        431034,
+        431035,
+        431036,
+        431037,
+        431038,
+        431039,
+        431040,
+        431041,
+        431042,
+        431043,
+        431044
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33152",
+      "release_id": 33152,
+      "track_ids": [
+        431045,
+        431046,
+        431047,
+        431048,
+        431049,
+        431050,
+        431051,
+        431052,
+        431053,
+        431054,
+        431055,
+        431056
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33153",
+      "release_id": 33153,
+      "track_ids": [
+        431057,
+        431058,
+        431059,
+        431060,
+        431061,
+        431062,
+        431063,
+        431064,
+        431065,
+        431066,
+        431067,
+        431068,
+        431069
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33154",
+      "release_id": 33154,
+      "track_ids": [
+        431070,
+        431071,
+        431072,
+        431073,
+        431074,
+        431075,
+        431076,
+        431077,
+        431078,
+        431079,
+        431080,
+        431081
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33155",
+      "release_id": 33155,
+      "track_ids": [
+        431082,
+        431094,
+        431083,
+        431095,
+        431084,
+        431096,
+        431085,
+        431086,
+        431087,
+        431088,
+        431089,
+        431090,
+        431091,
+        431092,
+        431093
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33156",
+      "release_id": 33156,
+      "track_ids": [
+        431097,
+        431098,
+        431099,
+        431100,
+        431101,
+        431102,
+        431103,
+        431104,
+        431105,
+        431106,
+        431107,
+        431108,
+        431109
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6243,
+      "artifact_ids": [
+        "artifact:fe7bf8eeb3a6e41d9fefe789bf8143aa80b34ae63a25ef21de7e2eff7da9aa46",
+        "artifact:1f85eddb41024dcbe95da816a8e2763d464d51c2f2d9c476db7c5a837810078c",
+        "artifact:78fc5e42d5177570a6d1c27e401c462a9a6752e7648d96ad72bdfd79f5e4bf45",
+        "artifact:9bf485ec5c661541c4b7b8d5b8a6b9a521045e12f7af010a1dea1b0b5c28a525",
+        "artifact:e75b0cdf6f08c54323e5074cec91b09f248437356856c7a707ca1a11eaa40d2d",
+        "artifact:3d92953a8a0afadd23a9c0382d59fcce62700ec7ab6f5e51d9683922547c550e",
+        "artifact:9743a8369c166a42fe5c75abd4f7fcf72c79615722b1e265f215133ff06918cb",
+        "artifact:3e1176ac4499f9ee699544b175afc8c42f448882109a18afd578e15cb9005c1d",
+        "artifact:db1e72819757666aa8789e7b0730a17f84e1a37babc994425c3d5c56a90f5070",
+        "artifact:b97b7eaac616d6b49a17d3945b1f1332fb4a44935e2319ff3e79f44c6c139790",
+        "artifact:f2668a8801e93b83cb27e47df06f7934c9f48e5aa2716afbaa7e10d811635385",
+        "artifact:bb163ff1011a2b43f82ee32da6cd6d97aa662f36e9c72dabb34961ddb7046565",
+        "artifact:a57aee7e651d1a09995377176253121bc736bacbb92b4963bb3a9df7cd558f62",
+        "artifact:916570bf86584dda8033105b9de976d1353ce625f514cbe74fb10a627cbb86ba",
+        "artifact:e6e09896b06e2fc2ab177261f6dee97367b2e5c92db0946171043077c982f651"
+      ],
+      "capability_id": "capability:import_missing_tracks:33157",
+      "release_id": 33157,
+      "track_ids": [
+        431110,
+        431111,
+        431112,
+        431113,
+        431114,
+        431115,
+        431116,
+        431117,
+        431118,
+        431119,
+        431120,
+        431121,
+        431122
+      ]
+    }
+  ],
+  "case_id": "sha256:4b28104e29b9ed0a3f9fbbae163d5f97d5eff0909832adbc04baa2e505f331bf",
+  "observed_at": "2026-09-23T02:25:56.020418012Z",
+  "queue": {
+    "download_ref": "download:97b6a1f8372c5bcc82398f0e43dd3b00b358e58f1abf908833303131ee8a34f9",
+    "messages": [
+      "01_in_strict_confidence-zauberschloss.flac",
+      "02_in_strict_confidence-heaven_is_the_place_to_be.flac",
+      "03_in_strict_confidence-stern.flac",
+      "04_in_strict_confidence-the_truth_inside_of_me.flac",
+      "05_in_strict_confidence-spread_your_wings_(part_i).flac",
+      "06_in_strict_confidence-kiss_your_shadow.flac",
+      "07_in_strict_confidence-silent_memorial.flac",
+      "08_in_strict_confidence-wenn_ich_die_augean_schliesse.flac",
+      "09_in_strict_confidence-weltuntergang.flac",
+      "10_in_strict_confidence-the_setting_of_the_sun.flac",
+      "11_in_strict_confidence-spread_your_wings_(part_ii).flac",
+      "12_in_strict_confidence-kiss_your_shadow_(french_kiss_version).flac",
+      "13_in_strict_confidence-come_down.flac",
+      "14_in_strict_confidence-illusion.flac",
+      "15_in_strict_confidence-never_surrender.flac",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "Worst track match: 10.5% vs 60% [track length, track title, recording id]"
+    ],
+    "queue_id": 255206800,
+    "title": "In Strict Confidence-Love Kills-Deluxe Edition-CD-FLAC-2026-FWYH-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b5b14d51-1516-4f05-b74f-5f183ef0d1b3",
+      "format": "CD",
+      "labels": [
+        "Bloodline"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33151,
+      "title": "Love Kills!",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Sweden"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "948668eb-340f-3dee-88cc-d340e33f0a7d",
+      "format": "CD",
+      "labels": [
+        "Energy Rekords"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33152,
+      "title": "Love Kills!",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "a2bb313d-5330-43b2-96e3-c71eabbfbd13",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33153,
+      "title": "Love Kills!",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "429850e4-3d8f-3ce6-8676-80515f15882c",
+      "format": "CD",
+      "labels": [
+        "WTII Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33154,
+      "title": "Love Kills!",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "limited box set",
+      "foreign_release_id": "f01eb598-d199-3580-8757-a0a0655820ce",
+      "format": "2xCD",
+      "labels": [
+        "Bloodline"
+      ],
+      "medium_count": 2,
+      "monitored": true,
+      "release_id": 33155,
+      "title": "Love Kills!",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "aac98a65-db9e-3430-8773-f033729e5a0b",
+      "format": "CD",
+      "labels": [
+        "Minuswelt Musikfabrik"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33156,
+      "title": "Love Kills!",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "Russia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6a295eab-71bc-4ec4-8e26-5d539afa7aa6",
+      "format": "CD",
+      "labels": [
+        "Irond"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 33157,
+      "title": "Love Kills!",
+      "track_count": 13
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33151,
+      "title": "Zauberschloss",
+      "track_id": 431033
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33151,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431034
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33151,
+      "title": "Stern",
+      "track_id": 431035
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33151,
+      "title": "The Truth Inside of Me",
+      "track_id": 431036
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33151,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431037
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33151,
+      "title": "Kiss Your Shadow",
+      "track_id": 431038
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33151,
+      "title": "Silent Memorial",
+      "track_id": 431039
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33151,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431040
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33151,
+      "title": "Weltuntergang",
+      "track_id": 431041
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33151,
+      "title": "The Setting Off the Sun",
+      "track_id": 431042
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33151,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431043
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 666213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33151,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431044
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33152,
+      "title": "Zauberschloss",
+      "track_id": 431045
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33152,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431046
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33152,
+      "title": "Stern",
+      "track_id": 431047
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33152,
+      "title": "The Truth Inside of Me",
+      "track_id": 431048
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33152,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431049
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33152,
+      "title": "Kiss Your Shadow",
+      "track_id": 431050
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33152,
+      "title": "Silent Memorial",
+      "track_id": 431051
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33152,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431052
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33152,
+      "title": "Weltuntergang",
+      "track_id": 431053
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33152,
+      "title": "The Setting Off the Sun",
+      "track_id": 431054
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33152,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431055
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 666213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33152,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431056
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33153,
+      "title": "Zauberschloss",
+      "track_id": 431057
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33153,
+      "title": "Stern",
+      "track_id": 431058
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33153,
+      "title": "The Truth Inside of Me",
+      "track_id": 431059
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33153,
+      "title": "Kiss Your Shadow",
+      "track_id": 431060
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33153,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431061
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 245267,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33153,
+      "title": "Silent Memorial",
+      "track_id": 431062
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33153,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431063
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 281547,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33153,
+      "title": "Weltuntergang",
+      "track_id": 431064
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 217987,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33153,
+      "title": "The Setting Off the Sun",
+      "track_id": 431065
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33153,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431066
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 668213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33153,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431067
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 330587,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33153,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431068
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 379080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 33153,
+      "title": "Stern (Nasa mix)",
+      "track_id": 431069
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33154,
+      "title": "Zauberschloss",
+      "track_id": 431070
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33154,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431071
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33154,
+      "title": "Stern",
+      "track_id": 431072
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33154,
+      "title": "The Truth Inside of Me",
+      "track_id": 431073
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33154,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431074
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33154,
+      "title": "Kiss Your Shadow",
+      "track_id": 431075
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33154,
+      "title": "Silent Memorial",
+      "track_id": 431076
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33154,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431077
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33154,
+      "title": "Weltuntergang",
+      "track_id": 431078
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33154,
+      "title": "The Setting Off the Sun",
+      "track_id": 431079
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33154,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431080
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 666213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33154,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431081
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33155,
+      "title": "Zauberschloss",
+      "track_id": 431082
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 381000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 33155,
+      "title": "Stern (NASA-mix)",
+      "track_id": 431094
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33155,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431083
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 376000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 33155,
+      "title": "Kiss Your Shadow (Q-mix)",
+      "track_id": 431095
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33155,
+      "title": "Stern",
+      "track_id": 431084
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 33155,
+      "title": "Weltuntergang (Roswell-mix)",
+      "track_id": 431096
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33155,
+      "title": "The Truth Inside of Me",
+      "track_id": 431085
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33155,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431086
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33155,
+      "title": "Kiss Your Shadow",
+      "track_id": 431087
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33155,
+      "title": "Silent Memorial",
+      "track_id": 431088
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33155,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431089
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33155,
+      "title": "Weltuntergang",
+      "track_id": 431090
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33155,
+      "title": "The Setting Off the Sun",
+      "track_id": 431091
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33155,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431092
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 666213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33155,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431093
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33156,
+      "title": "Zauberschloss",
+      "track_id": 431097
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33156,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431098
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33156,
+      "title": "Stern",
+      "track_id": 431099
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33156,
+      "title": "The Truth Inside of Me",
+      "track_id": 431100
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33156,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431101
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33156,
+      "title": "Kiss Your Shadow",
+      "track_id": 431102
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33156,
+      "title": "Silent Memorial",
+      "track_id": 431103
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33156,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431104
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33156,
+      "title": "Weltuntergang",
+      "track_id": 431105
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33156,
+      "title": "The Setting Off the Sun",
+      "track_id": 431106
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33156,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431107
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 668213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33156,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431108
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 379080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 33156,
+      "title": "Stern (Nasa mix)",
+      "track_id": 431109
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 470520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33157,
+      "title": "Zauberschloss",
+      "track_id": 431110
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 330586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33157,
+      "title": "Heaven Is the Place to Be",
+      "track_id": 431111
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 354000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 33157,
+      "title": "Stern",
+      "track_id": 431112
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 304653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 33157,
+      "title": "The Truth Inside of Me",
+      "track_id": 431113
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 322240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 33157,
+      "title": "Spread Your Wings, Part I",
+      "track_id": 431114
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 239400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 33157,
+      "title": "Kiss Your Shadow",
+      "track_id": 431115
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 33157,
+      "title": "Silent Memorial",
+      "track_id": 431116
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 390053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 33157,
+      "title": "Wenn ich die Augen schließe",
+      "track_id": 431117
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 33157,
+      "title": "Weltuntergang",
+      "track_id": 431118
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 217986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 33157,
+      "title": "The Setting Off the Sun",
+      "track_id": 431119
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 213693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 33157,
+      "title": "Spread Your Wings, Part II",
+      "track_id": 431120
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 668213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 33157,
+      "title": "Six Six Six Seconds Silence in Heaven",
+      "track_id": 431121
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 379080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 33157,
+      "title": "Stern (Nasa mix)",
+      "track_id": 431122
+    }
+  ]
+}

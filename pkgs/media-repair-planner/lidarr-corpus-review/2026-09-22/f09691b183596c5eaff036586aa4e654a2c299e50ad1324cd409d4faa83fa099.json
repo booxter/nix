@@ -1,0 +1,191 @@
+{
+  "album": {
+    "album_id": 3014,
+    "artist": "Irmin Schmidt",
+    "artist_id": 225,
+    "monitored": true,
+    "title": "Requiem"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+      "duration_ms": 1392000,
+      "fingerprint": "sha256:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-irmin_schmidt-part_1-543eefd3.flac",
+      "size_bytes": 607661495,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 192000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Part 1"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
+      "duration_ms": 1071107,
+      "fingerprint": "sha256:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-irmin_schmidt-part_2-9a4874ca.flac",
+      "size_bytes": 457943155,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 192000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Part 2"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 3014,
+      "artifact_id": "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 14276,
+      "tag_album": "Requiem",
+      "tag_artist": "Irmin Schmidt",
+      "tag_title": "Part 1",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        170573
+      ]
+    },
+    {
+      "album_id": 3014,
+      "artifact_id": "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 14276,
+      "tag_album": "Requiem",
+      "tag_artist": "Irmin Schmidt",
+      "tag_title": "Part 2",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        170574
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 3014,
+      "artifact_ids": [
+        "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+        "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9"
+      ],
+      "capability_id": "capability:import_missing_tracks:14276",
+      "release_id": 14276,
+      "track_ids": [
+        170575
+      ]
+    }
+  ],
+  "case_id": "sha256:f09691b183596c5eaff036586aa4e654a2c299e50ad1324cd409d4faa83fa099",
+  "observed_at": "2026-09-23T02:00:19.922553262Z",
+  "queue": {
+    "download_ref": "download:87fd9c6dd28638c43416c35111c75a94dcc0d11109085c0fd597bb2ba9bb279c",
+    "messages": [
+      "01-irmin_schmidt-part_1-543eefd3.flac",
+      "02-irmin_schmidt-part_2-9a4874ca.flac",
+      "Album match is not close enough: 67.3% vs 80% [country, tracks, missing tracks]",
+      "Album match is not close enough: 67.3% vs 80% [country, tracks, missing tracks]",
+      "Has missing tracks",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 523764395,
+    "title": "Irmin Schmidt-Requiem-(IFDSPOON70)-24BIT-WEB-FLAC-2026-ENRiCH-xpost"
+  },
+  "releases": [
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "84a51274-2c43-4113-a762-03483f1f0b63",
+      "format": "Digital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 14276,
+      "title": "Requiem",
+      "track_count": 3
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 14276,
+      "title": "Part 1",
+      "track_id": 170573
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 14276,
+      "title": "Part 2",
+      "track_id": 170574
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 14276,
+      "title": "Excerpt 06 [Bonus]",
+      "track_id": 170575
+    }
+  ]
+}

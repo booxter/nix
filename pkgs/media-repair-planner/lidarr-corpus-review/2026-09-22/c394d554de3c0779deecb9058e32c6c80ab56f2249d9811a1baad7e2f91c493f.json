@@ -1,0 +1,3359 @@
+{
+  "album": {
+    "album_id": 2327,
+    "artist": "Throbbing Gristle",
+    "artist_id": 281,
+    "monitored": true,
+    "title": "20 Jazz Funk Greats"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:7e474f17c12aeffb7eecfc01ce29a82d641d202e9fd50cc5d9ca283cf67d9b0b",
+      "duration_ms": 168987,
+      "fingerprint": "sha256:e6e8dbf35b69bd49c3281341acc5226d40755894ec8d9246d1ea22cb59b5cb12",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "01-throbbing_gristle-20_jazz_funk_greats.mp3",
+      "size_bytes": 5595148,
+      "streams": [
+        {
+          "bit_rate_bps": 264599,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "20 Jazz Funk Greats"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:d0adbf4f52c2ab40d04662c8fadb646f170099b5ccf7c45076d2ba7caa1d2040",
+      "duration_ms": 221853,
+      "fingerprint": "sha256:81f7671823254d52acfe84554d0fcbd4a34ea14ab1834cfe41c6c3c0ca6b59d4",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "02-throbbing_gristle-beachy_head.mp3",
+      "size_bytes": 5975884,
+      "streams": [
+        {
+          "bit_rate_bps": 215307,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Beachy Head"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:d67f56b07ca4cc3f884d5b6f31eb3fe480318f7e90427bf24b087a7f7905a448",
+      "duration_ms": 293707,
+      "fingerprint": "sha256:6f2e5a3e152bcb3ef5701ef0c12c3b5e247f4a9b2d8bb4f663e2f1e1a491273f",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "03-throbbing_gristle-still_walking.1.mp3",
+      "size_bytes": 9452832,
+      "streams": [
+        {
+          "bit_rate_bps": 257326,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Still Walking"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7d8415bb56d48e9f136c895fb799edb11ca1abe10b784ce0a370493b1851b316",
+      "duration_ms": 293707,
+      "fingerprint": "sha256:6f2e5a3e152bcb3ef5701ef0c12c3b5e247f4a9b2d8bb4f663e2f1e1a491273f",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "03-throbbing_gristle-still_walking.mp3",
+      "size_bytes": 9452832,
+      "streams": [
+        {
+          "bit_rate_bps": 257326,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Still Walking"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4637550a3b06a619b1e324313b7e026dd7c0e68eb0df072963043a367e3c7ece",
+      "duration_ms": 136120,
+      "fingerprint": "sha256:be5fb93350ac551854c3aaebaa70c9fc2bb99f815edf13aea0b7b7f656c2108b",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "04-throbbing_gristle-tanith.mp3",
+      "size_bytes": 3733189,
+      "streams": [
+        {
+          "bit_rate_bps": 219109,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Tanith"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8f0e0676c0400c359f083b11a9bd23beb547307caf77879a9bf6a34166b82de0",
+      "duration_ms": 294120,
+      "fingerprint": "sha256:6474eb91fc7865b75d3d6bb138d986cf33599cde559707dc6d9634fc8004c634",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "05-throbbing_gristle-convincing_people.1.mp3",
+      "size_bytes": 9772817,
+      "streams": [
+        {
+          "bit_rate_bps": 265663,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Convincing People"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7560e9b6aae7d472f9f90221f91821da275ba4991c8d2500ee667edc6ad65c60",
+      "duration_ms": 294120,
+      "fingerprint": "sha256:6474eb91fc7865b75d3d6bb138d986cf33599cde559707dc6d9634fc8004c634",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "05-throbbing_gristle-convincing_people.mp3",
+      "size_bytes": 9772817,
+      "streams": [
+        {
+          "bit_rate_bps": 265663,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Convincing People"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8ca0bfa71724d7b2b2bdda23ca41ba50c0bd6d979f6bf7de7195d5d023060a0b",
+      "duration_ms": 175773,
+      "fingerprint": "sha256:c832977da93ac1e00b35f691d2c377677774b605687ce656b867886efa58bd1e",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "06-throbbing_gristle-exotica.mp3",
+      "size_bytes": 4730322,
+      "streams": [
+        {
+          "bit_rate_bps": 215062,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Exotica"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4fe2e772f499e9f3166c6a10660a5653afa06709c1b5eb97f3459a7e6c1564d4",
+      "duration_ms": 264267,
+      "fingerprint": "sha256:c22aa942dba341e17eb20d49fbd505367d7c943b252016f1c766853b76e625ef",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "07-throbbing_gristle-hot_on_the_heels_of_love.1.mp3",
+      "size_bytes": 9930165,
+      "streams": [
+        {
+          "bit_rate_bps": 300437,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hot on the Heels of Love"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:00de2b0951181ea326d95dbd38cc24c72c843471de05ef7ebf0cc2f9b55866c6",
+      "duration_ms": 264267,
+      "fingerprint": "sha256:c22aa942dba341e17eb20d49fbd505367d7c943b252016f1c766853b76e625ef",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "07-throbbing_gristle-hot_on_the_heels_of_love.mp3",
+      "size_bytes": 9930165,
+      "streams": [
+        {
+          "bit_rate_bps": 300437,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hot on the Heels of Love"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4d2fe5122d28925da33b48c1909c00ef278a60e0e1bbf93eb5f685a6def8ba70",
+      "duration_ms": 398547,
+      "fingerprint": "sha256:c559fee8b44c0a6f4a4cf7e4872b614e3f2d0e4509be9ba7f1ae208d4eaa5bcd",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "08-throbbing_gristle-persuasion.mp3",
+      "size_bytes": 11585212,
+      "streams": [
+        {
+          "bit_rate_bps": 232447,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Persuasion"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f4c212bcf5989205e4466f0356b48361ee7737d7ce7f6306d8c3265bc30175d3",
+      "duration_ms": 184920,
+      "fingerprint": "sha256:af7fb0412b2311b6bcf2e5921798eb8095790b4fa698ff1c7b704a3dd38f4cc7",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "09-throbbing_gristle-walkabout.1.mp3",
+      "size_bytes": 6004317,
+      "streams": [
+        {
+          "bit_rate_bps": 259538,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Walkabout"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:fef21813171af9f1cc95bb9768902088cc4166bdc752bb0063a7c15b934a1742",
+      "duration_ms": 184920,
+      "fingerprint": "sha256:af7fb0412b2311b6bcf2e5921798eb8095790b4fa698ff1c7b704a3dd38f4cc7",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "09-throbbing_gristle-walkabout.mp3",
+      "size_bytes": 6004317,
+      "streams": [
+        {
+          "bit_rate_bps": 259538,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Walkabout"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c9c9d3f2f5da540cc08bafc3f2ee42c5635db7e5cf85707816fa555fc174cefc",
+      "duration_ms": 280427,
+      "fingerprint": "sha256:cd70f1063a8046d3b3db92813f0c170232427d72b499b7b046c73b80ac1dd652",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "10-throbbing_gristle-what_a_day.mp3",
+      "size_bytes": 8878007,
+      "streams": [
+        {
+          "bit_rate_bps": 253106,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "What a Day"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:c20a78ad968d57a361a00b5ef528623eda9b3cd23c3ee9e718807f7bf95c13fb",
+      "duration_ms": 127160,
+      "fingerprint": "sha256:981a2aaf69ab71f3ade596f149ff0e475fd43c4abf3ad9981617fabbc0216aa9",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "11-throbbing_gristle-six_six_sixties.1.mp3",
+      "size_bytes": 3845873,
+      "streams": [
+        {
+          "bit_rate_bps": 241632,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Six Six Sixties"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9200bb95bb76eaa226cc9416852878e80ffde800e9f12c030e75e5472654454a",
+      "duration_ms": 127160,
+      "fingerprint": "sha256:981a2aaf69ab71f3ade596f149ff0e475fd43c4abf3ad9981617fabbc0216aa9",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "11-throbbing_gristle-six_six_sixties.mp3",
+      "size_bytes": 3845873,
+      "streams": [
+        {
+          "bit_rate_bps": 241632,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Six Six Sixties"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:35f53d5c262d5aca96ee466d2667bfbbfb0e14746b3b63f133329f65337500ec",
+      "duration_ms": 648800,
+      "fingerprint": "sha256:4f24323237057f20df56565a5503e3e3599f14fdaa6c365a486e61366a860ce2",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "12-throbbing_gristle-discipline_berlin.1.mp3",
+      "size_bytes": 22476050,
+      "streams": [
+        {
+          "bit_rate_bps": 277075,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Discipline (Berlin)"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:920146b8442436c38d7226c04a0640fe7d3d35e2054cbd0f9ae2a8972782137d",
+      "duration_ms": 648800,
+      "fingerprint": "sha256:4f24323237057f20df56565a5503e3e3599f14fdaa6c365a486e61366a860ce2",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "12-throbbing_gristle-discipline_berlin.mp3",
+      "size_bytes": 22476050,
+      "streams": [
+        {
+          "bit_rate_bps": 277075,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Discipline (Berlin)"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2b07f7737b09cbeb27437daddb4efb21cce9bc94e4dcaa6a5c788913ab962324",
+      "duration_ms": 485760,
+      "fingerprint": "sha256:70c7fa4e838cd6dc597e2be51953c48a447f55de9eb6153f42555d1fed0d9af8",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "13-throbbing_gristle-discipline_manchester.1.mp3",
+      "size_bytes": 16214805,
+      "streams": [
+        {
+          "bit_rate_bps": 266951,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Discipline (Manchester)"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f2e24cf4cc473a1aa77313959c0d627b6459d7735741e18748ebbf57b7a9c3d0",
+      "duration_ms": 485760,
+      "fingerprint": "sha256:70c7fa4e838cd6dc597e2be51953c48a447f55de9eb6153f42555d1fed0d9af8",
+      "formats": [
+        "mp3"
+      ],
+      "relative_path": "13-throbbing_gristle-discipline_manchester.mp3",
+      "size_bytes": 16214805,
+      "streams": [
+        {
+          "bit_rate_bps": 266951,
+          "channels": 2,
+          "codec": "mp3",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Discipline (Manchester)"
+        },
+        {
+          "name": "encoder",
+          "value": "LAME3.98r"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:7e474f17c12aeffb7eecfc01ce29a82d641d202e9fd50cc5d9ca283cf67d9b0b",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "20 Jazz Funk Greats",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        125771
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:d0adbf4f52c2ab40d04662c8fadb646f170099b5ccf7c45076d2ba7caa1d2040",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Beachy Head",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        125772
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:d67f56b07ca4cc3f884d5b6f31eb3fe480318f7e90427bf24b087a7f7905a448",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Still Walking",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        125773
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:7d8415bb56d48e9f136c895fb799edb11ca1abe10b784ce0a370493b1851b316",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Still Walking",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:4637550a3b06a619b1e324313b7e026dd7c0e68eb0df072963043a367e3c7ece",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Tanith",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        125774
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:8f0e0676c0400c359f083b11a9bd23beb547307caf77879a9bf6a34166b82de0",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Convincing People",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        125775
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:7560e9b6aae7d472f9f90221f91821da275ba4991c8d2500ee667edc6ad65c60",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Convincing People",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:8ca0bfa71724d7b2b2bdda23ca41ba50c0bd6d979f6bf7de7195d5d023060a0b",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Exotica",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        125776
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:4fe2e772f499e9f3166c6a10660a5653afa06709c1b5eb97f3459a7e6c1564d4",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Hot on the Heels of Love",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        125777
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:00de2b0951181ea326d95dbd38cc24c72c843471de05ef7ebf0cc2f9b55866c6",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Hot on the Heels of Love",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:4d2fe5122d28925da33b48c1909c00ef278a60e0e1bbf93eb5f685a6def8ba70",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Persuasion",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        125778
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:f4c212bcf5989205e4466f0356b48361ee7737d7ce7f6306d8c3265bc30175d3",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Walkabout",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        125779
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:fef21813171af9f1cc95bb9768902088cc4166bdc752bb0063a7c15b934a1742",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Walkabout",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:c9c9d3f2f5da540cc08bafc3f2ee42c5635db7e5cf85707816fa555fc174cefc",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "What a Day",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        125780
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:c20a78ad968d57a361a00b5ef528623eda9b3cd23c3ee9e718807f7bf95c13fb",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Six Six Sixties",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        125781
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:9200bb95bb76eaa226cc9416852878e80ffde800e9f12c030e75e5472654454a",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Six Six Sixties",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:35f53d5c262d5aca96ee466d2667bfbbfb0e14746b3b63f133329f65337500ec",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Discipline (Berlin)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        125782
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:920146b8442436c38d7226c04a0640fe7d3d35e2054cbd0f9ae2a8972782137d",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Discipline (Berlin)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:2b07f7737b09cbeb27437daddb4efb21cce9bc94e4dcaa6a5c788913ab962324",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Discipline (Manchester)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        125783
+      ]
+    },
+    {
+      "album_id": 2327,
+      "artifact_id": "artifact:f2e24cf4cc473a1aa77313959c0d627b6459d7735741e18748ebbf57b7a9c3d0",
+      "rejections": [
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10801,
+      "tag_album": "20 Jazz Funk Greats",
+      "tag_artist": "Throbbing Gristle",
+      "tag_title": "Discipline (Manchester)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": []
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2327,
+      "artifact_ids": [
+        "artifact:7e474f17c12aeffb7eecfc01ce29a82d641d202e9fd50cc5d9ca283cf67d9b0b",
+        "artifact:d0adbf4f52c2ab40d04662c8fadb646f170099b5ccf7c45076d2ba7caa1d2040",
+        "artifact:d67f56b07ca4cc3f884d5b6f31eb3fe480318f7e90427bf24b087a7f7905a448",
+        "artifact:7d8415bb56d48e9f136c895fb799edb11ca1abe10b784ce0a370493b1851b316",
+        "artifact:4637550a3b06a619b1e324313b7e026dd7c0e68eb0df072963043a367e3c7ece",
+        "artifact:8f0e0676c0400c359f083b11a9bd23beb547307caf77879a9bf6a34166b82de0",
+        "artifact:7560e9b6aae7d472f9f90221f91821da275ba4991c8d2500ee667edc6ad65c60",
+        "artifact:8ca0bfa71724d7b2b2bdda23ca41ba50c0bd6d979f6bf7de7195d5d023060a0b",
+        "artifact:4fe2e772f499e9f3166c6a10660a5653afa06709c1b5eb97f3459a7e6c1564d4",
+        "artifact:00de2b0951181ea326d95dbd38cc24c72c843471de05ef7ebf0cc2f9b55866c6",
+        "artifact:4d2fe5122d28925da33b48c1909c00ef278a60e0e1bbf93eb5f685a6def8ba70",
+        "artifact:f4c212bcf5989205e4466f0356b48361ee7737d7ce7f6306d8c3265bc30175d3",
+        "artifact:fef21813171af9f1cc95bb9768902088cc4166bdc752bb0063a7c15b934a1742",
+        "artifact:c9c9d3f2f5da540cc08bafc3f2ee42c5635db7e5cf85707816fa555fc174cefc",
+        "artifact:c20a78ad968d57a361a00b5ef528623eda9b3cd23c3ee9e718807f7bf95c13fb",
+        "artifact:9200bb95bb76eaa226cc9416852878e80ffde800e9f12c030e75e5472654454a",
+        "artifact:35f53d5c262d5aca96ee466d2667bfbbfb0e14746b3b63f133329f65337500ec",
+        "artifact:920146b8442436c38d7226c04a0640fe7d3d35e2054cbd0f9ae2a8972782137d",
+        "artifact:2b07f7737b09cbeb27437daddb4efb21cce9bc94e4dcaa6a5c788913ab962324",
+        "artifact:f2e24cf4cc473a1aa77313959c0d627b6459d7735741e18748ebbf57b7a9c3d0"
+      ],
+      "capability_id": "capability:import_missing_tracks:10804",
+      "release_id": 10804,
+      "track_ids": [
+        125828
+      ]
+    }
+  ],
+  "case_id": "sha256:c394d554de3c0779deecb9058e32c6c80ab56f2249d9811a1baad7e2f91c493f",
+  "observed_at": "2026-09-23T02:25:06.713552349Z",
+  "queue": {
+    "download_ref": "download:f766588a6fea0f36fbfcc04972a72da4d6ab8945e608f5a8a95373832452d611",
+    "messages": [
+      "01-throbbing_gristle-20_jazz_funk_greats.mp3",
+      "02-throbbing_gristle-beachy_head.mp3",
+      "03-throbbing_gristle-still_walking.1.mp3",
+      "03-throbbing_gristle-still_walking.mp3",
+      "04-throbbing_gristle-tanith.mp3",
+      "05-throbbing_gristle-convincing_people.1.mp3",
+      "05-throbbing_gristle-convincing_people.mp3",
+      "06-throbbing_gristle-exotica.mp3",
+      "07-throbbing_gristle-hot_on_the_heels_of_love.1.mp3",
+      "07-throbbing_gristle-hot_on_the_heels_of_love.mp3",
+      "08-throbbing_gristle-persuasion.mp3",
+      "09-throbbing_gristle-walkabout.1.mp3",
+      "09-throbbing_gristle-walkabout.mp3",
+      "10-throbbing_gristle-what_a_day.mp3",
+      "11-throbbing_gristle-six_six_sixties.1.mp3",
+      "11-throbbing_gristle-six_six_sixties.mp3",
+      "12-throbbing_gristle-discipline_berlin.1.mp3",
+      "12-throbbing_gristle-discipline_berlin.mp3",
+      "13-throbbing_gristle-discipline_manchester.1.mp3",
+      "13-throbbing_gristle-discipline_manchester.mp3",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 1889999962,
+    "title": "Throbbing Gristle-20 Jazz Funk Greats-Remastered-WEB-2011-D2H [zxf2vJG]-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "7b569d34-9f39-3561-afea-0637be153b63",
+      "format": "CD",
+      "labels": [
+        "The Grey Area"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10793,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "98d67ea7-3f1d-3ad9-a660-9fe60201ee38",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Fetish Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10794,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Italy"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b7b0e5f3-f55a-393f-9cc4-bd8700d090cd",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Expanded Music"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10795,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "4701daa5-9c11-3cb5-9f7e-4d497dcd1ab7",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10796,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "77ee256e-57ed-4e24-8411-d8abfc378e0c",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Industrial Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10797,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "1990 remaster",
+      "foreign_release_id": "508d80f8-dd06-441c-864a-616af1195acb",
+      "format": "CD",
+      "labels": [
+        "Elektra"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10798,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "2011 remaster",
+      "foreign_release_id": "2c4cef4d-2670-4742-9d6f-8e1d2ed61430",
+      "format": "2xCD",
+      "labels": [
+        "Industrial Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 10799,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 20
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "24d0d843-5393-4cb2-abf2-8d8c7ec97053",
+      "format": "CD",
+      "labels": [
+        "Mute",
+        "The Grey Area"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10800,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "19d31ad8-8f88-4c33-be7a-415952e101e8",
+      "format": "Digital Media",
+      "labels": [
+        "Industrial Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10801,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "34ee9d34-282e-4799-a568-bb9575517027",
+      "format": "CD",
+      "labels": [
+        "Mute",
+        "The Grey Area"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10802,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "Mexico",
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5ebc09b1-b6bd-4874-b493-5ff3fd3f88a2",
+      "format": "Digital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10803,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d8495fd1-220b-49ea-a91b-20bf9003fb9c",
+      "format": "2xDigital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 2,
+      "monitored": true,
+      "release_id": 10804,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 21
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "reissue, remaster",
+      "foreign_release_id": "45ddb529-13fb-49ba-9922-473f20389f93",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10805,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6ba89dea-bb15-4631-9417-c4a0e96b7f21",
+      "format": "2xDigital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 10806,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 21
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "6bba6f89-66d7-46ec-8549-df8fb0e30703",
+      "format": "2xCD",
+      "labels": [
+        "Industrial Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 10807,
+      "title": "20 Jazz Funk Greats",
+      "track_count": 20
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 171866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10793,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125668
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10793,
+      "title": "Beachy Head",
+      "track_id": 125669
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 296426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10793,
+      "title": "Still Walking",
+      "track_id": 125670
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 140306,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10793,
+      "title": "Tanith",
+      "track_id": 125671
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 294560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10793,
+      "title": "Convincing People",
+      "track_id": 125672
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10793,
+      "title": "Exotica",
+      "track_id": 125673
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10793,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125674
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 396760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10793,
+      "title": "Persuasion",
+      "track_id": 125675
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10793,
+      "title": "Walkabout",
+      "track_id": 125676
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 278706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10793,
+      "title": "What a Day",
+      "track_id": 125677
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10793,
+      "title": "Six Six Sixties",
+      "track_id": 125678
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 645866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10793,
+      "title": "Discipline (Berlin)",
+      "track_id": 125679
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 486693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 10793,
+      "title": "Discipline (Manchester)",
+      "track_id": 125680
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10794,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125681
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10794,
+      "title": "Beachy Head",
+      "track_id": 125682
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10794,
+      "title": "Still Walking",
+      "track_id": 125683
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 132000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 10794,
+      "title": "Tanith",
+      "track_id": 125684
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 10794,
+      "title": "Convincing People",
+      "track_id": 125685
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 10794,
+      "title": "Exotica",
+      "track_id": 125686
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10794,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125687
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10794,
+      "title": "Persuasion",
+      "track_id": 125688
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10794,
+      "title": "Walkabout",
+      "track_id": 125689
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 10794,
+      "title": "What a Day",
+      "track_id": 125690
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 10794,
+      "title": "Six Six Sixties",
+      "track_id": 125691
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10795,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125692
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10795,
+      "title": "Beachy Head",
+      "track_id": 125693
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10795,
+      "title": "Still Walking",
+      "track_id": 125694
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 132000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 10795,
+      "title": "Tanith",
+      "track_id": 125695
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 10795,
+      "title": "Convincing People",
+      "track_id": 125696
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 10795,
+      "title": "Exotica",
+      "track_id": 125697
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10795,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125698
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10795,
+      "title": "Persuasion",
+      "track_id": 125699
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10795,
+      "title": "Walkabout",
+      "track_id": 125700
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 10795,
+      "title": "What a Day",
+      "track_id": 125701
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 10795,
+      "title": "Six Six Sixties",
+      "track_id": 125702
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10796,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125703
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10796,
+      "title": "Beachy Head",
+      "track_id": 125704
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10796,
+      "title": "Still Walking",
+      "track_id": 125705
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 132000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 10796,
+      "title": "Tanith",
+      "track_id": 125706
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 10796,
+      "title": "Convincing People",
+      "track_id": 125707
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 10796,
+      "title": "Exotica",
+      "track_id": 125708
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10796,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125709
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10796,
+      "title": "Persuasion",
+      "track_id": 125710
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10796,
+      "title": "Walkabout",
+      "track_id": 125711
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 10796,
+      "title": "What a Day",
+      "track_id": 125712
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 10796,
+      "title": "Six Six Sixties",
+      "track_id": 125713
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10797,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125714
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10797,
+      "title": "Beachy Head",
+      "track_id": 125715
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10797,
+      "title": "Still Walking",
+      "track_id": 125716
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 132000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 10797,
+      "title": "Tanith",
+      "track_id": 125717
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 10797,
+      "title": "Convincing People",
+      "track_id": 125718
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 10797,
+      "title": "Exotica",
+      "track_id": 125719
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10797,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125720
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10797,
+      "title": "Persuasion",
+      "track_id": 125721
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10797,
+      "title": "Walkabout",
+      "track_id": 125722
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 10797,
+      "title": "What a Day",
+      "track_id": 125723
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 10797,
+      "title": "Six Six Sixties",
+      "track_id": 125724
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10798,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125725
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10798,
+      "title": "Beachy Head",
+      "track_id": 125726
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 296426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10798,
+      "title": "Still Walking",
+      "track_id": 125727
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 140306,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10798,
+      "title": "Tanith",
+      "track_id": 125728
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 294560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10798,
+      "title": "Convincing People",
+      "track_id": 125729
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10798,
+      "title": "Exotica",
+      "track_id": 125730
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10798,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125731
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 396760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10798,
+      "title": "Persuasion",
+      "track_id": 125732
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10798,
+      "title": "Walkabout",
+      "track_id": 125733
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 278706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10798,
+      "title": "What a Day",
+      "track_id": 125734
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10798,
+      "title": "Six Six Sixties",
+      "track_id": 125735
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 645866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10798,
+      "title": "Discipline (Berlin)",
+      "track_id": 125736
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 486693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 10798,
+      "title": "Discipline (Manchester)",
+      "track_id": 125737
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10799,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125738
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 95000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 10799,
+      "title": "Weapon Training",
+      "track_id": 125749
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10799,
+      "title": "Beachy Head",
+      "track_id": 125739
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 373000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 10799,
+      "title": "Convincing People",
+      "track_id": 125750
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 294000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10799,
+      "title": "Still Walking",
+      "track_id": 125740
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 329000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 10799,
+      "title": "They Make No Say",
+      "track_id": 125751
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 137000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10799,
+      "title": "Tanith",
+      "track_id": 125741
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 387000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 10799,
+      "title": "Five Knuckle Shuffle",
+      "track_id": 125752
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10799,
+      "title": "Convincing People",
+      "track_id": 125742
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 232000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 10799,
+      "title": "His Arm Was Her Leg",
+      "track_id": 125753
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10799,
+      "title": "Exotica",
+      "track_id": 125743
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 346000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 10799,
+      "title": "See You Are",
+      "track_id": 125754
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 265000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10799,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125744
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 378000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 10799,
+      "title": "What a Day",
+      "track_id": 125755
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 399000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10799,
+      "title": "Persuasion",
+      "track_id": 125745
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 491000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 10799,
+      "title": "Discipline (Manchester)",
+      "track_id": 125756
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10799,
+      "title": "Walkabout",
+      "track_id": 125746
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 647000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 10799,
+      "title": "Discipline (Berlin)",
+      "track_id": 125757
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10799,
+      "title": "What a Day",
+      "track_id": 125747
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 126000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10799,
+      "title": "Six Six Sixties",
+      "track_id": 125748
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10800,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125758
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10800,
+      "title": "Beachy Head",
+      "track_id": 125759
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 296426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10800,
+      "title": "Still Walking",
+      "track_id": 125760
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 140306,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10800,
+      "title": "Tanith",
+      "track_id": 125761
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 294560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10800,
+      "title": "Convincing People",
+      "track_id": 125762
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10800,
+      "title": "Exotica",
+      "track_id": 125763
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10800,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125764
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 396760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10800,
+      "title": "Persuasion",
+      "track_id": 125765
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10800,
+      "title": "Walkabout",
+      "track_id": 125766
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 278706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10800,
+      "title": "What a Day",
+      "track_id": 125767
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10800,
+      "title": "Six Six Sixties",
+      "track_id": 125768
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 645866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10800,
+      "title": "Discipline (Berlin)",
+      "track_id": 125769
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 486693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 10800,
+      "title": "Discipline (Manchester)",
+      "track_id": 125770
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 168986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10801,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125771
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 221853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10801,
+      "title": "Beachy Head",
+      "track_id": 125772
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 293706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10801,
+      "title": "Still Walking",
+      "track_id": 125773
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 136120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10801,
+      "title": "Tanith",
+      "track_id": 125774
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 294120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10801,
+      "title": "Convincing People",
+      "track_id": 125775
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 175773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10801,
+      "title": "Exotica",
+      "track_id": 125776
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10801,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125777
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 398546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10801,
+      "title": "Persuasion",
+      "track_id": 125778
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10801,
+      "title": "Walkabout",
+      "track_id": 125779
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 280426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10801,
+      "title": "What a Day",
+      "track_id": 125780
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10801,
+      "title": "Six Six Sixties",
+      "track_id": 125781
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 648800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10801,
+      "title": "Discipline (Berlin)",
+      "track_id": 125782
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 485760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 10801,
+      "title": "Discipline (Manchester)",
+      "track_id": 125783
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10802,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125784
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10802,
+      "title": "Beachy Head",
+      "track_id": 125785
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 296426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10802,
+      "title": "Still Walking",
+      "track_id": 125786
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 140306,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10802,
+      "title": "Tanith",
+      "track_id": 125787
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 294560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10802,
+      "title": "Convincing People",
+      "track_id": 125788
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10802,
+      "title": "Exotica",
+      "track_id": 125789
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10802,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125790
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 396760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10802,
+      "title": "Persuasion",
+      "track_id": 125791
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10802,
+      "title": "Walkabout",
+      "track_id": 125792
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 278706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10802,
+      "title": "What a Day",
+      "track_id": 125793
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 127093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10802,
+      "title": "Six Six Sixties",
+      "track_id": 125794
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 645866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10802,
+      "title": "Discipline (Berlin)",
+      "track_id": 125795
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 486693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 10802,
+      "title": "Discipline (Manchester)",
+      "track_id": 125796
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 163000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10803,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125797
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 216000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10803,
+      "title": "Beachy Head",
+      "track_id": 125798
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10803,
+      "title": "Still Walking",
+      "track_id": 125799
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 131000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10803,
+      "title": "Tanith",
+      "track_id": 125800
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10803,
+      "title": "Convincing People",
+      "track_id": 125801
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10803,
+      "title": "Exotica",
+      "track_id": 125802
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10803,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125803
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 393000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10803,
+      "title": "Persuasion",
+      "track_id": 125804
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 179000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10803,
+      "title": "Walkabout",
+      "track_id": 125805
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10803,
+      "title": "What a Day",
+      "track_id": 125806
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 125000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10803,
+      "title": "Six Six Sixties",
+      "track_id": 125807
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10804,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125808
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 90000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 10804,
+      "title": "Weapon Training (The Factory 1979)",
+      "track_id": 125819
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10804,
+      "title": "Beachy Head",
+      "track_id": 125809
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 367000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 10804,
+      "title": "Convincing People (The Factory 1979)",
+      "track_id": 125820
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 289000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10804,
+      "title": "Still Walking",
+      "track_id": 125810
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 323000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 10804,
+      "title": "They Make No Say (Northampton 1979)",
+      "track_id": 125821
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 131000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10804,
+      "title": "Tanith",
+      "track_id": 125811
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 382000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 10804,
+      "title": "Five Knuckle Shuffle (The Factory, Manchester 1979)",
+      "track_id": 125822
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 289000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10804,
+      "title": "Convincing People",
+      "track_id": 125812
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 226000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 10804,
+      "title": "His Arm Was Her Leg (The Factory 1979)",
+      "track_id": 125823
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 176000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10804,
+      "title": "Exotica",
+      "track_id": 125813
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 341000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 10804,
+      "title": "See You Are (The Factory 1979)",
+      "track_id": 125824
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 261000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10804,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125814
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 372000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 10804,
+      "title": "What a Day (The Factory 1979)",
+      "track_id": 125825
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10804,
+      "title": "Persuasion",
+      "track_id": 125815
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 486000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 10804,
+      "title": "Discipline (Manchester): 12\" Single A-side",
+      "track_id": 125826
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10804,
+      "title": "Walkabout",
+      "track_id": 125816
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 647000,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 10804,
+      "title": "Discipline (Berlin): 12\" Single B-side",
+      "track_id": 125827
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10804,
+      "title": "What a Day",
+      "track_id": 125817
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 10804,
+      "title": "Ice Cool Down (Northampton 1979)",
+      "track_id": 125828
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 125000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10804,
+      "title": "Six Six Sixties",
+      "track_id": 125818
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10805,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125829
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10805,
+      "title": "Beachy Head",
+      "track_id": 125830
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10805,
+      "title": "Still Walking",
+      "track_id": 125831
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 132000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10805,
+      "title": "Tanith",
+      "track_id": 125832
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10805,
+      "title": "Convincing People",
+      "track_id": 125833
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10805,
+      "title": "Exotica",
+      "track_id": 125834
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10805,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125835
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10805,
+      "title": "Persuasion",
+      "track_id": 125836
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10805,
+      "title": "Walkabout",
+      "track_id": 125837
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10805,
+      "title": "What a Day",
+      "track_id": 125838
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10805,
+      "title": "Six Six Sixties",
+      "track_id": 125839
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10806,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125840
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 90000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 10806,
+      "title": "Weapon Training",
+      "track_id": 125852
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10806,
+      "title": "Beachy Head",
+      "track_id": 125841
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 367000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 10806,
+      "title": "Convincing People",
+      "track_id": 125853
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10806,
+      "title": "Still Walking",
+      "track_id": 125842
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 323000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 10806,
+      "title": "They Make No Say",
+      "track_id": 125854
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 131000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10806,
+      "title": "Tanith",
+      "track_id": 125843
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 382000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 10806,
+      "title": "Five Knuckle Shuffle",
+      "track_id": 125855
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10806,
+      "title": "Convincing People",
+      "track_id": 125844
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 10806,
+      "title": "His Arm Was Her Leg",
+      "track_id": 125856
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10806,
+      "title": "Exotica",
+      "track_id": 125845
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 341000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 10806,
+      "title": "See You Are",
+      "track_id": 125857
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10806,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125846
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 372000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 10806,
+      "title": "What a Day",
+      "track_id": 125858
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 283000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10806,
+      "title": "Ice Cool Down (Northampton 1979)",
+      "track_id": 125847
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 486000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 10806,
+      "title": "Discipline (Manchester)",
+      "track_id": 125859
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 394000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10806,
+      "title": "Persuasion",
+      "track_id": 125848
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 647000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 10806,
+      "title": "Discipline (Berlin)",
+      "track_id": 125860
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10806,
+      "title": "Walkabout",
+      "track_id": 125849
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10806,
+      "title": "What a Day",
+      "track_id": 125850
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 125000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 10806,
+      "title": "Six Six Sixties",
+      "track_id": 125851
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10807,
+      "title": "20 Jazz Funk Greats",
+      "track_id": 125861
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 95000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 10807,
+      "title": "Weapon Training",
+      "track_id": 125872
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10807,
+      "title": "Beachy Head",
+      "track_id": 125862
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 373000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 10807,
+      "title": "Convincing People",
+      "track_id": 125873
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 294000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10807,
+      "title": "Still Walking",
+      "track_id": 125863
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 329000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 10807,
+      "title": "They Make No Say",
+      "track_id": 125874
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 137000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10807,
+      "title": "Tanith",
+      "track_id": 125864
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 387000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 10807,
+      "title": "Five Knuckle Shuffle",
+      "track_id": 125875
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10807,
+      "title": "Convincing People",
+      "track_id": 125865
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 232000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 10807,
+      "title": "His Arm Was Her Leg",
+      "track_id": 125876
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10807,
+      "title": "Exotica",
+      "track_id": 125866
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 346000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 10807,
+      "title": "See You Are",
+      "track_id": 125877
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 265000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 10807,
+      "title": "Hot on the Heels of Love",
+      "track_id": 125867
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 378000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 10807,
+      "title": "What a Day",
+      "track_id": 125878
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 399000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 10807,
+      "title": "Persuasion",
+      "track_id": 125868
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 491000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 10807,
+      "title": "Discipline (Manchester)",
+      "track_id": 125879
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 10807,
+      "title": "Walkabout",
+      "track_id": 125869
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 647000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 10807,
+      "title": "Discipline (Berlin)",
+      "track_id": 125880
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 10807,
+      "title": "What a Day",
+      "track_id": 125870
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 126000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 10807,
+      "title": "Six Six Sixties",
+      "track_id": 125871
+    }
+  ]
+}

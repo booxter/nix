@@ -1,0 +1,1127 @@
+{
+  "album": {
+    "album_id": 101,
+    "artist": "Shovel Dance Collective",
+    "artist_id": 16,
+    "monitored": true,
+    "title": "The Water Is the Shovel of the Shore"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:d1ae19d5140506d00a92ae8526ff4265f6267faae94f2bfe55c54d6b1e8d557a",
+      "duration_ms": 370132,
+      "fingerprint": "sha256:d1ae19d5140506d00a92ae8526ff4265f6267faae94f2bfe55c54d6b1e8d557a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05.-.II.flac",
+      "size_bytes": 29724956,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "II: In Charlestown there Dwelled a Lass"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:08a76fbb63c1543d0d62f6a5c90533b3a72f548b0aa1179d8d6c13af72120e78",
+      "duration_ms": 270564,
+      "fingerprint": "sha256:08a76fbb63c1543d0d62f6a5c90533b3a72f548b0aa1179d8d6c13af72120e78",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06.-.II.flac",
+      "size_bytes": 27830724,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "II: Camera flash on the Deptford foreshore, The Rolling Waves, crashing spring waves by the Cutty Sark"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:519bd66a854a65fcbcb7ca7a86f3237f57f1395cefc84862b958bd172785d56d",
+      "duration_ms": 141415,
+      "fingerprint": "sha256:519bd66a854a65fcbcb7ca7a86f3237f57f1395cefc84862b958bd172785d56d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07.-.II.flac",
+      "size_bytes": 11608770,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "II: Lovely on the Water, lapping waters by Tower Hill"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6d4f606421131bd0c9bb29a6a60097e83be75f8dbcb05c319e5b312bd67a1030",
+      "duration_ms": 157101,
+      "fingerprint": "sha256:6d4f606421131bd0c9bb29a6a60097e83be75f8dbcb05c319e5b312bd67a1030",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08.-.II.flac",
+      "size_bytes": 15421863,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "II: Pump organ bellows being pushed by hand, the River Chess trickles, The Watermans Dance"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bb3ea258809d1626c92c0c6dc1b68f02da978315dadad4c3dcff89776175ee2b",
+      "duration_ms": 150795,
+      "fingerprint": "sha256:bb3ea258809d1626c92c0c6dc1b68f02da978315dadad4c3dcff89776175ee2b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09.-.III.flac",
+      "size_bytes": 14513204,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "III: Tourists feed gulls outside City Hall, The Bold Fisherman"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f8343acb04b03594128ad8decee0fa76e0134953a8472131a201888893f1081a",
+      "duration_ms": 226913,
+      "fingerprint": "sha256:f8343acb04b03594128ad8decee0fa76e0134953a8472131a201888893f1081a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10.-.III.flac",
+      "size_bytes": 21458128,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "III: Ferry east from London Bridge, A Fishermans’ Song for Attracting Seals / The Full Rigged Ship"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:dc429500ea4f6c131c9109ac6719fd4e0412561786c45c934a5d7c001bdc2aa8",
+      "duration_ms": 242426,
+      "fingerprint": "sha256:dc429500ea4f6c131c9109ac6719fd4e0412561786c45c934a5d7c001bdc2aa8",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11.-.III.flac",
+      "size_bytes": 29326880,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "III: The Wild Goose Shanty, slapping Thames water under a bridge, The Drowned Sailor, crashing waves at Deptford foreshore"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:ef81043ea8208e10c994122358c24957aae993efdf81e7cb48fbc27bf179d1dd",
+      "duration_ms": 89550,
+      "fingerprint": "sha256:ef81043ea8208e10c994122358c24957aae993efdf81e7cb48fbc27bf179d1dd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12.-.III.flac",
+      "size_bytes": 9068068,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "III: Waterfall and rain on the River Chess, Captain Kidd's Farewell to the Seas"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:fede19ddc71fd390563c990bf60714099d103d5d6098d13d52673ecf94dbd03e",
+      "duration_ms": 241704,
+      "fingerprint": "sha256:fede19ddc71fd390563c990bf60714099d103d5d6098d13d52673ecf94dbd03e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13.-.IV.flac",
+      "size_bytes": 24080275,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "IV: Waters of the River Ravensbourne beside Elverson Road DLR station, Lowlands"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:ab9901b4d3635ba6a844d7529e9841b43d866e3af13afe3d3318cd96d74c628f",
+      "duration_ms": 194085,
+      "fingerprint": "sha256:ab9901b4d3635ba6a844d7529e9841b43d866e3af13afe3d3318cd96d74c628f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14.-.IV.flac",
+      "size_bytes": 18748339,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "IV: The Cruel Grave, pump organs at Nick's House"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:b7c78ea612e20bfa107577037bcf74fecdde94e8bbf9258d6136ba4b33bac9e3",
+      "duration_ms": 317462,
+      "fingerprint": "sha256:b7c78ea612e20bfa107577037bcf74fecdde94e8bbf9258d6136ba4b33bac9e3",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15.-.IV.flac",
+      "size_bytes": 30643641,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "IV: The Grey Cock, Dan wading through Elverson Road DLR station tunnel"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6c1c7a0f516d533d43eeb339b17defa78276e5b0c325b53e9b1f952d47961af2",
+      "duration_ms": 100776,
+      "fingerprint": "sha256:6c1c7a0f516d533d43eeb339b17defa78276e5b0c325b53e9b1f952d47961af2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "16.-.IV.flac",
+      "size_bytes": 9737105,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "IV: Ova Canje Water"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:cbdc6eb49c0e2c5d2ad5d72af44f11fdf41fbed4fe5d311b8b805fc50076696f",
+      "duration_ms": 180557,
+      "fingerprint": "sha256:cbdc6eb49c0e2c5d2ad5d72af44f11fdf41fbed4fe5d311b8b805fc50076696f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Junkyard.work.next.to.Dartford.Creek,.rigging.and.reeds.at.Erith.Marina,.The.Bold.Benjamin,.waterfowl.on.the.Darent.flac",
+      "size_bytes": 18591500,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I: Junkyard work next to Dartford Creek, rigging and reeds at Erith Marina, The Bold Benjamin, waterfowl on the Darent"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:de75053c20c4b805fde818d0fe56825ff60f9c478ac17358e0ac8af8c1b23269",
+      "duration_ms": 253789,
+      "fingerprint": "sha256:de75053c20c4b805fde818d0fe56825ff60f9c478ac17358e0ac8af8c1b23269",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Thames.waters.off.Greenland.Dock,.The.Weary.Whaling.Grounds,.flac",
+      "size_bytes": 23992634,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I: Thames waters off Greenland Dock, The Weary Whaling Grounds,"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3053c8f49d111b524d907afedeb98552dc04299b2c9cd269a08de8686ef9b244",
+      "duration_ms": 157288,
+      "fingerprint": "sha256:3053c8f49d111b524d907afedeb98552dc04299b2c9cd269a08de8686ef9b244",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "The.Bold.Fisherman.flac",
+      "size_bytes": 15609197,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I: The Bold Fisherman"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f6b075e510545b52b710212f7422ac51dec0fd0f3cb3a2c040ddf861d44b6449",
+      "duration_ms": 69265,
+      "fingerprint": "sha256:f6b075e510545b52b710212f7422ac51dec0fd0f3cb3a2c040ddf861d44b6449",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "The.Herrings.Head.flac",
+      "size_bytes": 7387676,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I: The Herrings Head"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:d1ae19d5140506d00a92ae8526ff4265f6267faae94f2bfe55c54d6b1e8d557a",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "II: In Charlestown there Dwelled a Lass",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        4042
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:08a76fbb63c1543d0d62f6a5c90533b3a72f548b0aa1179d8d6c13af72120e78",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "II: Camera flash on the Deptford foreshore, The Rolling Waves, crashing spring waves by the Cutty Sark",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        4043
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:519bd66a854a65fcbcb7ca7a86f3237f57f1395cefc84862b958bd172785d56d",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "II: Lovely on the Water, lapping waters by Tower Hill",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        4044
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:6d4f606421131bd0c9bb29a6a60097e83be75f8dbcb05c319e5b312bd67a1030",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "II: Pump organ bellows being pushed by hand, the River Chess trickles, The Watermans Dance",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        4045
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:bb3ea258809d1626c92c0c6dc1b68f02da978315dadad4c3dcff89776175ee2b",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "III: Tourists feed gulls outside City Hall, The Bold Fisherman",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        4046
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:f8343acb04b03594128ad8decee0fa76e0134953a8472131a201888893f1081a",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "III: Ferry east from London Bridge, A Fishermans’ Song for Attracting Seals / The Full Rigged Ship",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        4047
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:dc429500ea4f6c131c9109ac6719fd4e0412561786c45c934a5d7c001bdc2aa8",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "III: The Wild Goose Shanty, slapping Thames water under a bridge, The Drowned Sailor, crashing waves at Deptford foreshore",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        4049
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:ef81043ea8208e10c994122358c24957aae993efdf81e7cb48fbc27bf179d1dd",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "III: Waterfall and rain on the River Chess, Captain Kidd's Farewell to the Seas",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        4050
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:fede19ddc71fd390563c990bf60714099d103d5d6098d13d52673ecf94dbd03e",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "IV: Waters of the River Ravensbourne beside Elverson Road DLR station, Lowlands",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        4051
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:ab9901b4d3635ba6a844d7529e9841b43d866e3af13afe3d3318cd96d74c628f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "IV: The Cruel Grave, pump organs at Nick's House",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        4052
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:b7c78ea612e20bfa107577037bcf74fecdde94e8bbf9258d6136ba4b33bac9e3",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "IV: The Grey Cock, Dan wading through Elverson Road DLR station tunnel",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        4053
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:6c1c7a0f516d533d43eeb339b17defa78276e5b0c325b53e9b1f952d47961af2",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "IV: Ova Canje Water",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        4054
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:cbdc6eb49c0e2c5d2ad5d72af44f11fdf41fbed4fe5d311b8b805fc50076696f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "I: Junkyard work next to Dartford Creek, rigging and reeds at Erith Marina, The Bold Benjamin, waterfowl on the Darent",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        4039
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:de75053c20c4b805fde818d0fe56825ff60f9c478ac17358e0ac8af8c1b23269",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "I: Thames waters off Greenland Dock, The Weary Whaling Grounds,",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        4038
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:3053c8f49d111b524d907afedeb98552dc04299b2c9cd269a08de8686ef9b244",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "I: The Bold Fisherman",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        4037
+      ]
+    },
+    {
+      "album_id": 101,
+      "artifact_id": "artifact:f6b075e510545b52b710212f7422ac51dec0fd0f3cb3a2c040ddf861d44b6449",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 339,
+      "tag_album": "The Water is the Shovel of the Shore",
+      "tag_artist": "Shovel Dance Collective",
+      "tag_title": "I: The Herrings Head",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        4040
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 101,
+      "artifact_ids": [
+        "artifact:d1ae19d5140506d00a92ae8526ff4265f6267faae94f2bfe55c54d6b1e8d557a",
+        "artifact:08a76fbb63c1543d0d62f6a5c90533b3a72f548b0aa1179d8d6c13af72120e78",
+        "artifact:519bd66a854a65fcbcb7ca7a86f3237f57f1395cefc84862b958bd172785d56d",
+        "artifact:6d4f606421131bd0c9bb29a6a60097e83be75f8dbcb05c319e5b312bd67a1030",
+        "artifact:bb3ea258809d1626c92c0c6dc1b68f02da978315dadad4c3dcff89776175ee2b",
+        "artifact:f8343acb04b03594128ad8decee0fa76e0134953a8472131a201888893f1081a",
+        "artifact:dc429500ea4f6c131c9109ac6719fd4e0412561786c45c934a5d7c001bdc2aa8",
+        "artifact:ef81043ea8208e10c994122358c24957aae993efdf81e7cb48fbc27bf179d1dd",
+        "artifact:fede19ddc71fd390563c990bf60714099d103d5d6098d13d52673ecf94dbd03e",
+        "artifact:ab9901b4d3635ba6a844d7529e9841b43d866e3af13afe3d3318cd96d74c628f",
+        "artifact:b7c78ea612e20bfa107577037bcf74fecdde94e8bbf9258d6136ba4b33bac9e3",
+        "artifact:6c1c7a0f516d533d43eeb339b17defa78276e5b0c325b53e9b1f952d47961af2",
+        "artifact:cbdc6eb49c0e2c5d2ad5d72af44f11fdf41fbed4fe5d311b8b805fc50076696f",
+        "artifact:de75053c20c4b805fde818d0fe56825ff60f9c478ac17358e0ac8af8c1b23269",
+        "artifact:3053c8f49d111b524d907afedeb98552dc04299b2c9cd269a08de8686ef9b244",
+        "artifact:f6b075e510545b52b710212f7422ac51dec0fd0f3cb3a2c040ddf861d44b6449"
+      ],
+      "capability_id": "capability:import_missing_tracks:339",
+      "release_id": 339,
+      "track_ids": [
+        4041,
+        4048
+      ]
+    }
+  ],
+  "case_id": "sha256:a090e5d392a0d9e0e0e30140a29e4a0fd80f74c6e3cba5369e13d27388d29c7c",
+  "observed_at": "2026-09-23T01:52:26.853803264Z",
+  "queue": {
+    "download_ref": "download:4ae7cb9d1eaec279eabde2f8a55a43260632aaa2ab9a7843fba1582fd4f8fbd7",
+    "messages": [
+      "05.-.II.flac",
+      "06.-.II.flac",
+      "07.-.II.flac",
+      "08.-.II.flac",
+      "09.-.III.flac",
+      "10.-.III.flac",
+      "11.-.III.flac",
+      "12.-.III.flac",
+      "13.-.IV.flac",
+      "14.-.IV.flac",
+      "15.-.IV.flac",
+      "16.-.IV.flac",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Junkyard.work.next.to.Dartford.Creek,.rigging.and.reeds.at.Erith.Marina,.The.Bold.Benjamin,.waterfowl.on.the.Darent.flac",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "Thames.waters.off.Greenland.Dock,.The.Weary.Whaling.Grounds,.flac",
+      "The.Bold.Fisherman.flac",
+      "The.Herrings.Head.flac"
+    ],
+    "queue_id": 524658761,
+    "title": "[2022].Shovel.Dance.Collective.-.The.Water.Is.the.Shovel.of.the.Shore.[FLAC]-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "91947906-2897-4a97-93f1-6547133f8e4d",
+      "format": "Digital Media",
+      "labels": [
+        "Memorials of Distinction"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 338,
+      "title": "The Water Is the Shovel of the Shore",
+      "track_count": 4
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "2e0da49f-9778-4bbd-bc7f-824ad6324b45",
+      "format": "Digital Media",
+      "labels": [
+        "Double Dare",
+        "Memorials of Distinction"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 339,
+      "title": "The Water Is the Shovel of the Shore",
+      "track_count": 18
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 855693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 338,
+      "title": "I",
+      "track_id": 4033
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 939213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 338,
+      "title": "II",
+      "track_id": 4034
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 913509,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 338,
+      "title": "III",
+      "track_id": 4035
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 854027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 338,
+      "title": "IV",
+      "track_id": 4036
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 157288,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 339,
+      "title": "I: The Bold Fisherman",
+      "track_id": 4037
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 253789,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 339,
+      "title": "I: Thames waters off Greenland Dock, The Weary Whaling Grounds,",
+      "track_id": 4038
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 180556,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 339,
+      "title": "I: Junkyard work next to Dartford Creek, rigging and reeds at Erith Marina, The Bold Benjamin, waterfowl on the Darent",
+      "track_id": 4039
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 69264,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 339,
+      "title": "I: The Herrings Head",
+      "track_id": 4040
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 194794,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 339,
+      "title": "I: Water pump in Ladywell, Waves on the Shore, a Creek on the Llŷn Peninsula",
+      "track_id": 4041
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 370132,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 339,
+      "title": "II: In Charlestown there Dwelled a Lass",
+      "track_id": 4042
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 270564,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 339,
+      "title": "II: Camera flash on the Deptford foreshore, The Rolling Waves, crashing spring waves by the Cutty Sark",
+      "track_id": 4043
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 141415,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 339,
+      "title": "II: Lovely on the Water, lapping waters by Tower Hill",
+      "track_id": 4044
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 157101,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 339,
+      "title": "II: Pump organ bellows being pushed by hand, the River Chess trickles, The Watermans Dance",
+      "track_id": 4045
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 150794,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 339,
+      "title": "III: Tourists feed gulls outside City Hall, The Bold Fisherman",
+      "track_id": 4046
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 226913,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 339,
+      "title": "III: Ferry east from London Bridge, A Fishermans’ Song for Attracting Seals / The Full Rigged Ship",
+      "track_id": 4047
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 203825,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 339,
+      "title": "III: Clergy of Southwark Cathedral and St Magnus the Martyr bless the Thames, the organ at St Mark's Clerkenwell, a fence at North Greenwich sings in the wind, distant cranes at Silvertown",
+      "track_id": 4048
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 242425,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 339,
+      "title": "III: The Wild Goose Shanty, slapping Thames water under a bridge, The Drowned Sailor, crashing waves at Deptford foreshore",
+      "track_id": 4049
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 89549,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 339,
+      "title": "III: Waterfall and rain on the River Chess, Captain Kidd's Farewell to the Seas",
+      "track_id": 4050
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 241704,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 339,
+      "title": "IV: Waters of the River Ravensbourne beside Elverson Road DLR station, Lowlands",
+      "track_id": 4051
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 194084,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 339,
+      "title": "IV: The Cruel Grave, pump organs at Nick's House",
+      "track_id": 4052
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 317462,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 339,
+      "title": "IV: The Grey Cock, Dan wading through Elverson Road DLR station tunnel",
+      "track_id": 4053
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 100775,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 339,
+      "title": "IV: Ova Canje Water",
+      "track_id": 4054
+    }
+  ]
+}

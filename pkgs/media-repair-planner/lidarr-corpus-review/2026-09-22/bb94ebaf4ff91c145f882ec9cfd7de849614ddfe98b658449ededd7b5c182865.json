@@ -1,0 +1,998 @@
+{
+  "album": {
+    "album_id": 2866,
+    "artist": "LORN",
+    "artist_id": 340,
+    "monitored": true,
+    "title": "Ask the Dust"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:9fb3e09bb99ca9be90ea1feb3035c645f4f6015f1662bf6d4d45e91f6fa3d748",
+      "duration_ms": 143000,
+      "fingerprint": "sha256:9fb3e09bb99ca9be90ea1feb3035c645f4f6015f1662bf6d4d45e91f6fa3d748",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-lorn-mercy.flac",
+      "size_bytes": 16459080,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Mercy"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:e4cceeed0be6a7d66bc073f9293c1ce907bc920d624111dbb2bf9d07e4e0ea2b",
+      "duration_ms": 252373,
+      "fingerprint": "sha256:e4cceeed0be6a7d66bc073f9293c1ce907bc920d624111dbb2bf9d07e4e0ea2b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-lorn-ghosst.flac",
+      "size_bytes": 29574344,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Ghosst"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3b37b066cce8db009811822050122de47c33d7be1d81d67c4ab9b5294dd43c84",
+      "duration_ms": 219560,
+      "fingerprint": "sha256:3b37b066cce8db009811822050122de47c33d7be1d81d67c4ab9b5294dd43c84",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-lorn-weigh_me_down.flac",
+      "size_bytes": 28212755,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Weigh Me Down"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:92667293c74688c078065d801af8f9e476b6e1b841860d8eb029ca1d71e36b2f",
+      "duration_ms": 43293,
+      "fingerprint": "sha256:92667293c74688c078065d801af8f9e476b6e1b841860d8eb029ca1d71e36b2f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-lorn-this.flac",
+      "size_bytes": 3243758,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "This"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f9fc0dd0460982ee21c03b66a49c9fc78065174ac4f006347711283897a9b77f",
+      "duration_ms": 310040,
+      "fingerprint": "sha256:f9fc0dd0460982ee21c03b66a49c9fc78065174ac4f006347711283897a9b77f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-lorn-diamond.flac",
+      "size_bytes": 38312876,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Diamond"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:09ba360909c52d47276c8582a70562921fc97ca197b22fad5e8589fe8a97833f",
+      "duration_ms": 208613,
+      "fingerprint": "sha256:09ba360909c52d47276c8582a70562921fc97ca197b22fad5e8589fe8a97833f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-lorn-everything_is_violence.flac",
+      "size_bytes": 23722956,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Everything Is Violence"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bf0922d68f99e6b6f2962b2440ed072e02903c1fa082842bbfeb2536442c25e0",
+      "duration_ms": 382080,
+      "fingerprint": "sha256:bf0922d68f99e6b6f2962b2440ed072e02903c1fa082842bbfeb2536442c25e0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-lorn-the_well.flac",
+      "size_bytes": 42090605,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Well"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:1ff89675f96b33479e1e58bfa3a0c8052f59679ec5ecf8b5fb0e185a3f616206",
+      "duration_ms": 192307,
+      "fingerprint": "sha256:1ff89675f96b33479e1e58bfa3a0c8052f59679ec5ecf8b5fb0e185a3f616206",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-lorn-the_gun.flac",
+      "size_bytes": 21116297,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Gun"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:581452f0dfac8fe44554d05ce57ad9f280510bd8d98ae75a80f12ff2a3a20f9a",
+      "duration_ms": 247373,
+      "fingerprint": "sha256:581452f0dfac8fe44554d05ce57ad9f280510bd8d98ae75a80f12ff2a3a20f9a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-lorn-dead_dogs.flac",
+      "size_bytes": 28981797,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Dead Dogs"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5d83f750130c6d44ca7040a901daa4dd3dd4437a85a05f37d797d9366720e50a",
+      "duration_ms": 196333,
+      "fingerprint": "sha256:5d83f750130c6d44ca7040a901daa4dd3dd4437a85a05f37d797d9366720e50a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-lorn-chhurch.flac",
+      "size_bytes": 23378882,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Chhurch"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9fd392ce7e5826a06f82c2f8fe05ed33d289ea8f28cc4c7981f2f2c88c8bfdb0",
+      "duration_ms": 174040,
+      "fingerprint": "sha256:9fd392ce7e5826a06f82c2f8fe05ed33d289ea8f28cc4c7981f2f2c88c8bfdb0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11-lorn-i_better.flac",
+      "size_bytes": 21045597,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "I Better"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:9fb3e09bb99ca9be90ea1feb3035c645f4f6015f1662bf6d4d45e91f6fa3d748",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Mercy",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        165288
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:e4cceeed0be6a7d66bc073f9293c1ce907bc920d624111dbb2bf9d07e4e0ea2b",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Ghosst",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        165289
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:3b37b066cce8db009811822050122de47c33d7be1d81d67c4ab9b5294dd43c84",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Weigh Me Down",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        165290
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:92667293c74688c078065d801af8f9e476b6e1b841860d8eb029ca1d71e36b2f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "This",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        165291
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:f9fc0dd0460982ee21c03b66a49c9fc78065174ac4f006347711283897a9b77f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Diamond",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        165292
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:09ba360909c52d47276c8582a70562921fc97ca197b22fad5e8589fe8a97833f",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Everything Is Violence",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        165293
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:bf0922d68f99e6b6f2962b2440ed072e02903c1fa082842bbfeb2536442c25e0",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "The Well",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        165294
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:1ff89675f96b33479e1e58bfa3a0c8052f59679ec5ecf8b5fb0e185a3f616206",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "The Gun",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        165295
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:581452f0dfac8fe44554d05ce57ad9f280510bd8d98ae75a80f12ff2a3a20f9a",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Dead Dogs",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        165296
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:5d83f750130c6d44ca7040a901daa4dd3dd4437a85a05f37d797d9366720e50a",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "Chhurch",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        165297
+      ]
+    },
+    {
+      "album_id": 2866,
+      "artifact_id": "artifact:9fd392ce7e5826a06f82c2f8fe05ed33d289ea8f28cc4c7981f2f2c88c8bfdb0",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 13813,
+      "tag_album": "Ask The Dust",
+      "tag_artist": "Lorn",
+      "tag_title": "I Better",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        165298
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2866,
+      "artifact_ids": [
+        "artifact:9fb3e09bb99ca9be90ea1feb3035c645f4f6015f1662bf6d4d45e91f6fa3d748",
+        "artifact:e4cceeed0be6a7d66bc073f9293c1ce907bc920d624111dbb2bf9d07e4e0ea2b",
+        "artifact:3b37b066cce8db009811822050122de47c33d7be1d81d67c4ab9b5294dd43c84",
+        "artifact:92667293c74688c078065d801af8f9e476b6e1b841860d8eb029ca1d71e36b2f",
+        "artifact:f9fc0dd0460982ee21c03b66a49c9fc78065174ac4f006347711283897a9b77f",
+        "artifact:09ba360909c52d47276c8582a70562921fc97ca197b22fad5e8589fe8a97833f",
+        "artifact:bf0922d68f99e6b6f2962b2440ed072e02903c1fa082842bbfeb2536442c25e0",
+        "artifact:1ff89675f96b33479e1e58bfa3a0c8052f59679ec5ecf8b5fb0e185a3f616206",
+        "artifact:581452f0dfac8fe44554d05ce57ad9f280510bd8d98ae75a80f12ff2a3a20f9a",
+        "artifact:5d83f750130c6d44ca7040a901daa4dd3dd4437a85a05f37d797d9366720e50a",
+        "artifact:9fd392ce7e5826a06f82c2f8fe05ed33d289ea8f28cc4c7981f2f2c88c8bfdb0"
+      ],
+      "capability_id": "capability:import_missing_tracks:13813",
+      "release_id": 13813,
+      "track_ids": [
+        165299
+      ]
+    }
+  ],
+  "case_id": "sha256:bb94ebaf4ff91c145f882ec9cfd7de849614ddfe98b658449ededd7b5c182865",
+  "observed_at": "2026-09-23T01:55:01.287504834Z",
+  "queue": {
+    "download_ref": "download:28c69b52ce5ddee34c1fdc75f0aa175aca9e60e17d8de8b7f2d239e5f7c7a687",
+    "messages": [
+      "01-lorn-mercy.flac",
+      "02-lorn-ghosst.flac",
+      "03-lorn-weigh_me_down.flac",
+      "04-lorn-this.flac",
+      "05-lorn-diamond.flac",
+      "06-lorn-everything_is_violence.flac",
+      "07-lorn-the_well.flac",
+      "08-lorn-the_gun.flac",
+      "09-lorn-dead_dogs.flac",
+      "10-lorn-chhurch.flac",
+      "11-lorn-i_better.flac",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 1248946936,
+    "title": "Lorn-Ask The Dust-CD-FLAC-2012-PERFECT"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "300b76f7-fc02-4288-832c-3b4f0951841d",
+      "format": "CD",
+      "labels": [
+        "Ninja Tune"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 13813,
+      "title": "Ask the Dust",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "France"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "59b63086-0163-46e2-bad9-c0d62a2fc124",
+      "format": "Digital Media",
+      "labels": [
+        "Ninja Tune"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 13814,
+      "title": "Ask the Dust",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "bafde6d8-5718-4baa-ac8e-14de56a258ce",
+      "format": "Digital Media",
+      "labels": [
+        "Ninja Tune"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 13815,
+      "title": "Ask the Dust",
+      "track_count": 12
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 143061,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13813,
+      "title": "Mercy",
+      "track_id": 165288
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 252425,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13813,
+      "title": "Ghosst",
+      "track_id": 165289
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 219619,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13813,
+      "title": "Weigh Me Down",
+      "track_id": 165290
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 43362,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13813,
+      "title": "This",
+      "track_id": 165291
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 310072,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13813,
+      "title": "Diamond",
+      "track_id": 165292
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 208648,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13813,
+      "title": "Everything Is Violence",
+      "track_id": 165293
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 382111,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13813,
+      "title": "The Well",
+      "track_id": 165294
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 192350,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13813,
+      "title": "The Gun",
+      "track_id": 165295
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 247410,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13813,
+      "title": "Dead Dogs",
+      "track_id": 165296
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 196372,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13813,
+      "title": "Chhurch",
+      "track_id": 165297
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 174092,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13813,
+      "title": "I Better",
+      "track_id": 165298
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 274993,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13813,
+      "title": "Ghosst(s)",
+      "track_id": 165299
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 143061,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13814,
+      "title": "Mercy",
+      "track_id": 165300
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 252425,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13814,
+      "title": "Ghosst",
+      "track_id": 165301
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 219619,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13814,
+      "title": "Weigh Me Down",
+      "track_id": 165302
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 43362,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13814,
+      "title": "This",
+      "track_id": 165303
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 310072,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13814,
+      "title": "Diamond",
+      "track_id": 165304
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 208648,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13814,
+      "title": "Everything Is Violence",
+      "track_id": 165305
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 382111,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13814,
+      "title": "The Well",
+      "track_id": 165306
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 192350,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13814,
+      "title": "The Gun",
+      "track_id": 165307
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 247410,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13814,
+      "title": "Dead Dogs",
+      "track_id": 165308
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 196372,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13814,
+      "title": "Chhurch",
+      "track_id": 165309
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 174092,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13814,
+      "title": "I Better",
+      "track_id": 165310
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 274993,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13814,
+      "title": "Ghosst(s)",
+      "track_id": 165311
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 220000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 13814,
+      "title": "Italics",
+      "track_id": 165312
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 143061,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13815,
+      "title": "Mercy",
+      "track_id": 165313
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 252425,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13815,
+      "title": "Ghosst",
+      "track_id": 165314
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 219619,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13815,
+      "title": "Weigh Me Down",
+      "track_id": 165315
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 43362,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13815,
+      "title": "This",
+      "track_id": 165316
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 310072,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13815,
+      "title": "Diamond",
+      "track_id": 165317
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 208648,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13815,
+      "title": "Everything Is Violence",
+      "track_id": 165318
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 382111,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13815,
+      "title": "The Well",
+      "track_id": 165319
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 192350,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13815,
+      "title": "The Gun",
+      "track_id": 165320
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 247410,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13815,
+      "title": "Dead Dogs",
+      "track_id": 165321
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 196372,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13815,
+      "title": "Chhurch",
+      "track_id": 165322
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 174092,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13815,
+      "title": "I Better",
+      "track_id": 165323
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 274993,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13815,
+      "title": "Ghosst(s)",
+      "track_id": 165324
+    }
+  ]
+}

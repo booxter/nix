@@ -1,0 +1,4598 @@
+{
+  "album": {
+    "album_id": 5144,
+    "artist": "R.E.M.",
+    "artist_id": 429,
+    "monitored": true,
+    "title": "Fables of the Reconstruction"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:4b2f5c04de1da830c1c204828aad072dc4add1b1a1ec527271c3567d6d97b949",
+      "duration_ms": 291640,
+      "fingerprint": "sha256:4b2f5c04de1da830c1c204828aad072dc4add1b1a1ec527271c3567d6d97b949",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-r.e.m.-feeling_gravitys_pull.flac",
+      "size_bytes": 28017344,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Feeling Gravitys Pull"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:bee5da50be6afb4976f04acff3cbec0cd664c80134a99ebefee296e0375bf0bd",
+      "duration_ms": 190533,
+      "fingerprint": "sha256:bee5da50be6afb4976f04acff3cbec0cd664c80134a99ebefee296e0375bf0bd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-r.e.m.-maps_and_legends.flac",
+      "size_bytes": 20517325,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Maps and Legends"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:ada8f29b89f54724bafd56edd565c1339cfca49ef178fc23643dbd3139edc43a",
+      "duration_ms": 204067,
+      "fingerprint": "sha256:ada8f29b89f54724bafd56edd565c1339cfca49ef178fc23643dbd3139edc43a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-r.e.m.-driver_8.flac",
+      "size_bytes": 22835813,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Driver 8"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:33dcbada41784abf11b5518d1548eae27074e2cae5d537acec0b64f41a955997",
+      "duration_ms": 248533,
+      "fingerprint": "sha256:33dcbada41784abf11b5518d1548eae27074e2cae5d537acec0b64f41a955997",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-r.e.m.-life_and_how_to_live_it.flac",
+      "size_bytes": 26779386,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Life and How to Live It"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:05b495799cf089c8a0d08a8ac30486c8737d1a934cf85e6b448b33157246bf38",
+      "duration_ms": 250027,
+      "fingerprint": "sha256:05b495799cf089c8a0d08a8ac30486c8737d1a934cf85e6b448b33157246bf38",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-r.e.m.-old_man_kensey.flac",
+      "size_bytes": 24982826,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Old Man Kensey"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:05cdcfc7f914e9f15f5b9a4f15a8f9a4a520b3d105e869d701bfb7c0dddb3f5b",
+      "duration_ms": 220040,
+      "fingerprint": "sha256:05cdcfc7f914e9f15f5b9a4f15a8f9a4a520b3d105e869d701bfb7c0dddb3f5b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-r.e.m.-cant_get_there_from_here.flac",
+      "size_bytes": 25157339,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Cant Get There From Here"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:e225f566d77c24d96571731db9277e3e3eb4135a1f9ba15451fcd6300d6bda70",
+      "duration_ms": 225933,
+      "fingerprint": "sha256:e225f566d77c24d96571731db9277e3e3eb4135a1f9ba15451fcd6300d6bda70",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-r.e.m.-green_grow_the_rushes.flac",
+      "size_bytes": 23575910,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Green Grow the Rushes"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:dd2692dbdd8c900cc29fd9d217e4a815195ab9cfe5c9f98fca005005e974cd9c",
+      "duration_ms": 197067,
+      "fingerprint": "sha256:dd2692dbdd8c900cc29fd9d217e4a815195ab9cfe5c9f98fca005005e974cd9c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-r.e.m.-kohoutek.flac",
+      "size_bytes": 21254072,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Kohoutek"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:f14e9231e2b958d3e78b36d40a93489f6ef963e41dac0c0681954bad24995a55",
+      "duration_ms": 163760,
+      "fingerprint": "sha256:f14e9231e2b958d3e78b36d40a93489f6ef963e41dac0c0681954bad24995a55",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-r.e.m.-auctioneer_(another_engine).flac",
+      "size_bytes": 17479956,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Auctioneer (Another Engine)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4fc69c0c83d8ed65e75fc93cd290e4934063e73063615458e50c4fa636abbe12",
+      "duration_ms": 210533,
+      "fingerprint": "sha256:4fc69c0c83d8ed65e75fc93cd290e4934063e73063615458e50c4fa636abbe12",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-r.e.m.-good_advices.flac",
+      "size_bytes": 22279004,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Good Advices"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:e9efaa6c23556fd2f0b0033f19328591714974c830b01400778687556b7661be",
+      "duration_ms": 181867,
+      "fingerprint": "sha256:e9efaa6c23556fd2f0b0033f19328591714974c830b01400778687556b7661be",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11-r.e.m.-wendell_gee.flac",
+      "size_bytes": 18061935,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "(FLAC 1.2.1)"
+        },
+        {
+          "name": "title",
+          "value": "Wendell Gee"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:4b2f5c04de1da830c1c204828aad072dc4add1b1a1ec527271c3567d6d97b949",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Feeling Gravitys Pull",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        283372
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:bee5da50be6afb4976f04acff3cbec0cd664c80134a99ebefee296e0375bf0bd",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Maps and Legends",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        283373
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:ada8f29b89f54724bafd56edd565c1339cfca49ef178fc23643dbd3139edc43a",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Driver 8",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        283374
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:33dcbada41784abf11b5518d1548eae27074e2cae5d537acec0b64f41a955997",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Life and How to Live It",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        283375
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:05b495799cf089c8a0d08a8ac30486c8737d1a934cf85e6b448b33157246bf38",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Old Man Kensey",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        283376
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:05cdcfc7f914e9f15f5b9a4f15a8f9a4a520b3d105e869d701bfb7c0dddb3f5b",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Cant Get There From Here",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        283377
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:e225f566d77c24d96571731db9277e3e3eb4135a1f9ba15451fcd6300d6bda70",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Green Grow the Rushes",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        283378
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:dd2692dbdd8c900cc29fd9d217e4a815195ab9cfe5c9f98fca005005e974cd9c",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Kohoutek",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        283379
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:f14e9231e2b958d3e78b36d40a93489f6ef963e41dac0c0681954bad24995a55",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Auctioneer (Another Engine)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        283380
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:4fc69c0c83d8ed65e75fc93cd290e4934063e73063615458e50c4fa636abbe12",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Good Advices",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        283381
+      ]
+    },
+    {
+      "album_id": 5144,
+      "artifact_id": "artifact:e9efaa6c23556fd2f0b0033f19328591714974c830b01400778687556b7661be",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 22191,
+      "tag_album": "Fables Of The Reconstruction",
+      "tag_artist": "R.E.M.",
+      "tag_title": "Wendell Gee",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        283382
+      ]
+    }
+  ],
+  "capabilities": [],
+  "case_id": "sha256:f71bc065e0a7f200481d07a9c927def2be92ec930ba92b06b9ff6a3c1a611239",
+  "observed_at": "2026-09-23T02:23:28.271133398Z",
+  "queue": {
+    "download_ref": "download:a6bb2ad950c531f93cf3be5f6bfeabaf8276974b4e4ce2d35ffe24d1372d49e9",
+    "messages": [
+      "01-r.e.m.-feeling_gravitys_pull.flac",
+      "02-r.e.m.-maps_and_legends.flac",
+      "03-r.e.m.-driver_8.flac",
+      "04-r.e.m.-life_and_how_to_live_it.flac",
+      "05-r.e.m.-old_man_kensey.flac",
+      "06-r.e.m.-cant_get_there_from_here.flac",
+      "07-r.e.m.-green_grow_the_rushes.flac",
+      "08-r.e.m.-kohoutek.flac",
+      "09-r.e.m.-auctioneer_(another_engine).flac",
+      "10-r.e.m.-good_advices.flac",
+      "11-r.e.m.-wendell_gee.flac",
+      "Has fewer tracks than existing release",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 1022476880,
+    "title": "R.E.M.-Fables.Of.The.Reconstruction-CD-FLAC-1985-BUDDHA"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "41b04230-1e15-36fa-a4d4-61ecb445b9c1",
+      "format": "12\" Vinyl",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22186,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "013985d1-87fb-383b-b156-f8bb452ef1c6",
+      "format": "CD",
+      "labels": [
+        "CBS/Sony"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22187,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "92ba0cbd-9f10-4cf6-8d8e-4adc7bb0299d",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22188,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "25th anniversary edition",
+      "foreign_release_id": "12365430-794a-3bdb-aea5-8895a95dc8d4",
+      "format": "2xCD",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 2,
+      "monitored": true,
+      "release_id": 22189,
+      "title": "Fables of the Reconstruction",
+      "track_count": 25
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "The I.R.S. Years Vintage 1985",
+      "foreign_release_id": "468ab3f6-43a4-3294-84f4-d78a96783594",
+      "format": "CD",
+      "labels": [
+        "EMI"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22190,
+      "title": "Fables of the Reconstruction",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "BMG club edition",
+      "foreign_release_id": "03d6b895-fb95-4012-aa1a-1aaa99d5e209",
+      "format": "CD",
+      "labels": [
+        "BMG Direct Marketing, Inc."
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22191,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "4016be91-df15-4f8e-9f9c-64fdb60375d8",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22192,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "fbb5173b-ae3f-324b-9073-652365018ad2",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22193,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d52f8c73-512a-4371-9c8e-7d34b8c54c1e",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22194,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "68426b7c-4e1b-30d0-9971-1be02755d8e4",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22195,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5b10a6ba-66f0-4577-be99-2c53a0ecbcfc",
+      "format": "12\" Vinyl",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22196,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "65d4b431-d6ce-4234-8042-6ed642ed14a0",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22197,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "The I.R.S. Years Vintage 1985",
+      "foreign_release_id": "79f367cd-2788-44e1-9518-db3c432aee49",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22198,
+      "title": "Fables of the Reconstruction",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "38772f1e-736a-449d-a0ff-e45e6feb136b",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22199,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "919555fe-c9f8-4a6b-8edc-6eeb10efb07a",
+      "format": "12\" Vinyl",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22200,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "0a35f9d9-f2c8-4b38-9db6-8b222c491963",
+      "format": "CD",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22201,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "3fc117de-e451-4c9a-9444-470f1cd7c3ae",
+      "format": "Digital Media",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22202,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "d5cac1a5-8fbd-4589-b45c-94b43724d3e1",
+      "format": "Digital Media",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22203,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Canada",
+        "[Worldwide]"
+      ],
+      "disambiguation": "deluxe edition",
+      "foreign_release_id": "b2de07b8-33fb-4215-8a01-9aa9577b73ef",
+      "format": "2xDigital Media",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 22204,
+      "title": "Fables of the Reconstruction",
+      "track_count": 25
+    },
+    {
+      "countries": [],
+      "disambiguation": "hi-res, 96kHz/24bit",
+      "foreign_release_id": "d36f872e-6a47-4a65-a475-5135afc0fe89",
+      "format": "Digital Media",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22205,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [],
+      "disambiguation": "hi-res, 192kHz/24bit",
+      "foreign_release_id": "cf0e8dd9-ac21-40d1-bac0-b7da051dd617",
+      "format": "Digital Media",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22206,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e1168f3d-0f41-4c0e-ac97-74ce1b57c6dd",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22207,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "33aa5887-5e54-4fd0-a1b8-024dac6349fc",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 22208,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "34344aff-c867-4d79-8ccc-967cb37e137f",
+      "format": "CD",
+      "labels": [
+        "I.R.S. Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 31816,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "deluxe edition",
+      "foreign_release_id": "b78f069b-9bea-4293-ac42-57b2dfcbf12e",
+      "format": "2xDigital Media",
+      "labels": [],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 32431,
+      "title": "Fables of the Reconstruction",
+      "track_count": 25
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "4c0210ab-a80c-4054-ba21-e5904101836c",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 32432,
+      "title": "Fables of the Reconstruction",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "df0c06db-8f83-4de9-94cb-af1d3e029b8a",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 32434,
+      "title": "Fables of the Reconstruction",
+      "track_count": 25
+    }
+  ],
+  "schema_version": "lidarr-repair/v2",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 22186,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283298
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 22186,
+      "title": "Maps and Legends",
+      "track_id": 283299
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 22186,
+      "title": "Driver 8",
+      "track_id": 283300
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 22186,
+      "title": "Life and How to Live It",
+      "track_id": 283301
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 22186,
+      "title": "Old Man Kensey",
+      "track_id": 283302
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 22186,
+      "title": "Can’t Get There From Here",
+      "track_id": 283303
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 22186,
+      "title": "Green Grow the Rushes",
+      "track_id": 283304
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 22186,
+      "title": "Kohoutek",
+      "track_id": 283305
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 22186,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283306
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 22186,
+      "title": "Good Advices",
+      "track_id": 283307
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 22186,
+      "title": "Wendell Gee",
+      "track_id": 283308
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22187,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283309
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22187,
+      "title": "Maps and Legends",
+      "track_id": 283310
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22187,
+      "title": "Driver 8",
+      "track_id": 283311
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22187,
+      "title": "Life and How to Live It",
+      "track_id": 283312
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22187,
+      "title": "Old Man Kensey",
+      "track_id": 283313
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22187,
+      "title": "Can’t Get There From Here",
+      "track_id": 283314
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22187,
+      "title": "Green Grow the Rushes",
+      "track_id": 283315
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22187,
+      "title": "Kohoutek",
+      "track_id": 283316
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22187,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283317
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22187,
+      "title": "Good Advices",
+      "track_id": 283318
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22187,
+      "title": "Wendell Gee",
+      "track_id": 283319
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 292000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22188,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283320
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22188,
+      "title": "Maps and Legends",
+      "track_id": 283321
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22188,
+      "title": "Driver 8",
+      "track_id": 283322
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 249000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22188,
+      "title": "Life and How to Live It",
+      "track_id": 283323
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22188,
+      "title": "Old Man Kensey",
+      "track_id": 283324
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22188,
+      "title": "Can’t Get There From Here",
+      "track_id": 283325
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22188,
+      "title": "Green Grow the Rushes",
+      "track_id": 283326
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22188,
+      "title": "Kohoutek",
+      "track_id": 283327
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22188,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283328
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22188,
+      "title": "Good Advices",
+      "track_id": 283329
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22188,
+      "title": "Wendell Gee",
+      "track_id": 283330
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22189,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283331
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 172240,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 22189,
+      "title": "Auctioneer (Another Engine) (Athens demo)",
+      "track_id": 283342
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22189,
+      "title": "Maps and Legends",
+      "track_id": 283332
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 144306,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 22189,
+      "title": "Bandwagon (Athens demo)",
+      "track_id": 283343
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22189,
+      "title": "Driver 8",
+      "track_id": 283333
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 220746,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 22189,
+      "title": "Can’t Get There From Here (Athens demo)",
+      "track_id": 283344
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22189,
+      "title": "Life and How to Live It",
+      "track_id": 283334
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 210973,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 22189,
+      "title": "Driver 8 (Athens demo)",
+      "track_id": 283345
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22189,
+      "title": "Old Man Kensey",
+      "track_id": 283335
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 276026,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 22189,
+      "title": "Feeling Gravity’s Pull (Athens demo)",
+      "track_id": 283346
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22189,
+      "title": "Can’t Get There From Here",
+      "track_id": 283336
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 211426,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 22189,
+      "title": "Good Advices (Athens demo)",
+      "track_id": 283347
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22189,
+      "title": "Green Grow the Rushes",
+      "track_id": 283337
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 227026,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 22189,
+      "title": "Green Grow the Rushes (Athens demo)",
+      "track_id": 283348
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22189,
+      "title": "Kohoutek",
+      "track_id": 283338
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 173400,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 22189,
+      "title": "Hyena (Athens demo)",
+      "track_id": 283349
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22189,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283339
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 206360,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 22189,
+      "title": "Kohoutek (Athens demo)",
+      "track_id": 283350
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22189,
+      "title": "Good Advices",
+      "track_id": 283340
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 250466,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 22189,
+      "title": "Life and How to Live It (Athens demo)",
+      "track_id": 283351
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22189,
+      "title": "Wendell Gee",
+      "track_id": 283341
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 191880,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 22189,
+      "title": "Maps and Legends (Athens demo)",
+      "track_id": 283352
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 247080,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 22189,
+      "title": "Old Man Kensey (Athens demo)",
+      "track_id": 283353
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189773,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 22189,
+      "title": "Throw Those Trolls Away (Athens demo)",
+      "track_id": 283354
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 186973,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 22189,
+      "title": "Wendell Gee (Athens demo)",
+      "track_id": 283355
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22190,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283356
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22190,
+      "title": "Maps and Legends",
+      "track_id": 283357
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22190,
+      "title": "Driver 8",
+      "track_id": 283358
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22190,
+      "title": "Life and How to Live It",
+      "track_id": 283359
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22190,
+      "title": "Old Man Kensey",
+      "track_id": 283360
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22190,
+      "title": "Can’t Get There From Here",
+      "track_id": 283361
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22190,
+      "title": "Green Grow the Rushes",
+      "track_id": 283362
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22190,
+      "title": "Kohoutek",
+      "track_id": 283363
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22190,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283364
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22190,
+      "title": "Good Advices",
+      "track_id": 283365
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 182506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22190,
+      "title": "Wendell Gee",
+      "track_id": 283366
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 184960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 22190,
+      "title": "Crazy",
+      "track_id": 283367
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 229106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 22190,
+      "title": "Burning Hell",
+      "track_id": 283368
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 135293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 22190,
+      "title": "Bandwagon",
+      "track_id": 283369
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 210506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 22190,
+      "title": "Driver 8 (live)",
+      "track_id": 283370
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 195400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 22190,
+      "title": "Maps and Legends (live)",
+      "track_id": 283371
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22191,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283372
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22191,
+      "title": "Maps and Legends",
+      "track_id": 283373
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22191,
+      "title": "Driver 8",
+      "track_id": 283374
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22191,
+      "title": "Life and How to Live It",
+      "track_id": 283375
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22191,
+      "title": "Old Man Kensey",
+      "track_id": 283376
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22191,
+      "title": "Can’t Get There From Here",
+      "track_id": 283377
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22191,
+      "title": "Green Grow the Rushes",
+      "track_id": 283378
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22191,
+      "title": "Kohoutek",
+      "track_id": 283379
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22191,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283380
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22191,
+      "title": "Good Advices",
+      "track_id": 283381
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22191,
+      "title": "Wendell Gee",
+      "track_id": 283382
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22192,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283383
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 191093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22192,
+      "title": "Maps and Legends",
+      "track_id": 283384
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22192,
+      "title": "Driver 8",
+      "track_id": 283385
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22192,
+      "title": "Life and How to Live It",
+      "track_id": 283386
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 248973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22192,
+      "title": "Old Man Kensey",
+      "track_id": 283387
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22192,
+      "title": "Can’t Get There From Here",
+      "track_id": 283388
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22192,
+      "title": "Green Grow the Rushes",
+      "track_id": 283389
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22192,
+      "title": "Kohoutek",
+      "track_id": 283390
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22192,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283391
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 211040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22192,
+      "title": "Good Advices",
+      "track_id": 283392
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 181933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22192,
+      "title": "Wendell Gee",
+      "track_id": 283393
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22193,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283394
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22193,
+      "title": "Maps and Legends",
+      "track_id": 283395
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22193,
+      "title": "Driver 8",
+      "track_id": 283396
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22193,
+      "title": "Life and How to Live It",
+      "track_id": 283397
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22193,
+      "title": "Old Man Kensey",
+      "track_id": 283398
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22193,
+      "title": "Can’t Get There From Here",
+      "track_id": 283399
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22193,
+      "title": "Green Grow the Rushes",
+      "track_id": 283400
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22193,
+      "title": "Kohoutek",
+      "track_id": 283401
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22193,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283402
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22193,
+      "title": "Good Advices",
+      "track_id": 283403
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22193,
+      "title": "Wendell Gee",
+      "track_id": 283404
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22194,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283405
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22194,
+      "title": "Maps and Legends",
+      "track_id": 283406
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22194,
+      "title": "Driver 8",
+      "track_id": 283407
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22194,
+      "title": "Life and How to Live It",
+      "track_id": 283408
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22194,
+      "title": "Old Man Kensey",
+      "track_id": 283409
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22194,
+      "title": "Can’t Get There From Here",
+      "track_id": 283410
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22194,
+      "title": "Green Grow the Rushes",
+      "track_id": 283411
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22194,
+      "title": "Kohoutek",
+      "track_id": 283412
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22194,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283413
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22194,
+      "title": "Good Advices",
+      "track_id": 283414
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22194,
+      "title": "Wendell Gee",
+      "track_id": 283415
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22195,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283416
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22195,
+      "title": "Maps and Legends",
+      "track_id": 283417
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22195,
+      "title": "Driver 8",
+      "track_id": 283418
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22195,
+      "title": "Life and How to Live It",
+      "track_id": 283419
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22195,
+      "title": "Old Man Kensey",
+      "track_id": 283420
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22195,
+      "title": "Can’t Get There From Here",
+      "track_id": 283421
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22195,
+      "title": "Green Grow the Rushes",
+      "track_id": 283422
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22195,
+      "title": "Kohoutek",
+      "track_id": 283423
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22195,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283424
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22195,
+      "title": "Good Advices",
+      "track_id": 283425
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22195,
+      "title": "Wendell Gee",
+      "track_id": 283426
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22196,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283427
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22196,
+      "title": "Maps and Legends",
+      "track_id": 283428
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22196,
+      "title": "Driver 8",
+      "track_id": 283429
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22196,
+      "title": "Life and How to Live It",
+      "track_id": 283430
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22196,
+      "title": "Old Man Kensey",
+      "track_id": 283431
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22196,
+      "title": "Can’t Get There From Here",
+      "track_id": 283432
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22196,
+      "title": "Green Grow the Rushes",
+      "track_id": 283433
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22196,
+      "title": "Kohoutek",
+      "track_id": 283434
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22196,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283435
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22196,
+      "title": "Good Advices",
+      "track_id": 283436
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22196,
+      "title": "Wendell Gee",
+      "track_id": 283437
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22197,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283438
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 181000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22197,
+      "title": "Maps and Legends",
+      "track_id": 283439
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22197,
+      "title": "Driver 8",
+      "track_id": 283440
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22197,
+      "title": "Life and How to Live It",
+      "track_id": 283441
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22197,
+      "title": "Old Man Kensey",
+      "track_id": 283442
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22197,
+      "title": "Can’t Get There From Here",
+      "track_id": 283443
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22197,
+      "title": "Green Grow the Rushes",
+      "track_id": 283444
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22197,
+      "title": "Kohoutek",
+      "track_id": 283445
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22197,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283446
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 208000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22197,
+      "title": "Good Advices",
+      "track_id": 283447
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 181000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22197,
+      "title": "Wendell Gee",
+      "track_id": 283448
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22198,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283449
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22198,
+      "title": "Maps and Legends",
+      "track_id": 283450
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22198,
+      "title": "Driver 8",
+      "track_id": 283451
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22198,
+      "title": "Life and How to Live It",
+      "track_id": 283452
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22198,
+      "title": "Old Man Kensey",
+      "track_id": 283453
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22198,
+      "title": "Can’t Get There From Here",
+      "track_id": 283454
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22198,
+      "title": "Green Grow the Rushes",
+      "track_id": 283455
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22198,
+      "title": "Kohoutek",
+      "track_id": 283456
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22198,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283457
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22198,
+      "title": "Good Advices",
+      "track_id": 283458
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 182506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22198,
+      "title": "Wendell Gee",
+      "track_id": 283459
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 184960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 22198,
+      "title": "Crazy",
+      "track_id": 283460
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 229106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 22198,
+      "title": "Burning Hell",
+      "track_id": 283461
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 135293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 22198,
+      "title": "Bandwagon",
+      "track_id": 283462
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 210506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 22198,
+      "title": "Driver 8 (live)",
+      "track_id": 283463
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 195400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 22198,
+      "title": "Maps and Legends (live)",
+      "track_id": 283464
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 22199,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283465
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 22199,
+      "title": "Maps and Legends",
+      "track_id": 283466
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 22199,
+      "title": "Driver 8",
+      "track_id": 283467
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 22199,
+      "title": "Life and How to Live It",
+      "track_id": 283468
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 22199,
+      "title": "Old Man Kensey",
+      "track_id": 283469
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 22199,
+      "title": "Can’t Get There From Here",
+      "track_id": 283470
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 22199,
+      "title": "Green Grow the Rushes",
+      "track_id": 283471
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 22199,
+      "title": "Kohoutek",
+      "track_id": 283472
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 161000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 22199,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283473
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 22199,
+      "title": "Good Advices",
+      "track_id": 283474
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 22199,
+      "title": "Wendell Gee",
+      "track_id": 283475
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 22200,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283476
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 22200,
+      "title": "Maps and Legends",
+      "track_id": 283477
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 22200,
+      "title": "Driver 8",
+      "track_id": 283478
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 22200,
+      "title": "Life and How to Live It",
+      "track_id": 283479
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 22200,
+      "title": "Old Man Kensey",
+      "track_id": 283480
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 22200,
+      "title": "Can’t Get There From Here",
+      "track_id": 283481
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 22200,
+      "title": "Green Grow the Rushes",
+      "track_id": 283482
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 22200,
+      "title": "Kohoutek",
+      "track_id": 283483
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 161000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 22200,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283484
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 22200,
+      "title": "Good Advices",
+      "track_id": 283485
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 22200,
+      "title": "Wendell Gee",
+      "track_id": 283486
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22201,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283487
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22201,
+      "title": "Maps and Legends",
+      "track_id": 283488
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22201,
+      "title": "Driver 8",
+      "track_id": 283489
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22201,
+      "title": "Life and How to Live It",
+      "track_id": 283490
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22201,
+      "title": "Old Man Kensey",
+      "track_id": 283491
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22201,
+      "title": "Can’t Get There From Here",
+      "track_id": 283492
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22201,
+      "title": "Green Grow the Rushes",
+      "track_id": 283493
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22201,
+      "title": "Kohoutek",
+      "track_id": 283494
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 161000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22201,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283495
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22201,
+      "title": "Good Advices",
+      "track_id": 283496
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22201,
+      "title": "Wendell Gee",
+      "track_id": 283497
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 290867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22202,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283498
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22202,
+      "title": "Maps and Legends",
+      "track_id": 283499
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22202,
+      "title": "Driver 8",
+      "track_id": 283500
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22202,
+      "title": "Life and How to Live It",
+      "track_id": 283501
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22202,
+      "title": "Old Man Kensey",
+      "track_id": 283502
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219467,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22202,
+      "title": "Can’t Get There From Here",
+      "track_id": 283503
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22202,
+      "title": "Green Grow the Rushes",
+      "track_id": 283504
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22202,
+      "title": "Kohoutek",
+      "track_id": 283505
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164427,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22202,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283506
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22202,
+      "title": "Good Advices",
+      "track_id": 283507
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 181200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22202,
+      "title": "Wendell Gee",
+      "track_id": 283508
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 290987,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22203,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283509
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22203,
+      "title": "Maps and Legends",
+      "track_id": 283510
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22203,
+      "title": "Driver 8",
+      "track_id": 283511
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22203,
+      "title": "Life and How to Live It",
+      "track_id": 283512
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 249573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22203,
+      "title": "Old Man Kensey",
+      "track_id": 283513
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22203,
+      "title": "Can’t Get There From Here",
+      "track_id": 283514
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226480,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22203,
+      "title": "Green Grow the Rushes",
+      "track_id": 283515
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198387,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22203,
+      "title": "Kohoutek",
+      "track_id": 283516
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22203,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283517
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 211133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22203,
+      "title": "Good Advices",
+      "track_id": 283518
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 183320,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22203,
+      "title": "Wendell Gee",
+      "track_id": 283519
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22204,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283520
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 172240,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 22204,
+      "title": "Auctioneer (Another Engine) (Athens demo)",
+      "track_id": 283531
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22204,
+      "title": "Maps and Legends",
+      "track_id": 283521
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 144307,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 22204,
+      "title": "Bandwagon (Athens demo)",
+      "track_id": 283532
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22204,
+      "title": "Driver 8",
+      "track_id": 283522
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 220729,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 22204,
+      "title": "Can’t Get There From Here (Athens demo)",
+      "track_id": 283533
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22204,
+      "title": "Life and How to Live It",
+      "track_id": 283523
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 210973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 22204,
+      "title": "Driver 8 (Athens demo)",
+      "track_id": 283534
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 249427,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22204,
+      "title": "Old Man Kensey",
+      "track_id": 283524
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 276027,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 22204,
+      "title": "Feeling Gravity’s Pull (Athens demo)",
+      "track_id": 283535
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219787,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22204,
+      "title": "Can’t Get There From Here",
+      "track_id": 283525
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 211427,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 22204,
+      "title": "Good Advices (Athens demo)",
+      "track_id": 283536
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226307,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22204,
+      "title": "Green Grow the Rushes",
+      "track_id": 283526
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 227027,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 22204,
+      "title": "Green Grow the Rushes (Athens demo)",
+      "track_id": 283537
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22204,
+      "title": "Kohoutek",
+      "track_id": 283527
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 22204,
+      "title": "Hyena (Athens demo)",
+      "track_id": 283538
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164587,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22204,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283528
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 206360,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 22204,
+      "title": "Kohoutek (Athens demo)",
+      "track_id": 283539
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22204,
+      "title": "Good Advices",
+      "track_id": 283529
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 250467,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 22204,
+      "title": "Life and How to Live It (Athens demo)",
+      "track_id": 283540
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 185400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22204,
+      "title": "Wendell Gee",
+      "track_id": 283530
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 191880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 22204,
+      "title": "Maps and Legends (Athens demo)",
+      "track_id": 283541
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 247080,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 22204,
+      "title": "Old Man Kensey (Athens demo)",
+      "track_id": 283542
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 22204,
+      "title": "Throw Those Trolls Away (Athens demo)",
+      "track_id": 283543
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 186973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 22204,
+      "title": "Wendell Gee (Athens demo)",
+      "track_id": 283544
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22205,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283545
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22205,
+      "title": "Maps and Legends",
+      "track_id": 283546
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22205,
+      "title": "Driver 8",
+      "track_id": 283547
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22205,
+      "title": "Life and How to Live It",
+      "track_id": 283548
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22205,
+      "title": "Old Man Kensey",
+      "track_id": 283549
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22205,
+      "title": "Can’t Get There From Here",
+      "track_id": 283550
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22205,
+      "title": "Green Grow the Rushes",
+      "track_id": 283551
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22205,
+      "title": "Kohoutek",
+      "track_id": 283552
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 165000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22205,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283553
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22205,
+      "title": "Good Advices",
+      "track_id": 283554
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22205,
+      "title": "Wendell Gee",
+      "track_id": 283555
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 290986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22206,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283556
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22206,
+      "title": "Maps and Legends",
+      "track_id": 283557
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203920,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22206,
+      "title": "Driver 8",
+      "track_id": 283558
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22206,
+      "title": "Life and How to Live It",
+      "track_id": 283559
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 249573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22206,
+      "title": "Old Man Kensey",
+      "track_id": 283560
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22206,
+      "title": "Can’t Get There From Here",
+      "track_id": 283561
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226480,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22206,
+      "title": "Green Grow the Rushes",
+      "track_id": 283562
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22206,
+      "title": "Kohoutek",
+      "track_id": 283563
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22206,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283564
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 211133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22206,
+      "title": "Good Advices",
+      "track_id": 283565
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 183320,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22206,
+      "title": "Wendell Gee",
+      "track_id": 283566
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22207,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283567
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22207,
+      "title": "Maps and Legends",
+      "track_id": 283568
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22207,
+      "title": "Driver 8",
+      "track_id": 283569
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22207,
+      "title": "Life and How to Live It",
+      "track_id": 283570
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22207,
+      "title": "Old Man Kensey",
+      "track_id": 283571
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22207,
+      "title": "Can’t Get There From Here",
+      "track_id": 283572
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22207,
+      "title": "Green Grow the Rushes",
+      "track_id": 283573
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22207,
+      "title": "Kohoutek",
+      "track_id": 283574
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22207,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283575
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22207,
+      "title": "Good Advices",
+      "track_id": 283576
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22207,
+      "title": "Wendell Gee",
+      "track_id": 283577
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 290626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 22208,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 283578
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 22208,
+      "title": "Maps and Legends",
+      "track_id": 283579
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 22208,
+      "title": "Driver 8",
+      "track_id": 283580
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 22208,
+      "title": "Life and How to Live It",
+      "track_id": 283581
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 249040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 22208,
+      "title": "Old Man Kensey",
+      "track_id": 283582
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 22208,
+      "title": "Can’t Get There From Here",
+      "track_id": 283583
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 22208,
+      "title": "Green Grow the Rushes",
+      "track_id": 283584
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 22208,
+      "title": "Kohoutek",
+      "track_id": 283585
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164173,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 22208,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 283586
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 22208,
+      "title": "Good Advices",
+      "track_id": 283587
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 183333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 22208,
+      "title": "Wendell Gee",
+      "track_id": 283588
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31816,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 413893
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31816,
+      "title": "Maps and Legends",
+      "track_id": 413894
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31816,
+      "title": "Driver 8",
+      "track_id": 413895
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31816,
+      "title": "Life and How to Live It",
+      "track_id": 413896
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31816,
+      "title": "Old Man Kensey",
+      "track_id": 413897
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31816,
+      "title": "Can’t Get There From Here",
+      "track_id": 413898
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31816,
+      "title": "Green Grow the Rushes",
+      "track_id": 413899
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31816,
+      "title": "Kohoutek",
+      "track_id": 413900
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31816,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 413901
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 31816,
+      "title": "Good Advices",
+      "track_id": 413902
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 182000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 31816,
+      "title": "Wendell Gee",
+      "track_id": 413903
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32431,
+      "title": "Feeling Gravity's Pull",
+      "track_id": 421178
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 172240,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 32431,
+      "title": "Auctioneer (Another Engine) (Athens demo)",
+      "track_id": 421189
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32431,
+      "title": "Maps and Legends",
+      "track_id": 421179
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 144307,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 32431,
+      "title": "Bandwagon (Athens demo)",
+      "track_id": 421190
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32431,
+      "title": "Driver 8",
+      "track_id": 421180
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 220729,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 32431,
+      "title": "Can't Get There From Here (Athens demo)",
+      "track_id": 421191
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 247800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32431,
+      "title": "Life and How to Live It",
+      "track_id": 421181
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 210973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 32431,
+      "title": "Driver 8 (Athens demo)",
+      "track_id": 421192
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 249427,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32431,
+      "title": "Old Man Kensey",
+      "track_id": 421182
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 276027,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 32431,
+      "title": "Feeling Gravity's Pull (Athens demo)",
+      "track_id": 421193
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219787,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32431,
+      "title": "Can't Get There From Here",
+      "track_id": 421183
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 211427,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 32431,
+      "title": "Good Advices (Athens demo)",
+      "track_id": 421194
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226307,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32431,
+      "title": "Green Grow the Rushes",
+      "track_id": 421184
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 227027,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 32431,
+      "title": "Green Grow the Rushes (Athens demo)",
+      "track_id": 421195
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32431,
+      "title": "Kohoutek",
+      "track_id": 421185
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 173400,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 32431,
+      "title": "Hyena (Athens demo)",
+      "track_id": 421196
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164587,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32431,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 421186
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 206360,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 32431,
+      "title": "Kohoutek (Athens demo)",
+      "track_id": 421197
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32431,
+      "title": "Good Advices",
+      "track_id": 421187
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 250467,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 32431,
+      "title": "Life and How to Live It (Athens demo)",
+      "track_id": 421198
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 185400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32431,
+      "title": "Wendell Gee",
+      "track_id": 421188
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 191880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 32431,
+      "title": "Maps and Legends (Athens demo)",
+      "track_id": 421199
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 247080,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 32431,
+      "title": "Old Man Kensey (Athens demo)",
+      "track_id": 421200
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 32431,
+      "title": "Throw Those Trolls Away (Athens demo)",
+      "track_id": 421201
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 186973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 32431,
+      "title": "Wendell Gee (Athens demo)",
+      "track_id": 421202
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 290867,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32432,
+      "title": "Feeling Gravitys Pull",
+      "track_id": 421203
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32432,
+      "title": "Maps and Legends",
+      "track_id": 421204
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 203800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32432,
+      "title": "Driver 8",
+      "track_id": 421205
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32432,
+      "title": "Life and How to Live It",
+      "track_id": 421206
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32432,
+      "title": "Old Man Kensey",
+      "track_id": 421207
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 219467,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32432,
+      "title": "Can't Get There From Here",
+      "track_id": 421208
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 226027,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32432,
+      "title": "Green Grow the Rushes",
+      "track_id": 421209
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 197773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32432,
+      "title": "Kohoutek",
+      "track_id": 421210
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164427,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32432,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 421211
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32432,
+      "title": "Good Advices",
+      "track_id": 421212
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 181200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32432,
+      "title": "Wendell Gee",
+      "track_id": 421213
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 291573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32434,
+      "title": "Feeling Gravity’s Pull",
+      "track_id": 421239
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32434,
+      "title": "Maps and Legends",
+      "track_id": 421240
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 204040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32434,
+      "title": "Driver 8",
+      "track_id": 421241
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32434,
+      "title": "Life and How to Live It",
+      "track_id": 421242
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 250026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32434,
+      "title": "Old Man Kensey",
+      "track_id": 421243
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 220040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32434,
+      "title": "Can’t Get There From Here",
+      "track_id": 421244
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 225933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32434,
+      "title": "Green Grow the Rushes",
+      "track_id": 421245
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 196600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32434,
+      "title": "Kohoutek",
+      "track_id": 421246
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 164093,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32434,
+      "title": "Auctioneer (Another Engine)",
+      "track_id": 421247
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 210533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32434,
+      "title": "Good Advices",
+      "track_id": 421248
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 180400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32434,
+      "title": "Wendell Gee",
+      "track_id": 421249
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 172000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 32434,
+      "title": "Auctioneer (Another Engine) (Athens demo)",
+      "track_id": 421250
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 32434,
+      "title": "Bandwagon (Athens demo)",
+      "track_id": 421251
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 32434,
+      "title": "Can’t Get There From Here (Athens demo)",
+      "track_id": 421252
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 32434,
+      "title": "Driver 8 (Athens demo)",
+      "track_id": 421253
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 276000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 32434,
+      "title": "Feeling Gravity’s Pull (Athens demo)",
+      "track_id": 421254
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 32434,
+      "title": "Good Advices (Athens demo)",
+      "track_id": 421255
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 227000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 32434,
+      "title": "Green Grow the Rushes (Athens demo)",
+      "track_id": 421256
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 173000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 32434,
+      "title": "Hyena (Athens demo)",
+      "track_id": 421257
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 32434,
+      "title": "Kohoutek (Athens demo)",
+      "track_id": 421258
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 32434,
+      "title": "Life and How to Live It (Athens demo)",
+      "track_id": 421259
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 192000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 32434,
+      "title": "Maps and Legends (Athens demo)",
+      "track_id": 421260
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 247000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 32434,
+      "title": "Old Man Kensey (Athens demo)",
+      "track_id": 421261
+    },
+    {
+      "absolute_number": 24,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "24",
+      "release_id": 32434,
+      "title": "Throw Those Trolls Away (Athens demo)",
+      "track_id": 421262
+    },
+    {
+      "absolute_number": 25,
+      "duration_ms": 187000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "25",
+      "release_id": 32434,
+      "title": "Wendell Gee (Athens demo)",
+      "track_id": 421263
+    }
+  ]
+}
