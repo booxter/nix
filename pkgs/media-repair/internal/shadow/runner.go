@@ -11,6 +11,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/inspection"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 type CaseSource interface {
@@ -36,9 +37,10 @@ type ResultStore interface {
 
 type FailureClassifier func(error) casestore.PlanningFailure
 
-type Backoff struct {
-	Initial time.Duration
-	Maximum time.Duration
+type Backoff planningrunner.Backoff
+
+func (backoff Backoff) delay(priorAttempts uint64) time.Duration {
+	return planningrunner.Backoff(backoff).Delay(priorAttempts)
 }
 
 type Dependencies struct {
@@ -123,6 +125,11 @@ type metricData struct {
 
 type Runner struct {
 	dependencies Dependencies
+	planner      *planningrunner.Runner[
+		casebuilder.Assembly,
+		contracts.RepairDecisionV3,
+		casestore.PlanningFailure,
+	]
 }
 
 func New(dependencies Dependencies) (*Runner, error) {
@@ -142,7 +149,38 @@ func New(dependencies Dependencies) (*Runner, error) {
 	case dependencies.Backoff.Maximum < dependencies.Backoff.Initial:
 		return nil, fmt.Errorf("maximum planner retry delay must not be shorter than the initial delay")
 	default:
-		return &Runner{dependencies: dependencies}, nil
+		planner, err := planningrunner.New(planningrunner.Dependencies[
+			casebuilder.Assembly,
+			contracts.RepairDecisionV3,
+			casestore.PlanningFailure,
+		]{
+			Store: radarrPlanningStore{store: dependencies.Store},
+			Plan: func(ctx context.Context, assembly casebuilder.Assembly) (
+				contracts.RepairDecisionV3,
+				error,
+			) {
+				return dependencies.Planner.Plan(ctx, assembly.Request)
+			},
+			Clock:          dependencies.Clock,
+			CaseID:         func(assembly casebuilder.Assembly) string { return assembly.Request.CaseID },
+			DecisionCaseID: func(decision contracts.RepairDecisionV3) string { return decision.CaseID() },
+			Superseded: func(assembly casebuilder.Assembly) bool {
+				observation := assembly.LocalSnapshot.Observation
+				return controller.AllReplacementsSuperseded(
+					observation.Movie,
+					observation.ManualImports,
+				)
+			},
+			ClassifyFailure: dependencies.ClassifyFailure,
+			Backoff: planningrunner.Backoff{
+				Initial: dependencies.Backoff.Initial,
+				Maximum: dependencies.Backoff.Maximum,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &Runner{dependencies: dependencies, planner: planner}, nil
 	}
 }
 
@@ -243,137 +281,31 @@ func (runner *Runner) process(
 	ctx context.Context,
 	assembly casebuilder.Assembly,
 ) (caseResult, error) {
-	created, err := runner.dependencies.Store.PutAssembly(assembly)
-	if err != nil {
-		return caseResult{Outcome: caseFailed}, fmt.Errorf("store repair case: %w", err)
-	}
-	result := caseResult{Stored: created, Assembly: assembly}
-	observation := assembly.LocalSnapshot.Observation
-	if controller.AllReplacementsSuperseded(
-		observation.Movie,
-		observation.ManualImports,
-	) {
-		result.Outcome = caseSuperseded
-		return result, nil
-	}
-	caseID := assembly.Request.CaseID
-	previous, found, err := runner.dependencies.Store.GetPlanningResult(caseID)
-	if err != nil {
-		result.Outcome = caseFailed
-		return result, fmt.Errorf("read planning result: %w", err)
-	}
-	if found && previous.HasDecision() {
-		planned, err := runner.loadPlannedCase(caseID)
-		if err != nil {
-			result.Outcome = caseFailed
-			return result, err
-		}
-		result.Assembly = planned.Assembly
-		result.Decision = planned.Decision
-		result.Outcome = caseAlreadyDecided
-		return result, nil
-	}
-	now := runner.dependencies.Clock.Now().UTC()
-	if now.IsZero() {
-		result.Outcome = caseFailed
-		return result, fmt.Errorf("clock returned a zero time")
-	}
-	if found && previous.RetryAfter != nil && now.Before(*previous.RetryAfter) {
-		result.Outcome = caseDeferred
-		return result, nil
-	}
-
-	result.Submitted = true
-	startedAt := now
-	decision, planErr := runner.dependencies.Planner.Plan(ctx, assembly.Request)
-	completedAt := runner.dependencies.Clock.Now().UTC()
-	if completedAt.IsZero() {
-		result.Outcome = caseFailed
-		return result, fmt.Errorf("clock returned a zero time")
-	}
-	if completedAt.After(startedAt) {
-		result.PlannerDuration = completedAt.Sub(startedAt)
-	}
-	if planErr != nil {
-		priorAttempts := uint64(0)
-		if found {
-			priorAttempts = previous.Attempts
-		}
-		retryAfter := completedAt.Add(runner.dependencies.Backoff.delay(priorAttempts))
-		failure := runner.dependencies.ClassifyFailure(planErr)
-		result.PlannerFailure = &failure
-		_, _, storeErr := runner.dependencies.Store.PutPlanningFailure(
-			caseID, failure, completedAt, retryAfter,
-		)
-		result.Outcome = caseFailed
-		if storeErr != nil {
-			return result, errors.Join(
-				fmt.Errorf("planner failed: %w", planErr),
-				fmt.Errorf("store planner failure: %w", storeErr),
-			)
-		}
-		return result, fmt.Errorf("planner failed: %w", planErr)
-	}
-	stored, changed, err := runner.dependencies.Store.PutPlanningDecision(
-		caseID, decision, completedAt,
-	)
-	if err != nil {
-		result.Outcome = caseFailed
-		return result, fmt.Errorf("store planning decision: %w", err)
-	}
-	if !changed && stored.HasDecision() {
-		planned, err := runner.loadPlannedCase(caseID)
-		if err != nil {
-			result.Outcome = caseFailed
-			return result, err
-		}
-		result.Assembly = planned.Assembly
-		result.Decision = planned.Decision
-		result.Outcome = caseAlreadyDecided
-		return result, nil
-	}
-	if !changed {
-		result.Outcome = caseFailed
-		return result, fmt.Errorf("result store did not record the planning decision")
-	}
-	result.Decision, err = planningDecision(caseID, stored)
-	if err != nil {
-		result.Outcome = caseFailed
-		return result, err
-	}
-	result.Outcome = caseDecided
-	return result, nil
+	shared, err := runner.planner.Process(ctx, assembly)
+	return caseResult{
+		Outcome:         sharedOutcome(shared.Outcome),
+		Stored:          shared.Stored,
+		Submitted:       shared.Submitted,
+		Assembly:        shared.Planned.Case,
+		Decision:        shared.Planned.Decision,
+		PlannerFailure:  shared.Failure,
+		PlannerDuration: shared.PlannerDuration,
+	}, err
 }
 
-func (runner *Runner) loadPlannedCase(caseID string) (casestore.PlannedCase, error) {
-	planned, err := runner.dependencies.Store.GetPlannedCase(caseID)
-	if err != nil {
-		return casestore.PlannedCase{}, fmt.Errorf("load stored planned case: %w", err)
+func sharedOutcome(outcome planningrunner.Outcome) caseOutcome {
+	switch outcome {
+	case planningrunner.Decided:
+		return caseDecided
+	case planningrunner.AlreadyDecided:
+		return caseAlreadyDecided
+	case planningrunner.Deferred:
+		return caseDeferred
+	case planningrunner.Superseded:
+		return caseSuperseded
+	default:
+		return caseFailed
 	}
-	if planned.Decision.CaseID() != caseID {
-		return casestore.PlannedCase{}, fmt.Errorf(
-			"planning decision case ID does not match observed case %q",
-			caseID,
-		)
-	}
-	return planned, nil
-}
-
-func planningDecision(
-	caseID string,
-	result casestore.PlanningResult,
-) (contracts.RepairDecisionV3, error) {
-	decision, err := contracts.DecodeDecision(result.Decision)
-	if err != nil {
-		return contracts.RepairDecisionV3{}, fmt.Errorf("decode planning decision: %w", err)
-	}
-	if decision.CaseID() != caseID {
-		return contracts.RepairDecisionV3{}, fmt.Errorf(
-			"planning decision case ID does not match observed case %q",
-			caseID,
-		)
-	}
-	return decision, nil
 }
 
 func (report *Report) observe(assembly casebuilder.Assembly) {
@@ -437,17 +369,56 @@ func (report *Report) observePlannerFailure(kind casestore.PlanningFailureKind) 
 	}
 }
 
-func (backoff Backoff) delay(priorAttempts uint64) time.Duration {
-	delay := backoff.Initial
-	for priorAttempts > 0 && delay < backoff.Maximum {
-		if delay > backoff.Maximum/2 {
-			return backoff.Maximum
-		}
-		delay *= 2
-		priorAttempts--
+type radarrPlanningStore struct {
+	store ResultStore
+}
+
+func (store radarrPlanningStore) PutCase(assembly casebuilder.Assembly) (bool, error) {
+	return store.store.PutAssembly(assembly)
+}
+
+func (store radarrPlanningStore) GetStatus(
+	caseID string,
+) (planningrunner.Status, bool, error) {
+	result, found, err := store.store.GetPlanningResult(caseID)
+	return planningStatus(result), found, err
+}
+
+func (store radarrPlanningStore) GetPlanned(
+	caseID string,
+) (planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3], error) {
+	planned, err := store.store.GetPlannedCase(caseID)
+	if err != nil {
+		return planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3]{}, err
 	}
-	if delay > backoff.Maximum {
-		return backoff.Maximum
+	return planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3]{
+		Case: planned.Assembly, Decision: planned.Decision,
+	}, nil
+}
+
+func (store radarrPlanningStore) PutFailure(
+	caseID string,
+	failure casestore.PlanningFailure,
+	attemptedAt time.Time,
+	retryAfter time.Time,
+) (planningrunner.Status, bool, error) {
+	result, changed, err := store.store.PutPlanningFailure(
+		caseID, failure, attemptedAt, retryAfter,
+	)
+	return planningStatus(result), changed, err
+}
+
+func (store radarrPlanningStore) PutDecision(
+	caseID string,
+	decision contracts.RepairDecisionV3,
+	attemptedAt time.Time,
+) (planningrunner.Status, bool, error) {
+	result, changed, err := store.store.PutPlanningDecision(caseID, decision, attemptedAt)
+	return planningStatus(result), changed, err
+}
+
+func planningStatus(result casestore.PlanningResult) planningrunner.Status {
+	return planningrunner.Status{
+		Attempts: result.Attempts, RetryAfter: result.RetryAfter, Decided: result.HasDecision(),
 	}
-	return delay
 }

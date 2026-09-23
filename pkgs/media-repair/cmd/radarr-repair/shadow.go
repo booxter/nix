@@ -11,6 +11,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
 
@@ -269,22 +270,5 @@ func (config shadowConfig) inspectionConfig() inspectConfig {
 }
 
 func classifyPlannerFailure(err error) casestore.PlanningFailure {
-	var failure *plannerclient.Failure
-	if !errors.As(err, &failure) {
-		return casestore.PlanningFailure{Kind: casestore.PlanningFailureUnexpected}
-	}
-	switch failure.Kind {
-	case plannerclient.FailureUnavailable:
-		return casestore.PlanningFailure{Kind: casestore.PlanningFailureUnavailable}
-	case plannerclient.FailureTimeout:
-		return casestore.PlanningFailure{Kind: casestore.PlanningFailureTimeout}
-	case plannerclient.FailureHTTP:
-		return casestore.PlanningFailure{
-			Kind: casestore.PlanningFailureHTTP, StatusCode: failure.StatusCode,
-		}
-	case plannerclient.FailureInvalidResponse:
-		return casestore.PlanningFailure{Kind: casestore.PlanningFailureInvalidResult}
-	default:
-		return casestore.PlanningFailure{Kind: casestore.PlanningFailureUnexpected}
-	}
+	return planningrunner.ClassifyFailure(err)
 }

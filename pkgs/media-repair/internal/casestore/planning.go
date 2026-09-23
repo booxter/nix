@@ -12,24 +12,22 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 )
 
 const PlanningResultVersionV1 = "radarr-repair-planning/v1"
 
-type PlanningFailureKind string
+type PlanningFailureKind = planningrunner.FailureKind
 
 const (
-	PlanningFailureUnavailable   PlanningFailureKind = "planner_unavailable"
-	PlanningFailureTimeout       PlanningFailureKind = "planner_timeout"
-	PlanningFailureHTTP          PlanningFailureKind = "planner_http_error"
-	PlanningFailureInvalidResult PlanningFailureKind = "planner_invalid_result"
-	PlanningFailureUnexpected    PlanningFailureKind = "planner_unexpected_error"
+	PlanningFailureUnavailable   = planningrunner.FailureUnavailable
+	PlanningFailureTimeout       = planningrunner.FailureTimeout
+	PlanningFailureHTTP          = planningrunner.FailureHTTP
+	PlanningFailureInvalidResult = planningrunner.FailureInvalidResult
+	PlanningFailureUnexpected    = planningrunner.FailureUnexpected
 )
 
-type PlanningFailure struct {
-	Kind       PlanningFailureKind `json:"kind"`
-	StatusCode int                 `json:"status_code,omitempty"`
-}
+type PlanningFailure = planningrunner.Failure
 
 // PlanningResult is the latest planner outcome for a case. A failure may be
 // replaced by a later attempt; a decision is terminal for that case ID.
@@ -297,17 +295,7 @@ func validatePlanningResult(result PlanningResult) error {
 }
 
 func validPlanningFailure(failure PlanningFailure) bool {
-	switch failure.Kind {
-	case PlanningFailureHTTP:
-		return failure.StatusCode >= 100 && failure.StatusCode <= 599
-	case PlanningFailureUnavailable,
-		PlanningFailureTimeout,
-		PlanningFailureInvalidResult,
-		PlanningFailureUnexpected:
-		return failure.StatusCode == 0
-	default:
-		return false
-	}
+	return planningrunner.ValidFailure(failure)
 }
 
 func timePointer(value time.Time) *time.Time {
