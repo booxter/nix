@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"golang.org/x/sys/unix"
 )
 
 type fakeFiles struct {
@@ -129,7 +130,6 @@ func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
 		{err: fmt.Errorf("%w: detail", errDirectorySpecial), want: "directory_contains_special_file"},
 		{err: fmt.Errorf("%w: detail", errDirectoryLimit), want: "directory_limit_exceeded"},
 		{err: fmt.Errorf("%w: detail", errDirectoryEntryInfo), want: "directory_entry_info_failed"},
-		{err: fmt.Errorf("%w: detail", errDirectoryIdentity), want: "directory_identity_failed"},
 		{err: errors.New("other"), want: "invalid_directory"},
 	}
 	for _, test := range tests {
@@ -140,7 +140,16 @@ func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
 }
 
 func (files *fakeFiles) OpenDirectory(_ string, components []string) (*os.File, error) {
-	return os.Open(filepath.Join(append([]string{files.root}, components...)...))
+	directory, err := os.Open(filepath.Join(append([]string{files.root}, components...)...))
+	if err != nil {
+		return nil, err
+	}
+	defer directory.Close()
+	fd, err := unix.Dup(int(directory.Fd()))
+	if err != nil {
+		return nil, err
+	}
+	return os.NewFile(uintptr(fd), "opaque-directory"), nil
 }
 
 func (files *fakeFiles) Path(_ string) (string, error) {

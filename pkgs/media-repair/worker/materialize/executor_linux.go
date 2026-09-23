@@ -21,6 +21,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/worker/mediaevidence"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -45,7 +46,6 @@ var (
 	errDirectorySpecial   = errors.New("source directory contains a special file")
 	errDirectoryLimit     = errors.New("source directory exceeds limits")
 	errDirectoryEntryInfo = errors.New("read source directory entry metadata")
-	errDirectoryIdentity  = errors.New("identify source directory entry")
 	errDirectoryCopy      = errors.New("copy directory audio")
 	errDirectoryProbe     = errors.New("probe directory audio")
 	errDirectoryChanged   = errors.New("source directory changed")
@@ -332,7 +332,7 @@ func (executor *Executor) scanDirectory(
 	result := directorySource{}
 	entries := 0
 	var visit func([]string, []string) error
-	visit = func(absoluteComponents, relativeComponents []string) error {
+	visit = func(absoluteComponents, relativeComponents []string) (visitErr error) {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -340,10 +340,14 @@ func (executor *Executor) scanDirectory(
 		if err != nil {
 			return err
 		}
-		children, readErr := directory.ReadDir(-1)
-		closeErr := directory.Close()
-		if readErr != nil || closeErr != nil {
-			return fmt.Errorf("%w: %v", errDirectoryRead, errors.Join(readErr, closeErr))
+		defer func() {
+			if err := directory.Close(); err != nil {
+				visitErr = errors.Join(visitErr, fmt.Errorf("%w: %v", errDirectoryRead, err))
+			}
+		}()
+		children, err := directory.ReadDir(-1)
+		if err != nil {
+			return fmt.Errorf("%w: %v", errDirectoryRead, err)
 		}
 		sort.Slice(children, func(left, right int) bool {
 			return children[left].Name() < children[right].Name()
@@ -353,13 +357,20 @@ func (executor *Executor) scanDirectory(
 			if entries > maximumEntries {
 				return errDirectoryLimit
 			}
-			name, err := safeArchiveName(child.Name(), child.IsDir())
+			name, err := safeArchiveName(child.Name(), false)
 			if err != nil || strings.Contains(name, "/") {
 				return errDirectoryEntry
 			}
+			var stat unix.Stat_t
+			if err := unix.Fstatat(
+				int(directory.Fd()), name, &stat, unix.AT_SYMLINK_NOFOLLOW,
+			); err != nil {
+				return fmt.Errorf("%w: %v", errDirectoryEntryInfo, err)
+			}
 			absolute := appendCopy(absoluteComponents, name)
 			relative := appendCopy(relativeComponents, name)
-			if child.IsDir() {
+			fileType := stat.Mode & unix.S_IFMT
+			if fileType == unix.S_IFDIR {
 				if len(relative) > 64 {
 					return errDirectoryLimit
 				}
@@ -368,28 +379,24 @@ func (executor *Executor) scanDirectory(
 				}
 				continue
 			}
-			if child.Type()&os.ModeSymlink != 0 {
+			if fileType == unix.S_IFLNK {
 				return errDirectorySymlink
 			}
-			info, err := child.Info()
-			if err != nil {
-				return fmt.Errorf("%w: %v", errDirectoryEntryInfo, err)
-			}
-			if !info.Mode().IsRegular() {
+			if fileType != unix.S_IFREG {
 				return errDirectorySpecial
 			}
 			if _, audio := audioExtensions[strings.ToLower(filepath.Ext(name))]; !audio {
 				continue
 			}
-			if info.Size() <= 0 || info.Size() > maximumFileBytes ||
-				result.bytes > maximumTotalBytes-info.Size() {
+			if stat.Size <= 0 || stat.Size > maximumFileBytes ||
+				result.bytes > maximumTotalBytes-stat.Size {
 				return errDirectoryLimit
 			}
-			snapshot, err := fileidentity.FromFileInfo(info)
-			if err != nil {
-				return fmt.Errorf("%w: %v", errDirectoryIdentity, err)
+			snapshot := fileidentity.Snapshot{
+				Device: uint64(stat.Dev), Inode: stat.Ino, SizeBytes: stat.Size,
+				MTimeNS: stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
 			}
-			result.bytes += info.Size()
+			result.bytes += stat.Size
 			result.files = append(result.files, directoryFile{
 				components: absolute,
 				relative:   strings.Join(relative, "/"),
@@ -720,8 +727,6 @@ func reasonForDirectoryError(err error) string {
 		return "directory_limit_exceeded"
 	case errors.Is(err, errDirectoryEntryInfo):
 		return "directory_entry_info_failed"
-	case errors.Is(err, errDirectoryIdentity):
-		return "directory_identity_failed"
 	case errors.Is(err, errDirectoryCopy):
 		return "copy_failed"
 	case errors.Is(err, errDirectoryProbe):
