@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
+	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
@@ -39,11 +39,13 @@ type Planner interface {
 }
 
 type Report struct {
-	Observed   int
-	Candidates int
-	Planned    int
-	Cached     int
-	NoRepair   int
+	Observed     int
+	Candidates   int
+	Planned      int
+	Cached       int
+	Deferred     int
+	NoRepair     int
+	PlannedCases []Record
 }
 
 type Evidence struct {
@@ -58,22 +60,75 @@ type Evidence struct {
 }
 
 type Runner struct {
-	lidarr  Lidarr
-	worker  Worker
-	planner Planner
-	store   *Store
-	now     func() time.Time
+	lidarr   Lidarr
+	worker   Worker
+	store    *Store
+	now      func() time.Time
+	planning *planningrunner.Runner[
+		Record,
+		lidarrcontracts.Decision,
+		planningrunner.Failure,
+	]
 }
 
+type lidarrPlanningResult = planningrunner.Result[
+	Record,
+	lidarrcontracts.Decision,
+	planningrunner.Failure,
+]
+
 var errNoTarArchive = errors.New("download contains no tar archive")
+
+const (
+	initialPlanningBackoff = 5 * time.Minute
+	maximumPlanningBackoff = 6 * time.Hour
+)
 
 func NewRunner(client Lidarr, worker Worker, planner Planner, store *Store) (*Runner, error) {
 	if client == nil || worker == nil || planner == nil || store == nil {
 		return nil, fmt.Errorf("Lidarr shadow runner dependencies are incomplete")
 	}
-	return &Runner{
-		lidarr: client, worker: worker, planner: planner, store: store, now: time.Now,
-	}, nil
+	runner := &Runner{
+		lidarr: client, worker: worker, store: store, now: time.Now,
+	}
+	planning, err := planningrunner.New(planningrunner.Dependencies[
+		Record,
+		lidarrcontracts.Decision,
+		planningrunner.Failure,
+	]{
+		Store: store,
+		Plan: func(ctx context.Context, record Record) (lidarrcontracts.Decision, error) {
+			repairCase, err := lidarrcontracts.DecodeCase(record.Case)
+			if err != nil {
+				return lidarrcontracts.Decision{}, err
+			}
+			decision, err := planner.PlanLidarr(ctx, repairCase)
+			if err != nil {
+				return lidarrcontracts.Decision{}, err
+			}
+			if err := ValidateDecision(repairCase, decision); err != nil {
+				return lidarrcontracts.Decision{}, &planningrunner.InvalidResultError{Err: err}
+			}
+			return decision, nil
+		},
+		Clock: runnerClock{runner: runner},
+		CaseID: func(record Record) string {
+			caseID, _ := recordCaseID(record)
+			return caseID
+		},
+		DecisionCaseID:  func(decision lidarrcontracts.Decision) string { return decision.CaseID() },
+		Superseded:      func(Record) bool { return false },
+		ClassifyFailure: planningrunner.ClassifyFailure,
+		Backoff: planningrunner.Backoff{
+			Initial: initialPlanningBackoff,
+			Maximum: maximumPlanningBackoff,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	runner.planning = planning
+	return runner, nil
 }
 
 func (runner *Runner) Run(ctx context.Context) (Report, error) {
@@ -87,7 +142,7 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		if !eligibleQueue(queue) {
 			continue
 		}
-		candidate, cached, decision, err := runner.processQueue(ctx, queue)
+		candidate, result, err := runner.processQueue(ctx, queue)
 		if candidate {
 			report.Candidates++
 		}
@@ -98,12 +153,27 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		if !candidate {
 			continue
 		}
-		if cached {
-			report.Cached++
-		} else {
+		switch result.Outcome {
+		case planningrunner.Decided:
 			report.Planned++
+		case planningrunner.AlreadyDecided:
+			report.Cached++
+		case planningrunner.Deferred:
+			report.Deferred++
 		}
-		if decision.Kind == lidarrcontracts.ActionNoRepair {
+		if result.Outcome == planningrunner.Decided ||
+			result.Outcome == planningrunner.AlreadyDecided {
+			decision := result.Planned.Decision
+			record := result.Planned.Case
+			decisionData, encodeErr := lidarrcontracts.EncodeDecision(decision)
+			if encodeErr != nil {
+				failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, encodeErr))
+				continue
+			}
+			record.Decision = decisionData
+			report.PlannedCases = append(report.PlannedCases, record)
+		}
+		if result.Planned.Decision.Kind == lidarrcontracts.ActionNoRepair {
 			report.NoRepair++
 		}
 	}
@@ -113,46 +183,43 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 func (runner *Runner) processQueue(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
-) (bool, bool, lidarrcontracts.Decision, error) {
+) (bool, lidarrPlanningResult, error) {
 	archivePath, snapshot, err := findArchive(queue.OutputPath)
 	if err == nil {
-		cached, decision, processErr := runner.processTar(ctx, queue, archivePath, snapshot)
-		return true, cached, decision, processErr
+		result, processErr := runner.processTar(ctx, queue, archivePath, snapshot)
+		return true, result, processErr
 	}
 	if !errors.Is(err, errNoTarArchive) {
 		if errors.Is(err, os.ErrNotExist) {
-			decision, found, cachedErr := runner.cachedDecision(queue.ID)
-			return found, found, decision, cachedErr
+			planned, found, readErr := runner.store.Get(queue.ID)
+			if readErr != nil || !found {
+				return found, lidarrPlanningResult{}, readErr
+			}
+			evidence, buildErr := runner.buildStoredEvidence(ctx, queue, planned)
+			if buildErr != nil {
+				return true, lidarrPlanningResult{}, buildErr
+			}
+			result, planErr := runner.planEvidence(ctx, evidence)
+			return true, result, planErr
 		}
-		return true, false, lidarrcontracts.Decision{}, fmt.Errorf("discover source: %w", err)
+		return true, lidarrPlanningResult{}, fmt.Errorf("discover source: %w", err)
 	}
 
 	materialized, err := runner.worker.MaterializeDirectoryAudio(
 		ctx, queue.OutputPath, directoryWorkspaceID(queue.ID, queue.OutputPath),
 	)
 	if materialize.IsNoSupportedAudio(err) {
-		return false, false, lidarrcontracts.Decision{}, nil
+		return false, lidarrPlanningResult{}, nil
 	}
 	if err != nil {
-		return true, false, lidarrcontracts.Decision{}, fmt.Errorf(
+		return true, lidarrPlanningResult{}, fmt.Errorf(
 			"materialize directory evidence: %w", err,
 		)
 	}
-	cached, decision, err := runner.processMaterialized(
+	result, err := runner.processMaterialized(
 		ctx, queue, SourceDirectoryAudio, queue.OutputPath, materialized,
 	)
-	return true, cached, decision, err
-}
-
-func (runner *Runner) cachedDecision(
-	queueID int64,
-) (lidarrcontracts.Decision, bool, error) {
-	record, found, err := runner.store.Get(queueID)
-	if err != nil || !found {
-		return lidarrcontracts.Decision{}, found, err
-	}
-	decision, err := lidarrcontracts.DecodeDecision(record.Decision)
-	return decision, true, err
+	return true, result, err
 }
 
 func (runner *Runner) processTar(
@@ -160,24 +227,13 @@ func (runner *Runner) processTar(
 	queue lidarr.QueueRecord,
 	archivePath string,
 	snapshot fileidentity.Snapshot,
-) (bool, lidarrcontracts.Decision, error) {
+) (lidarrPlanningResult, error) {
 	fingerprint := snapshot.Fingerprint()
-	previous, found, err := runner.store.Get(queue.ID)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
-	}
-	if found && previous.SourceKind == SourceTarAudio && previous.SourcePath == archivePath &&
-		previous.SourceFingerprint == fingerprint {
-		decision, err := lidarrcontracts.DecodeDecision(previous.Decision)
-		if err != nil || decision.Kind == lidarrcontracts.ActionNoRepair {
-			return true, decision, err
-		}
-	}
 	materialized, err := runner.worker.MaterializeTarAudio(
 		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
 	)
 	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("materialize archive evidence: %w", err)
+		return lidarrPlanningResult{}, fmt.Errorf("materialize archive evidence: %w", err)
 	}
 	return runner.processMaterialized(ctx, queue, SourceTarAudio, archivePath, materialized)
 }
@@ -188,38 +244,15 @@ func (runner *Runner) processMaterialized(
 	sourceKind SourceKind,
 	sourcePath string,
 	materialized materialize.Success,
-) (bool, lidarrcontracts.Decision, error) {
+) (lidarrPlanningResult, error) {
 	if err := validateMaterializedSource(sourceKind, materialized); err != nil {
-		return false, lidarrcontracts.Decision{}, err
-	}
-	previous, found, err := runner.store.Get(queue.ID)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
-	}
-	if found && previous.SourceKind == sourceKind && previous.SourcePath == sourcePath &&
-		previous.SourceFingerprint == materialized.SourceFingerprint {
-		decision, decodeErr := lidarrcontracts.DecodeDecision(previous.Decision)
-		if decodeErr != nil || decision.Kind == lidarrcontracts.ActionNoRepair {
-			return true, decision, decodeErr
-		}
-		evidence, assembleErr := runner.assembleMaterializedEvidence(
-			ctx, queue, sourceKind, sourcePath, materialized,
-		)
-		if assembleErr != nil {
-			return false, lidarrcontracts.Decision{}, assembleErr
-		}
-		if decision.CaseID() == evidence.Case.CaseID &&
-			previous.WorkspaceRoot == evidence.WorkspaceRoot &&
-			reflect.DeepEqual(previous.Bindings, evidence.Bindings) {
-			return true, decision, nil
-		}
-		return runner.planEvidence(ctx, evidence)
+		return lidarrPlanningResult{}, err
 	}
 	evidence, err := runner.assembleMaterializedEvidence(
 		ctx, queue, sourceKind, sourcePath, materialized,
 	)
 	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
+		return lidarrPlanningResult{}, err
 	}
 	return runner.planEvidence(ctx, evidence)
 }
@@ -227,31 +260,21 @@ func (runner *Runner) processMaterialized(
 func (runner *Runner) planEvidence(
 	ctx context.Context,
 	evidence Evidence,
-) (bool, lidarrcontracts.Decision, error) {
-	decision, err := runner.planner.PlanLidarr(ctx, evidence.Case)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("plan complete case: %w", err)
-	}
-	if err := ValidateDecision(evidence.Case, decision); err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("validate planned repair: %w", err)
-	}
+) (lidarrPlanningResult, error) {
 	caseData, err := lidarrcontracts.EncodeCase(evidence.Case)
 	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
+		return lidarrPlanningResult{}, err
 	}
-	decisionData, err := lidarrcontracts.EncodeDecision(decision)
-	if err != nil {
-		return false, lidarrcontracts.Decision{}, err
-	}
-	if err := runner.store.Put(Record{
+	result, err := runner.planning.Process(ctx, Record{
 		Version: stateVersion, QueueID: evidence.Queue.ID, SourceKind: evidence.SourceKind,
 		SourcePath: evidence.SourcePath, SourceFingerprint: evidence.SourceFingerprint,
 		WorkspaceRoot: evidence.WorkspaceRoot,
-		Case:          caseData, Decision: decisionData, Bindings: evidence.Bindings,
-	}); err != nil {
-		return false, lidarrcontracts.Decision{}, fmt.Errorf("store shadow decision: %w", err)
+		Case:          caseData, Bindings: evidence.Bindings,
+	})
+	if err != nil {
+		return result, fmt.Errorf("plan complete case: %w", err)
 	}
-	return false, decision, nil
+	return result, nil
 }
 
 func (runner *Runner) BuildCurrentEvidence(
@@ -489,4 +512,12 @@ func findArchive(outputPath string) (string, fileidentity.Snapshot, error) {
 		return "", fileidentity.Snapshot{}, err
 	}
 	return archivePath, snapshot, nil
+}
+
+type runnerClock struct {
+	runner *Runner
+}
+
+func (clock runnerClock) Now() time.Time {
+	return clock.runner.now()
 }

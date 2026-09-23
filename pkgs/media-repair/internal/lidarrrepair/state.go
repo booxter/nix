@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/privatefile"
@@ -49,7 +49,10 @@ type Record struct {
 }
 
 type Store struct {
-	directory string
+	directory       string
+	casesDir        string
+	planningDir     string
+	observationsDir string
 }
 
 func NewStore(directory string) (*Store, error) {
@@ -60,35 +63,49 @@ func NewStore(directory string) (*Store, error) {
 	if err := privatefile.EnsureDirectory(directory); err != nil {
 		return nil, fmt.Errorf("prepare Lidarr state directory: %w", err)
 	}
-	return &Store{directory: directory}, nil
+	casesDir := filepath.Join(directory, "cases")
+	if err := privatefile.EnsureDirectory(casesDir); err != nil {
+		return nil, fmt.Errorf("prepare Lidarr case records directory: %w", err)
+	}
+	planningDir := filepath.Join(directory, "planning")
+	if err := privatefile.EnsureDirectory(planningDir); err != nil {
+		return nil, fmt.Errorf("prepare Lidarr planning records directory: %w", err)
+	}
+	observationsDir := filepath.Join(directory, "observations")
+	if err := privatefile.EnsureDirectory(observationsDir); err != nil {
+		return nil, fmt.Errorf("prepare Lidarr observation records directory: %w", err)
+	}
+	store := &Store{
+		directory: directory, casesDir: casesDir, planningDir: planningDir,
+		observationsDir: observationsDir,
+	}
+	if err := store.migrateLegacyRecords(); err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 func (store *Store) Get(queueID int64) (Record, bool, error) {
-	path, err := store.path(queueID)
-	if err != nil {
-		return Record{}, false, err
-	}
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return Record{}, false, nil
-	}
-	if err != nil {
-		return Record{}, false, fmt.Errorf("read Lidarr repair state: %w", err)
-	}
-	record, err := decodeRecord(data)
-	return record, true, err
+	return store.latestPlanned(queueID)
 }
 
 func (store *Store) Put(record Record) error {
-	data, err := encodeRecord(record)
+	if _, err := encodeRecord(record); err != nil {
+		return err
+	}
+	if _, err := store.PutCase(record); err != nil {
+		return err
+	}
+	decision, err := lidarrcontracts.DecodeDecision(record.Decision)
 	if err != nil {
 		return err
 	}
-	path, err := store.path(record.QueueID)
+	caseID, err := recordCaseID(record)
 	if err != nil {
 		return err
 	}
-	return privatefile.Replace(store.directory, path, data)
+	_, _, err = store.PutDecision(caseID, decision, time.Now().UTC())
+	return err
 }
 
 func (store *Store) path(queueID int64) (string, error) {

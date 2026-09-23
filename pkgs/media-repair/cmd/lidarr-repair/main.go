@@ -50,6 +50,7 @@ type report struct {
 	Candidates    int
 	Planned       int
 	Cached        int
+	Deferred      int
 	NoRepair      int
 	Actions       int
 	Imported      int
@@ -166,9 +167,10 @@ func (app application) run(
 	}
 	_, err = fmt.Fprintf(
 		stdout,
-		"observed=%d candidates=%d planned=%d cached=%d no_repair=%d "+
+		"observed=%d candidates=%d planned=%d cached=%d deferred=%d no_repair=%d "+
 			"actions=%d imported=%d failed=%d apply_disabled=%t\n",
-		result.Observed, result.Candidates, result.Planned, result.Cached, result.NoRepair,
+		result.Observed, result.Candidates, result.Planned, result.Cached, result.Deferred,
+		result.NoRepair,
 		result.Actions, result.Imported, result.Failed, result.ApplyDisabled,
 	)
 	return err
@@ -265,7 +267,8 @@ func runController(ctx context.Context, configuration config) (report, error) {
 	result, err := runner.Run(ctx)
 	controllerReport := report{
 		Observed: result.Observed, Candidates: result.Candidates,
-		Planned: result.Planned, Cached: result.Cached, NoRepair: result.NoRepair,
+		Planned: result.Planned, Cached: result.Cached, Deferred: result.Deferred,
+		NoRepair: result.NoRepair,
 	}
 	if err != nil || !configuration.Apply {
 		return controllerReport, err
@@ -289,11 +292,12 @@ func runController(ctx context.Context, configuration config) (report, error) {
 	if err != nil {
 		return controllerReport, fmt.Errorf("refresh Lidarr queue before apply: %w", err)
 	}
+	queuesByID := make(map[int64]lidarrsource.QueueRecord, len(queues))
 	for _, queue := range queues {
-		planned, found, readErr := store.Get(queue.ID)
-		if readErr != nil {
-			return controllerReport, readErr
-		}
+		queuesByID[queue.ID] = queue
+	}
+	for _, planned := range result.PlannedCases {
+		queue, found := queuesByID[planned.QueueID]
 		if !found {
 			continue
 		}

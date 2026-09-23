@@ -217,7 +217,7 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	}
 	if first.Observed != 2 || first.Candidates != 1 || first.Planned != 1 ||
 		first.NoRepair != 1 || second.Candidates != 1 || second.Cached != 1 ||
-		third.Candidates != 0 || worker.calls != 1 || planner.calls != 1 {
+		third.Candidates != 0 || worker.calls != 2 || planner.calls != 1 {
 		t.Fatalf(
 			"first=%#v second=%#v third=%#v worker=%d planner=%d",
 			first, second, third, worker.calls, planner.calls,

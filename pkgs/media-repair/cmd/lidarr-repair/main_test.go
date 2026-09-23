@@ -34,13 +34,15 @@ func TestApplicationObservesWithoutActions(t *testing.T) {
 			configuration.WorkerRoots["usenet"] != "/downloads" || configuration.Apply {
 			t.Fatalf("configuration = %#v", configuration)
 		}
-		return report{Observed: 7, Candidates: 2, Planned: 1, Cached: 1, NoRepair: 1}, nil
+		return report{
+			Observed: 7, Candidates: 3, Planned: 1, Cached: 1, Deferred: 1, NoRepair: 1,
+		}, nil
 	}}
 	var stdout, stderr bytes.Buffer
 	if err := app.run(context.Background(), validArguments(t), &stdout, &stderr); err != nil {
 		t.Fatal(err)
 	}
-	if !called || stdout.String() != "observed=7 candidates=2 planned=1 cached=1 "+
+	if !called || stdout.String() != "observed=7 candidates=3 planned=1 cached=1 deferred=1 "+
 		"no_repair=1 actions=0 imported=0 failed=0 apply_disabled=false\n" || stderr.Len() != 0 {
 		t.Fatalf("called = %v, stdout = %q, stderr = %q", called, stdout.String(), stderr.String())
 	}
