@@ -82,7 +82,7 @@ func TestStorePersistsImportExecutionTransitions(t *testing.T) {
 		t.Fatalf("execution = %#v, changed = %v, error = %v", execution, changed, err)
 	}
 	execution, changed, err = store.MarkImported(1, []lidarr.ImportedTrack{{
-		HistoryID: 91, AlbumID: 3, ArtistID: 2, TrackID: 11, DownloadID: "download",
+		HistoryID: 91, AlbumID: 3, ArtistID: 2, TrackID: 11,
 		DroppedPath: "/downloads/staged/02.flac", ImportedPath: "/music/02.flac",
 		OccurredAt: now,
 	}}, now)

@@ -52,7 +52,8 @@ func TestImportExecutorConfirmsEverySelectedTrack(t *testing.T) {
 		)
 	}
 	if len(client.requested.Files) != 2 || client.requested.Files[0].TrackID != 11 ||
-		client.requested.Files[1].TrackID != 12 || client.requested.Files[0].AlbumReleaseID != 7 {
+		client.requested.Files[1].TrackID != 12 || client.requested.Files[0].AlbumReleaseID != 7 ||
+		client.requested.Files[0].DownloadID != "" || client.requested.Files[1].DownloadID != "" {
 		t.Fatalf("request = %#v", client.requested)
 	}
 }
@@ -140,7 +141,7 @@ func testAuthorizedImport() AuthorizedImport {
 func testImportedTrack(track AuthorizedTrack, at time.Time, historyID int64) lidarr.ImportedTrack {
 	return lidarr.ImportedTrack{
 		HistoryID: historyID, AlbumID: 3, ArtistID: 2, TrackID: track.TrackID,
-		DownloadID: track.DownloadID, DroppedPath: track.Path,
+		DroppedPath:  track.Path,
 		ImportedPath: "/music/Artist/Album/" + track.ArtifactID + ".flac", OccurredAt: at,
 	}
 }

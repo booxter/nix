@@ -69,7 +69,7 @@ func (executor *ImportExecutor) Execute(
 	history, err := executor.dependencies.Lidarr.ReadImportedTracks(
 		ctx,
 		authorized.AlbumID,
-		authorized.Tracks[0].DownloadID,
+		"",
 	)
 	if err != nil {
 		return ImportExecution{}, fmt.Errorf("read Lidarr history before manual import: %w", err)
@@ -162,7 +162,6 @@ func manualImportCommand(authorized AuthorizedImport) lidarr.ManualImportCommand
 			Path: track.Path, ArtistID: authorized.ArtistID, AlbumID: authorized.AlbumID,
 			AlbumReleaseID: authorized.ReleaseID, TrackID: track.TrackID,
 			Quality: track.Quality, IndexerFlags: track.IndexerFlags,
-			DownloadID:              track.DownloadID,
 			DisableReleaseSwitching: track.DisableReleaseSwitching,
 		}
 	}
@@ -176,7 +175,7 @@ func (executor *ImportExecutor) confirm(
 	history, err := executor.dependencies.Lidarr.ReadImportedTracks(
 		ctx,
 		execution.AlbumID,
-		execution.Tracks[0].DownloadID,
+		"",
 	)
 	if err != nil {
 		return execution, false, fmt.Errorf("read Lidarr imported-track history: %w", err)
@@ -184,7 +183,7 @@ func (executor *ImportExecutor) confirm(
 	confirmations := make([]lidarr.ImportedTrack, 0, len(execution.Tracks))
 	for _, track := range execution.Tracks {
 		confirmed, found := lidarr.FindImportedTrack(history, lidarr.ImportedTrackMatch{
-			TrackID: track.TrackID, DownloadID: track.DownloadID, DroppedPath: track.Path,
+			TrackID: track.TrackID, DroppedPath: track.Path,
 			AfterHistoryID: execution.HistoryIDBefore, NotBefore: execution.PreparedAt,
 		})
 		if !found {

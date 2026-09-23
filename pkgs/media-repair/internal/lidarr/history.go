@@ -36,7 +36,7 @@ func (client *Client) ReadImportedTracks(
 	albumID int64,
 	downloadID string,
 ) ([]ImportedTrack, error) {
-	if albumID <= 0 || downloadID == "" || downloadID != strings.TrimSpace(downloadID) ||
+	if albumID <= 0 || downloadID != strings.TrimSpace(downloadID) ||
 		strings.ContainsRune(downloadID, '\x00') {
 		return nil, fmt.Errorf("Lidarr imported-track history query is invalid")
 	}
@@ -48,7 +48,9 @@ func (client *Client) ReadImportedTracks(
 			Page: page, PageSize: historyPageSize, SortKey: "date", SortDir: starr.SortDescend,
 		}
 		request.Set("albumId", strconv.FormatInt(albumID, 10))
-		request.Set("downloadId", downloadID)
+		if downloadID != "" {
+			request.Set("downloadId", downloadID)
+		}
 		request.Set("eventType", strconv.Itoa(int(starrLidarr.FilterTrackFileImported)))
 		response, err := client.api.GetHistoryPageContext(ctx, request)
 		if err != nil {
@@ -76,8 +78,8 @@ func (client *Client) ReadImportedTracks(
 				return nil, fmt.Errorf("Lidarr history contains duplicate record ID %d", record.ID)
 			}
 			seen[record.ID] = struct{}{}
-			if record.EventType != trackFileImportedEvent ||
-				record.AlbumID != albumID || record.DownloadID != downloadID {
+			if record.EventType != trackFileImportedEvent || record.AlbumID != albumID ||
+				(downloadID != "" && record.DownloadID != downloadID) {
 				continue
 			}
 			if record.ArtistID <= 0 || record.TrackID <= 0 ||
@@ -123,7 +125,8 @@ type ImportedTrackMatch struct {
 func FindImportedTrack(imports []ImportedTrack, match ImportedTrackMatch) (ImportedTrack, bool) {
 	for _, imported := range imports {
 		if imported.HistoryID > match.AfterHistoryID && imported.TrackID == match.TrackID &&
-			imported.DownloadID == match.DownloadID && imported.DroppedPath == match.DroppedPath &&
+			(match.DownloadID == "" || imported.DownloadID == match.DownloadID) &&
+			imported.DroppedPath == match.DroppedPath &&
 			!imported.OccurredAt.Before(match.NotBefore) {
 			return imported, true
 		}

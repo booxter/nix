@@ -266,7 +266,7 @@ func validateConfirmations(record ImportExecution, confirmations []lidarr.Import
 	for _, track := range record.Tracks {
 		confirmation, found := byTrack[track.TrackID]
 		if !found || confirmation.AlbumID != record.AlbumID ||
-			confirmation.ArtistID != record.ArtistID || confirmation.DownloadID != track.DownloadID ||
+			confirmation.ArtistID != record.ArtistID ||
 			confirmation.DroppedPath != track.Path || confirmation.HistoryID <= record.HistoryIDBefore ||
 			confirmation.OccurredAt.Before(record.PreparedAt) {
 			return fmt.Errorf("Lidarr import confirmation for track %d does not match", track.TrackID)

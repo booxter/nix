@@ -37,12 +37,12 @@ func TestRequestManualImportUsesExactSelectedTracks(t *testing.T) {
 			{
 				Path: "/downloads/staged/01.mp3", ArtistID: 2, AlbumID: 3,
 				AlbumReleaseID: 7, TrackID: 11, Quality: quality,
-				DownloadID: "download", DisableReleaseSwitching: false,
+				DisableReleaseSwitching: false,
 			},
 			{
 				Path: "/downloads/staged/02.mp3", ArtistID: 2, AlbumID: 3,
 				AlbumReleaseID: 7, TrackID: 12, Quality: quality,
-				DownloadID: "download", DisableReleaseSwitching: false,
+				DisableReleaseSwitching: false,
 			},
 		},
 	})
@@ -55,8 +55,41 @@ func TestRequestManualImportUsesExactSelectedTracks(t *testing.T) {
 		t.Fatalf("command = %#v, request = %#v", command, observed)
 	}
 	if len(observed.Files[0].TrackIDs) != 1 || observed.Files[0].TrackIDs[0] != 11 ||
-		observed.Files[0].AlbumReleaseID != 7 || observed.Files[0].DisableReleaseSwitching {
+		observed.Files[0].AlbumReleaseID != 7 || observed.Files[0].DownloadID != "" ||
+		observed.Files[0].DisableReleaseSwitching {
 		t.Fatalf("first file = %#v", observed.Files[0])
+	}
+}
+
+func TestReadImportedTracksWithoutDownloadFilter(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Query().Has("downloadId") {
+			t.Errorf("query = %v", request.URL.Query())
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"page":1,"pageSize":250,"totalRecords":1,
+			"records":[{
+				"id":91,"albumId":3,"artistId":2,"trackId":11,
+				"downloadId":"","eventType":"trackFileImported",
+				"date":"2026-09-22T12:00:00Z",
+				"data":{"droppedPath":"/downloads/staged/01.mp3","importedPath":"/music/01.mp3"}
+			}]
+		}`))
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	imports, err := client.ReadImportedTracks(context.Background(), 3, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(imports) != 1 || imports[0].DownloadID != "" || imports[0].TrackID != 11 {
+		t.Fatalf("imports = %#v", imports)
 	}
 }
 

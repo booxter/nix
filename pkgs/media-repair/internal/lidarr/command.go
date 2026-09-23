@@ -39,7 +39,7 @@ func (command ManualImportCommand) validate() error {
 		if file.Path == "" || !filepath.IsAbs(file.Path) || filepath.Clean(file.Path) != file.Path ||
 			strings.ContainsRune(file.Path, '\x00') || file.ArtistID <= 0 || file.AlbumID <= 0 ||
 			file.AlbumReleaseID <= 0 || file.TrackID <= 0 || file.Quality == nil ||
-			strings.TrimSpace(file.DownloadID) == "" || file.DownloadID != strings.TrimSpace(file.DownloadID) ||
+			file.DownloadID != strings.TrimSpace(file.DownloadID) ||
 			strings.ContainsRune(file.DownloadID, '\x00') {
 			return fmt.Errorf("Lidarr manual-import file %d is incomplete", index)
 		}
