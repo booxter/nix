@@ -108,7 +108,7 @@ func TestMaterializeDirectoryRejectsSymlink(t *testing.T) {
 		Operation: OperationMaterializeDirectory, RootID: "root:test",
 		SourceComponents: []string{"Album"}, WorkspaceID: "workspace:directory",
 	})
-	if response.Failure == nil || response.Failure.Reason != "invalid_directory" {
+	if response.Failure == nil || response.Failure.Reason != "directory_contains_symlink" {
 		t.Fatalf("response = %#v", response)
 	}
 }
@@ -123,6 +123,13 @@ func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
 		{err: fmt.Errorf("%w: detail", errDirectoryCopy), want: "copy_failed"},
 		{err: fmt.Errorf("%w: detail", errDirectoryProbe), want: "probe_failed"},
 		{err: fmt.Errorf("%w: detail", errDirectoryChanged), want: "source_changed"},
+		{err: fmt.Errorf("%w: detail", errDirectoryRead), want: "directory_read_failed"},
+		{err: fmt.Errorf("%w: detail", errDirectoryEntry), want: "invalid_directory_entry"},
+		{err: fmt.Errorf("%w: detail", errDirectorySymlink), want: "directory_contains_symlink"},
+		{err: fmt.Errorf("%w: detail", errDirectorySpecial), want: "directory_contains_special_file"},
+		{err: fmt.Errorf("%w: detail", errDirectoryLimit), want: "directory_limit_exceeded"},
+		{err: fmt.Errorf("%w: detail", errDirectoryEntryInfo), want: "directory_entry_info_failed"},
+		{err: fmt.Errorf("%w: detail", errDirectoryIdentity), want: "directory_identity_failed"},
 		{err: errors.New("other"), want: "invalid_directory"},
 	}
 	for _, test := range tests {
