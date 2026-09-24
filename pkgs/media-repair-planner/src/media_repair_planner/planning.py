@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol
-
 from .case_models import RepairCaseV3
-from .contracts import decode_case, decode_decision, encode_case, encode_decision
+from .contracts import decision_schema, decode_case, decode_decision, encode_case, encode_decision
 from .decision_models import (
     EvidenceRefs,
     NoRepair,
@@ -12,33 +10,14 @@ from .decision_models import (
     SafeExplanation,
     Sha256Id,
 )
-from .decision_validation import validate_decision_for_case
-from .decision_validation_core import DecisionViolation
+from .decision_validation import validate_decision_for_case, validate_decision_object
 from .planning_core import ContractPlanner
 from .planning_core import DecisionModelError as DecisionModelError
 from .planning_core import PlanningOutcome as PlanningOutcome
 from .prompt import SYSTEM_INSTRUCTION
-
-
-class DecisionModel(Protocol):
-    async def decide(
-        self,
-        system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3: ...
-
-
-class RadarrDecisionGenerator:
-    def __init__(self, model: DecisionModel) -> None:
-        self._model = model
-
-    async def generate(
-        self,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        return await self._model.decide(SYSTEM_INSTRUCTION, repair_case, correction)
+from .radarr_projection import project_case
+from .structured_model import StructuredDecisionModel
+from .structured_planning import StructuredDecisionGenerator
 
 
 def _roundtrip_case(repair_case: RepairCaseV3) -> RepairCaseV3:
@@ -67,9 +46,18 @@ def _fallback(repair_case: RepairCaseV3) -> RepairDecisionV3:
 
 
 class Planner(ContractPlanner[RepairCaseV3, RepairDecisionV3]):
-    def __init__(self, model: DecisionModel) -> None:
+    def __init__(self, model: StructuredDecisionModel) -> None:
         super().__init__(
-            generator=RadarrDecisionGenerator(model),
+            generator=StructuredDecisionGenerator(
+                model=model,
+                system_instruction=SYSTEM_INSTRUCTION,
+                decision_schema=decision_schema,
+                decision_model=RepairDecisionV3,
+                project_case=project_case,
+                decode_decision=decode_decision,
+                validate_decision_object=validate_decision_object,
+                case_id=lambda repair_case: repair_case.case_id.root,
+            ),
             roundtrip_case=_roundtrip_case,
             roundtrip_decision=_roundtrip_decision,
             validate_decision=validate_decision_for_case,

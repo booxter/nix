@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
-from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation
@@ -26,7 +26,9 @@ from media_repair_planner.evaluation_cli import main
 from media_repair_planner.ollama_model import MODEL_NAME, OllamaSettings
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.planning import Planner, PlanningOutcome
+from media_repair_planner.structured_model import StructuredModelResponse
 from media_repair_planner.tracing import TraceSink
+from pydantic import BaseModel
 
 
 def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV3:
@@ -65,14 +67,20 @@ class ExpectedDecisionModel:
             for evaluation_case in load_evaluation_cases()
         }
 
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        del system_instruction, correction
-        return self.decisions[repair_case.case_id.root]
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        del system_instruction, case_content, decision_schema, decision_model, correction
+        return StructuredModelResponse(
+            self.decisions[case_id].model_dump_json(by_alias=True),
+            "Expected",
+        )
 
 
 class CloseableExpectedDecisionModel(ExpectedDecisionModel):
@@ -85,23 +93,26 @@ class CloseableExpectedDecisionModel(ExpectedDecisionModel):
 
 
 class AlwaysNoRepairModel:
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        del system_instruction, correction
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        del system_instruction, case_content, decision_schema, decision_model, correction
         value = {
             "schema_version": "radarr-repair/v3",
-            "case_id": repair_case.case_id.root,
+            "case_id": case_id,
             "action": "no_repair",
             "reason": "unsafe_to_repair",
             "missing_evidence": [],
             "evidence_refs": [],
             "explanation": "Synthetic abstention.",
         }
-        return decode_decision(json.dumps(value).encode())
+        return StructuredModelResponse(json.dumps(value), "Expected")
 
 
 def settings(runs: int = 1, case: str | None = None) -> OllamaEvaluationSettings:

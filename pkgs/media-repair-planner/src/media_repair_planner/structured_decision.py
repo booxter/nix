@@ -3,9 +3,6 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 
-from .contracts import ContractError, decode_decision
-from .decision_models import RepairDecisionV3
-from .decision_validation import validate_decision_object
 from .decision_validation_core import (
     DecisionViolation,
     describe_violations,
@@ -13,6 +10,7 @@ from .decision_validation_core import (
     non_object_violation,
     parsing_violation,
 )
+from .json_contract import ContractError
 
 ERROR_DETAIL_LIMIT = 384
 
@@ -43,10 +41,6 @@ def structured_prompt(
     if correction:
         system_content += "\n\n" + format_correction(correction)
     return system_content, case_content
-
-
-def decode_structured_decision(raw_output: str) -> RepairDecisionV3:
-    return decode_structured_output(raw_output, decode_decision, validate_decision_object)
 
 
 def decode_structured_output[DecisionT](

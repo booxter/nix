@@ -4,6 +4,7 @@ import json
 import os
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
@@ -17,26 +18,33 @@ from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.planning import DecisionModelError, Planner
 from media_repair_planner.prompt import SYSTEM_INSTRUCTION
+from media_repair_planner.radarr_projection import project_case
+from media_repair_planner.structured_model import StructuredModelResponse
+from pydantic import BaseModel
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
 
 
 class ScriptedDecisionModel:
-    def __init__(self, steps: Sequence[RepairDecisionV3 | Exception]) -> None:
+    def __init__(self, steps: Sequence[str | Exception]) -> None:
         self.steps = list(steps)
-        self.calls: list[tuple[str, RepairCaseV3, tuple[DecisionViolation, ...]]] = []
+        self.calls: list[tuple[str, str, dict[str, Any], str, tuple[DecisionViolation, ...]]] = []
 
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        self.calls.append((system_instruction, repair_case, correction))
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        assert decision_model is RepairDecisionV3
+        self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
         step = self.steps.pop(0)
         if isinstance(step, Exception):
             raise step
-        return step
+        return StructuredModelResponse(step, "Scripted")
 
 
 def repair_case(name: str = "repair-case-joinable.json") -> RepairCaseV3:
@@ -47,20 +55,25 @@ def repair_decision(name: str = "repair-decision-join.json") -> RepairDecisionV3
     return decode_decision((FIXTURES / name).read_bytes())
 
 
+def model_output(decision: RepairDecisionV3) -> str:
+    return encode_decision(decision).decode()
+
+
 async def test_planner_returns_valid_model_decision() -> None:
     expected = repair_decision()
-    model = ScriptedDecisionModel([expected])
+    model = ScriptedDecisionModel([model_output(expected)])
 
     actual = await Planner(model).plan(repair_case())
 
     assert actual == expected
     assert len(model.calls) == 1
     assert model.calls[0][0] == SYSTEM_INSTRUCTION
-    assert model.calls[0][2] == ()
+    assert model.calls[0][1] == project_case(repair_case()).case_content
+    assert model.calls[0][4] == ()
 
 
 async def test_planner_reports_successful_attempt() -> None:
-    model = ScriptedDecisionModel([repair_decision()])
+    model = ScriptedDecisionModel([model_output(repair_decision())])
 
     outcome = await Planner(model).plan_with_outcome(repair_case())
 
@@ -71,14 +84,14 @@ async def test_planner_reports_successful_attempt() -> None:
 
 async def test_planner_retries_one_expected_failure() -> None:
     expected = repair_decision()
-    model = ScriptedDecisionModel([DecisionModelError("unavailable"), expected])
+    model = ScriptedDecisionModel([DecisionModelError("unavailable"), model_output(expected)])
 
     outcome = await Planner(model).plan_with_outcome(repair_case())
 
     assert outcome.decision == expected
     assert outcome.attempt_errors == ("attempt 1: unavailable",)
     assert len(model.calls) == 2
-    assert model.calls[1][2] == ()
+    assert model.calls[1][4] == ()
 
 
 async def test_planner_falls_back_after_attempt_limit() -> None:
@@ -117,8 +130,9 @@ async def test_planner_reports_fallback() -> None:
 
 async def test_planner_retries_wrong_case_id_then_falls_back() -> None:
     wrong = repair_decision()
-    wrong.root.case_id.root = "sha256:" + "0" * 64
-    model = ScriptedDecisionModel([wrong, wrong])
+    wrong_case_id = "sha256:" + "f" * 64
+    wrong.root.case_id.root = wrong_case_id
+    model = ScriptedDecisionModel([model_output(wrong), model_output(wrong)])
 
     outcome = await Planner(model).plan_with_outcome(repair_case())
 
@@ -128,12 +142,12 @@ async def test_planner_retries_wrong_case_id_then_falls_back() -> None:
         "attempt 2: decision case_id does not match the case",
     )
     assert len(model.calls) == 2
-    assert model.calls[1][2] == (
+    assert model.calls[1][4] == (
         DecisionViolation(
             code=ViolationCode.CASE_ID_MISMATCH,
             path=("case_id",),
-            rejected_values=("sha256:" + "0" * 64,),
-            allowed_values=(repair_case().case_id.root,),
+            rejected_values=(wrong_case_id,),
+            allowed_values=("sha256:" + "0" * 64,),
         ),
     )
 
@@ -141,19 +155,22 @@ async def test_planner_retries_wrong_case_id_then_falls_back() -> None:
 async def test_planner_passes_model_rejection_to_retry() -> None:
     violation = DecisionViolation(ViolationCode.INVALID_JSON, ())
     expected = repair_decision()
-    model = ScriptedDecisionModel([DecisionModelError("invalid response", (violation,)), expected])
+    model = ScriptedDecisionModel(
+        [DecisionModelError("invalid response", (violation,)), model_output(expected)]
+    )
 
     outcome = await Planner(model).plan_with_outcome(repair_case())
 
     assert outcome.decision == expected
-    assert model.calls[0][2] == ()
-    assert model.calls[1][2] == (violation,)
+    assert model.calls[0][4] == ()
+    assert model.calls[1][4] == (violation,)
 
 
 async def test_planner_retries_invalid_structured_output_then_falls_back() -> None:
-    invalid = repair_decision()
-    invalid.root.case_id.root = "invalid"
-    model = ScriptedDecisionModel([invalid, invalid])
+    invalid = json.loads(model_output(repair_decision()))
+    invalid["case_id"] = "invalid"
+    output = json.dumps(invalid)
+    model = ScriptedDecisionModel([output, output])
 
     result = await Planner(model).plan(repair_case())
 
@@ -164,7 +181,7 @@ async def test_planner_retries_invalid_structured_output_then_falls_back() -> No
 async def test_planner_revalidates_input_before_calling_model() -> None:
     case = repair_case()
     case.schema_version = "unsupported"  # type: ignore[assignment]
-    model = ScriptedDecisionModel([repair_decision()])
+    model = ScriptedDecisionModel([model_output(repair_decision())])
 
     with pytest.raises(ContractError, match="contract validation failed"):
         await Planner(model).plan(case)

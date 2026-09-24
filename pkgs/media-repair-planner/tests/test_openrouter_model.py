@@ -12,8 +12,9 @@ from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.contracts import decode_case
+from media_repair_planner.contracts import decision_schema, decode_case, decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
+from media_repair_planner.decision_validation import validate_decision_object
 from media_repair_planner.decision_validation_core import (
     DecisionViolation,
     ViolationCode,
@@ -29,6 +30,8 @@ from media_repair_planner.openrouter_model import (
 )
 from media_repair_planner.planning import DecisionModelError
 from media_repair_planner.radarr_projection import project_case
+from media_repair_planner.structured_model import StructuredDecisionModel
+from media_repair_planner.structured_planning import StructuredDecisionGenerator
 from media_repair_planner.tracing import JsonlTraceWriter
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
@@ -77,6 +80,24 @@ class ScriptedTransport:
         self.closed = True
 
 
+async def decide(
+    model: StructuredDecisionModel,
+    repair_case: RepairCaseV3,
+    correction: tuple[DecisionViolation, ...] = (),
+) -> RepairDecisionV3:
+    generator = StructuredDecisionGenerator(
+        model=model,
+        system_instruction="system instruction",
+        decision_schema=decision_schema,
+        decision_model=RepairDecisionV3,
+        project_case=project_case,
+        decode_decision=decode_decision,
+        validate_decision_object=validate_decision_object,
+        case_id=lambda value: value.case_id.root,
+    )
+    return await generator.generate(repair_case, correction)
+
+
 async def test_decision_model_sends_pinned_structured_request() -> None:
     response = OpenRouterResponse(
         content=decision_output(),
@@ -95,11 +116,7 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
         ),
     )
 
-    result = await model.decide(
-        "system instruction",
-        case,
-        correction,
-    )
+    result = await decide(model, case, correction)
 
     assert result.root.case_id.root == case.case_id.root
     request = transport.requests[0]
@@ -128,7 +145,7 @@ async def test_decision_model_wraps_transport_failure() -> None:
         DecisionModelError,
         match=r"OpenRouter request failed: RuntimeError: transport failed",
     ):
-        await model.decide("system instruction", repair_case())
+        await decide(model, repair_case())
 
 
 @pytest.mark.parametrize(
@@ -178,7 +195,7 @@ async def test_decision_model_rejects_invalid_response(
     model = OpenRouterDecisionModel(ScriptedTransport(response), settings())
 
     with pytest.raises(DecisionModelError, match=message) as raised:
-        await model.decide("system instruction", repair_case())
+        await decide(model, repair_case())
 
     assert tuple(violation.code for violation in raised.value.violations) == (
         () if violation_code is None else (violation_code,)
@@ -196,7 +213,7 @@ async def test_decision_model_applies_complete_contract_after_unwrapping() -> No
     )
 
     with pytest.raises(DecisionModelError, match="decision contract failed"):
-        await model.decide("system instruction", repair_case())
+        await decide(model, repair_case())
 
 
 async def test_decision_model_traces_response_without_reasoning(tmp_path: Path) -> None:
@@ -214,11 +231,12 @@ async def test_decision_model_traces_response_without_reasoning(tmp_path: Path) 
     )
 
     with JsonlTraceWriter(path, {case.case_id.root: "clear_ordered_join"}) as trace:
-        await OpenRouterDecisionModel(
+        model = OpenRouterDecisionModel(
             ScriptedTransport(response),
             settings(),
             trace,
-        ).decide("system instruction", case)
+        )
+        await decide(model, case)
 
     value = json.loads(path.read_text())
     assert value["raw_output"] == raw_output
