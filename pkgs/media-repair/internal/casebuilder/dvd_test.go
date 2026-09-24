@@ -37,6 +37,13 @@ func TestDVDCapabilityBindsTitleAndWholeDiscSnapshot(t *testing.T) {
 	}
 	previousID := capabilities[0].CapabilityID
 	file := files[vobID]
+	file.Fingerprint.Device++
+	files[vobID] = file
+	remounted, err := bindDVDCapabilities([]dvdvideo.Candidate{title}, files)
+	if err != nil || remounted[0].CapabilityID != previousID {
+		t.Fatalf("remounted DVD source changed capability identity: %#v, %v", remounted, err)
+	}
+	file = files[vobID]
 	file.Fingerprint.MTimeNS++
 	files[vobID] = file
 	changed, err := bindDVDCapabilities([]dvdvideo.Candidate{title}, files)

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"golang.org/x/sys/unix"
 )
 
@@ -140,6 +141,24 @@ func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
 	}
 }
 
+func TestDirectoryFingerprintIgnoresFilesystemDevice(t *testing.T) {
+	t.Parallel()
+
+	files := []directoryFile{{
+		relative: "01.flac",
+		snapshot: fileidentity.Snapshot{Device: 1, Inode: 2, SizeBytes: 3, MTimeNS: 4},
+	}}
+	before := directoryFingerprint(files)
+	files[0].snapshot.Device++
+	if after := directoryFingerprint(files); after != before {
+		t.Fatalf("fingerprint changed from %q to %q", before, after)
+	}
+	files[0].snapshot.MTimeNS++
+	if after := directoryFingerprint(files); after == before {
+		t.Fatalf("changed file retained fingerprint %q", after)
+	}
+}
+
 func (files *fakeFiles) OpenDirectory(_ string, components []string) (*os.File, error) {
 	directory, err := os.Open(filepath.Join(append([]string{files.root}, components...)...))
 	if err != nil {
@@ -194,6 +213,17 @@ func TestMaterializeTarAudio(t *testing.T) {
 	response := executor.Execute(context.Background(), validRequest())
 	if response.Success == nil || response.Failure != nil {
 		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+	}
+	archiveInfo, err := os.Stat(archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archiveSnapshot, err := fileidentity.FromFileInfo(archiveInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := response.Success.SourceFingerprint, archiveSnapshot.StableFingerprint(); got != want {
+		t.Fatalf("source fingerprint = %q, want %q", got, want)
 	}
 	retry := validRequest()
 	retry.RequestID = "request:retry"

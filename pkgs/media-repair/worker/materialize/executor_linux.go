@@ -27,7 +27,7 @@ import (
 const (
 	workspaceDirectory = ".media-repair"
 	workspaceManifest  = ".materialization.json"
-	manifestVersion    = "media-repair-workspace/v2"
+	manifestVersion    = "media-repair-workspace/v3"
 	maximumEntries     = 4096
 	maximumFileBytes   = 8 << 30
 	maximumTotalBytes  = 32 << 30
@@ -98,6 +98,15 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 		return fail(reasonForError(err))
 	}
 	defer archive.Close()
+	archiveInfo, err := archive.Stat()
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	archiveSnapshot, err := fileidentity.FromFileInfo(archiveInfo)
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	sourceFingerprint := archiveSnapshot.StableFingerprint()
 	rootPath, err := executor.files.Path(request.RootID)
 	if err != nil {
 		return fail(reasonForError(err))
@@ -110,7 +119,7 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 		return fail("workspace_error")
 	}
 	if success, found, err := loadWorkspace(
-		workspacePath, request, workspaceComponents, request.ExpectedFingerprint,
+		workspacePath, request, workspaceComponents, sourceFingerprint,
 	); err != nil {
 		return fail("workspace_error")
 	} else if found {
@@ -136,11 +145,11 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	success := Success{
 		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
 		Operation: OperationMaterializeTar, RootID: request.RootID,
-		SourceFingerprint:   request.ExpectedFingerprint,
+		SourceFingerprint:   sourceFingerprint,
 		WorkspaceComponents: workspaceComponents, Artifacts: artifacts,
 	}
 	if err := writeManifest(
-		partialPath, request.Operation, request.ExpectedFingerprint, success,
+		partialPath, request.Operation, sourceFingerprint, success,
 	); err != nil {
 		_ = os.RemoveAll(partialPath)
 		return fail("workspace_error")
@@ -418,15 +427,19 @@ func (executor *Executor) scanDirectory(
 	if len(result.files) == 0 {
 		return directorySource{}, errNoSupportedAudio
 	}
+	result.fingerprint = directoryFingerprint(result.files)
+	return result, nil
+}
+
+func directoryFingerprint(files []directoryFile) string {
 	hash := sha256.New()
-	for _, file := range result.files {
+	for _, file := range files {
 		_, _ = io.WriteString(hash, file.relative)
 		_, _ = hash.Write([]byte{0})
-		_, _ = io.WriteString(hash, file.snapshot.StrictFingerprint())
+		_, _ = io.WriteString(hash, file.snapshot.StableFingerprint())
 		_, _ = hash.Write([]byte{0})
 	}
-	result.fingerprint = "sha256:" + hex.EncodeToString(hash.Sum(nil))
-	return result, nil
+	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
 }
 
 func (executor *Executor) copyAndProbeDirectory(

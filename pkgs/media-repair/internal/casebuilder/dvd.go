@@ -48,7 +48,7 @@ func bindDVDCapabilities(
 		}
 		identity := []string{
 			string(contracts.CapabilityActionRemuxDVD), string(title.NavigationFileID),
-			navigation.Fingerprint.StrictFingerprint(),
+			navigation.Fingerprint.StableFingerprint(),
 			strconv.Itoa(details.Number), strconv.Itoa(details.TitleSet),
 			strconv.Itoa(details.TitleInSet), strconv.FormatInt(details.DurationMS, 10),
 			strconv.Itoa(details.Chapters),
@@ -62,7 +62,7 @@ func bindDVDCapabilities(
 			}
 			seen[fileID] = true
 			sourceIDs = append(sourceIDs, string(fileID))
-			identity = append(identity, string(fileID), file.Fingerprint.StrictFingerprint())
+			identity = append(identity, string(fileID), file.Fingerprint.StableFingerprint())
 		}
 		if !seen[title.NavigationFileID] {
 			return nil, fmt.Errorf("DVD navigation file is not bound to title sources")

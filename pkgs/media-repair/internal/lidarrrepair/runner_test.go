@@ -58,19 +58,21 @@ func (fake *fakeLidarr) ReadManualImports(
 }
 
 type fakeWorker struct {
-	calls          int
-	directoryCalls int
-	directoryAudio bool
+	calls           int
+	directoryCalls  int
+	directoryAudio  bool
+	tarWorkspaceIDs []string
 }
 
 func (fake *fakeWorker) MaterializeTarAudio(
 	_ context.Context,
 	_ string,
 	snapshot fileidentity.Snapshot,
-	_ string,
+	workspaceID string,
 ) (materialize.Success, error) {
 	fake.calls++
-	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StrictFingerprint()), nil
+	fake.tarWorkspaceIDs = append(fake.tarWorkspaceIDs, workspaceID)
+	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StableFingerprint()), nil
 }
 
 func testMaterialization(operation, sourceFingerprint string) materialize.Success {
@@ -168,6 +170,10 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if err := os.WriteFile(archive, []byte("tar"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	_, archiveSnapshot, err := findArchive(download)
+	if err != nil {
+		t.Fatal(err)
+	}
 	albumID, artistID := int64(3), int64(2)
 	client := &fakeLidarr{
 		queue: []lidarr.QueueRecord{{
@@ -225,6 +231,12 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	}
 	if worker.directoryCalls != 4 {
 		t.Fatalf("directory calls = %d", worker.directoryCalls)
+	}
+	wantWorkspaceID := workspaceID(1, archiveSnapshot.StableFingerprint())
+	for _, got := range worker.tarWorkspaceIDs {
+		if got != wantWorkspaceID {
+			t.Fatalf("tar workspace ID = %q, want %q", got, wantWorkspaceID)
+		}
 	}
 	record, found, err := store.Get(1)
 	if err != nil || !found || len(record.Bindings) != 1 {
