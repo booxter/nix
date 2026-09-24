@@ -181,14 +181,14 @@ func dvdStageMatches(record RemuxExecution, request workercontracts.DVDRemuxRequ
 		request.TitleNumber != int64(authorized.TitleNumber) ||
 		request.ExpectedDurationMS != authorized.ExpectedDurationMS ||
 		request.ExpectedChapterCount != int64(authorized.ExpectedChapters) ||
-		request.Navigation.ExpectedFingerprint != authorized.Navigation.Fingerprint.Fingerprint() ||
+		request.Navigation.ExpectedFingerprint != authorized.Navigation.Fingerprint.StrictFingerprint() ||
 		request.Navigation.SizeBytes != authorized.Navigation.Fingerprint.SizeBytes ||
 		len(request.Sources) != len(authorized.Sources) ||
 		len(request.ExpectedTracks) != len(authorized.ExpectedTracks) {
 		return false
 	}
 	for index, source := range authorized.Sources {
-		if request.Sources[index].ExpectedFingerprint != source.Fingerprint.Fingerprint() ||
+		if request.Sources[index].ExpectedFingerprint != source.Fingerprint.StrictFingerprint() ||
 			request.Sources[index].SizeBytes != source.Fingerprint.SizeBytes {
 			return false
 		}

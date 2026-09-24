@@ -275,12 +275,12 @@ func validStage() (
 		OutputContainer:     workercontracts.OutputContainerMKV,
 		Parts: []workercontracts.StageJoinPartV1{
 			{
-				ExpectedFingerprint: firstFingerprint.Fingerprint(),
+				ExpectedFingerprint: firstFingerprint.StrictFingerprint(),
 				FileID:              "file:first",
 				PathComponents:      []string{"Movie", "Movie CD1.mkv"},
 			},
 			{
-				ExpectedFingerprint: secondFingerprint.Fingerprint(),
+				ExpectedFingerprint: secondFingerprint.StrictFingerprint(),
 				FileID:              "file:second",
 				PathComponents:      []string{"Movie", "Movie CD2.mkv"},
 			},

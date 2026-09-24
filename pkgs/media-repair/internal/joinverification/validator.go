@@ -137,7 +137,7 @@ func requestMatchesAuthorization(
 	for position, part := range request.Parts {
 		expected := authorized.OrderedParts[position]
 		if part.FileID != string(expected.FileID) ||
-			part.ExpectedFingerprint != expected.Fingerprint.Fingerprint() {
+			part.ExpectedFingerprint != expected.Fingerprint.StrictFingerprint() {
 			return false
 		}
 	}

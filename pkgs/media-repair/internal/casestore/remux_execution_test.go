@@ -150,10 +150,10 @@ func TestPrepareRemuxRequiresStoredDecision(t *testing.T) {
 	request.CapabilityID = prepared.Authorization.CapabilityID
 	request.ExecutionID = prepared.ExecutionID
 	request.Playlist.PathComponents = playlist.PathComponents
-	request.Playlist.ExpectedFingerprint = playlist.Fingerprint.Fingerprint()
+	request.Playlist.ExpectedFingerprint = playlist.Fingerprint.StrictFingerprint()
 	request.Playlist.SizeBytes = playlist.Fingerprint.SizeBytes
 	request.Clips[0].PathComponents = clip.PathComponents
-	request.Clips[0].ExpectedFingerprint = clip.Fingerprint.Fingerprint()
+	request.Clips[0].ExpectedFingerprint = clip.Fingerprint.StrictFingerprint()
 	request.Clips[0].SizeBytes = clip.Fingerprint.SizeBytes
 	request.ExpectedDurationMS = prepared.Authorization.ExpectedDurationMS
 	request.ExpectedChapterCount = prepared.Authorization.ExpectedChapters
@@ -300,8 +300,8 @@ func preparedRemuxFixture(t *testing.T) (*Store, RemuxExecution, workerclient.Bl
 		t.Fatal(err)
 	}
 	request.ExecutionID = id
-	request.Playlist.ExpectedFingerprint = playlistFingerprint.Fingerprint()
-	request.Clips[0].ExpectedFingerprint = clipFingerprint.Fingerprint()
+	request.Playlist.ExpectedFingerprint = playlistFingerprint.StrictFingerprint()
+	request.Clips[0].ExpectedFingerprint = clipFingerprint.StrictFingerprint()
 	response.Success.RequestID = request.RequestID
 	store, err := New(filepath.Join(t.TempDir(), "state"))
 	if err != nil {

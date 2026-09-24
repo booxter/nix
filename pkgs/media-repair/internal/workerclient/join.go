@@ -53,7 +53,7 @@ func (client *Client) StageJoin(
 	parts := make([]workercontracts.StageJoinPartV1, len(authorized.OrderedParts))
 	for position, part := range authorized.OrderedParts {
 		parts[position] = workercontracts.StageJoinPartV1{
-			ExpectedFingerprint: part.Fingerprint.Fingerprint(),
+			ExpectedFingerprint: part.Fingerprint.StrictFingerprint(),
 			FileID:              string(part.FileID),
 			PathComponents:      components[position],
 		}

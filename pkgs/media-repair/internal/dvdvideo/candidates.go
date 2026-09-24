@@ -75,7 +75,7 @@ func ListFeatureTitles(
 		}
 		titles, err := identifier.IdentifyDVD(ctx, Target{
 			NavigationPath:      path,
-			ExpectedFingerprint: navigationFile.Fingerprint.Fingerprint(),
+			ExpectedFingerprint: navigationFile.Fingerprint.StrictFingerprint(),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("identify DVD %q: %w", path, err)

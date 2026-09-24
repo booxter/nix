@@ -422,7 +422,7 @@ func (executor *Executor) scanDirectory(
 	for _, file := range result.files {
 		_, _ = io.WriteString(hash, file.relative)
 		_, _ = hash.Write([]byte{0})
-		_, _ = io.WriteString(hash, file.snapshot.Fingerprint())
+		_, _ = io.WriteString(hash, file.snapshot.StrictFingerprint())
 		_, _ = hash.Write([]byte{0})
 	}
 	result.fingerprint = "sha256:" + hex.EncodeToString(hash.Sum(nil))
@@ -443,7 +443,7 @@ func (executor *Executor) copyAndProbeDirectory(
 			return nil, err
 		}
 		input, err := executor.files.Open(
-			request.RootID, sourceFile.components, sourceFile.snapshot.Fingerprint(),
+			request.RootID, sourceFile.components, sourceFile.snapshot.StrictFingerprint(),
 		)
 		if err != nil {
 			return nil, err
@@ -451,7 +451,7 @@ func (executor *Executor) copyAndProbeDirectory(
 		artifact, copyErr := copyDirectoryFile(
 			input, workspacePath, workspaceComponents, sourceFile, groupID,
 		)
-		verifyErr := executor.files.Verify(input, sourceFile.snapshot.Fingerprint())
+		verifyErr := executor.files.Verify(input, sourceFile.snapshot.StrictFingerprint())
 		closeErr := input.Close()
 		if copyErr != nil || verifyErr != nil || closeErr != nil {
 			return nil, fmt.Errorf(

@@ -281,14 +281,14 @@ func remuxStageMatches(
 		request.CapabilityID != authorized.CapabilityID ||
 		request.ExpectedDurationMS != authorized.ExpectedDurationMS ||
 		request.ExpectedChapterCount != authorized.ExpectedChapters ||
-		request.Playlist.ExpectedFingerprint != authorized.Playlist.Fingerprint.Fingerprint() ||
+		request.Playlist.ExpectedFingerprint != authorized.Playlist.Fingerprint.StrictFingerprint() ||
 		request.Playlist.SizeBytes != authorized.Playlist.Fingerprint.SizeBytes ||
 		len(request.Clips) != len(authorized.Clips) ||
 		len(request.ExpectedTracks) != len(authorized.ExpectedTracks) {
 		return false
 	}
 	for index, clip := range authorized.Clips {
-		if request.Clips[index].ExpectedFingerprint != clip.Fingerprint.Fingerprint() ||
+		if request.Clips[index].ExpectedFingerprint != clip.Fingerprint.StrictFingerprint() ||
 			request.Clips[index].SizeBytes != clip.Fingerprint.SizeBytes {
 			return false
 		}

@@ -437,7 +437,7 @@ func pathFingerprint(t *testing.T, path string) string {
 		Inode:     stat.Ino,
 		SizeBytes: stat.Size,
 		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
-	}.Fingerprint()
+	}.StrictFingerprint()
 }
 
 func requiredEnvironment(t *testing.T, name string) string {

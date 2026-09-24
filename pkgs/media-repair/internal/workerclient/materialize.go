@@ -25,7 +25,7 @@ func (client *Client) MaterializeTarAudio(
 	payload, err := materialize.EncodeRequest(materialize.Request{
 		SchemaVersion: materialize.SchemaVersion, RequestID: requestID,
 		Operation: materialize.OperationMaterializeTar, RootID: rootID,
-		SourceComponents: components, ExpectedFingerprint: fingerprint.Fingerprint(),
+		SourceComponents: components, ExpectedFingerprint: fingerprint.StrictFingerprint(),
 		WorkspaceID: workspaceID,
 	})
 	if err != nil {

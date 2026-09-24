@@ -173,7 +173,7 @@ func (client *Client) Probe(
 	}
 	requestID := client.nextID()
 	payload, err := workercontracts.EncodeProbeRequest(workercontracts.ProbeRequestV1{
-		ExpectedFingerprint: target.Fingerprint.Fingerprint(),
+		ExpectedFingerprint: target.Fingerprint.StrictFingerprint(),
 		Operation:           workercontracts.ProbeV1,
 		PathComponents:      components,
 		RequestID:           requestID,

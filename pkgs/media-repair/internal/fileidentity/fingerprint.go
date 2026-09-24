@@ -9,7 +9,10 @@ import (
 	"syscall"
 )
 
-const fingerprintDomain = "radarr-repair-file-metadata-v1\x00"
+const (
+	strictFingerprintDomain = "radarr-repair-file-metadata-v1\x00"
+	stableFingerprintDomain = "media-repair-file-identity-v1\x00"
+)
 
 type Snapshot struct {
 	Device    uint64
@@ -32,17 +35,40 @@ func FromFileInfo(info os.FileInfo) (Snapshot, error) {
 	}, nil
 }
 
-// Fingerprint returns a versioned metadata fingerprint without reading file
-// contents. Each field is an unsigned 64-bit big-endian word, so signed fields
-// retain their two's-complement bit pattern.
-func (snapshot Snapshot) Fingerprint() string {
-	payload := make([]byte, len(fingerprintDomain)+32)
-	copy(payload, fingerprintDomain)
-	fields := payload[len(fingerprintDomain):]
-	binary.BigEndian.PutUint64(fields[0:8], snapshot.Device)
-	binary.BigEndian.PutUint64(fields[8:16], snapshot.Inode)
-	binary.BigEndian.PutUint64(fields[16:24], uint64(snapshot.SizeBytes))
-	binary.BigEndian.PutUint64(fields[24:32], uint64(snapshot.MTimeNS))
+// StrictFingerprint identifies one observed filesystem object. It includes the
+// device number so open and verify operations can reject a different mount.
+func (snapshot Snapshot) StrictFingerprint() string {
+	return fingerprint(
+		strictFingerprintDomain,
+		snapshot.Device,
+		snapshot.Inode,
+		uint64(snapshot.SizeBytes),
+		uint64(snapshot.MTimeNS),
+	)
+}
+
+// StableFingerprint identifies the same file across a remount. It deliberately
+// excludes the device number, which can change while the underlying file does
+// not. It is suitable for persisted planning and workspace identities, not for
+// authorizing a live file operation.
+func (snapshot Snapshot) StableFingerprint() string {
+	return fingerprint(
+		stableFingerprintDomain,
+		snapshot.Inode,
+		uint64(snapshot.SizeBytes),
+		uint64(snapshot.MTimeNS),
+	)
+}
+
+// fingerprint encodes each field as an unsigned 64-bit big-endian word, so
+// signed fields retain their two's-complement bit pattern.
+func fingerprint(domain string, values ...uint64) string {
+	payload := make([]byte, len(domain)+8*len(values))
+	copy(payload, domain)
+	fields := payload[len(domain):]
+	for position, value := range values {
+		binary.BigEndian.PutUint64(fields[position*8:(position+1)*8], value)
+	}
 
 	digest := sha256.Sum256(payload)
 	return "sha256:" + hex.EncodeToString(digest[:])

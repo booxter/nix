@@ -81,7 +81,7 @@ func dvdSource(
 ) workercontracts.DVDRemuxSourceV1 {
 	return workercontracts.DVDRemuxSourceV1{
 		PathComponents:      append([]string(nil), components...),
-		ExpectedFingerprint: source.Fingerprint.Fingerprint(),
+		ExpectedFingerprint: source.Fingerprint.StrictFingerprint(),
 		SizeBytes:           source.Fingerprint.SizeBytes,
 	}
 }

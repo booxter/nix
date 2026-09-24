@@ -228,7 +228,7 @@ func (runner *Runner) processTar(
 	archivePath string,
 	snapshot fileidentity.Snapshot,
 ) (lidarrPlanningResult, error) {
-	fingerprint := snapshot.Fingerprint()
+	fingerprint := snapshot.StrictFingerprint()
 	materialized, err := runner.worker.MaterializeTarAudio(
 		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
 	)
@@ -316,7 +316,7 @@ func (runner *Runner) buildTarEvidence(
 	archivePath string,
 	snapshot fileidentity.Snapshot,
 ) (Evidence, error) {
-	fingerprint := snapshot.Fingerprint()
+	fingerprint := snapshot.StrictFingerprint()
 	materialized, err := runner.worker.MaterializeTarAudio(
 		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
 	)

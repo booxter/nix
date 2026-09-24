@@ -396,7 +396,7 @@ func successfulJoinStage(
 	for position, part := range authorized.OrderedParts {
 		parts[position] = workercontracts.StageJoinPartV1{
 			FileID: string(part.FileID), PathComponents: []string{"Movie.Release", filepath.Base(string(part.FileID)) + ".mkv"},
-			ExpectedFingerprint: part.Fingerprint.Fingerprint(),
+			ExpectedFingerprint: part.Fingerprint.StrictFingerprint(),
 		}
 	}
 	request := workercontracts.StageJoinRequestV1{

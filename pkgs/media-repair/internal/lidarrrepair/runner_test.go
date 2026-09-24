@@ -70,7 +70,7 @@ func (fake *fakeWorker) MaterializeTarAudio(
 	_ string,
 ) (materialize.Success, error) {
 	fake.calls++
-	return testMaterialization(materialize.OperationMaterializeTar, snapshot.Fingerprint()), nil
+	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StrictFingerprint()), nil
 }
 
 func testMaterialization(operation, sourceFingerprint string) materialize.Success {
