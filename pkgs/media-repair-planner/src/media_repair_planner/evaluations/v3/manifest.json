@@ -277,6 +277,18 @@
       }
     },
     {
+      "base_case": "c5f5466a27fd3bf75a6ccf1acead8f7f01de97bc7617927a4809721b8d8123ec.json",
+      "expected": {
+        "action": "remux_dvd_v1",
+        "capability_id": "capability:11bbcdae7adebb855930dc86063e23aca48422a3bd831dd9d309822b1e862867"
+      },
+      "name": "pink_velvet_2_dvd_runtime_within_tolerance",
+      "replacements": {
+        "/case_id": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "/radarr/movie/runtime_minutes": 180
+      }
+    },
+    {
       "base_case": "2ab531d38c35dad6855fad843ae4a3193067d9ba0007b35a355d690ac8ebf3b7.json",
       "expected": {
         "action": "join_parts_v1",

@@ -132,6 +132,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "missing_movie_identity",
         "poorly_named_manual_import",
         "pink_velvet_2_dvd_runtime_mismatch",
+        "pink_velvet_2_dvd_runtime_within_tolerance",
         "raw_bluray",
         "real_anime_season",
         "real_double_exposure_raw_bluray",

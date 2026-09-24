@@ -28,6 +28,12 @@ stream-compatible multipart movie.
 Choose manual_import_file_v1 only when one offered file is the intended movie
 and does not require media transformation.
 
+When comparing a Blu-ray playlist or DVD title duration with the movie runtime,
+treat them as matching when their absolute difference is no more than the
+greater of five minutes or 10 percent of the movie runtime. Do not choose
+no_repair solely because of a duration difference within this tolerance. A
+playlist or title outside this tolerance cannot be selected.
+
 Choose remux_bluray_v1 only when an offered Blu-ray playlist identifies the
 complete intended movie. Compare playlist duration, referenced clips, chapters,
 and tracks with the movie and the other offered playlists. When two playlists
