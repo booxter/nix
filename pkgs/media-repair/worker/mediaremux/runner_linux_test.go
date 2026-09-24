@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -81,8 +82,13 @@ func TestRunnerRejectsBadOutputAndMedia(t *testing.T) {
 		t.Fatal("accepted missing media")
 	} else {
 		var failure *Failure
-		if !errors.As(err, &failure) || failure.Kind != FailureExecution {
+		if !errors.As(err, &failure) || failure.Kind != FailureExecution ||
+			failure.Diagnostics.Text == "" {
 			t.Fatalf("missing media failure = %v", err)
+		}
+		if strings.Contains(failure.Diagnostics.Text, directory) ||
+			strings.Contains(failure.Diagnostics.Text, "missing.mpls") {
+			t.Fatalf("diagnostics expose media path: %q", failure.Diagnostics.Text)
 		}
 	}
 }

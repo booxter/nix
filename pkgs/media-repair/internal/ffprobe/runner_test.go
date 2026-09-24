@@ -79,6 +79,10 @@ func TestRunnerReturnsTypedFailures(t *testing.T) {
 	}
 	_, err := testRunner(t, 10*time.Second).Probe(context.Background(), mediaPath)
 	assertFailureKind(t, err, FailureExecution)
+	var failure *Failure
+	if !errors.As(err, &failure) || failure.Diagnostics.Text == "" {
+		t.Fatalf("failure has no diagnostics: %v", err)
+	}
 	if strings.Contains(err.Error(), mediaPath) {
 		t.Fatalf("failure exposes media path: %v", err)
 	}

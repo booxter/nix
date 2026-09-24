@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 )
 
 const (
@@ -26,8 +28,9 @@ const (
 )
 
 type Failure struct {
-	Kind  FailureKind
-	cause error
+	Kind        FailureKind
+	Diagnostics commanddiagnostics.Diagnostics
+	cause       error
 }
 
 func (failure *Failure) Error() string {
@@ -103,17 +106,21 @@ func (runner *Runner) Remux(
 		playlistPath,
 	)
 	command.WaitDelay = commandWaitDelay
-	command.Stdout = io.Discard
-	command.Stderr = io.Discard
+	diagnosticOutput := commanddiagnostics.NewRecorder(playlistPath)
+	command.Stdout = diagnosticOutput
+	command.Stderr = diagnosticOutput
 	command.ExtraFiles = []*os.File{output}
 	if err := command.Run(); err != nil {
+		diagnostics := diagnosticOutput.Diagnostics()
 		if ctx.Err() != nil {
-			return 0, ctx.Err()
+			return 0, commanddiagnostics.Attach(ctx.Err(), diagnostics)
 		}
 		if errors.Is(remuxContext.Err(), context.DeadlineExceeded) {
-			return 0, &Failure{Kind: FailureTimeout, cause: err}
+			return 0, &Failure{Kind: FailureTimeout, Diagnostics: diagnostics,
+				cause: commanddiagnostics.Attach(err, diagnostics)}
 		}
-		return 0, &Failure{Kind: FailureExecution, cause: err}
+		return 0, &Failure{Kind: FailureExecution, Diagnostics: diagnostics,
+			cause: commanddiagnostics.Attach(err, diagnostics)}
 	}
 	if err := output.Sync(); err != nil {
 		return 0, &Failure{Kind: FailureInvalidOutput, cause: err}

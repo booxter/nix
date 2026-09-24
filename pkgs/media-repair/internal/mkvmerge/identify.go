@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 )
 
 const maximumOutputBytes = 1 << 20
@@ -48,10 +50,17 @@ func (runner Runner) Identify(ctx context.Context, target Target) (Playlist, err
 		ctx, runner.Executable, "--identification-format", "json", "--identify", target.Path,
 	)
 	command.Stdout = &limitedWriter{buffer: &output, limit: maximumOutputBytes}
+	diagnosticOutput := commanddiagnostics.NewRecorder(target.Path)
+	command.Stderr = diagnosticOutput
 	if err := command.Run(); err != nil {
-		return Playlist{}, fmt.Errorf("identify Blu-ray playlist: %w", err)
+		return Playlist{}, fmt.Errorf("identify Blu-ray playlist: %w",
+			commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics()))
 	}
-	return decodePlaylist(output.Bytes())
+	playlist, err := decodePlaylist(output.Bytes())
+	if err != nil {
+		return Playlist{}, commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics())
+	}
+	return playlist, nil
 }
 
 func cleanAbsolute(path string) bool {

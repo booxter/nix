@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 )
 
 const maximumOutputBytes = 1 << 20
@@ -52,10 +54,17 @@ func (runner Runner) IdentifyDVD(ctx context.Context, target Target) ([]Title, e
 	var output bytes.Buffer
 	command := exec.CommandContext(ctx, runner.Executable, "-x", "-Ox", directory)
 	command.Stdout = &limitedWriter{buffer: &output, limit: maximumOutputBytes}
+	diagnosticOutput := commanddiagnostics.NewRecorder(directory)
+	command.Stderr = diagnosticOutput
 	if err := command.Run(); err != nil {
-		return nil, fmt.Errorf("identify DVD titles: %w", err)
+		return nil, fmt.Errorf("identify DVD titles: %w",
+			commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics()))
 	}
-	return decodeTitles(output.Bytes())
+	titles, err := decodeTitles(output.Bytes())
+	if err != nil {
+		return nil, commanddiagnostics.Attach(err, diagnosticOutput.Diagnostics())
+	}
+	return titles, nil
 }
 
 type limitedWriter struct {

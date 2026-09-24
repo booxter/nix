@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
 
 const (
 	firstInheritedDescriptor = 3
-	maxDiagnosticBytes       = 64 << 10
 	commandWaitDelay         = 5 * time.Second
 )
 
@@ -29,10 +29,7 @@ const (
 	FailureInvalidOutput FailureKind = "invalid_output"
 )
 
-type Diagnostics struct {
-	Text      string
-	Truncated bool
-}
+type Diagnostics = commanddiagnostics.Diagnostics
 
 type Result struct {
 	SizeBytes   int64
@@ -135,20 +132,22 @@ func (runner *Runner) Join(
 	command.Stdin = strings.NewReader(manifest)
 	command.Stdout = io.Discard
 	command.ExtraFiles = append(append([]*os.File(nil), parts...), output)
-	diagnosticOutput := &diagnosticWriter{}
+	diagnosticOutput := commanddiagnostics.NewRecorder()
 	command.Stderr = diagnosticOutput
 	if err := command.Run(); err != nil {
 		diagnostics := diagnosticOutput.Diagnostics()
 		if ctx.Err() != nil {
-			return Result{}, ctx.Err()
+			return Result{}, commanddiagnostics.Attach(ctx.Err(), diagnostics)
 		}
 		if errors.Is(joinContext.Err(), context.DeadlineExceeded) {
 			return Result{}, &Failure{
-				Kind: FailureTimeout, Diagnostics: diagnostics, cause: err,
+				Kind: FailureTimeout, Diagnostics: diagnostics,
+				cause: commanddiagnostics.Attach(err, diagnostics),
 			}
 		}
 		return Result{}, &Failure{
-			Kind: FailureExecution, Diagnostics: diagnostics, cause: err,
+			Kind: FailureExecution, Diagnostics: diagnostics,
+			cause: commanddiagnostics.Attach(err, diagnostics),
 		}
 	}
 	diagnostics := diagnosticOutput.Diagnostics()
@@ -251,28 +250,4 @@ func concatManifest(partCount int) string {
 		)
 	}
 	return manifest.String()
-}
-
-type diagnosticWriter struct {
-	data      []byte
-	truncated bool
-}
-
-func (writer *diagnosticWriter) Write(data []byte) (int, error) {
-	written := len(data)
-	remaining := maxDiagnosticBytes - len(writer.data)
-	if remaining > 0 {
-		writer.data = append(writer.data, data[:min(len(data), remaining)]...)
-	}
-	if len(data) > remaining {
-		writer.truncated = true
-	}
-	return written, nil
-}
-
-func (writer *diagnosticWriter) Diagnostics() Diagnostics {
-	return Diagnostics{
-		Text:      strings.TrimSpace(string(writer.data)),
-		Truncated: writer.truncated,
-	}
 }

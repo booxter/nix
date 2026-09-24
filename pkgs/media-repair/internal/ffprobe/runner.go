@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/commanddiagnostics"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
 
@@ -24,8 +25,9 @@ const (
 )
 
 type Failure struct {
-	Kind  FailureKind
-	cause error
+	Kind        FailureKind
+	Diagnostics commanddiagnostics.Diagnostics
+	cause       error
 }
 
 func (failure *Failure) Error() string {
@@ -120,29 +122,35 @@ func (runner *Runner) ProbeFile(
 	// protocol for containers that require random access.
 	command.ExtraFiles = []*os.File{media}
 	command.Stdout = &stdout
-	// The typed failure is sufficient here and cannot accidentally cross the
-	// planner boundary.
-	command.Stderr = io.Discard
+	diagnosticOutput := commanddiagnostics.NewRecorder()
+	command.Stderr = diagnosticOutput
 	if err := command.Run(); err != nil {
+		diagnostics := diagnosticOutput.Diagnostics()
 		if ctx.Err() != nil {
-			return controller.ProbeEvidence{}, ctx.Err()
+			return controller.ProbeEvidence{}, commanddiagnostics.Attach(ctx.Err(), diagnostics)
 		}
 		if errors.Is(probeContext.Err(), context.DeadlineExceeded) {
-			return controller.ProbeEvidence{}, &Failure{Kind: FailureTimeout, cause: err}
+			return controller.ProbeEvidence{}, &Failure{Kind: FailureTimeout,
+				Diagnostics: diagnostics, cause: commanddiagnostics.Attach(err, diagnostics)}
 		}
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureExecution, cause: err}
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureExecution,
+			Diagnostics: diagnostics, cause: commanddiagnostics.Attach(err, diagnostics)}
 	}
+	diagnostics := diagnosticOutput.Diagnostics()
 	if stdout.overflow {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput}
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput,
+			Diagnostics: diagnostics, cause: commanddiagnostics.Attach(nil, diagnostics)}
 	}
 
 	document, err := Decode(stdout.Bytes())
 	if err != nil {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput, cause: err}
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput,
+			Diagnostics: diagnostics, cause: commanddiagnostics.Attach(err, diagnostics)}
 	}
 	evidence, err := Normalize(document)
 	if err != nil {
-		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput, cause: err}
+		return controller.ProbeEvidence{}, &Failure{Kind: FailureInvalidOutput,
+			Diagnostics: diagnostics, cause: commanddiagnostics.Attach(err, diagnostics)}
 	}
 	return evidence, nil
 }
