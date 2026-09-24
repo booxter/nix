@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -21,10 +20,9 @@ import (
 )
 
 const (
-	caseRecordVersion     = "lidarr-repair-case/v1"
-	planningResultVersion = "lidarr-repair-planning/v1"
-	observationVersion    = "lidarr-repair-observation/v1"
-	stateLockName         = ".lock"
+	caseRecordVersion  = "lidarr-repair-case/v1"
+	observationVersion = "lidarr-repair-observation/v1"
+	stateLockName      = ".lock"
 )
 
 type caseRecord struct {
@@ -39,26 +37,12 @@ type caseRecord struct {
 	Bindings          []ImportBinding `json:"bindings"`
 }
 
-type planningResult struct {
-	Version     string                  `json:"version"`
-	CaseID      string                  `json:"case_id"`
-	Attempts    uint64                  `json:"attempts"`
-	AttemptedAt time.Time               `json:"attempted_at"`
-	RetryAfter  *time.Time              `json:"retry_after,omitempty"`
-	Failure     *planningrunner.Failure `json:"failure,omitempty"`
-	Decision    json.RawMessage         `json:"decision,omitempty"`
-}
+type planningResult = planningrunner.StoredResult
 
 type observationRecord struct {
 	Version string `json:"version"`
 	QueueID int64  `json:"queue_id"`
 	CaseID  string `json:"case_id"`
-}
-
-func (result planningResult) status() planningrunner.Status {
-	return planningrunner.Status{
-		Attempts: result.Attempts, RetryAfter: result.RetryAfter, Decided: len(result.Decision) != 0,
-	}
 }
 
 func (store *Store) PutCase(record Record) (bool, error) {
@@ -138,7 +122,7 @@ func (store *Store) PutCase(record Record) (bool, error) {
 
 func (store *Store) GetStatus(caseID string) (planningrunner.Status, bool, error) {
 	result, found, err := store.readPlanningResult(caseID)
-	return result.status(), found, err
+	return result.Status(), found, err
 }
 
 func (store *Store) GetDecision(caseID string) (lidarrcontracts.Decision, error) {
@@ -168,20 +152,11 @@ func (store *Store) PutFailure(
 		previous planningResult,
 		found bool,
 	) (planningResult, bool, error) {
-		if found && len(previous.Decision) != 0 {
-			return previous, false, nil
-		}
-		attempts, err := nextAttempts(previous, found)
-		if err != nil {
-			return planningResult{}, false, err
-		}
-		return planningResult{
-			Version: planningResultVersion, CaseID: caseID, Attempts: attempts,
-			AttemptedAt: attemptedAt.UTC(), RetryAfter: timePointer(retryAfter.UTC()),
-			Failure: &failure,
-		}, true, nil
+		return planningrunner.NextFailure(
+			previous, found, caseID, failure, attemptedAt, retryAfter,
+		)
 	})
-	return result.status(), changed, err
+	return result.Status(), changed, err
 }
 
 func (store *Store) PutDecision(
@@ -202,24 +177,9 @@ func (store *Store) PutDecision(
 		previous planningResult,
 		found bool,
 	) (planningResult, bool, error) {
-		if found && len(previous.Decision) != 0 {
-			if bytes.Equal(previous.Decision, encoded) {
-				return previous, false, nil
-			}
-			return planningResult{}, false, fmt.Errorf(
-				"case ID %q is already bound to a different Lidarr planning decision", caseID,
-			)
-		}
-		attempts, err := nextAttempts(previous, found)
-		if err != nil {
-			return planningResult{}, false, err
-		}
-		return planningResult{
-			Version: planningResultVersion, CaseID: caseID, Attempts: attempts,
-			AttemptedAt: attemptedAt.UTC(), Decision: encoded,
-		}, true, nil
+		return planningrunner.NextDecision(previous, found, caseID, encoded, attemptedAt)
 	})
-	return result.status(), changed, err
+	return result.Status(), changed, err
 }
 
 func (store *Store) updatePlanningResult(
@@ -478,55 +438,23 @@ func (store *Store) readCase(caseID string) (caseRecord, bool, error) {
 }
 
 func encodePlanningResult(result planningResult) ([]byte, error) {
-	if err := validatePlanningResult(result); err != nil {
-		return nil, err
-	}
-	data, err := json.Marshal(result)
-	if err != nil {
-		return nil, fmt.Errorf("encode Lidarr planning result: %w", err)
-	}
-	return data, nil
+	return planningrunner.EncodeStoredResult(result, validateLidarrDecision)
 }
 
 func decodePlanningResult(data []byte) (planningResult, error) {
-	var result planningResult
-	if err := decodeStrictState(data, &result); err != nil {
-		return planningResult{}, fmt.Errorf("decode Lidarr planning result: %w", err)
-	}
-	if err := validatePlanningResult(result); err != nil {
-		return planningResult{}, err
-	}
-	return result, nil
+	return planningrunner.DecodeStoredResult(data, validateLidarrDecision)
 }
 
-func validatePlanningResult(result planningResult) error {
-	if result.Version != planningResultVersion || !stateFingerprint.MatchString(result.CaseID) ||
-		result.Attempts == 0 || result.AttemptedAt.IsZero() {
-		return fmt.Errorf("Lidarr planning result identity is invalid")
+func validateLidarrDecision(data json.RawMessage) (string, json.RawMessage, error) {
+	decision, err := lidarrcontracts.DecodeDecision(data)
+	if err != nil {
+		return "", nil, err
 	}
-	hasDecision := len(result.Decision) != 0
-	hasFailure := result.Failure != nil
-	if hasDecision == hasFailure {
-		return fmt.Errorf("Lidarr planning result must contain exactly one decision or failure")
+	canonical, err := lidarrcontracts.EncodeDecision(decision)
+	if err != nil {
+		return "", nil, err
 	}
-	if hasDecision {
-		if result.RetryAfter != nil {
-			return fmt.Errorf("successful Lidarr planning result cannot have a retry time")
-		}
-		decision, err := lidarrcontracts.DecodeDecision(result.Decision)
-		if err != nil {
-			return err
-		}
-		if decision.CaseID() != result.CaseID {
-			return fmt.Errorf("Lidarr planning decision case ID does not match its record")
-		}
-		return nil
-	}
-	if result.RetryAfter == nil || !result.RetryAfter.After(result.AttemptedAt) ||
-		!planningrunner.ValidFailure(*result.Failure) {
-		return fmt.Errorf("failed Lidarr planning result is invalid")
-	}
-	return nil
+	return decision.CaseID(), canonical, nil
 }
 
 func (store *Store) readPlanningResult(caseID string) (planningResult, bool, error) {
@@ -543,16 +471,6 @@ func (store *Store) readPlanningResult(caseID string) (planningResult, bool, err
 	}
 	result, err := decodePlanningResult(data)
 	return result, true, err
-}
-
-func nextAttempts(previous planningResult, found bool) (uint64, error) {
-	if !found {
-		return 1, nil
-	}
-	if previous.Attempts == math.MaxUint64 {
-		return 0, fmt.Errorf("Lidarr planning attempt count overflow")
-	}
-	return previous.Attempts + 1, nil
 }
 
 func decodeStrictState(data []byte, target any) error {
@@ -623,8 +541,4 @@ func (store *Store) lock() (*os.File, error) {
 func unlockState(lock *os.File) {
 	_ = unix.Flock(int(lock.Fd()), unix.LOCK_UN)
 	_ = lock.Close()
-}
-
-func timePointer(value time.Time) *time.Time {
-	return &value
 }
