@@ -839,6 +839,9 @@ jobs:
           manifests="${RUNNER_TEMP}/attic-built-path-manifests.txt"
           paths="${RUNNER_TEMP}/attic-built-paths"
           available_paths="${RUNNER_TEMP}/attic-available-paths"
+          # Stream paths from FlakeHub through Attic without storing their
+          # closures in the runner's local Nix store.
+          source_store="https://cache.flakehub.com"
           if [ ! -d "${manifest_directory}" ]; then
             echo 'No built path manifests were uploaded; skipping publication.'
             exit 0
@@ -857,10 +860,10 @@ jobs:
             exit 0
           fi
 
-          xargs -n 100 nix-store --realise --ignore-unknown --keep-going \
-            <"${paths}" || true
           while IFS= read -r path; do
-            if nix-store --check-validity "${path}" >/dev/null 2>&1; then
+            if nix path-info \
+              --store "${source_store}" \
+              "${path}" >/dev/null 2>&1; then
               printf '%s\n' "${path}"
             fi
           done <"${paths}" >"${available_paths}"
@@ -887,6 +890,7 @@ jobs:
             "${ATTIC_TOKEN}"
           HOME="${attic_home}" \
             XDG_CONFIG_HOME="${attic_home}/.config" \
+            NIX_REMOTE="${source_store}" \
             "${attic_package}/bin/attic" push \
             --jobs 5 \
             --stdin \
