@@ -89,16 +89,16 @@ let
       subPackages = [ "cmd/lidarr-repair" ];
 
       preCheck = ''
-        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
+        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/planningstate internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
         if test -n "$unformatted"; then
-          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
+          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/planningstate internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
           exit 1
         fi
-        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
+        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/planningstate ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
       '';
       checkPhase = ''
         runHook preCheck
-        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
+        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/planningstate ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
         runHook postCheck
       '';
 
