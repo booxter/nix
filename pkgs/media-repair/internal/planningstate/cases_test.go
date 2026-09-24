@@ -64,9 +64,9 @@ func newTestCaseStore(t *testing.T) *CaseStore[testCase] {
 			SameIdentity: func(left, right testCase) (bool, error) {
 				return left.Evidence == right.Evidence, nil
 			},
-			Merge: func(stored, current testCase) testCase {
+			Merge: func(stored, current testCase) (testCase, error) {
 				current.Evidence = stored.Evidence
-				return current
+				return current, nil
 			},
 		},
 	)

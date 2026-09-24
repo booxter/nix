@@ -95,7 +95,9 @@ func NewStore(directory string) (*Store, error) {
 			Encode:       encodeCaseRecord,
 			Decode:       decodeCaseRecord,
 			SameIdentity: sameLidarrCaseIdentity,
-			Merge:        mergeLidarrCaseObservation,
+			Merge: func(stored, current caseRecord) (caseRecord, error) {
+				return mergeLidarrCaseObservation(stored, current), nil
+			},
 		},
 	)
 	if err != nil {

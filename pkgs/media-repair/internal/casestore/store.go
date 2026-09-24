@@ -9,6 +9,7 @@ import (
 
 	"github.com/booxter/nix-config/media-repair/contracts"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
+	"github.com/booxter/nix-config/media-repair/internal/planningstate"
 	"github.com/booxter/nix-config/media-repair/internal/privatefile"
 	"golang.org/x/sys/unix"
 )
@@ -25,6 +26,7 @@ type Store struct {
 	casesDir     string
 	planningDir  string
 	executionDir string
+	cases        *planningstate.CaseStore[CaseRecord]
 }
 
 func (store *Store) PutAssembly(assembly casebuilder.Assembly) (bool, error) {
@@ -57,121 +59,45 @@ func New(root string) (*Store, error) {
 	if err := syncDirectory(root); err != nil {
 		return nil, fmt.Errorf("sync case store root: %w", err)
 	}
-	return &Store{
+	store := &Store{
 		root: root, casesDir: casesDir, planningDir: planningDir,
 		executionDir: executionDir,
-	}, nil
+	}
+	cases, err := planningstate.NewCaseStore(
+		casesDir,
+		func() (func(), error) {
+			lock, lockErr := store.lock()
+			if lockErr != nil {
+				return nil, lockErr
+			}
+			return func() { unlock(lock) }, nil
+		},
+		planningstate.CaseCodec[CaseRecord]{
+			CaseID:       func(record CaseRecord) string { return record.CaseID },
+			Encode:       EncodeRecord,
+			Decode:       DecodeRecord,
+			SameIdentity: sameRadarrCaseIdentity,
+			Merge: func(_ CaseRecord, current CaseRecord) (CaseRecord, error) {
+				return current, nil
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.cases = cases
+	return store, nil
 }
 
-// Put stores a record without replacing anything already published under its
-// case ID. It reports false when the same case was stored by an earlier
-// observation; any other difference is treated as a collision.
+// Put stores the latest local observation for immutable planning evidence. It
+// reports whether this is the first observation of the case identity.
 func (store *Store) Put(record CaseRecord) (bool, error) {
-	data, err := EncodeRecord(record)
-	if err != nil {
-		return false, err
-	}
-	path, err := store.recordPath(record.CaseID)
-	if err != nil {
-		return false, err
-	}
-
-	lock, err := store.lock()
-	if err != nil {
-		return false, err
-	}
-	defer unlock(lock)
-
-	found, err := store.compareExisting(path, record)
-	if err != nil {
-		return false, err
-	}
-	if found {
-		if err := syncDirectory(store.casesDir); err != nil {
-			return false, fmt.Errorf("sync case records directory: %w", err)
-		}
-		return false, nil
-	}
-
-	temporary, err := os.CreateTemp(store.casesDir, ".case-*.tmp")
-	if err != nil {
-		return false, fmt.Errorf("create temporary case record: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	defer os.Remove(temporaryPath)
-
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("set temporary case record permissions: %w", err)
-	}
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("write temporary case record: %w", err)
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("sync temporary case record: %w", err)
-	}
-	if err := temporary.Close(); err != nil {
-		return false, fmt.Errorf("close temporary case record: %w", err)
-	}
-
-	if err := os.Link(temporaryPath, path); err != nil {
-		if !errors.Is(err, os.ErrExist) {
-			return false, fmt.Errorf("publish case record: %w", err)
-		}
-		found, compareErr := store.compareExisting(path, record)
-		if compareErr != nil {
-			return false, compareErr
-		}
-		if !found {
-			return false, fmt.Errorf("case record disappeared during publication")
-		}
-		if err := syncDirectory(store.casesDir); err != nil {
-			return false, fmt.Errorf("sync case records directory: %w", err)
-		}
-		return false, nil
-	}
-	if err := os.Remove(temporaryPath); err != nil {
-		return false, fmt.Errorf("remove temporary case record: %w", err)
-	}
-	if err := syncDirectory(store.casesDir); err != nil {
-		return false, fmt.Errorf("sync case records directory: %w", err)
-	}
-	return true, nil
+	observed, err := store.cases.Observe(record, nil)
+	return observed.Created, err
 }
 
 func (store *Store) Get(caseID string) (CaseRecord, bool, error) {
-	path, err := store.recordPath(caseID)
-	if err != nil {
-		return CaseRecord{}, false, err
-	}
-	record, found, err := readRecord(path)
-	if err != nil {
-		return CaseRecord{}, false, err
-	}
-	if !found {
-		return CaseRecord{}, false, nil
-	}
-	if record.CaseID != caseID {
-		return CaseRecord{}, false, fmt.Errorf("stored record has unexpected case ID %q", record.CaseID)
-	}
-	return record, true, nil
-}
-
-func (store *Store) compareExisting(path string, wanted CaseRecord) (bool, error) {
-	existing, found, err := readRecord(path)
-	if err != nil || !found {
-		return found, err
-	}
-	equivalent, err := equivalentRecords(existing, wanted)
-	if err != nil {
-		return true, err
-	}
-	if !equivalent {
-		return true, fmt.Errorf("case ID %q is already bound to different local state", wanted.CaseID)
-	}
-	return true, nil
+	return store.cases.Get(caseID)
 }
 
 func (store *Store) recordPath(caseID string) (string, error) {
@@ -232,7 +158,7 @@ func readRecord(path string) (CaseRecord, bool, error) {
 	return record, true, nil
 }
 
-func equivalentRecords(left, right CaseRecord) (bool, error) {
+func sameRadarrCaseIdentity(left, right CaseRecord) (bool, error) {
 	leftRequest, err := contracts.DecodeCase(left.Request)
 	if err != nil {
 		return false, fmt.Errorf("decode existing repair case: %w", err)
@@ -241,26 +167,10 @@ func equivalentRecords(left, right CaseRecord) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("decode new repair case: %w", err)
 	}
-	leftAssembly := casebuilder.Assembly{Request: leftRequest, LocalSnapshot: left.Snapshot}
-	rightAssembly := casebuilder.Assembly{Request: rightRequest, LocalSnapshot: right.Snapshot}
-	if left.Version == RecordVersionV1 && right.Version == RecordVersionV3 {
-		// V1 predates HasFile and retained Radarr's moving completion estimate.
-		// Match those old values without weakening comparisons between current records.
-		if rightAssembly.LocalSnapshot.Observation.Movie != nil {
-			movie := *rightAssembly.LocalSnapshot.Observation.Movie
-			movie.HasFile = false
-			rightAssembly.LocalSnapshot.Observation.Movie = &movie
-		}
-		rightAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime =
-			leftAssembly.LocalSnapshot.Observation.Correlation.Radarr.EstimatedCompletionTime
-	} else if left.Version == RecordVersionV2 && right.Version == RecordVersionV3 {
-		// V2 predates structured manual-import rejection reasons. SameCaseState
-		// compares their human evidence while fresh policy uses the live codes.
-	} else if left.Version != right.Version {
+	if left.CaseID != right.CaseID {
 		return false, nil
 	}
-	return left.CaseID == right.CaseID &&
-		casebuilder.SameCaseState(leftAssembly, rightAssembly), nil
+	return contracts.SameCaseIdentity(leftRequest, rightRequest)
 }
 
 func caseDigest(caseID string) (string, error) {

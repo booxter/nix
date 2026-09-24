@@ -20,7 +20,7 @@ type CaseCodec[Case any] struct {
 	Encode       func(Case) ([]byte, error)
 	Decode       func([]byte) (Case, error)
 	SameIdentity func(Case, Case) (bool, error)
-	Merge        func(stored, current Case) Case
+	Merge        func(stored, current Case) (Case, error)
 }
 
 type CaseStore[Case any] struct {
@@ -88,7 +88,10 @@ func (store *CaseStore[Case]) Observe(
 				"case ID %q is already bound to different planning evidence", caseID,
 			)
 		}
-		wanted = store.codec.Merge(stored, current)
+		wanted, err = store.codec.Merge(stored, current)
+		if err != nil {
+			return Observation{}, err
+		}
 	}
 	data, err := store.codec.Encode(wanted)
 	if err != nil {

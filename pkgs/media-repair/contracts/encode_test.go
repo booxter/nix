@@ -56,6 +56,24 @@ func TestCaseIdentityChangesWithPlanningEvidence(t *testing.T) {
 	}
 }
 
+func TestSameCaseIdentityIgnoresObservationFields(t *testing.T) {
+	t.Parallel()
+	left := exampleCase(t)
+	right := left
+	right.ObservedAt = right.ObservedAt.Add(time.Hour)
+	right.CaseID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	same, err := SameCaseIdentity(left, right)
+	if err != nil || !same {
+		t.Fatalf("same = %t, error = %v", same, err)
+	}
+	right.Files = append([]FileElement(nil), left.Files...)
+	right.Files[0].SizeBytes++
+	same, err = SameCaseIdentity(left, right)
+	if err != nil || same {
+		t.Fatalf("changed evidence: same = %t, error = %v", same, err)
+	}
+}
+
 func TestCaseIdentityCanonicalizesJSONStrings(t *testing.T) {
 	t.Parallel()
 
