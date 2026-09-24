@@ -85,6 +85,13 @@ func TestAssessStreamCompatibilityRejectsKnownDifferences(t *testing.T) {
 			},
 			field: StreamFieldAverageFrameRate,
 		},
+		{
+			name: "time base",
+			mutate: func(stream *ProbeStream) {
+				stream.TimeBase = &Rational{Numerator: 1, Denominator: 12_800}
+			},
+			field: StreamFieldTimeBase,
+		},
 	}
 
 	for _, test := range tests {
@@ -258,7 +265,7 @@ func TestAssessStreamCompatibilityRequiresEveryStreamToMatch(t *testing.T) {
 	}
 }
 
-func TestStreamLayoutMatchesOrderedProbeStreams(t *testing.T) {
+func TestStreamLayoutMatchesMuxedOutput(t *testing.T) {
 	t.Parallel()
 
 	assessment := AssessStreamCompatibility([]ProbeEvidence{
@@ -268,22 +275,27 @@ func TestStreamLayoutMatchesOrderedProbeStreams(t *testing.T) {
 	if assessment.Layout == nil {
 		t.Fatal("compatible streams did not produce a layout")
 	}
-	if !assessment.Layout.Matches([]ProbeStream{audioStream(1), videoStream(0)}) {
+	if !assessment.Layout.MatchesMuxedOutput([]ProbeStream{audioStream(1), videoStream(0)}) {
 		t.Fatal("layout did not match streams returned out of array order")
+	}
+	muxed := []ProbeStream{videoStream(0), audioStream(1)}
+	muxed[0].TimeBase = pointerTo(Rational{Numerator: 1, Denominator: 12_800})
+	if !assessment.Layout.MatchesMuxedOutput(muxed) {
+		t.Fatal("layout did not match a muxer-selected time base")
 	}
 
 	reordered := []ProbeStream{audioStream(0), videoStream(1)}
-	if assessment.Layout.Matches(reordered) {
+	if assessment.Layout.MatchesMuxedOutput(reordered) {
 		t.Fatal("layout matched streams with different index order")
 	}
 	duplicateIndexes := []ProbeStream{videoStream(0), audioStream(0)}
-	if assessment.Layout.Matches(duplicateIndexes) {
+	if assessment.Layout.MatchesMuxedOutput(duplicateIndexes) {
 		t.Fatal("layout matched duplicate stream indexes")
 	}
 
 	changed := []ProbeStream{videoStream(0), audioStream(1)}
 	changed[1].Channels = pointerTo(int64(2))
-	if assessment.Layout.Matches(changed) {
+	if assessment.Layout.MatchesMuxedOutput(changed) {
 		t.Fatal("layout matched changed audio")
 	}
 }
@@ -302,12 +314,12 @@ func TestStreamLayoutRejectsIncompleteEvidence(t *testing.T) {
 			AverageRate: Rational{Numerator: 24_000, Denominator: 1_001},
 		},
 	}}}
-	if layout.Matches([]ProbeStream{videoStreamWithoutTimeBase(0)}) {
+	if layout.MatchesMuxedOutput([]ProbeStream{videoStreamWithoutTimeBase(0)}) {
 		t.Fatal("layout matched incomplete stream evidence")
 	}
 
 	layout.Streams[0].Video = nil
-	if layout.Matches([]ProbeStream{videoStream(0)}) {
+	if layout.MatchesMuxedOutput([]ProbeStream{videoStream(0)}) {
 		t.Fatal("malformed expected layout matched a stream")
 	}
 }

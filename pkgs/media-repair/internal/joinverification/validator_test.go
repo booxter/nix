@@ -32,7 +32,7 @@ func TestValidateStagedJoinAuthorizesVerifiedArtifact(t *testing.T) {
 	}
 }
 
-func TestValidateStagedJoinAcceptsMP4Output(t *testing.T) {
+func TestValidateStagedJoinAcceptsMP4OutputWithMuxerTimeBase(t *testing.T) {
 	t.Parallel()
 
 	authorized, request, response := validStage()
@@ -40,6 +40,9 @@ func TestValidateStagedJoinAcceptsMP4Output(t *testing.T) {
 	request.OutputContainer = workercontracts.OutputContainerMP4
 	evidence := joinedEvidence()
 	evidence.Format.Names = []string{"mov", "mp4", "m4a", "3gp", "3g2", "mj2"}
+	evidence.Streams[0].TimeBase = value(controller.Rational{
+		Numerator: 1, Denominator: 12_800,
+	})
 	response.Success.Evidence = mediaevidence.FromProbe(evidence)
 	if validation := ValidateStagedJoin(authorized, request, response); !validation.Accepted() {
 		t.Fatalf("validation = %#v", validation)

@@ -105,7 +105,7 @@ func ValidateStagedJoin(
 	if !matchesContainer(authorized.OutputContainer, evidence.Format.Names) {
 		validation = reject(validation, OutputContainerMismatch)
 	}
-	if !authorized.ExpectedStreamLayout.Matches(evidence.Streams) {
+	if !authorized.ExpectedStreamLayout.MatchesMuxedOutput(evidence.Streams) {
 		validation = reject(validation, StreamLayoutMismatch)
 	}
 
