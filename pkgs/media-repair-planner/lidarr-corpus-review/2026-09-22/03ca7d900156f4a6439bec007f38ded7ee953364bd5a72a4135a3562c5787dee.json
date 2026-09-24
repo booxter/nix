@@ -8,7 +8,7 @@
   },
   "artifacts": [
     {
-      "artifact_id": "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
+      "artifact_id": "artifact:1",
       "duration_ms": 2872719,
       "fingerprint": "sha256:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
       "formats": [
@@ -28,7 +28,7 @@
       "tags": []
     },
     {
-      "artifact_id": "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa",
+      "artifact_id": "artifact:2",
       "duration_ms": 3341933,
       "fingerprint": "sha256:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa",
       "formats": [
@@ -51,7 +51,7 @@
   "assessments": [
     {
       "album_id": 5509,
-      "artifact_id": "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
+      "artifact_id": "artifact:1",
       "rejections": [
         "permanent: Album match is not close enough: 61.9% vs 80% [album, tracks, missing tracks]",
         "permanent: Has missing tracks"
@@ -67,7 +67,7 @@
     },
     {
       "album_id": 5514,
-      "artifact_id": "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa",
+      "artifact_id": "artifact:2",
       "rejections": [
         "permanent: Album match is not close enough: 64.4% vs 80% [album, tracks, missing tracks]",
         "permanent: Has missing tracks"
@@ -87,8 +87,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30080",
       "release_id": 30080,
@@ -113,8 +113,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30081",
       "release_id": 30081,
@@ -140,8 +140,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30082",
       "release_id": 30082,
@@ -167,8 +167,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30083",
       "release_id": 30083,
@@ -193,8 +193,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30084",
       "release_id": 30084,
@@ -219,8 +219,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30085",
       "release_id": 30085,
@@ -245,8 +245,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30086",
       "release_id": 30086,
@@ -271,8 +271,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30087",
       "release_id": 30087,
@@ -297,8 +297,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30088",
       "release_id": 30088,
@@ -337,8 +337,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30089",
       "release_id": 30089,
@@ -363,8 +363,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30090",
       "release_id": 30090,
@@ -389,8 +389,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30091",
       "release_id": 30091,
@@ -415,8 +415,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30092",
       "release_id": 30092,
@@ -441,8 +441,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30093",
       "release_id": 30093,
@@ -467,8 +467,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30094",
       "release_id": 30094,
@@ -493,8 +493,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30095",
       "release_id": 30095,
@@ -519,8 +519,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30096",
       "release_id": 30096,
@@ -545,8 +545,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30097",
       "release_id": 30097,
@@ -571,8 +571,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30098",
       "release_id": 30098,
@@ -598,8 +598,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30099",
       "release_id": 30099,
@@ -624,8 +624,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30100",
       "release_id": 30100,
@@ -681,8 +681,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30101",
       "release_id": 30101,
@@ -708,8 +708,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30102",
       "release_id": 30102,
@@ -734,8 +734,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30103",
       "release_id": 30103,
@@ -788,8 +788,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30104",
       "release_id": 30104,
@@ -814,8 +814,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:30105",
       "release_id": 30105,
@@ -840,8 +840,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 5509,
       "artifact_ids": [
-        "artifact:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
-        "artifact:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:31702",
       "release_id": 31702,
@@ -894,7 +894,7 @@
       ]
     }
   ],
-  "case_id": "sha256:14d1935254724de3dd530c4b5182e777b14cb2b71be96343559041932ca2b8a0",
+  "case_id": "sha256:03ca7d900156f4a6439bec007f38ded7ee953364bd5a72a4135a3562c5787dee",
   "observed_at": "2026-09-23T03:22:31.342762929Z",
   "queue": {
     "download_ref": "download:071700e47539cd214edcbeccedba2e0deb55e155ac10e1a22445f24d00aa8f12",
@@ -1335,7 +1335,7 @@
       "track_count": 45
     }
   ],
-  "schema_version": "lidarr-repair/v2",
+  "schema_version": "lidarr-repair/v3",
   "tracks": [
     {
       "absolute_number": 1,

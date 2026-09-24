@@ -8,7 +8,7 @@
   },
   "artifacts": [
     {
-      "artifact_id": "artifact:32cb1f68ea945f06f7b977766f9028e57b56befa28e599da5ac906d3f4a24620",
+      "artifact_id": "artifact:1",
       "duration_ms": 4495907,
       "fingerprint": "sha256:32cb1f68ea945f06f7b977766f9028e57b56befa28e599da5ac906d3f4a24620",
       "formats": [
@@ -40,7 +40,7 @@
   "assessments": [
     {
       "album_id": 725,
-      "artifact_id": "artifact:32cb1f68ea945f06f7b977766f9028e57b56befa28e599da5ac906d3f4a24620",
+      "artifact_id": "artifact:1",
       "rejections": [
         "permanent: Has fewer tracks than existing release",
         "permanent: Has missing tracks"
@@ -56,7 +56,7 @@
     }
   ],
   "capabilities": [],
-  "case_id": "sha256:6d9a9d57573b88f91f57fb854ce3593bf920fa926e601c44b194e7a528ae53ac",
+  "case_id": "sha256:df4e5104a23b2fb03b043923203e08d0cf6c62f12d468296a0a8b46e94c6d765",
   "observed_at": "2026-09-23T03:22:15.661401307Z",
   "queue": {
     "download_ref": "download:37e3f6819de6c407cd5c02265566b316d439e4493945cb1d7669b46fb194f066",
@@ -103,7 +103,7 @@
       "track_count": 18
     }
   ],
-  "schema_version": "lidarr-repair/v2",
+  "schema_version": "lidarr-repair/v3",
   "tracks": [
     {
       "absolute_number": 1,

@@ -8,7 +8,7 @@
   },
   "artifacts": [
     {
-      "artifact_id": "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+      "artifact_id": "artifact:1",
       "duration_ms": 1392000,
       "fingerprint": "sha256:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
       "formats": [
@@ -40,7 +40,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
+      "artifact_id": "artifact:2",
       "duration_ms": 1071107,
       "fingerprint": "sha256:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
       "formats": [
@@ -75,7 +75,7 @@
   "assessments": [
     {
       "album_id": 3014,
-      "artifact_id": "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
+      "artifact_id": "artifact:1",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -92,7 +92,7 @@
     },
     {
       "album_id": 3014,
-      "artifact_id": "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9",
+      "artifact_id": "artifact:2",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -113,8 +113,8 @@
       "action": "import_missing_tracks_v1",
       "album_id": 3014,
       "artifact_ids": [
-        "artifact:b4ace69e8c4d0222a9154501580cff02e029064740845a8642e58e6895bbd32e",
-        "artifact:9564ed50bc904feaf4d8b9cba61402b22a01e0eb7afd0bcbdadb933273ee4df9"
+        "artifact:1",
+        "artifact:2"
       ],
       "capability_id": "capability:import_missing_tracks:14276",
       "release_id": 14276,
@@ -123,7 +123,7 @@
       ]
     }
   ],
-  "case_id": "sha256:c7898e410479f42d5309c2523c9fec622c640d36c60d90b426ffe90a917c90ae",
+  "case_id": "sha256:c5e9fe2f20c6deedaf652f6f2b1519cbcff15d966dc54c618afe442241d0496f",
   "observed_at": "2026-09-23T03:23:22.138025021Z",
   "queue": {
     "download_ref": "download:87fd9c6dd28638c43416c35111c75a94dcc0d11109085c0fd597bb2ba9bb279c",
@@ -153,7 +153,7 @@
       "track_count": 3
     }
   ],
-  "schema_version": "lidarr-repair/v2",
+  "schema_version": "lidarr-repair/v3",
   "tracks": [
     {
       "absolute_number": 1,

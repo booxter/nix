@@ -8,7 +8,7 @@
   },
   "artifacts": [
     {
-      "artifact_id": "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+      "artifact_id": "artifact:1",
       "duration_ms": 169333,
       "fingerprint": "sha256:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
       "formats": [
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+      "artifact_id": "artifact:2",
       "duration_ms": 135320,
       "fingerprint": "sha256:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
       "formats": [
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+      "artifact_id": "artifact:3",
       "duration_ms": 134693,
       "fingerprint": "sha256:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
       "formats": [
@@ -83,7 +83,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+      "artifact_id": "artifact:4",
       "duration_ms": 126853,
       "fingerprint": "sha256:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
       "formats": [
@@ -108,7 +108,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+      "artifact_id": "artifact:5",
       "duration_ms": 143920,
       "fingerprint": "sha256:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
       "formats": [
@@ -133,7 +133,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+      "artifact_id": "artifact:6",
       "duration_ms": 155667,
       "fingerprint": "sha256:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
       "formats": [
@@ -158,7 +158,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+      "artifact_id": "artifact:7",
       "duration_ms": 214053,
       "fingerprint": "sha256:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
       "formats": [
@@ -183,7 +183,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+      "artifact_id": "artifact:8",
       "duration_ms": 163160,
       "fingerprint": "sha256:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
       "formats": [
@@ -208,7 +208,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+      "artifact_id": "artifact:9",
       "duration_ms": 117907,
       "fingerprint": "sha256:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
       "formats": [
@@ -233,7 +233,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+      "artifact_id": "artifact:10",
       "duration_ms": 150560,
       "fingerprint": "sha256:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
       "formats": [
@@ -258,7 +258,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+      "artifact_id": "artifact:11",
       "duration_ms": 126920,
       "fingerprint": "sha256:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
       "formats": [
@@ -283,7 +283,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+      "artifact_id": "artifact:12",
       "duration_ms": 219120,
       "fingerprint": "sha256:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
       "formats": [
@@ -308,7 +308,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+      "artifact_id": "artifact:13",
       "duration_ms": 166800,
       "fingerprint": "sha256:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
       "formats": [
@@ -333,7 +333,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+      "artifact_id": "artifact:14",
       "duration_ms": 279067,
       "fingerprint": "sha256:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
       "formats": [
@@ -358,7 +358,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+      "artifact_id": "artifact:15",
       "duration_ms": 301987,
       "fingerprint": "sha256:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
       "formats": [
@@ -383,7 +383,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
+      "artifact_id": "artifact:16",
       "duration_ms": 122387,
       "fingerprint": "sha256:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
       "formats": [
@@ -411,7 +411,7 @@
   "assessments": [
     {
       "album_id": 1750,
-      "artifact_id": "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
+      "artifact_id": "artifact:1",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -429,7 +429,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
+      "artifact_id": "artifact:2",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -445,7 +445,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
+      "artifact_id": "artifact:3",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -461,7 +461,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
+      "artifact_id": "artifact:4",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -477,7 +477,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
+      "artifact_id": "artifact:5",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -493,7 +493,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
+      "artifact_id": "artifact:6",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -511,7 +511,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
+      "artifact_id": "artifact:7",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -529,7 +529,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
+      "artifact_id": "artifact:8",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -547,7 +547,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
+      "artifact_id": "artifact:9",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -563,7 +563,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
+      "artifact_id": "artifact:10",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -581,7 +581,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
+      "artifact_id": "artifact:11",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -599,7 +599,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
+      "artifact_id": "artifact:12",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -617,7 +617,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
+      "artifact_id": "artifact:13",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -635,7 +635,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
+      "artifact_id": "artifact:14",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -653,7 +653,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
+      "artifact_id": "artifact:15",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -671,7 +671,7 @@
     },
     {
       "album_id": 1750,
-      "artifact_id": "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a",
+      "artifact_id": "artifact:16",
       "rejections": [
         "permanent: Album match is not close enough: 52.9% vs 80% [album, year, tracks, unmatched tracks]",
         "permanent: Has unmatched tracks"
@@ -691,22 +691,22 @@
       "action": "import_missing_tracks_v1",
       "album_id": 1760,
       "artifact_ids": [
-        "artifact:686e21568eeb481c0278b9e4b5984c312da4fe96850f8bf38d9154a0de7eb37a",
-        "artifact:35c2dc20166c432c6d94ac45e19c15237c1364d1bf113dde1466d26f22fd5cf9",
-        "artifact:769a0d9f043a59447715fb3410c7444c4cce6253a69ba9d72d9039934790a59d",
-        "artifact:d0eb2217597c2d1f4ffca3988ee332a868f3b26574a9d29c015cf9c40868cc21",
-        "artifact:342a1ea86d1ae2d4f15b8b2e0179b9f01981ebb08f4139290e4c1da91daaf94a",
-        "artifact:7fa1f0f10cc9046c95f2d02abf91583d937c55d5ced521898415341c714981c6",
-        "artifact:cb3c1a5f455e3d8e120900642196f220e0cb944d4aaadb2a5bcd86c0b26396c6",
-        "artifact:1505dd74e9ddf8cbd386c1fef86793e8f7144b25bbc587efdcf4b8e5df578a19",
-        "artifact:32fc182e1fed3e13c6538262696b739250b24d89fd088feb2d7fc740cf820813",
-        "artifact:30c7921afd1fd1747b5afc8b85c12642c570a7fd6c9d2e806bd94acf5571310b",
-        "artifact:3a50d76792beb7c8520a81710f2b99d14bd62508656797750c4d83e4e6aa17e2",
-        "artifact:23375b574d234916d93326d15045a6d646695ec48c08d7af0b2c9564e2db5d12",
-        "artifact:c0377d9ff448f9bad9b20dc70a1373aec255e53e8aed2b9aa40e17e548762dcc",
-        "artifact:78450286aa6efc0986bb80b349ce106f1d41442b63cca3818815b117f9ab2e01",
-        "artifact:bfa2a77f3fd0f49aabbeb7e2b112a6e69f947671fa934de862dc5f4b64dcad3b",
-        "artifact:926f8d77d0f030491eebb71d1b7cd3588b09a4cdf38727edc1e491b4ea9a6e9a"
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16"
       ],
       "capability_id": "capability:import_missing_tracks:7697",
       "release_id": 7697,
@@ -729,7 +729,7 @@
       ]
     }
   ],
-  "case_id": "sha256:f4657ce1263bbcbe713bc97b505b1ea042f78783b7215a17577b63b0ac2b42e6",
+  "case_id": "sha256:b65fd1da8a3a2c5c8d601e10ba948181435026a94f97b14e49133998edb01c05",
   "observed_at": "2026-09-23T03:22:00.021472151Z",
   "queue": {
     "download_ref": "download:d4b52b69c695722a095a4bd6a09921b1aac80b96adda8933e8e68be0f5dae6e5",
@@ -775,7 +775,7 @@
       "track_count": 15
     }
   ],
-  "schema_version": "lidarr-repair/v2",
+  "schema_version": "lidarr-repair/v3",
   "tracks": [
     {
       "absolute_number": 1,

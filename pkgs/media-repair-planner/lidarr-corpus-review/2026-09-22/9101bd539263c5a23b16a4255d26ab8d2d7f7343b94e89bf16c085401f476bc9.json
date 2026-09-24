@@ -8,7 +8,7 @@
   },
   "artifacts": [
     {
-      "artifact_id": "artifact:b25e9ac745bab44c00c35bc80f95781f236c01bd4b27431b5429a85266e48635",
+      "artifact_id": "artifact:1",
       "duration_ms": 190267,
       "fingerprint": "sha256:b25e9ac745bab44c00c35bc80f95781f236c01bd4b27431b5429a85266e48635",
       "formats": [
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:c63d796809164a971dfb7c7a47e64d8424615d8f76d52e93cc110560f6bc53c5",
+      "artifact_id": "artifact:2",
       "duration_ms": 194533,
       "fingerprint": "sha256:c63d796809164a971dfb7c7a47e64d8424615d8f76d52e93cc110560f6bc53c5",
       "formats": [
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:4d537f1e4b822ae68d7bdc37abfd8f05758fa5dc20c4e018287078ac1d0045c8",
+      "artifact_id": "artifact:3",
       "duration_ms": 240333,
       "fingerprint": "sha256:4d537f1e4b822ae68d7bdc37abfd8f05758fa5dc20c4e018287078ac1d0045c8",
       "formats": [
@@ -83,7 +83,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:71bbe1148a16b8caffde2759c3b54a8e27ab55498bfc777aeaae6cefbbb01716",
+      "artifact_id": "artifact:4",
       "duration_ms": 502000,
       "fingerprint": "sha256:71bbe1148a16b8caffde2759c3b54a8e27ab55498bfc777aeaae6cefbbb01716",
       "formats": [
@@ -108,7 +108,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:3844c56ad847d29734883a1de57320c33ffd9ddc5d4a25117b5c6920d63895f1",
+      "artifact_id": "artifact:5",
       "duration_ms": 241773,
       "fingerprint": "sha256:3844c56ad847d29734883a1de57320c33ffd9ddc5d4a25117b5c6920d63895f1",
       "formats": [
@@ -133,7 +133,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:71e0d6ecda95d0681a98b08eb6c3822f696dc374c46ea8e4bb27879dff4bc5e0",
+      "artifact_id": "artifact:6",
       "duration_ms": 883360,
       "fingerprint": "sha256:71e0d6ecda95d0681a98b08eb6c3822f696dc374c46ea8e4bb27879dff4bc5e0",
       "formats": [
@@ -158,7 +158,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:4436cf0713f39ea953c97112aa2c022cbcd9581a7cd57f7670d7cf02d0f19cea",
+      "artifact_id": "artifact:7",
       "duration_ms": 243800,
       "fingerprint": "sha256:4436cf0713f39ea953c97112aa2c022cbcd9581a7cd57f7670d7cf02d0f19cea",
       "formats": [
@@ -183,7 +183,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:7f7aa9e72d009c463cc3e5fd2e40e46725dd8ad75e59d287acc18db5d2e84321",
+      "artifact_id": "artifact:8",
       "duration_ms": 130467,
       "fingerprint": "sha256:7f7aa9e72d009c463cc3e5fd2e40e46725dd8ad75e59d287acc18db5d2e84321",
       "formats": [
@@ -208,7 +208,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:3606ad67246e2c39b06d37534b065b66bf6f197687efef5d189ccc248ba224b6",
+      "artifact_id": "artifact:9",
       "duration_ms": 687240,
       "fingerprint": "sha256:3606ad67246e2c39b06d37534b065b66bf6f197687efef5d189ccc248ba224b6",
       "formats": [
@@ -233,7 +233,7 @@
       ]
     },
     {
-      "artifact_id": "artifact:9743e658981f48a0e7a7814d3726311e9b1dceee50e50e6c6da76081b1d87595",
+      "artifact_id": "artifact:10",
       "duration_ms": 765227,
       "fingerprint": "sha256:9743e658981f48a0e7a7814d3726311e9b1dceee50e50e6c6da76081b1d87595",
       "formats": [
@@ -261,7 +261,7 @@
   "assessments": [
     {
       "album_id": 753,
-      "artifact_id": "artifact:b25e9ac745bab44c00c35bc80f95781f236c01bd4b27431b5429a85266e48635",
+      "artifact_id": "artifact:1",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -278,7 +278,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:c63d796809164a971dfb7c7a47e64d8424615d8f76d52e93cc110560f6bc53c5",
+      "artifact_id": "artifact:2",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -295,7 +295,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:4d537f1e4b822ae68d7bdc37abfd8f05758fa5dc20c4e018287078ac1d0045c8",
+      "artifact_id": "artifact:3",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -312,7 +312,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:71bbe1148a16b8caffde2759c3b54a8e27ab55498bfc777aeaae6cefbbb01716",
+      "artifact_id": "artifact:4",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -329,7 +329,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:3844c56ad847d29734883a1de57320c33ffd9ddc5d4a25117b5c6920d63895f1",
+      "artifact_id": "artifact:5",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -346,7 +346,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:71e0d6ecda95d0681a98b08eb6c3822f696dc374c46ea8e4bb27879dff4bc5e0",
+      "artifact_id": "artifact:6",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -363,7 +363,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:4436cf0713f39ea953c97112aa2c022cbcd9581a7cd57f7670d7cf02d0f19cea",
+      "artifact_id": "artifact:7",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -380,7 +380,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:7f7aa9e72d009c463cc3e5fd2e40e46725dd8ad75e59d287acc18db5d2e84321",
+      "artifact_id": "artifact:8",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -397,7 +397,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:3606ad67246e2c39b06d37534b065b66bf6f197687efef5d189ccc248ba224b6",
+      "artifact_id": "artifact:9",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -414,7 +414,7 @@
     },
     {
       "album_id": 753,
-      "artifact_id": "artifact:9743e658981f48a0e7a7814d3726311e9b1dceee50e50e6c6da76081b1d87595",
+      "artifact_id": "artifact:10",
       "rejections": [
         "permanent: Has missing tracks"
       ],
@@ -435,16 +435,16 @@
       "action": "import_missing_tracks_v1",
       "album_id": 753,
       "artifact_ids": [
-        "artifact:b25e9ac745bab44c00c35bc80f95781f236c01bd4b27431b5429a85266e48635",
-        "artifact:c63d796809164a971dfb7c7a47e64d8424615d8f76d52e93cc110560f6bc53c5",
-        "artifact:4d537f1e4b822ae68d7bdc37abfd8f05758fa5dc20c4e018287078ac1d0045c8",
-        "artifact:71bbe1148a16b8caffde2759c3b54a8e27ab55498bfc777aeaae6cefbbb01716",
-        "artifact:3844c56ad847d29734883a1de57320c33ffd9ddc5d4a25117b5c6920d63895f1",
-        "artifact:71e0d6ecda95d0681a98b08eb6c3822f696dc374c46ea8e4bb27879dff4bc5e0",
-        "artifact:4436cf0713f39ea953c97112aa2c022cbcd9581a7cd57f7670d7cf02d0f19cea",
-        "artifact:7f7aa9e72d009c463cc3e5fd2e40e46725dd8ad75e59d287acc18db5d2e84321",
-        "artifact:3606ad67246e2c39b06d37534b065b66bf6f197687efef5d189ccc248ba224b6",
-        "artifact:9743e658981f48a0e7a7814d3726311e9b1dceee50e50e6c6da76081b1d87595"
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10"
       ],
       "capability_id": "capability:import_missing_tracks:3790",
       "release_id": 3790,
@@ -453,7 +453,7 @@
       ]
     }
   ],
-  "case_id": "sha256:10473352ef68126a6ee8806244291e01353503aa11faa11a05eb873b58583ba5",
+  "case_id": "sha256:9101bd539263c5a23b16a4255d26ab8d2d7f7343b94e89bf16c085401f476bc9",
   "observed_at": "2026-09-23T03:18:47.06645071Z",
   "queue": {
     "download_ref": "download:f7523bb25d9950aa314c56c183364d3c5e0dd7e3692276affcd55e8739e04900",
@@ -556,7 +556,7 @@
       "track_count": 11
     }
   ],
-  "schema_version": "lidarr-repair/v2",
+  "schema_version": "lidarr-repair/v3",
   "tracks": [
     {
       "absolute_number": 1,
