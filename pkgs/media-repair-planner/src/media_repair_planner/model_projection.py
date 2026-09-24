@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from .decision_validation import DecisionViolation
 
+MODEL_CASE_ID = "sha256:" + "0" * 64
+
 
 def objects(value: object, field: str) -> list[dict[str, object]]:
     if not isinstance(value, dict):
@@ -15,7 +17,9 @@ def objects(value: object, field: str) -> list[dict[str, object]]:
     return items
 
 
-def identifier(item: dict[str, object], field: str) -> str:
+def identifier(item: object, field: str) -> str:
+    if not isinstance(item, dict):
+        raise ValueError("encoded repair case is not an object")
     value = item.get(field)
     if not isinstance(value, str):
         raise ValueError(f"encoded repair case has invalid {field}")

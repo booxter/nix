@@ -7,7 +7,14 @@ from .decision_validation import DecisionViolation
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import decode_decision, encode_case, encode_decision
 from .lidarr_decision_models import LidarrRepairDecisionV3
-from .model_projection import IdentifierAliases, compact_json, identifier, objects, transform
+from .model_projection import (
+    MODEL_CASE_ID,
+    IdentifierAliases,
+    compact_json,
+    identifier,
+    objects,
+    transform,
+)
 
 OMITTED_FIELDS = frozenset({"download_ref", "fingerprint", "foreign_release_id", "queue_id"})
 OMITTED_CAPABILITY_FIELDS = frozenset({"action", "album_id", "artifact_ids", "track_ids"})
@@ -83,10 +90,13 @@ class LidarrProjection:
 def project_case(repair_case: LidarrRepairCaseV3) -> LidarrProjection:
     value: object = json.loads(encode_case(repair_case))
     _validate_capabilities(value)
-    aliases = {
-        identifier(capability, "capability_id"): f"capability:{index}"
-        for index, capability in enumerate(objects(value, "capabilities"), 1)
-    }
+    aliases = {identifier(value, "case_id"): MODEL_CASE_ID}
+    aliases.update(
+        {
+            identifier(capability, "capability_id"): f"capability:{index}"
+            for index, capability in enumerate(objects(value, "capabilities"), 1)
+        }
+    )
     identifiers = IdentifierAliases.create(aliases)
     projected = transform(value, aliases, OMITTED_FIELDS)
     for capability in objects(projected, "capabilities"):

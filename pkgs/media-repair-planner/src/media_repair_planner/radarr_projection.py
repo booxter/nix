@@ -8,6 +8,7 @@ from .contracts import decode_decision, encode_case, encode_decision
 from .decision_models import RepairDecisionV3
 from .decision_validation import DecisionViolation
 from .model_projection import (
+    MODEL_CASE_ID,
     IdentifierAliases,
     compact_json,
     identifier,
@@ -48,7 +49,7 @@ class RadarrProjection:
 
 def project_case(repair_case: RepairCaseV3) -> RadarrProjection:
     value: object = json.loads(encode_case(repair_case))
-    aliases: dict[str, str] = {}
+    aliases = {identifier(value, "case_id"): MODEL_CASE_ID}
 
     for index, item in enumerate(objects(value, "files"), 1):
         aliases[identifier(item, "file_id")] = f"file:{index}"
