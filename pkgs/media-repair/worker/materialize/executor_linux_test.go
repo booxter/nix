@@ -3,6 +3,7 @@ package materialize
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -247,6 +248,40 @@ func TestMaterializeTarAudio(t *testing.T) {
 		if info.Mode().Perm() != 0o640 {
 			t.Fatalf("mode for %s = %o", relative, info.Mode().Perm())
 		}
+	}
+	manifestPath := filepath.Join(workspace, workspaceManifest)
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored manifest
+	if err := json.Unmarshal(data, &stored); err != nil {
+		t.Fatal(err)
+	}
+	stored.Version = "media-repair-workspace/v2"
+	data, err = json.Marshal(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifestPath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stalePath := filepath.Join(workspace, "stale")
+	if err := os.WriteFile(stalePath, []byte("stale"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	outdated := validRequest()
+	outdated.RequestID = "request:outdated-workspace"
+	rebuilt := executor.Execute(context.Background(), outdated)
+	if rebuilt.Success == nil || rebuilt.Success.RequestID != outdated.RequestID ||
+		rebuilt.Failure != nil || files.verifyCalls != 3 || len(prober.paths) != 4 {
+		t.Fatalf(
+			"rebuilt response = %#v, failure = %#v, verify calls = %d, probes = %v",
+			rebuilt, rebuilt.Failure, files.verifyCalls, prober.paths,
+		)
+	}
+	if _, err := os.Stat(stalePath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("stale workspace entry remains: %v", err)
 	}
 }
 

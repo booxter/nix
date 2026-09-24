@@ -121,7 +121,9 @@ func (executor *Executor) Execute(ctx context.Context, request Request) Response
 	if success, found, err := loadWorkspace(
 		workspacePath, request, workspaceComponents, sourceFingerprint,
 	); err != nil {
-		return fail("workspace_error")
+		if clearErr := clearWorkspace(workspacePath); clearErr != nil {
+			return fail("workspace_error")
+		}
 	} else if found {
 		if err := executor.files.Verify(archive, request.ExpectedFingerprint); err != nil {
 			return fail(reasonForError(err))
