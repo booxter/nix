@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
+	"github.com/booxter/nix-config/media-repair/internal/planningstate"
 	"github.com/booxter/nix-config/media-repair/internal/privatefile"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	"golift.io/starr"
@@ -53,6 +54,7 @@ type Store struct {
 	casesDir        string
 	planningDir     string
 	observationsDir string
+	cases           *planningstate.CaseStore[caseRecord]
 }
 
 func NewStore(directory string) (*Store, error) {
@@ -79,6 +81,27 @@ func NewStore(directory string) (*Store, error) {
 		directory: directory, casesDir: casesDir, planningDir: planningDir,
 		observationsDir: observationsDir,
 	}
+	cases, err := planningstate.NewCaseStore(
+		casesDir,
+		func() (func(), error) {
+			lock, lockErr := store.lock()
+			if lockErr != nil {
+				return nil, lockErr
+			}
+			return func() { unlockState(lock) }, nil
+		},
+		planningstate.CaseCodec[caseRecord]{
+			CaseID:       func(record caseRecord) string { return record.CaseID },
+			Encode:       encodeCaseRecord,
+			Decode:       decodeCaseRecord,
+			SameIdentity: sameLidarrCaseIdentity,
+			Merge:        mergeLidarrCaseObservation,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.cases = cases
 	if err := store.migrateLegacyRecords(); err != nil {
 		return nil, err
 	}

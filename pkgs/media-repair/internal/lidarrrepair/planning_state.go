@@ -50,74 +50,10 @@ func (store *Store) PutCase(record Record) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	data, err := encodeCaseRecord(stored)
-	if err != nil {
-		return false, err
-	}
-	path, err := store.casePath(stored.CaseID)
-	if err != nil {
-		return false, err
-	}
-	lock, err := store.lock()
-	if err != nil {
-		return false, err
-	}
-	defer unlockState(lock)
-
-	found, err := equivalentCaseAt(path, stored)
-	if err != nil {
-		return false, err
-	}
-	if found {
-		return false, store.putObservationLocked(stored.QueueID, stored.CaseID)
-	}
-	temporary, err := os.CreateTemp(store.casesDir, ".case-*.tmp")
-	if err != nil {
-		return false, fmt.Errorf("create temporary Lidarr case record: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	defer os.Remove(temporaryPath)
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("set temporary Lidarr case permissions: %w", err)
-	}
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("write temporary Lidarr case record: %w", err)
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return false, fmt.Errorf("sync temporary Lidarr case record: %w", err)
-	}
-	if err := temporary.Close(); err != nil {
-		return false, fmt.Errorf("close temporary Lidarr case record: %w", err)
-	}
-	if err := os.Link(temporaryPath, path); err != nil {
-		if !errors.Is(err, os.ErrExist) {
-			return false, fmt.Errorf("publish Lidarr case record: %w", err)
-		}
-		found, compareErr := equivalentCaseAt(path, stored)
-		if compareErr != nil {
-			return false, compareErr
-		}
-		if !found {
-			return false, fmt.Errorf("Lidarr case record disappeared during publication")
-		}
-		if err := privatefile.SyncDirectory(store.casesDir); err != nil {
-			return false, err
-		}
-		return false, store.putObservationLocked(stored.QueueID, stored.CaseID)
-	}
-	if err := os.Remove(temporaryPath); err != nil {
-		return false, fmt.Errorf("remove temporary Lidarr case record: %w", err)
-	}
-	if err := privatefile.SyncDirectory(store.casesDir); err != nil {
-		return false, fmt.Errorf("sync Lidarr case records: %w", err)
-	}
-	if err := store.putObservationLocked(stored.QueueID, stored.CaseID); err != nil {
-		return false, err
-	}
-	return true, nil
+	observed, err := store.cases.Observe(stored, func() error {
+		return store.putObservationLocked(stored.QueueID, stored.CaseID)
+	})
+	return observed.Created, err
 }
 
 func (store *Store) GetStatus(caseID string) (planningrunner.Status, bool, error) {
@@ -389,52 +325,27 @@ func validateCaseRecord(record caseRecord) error {
 	return nil
 }
 
-func equivalentCaseAt(path string, wanted caseRecord) (bool, error) {
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
+func sameLidarrCaseIdentity(left, right caseRecord) (bool, error) {
+	leftCase, err := lidarrcontracts.DecodeCase(left.Case)
 	if err != nil {
-		return false, fmt.Errorf("read existing Lidarr case record: %w", err)
+		return false, err
 	}
-	existing, err := decodeCaseRecord(data)
+	rightCase, err := lidarrcontracts.DecodeCase(right.Case)
 	if err != nil {
-		return true, err
+		return false, err
 	}
-	left, err := lidarrcontracts.DecodeCase(existing.Case)
-	if err != nil {
-		return true, err
-	}
-	right, err := lidarrcontracts.DecodeCase(wanted.Case)
-	if err != nil {
-		return true, err
-	}
-	left.ObservedAt = time.Time{}
-	right.ObservedAt = time.Time{}
-	existing.Case = nil
-	wanted.Case = nil
-	if !reflect.DeepEqual(existing, wanted) || !reflect.DeepEqual(left, right) {
-		return true, fmt.Errorf(
-			"case ID %q is already bound to different Lidarr local state", wanted.CaseID,
-		)
-	}
-	return true, nil
+	leftCase.ObservedAt = time.Time{}
+	rightCase.ObservedAt = time.Time{}
+	return left.CaseID == right.CaseID && reflect.DeepEqual(leftCase, rightCase), nil
+}
+
+func mergeLidarrCaseObservation(stored, current caseRecord) caseRecord {
+	current.Case = append(json.RawMessage(nil), stored.Case...)
+	return current
 }
 
 func (store *Store) readCase(caseID string) (caseRecord, bool, error) {
-	path, err := store.casePath(caseID)
-	if err != nil {
-		return caseRecord{}, false, err
-	}
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return caseRecord{}, false, nil
-	}
-	if err != nil {
-		return caseRecord{}, false, fmt.Errorf("read Lidarr case record: %w", err)
-	}
-	record, err := decodeCaseRecord(data)
-	return record, true, err
+	return store.cases.Get(caseID)
 }
 
 func encodePlanningResult(result planningResult) ([]byte, error) {
