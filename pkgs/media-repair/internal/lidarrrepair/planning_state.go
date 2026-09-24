@@ -84,14 +84,7 @@ func (store *Store) PutFailure(
 	attemptedAt time.Time,
 	retryAfter time.Time,
 ) (planningrunner.Status, bool, error) {
-	result, changed, err := store.updatePlanningResult(caseID, func(
-		previous planningResult,
-		found bool,
-	) (planningResult, bool, error) {
-		return planningrunner.NextFailure(
-			previous, found, caseID, failure, attemptedAt, retryAfter,
-		)
-	})
+	result, changed, err := store.results.PutFailure(caseID, failure, attemptedAt, retryAfter)
 	return result.Status(), changed, err
 }
 
@@ -109,49 +102,8 @@ func (store *Store) PutDecision(
 			"Lidarr planning decision case ID does not match its record",
 		)
 	}
-	result, changed, err := store.updatePlanningResult(caseID, func(
-		previous planningResult,
-		found bool,
-	) (planningResult, bool, error) {
-		return planningrunner.NextDecision(previous, found, caseID, encoded, attemptedAt)
-	})
+	result, changed, err := store.results.PutDecision(caseID, encoded, attemptedAt)
 	return result.Status(), changed, err
-}
-
-func (store *Store) updatePlanningResult(
-	caseID string,
-	update func(planningResult, bool) (planningResult, bool, error),
-) (planningResult, bool, error) {
-	lock, err := store.lock()
-	if err != nil {
-		return planningResult{}, false, err
-	}
-	defer unlockState(lock)
-	if _, found, err := store.readCase(caseID); err != nil {
-		return planningResult{}, false, err
-	} else if !found {
-		return planningResult{}, false, fmt.Errorf("case %q is not stored", caseID)
-	}
-	previous, found, err := store.readPlanningResult(caseID)
-	if err != nil {
-		return planningResult{}, false, err
-	}
-	result, changed, err := update(previous, found)
-	if err != nil || !changed {
-		return result, changed, err
-	}
-	data, err := encodePlanningResult(result)
-	if err != nil {
-		return planningResult{}, false, err
-	}
-	path, err := store.planningPath(caseID)
-	if err != nil {
-		return planningResult{}, false, err
-	}
-	if err := privatefile.Replace(store.planningDir, path, data); err != nil {
-		return planningResult{}, false, err
-	}
-	return result, true, nil
 }
 
 func (store *Store) latestPlanned(queueID int64) (Record, bool, error) {
@@ -348,14 +300,6 @@ func (store *Store) readCase(caseID string) (caseRecord, bool, error) {
 	return store.cases.Get(caseID)
 }
 
-func encodePlanningResult(result planningResult) ([]byte, error) {
-	return planningrunner.EncodeStoredResult(result, validateLidarrDecision)
-}
-
-func decodePlanningResult(data []byte) (planningResult, error) {
-	return planningrunner.DecodeStoredResult(data, validateLidarrDecision)
-}
-
 func validateLidarrDecision(data json.RawMessage) (string, json.RawMessage, error) {
 	decision, err := lidarrcontracts.DecodeDecision(data)
 	if err != nil {
@@ -369,19 +313,7 @@ func validateLidarrDecision(data json.RawMessage) (string, json.RawMessage, erro
 }
 
 func (store *Store) readPlanningResult(caseID string) (planningResult, bool, error) {
-	path, err := store.planningPath(caseID)
-	if err != nil {
-		return planningResult{}, false, err
-	}
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return planningResult{}, false, nil
-	}
-	if err != nil {
-		return planningResult{}, false, fmt.Errorf("read Lidarr planning result: %w", err)
-	}
-	result, err := decodePlanningResult(data)
-	return result, true, err
+	return store.results.Get(caseID)
 }
 
 func decodeStrictState(data []byte, target any) error {
@@ -408,11 +340,7 @@ func (store *Store) casePath(caseID string) (string, error) {
 }
 
 func (store *Store) planningPath(caseID string) (string, error) {
-	digest, err := stateDigest(caseID)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(store.planningDir, digest+".json"), nil
+	return store.results.Path(caseID)
 }
 
 func (store *Store) observationPath(queueID int64) (string, error) {

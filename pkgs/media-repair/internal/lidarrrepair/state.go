@@ -56,6 +56,7 @@ type Store struct {
 	observationsDir string
 	importsDir      string
 	cases           *planningstate.CaseStore[caseRecord]
+	results         *planningstate.ResultStore
 }
 
 func NewStore(directory string) (*Store, error) {
@@ -86,15 +87,16 @@ func NewStore(directory string) (*Store, error) {
 		directory: directory, casesDir: casesDir, planningDir: planningDir,
 		observationsDir: observationsDir, importsDir: importsDir,
 	}
+	lock := func() (func(), error) {
+		stateLock, lockErr := store.lock()
+		if lockErr != nil {
+			return nil, lockErr
+		}
+		return func() { unlockState(stateLock) }, nil
+	}
 	cases, err := planningstate.NewCaseStore(
 		casesDir,
-		func() (func(), error) {
-			lock, lockErr := store.lock()
-			if lockErr != nil {
-				return nil, lockErr
-			}
-			return func() { unlockState(lock) }, nil
-		},
+		lock,
 		planningstate.CaseCodec[caseRecord]{
 			CaseID:       func(record caseRecord) string { return record.CaseID },
 			Encode:       encodeCaseRecord,
@@ -109,6 +111,19 @@ func NewStore(directory string) (*Store, error) {
 		return nil, err
 	}
 	store.cases = cases
+	results, err := planningstate.NewResultStore(
+		planningDir,
+		lock,
+		func(caseID string) (bool, error) {
+			_, found, getErr := store.cases.Get(caseID)
+			return found, getErr
+		},
+		validateLidarrDecision,
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.results = results
 	if err := store.migrateLegacyImportExecutions(); err != nil {
 		return nil, err
 	}

@@ -27,6 +27,7 @@ type Store struct {
 	planningDir  string
 	executionDir string
 	cases        *planningstate.CaseStore[CaseRecord]
+	results      *planningstate.ResultStore
 }
 
 func (store *Store) PutAssembly(assembly casebuilder.Assembly) (bool, error) {
@@ -63,15 +64,16 @@ func New(root string) (*Store, error) {
 		root: root, casesDir: casesDir, planningDir: planningDir,
 		executionDir: executionDir,
 	}
+	lock := func() (func(), error) {
+		stateLock, lockErr := store.lock()
+		if lockErr != nil {
+			return nil, lockErr
+		}
+		return func() { unlock(stateLock) }, nil
+	}
 	cases, err := planningstate.NewCaseStore(
 		casesDir,
-		func() (func(), error) {
-			lock, lockErr := store.lock()
-			if lockErr != nil {
-				return nil, lockErr
-			}
-			return func() { unlock(lock) }, nil
-		},
+		lock,
 		planningstate.CaseCodec[CaseRecord]{
 			CaseID:       func(record CaseRecord) string { return record.CaseID },
 			Encode:       EncodeRecord,
@@ -86,6 +88,19 @@ func New(root string) (*Store, error) {
 		return nil, err
 	}
 	store.cases = cases
+	results, err := planningstate.NewResultStore(
+		planningDir,
+		lock,
+		func(caseID string) (bool, error) {
+			_, found, getErr := store.cases.Get(caseID)
+			return found, getErr
+		},
+		validateRadarrDecision,
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.results = results
 	return store, nil
 }
 
