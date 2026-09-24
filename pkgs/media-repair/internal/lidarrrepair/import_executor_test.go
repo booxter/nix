@@ -227,7 +227,7 @@ func (store *fakeImportStore) PrepareImport(
 }
 
 func (store *fakeImportStore) MarkImportRequested(
-	_ int64,
+	_ string,
 	commandID int64,
 	at time.Time,
 ) (ImportExecution, bool, error) {
@@ -238,7 +238,7 @@ func (store *fakeImportStore) MarkImportRequested(
 }
 
 func (store *fakeImportStore) MarkImported(
-	_ int64,
+	_ string,
 	confirmations []lidarr.ImportedTrack,
 	at time.Time,
 ) (ImportExecution, bool, error) {
@@ -249,7 +249,7 @@ func (store *fakeImportStore) MarkImported(
 }
 
 func (store *fakeImportStore) MarkImportFailed(
-	_ int64,
+	_ string,
 	at time.Time,
 ) (ImportExecution, bool, error) {
 	store.execution.State = ImportFailed

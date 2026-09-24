@@ -54,6 +54,7 @@ type Store struct {
 	casesDir        string
 	planningDir     string
 	observationsDir string
+	importsDir      string
 	cases           *planningstate.CaseStore[caseRecord]
 }
 
@@ -77,9 +78,13 @@ func NewStore(directory string) (*Store, error) {
 	if err := privatefile.EnsureDirectory(observationsDir); err != nil {
 		return nil, fmt.Errorf("prepare Lidarr observation records directory: %w", err)
 	}
+	importsDir := filepath.Join(directory, "imports")
+	if err := privatefile.EnsureDirectory(importsDir); err != nil {
+		return nil, fmt.Errorf("prepare Lidarr import records directory: %w", err)
+	}
 	store := &Store{
 		directory: directory, casesDir: casesDir, planningDir: planningDir,
-		observationsDir: observationsDir,
+		observationsDir: observationsDir, importsDir: importsDir,
 	}
 	cases, err := planningstate.NewCaseStore(
 		casesDir,
@@ -104,6 +109,9 @@ func NewStore(directory string) (*Store, error) {
 		return nil, err
 	}
 	store.cases = cases
+	if err := store.migrateLegacyImportExecutions(); err != nil {
+		return nil, err
+	}
 	if err := store.migrateLegacyRecords(); err != nil {
 		return nil, err
 	}

@@ -77,11 +77,11 @@ func TestStorePersistsImportExecutionTransitions(t *testing.T) {
 	if err != nil || !prepared || execution.State != ImportPrepared {
 		t.Fatalf("execution = %#v, prepared = %v, error = %v", execution, prepared, err)
 	}
-	execution, changed, err := store.MarkImportRequested(1, 81, now)
+	execution, changed, err := store.MarkImportRequested(authorized.CaseID, 81, now)
 	if err != nil || !changed || execution.State != ImportRequested {
 		t.Fatalf("execution = %#v, changed = %v, error = %v", execution, changed, err)
 	}
-	execution, changed, err = store.MarkImported(1, []lidarr.ImportedTrack{{
+	execution, changed, err = store.MarkImported(authorized.CaseID, []lidarr.ImportedTrack{{
 		HistoryID: 91, AlbumID: 3, ArtistID: 2, TrackID: 11,
 		DroppedPath: "/downloads/staged/02.flac", ImportedPath: "/music/02.flac",
 		OccurredAt: now,
@@ -89,7 +89,7 @@ func TestStorePersistsImportExecutionTransitions(t *testing.T) {
 	if err != nil || !changed || execution.State != Imported {
 		t.Fatalf("execution = %#v, changed = %v, error = %v", execution, changed, err)
 	}
-	stored, found, err := store.GetImportExecution(1)
+	stored, found, err := store.GetImportExecution(authorized.CaseID)
 	if err != nil || !found || stored.State != Imported || len(stored.Confirmations) != 1 {
 		t.Fatalf("stored = %#v, found = %v, error = %v", stored, found, err)
 	}

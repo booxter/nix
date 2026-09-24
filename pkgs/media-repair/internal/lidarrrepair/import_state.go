@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
@@ -17,6 +18,8 @@ import (
 )
 
 const importExecutionVersion = "lidarr-repair-import/v1"
+
+var legacyImportExecutionName = regexp.MustCompile(`^import-queue-[1-9][0-9]*\.json$`)
 
 type ImportExecutionState string
 
@@ -52,11 +55,15 @@ type ImportExecution struct {
 	Confirmations   []lidarr.ImportedTrack `json:"confirmations,omitempty"`
 }
 
-func (store *Store) GetImportExecution(queueID int64) (ImportExecution, bool, error) {
-	path, err := store.importExecutionPath(queueID)
+func (store *Store) GetImportExecution(caseID string) (ImportExecution, bool, error) {
+	path, err := store.importExecutionPath(caseID)
 	if err != nil {
 		return ImportExecution{}, false, err
 	}
+	return store.readImportExecution(path)
+}
+
+func (store *Store) readImportExecution(path string) (ImportExecution, bool, error) {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return ImportExecution{}, false, nil
@@ -66,6 +73,78 @@ func (store *Store) GetImportExecution(queueID int64) (ImportExecution, bool, er
 	}
 	record, err := decodeImportExecution(data)
 	return record, true, err
+}
+
+func (store *Store) activeImportForQueue(
+	queueID int64,
+	exceptCaseID string,
+) (ImportExecution, bool, error) {
+	entries, err := os.ReadDir(store.importsDir)
+	if err != nil {
+		return ImportExecution{}, false, fmt.Errorf("read Lidarr import records: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+		record, found, err := store.readImportExecution(filepath.Join(store.importsDir, entry.Name()))
+		if err != nil {
+			return ImportExecution{}, false, err
+		}
+		if found && record.QueueID == queueID && record.CaseID != exceptCaseID &&
+			(record.State == ImportPrepared || record.State == ImportRequested) {
+			return record, true, nil
+		}
+	}
+	return ImportExecution{}, false, nil
+}
+
+func (store *Store) migrateLegacyImportExecutions() error {
+	entries, err := os.ReadDir(store.directory)
+	if err != nil {
+		return fmt.Errorf("read Lidarr state directory: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !legacyImportExecutionName.MatchString(entry.Name()) {
+			continue
+		}
+		source := filepath.Join(store.directory, entry.Name())
+		data, err := os.ReadFile(source)
+		if err != nil {
+			return fmt.Errorf("read legacy Lidarr import execution: %w", err)
+		}
+		record, err := decodeImportExecution(data)
+		if err != nil {
+			return fmt.Errorf("decode legacy Lidarr import execution %q: %w", entry.Name(), err)
+		}
+		if entry.Name() != fmt.Sprintf("import-queue-%d.json", record.QueueID) {
+			return fmt.Errorf("legacy Lidarr import execution has unexpected queue ID")
+		}
+		destination, err := store.importExecutionPath(record.CaseID)
+		if err != nil {
+			return err
+		}
+		existing, found, err := store.readImportExecution(destination)
+		if err != nil {
+			return err
+		}
+		if found && !reflect.DeepEqual(existing, record) {
+			return fmt.Errorf("legacy Lidarr import execution conflicts with case ledger")
+		}
+		if !found {
+			canonical, err := encodeImportExecution(record)
+			if err != nil {
+				return err
+			}
+			if err := privatefile.Replace(store.importsDir, destination, canonical); err != nil {
+				return fmt.Errorf("migrate legacy Lidarr import execution: %w", err)
+			}
+		}
+		if err := os.Remove(source); err != nil {
+			return fmt.Errorf("remove migrated Lidarr import execution: %w", err)
+		}
+	}
+	return nil
 }
 
 func (store *Store) PrepareImport(
@@ -79,7 +158,17 @@ func (store *Store) PrepareImport(
 	if historyIDBefore < 0 || at.IsZero() {
 		return ImportExecution{}, false, fmt.Errorf("Lidarr import preparation is invalid")
 	}
-	previous, found, err := store.GetImportExecution(authorized.QueueID)
+	unlock, err := store.lock()
+	if err != nil {
+		return ImportExecution{}, false, err
+	}
+	defer unlockState(unlock)
+
+	path, err := store.importExecutionPath(authorized.CaseID)
+	if err != nil {
+		return ImportExecution{}, false, err
+	}
+	previous, found, err := store.readImportExecution(path)
 	if err != nil {
 		return ImportExecution{}, false, err
 	}
@@ -88,9 +177,17 @@ func (store *Store) PrepareImport(
 		if sameImportExecution(previous, wanted) {
 			return previous, false, nil
 		}
+		return ImportExecution{}, false, fmt.Errorf("Lidarr case is already bound to a different import")
+	}
+	active, found, err := store.activeImportForQueue(authorized.QueueID, authorized.CaseID)
+	if err != nil {
+		return ImportExecution{}, false, err
+	}
+	if found {
 		return ImportExecution{}, false, fmt.Errorf(
-			"Lidarr queue %d is already bound to a different import",
+			"Lidarr queue %d has active import for case %q",
 			authorized.QueueID,
+			active.CaseID,
 		)
 	}
 	if err := store.writeImportExecution(wanted); err != nil {
@@ -100,14 +197,14 @@ func (store *Store) PrepareImport(
 }
 
 func (store *Store) MarkImportRequested(
-	queueID int64,
+	caseID string,
 	commandID int64,
 	at time.Time,
 ) (ImportExecution, bool, error) {
 	if commandID <= 0 {
 		return ImportExecution{}, false, fmt.Errorf("Lidarr command ID must be positive")
 	}
-	return store.updateImportExecution(queueID, at, func(record ImportExecution) (ImportExecution, bool, error) {
+	return store.updateImportExecution(caseID, at, func(record ImportExecution) (ImportExecution, bool, error) {
 		if record.State == ImportRequested && record.CommandID != nil && *record.CommandID == commandID {
 			return record, false, nil
 		}
@@ -121,11 +218,11 @@ func (store *Store) MarkImportRequested(
 }
 
 func (store *Store) MarkImported(
-	queueID int64,
+	caseID string,
 	confirmations []lidarr.ImportedTrack,
 	at time.Time,
 ) (ImportExecution, bool, error) {
-	return store.updateImportExecution(queueID, at, func(record ImportExecution) (ImportExecution, bool, error) {
+	return store.updateImportExecution(caseID, at, func(record ImportExecution) (ImportExecution, bool, error) {
 		if record.State == Imported {
 			if reflect.DeepEqual(record.Confirmations, confirmations) {
 				return record, false, nil
@@ -145,10 +242,10 @@ func (store *Store) MarkImported(
 }
 
 func (store *Store) MarkImportFailed(
-	queueID int64,
+	caseID string,
 	at time.Time,
 ) (ImportExecution, bool, error) {
-	return store.updateImportExecution(queueID, at, func(record ImportExecution) (ImportExecution, bool, error) {
+	return store.updateImportExecution(caseID, at, func(record ImportExecution) (ImportExecution, bool, error) {
 		if record.State == ImportFailed {
 			return record, false, nil
 		}
@@ -161,19 +258,28 @@ func (store *Store) MarkImportFailed(
 }
 
 func (store *Store) updateImportExecution(
-	queueID int64,
+	caseID string,
 	at time.Time,
 	update func(ImportExecution) (ImportExecution, bool, error),
 ) (ImportExecution, bool, error) {
 	if at.IsZero() {
 		return ImportExecution{}, false, fmt.Errorf("Lidarr import update time is required")
 	}
-	record, found, err := store.GetImportExecution(queueID)
+	unlock, err := store.lock()
+	if err != nil {
+		return ImportExecution{}, false, err
+	}
+	defer unlockState(unlock)
+	path, err := store.importExecutionPath(caseID)
+	if err != nil {
+		return ImportExecution{}, false, err
+	}
+	record, found, err := store.readImportExecution(path)
 	if err != nil {
 		return ImportExecution{}, false, err
 	}
 	if !found {
-		return ImportExecution{}, false, fmt.Errorf("Lidarr import for queue %d is not prepared", queueID)
+		return ImportExecution{}, false, fmt.Errorf("Lidarr import for case %q is not prepared", caseID)
 	}
 	if at.Before(record.UpdatedAt) {
 		return ImportExecution{}, false, fmt.Errorf("Lidarr import update time moved backwards")
@@ -275,11 +381,15 @@ func validateConfirmations(record ImportExecution, confirmations []lidarr.Import
 	return nil
 }
 
-func (store *Store) importExecutionPath(queueID int64) (string, error) {
-	if store == nil || store.directory == "" || queueID <= 0 {
+func (store *Store) importExecutionPath(caseID string) (string, error) {
+	if store == nil || store.importsDir == "" {
 		return "", fmt.Errorf("Lidarr import state is not configured")
 	}
-	return filepath.Join(store.directory, fmt.Sprintf("import-queue-%d.json", queueID)), nil
+	digest, err := stateDigest(caseID)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(store.importsDir, digest+".json"), nil
 }
 
 func (store *Store) writeImportExecution(record ImportExecution) error {
@@ -287,11 +397,11 @@ func (store *Store) writeImportExecution(record ImportExecution) error {
 	if err != nil {
 		return err
 	}
-	path, err := store.importExecutionPath(record.QueueID)
+	path, err := store.importExecutionPath(record.CaseID)
 	if err != nil {
 		return err
 	}
-	return privatefile.Replace(store.directory, path, data)
+	return privatefile.Replace(store.importsDir, path, data)
 }
 
 func encodeImportExecution(record ImportExecution) ([]byte, error) {
@@ -322,7 +432,7 @@ func decodeImportExecution(data []byte) (ImportExecution, error) {
 }
 
 func validateImportExecution(record ImportExecution) error {
-	if record.Version != importExecutionVersion || record.CaseID == "" ||
+	if record.Version != importExecutionVersion || !stateFingerprint.MatchString(record.CaseID) ||
 		record.CapabilityID == "" || record.QueueID <= 0 || record.ArtistID <= 0 ||
 		record.AlbumID <= 0 || record.ReleaseID <= 0 || len(record.Tracks) == 0 ||
 		record.HistoryIDBefore < 0 || record.PreparedAt.IsZero() || record.UpdatedAt.IsZero() ||
