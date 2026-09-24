@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, JsonValue, StringConstraints
 
-from .decision_validation import describe_violation
+from .decision_validation_core import describe_violation
 from .evaluation_runtime import EvaluationSettings
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import decode_case, encode_decision

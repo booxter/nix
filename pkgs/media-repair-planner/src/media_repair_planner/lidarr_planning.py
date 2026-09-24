@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import (
     decision_schema,

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from media_repair_planner.contracts import decode_case, decode_decision, encode_decision
-from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
+from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.model_projection import MODEL_CASE_ID
 from media_repair_planner.radarr_projection import project_case
 

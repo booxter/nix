@@ -14,7 +14,7 @@ import pytest
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_case
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import (
+from media_repair_planner.decision_validation_core import (
     DecisionViolation,
     ViolationCode,
     format_correction,

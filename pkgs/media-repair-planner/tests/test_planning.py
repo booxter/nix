@@ -14,7 +14,7 @@ from media_repair_planner.contracts import (
     encode_decision,
 )
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
+from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.planning import DecisionModelError, Planner
 from media_repair_planner.prompt import SYSTEM_INSTRUCTION
 

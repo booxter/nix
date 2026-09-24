@@ -5,13 +5,13 @@ from collections.abc import Callable
 
 from .contracts import ContractError, decode_decision
 from .decision_models import RepairDecisionV3
-from .decision_validation import (
+from .decision_validation import validate_decision_object
+from .decision_validation_core import (
     DecisionViolation,
     describe_violations,
     format_correction,
     non_object_violation,
     parsing_violation,
-    validate_decision_object,
 )
 
 ERROR_DETAIL_LIMIT = 384

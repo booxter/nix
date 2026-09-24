@@ -7,7 +7,7 @@ import pytest
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation
+from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.evaluation import (
     EvaluationCase,
     EvaluationDataError,

@@ -4,7 +4,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel
 
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 
 
 class StructuredDecisionModel(Protocol):

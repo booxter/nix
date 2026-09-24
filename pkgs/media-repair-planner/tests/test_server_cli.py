@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation
+from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.model_runtime import BackendSettings
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket

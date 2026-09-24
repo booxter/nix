@@ -12,7 +12,8 @@ from .decision_models import (
     SafeExplanation,
     Sha256Id,
 )
-from .decision_validation import DecisionViolation, validate_decision_for_case
+from .decision_validation import validate_decision_for_case
+from .decision_validation_core import DecisionViolation
 from .planning_core import ContractPlanner
 from .planning_core import DecisionModelError as DecisionModelError
 from .planning_core import PlanningOutcome as PlanningOutcome

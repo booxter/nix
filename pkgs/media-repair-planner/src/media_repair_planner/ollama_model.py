@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from .case_models import RepairCaseV3
 from .contracts import decision_schema
 from .decision_models import RepairDecisionV3
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 from .planning import DecisionModelError
 from .radarr_projection import project_case
 from .structured_decision import (

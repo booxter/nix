@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
+from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.lidarr_contracts import decode_case, decode_decision
 from media_repair_planner.lidarr_projection import project_case
 from media_repair_planner.model_projection import MODEL_CASE_ID

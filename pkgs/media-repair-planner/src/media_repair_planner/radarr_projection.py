@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .case_models import RepairCaseV3
 from .contracts import decode_decision, encode_case, encode_decision
 from .decision_models import RepairDecisionV3
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 from .model_projection import (
     MODEL_CASE_ID,
     IdentifierAliases,

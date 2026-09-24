@@ -18,7 +18,7 @@ from media_repair_planner.contracts import (
     decision_schema,
     decode_case,
 )
-from media_repair_planner.decision_validation import (
+from media_repair_planner.decision_validation_core import (
     DecisionViolation,
     ViolationCode,
     format_correction,

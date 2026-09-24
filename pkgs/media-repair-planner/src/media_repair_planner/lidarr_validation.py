@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .decision_validation import (
+from .decision_validation_core import (
     DecisionViolation,
     ViolationCode,
     validate_object_against_action_schema,
