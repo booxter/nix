@@ -16,6 +16,7 @@ from .lidarr_decision_models import (
     Reason,
     Sha256Id,
 )
+from .lidarr_projection import project_case
 from .lidarr_prompt import SYSTEM_INSTRUCTION
 from .lidarr_validation import validate_decision_for_case, validate_decision_object
 from .planning_core import ContractPlanner, DecisionModelError
@@ -32,16 +33,18 @@ class LidarrDecisionGenerator:
         repair_case: LidarrRepairCaseV3,
         correction: tuple[DecisionViolation, ...],
     ) -> LidarrRepairDecisionV3:
+        projection = project_case(repair_case)
         try:
             raw = await self._model.decide_json(
                 SYSTEM_INSTRUCTION,
-                encode_case(repair_case).decode(),
+                projection.case_content,
                 decision_schema(),
                 LidarrRepairDecisionV3,
                 repair_case.case_id.root,
-                correction,
+                projection.project_correction(correction),
             )
-            return decode_structured_output(raw, decode_decision, validate_decision_object)
+            decision = decode_structured_output(raw, decode_decision, validate_decision_object)
+            return projection.restore_decision(decision)
         except StructuredDecisionError as error:
             raise DecisionModelError(
                 "Lidarr " + str(error),

@@ -29,6 +29,7 @@ from media_repair_planner.lidarr_evaluation import (
 )
 from media_repair_planner.lidarr_evaluation_cli import main as evaluation_main
 from media_repair_planner.lidarr_planning import LidarrPlanner
+from media_repair_planner.lidarr_projection import project_case
 from media_repair_planner.lidarr_validation import (
     validate_decision_for_case,
     validate_decision_object,
@@ -169,6 +170,10 @@ def repair_decision(**changes: object) -> LidarrRepairDecisionV3:
     return decode_decision(json.dumps(decision_value(**changes)).encode())
 
 
+def model_decision_value(**changes: object) -> dict[str, object]:
+    return decision_value(capability_id="capability:1", **changes)
+
+
 class ScriptedModel:
     def __init__(self, outputs: list[str | Exception]) -> None:
         self.outputs = outputs
@@ -193,15 +198,16 @@ class ScriptedModel:
 
 async def test_lidarr_planner_returns_complete_mapping() -> None:
     expected = repair_decision()
-    model = ScriptedModel([encode_decision(expected).decode()])
+    model = ScriptedModel([json.dumps(model_decision_value())])
+    case = repair_case()
 
-    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+    outcome = await LidarrPlanner(model).plan_with_outcome(case)
 
     assert outcome.decision == expected
     assert outcome.attempts == 1
     assert not outcome.used_fallback
     assert model.calls[0][3] == CASE_ID
-    assert json.loads(model.calls[0][1]) == case_value()
+    assert model.calls[0][1] == project_case(case).case_content
 
 
 async def test_lidarr_planner_returns_partial_mapping() -> None:
@@ -209,7 +215,16 @@ async def test_lidarr_planner_returns_partial_mapping() -> None:
         mappings=[{"artifact_id": "artifact:1", "track_id": 5}],
         evidence_refs=["artifact:1"],
     )
-    model = ScriptedModel([encode_decision(expected).decode()])
+    model = ScriptedModel(
+        [
+            json.dumps(
+                model_decision_value(
+                    mappings=[{"artifact_id": "artifact:1", "track_id": 5}],
+                    evidence_refs=["artifact:1"],
+                )
+            )
+        ]
+    )
 
     outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
 
@@ -220,7 +235,7 @@ async def test_lidarr_planner_returns_partial_mapping() -> None:
 
 async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None:
     invalid = json.dumps(
-        decision_value(
+        model_decision_value(
             mappings=[
                 {"artifact_id": "artifact:1", "track_id": 5},
                 {"artifact_id": "artifact:1", "track_id": 5},
@@ -242,7 +257,7 @@ async def test_lidarr_planner_logs_bounded_fallback_evidence(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     invalid = json.dumps(
-        decision_value(
+        model_decision_value(
             mappings=[
                 {"artifact_id": "artifact:1", "track_id": 5},
                 {"artifact_id": "artifact:1", "track_id": 5},
@@ -268,7 +283,7 @@ async def test_lidarr_planner_logs_bounded_fallback_evidence(
 
 
 async def test_lidarr_planner_corrects_malformed_output() -> None:
-    model = ScriptedModel(["not JSON", json.dumps(decision_value())])
+    model = ScriptedModel(["not JSON", json.dumps(model_decision_value())])
 
     outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
 
@@ -436,7 +451,7 @@ def test_lidarr_review_corpus_rejects_bad_identity(tmp_path: Path) -> None:
 
 async def test_lidarr_review_runs_structured_planner(tmp_path: Path) -> None:
     write_lidarr_case(tmp_path)
-    model = ScriptedModel([json.dumps(decision_value())])
+    model = ScriptedModel([json.dumps(model_decision_value())])
 
     report = await run_evaluation(
         LidarrPlanner(model),
@@ -496,7 +511,7 @@ def test_lidarr_review_cli_writes_openrouter_report(tmp_path: Path) -> None:
 
     def model_factory(settings: object, trace_sink: object) -> ScriptedModel:
         del settings, trace_sink
-        return ScriptedModel([json.dumps(decision_value())])
+        return ScriptedModel([json.dumps(model_decision_value())])
 
     result = evaluation_main(
         [

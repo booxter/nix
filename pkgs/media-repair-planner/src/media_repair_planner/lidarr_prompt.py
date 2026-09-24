@@ -16,13 +16,14 @@ download reference, album IDs, release IDs, track IDs, filenames, or paths.
 Keep the references concise; they do not need to repeat every mapped artifact
 when the selected capability and explanation identify the evidence.
 
-Each capability identifies one release and all tracks currently missing from
-it. Choose import_missing_tracks_v1 when the evidence establishes a safe
-one-to-one mapping from distinct offered artifacts to at least one missing
-track in one capability. Include every independently safe mapping for that
-release, but do not include an uncertain mapping merely to increase coverage.
-Extra artifacts and missing tracks without safe matches may be ignored. Never
-map a track outside the selected capability.
+Each capability identifies one release eligible for import_missing_tracks_v1.
+Its offered tracks are the tracks for that release where has_file is false,
+and all listed artifacts are offered to every capability. Choose that action
+when the evidence establishes a safe one-to-one mapping from distinct offered
+artifacts to at least one missing track for one capability. Include every
+independently safe mapping for that release, but do not include an uncertain
+mapping merely to increase coverage. Extra artifacts and missing tracks
+without safe matches may be ignored. Never map another release's track.
 
 Use release country, label, format, MusicBrainz identity, filenames, embedded
 tags, track and disc numbers, durations, and Lidarr's assessment together. A
