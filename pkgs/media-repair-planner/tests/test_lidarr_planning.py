@@ -11,7 +11,7 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
 from media_repair_planner.evaluation_runtime import OpenRouterEvaluationSettings
-from media_repair_planner.lidarr_case_models import LidarrRepairCaseV2
+from media_repair_planner.lidarr_case_models import LidarrRepairCaseV3
 from media_repair_planner.lidarr_contracts import (
     ContractError,
     decode_case,
@@ -19,7 +19,7 @@ from media_repair_planner.lidarr_contracts import (
     encode_case,
     encode_decision,
 )
-from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV2
+from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV3
 from media_repair_planner.lidarr_evaluation import (
     CorpusCase,
     LidarrEvaluationDataError,
@@ -96,7 +96,7 @@ def case_value() -> dict[str, object]:
             }
         )
     return {
-        "schema_version": "lidarr-repair/v2",
+        "schema_version": "lidarr-repair/v3",
         "case_id": CASE_ID,
         "observed_at": "2026-09-21T12:00:00Z",
         "queue": {
@@ -144,7 +144,7 @@ def case_value() -> dict[str, object]:
 
 def decision_value(**changes: object) -> dict[str, object]:
     value: dict[str, object] = {
-        "schema_version": "lidarr-repair/v2",
+        "schema_version": "lidarr-repair/v3",
         "case_id": CASE_ID,
         "action": "import_missing_tracks_v1",
         "capability_id": "capability:one",
@@ -161,11 +161,11 @@ def decision_value(**changes: object) -> dict[str, object]:
     return value
 
 
-def repair_case() -> LidarrRepairCaseV2:
+def repair_case() -> LidarrRepairCaseV3:
     return decode_case(json.dumps(case_value()).encode())
 
 
-def repair_decision(**changes: object) -> LidarrRepairDecisionV2:
+def repair_decision(**changes: object) -> LidarrRepairDecisionV3:
     return decode_decision(json.dumps(decision_value(**changes)).encode())
 
 
@@ -183,7 +183,7 @@ class ScriptedModel:
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
     ) -> str:
-        assert decision_model is LidarrRepairDecisionV2
+        assert decision_model is LidarrRepairDecisionV3
         self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
@@ -202,6 +202,20 @@ async def test_lidarr_planner_returns_complete_mapping() -> None:
     assert not outcome.used_fallback
     assert model.calls[0][3] == CASE_ID
     assert json.loads(model.calls[0][1]) == case_value()
+
+
+async def test_lidarr_planner_returns_partial_mapping() -> None:
+    expected = repair_decision(
+        mappings=[{"artifact_id": "artifact:1", "track_id": 5}],
+        evidence_refs=["artifact:1"],
+    )
+    model = ScriptedModel([encode_decision(expected).decode()])
+
+    outcome = await LidarrPlanner(model).plan_with_outcome(repair_case())
+
+    assert outcome.decision == expected
+    assert outcome.attempts == 1
+    assert not outcome.used_fallback
 
 
 async def test_lidarr_planner_corrects_invalid_mapping_then_falls_back() -> None:
@@ -304,11 +318,20 @@ def test_lidarr_semantic_validation_allows_unused_existing_track_artifact() -> N
     assert validate_decision_for_case(repair_case, decision) == ()
 
 
+def test_lidarr_semantic_validation_allows_partial_mapping() -> None:
+    decision = repair_decision(
+        mappings=[{"artifact_id": "artifact:1", "track_id": 5}],
+        evidence_refs=["artifact:1"],
+    )
+
+    assert validate_decision_for_case(repair_case(), decision) == ()
+
+
 def test_lidarr_no_repair_is_valid() -> None:
     decision = decode_decision(
         json.dumps(
             {
-                "schema_version": "lidarr-repair/v2",
+                "schema_version": "lidarr-repair/v3",
                 "case_id": CASE_ID,
                 "action": "no_repair",
                 "reason": "ambiguous_tracks",
@@ -347,7 +370,7 @@ class NeverRadarrPlanner:
 
 
 class StaticLidarrPlanner:
-    async def plan(self, repair_case: LidarrRepairCaseV2) -> LidarrRepairDecisionV2:
+    async def plan(self, repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
         assert repair_case.case_id.root == CASE_ID
         return repair_decision()
 
@@ -360,12 +383,12 @@ async def test_lidarr_endpoint_uses_shared_http_boundary() -> None:
     )
     app = create_app(
         NeverRadarrPlanner(),
-        additional_endpoints={"/lidarr/v2/repair-plans": endpoint},
+        additional_endpoints={"/lidarr/v3/repair-plans": endpoint},
     )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://planner") as client:
         response = await client.post(
-            "/lidarr/v2/repair-plans",
+            "/lidarr/v3/repair-plans",
             content=encode_case(repair_case()),
             headers={"Content-Type": "application/json"},
         )
@@ -447,7 +470,7 @@ def test_lidarr_review_marks_fallback_as_failed() -> None:
             decision=decode_decision(
                 json.dumps(
                     {
-                        "schema_version": "lidarr-repair/v2",
+                        "schema_version": "lidarr-repair/v3",
                         "case_id": CASE_ID,
                         "action": "no_repair",
                         "reason": "unsafe_to_repair",

@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict, JsonValue, StringConstraints
 
 from .decision_validation import describe_violation
 from .evaluation_runtime import EvaluationSettings
-from .lidarr_case_models import LidarrRepairCaseV2
+from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import decode_case, encode_decision
-from .lidarr_decision_models import LidarrRepairDecisionV2
+from .lidarr_decision_models import LidarrRepairDecisionV3
 from .lidarr_planning import LidarrPlanner
 from .lidarr_validation import validate_decision_for_case
 from .planning_core import PlanningOutcome
@@ -53,7 +53,7 @@ class EvaluationReport(StrictModel):
 @dataclass(frozen=True)
 class CorpusCase:
     name: str
-    repair_case: LidarrRepairCaseV2
+    repair_case: LidarrRepairCaseV3
 
 
 def load_cases(directory: Path) -> list[CorpusCase]:
@@ -87,7 +87,7 @@ def load_cases(directory: Path) -> list[CorpusCase]:
 def evaluate_outcome(
     corpus_case: CorpusCase,
     run: int,
-    outcome: PlanningOutcome[LidarrRepairDecisionV2],
+    outcome: PlanningOutcome[LidarrRepairDecisionV3],
 ) -> EvaluationResult:
     violations = ["planner exhausted its attempts"] if outcome.used_fallback else []
     violations.extend(

@@ -25,9 +25,9 @@ python3Packages.buildPythonApplication {
     mkdir -p src/media_repair_planner/schemas
     cp ${contracts}/share/radarr-repair/contracts/v3/*.schema.json \
       src/media_repair_planner/schemas/
-    cp ${contracts}/share/lidarr-repair/contracts/v2/repair-case.schema.json \
+    cp ${contracts}/share/lidarr-repair/contracts/v3/repair-case.schema.json \
       src/media_repair_planner/schemas/lidarr-repair-case.schema.json
-    cp ${contracts}/share/lidarr-repair/contracts/v2/repair-decision.schema.json \
+    cp ${contracts}/share/lidarr-repair/contracts/v3/repair-decision.schema.json \
       src/media_repair_planner/schemas/lidarr-repair-decision.schema.json
     mkdir -p src/media_repair_planner/evaluations/v3/cases
     cp ${contracts}/share/radarr-repair/contracts/v3/examples/repair-case-*.json \

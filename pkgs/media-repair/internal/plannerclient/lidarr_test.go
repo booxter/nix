@@ -24,7 +24,7 @@ func TestClientPlansLidarrCaseThroughSharedTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 	socketPath := serveUnix(t, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/lidarr/v2/repair-plans" {
+		if request.URL.Path != "/lidarr/v3/repair-plans" {
 			http.NotFound(writer, request)
 			return
 		}

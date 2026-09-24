@@ -53,6 +53,9 @@ func TestAssembleNormalizesExternalLists(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(repairCase.Queue.Messages) != maximumQueueMessages ||
+		repairCase.Artifacts[0].ArtifactID != "artifact:1" ||
+		repairCase.Assessments[0].ArtifactID != "artifact:1" ||
+		repairCase.Capabilities[0].ArtifactIDs[0] != "artifact:1" ||
 		len(repairCase.Releases[0].Countries) != maximumReleaseNames ||
 		len(repairCase.Releases[0].Labels) != 1 ||
 		repairCase.Assessments[0].TrackIDs == nil ||

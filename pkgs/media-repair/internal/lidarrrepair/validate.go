@@ -20,6 +20,13 @@ func validateDecisionSelection(
 	repairCase lidarrcontracts.Case,
 	decision lidarrcontracts.Decision,
 ) error {
+	if repairCase.SchemaVersion != lidarrcontracts.LidarrRepairV2 &&
+		repairCase.SchemaVersion != lidarrcontracts.SchemaVersion {
+		return fmt.Errorf("unsupported Lidarr repair schema version %q", repairCase.SchemaVersion)
+	}
+	if decisionVersion(decision) != repairCase.SchemaVersion {
+		return fmt.Errorf("Lidarr decision schema version does not match its case")
+	}
 	if decision.Kind == lidarrcontracts.ActionNoRepair && decision.NoRepair != nil {
 		return validateEvidenceReferences(repairCase, decision.NoRepair.EvidenceRefs)
 	}
@@ -59,10 +66,28 @@ func validateDecisionSelection(
 		artifacts[mapping.ArtifactID] = struct{}{}
 		tracks[mapping.TrackID] = struct{}{}
 	}
-	if len(tracks) != len(capability.TrackIDs) {
+	if len(tracks) == 0 {
+		return fmt.Errorf("Lidarr decision does not map any missing track")
+	}
+	if repairCase.SchemaVersion == lidarrcontracts.LidarrRepairV2 &&
+		len(tracks) != len(capability.TrackIDs) {
 		return fmt.Errorf("Lidarr decision does not map every missing track")
 	}
 	return nil
+}
+
+func decisionVersion(decision lidarrcontracts.Decision) string {
+	switch decision.Kind {
+	case lidarrcontracts.ActionNoRepair:
+		if decision.NoRepair != nil {
+			return decision.NoRepair.SchemaVersion
+		}
+	case lidarrcontracts.ActionImportMissingTracks:
+		if decision.ImportMissingTracks != nil {
+			return decision.ImportMissingTracks.SchemaVersion
+		}
+	}
+	return ""
 }
 
 func validateEvidenceReferences(repairCase lidarrcontracts.Case, references []string) error {

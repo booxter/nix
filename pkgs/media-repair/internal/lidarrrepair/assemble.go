@@ -47,7 +47,7 @@ func Assemble(
 	assessments := make([]lidarrcontracts.Assessment, 0, len(materialized.Artifacts))
 	bindings := make([]ImportBinding, 0, len(materialized.Artifacts))
 	artifactIDs := make([]string, 0, len(materialized.Artifacts))
-	for _, artifact := range materialized.Artifacts {
+	for index, artifact := range materialized.Artifacts {
 		absolutePath, err := resolver.ResolvePublishedPath(
 			materialized.RootID, artifact.PathComponents,
 		)
@@ -60,10 +60,11 @@ func Assemble(
 				"Lidarr did not assess materialized artifact %q", artifact.ArtifactID,
 			)
 		}
-		artifacts = append(artifacts, contractArtifact(artifact))
-		assessments = append(assessments, contractAssessment(artifact.ArtifactID, item))
-		bindings = append(bindings, bindingFromImport(artifact.ArtifactID, item, queue.DownloadID))
-		artifactIDs = append(artifactIDs, artifact.ArtifactID)
+		artifactID := caseArtifactID(index)
+		artifacts = append(artifacts, contractArtifact(artifact, artifactID))
+		assessments = append(assessments, contractAssessment(artifactID, item))
+		bindings = append(bindings, bindingFromImport(artifactID, item, queue.DownloadID))
+		artifactIDs = append(artifactIDs, artifactID)
 	}
 	return assembleCase(
 		observedAt, queue, album, tracks, artifacts, assessments, bindings, artifactIDs,
@@ -241,15 +242,19 @@ func buildImportCapabilities(
 	return capabilities, nil
 }
 
-func contractArtifact(artifact materialize.Artifact) lidarrcontracts.Artifact {
+func contractArtifact(artifact materialize.Artifact, artifactID string) lidarrcontracts.Artifact {
 	evidence := artifact.Evidence
 	tags := append(contractTags(evidence.Format.Tags), streamTags(evidence.Streams)...)
 	return lidarrcontracts.Artifact{
-		ArtifactID: artifact.ArtifactID, RelativePath: artifact.RelativePath,
+		ArtifactID: artifactID, RelativePath: artifact.RelativePath,
 		Fingerprint: artifact.Fingerprint, SizeBytes: artifact.SizeBytes,
 		DurationMS: effectiveDuration(evidence), Formats: append([]string(nil), evidence.Format.Names...),
 		Tags: tags, Streams: contractStreams(evidence.Streams),
 	}
+}
+
+func caseArtifactID(index int) string {
+	return fmt.Sprintf("artifact:%d", index+1)
 }
 
 func contractAssessment(artifactID string, item lidarr.ManualImport) lidarrcontracts.Assessment {

@@ -7,7 +7,7 @@
 }:
 let
   radarrSchemaDirectory = "${contracts}/share/radarr-repair/contracts/v3";
-  lidarrSchemaDirectory = "${contracts}/share/lidarr-repair/contracts/v2";
+  lidarrSchemaDirectory = "${contracts}/share/lidarr-repair/contracts/v3";
   generate = schemaDirectory: schema: className: output: ''
     datamodel-codegen \
       --input "${schemaDirectory}/${schema}" \
@@ -43,10 +43,10 @@ runCommand "media-repair-pydantic-models-v3"
     ${generate radarrSchemaDirectory "repair-decision.schema.json" "RepairDecisionV3"
       "decision_models.py"
     }
-    ${generate lidarrSchemaDirectory "repair-case.schema.json" "LidarrRepairCaseV2"
+    ${generate lidarrSchemaDirectory "repair-case.schema.json" "LidarrRepairCaseV3"
       "lidarr_case_models.py"
     }
-    ${generate lidarrSchemaDirectory "repair-decision.schema.json" "LidarrRepairDecisionV2"
+    ${generate lidarrSchemaDirectory "repair-decision.schema.json" "LidarrRepairDecisionV3"
       "lidarr_decision_models.py"
     }
     ruff format --config ${../../ruff.toml} "$out"

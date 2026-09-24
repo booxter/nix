@@ -21,6 +21,27 @@ func TestCaseRoundTrip(t *testing.T) {
 	}
 }
 
+func TestLegacyCaseRoundTrip(t *testing.T) {
+	repairCase := testCase(t)
+	repairCase.SchemaVersion = LidarrRepairV2
+	caseID, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repairCase.CaseID = caseID
+	encoded, err := EncodeCase(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeCase(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.SchemaVersion != LidarrRepairV2 || decoded.CaseID != caseID {
+		t.Fatalf("unexpected legacy case: %#v", decoded)
+	}
+}
+
 func TestCaseIDIgnoresObservationTime(t *testing.T) {
 	first := testCase(t)
 	second := first
@@ -48,16 +69,7 @@ func TestDecodeCaseRejectsIdentityMismatch(t *testing.T) {
 
 func TestDecisionRoundTrip(t *testing.T) {
 	repairCase := testCase(t)
-	decision := Decision{
-		Kind: ActionImportMissingTracks,
-		ImportMissingTracks: &ImportMissingTracksDecision{
-			SchemaVersion: SchemaVersion, CaseID: repairCase.CaseID,
-			Action: string(ActionImportMissingTracks), CapabilityID: "capability:one",
-			AlbumID: 3, ReleaseID: 4,
-			Mappings:     []TrackMapping{{ArtifactID: "artifact:one", TrackID: 5}},
-			EvidenceRefs: []string{"artifact:one"}, Explanation: "The tags and duration agree.",
-		},
-	}
+	decision := testDecision(repairCase, SchemaVersion)
 	encoded, err := EncodeDecision(decision)
 	if err != nil {
 		t.Fatal(err)
@@ -68,6 +80,41 @@ func TestDecisionRoundTrip(t *testing.T) {
 	}
 	if decoded.CaseID() != repairCase.CaseID || decoded.ImportMissingTracks.ReleaseID != 4 {
 		t.Fatalf("unexpected decoded decision: %#v", decoded)
+	}
+}
+
+func TestLegacyDecisionRoundTrip(t *testing.T) {
+	repairCase := testCase(t)
+	repairCase.SchemaVersion = LidarrRepairV2
+	caseID, err := CalculateCaseID(repairCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repairCase.CaseID = caseID
+	decision := testDecision(repairCase, LidarrRepairV2)
+	encoded, err := EncodeDecision(decision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeDecision(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.ImportMissingTracks.SchemaVersion != LidarrRepairV2 || decoded.CaseID() != caseID {
+		t.Fatalf("unexpected legacy decision: %#v", decoded)
+	}
+}
+
+func testDecision(repairCase Case, schemaVersion string) Decision {
+	return Decision{
+		Kind: ActionImportMissingTracks,
+		ImportMissingTracks: &ImportMissingTracksDecision{
+			SchemaVersion: schemaVersion, CaseID: repairCase.CaseID,
+			Action: string(ActionImportMissingTracks), CapabilityID: "capability:one",
+			AlbumID: 3, ReleaseID: 4,
+			Mappings:     []TrackMapping{{ArtifactID: "artifact:one", TrackID: 5}},
+			EvidenceRefs: []string{"artifact:one"}, Explanation: "The tags and duration agree.",
+		},
 	}
 }
 

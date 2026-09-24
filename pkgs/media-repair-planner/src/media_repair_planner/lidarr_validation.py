@@ -5,11 +5,11 @@ from .decision_validation import (
     ViolationCode,
     validate_object_against_action_schema,
 )
-from .lidarr_case_models import LidarrRepairCaseV2
+from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import decision_schema
 from .lidarr_decision_models import (
     ImportMissingTracks,
-    LidarrRepairDecisionV2,
+    LidarrRepairDecisionV3,
     NoRepair,
 )
 
@@ -38,7 +38,7 @@ def _invalid(
     )
 
 
-def _reference_ids(repair_case: LidarrRepairCaseV2) -> tuple[str, ...]:
+def _reference_ids(repair_case: LidarrRepairCaseV3) -> tuple[str, ...]:
     return tuple(
         sorted(
             {
@@ -50,8 +50,8 @@ def _reference_ids(repair_case: LidarrRepairCaseV2) -> tuple[str, ...]:
 
 
 def validate_decision_for_case(
-    repair_case: LidarrRepairCaseV2,
-    decision: LidarrRepairDecisionV2,
+    repair_case: LidarrRepairCaseV3,
+    decision: LidarrRepairDecisionV3,
 ) -> tuple[DecisionViolation, ...]:
     value = decision.root
     violations: list[DecisionViolation] = []
@@ -120,7 +120,7 @@ def validate_decision_for_case(
 
     tracks = tuple(str(mapping.track_id.root) for mapping in value.mappings)
     allowed_tracks = tuple(str(item.root) for item in capability.track_ids.root)
-    if len(set(tracks)) != len(tracks) or set(tracks) != set(allowed_tracks):
+    if len(set(tracks)) != len(tracks) or not set(tracks).issubset(allowed_tracks):
         violations.append(_invalid(("mappings", "track_id"), tracks, allowed_tracks))
 
     return tuple(violations)

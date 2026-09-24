@@ -2,7 +2,10 @@ package lidarrcontracts
 
 import "time"
 
-const SchemaVersion = "lidarr-repair/v2"
+const (
+	LidarrRepairV2 = "lidarr-repair/v2"
+	SchemaVersion  = "lidarr-repair/v3"
+)
 
 type Case struct {
 	SchemaVersion string       `json:"schema_version"`

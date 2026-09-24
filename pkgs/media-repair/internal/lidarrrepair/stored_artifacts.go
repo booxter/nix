@@ -34,7 +34,7 @@ func verifyStoredArtifacts(
 		}
 		bindingsByArtifact[binding.ArtifactID] = binding
 	}
-	for _, artifact := range artifacts {
+	for index, artifact := range artifacts {
 		binding, found := bindingsByArtifact[artifact.ArtifactID]
 		if !found {
 			return fmt.Errorf("stored Lidarr artifact %q has no binding", artifact.ArtifactID)
@@ -49,7 +49,9 @@ func verifyStoredArtifacts(
 		if path != binding.Path {
 			return fmt.Errorf("stored Lidarr artifact %q changed path", artifact.ArtifactID)
 		}
-		if err := verifyStoredArtifact(workspaceRoot, relativePath, artifact, owner); err != nil {
+		if err := verifyStoredArtifact(
+			workspaceRoot, relativePath, artifact, caseArtifactID(index), owner,
+		); err != nil {
 			return err
 		}
 	}
@@ -60,6 +62,7 @@ func verifyStoredArtifact(
 	workspaceRoot string,
 	relativePath string,
 	artifact lidarrcontracts.Artifact,
+	caseID string,
 	owner uint32,
 ) error {
 	components := strings.Split(relativePath, string(filepath.Separator))
@@ -95,7 +98,8 @@ func verifyStoredArtifact(
 	legacyID := "artifact:" + digest
 	currentID := materialize.ArtifactID(artifact.RelativePath, artifact.Fingerprint)
 	if "sha256:"+digest != artifact.Fingerprint ||
-		(artifact.ArtifactID != legacyID && artifact.ArtifactID != currentID) {
+		(artifact.ArtifactID != caseID && artifact.ArtifactID != legacyID &&
+			artifact.ArtifactID != currentID) {
 		return fmt.Errorf("stored Lidarr artifact %q changed contents", artifact.ArtifactID)
 	}
 	return nil

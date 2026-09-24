@@ -20,7 +20,7 @@ import (
 
 const (
 	radarrPlanningURL       = "http://planner/v3/repair-plans"
-	lidarrPlanningURL       = "http://planner/lidarr/v2/repair-plans"
+	lidarrPlanningURL       = "http://planner/lidarr/v3/repair-plans"
 	maxDecisionResponseSize = 64 << 10
 )
 

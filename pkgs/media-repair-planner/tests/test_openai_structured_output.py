@@ -4,7 +4,7 @@ import json
 
 import pytest
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV2
+from media_repair_planner.lidarr_decision_models import LidarrRepairDecisionV3
 from media_repair_planner.openai_structured_output import (
     DECISION_FIELD,
     OpenAIStructuredOutputError,
@@ -43,14 +43,14 @@ def test_openai_envelope_schema_has_explicit_const_types() -> None:
 
 
 def test_builds_lidarr_specific_openai_envelope() -> None:
-    envelope = decision_envelope_model(LidarrRepairDecisionV2)
+    envelope = decision_envelope_model(LidarrRepairDecisionV3)
     schema = envelope.model_json_schema()
 
-    assert envelope.__name__ == "LidarrRepairDecisionV2Envelope"
+    assert envelope.__name__ == "LidarrRepairDecisionV3Envelope"
     assert schema["type"] == "object"
     assert schema["required"] == [DECISION_FIELD]
     assert schema["additionalProperties"] is False
-    assert "lidarr-repair/v2" in json.dumps(schema)
+    assert "lidarr-repair/v3" in json.dumps(schema)
     assert "radarr-repair/v3" not in json.dumps(schema)
 
 

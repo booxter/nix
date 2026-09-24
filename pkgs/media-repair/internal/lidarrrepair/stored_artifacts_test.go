@@ -26,10 +26,20 @@ func TestVerifyStoredArtifactsRequiresImmutableMatchingContent(t *testing.T) {
 		t.Fatal(err)
 	}
 	artifacts := []lidarrcontracts.Artifact{{
-		ArtifactID: "artifact:" + fingerprint, RelativePath: "album/01.flac",
+		ArtifactID: "artifact:1", RelativePath: "album/01.flac",
 		Fingerprint: "sha256:" + fingerprint, SizeBytes: int64(len(body)),
 	}}
 	bindings := []ImportBinding{{ArtifactID: artifacts[0].ArtifactID, Path: path}}
+	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
+		t.Fatal(err)
+	}
+	artifacts[0].ArtifactID = "artifact:2"
+	bindings[0].ArtifactID = artifacts[0].ArtifactID
+	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err == nil {
+		t.Fatal("incorrect case-local artifact ID was accepted")
+	}
+	artifacts[0].ArtifactID = "artifact:" + fingerprint
+	bindings[0].ArtifactID = artifacts[0].ArtifactID
 	if err := verifyStoredArtifacts(workspace, artifacts, bindings); err != nil {
 		t.Fatal(err)
 	}

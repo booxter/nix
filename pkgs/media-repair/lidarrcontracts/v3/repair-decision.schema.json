@@ -1,0 +1,149 @@
+{
+  "$defs": {
+    "explanation": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "type": "string"
+    },
+    "id": {
+      "maximum": 9007199254740991,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "importMissingTracks": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "import_missing_tracks_v1"
+        },
+        "album_id": {
+          "$ref": "#/$defs/id"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "explanation": {
+          "$ref": "#/$defs/explanation"
+        },
+        "mappings": {
+          "items": {
+            "$ref": "#/$defs/mapping"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array"
+        },
+        "release_id": {
+          "$ref": "#/$defs/id"
+        },
+        "schema_version": {
+          "const": "lidarr-repair/v3"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "capability_id",
+        "album_id",
+        "release_id",
+        "mappings",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "mapping": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/opaqueId"
+        },
+        "track_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "track_id"
+      ],
+      "type": "object"
+    },
+    "noRepair": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "no_repair"
+        },
+        "case_id": {
+          "$ref": "#/$defs/sha256Id"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/opaqueId"
+          },
+          "maxItems": 64,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "explanation": {
+          "$ref": "#/$defs/explanation"
+        },
+        "reason": {
+          "enum": [
+            "no_repair_needed",
+            "ambiguous_album",
+            "ambiguous_release",
+            "ambiguous_tracks",
+            "incomplete_release",
+            "unsupported_repair",
+            "unsafe_to_repair"
+          ]
+        },
+        "schema_version": {
+          "const": "lidarr-repair/v3"
+        }
+      },
+      "required": [
+        "schema_version",
+        "case_id",
+        "action",
+        "reason",
+        "evidence_refs",
+        "explanation"
+      ],
+      "type": "object"
+    },
+    "opaqueId": {
+      "pattern": "^[a-z][a-z0-9_:-]{0,127}$",
+      "type": "string"
+    },
+    "sha256Id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "urn:lidarr-repair:schema:repair-decision:v3",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/noRepair"
+    },
+    {
+      "$ref": "#/$defs/importMissingTracks"
+    }
+  ],
+  "title": "Lidarr repair decision version 3"
+}

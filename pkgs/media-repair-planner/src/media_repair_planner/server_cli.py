@@ -108,7 +108,7 @@ async def _serve(
             Planner(model),
             limits,
             {
-                "/lidarr/v2/repair-plans": ContractEndpoint(
+                "/lidarr/v3/repair-plans": ContractEndpoint(
                     planner=LidarrPlanner(model),
                     decode_case=decode_lidarr_case,
                     encode_decision=encode_lidarr_decision,
