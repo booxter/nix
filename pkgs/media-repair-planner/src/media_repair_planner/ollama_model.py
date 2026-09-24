@@ -11,10 +11,11 @@ from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel
 
 from .case_models import RepairCaseV3
-from .contracts import decision_schema, encode_case
+from .contracts import decision_schema
 from .decision_models import RepairDecisionV3
 from .decision_validation import DecisionViolation
 from .planning import DecisionModelError
+from .radarr_projection import project_case
 from .structured_decision import (
     StructuredDecisionError,
     decode_structured_decision,
@@ -279,12 +280,13 @@ class OllamaDecisionModel:
         correction: tuple[DecisionViolation, ...] = (),
     ) -> RepairDecisionV3:
         case_id = repair_case.case_id.root
+        projection = project_case(repair_case)
         decision_output, raw = await self._generate(
             system_instruction,
-            encode_case(repair_case).decode(),
+            projection.case_content,
             decision_schema(),
             case_id,
-            correction,
+            projection.project_correction(correction),
         )
         try:
             decision = decode_structured_decision(decision_output)
@@ -295,4 +297,4 @@ class OllamaDecisionModel:
                 error.violations,
             ) from error
         self._trace(case_id, raw, None)
-        return decision
+        return projection.restore_decision(decision)

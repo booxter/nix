@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.contracts import decode_case, encode_case
+from media_repair_planner.contracts import decode_case
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import (
     DecisionViolation,
@@ -28,6 +28,7 @@ from media_repair_planner.openrouter_model import (
     OpenRouterSettings,
 )
 from media_repair_planner.planning import DecisionModelError
+from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.tracing import JsonlTraceWriter
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"
@@ -106,8 +107,11 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
     assert request.provider == "openai"
     assert request.output_tokens == 4096
     assert request.reasoning_effort == "medium"
-    assert request.system_content == "system instruction\n\n" + format_correction(correction)
-    assert request.case_content == encode_case(case).decode()
+    projection = project_case(case)
+    assert request.system_content == "system instruction\n\n" + format_correction(
+        projection.project_correction(correction)
+    )
+    assert request.case_content == projection.case_content
 
     await model.close()
 

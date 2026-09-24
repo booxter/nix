@@ -10,7 +10,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
 from .case_models import RepairCaseV3
-from .contracts import decision_schema, encode_case
+from .contracts import decision_schema
 from .decision_models import RepairDecisionV3
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
@@ -19,6 +19,7 @@ from .openai_structured_output import (
     unwrap_openai_decision,
 )
 from .planning import DecisionModelError
+from .radarr_projection import project_case
 from .structured_decision import (
     StructuredDecisionError,
     decode_structured_decision,
@@ -301,13 +302,14 @@ class OpenRouterDecisionModel:
         correction: tuple[DecisionViolation, ...] = (),
     ) -> RepairDecisionV3:
         case_id = repair_case.case_id.root
+        projection = project_case(repair_case)
         decision_output, response = await self._generate(
             system_instruction,
-            encode_case(repair_case).decode(),
+            projection.case_content,
             decision_schema(),
             RepairDecisionV3,
             case_id,
-            correction,
+            projection.project_correction(correction),
         )
         try:
             decision = decode_structured_decision(decision_output)
@@ -318,4 +320,4 @@ class OpenRouterDecisionModel:
                 error.violations,
             ) from error
         self._trace(case_id, response, None)
-        return decision
+        return projection.restore_decision(decision)

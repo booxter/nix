@@ -17,7 +17,6 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import (
     decision_schema,
     decode_case,
-    encode_case,
 )
 from media_repair_planner.decision_validation import (
     DecisionViolation,
@@ -32,6 +31,7 @@ from media_repair_planner.ollama_model import (
     OllamaSettings,
 )
 from media_repair_planner.planning import DecisionModelError
+from media_repair_planner.radarr_projection import project_case
 from media_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 from ollama import ChatResponse, Message
 
@@ -107,7 +107,7 @@ async def test_decision_model_sends_case_as_messages() -> None:
     assert request.model == MODEL_NAME
     system_content = request.messages[0]["content"]
     assert system_content == "system instruction"
-    assert request.messages[1] == {"role": "user", "content": encode_case(case).decode()}
+    assert request.messages[1] == {"role": "user", "content": project_case(case).case_content}
     assert request.schema == decision_schema()
     assert request.context_tokens == 32768
     assert request.output_tokens == 4096
@@ -165,6 +165,7 @@ async def test_decision_model_rejects_invalid_response(
 
 async def test_decision_model_adds_correction_to_trusted_instruction() -> None:
     chat = ScriptedResponseModel(chat_response(json.dumps(decision_value())))
+    case = repair_case()
     correction = (
         DecisionViolation(
             ViolationCode.UNKNOWN_EVIDENCE,
@@ -176,12 +177,12 @@ async def test_decision_model_adds_correction_to_trusted_instruction() -> None:
 
     await OllamaDecisionModel(chat, test_settings()).decide(
         "system instruction",
-        repair_case(),
+        case,
         correction,
     )
 
     content = chat.calls[0].messages[0]["content"]
-    assert content.endswith(format_correction(correction))
+    assert content.endswith(format_correction(project_case(case).project_correction(correction)))
 
 
 async def test_decision_model_traces_raw_parse_failure(tmp_path: Path) -> None:
@@ -353,7 +354,7 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
             "role": "system",
             "content": "system instruction",
         },
-        {"role": "user", "content": encode_case(case).decode()},
+        {"role": "user", "content": project_case(case).case_content},
     ]
     assert request["test_peer_certificate"]
     assert request["test_authorization"] is None
