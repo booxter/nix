@@ -12,15 +12,12 @@ from typing import Any
 
 import pytest
 from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.contracts import decision_schema, decode_case, encode_case
+from media_repair_planner.contracts import decode_case, encode_case
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import (
     DecisionViolation,
     ViolationCode,
     format_correction,
-)
-from media_repair_planner.openai_structured_output import (
-    SCHEMA_INSTRUCTION as OPENAI_SCHEMA_INSTRUCTION,
 )
 from media_repair_planner.openrouter_model import (
     OpenRouterChatTransport,
@@ -109,13 +106,7 @@ async def test_decision_model_sends_pinned_structured_request() -> None:
     assert request.provider == "openai"
     assert request.output_tokens == 4096
     assert request.reasoning_effort == "medium"
-    prefix = "system instruction\n\n" + OPENAI_SCHEMA_INSTRUCTION
-    schema_text, separator, correction_text = request.system_content.removeprefix(prefix).partition(
-        "\n\n"
-    )
-    assert json.loads(schema_text) == decision_schema()
-    assert separator == "\n\n"
-    assert correction_text == format_correction(correction)
+    assert request.system_content == "system instruction\n\n" + format_correction(correction)
     assert request.case_content == encode_case(case).decode()
 
     await model.close()

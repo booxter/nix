@@ -6,11 +6,6 @@ from functools import cache
 from pydantic import BaseModel, ConfigDict, create_model
 
 DECISION_FIELD = "decision"
-SCHEMA_INSTRUCTION = """\
-The authoritative schema for the `decision` field follows. Return only one JSON
-object whose sole field is `decision`, containing a value that validates against
-this schema. Do not include Markdown fences or surrounding text.
-"""
 
 
 class OpenAIStructuredOutputError(ValueError):

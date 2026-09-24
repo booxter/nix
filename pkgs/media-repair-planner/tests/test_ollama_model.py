@@ -32,7 +32,6 @@ from media_repair_planner.ollama_model import (
     OllamaSettings,
 )
 from media_repair_planner.planning import DecisionModelError
-from media_repair_planner.structured_decision import SCHEMA_INSTRUCTION
 from media_repair_planner.tracing import JsonlTraceWriter, ModelTrace
 from ollama import ChatResponse, Message
 
@@ -107,9 +106,7 @@ async def test_decision_model_sends_case_as_messages() -> None:
     request = chat.calls[0]
     assert request.model == MODEL_NAME
     system_content = request.messages[0]["content"]
-    prefix = "system instruction\n\n" + SCHEMA_INSTRUCTION
-    assert system_content.startswith(prefix)
-    assert json.loads(system_content.removeprefix(prefix)) == decision_schema()
+    assert system_content == "system instruction"
     assert request.messages[1] == {"role": "user", "content": encode_case(case).decode()}
     assert request.schema == decision_schema()
     assert request.context_tokens == 32768
@@ -354,16 +351,7 @@ async def test_real_client_uses_mtls_and_native_schema(tmp_path: Path) -> None:
     assert request["messages"] == [
         {
             "role": "system",
-            "content": (
-                "system instruction\n\n"
-                + SCHEMA_INSTRUCTION
-                + json.dumps(
-                    decision_schema(),
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                    sort_keys=True,
-                )
-            ),
+            "content": "system instruction",
         },
         {"role": "user", "content": encode_case(case).decode()},
     ]

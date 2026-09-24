@@ -220,7 +220,6 @@ class OllamaDecisionModel:
         system_content, case_content = structured_prompt(
             system_instruction,
             case_content,
-            schema,
             correction,
         )
         request = ChatRequest(

@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from typing import Any
 
-from .case_models import RepairCaseV3
-from .contracts import ContractError, decision_schema, decode_decision, encode_case
+from .contracts import ContractError, decode_decision
 from .decision_models import RepairDecisionV3
 from .decision_validation import (
     DecisionViolation,
@@ -17,10 +15,6 @@ from .decision_validation import (
 )
 
 ERROR_DETAIL_LIMIT = 384
-SCHEMA_INSTRUCTION = """\
-The authoritative response JSON Schema follows. Return only one JSON object
-that validates against it, without Markdown fences or surrounding text.
-"""
 
 
 class StructuredDecisionError(ValueError):
@@ -40,35 +34,12 @@ def diagnostic(error: BaseException) -> str:
     return (type(error).__name__ + (f": {detail}" if detail else ""))[:ERROR_DETAIL_LIMIT]
 
 
-def decision_prompt(
-    system_instruction: str,
-    repair_case: RepairCaseV3,
-    correction: tuple[DecisionViolation, ...],
-    schema_instruction: str = SCHEMA_INSTRUCTION,
-) -> tuple[str, str]:
-    return structured_prompt(
-        system_instruction,
-        encode_case(repair_case).decode(),
-        decision_schema(),
-        correction,
-        schema_instruction,
-    )
-
-
 def structured_prompt(
     system_instruction: str,
     case_content: str,
-    schema_value: dict[str, Any],
     correction: tuple[DecisionViolation, ...],
-    schema_instruction: str = SCHEMA_INSTRUCTION,
 ) -> tuple[str, str]:
-    schema = json.dumps(
-        schema_value,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    system_content = f"{system_instruction.rstrip()}\n\n{schema_instruction}{schema}"
+    system_content = system_instruction.rstrip()
     if correction:
         system_content += "\n\n" + format_correction(correction)
     return system_content, case_content

@@ -14,7 +14,6 @@ from .contracts import decision_schema, encode_case
 from .decision_models import RepairDecisionV3
 from .decision_validation import DecisionViolation
 from .openai_structured_output import (
-    SCHEMA_INSTRUCTION,
     OpenAIStructuredOutputError,
     decision_envelope_model,
     unwrap_openai_decision,
@@ -243,9 +242,7 @@ class OpenRouterDecisionModel:
         system_content, case_content = structured_prompt(
             system_instruction,
             case_content,
-            schema,
             correction,
-            schema_instruction=SCHEMA_INSTRUCTION,
         )
         request = OpenRouterRequest(
             model=self._settings.model,
