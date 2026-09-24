@@ -123,12 +123,14 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "ambiguous_part_order",
         "clear_ordered_join",
         "current_double_exposure_bluray",
+        "current_luxure_split_scenes",
         "current_malice_before_daylight_scenes",
         "current_pandoras_mirror_bluray",
         "current_pink_velvet_2_dvd",
         "current_xconfessions_bluray_runtime_mismatch",
         "episodic_release_with_join_pool",
         "incompatible_parts",
+        "luxure_scenes_without_split_marker",
         "missing_movie_identity",
         "poorly_named_manual_import",
         "pink_velvet_2_dvd_runtime_mismatch",
@@ -143,6 +145,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "real_traci_manual_import",
         "real_xconfessions_raw_bluray",
         "single_file_without_capability",
+        "split_scenes_runtime_mismatch",
         "untrusted_filename_instruction",
     }
     clear_join = next(case for case in cases if case.spec.name == "clear_ordered_join")

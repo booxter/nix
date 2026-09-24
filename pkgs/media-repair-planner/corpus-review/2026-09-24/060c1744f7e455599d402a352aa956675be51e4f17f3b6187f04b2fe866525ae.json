@@ -1,0 +1,775 @@
+{
+  "capabilities": [
+    {
+      "action": "join_parts_v1",
+      "candidate_file_ids": [
+        "file:bb3d0b1858e246d1558ea21407fb07cc43bc34c9bcdbfb67fb80f27af82bb67d",
+        "file:b1535a3c831ffb6203fe2e0875e518e288866f4d05a27cbf45d8c7796b50ed93",
+        "file:5439722a2b1f5fae5b3bd1503a9c2b5e90dfdbaa7d7d3f9a698d2b5ae703958d",
+        "file:9bd728eebc37e4f259c56ccbb91dfd1ba169b51733d4d0d48f691ca76cf835f8",
+        "file:c947773cc1c52018501d8d3432262764891eb34d6599a62bf76ef957f71c906e",
+        "file:fda7b38d0b40193d7f42380d656116e618760c9ee49c11112f1815a9df0727b8"
+      ],
+      "capability_id": "capability:bcec6711427a8f638b108347db31ef7f4d138459e02dd853af27ed9146a8a761"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:5b05fded3bdba1207b226707f318b612bac83157aa3edf3ea235d0eed6b59912",
+      "file_id": "file:bb3d0b1858e246d1558ea21407fb07cc43bc34c9bcdbfb67fb80f27af82bb67d"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:6b7094c1ca01c6aa4690ba54a3ccb5606c4d176f44e438a7d885247fe960e901",
+      "file_id": "file:b1535a3c831ffb6203fe2e0875e518e288866f4d05a27cbf45d8c7796b50ed93"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:172676673322fd6b47cd2efe09bc6da17ea62f78df9966305aab7c951bd62851",
+      "file_id": "file:5439722a2b1f5fae5b3bd1503a9c2b5e90dfdbaa7d7d3f9a698d2b5ae703958d"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:38f8c4b62f4efc6e4e1e3d508ad502f18556bf2f328507a1597b7e3e59153bab",
+      "file_id": "file:9bd728eebc37e4f259c56ccbb91dfd1ba169b51733d4d0d48f691ca76cf835f8"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:e3f1a82121de496cb23b70214981fde38eb2b004bc994f2416bdc3826484cc3d",
+      "file_id": "file:c947773cc1c52018501d8d3432262764891eb34d6599a62bf76ef957f71c906e"
+    },
+    {
+      "action": "manual_import_file_v1",
+      "capability_id": "capability:5d632c2d3ee8d75270a548ec1b7549e7dd79d5573b9a815b0ba8ee56125c76a8",
+      "file_id": "file:fda7b38d0b40193d7f42380d656116e618760c9ee49c11112f1815a9df0727b8"
+    }
+  ],
+  "case_id": "sha256:060c1744f7e455599d402a352aa956675be51e4f17f3b6187f04b2fe866525ae",
+  "download": {
+    "client": "transmission",
+    "completed_at": "2026-09-24T09:30:42Z",
+    "content_ownership": "manifest",
+    "download_ref": "download:9b3325c1e67129c7b21e689e2b697884a99cb9257d40b3019afff6f54983e8e3",
+    "file_count": 6,
+    "is_complete": true,
+    "labels": [
+      "radarr"
+    ],
+    "name": "Luxure - The perfect wife 2160p",
+    "source_type": "torrent",
+    "total_size_bytes": 26826740342
+  },
+  "files": [
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 5345330681,
+        "selected": true,
+        "source_index": 0,
+        "source_size_bytes": 5345330681
+      },
+      "extension": "mp4",
+      "file_id": "file:bb3d0b1858e246d1558ea21407fb07cc43bc34c9bcdbfb67fb80f27af82bb67d",
+      "fingerprint": "sha256:039ab0467c17078da31755f0600844badcb041e3acf12e442e2edc67c146e108",
+      "path_components": [
+        "ariel-fucked-by-samantha-bentley-25125.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 40188945,
+          "effective_duration_ms": 1064040,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1064040,
+          "longest_stream_duration_ms": 1064040,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 5345330681
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 39996196,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1064040,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 2160,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25,
+              "numerator": 1
+            },
+            "width": 3840
+          },
+          {
+            "bit_rate_bps": 188711,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1064000,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 5345330681
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 5137254917,
+        "selected": true,
+        "source_index": 1,
+        "source_size_bytes": 5137254917
+      },
+      "extension": "mp4",
+      "file_id": "file:b1535a3c831ffb6203fe2e0875e518e288866f4d05a27cbf45d8c7796b50ed93",
+      "fingerprint": "sha256:70d402fce0fac8fa5a3128f9f2a6fbc7591d3a5047dab1a4f95694266ed89c91",
+      "path_components": [
+        "ariel-rebel-extrem-obedience-25697.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 40191323,
+          "effective_duration_ms": 1022560,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1022560,
+          "longest_stream_duration_ms": 1022560,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 5137254917
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 39998513,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1022560,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 2160,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25,
+              "numerator": 1
+            },
+            "width": 3840
+          },
+          {
+            "bit_rate_bps": 188734,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1022400,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 5137254917
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 7264849043,
+        "selected": true,
+        "source_index": 2,
+        "source_size_bytes": 7264849043
+      },
+      "extension": "mp4",
+      "file_id": "file:5439722a2b1f5fae5b3bd1503a9c2b5e90dfdbaa7d7d3f9a698d2b5ae703958d",
+      "fingerprint": "sha256:9ec41ad13cebd17a01cb952cbc9887173e6e8e4745bf937e083279485800d94a",
+      "path_components": [
+        "luxure-megan-rain-gets-banged-by-2-men-for-her-first-dorcel-movie-8551.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 40190578,
+          "effective_duration_ms": 1446080,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1446080,
+          "longest_stream_duration_ms": 1446080,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 7264849043
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 39997196,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1446080,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 2160,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25,
+              "numerator": 1
+            },
+            "width": 3840
+          },
+          {
+            "bit_rate_bps": 188718,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1446000,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 7264849043
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 4120092964,
+        "selected": true,
+        "source_index": 3,
+        "source_size_bytes": 4120092964
+      },
+      "extension": "mp4",
+      "file_id": "file:9bd728eebc37e4f259c56ccbb91dfd1ba169b51733d4d0d48f691ca76cf835f8",
+      "fingerprint": "sha256:9885f1baed0384cd0a16e32153815827ddba7bbe412e28f7f665b805675178a9",
+      "path_components": [
+        "luxure-nikita-bellucci-gangbanged-by-3-men-25461.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 40190147,
+          "effective_duration_ms": 820120,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 820120,
+          "longest_stream_duration_ms": 820120,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 4120092964
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 39997198,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 820120,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 2160,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25,
+              "numerator": 1
+            },
+            "width": 3840
+          },
+          {
+            "bit_rate_bps": 188728,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 820000,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 4120092964
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 756952033,
+        "selected": true,
+        "source_index": 4,
+        "source_size_bytes": 756952033
+      },
+      "extension": "mp4",
+      "file_id": "file:c947773cc1c52018501d8d3432262764891eb34d6599a62bf76ef957f71c906e",
+      "fingerprint": "sha256:0408d18872fd0493b3cbde704115e4634e5b09601018ea72a814855c21bc638e",
+      "path_components": [
+        "making-of-luxure-the-perfect-wife-25685-1080p_full_mp4.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 3112723,
+          "effective_duration_ms": 1945440,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 1945440,
+          "longest_stream_duration_ms": 1945440,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 756952033
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 2994647,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1945440,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 1080,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 12800,
+              "numerator": 1
+            },
+            "width": 1920
+          },
+          {
+            "bit_rate_bps": 111975,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 1945429,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 756952033
+    },
+    {
+      "disposition": "probe_candidate",
+      "disposition_reason": null,
+      "download_membership": {
+        "available_bytes": 4202260704,
+        "selected": true,
+        "source_index": 5,
+        "source_size_bytes": 4202260704
+      },
+      "extension": "mp4",
+      "file_id": "file:fda7b38d0b40193d7f42380d656116e618760c9ee49c11112f1815a9df0727b8",
+      "fingerprint": "sha256:560d8cad9db323c0c4e35423bd7c6fe2964979abbcc7e0e4a816f1f61610bfd6",
+      "path_components": [
+        "mina-sauvage-her-first-porn-24725.mp4"
+      ],
+      "probe": {
+        "format": {
+          "bit_rate_bps": 40188023,
+          "effective_duration_ms": 836520,
+          "effective_duration_source": "consistent_format_and_stream",
+          "format_duration_ms": 836520,
+          "longest_stream_duration_ms": 836520,
+          "names": [
+            "mov",
+            "mp4",
+            "m4a",
+            "3gp",
+            "3g2",
+            "mj2"
+          ],
+          "size_bytes": 4202260704
+        },
+        "status": "ok",
+        "streams": [
+          {
+            "bit_rate_bps": 39995176,
+            "codec_name": "h264",
+            "codec_tag": "avc1",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 836520,
+            "frame_rate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "height": 2160,
+            "index": 0,
+            "kind": "video",
+            "language": "eng",
+            "pixel_format": "yuv420p",
+            "profile": "100",
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 25,
+              "numerator": 1
+            },
+            "width": 3840
+          },
+          {
+            "bit_rate_bps": 188732,
+            "channel_layout": "stereo",
+            "channels": 2,
+            "codec_name": "aac",
+            "codec_tag": "mp4a",
+            "disposition": {
+              "default": true,
+              "forced": false,
+              "hearing_impaired": false,
+              "visual_impaired": false
+            },
+            "duration_ms": 836400,
+            "index": 1,
+            "kind": "audio",
+            "language": "eng",
+            "profile": "1",
+            "sample_rate_hz": 48000,
+            "start_time_ms": 0,
+            "time_base": {
+              "denominator": 48000,
+              "numerator": 1
+            }
+          }
+        ]
+      },
+      "size_bytes": 4202260704
+    }
+  ],
+  "observed_at": "2026-09-24T17:22:06.063744128Z",
+  "radarr": {
+    "failure": {
+      "download_ref": "download:9b3325c1e67129c7b21e689e2b697884a99cb9257d40b3019afff6f54983e8e3",
+      "error_message": "",
+      "queue_id": 1284031454,
+      "status": "completed",
+      "status_message_count": 7,
+      "status_messages": [
+        {
+          "evidence_id": "evidence:a3a227157b5bde818e18251216cd114c26784db22ca6a4729354d7d75927311e",
+          "message_count": 0,
+          "messages": [],
+          "title": "One or more movies expected in this release were not imported or missing"
+        },
+        {
+          "evidence_id": "evidence:bb626d40d1838922c70b853f9eedf57331475e3e665828db58716d9f4a40af0c",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "ariel-fucked-by-samantha-bentley-25125.mp4"
+        },
+        {
+          "evidence_id": "evidence:ef1217c3440b92bc9594e5928b4eca1d457f727c557ff91683167c36ea969737",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "ariel-rebel-extrem-obedience-25697.mp4"
+        },
+        {
+          "evidence_id": "evidence:afa78a961e99239873d69b487bbf38014fba036779ece8b9a9a3d251e2abe0c6",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "luxure-megan-rain-gets-banged-by-2-men-for-her-first-dorcel-movie-8551.mp4"
+        },
+        {
+          "evidence_id": "evidence:a283d973ba3b73b7ed39aed5fcd60688dc24c21b0399e487c4cf9ae61238a4ec",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "luxure-nikita-bellucci-gangbanged-by-3-men-25461.mp4"
+        },
+        {
+          "evidence_id": "evidence:815ab98b19e34d6060987ceba0d635b147a06f96a1133021ceee781e318145f0",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "making-of-luxure-the-perfect-wife-25685-1080p_full_mp4.mp4"
+        },
+        {
+          "evidence_id": "evidence:486f3a60255b6fe1f0acb8f0a1a80d4562e54582ba22a700d5a2089fb8fba3b6",
+          "message_count": 1,
+          "messages": [
+            "Unable to parse file"
+          ],
+          "title": "mina-sauvage-her-first-porn-24725.mp4"
+        }
+      ],
+      "title": "Luxure - The perfect wife 2160p",
+      "tracked_download_state": "importBlocked",
+      "tracked_download_status": "warning"
+    },
+    "history": [
+      {
+        "event_type": "grabbed",
+        "evidence_id": "evidence:040a8cb5c99dc0bf87d8ea19dd8521768e7057cf6b7fe8dac840909ee4864ceb",
+        "languages": [
+          "French"
+        ],
+        "occurred_at": "2026-09-23T13:50:06Z",
+        "quality": "WEBDL-2160p",
+        "source_title": "Luxure: The Perfect Wife / Совершенная Жена (Herve Bodilis, Marc Dorcel) [2017 г., Affairs & Love Triangles, Domination, Feature, Threesomes, Wives, Anal, DP, WEB-DL, 2160p] (Split Scenes)"
+      }
+    ],
+    "manual_imports": [
+      {
+        "file_id": "file:bb3d0b1858e246d1558ea21407fb07cc43bc34c9bcdbfb67fb80f27af82bb67d",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:f59d7830927eb77f904baaaffdfe611d2d109455344b6e5e3d3feece3e8ba382",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:b1535a3c831ffb6203fe2e0875e518e288866f4d05a27cbf45d8c7796b50ed93",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:7588573ae827de8f98492d662e902bd5ed72b5459460ffef028a1c84928d70ab",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:5439722a2b1f5fae5b3bd1503a9c2b5e90dfdbaa7d7d3f9a698d2b5ae703958d",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:a3bbcdc00a9c96a53a1dda7f36208686ade93adadf8054e31a3a598a9ba6538f",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:9bd728eebc37e4f259c56ccbb91dfd1ba169b51733d4d0d48f691ca76cf835f8",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:8cfb4233deb8b54282a2f25963035646567aacd14a6531474a6488b718612448",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:c947773cc1c52018501d8d3432262764891eb34d6599a62bf76ef957f71c906e",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:cc5faf2e7782cecd8f272ab2f422349a0e5d85b5c2f3a55b24a58cebb820dd27",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      },
+      {
+        "file_id": "file:fda7b38d0b40193d7f42380d656116e618760c9ee49c11112f1815a9df0727b8",
+        "languages": [],
+        "quality": null,
+        "rejections": [
+          {
+            "evidence_id": "evidence:1eef57544109a925e4bf6397bc213cd8fc2556f21ce02d9c933ada153951065b",
+            "reason": "Unable to parse file",
+            "type": "permanent"
+          }
+        ],
+        "release_group": null
+      }
+    ],
+    "movie": {
+      "alternate_titles": [],
+      "imdb_id": null,
+      "original_title": "Luxure : L'épouse parfaite",
+      "radarr_id": 9027,
+      "runtime_minutes": 86,
+      "title": "Luxure: The Perfect Wife",
+      "tmdb_id": 442430,
+      "year": 2017
+    }
+  },
+  "schema_version": "radarr-repair/v3"
+}

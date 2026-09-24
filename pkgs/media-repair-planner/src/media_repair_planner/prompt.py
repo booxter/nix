@@ -18,12 +18,26 @@ invent an operation, identifier, path, command, or missing fact. Prefer
 no_repair whenever the evidence does not establish a safe choice.
 
 Choose join_parts_v1 only when the selected files are parts of exactly one
-movie, their complete order is supported by the evidence, and joining them is
-appropriate. Do not join episodic releases, bonus material, unrelated files,
-or raw DVD or Blu-ray structures. Knowing which movie the parts belong to is
-not required. Do not reject a join solely because Radarr movie metadata is
-absent when the files otherwise establish a complete, ordered,
-stream-compatible multipart movie.
+movie and joining them is appropriate. Normally, their complete order must be
+supported by the evidence. An order need not be authored when the evidence
+explicitly identifies an anthology, vignettes, or split scenes and the files
+are independently named, self-contained scenes rather than sequential movie
+segments. In that case, require the selected scenes to account for the complete
+movie runtime, exclude every clearly identified extra, and order the selected
+files by ascending download_membership.source_index. Do not apply this
+exception based only on a genre label, generic split-file wording, or missing
+part numbers. Independently named files and a runtime match do not establish
+this exception on their own. Without explicit release-level evidence of split
+scenes, vignettes, an anthology, or equivalent, require an authored order and
+choose no_repair when it is absent. An authored order such as part numbers
+takes precedence over the download manifest order.
+
+Do not join episodic releases, bonus material, unrelated files, or raw DVD or
+Blu-ray structures. Knowing which movie the parts belong to is not required.
+Do not reject a join solely because Radarr movie metadata is absent when the
+files otherwise establish a complete, ordered, stream-compatible multipart
+movie. If scene membership, completeness, independence, or compatibility is
+uncertain, choose no_repair.
 
 Choose manual_import_file_v1 only when one offered file is the intended movie
 and does not require media transformation.

@@ -302,6 +302,52 @@
         ]
       },
       "name": "current_malice_before_daylight_scenes"
+    },
+    {
+      "base_case": "060c1744f7e455599d402a352aa956675be51e4f17f3b6187f04b2fe866525ae.json",
+      "expected": {
+        "action": "join_parts_v1",
+        "capability_id": "capability:bcec6711427a8f638b108347db31ef7f4d138459e02dd853af27ed9146a8a761",
+        "ordered_file_ids": [
+          "file:bb3d0b1858e246d1558ea21407fb07cc43bc34c9bcdbfb67fb80f27af82bb67d",
+          "file:b1535a3c831ffb6203fe2e0875e518e288866f4d05a27cbf45d8c7796b50ed93",
+          "file:5439722a2b1f5fae5b3bd1503a9c2b5e90dfdbaa7d7d3f9a698d2b5ae703958d",
+          "file:9bd728eebc37e4f259c56ccbb91dfd1ba169b51733d4d0d48f691ca76cf835f8",
+          "file:fda7b38d0b40193d7f42380d656116e618760c9ee49c11112f1815a9df0727b8"
+        ]
+      },
+      "name": "current_luxure_split_scenes"
+    },
+    {
+      "base_case": "060c1744f7e455599d402a352aa956675be51e4f17f3b6187f04b2fe866525ae.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "ambiguous_part_order",
+          "insufficient_evidence"
+        ]
+      },
+      "name": "luxure_scenes_without_split_marker",
+      "replacements": {
+        "/case_id": "sha256:1212121212121212121212121212121212121212121212121212121212121212",
+        "/radarr/history/0/source_title": "Luxure: The Perfect Wife 2160p"
+      }
+    },
+    {
+      "base_case": "060c1744f7e455599d402a352aa956675be51e4f17f3b6187f04b2fe866525ae.json",
+      "expected": {
+        "action": "no_repair",
+        "allowed_reasons": [
+          "content_not_single_movie",
+          "insufficient_evidence",
+          "unsafe_to_repair"
+        ]
+      },
+      "name": "split_scenes_runtime_mismatch",
+      "replacements": {
+        "/case_id": "sha256:1313131313131313131313131313131313131313131313131313131313131313",
+        "/radarr/movie/runtime_minutes": 120
+      }
     }
   ],
   "schema_version": "radarr-repair-evaluation/v2"
