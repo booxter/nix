@@ -167,8 +167,8 @@ func TestStoreRetriesFailuresWithoutReplacingCases(t *testing.T) {
 	if err != nil || !changed || status.Attempts != 2 || !status.Decided {
 		t.Fatalf("decided status = %#v, changed = %v, error = %v", status, changed, err)
 	}
-	stored, err := store.GetPlanned(caseID)
-	if err != nil || stored.Decision.CaseID() != caseID || stored.Case.QueueID != planned.QueueID {
+	stored, err := store.GetDecision(caseID)
+	if err != nil || stored.CaseID() != caseID {
 		t.Fatalf("planned = %#v, error = %v", stored, err)
 	}
 }

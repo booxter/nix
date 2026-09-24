@@ -8,7 +8,8 @@ import (
 )
 
 type testCase struct {
-	id string
+	id    string
+	local string
 }
 
 type testDecision struct {
@@ -22,15 +23,15 @@ type testClock struct {
 func (clock *testClock) Now() time.Time { return clock.now }
 
 type testStore struct {
-	cases    map[string]testCase
-	statuses map[string]Status
-	planned  map[string]Planned[testCase, testDecision]
+	cases     map[string]testCase
+	statuses  map[string]Status
+	decisions map[string]testDecision
 }
 
 func newTestStore() *testStore {
 	return &testStore{
 		cases: make(map[string]testCase), statuses: make(map[string]Status),
-		planned: make(map[string]Planned[testCase, testDecision]),
+		decisions: make(map[string]testDecision),
 	}
 }
 
@@ -47,10 +48,8 @@ func (store *testStore) GetStatus(caseID string) (Status, bool, error) {
 	return status, found, nil
 }
 
-func (store *testStore) GetPlanned(
-	caseID string,
-) (Planned[testCase, testDecision], error) {
-	return store.planned[caseID], nil
+func (store *testStore) GetDecision(caseID string) (testDecision, error) {
+	return store.decisions[caseID], nil
 }
 
 func (store *testStore) PutFailure(
@@ -79,9 +78,7 @@ func (store *testStore) PutDecision(
 	status.Decided = true
 	status.RetryAfter = nil
 	store.statuses[caseID] = status
-	store.planned[caseID] = Planned[testCase, testDecision]{
-		Case: store.cases[caseID], Decision: decision,
-	}
+	store.decisions[caseID] = decision
 	return status, true, nil
 }
 
@@ -98,13 +95,16 @@ func TestRunnerCachesTerminalDecisionByCase(t *testing.T) {
 		return testDecision{caseID: repairCase.id}, nil
 	})
 
-	first, err := runner.Process(context.Background(), testCase{id: "case:one"})
+	first, err := runner.Process(context.Background(), testCase{id: "case:one", local: "first"})
 	if err != nil || first.Outcome != Decided || !first.Stored || !first.Submitted {
 		t.Fatalf("first = %#v, error = %v", first, err)
 	}
-	second, err := runner.Process(context.Background(), testCase{id: "case:one"})
+	second, err := runner.Process(context.Background(), testCase{id: "case:one", local: "second"})
 	if err != nil || second.Outcome != AlreadyDecided || second.Stored || second.Submitted || plans != 1 {
 		t.Fatalf("second = %#v, plans = %d, error = %v", second, plans, err)
+	}
+	if second.Planned.Case.local != "second" {
+		t.Fatalf("cached decision used stale local case data: %#v", second.Planned.Case)
 	}
 }
 

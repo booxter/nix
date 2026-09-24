@@ -141,34 +141,21 @@ func (store *Store) GetStatus(caseID string) (planningrunner.Status, bool, error
 	return result.status(), found, err
 }
 
-func (store *Store) GetPlanned(
-	caseID string,
-) (planningrunner.Planned[Record, lidarrcontracts.Decision], error) {
-	stored, found, err := store.readCase(caseID)
-	if err != nil {
-		return planningrunner.Planned[Record, lidarrcontracts.Decision]{}, err
-	}
-	if !found {
-		return planningrunner.Planned[Record, lidarrcontracts.Decision]{}, fmt.Errorf(
-			"case %q is not stored", caseID,
-		)
-	}
+func (store *Store) GetDecision(caseID string) (lidarrcontracts.Decision, error) {
 	result, found, err := store.readPlanningResult(caseID)
 	if err != nil {
-		return planningrunner.Planned[Record, lidarrcontracts.Decision]{}, err
+		return lidarrcontracts.Decision{}, err
 	}
 	if !found || len(result.Decision) == 0 {
-		return planningrunner.Planned[Record, lidarrcontracts.Decision]{}, fmt.Errorf(
+		return lidarrcontracts.Decision{}, fmt.Errorf(
 			"case %q has no stored planning decision", caseID,
 		)
 	}
 	decision, err := lidarrcontracts.DecodeDecision(result.Decision)
 	if err != nil {
-		return planningrunner.Planned[Record, lidarrcontracts.Decision]{}, err
+		return lidarrcontracts.Decision{}, err
 	}
-	return planningrunner.Planned[Record, lidarrcontracts.Decision]{
-		Case: stored.join(result.Decision), Decision: decision,
-	}, nil
+	return decision, nil
 }
 
 func (store *Store) PutFailure(

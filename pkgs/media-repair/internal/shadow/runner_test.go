@@ -178,7 +178,7 @@ func TestRunStoresButDoesNotPlanSupersededCases(t *testing.T) {
 	}
 }
 
-func TestRunKeepsFirstObservationForAlreadyDecidedCase(t *testing.T) {
+func TestRunKeepsCurrentObservationForAlreadyDecidedCase(t *testing.T) {
 	t.Parallel()
 
 	caseID := testCaseID("d")
@@ -207,9 +207,9 @@ func TestRunKeepsFirstObservationForAlreadyDecidedCase(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(report.PlannedCases) != 1 ||
-		report.PlannedCases[0].Assembly.Request.ObservedAt != first.Request.ObservedAt ||
+		report.PlannedCases[0].Assembly.Request.ObservedAt != fresh.Request.ObservedAt ||
 		report.PlannedCases[0].Assembly.LocalSnapshot.Observation.ObservedAt !=
-			first.LocalSnapshot.Observation.ObservedAt {
+			fresh.LocalSnapshot.Observation.ObservedAt {
 		t.Fatalf("planned cases = %#v", report.PlannedCases)
 	}
 }

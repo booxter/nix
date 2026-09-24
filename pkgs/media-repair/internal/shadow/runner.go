@@ -384,16 +384,19 @@ func (store radarrPlanningStore) GetStatus(
 	return planningStatus(result), found, err
 }
 
-func (store radarrPlanningStore) GetPlanned(
+func (store radarrPlanningStore) GetDecision(
 	caseID string,
-) (planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3], error) {
-	planned, err := store.store.GetPlannedCase(caseID)
+) (contracts.RepairDecisionV3, error) {
+	result, found, err := store.store.GetPlanningResult(caseID)
 	if err != nil {
-		return planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3]{}, err
+		return contracts.RepairDecisionV3{}, err
 	}
-	return planningrunner.Planned[casebuilder.Assembly, contracts.RepairDecisionV3]{
-		Case: planned.Assembly, Decision: planned.Decision,
-	}, nil
+	if !found || !result.HasDecision() {
+		return contracts.RepairDecisionV3{}, fmt.Errorf(
+			"case %q has no stored planning decision", caseID,
+		)
+	}
+	return contracts.DecodeDecision(result.Decision)
 }
 
 func (store radarrPlanningStore) PutFailure(

@@ -25,7 +25,7 @@ type Planned[Case, Decision any] struct {
 type Store[Case, Decision, Failure any] interface {
 	PutCase(Case) (bool, error)
 	GetStatus(string) (Status, bool, error)
-	GetPlanned(string) (Planned[Case, Decision], error)
+	GetDecision(string) (Decision, error)
 	PutFailure(string, Failure, time.Time, time.Time) (Status, bool, error)
 	PutDecision(string, Decision, time.Time) (Status, bool, error)
 }
@@ -204,19 +204,19 @@ func (runner *Runner[Case, Decision, Failure]) loadPlanned(
 	result Result[Case, Decision, Failure],
 	outcome Outcome,
 ) (Result[Case, Decision, Failure], error) {
-	planned, err := runner.dependencies.Store.GetPlanned(caseID)
+	decision, err := runner.dependencies.Store.GetDecision(caseID)
 	if err != nil {
 		result.Outcome = Failed
-		return result, fmt.Errorf("load stored planned case: %w", err)
+		return result, fmt.Errorf("load stored planning decision: %w", err)
 	}
-	if decisionCaseID := runner.dependencies.DecisionCaseID(planned.Decision); decisionCaseID != caseID {
+	if decisionCaseID := runner.dependencies.DecisionCaseID(decision); decisionCaseID != caseID {
 		result.Outcome = Failed
 		return result, fmt.Errorf(
 			"planning decision case ID %q does not match observed case %q",
 			decisionCaseID, caseID,
 		)
 	}
-	result.Planned = planned
+	result.Planned.Decision = decision
 	result.Outcome = outcome
 	return result, nil
 }
