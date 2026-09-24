@@ -4,6 +4,7 @@
   ...
 }:
 let
+  mkControllerService = import ../media-repair/controller-service.nix;
   lidarr = config.host.lidarr;
   controller = if lidarr == null then null else lidarr.repair.controller;
   planner = config.host.mediaRepair.planner;
@@ -64,126 +65,63 @@ let
       );
 in
 {
-  config = lib.mkIf (controller != null && controller.enable) {
-    assertions = [
-      {
-        assertion = worker.enable && planner.enable && worker.roots != { };
-        message = "Lidarr repair requires the shared media worker and planner with roots.";
-      }
-      {
-        assertion = !controller.apply.enable || controller.apply.allowedActions != [ ];
-        message = "Lidarr repair apply mode requires at least one allowed action.";
-      }
-      {
-        assertion = !controller.apply.enable || controller.apply.allowedSources != [ ];
-        message = "Lidarr repair apply mode requires at least one allowed source.";
-      }
-      {
-        assertion =
-          controller.apply.enable
-          || (controller.apply.allowedActions == [ ] && controller.apply.allowedSources == [ ]);
-        message = "Lidarr repair actions and sources can be allowed only in apply mode.";
-      }
-      {
-        assertion =
-          builtins.length controller.apply.allowedActions
-          == builtins.length (lib.unique controller.apply.allowedActions);
-        message = "Lidarr repair allowed actions must be unique.";
-      }
-      {
-        assertion =
-          builtins.length controller.apply.allowedSources
-          == builtins.length (lib.unique controller.apply.allowedSources);
-        message = "Lidarr repair allowed sources must be unique.";
-      }
-    ];
-
-    users.groups.${serviceName} = { };
-    users.users.${serviceName} = {
-      isSystemUser = true;
-      group = serviceName;
-      home = "/var/empty";
-    };
-
-    systemd.services.${serviceName} = {
-      description =
-        if controller.apply.enable then
-          "Plan and apply permitted Lidarr import repairs"
-        else
-          "Plan Lidarr import repairs in shadow mode";
-      requires = [
-        "media-repair-planner.socket"
-        "media-repair-worker.service"
-        "lidarr.service"
-        "sops-install-secrets.service"
-      ];
-      after = [
-        "media-repair-planner.socket"
-        "media-repair-worker.service"
-        "lidarr.service"
-        "sops-install-secrets.service"
-      ];
-      unitConfig.RequiresMountsFor = rootPaths;
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = command;
-        LoadCredential = [
+  config = lib.mkIf (controller != null && controller.enable) (
+    lib.mkMerge [
+      (mkControllerService {
+        applicationService = "lidarr.service";
+        inherit
+          command
+          planner
+          rootPaths
+          serviceName
+          worker
+          ;
+        credentials = [
           "lidarr-api-key:${config.sops.secrets."lidarr/apiKey".path}"
         ];
-        User = serviceName;
-        Group = serviceName;
-        SupplementaryGroups = [
-          "media"
-          planner.clientGroup
-          worker.clientGroup
+        description =
+          if controller.apply.enable then
+            "Plan and apply permitted Lidarr import repairs"
+          else
+            "Plan Lidarr import repairs in shadow mode";
+        interval = controller.interval;
+        timerDescription = "Periodically run the Lidarr repair controller";
+        timeoutStopSec = "10s";
+      })
+      {
+        assertions = [
+          {
+            assertion = worker.enable && planner.enable && worker.roots != { };
+            message = "Lidarr repair requires the shared media worker and planner with roots.";
+          }
+          {
+            assertion = !controller.apply.enable || controller.apply.allowedActions != [ ];
+            message = "Lidarr repair apply mode requires at least one allowed action.";
+          }
+          {
+            assertion = !controller.apply.enable || controller.apply.allowedSources != [ ];
+            message = "Lidarr repair apply mode requires at least one allowed source.";
+          }
+          {
+            assertion =
+              controller.apply.enable
+              || (controller.apply.allowedActions == [ ] && controller.apply.allowedSources == [ ]);
+            message = "Lidarr repair actions and sources can be allowed only in apply mode.";
+          }
+          {
+            assertion =
+              builtins.length controller.apply.allowedActions
+              == builtins.length (lib.unique controller.apply.allowedActions);
+            message = "Lidarr repair allowed actions must be unique.";
+          }
+          {
+            assertion =
+              builtins.length controller.apply.allowedSources
+              == builtins.length (lib.unique controller.apply.allowedSources);
+            message = "Lidarr repair allowed sources must be unique.";
+          }
         ];
-        StateDirectory = serviceName;
-        StateDirectoryMode = "0700";
-        TimeoutStartSec = "infinity";
-        TimeoutStopSec = "10s";
-        UMask = "0077";
-        AmbientCapabilities = "";
-        CapabilityBoundingSet = "";
-        InaccessiblePaths = [ "-/run/secrets" ];
-        IPAddressAllow = [ "localhost" ];
-        IPAddressDeny = "any";
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-        NoNewPrivileges = true;
-        PrivateDevices = true;
-        PrivateTmp = true;
-        ProtectClock = true;
-        ProtectControlGroups = true;
-        ProtectHome = true;
-        ProtectHostname = true;
-        ProtectKernelLogs = true;
-        ProtectKernelModules = true;
-        ProtectKernelTunables = true;
-        ProtectProc = "invisible";
-        ProtectSystem = "strict";
-        ProcSubset = "pid";
-        ReadOnlyPaths = rootPaths;
-        RemoveIPC = true;
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-        RestrictNamespaces = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        SystemCallArchitectures = "native";
-      };
-    };
-
-    systemd.timers.${serviceName} = {
-      description = "Periodically run the Lidarr repair controller";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnActiveSec = "5m";
-        OnUnitInactiveSec = controller.interval;
-        Unit = "${serviceName}.service";
-      };
-    };
-  };
+      }
+    ]
+  );
 }

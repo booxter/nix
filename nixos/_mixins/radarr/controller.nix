@@ -4,6 +4,7 @@
   ...
 }:
 let
+  mkControllerService = import ../media-repair/controller-service.nix;
   model = import ./model.nix { inherit config lib; };
   inherit (model)
     controller
@@ -89,108 +90,42 @@ let
   );
 in
 {
-  config = lib.mkIf (controller != null && controller.enable) {
-    users.groups.${serviceName} = { };
-    users.users.${serviceName} = {
-      isSystemUser = true;
-      group = serviceName;
-      home = "/var/empty";
-    };
-
-    systemd.tmpfiles.rules = [
-      "d ${controller.metricsDirectory} 0755 ${serviceName} ${serviceName} - -"
-    ];
-
-    sops.secrets = lib.optionalAttrs (sabnzbdSecret != null) {
-      ${sabnzbdSecret}.restartUnits = [ "${serviceName}.service" ];
-    };
-
-    systemd.services.${serviceName} = {
-      description =
-        if controller.apply.enable then
-          "Plan and apply permitted Radarr import repairs"
-        else
-          "Plan Radarr import repairs in shadow mode";
-      requires = [
-        "media-repair-planner.socket"
-        "media-repair-worker.service"
-        "radarr.service"
-        "sops-install-secrets.service"
-      ]
-      ++ downloadClientUnits;
-      wants = [ "network-online.target" ];
-      after = [
-        "network-online.target"
-        "media-repair-planner.socket"
-        "media-repair-worker.service"
-        "radarr.service"
-        "sops-install-secrets.service"
-      ]
-      ++ downloadClientUnits;
-      unitConfig.RequiresMountsFor = rootPaths;
-      serviceConfig = {
-        Type = "oneshot";
-        # %d expands to this service's private credentials directory.
-        ExecStart = command;
-        LoadCredential = [
+  config = lib.mkIf (controller != null && controller.enable) (
+    lib.mkMerge [
+      (mkControllerService {
+        applicationService = "radarr.service";
+        inherit
+          command
+          planner
+          rootPaths
+          serviceName
+          worker
+          ;
+        credentials = [
           "radarr-api-key:${config.sops.secrets."radarr/apiKey".path}"
         ]
         ++ downloadClientCredentials;
-        User = serviceName;
-        Group = serviceName;
-        SupplementaryGroups = [
-          "media"
-          planner.clientGroup
-          worker.clientGroup
+        description =
+          if controller.apply.enable then
+            "Plan and apply permitted Radarr import repairs"
+          else
+            "Plan Radarr import repairs in shadow mode";
+        interval = controller.interval;
+        timerDescription = "Periodically run the Radarr repair controller";
+        timeoutStopSec = "35s";
+        extraRequiredUnits = downloadClientUnits;
+        readWritePaths = [ controller.metricsDirectory ];
+        wantedUnits = [ "network-online.target" ];
+      })
+      {
+        systemd.tmpfiles.rules = [
+          "d ${controller.metricsDirectory} 0755 ${serviceName} ${serviceName} - -"
         ];
-        StateDirectory = serviceName;
-        StateDirectoryMode = "0700";
-        TimeoutStartSec = "infinity";
-        TimeoutStopSec = "35s";
-        UMask = "0077";
-        AmbientCapabilities = "";
-        CapabilityBoundingSet = "";
-        InaccessiblePaths = [ "-/run/secrets" ];
-        IPAddressAllow = [ "localhost" ];
-        IPAddressDeny = "any";
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-        NoNewPrivileges = true;
-        PrivateDevices = true;
-        PrivateTmp = true;
-        ProtectClock = true;
-        ProtectControlGroups = true;
-        ProtectHome = true;
-        ProtectHostname = true;
-        ProtectKernelLogs = true;
-        ProtectKernelModules = true;
-        ProtectKernelTunables = true;
-        ProtectProc = "invisible";
-        ProtectSystem = "strict";
-        ProcSubset = "pid";
-        ReadOnlyPaths = rootPaths;
-        ReadWritePaths = [ controller.metricsDirectory ];
-        RemoveIPC = true;
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-        RestrictNamespaces = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        SystemCallArchitectures = "native";
-      };
-    };
 
-    systemd.timers.${serviceName} = {
-      description = "Periodically run the Radarr repair controller";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnActiveSec = "5m";
-        OnUnitInactiveSec = controller.interval;
-        Unit = "${serviceName}.service";
-      };
-    };
-  };
+        sops.secrets = lib.optionalAttrs (sabnzbdSecret != null) {
+          ${sabnzbdSecret}.restartUnits = [ "${serviceName}.service" ];
+        };
+      }
+    ]
+  );
 }
