@@ -32,6 +32,11 @@ let
           url = "https://github.com/booxter/nix-1/commit/7cc467036383c9ee3abe989f5f515b1baee1147d.patch";
           hash = "sha256-Jfa3P644DWGwz6bPfYKKEUuH1dQEpVxeB6hJAbHKwEY=";
         })
+        # Keep SIGCHLD from writing to a self-pipe closed during daemon shutdown.
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nix/commit/20e5b8e84cfa0718323f6d93eabd86a73ff86cc8.patch";
+          hash = "sha256-K6ATPUbVP2JPsqsgshSuiBqYthZurx7imxjFyH2rcEk=";
+        })
       ];
 in
 {
