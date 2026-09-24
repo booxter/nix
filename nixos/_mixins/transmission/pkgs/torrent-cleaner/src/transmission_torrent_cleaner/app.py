@@ -8,11 +8,18 @@ from pathlib import Path
 from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from transmission_common.policy import (
+    PolicyConfigError,
+    TorrentPolicy,
+    cleanup_reasons,
+    load_policy,
+)
 from transmission_common.transmission import (
+    Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
-    normalize_tracker_host,
     read_tracker_hosts,
+    trackers_match_hosts,
 )
 
 LOG = logging.getLogger("transmission-torrent-cleaner")
@@ -29,13 +36,6 @@ TORRENT_FIELDS = [
     "tracker_stats",
     "upload_ratio",
 ]
-
-
-class Tracker(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
-
-    host: str | None = None
-    announce: str | None = None
 
 
 class Torrent(BaseModel):
@@ -59,18 +59,11 @@ class TorrentList(BaseModel):
 
 
 @dataclass(frozen=True)
-class Policy:
-    minimum_age_days: float
-    minimum_ratio: float
-    maximum_age_days: float
-
-
-@dataclass(frozen=True)
 class Settings:
     rpc_url: str
     trackers_file: Path
     request_timeout_seconds: float
-    policy: Policy
+    policy: TorrentPolicy
     delete: bool
 
 
@@ -155,53 +148,34 @@ def torrent_added_timestamp(torrent: Torrent) -> int | None:
     return None
 
 
-def torrent_matches_tracker_hosts(torrent: Torrent, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.tracker_stats:
-        for raw_host in (tracker.host, tracker.announce):
-            if raw_host is None:
-                continue
-            host = normalize_tracker_host(raw_host)
-            if host and host in tracker_hosts:
-                return True
-    return False
-
-
 def select_candidates(
-    torrents: Sequence[Torrent], tracker_hosts: set[str], policy: Policy, now: float
+    torrents: Sequence[Torrent], tracker_hosts: set[str], policy: TorrentPolicy, now: float
 ) -> list[Candidate]:
-    minimum_age_seconds = policy.minimum_age_days * DAY_SECONDS
-    maximum_age_seconds = policy.maximum_age_days * DAY_SECONDS
     candidates: list[Candidate] = []
 
     for torrent in torrents:
         if not torrent.hash_string or not torrent.name:
             continue
-        if torrent_matches_tracker_hosts(torrent, tracker_hosts):
-            continue
 
-        age_days: float | None = None
-        reasons: list[str] = []
+        is_preferred = trackers_match_hosts(torrent.tracker_stats, tracker_hosts)
+        class_policy = policy.class_policy(preferred=is_preferred)
         added_timestamp = torrent_added_timestamp(torrent)
-        if added_timestamp is not None:
-            torrent_age_seconds = now - added_timestamp
-            if torrent_age_seconds >= maximum_age_seconds:
-                reasons.append("maximum-age")
-                age_days = torrent_age_seconds / DAY_SECONDS
-
-        if torrent_is_complete(torrent):
-            completion_timestamp = torrent_completion_timestamp(torrent)
-            if completion_timestamp is not None:
-                completion_age_seconds = now - completion_timestamp
-                if (
-                    completion_age_seconds >= minimum_age_seconds
-                    and torrent.upload_ratio is not None
-                    and torrent.upload_ratio >= policy.minimum_ratio
-                ):
-                    reasons.append("high-ratio")
-                    if age_days is None:
-                        age_days = completion_age_seconds / DAY_SECONDS
-
-        if not reasons or age_days is None:
+        completion_timestamp = torrent_completion_timestamp(torrent)
+        added_age_days = None if added_timestamp is None else (now - added_timestamp) / DAY_SECONDS
+        completion_age_days = (
+            None if completion_timestamp is None else (now - completion_timestamp) / DAY_SECONDS
+        )
+        reasons = cleanup_reasons(
+            class_policy.cleanup,
+            ratio=torrent.upload_ratio,
+            complete=torrent_is_complete(torrent),
+            completion_age_days=completion_age_days,
+            added_age_days=added_age_days,
+        )
+        if not reasons:
+            continue
+        age_days = added_age_days if "maximum-age" in reasons else completion_age_days
+        if age_days is None:
             continue
         candidates.append(
             Candidate(
@@ -209,7 +183,7 @@ def select_candidates(
                 name=torrent.name,
                 ratio=None if torrent.upload_ratio is None else float(torrent.upload_ratio),
                 age_days=age_days,
-                reasons=tuple(reasons),
+                reasons=reasons,
                 size_bytes=torrent.size_when_done,
             )
         )
@@ -243,15 +217,11 @@ def run_cleanup(settings: Settings, client: TorrentClient, clock: Clock) -> int:
     mode = "delete" if settings.delete else "dry-run"
 
     LOG.info(
-        "scan complete: torrents=%s tracker_hosts=%s eligible=%s mode=%s "
-        "minimum_age_days=%s minimum_ratio=%.2f maximum_age_days=%s",
+        "scan complete: torrents=%s tracker_hosts=%s eligible=%s mode=%s policy_classes=2",
         len(torrents),
         len(tracker_hosts),
         len(candidates),
         mode,
-        settings.policy.minimum_age_days,
-        settings.policy.minimum_ratio,
-        settings.policy.maximum_age_days,
     )
     if not candidates:
         return 0
@@ -292,9 +262,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--rpc-url", default="http://127.0.0.1:9091/transmission/rpc")
     parser.add_argument("--trackers-file", required=True, type=Path)
-    parser.add_argument("--minimum-age-days", type=float, default=30.0)
-    parser.add_argument("--minimum-ratio", type=float, default=3.0)
-    parser.add_argument("--maximum-age-days", type=float, default=365.0)
+    parser.add_argument("--policy-file", required=True, type=Path)
     parser.add_argument("--request-timeout-seconds", type=float, default=20.0)
     parser.add_argument("--delete", action="store_true")
     parser.add_argument(
@@ -311,27 +279,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    settings = Settings(
-        rpc_url=args.rpc_url,
-        trackers_file=args.trackers_file,
-        request_timeout_seconds=args.request_timeout_seconds,
-        policy=Policy(
-            minimum_age_days=args.minimum_age_days,
-            minimum_ratio=args.minimum_ratio,
-            maximum_age_days=args.maximum_age_days,
-        ),
-        delete=args.delete,
-    )
-    client = TransmissionClient(
-        TransmissionRpcClient(
-            rpc_url=settings.rpc_url,
-            timeout_seconds=settings.request_timeout_seconds,
-        )
-    )
     try:
+        settings = Settings(
+            rpc_url=args.rpc_url,
+            trackers_file=args.trackers_file,
+            request_timeout_seconds=args.request_timeout_seconds,
+            policy=load_policy(args.policy_file),
+            delete=args.delete,
+        )
+        client = TransmissionClient(
+            TransmissionRpcClient(
+                rpc_url=settings.rpc_url,
+                timeout_seconds=settings.request_timeout_seconds,
+            )
+        )
         return run_cleanup(settings, client, SystemClock())
     except FileNotFoundError as exc:
         LOG.error("required file is missing: %s", exc)
+    except PolicyConfigError as exc:
+        LOG.error("invalid policy configuration: %s", exc)
     except OSError as exc:
         LOG.error("failed to read tracker host file: %s", exc)
     except TransmissionRpcError as exc:

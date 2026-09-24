@@ -15,6 +15,10 @@ python3.pkgs.buildPythonPackage {
     python3.pkgs.setuptools
   ];
 
+  dependencies = [
+    python3.pkgs.pydantic
+  ];
+
   nativeCheckInputs = [
     python3.pkgs.mypy
     pythonRuffCheckHook
@@ -22,6 +26,7 @@ python3.pkgs.buildPythonPackage {
 
   pythonRuffCheckPaths = [
     "transmission_common"
+    "test_policy.py"
     "test_transmission.py"
   ];
 

@@ -1,0 +1,1498 @@
+{
+  "album": {
+    "album_id": 6253,
+    "artist": "Richard Wagner",
+    "artist_id": 391,
+    "monitored": true,
+    "title": "Tristan Und Isolde"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 760240,
+      "fingerprint": "sha256:51738702269ab6d8b4436a0c7627c92efc50394ea9f55cb796ec074ebe538554",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/01 - ACT I- Prelude.flac",
+      "size_bytes": 55020331,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT I: Prelude"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 357227,
+      "fingerprint": "sha256:e9b4f391a52986f503ffa7c82afa2d5f6067936495cdb213444bf6f5a6a6248a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/02 - Scene 1 Westwarts schweift der Blick.flac",
+      "size_bytes": 25442018,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Scene 1 Westwarts schweift der Blick"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 253400,
+      "fingerprint": "sha256:777c8a9e569e37591c812b43ef992d14b8f0446af10d77e355596f72be91f063",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/03 - Scene 2 Frisch weht der Wind der Heimat zu.flac",
+      "size_bytes": 16407791,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Scene 2 Frisch weht der Wind der Heimat zu"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 331600,
+      "fingerprint": "sha256:fcbba2687277680eddd85b0a6a46ddc9d60670f03df2026cdb08104628c1043e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/04 - Hab acht, Tristan!.flac",
+      "size_bytes": 23206470,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hab acht, Tristan!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 109467,
+      "fingerprint": "sha256:d9098f14339a8643881346804ce497b863379d55e2f3c391777d09beef04f863",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/05 - Scene 3 Weh, ach wehe!.flac",
+      "size_bytes": 8487341,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Scene 3 Weh, ach wehe!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 428440,
+      "fingerprint": "sha256:ce69052de9dd8f027172a8578e6d28669cb25e506b7f8b793af6513389e6a40e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/06 - Wie lachend sie mir Lieder singen.flac",
+      "size_bytes": 32291460,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Wie lachend sie mir Lieder singen"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 660667,
+      "fingerprint": "sha256:15c8e7fc159bbd8d76dde4a6a80d98db7c75b9944dedbafec468b880b86c7160",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/07 - O blinde Augen.flac",
+      "size_bytes": 49104424,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "O blinde Augen"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 79667,
+      "fingerprint": "sha256:6abcb92abc1c07573000921ee10d2a490726247b6799d83d2c2d28a6c304d0fd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/08 - Scene 4 Auf! Auf! Ihr Frauen!.flac",
+      "size_bytes": 6653197,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Scene 4 Auf! Auf! Ihr Frauen!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 415627,
+      "fingerprint": "sha256:c653568f58c5f465c66e654c983d1d2227f65b7a9736862447a4bc9f4b30dd5d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/09 - Herrn Tristan bringe meinen Grusz.flac",
+      "size_bytes": 28861333,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Herrn Tristan bringe meinen Grusz"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 581800,
+      "fingerprint": "sha256:c17be10359c4aff0f091c58930560471a4ea9a02b5f42dfa473d36c59624a108",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 1 - Flac/10 - Scene 5 Begehrt, Herrin, was Ihr wunscht.flac",
+      "size_bytes": 41756071,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Scene 5 Begehrt, Herrin, was Ihr wunscht"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 691867,
+      "fingerprint": "sha256:c114901e1d575d3a729acc2bcbdc2435a41f3ca1700e485134e70b6fe0c2469f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/01 - AKT I - Szene V - War Morold dir so wert.flac",
+      "size_bytes": 48176859,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT I - Szene V - War Morold dir so wert"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 441840,
+      "fingerprint": "sha256:8b92c7e8fd2a077737abf105da372fde3184fa99a71e413d16ce15d649b4f4b6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/02 - AKT I - Szene V - Tristan!.....Isolde!.flac",
+      "size_bytes": 36783714,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT I - Szene V - Tristan!.....Isolde!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:13",
+      "duration_ms": 153333,
+      "fingerprint": "sha256:46b4dafeb613c4cd9749b761d39fa684ed85fec0bda6fc06ceef8a1393f98a94",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/03 - AKT II - Vorspiel.flac",
+      "size_bytes": 10597854,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT II - Vorspiel"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:14",
+      "duration_ms": 733067,
+      "fingerprint": "sha256:a6484f7fa9b9e49ad8b42457b1b4fd029eb79badbf1d17f7672c2a0fda2aa9b5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/04 - AKT II - Szene I - Horst du sie noch .flac",
+      "size_bytes": 54948832,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT II - Szene I - Horst du sie noch?"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:15",
+      "duration_ms": 1090600,
+      "fingerprint": "sha256:101a75dda1dc3474838fda3b9b1de8d3a2effa2bfb8a618b7691efd151055856",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/05 - AKT II - Szene II - Isolde!....Tristan!.flac",
+      "size_bytes": 88330665,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT II - Szene II - Isolde!....Tristan!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:16",
+      "duration_ms": 497667,
+      "fingerprint": "sha256:12d910d97892c899b1b257cc18670e2686b3625635b2d6f1dd54d757785c07c4",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/06 - AKT II - Szene II - O sink hernieder, Nacht der Liebe.flac",
+      "size_bytes": 32214820,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT II - Szene II - O sink hernieder, Nacht der Liebe"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:17",
+      "duration_ms": 278960,
+      "fingerprint": "sha256:065566d400e914f28a5aebd4e0d885cf7655bf0dfd3ebbcd7b49036d6ca536fd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 2 - Flac/07 - AKT II - Szene II - Lausch, Geliebter!.flac",
+      "size_bytes": 19926619,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT II - Szene II - Lausch, Geliebter!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:18",
+      "duration_ms": 673600,
+      "fingerprint": "sha256:334fc9b25100bc1f096000da29ef5edfa19ccf0b0fddcb6d0514a99e3a4f9372",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/01 - ACT II ! Scene 2- Doch, unsre Liebe.flac",
+      "size_bytes": 52554165,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT II | Scene 2: Doch, unsre Liebe"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:19",
+      "duration_ms": 115907,
+      "fingerprint": "sha256:b68b9717bb8b5b05adfa4722d620788ec0a63e799533254010895b2ad184886b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/02 - ACT II ! Scene 3-  Rette dich, Tristan!.flac",
+      "size_bytes": 8320075,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT II | Scene 3:  Rette dich, Tristan!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:20",
+      "duration_ms": 725000,
+      "fingerprint": "sha256:9dfcd05d8c1243bcf2f2bada374d46432051ea60da1d10cb5988882698df6cb8",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/03 - ACT II ! Scene 3- Tatest du's wirklich .flac",
+      "size_bytes": 47844942,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT II | Scene 3: Tatest du's wirklich?"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:21",
+      "duration_ms": 550160,
+      "fingerprint": "sha256:667510eb6727e6a995142867dc464ae6110e4b11608ec75f2218cc63d0081cab",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/04 - ACT II ! Scene 3- O Konig, das kann ich dir nicht sagen.flac",
+      "size_bytes": 36127888,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT II | Scene 3: O Konig, das kann ich dir nicht sagen"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:22",
+      "duration_ms": 488533,
+      "fingerprint": "sha256:4333c3282b1e4ca0c59cca420d5e2315f9e40faf508eb78454025199d6eba46b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/05 - ACT III ! Prelude.flac",
+      "size_bytes": 29412709,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT III | Prelude"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23",
+      "duration_ms": 639467,
+      "fingerprint": "sha256:0f83c8a0781b6a4fcf95697c383e8756a35a59da7077219854a654d26fd77a41",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/06 - ACT III ! Scene 1-  Kurwenal! He!.flac",
+      "size_bytes": 43181765,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT III | Scene 1:  Kurwenal! He!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:24",
+      "duration_ms": 527307,
+      "fingerprint": "sha256:0907eba4024c13aacb90c33d1a20790ad54bdd4c7e6d9327c8990bd274f115bc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 3 - Flac/07 - ACT III ! Scene 1- Wo ich erwacht - weilt' ich nicht.flac",
+      "size_bytes": 37616066,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "ACT III | Scene 1: Wo ich erwacht - weilt' ich nicht"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:25",
+      "duration_ms": 1656173,
+      "fingerprint": "sha256:873f1d94e4030d3135041103f085f0b74382bf609b20e42278d1b7649fbc817c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 4 - Flac/01 - AKT III - Szene I - Noch losch das Licht nicht aus.flac",
+      "size_bytes": 127482182,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT III - Szene I - Noch losch das Licht nicht aus"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:26",
+      "duration_ms": 203893,
+      "fingerprint": "sha256:64d48d014d3a96beed7ff2e55ab33e811a3e69e9b05c6cc9a187cf5121329277",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 4 - Flac/02 - AKT III - Szene II - O diese Sonne!.flac",
+      "size_bytes": 16932750,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT III - Szene II - O diese Sonne!"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:27",
+      "duration_ms": 390573,
+      "fingerprint": "sha256:064b1ebf1594d0bd46cc12d3e4303581b0b1e028777fa1749ad4e86514f39d04",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 4 - Flac/03 - AKT III - Szene II - Ha! ich bin's, ich bin's.flac",
+      "size_bytes": 26885500,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT III - Szene II - Ha! ich bin's, ich bin's"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:28",
+      "duration_ms": 486360,
+      "fingerprint": "sha256:75a39b88fe8c78f7c140340e044a73e85707f9618c8f2aea048fd92979aed0c6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 4 - Flac/04 - AKT III - Szene III - Kurwenal! Hor! Ein zweites Schiff.flac",
+      "size_bytes": 35839531,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT III - Szene III - Kurwenal! Hor! Ein zweites Schiff"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:29",
+      "duration_ms": 438000,
+      "fingerprint": "sha256:8694884ca51b32d1eb38bbceb00ed5338ac55f8ba3cf3a1575f356a489586787",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "CD 4 - Flac/05 - AKT III - Szene III - Mild und leise wie er lachelt.flac",
+      "size_bytes": 32604229,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "AKT III - Szene III - Mild und leise wie er lachelt"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT I: Prelude",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        215726
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Scene 1 Westwarts schweift der Blick",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        215727
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Scene 2 Frisch weht der Wind der Heimat zu",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        215728
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Hab acht, Tristan!",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        215729
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Scene 3 Weh, ach wehe!",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        215730
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Wie lachend sie mir Lieder singen",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        215731
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "O blinde Augen",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        215732
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Scene 4 Auf! Auf! Ihr Frauen!",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        215733
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Herrn Tristan bringe meinen Grusz",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        215734
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Album match is not close enough: 56.5% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (1/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "Scene 5 Begehrt, Herrin, was Ihr wunscht",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        215735
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:11",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT I - Szene V - War Morold dir so wert",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        215736
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:12",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT I - Szene V - Tristan!.....Isolde!",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        215737
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:13",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT II - Vorspiel",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        215738
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:14",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT II - Szene I - Horst du sie noch?",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        215739
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:15",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT II - Szene II - Isolde!....Tristan!",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        215740
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:16",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT II - Szene II - O sink hernieder, Nacht der Liebe",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        215741
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:17",
+      "rejections": [
+        "permanent: Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde (2/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT II - Szene II - Lausch, Geliebter!",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        215742
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:18",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT II | Scene 2: Doch, unsre Liebe",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        215743
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:19",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT II | Scene 3:  Rette dich, Tristan!",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        215744
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:20",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT II | Scene 3: Tatest du's wirklich?",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        215745
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:21",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT II | Scene 3: O Konig, das kann ich dir nicht sagen",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        215746
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:22",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT III | Prelude",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        215747
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:23",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT III | Scene 1:  Kurwenal! He!",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        215748
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:24",
+      "rejections": [
+        "permanent: Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (3/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "ACT III | Scene 1: Wo ich erwacht - weilt' ich nicht",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        215749
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:25",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (4/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT III - Szene I - Noch losch das Licht nicht aus",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        215750
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:26",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (4/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT III - Szene II - O diese Sonne!",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        215751
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:27",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (4/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT III - Szene II - Ha! ich bin's, ich bin's",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        215752
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:28",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (4/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT III - Szene III - Kurwenal! Hor! Ein zweites Schiff",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        215753
+      ]
+    },
+    {
+      "album_id": 4396,
+      "artifact_id": "artifact:29",
+      "rejections": [
+        "permanent: Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 17547,
+      "tag_album": "Tristan Und Isolde  (4/4)",
+      "tag_artist": "Berliner Philharmoniker, von Karajan",
+      "tag_title": "AKT III - Szene III - Mild und leise wie er lachelt",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        215754
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 6253,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29"
+      ],
+      "capability_id": "capability:import_missing_tracks:33225",
+      "release_id": 33225,
+      "track_ids": [
+        432009,
+        432010,
+        432011,
+        432012,
+        432013,
+        432014,
+        432015,
+        432016,
+        432017,
+        432018,
+        432019,
+        432020
+      ]
+    }
+  ],
+  "case_id": "sha256:0dec9481895047c361485a74db3172e8e7dbc531b7f3b39a2c385e7bbd96e2e9",
+  "observed_at": "2026-09-23T03:24:30.464491362Z",
+  "queue": {
+    "download_ref": "download:7c537352bcd8d3d25e01fd62c803828ede683e79d18c96fc46407e17b0777bc9",
+    "messages": [
+      "01 - ACT I- Prelude.flac",
+      "01 - ACT II ! Scene 2- Doch, unsre Liebe.flac",
+      "01 - AKT I - Szene V - War Morold dir so wert.flac",
+      "01 - AKT III - Szene I - Noch losch das Licht nicht aus.flac",
+      "02 - ACT II ! Scene 3-  Rette dich, Tristan!.flac",
+      "02 - AKT I - Szene V - Tristan!.....Isolde!.flac",
+      "02 - AKT III - Szene II - O diese Sonne!.flac",
+      "02 - Scene 1 Westwarts schweift der Blick.flac",
+      "03 - ACT II ! Scene 3- Tatest du's wirklich .flac",
+      "03 - AKT II - Vorspiel.flac",
+      "03 - AKT III - Szene II - Ha! ich bin's, ich bin's.flac",
+      "03 - Scene 2 Frisch weht der Wind der Heimat zu.flac",
+      "04 - ACT II ! Scene 3- O Konig, das kann ich dir nicht sagen.flac",
+      "04 - AKT II - Szene I - Horst du sie noch .flac",
+      "04 - AKT III - Szene III - Kurwenal! Hor! Ein zweites Schiff.flac",
+      "04 - Hab acht, Tristan!.flac",
+      "05 - ACT III ! Prelude.flac",
+      "05 - AKT II - Szene II - Isolde!....Tristan!.flac",
+      "05 - AKT III - Szene III - Mild und leise wie er lachelt.flac",
+      "05 - Scene 3 Weh, ach wehe!.flac",
+      "06 - ACT III ! Scene 1-  Kurwenal! He!.flac",
+      "06 - AKT II - Szene II - O sink hernieder, Nacht der Liebe.flac",
+      "06 - Wie lachend sie mir Lieder singen.flac",
+      "07 - ACT III ! Scene 1- Wo ich erwacht - weilt' ich nicht.flac",
+      "07 - AKT II - Szene II - Lausch, Geliebter!.flac",
+      "07 - O blinde Augen.flac",
+      "08 - Scene 4 Auf! Auf! Ihr Frauen!.flac",
+      "09 - Herrn Tristan bringe meinen Grusz.flac",
+      "10 - Scene 5 Begehrt, Herrin, was Ihr wunscht.flac",
+      "Album match is not close enough: 67.9% vs 80% [artist, album, tracks, missing tracks]",
+      "Album match is not close enough: 68.0% vs 80% [artist, album, tracks, missing tracks]",
+      "Album match is not close enough: 68.8% vs 80% [artist, album, tracks, missing tracks]",
+      "Album match is not close enough: 69.0% vs 80% [artist, album, tracks, missing tracks]",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 930946137,
+    "title": "Tristan Und Isolde - Karajan 1972 - Flac (Wagner)"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "da36f986-28e9-40ff-aaa6-556604317267",
+      "format": "Phonograph record",
+      "labels": [
+        "London Records"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 33225,
+      "title": "Tristan Und Isolde",
+      "track_count": 12
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 1519900,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Prelude - Act 1 - Part 1 Westwarts Schweift Der Blick",
+      "track_id": 432009
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 1466400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 1 - Part 2 Das Sage Sie Der Frau Isold!",
+      "track_id": 432010
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 1545000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 1 - Part 3 Du Merke Wohl, Und Melt Es Gut!",
+      "track_id": 432011
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 401100,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 1 - Conclusion Tristan... Isolde... Treusoler Holder!",
+      "track_id": 432012
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 1659800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 2 - Part 2 Isolde... Tristan... Geliebter!",
+      "track_id": 432013
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 1646500,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 2 - Part 3 Unsre Liebe? Tristans Liebe?",
+      "track_id": 432014
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 498300,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 2 - Conclusion O Konig, Was Kann Ich Dir Nicht Sagen",
+      "track_id": 432015
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 1670400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 3 - Part 2 Hei Nun! Wie Du Kamst?",
+      "track_id": 432016
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 798200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 3 - Part 3 O Wonne! Nein!",
+      "track_id": 432017
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 1304700,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 33225,
+      "title": "Act 3 - Conclusion Ich Bin's, Ich Bin's Süssester Freund",
+      "track_id": 432018
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 895100,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33225,
+      "title": "Act 2 - Part 1 Horst Du Sie Noch?",
+      "track_id": 432019
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 1001000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 33225,
+      "title": "Act 3 - Part 1 Kurwenal! He!",
+      "track_id": 432020
+    }
+  ]
+}

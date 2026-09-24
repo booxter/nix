@@ -2,6 +2,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
+from transmission_common.policy import (
+    CleanupPolicy,
+    CompletedCleanupPolicy,
+    Priority,
+    RatioPriorityPolicy,
+    StopPolicy,
+    TorrentClassPolicy,
+    TorrentPolicy,
+)
 from transmission_torrent_cleaner import app
 
 NOW = 2_000_000_000.0
@@ -50,12 +59,37 @@ def settings(trackers_file: Path, *, delete: bool = True) -> app.Settings:
         rpc_url="http://127.0.0.1:9091/transmission/rpc",
         trackers_file=trackers_file,
         request_timeout_seconds=20.0,
-        policy=app.Policy(
-            minimum_age_days=30.0,
-            minimum_ratio=3.0,
-            maximum_age_days=365.0,
-        ),
+        policy=policy(),
         delete=delete,
+    )
+
+
+def ratio_policy(after: Priority) -> RatioPriorityPolicy:
+    return RatioPriorityPolicy(
+        target_ratio=3.0,
+        below_target=Priority.HIGH,
+        at_or_above_target=after,
+    )
+
+
+def policy() -> TorrentPolicy:
+    return TorrentPolicy(
+        preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.NORMAL),
+            stop=None,
+            cleanup=None,
+        ),
+        non_preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.LOW),
+            stop=StopPolicy(minimum_ratio=6.0, require_complete=True),
+            cleanup=CleanupPolicy(
+                completed=CompletedCleanupPolicy(
+                    minimum_ratio=3.0,
+                    minimum_age_days=30.0,
+                ),
+                maximum_age_days=365.0,
+            ),
+        ),
     )
 
 
@@ -76,7 +110,7 @@ def test_over_age_incomplete_torrent_is_deleted(tmp_path: Path) -> None:
             torrent(
                 hash_string="old-public",
                 name="old-public",
-                added_date=int(NOW) - 366 * DAY_SECONDS,
+                added_date=int(NOW) - 365 * DAY_SECONDS,
                 left_until_done=1024,
                 percent_done=0.5,
                 done_date=0,
@@ -137,12 +171,20 @@ def test_preferred_torrent_is_exempt_by_host_or_announce(tmp_path: Path) -> None
                 hash_string="preferred-host",
                 name="preferred-host",
                 added_date=int(NOW) - 366 * DAY_SECONDS,
+                done_date=int(NOW) - 366 * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=99.0,
                 tracker_stats=[{"host": "preferred.example"}],
             ),
             torrent(
                 hash_string="preferred-announce",
                 name="preferred-announce",
                 added_date=int(NOW) - 366 * DAY_SECONDS,
+                done_date=int(NOW) - 366 * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=99.0,
                 tracker_stats=[{"announce": "https://preferred.example/announce"}],
             ),
         ],
@@ -170,6 +212,37 @@ def test_old_complete_high_ratio_torrent_is_deleted(tmp_path: Path) -> None:
 
     assert result == 0
     assert client.removed == [(["old-high-ratio"], True)]
+
+
+@pytest.mark.parametrize(
+    ("completion_age_days", "expected_removed"),
+    [
+        (29, False),
+        (30, True),
+    ],
+)
+def test_completed_age_boundary(
+    tmp_path: Path,
+    completion_age_days: int,
+    expected_removed: bool,
+) -> None:
+    result, client = run_cleaner(
+        tmp_path,
+        [
+            torrent(
+                hash_string="ratio-target",
+                name="ratio-target",
+                added_date=int(NOW) - (completion_age_days + 1) * DAY_SECONDS,
+                done_date=int(NOW) - completion_age_days * DAY_SECONDS,
+                left_until_done=0,
+                percent_done=1.0,
+                upload_ratio=3.0,
+            )
+        ],
+    )
+
+    assert result == 0
+    assert bool(client.removed) is expected_removed
 
 
 def test_dry_run_orders_candidates_without_removing(tmp_path: Path) -> None:
@@ -244,6 +317,15 @@ def test_timestamp_fallbacks_preserve_cleanup_policy() -> None:
 
 
 def test_main_reports_missing_tracker_file(tmp_path: Path) -> None:
-    result = app.main(["--trackers-file", str(tmp_path / "missing")])
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(policy().model_dump_json(), encoding="utf-8")
+    result = app.main(
+        [
+            "--trackers-file",
+            str(tmp_path / "missing"),
+            "--policy-file",
+            str(policy_path),
+        ]
+    )
 
     assert result == 1

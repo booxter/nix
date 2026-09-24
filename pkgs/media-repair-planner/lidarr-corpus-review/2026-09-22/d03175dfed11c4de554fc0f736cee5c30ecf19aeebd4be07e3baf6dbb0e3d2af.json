@@ -1,0 +1,4789 @@
+{
+  "album": {
+    "album_id": 5046,
+    "artist": "Kylie Minogue",
+    "artist_id": 416,
+    "monitored": true,
+    "title": "X"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 237667,
+      "fingerprint": "sha256:eab031f1b37c305a28bf1e0b7751ad6bdf7130d9981924071291175c74458bf1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "67b4ae45a6dd9de3fca4d482a88f6bc9.flac",
+      "size_bytes": 27823318,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Can't Get You Out Of My Head (K & M Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 358307,
+      "fingerprint": "sha256:b17dcf6750237f4d326dd6a0b7b28c4d9c63a4d6d361b084d552f37dcb1ef4c2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "945c32dd74773a24ac4eec95e3b8e754.flac",
+      "size_bytes": 41325572,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.3.1"
+        },
+        {
+          "name": "title",
+          "value": "Can't Get You Out Of My Head (Nick Faber Remix)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5046,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Album match is not close enough: 37.8% vs 80% [album, year, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 20083,
+      "tag_album": "Can't Get You Out Of My Head Remix",
+      "tag_artist": "Kylie Minogue",
+      "tag_title": "Can't Get You Out Of My Head (K & M Remix)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        253210
+      ]
+    },
+    {
+      "album_id": 5046,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Album match is not close enough: 37.8% vs 80% [album, year, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 20083,
+      "tag_album": "Can't Get You Out Of My Head Remix",
+      "tag_artist": "Kylie Minogue",
+      "tag_title": "Can't Get You Out Of My Head (Nick Faber Remix)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        253204
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20074",
+      "release_id": 20074,
+      "track_ids": [
+        253055,
+        253056,
+        253057,
+        253058,
+        253059,
+        253060,
+        253061,
+        253062,
+        253063,
+        253064,
+        253065,
+        253066,
+        253067,
+        253068
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20075",
+      "release_id": 20075,
+      "track_ids": [
+        253069,
+        253070,
+        253071,
+        253072,
+        253073,
+        253074,
+        253075,
+        253076,
+        253077,
+        253078,
+        253079,
+        253080,
+        253081
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20076",
+      "release_id": 20076,
+      "track_ids": [
+        253082,
+        253083,
+        253084,
+        253085,
+        253086,
+        253087,
+        253088,
+        253089,
+        253090,
+        253091,
+        253092,
+        253093,
+        253094
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20077",
+      "release_id": 20077,
+      "track_ids": [
+        253095,
+        253096,
+        253097,
+        253098,
+        253099,
+        253100,
+        253101,
+        253102,
+        253103,
+        253104,
+        253105,
+        253106,
+        253107,
+        253108,
+        253109,
+        253110,
+        253111,
+        253112,
+        253113
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20078",
+      "release_id": 20078,
+      "track_ids": [
+        253114,
+        253115,
+        253116,
+        253117,
+        253118,
+        253119,
+        253120,
+        253121,
+        253122,
+        253123,
+        253124,
+        253125,
+        253126,
+        253127,
+        253128
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20079",
+      "release_id": 20079,
+      "track_ids": [
+        253129,
+        253130,
+        253131,
+        253132,
+        253133,
+        253134,
+        253135,
+        253136,
+        253137,
+        253138,
+        253139,
+        253140,
+        253141,
+        253142,
+        253143,
+        253144,
+        253145
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20080",
+      "release_id": 20080,
+      "track_ids": [
+        253146,
+        253159,
+        253147,
+        253160,
+        253148,
+        253161,
+        253149,
+        253162,
+        253150,
+        253163,
+        253151,
+        253164,
+        253152,
+        253165,
+        253153,
+        253166,
+        253154,
+        253167,
+        253155,
+        253168,
+        253156,
+        253157,
+        253158
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20081",
+      "release_id": 20081,
+      "track_ids": [
+        253169,
+        253170,
+        253171,
+        253172,
+        253173,
+        253174,
+        253175,
+        253176,
+        253177,
+        253178,
+        253179,
+        253180,
+        253181,
+        253182,
+        253183
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20082",
+      "release_id": 20082,
+      "track_ids": [
+        253184,
+        253185,
+        253186,
+        253187,
+        253188,
+        253189,
+        253190,
+        253191,
+        253192,
+        253193,
+        253194,
+        253195,
+        253196,
+        253197,
+        253198,
+        253199,
+        253200,
+        253201,
+        253202
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20083",
+      "release_id": 20083,
+      "track_ids": [
+        253203,
+        253204,
+        253205,
+        253206,
+        253207,
+        253208,
+        253209,
+        253210,
+        253211,
+        253212,
+        253213,
+        253214,
+        253215
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20084",
+      "release_id": 20084,
+      "track_ids": [
+        253216,
+        253217,
+        253218,
+        253219,
+        253220,
+        253221,
+        253222,
+        253223,
+        253224,
+        253225,
+        253226,
+        253227,
+        253228,
+        253229,
+        253230,
+        253231
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20085",
+      "release_id": 20085,
+      "track_ids": [
+        253232,
+        253233,
+        253234,
+        253235,
+        253236,
+        253237,
+        253238,
+        253239,
+        253240,
+        253241,
+        253242,
+        253243,
+        253244
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20086",
+      "release_id": 20086,
+      "track_ids": [
+        253245,
+        253246,
+        253247,
+        253248,
+        253249,
+        253250,
+        253251,
+        253252,
+        253253,
+        253254,
+        253255,
+        253256,
+        253257,
+        253258,
+        253259
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20087",
+      "release_id": 20087,
+      "track_ids": [
+        253260,
+        253261,
+        253262,
+        253263,
+        253264,
+        253265,
+        253266,
+        253267,
+        253268,
+        253269,
+        253270,
+        253271,
+        253272
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20088",
+      "release_id": 20088,
+      "track_ids": [
+        253273,
+        253274,
+        253275,
+        253276,
+        253277,
+        253278,
+        253279,
+        253280,
+        253281,
+        253282,
+        253283,
+        253284,
+        253285
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20089",
+      "release_id": 20089,
+      "track_ids": [
+        253286,
+        253287,
+        253288,
+        253289,
+        253290,
+        253291,
+        253292,
+        253293,
+        253294,
+        253295,
+        253296,
+        253297,
+        253298,
+        253299,
+        253300,
+        253301,
+        253302,
+        253303,
+        253304
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20090",
+      "release_id": 20090,
+      "track_ids": [
+        253305,
+        253306,
+        253307,
+        253308,
+        253309,
+        253310,
+        253311,
+        253312,
+        253313,
+        253314,
+        253315,
+        253316,
+        253317,
+        253318,
+        253319
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20091",
+      "release_id": 20091,
+      "track_ids": [
+        253320,
+        253321,
+        253322,
+        253323,
+        253324,
+        253325,
+        253326,
+        253327,
+        253328,
+        253329,
+        253330,
+        253331,
+        253332,
+        253333
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20092",
+      "release_id": 20092,
+      "track_ids": [
+        253334,
+        253335,
+        253336,
+        253337,
+        253338,
+        253339,
+        253340,
+        253341,
+        253342,
+        253343,
+        253344,
+        253345,
+        253346,
+        253347
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20093",
+      "release_id": 20093,
+      "track_ids": [
+        253348,
+        253349,
+        253350,
+        253351,
+        253352,
+        253353,
+        253354,
+        253355,
+        253356,
+        253357,
+        253358,
+        253359,
+        253360,
+        253361
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20094",
+      "release_id": 20094,
+      "track_ids": [
+        253362,
+        253363,
+        253364,
+        253365,
+        253366,
+        253367,
+        253368,
+        253369,
+        253370,
+        253371,
+        253372,
+        253373,
+        253374,
+        253375,
+        253376
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:20095",
+      "release_id": 20095,
+      "track_ids": [
+        253377,
+        253378,
+        253379,
+        253380,
+        253381,
+        253382,
+        253383,
+        253384,
+        253385,
+        253386,
+        253387,
+        253388,
+        253389,
+        253390,
+        253391
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:31239",
+      "release_id": 31239,
+      "track_ids": [
+        406984,
+        406985,
+        406986,
+        406987,
+        406988,
+        406989,
+        406990,
+        406991,
+        406992,
+        406993,
+        406994,
+        406995,
+        406996
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5046,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:32988",
+      "release_id": 32988,
+      "track_ids": [
+        428766,
+        428767,
+        428768,
+        428769,
+        428770,
+        428771,
+        428772,
+        428773,
+        428774,
+        428775,
+        428776,
+        428777,
+        428778
+      ]
+    }
+  ],
+  "case_id": "sha256:d03175dfed11c4de554fc0f736cee5c30ecf19aeebd4be07e3baf6dbb0e3d2af",
+  "observed_at": "2026-09-23T03:17:25.408710852Z",
+  "queue": {
+    "download_ref": "download:0a27b4e8755b995183e7ee3713d9cc3d41c0123b6f45e5bcdff23437a5fffa70",
+    "messages": [
+      "67b4ae45a6dd9de3fca4d482a88f6bc9.flac",
+      "945c32dd74773a24ac4eec95e3b8e754.flac",
+      "Album match is not close enough: 37.8% vs 80% [album, year, tracks, missing tracks]",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 2132739499,
+    "title": "Kylie Minogue-Cant Get You Out Of My Head Remix-PROMO-CDS-FLAC-2001-MAHOU"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "BMG music club release",
+      "foreign_release_id": "77750faf-eafb-4bff-8747-a0f70a21e4f7",
+      "format": "CD",
+      "labels": [
+        "Astralwerks",
+        "BMG Direct Marketing, Inc.",
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20074,
+      "title": "X",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Philippines"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "8c807445-10ed-3d8a-9e3a-85815ad53e5b",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20075,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c9b256fc-e624-3612-bfb2-59d6940588d8",
+      "format": "Digital Media",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20076,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "Mexico"
+      ],
+      "disambiguation": "edición especial México",
+      "foreign_release_id": "b622e066-6c5d-4614-9e7f-0220e96e2939",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20077,
+      "title": "X",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "f80e5bf3-48c2-41cd-97f9-631f5b2980de",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20078,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Taiwan"
+      ],
+      "disambiguation": "limited tour edition",
+      "foreign_release_id": "70d48dfe-fbb8-42d8-ab06-db2e61b821a4",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20079,
+      "title": "X",
+      "track_count": 17
+    },
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "tour edition",
+      "foreign_release_id": "c253de39-d431-3576-8471-a94d72edc3fa",
+      "format": "Enhanced CD, CD",
+      "labels": [
+        "Warner Music Australia"
+      ],
+      "medium_count": 2,
+      "monitored": true,
+      "release_id": 20080,
+      "title": "X",
+      "track_count": 23
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c5c2cae6-3ec8-4748-ba03-602a573b1fec",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20081,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Colombia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c4043927-b048-4fb0-abbe-0baca92e6ed7",
+      "format": "CD",
+      "labels": [
+        "EMI Music Colombia"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20082,
+      "title": "X",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6eccc5aa-d013-4935-96a9-d6a6999a9b2a",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20083,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "be2dd7be-c358-42aa-a6ce-cb3cc9d176d1",
+      "format": "Vinyl",
+      "labels": [
+        "[no label]"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20084,
+      "title": "X",
+      "track_count": 16
+    },
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "special edition",
+      "foreign_release_id": "1877f4c5-ed21-4adc-a164-b3a7294d6c4c",
+      "format": "CD",
+      "labels": [
+        "Warner Music Australia"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20085,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "Special Edition",
+      "foreign_release_id": "e49f6c6a-59cf-4edc-8638-65298a018fdc",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20086,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "60650243-9298-356b-be5e-cc6d0654943d",
+      "format": "CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20087,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "0620527c-d4bc-4ca4-a9c9-5e16e7f7d461",
+      "format": "Enhanced CD",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20088,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "c1442dc4-dc88-45d0-9e87-2f324dfe902d",
+      "format": "CD",
+      "labels": [
+        "EMI"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20089,
+      "title": "X",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "Australia",
+        "New Zealand"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e5a3d94a-4e43-4875-a72b-e3c512b49df1",
+      "format": "Digital Media",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20090,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1cde8a4e-7566-4179-9101-a84ea3574a69",
+      "format": "CD",
+      "labels": [
+        "Capitol Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20091,
+      "title": "X",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Germany",
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "827c51fa-5a82-4aa8-8cfc-2299caab67fd",
+      "format": "Digital Media",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20092,
+      "title": "X",
+      "track_count": 14
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "b665b9e9-046a-4ee3-831d-28ef0cd40130",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20093,
+      "title": "X",
+      "track_count": 14
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "18894b4e-48f5-4b61-be75-764c9e746cdc",
+      "format": "Digital Media",
+      "labels": [
+        "Parlophone Records Ltd."
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20094,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "254a258b-9571-40c3-b972-548b33aec979",
+      "format": "Digital Media",
+      "labels": [
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 20095,
+      "title": "X",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "276ed829-1034-4931-aa95-155ee423d0b9",
+      "format": "Enhanced CD",
+      "labels": [
+        "EMI",
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 31239,
+      "title": "X",
+      "track_count": 13
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "special edition; mediamotion",
+      "foreign_release_id": "1f5847b7-8f76-41d8-8e73-8a3891b0612e",
+      "format": "CD",
+      "labels": [
+        "Abbey Road",
+        "Parlophone"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 32988,
+      "title": "X",
+      "track_count": 13
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20074,
+      "title": "2 Hearts",
+      "track_id": 253055
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20074,
+      "title": "Like a Drug",
+      "track_id": 253056
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20074,
+      "title": "In My Arms",
+      "track_id": 253057
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20074,
+      "title": "Speakerphone",
+      "track_id": 253058
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20074,
+      "title": "Sensitized",
+      "track_id": 253059
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20074,
+      "title": "Heart Beat Rock",
+      "track_id": 253060
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20074,
+      "title": "The One",
+      "track_id": 253061
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20074,
+      "title": "No More Rain",
+      "track_id": 253062
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20074,
+      "title": "All I See",
+      "track_id": 253063
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20074,
+      "title": "Stars",
+      "track_id": 253064
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20074,
+      "title": "Wow",
+      "track_id": 253065
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20074,
+      "title": "Nu‐di‐ty",
+      "track_id": 253066
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189640,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20074,
+      "title": "Cosmic",
+      "track_id": 253067
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 231466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20074,
+      "title": "All I See",
+      "track_id": 253068
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20075,
+      "title": "2 Hearts",
+      "track_id": 253069
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20075,
+      "title": "Like a Drug",
+      "track_id": 253070
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20075,
+      "title": "In My Arms",
+      "track_id": 253071
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20075,
+      "title": "Speakerphone",
+      "track_id": 253072
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20075,
+      "title": "Sensitized",
+      "track_id": 253073
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20075,
+      "title": "Heart Beat Rock",
+      "track_id": 253074
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20075,
+      "title": "The One",
+      "track_id": 253075
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20075,
+      "title": "No More Rain",
+      "track_id": 253076
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20075,
+      "title": "All I See",
+      "track_id": 253077
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20075,
+      "title": "Stars",
+      "track_id": 253078
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20075,
+      "title": "Wow",
+      "track_id": 253079
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20075,
+      "title": "Nu-di-ty",
+      "track_id": 253080
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20075,
+      "title": "Cosmic",
+      "track_id": 253081
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20076,
+      "title": "2 Hearts",
+      "track_id": 253082
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20076,
+      "title": "Like a Drug",
+      "track_id": 253083
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20076,
+      "title": "In My Arms",
+      "track_id": 253084
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20076,
+      "title": "Speakerphone",
+      "track_id": 253085
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20076,
+      "title": "Sensitized",
+      "track_id": 253086
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20076,
+      "title": "Heart Beat Rock",
+      "track_id": 253087
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20076,
+      "title": "The One",
+      "track_id": 253088
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20076,
+      "title": "No More Rain",
+      "track_id": 253089
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20076,
+      "title": "All I See",
+      "track_id": 253090
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20076,
+      "title": "Stars",
+      "track_id": 253091
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20076,
+      "title": "Wow",
+      "track_id": 253092
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20076,
+      "title": "Nu-di-ty",
+      "track_id": 253093
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20076,
+      "title": "Cosmic",
+      "track_id": 253094
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20077,
+      "title": "2 Hearts",
+      "track_id": 253095
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20077,
+      "title": "Like a Drug",
+      "track_id": 253096
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20077,
+      "title": "In My Arms",
+      "track_id": 253097
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20077,
+      "title": "Speakerphone",
+      "track_id": 253098
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20077,
+      "title": "Sensitized",
+      "track_id": 253099
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20077,
+      "title": "Heart Beat Rock",
+      "track_id": 253100
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20077,
+      "title": "The One",
+      "track_id": 253101
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20077,
+      "title": "No More Rain",
+      "track_id": 253102
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20077,
+      "title": "All I See",
+      "track_id": 253103
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20077,
+      "title": "Stars",
+      "track_id": 253104
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20077,
+      "title": "Wow",
+      "track_id": 253105
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20077,
+      "title": "Nu‐di‐ty",
+      "track_id": 253106
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 190560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20077,
+      "title": "Cosmic",
+      "track_id": 253107
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 220666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20077,
+      "title": "In My Arms",
+      "track_id": 253108
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 303053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20077,
+      "title": "In My Arms (Spitzer dub remix)",
+      "track_id": 253109
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 196560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 20077,
+      "title": "Wow (CSS remix)",
+      "track_id": 253110
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 197466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 20077,
+      "title": "Carried Away",
+      "track_id": 253111
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 257893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 20077,
+      "title": "Cherry Bomb",
+      "track_id": 253112
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 201973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 20077,
+      "title": "Do It Again",
+      "track_id": 253113
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20078,
+      "title": "2 Hearts",
+      "track_id": 253114
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20078,
+      "title": "Like a Drug",
+      "track_id": 253115
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20078,
+      "title": "In My Arms",
+      "track_id": 253116
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20078,
+      "title": "Speakerphone",
+      "track_id": 253117
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20078,
+      "title": "Sensitized",
+      "track_id": 253118
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20078,
+      "title": "Heart Beat Rock",
+      "track_id": 253119
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20078,
+      "title": "The One",
+      "track_id": 253120
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20078,
+      "title": "No More Rain",
+      "track_id": 253121
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20078,
+      "title": "All I See",
+      "track_id": 253122
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20078,
+      "title": "Stars",
+      "track_id": 253123
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20078,
+      "title": "Wow",
+      "track_id": 253124
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 184000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20078,
+      "title": "Nu‐di‐ty",
+      "track_id": 253125
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20078,
+      "title": "Cosmic",
+      "track_id": 253126
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 159000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20078,
+      "title": "King or Queen",
+      "track_id": 253127
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20078,
+      "title": "I Don’t Know What It Is",
+      "track_id": 253128
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 175000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20079,
+      "title": "2 Hearts",
+      "track_id": 253129
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20079,
+      "title": "Like a Drug",
+      "track_id": 253130
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20079,
+      "title": "In My Arms",
+      "track_id": 253131
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20079,
+      "title": "Speakerphone",
+      "track_id": 253132
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20079,
+      "title": "Sensitized",
+      "track_id": 253133
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20079,
+      "title": "Heart Beat Rock",
+      "track_id": 253134
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20079,
+      "title": "The One",
+      "track_id": 253135
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20079,
+      "title": "No More Rain",
+      "track_id": 253136
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20079,
+      "title": "All I See",
+      "track_id": 253137
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20079,
+      "title": "Stars",
+      "track_id": 253138
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20079,
+      "title": "Wow",
+      "track_id": 253139
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 184000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20079,
+      "title": "Nu‐di‐ty",
+      "track_id": 253140
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20079,
+      "title": "Cosmic",
+      "track_id": 253141
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 231000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20079,
+      "title": "All I See",
+      "track_id": 253142
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 196000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20079,
+      "title": "Magnetic Electric",
+      "track_id": 253143
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 556000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 20079,
+      "title": "The One (Freemasons vocal club mix)",
+      "track_id": 253144
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 243000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 20079,
+      "title": "Can’t Get You Out of My Head (Greg Kurstin remix)",
+      "track_id": 253145
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20080,
+      "title": "2 Hearts",
+      "track_id": 253146
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 264506,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 20080,
+      "title": "2 Hearts (Harris & Masterson extended mix)",
+      "track_id": 253159
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20080,
+      "title": "Like a Drug",
+      "track_id": 253147
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 292480,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 20080,
+      "title": "2 Hearts (Alan Braxe remix)",
+      "track_id": 253160
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20080,
+      "title": "In My Arms",
+      "track_id": 253148
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 553293,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 20080,
+      "title": "The One (Freemasons vocal club mix)",
+      "track_id": 253161
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20080,
+      "title": "Speakerphone",
+      "track_id": 253149
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 383346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 20080,
+      "title": "Wow (David Guetta remix)",
+      "track_id": 253162
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20080,
+      "title": "Sensitized",
+      "track_id": 253150
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 193586,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 20080,
+      "title": "Wow (CSS remix)",
+      "track_id": 253163
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20080,
+      "title": "Heart Beat Rock",
+      "track_id": 253151
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 395586,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 20080,
+      "title": "In My Arms (Chris Lake vocal mix)",
+      "track_id": 253164
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20080,
+      "title": "The One",
+      "track_id": 253152
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 401346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 20080,
+      "title": "In My Arms (Steve Pitron & Max Sanna remix)",
+      "track_id": 253165
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20080,
+      "title": "No More Rain",
+      "track_id": 253153
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 421706,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 20080,
+      "title": "In My Arms (Sebastien Leger remix)",
+      "track_id": 253166
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20080,
+      "title": "All I See",
+      "track_id": 253154
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 209893,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 20080,
+      "title": "In My Arms (Spitzer remix)",
+      "track_id": 253167
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20080,
+      "title": "Stars",
+      "track_id": 253155
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 229853,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 20080,
+      "title": "All I See",
+      "track_id": 253168
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20080,
+      "title": "Wow",
+      "track_id": 253156
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20080,
+      "title": "Nu‐di‐ty",
+      "track_id": 253157
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20080,
+      "title": "Cosmic",
+      "track_id": 253158
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20081,
+      "title": "2 Hearts",
+      "track_id": 253169
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20081,
+      "title": "Like a Drug",
+      "track_id": 253170
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20081,
+      "title": "In My Arms",
+      "track_id": 253171
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20081,
+      "title": "Speakerphone",
+      "track_id": 253172
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20081,
+      "title": "Sensitized",
+      "track_id": 253173
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20081,
+      "title": "Heart Beat Rock",
+      "track_id": 253174
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20081,
+      "title": "The One",
+      "track_id": 253175
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20081,
+      "title": "No More Rain",
+      "track_id": 253176
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20081,
+      "title": "All I See",
+      "track_id": 253177
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20081,
+      "title": "Stars",
+      "track_id": 253178
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20081,
+      "title": "Wow",
+      "track_id": 253179
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20081,
+      "title": "Nu-di-ty",
+      "track_id": 253180
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20081,
+      "title": "Cosmic",
+      "track_id": 253181
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 159000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20081,
+      "title": "King Or Queen",
+      "track_id": 253182
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20081,
+      "title": "I Don't Know What It Is",
+      "track_id": 253183
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 176546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20082,
+      "title": "2 Hearts",
+      "track_id": 253184
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 199386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20082,
+      "title": "Like a Drug",
+      "track_id": 253185
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 214266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20082,
+      "title": "In My Arms",
+      "track_id": 253186
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 236373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20082,
+      "title": "Speakerphone",
+      "track_id": 253187
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 238946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20082,
+      "title": "Sensitized",
+      "track_id": 253188
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 206146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20082,
+      "title": "Heart Beat Rock",
+      "track_id": 253189
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 246933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20082,
+      "title": "The One",
+      "track_id": 253190
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20082,
+      "title": "No More Rain",
+      "track_id": 253191
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 186586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20082,
+      "title": "All I See",
+      "track_id": 253192
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 224040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20082,
+      "title": "Stars",
+      "track_id": 253193
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 195426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20082,
+      "title": "Wow",
+      "track_id": 253194
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 185666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20082,
+      "title": "Nu-di-ty",
+      "track_id": 253195
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 192560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20082,
+      "title": "Cosmic",
+      "track_id": 253196
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 222666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20082,
+      "title": "In My Arms",
+      "track_id": 253197
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 305053,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20082,
+      "title": "In My Arms (Spitzer dub remix)",
+      "track_id": 253198
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 198560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 20082,
+      "title": "Wow (CSS remix)",
+      "track_id": 253199
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 199466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 20082,
+      "title": "Carried Away",
+      "track_id": 253200
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 259893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 20082,
+      "title": "Cherry Bomb",
+      "track_id": 253201
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 201973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 20082,
+      "title": "Do It Again",
+      "track_id": 253202
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20083,
+      "title": "2 Hearts",
+      "track_id": 253203
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20083,
+      "title": "Like a Drug",
+      "track_id": 253204
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20083,
+      "title": "In My Arms",
+      "track_id": 253205
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20083,
+      "title": "Speakerphone",
+      "track_id": 253206
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20083,
+      "title": "Sensitized",
+      "track_id": 253207
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20083,
+      "title": "Heart Beat Rock",
+      "track_id": 253208
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20083,
+      "title": "The One",
+      "track_id": 253209
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20083,
+      "title": "No More Rain",
+      "track_id": 253210
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20083,
+      "title": "All I See",
+      "track_id": 253211
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20083,
+      "title": "Stars",
+      "track_id": 253212
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20083,
+      "title": "Wow",
+      "track_id": 253213
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20083,
+      "title": "Nu-Di-Ty",
+      "track_id": 253214
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20083,
+      "title": "Cosmic",
+      "track_id": 253215
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20084,
+      "title": "2 Hearts",
+      "track_id": 253216
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20084,
+      "title": "Like a Drug",
+      "track_id": 253217
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20084,
+      "title": "In My Arms",
+      "track_id": 253218
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20084,
+      "title": "Speakerphone",
+      "track_id": 253219
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20084,
+      "title": "Sensitized",
+      "track_id": 253220
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20084,
+      "title": "Heart Beat Rock",
+      "track_id": 253221
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20084,
+      "title": "The One",
+      "track_id": 253222
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20084,
+      "title": "No More Rain",
+      "track_id": 253223
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20084,
+      "title": "All I See",
+      "track_id": 253224
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20084,
+      "title": "Stars",
+      "track_id": 253225
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20084,
+      "title": "Wow",
+      "track_id": 253226
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20084,
+      "title": "Nu-di-ty",
+      "track_id": 253227
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20084,
+      "title": "Cosmic",
+      "track_id": 253228
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 185000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20084,
+      "title": "White Diamond (Ballad Version)",
+      "track_id": 253229
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20084,
+      "title": "Ruffle My Feathers (Bitrocka Radio Edit)",
+      "track_id": 253230
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 20084,
+      "title": "Boombox (LA Riots Remix)",
+      "track_id": 253231
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20085,
+      "title": "2 Hearts",
+      "track_id": 253232
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20085,
+      "title": "Like a Drug",
+      "track_id": 253233
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20085,
+      "title": "In My Arms",
+      "track_id": 253234
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20085,
+      "title": "Speakerphone",
+      "track_id": 253235
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20085,
+      "title": "Sensitized",
+      "track_id": 253236
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20085,
+      "title": "Heart Beat Rock",
+      "track_id": 253237
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20085,
+      "title": "The One",
+      "track_id": 253238
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20085,
+      "title": "No More Rain",
+      "track_id": 253239
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20085,
+      "title": "All I See",
+      "track_id": 253240
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20085,
+      "title": "Stars",
+      "track_id": 253241
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20085,
+      "title": "Wow",
+      "track_id": 253242
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20085,
+      "title": "Nu-di-ty",
+      "track_id": 253243
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20085,
+      "title": "Cosmic",
+      "track_id": 253244
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20086,
+      "title": "2 Hearts",
+      "track_id": 253245
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20086,
+      "title": "Like a Drug",
+      "track_id": 253246
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20086,
+      "title": "In My Arms",
+      "track_id": 253247
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20086,
+      "title": "Speakerphone",
+      "track_id": 253248
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20086,
+      "title": "Sensitized",
+      "track_id": 253249
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20086,
+      "title": "Heart Beat Rock",
+      "track_id": 253250
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20086,
+      "title": "The One",
+      "track_id": 253251
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20086,
+      "title": "No More Rain",
+      "track_id": 253252
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20086,
+      "title": "All I See",
+      "track_id": 253253
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20086,
+      "title": "Stars",
+      "track_id": 253254
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20086,
+      "title": "Wow",
+      "track_id": 253255
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20086,
+      "title": "Nu‐di‐ty",
+      "track_id": 253256
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20086,
+      "title": "Cosmic",
+      "track_id": 253257
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 159106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20086,
+      "title": "King or Queen",
+      "track_id": 253258
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 198026,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20086,
+      "title": "I Don’t Know What It Is",
+      "track_id": 253259
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20087,
+      "title": "2 Hearts",
+      "track_id": 253260
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20087,
+      "title": "Like a Drug",
+      "track_id": 253261
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20087,
+      "title": "In My Arms",
+      "track_id": 253262
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20087,
+      "title": "Speakerphone",
+      "track_id": 253263
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20087,
+      "title": "Sensitized",
+      "track_id": 253264
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20087,
+      "title": "Heart Beat Rock",
+      "track_id": 253265
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20087,
+      "title": "The One",
+      "track_id": 253266
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20087,
+      "title": "No More Rain",
+      "track_id": 253267
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20087,
+      "title": "All I See",
+      "track_id": 253268
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20087,
+      "title": "Stars",
+      "track_id": 253269
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20087,
+      "title": "Wow",
+      "track_id": 253270
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20087,
+      "title": "Nu-di-ty",
+      "track_id": 253271
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20087,
+      "title": "Cosmic",
+      "track_id": 253272
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20088,
+      "title": "2 Hearts",
+      "track_id": 253273
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20088,
+      "title": "Like a Drug",
+      "track_id": 253274
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20088,
+      "title": "In My Arms",
+      "track_id": 253275
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20088,
+      "title": "Speakerphone",
+      "track_id": 253276
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20088,
+      "title": "Sensitized",
+      "track_id": 253277
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20088,
+      "title": "Heart Beat Rock",
+      "track_id": 253278
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20088,
+      "title": "The One",
+      "track_id": 253279
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20088,
+      "title": "No More Rain",
+      "track_id": 253280
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20088,
+      "title": "All I See",
+      "track_id": 253281
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20088,
+      "title": "Stars",
+      "track_id": 253282
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20088,
+      "title": "Wow",
+      "track_id": 253283
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20088,
+      "title": "Nu-di-ty",
+      "track_id": 253284
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20088,
+      "title": "Cosmic",
+      "track_id": 253285
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 176546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20089,
+      "title": "2 Hearts",
+      "track_id": 253286
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 199386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20089,
+      "title": "Like a Drug",
+      "track_id": 253287
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 214266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20089,
+      "title": "In My Arms",
+      "track_id": 253288
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 236373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20089,
+      "title": "Speakerphone",
+      "track_id": 253289
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 238946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20089,
+      "title": "Sensitized",
+      "track_id": 253290
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 206146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20089,
+      "title": "Heart Beat Rock",
+      "track_id": 253291
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 246933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20089,
+      "title": "The One",
+      "track_id": 253292
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20089,
+      "title": "No More Rain",
+      "track_id": 253293
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 186586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20089,
+      "title": "All I See",
+      "track_id": 253294
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 224040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20089,
+      "title": "Stars",
+      "track_id": 253295
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 195426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20089,
+      "title": "Wow",
+      "track_id": 253296
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 185666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20089,
+      "title": "Nu-di-ty",
+      "track_id": 253297
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 192560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20089,
+      "title": "Cosmic",
+      "track_id": 253298
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 215000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20089,
+      "title": "Rippin' Up The Disco",
+      "track_id": 253299
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 159000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20089,
+      "title": "King Or Queen",
+      "track_id": 253300
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 20089,
+      "title": "Magnetic Electric",
+      "track_id": 253301
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 20089,
+      "title": "I Don't Know What It Is",
+      "track_id": 253302
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 20089,
+      "title": "Santa Baby",
+      "track_id": 253303
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 20089,
+      "title": "White Diamond",
+      "track_id": 253304
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20090,
+      "title": "2 Hearts",
+      "track_id": 253305
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20090,
+      "title": "Like a Drug",
+      "track_id": 253306
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20090,
+      "title": "In My Arms",
+      "track_id": 253307
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20090,
+      "title": "Speakerphone",
+      "track_id": 253308
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20090,
+      "title": "Sensitized",
+      "track_id": 253309
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20090,
+      "title": "Heart Beat Rock",
+      "track_id": 253310
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 245000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20090,
+      "title": "The One",
+      "track_id": 253311
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20090,
+      "title": "No More Rain",
+      "track_id": 253312
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20090,
+      "title": "All I See",
+      "track_id": 253313
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20090,
+      "title": "Stars",
+      "track_id": 253314
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20090,
+      "title": "Wow",
+      "track_id": 253315
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20090,
+      "title": "Nu-di-ty",
+      "track_id": 253316
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20090,
+      "title": "Cosmic",
+      "track_id": 253317
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 196000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20090,
+      "title": "Magnetic Electric",
+      "track_id": 253318
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20090,
+      "title": "White Diamond",
+      "track_id": 253319
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20091,
+      "title": "2 Hearts",
+      "track_id": 253320
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20091,
+      "title": "Like a Drug",
+      "track_id": 253321
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20091,
+      "title": "In My Arms",
+      "track_id": 253322
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20091,
+      "title": "Speakerphone",
+      "track_id": 253323
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20091,
+      "title": "Sensitized",
+      "track_id": 253324
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20091,
+      "title": "Heart Beat Rock",
+      "track_id": 253325
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20091,
+      "title": "The One",
+      "track_id": 253326
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20091,
+      "title": "No More Rain",
+      "track_id": 253327
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20091,
+      "title": "All I See",
+      "track_id": 253328
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20091,
+      "title": "Stars",
+      "track_id": 253329
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20091,
+      "title": "Wow",
+      "track_id": 253330
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20091,
+      "title": "Nu-di-ty",
+      "track_id": 253331
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189640,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20091,
+      "title": "Cosmic",
+      "track_id": 253332
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 231466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20091,
+      "title": "All I See",
+      "track_id": 253333
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 173000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20092,
+      "title": "2 Hearts",
+      "track_id": 253334
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20092,
+      "title": "Like a Drug",
+      "track_id": 253335
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20092,
+      "title": "In My Arms",
+      "track_id": 253336
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20092,
+      "title": "Speakerphone",
+      "track_id": 253337
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20092,
+      "title": "Sensitized",
+      "track_id": 253338
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 203000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20092,
+      "title": "Heart Beat Rock",
+      "track_id": 253339
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20092,
+      "title": "The One",
+      "track_id": 253340
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20092,
+      "title": "No More Rain",
+      "track_id": 253341
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20092,
+      "title": "All I See",
+      "track_id": 253342
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20092,
+      "title": "Stars",
+      "track_id": 253343
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 192000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20092,
+      "title": "Wow",
+      "track_id": 253344
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20092,
+      "title": "Nu-Di-Ty",
+      "track_id": 253345
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20092,
+      "title": "Cosmic",
+      "track_id": 253346
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20092,
+      "title": "Heart Beat Rock (Benny Blanco remix)",
+      "track_id": 253347
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171267,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20093,
+      "title": "2 Hearts",
+      "track_id": 253348
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197387,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20093,
+      "title": "Like a Drug",
+      "track_id": 253349
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 210960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20093,
+      "title": "In My Arms",
+      "track_id": 253350
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20093,
+      "title": "Speakerphone",
+      "track_id": 253351
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236947,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20093,
+      "title": "Sensitized",
+      "track_id": 253352
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 203760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20093,
+      "title": "Heart Beat Rock",
+      "track_id": 253353
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 239880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20093,
+      "title": "The One",
+      "track_id": 253354
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20093,
+      "title": "No More Rain",
+      "track_id": 253355
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 186547,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20093,
+      "title": "All I See",
+      "track_id": 253356
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20093,
+      "title": "Stars",
+      "track_id": 253357
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 190973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20093,
+      "title": "Wow",
+      "track_id": 253358
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20093,
+      "title": "Nu‐Di‐Ty",
+      "track_id": 253359
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20093,
+      "title": "Cosmic",
+      "track_id": 253360
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 193869,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20093,
+      "title": "Heart Beat Rock [Benny Blanco Remix]",
+      "track_id": 253361
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20094,
+      "title": "2 Hearts",
+      "track_id": 253362
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20094,
+      "title": "Like a Drug",
+      "track_id": 253363
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20094,
+      "title": "In My Arms",
+      "track_id": 253364
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20094,
+      "title": "Speakerphone",
+      "track_id": 253365
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20094,
+      "title": "Sensitized",
+      "track_id": 253366
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20094,
+      "title": "Heart Beat Rock",
+      "track_id": 253367
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20094,
+      "title": "The One",
+      "track_id": 253368
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20094,
+      "title": "No More Rain",
+      "track_id": 253369
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20094,
+      "title": "All I See",
+      "track_id": 253370
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20094,
+      "title": "Stars",
+      "track_id": 253371
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20094,
+      "title": "Wow",
+      "track_id": 253372
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20094,
+      "title": "Nu-di-ty",
+      "track_id": 253373
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20094,
+      "title": "Cosmic",
+      "track_id": 253374
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 196000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20094,
+      "title": "Magnetic Electric",
+      "track_id": 253375
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 231000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20094,
+      "title": "All I See",
+      "track_id": 253376
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171267,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 20095,
+      "title": "2 Hearts",
+      "track_id": 253377
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197387,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 20095,
+      "title": "Like a Drug",
+      "track_id": 253378
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 210960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 20095,
+      "title": "In My Arms",
+      "track_id": 253379
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 20095,
+      "title": "Speakerphone",
+      "track_id": 253380
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236947,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 20095,
+      "title": "Sensitized",
+      "track_id": 253381
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 203760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 20095,
+      "title": "Heart Beat Rock",
+      "track_id": 253382
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 239880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 20095,
+      "title": "The One",
+      "track_id": 253383
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 241533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 20095,
+      "title": "No More Rain",
+      "track_id": 253384
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 186547,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 20095,
+      "title": "All I See",
+      "track_id": 253385
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 20095,
+      "title": "Stars",
+      "track_id": 253386
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 190973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 20095,
+      "title": "Wow",
+      "track_id": 253387
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 20095,
+      "title": "Nu-Di-Ty",
+      "track_id": 253388
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 189160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 20095,
+      "title": "Cosmic",
+      "track_id": 253389
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 196107,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 20095,
+      "title": "Magnetic Electric",
+      "track_id": 253390
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 231453,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 20095,
+      "title": "All I See",
+      "track_id": 253391
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31239,
+      "title": "2 Hearts",
+      "track_id": 406984
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31239,
+      "title": "Like a Drug",
+      "track_id": 406985
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31239,
+      "title": "In My Arms",
+      "track_id": 406986
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31239,
+      "title": "Speakerphone",
+      "track_id": 406987
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31239,
+      "title": "Sensitized",
+      "track_id": 406988
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31239,
+      "title": "Heart Beat Rock",
+      "track_id": 406989
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31239,
+      "title": "The One",
+      "track_id": 406990
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31239,
+      "title": "No More Rain",
+      "track_id": 406991
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31239,
+      "title": "All I See",
+      "track_id": 406992
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 31239,
+      "title": "Stars",
+      "track_id": 406993
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 31239,
+      "title": "Wow",
+      "track_id": 406994
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 31239,
+      "title": "Nu‐di‐ty",
+      "track_id": 406995
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 31239,
+      "title": "Cosmic",
+      "track_id": 406996
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 174546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32988,
+      "title": "2 Hearts",
+      "track_id": 428766
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 197386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32988,
+      "title": "Like a Drug",
+      "track_id": 428767
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 212266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32988,
+      "title": "In my Arms",
+      "track_id": 428768
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 234373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32988,
+      "title": "Speakerphone",
+      "track_id": 428769
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 236946,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32988,
+      "title": "Sensitized",
+      "track_id": 428770
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 204146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32988,
+      "title": "Heart Beat Rock",
+      "track_id": 428771
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32988,
+      "title": "The One",
+      "track_id": 428772
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 242013,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32988,
+      "title": "No More Rain",
+      "track_id": 428773
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 184586,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32988,
+      "title": "All I See",
+      "track_id": 428774
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 222040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32988,
+      "title": "Stars",
+      "track_id": 428775
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 193426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32988,
+      "title": "Wow",
+      "track_id": 428776
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 183666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 32988,
+      "title": "Nu-di-ty",
+      "track_id": 428777
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 188560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 32988,
+      "title": "Cosmic",
+      "track_id": 428778
+    }
+  ]
+}

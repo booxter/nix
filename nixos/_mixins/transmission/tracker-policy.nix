@@ -3,6 +3,7 @@
   lib,
   transmissionModel,
   pkgs,
+  transmissionPolicyFile,
   utils,
   ...
 }:
@@ -17,18 +18,16 @@ let
     "nginx.service"
     "transmission.service"
   ];
-  policy = model.trackerPolicy;
+  policy = model.torrentPolicy;
   commonArgs = [
     "--rpc-url"
     model.rpcUrl
     "--trackers-file"
     config.sops.secrets.transmissionTrackerHosts.path
-    "--non-preferred-low-priority-ratio"
-    (toString policy.lowPriorityRatio)
-    "--non-preferred-pause-ratio"
-    (toString policy.pauseRatio)
+    "--policy-file"
+    transmissionPolicyFile
     "--interval-seconds"
-    (toString policy.intervalSeconds)
+    (toString policy.reconcileIntervalSeconds)
     "--request-timeout-seconds"
     (toString policy.requestTimeoutSeconds)
   ];
@@ -53,7 +52,7 @@ let
     };
 in
 {
-  config = lib.mkIf (cfg != null && cfg.trackerPolicy != null) {
+  config = lib.mkIf (cfg != null && cfg.torrentPolicy != null) {
     host.observability.nodeExporter.textfile.directories.transmission-collector =
       nodeExporterTextfileDir;
 

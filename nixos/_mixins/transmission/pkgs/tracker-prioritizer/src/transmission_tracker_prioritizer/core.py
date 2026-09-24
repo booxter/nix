@@ -8,11 +8,19 @@ from typing import Literal, Protocol
 
 from prometheus_client import CollectorRegistry, Gauge, write_to_textfile
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from transmission_common.policy import (
+    Priority,
+    TorrentPolicy,
+    desired_priority,
+    load_policy,
+    should_stop,
+)
 from transmission_common.transmission import (
+    Tracker,
     TransmissionRpcClient,
     TransmissionRpcError,
-    normalize_tracker_host,
     read_tracker_hosts,
+    trackers_match_hosts,
 )
 
 LOG = logging.getLogger("transmission-tracker-common")
@@ -22,8 +30,11 @@ TR_PRI_HIGH = 1
 TR_STATUS_STOPPED = 0
 PriorityClass = Literal["low", "normal", "high"]
 PRIORITY_CLASSES: tuple[PriorityClass, ...] = ("low", "normal", "high")
-DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD = 3.0
-DEFAULT_NON_PREFERRED_PAUSE_RATIO_THRESHOLD = 6.0
+PRIORITY_VALUES = {
+    Priority.LOW: TR_PRI_LOW,
+    Priority.NORMAL: TR_PRI_NORMAL,
+    Priority.HIGH: TR_PRI_HIGH,
+}
 TORRENT_FIELDS = [
     "id",
     "name",
@@ -39,13 +50,6 @@ TORRENT_FIELDS = [
     "rate_upload",
     "tracker_stats",
 ]
-
-
-class Tracker(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
-
-    host: str | None = None
-    announce: str | None = None
 
 
 class Torrent(BaseModel):
@@ -131,18 +135,12 @@ class TransmissionClient:
 
 
 @dataclass(frozen=True)
-class Policy:
-    non_preferred_low_priority_ratio_threshold: float
-    non_preferred_pause_ratio_threshold: float
-
-
-@dataclass(frozen=True)
 class DaemonSettings:
     rpc_url: str
     trackers_file: Path
     interval_seconds: float
     request_timeout_seconds: float
-    policy: Policy
+    policy: TorrentPolicy
 
 
 PriorityCounts = dict[PriorityClass, int]
@@ -163,6 +161,7 @@ class IterationState:
     download_bytes_per_second: PriorityCounts
     upload_bytes_per_second: PriorityCounts
     high_priority_hashes: list[str]
+    normal_priority_hashes: list[str]
     low_priority_hashes: list[str]
     stop_hashes: list[str]
 
@@ -180,17 +179,6 @@ def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
     except OSError as exc:
         LOG.warning("unable to read tracker host file %s: %s", trackers_file, exc)
         return None
-
-
-def tracker_matches(torrent: Torrent, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.tracker_stats:
-        for raw_host in (tracker.host, tracker.announce):
-            if raw_host is None:
-                continue
-            host = normalize_tracker_host(raw_host)
-            if host and host in tracker_hosts:
-                return True
-    return False
 
 
 def nonnegative(value: int) -> int:
@@ -212,23 +200,17 @@ def torrent_is_complete(torrent: Torrent) -> bool:
 def torrent_desired_priority(
     torrent: Torrent,
     is_preferred: bool,
-    non_preferred_low_priority_ratio_threshold: float,
+    policy: TorrentPolicy,
 ) -> int:
-    if is_preferred:
-        return TR_PRI_HIGH
-    if (
-        torrent.upload_ratio is not None
-        and torrent.upload_ratio >= non_preferred_low_priority_ratio_threshold
-    ):
-        return TR_PRI_LOW
-    return TR_PRI_HIGH
+    class_policy = policy.class_policy(preferred=is_preferred)
+    return PRIORITY_VALUES[desired_priority(class_policy.priority, torrent.upload_ratio)]
 
 
 def collect_iteration_state(
     client: TorrentClient,
     trackers_file: Path,
     last_tracker_status: str | None,
-    policy: Policy,
+    policy: TorrentPolicy,
 ) -> tuple[str | None, IterationState | None]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
@@ -245,7 +227,7 @@ def collect_iteration_state(
     for torrent in client.list_torrents():
         if not torrent.hash_string:
             continue
-        is_preferred = tracker_matches(torrent, tracker_hosts)
+        is_preferred = trackers_match_hosts(torrent.tracker_stats, tracker_hosts)
         if is_preferred:
             preferred_hashes.add(torrent.hash_string)
         entries.append((torrent, is_preferred))
@@ -265,6 +247,7 @@ def collect_iteration_state(
     downloads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     uploads: PriorityCounts = dict.fromkeys(PRIORITY_CLASSES, 0)
     high: list[str] = []
+    normal: list[str] = []
     low: list[str] = []
     stop: list[str] = []
     preferred_upload_active = False
@@ -289,25 +272,25 @@ def collect_iteration_state(
             active = active_download if direction == "downloading" else active_upload
             activity_counts[direction]["active" if active else "inactive"] += 1
 
+        class_policy = policy.class_policy(preferred=is_preferred)
         if (
-            not is_preferred
-            and torrent_is_complete(torrent)
-            and torrent.upload_ratio is not None
-            and torrent.upload_ratio >= policy.non_preferred_pause_ratio_threshold
+            should_stop(
+                class_policy.stop,
+                ratio=torrent.upload_ratio,
+                complete=torrent_is_complete(torrent),
+            )
             and torrent.status != TR_STATUS_STOPPED
         ):
             stop.append(torrent.hash_string)
 
-        desired = torrent_desired_priority(
-            torrent,
-            is_preferred,
-            policy.non_preferred_low_priority_ratio_threshold,
-        )
+        desired = torrent_desired_priority(torrent, is_preferred, policy)
         if is_preferred:
             preferred_upload_bytes_per_second += nonnegative(torrent.rate_upload)
             preferred_upload_active |= torrent.peers_getting_from_us > 0
         if desired == TR_PRI_HIGH and torrent.bandwidth_priority != TR_PRI_HIGH:
             high.append(torrent.hash_string)
+        elif desired == TR_PRI_NORMAL and torrent.bandwidth_priority != TR_PRI_NORMAL:
+            normal.append(torrent.hash_string)
         elif desired == TR_PRI_LOW and torrent.bandwidth_priority != TR_PRI_LOW:
             low.append(torrent.hash_string)
 
@@ -323,6 +306,7 @@ def collect_iteration_state(
         download_bytes_per_second=downloads,
         upload_bytes_per_second=uploads,
         high_priority_hashes=sorted(high),
+        normal_priority_hashes=sorted(normal),
         low_priority_hashes=sorted(low),
         stop_hashes=sorted(stop),
     )
@@ -330,6 +314,7 @@ def collect_iteration_state(
 
 def apply_priority_updates(client: TorrentClient, state: IterationState) -> None:
     client.set_priority(state.high_priority_hashes, TR_PRI_HIGH)
+    client.set_priority(state.normal_priority_hashes, TR_PRI_NORMAL)
     client.set_priority(state.low_priority_hashes, TR_PRI_LOW)
     client.stop(state.stop_hashes)
 
@@ -501,16 +486,7 @@ def write_iteration_metrics(
 def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--rpc-url", default="http://127.0.0.1:9091/transmission/rpc")
     parser.add_argument("--trackers-file", required=True, type=Path)
-    parser.add_argument(
-        "--non-preferred-low-priority-ratio",
-        type=float,
-        default=DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD,
-    )
-    parser.add_argument(
-        "--non-preferred-pause-ratio",
-        type=float,
-        default=DEFAULT_NON_PREFERRED_PAUSE_RATIO_THRESHOLD,
-    )
+    parser.add_argument("--policy-file", required=True, type=Path)
     parser.add_argument("--interval-seconds", type=float, default=60.0)
     parser.add_argument("--request-timeout-seconds", type=float, default=15.0)
     parser.add_argument(
@@ -526,10 +502,7 @@ def settings_from_args(args: argparse.Namespace) -> DaemonSettings:
         trackers_file=args.trackers_file,
         interval_seconds=args.interval_seconds,
         request_timeout_seconds=args.request_timeout_seconds,
-        policy=Policy(
-            non_preferred_low_priority_ratio_threshold=(args.non_preferred_low_priority_ratio),
-            non_preferred_pause_ratio_threshold=args.non_preferred_pause_ratio,
-        ),
+        policy=load_policy(args.policy_file),
     )
 
 

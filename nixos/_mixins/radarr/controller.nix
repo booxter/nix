@@ -112,8 +112,8 @@ in
         else
           "Plan Radarr import repairs in shadow mode";
       requires = [
-        "radarr-repair-planner.socket"
-        "radarr-repair-worker.service"
+        "media-repair-planner.socket"
+        "media-repair-worker.service"
         "radarr.service"
         "sops-install-secrets.service"
       ]
@@ -121,8 +121,8 @@ in
       wants = [ "network-online.target" ];
       after = [
         "network-online.target"
-        "radarr-repair-planner.socket"
-        "radarr-repair-worker.service"
+        "media-repair-planner.socket"
+        "media-repair-worker.service"
         "radarr.service"
         "sops-install-secrets.service"
       ]

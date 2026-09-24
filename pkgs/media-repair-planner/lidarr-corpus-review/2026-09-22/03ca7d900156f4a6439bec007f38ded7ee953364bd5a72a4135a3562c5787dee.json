@@ -1,0 +1,6201 @@
+{
+  "album": {
+    "album_id": 5509,
+    "artist": "Björk",
+    "artist_id": 466,
+    "monitored": true,
+    "title": "Medúlla"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 2872719,
+      "fingerprint": "sha256:96fd58684289cceff222c6a276845ae4867ae2d576a81e13d763a92900336c25",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Medulla.flac",
+      "size_bytes": 561128946,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": []
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 3341933,
+      "fingerprint": "sha256:03083df220552e416e3e1a15085841f95a226fd9b51881afea36f90cc90018aa",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Vespertine.flac",
+      "size_bytes": 612050601,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": []
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5509,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Album match is not close enough: 61.9% vs 80% [album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30080,
+      "tag_album": "Medulla (SACD-R)",
+      "tag_artist": "Bjork",
+      "tag_title": "Medulla",
+      "tag_track_numbers": [],
+      "track_ids": [
+        390478
+      ]
+    },
+    {
+      "album_id": 5514,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Album match is not close enough: 64.4% vs 80% [album, tracks, missing tracks]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30188,
+      "tag_album": "Vespertine (SACD-R)",
+      "tag_artist": "Bjork",
+      "tag_title": "Vespertine",
+      "tag_track_numbers": [],
+      "track_ids": [
+        391945
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30080",
+      "release_id": 30080,
+      "track_ids": [
+        390478,
+        390479,
+        390480,
+        390481,
+        390482,
+        390483,
+        390484,
+        390485,
+        390486,
+        390487,
+        390488,
+        390489,
+        390490,
+        390491
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30081",
+      "release_id": 30081,
+      "track_ids": [
+        390492,
+        390493,
+        390494,
+        390495,
+        390496,
+        390497,
+        390498,
+        390499,
+        390500,
+        390501,
+        390502,
+        390503,
+        390504,
+        390505,
+        390506
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30082",
+      "release_id": 30082,
+      "track_ids": [
+        390507,
+        390508,
+        390509,
+        390510,
+        390511,
+        390512,
+        390513,
+        390514,
+        390515,
+        390516,
+        390517,
+        390518,
+        390519,
+        390520,
+        390521
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30083",
+      "release_id": 30083,
+      "track_ids": [
+        390522,
+        390523,
+        390524,
+        390525,
+        390526,
+        390527,
+        390528,
+        390529,
+        390530,
+        390531,
+        390532,
+        390533,
+        390534,
+        390535
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30084",
+      "release_id": 30084,
+      "track_ids": [
+        390536,
+        390543,
+        390537,
+        390544,
+        390538,
+        390545,
+        390539,
+        390546,
+        390540,
+        390547,
+        390541,
+        390548,
+        390542,
+        390549
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30085",
+      "release_id": 30085,
+      "track_ids": [
+        390550,
+        390551,
+        390552,
+        390553,
+        390554,
+        390555,
+        390556,
+        390557,
+        390558,
+        390559,
+        390560,
+        390561,
+        390562,
+        390563
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30086",
+      "release_id": 30086,
+      "track_ids": [
+        390564,
+        390565,
+        390566,
+        390567,
+        390568,
+        390569,
+        390570,
+        390571,
+        390572,
+        390573,
+        390574,
+        390575,
+        390576,
+        390577
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30087",
+      "release_id": 30087,
+      "track_ids": [
+        390578,
+        390579,
+        390580,
+        390581,
+        390582,
+        390583,
+        390584,
+        390585,
+        390586,
+        390587,
+        390588,
+        390589,
+        390590,
+        390591
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30088",
+      "release_id": 30088,
+      "track_ids": [
+        390592,
+        390593,
+        390594,
+        390595,
+        390596,
+        390597,
+        390598,
+        390599,
+        390600,
+        390601,
+        390602,
+        390603,
+        390604,
+        390605,
+        390606,
+        390607,
+        390608,
+        390609,
+        390610,
+        390611,
+        390612,
+        390613,
+        390614,
+        390615,
+        390616,
+        390617,
+        390618,
+        390619
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30089",
+      "release_id": 30089,
+      "track_ids": [
+        390620,
+        390628,
+        390621,
+        390629,
+        390622,
+        390630,
+        390623,
+        390631,
+        390624,
+        390632,
+        390625,
+        390633,
+        390626,
+        390627
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30090",
+      "release_id": 30090,
+      "track_ids": [
+        390634,
+        390635,
+        390636,
+        390637,
+        390638,
+        390639,
+        390640,
+        390641,
+        390642,
+        390643,
+        390644,
+        390645,
+        390646,
+        390647
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30091",
+      "release_id": 30091,
+      "track_ids": [
+        390648,
+        390649,
+        390650,
+        390651,
+        390652,
+        390653,
+        390654,
+        390655,
+        390656,
+        390657,
+        390658,
+        390659,
+        390660,
+        390661
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30092",
+      "release_id": 30092,
+      "track_ids": [
+        390662,
+        390670,
+        390663,
+        390671,
+        390664,
+        390672,
+        390665,
+        390673,
+        390666,
+        390674,
+        390667,
+        390675,
+        390668,
+        390669
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30093",
+      "release_id": 30093,
+      "track_ids": [
+        390676,
+        390677,
+        390678,
+        390679,
+        390680,
+        390681,
+        390682,
+        390683,
+        390684,
+        390685,
+        390686,
+        390687,
+        390688,
+        390689
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30094",
+      "release_id": 30094,
+      "track_ids": [
+        390690,
+        390691,
+        390692,
+        390693,
+        390694,
+        390695,
+        390696,
+        390697,
+        390698,
+        390699,
+        390700,
+        390701,
+        390702,
+        390703
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30095",
+      "release_id": 30095,
+      "track_ids": [
+        390704,
+        390705,
+        390706,
+        390707,
+        390708,
+        390709,
+        390710,
+        390711,
+        390712,
+        390713,
+        390714,
+        390715,
+        390716,
+        390717
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30096",
+      "release_id": 30096,
+      "track_ids": [
+        390718,
+        390719,
+        390720,
+        390721,
+        390722,
+        390723,
+        390724,
+        390725,
+        390726,
+        390727,
+        390728,
+        390729,
+        390730,
+        390731
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30097",
+      "release_id": 30097,
+      "track_ids": [
+        390732,
+        390733,
+        390734,
+        390735,
+        390736,
+        390737,
+        390738,
+        390739,
+        390740,
+        390741,
+        390742,
+        390743,
+        390744,
+        390745
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30098",
+      "release_id": 30098,
+      "track_ids": [
+        390746,
+        390747,
+        390748,
+        390749,
+        390750,
+        390751,
+        390752,
+        390753,
+        390754,
+        390755,
+        390756,
+        390757,
+        390758,
+        390759,
+        390760
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30099",
+      "release_id": 30099,
+      "track_ids": [
+        390761,
+        390769,
+        390762,
+        390770,
+        390763,
+        390771,
+        390764,
+        390772,
+        390765,
+        390773,
+        390766,
+        390774,
+        390767,
+        390768
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30100",
+      "release_id": 30100,
+      "track_ids": [
+        390775,
+        390790,
+        390805,
+        390776,
+        390791,
+        390806,
+        390777,
+        390792,
+        390807,
+        390778,
+        390793,
+        390808,
+        390779,
+        390794,
+        390809,
+        390780,
+        390795,
+        390810,
+        390781,
+        390796,
+        390811,
+        390782,
+        390797,
+        390812,
+        390783,
+        390798,
+        390813,
+        390784,
+        390799,
+        390814,
+        390785,
+        390800,
+        390815,
+        390786,
+        390801,
+        390816,
+        390787,
+        390802,
+        390817,
+        390788,
+        390803,
+        390818,
+        390789,
+        390804,
+        390819
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30101",
+      "release_id": 30101,
+      "track_ids": [
+        390820,
+        390821,
+        390822,
+        390823,
+        390824,
+        390825,
+        390826,
+        390827,
+        390828,
+        390829,
+        390830,
+        390831,
+        390832,
+        390833,
+        390834
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30102",
+      "release_id": 30102,
+      "track_ids": [
+        390835,
+        390836,
+        390837,
+        390838,
+        390839,
+        390840,
+        390841,
+        390842,
+        390843,
+        390844,
+        390845,
+        390846,
+        390847,
+        390848
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30103",
+      "release_id": 30103,
+      "track_ids": [
+        390849,
+        390863,
+        390877,
+        390850,
+        390864,
+        390878,
+        390851,
+        390865,
+        390879,
+        390852,
+        390866,
+        390880,
+        390853,
+        390867,
+        390881,
+        390854,
+        390868,
+        390882,
+        390855,
+        390869,
+        390883,
+        390856,
+        390870,
+        390884,
+        390857,
+        390871,
+        390885,
+        390858,
+        390872,
+        390886,
+        390859,
+        390873,
+        390887,
+        390860,
+        390874,
+        390888,
+        390861,
+        390875,
+        390889,
+        390862,
+        390876,
+        390890
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30104",
+      "release_id": 30104,
+      "track_ids": [
+        390891,
+        390892,
+        390893,
+        390894,
+        390895,
+        390896,
+        390897,
+        390898,
+        390899,
+        390900,
+        390901,
+        390902,
+        390903,
+        390904
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:30105",
+      "release_id": 30105,
+      "track_ids": [
+        390905,
+        390906,
+        390907,
+        390908,
+        390909,
+        390910,
+        390911,
+        390912,
+        390913,
+        390914,
+        390915,
+        390916,
+        390917,
+        390918
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5509,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2"
+      ],
+      "capability_id": "capability:import_missing_tracks:31702",
+      "release_id": 31702,
+      "track_ids": [
+        412255,
+        412270,
+        412285,
+        412256,
+        412271,
+        412286,
+        412257,
+        412272,
+        412287,
+        412258,
+        412273,
+        412288,
+        412259,
+        412274,
+        412289,
+        412260,
+        412275,
+        412290,
+        412261,
+        412276,
+        412291,
+        412262,
+        412277,
+        412292,
+        412263,
+        412278,
+        412293,
+        412264,
+        412279,
+        412294,
+        412265,
+        412280,
+        412295,
+        412266,
+        412281,
+        412296,
+        412267,
+        412282,
+        412297,
+        412268,
+        412283,
+        412298,
+        412269,
+        412284,
+        412299
+      ]
+    }
+  ],
+  "case_id": "sha256:03ca7d900156f4a6439bec007f38ded7ee953364bd5a72a4135a3562c5787dee",
+  "observed_at": "2026-09-23T03:22:31.342762929Z",
+  "queue": {
+    "download_ref": "download:071700e47539cd214edcbeccedba2e0deb55e155ac10e1a22445f24d00aa8f12",
+    "messages": [
+      "Album match is not close enough: 61.9% vs 80% [album, tracks, missing tracks]",
+      "Album match is not close enough: 64.4% vs 80% [album, tracks, missing tracks]",
+      "Has missing tracks",
+      "Medulla.flac",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "Vespertine.flac"
+    ],
+    "queue_id": 1631670676,
+    "title": "Bjork - Vespertine + Medulla (SACD-R) (FLAC)"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "31e19128-df0a-4bd7-a5ca-376790c375ff",
+      "format": "CD",
+      "labels": [
+        "Elektra"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30080,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Sweden"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "effd4986-0a5f-41fb-afb9-9d7b7b02e577",
+      "format": "Unknown",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30081,
+      "title": "Medúlla",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6f01bec9-ae3e-3b75-a667-49931ad038bd",
+      "format": "CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30082,
+      "title": "Medúlla",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Russia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "cffe65b2-d8dd-3f1a-90c3-3e0e91d2d781",
+      "format": "CD",
+      "labels": [
+        "Universal Music Russia"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30083,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1836d22a-43a9-4462-a0b1-22432c98b094",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 30084,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "5a7c1132-db48-4e8b-b65c-55b08b6675c5",
+      "format": "CD",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30085,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "2f5433d6-b923-3460-be45-24c54d5ff992",
+      "format": "DualDisc",
+      "labels": [
+        "Atlantic"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30086,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e9e45fda-df3d-333a-ab56-290570dd6f95",
+      "format": "CD",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30087,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "special edition",
+      "foreign_release_id": "db52aa02-2d24-4dcb-b300-f765b134f8ce",
+      "format": "DVD-Audio",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30088,
+      "title": "Medúlla",
+      "track_count": 28
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "4859fd65-5b4b-478e-90fe-665b0aba3bdd",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 30089,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Russia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "11115212-4769-4998-90dd-f914ba6f72ca",
+      "format": "CD",
+      "labels": [
+        "Universal"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30090,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5bfc0568-a7cb-4725-b0eb-fbf0f880d084",
+      "format": "Cassette",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30091,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "135ffcc2-fa4d-4ad5-8271-10b6d75a3be1",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 30092,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "Surrounded",
+      "foreign_release_id": "cad94c16-5b87-4f93-a6f8-ac2c6006d4a8",
+      "format": "DualDisc",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30093,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "Bandcamp release",
+      "foreign_release_id": "ab96a058-129b-4c22-a58b-c8176d7496d4",
+      "format": "Digital Media",
+      "labels": [
+        "One Little Independent Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30094,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "8ccce115-7274-4930-968c-7c1a1bacac1f",
+      "format": "CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30095,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "cardboard gatefold package",
+      "foreign_release_id": "5c24e649-4e52-4f57-90c9-8275149706c0",
+      "format": "CD",
+      "labels": [
+        "Elektra"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30096,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "made by Cinram Optical Discs",
+      "foreign_release_id": "08f0fcd9-46f0-48fe-a410-f2706011b42c",
+      "format": "CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30097,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "0ce2de94-c37f-4cea-98d3-3dbf5bdf2f7d",
+      "format": "SHM-CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30098,
+      "title": "Medúlla",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b0beafae-d153-47b3-97ac-6cab938cbade",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "One Little Independent Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 30099,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "052f0293-ffa6-44e1-b39c-16ba0adaf3cb",
+      "format": "Hybrid SACD (CD layer), Hybrid SACD (SACD layer, 2 channels), Hybrid SACD (SACD layer, multichannel)",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 3,
+      "monitored": true,
+      "release_id": 30100,
+      "title": "Medúlla",
+      "track_count": 45
+    },
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "57e3b34d-5f1b-44e2-91a9-546011c35563",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30101,
+      "title": "Medúlla [Bonus Tracks]",
+      "track_count": 15
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "ef5624e6-545e-45a1-9e88-73518f927baa",
+      "format": "CD",
+      "labels": [
+        "Elektra"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30102,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "56afb105-6c81-4c6a-96db-27d8a8ef8505",
+      "format": "Hybrid SACD (CD layer), Hybrid SACD (SACD layer, 2 channels), Hybrid SACD (SACD layer, multichannel)",
+      "labels": [
+        "One Little Indian Records"
+      ],
+      "medium_count": 3,
+      "monitored": false,
+      "release_id": 30103,
+      "title": "Medúlla",
+      "track_count": 42
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "made by Universal M & L",
+      "foreign_release_id": "5eefecfd-13e8-34ae-833e-919a04ccbc54",
+      "format": "CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30104,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "22b96cb8-7152-4c5f-8f30-9ce0174fd379",
+      "format": "Digital Media",
+      "labels": [
+        "One Little Independent Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30105,
+      "title": "Medúlla",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c6dff865-ee7a-47de-b12c-f063beaa865f",
+      "format": "Hybrid SACD (CD layer), Hybrid SACD (SACD layer, 2 channels), Hybrid SACD (SACD layer, multichannel)",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 3,
+      "monitored": false,
+      "release_id": 31702,
+      "title": "Medúlla",
+      "track_count": 45
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30080,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390478
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30080,
+      "title": "Show Me Forgiveness",
+      "track_id": 390479
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30080,
+      "title": "Where Is the Line",
+      "track_id": 390480
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30080,
+      "title": "Vökuró",
+      "track_id": 390481
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30080,
+      "title": "Öll birtan",
+      "track_id": 390482
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30080,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390483
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30080,
+      "title": "Submarine",
+      "track_id": 390484
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30080,
+      "title": "Desired Constellation",
+      "track_id": 390485
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30080,
+      "title": "Oceania",
+      "track_id": 390486
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30080,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390487
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30080,
+      "title": "Ancestors",
+      "track_id": 390488
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30080,
+      "title": "Mouth’s Cradle",
+      "track_id": 390489
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30080,
+      "title": "Miðvikudags",
+      "track_id": 390490
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30080,
+      "title": "Triumph of a Heart",
+      "track_id": 390491
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30081,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390492
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30081,
+      "title": "Show Me Forgiveness",
+      "track_id": 390493
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30081,
+      "title": "Where Is the Line",
+      "track_id": 390494
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30081,
+      "title": "Vökuró",
+      "track_id": 390495
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30081,
+      "title": "Öll birtan",
+      "track_id": 390496
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30081,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390497
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30081,
+      "title": "Submarine",
+      "track_id": 390498
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30081,
+      "title": "Desired Constellation",
+      "track_id": 390499
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30081,
+      "title": "Oceania",
+      "track_id": 390500
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30081,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390501
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30081,
+      "title": "Ancestors",
+      "track_id": 390502
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30081,
+      "title": "Mouth’s Cradle",
+      "track_id": 390503
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30081,
+      "title": "Miðvikudags",
+      "track_id": 390504
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30081,
+      "title": "Triumph of a Heart",
+      "track_id": 390505
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 120693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30081,
+      "title": "Komið",
+      "track_id": 390506
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30082,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390507
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30082,
+      "title": "Show Me Forgiveness",
+      "track_id": 390508
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30082,
+      "title": "Where Is the Line",
+      "track_id": 390509
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30082,
+      "title": "Vökuró",
+      "track_id": 390510
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30082,
+      "title": "Öll birtan",
+      "track_id": 390511
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30082,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390512
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30082,
+      "title": "Submarine",
+      "track_id": 390513
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30082,
+      "title": "Desired Constellation",
+      "track_id": 390514
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30082,
+      "title": "Oceania",
+      "track_id": 390515
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30082,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390516
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30082,
+      "title": "Ancestors",
+      "track_id": 390517
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30082,
+      "title": "Mouth’s Cradle",
+      "track_id": 390518
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30082,
+      "title": "Miðvikudags",
+      "track_id": 390519
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30082,
+      "title": "Triumph of a Heart",
+      "track_id": 390520
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 120693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30082,
+      "title": "Komið",
+      "track_id": 390521
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30083,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390522
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30083,
+      "title": "Show Me Forgiveness",
+      "track_id": 390523
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30083,
+      "title": "Where Is the Line",
+      "track_id": 390524
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30083,
+      "title": "Vökuró",
+      "track_id": 390525
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30083,
+      "title": "Öll birtan",
+      "track_id": 390526
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30083,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390527
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30083,
+      "title": "Submarine",
+      "track_id": 390528
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30083,
+      "title": "Desired Constellation",
+      "track_id": 390529
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30083,
+      "title": "Oceania",
+      "track_id": 390530
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30083,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390531
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30083,
+      "title": "Ancestors",
+      "track_id": 390532
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30083,
+      "title": "Mouth’s Cradle",
+      "track_id": 390533
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30083,
+      "title": "Miðvikudags",
+      "track_id": 390534
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30083,
+      "title": "Triumph of a Heart",
+      "track_id": 390535
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30084,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390536
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 30084,
+      "title": "Desired Constellation",
+      "track_id": 390543
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30084,
+      "title": "Show Me Forgiveness",
+      "track_id": 390537
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 30084,
+      "title": "Oceania",
+      "track_id": 390544
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30084,
+      "title": "Where Is the Line",
+      "track_id": 390538
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 30084,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390545
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30084,
+      "title": "Vökuró",
+      "track_id": 390539
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C4",
+      "release_id": 30084,
+      "title": "Ancestors",
+      "track_id": 390546
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30084,
+      "title": "Öll Birtan",
+      "track_id": 390540
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 30084,
+      "title": "Mouth’s Cradle",
+      "track_id": 390547
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30084,
+      "title": "Who Is It (Carry My Joy on the Left Carry My Pain on the Right)",
+      "track_id": 390541
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 30084,
+      "title": "Miðvikudags",
+      "track_id": 390548
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30084,
+      "title": "Submarine",
+      "track_id": 390542
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 30084,
+      "title": "Triumph of a Heart",
+      "track_id": 390549
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30085,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390550
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30085,
+      "title": "Show Me Forgiveness",
+      "track_id": 390551
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30085,
+      "title": "Where Is the Line",
+      "track_id": 390552
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30085,
+      "title": "Vökuró",
+      "track_id": 390553
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30085,
+      "title": "Öll birtan",
+      "track_id": 390554
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30085,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390555
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30085,
+      "title": "Submarine",
+      "track_id": 390556
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30085,
+      "title": "Desired Constellation",
+      "track_id": 390557
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30085,
+      "title": "Oceania",
+      "track_id": 390558
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30085,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390559
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30085,
+      "title": "Ancestors",
+      "track_id": 390560
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30085,
+      "title": "Mouth’s Cradle",
+      "track_id": 390561
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30085,
+      "title": "Miðvikudags",
+      "track_id": 390562
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30085,
+      "title": "Triumph of a Heart",
+      "track_id": 390563
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30086,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390564
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30086,
+      "title": "Show Me Forgiveness",
+      "track_id": 390565
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30086,
+      "title": "Where Is the Line",
+      "track_id": 390566
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30086,
+      "title": "Vökuró",
+      "track_id": 390567
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30086,
+      "title": "Öll birtan",
+      "track_id": 390568
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30086,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390569
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30086,
+      "title": "Submarine",
+      "track_id": 390570
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30086,
+      "title": "Desired Constellation",
+      "track_id": 390571
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30086,
+      "title": "Oceania",
+      "track_id": 390572
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30086,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390573
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30086,
+      "title": "Ancestors",
+      "track_id": 390574
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30086,
+      "title": "Mouth's Cradle",
+      "track_id": 390575
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30086,
+      "title": "Miðvikudags",
+      "track_id": 390576
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30086,
+      "title": "Triumph of a Heart",
+      "track_id": 390577
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30087,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390578
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30087,
+      "title": "Show Me Forgiveness",
+      "track_id": 390579
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30087,
+      "title": "Where Is the Line",
+      "track_id": 390580
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30087,
+      "title": "Vökuró",
+      "track_id": 390581
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30087,
+      "title": "Öll birtan",
+      "track_id": 390582
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30087,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390583
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30087,
+      "title": "Submarine",
+      "track_id": 390584
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30087,
+      "title": "Desired Constellation",
+      "track_id": 390585
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30087,
+      "title": "Oceania",
+      "track_id": 390586
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30087,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390587
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30087,
+      "title": "Ancestors",
+      "track_id": 390588
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30087,
+      "title": "Mouth’s Cradle",
+      "track_id": 390589
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30087,
+      "title": "Miðvikudags",
+      "track_id": 390590
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30087,
+      "title": "Triumph of a Heart",
+      "track_id": 390591
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30088,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390592
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30088,
+      "title": "Show Me Forgiveness",
+      "track_id": 390593
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30088,
+      "title": "Where Is the Line",
+      "track_id": 390594
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30088,
+      "title": "Vökuró",
+      "track_id": 390595
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30088,
+      "title": "Öll birtan",
+      "track_id": 390596
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30088,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390597
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30088,
+      "title": "Submarine",
+      "track_id": 390598
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30088,
+      "title": "Desired Constellation",
+      "track_id": 390599
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30088,
+      "title": "Oceania",
+      "track_id": 390600
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30088,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390601
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30088,
+      "title": "Ancestors",
+      "track_id": 390602
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30088,
+      "title": "Mouth’s Cradle",
+      "track_id": 390603
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30088,
+      "title": "Miðvikudags",
+      "track_id": 390604
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30088,
+      "title": "Triumph of a Heart",
+      "track_id": 390605
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30088,
+      "title": "Pleasure Is All Mine (5.1 mix)",
+      "track_id": 390606
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 30088,
+      "title": "Show Me Forgiveness (5.1 mix)",
+      "track_id": 390607
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 30088,
+      "title": "Where Is the Line (5.1 mix)",
+      "track_id": 390608
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 30088,
+      "title": "Vökuró (5.1 mix)",
+      "track_id": 390609
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 30088,
+      "title": "Öll birtan (5.1 mix)",
+      "track_id": 390610
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 30088,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right) (5.1 mix)",
+      "track_id": 390611
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 30088,
+      "title": "Submarine (5.1 mix)",
+      "track_id": 390612
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 30088,
+      "title": "Desired Constellation (5.1 mix)",
+      "track_id": 390613
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 30088,
+      "title": "Oceania (5.1 mix)",
+      "track_id": 390614
+    },
+    {
+      "absolute_number": 24,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "24",
+      "release_id": 30088,
+      "title": "Sonnets/Unrealities XI (5.1 mix)",
+      "track_id": 390615
+    },
+    {
+      "absolute_number": 25,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "25",
+      "release_id": 30088,
+      "title": "Ancestors (5.1 mix)",
+      "track_id": 390616
+    },
+    {
+      "absolute_number": 26,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "26",
+      "release_id": 30088,
+      "title": "Mouth’s Cradle (5.1 mix)",
+      "track_id": 390617
+    },
+    {
+      "absolute_number": 27,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "27",
+      "release_id": 30088,
+      "title": "Miðvikudags (5.1 mix)",
+      "track_id": 390618
+    },
+    {
+      "absolute_number": 28,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "28",
+      "release_id": 30088,
+      "title": "Triumph of a Heart (5.1 mix)",
+      "track_id": 390619
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30089,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390620
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 30089,
+      "title": "Oceania",
+      "track_id": 390628
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30089,
+      "title": "Show Me Forgiveness",
+      "track_id": 390621
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 30089,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390629
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30089,
+      "title": "Where Is the Line",
+      "track_id": 390622
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 30089,
+      "title": "Ancestors",
+      "track_id": 390630
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30089,
+      "title": "Vökuró",
+      "track_id": 390623
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 30089,
+      "title": "Mouth’s Cradle",
+      "track_id": 390631
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30089,
+      "title": "Öll Birtan",
+      "track_id": 390624
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 30089,
+      "title": "Miðvikudags",
+      "track_id": 390632
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30089,
+      "title": "Who Is It (Carry My Joy on the Left Carry My Pain on the Right)",
+      "track_id": 390625
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 30089,
+      "title": "Triumph of a Heart",
+      "track_id": 390633
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30089,
+      "title": "Submarine",
+      "track_id": 390626
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 30089,
+      "title": "Desired Constellation",
+      "track_id": 390627
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30090,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390634
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30090,
+      "title": "Show Me Forgiveness",
+      "track_id": 390635
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 171000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30090,
+      "title": "Esto (Medúlla outtake)",
+      "track_id": 390636
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30090,
+      "title": "Vökuró",
+      "track_id": 390637
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30090,
+      "title": "Öll birtan",
+      "track_id": 390638
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 249000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30090,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390639
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30090,
+      "title": "町",
+      "track_id": 390640
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30090,
+      "title": "Desired Constellation",
+      "track_id": 390641
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30090,
+      "title": "Oceania",
+      "track_id": 390642
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30090,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390643
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30090,
+      "title": "Ancestors",
+      "track_id": 390644
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30090,
+      "title": "Mouth’s Cradle",
+      "track_id": 390645
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30090,
+      "title": "Miðvikudags",
+      "track_id": 390646
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30090,
+      "title": "Triumph of a Heart (Pain of a Heart) (Do Do Matmos mix)",
+      "track_id": 390647
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30091,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390648
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30091,
+      "title": "Show Me Forgiveness",
+      "track_id": 390649
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30091,
+      "title": "Where Is the Line",
+      "track_id": 390650
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30091,
+      "title": "Vökuró",
+      "track_id": 390651
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 30091,
+      "title": "Öll birtan",
+      "track_id": 390652
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 30091,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390653
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A7",
+      "release_id": 30091,
+      "title": "Submarine",
+      "track_id": 390654
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30091,
+      "title": "Desired Constellation",
+      "track_id": 390655
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30091,
+      "title": "Oceania",
+      "track_id": 390656
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30091,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390657
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 30091,
+      "title": "Ancestors",
+      "track_id": 390658
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 30091,
+      "title": "Mouth’s Cradle",
+      "track_id": 390659
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 30091,
+      "title": "Miðvikudags",
+      "track_id": 390660
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B7",
+      "release_id": 30091,
+      "title": "Triumph of a Heart",
+      "track_id": 390661
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30092,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390662
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 30092,
+      "title": "Oceania",
+      "track_id": 390670
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30092,
+      "title": "Show Me Forgiveness",
+      "track_id": 390663
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 30092,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390671
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30092,
+      "title": "Where Is the Line",
+      "track_id": 390664
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 30092,
+      "title": "Ancestors",
+      "track_id": 390672
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30092,
+      "title": "Vökuró",
+      "track_id": 390665
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 30092,
+      "title": "Mouth’s Cradle",
+      "track_id": 390673
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30092,
+      "title": "Öll Birtan",
+      "track_id": 390666
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 30092,
+      "title": "Miðvikudags",
+      "track_id": 390674
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30092,
+      "title": "Who Is It (Carry My Joy on the Left Carry My Pain on the Right)",
+      "track_id": 390667
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 30092,
+      "title": "Triumph of a Heart",
+      "track_id": 390675
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30092,
+      "title": "Submarine",
+      "track_id": 390668
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 30092,
+      "title": "Desired Constellation",
+      "track_id": 390669
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30093,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390676
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30093,
+      "title": "Show Me Forgiveness",
+      "track_id": 390677
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30093,
+      "title": "Where Is the Line",
+      "track_id": 390678
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30093,
+      "title": "Vökuró",
+      "track_id": 390679
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30093,
+      "title": "Öll birtan",
+      "track_id": 390680
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30093,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390681
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30093,
+      "title": "Submarine",
+      "track_id": 390682
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30093,
+      "title": "Desired Constellation",
+      "track_id": 390683
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30093,
+      "title": "Oceania",
+      "track_id": 390684
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30093,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390685
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30093,
+      "title": "Ancestors",
+      "track_id": 390686
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30093,
+      "title": "Mouth’s Cradle",
+      "track_id": 390687
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30093,
+      "title": "Midvikudags",
+      "track_id": 390688
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30093,
+      "title": "Triumph of a Heart",
+      "track_id": 390689
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30094,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390690
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30094,
+      "title": "Show Me Forgiveness",
+      "track_id": 390691
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30094,
+      "title": "Where Is the Line",
+      "track_id": 390692
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30094,
+      "title": "Vökuró",
+      "track_id": 390693
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30094,
+      "title": "Öll birtan",
+      "track_id": 390694
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30094,
+      "title": "Who Is It",
+      "track_id": 390695
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30094,
+      "title": "Submarine",
+      "track_id": 390696
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30094,
+      "title": "Desired Constellation",
+      "track_id": 390697
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30094,
+      "title": "Oceania",
+      "track_id": 390698
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30094,
+      "title": "Sonnets_Unrealities XI",
+      "track_id": 390699
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30094,
+      "title": "Ancestors",
+      "track_id": 390700
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30094,
+      "title": "Mouth’s Cradle",
+      "track_id": 390701
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30094,
+      "title": "Miðvikudags",
+      "track_id": 390702
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30094,
+      "title": "Triumph of a Heart",
+      "track_id": 390703
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30095,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390704
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30095,
+      "title": "Show Me Forgiveness",
+      "track_id": 390705
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30095,
+      "title": "Where Is the Line",
+      "track_id": 390706
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30095,
+      "title": "Vökuró",
+      "track_id": 390707
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30095,
+      "title": "Öll birtan",
+      "track_id": 390708
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30095,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390709
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30095,
+      "title": "Submarine",
+      "track_id": 390710
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30095,
+      "title": "Desired Constellation",
+      "track_id": 390711
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30095,
+      "title": "Oceania",
+      "track_id": 390712
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30095,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390713
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30095,
+      "title": "Ancestors",
+      "track_id": 390714
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30095,
+      "title": "Mouth’s Cradle",
+      "track_id": 390715
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30095,
+      "title": "Miðvikudags",
+      "track_id": 390716
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30095,
+      "title": "Triumph of a Heart",
+      "track_id": 390717
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30096,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390718
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30096,
+      "title": "Show Me Forgiveness",
+      "track_id": 390719
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30096,
+      "title": "Where Is the Line",
+      "track_id": 390720
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30096,
+      "title": "Vökuró",
+      "track_id": 390721
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30096,
+      "title": "Öll birtan",
+      "track_id": 390722
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30096,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390723
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30096,
+      "title": "Submarine",
+      "track_id": 390724
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30096,
+      "title": "Desired Constellation",
+      "track_id": 390725
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30096,
+      "title": "Oceania",
+      "track_id": 390726
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30096,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390727
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30096,
+      "title": "Ancestors",
+      "track_id": 390728
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30096,
+      "title": "Mouth’s Cradle",
+      "track_id": 390729
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30096,
+      "title": "Miðvikudags",
+      "track_id": 390730
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30096,
+      "title": "Triumph of a Heart",
+      "track_id": 390731
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30097,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390732
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30097,
+      "title": "Show Me Forgiveness",
+      "track_id": 390733
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30097,
+      "title": "Where Is the Line",
+      "track_id": 390734
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30097,
+      "title": "Vökuró",
+      "track_id": 390735
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30097,
+      "title": "Öll birtan",
+      "track_id": 390736
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30097,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390737
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30097,
+      "title": "Submarine",
+      "track_id": 390738
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30097,
+      "title": "Desired Constellation",
+      "track_id": 390739
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30097,
+      "title": "Oceania",
+      "track_id": 390740
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30097,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390741
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30097,
+      "title": "Ancestors",
+      "track_id": 390742
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30097,
+      "title": "Mouth’s Cradle",
+      "track_id": 390743
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30097,
+      "title": "Miðvikudags",
+      "track_id": 390744
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30097,
+      "title": "Triumph of a Heart",
+      "track_id": 390745
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30098,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390746
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30098,
+      "title": "Show Me Forgiveness",
+      "track_id": 390747
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30098,
+      "title": "Where Is the Line",
+      "track_id": 390748
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30098,
+      "title": "Vökuró",
+      "track_id": 390749
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30098,
+      "title": "Öll birtan",
+      "track_id": 390750
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30098,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390751
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30098,
+      "title": "Submarine",
+      "track_id": 390752
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30098,
+      "title": "Desired Constellation",
+      "track_id": 390753
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30098,
+      "title": "Oceania",
+      "track_id": 390754
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30098,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390755
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30098,
+      "title": "Ancestors",
+      "track_id": 390756
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30098,
+      "title": "Mouth’s Cradle",
+      "track_id": 390757
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30098,
+      "title": "Miðvikudags",
+      "track_id": 390758
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30098,
+      "title": "Triumph of a Heart",
+      "track_id": 390759
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30098,
+      "title": "Komið",
+      "track_id": 390760
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 30099,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390761
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 30099,
+      "title": "Oceania",
+      "track_id": 390769
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 30099,
+      "title": "Show Me Forgiveness",
+      "track_id": 390762
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 30099,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390770
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 30099,
+      "title": "Where Is the Line",
+      "track_id": 390763
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 30099,
+      "title": "Ancestors",
+      "track_id": 390771
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 30099,
+      "title": "Vökuró",
+      "track_id": 390764
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 30099,
+      "title": "Mouth’s Cradle",
+      "track_id": 390772
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 30099,
+      "title": "Öll Birtan",
+      "track_id": 390765
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 30099,
+      "title": "Miðvikudags",
+      "track_id": 390773
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 30099,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390766
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D3",
+      "release_id": 30099,
+      "title": "Triumph of a Heart",
+      "track_id": 390774
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 30099,
+      "title": "Submarine",
+      "track_id": 390767
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 30099,
+      "title": "Desired Constellation",
+      "track_id": 390768
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30100,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390775
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 30100,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390790
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 30100,
+      "title": "Pleasure Is All Mine (5.1 mix)",
+      "track_id": 390805
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30100,
+      "title": "Show Me Forgiveness",
+      "track_id": 390776
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 30100,
+      "title": "Show Me Forgiveness",
+      "track_id": 390791
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 30100,
+      "title": "Show Me Forgiveness (5.1 mix)",
+      "track_id": 390806
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30100,
+      "title": "Where Is the Line",
+      "track_id": 390777
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 30100,
+      "title": "Where Is the Line",
+      "track_id": 390792
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 30100,
+      "title": "Where Is the Line (5.1 mix)",
+      "track_id": 390807
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30100,
+      "title": "Vökuró",
+      "track_id": 390778
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 30100,
+      "title": "Vökuró",
+      "track_id": 390793
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 30100,
+      "title": "Vökuró (5.1 mix)",
+      "track_id": 390808
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30100,
+      "title": "Öll birtan",
+      "track_id": 390779
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 30100,
+      "title": "Öll birtan",
+      "track_id": 390794
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 30100,
+      "title": "Öll birtan (5.1 mix)",
+      "track_id": 390809
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30100,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390780
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 30100,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390795
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 30100,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right) (5.1 mix)",
+      "track_id": 390810
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30100,
+      "title": "Submarine",
+      "track_id": 390781
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 30100,
+      "title": "Submarine",
+      "track_id": 390796
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 30100,
+      "title": "Submarine (5.1 mix)",
+      "track_id": 390811
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30100,
+      "title": "Desired Constellation",
+      "track_id": 390782
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 30100,
+      "title": "Desired Constellation",
+      "track_id": 390797
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 30100,
+      "title": "Desired Constellation (5.1 mix)",
+      "track_id": 390812
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30100,
+      "title": "Oceania",
+      "track_id": 390783
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 30100,
+      "title": "Oceania",
+      "track_id": 390798
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 30100,
+      "title": "Oceania (5.1 mix)",
+      "track_id": 390813
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30100,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390784
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 30100,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390799
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 30100,
+      "title": "Sonnets/Unrealities XI (5.1 mix)",
+      "track_id": 390814
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30100,
+      "title": "Ancestors",
+      "track_id": 390785
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 30100,
+      "title": "Ancestors",
+      "track_id": 390800
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 30100,
+      "title": "Ancestors (5.1 mix)",
+      "track_id": 390815
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30100,
+      "title": "Mouth’s Cradle",
+      "track_id": 390786
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 30100,
+      "title": "Mouth’s Cradle",
+      "track_id": 390801
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "12",
+      "release_id": 30100,
+      "title": "Mouth’s Cradle (5.1 mix)",
+      "track_id": 390816
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30100,
+      "title": "Miðvikudags",
+      "track_id": 390787
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 30100,
+      "title": "Miðvikudags",
+      "track_id": 390802
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "13",
+      "release_id": 30100,
+      "title": "Miðvikudags (5.1 mix)",
+      "track_id": 390817
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30100,
+      "title": "Triumph of a Heart",
+      "track_id": 390788
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250040,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 30100,
+      "title": "Triumph of a Heart",
+      "track_id": 390803
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "14",
+      "release_id": 30100,
+      "title": "Triumph of a Heart (5.1 mix)",
+      "track_id": 390818
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 121000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30100,
+      "title": "Komið",
+      "track_id": 390789
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 120693,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 30100,
+      "title": "Komið",
+      "track_id": 390804
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 121000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "15",
+      "release_id": 30100,
+      "title": "Komið (5.1 mix)",
+      "track_id": 390819
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30101,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390820
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30101,
+      "title": "Show Me Forgiveness",
+      "track_id": 390821
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30101,
+      "title": "Where Is the Line",
+      "track_id": 390822
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30101,
+      "title": "Vökuró",
+      "track_id": 390823
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30101,
+      "title": "Öll birtan",
+      "track_id": 390824
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30101,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390825
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30101,
+      "title": "Submarine",
+      "track_id": 390826
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30101,
+      "title": "Desired Constellation",
+      "track_id": 390827
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30101,
+      "title": "Oceania",
+      "track_id": 390828
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30101,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390829
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30101,
+      "title": "Ancestors",
+      "track_id": 390830
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30101,
+      "title": "Mouth’s Cradle",
+      "track_id": 390831
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30101,
+      "title": "Miðvikudags",
+      "track_id": 390832
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30101,
+      "title": "Triumph of a Heart",
+      "track_id": 390833
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 121000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 30101,
+      "title": "Komið",
+      "track_id": 390834
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30102,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390835
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30102,
+      "title": "Show Me Forgiveness",
+      "track_id": 390836
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30102,
+      "title": "Where Is the Line",
+      "track_id": 390837
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30102,
+      "title": "Vökuró",
+      "track_id": 390838
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30102,
+      "title": "Öll birtan",
+      "track_id": 390839
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30102,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390840
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30102,
+      "title": "Submarine",
+      "track_id": 390841
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30102,
+      "title": "Desired Constellation",
+      "track_id": 390842
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30102,
+      "title": "Oceania",
+      "track_id": 390843
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30102,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390844
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30102,
+      "title": "Ancestors",
+      "track_id": 390845
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30102,
+      "title": "Mouth’s Cradle",
+      "track_id": 390846
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30102,
+      "title": "Miðvikudags",
+      "track_id": 390847
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30102,
+      "title": "Triumph of a Heart",
+      "track_id": 390848
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30103,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390849
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 30103,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390863
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 30103,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390877
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30103,
+      "title": "Show Me Forgiveness",
+      "track_id": 390850
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 30103,
+      "title": "Show Me Forgiveness",
+      "track_id": 390864
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 30103,
+      "title": "Show Me Forgiveness",
+      "track_id": 390878
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30103,
+      "title": "Where Is the Line",
+      "track_id": 390851
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 30103,
+      "title": "Where Is the Line",
+      "track_id": 390865
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 30103,
+      "title": "Where Is the Line",
+      "track_id": 390879
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30103,
+      "title": "Vökuró",
+      "track_id": 390852
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 30103,
+      "title": "Vökuró",
+      "track_id": 390866
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 30103,
+      "title": "Vökuró",
+      "track_id": 390880
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30103,
+      "title": "Öll birtan",
+      "track_id": 390853
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 30103,
+      "title": "Öll birtan",
+      "track_id": 390867
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 30103,
+      "title": "Öll birtan",
+      "track_id": 390881
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30103,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390854
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 30103,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390868
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 30103,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390882
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30103,
+      "title": "Submarine",
+      "track_id": 390855
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 30103,
+      "title": "Submarine",
+      "track_id": 390869
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 30103,
+      "title": "Submarine",
+      "track_id": 390883
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30103,
+      "title": "Desired Constellation",
+      "track_id": 390856
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 30103,
+      "title": "Desired Constellation",
+      "track_id": 390870
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 30103,
+      "title": "Desired Constellation",
+      "track_id": 390884
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30103,
+      "title": "Oceania",
+      "track_id": 390857
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 30103,
+      "title": "Oceania",
+      "track_id": 390871
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 30103,
+      "title": "Oceania",
+      "track_id": 390885
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30103,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390858
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 30103,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390872
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 30103,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390886
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30103,
+      "title": "Ancestors",
+      "track_id": 390859
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 30103,
+      "title": "Ancestors",
+      "track_id": 390873
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 30103,
+      "title": "Ancestors",
+      "track_id": 390887
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30103,
+      "title": "Mouth’s Cradle",
+      "track_id": 390860
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 30103,
+      "title": "Mouth’s Cradle",
+      "track_id": 390874
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "12",
+      "release_id": 30103,
+      "title": "Mouth’s Cradle",
+      "track_id": 390888
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30103,
+      "title": "Miðvikudags",
+      "track_id": 390861
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 30103,
+      "title": "Miðvikudags",
+      "track_id": 390875
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "13",
+      "release_id": 30103,
+      "title": "Miðvikudags",
+      "track_id": 390889
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30103,
+      "title": "Triumph of a Heart",
+      "track_id": 390862
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 30103,
+      "title": "Triumph of a Heart",
+      "track_id": 390876
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "14",
+      "release_id": 30103,
+      "title": "Triumph of a Heart",
+      "track_id": 390890
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30104,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390891
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30104,
+      "title": "Show Me Forgiveness",
+      "track_id": 390892
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30104,
+      "title": "Where Is the Line",
+      "track_id": 390893
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30104,
+      "title": "Vökuró",
+      "track_id": 390894
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30104,
+      "title": "Öll birtan",
+      "track_id": 390895
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30104,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 390896
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30104,
+      "title": "Submarine",
+      "track_id": 390897
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30104,
+      "title": "Desired Constellation",
+      "track_id": 390898
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30104,
+      "title": "Oceania",
+      "track_id": 390899
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30104,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 390900
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30104,
+      "title": "Ancestors",
+      "track_id": 390901
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30104,
+      "title": "Mouth’s Cradle",
+      "track_id": 390902
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30104,
+      "title": "Miðvikudags",
+      "track_id": 390903
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30104,
+      "title": "Triumph of a Heart",
+      "track_id": 390904
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30105,
+      "title": "Pleasure Is All Mine",
+      "track_id": 390905
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30105,
+      "title": "Show Me Forgiveness",
+      "track_id": 390906
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30105,
+      "title": "Where Is the Line",
+      "track_id": 390907
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30105,
+      "title": "Vökuró",
+      "track_id": 390908
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30105,
+      "title": "Öll Birtan",
+      "track_id": 390909
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30105,
+      "title": "Who Is It (Carry My Joy on The Left, Carry My Pain on The Right)",
+      "track_id": 390910
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30105,
+      "title": "Submarine",
+      "track_id": 390911
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30105,
+      "title": "Desired Constellation",
+      "track_id": 390912
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30105,
+      "title": "Oceania",
+      "track_id": 390913
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30105,
+      "title": "Sonnets / Unrealities XI",
+      "track_id": 390914
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 30105,
+      "title": "Ancestors",
+      "track_id": 390915
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 30105,
+      "title": "Mouth’s Cradle",
+      "track_id": 390916
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 30105,
+      "title": "Miðvikudags",
+      "track_id": 390917
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 244213,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 30105,
+      "title": "Triumph of a Heart",
+      "track_id": 390918
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31702,
+      "title": "Pleasure Is All Mine",
+      "track_id": 412255
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 206773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 31702,
+      "title": "Pleasure Is All Mine",
+      "track_id": 412270
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 31702,
+      "title": "Pleasure Is All Mine (5.1 mix)",
+      "track_id": 412285
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31702,
+      "title": "Show Me Forgiveness",
+      "track_id": 412256
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 83826,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 31702,
+      "title": "Show Me Forgiveness",
+      "track_id": 412271
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 84000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 31702,
+      "title": "Show Me Forgiveness (5.1 mix)",
+      "track_id": 412286
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31702,
+      "title": "Where Is the Line",
+      "track_id": 412257
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281200,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 31702,
+      "title": "Where Is the Line",
+      "track_id": 412272
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 281000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 31702,
+      "title": "Where Is the Line (5.1 mix)",
+      "track_id": 412287
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31702,
+      "title": "Vökuró",
+      "track_id": 412258
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194040,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 31702,
+      "title": "Vökuró",
+      "track_id": 412273
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 31702,
+      "title": "Vökuró (5.1 mix)",
+      "track_id": 412288
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31702,
+      "title": "Öll birtan",
+      "track_id": 412259
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112080,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 31702,
+      "title": "Öll birtan",
+      "track_id": 412274
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 112000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 31702,
+      "title": "Öll birtan (5.1 mix)",
+      "track_id": 412289
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31702,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 412260
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 31702,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right)",
+      "track_id": 412275
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 237000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 31702,
+      "title": "Who Is It (Carry My Joy on the Left, Carry My Pain on the Right) (5.1 mix)",
+      "track_id": 412290
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31702,
+      "title": "Submarine",
+      "track_id": 412261
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 193653,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 31702,
+      "title": "Submarine",
+      "track_id": 412276
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 194000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 31702,
+      "title": "Submarine (5.1 mix)",
+      "track_id": 412291
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31702,
+      "title": "Desired Constellation",
+      "track_id": 412262
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 295533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 31702,
+      "title": "Desired Constellation",
+      "track_id": 412277
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 296000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 31702,
+      "title": "Desired Constellation (5.1 mix)",
+      "track_id": 412292
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31702,
+      "title": "Oceania",
+      "track_id": 412263
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 204853,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 31702,
+      "title": "Oceania",
+      "track_id": 412278
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 205000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 31702,
+      "title": "Oceania (5.1 mix)",
+      "track_id": 412293
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 31702,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 412264
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 119560,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 31702,
+      "title": "Sonnets/Unrealities XI",
+      "track_id": 412279
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 120000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 31702,
+      "title": "Sonnets/Unrealities XI (5.1 mix)",
+      "track_id": 412294
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 31702,
+      "title": "Ancestors",
+      "track_id": 412265
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 31702,
+      "title": "Ancestors",
+      "track_id": 412280
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 248000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 31702,
+      "title": "Ancestors (5.1 mix)",
+      "track_id": 412295
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 31702,
+      "title": "Mouth’s Cradle",
+      "track_id": 412266
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 239826,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 31702,
+      "title": "Mouth’s Cradle",
+      "track_id": 412281
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "12",
+      "release_id": 31702,
+      "title": "Mouth’s Cradle (5.1 mix)",
+      "track_id": 412296
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 31702,
+      "title": "Miðvikudags",
+      "track_id": 412267
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 84693,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 31702,
+      "title": "Miðvikudags",
+      "track_id": 412282
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 85000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "13",
+      "release_id": 31702,
+      "title": "Miðvikudags (5.1 mix)",
+      "track_id": 412297
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 31702,
+      "title": "Triumph of a Heart",
+      "track_id": 412268
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250040,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 31702,
+      "title": "Triumph of a Heart",
+      "track_id": 412283
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 250000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "14",
+      "release_id": 31702,
+      "title": "Triumph of a Heart (5.1 mix)",
+      "track_id": 412298
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 121000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 31702,
+      "title": "Komið",
+      "track_id": 412269
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 120693,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 31702,
+      "title": "Komið",
+      "track_id": 412284
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 121000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "15",
+      "release_id": 31702,
+      "title": "Komið (5.1 mix)",
+      "track_id": 412299
+    }
+  ]
+}

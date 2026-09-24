@@ -1,0 +1,7923 @@
+{
+  "album": {
+    "album_id": 2781,
+    "artist": "The Fall",
+    "artist_id": 332,
+    "monitored": true,
+    "title": "Cerebral Caustic"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 170320,
+      "fingerprint": "sha256:4ad2c71f3916bf19c7112dc264c2ef713f33be196e3251e4074cfcc171cba1f9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "0407103a10ef0bdfb6379e4930512e65.flac",
+      "size_bytes": 22743461,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Joke"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 75333,
+      "fingerprint": "sha256:76e3ac31ae70633d0ed54079f5bd7bb509d7e8b76a19b15d4ef9156c390eff18",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "0635823a1c19e5405d5acb77d48ab6e0.flac",
+      "size_bytes": 8513104,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Glasgow Advice (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 220813,
+      "fingerprint": "sha256:1768fdcb57537c199cb273815aa068a43df554b0ac497345facc2c25b2be897f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "066fada464a2b0265838298673aa45f2.flac",
+      "size_bytes": 22802053,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Glam Racket (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 435947,
+      "fingerprint": "sha256:51d6d4e0ac2c3b6f9bb8a3d661afb29e0de14e4732ce93ebd21a0a546c7fcb33",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "079762d996935866ab1768407f108792.flac",
+      "size_bytes": 45606409,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Big New Prinz (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 314373,
+      "fingerprint": "sha256:a02887a9387b7194daef0e737ce3cfe9c561f10bf0ed73c6fd2980eb2e370962",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "0d5be43305c7269922a5982b11ad92de.flac",
+      "size_bytes": 34045339,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bill Is Dead (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 202133,
+      "fingerprint": "sha256:0093a72546ed63190bf362e2325d99a152a4e7ea2f97a63080cb021a45fc74e7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "0eccdda9b032c3b61a84a5f86f9b1b4b.flac",
+      "size_bytes": 26801531,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "One Day"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 116067,
+      "fingerprint": "sha256:8b4953050b9b0dbaa719e31b88d644b2b41ba6be7813055396af7790229c5e70",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15f4215eddbe13180dcd9a838a49cd83.flac",
+      "size_bytes": 13685489,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bounces - Leeds (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 238800,
+      "fingerprint": "sha256:bb88a8e86ede6659828bedb04eeaabab90ec2fa675c37fab7f442b5ff33f17f1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "1e27e62520d1abd70976d52f43049160.flac",
+      "size_bytes": 30633749,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Behind The Counter (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 297920,
+      "fingerprint": "sha256:900b639812266b74bbf0b5f4a9d67d74c6808a161a7b9e6b0a3198f1ff1ef615",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "2304fa49bac6fb36892e5ce713112483.flac",
+      "size_bytes": 31440736,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Life Just Bounces (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 274307,
+      "fingerprint": "sha256:fc78f0ea46fbbc090b28b1f5bc0d9f400d5c16fef5987a0ba1f5b1bfafdf6217",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "2a8c7d6bda9257c87e04ebdac6c99af6.flac",
+      "size_bytes": 30709353,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Middle Class Revolt - Simon, Dave & John (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 215107,
+      "fingerprint": "sha256:9a730a9775bb138aa1279ede012d273253bc703cf2e6778b1afee3fb64038f09",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "2fdad6f65643adfd539f9efbbac757ad.flac",
+      "size_bytes": 23261000,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "One Day (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 255067,
+      "fingerprint": "sha256:dbe863ec67e50e90e28ef9ffc21a89645ce74bb03a8add1436a2a435a4ace3c9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "321807f82feb96befc523fa62dd0fdb3.flac",
+      "size_bytes": 30189329,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Paranoia Man In Cheap Sh..t Room (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:13",
+      "duration_ms": 189600,
+      "fingerprint": "sha256:2dc7861db942beb2d8e1fb1779f26afd187c75746a65fa0d35d8c7fb39bc23ce",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "345eb89015dca706980220f3282e4954.flac",
+      "size_bytes": 22356498,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hark The Herald Angels Sing (live, Bbc Radio 1 John Peel, 17 December 1994)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:14",
+      "duration_ms": 193480,
+      "fingerprint": "sha256:f9d8264b2b73420516073febd2b4cc132979687b7b0336ed20c770c4cd67a29d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "35f58cb8da5d49bbab9e0e4047625e85.flac",
+      "size_bytes": 22705323,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Joke (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:15",
+      "duration_ms": 190960,
+      "fingerprint": "sha256:5cef32130e2548d371ce1dff20168124f98ad5c6654b5b3aac022c8e76c474ea",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "3f233c1d9cd88a4c1d20004970e7ed43.flac",
+      "size_bytes": 21574518,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Pearl City (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:16",
+      "duration_ms": 314600,
+      "fingerprint": "sha256:312639517c425e5a41098ebd91291ef01be6ab79d14cf351b514a5bbc3bf81d0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "43da5f1d7cec44eee47ab5f1cc78016a.flac",
+      "size_bytes": 35633850,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Edinburgh Man (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:17",
+      "duration_ms": 168733,
+      "fingerprint": "sha256:0d99d729b9101ba5d3f07898e35a6ba76a03d0c6f25155f2eeeb26c13eb0efa1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "4c01dd459cee14d3cf57b229ada5be3b.flac",
+      "size_bytes": 16516004,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Outro (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:18",
+      "duration_ms": 270173,
+      "fingerprint": "sha256:a44595f1fa4449266d27894c5a0e631fb2ead47857ed24658c67efca7ae0beed",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "520b1c6f5a6f2829b17862814fb9a77f.flac",
+      "size_bytes": 32332532,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "A Past Gone Mad (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:19",
+      "duration_ms": 163747,
+      "fingerprint": "sha256:da121f3c1fe09a4450f4da17ba1ef29045376fd32c7d786addc4df1fcb98f9b3",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "5772c165d7913feedcfdcdb0bcc02eb1.flac",
+      "size_bytes": 21294852,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Feeling Numb"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:20",
+      "duration_ms": 377893,
+      "fingerprint": "sha256:3094195b86ee9598e6eab7c527adee9fc491a82ce317fa75aa552f49f2a994cc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "57bf10f7302411166f5cd91512b24ee8.flac",
+      "size_bytes": 39939217,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bonkers In Phoenix (alternate Version)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:21",
+      "duration_ms": 165693,
+      "fingerprint": "sha256:573a76f89cd5e58075820ccae6fc286addd10e50af00f356cbc7bb649554d19b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "5896289e90eff13dab7b802bad33adc0.flac",
+      "size_bytes": 21016002,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Pearl City"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:22",
+      "duration_ms": 382320,
+      "fingerprint": "sha256:9102670448331df8b4c816e2c65b35d1389e3d941d4bd6d56bd2a0942baeacbb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "58c3306cb42d8c60168165748dcdef7e.flac",
+      "size_bytes": 44098393,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Noel's Chemical Effluence (studio Out-take From Code-selfish Sessions)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23",
+      "duration_ms": 197427,
+      "fingerprint": "sha256:77209918449b336c4a9b2a075c366b1010b87877cf28ebcfa98a088be86c2ead",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "5a581a48f2e2724f1c49758cd9285b98.flac",
+      "size_bytes": 24377020,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Feeling Numb (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:24",
+      "duration_ms": 372840,
+      "fingerprint": "sha256:6349ebffdceaa1643dcfc5e0ea3fa98f8af373885c3499faebb0ae04da0993ed",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "5b0868cd57203143224a3d3392ca62b3.flac",
+      "size_bytes": 39266749,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bonkers In Phoenix (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:25",
+      "duration_ms": 183120,
+      "fingerprint": "sha256:7b70e390c07720b7f4b60479e45aeace6a2474421d86d657e1eb19cedb546561",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "672d0681c19778d2063430a27aaaaa9b.flac",
+      "size_bytes": 21993507,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Mere Pseud Mag. Ed. (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:26",
+      "duration_ms": 361853,
+      "fingerprint": "sha256:5a14ee3168d9f0a3d74aec566b5065e1a4b1126030131843a7a402c0e79e58cb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "6a26fdf3ba4531fe89c915f95f292cb9.flac",
+      "size_bytes": 43745794,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bonkers In Phoenix"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:27",
+      "duration_ms": 221333,
+      "fingerprint": "sha256:0dacb1cb05ea29843a6cdf3192fe260d233e312e8836d4b665d1a706df26981a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "6a89814f34d92241ec6f5c9fa1c05dd7.flac",
+      "size_bytes": 27491462,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Pine Leaves"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:28",
+      "duration_ms": 63387,
+      "fingerprint": "sha256:0f193fc87ebf593f7e65e291f11adb1900c600262b5b5892c93b113ce946bb7e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "6b90a849a163f9e5bf4a81a134f7610e.flac",
+      "size_bytes": 7753608,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Mollusc In Tyrol (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:29",
+      "duration_ms": 206800,
+      "fingerprint": "sha256:61296e488f3a282a132a7b8aedd07061e3c3dc22633070401586cfeff47f12a9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "6fd1ca35b07ed8ea6d24d108a626ce35.flac",
+      "size_bytes": 24479380,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I'm Not Satisfied (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:30",
+      "duration_ms": 69227,
+      "fingerprint": "sha256:7f1013ded468da9d25f923cd5b090cef1b95a5ae31045d453fbbec22291da275",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "70225e821ae890dbe4cf74a23a8cd19f.flac",
+      "size_bytes": 7190555,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Jingle Bell Rock (live, Bbc Radio 1 John Peel, 17 December 1994)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:31",
+      "duration_ms": 397867,
+      "fingerprint": "sha256:1e3cd3dcf140cdcc3ffd40bb36642d04e94dd768857c97e7d0a7b5920b2f7896",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "71d4361745511a7cab3dfe109304c777.flac",
+      "size_bytes": 41903597,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Life Just Bounces (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:32",
+      "duration_ms": 211707,
+      "fingerprint": "sha256:de0dd4aaa45c2c4bda17a0de81cf49fdd0d378042a9a90adb2a825d3f74f5e38",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "77841b5ed68662078f5f0ab53b70395a.flac",
+      "size_bytes": 22342296,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Chiselers (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:33",
+      "duration_ms": 264307,
+      "fingerprint": "sha256:82a1efb6852f13472544598de85a431048bf382da97ebe4d4fd5963507ee1a2d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "78ec8aedf4609aedb57bb90297064fa1.flac",
+      "size_bytes": 32236581,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Lost In Music (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:34",
+      "duration_ms": 222173,
+      "fingerprint": "sha256:32820f88e473d51cbc773c94430e429131b03ee14475194b812346fc1db9e29a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "812b713e931085fac344cc2fcfe2df64.flac",
+      "size_bytes": 23590753,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rainmaster (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:35",
+      "duration_ms": 224507,
+      "fingerprint": "sha256:0b0119eb271f51713e28454a8de391df393166c69b9b8ce55cafb14872a6f3e2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "819a04405f064d7ee39041c252a1ec0b.flac",
+      "size_bytes": 24138443,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Don't Call Me Darling (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:36",
+      "duration_ms": 214987,
+      "fingerprint": "sha256:ae27a5fe28023bc3f3ab6a933045975582d29035ca76127de1e12580af54b8a6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "836309808b3ba679428d7b47beb4e193.flac",
+      "size_bytes": 28052709,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Don't Call Me Darling"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:37",
+      "duration_ms": 210813,
+      "fingerprint": "sha256:605b242deab29d213f491d2030e9d15274c5f8e749f5e82b5be81d88982e8ce0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "882e2596248af3fa04739d47860c95fe.flac",
+      "size_bytes": 23705326,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Don't Call Me Darling (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:38",
+      "duration_ms": 163467,
+      "fingerprint": "sha256:e839aa4be7473acb3de26a6208089e17e7307ece3a1e85a4612c690958251caf",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "896c7baeb56e7d577f8d0daa9a9eef55.flac",
+      "size_bytes": 18390707,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Paranoia Man In Cheap Sh..t Room (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:39",
+      "duration_ms": 189947,
+      "fingerprint": "sha256:c11577188988b85493e00dea7b4ca4dcf74833d8eab316b3f7f1011bb535122b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "8a61ebc4e5dd0bd7179f8e64ce29a021.flac",
+      "size_bytes": 20473895,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Prague '91 / Mr. Pharmacist (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:40",
+      "duration_ms": 172347,
+      "fingerprint": "sha256:ede216093b6f96920e89d76ee8115b4fac231e4d862e71433b2937867c71eadd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "8b7d9faa1aee0a5eee1c18e9419d3450.flac",
+      "size_bytes": 18414496,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Feeling Numb (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:41",
+      "duration_ms": 47347,
+      "fingerprint": "sha256:e35087c708dcaf802afd530fa3bfdd8b9f17e264d0e27cf3f6be972fac7f67ec",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "90a7184ede2eff05e652a311cdddf826.flac",
+      "size_bytes": 5018047,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Idiot-walk-out (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:42",
+      "duration_ms": 181200,
+      "fingerprint": "sha256:e5d931fe1b5d211eb5db71dc11f7a33dfb5a724c5116672c3477f2eae298cbe6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "93a4dbfa73486d9ef4f6a13b1fe5c9ce.flac",
+      "size_bytes": 20635824,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Numb At The Lodge (live, Bbc Radio 1 John Peel, 17 December 1994)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:43",
+      "duration_ms": 90253,
+      "fingerprint": "sha256:a8bfeb57aa87a0d7ebbf2e23e0a45cc97ad8432c7836482d0ad130420b5db28e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "962f8884f6508c2b963d88acaaed6243.flac",
+      "size_bytes": 9515442,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Intro - Roadhouse (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:44",
+      "duration_ms": 173547,
+      "fingerprint": "sha256:ccbc5ff8d54a262eaa555489b75190d3aeb25ba5e3946881fd39c82caed2a567",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "997b90fb38e4d9b2deca80145fb60ceb.flac",
+      "size_bytes": 18206719,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Aphid (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:45",
+      "duration_ms": 256373,
+      "fingerprint": "sha256:38b3f061d7d855bffc7ad1f334e3b000dd9c71266edfc46afe14fff2c94f1afa",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "99fd402d1edc1556443d27cdcaf4f8fb.flac",
+      "size_bytes": 31009582,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Idiot Joy Showland (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:46",
+      "duration_ms": 259840,
+      "fingerprint": "sha256:b40df98793cdd41edbc63bd2245f869d828e5347ba48ce6aa2390ad570d07447",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "9a947d581475bd4f73f92778292b2292.flac",
+      "size_bytes": 32042241,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Ladybird (green Grass) [live]"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:47",
+      "duration_ms": 206587,
+      "fingerprint": "sha256:8eaecd83a9d86afe17ebe25eb3be1791b0fe0d656ad6af41052b606e03e82594",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "a3e32ad0f2b2ff554f0750124b8f4cc9.flac",
+      "size_bytes": 26012737,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rainmaster"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:48",
+      "duration_ms": 230373,
+      "fingerprint": "sha256:c83ba9f2341b7cab8ac3c6ea6dc75d23b2f466b831ac01eb346d19d200ee8c29",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "aa4e37de1eb32bef03b2ff08151d768d.flac",
+      "size_bytes": 25818455,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Free Range (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:49",
+      "duration_ms": 166040,
+      "fingerprint": "sha256:5442628408971b6d4b097edd78b7dca3e49626953284663942d2629fca091682",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "ac605b97dc9e761a52a4fc7cfbf39002.flac",
+      "size_bytes": 20718566,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Aphid"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:50",
+      "duration_ms": 262267,
+      "fingerprint": "sha256:e2449502a1e284c173630b5f3e41092ff242c610b61fd1cd0452d641858bf13c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "b13a53ac8b05628e549cdb7c23d8375c.flac",
+      "size_bytes": 30578766,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Cloud Of Black (studio Out-take From Shift-work Sessions)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:51",
+      "duration_ms": 169253,
+      "fingerprint": "sha256:27806bd15a40e164e6822af69a54fb0b01c2f08cd24c0274628b4abcf5d6d949",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "b532bcf9c03ae781d1bae435e9307e10.flac",
+      "size_bytes": 17930460,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Joke (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:52",
+      "duration_ms": 188027,
+      "fingerprint": "sha256:abd6a5234ac5a4e10707e77b3fbc74c8c2c2fcf3fb6aca8320c73a0890741aa7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "b96461f1cbfa6d7735ca4af2f165abc7.flac",
+      "size_bytes": 22362235,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "North West Fashion Show"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:53",
+      "duration_ms": 206787,
+      "fingerprint": "sha256:11db35db3b6bcb2d16765082151d0c2de4ae4b0f07c2a4f1493e3051e60ae654",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "be888cbe0c035cc958d6ac1456c6a9df.flac",
+      "size_bytes": 22928223,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "War! (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:54",
+      "duration_ms": 197613,
+      "fingerprint": "sha256:8b2c53d172d72709be45d920960166be5cca9534bebee7ec24171cb274b4d6b9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "c2d511913257aa7bb4c7b846e4ae56c5.flac",
+      "size_bytes": 20806910,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I'm Not Satisfied (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:55",
+      "duration_ms": 176107,
+      "fingerprint": "sha256:0432639a378466a76b67ca8c3a8f6fe571cfabf2f6ef7d65b5100d621ebf9755",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "c41d28490465fff6163977b3b91a4f05.flac",
+      "size_bytes": 23959140,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "I'm Not Satisfied"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:56",
+      "duration_ms": 217507,
+      "fingerprint": "sha256:e101534b29bf1e2bf76a9a9d0823cb2140f8403e1b308110788b425af3b51bfc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "c4f660c2ae9f4cef82189c2049e22412.flac",
+      "size_bytes": 26135562,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Joke (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:57",
+      "duration_ms": 178107,
+      "fingerprint": "sha256:9848e726b36818b03ea8321ca5d37cafeb21b05dc8efedd6a3849ad89fc0e8d7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "c75733c30cac38fffa69fd42249f357b.flac",
+      "size_bytes": 18748871,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Pearl City (pre-release Rough Mix)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:58",
+      "duration_ms": 285667,
+      "fingerprint": "sha256:4812d3016430e93718fc7e732ed2020849a9c983332463519b9c453b6e427a81",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "c7d5c658d1dea16ceccaeedd57a9a3ae.flac",
+      "size_bytes": 33283704,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Life Just Bounces"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:59",
+      "duration_ms": 271173,
+      "fingerprint": "sha256:4a0a8b19d4b83158bc1e1cf754a43b846c50c13c6621645c4e3e2f391dfc2e91",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "caf8fb002da9839a11efc1dc04109daa.flac",
+      "size_bytes": 30252290,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The League Of Bald-headed Men (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:60",
+      "duration_ms": 255533,
+      "fingerprint": "sha256:d8771f93928eb9ab1409de0f5f495de63102ef6b494a933d82bc651b63e0ee91",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "cc0893f5cf7a4613e95d3aa696fe977c.flac",
+      "size_bytes": 31344372,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hi-tension Line (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:61",
+      "duration_ms": 48440,
+      "fingerprint": "sha256:68af804f177ecef264b69944dcf009a7eeda41053e8a948e60e391fb2b94ed12",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "d0eb64b82d92a47657c68a3e3860aac5.flac",
+      "size_bytes": 3540541,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Three Points (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:62",
+      "duration_ms": 103013,
+      "fingerprint": "sha256:90e77866dca1c7ab2863f254b2a4e81292107b5947ba7f0ec169fd8bbef2e0a2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "d1b624148cd5facc3d6067de10f07e17.flac",
+      "size_bytes": 10781780,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "M.h.'s Jokes (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:63",
+      "duration_ms": 169227,
+      "fingerprint": "sha256:71cb50c97e8ce4d3ea7753e2c5c5db9a789c762b3e5c2ed46442c98e82cb263a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "db8c7ddccaee94d17218b2e59842b1e7.flac",
+      "size_bytes": 19319311,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Strychnine (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:64",
+      "duration_ms": 226813,
+      "fingerprint": "sha256:a205b78cdca51c11959b6c747d7057921977d74935f7b45b067572e768ec3291",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "dc0ad40b9e58383b4201cbfa6456aa16.flac",
+      "size_bytes": 24660718,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Idiot Joy Showland (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:65",
+      "duration_ms": 329347,
+      "fingerprint": "sha256:cf9115526ccf41223373393b2c2103e635d467cdade65e940531e8a711f8f385",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "de26578efc0179b9a63ca93e8b43d1e1.flac",
+      "size_bytes": 35138770,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hey! Student (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:66",
+      "duration_ms": 361027,
+      "fingerprint": "sha256:aa66548f4a3ff83de85ea1b9fc0ffb16fc11bf1d0f8cb18a6235c8cf0d66f314",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "e3633fdc94086985fcf7e12a02d1612c.flac",
+      "size_bytes": 43769015,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Big New Prinz (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:67",
+      "duration_ms": 210640,
+      "fingerprint": "sha256:72290d121b5291eda79d632023994237f618472b6a297712d1a6d67877e4a54f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "e5cf8fb7d0bad7599a4553886d0aaa6c.flac",
+      "size_bytes": 22949794,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Glam Racket - Star (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:68",
+      "duration_ms": 202267,
+      "fingerprint": "sha256:67c5130e1ae2ea7c63e77923e6ac03805859e9ea4eaafad2b2becc1e0c743c44",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "e62711dc2dc98332fada4d125aa06883.flac",
+      "size_bytes": 20883946,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Glam Racket - Star (live, Bbc Radio 1 John Peel, 17 December 1994)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:69",
+      "duration_ms": 285880,
+      "fingerprint": "sha256:322c42164d02959f166d331b257c1f4da89971be754dbdf7008feeba5d3afd50",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "e678c5d7c280121042405ac3aeb79cad.flac",
+      "size_bytes": 33406222,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The City Never Sleeps (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:70",
+      "duration_ms": 229280,
+      "fingerprint": "sha256:e8841145d4f1307166cf079555b4e36a11a85951b5a4fadeae56fa3cb855ae12",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "e84ed792d11042ed9326acbfb131d3a9.flac",
+      "size_bytes": 27883969,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Return (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:71",
+      "duration_ms": 256800,
+      "fingerprint": "sha256:8c74f339a8ca0da0661ba3f9f2917aa83ef475c9aaf2da851552ce1b5e5bd3d7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "ecbeb268d967f527f7d5465601896dd5.flac",
+      "size_bytes": 27295333,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Bill Is Dead (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:72",
+      "duration_ms": 375573,
+      "fingerprint": "sha256:1d377110b3756d56a9b7b8691ea2bb724f4d886cb6e62d4b9e712f3e297534e4",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "f190e8bc7b3eb96c2498a78a98cff777.flac",
+      "size_bytes": 42051573,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Intro. Tape (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:73",
+      "duration_ms": 152173,
+      "fingerprint": "sha256:98cb487c34399651c6a8f14497916b504038fadacbeb55d0e1b85f128cb58c3e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "f19f2f7225b03c780d4232a09ef9b598.flac",
+      "size_bytes": 17195897,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Birthday (live, Rennes, France, 28 April 1995)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:74",
+      "duration_ms": 213280,
+      "fingerprint": "sha256:ee4b795e129cfe3e525beaf683da65d3efbdda89505bd4676478d2c6dfbf6f4c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "f3219bca9494de98c7db6db279df77cf.flac",
+      "size_bytes": 25292373,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "One Day (alternate Version)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:75",
+      "duration_ms": 123787,
+      "fingerprint": "sha256:2fea1b83b961fddc7d71d880365855e884bbdda80ef7e3f170b6b1603c928521",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "f3616a13e0d6c229917c611b1688ac8b.flac",
+      "size_bytes": 14599062,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "British People In Hot Weather (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:76",
+      "duration_ms": 109960,
+      "fingerprint": "sha256:c117340cba3999ed820824def114e5fe0ae2c9fe60483c6bfcf9a4779ea43f4a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "f8e16ae7f569ca3f195fdebf91307a58.flac",
+      "size_bytes": 10068301,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Ten Points (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:77",
+      "duration_ms": 173547,
+      "fingerprint": "sha256:1e18171c9a3d09ba76467bcd797b6985daf03ed35759fe630eb17159b816d640",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "fd5eb99c4267c53ec69737c8b7cd0246.flac",
+      "size_bytes": 19307376,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Up Too Much (live)"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:1",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Joke",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        428191
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:2",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Glasgow Advice (live)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        428260
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:3",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Glam Racket (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        428226
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:4",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Big New Prinz (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        19
+      ],
+      "track_ids": [
+        428237
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:5",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bill Is Dead (live)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        428262
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:6",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "One Day",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        428200
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:7",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bounces - Leeds (live)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        428257
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:8",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Behind The Counter (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        428223
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:9",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Life Just Bounces (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        428213
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:10",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Middle Class Revolt - Simon, Dave & John (live)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        428261
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:11",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "One Day (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        428207
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:12",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Paranoia Man In Cheap Sh..t Room (live)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        428256
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:13",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Hark The Herald Angels Sing (live, Bbc Radio 1 John Peel, 17 December 1994)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        428205
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:14",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Joke (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        428220
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:15",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Pearl City (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        428221
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:16",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Edinburgh Man (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        428231
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:17",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Outro (live)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        428258
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:18",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "A Past Gone Mad (live)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        428259
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:19",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Feeling Numb",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        428194
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:20",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bonkers In Phoenix (alternate Version)",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        428218
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:21",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Pearl City",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        428195
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:22",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Noel's Chemical Effluence (studio Out-take From Code-selfish Sessions)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        428265
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:23",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Feeling Numb (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        428227
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:24",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bonkers In Phoenix (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        428216
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:25",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Mere Pseud Mag. Ed. (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        428224
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:26",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bonkers In Phoenix",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        428199
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:27",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Pine Leaves",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        428202
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:28",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Mollusc In Tyrol (live)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        428238
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:29",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "I'm Not Satisfied (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        428228
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:30",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Jingle Bell Rock (live, Bbc Radio 1 John Peel, 17 December 1994)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        428204
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:31",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Life Just Bounces (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        428234
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:32",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Chiselers (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        18
+      ],
+      "track_ids": [
+        428236
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:33",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Lost In Music (live)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        428253
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:34",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Rainmaster (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        428208
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:35",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Don't Call Me Darling (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        428211
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:36",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Don't Call Me Darling",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        428192
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:37",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Don't Call Me Darling (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        428232
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:38",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Paranoia Man In Cheap Sh..t Room (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        428230
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:39",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Prague '91 / Mr. Pharmacist (live)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        428254
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:40",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Feeling Numb (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        428209
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:41",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Idiot-walk-out (live)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        428241
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:42",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Numb At The Lodge (live, Bbc Radio 1 John Peel, 17 December 1994)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        428206
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:43",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Intro - Roadhouse (live)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        428245
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:44",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Aphid (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        428215
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:45",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Idiot Joy Showland (live)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        428243
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:46",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Ladybird (green Grass) [live]",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        428240
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:47",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Rainmaster",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        428193
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:48",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Free Range (live)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        428249
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:49",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Aphid",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        428198
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:50",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Cloud Of Black (studio Out-take From Shift-work Sessions)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        428255
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:51",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Joke (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        428210
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:52",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "North West Fashion Show",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        428201
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:53",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "War! (live)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        428264
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:54",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "I'm Not Satisfied (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        428214
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:55",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "I'm Not Satisfied",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        428197
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:56",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The Joke (live)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        428246
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:57",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Pearl City (pre-release Rough Mix)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        428212
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:58",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Life Just Bounces",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        428196
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:59",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The League Of Bald-headed Men (live)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        428251
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:60",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Hi-tension Line (live)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        428250
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:61",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Three Points (live)",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        428266
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:62",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "M.h.'s Jokes (live)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        428247
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:63",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Strychnine (live)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        428263
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:64",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Idiot Joy Showland (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        428229
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:65",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Hey! Student (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        428233
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:66",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Big New Prinz (live)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        428244
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:67",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Glam Racket - Star (live)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        428252
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:68",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Glam Racket - Star (live, Bbc Radio 1 John Peel, 17 December 1994)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        428203
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:69",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "The City Never Sleeps (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        17
+      ],
+      "track_ids": [
+        428235
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:70",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Return (live)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        428239
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:71",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Bill Is Dead (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        428225
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:72",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Intro. Tape (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        428219
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:73",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Birthday (live, Rennes, France, 28 April 1995)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        428222
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:74",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "One Day (alternate Version)",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        428217
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:75",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "British People In Hot Weather (live)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        428248
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:76",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Ten Points (live)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        428242
+      ]
+    },
+    {
+      "album_id": 2781,
+      "artifact_id": "artifact:77",
+      "rejections": [],
+      "release_id": 32957,
+      "tag_album": "Cerebral Caustic (Expanded Edition)",
+      "tag_artist": "The Fall",
+      "tag_title": "Up Too Much (live)",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        428267
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13381",
+      "release_id": 13381,
+      "track_ids": [
+        159365,
+        159377,
+        159366,
+        159378,
+        159367,
+        159379,
+        159368,
+        159380,
+        159369,
+        159381,
+        159370,
+        159382,
+        159371,
+        159383,
+        159372,
+        159384,
+        159373,
+        159385,
+        159374,
+        159386,
+        159375,
+        159387,
+        159376,
+        159388,
+        159389,
+        159390,
+        159391,
+        159392,
+        159393
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13382",
+      "release_id": 13382,
+      "track_ids": [
+        159394,
+        159406,
+        159395,
+        159407,
+        159396,
+        159408,
+        159397,
+        159409,
+        159398,
+        159410,
+        159399,
+        159411,
+        159400,
+        159412,
+        159401,
+        159413,
+        159402,
+        159414,
+        159403,
+        159415,
+        159404,
+        159416,
+        159405,
+        159417,
+        159418,
+        159419,
+        159420,
+        159421,
+        159422
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13383",
+      "release_id": 13383,
+      "track_ids": [
+        159423,
+        159424,
+        159425,
+        159426,
+        159427,
+        159428,
+        159429,
+        159430,
+        159431,
+        159432,
+        159433,
+        159434,
+        159435,
+        159436
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13384",
+      "release_id": 13384,
+      "track_ids": [
+        159437,
+        159438,
+        159439,
+        159440,
+        159441,
+        159442,
+        159443,
+        159444,
+        159445,
+        159446,
+        159447,
+        159448
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13385",
+      "release_id": 13385,
+      "track_ids": [
+        159449,
+        159450,
+        159451,
+        159452,
+        159453,
+        159454,
+        159455,
+        159456,
+        159457,
+        159458,
+        159459,
+        159460
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:13386",
+      "release_id": 13386,
+      "track_ids": [
+        159461,
+        159473,
+        159462,
+        159474,
+        159463,
+        159475,
+        159464,
+        159476,
+        159465,
+        159477,
+        159466,
+        159478,
+        159467,
+        159479,
+        159468,
+        159480,
+        159469,
+        159481,
+        159470,
+        159482,
+        159471,
+        159483,
+        159472,
+        159484,
+        159485,
+        159486,
+        159487,
+        159488,
+        159489
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:32956",
+      "release_id": 32956,
+      "track_ids": [
+        428114,
+        428115,
+        428116,
+        428117,
+        428118,
+        428119,
+        428120,
+        428121,
+        428122,
+        428123,
+        428124,
+        428125,
+        428126,
+        428127,
+        428128,
+        428129,
+        428130,
+        428131,
+        428132,
+        428133,
+        428134,
+        428135,
+        428136,
+        428137,
+        428138,
+        428139,
+        428140,
+        428141,
+        428142,
+        428143,
+        428144,
+        428145,
+        428146,
+        428147,
+        428148,
+        428149,
+        428150,
+        428151,
+        428152,
+        428153,
+        428154,
+        428155,
+        428156,
+        428157,
+        428158,
+        428159,
+        428160,
+        428161,
+        428162,
+        428163,
+        428164,
+        428165,
+        428166,
+        428167,
+        428168,
+        428169,
+        428170,
+        428171,
+        428172,
+        428173,
+        428174,
+        428175,
+        428176,
+        428177,
+        428178,
+        428179,
+        428180,
+        428181,
+        428182,
+        428183,
+        428184,
+        428185,
+        428186,
+        428187,
+        428188,
+        428189,
+        428190
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2781,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49",
+        "artifact:50",
+        "artifact:51",
+        "artifact:52",
+        "artifact:53",
+        "artifact:54",
+        "artifact:55",
+        "artifact:56",
+        "artifact:57",
+        "artifact:58",
+        "artifact:59",
+        "artifact:60",
+        "artifact:61",
+        "artifact:62",
+        "artifact:63",
+        "artifact:64",
+        "artifact:65",
+        "artifact:66",
+        "artifact:67",
+        "artifact:68",
+        "artifact:69",
+        "artifact:70",
+        "artifact:71",
+        "artifact:72",
+        "artifact:73",
+        "artifact:74",
+        "artifact:75",
+        "artifact:76",
+        "artifact:77"
+      ],
+      "capability_id": "capability:import_missing_tracks:32957",
+      "release_id": 32957,
+      "track_ids": [
+        428191,
+        428203,
+        428219,
+        428238,
+        428252,
+        428192,
+        428204,
+        428220,
+        428239,
+        428253,
+        428193,
+        428205,
+        428221,
+        428240,
+        428254,
+        428194,
+        428206,
+        428222,
+        428241,
+        428255,
+        428195,
+        428207,
+        428223,
+        428242,
+        428256,
+        428196,
+        428208,
+        428224,
+        428243,
+        428257,
+        428197,
+        428209,
+        428225,
+        428244,
+        428258,
+        428198,
+        428210,
+        428226,
+        428245,
+        428259,
+        428199,
+        428211,
+        428227,
+        428246,
+        428260,
+        428200,
+        428212,
+        428228,
+        428247,
+        428261,
+        428201,
+        428213,
+        428229,
+        428248,
+        428262,
+        428202,
+        428214,
+        428230,
+        428249,
+        428263,
+        428215,
+        428231,
+        428250,
+        428264,
+        428216,
+        428232,
+        428251,
+        428265,
+        428217,
+        428233,
+        428266,
+        428218,
+        428234,
+        428267,
+        428235,
+        428236,
+        428237
+      ]
+    }
+  ],
+  "case_id": "sha256:2ab65db8f6ce28c834069c5474c645a88dde3e8251355773b9f779421ed9b64b",
+  "observed_at": "2026-09-23T03:20:39.132139982Z",
+  "queue": {
+    "download_ref": "download:3b8d6fc853b3a87ed534a11dfdb3577b1bae918f1f08750e2c87fcc2886f16c9",
+    "messages": [
+      "0407103a10ef0bdfb6379e4930512e65.flac",
+      "0635823a1c19e5405d5acb77d48ab6e0.flac",
+      "066fada464a2b0265838298673aa45f2.flac",
+      "079762d996935866ab1768407f108792.flac",
+      "0d5be43305c7269922a5982b11ad92de.flac",
+      "0eccdda9b032c3b61a84a5f86f9b1b4b.flac",
+      "15f4215eddbe13180dcd9a838a49cd83.flac",
+      "1e27e62520d1abd70976d52f43049160.flac",
+      "2304fa49bac6fb36892e5ce713112483.flac",
+      "2a8c7d6bda9257c87e04ebdac6c99af6.flac",
+      "2fdad6f65643adfd539f9efbbac757ad.flac",
+      "321807f82feb96befc523fa62dd0fdb3.flac",
+      "345eb89015dca706980220f3282e4954.flac",
+      "35f58cb8da5d49bbab9e0e4047625e85.flac",
+      "3f233c1d9cd88a4c1d20004970e7ed43.flac",
+      "43da5f1d7cec44eee47ab5f1cc78016a.flac",
+      "4c01dd459cee14d3cf57b229ada5be3b.flac",
+      "520b1c6f5a6f2829b17862814fb9a77f.flac",
+      "5772c165d7913feedcfdcdb0bcc02eb1.flac",
+      "57bf10f7302411166f5cd91512b24ee8.flac",
+      "5896289e90eff13dab7b802bad33adc0.flac",
+      "58c3306cb42d8c60168165748dcdef7e.flac",
+      "5a581a48f2e2724f1c49758cd9285b98.flac",
+      "5b0868cd57203143224a3d3392ca62b3.flac",
+      "672d0681c19778d2063430a27aaaaa9b.flac",
+      "6a26fdf3ba4531fe89c915f95f292cb9.flac",
+      "6a89814f34d92241ec6f5c9fa1c05dd7.flac",
+      "6b90a849a163f9e5bf4a81a134f7610e.flac",
+      "6fd1ca35b07ed8ea6d24d108a626ce35.flac",
+      "70225e821ae890dbe4cf74a23a8cd19f.flac",
+      "71d4361745511a7cab3dfe109304c777.flac",
+      "77841b5ed68662078f5f0ab53b70395a.flac",
+      "78ec8aedf4609aedb57bb90297064fa1.flac",
+      "812b713e931085fac344cc2fcfe2df64.flac",
+      "819a04405f064d7ee39041c252a1ec0b.flac",
+      "836309808b3ba679428d7b47beb4e193.flac",
+      "882e2596248af3fa04739d47860c95fe.flac",
+      "896c7baeb56e7d577f8d0daa9a9eef55.flac",
+      "8a61ebc4e5dd0bd7179f8e64ce29a021.flac",
+      "8b7d9faa1aee0a5eee1c18e9419d3450.flac",
+      "90a7184ede2eff05e652a311cdddf826.flac",
+      "93a4dbfa73486d9ef4f6a13b1fe5c9ce.flac",
+      "962f8884f6508c2b963d88acaaed6243.flac",
+      "997b90fb38e4d9b2deca80145fb60ceb.flac",
+      "99fd402d1edc1556443d27cdcaf4f8fb.flac",
+      "9a947d581475bd4f73f92778292b2292.flac",
+      "Album match is not close enough: 52.4% vs 80% [album, media count, year, tracks, unmatched tracks]",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "a3e32ad0f2b2ff554f0750124b8f4cc9.flac",
+      "aa4e37de1eb32bef03b2ff08151d768d.flac",
+      "ac605b97dc9e761a52a4fc7cfbf39002.flac",
+      "b13a53ac8b05628e549cdb7c23d8375c.flac",
+      "b532bcf9c03ae781d1bae435e9307e10.flac",
+      "b96461f1cbfa6d7735ca4af2f165abc7.flac",
+      "be888cbe0c035cc958d6ac1456c6a9df.flac",
+      "c2d511913257aa7bb4c7b846e4ae56c5.flac",
+      "c41d28490465fff6163977b3b91a4f05.flac",
+      "c4f660c2ae9f4cef82189c2049e22412.flac",
+      "c75733c30cac38fffa69fd42249f357b.flac",
+      "c7d5c658d1dea16ceccaeedd57a9a3ae.flac",
+      "caf8fb002da9839a11efc1dc04109daa.flac",
+      "cc0893f5cf7a4613e95d3aa696fe977c.flac",
+      "d0eb64b82d92a47657c68a3e3860aac5.flac",
+      "d1b624148cd5facc3d6067de10f07e17.flac",
+      "db8c7ddccaee94d17218b2e59842b1e7.flac",
+      "dc0ad40b9e58383b4201cbfa6456aa16.flac",
+      "de26578efc0179b9a63ca93e8b43d1e1.flac",
+      "e3633fdc94086985fcf7e12a02d1612c.flac",
+      "e5cf8fb7d0bad7599a4553886d0aaa6c.flac",
+      "e62711dc2dc98332fada4d125aa06883.flac",
+      "e678c5d7c280121042405ac3aeb79cad.flac",
+      "e84ed792d11042ed9326acbfb131d3a9.flac",
+      "ecbeb268d967f527f7d5465601896dd5.flac",
+      "f190e8bc7b3eb96c2498a78a98cff777.flac",
+      "f19f2f7225b03c780d4232a09ef9b598.flac",
+      "f3219bca9494de98c7db6db279df77cf.flac",
+      "f3616a13e0d6c229917c611b1688ac8b.flac",
+      "f8e16ae7f569ca3f195fdebf91307a58.flac",
+      "fd5eb99c4267c53ec69737c8b7cd0246.flac"
+    ],
+    "queue_id": 1825055000,
+    "title": "The.Fall-Cerebral.Caustic.(Expanded.Edition)-16BIT-WEB-FLAC-2026-OBZEN"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "5a6cf112-c723-3f4a-8720-a6a975d611b4",
+      "format": "2xCD",
+      "labels": [
+        "Castle Music"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 13381,
+      "title": "Cerebral Caustic",
+      "track_count": 29
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "72940a4a-f827-4a98-a3b9-308984cb89e9",
+      "format": "2xDigital Media",
+      "labels": [
+        "Cherry Red Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 13382,
+      "title": "Cerebral Caustic",
+      "track_count": 29
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "acfa2efc-209b-479f-a6c4-81694541c349",
+      "format": "CD",
+      "labels": [
+        "Zero Corporation"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 13383,
+      "title": "Cerebral Caustic",
+      "track_count": 14
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e2cd118c-514b-4b5f-bc2b-9f0e6ce1084f",
+      "format": "Digital Media",
+      "labels": [
+        "Artful Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 13384,
+      "title": "Cerebral Caustic",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "189273b4-fd64-4cee-9b77-2b27ab6f689f",
+      "format": "CD",
+      "labels": [
+        "Permanent Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 13385,
+      "title": "Cerebral Caustic",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "836254bf-f7ad-4157-b106-5c504ae7c35d",
+      "format": "2xCD",
+      "labels": [
+        "Castle Music"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 13386,
+      "title": "Cerebral Caustic",
+      "track_count": 29
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "expanded edition",
+      "foreign_release_id": "829a8460-f2c4-4506-8f14-310683d84d9e",
+      "format": "Digital Media",
+      "labels": [],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 32956,
+      "title": "Cerebral Caustic",
+      "track_count": 77
+    },
+    {
+      "countries": [],
+      "disambiguation": "expanded edition",
+      "foreign_release_id": "98ff1d95-a0da-4402-9dca-94c39a9ba4c8",
+      "format": "5xCD",
+      "labels": [],
+      "medium_count": 5,
+      "monitored": false,
+      "release_id": 32957,
+      "title": "Cerebral Caustic",
+      "track_count": 77
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 171466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13381,
+      "title": "The Joke",
+      "track_id": 159365
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 203573,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 13381,
+      "title": "Glam Racket - Star",
+      "track_id": 159377
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13381,
+      "title": "Don't Call Me Darling",
+      "track_id": 159366
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 69866,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 13381,
+      "title": "Jingle Bell Rock",
+      "track_id": 159378
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13381,
+      "title": "Rainmaster",
+      "track_id": 159367
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 190640,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 13381,
+      "title": "Hark the Herald Angels Sing",
+      "track_id": 159379
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 165706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13381,
+      "title": "Feeling Numb",
+      "track_id": 159368
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 186506,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 13381,
+      "title": "Numb at the Lodge",
+      "track_id": 159380
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 167186,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13381,
+      "title": "Pearl City",
+      "track_id": 159369
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216986,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 13381,
+      "title": "One Day (pre-release rough mix)",
+      "track_id": 159381
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13381,
+      "title": "Life Just Bounces",
+      "track_id": 159370
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 223746,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 13381,
+      "title": "Rainmaster (pre-release rough mix)",
+      "track_id": 159382
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13381,
+      "title": "I'm Not Satisfied",
+      "track_id": 159371
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 174773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 13381,
+      "title": "Feeling Numb (pre-release rough mix)",
+      "track_id": 159383
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13381,
+      "title": "The Aphid",
+      "track_id": 159372
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 169253,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 13381,
+      "title": "The Joke (pre-release rough mix)",
+      "track_id": 159384
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13381,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159373
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 226120,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 13381,
+      "title": "Don't Call Me Darling (pre-release rough mix)",
+      "track_id": 159385
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202280,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13381,
+      "title": "One Day",
+      "track_id": 159374
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 180573,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 13381,
+      "title": "Pearl City (pre-release rough mix)",
+      "track_id": 159386
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 189520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13381,
+      "title": "North West Fashion Show",
+      "track_id": 159375
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 298520,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 13381,
+      "title": "Life Just Bounces (pre-release rough mix)",
+      "track_id": 159387
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 220933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13381,
+      "title": "Pine Leaves",
+      "track_id": 159376
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 198600,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 13381,
+      "title": "I'm Not Satisfied (pre-release rough mix)",
+      "track_id": 159388
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 176960,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 13381,
+      "title": "The Aphid (pre-release rough mix)",
+      "track_id": 159389
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 374973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 13381,
+      "title": "Bonkers in Phoenix (pre-release rough mix)",
+      "track_id": 159390
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 216533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 13381,
+      "title": "One Day (alternate version)",
+      "track_id": 159391
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 381253,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 13381,
+      "title": "Bonkers in Phoenix (alternate version)",
+      "track_id": 159392
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 459373,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "17",
+      "release_id": 13381,
+      "title": "Mark E Smith & Brix Smith Promo Interview",
+      "track_id": 159393
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13382,
+      "title": "The Joke",
+      "track_id": 159394
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 203573,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 13382,
+      "title": "Glam Racket – Star",
+      "track_id": 159406
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13382,
+      "title": "Don’t Call Me Darling",
+      "track_id": 159395
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 69866,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 13382,
+      "title": "Jingle Bell Rock",
+      "track_id": 159407
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13382,
+      "title": "Rainmaster",
+      "track_id": 159396
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 190640,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 13382,
+      "title": "Hark the Herald Angels Sing",
+      "track_id": 159408
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 165706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13382,
+      "title": "Feeling Numb",
+      "track_id": 159397
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 186506,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 13382,
+      "title": "Numb at the Lodge",
+      "track_id": 159409
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 167186,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13382,
+      "title": "Pearl City",
+      "track_id": 159398
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 216986,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 13382,
+      "title": "One Day (pre‐release rough mix)",
+      "track_id": 159410
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13382,
+      "title": "Life Just Bounces",
+      "track_id": 159399
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 223746,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 13382,
+      "title": "Rainmaster (pre‐release rough mix)",
+      "track_id": 159411
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13382,
+      "title": "I’m Not Satisfied",
+      "track_id": 159400
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 174773,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 13382,
+      "title": "Feeling Numb (pre‐release rough mix)",
+      "track_id": 159412
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13382,
+      "title": "The Aphid",
+      "track_id": 159401
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 169253,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 13382,
+      "title": "The Joke (pre‐release rough mix)",
+      "track_id": 159413
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13382,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159402
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 226120,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 13382,
+      "title": "Don’t Call Me Darling (pre‐release rough mix)",
+      "track_id": 159414
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202280,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13382,
+      "title": "One Day",
+      "track_id": 159403
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 180573,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 13382,
+      "title": "Pearl City (pre‐release rough mix)",
+      "track_id": 159415
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 189520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13382,
+      "title": "North West Fashion Show",
+      "track_id": 159404
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 298520,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 13382,
+      "title": "Life Just Bounces (pre‐release rough mix)",
+      "track_id": 159416
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 220933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13382,
+      "title": "Pine Leaves",
+      "track_id": 159405
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 198600,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 13382,
+      "title": "I’m Not Satisfied (pre‐release rough mix)",
+      "track_id": 159417
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 176960,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 13382,
+      "title": "The Aphid (pre‐release rough mix)",
+      "track_id": 159418
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 374973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 13382,
+      "title": "Bonkers in Phoenix (pre‐release rough mix)",
+      "track_id": 159419
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 216533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 13382,
+      "title": "One Day (alternate version)",
+      "track_id": 159420
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 381253,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 13382,
+      "title": "Bonkers in Phoenix (alternate version)",
+      "track_id": 159421
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 459373,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "17",
+      "release_id": 13382,
+      "title": "Mark E Smith & Brix Smith Promo Interview",
+      "track_id": 159422
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13383,
+      "title": "The Joke",
+      "track_id": 159423
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13383,
+      "title": "Don’t Call Me Darling",
+      "track_id": 159424
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13383,
+      "title": "Rainmaster",
+      "track_id": 159425
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 165706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13383,
+      "title": "Feeling Numb",
+      "track_id": 159426
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 167186,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13383,
+      "title": "Pearl City",
+      "track_id": 159427
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13383,
+      "title": "Life Just Bounces",
+      "track_id": 159428
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13383,
+      "title": "I’m Not Satisfied",
+      "track_id": 159429
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13383,
+      "title": "The Aphid",
+      "track_id": 159430
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13383,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159431
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202280,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13383,
+      "title": "One Day",
+      "track_id": 159432
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 189520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13383,
+      "title": "North West Fashion Show",
+      "track_id": 159433
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 220933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13383,
+      "title": "Pine Leaves",
+      "track_id": 159434
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 439000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 13383,
+      "title": "Middle Class Revolt! (The Prozac mix)",
+      "track_id": 159435
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 471000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 13383,
+      "title": "Middle Class Revolt! (The Orange in the Mouth mix)",
+      "track_id": 159436
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13384,
+      "title": "The Joke",
+      "track_id": 159437
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13384,
+      "title": "Don’t Call Me Darling",
+      "track_id": 159438
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13384,
+      "title": "Rainmaster",
+      "track_id": 159439
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 165706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13384,
+      "title": "Feeling Numb",
+      "track_id": 159440
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 167186,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13384,
+      "title": "Pearl City",
+      "track_id": 159441
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13384,
+      "title": "Life Just Bounces",
+      "track_id": 159442
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13384,
+      "title": "I’m Not Satisfied",
+      "track_id": 159443
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13384,
+      "title": "The Aphid",
+      "track_id": 159444
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13384,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159445
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202280,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13384,
+      "title": "One Day",
+      "track_id": 159446
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 189520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13384,
+      "title": "North West Fashion Show",
+      "track_id": 159447
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 220933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13384,
+      "title": "Pine Leaves",
+      "track_id": 159448
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13385,
+      "title": "The Joke",
+      "track_id": 159449
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215626,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13385,
+      "title": "Don't Call Me Darling",
+      "track_id": 159450
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13385,
+      "title": "Rainmaster",
+      "track_id": 159451
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 165706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13385,
+      "title": "Feeling Numb",
+      "track_id": 159452
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 167186,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13385,
+      "title": "Pearl City",
+      "track_id": 159453
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13385,
+      "title": "Life Just Bounces",
+      "track_id": 159454
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13385,
+      "title": "I'm Not Satisfied",
+      "track_id": 159455
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13385,
+      "title": "The Aphid",
+      "track_id": 159456
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13385,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159457
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202280,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13385,
+      "title": "One Day",
+      "track_id": 159458
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 189520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13385,
+      "title": "North West Fashion Show",
+      "track_id": 159459
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 220933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13385,
+      "title": "Pine Leaves",
+      "track_id": 159460
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 171000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 13386,
+      "title": "The Joke",
+      "track_id": 159461
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 204000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 13386,
+      "title": "Glam Racket – Star",
+      "track_id": 159473
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 216000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 13386,
+      "title": "Don’t Call Me Darling",
+      "track_id": 159462
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 70000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 13386,
+      "title": "Jingle Bell Rock",
+      "track_id": 159474
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 13386,
+      "title": "Rainmaster",
+      "track_id": 159463
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 13386,
+      "title": "Hark the Herald Angels Sing",
+      "track_id": 159475
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 13386,
+      "title": "Feeling Numb",
+      "track_id": 159464
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 187000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 13386,
+      "title": "Numb at the Lodge",
+      "track_id": 159476
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 13386,
+      "title": "Pearl City",
+      "track_id": 159465
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 13386,
+      "title": "One Day (pre‐release rough mix)",
+      "track_id": 159477
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 13386,
+      "title": "Life Just Bounces",
+      "track_id": 159466
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 214000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 13386,
+      "title": "Rainmaster (pre‐release rough mix)",
+      "track_id": 159478
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 177000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 13386,
+      "title": "I’m Not Satisfied",
+      "track_id": 159467
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 175000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 13386,
+      "title": "Feeling Numb (pre‐release rough mix)",
+      "track_id": 159479
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 13386,
+      "title": "The Aphid",
+      "track_id": 159468
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 13386,
+      "title": "The Joke (pre‐release rough mix)",
+      "track_id": 159480
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 13386,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159469
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 13386,
+      "title": "Don’t Call Me Darling (pre‐release rough mix)",
+      "track_id": 159481
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 13386,
+      "title": "One Day",
+      "track_id": 159470
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 181000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 13386,
+      "title": "Pearl City (pre‐release rough mix)",
+      "track_id": 159482
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 13386,
+      "title": "North West Fashion Show",
+      "track_id": 159471
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 299000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 13386,
+      "title": "Life Just Bounces (pre‐release rough mix)",
+      "track_id": 159483
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 13386,
+      "title": "Pine Leaves",
+      "track_id": 159472
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 13386,
+      "title": "I’m Not Satisfied (pre‐release rough mix)",
+      "track_id": 159484
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 177000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 13386,
+      "title": "The Aphid (pre‐release rough mix)",
+      "track_id": 159485
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 375000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 13386,
+      "title": "Bonkers in Phoenix (pre‐release rough mix)",
+      "track_id": 159486
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 13386,
+      "title": "One Day (pre‐release rough mix)",
+      "track_id": 159487
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 381000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 13386,
+      "title": "Bonkers in Phoenix",
+      "track_id": 159488
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 459000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "17",
+      "release_id": 13386,
+      "title": "Mark E Smith & Brix Smith Promo Interview",
+      "track_id": 159489
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32956,
+      "title": "The Joke",
+      "track_id": 428114
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 214000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32956,
+      "title": "Don’t Call Me Darling",
+      "track_id": 428115
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32956,
+      "title": "Rainmaster",
+      "track_id": 428116
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 163000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32956,
+      "title": "Feeling Numb",
+      "track_id": 428117
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 165000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32956,
+      "title": "Pearl City",
+      "track_id": 428118
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 285000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32956,
+      "title": "Life Just Bounces",
+      "track_id": 428119
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32956,
+      "title": "I’m Not Satisfied",
+      "track_id": 428120
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32956,
+      "title": "The Aphid",
+      "track_id": 428121
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 361000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32956,
+      "title": "Bonkers in Phoenix",
+      "track_id": 428122
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32956,
+      "title": "One Day",
+      "track_id": 428123
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 188000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32956,
+      "title": "North West Fashion Show",
+      "track_id": 428124
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 32956,
+      "title": "Pine Leaves",
+      "track_id": 428125
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 32956,
+      "title": "Glam Racket – Star (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428126
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 69000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 32956,
+      "title": "Jingle Bell Rock (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428127
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 189000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 32956,
+      "title": "Hark the Herald Angels Sing (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428128
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 181000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 32956,
+      "title": "Numb at the Lodge (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428129
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 215000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 32956,
+      "title": "One Day (pre‐release rough mix)",
+      "track_id": 428130
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 32956,
+      "title": "Rainmaster (pre‐release rough mix)",
+      "track_id": 428131
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 172000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 32956,
+      "title": "Feeling Numb (pre‐release rough mix)",
+      "track_id": 428132
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "20",
+      "release_id": 32956,
+      "title": "The Joke (pre‐release rough mix)",
+      "track_id": 428133
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 224000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "21",
+      "release_id": 32956,
+      "title": "Don’t Call Me Darling (pre‐release rough mix)",
+      "track_id": 428134
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 178000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "22",
+      "release_id": 32956,
+      "title": "Pearl City (pre‐release rough mix)",
+      "track_id": 428135
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 297000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "23",
+      "release_id": 32956,
+      "title": "Life Just Bounces (pre‐release rough mix)",
+      "track_id": 428136
+    },
+    {
+      "absolute_number": 24,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "24",
+      "release_id": 32956,
+      "title": "I’m Not Satisfied (pre‐release rough mix)",
+      "track_id": 428137
+    },
+    {
+      "absolute_number": 25,
+      "duration_ms": 173000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "25",
+      "release_id": 32956,
+      "title": "The Aphid (pre‐release rough mix)",
+      "track_id": 428138
+    },
+    {
+      "absolute_number": 26,
+      "duration_ms": 372000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "26",
+      "release_id": 32956,
+      "title": "Bonkers in Phoenix (pre‐release rough mix)",
+      "track_id": 428139
+    },
+    {
+      "absolute_number": 27,
+      "duration_ms": 213000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "27",
+      "release_id": 32956,
+      "title": "One Day (alternate version)",
+      "track_id": 428140
+    },
+    {
+      "absolute_number": 28,
+      "duration_ms": 377000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "28",
+      "release_id": 32956,
+      "title": "Bonkers in Phoenix (alternate version)",
+      "track_id": 428141
+    },
+    {
+      "absolute_number": 29,
+      "duration_ms": 375000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "29",
+      "release_id": 32956,
+      "title": "Intro. Tape",
+      "track_id": 428142
+    },
+    {
+      "absolute_number": 30,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "30",
+      "release_id": 32956,
+      "title": "The Joke",
+      "track_id": 428143
+    },
+    {
+      "absolute_number": 31,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "31",
+      "release_id": 32956,
+      "title": "Pearl City",
+      "track_id": 428144
+    },
+    {
+      "absolute_number": 32,
+      "duration_ms": 152000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "32",
+      "release_id": 32956,
+      "title": "Birthday",
+      "track_id": 428145
+    },
+    {
+      "absolute_number": 33,
+      "duration_ms": 238000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "33",
+      "release_id": 32956,
+      "title": "Behind the Counter",
+      "track_id": 428146
+    },
+    {
+      "absolute_number": 34,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "34",
+      "release_id": 32956,
+      "title": "Mere Pseud Mag. Ed.",
+      "track_id": 428147
+    },
+    {
+      "absolute_number": 35,
+      "duration_ms": 256000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "35",
+      "release_id": 32956,
+      "title": "Bill Is Dead (live, Rennes, France, 28 April 1995)",
+      "track_id": 428148
+    },
+    {
+      "absolute_number": 36,
+      "duration_ms": 220000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "36",
+      "release_id": 32956,
+      "title": "Glam Racket (live, Rennes, France, 28 April 1995)",
+      "track_id": 428149
+    },
+    {
+      "absolute_number": 37,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "37",
+      "release_id": 32956,
+      "title": "Feeling Numb (live, Rennes, France, 28 April 1995)",
+      "track_id": 428150
+    },
+    {
+      "absolute_number": 38,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "38",
+      "release_id": 32956,
+      "title": "I’m Not Satisfied (live, Rennes, France, 28 April 1995)",
+      "track_id": 428151
+    },
+    {
+      "absolute_number": 39,
+      "duration_ms": 226000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "39",
+      "release_id": 32956,
+      "title": "Idiot Joy Showland (live, Rennes, France, 28 April 1995)",
+      "track_id": 428152
+    },
+    {
+      "absolute_number": 40,
+      "duration_ms": 163000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "40",
+      "release_id": 32956,
+      "title": "Paranoia Man in Cheap Sh…t Room (live, Rennes, France, 28 April 1995)",
+      "track_id": 428153
+    },
+    {
+      "absolute_number": 41,
+      "duration_ms": 314000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "41",
+      "release_id": 32956,
+      "title": "Edinburgh Man (live, Rennes, France, 28 April 1995)",
+      "track_id": 428154
+    },
+    {
+      "absolute_number": 42,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "42",
+      "release_id": 32956,
+      "title": "Don’t Call Me Darling (live, Rennes, France, 28 April 1995)",
+      "track_id": 428155
+    },
+    {
+      "absolute_number": 43,
+      "duration_ms": 329000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "43",
+      "release_id": 32956,
+      "title": "Hey! Student (live, Rennes, France, 28 April 1995)",
+      "track_id": 428156
+    },
+    {
+      "absolute_number": 44,
+      "duration_ms": 397000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "44",
+      "release_id": 32956,
+      "title": "Life Just Bounces (live, Rennes, France, 28 April 1995)",
+      "track_id": 428157
+    },
+    {
+      "absolute_number": 45,
+      "duration_ms": 285000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "45",
+      "release_id": 32956,
+      "title": "The City Never Sleeps (live, Rennes, France, 28 April 1995)",
+      "track_id": 428158
+    },
+    {
+      "absolute_number": 46,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "46",
+      "release_id": 32956,
+      "title": "The Chiselers (live, Rennes, France, 28 April 1995)",
+      "track_id": 428159
+    },
+    {
+      "absolute_number": 47,
+      "duration_ms": 435000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "47",
+      "release_id": 32956,
+      "title": "Big New Prinz (live, Rennes, France, 28 April 1995)",
+      "track_id": 428160
+    },
+    {
+      "absolute_number": 48,
+      "duration_ms": 63000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "48",
+      "release_id": 32956,
+      "title": "Mollusc in Tyrol (live)",
+      "track_id": 428161
+    },
+    {
+      "absolute_number": 49,
+      "duration_ms": 229000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "49",
+      "release_id": 32956,
+      "title": "Return (live)",
+      "track_id": 428162
+    },
+    {
+      "absolute_number": 50,
+      "duration_ms": 259000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "50",
+      "release_id": 32956,
+      "title": "Ladybird (Green Grass) (live)",
+      "track_id": 428163
+    },
+    {
+      "absolute_number": 51,
+      "duration_ms": 47000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "51",
+      "release_id": 32956,
+      "title": "Idiot‐Walk‐Out (live)",
+      "track_id": 428164
+    },
+    {
+      "absolute_number": 52,
+      "duration_ms": 109000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "52",
+      "release_id": 32956,
+      "title": "Ten Points (live)",
+      "track_id": 428165
+    },
+    {
+      "absolute_number": 53,
+      "duration_ms": 256000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "53",
+      "release_id": 32956,
+      "title": "Idiot Joy Showland (live)",
+      "track_id": 428166
+    },
+    {
+      "absolute_number": 54,
+      "duration_ms": 361000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "54",
+      "release_id": 32956,
+      "title": "Big New Prinz (live)",
+      "track_id": 428167
+    },
+    {
+      "absolute_number": 55,
+      "duration_ms": 90000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "55",
+      "release_id": 32956,
+      "title": "Intro – Roadhouse (live)",
+      "track_id": 428168
+    },
+    {
+      "absolute_number": 56,
+      "duration_ms": 217000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "56",
+      "release_id": 32956,
+      "title": "The Joke (live)",
+      "track_id": 428169
+    },
+    {
+      "absolute_number": 57,
+      "duration_ms": 103000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "57",
+      "release_id": 32956,
+      "title": "M.H.’s Jokes (live)",
+      "track_id": 428170
+    },
+    {
+      "absolute_number": 58,
+      "duration_ms": 123000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "58",
+      "release_id": 32956,
+      "title": "British People in Hot Weather (live)",
+      "track_id": 428171
+    },
+    {
+      "absolute_number": 59,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "59",
+      "release_id": 32956,
+      "title": "Free Range (live)",
+      "track_id": 428172
+    },
+    {
+      "absolute_number": 60,
+      "duration_ms": 255000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "60",
+      "release_id": 32956,
+      "title": "Hi‐Tension Line (live)",
+      "track_id": 428173
+    },
+    {
+      "absolute_number": 61,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "61",
+      "release_id": 32956,
+      "title": "The League of Bald‐Headed Men (live)",
+      "track_id": 428174
+    },
+    {
+      "absolute_number": 62,
+      "duration_ms": 210000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "62",
+      "release_id": 32956,
+      "title": "Glam Racket – Star (live)",
+      "track_id": 428175
+    },
+    {
+      "absolute_number": 63,
+      "duration_ms": 264000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "63",
+      "release_id": 32956,
+      "title": "Lost in Music (live)",
+      "track_id": 428176
+    },
+    {
+      "absolute_number": 64,
+      "duration_ms": 189000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "64",
+      "release_id": 32956,
+      "title": "Prague ’91 / Mr. Pharmacist (live)",
+      "track_id": 428177
+    },
+    {
+      "absolute_number": 65,
+      "duration_ms": 262000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "65",
+      "release_id": 32956,
+      "title": "Cloud of Black (live)",
+      "track_id": 428178
+    },
+    {
+      "absolute_number": 66,
+      "duration_ms": 255000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "66",
+      "release_id": 32956,
+      "title": "Paranoia Man in Cheap Sh…t Room (live)",
+      "track_id": 428179
+    },
+    {
+      "absolute_number": 67,
+      "duration_ms": 116000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "67",
+      "release_id": 32956,
+      "title": "Bounces (Leeds, live)",
+      "track_id": 428180
+    },
+    {
+      "absolute_number": 68,
+      "duration_ms": 168000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "68",
+      "release_id": 32956,
+      "title": "Outro (live)",
+      "track_id": 428181
+    },
+    {
+      "absolute_number": 69,
+      "duration_ms": 270000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "69",
+      "release_id": 32956,
+      "title": "A Past Gone Mad (live)",
+      "track_id": 428182
+    },
+    {
+      "absolute_number": 70,
+      "duration_ms": 75000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "70",
+      "release_id": 32956,
+      "title": "Glasgow Advice (live)",
+      "track_id": 428183
+    },
+    {
+      "absolute_number": 71,
+      "duration_ms": 274000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "71",
+      "release_id": 32956,
+      "title": "Middle Class Revolt (Simon, Dave & John, live)",
+      "track_id": 428184
+    },
+    {
+      "absolute_number": 72,
+      "duration_ms": 314000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "72",
+      "release_id": 32956,
+      "title": "Bill Is Dead (live)",
+      "track_id": 428185
+    },
+    {
+      "absolute_number": 73,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "73",
+      "release_id": 32956,
+      "title": "Strychnine (live)",
+      "track_id": 428186
+    },
+    {
+      "absolute_number": 74,
+      "duration_ms": 206000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "74",
+      "release_id": 32956,
+      "title": "War! (live)",
+      "track_id": 428187
+    },
+    {
+      "absolute_number": 75,
+      "duration_ms": 382000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "75",
+      "release_id": 32956,
+      "title": "Noel’s Chemical Effluence (live)",
+      "track_id": 428188
+    },
+    {
+      "absolute_number": 76,
+      "duration_ms": 48000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "76",
+      "release_id": 32956,
+      "title": "Three Points (live)",
+      "track_id": 428189
+    },
+    {
+      "absolute_number": 77,
+      "duration_ms": 173000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "77",
+      "release_id": 32956,
+      "title": "Up Too Much (live)",
+      "track_id": 428190
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 170000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 32957,
+      "title": "The Joke",
+      "track_id": 428191
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 32957,
+      "title": "Glam Racket – Star (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428203
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 376000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 32957,
+      "title": "Intro. Tape (live, Rennes, France, 28 April 1995)",
+      "track_id": 428219
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 63000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "1",
+      "release_id": 32957,
+      "title": "Mollusc in Tyrol (live)",
+      "track_id": 428238
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "1",
+      "release_id": 32957,
+      "title": "Glam Racket – Star (live)",
+      "track_id": 428252
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 215000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 32957,
+      "title": "Don’t Call Me Darling",
+      "track_id": 428192
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 69000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 32957,
+      "title": "Jingle Bell Rock (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428204
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 193000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 32957,
+      "title": "The Joke (live, Rennes, France, 28 April 1995)",
+      "track_id": 428220
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 229000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "2",
+      "release_id": 32957,
+      "title": "Return (live)",
+      "track_id": 428239
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 264000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "2",
+      "release_id": 32957,
+      "title": "Lost in Music (live)",
+      "track_id": 428253
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 32957,
+      "title": "Rainmaster",
+      "track_id": 428193
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 32957,
+      "title": "Hark the Herald Angels Sing (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428205
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 191000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 32957,
+      "title": "Pearl City (live, Rennes, France, 28 April 1995)",
+      "track_id": 428221
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "3",
+      "release_id": 32957,
+      "title": "Ladybird (Green Grass) (live)",
+      "track_id": 428240
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "3",
+      "release_id": 32957,
+      "title": "Prague ’91 – Mr. Pharmacist (live)",
+      "track_id": 428254
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 164000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 32957,
+      "title": "Feeling Numb",
+      "track_id": 428194
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 181000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 32957,
+      "title": "Numb at the Lodge (live, BBC Radio 1 John Peel, 17 December 1994)",
+      "track_id": 428206
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 152000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 32957,
+      "title": "Birthday (live, Rennes, France, 28 April 1995)",
+      "track_id": 428222
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 47000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "4",
+      "release_id": 32957,
+      "title": "Idiot‐Walk‐Out (live)",
+      "track_id": 428241
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 262000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "4",
+      "release_id": 32957,
+      "title": "Cloud of Black (studio out‐take from Shift‐Work sessions)",
+      "track_id": 428255
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 32957,
+      "title": "Pearl City",
+      "track_id": 428195
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 215000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 32957,
+      "title": "One Day (pre‐release rough mix)",
+      "track_id": 428207
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 239000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 32957,
+      "title": "Behind the Counter (live, Rennes, France, 28 April 1995)",
+      "track_id": 428223
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 110000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "5",
+      "release_id": 32957,
+      "title": "Ten Points (live)",
+      "track_id": 428242
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 255000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "5",
+      "release_id": 32957,
+      "title": "Paranoia Man in Cheap Sh…t Room (live)",
+      "track_id": 428256
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 286000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 32957,
+      "title": "Life Just Bounces",
+      "track_id": 428196
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 222000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 32957,
+      "title": "Rainmaster (pre‐release rough mix)",
+      "track_id": 428208
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 183000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 32957,
+      "title": "Mere Pseud Mag. Ed. (live, Rennes, France, 28 April 1995)",
+      "track_id": 428224
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 256000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "6",
+      "release_id": 32957,
+      "title": "Idiot Joy Showland (live)",
+      "track_id": 428243
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 116000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "6",
+      "release_id": 32957,
+      "title": "Bounces (Leeds, live)",
+      "track_id": 428257
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 176000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 32957,
+      "title": "I’m Not Satisfied",
+      "track_id": 428197
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 172000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 32957,
+      "title": "Feeling Numb (pre‐release rough mix)",
+      "track_id": 428209
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 257000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 32957,
+      "title": "Bill Is Dead (live, Rennes, France, 28 April 1995)",
+      "track_id": 428225
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 361000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "7",
+      "release_id": 32957,
+      "title": "Big New Prinz (live)",
+      "track_id": 428244
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "7",
+      "release_id": 32957,
+      "title": "Outro (live)",
+      "track_id": 428258
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 166000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 32957,
+      "title": "The Aphid",
+      "track_id": 428198
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 32957,
+      "title": "The Joke (pre‐release rough mix)",
+      "track_id": 428210
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 32957,
+      "title": "Glam Racket (live, Rennes, France, 28 April 1995)",
+      "track_id": 428226
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 90000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "8",
+      "release_id": 32957,
+      "title": "Intro – Roadhouse (live)",
+      "track_id": 428245
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 270000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "8",
+      "release_id": 32957,
+      "title": "A Past Gone Mad (live)",
+      "track_id": 428259
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 362000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 32957,
+      "title": "Bonkers in Phoenix",
+      "track_id": 428199
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 225000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 32957,
+      "title": "Don’t Call Me Darling (pre‐release rough mix)",
+      "track_id": 428211
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 197000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 32957,
+      "title": "Feeling Numb (live, Rennes, France, 28 April 1995)",
+      "track_id": 428227
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 218000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "9",
+      "release_id": 32957,
+      "title": "The Joke (live)",
+      "track_id": 428246
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 75000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "9",
+      "release_id": 32957,
+      "title": "Glasgow Advice (live)",
+      "track_id": 428260
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 202000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 32957,
+      "title": "One Day",
+      "track_id": 428200
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 178000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 32957,
+      "title": "Pearl City (pre‐release rough mix)",
+      "track_id": 428212
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 32957,
+      "title": "I’m Not Satisfied (live, Rennes, France, 28 April 1995)",
+      "track_id": 428228
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 103000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "10",
+      "release_id": 32957,
+      "title": "M.H.’s Jokes (live)",
+      "track_id": 428247
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 274000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "10",
+      "release_id": 32957,
+      "title": "Middle Class Revolt (Simon, Dave & John, live)",
+      "track_id": 428261
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 188000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 32957,
+      "title": "North West Fashion Show",
+      "track_id": 428201
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 298000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 32957,
+      "title": "Life Just Bounces (pre‐release rough mix)",
+      "track_id": 428213
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 227000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 32957,
+      "title": "Idiot Joy Showland (live, Rennes, France, 28 April 1995)",
+      "track_id": 428229
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 124000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "11",
+      "release_id": 32957,
+      "title": "British People in Hot Weather (live)",
+      "track_id": 428248
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 314000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "11",
+      "release_id": 32957,
+      "title": "Bill Is Dead (live)",
+      "track_id": 428262
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 32957,
+      "title": "Pine Leaves",
+      "track_id": 428202
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 198000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 32957,
+      "title": "I’m Not Satisfied (pre‐release rough mix)",
+      "track_id": 428214
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 163000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "12",
+      "release_id": 32957,
+      "title": "Paranoia Man in Cheap Sh…t Room (live, Rennes, France, 28 April 1995)",
+      "track_id": 428230
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "12",
+      "release_id": 32957,
+      "title": "Free Range (live)",
+      "track_id": 428249
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 169000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "12",
+      "release_id": 32957,
+      "title": "Strychnine (live)",
+      "track_id": 428263
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 174000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 32957,
+      "title": "The Aphid (pre‐release rough mix)",
+      "track_id": 428215
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 315000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "13",
+      "release_id": 32957,
+      "title": "Edinburgh Man (live, Rennes, France, 28 April 1995)",
+      "track_id": 428231
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 256000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "13",
+      "release_id": 32957,
+      "title": "Hi‐Tension Line (live)",
+      "track_id": 428250
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 207000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "13",
+      "release_id": 32957,
+      "title": "War! (live)",
+      "track_id": 428264
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 373000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 32957,
+      "title": "Bonkers in Phoenix (pre‐release rough mix)",
+      "track_id": 428216
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 211000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "14",
+      "release_id": 32957,
+      "title": "Don’t Call Me Darling (live, Rennes, France, 28 April 1995)",
+      "track_id": 428232
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "14",
+      "release_id": 32957,
+      "title": "The League of Bald‐Headed Men (live)",
+      "track_id": 428251
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 382000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "14",
+      "release_id": 32957,
+      "title": "Noel’s Chemical Effluence (studio out‐take from Code‐Selfish sessions)",
+      "track_id": 428265
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 213000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 32957,
+      "title": "One Day (alternate version)",
+      "track_id": 428217
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 329000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "15",
+      "release_id": 32957,
+      "title": "Hey! Student (live, Rennes, France, 28 April 1995)",
+      "track_id": 428233
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 48000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "15",
+      "release_id": 32957,
+      "title": "Three Points (live)",
+      "track_id": 428266
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 378000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 32957,
+      "title": "Bonkers in Phoenix (alternate version)",
+      "track_id": 428218
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 398000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "16",
+      "release_id": 32957,
+      "title": "Life Just Bounces (live, Rennes, France, 28 April 1995)",
+      "track_id": 428234
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 174000,
+      "has_file": false,
+      "medium_number": 5,
+      "number": "16",
+      "release_id": 32957,
+      "title": "Up Too Much (live)",
+      "track_id": 428267
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 286000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "17",
+      "release_id": 32957,
+      "title": "The City Never Sleeps (live, Rennes, France, 28 April 1995)",
+      "track_id": 428235
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 212000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "18",
+      "release_id": 32957,
+      "title": "The Chiselers (live, Rennes, France, 28 April 1995)",
+      "track_id": 428236
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 436000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "19",
+      "release_id": 32957,
+      "title": "Big New Prinz (live, Rennes, France, 28 April 1995)",
+      "track_id": 428237
+    }
+  ]
+}

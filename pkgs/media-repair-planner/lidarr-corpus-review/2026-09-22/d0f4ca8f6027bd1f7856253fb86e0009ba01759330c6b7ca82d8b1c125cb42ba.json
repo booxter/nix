@@ -1,0 +1,769 @@
+{
+  "album": {
+    "album_id": 5580,
+    "artist": "Warpaint",
+    "artist_id": 472,
+    "monitored": true,
+    "title": "Radiate Like This"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 279293,
+      "fingerprint": "sha256:49a7160f9f1c96cb7e9fcabaff7609979706d2c778ea23e939ca6289bd316658",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-warpaint-champion-e6fdf453.flac",
+      "size_bytes": 98820873,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Champion"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 200000,
+      "fingerprint": "sha256:7ba1a36551a382a35e5f6731f9827e60ec8e9944d815be0a3cc1a83bf28c4d07",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-warpaint-hips-cfc7ac80.flac",
+      "size_bytes": 71585567,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hips"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 300040,
+      "fingerprint": "sha256:608e9c4c5e0a9b76e62b1c0c2b992f4c9f6ae20888703b13329f962718f3e773",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-warpaint-hard_to_tell_you-3709e396.flac",
+      "size_bytes": 111578238,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Hard To Tell You"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 243693,
+      "fingerprint": "sha256:cc284b5e25fefd5a082126c9ec7cbc9686b8cad825b8519c4eb8460ff73b6c4f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-warpaint-stevie-e055bcac.flac",
+      "size_bytes": 88181571,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Stevie"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 230613,
+      "fingerprint": "sha256:592d3dbe76528d3957a0323e5549eff7bc24db5c0cd4d251ddfe2d150341bc9a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-warpaint-like_sweetness-b2945316.flac",
+      "size_bytes": 73766223,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Like Sweetness"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 221907,
+      "fingerprint": "sha256:e3db3ae3349313814dc0378e67a70eb3bf440ab5e08e90d166089be474fa3e81",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-warpaint-trouble-493e3750.flac",
+      "size_bytes": 80325282,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Trouble"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 246867,
+      "fingerprint": "sha256:450ca71d5bca3c608d8297658a9cc4c6cf695b90f671e2daf903a0e458517e8a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-warpaint-altar-2d1b4996.flac",
+      "size_bytes": 86572842,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Altar"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 308920,
+      "fingerprint": "sha256:9d4bf9315935e7574a06eea537cb83ee7c7f80cd842aa91e0468bc62e8e6159b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-warpaint-melting-30229981.flac",
+      "size_bytes": 109165243,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Melting"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 199600,
+      "fingerprint": "sha256:d77a285c7225f1639efe1962e174e2b891243efadf8ace5b028e782e22163773",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-warpaint-send_nudes-912efea4.flac",
+      "size_bytes": 66751443,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Send Nudes"
+        },
+        {
+          "name": "title",
+          "value": "front cover"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Champion",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        394994
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Hips",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        394995
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Hard To Tell You",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        394996
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Stevie",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        394997
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Like Sweetness",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        394998
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Trouble",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        394999
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Altar",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        395001
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Melting",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        395002
+      ]
+    },
+    {
+      "album_id": 5580,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 30451,
+      "tag_album": "Radiate Like This",
+      "tag_artist": "Warpaint",
+      "tag_title": "Send Nudes",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        395003
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5580,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9"
+      ],
+      "capability_id": "capability:import_missing_tracks:30451",
+      "release_id": 30451,
+      "track_ids": [
+        395000
+      ]
+    }
+  ],
+  "case_id": "sha256:d0f4ca8f6027bd1f7856253fb86e0009ba01759330c6b7ca82d8b1c125cb42ba",
+  "observed_at": "2026-09-23T03:19:20.757881689Z",
+  "queue": {
+    "download_ref": "download:4f2440056c0799aa76eea8fe54cd9b1a91a073977f65d7881792d0acbce395c3",
+    "messages": [
+      "01-warpaint-champion-e6fdf453.flac",
+      "02-warpaint-hips-cfc7ac80.flac",
+      "03-warpaint-hard_to_tell_you-3709e396.flac",
+      "04-warpaint-stevie-e055bcac.flac",
+      "05-warpaint-like_sweetness-b2945316.flac",
+      "06-warpaint-trouble-493e3750.flac",
+      "08-warpaint-altar-2d1b4996.flac",
+      "09-warpaint-melting-30229981.flac",
+      "10-warpaint-send_nudes-912efea4.flac",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 1218010070,
+    "title": "Warpaint-Radiate Like This-24BIT-WEBFLAC-2022-KNOWNFLAC"
+  },
+  "releases": [
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b6a1248e-0f80-4dfe-ae80-a879a3c63a30",
+      "format": "Digital Media",
+      "labels": [
+        "Virgin Music UK LAS (P&D)"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 30450,
+      "title": "Radiate Like This",
+      "track_count": 10
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d66df5fc-0304-4fc4-a9d5-0c6210b86d21",
+      "format": "CD",
+      "labels": [
+        "Virgin Music Label & Artist Services"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 30451,
+      "title": "Radiate Like This",
+      "track_count": 10
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 279000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30450,
+      "title": "Champion",
+      "track_id": 394984
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 200000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30450,
+      "title": "Hips",
+      "track_id": 394985
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 300000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30450,
+      "title": "Hard to Tell You",
+      "track_id": 394986
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 243000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30450,
+      "title": "Stevie",
+      "track_id": 394987
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 230000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30450,
+      "title": "Like Sweetness",
+      "track_id": 394988
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30450,
+      "title": "Trouble",
+      "track_id": 394989
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30450,
+      "title": "Proof",
+      "track_id": 394990
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30450,
+      "title": "Altar",
+      "track_id": 394991
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 308000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30450,
+      "title": "Melting",
+      "track_id": 394992
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30450,
+      "title": "Send Nudes",
+      "track_id": 394993
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 279293,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 30451,
+      "title": "Champion",
+      "track_id": 394994
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 200000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 30451,
+      "title": "Hips",
+      "track_id": 394995
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 300040,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 30451,
+      "title": "Hard to Tell You",
+      "track_id": 394996
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 243693,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 30451,
+      "title": "Stevie",
+      "track_id": 394997
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 230613,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 30451,
+      "title": "Like Sweetness",
+      "track_id": 394998
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 221906,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 30451,
+      "title": "Trouble",
+      "track_id": 394999
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 264346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 30451,
+      "title": "Proof",
+      "track_id": 395000
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246866,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 30451,
+      "title": "Altar",
+      "track_id": 395001
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 308920,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 30451,
+      "title": "Melting",
+      "track_id": 395002
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 199600,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 30451,
+      "title": "Send Nudes",
+      "track_id": 395003
+    }
+  ]
+}

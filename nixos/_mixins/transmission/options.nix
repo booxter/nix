@@ -43,11 +43,7 @@ in
           vpn = {
             peerPort = lib.mkOption { type = lib.types.port; };
           };
-          trackerPolicy = lib.mkOption {
-            type = lib.types.nullOr capabilityType;
-            default = null;
-          };
-          torrentCleaner = lib.mkOption {
+          torrentPolicy = lib.mkOption {
             type = lib.types.nullOr capabilityType;
             default = null;
           };

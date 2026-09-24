@@ -1,4 +1,7 @@
-{ config, ... }:
+{ config, pkgs, ... }:
+let
+  transmissionModel = import ./model.nix { inherit config; };
+in
 {
   imports = [
     ./assertions.nix
@@ -14,5 +17,10 @@
     ./web.nix
   ];
 
-  config._module.args.transmissionModel = import ./model.nix { inherit config; };
+  config._module.args = {
+    inherit transmissionModel;
+    transmissionPolicyFile =
+      (pkgs.formats.json { }).generate "transmission-torrent-policy.json"
+        transmissionModel.torrentPolicyDocument;
+  };
 }

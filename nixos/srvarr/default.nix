@@ -49,6 +49,10 @@ in
       apply = {
         enable = true;
         allowedActions = [ "import_missing_tracks_v1" ];
+        allowedSources = [
+          "directory_audio_v1"
+          "tar_audio_v1"
+        ];
       };
     };
   };
@@ -80,7 +84,7 @@ in
     ./glance.nix
     ./observability.nix
     ./pinepods.nix
-    ./radarr-repair.nix
+    ./media-repair.nix
     ./romm.nix
     ./sabnzbd.nix
     ./shelfmark

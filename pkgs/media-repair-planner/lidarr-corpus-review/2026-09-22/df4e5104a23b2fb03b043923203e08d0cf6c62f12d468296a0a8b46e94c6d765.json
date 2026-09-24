@@ -1,0 +1,479 @@
+{
+  "album": {
+    "album_id": 725,
+    "artist": "Brygada Kryzys",
+    "artist_id": 104,
+    "monitored": true,
+    "title": "Cosmopolis"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 4495907,
+      "fingerprint": "sha256:32cb1f68ea945f06f7b977766f9028e57b56befa28e599da5ac906d3f4a24620",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Brygada.Kryzys.-.Cosmopolis.(1992).FLAC.flac",
+      "size_bytes": 488124137,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "fre:ac v1.1 Beta 3"
+        },
+        {
+          "name": "title",
+          "value": "Cosmopolis"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 725,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3710,
+      "tag_album": "Cosmopolis",
+      "tag_artist": "Brygada Kryzys",
+      "tag_title": "Cosmopolis",
+      "tag_track_numbers": [],
+      "track_ids": [
+        46476
+      ]
+    }
+  ],
+  "capabilities": [],
+  "case_id": "sha256:df4e5104a23b2fb03b043923203e08d0cf6c62f12d468296a0a8b46e94c6d765",
+  "observed_at": "2026-09-23T03:22:15.661401307Z",
+  "queue": {
+    "download_ref": "download:37e3f6819de6c407cd5c02265566b316d439e4493945cb1d7669b46fb194f066",
+    "messages": [
+      "Brygada.Kryzys.-.Cosmopolis.(1992).FLAC.flac",
+      "Has fewer tracks than existing release",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 865545110,
+    "title": "Brygada.Kryzys.-.Cosmopolis.(1992)"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "531bba89-5b42-4b3b-876b-420df4bed192",
+      "format": "CD",
+      "labels": [
+        "Kamiling Co"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 3709,
+      "title": "Cosmopolis",
+      "track_count": 19
+    },
+    {
+      "countries": [
+        "Poland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "cecc2726-b557-4a81-a5e7-37fbb9fa411f",
+      "format": "CD",
+      "labels": [
+        "Mega Czad"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3710,
+      "title": "Cosmopolis",
+      "track_count": 18
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 283840,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3709,
+      "title": "Subway Train",
+      "track_id": 46444
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 225226,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3709,
+      "title": "Too Much",
+      "track_id": 46445
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 90933,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3709,
+      "title": "Żondzi Xionc",
+      "track_id": 46446
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 295266,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3709,
+      "title": "Nie daj się",
+      "track_id": 46447
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 134066,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3709,
+      "title": "I Need You",
+      "track_id": 46448
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 182066,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3709,
+      "title": "Ty i tylko Ty",
+      "track_id": 46449
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 320173,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3709,
+      "title": "To co czujesz",
+      "track_id": 46450
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 198293,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3709,
+      "title": "What to Do to Be True",
+      "track_id": 46451
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281133,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3709,
+      "title": "Water",
+      "track_id": 46452
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 115533,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3709,
+      "title": "F.U.C.K",
+      "track_id": 46453
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 219800,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3709,
+      "title": "Naokoło wieży",
+      "track_id": 46454
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 284400,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3709,
+      "title": "Wojna!",
+      "track_id": 46455
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 327573,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3709,
+      "title": "Age of Iron",
+      "track_id": 46456
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 149226,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3709,
+      "title": "Jazz Brigade",
+      "track_id": 46457
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 318866,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3709,
+      "title": "Cosmopolis",
+      "track_id": 46458
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 433933,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3709,
+      "title": "Take My Hand",
+      "track_id": 46459
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 249733,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 3709,
+      "title": "Take My Dub",
+      "track_id": 46460
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 267506,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 3709,
+      "title": "Ten drugi Dub",
+      "track_id": 46461
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 118000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "19",
+      "release_id": 3709,
+      "title": "Back Train",
+      "track_id": 46462
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 281226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3710,
+      "title": "Subway Train",
+      "track_id": 46463
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 219906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3710,
+      "title": "Too Much",
+      "track_id": 46464
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 88133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3710,
+      "title": "Żondzi Xionc",
+      "track_id": 46465
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 294786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3710,
+      "title": "Nie daj się",
+      "track_id": 46466
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 131506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3710,
+      "title": "I Need You",
+      "track_id": 46467
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 182146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3710,
+      "title": "Ty i tylko Ty",
+      "track_id": 46468
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317613,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3710,
+      "title": "To co czujesz",
+      "track_id": 46469
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 194360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3710,
+      "title": "What to Do to Be True",
+      "track_id": 46470
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 281680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3710,
+      "title": "Water",
+      "track_id": 46471
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 113133,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3710,
+      "title": "F.U.C.K",
+      "track_id": 46472
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 280546,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3710,
+      "title": "Wojna!",
+      "track_id": 46473
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 324533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 3710,
+      "title": "Age of Iron",
+      "track_id": 46474
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 144160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "13",
+      "release_id": 3710,
+      "title": "Jazz Brigade",
+      "track_id": 46475
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 314640,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "14",
+      "release_id": 3710,
+      "title": "Cosmopolis",
+      "track_id": 46476
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 432986,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "15",
+      "release_id": 3710,
+      "title": "Take My Hand",
+      "track_id": 46477
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 244106,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "16",
+      "release_id": 3710,
+      "title": "Take My Dub",
+      "track_id": 46478
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 281453,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "17",
+      "release_id": 3710,
+      "title": "Ten drugi Dub",
+      "track_id": 46479
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 93720,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "18",
+      "release_id": 3710,
+      "title": "Back Train",
+      "track_id": 46480
+    }
+  ]
+}

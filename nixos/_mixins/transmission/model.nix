@@ -4,7 +4,62 @@ let
   user = "transmission";
   group = "media";
   vpnNamespaceName = "wg";
-  lowPriorityRatio = 3.0;
+  targetRatio = 3.0;
+  mkRatioPriority = atOrAboveTarget: {
+    inherit targetRatio atOrAboveTarget;
+    belowTarget = "high";
+  };
+  renderClassPolicy = policy: {
+    priority = {
+      target_ratio = policy.priority.targetRatio;
+      below_target = policy.priority.belowTarget;
+      at_or_above_target = policy.priority.atOrAboveTarget;
+    };
+    stop =
+      if policy.stop == null then
+        null
+      else
+        {
+          minimum_ratio = policy.stop.minimumRatio;
+          require_complete = policy.stop.requireComplete;
+        };
+    cleanup =
+      if policy.cleanup == null then
+        null
+      else
+        {
+          completed = {
+            minimum_ratio = policy.cleanup.completed.minimumRatio;
+            minimum_age_days = policy.cleanup.completed.minimumAgeDays;
+          };
+          maximum_age_days = policy.cleanup.maximumAgeDays;
+        };
+  };
+  torrentPolicy = {
+    preferred = {
+      priority = mkRatioPriority "normal";
+      stop = null;
+      cleanup = null;
+    };
+    nonPreferred = {
+      priority = mkRatioPriority "low";
+      stop = {
+        minimumRatio = 6.0;
+        requireComplete = true;
+      };
+      cleanup = {
+        completed = {
+          minimumRatio = targetRatio;
+          minimumAgeDays = 30;
+        };
+        maximumAgeDays = 365;
+      };
+    };
+    reconcileIntervalSeconds = 30;
+    requestTimeoutSeconds = 20;
+    cleanupSchedule = "15m";
+    deleteOnCleanup = true;
+  };
   claimMountPoint =
     if cfg == null then null else config.host.storage.claims.${cfg.storage.claim}.mountPoint;
   vpnNamespace = if cfg == null then null else config.host.vpn.namespaces.${vpnNamespaceName} or null;
@@ -17,6 +72,7 @@ in
     cfg
     group
     rpcPort
+    torrentPolicy
     user
     vpnNamespace
     vpnNamespaceName
@@ -26,17 +82,8 @@ in
   watchDir = "${baseDir}/.watch";
   rpcUrl = "http://127.0.0.1:${toString rpcPort}/transmission/rpc";
   stateDir = if cfg == null then null else "${cfg.stateDir}/.config/transmission-daemon";
-  trackerPolicy = {
-    inherit lowPriorityRatio;
-    pauseRatio = 6.0;
-    intervalSeconds = 30;
-    requestTimeoutSeconds = 20;
-  };
-  torrentCleaner = {
-    minimumAgeDays = 30;
-    minimumRatio = lowPriorityRatio;
-    maximumAgeDays = 365;
-    schedule = "15m";
-    delete = true;
+  torrentPolicyDocument = {
+    preferred = renderClassPolicy torrentPolicy.preferred;
+    non_preferred = renderClassPolicy torrentPolicy.nonPreferred;
   };
 }

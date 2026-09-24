@@ -8,8 +8,7 @@
     vpn = {
       peerPort = 45486;
     };
-    trackerPolicy = { };
-    torrentCleaner = { };
+    torrentPolicy = { };
     uploadLimit.initialKBytesPerSecond = 950;
   };
 }

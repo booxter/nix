@@ -1,0 +1,5313 @@
+{
+  "album": {
+    "album_id": 5365,
+    "artist": "Soundgarden",
+    "artist_id": 450,
+    "monitored": true,
+    "title": "Badmotorfinger"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 266200,
+      "fingerprint": "sha256:f1b563a7f4b71ab8c20a29ea53e9e2f0e1e6ed50bd7ccafba539564d39c5962a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01.Rusty.Cage.flac",
+      "size_bytes": 33615040,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rusty Cage"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 311000,
+      "fingerprint": "sha256:75e0bd90d6b2d9fdb9c8eae62352da1ab1460c537dd67a6483827b9632320256",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02.Outshined.flac",
+      "size_bytes": 39375334,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Outshined"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 351360,
+      "fingerprint": "sha256:3690ad960940c31341f2f57efa78d417d68398a0f6e93cbee78d7e35269bf0eb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04.Jesus.Christ.Pose.flac",
+      "size_bytes": 41642863,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Jesus Christ Pose"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 143840,
+      "fingerprint": "sha256:d01210008e7285d52586aaf66e2d8b325cd36d33ab568e141d70df53174fd20d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05.Face.Pollution.flac",
+      "size_bytes": 18446485,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Face Pollution"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 261040,
+      "fingerprint": "sha256:f96e9967669afa1e26d3084544bbea74394581c8cc404649e1d70cacb9762a70",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06.Somewhere.flac",
+      "size_bytes": 32427398,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Somewhere"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 391653,
+      "fingerprint": "sha256:801d65eae6fbdb538db6966ee96a6d624f1982143ea1544913e2f18ac9d5e9ad",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07.Searching.With.My.Good.Eye.Closed.flac",
+      "size_bytes": 43678024,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Searching With My Good Eye Closed"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 246253,
+      "fingerprint": "sha256:25f04d4a348c64eaf2cc0f6943d5011fd03988614e65572822e77127613f9963",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08.Room.a.Thousand.Years.Wide.flac",
+      "size_bytes": 32846385,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Room a Thousand Years Wide"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 289880,
+      "fingerprint": "sha256:76a19c7f75ccf9c486465c56e73b821a728792b789636a0f2561d2a874e64ea2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09.Mind.Riot.flac",
+      "size_bytes": 33013310,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Mind Riot"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 146827,
+      "fingerprint": "sha256:3d3580fcd7d88795acc9fc834b379d08633507822e24acfd3978a5df7114c56f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10.Drawing.Flies.flac",
+      "size_bytes": 18561362,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Drawing Flies"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 307507,
+      "fingerprint": "sha256:8aed8ab76957bea32bac481159ae65153fd9b9758588aece4f8476ae39ed4127",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11.Holy.Water.flac",
+      "size_bytes": 39923112,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Holy Water"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 340147,
+      "fingerprint": "sha256:9cdbe219221264ab35e0f8cfa1bea8d54ff3b0aa89398ea2e3b620a92f6097c5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12.New.Damage.flac",
+      "size_bytes": 42334459,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "New Damage"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 416200,
+      "fingerprint": "sha256:cb84e500307115be3d5f79518336b6c4d37797c5b4be2a7ea7be6450002952d9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Bulldozers.flac",
+      "size_bytes": 52422264,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Slaves & Bulldozers"
+        },
+        {
+          "name": "title",
+          "value": "cover"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Rusty Cage",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        352231
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Outshined",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        352232
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Jesus Christ Pose",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        352234
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Face Pollution",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        352235
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Somewhere",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        352236
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Searching With My Good Eye Closed",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        352237
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Room a Thousand Years Wide",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        352238
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Mind Riot",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        352239
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Drawing Flies",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        352240
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Holy Water",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        352241
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:11",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "New Damage",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        352242
+      ]
+    },
+    {
+      "album_id": 5365,
+      "artifact_id": "artifact:12",
+      "rejections": [
+        "permanent: Has fewer tracks than existing release"
+      ],
+      "release_id": 27393,
+      "tag_album": "Badmotorfinger",
+      "tag_artist": "Soundgarden",
+      "tag_title": "Slaves & Bulldozers",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        352233
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5365,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12"
+      ],
+      "capability_id": "capability:import_missing_tracks:27390",
+      "release_id": 27390,
+      "track_ids": [
+        352200,
+        352202,
+        352204,
+        352205
+      ]
+    }
+  ],
+  "case_id": "sha256:360308fa3068439bee4dbc333fc57580d8179aaa437bcc62df126afc80176826",
+  "observed_at": "2026-09-23T03:22:19.632697068Z",
+  "queue": {
+    "download_ref": "download:b40d9cf1b37367b066f2579653e6708c5c4d1c15e8a908739959ce5a4848af3a",
+    "messages": [
+      "01.Rusty.Cage.flac",
+      "02.Outshined.flac",
+      "04.Jesus.Christ.Pose.flac",
+      "05.Face.Pollution.flac",
+      "06.Somewhere.flac",
+      "07.Searching.With.My.Good.Eye.Closed.flac",
+      "08.Room.a.Thousand.Years.Wide.flac",
+      "09.Mind.Riot.flac",
+      "10.Drawing.Flies.flac",
+      "11.Holy.Water.flac",
+      "12.New.Damage.flac",
+      "Bulldozers.flac",
+      "Has fewer tracks than existing release",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 646079332,
+    "title": "Soundgarden-Badmotorfinger-16BIT-WEB-FLAC-1991-coodu-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "38153879-cf9e-39a0-a7f6-8a2d34a3d209",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27381,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Netherlands"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "640d305c-c4f5-334a-9104-97c32256501d",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27382,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "9691b2c5-942e-3696-a18a-5e11b73e8f71",
+      "format": "Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27383,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "8fe61142-0b43-46d2-a236-39a5deb0fe37",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27384,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "2f47b083-a555-4dba-b5d1-635c8f33b98c",
+      "format": "CD",
+      "labels": [
+        "Polydor"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27385,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d285eee3-9a66-4e69-8145-032c7c3c8c57",
+      "format": "12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27386,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "0bc42d4f-72c3-49b8-a81c-2ec0551a1638",
+      "format": "12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27387,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "051dea09-f756-4984-a3ea-b31df63e42ab",
+      "format": "CD",
+      "labels": [
+        "A&M Records",
+        "BMG Direct Marketing, Inc."
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27388,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Super Deluxe Edition",
+      "foreign_release_id": "44b1cf51-d0c1-4877-9663-508b1c641b7f",
+      "format": "4xDigital Media",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 4,
+      "monitored": false,
+      "release_id": 27389,
+      "title": "Badmotorfinger",
+      "track_count": 47
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Deluxe Edition",
+      "foreign_release_id": "eefe3c24-980c-4ad6-9e17-05a8ca01c061",
+      "format": "2xCD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 2,
+      "monitored": true,
+      "release_id": 27390,
+      "title": "Badmotorfinger",
+      "track_count": 28
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Best Buy Exclusive",
+      "foreign_release_id": "7b2c9d62-37c2-4403-b575-891f2fc53455",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27391,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "25th Anniversary Remaster",
+      "foreign_release_id": "b5a22a87-f220-4f08-888c-4a27eab09855",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 27392,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "17200070-8a0c-358a-bf10-28c0c9885342",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27393,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "f4d533b5-9923-4e7d-9e39-d7a952f5969b",
+      "format": "Cassette",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27394,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "25th Anniversary Remaster",
+      "foreign_release_id": "f804fe90-3fac-4c5d-ace0-0e84adff0e0e",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 27395,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Super Deluxe Edition",
+      "foreign_release_id": "3ed8292a-145f-4ddd-969e-c33fccb5188a",
+      "format": "4xCD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 4,
+      "monitored": false,
+      "release_id": 27396,
+      "title": "Badmotorfinger",
+      "track_count": 47
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "Deluxe Edition",
+      "foreign_release_id": "92521076-e59b-4e98-b863-9afaf8d9aee4",
+      "format": "2xCD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 27397,
+      "title": "Badmotorfinger",
+      "track_count": 28
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "be2fcdfe-80e4-45f0-9c81-e615d46cf216",
+      "format": "12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27398,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Remastered",
+      "foreign_release_id": "48366502-b900-4701-8480-5ca646e15481",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27399,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Japan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "609af5a1-c70c-47e9-a96f-bf4dbafba0de",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27400,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Canada"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d66f3b43-a762-43b6-8a0c-9a5ffa835269",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27401,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "Europe",
+        "United Kingdom"
+      ],
+      "disambiguation": "25th Anniversary Remaster",
+      "foreign_release_id": "ed2b7805-2e2f-4552-850f-a2f667aa904d",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27402,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Limited Edition",
+      "foreign_release_id": "014d13d5-0a63-33a3-ab95-4a29981dfee1",
+      "format": "2xCD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 27403,
+      "title": "Badmotorfinger / SOMMS",
+      "track_count": 17
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "25th Anniversary Remaster",
+      "foreign_release_id": "0a398ad3-7042-4e6d-8f05-f8fa0fff7fc7",
+      "format": "Digital Media",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27404,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "eb4f6474-f247-3556-8e6c-6c0b407f656f",
+      "format": "CD",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27405,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "Yellow translucent vinyl",
+      "foreign_release_id": "b56e7bcd-ef67-4d01-9b6d-9bb06028558f",
+      "format": "12\" Vinyl",
+      "labels": [
+        "A&M Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 27406,
+      "title": "Badmotorfinger",
+      "track_count": 12
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 266800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27381,
+      "title": "Rusty Cage",
+      "track_id": 352036
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27381,
+      "title": "Outshined",
+      "track_id": 352037
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27381,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352038
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27381,
+      "title": "Jesus Christ Pose",
+      "track_id": 352039
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27381,
+      "title": "Face Pollution",
+      "track_id": 352040
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27381,
+      "title": "Somewhere",
+      "track_id": 352041
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27381,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352042
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27381,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352043
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27381,
+      "title": "Mind Riot",
+      "track_id": 352044
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27381,
+      "title": "Drawing Flies",
+      "track_id": 352045
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27381,
+      "title": "Holy Water",
+      "track_id": 352046
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27381,
+      "title": "New Damage",
+      "track_id": 352047
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27382,
+      "title": "Rusty Cage",
+      "track_id": 352048
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27382,
+      "title": "Outshined",
+      "track_id": 352049
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27382,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352050
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27382,
+      "title": "Jesus Christ Pose",
+      "track_id": 352051
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27382,
+      "title": "Face Pollution",
+      "track_id": 352052
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27382,
+      "title": "Somewhere",
+      "track_id": 352053
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27382,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352054
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27382,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352055
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27382,
+      "title": "Mind Riot",
+      "track_id": 352056
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27382,
+      "title": "Drawing Flies",
+      "track_id": 352057
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27382,
+      "title": "Holy Water",
+      "track_id": 352058
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27382,
+      "title": "New Damage",
+      "track_id": 352059
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 265906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27383,
+      "title": "Rusty Cage",
+      "track_id": 352060
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27383,
+      "title": "Outshined",
+      "track_id": 352061
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27383,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352062
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27383,
+      "title": "Jesus Christ Pose",
+      "track_id": 352063
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27383,
+      "title": "Face Pollution",
+      "track_id": 352064
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27383,
+      "title": "Somewhere",
+      "track_id": 352065
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27383,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352066
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27383,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352067
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27383,
+      "title": "Mind Riot",
+      "track_id": 352068
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27383,
+      "title": "Drawing Flies",
+      "track_id": 352069
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27383,
+      "title": "Holy Water",
+      "track_id": 352070
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27383,
+      "title": "New Damage",
+      "track_id": 352071
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27384,
+      "title": "Rusty Cage",
+      "track_id": 352072
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27384,
+      "title": "Outshined",
+      "track_id": 352073
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27384,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352074
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350866,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27384,
+      "title": "Jesus Christ Pose",
+      "track_id": 352075
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27384,
+      "title": "Face Pollution",
+      "track_id": 352076
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260839,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27384,
+      "title": "Somewhere",
+      "track_id": 352077
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27384,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352078
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27384,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352079
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27384,
+      "title": "Mind Riot",
+      "track_id": 352080
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27384,
+      "title": "Drawing Flies",
+      "track_id": 352081
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27384,
+      "title": "Holy Water",
+      "track_id": 352082
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27384,
+      "title": "New Damage",
+      "track_id": 352083
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27385,
+      "title": "Rusty Cage",
+      "track_id": 352084
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27385,
+      "title": "Outshined",
+      "track_id": 352085
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415893,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27385,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352086
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27385,
+      "title": "Jesus Christ Pose",
+      "track_id": 352087
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27385,
+      "title": "Face Pollution",
+      "track_id": 352088
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27385,
+      "title": "Somewhere",
+      "track_id": 352089
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 390573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27385,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352090
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27385,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352091
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 290666,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27385,
+      "title": "Mind Riot",
+      "track_id": 352092
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27385,
+      "title": "Drawing Flies",
+      "track_id": 352093
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27385,
+      "title": "Holy Water",
+      "track_id": 352094
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 338173,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27385,
+      "title": "New Damage",
+      "track_id": 352095
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 270000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27386,
+      "title": "Rusty Cage",
+      "track_id": 352096
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 306000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27386,
+      "title": "Outshined",
+      "track_id": 352097
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27386,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352098
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27386,
+      "title": "Jesus Christ Pose",
+      "track_id": 352099
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27386,
+      "title": "Face Pollution",
+      "track_id": 352100
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27386,
+      "title": "Somewhere",
+      "track_id": 352101
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27386,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352102
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27386,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352103
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27386,
+      "title": "Mind Riot",
+      "track_id": 352104
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 152000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27386,
+      "title": "Drawing Flies",
+      "track_id": 352105
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 306000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27386,
+      "title": "Holy Water",
+      "track_id": 352106
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27386,
+      "title": "New Damage",
+      "track_id": 352107
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 270000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27387,
+      "title": "Rusty Cage",
+      "track_id": 352108
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 306000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27387,
+      "title": "Outshined",
+      "track_id": 352109
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27387,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352110
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27387,
+      "title": "Jesus Christ Pose",
+      "track_id": 352111
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27387,
+      "title": "Face Pollution",
+      "track_id": 352112
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27387,
+      "title": "Somewhere",
+      "track_id": 352113
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27387,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352114
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27387,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352115
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27387,
+      "title": "Mind Riot",
+      "track_id": 352116
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 152000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27387,
+      "title": "Drawing Flies",
+      "track_id": 352117
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 306000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27387,
+      "title": "Holy Water",
+      "track_id": 352118
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27387,
+      "title": "New Damage",
+      "track_id": 352119
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27388,
+      "title": "Rusty Cage",
+      "track_id": 352120
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27388,
+      "title": "Outshined",
+      "track_id": 352121
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27388,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352122
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27388,
+      "title": "Jesus Christ Pose",
+      "track_id": 352123
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27388,
+      "title": "Face Pollution",
+      "track_id": 352124
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27388,
+      "title": "Somewhere",
+      "track_id": 352125
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27388,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352126
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27388,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352127
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27388,
+      "title": "Mind Riot",
+      "track_id": 352128
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27388,
+      "title": "Drawing Flies",
+      "track_id": 352129
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307426,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27388,
+      "title": "Holy Water",
+      "track_id": 352130
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339786,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27388,
+      "title": "New Damage",
+      "track_id": 352131
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266206,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27389,
+      "title": "Rusty Cage",
+      "track_id": 352132
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 271359,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 27389,
+      "title": "Rusty Cage (studio outtake)",
+      "track_id": 352144
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 267971,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 27389,
+      "title": "Searching With My Good Eye Closed (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352160
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 345170,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "1",
+      "release_id": 27389,
+      "title": "Outshined (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352171
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310997,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27389,
+      "title": "Outshined",
+      "track_id": 352133
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 313353,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 27389,
+      "title": "Outshined (studio outtake)",
+      "track_id": 352145
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 366474,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 27389,
+      "title": "Hands All Over (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352161
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 235716,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "2",
+      "release_id": 27389,
+      "title": "Mind Riot (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352172
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416198,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27389,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352134
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 426301,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 27389,
+      "title": "Slaves & Bulldozers (studio outtake)",
+      "track_id": 352146
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 150497,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 27389,
+      "title": "Drawing Flies (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352162
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 433847,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "3",
+      "release_id": 27389,
+      "title": "Beyond the Wheel (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352173
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351365,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27389,
+      "title": "Jesus Christ Pose",
+      "track_id": 352135
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 342718,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 27389,
+      "title": "Jesus Christ Pose (studio outtake)",
+      "track_id": 352147
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 226829,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 27389,
+      "title": "Room a Thousand Years Wide (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352163
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 450931,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "4",
+      "release_id": 27389,
+      "title": "Into the Void (Sealth) (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352174
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143845,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27389,
+      "title": "Face Pollution",
+      "track_id": 352136
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 146296,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 27389,
+      "title": "Face Pollution (studio outtake)",
+      "track_id": 352148
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 364019,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 27389,
+      "title": "Gun (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352164
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 387216,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "5",
+      "release_id": 27389,
+      "title": "Jesus Christ Pose (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352175
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261029,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27389,
+      "title": "Somewhere",
+      "track_id": 352137
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 262613,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 27389,
+      "title": "Somewhere (studio outtake)",
+      "track_id": 352149
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 217095,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 27389,
+      "title": "Flower (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352165
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 188889,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "6",
+      "release_id": 27389,
+      "title": "Hunted Down (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352176
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391655,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27389,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352138
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 421524,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 27389,
+      "title": "Searching With My Good Eye Closed (studio outtake)",
+      "track_id": 352150
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 296344,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 27389,
+      "title": "Little Joe (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352166
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 263937,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "7",
+      "release_id": 27389,
+      "title": "Somewhere (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352177
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246263,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27389,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352139
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 247715,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 27389,
+      "title": "Room a Thousand Years Wide (studio outtake)",
+      "track_id": 352151
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 331848,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 27389,
+      "title": "Big Dumb Sex (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352167
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 951978,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "8",
+      "release_id": 27389,
+      "title": "Slaves & Bulldozers (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352178
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289871,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27389,
+      "title": "Mind Riot",
+      "track_id": 352140
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 156274,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 27389,
+      "title": "Drawing Flies (studio outtake)",
+      "track_id": 352152
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 161265,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 27389,
+      "title": "Face Pollution (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352168
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27389,
+      "title": "Drawing Flies",
+      "track_id": 352141
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 331873,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 27389,
+      "title": "Holy Water (studio outtake)",
+      "track_id": 352153
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 531703,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 27389,
+      "title": "Incessant Mace (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352169
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27389,
+      "title": "Holy Water",
+      "track_id": 352142
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 323752,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 27389,
+      "title": "Cold Bitch (studio outtake)",
+      "track_id": 352154
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 362989,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 27389,
+      "title": "Rusty Cage (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352170
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340139,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27389,
+      "title": "New Damage",
+      "track_id": 352143
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 113588,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 27389,
+      "title": "She's a Politician (studio outtake)",
+      "track_id": 352155
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 298538,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 27389,
+      "title": "Black Rain (Black Days)",
+      "track_id": 352156
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 330007,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 27389,
+      "title": "Birth Ritual (studio outtake)",
+      "track_id": 352157
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 440977,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 27389,
+      "title": "Blind Dogs (studio outtake)",
+      "track_id": 352158
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 320007,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 27389,
+      "title": "New Damage",
+      "track_id": 352159
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266206,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27390,
+      "title": "Rusty Cage",
+      "track_id": 352179
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 271346,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 27390,
+      "title": "Rusty Cage (studio outtake)",
+      "track_id": 352191
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310997,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27390,
+      "title": "Outshined",
+      "track_id": 352180
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 313360,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 27390,
+      "title": "Outshined (studio outtake)",
+      "track_id": 352192
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416198,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27390,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352181
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 426293,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 27390,
+      "title": "Slaves & Bulldozers (studio outtake)",
+      "track_id": 352193
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351365,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27390,
+      "title": "Jesus Christ Pose",
+      "track_id": 352182
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 342720,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 27390,
+      "title": "Jesus Christ Pose (studio outtake)",
+      "track_id": 352194
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143845,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27390,
+      "title": "Face Pollution",
+      "track_id": 352183
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 146293,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 27390,
+      "title": "Face Pollution (studio outtake)",
+      "track_id": 352195
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261029,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27390,
+      "title": "Somewhere",
+      "track_id": 352184
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 262613,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 27390,
+      "title": "Somewhere (studio outtake)",
+      "track_id": 352196
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391655,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27390,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352185
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 247720,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 27390,
+      "title": "Room a Thousand Years Wide (studio outtake)",
+      "track_id": 352197
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246263,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27390,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352186
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 331880,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 27390,
+      "title": "Holy Water (studio outtake)",
+      "track_id": 352198
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289871,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27390,
+      "title": "Mind Riot",
+      "track_id": 352187
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 321653,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 27390,
+      "title": "New Damage",
+      "track_id": 352199
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27390,
+      "title": "Drawing Flies",
+      "track_id": 352188
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 259880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 27390,
+      "title": "Searching With My Good Eye Closed (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352200
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27390,
+      "title": "Holy Water",
+      "track_id": 352189
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 142453,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 27390,
+      "title": "Drawing Flies (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352201
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340139,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27390,
+      "title": "New Damage",
+      "track_id": 352190
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 153720,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 27390,
+      "title": "Face Pollution (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352202
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 266093,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 27390,
+      "title": "Rusty Cage (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352203
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 320760,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 27390,
+      "title": "Outshined (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352204
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 225226,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 27390,
+      "title": "Mind Riot (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352205
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 384306,
+      "has_file": true,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 27390,
+      "title": "Jesus Christ Pose (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352206
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 265906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27391,
+      "title": "Rusty Cage",
+      "track_id": 352207
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27391,
+      "title": "Outshined",
+      "track_id": 352208
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27391,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352209
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27391,
+      "title": "Jesus Christ Pose",
+      "track_id": 352210
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27391,
+      "title": "Face Pollution",
+      "track_id": 352211
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27391,
+      "title": "Somewhere",
+      "track_id": 352212
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27391,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352213
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27391,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352214
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27391,
+      "title": "Mind Riot",
+      "track_id": 352215
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27391,
+      "title": "Drawing Flies",
+      "track_id": 352216
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27391,
+      "title": "Holy Water",
+      "track_id": 352217
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27391,
+      "title": "New Damage",
+      "track_id": 352218
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27392,
+      "title": "Rusty Cage",
+      "track_id": 352219
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 27392,
+      "title": "Mind Riot",
+      "track_id": 352227
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27392,
+      "title": "Outshined",
+      "track_id": 352220
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 27392,
+      "title": "Drawing Flies",
+      "track_id": 352228
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27392,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352221
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 27392,
+      "title": "Holy Water",
+      "track_id": 352229
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27392,
+      "title": "Jesus Christ Pose",
+      "track_id": 352222
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C4",
+      "release_id": 27392,
+      "title": "New Damage",
+      "track_id": 352230
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27392,
+      "title": "Face Pollution",
+      "track_id": 352223
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27392,
+      "title": "Somewhere",
+      "track_id": 352224
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27392,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352225
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27392,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352226
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27393,
+      "title": "Rusty Cage",
+      "track_id": 352231
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27393,
+      "title": "Outshined",
+      "track_id": 352232
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27393,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352233
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27393,
+      "title": "Jesus Christ Pose",
+      "track_id": 352234
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27393,
+      "title": "Face Pollution",
+      "track_id": 352235
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27393,
+      "title": "Somewhere",
+      "track_id": 352236
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27393,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352237
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27393,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352238
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27393,
+      "title": "Mind Riot",
+      "track_id": 352239
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27393,
+      "title": "Drawing Flies",
+      "track_id": 352240
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27393,
+      "title": "Holy Water",
+      "track_id": 352241
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27393,
+      "title": "New Damage",
+      "track_id": 352242
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 265906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27394,
+      "title": "Rusty Cage",
+      "track_id": 352243
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27394,
+      "title": "Outshined",
+      "track_id": 352244
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27394,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352245
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27394,
+      "title": "Jesus Christ Pose",
+      "track_id": 352246
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27394,
+      "title": "Face Pollution",
+      "track_id": 352247
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27394,
+      "title": "Somewhere",
+      "track_id": 352248
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27394,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352249
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27394,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352250
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27394,
+      "title": "Mind Riot",
+      "track_id": 352251
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 145000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27394,
+      "title": "Drawing Flies",
+      "track_id": 352252
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27394,
+      "title": "Holy Water",
+      "track_id": 352253
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27394,
+      "title": "New Damage",
+      "track_id": 352254
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27395,
+      "title": "Rusty Cage",
+      "track_id": 352255
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 27395,
+      "title": "Mind Riot",
+      "track_id": 352263
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27395,
+      "title": "Outshined",
+      "track_id": 352256
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 27395,
+      "title": "Drawing Flies",
+      "track_id": 352264
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27395,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352257
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 27395,
+      "title": "Holy Water",
+      "track_id": 352265
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27395,
+      "title": "Jesus Christ Pose",
+      "track_id": 352258
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C4",
+      "release_id": 27395,
+      "title": "New Damage",
+      "track_id": 352266
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27395,
+      "title": "Face Pollution",
+      "track_id": 352259
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27395,
+      "title": "Somewhere",
+      "track_id": 352260
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27395,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352261
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 0,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27395,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352262
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27396,
+      "title": "Rusty Cage",
+      "track_id": 352267
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 271346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 27396,
+      "title": "Rusty Cage (studio outtake)",
+      "track_id": 352279
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 267960,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 27396,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352295
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 345160,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "1",
+      "release_id": 27396,
+      "title": "Outshined",
+      "track_id": 352306
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27396,
+      "title": "Outshined",
+      "track_id": 352268
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 313360,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 27396,
+      "title": "Outshined (studio outtake)",
+      "track_id": 352280
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 366480,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 27396,
+      "title": "Hands All Over",
+      "track_id": 352296
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 235720,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "2",
+      "release_id": 27396,
+      "title": "Mind Riot",
+      "track_id": 352307
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27396,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352269
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 426293,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 27396,
+      "title": "Slaves & Bulldozers (studio outtake)",
+      "track_id": 352281
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 150493,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 27396,
+      "title": "Drawing Flies",
+      "track_id": 352297
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 433840,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "3",
+      "release_id": 27396,
+      "title": "Beyond the Wheel",
+      "track_id": 352308
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27396,
+      "title": "Jesus Christ Pose",
+      "track_id": 352270
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 342720,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 27396,
+      "title": "Jesus Christ Pose (studio outtake)",
+      "track_id": 352282
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 226826,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 27396,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352298
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 450933,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "4",
+      "release_id": 27396,
+      "title": "Into the Void (Sealth)",
+      "track_id": 352309
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27396,
+      "title": "Face Pollution",
+      "track_id": 352271
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 146293,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 27396,
+      "title": "Face Pollution (studio outtake)",
+      "track_id": 352283
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 364026,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 27396,
+      "title": "Gun",
+      "track_id": 352299
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 387226,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "5",
+      "release_id": 27396,
+      "title": "Jesus Christ Pose",
+      "track_id": 352310
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27396,
+      "title": "Somewhere",
+      "track_id": 352272
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 262613,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 27396,
+      "title": "Somewhere (studio outtake)",
+      "track_id": 352284
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 217093,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 27396,
+      "title": "Flower",
+      "track_id": 352300
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 188880,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "6",
+      "release_id": 27396,
+      "title": "Hunted Down",
+      "track_id": 352311
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27396,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352273
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 421533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 27396,
+      "title": "Searching With My Good Eye Closed (studio outtake)",
+      "track_id": 352285
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 296346,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 27396,
+      "title": "Little Joe",
+      "track_id": 352301
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 263946,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "7",
+      "release_id": 27396,
+      "title": "Somewhere",
+      "track_id": 352312
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27396,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352274
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 247706,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 27396,
+      "title": "Room a Thousand Years Wide (studio outtake)",
+      "track_id": 352286
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 331840,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 27396,
+      "title": "Big Dumb Sex",
+      "track_id": 352302
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 951986,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "8",
+      "release_id": 27396,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352313
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27396,
+      "title": "Mind Riot",
+      "track_id": 352275
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 156280,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 27396,
+      "title": "Drawing Flies (studio outtake)",
+      "track_id": 352287
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 161266,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 27396,
+      "title": "Face Pollution",
+      "track_id": 352303
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27396,
+      "title": "Drawing Flies",
+      "track_id": 352276
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 331866,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 27396,
+      "title": "Holy Water (studio outtake)",
+      "track_id": 352288
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 531706,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "10",
+      "release_id": 27396,
+      "title": "Incessant Mace",
+      "track_id": 352304
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27396,
+      "title": "Holy Water",
+      "track_id": 352277
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 323760,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 27396,
+      "title": "Cold Bitch (studio outtake)",
+      "track_id": 352289
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 363000,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "11",
+      "release_id": 27396,
+      "title": "Rusty Cage",
+      "track_id": 352305
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27396,
+      "title": "New Damage",
+      "track_id": 352278
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 113586,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 27396,
+      "title": "She's a Politician (studio outtake)",
+      "track_id": 352290
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 298533,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 27396,
+      "title": "Black Rain (Black Days)",
+      "track_id": 352291
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 330013,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 27396,
+      "title": "Birth Ritual (studio outtake)",
+      "track_id": 352292
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 440973,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 27396,
+      "title": "Blind Dogs (studio outtake)",
+      "track_id": 352293
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 320013,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 27396,
+      "title": "New Damage",
+      "track_id": 352294
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27397,
+      "title": "Rusty Cage",
+      "track_id": 352314
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 271346,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 27397,
+      "title": "Rusty Cage (studio outtake)",
+      "track_id": 352326
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27397,
+      "title": "Outshined",
+      "track_id": 352315
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 313360,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 27397,
+      "title": "Outshined (studio outtake)",
+      "track_id": 352327
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27397,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352316
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 426293,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 27397,
+      "title": "Slaves & Bulldozers (studio outtake)",
+      "track_id": 352328
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27397,
+      "title": "Jesus Christ Pose",
+      "track_id": 352317
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 342720,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 27397,
+      "title": "Jesus Christ Pose (studio outtake)",
+      "track_id": 352329
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27397,
+      "title": "Face Pollution",
+      "track_id": 352318
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 146293,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 27397,
+      "title": "Face Pollution (studio outtake)",
+      "track_id": 352330
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27397,
+      "title": "Somewhere",
+      "track_id": 352319
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 262613,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 27397,
+      "title": "Somewhere (studio outtake)",
+      "track_id": 352331
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27397,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352320
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 247720,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 27397,
+      "title": "Room a Thousand Years Wide (studio outtake)",
+      "track_id": 352332
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27397,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352321
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 331880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 27397,
+      "title": "Holy Water (studio outtake)",
+      "track_id": 352333
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27397,
+      "title": "Mind Riot",
+      "track_id": 352322
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 321653,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 27397,
+      "title": "New Damage",
+      "track_id": 352334
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27397,
+      "title": "Drawing Flies",
+      "track_id": 352323
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 259880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "10",
+      "release_id": 27397,
+      "title": "Searching With My Good Eye Closed (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352335
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27397,
+      "title": "Holy Water",
+      "track_id": 352324
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 142453,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "11",
+      "release_id": 27397,
+      "title": "Drawing Flies (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352336
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27397,
+      "title": "New Damage",
+      "track_id": 352325
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 153720,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "12",
+      "release_id": 27397,
+      "title": "Face Pollution (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352337
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 266093,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "13",
+      "release_id": 27397,
+      "title": "Rusty Cage (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352338
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 320760,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "14",
+      "release_id": 27397,
+      "title": "Outshined (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352339
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 225226,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "15",
+      "release_id": 27397,
+      "title": "Mind Riot (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352340
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 384306,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "16",
+      "release_id": 27397,
+      "title": "Jesus Christ Pose (live at the Paramount Theatre, Seattle / 1992)",
+      "track_id": 352341
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27398,
+      "title": "Rusty Cage",
+      "track_id": 352342
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27398,
+      "title": "Outshined",
+      "track_id": 352343
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27398,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352344
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27398,
+      "title": "Jesus Christ Pose",
+      "track_id": 352345
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27398,
+      "title": "Face Pollution",
+      "track_id": 352346
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27398,
+      "title": "Somewhere",
+      "track_id": 352347
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27398,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352348
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27398,
+      "title": "Room A Thousand Years Wide",
+      "track_id": 352349
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27398,
+      "title": "Mind Riot",
+      "track_id": 352350
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 145000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27398,
+      "title": "Drawing Flies",
+      "track_id": 352351
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27398,
+      "title": "Holy Water",
+      "track_id": 352352
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27398,
+      "title": "New Damage",
+      "track_id": 352353
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27399,
+      "title": "Rusty Cage",
+      "track_id": 352354
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27399,
+      "title": "Outshined",
+      "track_id": 352355
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27399,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352356
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27399,
+      "title": "Jesus Christ Pose",
+      "track_id": 352357
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27399,
+      "title": "Face Pollution",
+      "track_id": 352358
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27399,
+      "title": "Somewhere",
+      "track_id": 352359
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27399,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352360
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27399,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352361
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27399,
+      "title": "Mind Riot",
+      "track_id": 352362
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27399,
+      "title": "Drawing Flies",
+      "track_id": 352363
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27399,
+      "title": "Holy Water",
+      "track_id": 352364
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27399,
+      "title": "New Damage",
+      "track_id": 352365
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266066,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27400,
+      "title": "Rusty Cage",
+      "track_id": 352366
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310493,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27400,
+      "title": "Outshined",
+      "track_id": 352367
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27400,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352368
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27400,
+      "title": "Jesus Christ Pose",
+      "track_id": 352369
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27400,
+      "title": "Face Pollution",
+      "track_id": 352370
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27400,
+      "title": "Somewhere",
+      "track_id": 352371
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27400,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352372
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27400,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352373
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27400,
+      "title": "Mind Riot",
+      "track_id": 352374
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27400,
+      "title": "Drawing Flies",
+      "track_id": 352375
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27400,
+      "title": "Holy Water",
+      "track_id": 352376
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27400,
+      "title": "New Damage",
+      "track_id": 352377
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 265800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27401,
+      "title": "Rusty Cage",
+      "track_id": 352378
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27401,
+      "title": "Outshined",
+      "track_id": 352379
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27401,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352380
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27401,
+      "title": "Jesus Christ Pose",
+      "track_id": 352381
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143693,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27401,
+      "title": "Face Pollution",
+      "track_id": 352382
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27401,
+      "title": "Somewhere",
+      "track_id": 352383
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27401,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352384
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245960,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27401,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352385
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27401,
+      "title": "Mind Riot",
+      "track_id": 352386
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27401,
+      "title": "Drawing Flies",
+      "track_id": 352387
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27401,
+      "title": "Holy Water",
+      "track_id": 352388
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 339906,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27401,
+      "title": "New Damage",
+      "track_id": 352389
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27402,
+      "title": "Rusty Cage",
+      "track_id": 352390
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27402,
+      "title": "Outshined",
+      "track_id": 352391
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27402,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352392
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27402,
+      "title": "Jesus Christ Pose",
+      "track_id": 352393
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27402,
+      "title": "Face Pollution",
+      "track_id": 352394
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27402,
+      "title": "Somewhere",
+      "track_id": 352395
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27402,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352396
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27402,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352397
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27402,
+      "title": "Mind Riot",
+      "track_id": 352398
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27402,
+      "title": "Drawing Flies",
+      "track_id": 352399
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307506,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27402,
+      "title": "Holy Water",
+      "track_id": 352400
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27402,
+      "title": "New Damage",
+      "track_id": 352401
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27403,
+      "title": "Rusty Cage",
+      "track_id": 352402
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 397573,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 27403,
+      "title": "Into the Void (Sealth)",
+      "track_id": 352414
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27403,
+      "title": "Outshined",
+      "track_id": 352403
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 209733,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 27403,
+      "title": "Girl U Want",
+      "track_id": 352415
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27403,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352404
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 286666,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 27403,
+      "title": "Stray Cat Blues",
+      "track_id": 352416
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27403,
+      "title": "Jesus Christ Pose",
+      "track_id": 352405
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 108133,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 27403,
+      "title": "She’s a Politician",
+      "track_id": 352417
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27403,
+      "title": "Face Pollution",
+      "track_id": 352406
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 518466,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 27403,
+      "title": "Slaves & Bulldozers (live)",
+      "track_id": 352418
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27403,
+      "title": "Somewhere",
+      "track_id": 352407
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27403,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352408
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27403,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352409
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27403,
+      "title": "Mind Riot",
+      "track_id": 352410
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27403,
+      "title": "Drawing Flies",
+      "track_id": 352411
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27403,
+      "title": "Holy Water",
+      "track_id": 352412
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27403,
+      "title": "New Damage",
+      "track_id": 352413
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266206,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27404,
+      "title": "Rusty Cage",
+      "track_id": 352419
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27404,
+      "title": "Outshined",
+      "track_id": 352420
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416198,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27404,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352421
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351365,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27404,
+      "title": "Jesus Christ Pose",
+      "track_id": 352422
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27404,
+      "title": "Face Pollution",
+      "track_id": 352423
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261029,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27404,
+      "title": "Somewhere",
+      "track_id": 352424
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27404,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352425
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246263,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27404,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352426
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27404,
+      "title": "Mind Riot",
+      "track_id": 352427
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27404,
+      "title": "Drawing Flies",
+      "track_id": 352428
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27404,
+      "title": "Holy Water",
+      "track_id": 352429
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340139,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27404,
+      "title": "New Damage",
+      "track_id": 352430
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 27405,
+      "title": "Rusty Cage",
+      "track_id": 352431
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 310533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 27405,
+      "title": "Outshined",
+      "track_id": 352432
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 415773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 27405,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352433
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 350826,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 27405,
+      "title": "Jesus Christ Pose",
+      "track_id": 352434
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 143706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 27405,
+      "title": "Face Pollution",
+      "track_id": 352435
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 260760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 27405,
+      "title": "Somewhere",
+      "track_id": 352436
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391200,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 27405,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352437
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 245973,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 27405,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352438
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 27405,
+      "title": "Mind Riot",
+      "track_id": 352439
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 146466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 27405,
+      "title": "Drawing Flies",
+      "track_id": 352440
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 27405,
+      "title": "Holy Water",
+      "track_id": 352441
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340733,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "12",
+      "release_id": 27405,
+      "title": "New Damage",
+      "track_id": 352442
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 266000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 27406,
+      "title": "Rusty Cage",
+      "track_id": 352443
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 311000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 27406,
+      "title": "Outshined",
+      "track_id": 352444
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 416000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 27406,
+      "title": "Slaves & Bulldozers",
+      "track_id": 352445
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 351000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A4",
+      "release_id": 27406,
+      "title": "Jesus Christ Pose",
+      "track_id": 352446
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 144000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A5",
+      "release_id": 27406,
+      "title": "Face Pollution",
+      "track_id": 352447
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 261000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A6",
+      "release_id": 27406,
+      "title": "Somewhere",
+      "track_id": 352448
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 391000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 27406,
+      "title": "Searching With My Good Eye Closed",
+      "track_id": 352449
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 27406,
+      "title": "Room a Thousand Years Wide",
+      "track_id": 352450
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 289000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 27406,
+      "title": "Mind Riot",
+      "track_id": 352451
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 145000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B4",
+      "release_id": 27406,
+      "title": "Drawing Flies",
+      "track_id": 352452
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 307000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B5",
+      "release_id": 27406,
+      "title": "Holy Water",
+      "track_id": 352453
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 340000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B6",
+      "release_id": 27406,
+      "title": "New Damage",
+      "track_id": 352454
+    }
+  ]
+}

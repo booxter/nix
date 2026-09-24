@@ -1,0 +1,3577 @@
+{
+  "album": {
+    "album_id": 5496,
+    "artist": "Moby",
+    "artist_id": 465,
+    "monitored": true,
+    "title": "All Visible Objects"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 294294,
+      "fingerprint": "sha256:d13e42912cfed2b9cb308a1ac2dff78c01f0a7727f03ccb825071137ad46c471",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01..Power.is.Taken.(Moby's.Old.School.Remix).flac",
+      "size_bytes": 35209064,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Power is Taken (Moby's Old School Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 271678,
+      "fingerprint": "sha256:1be7fba38c8f175e9d2feb9ba4189e770d746dab323aca4c94de23334edfa147",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02..Rise.Up.in.Love.(Moby's.Ecstatic.Piano.Remix).flac",
+      "size_bytes": 32646911,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rise Up in Love (Moby's Ecstatic Piano Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 299363,
+      "fingerprint": "sha256:bdc31df178be6ac00e0b0503f501eb78a0df1b2491ba88b35b61107e321fcd69",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03..Morningside.(Expansive.Remix).flac",
+      "size_bytes": 35158807,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Morningside (Expansive Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 285584,
+      "fingerprint": "sha256:819ce696f5fe0caa5e1d8ec4614183cefca978563264a655b285abf0c8b0b394",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04..Refuge.(Chris.Paul.flac",
+      "size_bytes": 33803742,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Refuge (Chris Paul & Raul Campos Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 268541,
+      "fingerprint": "sha256:a649fb2da32c743490a014897dffed789651fca3529f43ac1c1547fe4284ff8f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05..My.Only.Love.(Vintage.Culture.Remix).flac",
+      "size_bytes": 32172148,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "My Only Love (Vintage Culture Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 202818,
+      "fingerprint": "sha256:8a7292d68ae42ce96c29d490994c57536da0606fd99b6e705cd8a79ecac33c4f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06..Forever.(Voodoo.Child.Remix).flac",
+      "size_bytes": 24257469,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Forever (Voodoo Child Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 292189,
+      "fingerprint": "sha256:2f0b4da0fd22d7e01058b6ba3b4f53de25f65c5d157dc34a8a4ecff7d4bd5cde",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07..Power.Is.Taken.(Felguk.Remix).flac",
+      "size_bytes": 39675419,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Power Is Taken (Felguk Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 108404,
+      "fingerprint": "sha256:60853d365ac0f321b2e32b837247eebd0ef630a1c04080a77dab1862d36cef74",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08..Morningside.(Henry.Fong.Remix).flac",
+      "size_bytes": 14490048,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Morningside (Henry Fong Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 189775,
+      "fingerprint": "sha256:8016f3c65466ac86060500eb27ae02c03a2abd61654d1d9b155be1e69089e5b3",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09..My.Only.Love.(Tale.Of.Us.flac",
+      "size_bytes": 22686945,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "My Only Love (Tale Of Us & Anyma Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 387232,
+      "fingerprint": "sha256:0df74dc7d0b4f4dfaca56ee0abb3b08e5bbd18efd7641f110637b87b120a7e8e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10..Too.Much.Change.(Analog.Remix).flac",
+      "size_bytes": 43452811,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Too Much Change (Analog Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 357525,
+      "fingerprint": "sha256:53ed6e8f1bad23c216f4da71f787d9cc4d47303ad0719006cc6ed38ac29367aa",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11..Refuge.(Mind.Against's.Dub.mix).flac",
+      "size_bytes": 42476301,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Refuge (Mind Against's Dub mix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 177073,
+      "fingerprint": "sha256:69327b1fe89882064c0a3169afa9ee63a63272aae4c4b2a793c91c5ee38db241",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12..Morningside.(DJ.Boring's.Escape.Mix).flac",
+      "size_bytes": 18822311,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Morningside (DJ Boring's Escape Mix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:13",
+      "duration_ms": 245872,
+      "fingerprint": "sha256:93555be6010cf1c2706f3d55bfe1cc3a0d2b893878b1eea03058416cdb98c2f9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13..My.Only.Love.(DJ.Poolboi.Remix).flac",
+      "size_bytes": 27261887,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "My Only Love (DJ Poolboi Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:14",
+      "duration_ms": 239481,
+      "fingerprint": "sha256:f27cabbc1d8b0953a85a6252f4d63af6c64ef21ffee51b478009f803dc51e375",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14..Tecie.(Mind.Against's.Celestial.Remix).flac",
+      "size_bytes": 27475058,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Tecie (Mind Against's Celestial Remix)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Power is Taken (Moby's Old School Remix)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Rise Up in Love (Moby's Ecstatic Piano Remix)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        388001
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Morningside (Expansive Remix)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        388000
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Refuge (Chris Paul & Raul Campos Remix)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        388003
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "My Only Love (Vintage Culture Remix)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        388004
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Forever (Voodoo Child Remix)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        388005
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Power Is Taken (Felguk Remix)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        388006
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Morningside (Henry Fong Remix)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        388007
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "My Only Love (Tale Of Us & Anyma Remix)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        388008
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Too Much Change (Analog Remix)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        388009
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:11",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Refuge (Mind Against's Dub mix)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        388002
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:12",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Morningside (DJ Boring's Escape Mix)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:13",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "My Only Love (DJ Poolboi Remix)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        388010
+      ]
+    },
+    {
+      "album_id": 5496,
+      "artifact_id": "artifact:14",
+      "rejections": [
+        "permanent: Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 29931,
+      "tag_album": "All Visible Objects (Remixed : DJ Set)",
+      "tag_artist": "Moby",
+      "tag_title": "Tecie (Mind Against's Celestial Remix)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": []
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29931",
+      "release_id": 29931,
+      "track_ids": [
+        388000,
+        388001,
+        388002,
+        388003,
+        388004,
+        388005,
+        388006,
+        388007,
+        388008,
+        388009,
+        388010
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29932",
+      "release_id": 29932,
+      "track_ids": [
+        388011,
+        388012,
+        388013,
+        388014,
+        388015,
+        388016,
+        388017,
+        388018,
+        388019,
+        388020,
+        388021
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29933",
+      "release_id": 29933,
+      "track_ids": [
+        388022,
+        388023,
+        388024,
+        388025,
+        388026,
+        388027,
+        388028,
+        388029,
+        388030,
+        388031,
+        388032
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29934",
+      "release_id": 29934,
+      "track_ids": [
+        388033,
+        388034,
+        388035,
+        388036,
+        388037,
+        388038,
+        388039,
+        388040,
+        388041,
+        388042,
+        388043
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29935",
+      "release_id": 29935,
+      "track_ids": [
+        388044,
+        388045,
+        388046,
+        388047,
+        388048,
+        388049,
+        388050,
+        388051,
+        388052,
+        388053,
+        388054
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29936",
+      "release_id": 29936,
+      "track_ids": [
+        388055,
+        388056,
+        388057,
+        388058,
+        388059,
+        388060,
+        388061,
+        388062,
+        388063,
+        388064,
+        388065
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29937",
+      "release_id": 29937,
+      "track_ids": [
+        388066,
+        388067,
+        388068,
+        388069,
+        388070,
+        388071,
+        388072,
+        388073,
+        388074,
+        388075,
+        388076
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29938",
+      "release_id": 29938,
+      "track_ids": [
+        388077,
+        388078,
+        388079,
+        388080,
+        388081,
+        388082,
+        388083,
+        388084,
+        388085,
+        388086,
+        388087
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29939",
+      "release_id": 29939,
+      "track_ids": [
+        388088,
+        388089,
+        388090,
+        388091,
+        388092,
+        388093,
+        388094,
+        388095,
+        388096,
+        388097,
+        388098
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29940",
+      "release_id": 29940,
+      "track_ids": [
+        388099,
+        388100,
+        388101,
+        388102,
+        388103,
+        388104,
+        388105,
+        388106,
+        388107,
+        388108,
+        388109
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29941",
+      "release_id": 29941,
+      "track_ids": [
+        388110,
+        388111,
+        388112,
+        388113,
+        388114,
+        388115,
+        388116,
+        388117,
+        388118,
+        388119,
+        388120
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29942",
+      "release_id": 29942,
+      "track_ids": [
+        388121,
+        388122,
+        388123,
+        388124,
+        388125,
+        388126,
+        388127,
+        388128,
+        388129,
+        388130,
+        388131
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29943",
+      "release_id": 29943,
+      "track_ids": [
+        388132,
+        388133,
+        388134,
+        388135,
+        388136,
+        388137,
+        388138,
+        388139,
+        388140,
+        388141,
+        388142
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29944",
+      "release_id": 29944,
+      "track_ids": [
+        388143,
+        388149,
+        388144,
+        388150,
+        388145,
+        388151,
+        388146,
+        388152,
+        388147,
+        388153,
+        388148
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29945",
+      "release_id": 29945,
+      "track_ids": [
+        388154,
+        388155,
+        388156,
+        388157,
+        388158,
+        388159,
+        388160,
+        388161,
+        388162,
+        388163,
+        388164
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29946",
+      "release_id": 29946,
+      "track_ids": [
+        388165,
+        388166,
+        388167,
+        388168,
+        388169,
+        388170,
+        388171,
+        388172,
+        388173,
+        388174,
+        388175
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 5496,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14"
+      ],
+      "capability_id": "capability:import_missing_tracks:29947",
+      "release_id": 29947,
+      "track_ids": [
+        388176,
+        388177,
+        388178,
+        388179,
+        388180,
+        388181,
+        388182,
+        388183,
+        388184,
+        388185,
+        388186
+      ]
+    }
+  ],
+  "case_id": "sha256:0768fe0cb255d66af583d360c78df3f6c34ee4ca9f4d89fd7ca14de9c03ad3a2",
+  "observed_at": "2026-09-23T03:23:31.704839927Z",
+  "queue": {
+    "download_ref": "download:8cf5fe81b67e1613f67582add298aa0d5d0b02c9718fdb591eeef8957a333830",
+    "messages": [
+      "01..Power.is.Taken.(Moby's.Old.School.Remix).flac",
+      "02..Rise.Up.in.Love.(Moby's.Ecstatic.Piano.Remix).flac",
+      "03..Morningside.(Expansive.Remix).flac",
+      "04..Refuge.(Chris.Paul.flac",
+      "05..My.Only.Love.(Vintage.Culture.Remix).flac",
+      "06..Forever.(Voodoo.Child.Remix).flac",
+      "07..Power.Is.Taken.(Felguk.Remix).flac",
+      "08..Morningside.(Henry.Fong.Remix).flac",
+      "09..My.Only.Love.(Tale.Of.Us.flac",
+      "10..Too.Much.Change.(Analog.Remix).flac",
+      "11..Refuge.(Mind.Against's.Dub.mix).flac",
+      "12..Morningside.(DJ.Boring's.Escape.Mix).flac",
+      "13..My.Only.Love.(DJ.Poolboi.Remix).flac",
+      "14..Tecie.(Mind.Against's.Celestial.Remix).flac",
+      "Album match is not close enough: 28.3% vs 80% [album, country, tracks, unmatched tracks]",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 156842351,
+    "title": "Moby.-.All.Visible.Objects.(Remixed.DJ.Set).(2020).[FLAC]-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "Australia"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "bb843542-449b-4efc-a01f-c39a5624c948",
+      "format": "CD",
+      "labels": [
+        "Little Idiot Music",
+        "Pod"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 29931,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Andorra",
+        "France",
+        "Monaco"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "3b2e078d-696b-4cee-9bfc-9218093dad04",
+      "format": "Digital Media",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29932,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Hong Kong",
+        "Indonesia",
+        "Malaysia",
+        "Philippines",
+        "Singapore",
+        "Taiwan",
+        "Thailand",
+        "Vietnam"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b21c0d7a-2f30-4e8c-925b-c8b8869a9568",
+      "format": "Digital Media",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29933,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Austria",
+        "Germany",
+        "Switzerland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "516ff29a-1a58-4ad9-84e4-548752887b40",
+      "format": "Digital Media",
+      "labels": [
+        "Embassy One"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29934,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Australia",
+        "New Zealand"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "bcf2bdde-9f21-4958-9368-c3897da1351b",
+      "format": "Digital Media",
+      "labels": [
+        "Pod"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29935,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Belgium",
+        "Luxembourg",
+        "Netherlands"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "02d310ec-1754-4b99-85a2-8eef84cb8e4b",
+      "format": "Digital Media",
+      "labels": [
+        "V2 Records Benelux"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29936,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Netherlands"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "160c5726-78bd-4c85-bda3-50c9d9aea519",
+      "format": "CD",
+      "labels": [
+        "Little Idiot",
+        "V2 Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29937,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Afghanistan",
+        "Albania",
+        "Algeria",
+        "American Samoa",
+        "Andorra",
+        "Angola",
+        "Antarctica",
+        "Azerbaijan",
+        "Bahrain",
+        "Bangladesh",
+        "Benin",
+        "Bhutan",
+        "Bolivia",
+        "Bosnia and Herzegovina",
+        "Botswana",
+        "Bouvet Island",
+        "British Indian Ocean Territory",
+        "Brunei",
+        "Bulgaria",
+        "Burkina Faso",
+        "Burundi",
+        "Cameroon",
+        "Cape Verde",
+        "Central African Republic",
+        "Chad",
+        "China",
+        "Christmas Island",
+        "Cocos (Keeling) Islands",
+        "Colombia",
+        "Comoros",
+        "Congo",
+        "Cook Islands",
+        "Croatia",
+        "Cyprus",
+        "Czechia",
+        "Côte d'Ivoire",
+        "Democratic Republic of the Congo",
+        "Denmark",
+        "Djibouti",
+        "Ecuador",
+        "Egypt",
+        "Equatorial Guinea",
+        "Eritrea",
+        "Estonia",
+        "Eswatini",
+        "Ethiopia",
+        "Falkland Islands",
+        "Federated States of Micronesia",
+        "Fiji",
+        "Finland",
+        "Gabon",
+        "Gambia",
+        "Ghana",
+        "Greece",
+        "Guam",
+        "Guinea",
+        "Guinea-Bissau",
+        "Heard Island and McDonald Islands",
+        "Hungary",
+        "Iceland",
+        "India",
+        "Iran",
+        "Iraq",
+        "Ireland"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "023e420a-143d-4391-be0c-4781824d3335",
+      "format": "Digital Media",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29938,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Argentina",
+        "Brazil",
+        "Chile"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "a3e25d70-561f-48fd-a6cb-f3ce04209d55",
+      "format": "Digital Media",
+      "labels": [
+        "LAB 344"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29939,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "be5d7552-a7ff-4484-b150-0ae538511c0c",
+      "format": "CD",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29940,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Canada",
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "b5bf3d4d-0083-4383-952e-9a089ac03e00",
+      "format": "CD",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29941,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Armenia",
+        "Azerbaijan",
+        "Belarus",
+        "Georgia",
+        "Kazakhstan",
+        "Kyrgyzstan",
+        "Moldova",
+        "Russia",
+        "Tajikistan",
+        "Turkmenistan",
+        "Ukraine",
+        "Uzbekistan"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "a97c2140-93b3-4fab-8f6f-798e4925301d",
+      "format": "Digital Media",
+      "labels": [
+        "Warner Music Russia"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29942,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "11 × File, Album, 16 and 24 Bit",
+      "foreign_release_id": "9013af5a-13d0-4e91-80c0-36a4d8b6fb2c",
+      "format": "Digital Media",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29943,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe",
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6a50ec1b-a5ef-4c66-aee2-e14c1d9864e1",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 29944,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "8568494d-5b9a-4c7b-b9e0-27a45d098bb6",
+      "format": "CD",
+      "labels": [
+        "Little Idiot"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29945,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "24-Bit 44.1 kHz",
+      "foreign_release_id": "a81320eb-4a8a-44f9-b6fa-a32d60c93470",
+      "format": "Digital Media",
+      "labels": [
+        "Embassy One"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29946,
+      "title": "All Visible Objects",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "American Samoa",
+        "Canada",
+        "Guam",
+        "Mexico",
+        "U.S. Virgin Islands",
+        "United States",
+        "[Worldwide]"
+      ],
+      "disambiguation": "streaming/iTunes/Bandcamp release",
+      "foreign_release_id": "3199bcbe-edbf-4e25-bdf6-c9796aced156",
+      "format": "Digital Media",
+      "labels": [
+        "Mute"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 29947,
+      "title": "All Visible Objects",
+      "track_count": 11
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 331373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29931,
+      "title": "Morningside",
+      "track_id": 388000
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29931,
+      "title": "My Only Love",
+      "track_id": 388001
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29931,
+      "title": "Refuge",
+      "track_id": 388002
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29931,
+      "title": "One Last Time",
+      "track_id": 388003
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29931,
+      "title": "Power Is Taken",
+      "track_id": 388004
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29931,
+      "title": "Rise Up in Love",
+      "track_id": 388005
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29931,
+      "title": "Forever",
+      "track_id": 388006
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29931,
+      "title": "Too Much Change",
+      "track_id": 388007
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29931,
+      "title": "Separation",
+      "track_id": 388008
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29931,
+      "title": "Tecie",
+      "track_id": 388009
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29931,
+      "title": "All Visible Objects",
+      "track_id": 388010
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29932,
+      "title": "Morningside",
+      "track_id": 388011
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29932,
+      "title": "My Only Love",
+      "track_id": 388012
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29932,
+      "title": "Refuge",
+      "track_id": 388013
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29932,
+      "title": "One Last Time",
+      "track_id": 388014
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29932,
+      "title": "Power Is Taken",
+      "track_id": 388015
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29932,
+      "title": "Rise Up in Love",
+      "track_id": 388016
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29932,
+      "title": "Forever",
+      "track_id": 388017
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29932,
+      "title": "Too Much Change",
+      "track_id": 388018
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29932,
+      "title": "Separation",
+      "track_id": 388019
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29932,
+      "title": "Tecie",
+      "track_id": 388020
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29932,
+      "title": "All Visible Objects",
+      "track_id": 388021
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29933,
+      "title": "Morningside",
+      "track_id": 388022
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29933,
+      "title": "My Only Love",
+      "track_id": 388023
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29933,
+      "title": "Refuge",
+      "track_id": 388024
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29933,
+      "title": "One Last Time",
+      "track_id": 388025
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29933,
+      "title": "Power Is Taken",
+      "track_id": 388026
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29933,
+      "title": "Rise Up in Love",
+      "track_id": 388027
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29933,
+      "title": "Forever",
+      "track_id": 388028
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29933,
+      "title": "Too Much Change",
+      "track_id": 388029
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29933,
+      "title": "Separation",
+      "track_id": 388030
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29933,
+      "title": "Tecie",
+      "track_id": 388031
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29933,
+      "title": "All Visible Objects",
+      "track_id": 388032
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29934,
+      "title": "Morningside",
+      "track_id": 388033
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29934,
+      "title": "My Only Love",
+      "track_id": 388034
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29934,
+      "title": "Refuge",
+      "track_id": 388035
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29934,
+      "title": "One Last Time",
+      "track_id": 388036
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29934,
+      "title": "Power Is Taken",
+      "track_id": 388037
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29934,
+      "title": "Rise Up in Love",
+      "track_id": 388038
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29934,
+      "title": "Forever",
+      "track_id": 388039
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29934,
+      "title": "Too Much Change",
+      "track_id": 388040
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29934,
+      "title": "Separation",
+      "track_id": 388041
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29934,
+      "title": "Tecie",
+      "track_id": 388042
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29934,
+      "title": "All Visible Objects",
+      "track_id": 388043
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29935,
+      "title": "Morningside",
+      "track_id": 388044
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29935,
+      "title": "My Only Love",
+      "track_id": 388045
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29935,
+      "title": "Refuge",
+      "track_id": 388046
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29935,
+      "title": "One Last Time",
+      "track_id": 388047
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29935,
+      "title": "Power Is Taken",
+      "track_id": 388048
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29935,
+      "title": "Rise Up in Love",
+      "track_id": 388049
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29935,
+      "title": "Forever",
+      "track_id": 388050
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29935,
+      "title": "Too Much Change",
+      "track_id": 388051
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29935,
+      "title": "Separation",
+      "track_id": 388052
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29935,
+      "title": "Tecie",
+      "track_id": 388053
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29935,
+      "title": "All Visible Objects",
+      "track_id": 388054
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29936,
+      "title": "Morningside",
+      "track_id": 388055
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29936,
+      "title": "My Only Love",
+      "track_id": 388056
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29936,
+      "title": "Refuge",
+      "track_id": 388057
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29936,
+      "title": "One Last Time",
+      "track_id": 388058
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29936,
+      "title": "Power Is Taken",
+      "track_id": 388059
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29936,
+      "title": "Rise Up in Love",
+      "track_id": 388060
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29936,
+      "title": "Forever",
+      "track_id": 388061
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29936,
+      "title": "Too Much Change",
+      "track_id": 388062
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29936,
+      "title": "Separation",
+      "track_id": 388063
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29936,
+      "title": "Tecie",
+      "track_id": 388064
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29936,
+      "title": "All Visible Objects",
+      "track_id": 388065
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29937,
+      "title": "Morningside",
+      "track_id": 388066
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29937,
+      "title": "My Only Love",
+      "track_id": 388067
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29937,
+      "title": "Refuge",
+      "track_id": 388068
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29937,
+      "title": "One Last Time",
+      "track_id": 388069
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29937,
+      "title": "Power Is Taken",
+      "track_id": 388070
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29937,
+      "title": "Rise Up in Love",
+      "track_id": 388071
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29937,
+      "title": "Forever",
+      "track_id": 388072
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29937,
+      "title": "Too Much Change",
+      "track_id": 388073
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29937,
+      "title": "Separation",
+      "track_id": 388074
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29937,
+      "title": "Tecie",
+      "track_id": 388075
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29937,
+      "title": "All Visible Objects",
+      "track_id": 388076
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29938,
+      "title": "Morningside",
+      "track_id": 388077
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29938,
+      "title": "My Only Love",
+      "track_id": 388078
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344707,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29938,
+      "title": "Refuge",
+      "track_id": 388079
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29938,
+      "title": "One Last Time",
+      "track_id": 388080
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347747,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29938,
+      "title": "Power Is Taken",
+      "track_id": 388081
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347347,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29938,
+      "title": "Rise Up in Love",
+      "track_id": 388082
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317467,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29938,
+      "title": "Forever",
+      "track_id": 388083
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29938,
+      "title": "Too Much Change",
+      "track_id": 388084
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29938,
+      "title": "Separation",
+      "track_id": 388085
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29938,
+      "title": "Tecie",
+      "track_id": 388086
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29938,
+      "title": "All Visible Objects",
+      "track_id": 388087
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29939,
+      "title": "Morningside",
+      "track_id": 388088
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29939,
+      "title": "My Only Love",
+      "track_id": 388089
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29939,
+      "title": "Refuge",
+      "track_id": 388090
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29939,
+      "title": "One Last Time",
+      "track_id": 388091
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29939,
+      "title": "Power Is Taken",
+      "track_id": 388092
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29939,
+      "title": "Rise Up in Love",
+      "track_id": 388093
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29939,
+      "title": "Forever",
+      "track_id": 388094
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29939,
+      "title": "Too Much Change",
+      "track_id": 388095
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29939,
+      "title": "Separation",
+      "track_id": 388096
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29939,
+      "title": "Tecie",
+      "track_id": 388097
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29939,
+      "title": "All Visible Objects",
+      "track_id": 388098
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29940,
+      "title": "Morningside",
+      "track_id": 388099
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29940,
+      "title": "My Only Love",
+      "track_id": 388100
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29940,
+      "title": "Refuge",
+      "track_id": 388101
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29940,
+      "title": "One Last Time",
+      "track_id": 388102
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29940,
+      "title": "Power Is Taken",
+      "track_id": 388103
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29940,
+      "title": "Rise Up In Love",
+      "track_id": 388104
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29940,
+      "title": "Forever",
+      "track_id": 388105
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29940,
+      "title": "Too Much Change",
+      "track_id": 388106
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29940,
+      "title": "Separation",
+      "track_id": 388107
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29940,
+      "title": "Tecie",
+      "track_id": 388108
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29940,
+      "title": "All Visible Objects",
+      "track_id": 388109
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29941,
+      "title": "Morningside",
+      "track_id": 388110
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29941,
+      "title": "My Only Love",
+      "track_id": 388111
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29941,
+      "title": "Refuge",
+      "track_id": 388112
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29941,
+      "title": "One Last Time",
+      "track_id": 388113
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29941,
+      "title": "Power Is Taken",
+      "track_id": 388114
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29941,
+      "title": "Rise Up in Love",
+      "track_id": 388115
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29941,
+      "title": "Forever",
+      "track_id": 388116
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29941,
+      "title": "Too Much Change",
+      "track_id": 388117
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29941,
+      "title": "Separation",
+      "track_id": 388118
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29941,
+      "title": "Tecie",
+      "track_id": 388119
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29941,
+      "title": "All Visible Objects",
+      "track_id": 388120
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29942,
+      "title": "Morningside",
+      "track_id": 388121
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29942,
+      "title": "My Only Love",
+      "track_id": 388122
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29942,
+      "title": "Refuge",
+      "track_id": 388123
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29942,
+      "title": "One Last Time",
+      "track_id": 388124
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29942,
+      "title": "Power Is Taken",
+      "track_id": 388125
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29942,
+      "title": "Rise Up in Love",
+      "track_id": 388126
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29942,
+      "title": "Forever",
+      "track_id": 388127
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29942,
+      "title": "Too Much Change",
+      "track_id": 388128
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29942,
+      "title": "Separation",
+      "track_id": 388129
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29942,
+      "title": "Tecie",
+      "track_id": 388130
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29942,
+      "title": "All Visible Objects",
+      "track_id": 388131
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29943,
+      "title": "Morningside",
+      "track_id": 388132
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29943,
+      "title": "My Only love",
+      "track_id": 388133
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29943,
+      "title": "Refuge",
+      "track_id": 388134
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29943,
+      "title": "One Last Time",
+      "track_id": 388135
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29943,
+      "title": "Power Is Taken",
+      "track_id": 388136
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29943,
+      "title": "Rise Up In Love",
+      "track_id": 388137
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29943,
+      "title": "Forever",
+      "track_id": 388138
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29943,
+      "title": "Too Much Change",
+      "track_id": 388139
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29943,
+      "title": "Separation",
+      "track_id": 388140
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29943,
+      "title": "Tecie",
+      "track_id": 388141
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29943,
+      "title": "All Visible Objects",
+      "track_id": 388142
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 328000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 29944,
+      "title": "Morningside",
+      "track_id": 388143
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 314000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 29944,
+      "title": "Forever",
+      "track_id": 388149
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 345000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 29944,
+      "title": "My Only Love",
+      "track_id": 388144
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 581000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 29944,
+      "title": "Too Much Change",
+      "track_id": 388150
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 345000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 29944,
+      "title": "Refuge",
+      "track_id": 388145
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 399000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C3",
+      "release_id": 29944,
+      "title": "Separation",
+      "track_id": 388151
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 29944,
+      "title": "One Last Time",
+      "track_id": 388146
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 453000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D1",
+      "release_id": 29944,
+      "title": "Tecie",
+      "track_id": 388152
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 29944,
+      "title": "Power Is Taken",
+      "track_id": 388147
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 555000,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D2",
+      "release_id": 29944,
+      "title": "All Visible Objects",
+      "track_id": 388153
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 346000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 29944,
+      "title": "Rise Up in Love",
+      "track_id": 388148
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29945,
+      "title": "Morningside",
+      "track_id": 388154
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29945,
+      "title": "My Only Love",
+      "track_id": 388155
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29945,
+      "title": "Refuge",
+      "track_id": 388156
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29945,
+      "title": "One Last Time",
+      "track_id": 388157
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29945,
+      "title": "Power Is Taken",
+      "track_id": 388158
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29945,
+      "title": "Rise Up in Love",
+      "track_id": 388159
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29945,
+      "title": "Forever",
+      "track_id": 388160
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29945,
+      "title": "Too Much Change",
+      "track_id": 388161
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29945,
+      "title": "Separation",
+      "track_id": 388162
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29945,
+      "title": "Tecie",
+      "track_id": 388163
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557160,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29945,
+      "title": "All Visible Objects",
+      "track_id": 388164
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29946,
+      "title": "Morningside",
+      "track_id": 388165
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29946,
+      "title": "My Only Love",
+      "track_id": 388166
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344706,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29946,
+      "title": "Refuge",
+      "track_id": 388167
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29946,
+      "title": "One Last Time",
+      "track_id": 388168
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347746,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29946,
+      "title": "Power Is Taken",
+      "track_id": 388169
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347346,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29946,
+      "title": "Rise Up in Love",
+      "track_id": 388170
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29946,
+      "title": "Forever",
+      "track_id": 388171
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29946,
+      "title": "Too Much Change",
+      "track_id": 388172
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29946,
+      "title": "Separation",
+      "track_id": 388173
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29946,
+      "title": "Tecie",
+      "track_id": 388174
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29946,
+      "title": "All Visible Objects",
+      "track_id": 388175
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 331040,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 29947,
+      "title": "Morningside",
+      "track_id": 388176
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 344520,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 29947,
+      "title": "My Only Love",
+      "track_id": 388177
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 344707,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 29947,
+      "title": "Refuge",
+      "track_id": 388178
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 333653,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 29947,
+      "title": "One Last Time",
+      "track_id": 388179
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 347747,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 29947,
+      "title": "Power Is Taken",
+      "track_id": 388180
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 347347,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 29947,
+      "title": "Rise Up in Love",
+      "track_id": 388181
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 317467,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 29947,
+      "title": "Forever",
+      "track_id": 388182
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 586573,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 29947,
+      "title": "Too Much Change",
+      "track_id": 388183
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 401600,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 29947,
+      "title": "Separation",
+      "track_id": 388184
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 452680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 29947,
+      "title": "Tecie",
+      "track_id": 388185
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 557080,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 29947,
+      "title": "All Visible Objects",
+      "track_id": 388186
+    }
+  ]
+}

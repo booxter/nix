@@ -1,0 +1,1967 @@
+{
+  "album": {
+    "album_id": 2272,
+    "artist": "Miles Davis",
+    "artist_id": 273,
+    "monitored": true,
+    "title": "Vol. 3"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 4733,
+      "fingerprint": "sha256:61050f6587d3ae392252d9c1dc85f55aaa2fff68beb6b678d6629f3c119cc06e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/101-miles_davis-introduction_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 379631,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Introduction (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 623480,
+      "fingerprint": "sha256:c8e41a9597f5889612cb5f46662625e3cb0fa437d2afd0ef8d0d4bbbf4b2bf38",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/102-miles_davis-directions_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 70326296,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Directions (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 664387,
+      "fingerprint": "sha256:2130694d65ab1dbd302476a61d04246ecc167f9ba8d394545afe9d3195e53583",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/103-miles_davis-the_mask_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 59448630,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Mask (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 644627,
+      "fingerprint": "sha256:69fef055b82b099e22ea7ea7d98bdb819991eefb81a48ccfce92c3a9528810b2",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/104-miles_davis-its_about_that_time_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 65989124,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "It's About That Time (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 821493,
+      "fingerprint": "sha256:b5f13092c10f1c8e5d73d32d8e4fed60ae2506af121328407f63d1c1a3c2fa89",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/105-miles_davis-bitches_brew_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 76580252,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Bitches Brew (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 40680,
+      "fingerprint": "sha256:5057d9992b3176efec21642f532f62556bd5c058a54dbaddd219f6d1b42cce79",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/106-miles_davis-bitches_brew_(live_at_fillmore_east_june_17_1970).flac",
+      "size_bytes": 3776542,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Bitches Brew (Live at Fillmore East June 17, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 662440,
+      "fingerprint": "sha256:dab09761716ba6d8fb90a9a5d59bd4bd5c49d153ab65be39d5c57ee7b0d47539",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/107-miles_davis-paraphernalia_(live_at_fillmore_west_april_11_1970).flac",
+      "size_bytes": 58167575,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Paraphernalia (Live at Fillmore West April 11, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 673160,
+      "fingerprint": "sha256:68ca0575a8e83e9a35591aa9a0fa9fdb102050a29c1eeb4e7731b3ed3ad67697",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/108-miles_davis-footprints_(live_at_fillmore_west_april_11_1970).flac",
+      "size_bytes": 55510045,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Footprints (Live at Fillmore West April 11, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 610333,
+      "fingerprint": "sha256:416ce5ae1c9d36c9796f0f5ee5a203d8402bc0ae2f6cbb160b30d0fddf33e644",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/201-miles_davis-directions_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 62444468,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Directions (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 690000,
+      "fingerprint": "sha256:ef36fa586fdc9ac2d8c871e47db65b177539473288538a06566e7913eea94788",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/202-miles_davis-the_mask_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 62729606,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Mask (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 723520,
+      "fingerprint": "sha256:5a3083e3d47dc93df4d692c79ee62718719dea99bb8408ad38de5d8ddc28ac14",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/203-miles_davis-its_about_that_time_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 69310205,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "It's About That Time (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 717667,
+      "fingerprint": "sha256:edbb8f2bad22db702b6ea45346f295e0a643f54a2a2ac40cc07510f8b6021d9d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/204-miles_davis-bitches_brew_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 69458348,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Bitches Brew (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:13",
+      "duration_ms": 89627,
+      "fingerprint": "sha256:f03637a2deadebf19e82997ecca55b5d713a5aad4d1623009d2bc58b2f8a0289",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/205-miles_davis-the_theme_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 8640676,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Theme (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:14",
+      "duration_ms": 620480,
+      "fingerprint": "sha256:545be7a86054f3c2c06ca579a7583d2dd29ba9f5e5fdae51f85dc811ead6e755",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/206-miles_davis-spanish_key_(encore)_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 59315772,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Spanish Key (Encore) (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:15",
+      "duration_ms": 27720,
+      "fingerprint": "sha256:cdf996b0429ae0a69bac1d4f9a359199d12e83e65d5a82a1df7e6b5617c9ea08",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/207-miles_davis-the_theme_(encore)_(live_at_fillmore_east_june_18_1970).flac",
+      "size_bytes": 2289291,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Theme (Encore) (Live at Fillmore East June 18, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:16",
+      "duration_ms": 770067,
+      "fingerprint": "sha256:efb30fda11f82caaf7d37e69a7384a0edb359c5365042ca520192cf1cdaf3acf",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/301-miles_davis-directions_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 83778072,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Directions (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:17",
+      "duration_ms": 600653,
+      "fingerprint": "sha256:3d3dd54a015e112c379b658c5c18b71d78aa0257469a04d1b0c0aaeea0401f2e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/302-miles_davis-the_mask_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 58131968,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Mask (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:18",
+      "duration_ms": 687640,
+      "fingerprint": "sha256:ea7512ebf471966a221ead3e2ad4fea796a710e5f448bc8dcc8671679f61cbe1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/303-miles_davis-its_about_that_time_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 71471855,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "It's About That Time (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:19",
+      "duration_ms": 107920,
+      "fingerprint": "sha256:4f091850844a760a381777e4bd32b6009741a082fd8a0d32f10e310f8e935c3f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/304-miles_davis-i_fall_in_love_too_easily_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 7858769,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "I Fall in Love Too Easily (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:20",
+      "duration_ms": 204960,
+      "fingerprint": "sha256:6e41fea186abf36321f6c79ca3b11b36f378ba5b6486ba3cab3e174d4f5cd832",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/305-miles_davis-sanctuary_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 19711870,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Sanctuary (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:21",
+      "duration_ms": 758013,
+      "fingerprint": "sha256:cc9a66235031c9184daed0b2586b430ecc7a89a8f6228c4befe263337502cae5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/306-miles_davis-bitches_brew_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 75689452,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Bitches Brew (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:22",
+      "duration_ms": 44013,
+      "fingerprint": "sha256:e94aa98a77574cdacb32736ce57b2de1a76187bc5a4b32057fa47cf965819412",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/307-miles_davis-the_theme_(live_at_fillmore_east_june_19_1970).flac",
+      "size_bytes": 3873274,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Theme (Live at Fillmore East June 19, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23",
+      "duration_ms": 800880,
+      "fingerprint": "sha256:cfe1739ef2e52b4dcea1d435a33a9693c9045d8e5bccee9a5d8c05d4886ceab6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/308-miles_davis-miles_runs_the_voodoo_down_(live_at_fillmore_west_april_11_1970).flac",
+      "size_bytes": 70474536,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Miles Runs the Voodoo Down (Live at Fillmore West April 11, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:24",
+      "duration_ms": 648547,
+      "fingerprint": "sha256:0bbb4512c2daa0d64beb06293a390a1559279222f7450ba72d0d848a175b9ff0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/401-miles_davis-directions_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 73810201,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Directions (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:25",
+      "duration_ms": 674920,
+      "fingerprint": "sha256:15e50923f2ddd7d7aaa2e919802351ba265dcac0286bba36b0ac2b8d5581ea6c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/402-miles_davis-the_mask_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 70082018,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Mask (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:26",
+      "duration_ms": 663533,
+      "fingerprint": "sha256:75984b52afa50a2d657cbdec30cc8818ed201dac542101b43c286798962c4abc",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/403-miles_davis-its_about_that_time_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 67553355,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "It's About That Time (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:27",
+      "duration_ms": 80987,
+      "fingerprint": "sha256:cea53f240abd4a1a2491fa67646d84523f385ff69dc6f41cf40912d0eee47f32",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/404-miles_davis-i_fall_in_love_too_easily_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 6289705,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "I Fall in Love Too Easily (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:28",
+      "duration_ms": 201000,
+      "fingerprint": "sha256:f6dbbb5710a6673ee0aa61efdf338b8d269d3b21678c78326907b0baac8d6ac0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/405-miles_davis-sanctuary_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 18552567,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Sanctuary (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:29",
+      "duration_ms": 579547,
+      "fingerprint": "sha256:87fe333db9f7b628cd8c8f8d39f9621840b64002a9987f8d67b2673a620f73a7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/406-miles_davis-bitches_brew_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 56618815,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Bitches Brew (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:30",
+      "duration_ms": 561240,
+      "fingerprint": "sha256:8194058c420863ab76a59c5bd0cd7af6e5e32a96ea4f3cbfc14cd0597c593492",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/407-miles_davis-willie_nelson_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 61568443,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "Willie Nelson (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:31",
+      "duration_ms": 37213,
+      "fingerprint": "sha256:8efa821e49f09dafc8556ea539c0a2d042a9e71b682f3f2f15bd0c47efc6151a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Miles_Davis-Miles_At_The_Fillmore_1970_The_Bootleg_Series_Vol._3-4CD-FLAC-2014-BOCKSCAR/408-miles_davis-the_theme_(live_at_fillmore_east_june_20_1970).flac",
+      "size_bytes": 3624472,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "encoder",
+          "value": "FLAC 1.2.1"
+        },
+        {
+          "name": "title",
+          "value": "The Theme (Live at Fillmore East June 20, 1970)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Introduction (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Directions (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Mask (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        120448
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "It's About That Time (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Bitches Brew (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        120445
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Bitches Brew (Live at Fillmore East June 17, 1970)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Paraphernalia (Live at Fillmore West April 11, 1970)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Footprints (Live at Fillmore West April 11, 1970)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Directions (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Mask (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:11",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "It's About That Time (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:12",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Bitches Brew (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:13",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Theme (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:14",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Spanish Key (Encore) (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:15",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Theme (Encore) (Live at Fillmore East June 18, 1970)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:16",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Directions (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        120443
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:17",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Mask (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:18",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "It's About That Time (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:19",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "I Fall in Love Too Easily (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:20",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Sanctuary (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:21",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Bitches Brew (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        120447
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:22",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Theme (Live at Fillmore East June 19, 1970)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:23",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Miles Runs the Voodoo Down (Live at Fillmore West April 11, 1970)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        120449
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:24",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Directions (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        120442
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:25",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Mask (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:26",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "It's About That Time (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        120444
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:27",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "I Fall in Love Too Easily (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:28",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Sanctuary (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        120446
+      ]
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:29",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Bitches Brew (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:30",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "Willie Nelson (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": []
+    },
+    {
+      "album_id": 2242,
+      "artifact_id": "artifact:31",
+      "rejections": [
+        "permanent: Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+        "permanent: Has unmatched tracks"
+      ],
+      "release_id": 10160,
+      "tag_album": "Miles at the Fillmore 1970 The Bootleg Series Vol. 3",
+      "tag_artist": "Miles Davis",
+      "tag_title": "The Theme (Live at Fillmore East June 20, 1970)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": []
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2272,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31"
+      ],
+      "capability_id": "capability:import_missing_tracks:10682",
+      "release_id": 10682,
+      "track_ids": [
+        124499,
+        124500,
+        124501,
+        124502,
+        124503,
+        124504
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2272,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31"
+      ],
+      "capability_id": "capability:import_missing_tracks:10683",
+      "release_id": 10683,
+      "track_ids": [
+        124505,
+        124506,
+        124507,
+        124508,
+        124509,
+        124510
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2272,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31"
+      ],
+      "capability_id": "capability:import_missing_tracks:10684",
+      "release_id": 10684,
+      "track_ids": [
+        124511,
+        124512,
+        124513,
+        124514,
+        124515,
+        124516
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 2272,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31"
+      ],
+      "capability_id": "capability:import_missing_tracks:10685",
+      "release_id": 10685,
+      "track_ids": [
+        124517,
+        124518,
+        124519,
+        124520,
+        124521,
+        124522
+      ]
+    }
+  ],
+  "case_id": "sha256:d648d525ca505da0db5d93ecdba2b1d9515509226e1348c22e0a1aeacfa2c969",
+  "observed_at": "2026-09-23T03:18:25.693947838Z",
+  "queue": {
+    "download_ref": "download:08ee58917932180e8982d9b8a8460dd8b64128f37a793fc546ffe30cc5d2ccd7",
+    "messages": [
+      "101-miles_davis-introduction_(live_at_fillmore_east_june_17_1970).flac",
+      "102-miles_davis-directions_(live_at_fillmore_east_june_17_1970).flac",
+      "103-miles_davis-the_mask_(live_at_fillmore_east_june_17_1970).flac",
+      "104-miles_davis-its_about_that_time_(live_at_fillmore_east_june_17_1970).flac",
+      "105-miles_davis-bitches_brew_(live_at_fillmore_east_june_17_1970).flac",
+      "106-miles_davis-bitches_brew_(live_at_fillmore_east_june_17_1970).flac",
+      "107-miles_davis-paraphernalia_(live_at_fillmore_west_april_11_1970).flac",
+      "108-miles_davis-footprints_(live_at_fillmore_west_april_11_1970).flac",
+      "201-miles_davis-directions_(live_at_fillmore_east_june_18_1970).flac",
+      "202-miles_davis-the_mask_(live_at_fillmore_east_june_18_1970).flac",
+      "203-miles_davis-its_about_that_time_(live_at_fillmore_east_june_18_1970).flac",
+      "204-miles_davis-bitches_brew_(live_at_fillmore_east_june_18_1970).flac",
+      "205-miles_davis-the_theme_(live_at_fillmore_east_june_18_1970).flac",
+      "206-miles_davis-spanish_key_(encore)_(live_at_fillmore_east_june_18_1970).flac",
+      "207-miles_davis-the_theme_(encore)_(live_at_fillmore_east_june_18_1970).flac",
+      "301-miles_davis-directions_(live_at_fillmore_east_june_19_1970).flac",
+      "302-miles_davis-the_mask_(live_at_fillmore_east_june_19_1970).flac",
+      "303-miles_davis-its_about_that_time_(live_at_fillmore_east_june_19_1970).flac",
+      "304-miles_davis-i_fall_in_love_too_easily_(live_at_fillmore_east_june_19_1970).flac",
+      "305-miles_davis-sanctuary_(live_at_fillmore_east_june_19_1970).flac",
+      "306-miles_davis-bitches_brew_(live_at_fillmore_east_june_19_1970).flac",
+      "307-miles_davis-the_theme_(live_at_fillmore_east_june_19_1970).flac",
+      "308-miles_davis-miles_runs_the_voodoo_down_(live_at_fillmore_west_april_11_1970).flac",
+      "401-miles_davis-directions_(live_at_fillmore_east_june_20_1970).flac",
+      "402-miles_davis-the_mask_(live_at_fillmore_east_june_20_1970).flac",
+      "403-miles_davis-its_about_that_time_(live_at_fillmore_east_june_20_1970).flac",
+      "404-miles_davis-i_fall_in_love_too_easily_(live_at_fillmore_east_june_20_1970).flac",
+      "405-miles_davis-sanctuary_(live_at_fillmore_east_june_20_1970).flac",
+      "406-miles_davis-bitches_brew_(live_at_fillmore_east_june_20_1970).flac",
+      "407-miles_davis-willie_nelson_(live_at_fillmore_east_june_20_1970).flac",
+      "408-miles_davis-the_theme_(live_at_fillmore_east_june_20_1970).flac",
+      "Album match is not close enough: 21.6% vs 80% [album, year, tracks, unmatched tracks]",
+      "Has unmatched tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 1284359418,
+    "title": "Miles Davis-Miles At The Fillmore 1970 The Bootleg Series Vol. 3-4CD-FLAC-2014-BOCKSCAR"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "613cd365-de5e-49f1-a1a4-0bba90e42faa",
+      "format": "10\" Vinyl",
+      "labels": [
+        "Blue Note"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 10682,
+      "title": "Volume 3",
+      "track_count": 6
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "16ed7b47-e00c-499d-8866-65e660f4c78f",
+      "format": "10\" Vinyl",
+      "labels": [
+        "Blue Note"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10683,
+      "title": "Vol. 3",
+      "track_count": 6
+    },
+    {
+      "countries": [
+        "France",
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "39f12c43-9c89-4fa6-8392-409c5a3f8706",
+      "format": "Digital Media",
+      "labels": [
+        "Blue Note"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10684,
+      "title": "Volume 3",
+      "track_count": 6
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "691aba50-e1c1-4926-927e-7b7f47f9c1fc",
+      "format": "Digital Media",
+      "labels": [
+        "Blue Note"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 10685,
+      "title": "Volume 3",
+      "track_count": 6
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 224000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10682,
+      "title": "Take Off",
+      "track_id": 124499
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10682,
+      "title": "It Never Entered My Mind",
+      "track_id": 124500
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 327000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10682,
+      "title": "Well You Needn’t",
+      "track_id": 124501
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10682,
+      "title": "Lazy Susan",
+      "track_id": 124502
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10682,
+      "title": "Weirdo",
+      "track_id": 124503
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10682,
+      "title": "The Leap",
+      "track_id": 124504
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 220360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10683,
+      "title": "Take Off",
+      "track_id": 124505
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 242760,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10683,
+      "title": "It Never Entered My Mind",
+      "track_id": 124506
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 322560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10683,
+      "title": "Well You Needn’t",
+      "track_id": 124507
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 242453,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10683,
+      "title": "Lazy Susan",
+      "track_id": 124508
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 284533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10683,
+      "title": "Weirdo",
+      "track_id": 124509
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 270880,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10683,
+      "title": "The Leap",
+      "track_id": 124510
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 219000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 10684,
+      "title": "Take Off",
+      "track_id": 124511
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 10684,
+      "title": "It Never Entered My Mind",
+      "track_id": 124512
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 323000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 10684,
+      "title": "Well You Needn’t",
+      "track_id": 124513
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 241000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 10684,
+      "title": "Lazy Susan",
+      "track_id": 124514
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 284000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 10684,
+      "title": "Weirdo",
+      "track_id": 124515
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 10684,
+      "title": "The Leap",
+      "track_id": 124516
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 224000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 10685,
+      "title": "Take Off",
+      "track_id": 124517
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 10685,
+      "title": "It Never Entered My Mind",
+      "track_id": 124518
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 327000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 10685,
+      "title": "Well You Needn't",
+      "track_id": 124519
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 246000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 10685,
+      "title": "Lazy Susan",
+      "track_id": 124520
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 288000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 10685,
+      "title": "Weirdo",
+      "track_id": 124521
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 275000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 10685,
+      "title": "The Leap",
+      "track_id": 124522
+    }
+  ]
+}

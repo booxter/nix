@@ -2,13 +2,22 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import cast
+
+from pydantic import BaseModel, ConfigDict
 
 
 class TransmissionRpcError(RuntimeError):
     pass
+
+
+class Tracker(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=True, strict=True)
+
+    host: str | None = None
+    announce: str | None = None
 
 
 class TransmissionRpcClient:
@@ -130,23 +139,12 @@ def read_tracker_hosts(
     return hosts
 
 
-def torrent_matches_tracker_hosts(
-    torrent: Mapping[str, object],
-    tracker_hosts: set[str],
-) -> bool:
-    tracker_stats = torrent.get("tracker_stats", [])
-    if not isinstance(tracker_stats, list):
-        return False
-    for tracker in tracker_stats:
-        if not isinstance(tracker, dict):
-            continue
-        host = normalize_tracker_host(str(tracker.get("host", "")))
-        if host and host in tracker_hosts:
-            return True
-
-        announce = tracker.get("announce")
-        if isinstance(announce, str):
-            host = normalize_tracker_host(announce)
+def trackers_match_hosts(trackers: Sequence[Tracker], tracker_hosts: set[str]) -> bool:
+    for tracker in trackers:
+        for raw_host in (tracker.host, tracker.announce):
+            if raw_host is None:
+                continue
+            host = normalize_tracker_host(raw_host)
             if host and host in tracker_hosts:
                 return True
 

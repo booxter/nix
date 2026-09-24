@@ -1,0 +1,15 @@
+{
+  "action": "no_repair",
+  "case_id": "sha256:2b85e60abc6f15921af7888d790ce683918eb2f4d035556a8c98119811bf0ddb",
+  "evidence_refs": [
+    "file_single_01",
+    "evidence_single_queue_01"
+  ],
+  "explanation": "The controller did not provide the metadata required for an import action.",
+  "missing_evidence": [
+    "movie_identity",
+    "import_metadata"
+  ],
+  "reason": "missing_import_metadata",
+  "schema_version": "radarr-repair/v3"
+}

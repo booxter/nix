@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+from .decision_validation import DecisionViolation
+from .lidarr_case_models import LidarrRepairCaseV3
+from .lidarr_contracts import (
+    decision_schema,
+    decode_case,
+    decode_decision,
+    encode_case,
+    encode_decision,
+)
+from .lidarr_decision_models import (
+    Explanation,
+    LidarrRepairDecisionV3,
+    NoRepair,
+    Reason,
+    Sha256Id,
+)
+from .lidarr_projection import project_case
+from .lidarr_prompt import SYSTEM_INSTRUCTION
+from .lidarr_validation import validate_decision_for_case, validate_decision_object
+from .planning_core import ContractPlanner, DecisionModelError
+from .structured_decision import StructuredDecisionError, decode_structured_output
+from .structured_model import StructuredDecisionModel
+
+
+class LidarrDecisionGenerator:
+    def __init__(self, model: StructuredDecisionModel) -> None:
+        self._model = model
+
+    async def generate(
+        self,
+        repair_case: LidarrRepairCaseV3,
+        correction: tuple[DecisionViolation, ...],
+    ) -> LidarrRepairDecisionV3:
+        projection = project_case(repair_case)
+        try:
+            raw = await self._model.decide_json(
+                SYSTEM_INSTRUCTION,
+                projection.case_content,
+                decision_schema(),
+                LidarrRepairDecisionV3,
+                repair_case.case_id.root,
+                projection.project_correction(correction),
+            )
+            decision = decode_structured_output(raw, decode_decision, validate_decision_object)
+            return projection.restore_decision(decision)
+        except StructuredDecisionError as error:
+            raise DecisionModelError(
+                "Lidarr " + str(error),
+                error.violations,
+            ) from error
+
+
+def _roundtrip_case(repair_case: LidarrRepairCaseV3) -> LidarrRepairCaseV3:
+    return decode_case(encode_case(repair_case))
+
+
+def _roundtrip_decision(decision: LidarrRepairDecisionV3) -> LidarrRepairDecisionV3:
+    return decode_decision(encode_decision(decision))
+
+
+def _fallback(repair_case: LidarrRepairCaseV3) -> LidarrRepairDecisionV3:
+    return _roundtrip_decision(
+        LidarrRepairDecisionV3(
+            root=NoRepair(
+                action="no_repair",
+                case_id=Sha256Id(root=repair_case.case_id.root),
+                evidence_refs=[],
+                explanation=Explanation(
+                    root="The planner could not produce a valid decision within its attempt limit."
+                ),
+                reason=Reason.unsafe_to_repair,
+                schema_version="lidarr-repair/v3",
+            )
+        )
+    )
+
+
+class LidarrPlanner(ContractPlanner[LidarrRepairCaseV3, LidarrRepairDecisionV3]):
+    def __init__(self, model: StructuredDecisionModel) -> None:
+        super().__init__(
+            generator=LidarrDecisionGenerator(model),
+            roundtrip_case=_roundtrip_case,
+            roundtrip_decision=_roundtrip_decision,
+            validate_decision=validate_decision_for_case,
+            fallback=_fallback,
+            case_id=lambda repair_case: repair_case.case_id.root,
+        )

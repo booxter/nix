@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "media-repair-planner"
+version = "0.1.0"
+description = "Agentic planner for media import repair"
+requires-python = ">=3.13"
+dependencies = ["fastapi", "jsonschema", "ollama", "openai", "pydantic", "uvicorn"]
+
+[project.scripts]
+media-repair-planner = "media_repair_planner.cli:entrypoint"
+media-repair-planner-evaluate-radarr = "media_repair_planner.evaluation_cli:entrypoint"
+media-repair-planner-evaluate-lidarr = "media_repair_planner.lidarr_evaluation_cli:entrypoint"
+media-repair-planner-serve = "media_repair_planner.server_cli:entrypoint"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+media_repair_planner = [
+  "evaluations/v3/*.json",
+  "evaluations/v3/cases/*.json",
+  "schemas/*.json",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=media_repair_planner --cov-report=term-missing --cov-fail-under=90"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.coverage.run]
+omit = [
+  "*/case_models.py",
+  "*/decision_models.py",
+  "*/lidarr_case_models.py",
+  "*/lidarr_decision_models.py",
+]
+
+[tool.mypy]
+files = ["src/media_repair_planner"]
+strict = true

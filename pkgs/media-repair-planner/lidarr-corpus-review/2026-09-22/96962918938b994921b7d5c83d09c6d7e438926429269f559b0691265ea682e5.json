@@ -1,0 +1,5268 @@
+{
+  "album": {
+    "album_id": 1102,
+    "artist": "Marillion",
+    "artist_id": 154,
+    "monitored": true,
+    "title": "marillion.com"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 379745,
+      "fingerprint": "sha256:98cf60f0c51e5f62973fb910e2ee4bf1745e05887e4dfcee8237e7be2dbba474",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01. A Legacy (2026 Remix).flac",
+      "size_bytes": 128407886,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "A Legacy (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 135166,
+      "fingerprint": "sha256:5d2728a1664ab2da3a49df4dd57390bd19df044503e1073b66b36f38c2037c45",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01. A Legacy (Early Version - March 1999).flac",
+      "size_bytes": 25807529,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "A Legacy (Early Version - March 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 407665,
+      "fingerprint": "sha256:8274d8d403ef82c11928b2091b0cd7bc71904c14b89bcaf293febe2090396e72",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01. Easter (Live in London, 20_11_1999).flac",
+      "size_bytes": 78112483,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Easter (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 372007,
+      "fingerprint": "sha256:6f35c8379264aee5de80ef01485a594dbc3bf44b673097512e6bdfbce4604bcf",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02. A Legacy (Steven Wilson Master Mix - August 1999).flac",
+      "size_bytes": 68101390,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "A Legacy (Steven Wilson Master Mix - August 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 264974,
+      "fingerprint": "sha256:7fe289fd16e63fb21193a5fda2a0065fac2d14f5be55ebd7f724b9a0a3d9e5cb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02. Deserve (2026 Remix).flac",
+      "size_bytes": 96331724,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Deserve (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 254303,
+      "fingerprint": "sha256:2ffc9016de5addcbc850bb261a756e82f8687635fd960dcbce3f661b1cc9208e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02. The Answering Machine (Live in London, 20_11_1999).flac",
+      "size_bytes": 49022338,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Answering Machine (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 285220,
+      "fingerprint": "sha256:be3a48ef677427f2f8bc2dcd04a51bbaa93f787895201b8f8524feecb79339bf",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02. Under the Sun (Live in London, 20_11_1999).flac",
+      "size_bytes": 56703903,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Under the Sun (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 288629,
+      "fingerprint": "sha256:617f5f77c8cc8bb5caa89896439e9af1b7447d9c8e9a8633e856e07e4c0eca33",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03. Memory of Water (Big Beat) (Live in London, 20_11_1999).flac",
+      "size_bytes": 56996325,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Memory of Water (Big Beat) (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 324165,
+      "fingerprint": "sha256:796126c04f56637cb3ef5a70f6174bfa5cd1d0e6bc50297c7b8a2a813ba7fae1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03. Rich (Live in London, 20_11_1999).flac",
+      "size_bytes": 63903028,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rich (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 98342,
+      "fingerprint": "sha256:87fbbd9b0781ca89a0e5d630d1a49654b419b7ae2d7afa5d3c560e1456f1a1f0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03. You Get What You Deserve (Original Jam - January 1998).flac",
+      "size_bytes": 18933819,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "You Get What You Deserve (Original Jam - January 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:11",
+      "duration_ms": 276968,
+      "fingerprint": "sha256:11738d6f6785c31f6048b282a27160edaa4cd71591ed05d0170d34df17fe8677",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04. Deserve (Early Radiation Version - March 1998).flac",
+      "size_bytes": 54896078,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Deserve (Early Radiation Version - March 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:12",
+      "duration_ms": 457689,
+      "fingerprint": "sha256:894b6cc6be82c9bd76774e3673e8e51201d6770adb7464c9317b45a1a2cc98e9",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04. King (Live in London, 20_11_1999).flac",
+      "size_bytes": 85380509,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "King (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:13",
+      "duration_ms": 343253,
+      "fingerprint": "sha256:e76a054f7ea0bf38c4d52ca60880914aff913982371fd4d2413e221b443b991a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04. Rich (2026 Remix).flac",
+      "size_bytes": 121487445,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rich (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:14",
+      "duration_ms": 332175,
+      "fingerprint": "sha256:ae7d0df802786d046d639e845cef056bf611d112fa50ea8c736d956de240c527",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04. The Uninvited Guest (Live in London, 20_11_1999).flac",
+      "size_bytes": 64016571,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Uninvited Guest (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:15",
+      "duration_ms": 371739,
+      "fingerprint": "sha256:81cffe8ac68174b616b49d6986d394ca2ff3e5032c814b2555218f4ef496741c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05. A Legacy (Live in London, 20_11_1999).flac",
+      "size_bytes": 70232837,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "A Legacy (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:16",
+      "duration_ms": 333009,
+      "fingerprint": "sha256:40b27ac631e56035e0d09a3beddffec8ddcb78150a6d7f4b42e1c27762a6e19f",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05. Deserve (Early Dot Com Version - March 1999).flac",
+      "size_bytes": 64216877,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Deserve (Early Dot Com Version - March 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:17",
+      "duration_ms": 302500,
+      "fingerprint": "sha256:c9d5cd7c00bd0124805ef941cccd6f468d57b80e8622b26c35c592bf5e3b161b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05. Enlightened (2026 Remix).flac",
+      "size_bytes": 96833139,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Enlightened (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:18",
+      "duration_ms": 290680,
+      "fingerprint": "sha256:24ab7b6bd965a1bbce975214ab37504a509c69308a6dfbc26f037303b26015bb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06. Built-In Bastard Radar (2026 Remix).flac",
+      "size_bytes": 101458177,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Built-In Bastard Radar (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:19",
+      "duration_ms": 459527,
+      "fingerprint": "sha256:51d6b0c330abeb4af571395cda5a097ff6ce3f320cf85bbbc528730994a6a69a",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06. House (Live in London, 20_11_1999).flac",
+      "size_bytes": 83220762,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "House (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:20",
+      "duration_ms": 380440,
+      "fingerprint": "sha256:3ac4dc7ef72b62c646ef01798637fff09c36f8e75a3261485e942d759bfc45e7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06. The Great Escape (Live in London, 20_11_1999).flac",
+      "size_bytes": 73114594,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Great Escape (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:21",
+      "duration_ms": 257631,
+      "fingerprint": "sha256:bf46bb934dedaa81f3bb8167bc175b3d86b834298242a228eb7f592251382043",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07. Kayleigh (Live in London, 20_11_1999).flac",
+      "size_bytes": 49720484,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Kayleigh (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:22",
+      "duration_ms": 263012,
+      "fingerprint": "sha256:275f4b7c88b5c0d157263206cf1bac927e2b173237e90735af944ba8b1b4b030",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07. Mad _ The Opium Den (Live in London, 20_11_1999).flac",
+      "size_bytes": 49569353,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Mad / The Opium Den (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:23",
+      "duration_ms": 270501,
+      "fingerprint": "sha256:58c6335ff36c402d7b04c00be758645ddabc3e4b9883814c21617f19cf2ed1cd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07. Tumble Down the Years (2026 Remix).flac",
+      "size_bytes": 94396924,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Tumble Down the Years (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:24",
+      "duration_ms": 289463,
+      "fingerprint": "sha256:b9c86ba9473de7ebdcf624254c393d90af32cf0f80c1c3d68bd4653e7fbe68d5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07. Upside Down (Go) (Radiation Version - April 1998).flac",
+      "size_bytes": 54748994,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Upside Down (Go) (Radiation Version - April 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:25",
+      "duration_ms": 456007,
+      "fingerprint": "sha256:a833d8ab5b085ee755d0e9d26812a518814dfb155ac771b8763cf8d82ce7d026",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08. Afraid of Sunlight (Live in London, 20_11_1999).flac",
+      "size_bytes": 85069710,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Afraid of Sunlight (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:26",
+      "duration_ms": 914240,
+      "fingerprint": "sha256:1cfa6d10517d6c05a17616e119f6a8d8acbafb4fd7d10de992b99a6cc6e353cf",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08. Interior Lulu (2026 Remix).flac",
+      "size_bytes": 314746086,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Interior Lulu (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:27",
+      "duration_ms": 256170,
+      "fingerprint": "sha256:84bf1107da3e82e09aa19131e7dc4c6bd6c141e495cbf193f2f4c2fcb3a818c7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08. Lavender (Live in London, 20_11_1999).flac",
+      "size_bytes": 49926143,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Lavender (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:28",
+      "duration_ms": 302675,
+      "fingerprint": "sha256:1d41d1a12634f34b87119da4ebf85aa147d3a6afa505ae1a5034a32896fe4e5d",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09. Deserve (Live in London, 20_11_1999).flac",
+      "size_bytes": 60682471,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Deserve (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:29",
+      "duration_ms": 615067,
+      "fingerprint": "sha256:b2c29cd73a05f75cb4c12241fd89602597595b595a0fd78387206cc2faea8017",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09. House (2026 Remix).flac",
+      "size_bytes": 206567638,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "House (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:30",
+      "duration_ms": 320116,
+      "fingerprint": "sha256:d318c6f70f056e52cd9d974936caac6a89f39cd346bb166ce7497bbbe46e5fe7",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09. Slainte Mhath (Live in London, 20_11_1999).flac",
+      "size_bytes": 63363907,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Slainte Mhath (Live in London, 20/11/1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:31",
+      "duration_ms": 239052,
+      "fingerprint": "sha256:1bfc95fb20bda1dc8a0b6a509837a055dc167eda8ef547d5ad5d5623a6c0e3bb",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10. Swing Doors (Rich) (Early Radiation Version - March 1998).flac",
+      "size_bytes": 47230210,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Swing Doors (Rich) (Early Radiation Version - March 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:32",
+      "duration_ms": 270687,
+      "fingerprint": "sha256:fa3b404d934caf6c3c36107d26284281313a57b8916e29161a3e999c5e80284c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "11. Rich (Early Dot Com Version - March 1999).flac",
+      "size_bytes": 51400465,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Rich (Early Dot Com Version - March 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:33",
+      "duration_ms": 238086,
+      "fingerprint": "sha256:426c5f26100a3d74372538f1954148bf2464b2a94951acd070de80ce140c27f1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "12. Enlightened (Radiation Work in Progress - March 1998).flac",
+      "size_bytes": 44593619,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Enlightened (Radiation Work in Progress - March 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:34",
+      "duration_ms": 289088,
+      "fingerprint": "sha256:55d8505491ac70a096fae538c066389a4f773741387f5c0ec7a18dfefa5472f8",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "13. Enlightened (Dot Com Work in Progress - March 1999).flac",
+      "size_bytes": 48402414,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Enlightened (Dot Com Work in Progress - March 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:35",
+      "duration_ms": 264789,
+      "fingerprint": "sha256:faf580c0fb0802d3c287225e67751ecc9b55339f5b31f64e3c2c8e35d7ba2dba",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "14. Built in Bastard Radar (Writing Jams - March 1999).flac",
+      "size_bytes": 49528383,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Built in Bastard Radar (Writing Jams - March 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:36",
+      "duration_ms": 317498,
+      "fingerprint": "sha256:4ecebd25e56a7d6df7cee6340d1fc7ae1685213a58871d82cbb5b066a9485a1b",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "15. Built in Bastard Radar (Trevor Vallis Mix - July 1999).flac",
+      "size_bytes": 64318749,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Built in Bastard Radar (Trevor Vallis Mix - July 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:37",
+      "duration_ms": 200597,
+      "fingerprint": "sha256:f5099579b78e1ed6d25d01215ea03a49a9951aeef0d89fbc6bcabbf0b47832c1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "16. Tumble Down the Years (Early Radiation Version - March 1998).flac",
+      "size_bytes": 37809869,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Tumble Down the Years (Early Radiation Version - March 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:38",
+      "duration_ms": 270489,
+      "fingerprint": "sha256:fa817edbdef50df5aa492cdb968091e23c7f66c5433898d84a1b1b800d1af3bd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "17. Tumble Down the Years (Early Mix - May 1999).flac",
+      "size_bytes": 50772939,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Tumble Down the Years (Early Mix - May 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:39",
+      "duration_ms": 150182,
+      "fingerprint": "sha256:43d72a40cef4b9b22431a3487398d81abf3971771f97f4c74f2533026856be1e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "18. Interior Lulu (Radiation Backing Track - April 1998).flac",
+      "size_bytes": 29014514,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Interior Lulu (Radiation Backing Track - April 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:40",
+      "duration_ms": 1060238,
+      "fingerprint": "sha256:3dc24af6143992527a8c7297c8ab298d5c04ea4026beaac6d4772036acfa97c3",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "19. Finding Lulu (March 1998 to April 1999).flac",
+      "size_bytes": 192450685,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Finding Lulu (March 1998 to April 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:41",
+      "duration_ms": 490748,
+      "fingerprint": "sha256:dea753eeaca9854e550749a4c047cfe1429157c8036775a9bc96a39e495bc2cd",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "20. Massive Attack Song (House) (Original Radiation Jam - December 1997).flac",
+      "size_bytes": 88083669,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Massive Attack Song (House) (Original Radiation Jam - December 1997)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:42",
+      "duration_ms": 376214,
+      "fingerprint": "sha256:e03499c20b334312d198779a8b04e5b033ffc5aaf2f68daaa740da18d3d7d512",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "2026 Remix).flac",
+      "size_bytes": 126619903,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 96000
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Go! (2026 Remix)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:43",
+      "duration_ms": 360385,
+      "fingerprint": "sha256:7649d02c2164bfc0ecfba7f9852e6a601130d691f65f8d1472ad1bab36a8a061",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "21. This House Aches (Radiation Work in Progress - March 1998).flac",
+      "size_bytes": 66107930,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "This House Aches (Radiation Work in Progress - March 1998)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:44",
+      "duration_ms": 236019,
+      "fingerprint": "sha256:3578c1923ac96ac08de16d264d07ba46ae19b5a3ccaa521ce2d082e81082572e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "22. Think Happy.flac",
+      "size_bytes": 43742528,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Think Happy"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:45",
+      "duration_ms": 379707,
+      "fingerprint": "sha256:f2798b8e7391bfb479a65c611f9750297deb23deff34261cafbdfe6945dc102e",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "23. Dreaming of Summer (January 1999).flac",
+      "size_bytes": 66732122,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Dreaming of Summer (January 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:46",
+      "duration_ms": 430777,
+      "fingerprint": "sha256:fa1b340d3133a7fff946e92216d42f6a6d6f2d62707c0a43a609f78c428d8094",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Dot Com Work in Progress - February 1999).flac",
+      "size_bytes": 78226624,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Go! (Dot Com Work in Progress - February 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:47",
+      "duration_ms": 417286,
+      "fingerprint": "sha256:178cb8f30719b966d70ad1422d4f29f8879e6b29d318ade4a68f3aa6ba249696",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Early Mix - June 1999).flac",
+      "size_bytes": 75336572,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Go! (Early Mix - June 1999)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:48",
+      "duration_ms": 135491,
+      "fingerprint": "sha256:b110ee873626681e9c1b92b70022b2c3df2903b5039db19cceb31eb2670a8c9c",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Early Vocal Melody - Aos Sessions - October 1994).flac",
+      "size_bytes": 25076198,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Go! (Early Vocal Melody - Aos Sessions - October 1994)"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:49",
+      "duration_ms": 366056,
+      "fingerprint": "sha256:af867218d456cc70974dc77b234893b2120a46f58f94d61eed38acb5dafff369",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "Live in London, 20_11_1999).flac",
+      "size_bytes": 67972933,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        },
+        {
+          "bit_rate_bps": null,
+          "channels": null,
+          "codec": "mjpeg",
+          "kind": "video",
+          "sample_rate_hz": null
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Go! (Live in London, 20/11/1999)"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "A Legacy (2026 Remix)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        403542
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "A Legacy (Early Version - March 1999)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        403569
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Easter (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        403560
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "A Legacy (Steven Wilson Master Mix - August 1999)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        403570
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Deserve (2026 Remix)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        403543
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "The Answering Machine (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        403561
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Under the Sun (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        403552
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Memory of Water (Big Beat) (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        403562
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Rich (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        403553
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "You Get What You Deserve (Original Jam - January 1998)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        403571
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:11",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Deserve (Early Radiation Version - March 1998)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        403572
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:12",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "King (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        403563
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:13",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Rich (2026 Remix)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        403545
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:14",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "The Uninvited Guest (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        403554
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:15",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "A Legacy (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        403555
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:16",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Deserve (Early Dot Com Version - March 1999)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        403573
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:17",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Enlightened (2026 Remix)",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        403546
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:18",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Built-In Bastard Radar (2026 Remix)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        403547
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:19",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "House (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        403556
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:20",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "The Great Escape (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        403565
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:21",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Kayleigh (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        403566
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:22",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Mad / The Opium Den (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        403557
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:23",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Tumble Down the Years (2026 Remix)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        403548
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:24",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Upside Down (Go) (Radiation Version - April 1998)",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        403575
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:25",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Afraid of Sunlight (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        403558
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:26",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Interior Lulu (2026 Remix)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        403549
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:27",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Lavender (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        403567
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:28",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Deserve (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        403559
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:29",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "House (2026 Remix)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        403550
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:30",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Slainte Mhath (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        403568
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:31",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Swing Doors (Rich) (Early Radiation Version - March 1998)",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        403578
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:32",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Rich (Early Dot Com Version - March 1999)",
+      "tag_track_numbers": [
+        11
+      ],
+      "track_ids": [
+        403579
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:33",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Enlightened (Radiation Work in Progress - March 1998)",
+      "tag_track_numbers": [
+        12
+      ],
+      "track_ids": [
+        403580
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:34",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Enlightened (Dot Com Work in Progress - March 1999)",
+      "tag_track_numbers": [
+        13
+      ],
+      "track_ids": [
+        403581
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:35",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Built in Bastard Radar (Writing Jams - March 1999)",
+      "tag_track_numbers": [
+        14
+      ],
+      "track_ids": [
+        403582
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:36",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Built in Bastard Radar (Trevor Vallis Mix - July 1999)",
+      "tag_track_numbers": [
+        15
+      ],
+      "track_ids": [
+        403583
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:37",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Tumble Down the Years (Early Radiation Version - March 1998)",
+      "tag_track_numbers": [
+        16
+      ],
+      "track_ids": [
+        403584
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:38",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Tumble Down the Years (Early Mix - May 1999)",
+      "tag_track_numbers": [
+        17
+      ],
+      "track_ids": [
+        403585
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:39",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Interior Lulu (Radiation Backing Track - April 1998)",
+      "tag_track_numbers": [
+        18
+      ],
+      "track_ids": [
+        403586
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:40",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Finding Lulu (March 1998 to April 1999)",
+      "tag_track_numbers": [
+        19
+      ],
+      "track_ids": [
+        403587
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:41",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Massive Attack Song (House) (Original Radiation Jam - December 1997)",
+      "tag_track_numbers": [
+        20
+      ],
+      "track_ids": [
+        403588
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:42",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Go! (2026 Remix)",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        403544
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:43",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "This House Aches (Radiation Work in Progress - March 1998)",
+      "tag_track_numbers": [
+        21
+      ],
+      "track_ids": [
+        403589
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:44",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Think Happy",
+      "tag_track_numbers": [
+        22
+      ],
+      "track_ids": [
+        403590
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:45",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Dreaming of Summer (January 1999)",
+      "tag_track_numbers": [
+        23
+      ],
+      "track_ids": [
+        403591
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:46",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Go! (Dot Com Work in Progress - February 1999)",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        403576
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:47",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Go! (Early Mix - June 1999)",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        403577
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:48",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Go! (Early Vocal Melody - Aos Sessions - October 1994)",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        403574
+      ]
+    },
+    {
+      "album_id": 1102,
+      "artifact_id": "artifact:49",
+      "rejections": [
+        "permanent: Worst track match: 56.5% vs 60% [track title]",
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 31038,
+      "tag_album": "Marillion.Com (Deluxe Edition)",
+      "tag_artist": "Marillion",
+      "tag_title": "Go! (Live in London, 20/11/1999)",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        403551
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5450",
+      "release_id": 5450,
+      "track_ids": [
+        66221,
+        66222,
+        66223,
+        66224,
+        66225,
+        66226,
+        66227,
+        66228,
+        66229
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5451",
+      "release_id": 5451,
+      "track_ids": [
+        66230,
+        66236,
+        66231,
+        66237,
+        66232,
+        66238,
+        66233,
+        66234,
+        66235
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5452",
+      "release_id": 5452,
+      "track_ids": [
+        66239,
+        66240,
+        66241,
+        66242,
+        66243,
+        66244,
+        66245,
+        66246,
+        66247
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5453",
+      "release_id": 5453,
+      "track_ids": [
+        66248,
+        66249,
+        66250,
+        66251,
+        66252,
+        66253,
+        66254,
+        66255,
+        66256
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5454",
+      "release_id": 5454,
+      "track_ids": [
+        66257,
+        66258,
+        66259,
+        66260,
+        66261,
+        66262,
+        66263,
+        66264,
+        66265
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5455",
+      "release_id": 5455,
+      "track_ids": [
+        66266,
+        66267,
+        66268,
+        66269,
+        66270,
+        66271,
+        66272,
+        66273,
+        66274
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5456",
+      "release_id": 5456,
+      "track_ids": [
+        66275,
+        66276,
+        66277,
+        66278,
+        66279,
+        66280,
+        66281,
+        66282,
+        66283
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5457",
+      "release_id": 5457,
+      "track_ids": [
+        66284,
+        66285,
+        66286,
+        66287,
+        66288,
+        66289,
+        66290,
+        66291,
+        66292
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:5458",
+      "release_id": 5458,
+      "track_ids": [
+        66293,
+        66294,
+        66295,
+        66296,
+        66297,
+        66298,
+        66299,
+        66300,
+        66301
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:31036",
+      "release_id": 31036,
+      "track_ids": [
+        403483,
+        403484,
+        403485,
+        403486,
+        403487,
+        403488,
+        403489,
+        403490,
+        403491
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:31038",
+      "release_id": 31038,
+      "track_ids": [
+        403542,
+        403551,
+        403560,
+        403569,
+        403543,
+        403552,
+        403561,
+        403570,
+        403544,
+        403553,
+        403562,
+        403571,
+        403545,
+        403554,
+        403563,
+        403572,
+        403546,
+        403555,
+        403564,
+        403573,
+        403547,
+        403556,
+        403565,
+        403574,
+        403548,
+        403557,
+        403566,
+        403575,
+        403549,
+        403558,
+        403567,
+        403576,
+        403550,
+        403559,
+        403568,
+        403577,
+        403578,
+        403579,
+        403580,
+        403581,
+        403582,
+        403583,
+        403584,
+        403585,
+        403586,
+        403587,
+        403588,
+        403589,
+        403590,
+        403591
+      ]
+    },
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 1102,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10",
+        "artifact:11",
+        "artifact:12",
+        "artifact:13",
+        "artifact:14",
+        "artifact:15",
+        "artifact:16",
+        "artifact:17",
+        "artifact:18",
+        "artifact:19",
+        "artifact:20",
+        "artifact:21",
+        "artifact:22",
+        "artifact:23",
+        "artifact:24",
+        "artifact:25",
+        "artifact:26",
+        "artifact:27",
+        "artifact:28",
+        "artifact:29",
+        "artifact:30",
+        "artifact:31",
+        "artifact:32",
+        "artifact:33",
+        "artifact:34",
+        "artifact:35",
+        "artifact:36",
+        "artifact:37",
+        "artifact:38",
+        "artifact:39",
+        "artifact:40",
+        "artifact:41",
+        "artifact:42",
+        "artifact:43",
+        "artifact:44",
+        "artifact:45",
+        "artifact:46",
+        "artifact:47",
+        "artifact:48",
+        "artifact:49"
+      ],
+      "capability_id": "capability:import_missing_tracks:31039",
+      "release_id": 31039,
+      "track_ids": [
+        403592,
+        403601,
+        403610,
+        403593,
+        403602,
+        403611,
+        403594,
+        403603,
+        403612,
+        403595,
+        403604,
+        403613,
+        403596,
+        403605,
+        403614,
+        403597,
+        403606,
+        403615,
+        403598,
+        403607,
+        403616,
+        403599,
+        403608,
+        403617,
+        403600,
+        403609,
+        403618
+      ]
+    }
+  ],
+  "case_id": "sha256:96962918938b994921b7d5c83d09c6d7e438926429269f559b0691265ea682e5",
+  "observed_at": "2026-09-23T03:17:40.30686782Z",
+  "queue": {
+    "download_ref": "download:425076e292d95f2b4269b14f11649319e8f84d69e73cf3377d7ae810d3873299",
+    "messages": [
+      "01. A Legacy (2026 Remix).flac",
+      "01. A Legacy (Early Version - March 1999).flac",
+      "01. Easter (Live in London, 20_11_1999).flac",
+      "02. A Legacy (Steven Wilson Master Mix - August 1999).flac",
+      "02. Deserve (2026 Remix).flac",
+      "02. The Answering Machine (Live in London, 20_11_1999).flac",
+      "02. Under the Sun (Live in London, 20_11_1999).flac",
+      "03. Memory of Water (Big Beat) (Live in London, 20_11_1999).flac",
+      "03. Rich (Live in London, 20_11_1999).flac",
+      "03. You Get What You Deserve (Original Jam - January 1998).flac",
+      "04. Deserve (Early Radiation Version - March 1998).flac",
+      "04. King (Live in London, 20_11_1999).flac",
+      "04. Rich (2026 Remix).flac",
+      "04. The Uninvited Guest (Live in London, 20_11_1999).flac",
+      "05. A Legacy (Live in London, 20_11_1999).flac",
+      "05. Deserve (Early Dot Com Version - March 1999).flac",
+      "05. Enlightened (2026 Remix).flac",
+      "06. Built-In Bastard Radar (2026 Remix).flac",
+      "06. House (Live in London, 20_11_1999).flac",
+      "06. The Great Escape (Live in London, 20_11_1999).flac",
+      "07. Kayleigh (Live in London, 20_11_1999).flac",
+      "07. Mad _ The Opium Den (Live in London, 20_11_1999).flac",
+      "07. Tumble Down the Years (2026 Remix).flac",
+      "07. Upside Down (Go) (Radiation Version - April 1998).flac",
+      "08. Afraid of Sunlight (Live in London, 20_11_1999).flac",
+      "08. Interior Lulu (2026 Remix).flac",
+      "08. Lavender (Live in London, 20_11_1999).flac",
+      "09. Deserve (Live in London, 20_11_1999).flac",
+      "09. House (2026 Remix).flac",
+      "09. Slainte Mhath (Live in London, 20_11_1999).flac",
+      "10. Swing Doors (Rich) (Early Radiation Version - March 1998).flac",
+      "11. Rich (Early Dot Com Version - March 1999).flac",
+      "12. Enlightened (Radiation Work in Progress - March 1998).flac",
+      "13. Enlightened (Dot Com Work in Progress - March 1999).flac",
+      "14. Built in Bastard Radar (Writing Jams - March 1999).flac",
+      "15. Built in Bastard Radar (Trevor Vallis Mix - July 1999).flac",
+      "16. Tumble Down the Years (Early Radiation Version - March 1998).flac",
+      "17. Tumble Down the Years (Early Mix - May 1999).flac",
+      "18. Interior Lulu (Radiation Backing Track - April 1998).flac",
+      "19. Finding Lulu (March 1998 to April 1999).flac",
+      "20. Massive Attack Song (House) (Original Radiation Jam - December 1997).flac",
+      "2026 Remix).flac",
+      "21. This House Aches (Radiation Work in Progress - March 1998).flac",
+      "22. Think Happy.flac",
+      "23. Dreaming of Summer (January 1999).flac",
+      "Dot Com Work in Progress - February 1999).flac",
+      "Early Mix - June 1999).flac",
+      "Early Vocal Melody - Aos Sessions - October 1994).flac",
+      "Has missing tracks",
+      "Live in London, 20_11_1999).flac",
+      "One or more tracks expected in this release were not imported or missing from the release",
+      "Worst track match: 56.5% vs 60% [track title]"
+    ],
+    "queue_id": 1652127800,
+    "title": "Marillion - Marillion.Com (Deluxe Edition) 2026 WEB 24bit 44.1khz [FLAC]-InChY-xpost"
+  },
+  "releases": [
+    {
+      "countries": [],
+      "disambiguation": "",
+      "foreign_release_id": "1e0d101c-7d69-428b-ac9e-cb5fad6526ad",
+      "format": "Digital Media",
+      "labels": [
+        "Intact Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5450,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d7570597-a7c0-4818-aaf1-ecaa893b5e5d",
+      "format": "2x12\" Vinyl",
+      "labels": [
+        "Madfish"
+      ],
+      "medium_count": 2,
+      "monitored": false,
+      "release_id": 5451,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "c7e05b72-f896-45c9-9900-6d05463fe876",
+      "format": "CD",
+      "labels": [
+        "Madfish"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5452,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e59dc7de-5f0f-4c06-9c82-c90d52d5b4d6",
+      "format": "CD",
+      "labels": [
+        "Intact Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5453,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "1d571168-23a6-4962-91f9-c707985fc31f",
+      "format": "CD",
+      "labels": [
+        "Sanctuary Midline"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5454,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "ae826d14-3fec-48b2-b8b3-955efb01f740",
+      "format": "CD",
+      "labels": [
+        "Kscope"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5455,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "e4540539-17da-44b9-a62e-0eb469652464",
+      "format": "CD",
+      "labels": [
+        "Sanctuary Records"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5456,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "f7e9d4f4-36ab-4727-bab6-019817e57330",
+      "format": "CD",
+      "labels": [
+        "Madfish"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5457,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "United Kingdom"
+      ],
+      "disambiguation": "jewel case",
+      "foreign_release_id": "dd9840e9-1734-4891-ab71-0ab4ceed0058",
+      "format": "CD",
+      "labels": [
+        "Castle Music",
+        "Intact Records",
+        "Racket"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 5458,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "Germany"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "67042397-3e77-426f-82d4-65c2751b7178",
+      "format": "CD",
+      "labels": [
+        "earMUSIC"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 31036,
+      "title": "marillion.com",
+      "track_count": 9
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "deluxe edition",
+      "foreign_release_id": "bfb8824b-89ce-4c29-9d85-7fb1c6057ec2",
+      "format": "4xDigital Media",
+      "labels": [
+        "earMUSIC"
+      ],
+      "medium_count": 4,
+      "monitored": true,
+      "release_id": 31038,
+      "title": "marillion.com",
+      "track_count": 50
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "deluxe edition",
+      "foreign_release_id": "88a5067c-836c-4e5d-8449-55b6e39a0fb1",
+      "format": "3xCD",
+      "labels": [
+        "earMUSIC"
+      ],
+      "medium_count": 3,
+      "monitored": false,
+      "release_id": 31039,
+      "title": "marillion.com",
+      "track_count": 27
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 376227,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5450,
+      "title": "A Legacy",
+      "track_id": 66221
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 263333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5450,
+      "title": "Deserve",
+      "track_id": 66222
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 371333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5450,
+      "title": "Go!",
+      "track_id": 66223
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 342907,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5450,
+      "title": "Rich",
+      "track_id": 66224
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 299293,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5450,
+      "title": "Enlightened",
+      "track_id": 66225
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 292400,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5450,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 66226
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 273800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5450,
+      "title": "Tumble Down the Years",
+      "track_id": 66227
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 914240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5450,
+      "title": "Interior Lulu",
+      "track_id": 66228
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5450,
+      "title": "House",
+      "track_id": 66229
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A1",
+      "release_id": 5451,
+      "title": "A Legacy",
+      "track_id": 66230
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C1",
+      "release_id": 5451,
+      "title": "Interior Lulu",
+      "track_id": 66236
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A2",
+      "release_id": 5451,
+      "title": "Deserve",
+      "track_id": 66231
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "C2",
+      "release_id": 5451,
+      "title": "Tumble Down the Years",
+      "track_id": 66237
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "A3",
+      "release_id": 5451,
+      "title": "Go!",
+      "track_id": 66232
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "D",
+      "release_id": 5451,
+      "title": "House",
+      "track_id": 66238
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B1",
+      "release_id": 5451,
+      "title": "Rich",
+      "track_id": 66233
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B2",
+      "release_id": 5451,
+      "title": "Enlightened",
+      "track_id": 66234
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "B3",
+      "release_id": 5451,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 66235
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5452,
+      "title": "A Legacy",
+      "track_id": 66239
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5452,
+      "title": "Deserve",
+      "track_id": 66240
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5452,
+      "title": "Go!",
+      "track_id": 66241
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5452,
+      "title": "Rich",
+      "track_id": 66242
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5452,
+      "title": "Enlightened",
+      "track_id": 66243
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5452,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 66244
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5452,
+      "title": "Tumble Down the Years",
+      "track_id": 66245
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5452,
+      "title": "Interior Lulu",
+      "track_id": 66246
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5452,
+      "title": "House",
+      "track_id": 66247
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5453,
+      "title": "A Legacy",
+      "track_id": 66248
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5453,
+      "title": "Deserve",
+      "track_id": 66249
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5453,
+      "title": "Go!",
+      "track_id": 66250
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5453,
+      "title": "Rich",
+      "track_id": 66251
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5453,
+      "title": "Enlightened",
+      "track_id": 66252
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5453,
+      "title": "Built-in Bastard Radar",
+      "track_id": 66253
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5453,
+      "title": "Tumble Down the Years",
+      "track_id": 66254
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5453,
+      "title": "Interior Lulu",
+      "track_id": 66255
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5453,
+      "title": "House",
+      "track_id": 66256
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5454,
+      "title": "A Legacy",
+      "track_id": 66257
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5454,
+      "title": "Deserve",
+      "track_id": 66258
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5454,
+      "title": "Go!",
+      "track_id": 66259
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5454,
+      "title": "Rich",
+      "track_id": 66260
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5454,
+      "title": "Enlightened",
+      "track_id": 66261
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5454,
+      "title": "Built-in Bastard Radar",
+      "track_id": 66262
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5454,
+      "title": "Tumble Down the Years",
+      "track_id": 66263
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5454,
+      "title": "Interior Lulu",
+      "track_id": 66264
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5454,
+      "title": "House",
+      "track_id": 66265
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 376000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5455,
+      "title": "A Legacy",
+      "track_id": 66266
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 263000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5455,
+      "title": "Deserve",
+      "track_id": 66267
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 371000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5455,
+      "title": "Go!",
+      "track_id": 66268
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 343000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5455,
+      "title": "Rich",
+      "track_id": 66269
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 299000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5455,
+      "title": "Enlightened",
+      "track_id": 66270
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 292000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5455,
+      "title": "Built-In Bastard Radar",
+      "track_id": 66271
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 274000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5455,
+      "title": "Tumble Down the Years",
+      "track_id": 66272
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 914000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5455,
+      "title": "Interior Lulu",
+      "track_id": 66273
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5455,
+      "title": "House",
+      "track_id": 66274
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5456,
+      "title": "A Legacy",
+      "track_id": 66275
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5456,
+      "title": "Deserve",
+      "track_id": 66276
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5456,
+      "title": "Go!",
+      "track_id": 66277
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5456,
+      "title": "Rich",
+      "track_id": 66278
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5456,
+      "title": "Enlightened",
+      "track_id": 66279
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5456,
+      "title": "Built-In Bastard Radar",
+      "track_id": 66280
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5456,
+      "title": "Tumble Down the Years",
+      "track_id": 66281
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5456,
+      "title": "Interior Lulu",
+      "track_id": 66282
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5456,
+      "title": "House",
+      "track_id": 66283
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5457,
+      "title": "A Legacy",
+      "track_id": 66284
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5457,
+      "title": "Deserve",
+      "track_id": 66285
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5457,
+      "title": "Go!",
+      "track_id": 66286
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5457,
+      "title": "Rich",
+      "track_id": 66287
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5457,
+      "title": "Enlightened",
+      "track_id": 66288
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5457,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 66289
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5457,
+      "title": "Tumble Down the Years",
+      "track_id": 66290
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5457,
+      "title": "Interior Lulu",
+      "track_id": 66291
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5457,
+      "title": "House",
+      "track_id": 66292
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 378266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 5458,
+      "title": "A Legacy",
+      "track_id": 66293
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 5458,
+      "title": "Deserve",
+      "track_id": 66294
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 373373,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 5458,
+      "title": "Go!",
+      "track_id": 66295
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 344933,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 5458,
+      "title": "Rich",
+      "track_id": 66296
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 301333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 5458,
+      "title": "Enlightened",
+      "track_id": 66297
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 294440,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 5458,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 66298
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 275840,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 5458,
+      "title": "Tumble Down the Years",
+      "track_id": 66299
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 916146,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 5458,
+      "title": "Interior Lulu",
+      "track_id": 66300
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 5458,
+      "title": "House",
+      "track_id": 66301
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 380000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31036,
+      "title": "A Legacy",
+      "track_id": 403483
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 265386,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31036,
+      "title": "Deserve",
+      "track_id": 403484
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 376000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31036,
+      "title": "Go!",
+      "track_id": 403485
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 343000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31036,
+      "title": "Rich",
+      "track_id": 403486
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 303000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31036,
+      "title": "Enlightened",
+      "track_id": 403487
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 291000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31036,
+      "title": "Built‐In Bastard Radar",
+      "track_id": 403488
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 271000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31036,
+      "title": "Tumble Down the Years",
+      "track_id": 403489
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 914000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31036,
+      "title": "Interior Lulu",
+      "track_id": 403490
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615120,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31036,
+      "title": "House",
+      "track_id": 403491
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 379745,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31038,
+      "title": "A Legacy",
+      "track_id": 403542
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 366056,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 31038,
+      "title": "Go! (live in London, 20/11/1999)",
+      "track_id": 403551
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 407665,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 31038,
+      "title": "Easter (live in London, 20/11/1999)",
+      "track_id": 403560
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 135166,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "1",
+      "release_id": 31038,
+      "title": "A Legacy (early version) (March 1999)",
+      "track_id": 403569
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 264974,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31038,
+      "title": "Deserve",
+      "track_id": 403543
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 285220,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 31038,
+      "title": "Under the Sun (live in London, 20/11/1999)",
+      "track_id": 403552
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 254303,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 31038,
+      "title": "Answering Machine (live in London, 20/11/1999)",
+      "track_id": 403561
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 372007,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "2",
+      "release_id": 31038,
+      "title": "A Legacy (Steven Wilson master mix) (August 1999)",
+      "track_id": 403570
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 376214,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31038,
+      "title": "Go!",
+      "track_id": 403544
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 324165,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 31038,
+      "title": "Rich (live in London, 20/11/1999)",
+      "track_id": 403553
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 288629,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 31038,
+      "title": "Memory of Water Big Beat (live in London, 20/11/1999)",
+      "track_id": 403562
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 98342,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "3",
+      "release_id": 31038,
+      "title": "You Get What You Deserve (original jam) (January 1998)",
+      "track_id": 403571
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 343253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31038,
+      "title": "Rich",
+      "track_id": 403545
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 332175,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 31038,
+      "title": "Uninvited Guest (live in London, 20/11/1999)",
+      "track_id": 403554
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 457689,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 31038,
+      "title": "King (live in London, 20/11/1999)",
+      "track_id": 403563
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 276968,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "4",
+      "release_id": 31038,
+      "title": "Deserve (early Radiation version) (March 1998)",
+      "track_id": 403572
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 302500,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31038,
+      "title": "Enlightened",
+      "track_id": 403546
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 371739,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 31038,
+      "title": "A Legacy (live in London, 20/11/1999)",
+      "track_id": 403555
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 443119,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 31038,
+      "title": "Brave (live in London, 20/11/1999)",
+      "track_id": 403564
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 333009,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "5",
+      "release_id": 31038,
+      "title": "Deserve (early Dot Com version) (March 1999)",
+      "track_id": 403573
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 290680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31038,
+      "title": "Built-In Bastard Radar",
+      "track_id": 403547
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 459527,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 31038,
+      "title": "House (live in London, 20/11/1999)",
+      "track_id": 403556
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 380440,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 31038,
+      "title": "Great Escape (live in London, 20/11/1999)",
+      "track_id": 403565
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 135491,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "6",
+      "release_id": 31038,
+      "title": "Go! (early vocal melody) (AoS sessions) (October 1994)",
+      "track_id": 403574
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 270501,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31038,
+      "title": "Tumble Down the Years",
+      "track_id": 403548
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 263012,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 31038,
+      "title": "Mad / The Opium Den (live in London, 20/11/1999)",
+      "track_id": 403557
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 257631,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 31038,
+      "title": "Kayleigh (live in London, 20/11/1999)",
+      "track_id": 403566
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 289463,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "7",
+      "release_id": 31038,
+      "title": "Upside Down (Go) (Radiation version) (April 1998)",
+      "track_id": 403575
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 914240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31038,
+      "title": "Interior Lulu",
+      "track_id": 403549
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 456007,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 31038,
+      "title": "Afraid of Sunlight (live in London, 20/11/1999)",
+      "track_id": 403558
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 256170,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 31038,
+      "title": "Lavender (live in London, 20/11/1999)",
+      "track_id": 403567
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 430777,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "8",
+      "release_id": 31038,
+      "title": "Go! (Dot Com work in progress) (February 1999)",
+      "track_id": 403576
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31038,
+      "title": "House",
+      "track_id": 403550
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 302675,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 31038,
+      "title": "Deserve (live in London, 20/11/1999)",
+      "track_id": 403559
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 320116,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 31038,
+      "title": "Slàinte Mhath (live in London, 20/11/1999)",
+      "track_id": 403568
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 417286,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "9",
+      "release_id": 31038,
+      "title": "Go! (early mix) (June 1999)",
+      "track_id": 403577
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 239052,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "10",
+      "release_id": 31038,
+      "title": "Swing Doors (Rich) (early Radiation version) (March 1998)",
+      "track_id": 403578
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 270687,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "11",
+      "release_id": 31038,
+      "title": "Rich (early Dot Com version) (March 1999)",
+      "track_id": 403579
+    },
+    {
+      "absolute_number": 12,
+      "duration_ms": 238086,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "12",
+      "release_id": 31038,
+      "title": "Enlightened (Radiation work in progress) (March 1998)",
+      "track_id": 403580
+    },
+    {
+      "absolute_number": 13,
+      "duration_ms": 289088,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "13",
+      "release_id": 31038,
+      "title": "Enlightened (Dot Com work in progress) (March 1999)",
+      "track_id": 403581
+    },
+    {
+      "absolute_number": 14,
+      "duration_ms": 264789,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "14",
+      "release_id": 31038,
+      "title": "Built in Bastard Radar (writing jams) (March 1999)",
+      "track_id": 403582
+    },
+    {
+      "absolute_number": 15,
+      "duration_ms": 317498,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "15",
+      "release_id": 31038,
+      "title": "Built in Bastard Radar (Trevor Vallis mix) (July 1999)",
+      "track_id": 403583
+    },
+    {
+      "absolute_number": 16,
+      "duration_ms": 200597,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "16",
+      "release_id": 31038,
+      "title": "Tumble Down the Years (early Radiation version) (March 1998)",
+      "track_id": 403584
+    },
+    {
+      "absolute_number": 17,
+      "duration_ms": 270489,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "17",
+      "release_id": 31038,
+      "title": "Tumble Down the Years (early mix) (May 1999)",
+      "track_id": 403585
+    },
+    {
+      "absolute_number": 18,
+      "duration_ms": 150182,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "18",
+      "release_id": 31038,
+      "title": "Interior Lulu (Radiation backing track) (April 1998)",
+      "track_id": 403586
+    },
+    {
+      "absolute_number": 19,
+      "duration_ms": 1060238,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "19",
+      "release_id": 31038,
+      "title": "Finding Lulu (March 1998 to April 1999)",
+      "track_id": 403587
+    },
+    {
+      "absolute_number": 20,
+      "duration_ms": 490748,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "20",
+      "release_id": 31038,
+      "title": "Massive Attack Song (House) (original Radiation jam) (December 1997)",
+      "track_id": 403588
+    },
+    {
+      "absolute_number": 21,
+      "duration_ms": 360385,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "21",
+      "release_id": 31038,
+      "title": "This House Aches (Radiation work in progress) (March 1998)",
+      "track_id": 403589
+    },
+    {
+      "absolute_number": 22,
+      "duration_ms": 236019,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "22",
+      "release_id": 31038,
+      "title": "Think Happy",
+      "track_id": 403590
+    },
+    {
+      "absolute_number": 23,
+      "duration_ms": 379707,
+      "has_file": false,
+      "medium_number": 4,
+      "number": "23",
+      "release_id": 31038,
+      "title": "Dreaming of Summer (live January 1999)",
+      "track_id": 403591
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 379745,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 31039,
+      "title": "A Legacy",
+      "track_id": 403592
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 365880,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "1",
+      "release_id": 31039,
+      "title": "Go!",
+      "track_id": 403601
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 407626,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "1",
+      "release_id": 31039,
+      "title": "Easter",
+      "track_id": 403610
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 264974,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 31039,
+      "title": "Deserve",
+      "track_id": 403593
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 285240,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "2",
+      "release_id": 31039,
+      "title": "Under the Sun",
+      "track_id": 403602
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 255506,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "2",
+      "release_id": 31039,
+      "title": "Answering Machine",
+      "track_id": 403611
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 376214,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 31039,
+      "title": "Go!",
+      "track_id": 403594
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 324613,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "3",
+      "release_id": 31039,
+      "title": "Rich",
+      "track_id": 403603
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 287453,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "3",
+      "release_id": 31039,
+      "title": "Memory of Water Big Beat",
+      "track_id": 403612
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 343253,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 31039,
+      "title": "Rich",
+      "track_id": 403595
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 332506,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "4",
+      "release_id": 31039,
+      "title": "Uninvited Guest",
+      "track_id": 403604
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 458253,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "4",
+      "release_id": 31039,
+      "title": "King",
+      "track_id": 403613
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 302500,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 31039,
+      "title": "Enlightened",
+      "track_id": 403596
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 370933,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "5",
+      "release_id": 31039,
+      "title": "A Legacy",
+      "track_id": 403605
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 442640,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "5",
+      "release_id": 31039,
+      "title": "Brave",
+      "track_id": 403614
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 290680,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 31039,
+      "title": "Built-In Bastard Radar",
+      "track_id": 403597
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 459640,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "6",
+      "release_id": 31039,
+      "title": "House",
+      "track_id": 403606
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 380893,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "6",
+      "release_id": 31039,
+      "title": "Great Escape",
+      "track_id": 403615
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 270501,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 31039,
+      "title": "Tumble Down the Years",
+      "track_id": 403598
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 262733,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "7",
+      "release_id": 31039,
+      "title": "Mad / The Opium Den",
+      "track_id": 403607
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 257066,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "7",
+      "release_id": 31039,
+      "title": "Kayleigh",
+      "track_id": 403616
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 914240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 31039,
+      "title": "Interior Lulu",
+      "track_id": 403599
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 456400,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "8",
+      "release_id": 31039,
+      "title": "Afraid of Sunlight",
+      "track_id": 403608
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 256200,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "8",
+      "release_id": 31039,
+      "title": "Lavender",
+      "track_id": 403617
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 615067,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 31039,
+      "title": "House",
+      "track_id": 403600
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 302640,
+      "has_file": false,
+      "medium_number": 2,
+      "number": "9",
+      "release_id": 31039,
+      "title": "Deserve",
+      "track_id": 403609
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 320133,
+      "has_file": false,
+      "medium_number": 3,
+      "number": "9",
+      "release_id": 31039,
+      "title": "Slainte Mhath",
+      "track_id": 403618
+    }
+  ]
+}

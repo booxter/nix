@@ -1,0 +1,1112 @@
+{
+  "album": {
+    "album_id": 753,
+    "artist": "Melvins",
+    "artist_id": 106,
+    "monitored": true,
+    "title": "The Crybaby"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:1",
+      "duration_ms": 190267,
+      "fingerprint": "sha256:b25e9ac745bab44c00c35bc80f95781f236c01bd4b27431b5429a85266e48635",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "01-melvins-blockbuster.flac",
+      "size_bytes": 24609970,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Blockbuster"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:2",
+      "duration_ms": 194533,
+      "fingerprint": "sha256:c63d796809164a971dfb7c7a47e64d8424615d8f76d52e93cc110560f6bc53c5",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "02-melvins-ramblin_man.flac",
+      "size_bytes": 22738862,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Ramblin' Man"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:3",
+      "duration_ms": 240333,
+      "fingerprint": "sha256:4d537f1e4b822ae68d7bdc37abfd8f05758fa5dc20c4e018287078ac1d0045c8",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "03-melvins-g.i._joe.flac",
+      "size_bytes": 29637502,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "G.i. Joe"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:4",
+      "duration_ms": 502000,
+      "fingerprint": "sha256:71bbe1148a16b8caffde2759c3b54a8e27ab55498bfc777aeaae6cefbbb01716",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "04-melvins-mine_is_no_disgrace.flac",
+      "size_bytes": 55948417,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Mine Is No Disgrace"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:5",
+      "duration_ms": 241773,
+      "fingerprint": "sha256:3844c56ad847d29734883a1de57320c33ffd9ddc5d4a25117b5c6920d63895f1",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "05-melvins-spineless.flac",
+      "size_bytes": 30069237,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Spineless"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:6",
+      "duration_ms": 883360,
+      "fingerprint": "sha256:71e0d6ecda95d0681a98b08eb6c3822f696dc374c46ea8e4bb27879dff4bc5e0",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "06-melvins-divorced.flac",
+      "size_bytes": 86660757,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Divorced"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:7",
+      "duration_ms": 243800,
+      "fingerprint": "sha256:4436cf0713f39ea953c97112aa2c022cbcd9581a7cd57f7670d7cf02d0f19cea",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "07-melvins-dry_drunk.flac",
+      "size_bytes": 28864504,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Dry Drunk"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:8",
+      "duration_ms": 130467,
+      "fingerprint": "sha256:7f7aa9e72d009c463cc3e5fd2e40e46725dd8ad75e59d287acc18db5d2e84321",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "08-melvins-okie_from_muskogee.flac",
+      "size_bytes": 15385651,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Okie From Muskogee"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:9",
+      "duration_ms": 687240,
+      "fingerprint": "sha256:3606ad67246e2c39b06d37534b065b66bf6f197687efef5d189ccc248ba224b6",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "09-melvins-the_man_with_the_laughing_hand_is_dead.flac",
+      "size_bytes": 75597823,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "The Man With The Laughing Hand Is Dead"
+        }
+      ]
+    },
+    {
+      "artifact_id": "artifact:10",
+      "duration_ms": 765227,
+      "fingerprint": "sha256:9743e658981f48a0e7a7814d3726311e9b1dceee50e50e6c6da76081b1d87595",
+      "formats": [
+        "flac"
+      ],
+      "relative_path": "10-melvins-moon_pie.flac",
+      "size_bytes": 47874703,
+      "streams": [
+        {
+          "bit_rate_bps": null,
+          "channels": 2,
+          "codec": "flac",
+          "kind": "audio",
+          "sample_rate_hz": 44100
+        }
+      ],
+      "tags": [
+        {
+          "name": "title",
+          "value": "Moon Pie"
+        }
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:1",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Blockbuster",
+      "tag_track_numbers": [
+        1
+      ],
+      "track_ids": [
+        47373
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:2",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Ramblin' Man",
+      "tag_track_numbers": [
+        2
+      ],
+      "track_ids": [
+        47374
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:3",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "G.i. Joe",
+      "tag_track_numbers": [
+        3
+      ],
+      "track_ids": [
+        47375
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:4",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Mine Is No Disgrace",
+      "tag_track_numbers": [
+        4
+      ],
+      "track_ids": [
+        47376
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:5",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Spineless",
+      "tag_track_numbers": [
+        5
+      ],
+      "track_ids": [
+        47377
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:6",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Divorced",
+      "tag_track_numbers": [
+        6
+      ],
+      "track_ids": [
+        47378
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:7",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Dry Drunk",
+      "tag_track_numbers": [
+        7
+      ],
+      "track_ids": [
+        47379
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:8",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Okie From Muskogee",
+      "tag_track_numbers": [
+        8
+      ],
+      "track_ids": [
+        47380
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:9",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "The Man With The Laughing Hand Is Dead",
+      "tag_track_numbers": [
+        9
+      ],
+      "track_ids": [
+        47381
+      ]
+    },
+    {
+      "album_id": 753,
+      "artifact_id": "artifact:10",
+      "rejections": [
+        "permanent: Has missing tracks"
+      ],
+      "release_id": 3790,
+      "tag_album": "The Crybaby",
+      "tag_artist": "Melvins",
+      "tag_title": "Moon Pie",
+      "tag_track_numbers": [
+        10
+      ],
+      "track_ids": [
+        47382
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "action": "import_missing_tracks_v1",
+      "album_id": 753,
+      "artifact_ids": [
+        "artifact:1",
+        "artifact:2",
+        "artifact:3",
+        "artifact:4",
+        "artifact:5",
+        "artifact:6",
+        "artifact:7",
+        "artifact:8",
+        "artifact:9",
+        "artifact:10"
+      ],
+      "capability_id": "capability:import_missing_tracks:3790",
+      "release_id": 3790,
+      "track_ids": [
+        47372
+      ]
+    }
+  ],
+  "case_id": "sha256:9101bd539263c5a23b16a4255d26ab8d2d7f7343b94e89bf16c085401f476bc9",
+  "observed_at": "2026-09-23T03:18:47.06645071Z",
+  "queue": {
+    "download_ref": "download:f7523bb25d9950aa314c56c183364d3c5e0dd7e3692276affcd55e8739e04900",
+    "messages": [
+      "01-melvins-blockbuster.flac",
+      "02-melvins-ramblin_man.flac",
+      "03-melvins-g.i._joe.flac",
+      "04-melvins-mine_is_no_disgrace.flac",
+      "05-melvins-spineless.flac",
+      "06-melvins-divorced.flac",
+      "07-melvins-dry_drunk.flac",
+      "08-melvins-okie_from_muskogee.flac",
+      "09-melvins-the_man_with_the_laughing_hand_is_dead.flac",
+      "10-melvins-moon_pie.flac",
+      "Has missing tracks",
+      "One or more tracks expected in this release were not imported or missing from the release"
+    ],
+    "queue_id": 730661532,
+    "title": "Melvins-The Crybaby-16BIT-WEB-FLAC-2000-VEXED-xpost"
+  },
+  "releases": [
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "7df016cd-5171-46c3-a3ba-69d2711113c3",
+      "format": "CD",
+      "labels": [
+        "Ipecac Recordings"
+      ],
+      "medium_count": 1,
+      "monitored": true,
+      "release_id": 3790,
+      "title": "The Crybaby",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "Europe"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "15286d48-f515-3498-b84c-9bac4a8723dc",
+      "format": "CD",
+      "labels": [
+        "Ipecac Recordings"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3791,
+      "title": "The Crybaby",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "d09a727d-da64-419f-8e8a-c69edf09fc64",
+      "format": "CD",
+      "labels": [
+        "Ipecac Recordings"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3792,
+      "title": "The Crybaby",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "[Worldwide]"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "370b931e-fd61-4054-8386-e94d5bebfca2",
+      "format": "CD",
+      "labels": [
+        "Ipecac Recordings"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3793,
+      "title": "The Crybaby",
+      "track_count": 11
+    },
+    {
+      "countries": [
+        "United States"
+      ],
+      "disambiguation": "",
+      "foreign_release_id": "6e1c8cb0-5c38-4f56-97d2-cab3a5bf1c0a",
+      "format": "CD",
+      "labels": [
+        "Ipecac Recordings"
+      ],
+      "medium_count": 1,
+      "monitored": false,
+      "release_id": 3794,
+      "title": "The Crybaby",
+      "track_count": 11
+    }
+  ],
+  "schema_version": "lidarr-repair/v3",
+  "tracks": [
+    {
+      "absolute_number": 1,
+      "duration_ms": 303000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3790,
+      "title": "Smells Like Teen Spirit",
+      "track_id": 47372
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3790,
+      "title": "Blockbuster",
+      "track_id": 47373
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 195000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3790,
+      "title": "Ramblin’ Man",
+      "track_id": 47374
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 240000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3790,
+      "title": "G.I. Joe",
+      "track_id": 47375
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 502000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3790,
+      "title": "Mine Is No Disgrace",
+      "track_id": 47376
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 242000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3790,
+      "title": "Spineless",
+      "track_id": 47377
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 883000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3790,
+      "title": "Divorced",
+      "track_id": 47378
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3790,
+      "title": "Dry Drunk",
+      "track_id": 47379
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 130000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3790,
+      "title": "Okie From Muskogee",
+      "track_id": 47380
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 687000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3790,
+      "title": "The Man With the Laughing Hand Is Dead",
+      "track_id": 47381
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 765000,
+      "has_file": true,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3790,
+      "title": "Moon Pie",
+      "track_id": 47382
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3791,
+      "title": "Smells Like Teen Spirit",
+      "track_id": 47383
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3791,
+      "title": "Blockbuster",
+      "track_id": 47384
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 195000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3791,
+      "title": "Ramblin’ Man",
+      "track_id": 47385
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3791,
+      "title": "G.I. Joe",
+      "track_id": 47386
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 502000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3791,
+      "title": "Mine Is No Disgrace",
+      "track_id": 47387
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3791,
+      "title": "Spineless",
+      "track_id": 47388
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 883000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3791,
+      "title": "Divorced",
+      "track_id": 47389
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3791,
+      "title": "Dry Drunk",
+      "track_id": 47390
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 130000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3791,
+      "title": "Okie From Muskogee",
+      "track_id": 47391
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 687000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3791,
+      "title": "The Man With the Laughing Hand Is Dead",
+      "track_id": 47392
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 765000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3791,
+      "title": "Moon Pie",
+      "track_id": 47393
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 302560,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3792,
+      "title": "Smells Like Teen Spirit",
+      "track_id": 47394
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190266,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3792,
+      "title": "Blockbuster",
+      "track_id": 47395
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 194533,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3792,
+      "title": "Ramblin’ Man",
+      "track_id": 47396
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 240333,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3792,
+      "title": "G.I. Joe",
+      "track_id": 47397
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 502000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3792,
+      "title": "Mine Is No Disgrace",
+      "track_id": 47398
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 241773,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3792,
+      "title": "Spineless",
+      "track_id": 47399
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 883360,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3792,
+      "title": "Divorced",
+      "track_id": 47400
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 243800,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3792,
+      "title": "Dry Drunk",
+      "track_id": 47401
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 130466,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3792,
+      "title": "Okie From Muskogee",
+      "track_id": 47402
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 687240,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3792,
+      "title": "The Man With the Laughing Hand Is Dead",
+      "track_id": 47403
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 765226,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3792,
+      "title": "Moon Pie",
+      "track_id": 47404
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3793,
+      "title": "Smells Like Teen Spirit",
+      "track_id": 47405
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3793,
+      "title": "Blockbuster",
+      "track_id": 47406
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 195000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3793,
+      "title": "Ramblin’ Man",
+      "track_id": 47407
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3793,
+      "title": "G.I. Joe",
+      "track_id": 47408
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 502000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3793,
+      "title": "Mine Is No Disgrace",
+      "track_id": 47409
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3793,
+      "title": "Spineless",
+      "track_id": 47410
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 883000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3793,
+      "title": "Divorced",
+      "track_id": 47411
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3793,
+      "title": "Dry Drunk",
+      "track_id": 47412
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 130000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3793,
+      "title": "Okie From Muskogee",
+      "track_id": 47413
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 687000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3793,
+      "title": "The Man With the Laughing Hand Is Dead",
+      "track_id": 47414
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 765000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3793,
+      "title": "Moon Pie",
+      "track_id": 47415
+    },
+    {
+      "absolute_number": 1,
+      "duration_ms": 303000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "1",
+      "release_id": 3794,
+      "title": "Smells Like Teen Spirit",
+      "track_id": 47416
+    },
+    {
+      "absolute_number": 2,
+      "duration_ms": 190000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "2",
+      "release_id": 3794,
+      "title": "Blockbuster",
+      "track_id": 47417
+    },
+    {
+      "absolute_number": 3,
+      "duration_ms": 195000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "3",
+      "release_id": 3794,
+      "title": "Ramblin’ Man",
+      "track_id": 47418
+    },
+    {
+      "absolute_number": 4,
+      "duration_ms": 240000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "4",
+      "release_id": 3794,
+      "title": "G.I. Joe",
+      "track_id": 47419
+    },
+    {
+      "absolute_number": 5,
+      "duration_ms": 502000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "5",
+      "release_id": 3794,
+      "title": "Mine Is No Disgrace",
+      "track_id": 47420
+    },
+    {
+      "absolute_number": 6,
+      "duration_ms": 242000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "6",
+      "release_id": 3794,
+      "title": "Spineless",
+      "track_id": 47421
+    },
+    {
+      "absolute_number": 7,
+      "duration_ms": 883000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "7",
+      "release_id": 3794,
+      "title": "Divorced",
+      "track_id": 47422
+    },
+    {
+      "absolute_number": 8,
+      "duration_ms": 244000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "8",
+      "release_id": 3794,
+      "title": "Dry Drunk",
+      "track_id": 47423
+    },
+    {
+      "absolute_number": 9,
+      "duration_ms": 130000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "9",
+      "release_id": 3794,
+      "title": "Okie From Muskogee",
+      "track_id": 47424
+    },
+    {
+      "absolute_number": 10,
+      "duration_ms": 687000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "10",
+      "release_id": 3794,
+      "title": "The Man With the Laughing Hand Is Dead",
+      "track_id": 47425
+    },
+    {
+      "absolute_number": 11,
+      "duration_ms": 765000,
+      "has_file": false,
+      "medium_number": 1,
+      "number": "11",
+      "release_id": 3794,
+      "title": "Moon Pie",
+      "track_id": 47426
+    }
+  ]
+}

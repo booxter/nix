@@ -4,6 +4,15 @@ from pathlib import Path
 import pytest
 from prometheus_client import generate_latest
 from prometheus_client.parser import text_string_to_metric_families
+from transmission_common.policy import (
+    CleanupPolicy,
+    CompletedCleanupPolicy,
+    Priority,
+    RatioPriorityPolicy,
+    StopPolicy,
+    TorrentClassPolicy,
+    TorrentPolicy,
+)
 from transmission_tracker_prioritizer import collector, core, prioritizer
 
 
@@ -61,16 +70,44 @@ class FakeClock:
         self.sleeps.append(seconds)
 
 
-def policy() -> core.Policy:
-    return core.Policy(
-        non_preferred_low_priority_ratio_threshold=3.0,
-        non_preferred_pause_ratio_threshold=6.0,
+def ratio_policy(after: Priority) -> RatioPriorityPolicy:
+    return RatioPriorityPolicy(
+        target_ratio=3.0,
+        below_target=Priority.HIGH,
+        at_or_above_target=after,
+    )
+
+
+def policy() -> TorrentPolicy:
+    return TorrentPolicy(
+        preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.NORMAL),
+            stop=None,
+            cleanup=None,
+        ),
+        non_preferred=TorrentClassPolicy(
+            priority=ratio_policy(Priority.LOW),
+            stop=StopPolicy(minimum_ratio=6.0, require_complete=True),
+            cleanup=CleanupPolicy(
+                completed=CompletedCleanupPolicy(
+                    minimum_ratio=3.0,
+                    minimum_age_days=30.0,
+                ),
+                maximum_age_days=365.0,
+            ),
+        ),
     )
 
 
 def tracker_file(tmp_path: Path) -> Path:
     path = tmp_path / "trackers.txt"
     path.write_text("preferred.example\n", encoding="utf-8")
+    return path
+
+
+def policy_file(tmp_path: Path) -> Path:
+    path = tmp_path / "policy.json"
+    path.write_text(policy().model_dump_json(), encoding="utf-8")
     return path
 
 
@@ -86,13 +123,18 @@ def collect(tmp_path: Path, torrents: list[core.Torrent]) -> core.IterationState
 @pytest.mark.parametrize(
     ("is_preferred", "ratio", "expected"),
     [
-        (True, 99.0, core.TR_PRI_HIGH),
+        (True, 2.9, core.TR_PRI_HIGH),
+        (True, 3.0, core.TR_PRI_NORMAL),
+        (True, 6.0, core.TR_PRI_NORMAL),
         (False, 2.9, core.TR_PRI_HIGH),
         (False, 3.0, core.TR_PRI_LOW),
     ],
 )
 def test_desired_priority_policy(is_preferred: bool, ratio: float, expected: int) -> None:
-    assert core.torrent_desired_priority(torrent(upload_ratio=ratio), is_preferred, 3.0) == expected
+    assert (
+        core.torrent_desired_priority(torrent(upload_ratio=ratio), is_preferred, policy())
+        == expected
+    )
 
 
 def test_public_torrent_is_promoted_without_preferred_upload_peers(tmp_path: Path) -> None:
@@ -144,6 +186,7 @@ def test_pause_policy_only_stops_running_complete_public_torrents(tmp_path: Path
             torrent(hash_string="incomplete", upload_ratio=6.0, left_until_done=1),
             torrent(
                 hash_string="preferred",
+                bandwidth_priority=core.TR_PRI_HIGH,
                 upload_ratio=6.0,
                 tracker_stats=[{"host": "preferred.example"}],
             ),
@@ -151,6 +194,7 @@ def test_pause_policy_only_stops_running_complete_public_torrents(tmp_path: Path
     )
 
     assert state.stop_hashes == ["running"]
+    assert state.normal_priority_hashes == ["preferred"]
     assert state.low_priority_hashes == ["incomplete", "running", "stopped"]
 
 
@@ -320,6 +364,7 @@ def test_collector_writes_failure_health_after_rpc_error(tmp_path: Path) -> None
 
 def test_cli_entry_points_build_typed_settings(tmp_path: Path) -> None:
     trackers = tracker_file(tmp_path)
+    configured_policy = policy_file(tmp_path)
     metrics = tmp_path / "metrics.prom"
     seen: list[object] = []
 
@@ -341,10 +386,16 @@ def test_cli_entry_points_build_typed_settings(tmp_path: Path) -> None:
     ) -> None:
         seen.append(settings)
 
-    assert prioritizer.main(["--trackers-file", str(trackers)], run_prioritizer) == 0
+    common_arguments = [
+        "--trackers-file",
+        str(trackers),
+        "--policy-file",
+        str(configured_policy),
+    ]
+    assert prioritizer.main(common_arguments, run_prioritizer) == 0
     assert (
         collector.main(
-            ["--trackers-file", str(trackers), "--metrics-file", str(metrics)],
+            [*common_arguments, "--metrics-file", str(metrics)],
             run_collector,
         )
         == 0

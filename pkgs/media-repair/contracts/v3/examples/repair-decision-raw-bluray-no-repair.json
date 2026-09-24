@@ -1,0 +1,14 @@
+{
+  "action": "no_repair",
+  "case_id": "sha256:29a7899d0f94354145712636c9ea0fe9b93a752efe742b839aaba555a5213692",
+  "evidence_refs": [
+    "file_bluray_00000",
+    "file_bluray_00002"
+  ],
+  "explanation": "The files form a raw Blu-ray tree, which has no version-one extraction capability.",
+  "missing_evidence": [
+    "disc_playlist"
+  ],
+  "reason": "raw_disc_unsupported",
+  "schema_version": "radarr-repair/v3"
+}

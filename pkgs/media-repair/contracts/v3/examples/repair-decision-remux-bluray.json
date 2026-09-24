@@ -1,0 +1,8 @@
+{
+  "action": "remux_bluray_v1",
+  "capability_id": "capability:bluray_example",
+  "case_id": "sha256:b324ce609b22426da2ff77ea2794c7ffcf89da4ce49095d22f79cbb6b1a98846",
+  "evidence_refs": [],
+  "explanation": "The selected Blu-ray playlist is the complete feature and can be remuxed to MKV.",
+  "schema_version": "radarr-repair/v3"
+}
