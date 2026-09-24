@@ -10,6 +10,7 @@ import (
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 	"github.com/booxter/nix-config/media-repair/worker/dvdremux"
 	"github.com/booxter/nix-config/media-repair/worker/dvdstage"
+	"github.com/booxter/nix-config/media-repair/worker/failurelog"
 	"github.com/booxter/nix-config/media-repair/worker/mediaevidence"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 )
@@ -18,15 +19,21 @@ type Stager interface {
 	StageOrRecover(context.Context, dvdstage.Specification) (dvdstage.Result, error)
 }
 
-type Executor struct{ stager Stager }
+type Executor struct {
+	stager   Stager
+	reporter failurelog.Reporter
+}
 
 var _ Stager = (*dvdstage.Executor)(nil)
 
-func NewExecutor(stager Stager) (*Executor, error) {
+func NewExecutor(stager Stager, reporter failurelog.Reporter) (*Executor, error) {
 	if stager == nil {
 		return nil, fmt.Errorf("DVD remux stager is required")
 	}
-	return &Executor{stager: stager}, nil
+	if reporter == nil {
+		return nil, fmt.Errorf("DVD remux failure reporter is required")
+	}
+	return &Executor{stager: stager, reporter: reporter}, nil
 }
 
 func (executor *Executor) Execute(
@@ -37,7 +44,13 @@ func (executor *Executor) Execute(
 	}
 	result, err := executor.stager.StageOrRecover(ctx, Specification(request))
 	if err != nil {
-		return failure(request.RequestID, failureReason(err))
+		reason := failureReason(err)
+		executor.reporter.Report(failurelog.Event{
+			Operation: string(workercontracts.StageDVDRemuxV1), RequestID: request.RequestID,
+			CaseID: request.CaseID, ExecutionID: request.ExecutionID,
+			Reason: string(reason), Cause: err,
+		})
+		return failure(request.RequestID, reason)
 	}
 	return workercontracts.DVDRemuxResponseV1{
 		Kind: workercontracts.ProbeResponseSucceeded,

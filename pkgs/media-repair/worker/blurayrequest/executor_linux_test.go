@@ -9,6 +9,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/worker/bluraystage"
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
+	"github.com/booxter/nix-config/media-repair/worker/failurelog"
 	"github.com/booxter/nix-config/media-repair/worker/mediafile"
 )
 
@@ -16,6 +17,12 @@ type recordingStager struct {
 	spec   bluraystage.Specification
 	result bluraystage.Result
 	err    error
+}
+
+type recordingReporter struct{ events []failurelog.Event }
+
+func (reporter *recordingReporter) Report(event failurelog.Event) {
+	reporter.events = append(reporter.events, event)
 }
 
 func (stager *recordingStager) StageOrRecover(
@@ -40,7 +47,7 @@ func TestExecutorPassesBoundedRemuxSpecification(t *testing.T) {
 			},
 		},
 	}}
-	executor, err := NewExecutor(stager)
+	executor, err := NewExecutor(stager, &recordingReporter{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,14 +73,21 @@ func TestExecutorRedactsWorkerFailure(t *testing.T) {
 	stager := &recordingStager{
 		err: &mediafile.Failure{Kind: mediafile.FailureFingerprintMismatch},
 	}
-	executor, err := NewExecutor(stager)
+	reporter := &recordingReporter{}
+	request := remuxRequest(t)
+	executor, err := NewExecutor(stager, reporter)
 	if err != nil {
 		t.Fatal(err)
 	}
-	response := executor.Execute(context.Background(), remuxRequest(t))
+	response := executor.Execute(context.Background(), request)
 	if response.Failure == nil || response.Success != nil ||
 		response.Failure.Reason != "fingerprint_mismatch" {
 		t.Fatalf("remux failure = %#v", response)
+	}
+	if len(reporter.events) != 1 || reporter.events[0].Operation != "stage_bluray_remux_v1" ||
+		reporter.events[0].CaseID != request.CaseID ||
+		reporter.events[0].Reason != "fingerprint_mismatch" || reporter.events[0].Cause != stager.err {
+		t.Fatalf("reported failures = %#v", reporter.events)
 	}
 	if _, err := workercontracts.EncodeBlurayRemuxResponse(response); err != nil {
 		t.Fatalf("encode remux failure: %v", err)

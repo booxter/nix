@@ -28,6 +28,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/worker/dvdremux"
 	"github.com/booxter/nix-config/media-repair/worker/dvdrequest"
 	"github.com/booxter/nix-config/media-repair/worker/dvdstage"
+	"github.com/booxter/nix-config/media-repair/worker/failurelog"
 	"github.com/booxter/nix-config/media-repair/worker/joinfinish"
 	"github.com/booxter/nix-config/media-repair/worker/joininspect"
 	"github.com/booxter/nix-config/media-repair/worker/joinrequest"
@@ -120,6 +121,10 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err := ctx.Err(); err != nil {
 		return nil
 	}
+	failureReporter, err := failurelog.NewWriter(stderr)
+	if err != nil {
+		return err
+	}
 
 	rootSet, err := mediafile.NewRootSet(roots.Paths())
 	if err != nil {
@@ -175,7 +180,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	dvdRequest, err := dvdrequest.NewExecutor(dvdStager)
+	dvdRequest, err := dvdrequest.NewExecutor(dvdStager, failureReporter)
 	if err != nil {
 		return err
 	}
@@ -214,7 +219,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	blurayRequest, err := blurayrequest.NewExecutor(blurayStager)
+	blurayRequest, err := blurayrequest.NewExecutor(blurayStager, failureReporter)
 	if err != nil {
 		return err
 	}
