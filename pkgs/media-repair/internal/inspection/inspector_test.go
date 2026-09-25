@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 )
@@ -134,6 +135,55 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 	}
 	if _, err := contracts.DecodeCase(assembly.EncodedRequest); err != nil {
 		t.Fatalf("decode assembled case: %v", err)
+	}
+}
+
+func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	materializedFile := controller.InventoryFile{
+		ID: "artifact:movie", PathComponents: []string{"Movie", "movie.mkv"},
+		Fingerprint: controller.FileFingerprint{Device: 2, Inode: 3, SizeBytes: 100, MTimeNS: 4},
+		DownloadFile: &controller.DownloadFileReference{
+			LengthBytes: 100, BytesCompleted: 100, Selected: true,
+		},
+	}
+	fixture.archives = &fakeArchiveMaterializer{
+		found: true,
+		source: archivematerialize.Source{
+			Root: "/downloads/.media-repair/workspaces/archive",
+			Inventory: controller.FileInventory{
+				Files: []controller.InventoryFile{materializedFile},
+				Paths: []controller.FilePathMapping{{
+					FileID:       materializedFile.ID,
+					AbsolutePath: "/downloads/.media-repair/workspaces/archive/Movie/movie.mkv",
+				}},
+			},
+			Probes: []casebuilder.FileProbe{{
+				FileID:  materializedFile.ID,
+				Outcome: controller.SuccessfulMediaProbe(controller.ProbeEvidence{}),
+			}},
+		},
+	}
+	var observed casebuilder.Observation
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		observed = observation
+		return casebuilder.Assembly{}, nil
+	})
+
+	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.archives.calls != 1 || !reflect.DeepEqual(observed.Inventory, fixture.archives.source.Inventory) ||
+		!reflect.DeepEqual(observed.Probes, fixture.archives.source.Probes) {
+		t.Fatalf("archive source was not used: %#v", observed)
+	}
+	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root ||
+		len(fixture.probes.targets) != 0 {
+		t.Fatalf("manual import query = %#v, probe targets = %#v", fixture.radarr.manualImportQuery, fixture.probes.targets)
 	}
 }
 
@@ -534,6 +584,7 @@ type inspectionTestFixture struct {
 	files         *fakeFiles
 	probes        *fakeProbes
 	assembleError error
+	archives      *fakeArchiveMaterializer
 }
 
 func inspectionFixture() inspectionTestFixture {
@@ -563,10 +614,30 @@ func inspectionFixture() inspectionTestFixture {
 }
 
 func (fixture inspectionTestFixture) dependencies() Dependencies {
-	return Dependencies{
+	dependencies := Dependencies{
 		Clock: fixture.clock, Radarr: fixture.radarr, Downloads: fixture.transmission,
 		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
+	if fixture.archives != nil {
+		dependencies.Archives = fixture.archives
+	}
+	return dependencies
+}
+
+type fakeArchiveMaterializer struct {
+	source archivematerialize.Source
+	found  bool
+	err    error
+	calls  int
+}
+
+func (materializer *fakeArchiveMaterializer) MaterializeVideo(
+	context.Context,
+	int64,
+	controller.FileInventory,
+) (archivematerialize.Source, bool, error) {
+	materializer.calls++
+	return materializer.source, materializer.found, materializer.err
 }
 
 func eligibleDownload() (controller.RadarrQueueRecord, controller.Download) {

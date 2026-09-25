@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
@@ -19,6 +20,14 @@ type RadarrReader interface {
 	controller.RadarrManualImportReader
 }
 
+type VideoArchiveMaterializer interface {
+	MaterializeVideo(
+		context.Context,
+		int64,
+		controller.FileInventory,
+	) (archivematerialize.Source, bool, error)
+}
+
 type Dependencies struct {
 	Clock             controller.Clock
 	Radarr            RadarrReader
@@ -27,6 +36,7 @@ type Dependencies struct {
 	Probes            controller.MediaProbeReader
 	Playlists         mkvmerge.Identifier
 	DVDs              dvdvideo.Identifier
+	Archives          VideoArchiveMaterializer
 	CollectionTimeout time.Duration
 }
 
@@ -243,23 +253,42 @@ func (inspector *Inspector) inspectRecord(
 		if readErr != nil {
 			return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", readErr)
 		}
-		manualImports, readErr = inspector.dependencies.Radarr.ReadManualImports(
-			collectionContext,
-			controller.RadarrManualImportQuery{
-				MovieID: movieID, DownloadID: record.DownloadID, Folder: correlation.DownloadRoot,
-			},
-		)
-		if readErr != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", readErr)
-		}
 	}
 	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inventory download files: %w", err)
 	}
-	probes, err := inspector.collectProbes(callerContext, collectionContext, inventory)
-	if err != nil {
-		return casebuilder.Assembly{}, err
+	inspectionRoot := correlation.DownloadRoot
+	var probes []casebuilder.FileProbe
+	if inspector.dependencies.Archives != nil {
+		materialized, found, materializeErr := inspector.dependencies.Archives.MaterializeVideo(
+			collectionContext, record.ID, inventory,
+		)
+		if materializeErr != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("materialize archive video: %w", materializeErr)
+		}
+		if found {
+			inspectionRoot = materialized.Root
+			inventory = materialized.Inventory
+			probes = materialized.Probes
+		}
+	}
+	if probes == nil {
+		probes, err = inspector.collectProbes(callerContext, collectionContext, inventory)
+		if err != nil {
+			return casebuilder.Assembly{}, err
+		}
+	}
+	if movie != nil {
+		manualImports, err = inspector.dependencies.Radarr.ReadManualImports(
+			collectionContext,
+			controller.RadarrManualImportQuery{
+				MovieID: movie.ID, DownloadID: record.DownloadID, Folder: inspectionRoot,
+			},
+		)
+		if err != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", err)
+		}
 	}
 	var playlists []mkvmerge.Candidate
 	if inspector.dependencies.Playlists != nil {
