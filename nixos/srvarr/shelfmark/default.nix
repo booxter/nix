@@ -31,4 +31,9 @@
       usenet = "shelfmark-usenet";
     };
   };
+
+  services.shelfmark.environment = {
+    # Keep multi-file ebook releases as separate Audiobookshelf items.
+    FILE_ORGANIZATION = "rename";
+  };
 }
