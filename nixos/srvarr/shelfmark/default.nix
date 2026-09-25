@@ -31,4 +31,13 @@
       usenet = "shelfmark-usenet";
     };
   };
+
+  services.shelfmark.environment = {
+    # Keep multi-file ebook releases as separate Audiobookshelf items.
+    FILE_ORGANIZATION = "rename";
+    # The torrent and book directories are separate sandbox mounts.
+    HARDLINK_TORRENTS = "false";
+    # The torrent and audiobook directories are separate sandbox mounts.
+    HARDLINK_TORRENTS_AUDIOBOOK = "false";
+  };
 }
