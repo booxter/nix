@@ -48,6 +48,8 @@ in
     pydanticModels = mediaRepairPydanticModels;
   };
 
+  media-repair-review = mediaRepair.review;
+
   media-repair-worker = mediaRepair.worker;
 
   nix-builder-metrics = pkgs.callPackage ./nix-builder-metrics {

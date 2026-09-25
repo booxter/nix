@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Repairr</a>
+    <nav aria-label="Primary">
+      <a href="/lidarr"{{if eq .ActiveService "lidarr"}} aria-current="page"{{end}}>Lidarr</a>
+      <a href="/radarr"{{if eq .ActiveService "radarr"}} aria-current="page"{{end}}>Radarr</a>
+      <a href="/history"{{if .History}} aria-current="page"{{end}}>History</a>
+    </nav>
+  </header>
+  <main>
+    <h1>{{.Title}}</h1>
+    <section class="sources" aria-label="Snapshot status">
+      {{range .Sources}}
+      <div class="source {{if .Available}}available{{else}}unavailable{{end}}">
+        <strong>{{serviceLabel .Service}}</strong>
+        {{if .Available}}
+          <span>{{.Current}} current · {{.History}} historical</span>
+          <small>updated {{formatTime .GeneratedAt}}</small>
+        {{else if .Error}}<span>{{.Error}}</span>{{else}}<span>waiting for first controller pass</span>{{end}}
+      </div>
+      {{end}}
+    </section>
+
+    {{if .Case}}
+      {{$entry := .Case}}
+      <article class="case">
+        <div class="case-heading">
+          <div><span class="service">{{serviceLabel $entry.Service}}</span><h2>{{$entry.Item.Title}}</h2></div>
+          <span class="badge state-{{$entry.Item.State}}">{{stateLabel $entry.Item.State}}</span>
+        </div>
+        {{if $entry.Item.Subject}}<p class="subject">{{$entry.Item.Subject}}</p>{{end}}
+        <dl>
+          <dt>Queue</dt><dd>#{{$entry.Item.QueueID}} · {{$entry.Item.QueueStatus}} / {{$entry.Item.TrackedStatus}}</dd>
+          <dt>Observed</dt><dd>{{formatTime $entry.Item.ObservedAt}}</dd>
+          <dt>Last seen</dt><dd>{{formatTime $entry.Item.LastSeenAt}}</dd>
+          <dt>Case ID</dt><dd><code>{{$entry.Item.CaseID}}</code></dd>
+          {{if $entry.Item.SourceFingerprint}}<dt>Source fingerprint</dt><dd><code>{{$entry.Item.SourceFingerprint}}</code></dd>{{end}}
+        </dl>
+        {{if $entry.Item.Decision}}
+        <section class="decision">
+          <h3>Planner decision</h3>
+          <p><strong>{{$entry.Item.Decision.Action}}</strong>{{if $entry.Item.Decision.Reason}} · {{$entry.Item.Decision.Reason}}{{end}}</p>
+          <p>{{$entry.Item.Decision.Explanation}}</p>
+          {{if $entry.Item.Decision.EvidenceRefs}}
+          <h4>Evidence references</h4>
+          <ul>{{range $entry.Item.Decision.EvidenceRefs}}<li><code>{{.}}</code></li>{{end}}</ul>
+          {{end}}
+        </section>
+        {{else}}
+        <section class="decision"><h3>No planner decision</h3><p>{{$entry.Item.Detail}}</p></section>
+        {{end}}
+        <p><a class="button" href="{{$entry.QueueURL}}">Open {{serviceLabel $entry.Service}} queue</a></p>
+      </article>
+    {{else}}
+      <div class="filters" aria-label="State filters">
+        <a href="?">All</a>
+        <a href="?state=not_processed">Not processed</a>
+        <a href="?state=reviewed">Reviewed</a>
+        <a href="?state=repair_planned">Repair planned</a>
+        <a href="?state=planning_failed">Failed</a>
+      </div>
+      {{if .Items}}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Service</th><th>Release</th><th>Bot state</th><th>Decision</th><th>Observed</th></tr></thead>
+          <tbody>
+          {{range .Items}}
+            <tr>
+              <td><span class="service">{{serviceLabel .Service}}</span></td>
+              <td><a href="{{if .Item.CaseID}}{{caseURL .Item.CaseID}}{{else}}{{.QueueURL}}{{end}}">{{.Item.Title}}</a>{{if .Item.Subject}}<small>{{.Item.Subject}}</small>{{end}}</td>
+              <td><span class="badge state-{{.Item.State}}">{{stateLabel .Item.State}}</span>{{if .Item.Detail}}<small>{{.Item.Detail}}</small>{{end}}</td>
+              <td>{{if .Item.Decision}}<strong>{{.Item.Decision.Action}}</strong>{{if .Item.Decision.Reason}}<small>{{.Item.Decision.Reason}}</small>{{end}}{{else}}—{{end}}</td>
+              <td>{{formatTime .Item.ObservedAt}}</td>
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}<p class="empty">No entries match this view.</p>{{end}}
+    {{end}}
+  </main>
+</body>
+</html>

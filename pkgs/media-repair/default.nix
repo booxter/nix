@@ -159,7 +159,46 @@ let
       };
     }
   );
+
+  review = buildGoModule (
+    common
+    // {
+      pname = "media-repair-review";
+      subPackages = [ "cmd/media-repair-review" ];
+
+      preCheck = ''
+        unformatted="$(gofmt -l cmd/media-repair-review internal/review)"
+        if test -n "$unformatted"; then
+          gofmt -d cmd/media-repair-review internal/review >&2
+          exit 1
+        fi
+        go vet ./cmd/media-repair-review ./internal/review
+      '';
+      checkPhase = ''
+        runHook preCheck
+        go test ./cmd/media-repair-review ./internal/review -cover
+        runHook postCheck
+      '';
+
+      doInstallCheck = true;
+      installCheckPhase = ''
+        runHook preInstallCheck
+        "$out/bin/media-repair-review" -h >/dev/null
+        runHook postInstallCheck
+      '';
+
+      meta = common.meta // {
+        description = "Read-only review inbox for Servarr repair decisions";
+        mainProgram = "media-repair-review";
+      };
+    }
+  );
 in
 {
-  inherit controller lidarrController worker;
+  inherit
+    controller
+    lidarrController
+    review
+    worker
+    ;
 }
