@@ -193,6 +193,18 @@ func (inspector *Inspector) inspectRecord(
 	collectionContext context.Context,
 	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
+	if record.MovieID == nil {
+		movieID, found, err := inspector.dependencies.Radarr.RecoverMovieID(
+			collectionContext,
+			record.DownloadID,
+		)
+		if err != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("recover Radarr movie identity: %w", err)
+		}
+		if found {
+			record.MovieID = &movieID
+		}
+	}
 
 	download, found, err := inspector.dependencies.Downloads.Resolve(collectionContext, record)
 	if err != nil {

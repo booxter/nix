@@ -263,13 +263,15 @@ func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
 	}
 }
 
-func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
+func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	fixture.radarr.records[0].MovieID = nil
 	fixture.radarr.records[0].ErrorMessage = "A download client diagnostic"
 	fixture.radarr.records[0].StatusMessages = nil
+	fixture.radarr.recoveredMovieID = 42
+	fixture.radarr.recoveredMovieFound = true
 	var observed casebuilder.Observation
 	inspector := newTestInspector(t, fixture.dependencies(), func(
 		observation casebuilder.Observation,
@@ -281,12 +283,14 @@ func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
 	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Movie != nil || len(observed.History) != 0 || len(observed.ManualImports) != 0 {
-		t.Fatalf("movie-specific evidence = %#v", observed)
+	if observed.Movie == nil || observed.Movie.ID != 42 ||
+		len(observed.History) != 1 || len(observed.ManualImports) != 1 {
+		t.Fatalf("recovered movie-specific evidence = %#v", observed)
 	}
-	if fixture.radarr.movieReads != 0 || fixture.radarr.historyReads != 0 ||
-		fixture.radarr.manualImportReads != 0 {
-		t.Fatalf("movie-specific reads = %d, %d, %d",
+	if fixture.radarr.identityReads != 1 || fixture.radarr.movieReads != 1 ||
+		fixture.radarr.historyReads != 1 || fixture.radarr.manualImportReads != 1 {
+		t.Fatalf("movie-specific reads = %d, %d, %d, %d",
+			fixture.radarr.identityReads,
 			fixture.radarr.movieReads,
 			fixture.radarr.historyReads,
 			fixture.radarr.manualImportReads,
@@ -632,15 +636,23 @@ func (clock *fakeClock) Now() time.Time {
 }
 
 type fakeRadarr struct {
-	records           []controller.RadarrQueueRecord
-	movie             controller.RadarrMovie
-	history           []controller.RadarrHistoryEvent
-	imports           []controller.RadarrManualImport
-	manualImportQuery controller.RadarrManualImportQuery
-	queueReads        int
-	movieReads        int
-	historyReads      int
-	manualImportReads int
+	records             []controller.RadarrQueueRecord
+	movie               controller.RadarrMovie
+	history             []controller.RadarrHistoryEvent
+	imports             []controller.RadarrManualImport
+	manualImportQuery   controller.RadarrManualImportQuery
+	recoveredMovieID    int64
+	recoveredMovieFound bool
+	queueReads          int
+	movieReads          int
+	historyReads        int
+	manualImportReads   int
+	identityReads       int
+}
+
+func (reader *fakeRadarr) RecoverMovieID(context.Context, string) (int64, bool, error) {
+	reader.identityReads++
+	return reader.recoveredMovieID, reader.recoveredMovieFound, nil
 }
 
 func (reader *fakeRadarr) ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error) {
