@@ -40,6 +40,30 @@ func (client *Client) MaterializeTarVideo(
 	)
 }
 
+func (client *Client) MaterializeRARAudio(
+	ctx context.Context,
+	archivePath string,
+	fingerprint fileidentity.Snapshot,
+	workspaceID string,
+) (materialize.Success, error) {
+	return client.materializeArchive(
+		ctx, archivePath, fingerprint, workspaceID,
+		materialize.OperationMaterializeRAR, "/v1/materialize/rar-audio",
+	)
+}
+
+func (client *Client) MaterializeRARVideo(
+	ctx context.Context,
+	archivePath string,
+	fingerprint fileidentity.Snapshot,
+	workspaceID string,
+) (materialize.Success, error) {
+	return client.materializeArchive(
+		ctx, archivePath, fingerprint, workspaceID,
+		materialize.OperationMaterializeRARVideo, "/v1/materialize/rar-video",
+	)
+}
+
 func (client *Client) materializeArchive(
 	ctx context.Context,
 	archivePath string,

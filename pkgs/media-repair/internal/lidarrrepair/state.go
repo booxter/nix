@@ -25,6 +25,7 @@ type SourceKind string
 
 const (
 	SourceTarAudio       SourceKind = "tar_audio_v1"
+	SourceRARAudio       SourceKind = "rar_audio_v1"
 	SourceDirectoryAudio SourceKind = "directory_audio_v1"
 )
 
@@ -192,7 +193,8 @@ func decodeRecord(data []byte) (Record, error) {
 
 func validateRecord(record Record) error {
 	if record.Version != stateVersion || record.QueueID <= 0 ||
-		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceDirectoryAudio) ||
+		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceRARAudio &&
+			record.SourceKind != SourceDirectoryAudio) ||
 		record.SourcePath == "" || !filepath.IsAbs(record.SourcePath) ||
 		filepath.Clean(record.SourcePath) != record.SourcePath ||
 		!stateFingerprint.MatchString(record.SourceFingerprint) ||

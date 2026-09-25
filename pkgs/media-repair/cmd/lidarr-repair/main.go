@@ -80,7 +80,8 @@ func (value *allowedSourcesValue) String() string { return "" }
 
 func (value *allowedSourcesValue) Set(raw string) error {
 	source := lidarrrepair.SourceKind(raw)
-	if source != lidarrrepair.SourceTarAudio && source != lidarrrepair.SourceDirectoryAudio {
+	if source != lidarrrepair.SourceTarAudio && source != lidarrrepair.SourceRARAudio &&
+		source != lidarrrepair.SourceDirectoryAudio {
 		return fmt.Errorf("source %q cannot be allowed for automatic Lidarr repair", raw)
 	}
 	value.sources[source] = true

@@ -43,6 +43,8 @@ const (
 	OperationMaterializeTar             = "materialize_tar_audio_v1"
 	OperationMaterializeDirectory       = "materialize_directory_audio_v1"
 	OperationMaterializeTarVideo        = "materialize_tar_video_v1"
+	OperationMaterializeRAR             = "materialize_rar_audio_v1"
+	OperationMaterializeRARVideo        = "materialize_rar_video_v1"
 	MaxRequestBytes               int64 = 64 << 10
 	MaxResponseBytes                    = 8 << 20
 )
@@ -155,7 +157,9 @@ func validateRequest(request Request) error {
 		return fmt.Errorf("invalid source path")
 	}
 	if request.Operation == OperationMaterializeTar ||
-		request.Operation == OperationMaterializeTarVideo {
+		request.Operation == OperationMaterializeTarVideo ||
+		request.Operation == OperationMaterializeRAR ||
+		request.Operation == OperationMaterializeRARVideo {
 		if !fingerprint.MatchString(request.ExpectedFingerprint) {
 			return fmt.Errorf("invalid materialization identity")
 		}
@@ -205,7 +209,9 @@ func validOperation(operation string) bool {
 	switch operation {
 	case OperationMaterializeTar,
 		OperationMaterializeDirectory,
-		OperationMaterializeTarVideo:
+		OperationMaterializeTarVideo,
+		OperationMaterializeRAR,
+		OperationMaterializeRARVideo:
 		return true
 	default:
 		return false

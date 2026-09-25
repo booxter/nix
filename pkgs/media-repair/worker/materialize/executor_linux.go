@@ -66,9 +66,14 @@ type Prober interface {
 	Probe(context.Context, string) (controller.ProbeEvidence, error)
 }
 
+type RARExtractor interface {
+	Extract(context.Context, *os.File, string) error
+}
+
 type Executor struct {
 	files  Files
 	prober Prober
+	rar    RARExtractor
 }
 
 type manifest struct {
@@ -78,11 +83,117 @@ type manifest struct {
 	Success           Success `json:"success"`
 }
 
-func NewExecutor(files Files, prober Prober) (*Executor, error) {
+func NewExecutor(files Files, prober Prober, rar RARExtractor) (*Executor, error) {
 	if files == nil || prober == nil {
 		return nil, fmt.Errorf("materialization requires media access and probing")
 	}
-	return &Executor{files: files, prober: prober}, nil
+	return &Executor{files: files, prober: prober, rar: rar}, nil
+}
+
+func (executor *Executor) ExecuteRAR(ctx context.Context, request Request) Response {
+	fail := func(reason string) Response {
+		return Response{Status: "failed", Failure: &Failure{
+			SchemaVersion: SchemaVersion, RequestID: request.RequestID,
+			Operation: request.Operation, Reason: reason,
+		}}
+	}
+	if executor.rar == nil {
+		return fail("rar_unavailable")
+	}
+	extensions := audioExtensions
+	mediaName := "audio"
+	switch request.Operation {
+	case OperationMaterializeRAR:
+	case OperationMaterializeRARVideo:
+		extensions = videoExtensions
+		mediaName = "video"
+	default:
+		return fail("invalid_operation")
+	}
+	if err := ctx.Err(); err != nil {
+		return fail("timeout")
+	}
+	archive, err := executor.files.Open(
+		request.RootID, request.SourceComponents, request.ExpectedFingerprint,
+	)
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	defer archive.Close()
+	archiveInfo, err := archive.Stat()
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	archiveSnapshot, err := fileidentity.FromFileInfo(archiveInfo)
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	sourceFingerprint := archiveSnapshot.StableFingerprint()
+	rootPath, err := executor.files.Path(request.RootID)
+	if err != nil {
+		return fail(reasonForError(err))
+	}
+	workspaceComponents := []string{workspaceDirectory, "workspaces", request.WorkspaceID}
+	workspacePath := filepath.Join(append([]string{rootPath}, workspaceComponents...)...)
+	partialPath := workspacePath + ".partial"
+	groupID, err := workspaceGroup(rootPath)
+	if err != nil {
+		return fail("workspace_error")
+	}
+	if success, found, loadErr := loadWorkspace(
+		workspacePath, request, workspaceComponents, sourceFingerprint,
+	); loadErr == nil && found {
+		if err := executor.files.Verify(archive, request.ExpectedFingerprint); err != nil {
+			return fail(reasonForError(err))
+		}
+		return Response{Status: "ok", Success: &success}
+	} else if loadErr != nil {
+		if clearErr := clearWorkspace(workspacePath); clearErr != nil {
+			return fail("workspace_error")
+		}
+	}
+	if err := prepareWorkspace(rootPath, partialPath, workspacePath, groupID); err != nil {
+		return fail("workspace_error")
+	}
+	quarantine := filepath.Join(partialPath, ".rar-extract")
+	if err := os.Mkdir(quarantine, 0o700); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	if err := executor.rar.Extract(ctx, archive, quarantine); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail(reasonForRARError(err))
+	}
+	artifacts, err := executor.collectExtractedMedia(
+		ctx, quarantine, partialPath, workspaceComponents, groupID, extensions, mediaName,
+	)
+	if err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail(reasonForRARError(err))
+	}
+	if err := os.RemoveAll(quarantine); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	if err := executor.files.Verify(archive, request.ExpectedFingerprint); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail(reasonForError(err))
+	}
+	success := Success{
+		SchemaVersion: SchemaVersion, RequestID: request.RequestID,
+		Operation: request.Operation, RootID: request.RootID,
+		SourceFingerprint: sourceFingerprint, WorkspaceComponents: workspaceComponents,
+		Artifacts: artifacts,
+	}
+	if err := writeManifest(partialPath, request.Operation, sourceFingerprint, success); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	if err := os.Rename(partialPath, workspacePath); err != nil {
+		_ = os.RemoveAll(partialPath)
+		return fail("workspace_error")
+	}
+	return Response{Status: "ok", Success: &success}
 }
 
 func (executor *Executor) Execute(ctx context.Context, request Request) Response {

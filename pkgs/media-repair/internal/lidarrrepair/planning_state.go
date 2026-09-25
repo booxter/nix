@@ -248,7 +248,8 @@ func decodeCaseRecord(data []byte) (caseRecord, error) {
 
 func validateCaseRecord(record caseRecord) error {
 	if record.Version != caseRecordVersion || record.QueueID <= 0 ||
-		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceDirectoryAudio) ||
+		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceRARAudio &&
+			record.SourceKind != SourceDirectoryAudio) ||
 		record.SourcePath == "" || !filepath.IsAbs(record.SourcePath) ||
 		filepath.Clean(record.SourcePath) != record.SourcePath ||
 		!stateFingerprint.MatchString(record.SourceFingerprint) ||

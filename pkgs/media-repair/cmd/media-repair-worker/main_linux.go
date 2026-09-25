@@ -66,6 +66,8 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	ffmpegPath := flags.String("ffmpeg", "", "absolute ffmpeg executable path")
 	mkvmergePath := flags.String("mkvmerge", "", "absolute mkvmerge executable path")
 	lsdvdPath := flags.String("lsdvd", "", "absolute lsdvd executable path")
+	lsarPath := flags.String("lsar", "", "absolute lsar executable path")
+	unarPath := flags.String("unar", "", "absolute unar executable path")
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
 	joinTimeout := flags.Duration(
 		"join-timeout",
@@ -97,6 +99,9 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	}
 	if *ffmpegPath == "" {
 		return fmt.Errorf("ffmpeg executable is required")
+	}
+	if *lsarPath == "" || *unarPath == "" {
+		return fmt.Errorf("RAR listing and extraction executables are required")
 	}
 	if !filepath.IsAbs(*mkvmergePath) || filepath.Clean(*mkvmergePath) != *mkvmergePath {
 		return fmt.Errorf("mkvmerge executable must be an absolute clean path")
@@ -147,7 +152,11 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	materializeExecutor, err := materialize.NewExecutor(rootSet, probeRunner)
+	rarExtractor, err := materialize.NewRARExtractor(*lsarPath, *unarPath)
+	if err != nil {
+		return err
+	}
+	materializeExecutor, err := materialize.NewExecutor(rootSet, probeRunner, rarExtractor)
 	if err != nil {
 		return err
 	}
@@ -158,6 +167,18 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		return err
 	}
 	videoMaterializeHandler, err := workerserver.NewVideoMaterializeHandler(
+		materializeExecutor, *joinTimeout, 1,
+	)
+	if err != nil {
+		return err
+	}
+	rarMaterializeHandler, err := workerserver.NewRARMaterializeHandler(
+		materializeExecutor, *joinTimeout, 1,
+	)
+	if err != nil {
+		return err
+	}
+	rarVideoMaterializeHandler, err := workerserver.NewRARVideoMaterializeHandler(
 		materializeExecutor, *joinTimeout, 1,
 	)
 	if err != nil {
@@ -293,6 +314,8 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 		probeHandler,
 		materializeHandler,
 		videoMaterializeHandler,
+		rarMaterializeHandler,
+		rarVideoMaterializeHandler,
 		directoryMaterializeHandler,
 		dvdHandler,
 		dvdRemuxHandler,

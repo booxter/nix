@@ -70,9 +70,20 @@ func (fake *fakeLidarr) ReadManualImports(
 
 type fakeWorker struct {
 	calls           int
+	rarCalls        int
 	directoryCalls  int
 	directoryAudio  bool
 	tarWorkspaceIDs []string
+}
+
+func (fake *fakeWorker) MaterializeRARAudio(
+	_ context.Context,
+	_ string,
+	snapshot fileidentity.Snapshot,
+	_ string,
+) (materialize.Success, error) {
+	fake.rarCalls++
+	return testMaterialization(materialize.OperationMaterializeRAR, snapshot.StableFingerprint()), nil
 }
 
 func (fake *fakeWorker) MaterializeTarAudio(
@@ -181,7 +192,7 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if err := os.WriteFile(archive, []byte("tar"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, archiveSnapshot, err := findArchive(download)
+	_, archiveSnapshot, _, err := findArchive(download)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +277,7 @@ func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, _, err := findArchive(directory); err == nil {
+	if _, _, _, err := findArchive(directory); err == nil {
 		t.Fatal("ambiguous archive was accepted")
 	}
 }
