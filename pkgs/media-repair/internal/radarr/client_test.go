@@ -127,6 +127,33 @@ func TestReadQueue(t *testing.T) {
 	}
 }
 
+func TestFinalizeQueueOnlyRemovesRadarrTracking(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodDelete || request.URL.Path != "/api/v3/queue/42" {
+			t.Errorf("request = %s %s", request.Method, request.URL.Path)
+			http.Error(writer, "bad request", http.StatusBadRequest)
+			return
+		}
+		query := request.URL.Query()
+		if query.Get("removeFromClient") != "false" || query.Get("blocklist") != "false" ||
+			query.Get("skipRedownload") != "true" || query.Get("changeCategory") != "false" {
+			t.Errorf("query = %v", query)
+			http.Error(writer, "bad query", http.StatusBadRequest)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := client.FinalizeQueue(context.Background(), 42); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNewRejectsInvalidConfiguration(t *testing.T) {
 	t.Parallel()
 

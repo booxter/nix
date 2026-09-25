@@ -57,6 +57,7 @@ let
       ]
       ++ actionArguments
       ++ allowedDownloadClientArguments
+      ++ lib.optionals controller.apply.finalizeStaleQueue [ "--finalize-stale-queue" ]
     else
       [ "shadow" ];
   plannerTimeoutSeconds = planner.planningTimeoutSeconds + 30;
@@ -118,6 +119,13 @@ in
         wantedUnits = [ "network-online.target" ];
       })
       {
+        assertions = [
+          {
+            assertion = !controller.apply.finalizeStaleQueue || controller.apply.enable;
+            message = "Radarr stale queue finalization requires apply mode.";
+          }
+        ];
+
         systemd.tmpfiles.rules = [
           "d ${controller.metricsDirectory} 0755 ${serviceName} ${serviceName} - -"
         ];

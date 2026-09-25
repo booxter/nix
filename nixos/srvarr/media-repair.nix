@@ -30,6 +30,7 @@ in
     ];
     apply = {
       enable = true;
+      finalizeStaleQueue = true;
       allowedActions = [
         "join_parts_v1"
         "manual_import_file_v1"

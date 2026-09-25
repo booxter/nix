@@ -31,6 +31,18 @@ func automaticMetrics(report automaticReport, successful bool) []prometheus.Coll
 		Help:      "Whether the latest automatic run stopped at the apply kill switch.",
 	})
 	disabled.Set(boolMetricValue(report.ApplyDisabled))
+	finalized := prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: shadowrunner.MetricsNamespace,
+		Name:      "queue_finalized",
+		Help:      "Queue warnings safely finalized in the latest automatic run.",
+	})
+	finalized.Set(float64(report.Finalization.Finalized))
+	reconciled := prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: shadowrunner.MetricsNamespace,
+		Name:      "queue_finalization_reconciled",
+		Help:      "Prior ambiguous queue removals reconciled in the latest automatic run.",
+	})
+	reconciled.Set(float64(report.Finalization.Reconciled))
 
 	cases := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: shadowrunner.MetricsNamespace,
@@ -73,7 +85,9 @@ func automaticMetrics(report automaticReport, successful bool) []prometheus.Coll
 		executions.WithLabelValues(outcome.action, outcome.state).Set(float64(count))
 	}
 
-	return []prometheus.Collector{runSuccess, disabled, cases, rejections, executions}
+	return []prometheus.Collector{
+		runSuccess, disabled, finalized, reconciled, cases, rejections, executions,
+	}
 }
 
 type automaticExecutionOutcome struct {

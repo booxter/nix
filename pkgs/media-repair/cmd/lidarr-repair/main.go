@@ -17,6 +17,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
@@ -43,6 +44,7 @@ type config struct {
 	AllowedSources map[lidarrrepair.SourceKind]bool
 	KillSwitchFile string
 	PollInterval   time.Duration
+	FinalizeStale  bool
 }
 
 type report struct {
@@ -55,6 +57,8 @@ type report struct {
 	Actions       int
 	Imported      int
 	Failed        int
+	Finalized     int
+	Reconciled    int
 	ApplyDisabled bool
 }
 
@@ -137,6 +141,10 @@ func (app application) run(
 	pollInterval := flags.Duration(
 		"poll-interval", 2*time.Second, "Lidarr import confirmation poll interval",
 	)
+	finalizeStale := flags.Bool(
+		"finalize-stale-queue", false,
+		"remove tracking for completed warnings whose monitored release is complete",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -152,6 +160,7 @@ func (app application) run(
 		Apply: *apply, AllowedActions: allowed.actions, AllowedSources: allowedSources.sources,
 		KillSwitchFile: *killSwitchFile,
 		PollInterval:   *pollInterval,
+		FinalizeStale:  *finalizeStale,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -169,10 +178,11 @@ func (app application) run(
 	_, err = fmt.Fprintf(
 		stdout,
 		"observed=%d candidates=%d planned=%d cached=%d deferred=%d no_repair=%d "+
-			"actions=%d imported=%d failed=%d apply_disabled=%t\n",
+			"actions=%d imported=%d failed=%d finalized=%d reconciled=%d apply_disabled=%t\n",
 		result.Observed, result.Candidates, result.Planned, result.Cached, result.Deferred,
 		result.NoRepair,
-		result.Actions, result.Imported, result.Failed, result.ApplyDisabled,
+		result.Actions, result.Imported, result.Failed, result.Finalized, result.Reconciled,
+		result.ApplyDisabled,
 	)
 	return err
 }
@@ -217,7 +227,7 @@ func validateConfig(configuration config) error {
 			return fmt.Errorf("kill-switch file must be an absolute clean path")
 		}
 	} else if len(configuration.AllowedActions) != 0 || len(configuration.AllowedSources) != 0 ||
-		configuration.KillSwitchFile != "" {
+		configuration.KillSwitchFile != "" || configuration.FinalizeStale {
 		return fmt.Errorf("apply guards require --apply")
 	}
 	return nil
@@ -333,7 +343,46 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		}
 		return controllerReport, executeErr
 	}
+	if configuration.FinalizeStale {
+		finalization, finalizeErr := finalizeLidarrQueue(ctx, configuration, client)
+		controllerReport.Finalized = finalization.Finalized
+		controllerReport.Reconciled = finalization.Reconciled
+		if finalizeErr != nil {
+			return controllerReport, finalizeErr
+		}
+	}
 	return controllerReport, nil
+}
+
+func finalizeLidarrQueue(
+	ctx context.Context,
+	configuration config,
+	client *lidarrsource.Client,
+) (queuefinalize.Report, error) {
+	candidates, err := lidarrsource.FinalizationCandidates(ctx, client)
+	if err != nil {
+		return queuefinalize.Report{}, err
+	}
+	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
+		Service: "Lidarr", StateDirectory: configuration.StateDir,
+		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
+			records, err := client.ReadQueue(ctx)
+			if err != nil {
+				return nil, err
+			}
+			entries := make([]queuefinalize.Entry, len(records))
+			for index, record := range records {
+				entries[index] = lidarrsource.FinalizationEntry(record)
+			}
+			return entries, nil
+		},
+		Remove: client.FinalizeQueue,
+		Clock:  wallClock{},
+	})
+	if err != nil {
+		return queuefinalize.Report{}, fmt.Errorf("configure Lidarr queue finalizer: %w", err)
+	}
+	return finalizer.Run(ctx, candidates, 1)
 }
 
 type wallClock struct{}

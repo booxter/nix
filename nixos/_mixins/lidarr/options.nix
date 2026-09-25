@@ -35,6 +35,7 @@
         default = [ ];
         description = "Evidence sources the automatic controller may apply repairs from.";
       };
+      finalizeStaleQueue = lib.mkEnableOption "safe removal of stale completed queue warnings";
     };
   };
 }

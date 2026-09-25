@@ -34,6 +34,7 @@ let
       ]
       ++ actionArguments
       ++ sourceArguments
+      ++ lib.optionals controller.apply.finalizeStaleQueue [ "--finalize-stale-queue" ]
     else
       [ ];
   command =
@@ -101,6 +102,10 @@ in
           {
             assertion = !controller.apply.enable || controller.apply.allowedSources != [ ];
             message = "Lidarr repair apply mode requires at least one allowed source.";
+          }
+          {
+            assertion = !controller.apply.finalizeStaleQueue || controller.apply.enable;
+            message = "Lidarr stale queue finalization requires apply mode.";
           }
           {
             assertion =
