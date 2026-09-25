@@ -1,6 +1,7 @@
 package review
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -33,6 +34,18 @@ type Decision struct {
 	Reason       string   `json:"reason,omitempty"`
 	Explanation  string   `json:"explanation"`
 	EvidenceRefs []string `json:"evidence_refs"`
+}
+
+func ParseDecision(data []byte) (Decision, error) {
+	var decision Decision
+	if err := json.Unmarshal(data, &decision); err != nil {
+		return Decision{}, fmt.Errorf("decode review decision: %w", err)
+	}
+	if strings.TrimSpace(decision.Action) == "" || strings.TrimSpace(decision.Explanation) == "" {
+		return Decision{}, fmt.Errorf("review decision is incomplete")
+	}
+	decision.EvidenceRefs = append([]string(nil), decision.EvidenceRefs...)
+	return decision, nil
 }
 
 type Item struct {

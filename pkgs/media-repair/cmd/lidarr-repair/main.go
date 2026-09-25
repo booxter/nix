@@ -15,9 +15,11 @@ import (
 
 	lidarrsource "github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
+	"github.com/booxter/nix-config/media-repair/internal/lidarrreview"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
+	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
@@ -45,6 +47,7 @@ type config struct {
 	KillSwitchFile string
 	PollInterval   time.Duration
 	FinalizeStale  bool
+	ReviewDir      string
 }
 
 type report struct {
@@ -145,6 +148,9 @@ func (app application) run(
 		"finalize-stale-queue", false,
 		"remove tracking for completed warnings whose monitored release is complete",
 	)
+	reviewDirectory := flags.String(
+		"review-directory", "", "optional sanitized review snapshot directory",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -161,6 +167,7 @@ func (app application) run(
 		KillSwitchFile: *killSwitchFile,
 		PollInterval:   *pollInterval,
 		FinalizeStale:  *finalizeStale,
+		ReviewDir:      *reviewDirectory,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -199,6 +206,11 @@ func validateConfig(configuration config) error {
 		filepath.Clean(configuration.StateDir) != configuration.StateDir ||
 		filepath.Dir(configuration.StateDir) == configuration.StateDir {
 		return fmt.Errorf("state directory must be an absolute clean path")
+	}
+	if configuration.ReviewDir != "" && (!filepath.IsAbs(configuration.ReviewDir) ||
+		filepath.Clean(configuration.ReviewDir) != configuration.ReviewDir ||
+		filepath.Dir(configuration.ReviewDir) == configuration.ReviewDir) {
+		return fmt.Errorf("review directory must be an absolute clean path")
 	}
 	for name, path := range map[string]string{
 		"worker socket":  configuration.WorkerSocket,
@@ -281,8 +293,9 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		Planned: result.Planned, Cached: result.Cached, Deferred: result.Deferred,
 		NoRepair: result.NoRepair,
 	}
-	if err != nil || !configuration.Apply {
-		return controllerReport, err
+	publishErr := publishLidarrReview(configuration.ReviewDir, result, time.Now().UTC())
+	if err != nil || publishErr != nil || !configuration.Apply {
+		return controllerReport, errors.Join(err, publishErr)
 	}
 	disabled, err := applyDisabled(configuration.KillSwitchFile)
 	if err != nil {
@@ -352,6 +365,28 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		}
 	}
 	return controllerReport, nil
+}
+
+func publishLidarrReview(
+	directory string,
+	report lidarrrepair.Report,
+	generatedAt time.Time,
+) error {
+	if directory == "" {
+		return nil
+	}
+	snapshot, err := lidarrreview.Snapshot(report, generatedAt)
+	if err != nil {
+		return fmt.Errorf("build Lidarr review snapshot: %w", err)
+	}
+	store, err := review.NewStore(directory)
+	if err != nil {
+		return fmt.Errorf("configure Lidarr review store: %w", err)
+	}
+	if err := store.Publish(snapshot); err != nil {
+		return fmt.Errorf("publish Lidarr review snapshot: %w", err)
+	}
+	return nil
 }
 
 func finalizeLidarrQueue(

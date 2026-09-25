@@ -53,6 +53,16 @@ type Report struct {
 	Deferred     int
 	NoRepair     int
 	PlannedCases []Record
+	Reviews      []QueueReview
+}
+
+type QueueReview struct {
+	Queue     lidarr.QueueRecord
+	Candidate bool
+	Outcome   planningrunner.Outcome
+	Record    Record
+	Failure   *planningrunner.Failure
+	Detail    string
 }
 
 type Evidence struct {
@@ -153,23 +163,37 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 	report := Report{Observed: len(records)}
 	var failures []error
 	for _, queue := range records {
+		review := QueueReview{Queue: queue}
 		queue, err = runner.recoverQueueIdentity(ctx, queue)
 		if err != nil {
+			review.Detail = "queue identity could not be resolved"
+			report.Reviews = append(report.Reviews, review)
 			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
 			continue
 		}
+		review.Queue = queue
 		if !eligibleQueue(queue) {
+			review.Detail = "queue item is not a completed import warning"
+			report.Reviews = append(report.Reviews, review)
 			continue
 		}
 		candidate, result, err := runner.processQueue(ctx, queue)
+		review.Candidate = candidate
+		review.Outcome = result.Outcome
+		review.Record = result.Planned.Case
+		review.Failure = result.Failure
 		if candidate {
 			report.Candidates++
 		}
 		if err != nil {
+			review.Detail = "evidence collection or planning failed"
+			report.Reviews = append(report.Reviews, review)
 			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
 			continue
 		}
 		if !candidate {
+			review.Detail = "download source is not currently supported"
+			report.Reviews = append(report.Reviews, review)
 			continue
 		}
 		switch result.Outcome {
@@ -190,11 +214,13 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 				continue
 			}
 			record.Decision = decisionData
+			review.Record = record
 			report.PlannedCases = append(report.PlannedCases, record)
 		}
 		if result.Planned.Decision.Kind == lidarrcontracts.ActionNoRepair {
 			report.NoRepair++
 		}
+		report.Reviews = append(report.Reviews, review)
 	}
 	return report, errors.Join(failures...)
 }

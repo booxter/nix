@@ -560,6 +560,8 @@ func reportSummary(report Report) Report {
 	report.metrics = metricData{}
 	report.PlannedCases = nil
 	report.Rejections = nil
+	report.Queue = nil
+	report.Reviews = nil
 	return report
 }
 

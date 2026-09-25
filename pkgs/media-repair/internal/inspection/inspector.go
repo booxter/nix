@@ -62,6 +62,7 @@ type Rejection struct {
 type Result struct {
 	Assemblies []casebuilder.Assembly
 	Rejections []Rejection
+	Queue      []controller.RadarrQueueRecord
 }
 
 type CandidateUnavailableReason string
@@ -165,7 +166,10 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		inspector.dependencies.Downloads,
 	))
 	if len(eligible) == 0 {
-		return Result{Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{}}, nil
+		return Result{
+			Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{},
+			Queue: append([]controller.RadarrQueueRecord(nil), records...),
+		}, nil
 	}
 
 	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
@@ -206,7 +210,10 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		}
 		assemblies = append(assemblies, assembly)
 	}
-	return Result{Assemblies: assemblies, Rejections: rejections}, errors.Join(inspectionErrors...)
+	return Result{
+		Assemblies: assemblies, Rejections: rejections,
+		Queue: append([]controller.RadarrQueueRecord(nil), records...),
+	}, errors.Join(inspectionErrors...)
 }
 
 func (inspector *Inspector) inspectRecord(

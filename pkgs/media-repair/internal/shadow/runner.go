@@ -64,7 +64,16 @@ type Report struct {
 	Rejected       int
 	Rejections     []inspection.Rejection
 	PlannedCases   []casestore.PlannedCase
+	Queue          []controller.RadarrQueueRecord
+	Reviews        []CaseReview
 	metrics        metricData
+}
+
+type CaseReview struct {
+	Assembly       casebuilder.Assembly
+	Outcome        planningrunner.Outcome
+	Decision       contracts.RepairDecisionV3
+	PlannerFailure *casestore.PlanningFailure
 }
 
 const (
@@ -198,6 +207,7 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 		Observed:   len(assemblies),
 		Rejected:   len(collection.Rejections),
 		Rejections: append([]inspection.Rejection(nil), collection.Rejections...),
+		Queue:      append([]controller.RadarrQueueRecord(nil), collection.Queue...),
 	}
 	for _, assembly := range assemblies {
 		report.observe(assembly)
@@ -244,6 +254,12 @@ type caseResult struct {
 }
 
 func (report *Report) add(result caseResult) {
+	if result.Assembly.Request.CaseID != "" {
+		report.Reviews = append(report.Reviews, CaseReview{
+			Assembly: result.Assembly, Outcome: planningOutcome(result.Outcome),
+			Decision: result.Decision, PlannerFailure: result.PlannerFailure,
+		})
+	}
 	if result.Stored {
 		report.Stored++
 	}
@@ -274,6 +290,21 @@ func (report *Report) add(result caseResult) {
 		report.Superseded++
 	case caseFailed:
 		report.Failed++
+	}
+}
+
+func planningOutcome(outcome caseOutcome) planningrunner.Outcome {
+	switch outcome {
+	case caseDecided:
+		return planningrunner.Decided
+	case caseAlreadyDecided:
+		return planningrunner.AlreadyDecided
+	case caseDeferred:
+		return planningrunner.Deferred
+	case caseSuperseded:
+		return planningrunner.Superseded
+	default:
+		return planningrunner.Failed
 	}
 }
 

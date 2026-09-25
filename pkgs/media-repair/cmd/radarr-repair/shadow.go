@@ -12,6 +12,8 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
 	planningrunner "github.com/booxter/nix-config/media-repair/internal/planning"
+	"github.com/booxter/nix-config/media-repair/internal/radarrreview"
+	"github.com/booxter/nix-config/media-repair/internal/review"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
 
@@ -38,6 +40,7 @@ type shadowConfig struct {
 	PlannerTimeout     time.Duration
 	RetryInitial       time.Duration
 	RetryMaximum       time.Duration
+	ReviewDirectory    string
 }
 
 type shadowFunc func(context.Context, shadowConfig) (shadowrunner.Report, error)
@@ -57,6 +60,7 @@ type shadowFlags struct {
 	plannerTimeout     *time.Duration
 	retryInitial       *time.Duration
 	retryMaximum       *time.Duration
+	reviewDirectory    *string
 }
 
 func addShadowFlags(flags *flag.FlagSet) shadowFlags {
@@ -92,6 +96,9 @@ func addShadowFlags(flags *flag.FlagSet) shadowFlags {
 		retryMaximum: flags.Duration(
 			"retry-maximum", defaultRetryMaximum, "maximum planner retry delay",
 		),
+		reviewDirectory: flags.String(
+			"review-directory", "", "optional sanitized review snapshot directory",
+		),
 	}
 	flags.Var(values.workerRoots, "worker-root", "worker media root as ID=PATH; repeatable")
 	return values
@@ -115,6 +122,7 @@ func (values shadowFlags) Config() shadowConfig {
 		PlannerTimeout:     *values.plannerTimeout,
 		RetryInitial:       *values.retryInitial,
 		RetryMaximum:       *values.retryMaximum,
+		ReviewDirectory:    *values.reviewDirectory,
 	}
 }
 
@@ -207,6 +215,11 @@ func validateShadowConfig(config shadowConfig) error {
 	if err := validateAbsolutePath("metrics file", config.MetricsFile, false); err != nil {
 		return err
 	}
+	if config.ReviewDirectory != "" {
+		if err := validateAbsolutePath("review directory", config.ReviewDirectory, false); err != nil {
+			return err
+		}
+	}
 	if config.PlannerTimeout <= 0 {
 		return fmt.Errorf("planner timeout must be positive")
 	}
@@ -251,7 +264,31 @@ func runShadowOnce(
 	if err != nil {
 		return shadowrunner.Report{}, fmt.Errorf("configure shadow runner: %w", err)
 	}
-	return runner.Run(ctx)
+	report, runErr := runner.Run(ctx)
+	publishErr := publishRadarrReview(config.ReviewDirectory, report, time.Now().UTC())
+	return report, errors.Join(runErr, publishErr)
+}
+
+func publishRadarrReview(
+	directory string,
+	report shadowrunner.Report,
+	generatedAt time.Time,
+) error {
+	if directory == "" {
+		return nil
+	}
+	snapshot, err := radarrreview.Snapshot(report, generatedAt)
+	if err != nil {
+		return fmt.Errorf("build Radarr review snapshot: %w", err)
+	}
+	store, err := review.NewStore(directory)
+	if err != nil {
+		return fmt.Errorf("configure Radarr review store: %w", err)
+	}
+	if err := store.Publish(snapshot); err != nil {
+		return fmt.Errorf("publish Radarr review snapshot: %w", err)
+	}
+	return nil
 }
 
 func (config shadowConfig) inspectionConfig() inspectConfig {
