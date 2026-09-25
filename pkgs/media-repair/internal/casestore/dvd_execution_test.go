@@ -47,7 +47,7 @@ func TestDVDExecutionBindsStagedAndPublishedArtifact(t *testing.T) {
 	source := func(file decisionpolicy.AuthorizedRemuxFile, name string) workercontracts.DVDRemuxSourceV1 {
 		return workercontracts.DVDRemuxSourceV1{
 			PathComponents:      []string{"Movie", "VIDEO_TS", name},
-			ExpectedFingerprint: file.Fingerprint.Fingerprint(),
+			ExpectedFingerprint: file.Fingerprint.StrictFingerprint(),
 			SizeBytes:           file.Fingerprint.SizeBytes,
 		}
 	}
@@ -68,7 +68,7 @@ func TestDVDExecutionBindsStagedAndPublishedArtifact(t *testing.T) {
 		}},
 	}
 	artifact := &RemuxArtifact{
-		ID: "artifact:dvd", Fingerprint: navigation.Fingerprint.Fingerprint(), SizeBytes: 2048,
+		ID: "artifact:dvd", Fingerprint: navigation.Fingerprint.StrictFingerprint(), SizeBytes: 2048,
 	}
 	staged := prepared
 	staged.State = RemuxStaged

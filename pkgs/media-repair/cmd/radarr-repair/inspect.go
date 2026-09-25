@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	downloadsources "github.com/booxter/nix-config/media-repair/internal/downloadsource"
 	filesource "github.com/booxter/nix-config/media-repair/internal/filesystem"
@@ -343,6 +344,12 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("configure media worker client: %w", err)
 	}
+	archives, err := archivematerialize.New(probeClient)
+	if err != nil {
+		probeClient.Close()
+		transport.CloseIdleConnections()
+		return nil, fmt.Errorf("configure archive materializer: %w", err)
+	}
 	inspector, err := inspection.New(inspection.Dependencies{
 		Clock:             wallClock{},
 		Radarr:            radarrClient,
@@ -351,6 +358,7 @@ func configureControllerAccess(config inspectConfig) (*controllerAccess, error) 
 		Probes:            probeClient,
 		Playlists:         probeClient,
 		DVDs:              probeClient,
+		Archives:          archives,
 		CollectionTimeout: config.CollectionTimeout,
 	})
 	if err != nil {

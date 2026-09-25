@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/internal/lidarr"
+	"github.com/booxter/nix-config/media-repair/internal/planningstate"
 	"github.com/booxter/nix-config/media-repair/internal/privatefile"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
 	"golift.io/starr"
@@ -24,6 +25,7 @@ type SourceKind string
 
 const (
 	SourceTarAudio       SourceKind = "tar_audio_v1"
+	SourceRARAudio       SourceKind = "rar_audio_v1"
 	SourceDirectoryAudio SourceKind = "directory_audio_v1"
 )
 
@@ -53,6 +55,9 @@ type Store struct {
 	casesDir        string
 	planningDir     string
 	observationsDir string
+	importsDir      string
+	cases           *planningstate.CaseStore[caseRecord]
+	results         *planningstate.ResultStore
 }
 
 func NewStore(directory string) (*Store, error) {
@@ -75,9 +80,53 @@ func NewStore(directory string) (*Store, error) {
 	if err := privatefile.EnsureDirectory(observationsDir); err != nil {
 		return nil, fmt.Errorf("prepare Lidarr observation records directory: %w", err)
 	}
+	importsDir := filepath.Join(directory, "imports")
+	if err := privatefile.EnsureDirectory(importsDir); err != nil {
+		return nil, fmt.Errorf("prepare Lidarr import records directory: %w", err)
+	}
 	store := &Store{
 		directory: directory, casesDir: casesDir, planningDir: planningDir,
-		observationsDir: observationsDir,
+		observationsDir: observationsDir, importsDir: importsDir,
+	}
+	lock := func() (func(), error) {
+		stateLock, lockErr := store.lock()
+		if lockErr != nil {
+			return nil, lockErr
+		}
+		return func() { unlockState(stateLock) }, nil
+	}
+	cases, err := planningstate.NewCaseStore(
+		casesDir,
+		lock,
+		planningstate.CaseCodec[caseRecord]{
+			CaseID:       func(record caseRecord) string { return record.CaseID },
+			Encode:       encodeCaseRecord,
+			Decode:       decodeCaseRecord,
+			SameIdentity: sameLidarrCaseIdentity,
+			Merge: func(stored, current caseRecord) (caseRecord, error) {
+				return mergeLidarrCaseObservation(stored, current), nil
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.cases = cases
+	results, err := planningstate.NewResultStore(
+		planningDir,
+		lock,
+		func(caseID string) (bool, error) {
+			_, found, getErr := store.cases.Get(caseID)
+			return found, getErr
+		},
+		validateLidarrDecision,
+	)
+	if err != nil {
+		return nil, err
+	}
+	store.results = results
+	if err := store.migrateLegacyImportExecutions(); err != nil {
+		return nil, err
 	}
 	if err := store.migrateLegacyRecords(); err != nil {
 		return nil, err
@@ -144,7 +193,8 @@ func decodeRecord(data []byte) (Record, error) {
 
 func validateRecord(record Record) error {
 	if record.Version != stateVersion || record.QueueID <= 0 ||
-		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceDirectoryAudio) ||
+		(record.SourceKind != SourceTarAudio && record.SourceKind != SourceRARAudio &&
+			record.SourceKind != SourceDirectoryAudio) ||
 		record.SourcePath == "" || !filepath.IsAbs(record.SourcePath) ||
 		filepath.Clean(record.SourcePath) != record.SourcePath ||
 		!stateFingerprint.MatchString(record.SourceFingerprint) ||

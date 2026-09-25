@@ -9,7 +9,7 @@ import pytest
 from media_repair_planner.api import ContractEndpoint, create_app
 from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation, ViolationCode
+from media_repair_planner.decision_validation_core import DecisionViolation, ViolationCode
 from media_repair_planner.evaluation_runtime import OpenRouterEvaluationSettings
 from media_repair_planner.lidarr_case_models import LidarrRepairCaseV3
 from media_repair_planner.lidarr_contracts import (
@@ -35,6 +35,7 @@ from media_repair_planner.lidarr_validation import (
     validate_decision_object,
 )
 from media_repair_planner.planning_core import PlanningOutcome
+from media_repair_planner.structured_model import StructuredModelResponse
 from pydantic import BaseModel
 
 CASE_ID = "sha256:" + "a" * 64
@@ -187,13 +188,13 @@ class ScriptedModel:
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> str:
+    ) -> StructuredModelResponse:
         assert decision_model is LidarrRepairDecisionV3
         self.calls.append((system_instruction, case_content, decision_schema, case_id, correction))
         output = self.outputs.pop(0)
         if isinstance(output, Exception):
             raise output
-        return output
+        return StructuredModelResponse(output, "Scripted")
 
 
 async def test_lidarr_planner_returns_complete_mapping() -> None:

@@ -72,6 +72,53 @@ func TestReadHistory(t *testing.T) {
 	}
 }
 
+func TestRecoverMovieID(t *testing.T) {
+	t.Parallel()
+
+	page := testHistoryPage{
+		Page: 1, PageSize: historyPageSize, TotalRecords: 2,
+		Records: []*testHistoryRecord{validHistoryRecord(1), validHistoryRecord(2)},
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		assertHistoryRequest(t, request, 1, 0, testHistoryDownloadID)
+		historyHandler(page).ServeHTTP(writer, request)
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "test-api-key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	movieID, found, err := client.RecoverMovieID(context.Background(), testHistoryDownloadID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !found || movieID != 42 {
+		t.Fatalf("RecoverMovieID() = (%d, %v)", movieID, found)
+	}
+}
+
+func TestRecoverMovieIDRejectsConflictingHistory(t *testing.T) {
+	t.Parallel()
+
+	first := validHistoryRecord(1)
+	second := validHistoryRecord(2)
+	second.MovieID = 43
+	server := httptest.NewServer(historyHandler(testHistoryPage{
+		Page: 1, PageSize: historyPageSize, TotalRecords: 2,
+		Records: []*testHistoryRecord{first, second},
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "test-api-key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := client.RecoverMovieID(context.Background(), testHistoryDownloadID); err == nil {
+		t.Fatal("RecoverMovieID() accepted conflicting history")
+	}
+}
+
 func TestReadHistoryRejectsInvalidArguments(t *testing.T) {
 	t.Parallel()
 
@@ -261,9 +308,13 @@ func assertHistoryRequest(
 		"pageSize":      strconv.Itoa(historyPageSize),
 		"sortKey":       "date",
 		"sortDirection": "ascending",
-		"movieIds":      strconv.FormatInt(movieID, 10),
 		"downloadId":    downloadID,
 		"includeMovie":  "false",
+	}
+	if movieID > 0 {
+		want["movieIds"] = strconv.FormatInt(movieID, 10)
+	} else if request.URL.Query().Has("movieIds") {
+		t.Error("movieIds was sent for identity recovery")
 	}
 	query := request.URL.Query()
 	if query.Has("apikey") {

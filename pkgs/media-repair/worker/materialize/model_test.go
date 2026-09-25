@@ -1,11 +1,37 @@
 package materialize
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
 	workercontracts "github.com/booxter/nix-config/media-repair/worker/contracts"
 )
+
+func TestUnsupportedSourceRejections(t *testing.T) {
+	t.Parallel()
+	for _, reason := range []string{
+		FailureNoSupportedAudio,
+		FailureInvalidArchive,
+		FailureEncryptedArchive,
+		FailureInvalidCueSheet,
+	} {
+		err := fmt.Errorf("materialize source: %w", &Rejection{Reason: reason})
+		if !IsUnsupportedSource(err) {
+			t.Fatalf("reason %q was not classified as an unsupported source", reason)
+		}
+	}
+	for _, err := range []error{
+		errors.New("worker unavailable"),
+		&Rejection{Reason: "timeout"},
+		&Rejection{Reason: "fingerprint_mismatch"},
+	} {
+		if IsUnsupportedSource(err) {
+			t.Fatalf("error %q was classified as an unsupported source", err)
+		}
+	}
+}
 
 func TestRequestAndResponseRoundTrip(t *testing.T) {
 	t.Parallel()
@@ -67,6 +93,25 @@ func TestDirectoryRequestRoundTrip(t *testing.T) {
 	request.ExpectedFingerprint = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	if _, err := EncodeRequest(request); err == nil {
 		t.Fatal("directory request with caller fingerprint was accepted")
+	}
+}
+
+func TestVideoArchiveRequestRoundTrip(t *testing.T) {
+	t.Parallel()
+	request := Request{
+		SchemaVersion: SchemaVersion, RequestID: "request:video",
+		Operation: OperationMaterializeTarVideo, RootID: "downloads",
+		SourceComponents:    []string{"Movie", "video.tar"},
+		ExpectedFingerprint: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		WorkspaceID:         "workspace:video",
+	}
+	data, err := EncodeRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeRequest(data)
+	if err != nil || !reflect.DeepEqual(decoded, request) {
+		t.Fatalf("request = %#v, error = %v", decoded, err)
 	}
 }
 

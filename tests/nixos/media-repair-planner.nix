@@ -9,6 +9,7 @@ pkgs.testers.runNixOSTest {
     imports = [
       inputs.sops-nix.nixosModules.sops
       ../../nixos/_mixins/media-repair
+      ../../nixos/_mixins/web/options.nix
       ./lib/sops.nix
     ];
 

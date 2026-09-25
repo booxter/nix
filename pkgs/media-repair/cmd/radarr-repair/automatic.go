@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/applyselection"
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
+	radarrsource "github.com/booxter/nix-config/media-repair/internal/radarr"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
 
@@ -26,6 +30,7 @@ type automaticConfig struct {
 	KillSwitchFile         string
 	Stabilization          time.Duration
 	PollInterval           time.Duration
+	FinalizeStale          bool
 }
 
 type automaticReport struct {
@@ -33,6 +38,8 @@ type automaticReport struct {
 	Apply           applyrunner.Report
 	ShadowSucceeded bool
 	ApplyDisabled   bool
+	Finalization    queuefinalize.Report
+	FinalizeEnabled bool
 }
 
 type automaticFunc func(context.Context, automaticConfig) (automaticReport, error)
@@ -47,10 +54,13 @@ type automaticApplyFunc func(
 	[]casestore.PlannedCase,
 ) (applyrunner.Report, error)
 
+type automaticFinalizeFunc func(context.Context, automaticConfig) (queuefinalize.Report, error)
+
 type automaticDependencies struct {
-	shadow shadowFunc
-	guard  applyGuard
-	apply  automaticApplyFunc
+	shadow   shadowFunc
+	guard    applyGuard
+	apply    automaticApplyFunc
+	finalize automaticFinalizeFunc
 }
 
 type allowedActionsValue struct {
@@ -130,6 +140,10 @@ func (app application) runAutomatic(
 	pollInterval := flags.Duration(
 		"poll-interval", defaultImportPollInterval, "Radarr import confirmation poll interval",
 	)
+	finalizeStale := flags.Bool(
+		"finalize-stale-queue", false,
+		"remove tracking for completed warnings whose movie already has a file",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -144,6 +158,7 @@ func (app application) runAutomatic(
 		KillSwitchFile:         *killSwitchFile,
 		Stabilization:          *stabilization,
 		PollInterval:           *pollInterval,
+		FinalizeStale:          *finalizeStale,
 	}
 	if err := validateAutomaticConfig(config, *apply); err != nil {
 		return err
@@ -197,6 +212,14 @@ func writeAutomaticSummary(writer io.Writer, report automaticReport) error {
 	}
 	if !report.ShadowSucceeded {
 		return nil
+	}
+	if report.FinalizeEnabled {
+		if _, err := fmt.Fprintf(
+			writer, "queue_finalized=%d queue_reconciled=%d\n",
+			report.Finalization.Finalized, report.Finalization.Reconciled,
+		); err != nil {
+			return err
+		}
 	}
 	if report.ApplyDisabled {
 		_, err := fmt.Fprintln(writer, "apply=disabled")
@@ -321,9 +344,10 @@ func writeAutomaticExecution(writer io.Writer, execution applyrunner.CaseResult)
 
 func runAutomaticOnce(ctx context.Context, config automaticConfig) (automaticReport, error) {
 	return runAutomaticWith(ctx, config, automaticDependencies{
-		shadow: runShadowOnce,
-		guard:  filesystemApplyGuard{},
-		apply:  applyCurrentCases,
+		shadow:   runShadowOnce,
+		guard:    filesystemApplyGuard{},
+		apply:    applyCurrentCases,
+		finalize: finalizeRadarrQueue,
 	})
 }
 
@@ -332,7 +356,7 @@ func runAutomaticWith(
 	config automaticConfig,
 	dependencies automaticDependencies,
 ) (automaticReport, error) {
-	report := automaticReport{}
+	report := automaticReport{FinalizeEnabled: config.FinalizeStale}
 	shadowReport, err := dependencies.shadow(ctx, config.Shadow)
 	report.Shadow = shadowReport
 	if err != nil {
@@ -349,7 +373,64 @@ func runAutomaticWith(
 		return report, nil
 	}
 	report.Apply, err = dependencies.apply(ctx, config, shadowReport.PlannedCases)
+	if err != nil || !config.FinalizeStale {
+		return report, err
+	}
+	if dependencies.finalize == nil {
+		return report, fmt.Errorf("queue finalizer is not configured")
+	}
+	report.Finalization, err = dependencies.finalize(ctx, config)
 	return report, err
+}
+
+func finalizeRadarrQueue(
+	ctx context.Context,
+	config automaticConfig,
+) (queuefinalize.Report, error) {
+	apiKey, err := servarr.ReadAPIKey("Radarr", config.Shadow.RadarrAPIKeyFile)
+	if err != nil {
+		return queuefinalize.Report{}, err
+	}
+	transport, err := servarr.DirectHTTPTransport()
+	if err != nil {
+		return queuefinalize.Report{}, err
+	}
+	defer transport.CloseIdleConnections()
+	httpClient := &http.Client{
+		Transport: transport,
+		Timeout:   config.Shadow.RequestTimeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	client, err := radarrsource.New(config.Shadow.RadarrURL, apiKey, httpClient)
+	if err != nil {
+		return queuefinalize.Report{}, fmt.Errorf("configure Radarr queue finalizer: %w", err)
+	}
+	candidates, err := radarrsource.FinalizationCandidates(ctx, client)
+	if err != nil {
+		return queuefinalize.Report{}, err
+	}
+	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
+		Service: "Radarr", StateDirectory: config.Shadow.StateDirectory,
+		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
+			records, err := client.ReadQueue(ctx)
+			if err != nil {
+				return nil, err
+			}
+			entries := make([]queuefinalize.Entry, len(records))
+			for index, record := range records {
+				entries[index] = radarrsource.FinalizationEntry(record)
+			}
+			return entries, nil
+		},
+		Remove: client.FinalizeQueue,
+		Clock:  wallClock{},
+	})
+	if err != nil {
+		return queuefinalize.Report{}, fmt.Errorf("configure Radarr queue finalizer: %w", err)
+	}
+	return finalizer.Run(ctx, candidates, 1)
 }
 
 type filesystemApplyGuard struct{}

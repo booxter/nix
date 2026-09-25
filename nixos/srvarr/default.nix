@@ -48,9 +48,11 @@ in
       enable = true;
       apply = {
         enable = true;
+        finalizeStaleQueue = true;
         allowedActions = [ "import_missing_tracks_v1" ];
         allowedSources = [
           "directory_audio_v1"
+          "rar_audio_v1"
           "tar_audio_v1"
         ];
       };

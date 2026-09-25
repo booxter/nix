@@ -1,5 +1,32 @@
 { lib, pkgs }:
 {
+
+  review = {
+    enable = lib.mkEnableOption "read-only Servarr repair review inbox";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.media-repair-review;
+      description = "Media repair review frontend package.";
+    };
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 8790;
+      description = "Loopback port for the repair review frontend.";
+    };
+    stateDirectory = lib.mkOption {
+      type = lib.types.strMatching "^/.+";
+      default = "/var/lib/media-repair-review";
+      readOnly = true;
+      description = "Shared root containing sanitized controller review snapshots.";
+    };
+    writerGroup = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "media-repair-review";
+      readOnly = true;
+      description = "Group allowed to read sanitized controller review snapshots.";
+    };
+  };
+
   worker = {
     enable = lib.mkEnableOption "isolated media repair worker";
     package = lib.mkOption {

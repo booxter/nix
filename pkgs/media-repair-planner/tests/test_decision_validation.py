@@ -8,12 +8,14 @@ from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_case, decode_decision, encode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
 from media_repair_planner.decision_validation import (
+    validate_decision_for_case,
+    validate_decision_object,
+)
+from media_repair_planner.decision_validation_core import (
     DecisionViolation,
     ViolationCode,
     describe_violations,
     format_correction,
-    validate_decision_for_case,
-    validate_decision_object,
 )
 
 FIXTURES = Path(os.environ["RADARR_REPAIR_CONTRACT_FIXTURES"]) / "contracts/v3/examples"

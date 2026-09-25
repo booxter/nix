@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 from .lidarr_case_models import LidarrRepairCaseV3
 from .lidarr_contracts import decode_decision, encode_case, encode_decision
 from .lidarr_decision_models import LidarrRepairDecisionV3

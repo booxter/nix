@@ -2,31 +2,35 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
 import uvicorn
 from fastapi import FastAPI
-from media_repair_planner.case_models import RepairCaseV3
-from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation
+from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.model_runtime import BackendSettings
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.server_cli import UvicornServerRunner, main, validate_socket
+from media_repair_planner.structured_model import StructuredModelResponse
 from media_repair_planner.tracing import TraceSink
+from pydantic import BaseModel
 
 
 class CloseableModel:
     def __init__(self) -> None:
         self.closed = False
 
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        del system_instruction, repair_case, correction
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        del system_instruction, case_content, decision_schema, decision_model, case_id, correction
         raise AssertionError("readiness must not invoke the model")
 
     async def close(self) -> None:

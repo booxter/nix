@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"golift.io/starr"
 	starrRadarr "golift.io/starr/radarr"
 )
@@ -25,6 +26,9 @@ func (client *Client) ReadHistory(
 	movieID int64,
 	downloadID string,
 ) ([]controller.RadarrHistoryEvent, error) {
+	if movieID <= 0 {
+		return nil, fmt.Errorf("Radarr movie ID must be positive")
+	}
 	rawRecords, err := client.readHistoryRecords(ctx, movieID, downloadID)
 	if err != nil {
 		return nil, err
@@ -38,6 +42,28 @@ func (client *Client) ReadHistory(
 		records[index] = mapped
 	}
 	return records, nil
+}
+
+func (client *Client) RecoverMovieID(
+	ctx context.Context,
+	downloadID string,
+) (int64, bool, error) {
+	records, err := client.readHistoryRecords(ctx, 0, downloadID)
+	if err != nil {
+		return 0, false, err
+	}
+	identities := make([]int64, len(records))
+	for index, record := range records {
+		identities[index] = record.MovieID
+	}
+	movieID, found, err := servarr.SelectHistoryIdentity(
+		identities,
+		func(identity int64) bool { return identity > 0 },
+	)
+	if err != nil {
+		return 0, false, fmt.Errorf("select Radarr history movie ID: %w", err)
+	}
+	return movieID, found, nil
 }
 
 func (client *Client) readHistoryRecords(
@@ -113,8 +139,8 @@ func (client *Client) readHistoryRecords(
 }
 
 func validateHistoryQuery(movieID int64, downloadID string) error {
-	if movieID <= 0 {
-		return fmt.Errorf("Radarr movie ID must be positive")
+	if movieID < 0 {
+		return fmt.Errorf("Radarr movie ID must not be negative")
 	}
 	if downloadID == "" || strings.TrimSpace(downloadID) != downloadID ||
 		strings.ContainsRune(downloadID, '\x00') {
@@ -130,7 +156,9 @@ func historyPageRequest(page int, movieID int64, downloadID string) *starr.PageR
 		SortKey:  "date",
 		SortDir:  starr.SortAscend,
 	}
-	request.Set("movieIds", strconv.FormatInt(movieID, 10))
+	if movieID > 0 {
+		request.Set("movieIds", strconv.FormatInt(movieID, 10))
+	}
 	request.Set("downloadId", downloadID)
 	request.Set("includeMovie", "false")
 	return request
@@ -187,7 +215,10 @@ func validateHistoryRecord(
 	if record.ID <= 0 {
 		return fmt.Errorf("record ID must be positive")
 	}
-	if record.MovieID != movieID {
+	if record.MovieID <= 0 {
+		return fmt.Errorf("record movie ID must be positive")
+	}
+	if movieID > 0 && record.MovieID != movieID {
 		return fmt.Errorf(
 			"record movie ID %d does not match requested ID %d",
 			record.MovieID,

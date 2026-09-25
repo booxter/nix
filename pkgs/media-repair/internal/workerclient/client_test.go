@@ -60,7 +60,7 @@ func TestClientProbesThroughUnixSocket(t *testing.T) {
 	probeRequest := <-requests
 	if probeRequest.RootID != "root:movies" ||
 		!reflect.DeepEqual(probeRequest.PathComponents, []string{"Example", "movie.mkv"}) ||
-		probeRequest.ExpectedFingerprint != target.Fingerprint.Fingerprint() ||
+		probeRequest.ExpectedFingerprint != target.Fingerprint.StrictFingerprint() ||
 		probeRequest.RequestID != "request:1" {
 		t.Fatalf("request = %#v", probeRequest)
 	}

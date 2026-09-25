@@ -12,14 +12,13 @@ from .openrouter_model import (
     OpenRouterSettings,
     ReasoningEffort,
 )
-from .planning import DecisionModel
 from .structured_model import StructuredDecisionModel
 from .tracing import TraceSink
 
 BackendSettings = OllamaSettings | OpenRouterSettings
 
 
-class RuntimeDecisionModel(DecisionModel, StructuredDecisionModel, Protocol):
+class RuntimeDecisionModel(StructuredDecisionModel, Protocol):
     pass
 
 

@@ -76,7 +76,7 @@ func TestClientStagesAuthorizedJoinThroughUnixSocket(t *testing.T) {
 	for position, part := range request.Parts {
 		gotComponents[position] = part.PathComponents
 		if part.FileID != string(authorized.OrderedParts[position].FileID) ||
-			part.ExpectedFingerprint != authorized.OrderedParts[position].Fingerprint.Fingerprint() {
+			part.ExpectedFingerprint != authorized.OrderedParts[position].Fingerprint.StrictFingerprint() {
 			t.Fatalf("part %d = %#v", position, part)
 		}
 	}

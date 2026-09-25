@@ -30,6 +30,7 @@ in
     ];
     apply = {
       enable = true;
+      finalizeStaleQueue = true;
       allowedActions = [
         "join_parts_v1"
         "manual_import_file_v1"
@@ -46,7 +47,10 @@ in
   host.observability.nodeExporter.textfile.directories.radarr-repair =
     config.host.radarr.repair.controller.metricsDirectory;
 
-  host.mediaRepair.planner.enable = true;
+  host.mediaRepair = {
+    planner.enable = true;
+    review.enable = true;
+  };
   host.mediaRepair.worker = {
     enable = true;
     roots = {

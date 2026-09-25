@@ -43,7 +43,8 @@ func TestApplicationObservesWithoutActions(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !called || stdout.String() != "observed=7 candidates=3 planned=1 cached=1 deferred=1 "+
-		"no_repair=1 actions=0 imported=0 failed=0 apply_disabled=false\n" || stderr.Len() != 0 {
+		"no_repair=1 actions=0 imported=0 failed=0 finalized=0 reconciled=0 "+
+		"apply_disabled=false\n" || stderr.Len() != 0 {
 		t.Fatalf("called = %v, stdout = %q, stderr = %q", called, stdout.String(), stderr.String())
 	}
 }
@@ -58,6 +59,7 @@ func TestApplicationRequiresEveryApplyGuard(t *testing.T) {
 		{"--allow-action", "import_missing_tracks_v1"},
 		{"--allow-source", "tar_audio_v1"},
 		{"--kill-switch-file", "/run/lidarr-repair-disable-apply"},
+		{"--finalize-stale-queue"},
 	} {
 		arguments := append(append([]string(nil), base...), extra...)
 		if err := (application{}).run(
@@ -75,12 +77,14 @@ func TestApplicationPassesGuardedApplyConfiguration(t *testing.T) {
 		"--apply", "--allow-action", "import_missing_tracks_v1",
 		"--allow-source", "tar_audio_v1",
 		"--kill-switch-file", "/run/lidarr-repair-disable-apply",
+		"--finalize-stale-queue",
 	)
 	app := application{observe: func(_ context.Context, configuration config) (report, error) {
 		if !configuration.Apply ||
 			!configuration.AllowedActions["import_missing_tracks_v1"] ||
 			!configuration.AllowedSources["tar_audio_v1"] ||
-			configuration.KillSwitchFile != "/run/lidarr-repair-disable-apply" {
+			configuration.KillSwitchFile != "/run/lidarr-repair-disable-apply" ||
+			!configuration.FinalizeStale {
 			t.Fatalf("configuration = %#v", configuration)
 		}
 		return report{Actions: 1, Imported: 1}, nil

@@ -17,6 +17,7 @@ import (
 	"github.com/booxter/nix-config/media-repair/internal/casestore"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/executioncheck"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
 	"github.com/booxter/nix-config/media-repair/internal/repairexecution"
 	shadowrunner "github.com/booxter/nix-config/media-repair/internal/shadow"
 )
@@ -82,6 +83,41 @@ func TestAutomaticExecutionPrintsBluRayRemuxState(t *testing.T) {
 	})
 	if err != nil || output.String() != "apply=completed case_id=disc-case action=remux_bluray_v1 state=imported execution_id=execution:disc\n" {
 		t.Fatalf("output = %q, error = %v", output.String(), err)
+	}
+}
+
+func TestAutomaticRunFinalizesQueueWhenEnabled(t *testing.T) {
+	t.Parallel()
+	finalizeCalls := 0
+	report, err := runAutomaticWith(
+		context.Background(),
+		automaticConfig{FinalizeStale: true},
+		automaticDependencies{
+			shadow: func(context.Context, shadowConfig) (shadowrunner.Report, error) {
+				return shadowrunner.Report{}, nil
+			},
+			guard: &testApplyGuard{},
+			apply: func(
+				context.Context, automaticConfig, []casestore.PlannedCase,
+			) (applyrunner.Report, error) {
+				return applyrunner.Report{}, nil
+			},
+			finalize: func(context.Context, automaticConfig) (queuefinalize.Report, error) {
+				finalizeCalls++
+				return queuefinalize.Report{Finalized: 1}, nil
+			},
+		},
+	)
+	if err != nil || finalizeCalls != 1 || report.Finalization.Finalized != 1 ||
+		!report.FinalizeEnabled {
+		t.Fatalf("report = %#v, calls = %d, error = %v", report, finalizeCalls, err)
+	}
+	var output bytes.Buffer
+	if err := writeAutomaticSummary(&output, report); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "queue_finalized=1 queue_reconciled=0\n") {
+		t.Fatalf("summary = %q", output.String())
 	}
 }
 

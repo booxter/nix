@@ -58,7 +58,7 @@ func mapFile(
 		PathComponents:     clone(file.PathComponents),
 		SizeBytes:          file.Fingerprint.SizeBytes,
 		DownloadMembership: membership,
-		Fingerprint:        file.Fingerprint.Fingerprint(),
+		Fingerprint:        file.Fingerprint.StableFingerprint(),
 		Extension:          extension,
 		Disposition:        contracts.DispositionEnum(assessment.Disposition),
 		DispositionReason:  dispositionReason,

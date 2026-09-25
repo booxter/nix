@@ -105,7 +105,7 @@ func ValidateStagedJoin(
 	if !matchesContainer(authorized.OutputContainer, evidence.Format.Names) {
 		validation = reject(validation, OutputContainerMismatch)
 	}
-	if !authorized.ExpectedStreamLayout.Matches(evidence.Streams) {
+	if !authorized.ExpectedStreamLayout.MatchesMuxedOutput(evidence.Streams) {
 		validation = reject(validation, StreamLayoutMismatch)
 	}
 
@@ -137,7 +137,7 @@ func requestMatchesAuthorization(
 	for position, part := range request.Parts {
 		expected := authorized.OrderedParts[position]
 		if part.FileID != string(expected.FileID) ||
-			part.ExpectedFingerprint != expected.Fingerprint.Fingerprint() {
+			part.ExpectedFingerprint != expected.Fingerprint.StrictFingerprint() {
 			return false
 		}
 	}

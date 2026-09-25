@@ -1,11 +1,14 @@
 {
   buildGoModule,
+  cuetools,
   ffmpeg-full,
   goModels,
   lib,
   lsdvd,
   makeWrapper,
   mkvtoolnixCli,
+  unar,
+  wavpack,
 }:
 let
   version = "0.1.0";
@@ -45,6 +48,12 @@ let
       RADARR_REPAIR_TEST_FFPROBE = lib.getExe' ffmpeg-full "ffprobe";
       RADARR_REPAIR_TEST_MKVMERGE = lib.getExe' mkvtoolnixCli "mkvmerge";
       RADARR_REPAIR_TEST_LSDVD = lib.getExe' lsdvd "lsdvd";
+      RADARR_REPAIR_TEST_LSAR = lib.getExe' unar "lsar";
+      RADARR_REPAIR_TEST_UNAR = lib.getExe unar;
+      RADARR_REPAIR_TEST_CUECONVERT = lib.getExe' cuetools "cueconvert";
+      RADARR_REPAIR_TEST_CUEBREAKPOINTS = lib.getExe' cuetools "cuebreakpoints";
+      RADARR_REPAIR_TEST_WAVPACK = lib.getExe' wavpack "wavpack";
+      RADARR_REPAIR_TEST_WVUNPACK = lib.getExe' wavpack "wvunpack";
       RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
@@ -89,16 +98,16 @@ let
       subPackages = [ "cmd/lidarr-repair" ];
 
       preCheck = ''
-        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
+        unformatted="$(gofmt -l cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/planningstate internal/privatefile internal/servarr internal/workerclient lidarrcontracts)"
         if test -n "$unformatted"; then
-          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
+          gofmt -d cmd/lidarr-repair internal/fileidentity internal/lidarr internal/lidarrrepair internal/mediaroot internal/plannerclient internal/planning internal/planningstate internal/privatefile internal/servarr internal/workerclient lidarrcontracts >&2
           exit 1
         fi
-        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
+        go vet ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/planningstate ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts
       '';
       checkPhase = ''
         runHook preCheck
-        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
+        go test ./cmd/lidarr-repair ./internal/fileidentity ./internal/lidarr ./internal/lidarrrepair ./internal/mediaroot ./internal/plannerclient ./internal/planning ./internal/planningstate ./internal/privatefile ./internal/servarr ./internal/workerclient ./lidarrcontracts -cover
         runHook postCheck
       '';
 
@@ -128,7 +137,12 @@ let
           --add-flags ${lib.escapeShellArg "--ffprobe ${lib.getExe' ffmpeg-full "ffprobe"}"} \
           --add-flags ${lib.escapeShellArg "--ffmpeg ${lib.getExe' ffmpeg-full "ffmpeg"}"} \
           --add-flags ${lib.escapeShellArg "--lsdvd ${lib.getExe' lsdvd "lsdvd"}"} \
-          --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"}
+          --add-flags ${lib.escapeShellArg "--mkvmerge ${lib.getExe' mkvtoolnixCli "mkvmerge"}"} \
+          --add-flags ${lib.escapeShellArg "--lsar ${lib.getExe' unar "lsar"}"} \
+          --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"} \
+          --add-flags ${lib.escapeShellArg "--cueconvert ${lib.getExe' cuetools "cueconvert"}"} \
+          --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"} \
+          --add-flags ${lib.escapeShellArg "--wvunpack ${lib.getExe' wavpack "wvunpack"}"}
       '';
 
       doCheck = false;
@@ -145,7 +159,46 @@ let
       };
     }
   );
+
+  review = buildGoModule (
+    common
+    // {
+      pname = "media-repair-review";
+      subPackages = [ "cmd/media-repair-review" ];
+
+      preCheck = ''
+        unformatted="$(gofmt -l cmd/media-repair-review internal/review)"
+        if test -n "$unformatted"; then
+          gofmt -d cmd/media-repair-review internal/review >&2
+          exit 1
+        fi
+        go vet ./cmd/media-repair-review ./internal/review
+      '';
+      checkPhase = ''
+        runHook preCheck
+        go test ./cmd/media-repair-review ./internal/review -cover
+        runHook postCheck
+      '';
+
+      doInstallCheck = true;
+      installCheckPhase = ''
+        runHook preInstallCheck
+        "$out/bin/media-repair-review" -h >/dev/null
+        runHook postInstallCheck
+      '';
+
+      meta = common.meta // {
+        description = "Read-only review inbox for Servarr repair decisions";
+        mainProgram = "media-repair-review";
+      };
+    }
+  );
 in
 {
-  inherit controller lidarrController worker;
+  inherit
+    controller
+    lidarrController
+    review
+    worker
+    ;
 }

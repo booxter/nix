@@ -177,7 +177,7 @@ func (artifact *stagedArtifact) Snapshot() (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
-	return current.Fingerprint(), current.SizeBytes, nil
+	return current.StrictFingerprint(), current.SizeBytes, nil
 }
 
 func (artifact *stagedArtifact) Retain() error {
@@ -486,7 +486,7 @@ func (artifact *completedArtifact) Snapshot() (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
-	return current.Fingerprint(), current.SizeBytes, nil
+	return current.StrictFingerprint(), current.SizeBytes, nil
 }
 
 func (artifact *completedArtifact) Close() error {
@@ -527,7 +527,7 @@ func (rootSet *RootSet) removeStagedName(
 			_ = artifact.Close()
 			return false, err
 		}
-		if current.Fingerprint() != expectedFingerprint {
+		if current.StrictFingerprint() != expectedFingerprint {
 			_ = artifact.Close()
 			return false, &Failure{Kind: FailureFingerprintMismatch}
 		}
@@ -675,7 +675,7 @@ func verifyArtifactFingerprint(artifact *os.File, expected string) error {
 	if err != nil {
 		return err
 	}
-	if current.Fingerprint() != expected {
+	if current.StrictFingerprint() != expected {
 		return &Failure{Kind: FailureFingerprintMismatch}
 	}
 	return nil

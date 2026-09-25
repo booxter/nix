@@ -10,16 +10,16 @@
     },
     {
       "action": "manual_import_file_v1",
-      "capability_id": "capability:a98bd0d2598ab6403d833b8ac116bd51a44361f67ba28f4594151b4c70044642",
+      "capability_id": "capability:0044f1c2e12c668b5d5609b627ec7b6df28e409d6456c75fed77f70bf6f79be0",
       "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111"
     },
     {
       "action": "manual_import_file_v1",
-      "capability_id": "capability:a34a408ecba5d070d13dd1fc72ba53e7b991a91f4bfcc5464b34d92961405dc9",
+      "capability_id": "capability:c4d5d9e52d050a416448ffa1515b6085ae07ebad0fb20d6206912166eba5a16e",
       "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222"
     }
   ],
-  "case_id": "sha256:e2079816379f4be26e21a59bb86914f206dac607aafd18db41dfc04f20cee19d",
+  "case_id": "sha256:86ed42066fc04a08e785793e1a32e7db17edd11a479435fcc540d3045a218849",
   "download": {
     "client": "transmission",
     "completed_at": "2026-09-07T16:00:00Z",
@@ -46,7 +46,7 @@
       },
       "extension": "mkv",
       "file_id": "file:1111111111111111111111111111111111111111111111111111111111111111",
-      "fingerprint": "sha256:1fd277929044b950e55cb06145cb15acb6bc7812c2c190e117612a0ec4b3e01f",
+      "fingerprint": "sha256:e1fdd033664992a9586b96a6c7b6d4ee6010116e5695520700c00a04f929aea8",
       "path_components": [
         "CD1.mkv"
       ],
@@ -108,7 +108,7 @@
       },
       "extension": "mkv",
       "file_id": "file:2222222222222222222222222222222222222222222222222222222222222222",
-      "fingerprint": "sha256:d1c03e04630b65340a139fa7cf87e5619d5dff6c206b6553314c79d496d28a65",
+      "fingerprint": "sha256:558faeaf0da5fd89c9c44e3d73acd5270fa9b0c19100fd80fc098ad7f2cad5bd",
       "path_components": [
         "CD2.mkv"
       ],

@@ -154,5 +154,5 @@ func fingerprint(t *testing.T, path string) string {
 	}
 	return (fileidentity.Snapshot{Device: uint64(stat.Dev), Inode: stat.Ino,
 		SizeBytes: stat.Size,
-		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec}).Fingerprint()
+		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec}).StrictFingerprint()
 }

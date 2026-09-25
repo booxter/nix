@@ -31,11 +31,7 @@ func (store *Store) GetPlannedCase(caseID string) (PlannedCase, error) {
 		)
 	}
 
-	planningPath, err := store.planningResultPath(caseID)
-	if err != nil {
-		return PlannedCase{}, err
-	}
-	planning, found, err := readPlanningResult(planningPath)
+	planning, found, err := store.GetPlanningResult(caseID)
 	if err != nil {
 		return PlannedCase{}, err
 	}

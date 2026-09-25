@@ -86,7 +86,7 @@ func remuxSource(
 ) workercontracts.BlurayRemuxSourceV1 {
 	return workercontracts.BlurayRemuxSourceV1{
 		PathComponents:      append([]string(nil), components...),
-		ExpectedFingerprint: source.Fingerprint.Fingerprint(),
+		ExpectedFingerprint: source.Fingerprint.StrictFingerprint(),
 		SizeBytes:           source.Fingerprint.SizeBytes,
 	}
 }

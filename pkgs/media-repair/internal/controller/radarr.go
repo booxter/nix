@@ -15,6 +15,7 @@ type RadarrMovieReader interface {
 
 type RadarrHistoryReader interface {
 	ReadHistory(context.Context, int64, string) ([]RadarrHistoryEvent, error)
+	RecoverMovieID(context.Context, string) (int64, bool, error)
 }
 
 type RadarrManualImportReader interface {

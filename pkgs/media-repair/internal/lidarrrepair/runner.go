@@ -18,6 +18,7 @@ import (
 
 type Lidarr interface {
 	ReadQueue(context.Context) ([]lidarr.QueueRecord, error)
+	RecoverAlbumIdentity(context.Context, string) (lidarr.AlbumIdentity, bool, error)
 	ReadAlbum(context.Context, int64) (lidarr.Album, error)
 	ReadReleaseTracks(context.Context, int64, int64) ([]lidarr.Track, error)
 	ReadManualImports(context.Context, lidarr.ManualImportQuery) ([]lidarr.ManualImport, error)
@@ -26,6 +27,12 @@ type Lidarr interface {
 type Worker interface {
 	PathResolver
 	MaterializeTarAudio(
+		context.Context,
+		string,
+		fileidentity.Snapshot,
+		string,
+	) (materialize.Success, error)
+	MaterializeRARAudio(
 		context.Context,
 		string,
 		fileidentity.Snapshot,
@@ -46,6 +53,16 @@ type Report struct {
 	Deferred     int
 	NoRepair     int
 	PlannedCases []Record
+	Reviews      []QueueReview
+}
+
+type QueueReview struct {
+	Queue     lidarr.QueueRecord
+	Candidate bool
+	Outcome   planningrunner.Outcome
+	Record    Record
+	Failure   *planningrunner.Failure
+	Detail    string
 }
 
 type Evidence struct {
@@ -77,7 +94,14 @@ type lidarrPlanningResult = planningrunner.Result[
 	planningrunner.Failure,
 ]
 
-var errNoTarArchive = errors.New("download contains no tar archive")
+var errNoArchive = errors.New("download contains no supported archive")
+
+type archiveKind uint8
+
+const (
+	archiveTar archiveKind = iota + 1
+	archiveRAR
+)
 
 const (
 	initialPlanningBackoff = 5 * time.Minute
@@ -139,18 +163,37 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 	report := Report{Observed: len(records)}
 	var failures []error
 	for _, queue := range records {
+		review := QueueReview{Queue: queue}
+		queue, err = runner.recoverQueueIdentity(ctx, queue)
+		if err != nil {
+			review.Detail = "queue identity could not be resolved"
+			report.Reviews = append(report.Reviews, review)
+			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
+			continue
+		}
+		review.Queue = queue
 		if !eligibleQueue(queue) {
+			review.Detail = "queue item is not a completed import warning"
+			report.Reviews = append(report.Reviews, review)
 			continue
 		}
 		candidate, result, err := runner.processQueue(ctx, queue)
+		review.Candidate = candidate
+		review.Outcome = result.Outcome
+		review.Record = result.Planned.Case
+		review.Failure = result.Failure
 		if candidate {
 			report.Candidates++
 		}
 		if err != nil {
+			review.Detail = "evidence collection or planning failed"
+			report.Reviews = append(report.Reviews, review)
 			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
 			continue
 		}
 		if !candidate {
+			review.Detail = "download source is not currently supported"
+			report.Reviews = append(report.Reviews, review)
 			continue
 		}
 		switch result.Outcome {
@@ -171,11 +214,13 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 				continue
 			}
 			record.Decision = decisionData
+			review.Record = record
 			report.PlannedCases = append(report.PlannedCases, record)
 		}
 		if result.Planned.Decision.Kind == lidarrcontracts.ActionNoRepair {
 			report.NoRepair++
 		}
+		report.Reviews = append(report.Reviews, review)
 	}
 	return report, errors.Join(failures...)
 }
@@ -184,12 +229,15 @@ func (runner *Runner) processQueue(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (bool, lidarrPlanningResult, error) {
-	archivePath, snapshot, err := findArchive(queue.OutputPath)
+	archivePath, snapshot, kind, err := findArchive(queue.OutputPath)
 	if err == nil {
-		result, processErr := runner.processTar(ctx, queue, archivePath, snapshot)
+		result, processErr := runner.processArchive(ctx, queue, archivePath, snapshot, kind)
+		if materialize.IsUnsupportedSource(processErr) {
+			return false, lidarrPlanningResult{}, nil
+		}
 		return true, result, processErr
 	}
-	if !errors.Is(err, errNoTarArchive) {
+	if !errors.Is(err, errNoArchive) {
 		if errors.Is(err, os.ErrNotExist) {
 			planned, found, readErr := runner.store.Get(queue.ID)
 			if readErr != nil || !found {
@@ -208,7 +256,7 @@ func (runner *Runner) processQueue(
 	materialized, err := runner.worker.MaterializeDirectoryAudio(
 		ctx, queue.OutputPath, directoryWorkspaceID(queue.ID, queue.OutputPath),
 	)
-	if materialize.IsNoSupportedAudio(err) {
+	if materialize.IsUnsupportedSource(err) {
 		return false, lidarrPlanningResult{}, nil
 	}
 	if err != nil {
@@ -222,20 +270,34 @@ func (runner *Runner) processQueue(
 	return true, result, err
 }
 
-func (runner *Runner) processTar(
+func (runner *Runner) processArchive(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	archivePath string,
 	snapshot fileidentity.Snapshot,
+	kind archiveKind,
 ) (lidarrPlanningResult, error) {
-	fingerprint := snapshot.Fingerprint()
-	materialized, err := runner.worker.MaterializeTarAudio(
-		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
-	)
+	fingerprint := snapshot.StableFingerprint()
+	var materialized materialize.Success
+	var err error
+	sourceKind := SourceTarAudio
+	switch kind {
+	case archiveTar:
+		materialized, err = runner.worker.MaterializeTarAudio(
+			ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+		)
+	case archiveRAR:
+		sourceKind = SourceRARAudio
+		materialized, err = runner.worker.MaterializeRARAudio(
+			ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+		)
+	default:
+		return lidarrPlanningResult{}, fmt.Errorf("unsupported archive kind")
+	}
 	if err != nil {
 		return lidarrPlanningResult{}, fmt.Errorf("materialize archive evidence: %w", err)
 	}
-	return runner.processMaterialized(ctx, queue, SourceTarAudio, archivePath, materialized)
+	return runner.processMaterialized(ctx, queue, sourceKind, archivePath, materialized)
 }
 
 func (runner *Runner) processMaterialized(
@@ -281,17 +343,22 @@ func (runner *Runner) BuildCurrentEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (Evidence, error) {
+	var err error
+	queue, err = runner.recoverQueueIdentity(ctx, queue)
+	if err != nil {
+		return Evidence{}, err
+	}
 	if !eligibleQueue(queue) {
 		return Evidence{}, fmt.Errorf("Lidarr queue item is not eligible for repair")
 	}
-	archivePath, snapshot, err := findArchive(queue.OutputPath)
+	archivePath, snapshot, kind, err := findArchive(queue.OutputPath)
 	if err == nil {
-		return runner.buildTarEvidence(ctx, queue, archivePath, snapshot)
+		return runner.buildArchiveEvidence(ctx, queue, archivePath, snapshot, kind)
 	}
-	if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, errNoTarArchive) {
-		return Evidence{}, fmt.Errorf("discover tar archive: %w", err)
+	if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, errNoArchive) {
+		return Evidence{}, fmt.Errorf("discover archive: %w", err)
 	}
-	if errors.Is(err, errNoTarArchive) {
+	if errors.Is(err, errNoArchive) {
 		evidence, directoryErr := runner.buildDirectoryEvidence(ctx, queue)
 		if directoryErr == nil {
 			return evidence, nil
@@ -305,26 +372,68 @@ func (runner *Runner) BuildCurrentEvidence(
 		return Evidence{}, getErr
 	}
 	if !found {
-		return Evidence{}, fmt.Errorf("discover tar archive: %w", err)
+		return Evidence{}, fmt.Errorf("discover archive: %w", err)
 	}
 	return runner.buildStoredEvidence(ctx, queue, planned)
 }
 
-func (runner *Runner) buildTarEvidence(
+func (runner *Runner) recoverQueueIdentity(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+) (lidarr.QueueRecord, error) {
+	if queue.AlbumID != nil && queue.ArtistID != nil {
+		return queue, nil
+	}
+	if !eligibleQueueWithoutIdentity(queue) {
+		return queue, nil
+	}
+	identity, found, err := runner.lidarr.RecoverAlbumIdentity(ctx, queue.DownloadID)
+	if err != nil {
+		return queue, fmt.Errorf("recover Lidarr album identity: %w", err)
+	}
+	if !found {
+		return queue, nil
+	}
+	if queue.AlbumID != nil && *queue.AlbumID != identity.AlbumID {
+		return queue, fmt.Errorf("recovered Lidarr album identity conflicts with queue")
+	}
+	if queue.ArtistID != nil && *queue.ArtistID != identity.ArtistID {
+		return queue, fmt.Errorf("recovered Lidarr artist identity conflicts with queue")
+	}
+	queue.AlbumID = &identity.AlbumID
+	queue.ArtistID = &identity.ArtistID
+	return queue, nil
+}
+
+func (runner *Runner) buildArchiveEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 	archivePath string,
 	snapshot fileidentity.Snapshot,
+	kind archiveKind,
 ) (Evidence, error) {
-	fingerprint := snapshot.Fingerprint()
-	materialized, err := runner.worker.MaterializeTarAudio(
-		ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
-	)
+	fingerprint := snapshot.StableFingerprint()
+	var materialized materialize.Success
+	var err error
+	sourceKind := SourceTarAudio
+	switch kind {
+	case archiveTar:
+		materialized, err = runner.worker.MaterializeTarAudio(
+			ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+		)
+	case archiveRAR:
+		sourceKind = SourceRARAudio
+		materialized, err = runner.worker.MaterializeRARAudio(
+			ctx, archivePath, snapshot, workspaceID(queue.ID, fingerprint),
+		)
+	default:
+		return Evidence{}, fmt.Errorf("unsupported archive kind")
+	}
 	if err != nil {
 		return Evidence{}, fmt.Errorf("materialize archive evidence: %w", err)
 	}
 	return runner.assembleMaterializedEvidence(
-		ctx, queue, SourceTarAudio, archivePath, materialized,
+		ctx, queue, sourceKind, archivePath, materialized,
 	)
 }
 
@@ -384,6 +493,8 @@ func validateMaterializedSource(sourceKind SourceKind, materialized materialize.
 	expected := materialize.OperationMaterializeTar
 	if sourceKind == SourceDirectoryAudio {
 		expected = materialize.OperationMaterializeDirectory
+	} else if sourceKind == SourceRARAudio {
+		expected = materialize.OperationMaterializeRAR
 	}
 	if materialized.Operation != expected {
 		return fmt.Errorf("worker returned the wrong materialization operation")
@@ -462,56 +573,67 @@ func (runner *Runner) readCatalog(
 }
 
 func eligibleQueue(queue lidarr.QueueRecord) bool {
-	if queue.AlbumID == nil || queue.ArtistID == nil || queue.OutputPath == "" ||
-		queue.DownloadID == "" || queue.Status != "completed" ||
-		queue.TrackedDownloadStatus != "warning" {
-		return false
-	}
-	return true
+	return queue.AlbumID != nil && queue.ArtistID != nil &&
+		eligibleQueueWithoutIdentity(queue)
 }
 
-func findArchive(outputPath string) (string, fileidentity.Snapshot, error) {
+func eligibleQueueWithoutIdentity(queue lidarr.QueueRecord) bool {
+	return queue.OutputPath != "" && queue.DownloadID != "" &&
+		queue.Status == "completed" && queue.TrackedDownloadStatus == "warning"
+}
+
+func findArchive(outputPath string) (string, fileidentity.Snapshot, archiveKind, error) {
 	if outputPath == "" || !filepath.IsAbs(outputPath) || filepath.Clean(outputPath) != outputPath {
-		return "", fileidentity.Snapshot{}, fmt.Errorf("download output path is invalid")
+		return "", fileidentity.Snapshot{}, 0, fmt.Errorf("download output path is invalid")
 	}
 	rootInfo, err := os.Lstat(outputPath)
 	if err != nil {
-		return "", fileidentity.Snapshot{}, fmt.Errorf("inspect download output: %w", err)
+		return "", fileidentity.Snapshot{}, 0, fmt.Errorf("inspect download output: %w", err)
 	}
 	if !rootInfo.IsDir() || rootInfo.Mode()&os.ModeSymlink != 0 {
-		return "", fileidentity.Snapshot{}, fmt.Errorf("download output is not a regular directory")
+		return "", fileidentity.Snapshot{}, 0, fmt.Errorf("download output is not a regular directory")
 	}
 	entries, err := os.ReadDir(outputPath)
 	if err != nil {
-		return "", fileidentity.Snapshot{}, fmt.Errorf("read download output: %w", err)
+		return "", fileidentity.Snapshot{}, 0, fmt.Errorf("read download output: %w", err)
 	}
 	var archivePath string
 	var archiveInfo os.FileInfo
+	var kind archiveKind
 	for _, entry := range entries {
-		if !strings.EqualFold(filepath.Ext(entry.Name()), ".tar") {
+		var candidateKind archiveKind
+		switch strings.ToLower(filepath.Ext(entry.Name())) {
+		case ".tar":
+			candidateKind = archiveTar
+		case ".rar":
+			candidateKind = archiveRAR
+		default:
 			continue
 		}
 		info, err := entry.Info()
 		if err != nil {
-			return "", fileidentity.Snapshot{}, fmt.Errorf("inspect archive candidate: %w", err)
+			return "", fileidentity.Snapshot{}, 0, fmt.Errorf("inspect archive candidate: %w", err)
 		}
 		if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-			return "", fileidentity.Snapshot{}, fmt.Errorf("archive candidate is not a regular file")
+			return "", fileidentity.Snapshot{}, 0, fmt.Errorf("archive candidate is not a regular file")
 		}
 		if archivePath != "" {
-			return "", fileidentity.Snapshot{}, fmt.Errorf("download contains multiple tar archives")
+			return "", fileidentity.Snapshot{}, 0, fmt.Errorf(
+				"download contains multiple supported archives",
+			)
 		}
 		archivePath = filepath.Join(outputPath, entry.Name())
 		archiveInfo = info
+		kind = candidateKind
 	}
 	if archivePath == "" {
-		return "", fileidentity.Snapshot{}, errNoTarArchive
+		return "", fileidentity.Snapshot{}, 0, errNoArchive
 	}
 	snapshot, err := fileidentity.FromFileInfo(archiveInfo)
 	if err != nil {
-		return "", fileidentity.Snapshot{}, err
+		return "", fileidentity.Snapshot{}, 0, err
 	}
-	return archivePath, snapshot, nil
+	return archivePath, snapshot, kind, nil
 }
 
 type runnerClock struct {

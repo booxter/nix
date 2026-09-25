@@ -50,7 +50,7 @@ func ListFeaturePlaylists(
 		}
 		path := paths[file.ID]
 		details, err := identifier.Identify(ctx, Target{
-			Path: path, ExpectedFingerprint: file.Fingerprint.Fingerprint(),
+			Path: path, ExpectedFingerprint: file.Fingerprint.StrictFingerprint(),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("identify %q: %w", path, err)

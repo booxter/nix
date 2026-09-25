@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from .decision_validation import DecisionViolation
+from .decision_validation_core import DecisionViolation
 
 MODEL_CASE_ID = "sha256:" + "0" * 64
 

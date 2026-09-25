@@ -3,6 +3,7 @@ package materialize
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/internal/fileidentity"
 	"golang.org/x/sys/unix"
 )
 
@@ -50,7 +52,7 @@ func TestMaterializeDirectoryAudio(t *testing.T) {
 	probeWorkspaceSetup(t, root)
 	files := &fakeFiles{root: root}
 	prober := &fakeProber{}
-	executor, err := NewExecutor(files, prober)
+	executor, err := NewExecutor(files, prober, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +103,7 @@ func TestMaterializeDirectoryRejectsSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 	probeWorkspaceSetup(t, root)
-	executor, err := NewExecutor(&fakeFiles{root: root}, &fakeProber{})
+	executor, err := NewExecutor(&fakeFiles{root: root}, &fakeProber{}, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,6 +139,24 @@ func TestDirectoryFailuresRetainTheirStage(t *testing.T) {
 		if got := reasonForDirectoryError(test.err); got != test.want {
 			t.Errorf("reason = %q, want %q", got, test.want)
 		}
+	}
+}
+
+func TestDirectoryFingerprintIgnoresFilesystemDevice(t *testing.T) {
+	t.Parallel()
+
+	files := []directoryFile{{
+		relative: "01.flac",
+		snapshot: fileidentity.Snapshot{Device: 1, Inode: 2, SizeBytes: 3, MTimeNS: 4},
+	}}
+	before := directoryFingerprint(files)
+	files[0].snapshot.Device++
+	if after := directoryFingerprint(files); after != before {
+		t.Fatalf("fingerprint changed from %q to %q", before, after)
+	}
+	files[0].snapshot.MTimeNS++
+	if after := directoryFingerprint(files); after == before {
+		t.Fatalf("changed file retained fingerprint %q", after)
 	}
 }
 
@@ -187,13 +207,24 @@ func TestMaterializeTarAudio(t *testing.T) {
 	probeWorkspaceSetup(t, root)
 	files := &fakeFiles{root: root, archive: archive}
 	prober := &fakeProber{}
-	executor, err := NewExecutor(files, prober)
+	executor, err := NewExecutor(files, prober, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	response := executor.Execute(context.Background(), validRequest())
 	if response.Success == nil || response.Failure != nil {
 		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
+	}
+	archiveInfo, err := os.Stat(archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archiveSnapshot, err := fileidentity.FromFileInfo(archiveInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := response.Success.SourceFingerprint, archiveSnapshot.StableFingerprint(); got != want {
+		t.Fatalf("source fingerprint = %q, want %q", got, want)
 	}
 	retry := validRequest()
 	retry.RequestID = "request:retry"
@@ -217,6 +248,69 @@ func TestMaterializeTarAudio(t *testing.T) {
 		if info.Mode().Perm() != 0o640 {
 			t.Fatalf("mode for %s = %o", relative, info.Mode().Perm())
 		}
+	}
+	manifestPath := filepath.Join(workspace, workspaceManifest)
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored manifest
+	if err := json.Unmarshal(data, &stored); err != nil {
+		t.Fatal(err)
+	}
+	stored.Version = "media-repair-workspace/v2"
+	data, err = json.Marshal(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifestPath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stalePath := filepath.Join(workspace, "stale")
+	if err := os.WriteFile(stalePath, []byte("stale"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	outdated := validRequest()
+	outdated.RequestID = "request:outdated-workspace"
+	rebuilt := executor.Execute(context.Background(), outdated)
+	if rebuilt.Success == nil || rebuilt.Success.RequestID != outdated.RequestID ||
+		rebuilt.Failure != nil || files.verifyCalls != 3 || len(prober.paths) != 4 {
+		t.Fatalf(
+			"rebuilt response = %#v, failure = %#v, verify calls = %d, probes = %v",
+			rebuilt, rebuilt.Failure, files.verifyCalls, prober.paths,
+		)
+	}
+	if _, err := os.Stat(stalePath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("stale workspace entry remains: %v", err)
+	}
+}
+
+func TestMaterializeTarVideo(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, workspaceDirectory), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	archive := filepath.Join(root, "release.tar")
+	writeTar(t, archive, []tarEntry{
+		{name: "Movie/cover.jpg", body: "cover"},
+		{name: "Movie/movie.mkv", body: "video"},
+	})
+	probeWorkspaceSetup(t, root)
+	prober := &fakeProber{}
+	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, prober, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := validRequest()
+	request.Operation = OperationMaterializeTarVideo
+	request.WorkspaceID = "workspace:video"
+	response := executor.Execute(context.Background(), request)
+	if response.Success == nil || response.Failure != nil ||
+		response.Success.Operation != OperationMaterializeTarVideo ||
+		len(response.Success.Artifacts) != 1 ||
+		response.Success.Artifacts[0].RelativePath != "Movie/movie.mkv" || len(prober.paths) != 1 {
+		t.Fatalf("response = %#v, failure = %#v", response, response.Failure)
 	}
 }
 
@@ -242,7 +336,7 @@ func TestMaterializeRejectsArchiveLinks(t *testing.T) {
 		t.Fatal(err)
 	}
 	probeWorkspaceSetup(t, root)
-	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, &fakeProber{})
+	executor, err := NewExecutor(&fakeFiles{root: root, archive: archive}, &fakeProber{}, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -52,6 +52,7 @@
         default = [ ];
         description = "Download clients whose cases the automatic controller may repair.";
       };
+      finalizeStaleQueue = lib.mkEnableOption "safe removal of stale completed queue warnings";
     };
   };
 }

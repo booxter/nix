@@ -10,18 +10,10 @@ from urllib.parse import urlsplit
 from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel
 
-from .case_models import RepairCaseV3
-from .contracts import decision_schema
-from .decision_models import RepairDecisionV3
-from .decision_validation import DecisionViolation
-from .planning import DecisionModelError
-from .radarr_projection import project_case
-from .structured_decision import (
-    StructuredDecisionError,
-    decode_structured_decision,
-    diagnostic,
-    structured_prompt,
-)
+from .decision_validation_core import DecisionViolation
+from .planning_core import DecisionModelError
+from .structured_decision import diagnostic, structured_prompt
+from .structured_model import StructuredModelResponse
 from .tracing import MetadataValue, ModelTrace, TraceSink
 
 MODEL_NAME = "qwen3.8:27b-mtp-q4_K_M"
@@ -261,7 +253,7 @@ class OllamaDecisionModel:
         decision_model: type[BaseModel],
         case_id: str,
         correction: tuple[DecisionViolation, ...] = (),
-    ) -> str:
+    ) -> StructuredModelResponse:
         del decision_model
         decision_output, raw = await self._generate(
             system_instruction,
@@ -270,31 +262,8 @@ class OllamaDecisionModel:
             case_id,
             correction,
         )
-        self._trace(case_id, raw, None)
-        return decision_output
-
-    async def decide(
-        self,
-        system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...] = (),
-    ) -> RepairDecisionV3:
-        case_id = repair_case.case_id.root
-        projection = project_case(repair_case)
-        decision_output, raw = await self._generate(
-            system_instruction,
-            projection.case_content,
-            decision_schema(),
-            case_id,
-            projection.project_correction(correction),
+        return StructuredModelResponse(
+            decision_output,
+            "Ollama",
+            lambda error: self._trace(case_id, raw, error),
         )
-        try:
-            decision = decode_structured_decision(decision_output)
-        except StructuredDecisionError as error:
-            self._trace(case_id, raw, str(error))
-            raise DecisionModelError(
-                "Ollama " + str(error),
-                error.violations,
-            ) from error
-        self._trace(case_id, raw, None)
-        return projection.restore_decision(decision)

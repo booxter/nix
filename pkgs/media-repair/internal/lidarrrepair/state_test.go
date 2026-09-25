@@ -167,8 +167,51 @@ func TestStoreRetriesFailuresWithoutReplacingCases(t *testing.T) {
 	if err != nil || !changed || status.Attempts != 2 || !status.Decided {
 		t.Fatalf("decided status = %#v, changed = %v, error = %v", status, changed, err)
 	}
-	stored, err := store.GetPlanned(caseID)
-	if err != nil || stored.Decision.CaseID() != caseID || stored.Case.QueueID != planned.QueueID {
+	stored, err := store.GetDecision(caseID)
+	if err != nil || stored.CaseID() != caseID {
 		t.Fatalf("planned = %#v, error = %v", stored, err)
+	}
+}
+
+func TestStoreRefreshesLocalStateWithoutReplacingPlan(t *testing.T) {
+	t.Parallel()
+	planned, _ := testPlannedImport(t, false)
+	decision, err := lidarrcontracts.DecodeDecision(planned.Decision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planned.Decision = nil
+	store, err := NewStore(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created, err := store.PutCase(planned); err != nil || !created {
+		t.Fatalf("first observation: created = %t, error = %v", created, err)
+	}
+	caseID, err := recordCaseID(planned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := store.PutDecision(
+		caseID,
+		decision,
+		time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC),
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	refreshed := planned
+	refreshed.SourceFingerprint =
+		"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	if created, err := store.PutCase(refreshed); err != nil || created {
+		t.Fatalf("refreshed observation: created = %t, error = %v", created, err)
+	}
+	stored, found, err := store.Get(planned.QueueID)
+	if err != nil || !found {
+		t.Fatalf("get: found = %t, error = %v", found, err)
+	}
+	if stored.SourceFingerprint != refreshed.SourceFingerprint ||
+		stored.Decision == nil {
+		t.Fatalf("stored plan = %#v", stored)
 	}
 }

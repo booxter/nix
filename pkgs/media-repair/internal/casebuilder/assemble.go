@@ -218,7 +218,7 @@ func manualImportCapabilityID(binding controller.RadarrManualImportBinding) stri
 	identity := []string{
 		string(contracts.CapabilityActionManualImportFile),
 		string(binding.FileID),
-		binding.ExpectedFingerprint.Fingerprint(),
+		binding.ExpectedFingerprint.StableFingerprint(),
 		string(binding.ImportMode),
 		binding.File.Path,
 		binding.File.FolderName,

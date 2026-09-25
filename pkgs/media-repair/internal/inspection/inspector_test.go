@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/booxter/nix-config/media-repair/contracts"
+	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 const testDownloadHash = "abcdef0123456789abcdef0123456789abcdef01"
@@ -137,6 +139,55 @@ func TestInspectBuildsCaseForCompletedSABOutputTree(t *testing.T) {
 	}
 }
 
+func TestInspectUsesMaterializedArchiveVideo(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	materializedFile := controller.InventoryFile{
+		ID: "artifact:movie", PathComponents: []string{"Movie", "movie.mkv"},
+		Fingerprint: controller.FileFingerprint{Device: 2, Inode: 3, SizeBytes: 100, MTimeNS: 4},
+		DownloadFile: &controller.DownloadFileReference{
+			LengthBytes: 100, BytesCompleted: 100, Selected: true,
+		},
+	}
+	fixture.archives = &fakeArchiveMaterializer{
+		found: true,
+		source: archivematerialize.Source{
+			Root: "/downloads/.media-repair/workspaces/archive",
+			Inventory: controller.FileInventory{
+				Files: []controller.InventoryFile{materializedFile},
+				Paths: []controller.FilePathMapping{{
+					FileID:       materializedFile.ID,
+					AbsolutePath: "/downloads/.media-repair/workspaces/archive/Movie/movie.mkv",
+				}},
+			},
+			Probes: []casebuilder.FileProbe{{
+				FileID:  materializedFile.ID,
+				Outcome: controller.SuccessfulMediaProbe(controller.ProbeEvidence{}),
+			}},
+		},
+	}
+	var observed casebuilder.Observation
+	inspector := newTestInspector(t, fixture.dependencies(), func(
+		observation casebuilder.Observation,
+	) (casebuilder.Assembly, error) {
+		observed = observation
+		return casebuilder.Assembly{}, nil
+	})
+
+	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.archives.calls != 1 || !reflect.DeepEqual(observed.Inventory, fixture.archives.source.Inventory) ||
+		!reflect.DeepEqual(observed.Probes, fixture.archives.source.Probes) {
+		t.Fatalf("archive source was not used: %#v", observed)
+	}
+	if fixture.radarr.manualImportQuery.Folder != fixture.archives.source.Root ||
+		len(fixture.probes.targets) != 0 {
+		t.Fatalf("manual import query = %#v, probe targets = %#v", fixture.radarr.manualImportQuery, fixture.probes.targets)
+	}
+}
+
 func TestInspectSelectsAnExplicitEligibleCandidate(t *testing.T) {
 	t.Parallel()
 
@@ -247,6 +298,28 @@ func TestInspectAllRejectsInvalidEvidenceWithoutFailingCollection(t *testing.T) 
 	}
 }
 
+func TestInspectAllRejectsUnsupportedArchiveWithoutFailingCollection(t *testing.T) {
+	t.Parallel()
+
+	fixture := inspectionFixture()
+	fixture.archives = &fakeArchiveMaterializer{
+		found: true,
+		err:   &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
+	}
+	inspector := newTestInspector(t, fixture.dependencies(), successfulTestAssembler)
+
+	result, err := inspector.InspectAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Assemblies) != 0 || !reflect.DeepEqual(result.Rejections, []Rejection{{
+		QueueID: 71,
+		Reason:  RejectionUnsupportedSource,
+	}}) {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
 func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
 	t.Parallel()
 
@@ -263,13 +336,15 @@ func TestInspectAllReturnsNoCasesWithoutEligibleCandidates(t *testing.T) {
 	}
 }
 
-func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
+func TestInspectRecoversMovieIDFromHistory(t *testing.T) {
 	t.Parallel()
 
 	fixture := inspectionFixture()
 	fixture.radarr.records[0].MovieID = nil
 	fixture.radarr.records[0].ErrorMessage = "A download client diagnostic"
 	fixture.radarr.records[0].StatusMessages = nil
+	fixture.radarr.recoveredMovieID = 42
+	fixture.radarr.recoveredMovieFound = true
 	var observed casebuilder.Observation
 	inspector := newTestInspector(t, fixture.dependencies(), func(
 		observation casebuilder.Observation,
@@ -281,12 +356,14 @@ func TestInspectSkipsMovieSpecificReadsWithoutMovieID(t *testing.T) {
 	if _, err := inspector.Inspect(context.Background(), Selection{}); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Movie != nil || len(observed.History) != 0 || len(observed.ManualImports) != 0 {
-		t.Fatalf("movie-specific evidence = %#v", observed)
+	if observed.Movie == nil || observed.Movie.ID != 42 ||
+		len(observed.History) != 1 || len(observed.ManualImports) != 1 {
+		t.Fatalf("recovered movie-specific evidence = %#v", observed)
 	}
-	if fixture.radarr.movieReads != 0 || fixture.radarr.historyReads != 0 ||
-		fixture.radarr.manualImportReads != 0 {
-		t.Fatalf("movie-specific reads = %d, %d, %d",
+	if fixture.radarr.identityReads != 1 || fixture.radarr.movieReads != 1 ||
+		fixture.radarr.historyReads != 1 || fixture.radarr.manualImportReads != 1 {
+		t.Fatalf("movie-specific reads = %d, %d, %d, %d",
+			fixture.radarr.identityReads,
 			fixture.radarr.movieReads,
 			fixture.radarr.historyReads,
 			fixture.radarr.manualImportReads,
@@ -530,6 +607,7 @@ type inspectionTestFixture struct {
 	files         *fakeFiles
 	probes        *fakeProbes
 	assembleError error
+	archives      *fakeArchiveMaterializer
 }
 
 func inspectionFixture() inspectionTestFixture {
@@ -559,10 +637,30 @@ func inspectionFixture() inspectionTestFixture {
 }
 
 func (fixture inspectionTestFixture) dependencies() Dependencies {
-	return Dependencies{
+	dependencies := Dependencies{
 		Clock: fixture.clock, Radarr: fixture.radarr, Downloads: fixture.transmission,
 		Files: fixture.files, Probes: fixture.probes, CollectionTimeout: time.Minute,
 	}
+	if fixture.archives != nil {
+		dependencies.Archives = fixture.archives
+	}
+	return dependencies
+}
+
+type fakeArchiveMaterializer struct {
+	source archivematerialize.Source
+	found  bool
+	err    error
+	calls  int
+}
+
+func (materializer *fakeArchiveMaterializer) MaterializeVideo(
+	context.Context,
+	int64,
+	controller.FileInventory,
+) (archivematerialize.Source, bool, error) {
+	materializer.calls++
+	return materializer.source, materializer.found, materializer.err
 }
 
 func eligibleDownload() (controller.RadarrQueueRecord, controller.Download) {
@@ -632,15 +730,23 @@ func (clock *fakeClock) Now() time.Time {
 }
 
 type fakeRadarr struct {
-	records           []controller.RadarrQueueRecord
-	movie             controller.RadarrMovie
-	history           []controller.RadarrHistoryEvent
-	imports           []controller.RadarrManualImport
-	manualImportQuery controller.RadarrManualImportQuery
-	queueReads        int
-	movieReads        int
-	historyReads      int
-	manualImportReads int
+	records             []controller.RadarrQueueRecord
+	movie               controller.RadarrMovie
+	history             []controller.RadarrHistoryEvent
+	imports             []controller.RadarrManualImport
+	manualImportQuery   controller.RadarrManualImportQuery
+	recoveredMovieID    int64
+	recoveredMovieFound bool
+	queueReads          int
+	movieReads          int
+	historyReads        int
+	manualImportReads   int
+	identityReads       int
+}
+
+func (reader *fakeRadarr) RecoverMovieID(context.Context, string) (int64, bool, error) {
+	reader.identityReads++
+	return reader.recoveredMovieID, reader.recoveredMovieFound, nil
 }
 
 func (reader *fakeRadarr) ReadQueue(context.Context) ([]controller.RadarrQueueRecord, error) {

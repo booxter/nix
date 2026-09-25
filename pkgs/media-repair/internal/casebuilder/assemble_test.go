@@ -134,6 +134,31 @@ func TestAssembleCaseIdentityIgnoresObservationTime(t *testing.T) {
 	}
 }
 
+func TestAssembleCaseIdentityIgnoresFilesystemDevice(t *testing.T) {
+	t.Parallel()
+
+	observation := testObservation()
+	first, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstFingerprint := first.LocalSnapshot.Observation.Inventory.Files[0].Fingerprint
+	for index := range observation.Inventory.Files {
+		observation.Inventory.Files[index].Fingerprint.Device++
+	}
+	second, err := Assemble(observation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Request.CaseID != second.Request.CaseID {
+		t.Fatalf("case ID changed from %q to %q", first.Request.CaseID, second.Request.CaseID)
+	}
+	secondFingerprint := second.LocalSnapshot.Observation.Inventory.Files[0].Fingerprint
+	if firstFingerprint.StrictFingerprint() == secondFingerprint.StrictFingerprint() {
+		t.Fatal("local snapshots did not retain the changed filesystem device")
+	}
+}
+
 func TestAssembleOffersManualImportForOneFile(t *testing.T) {
 	t.Parallel()
 

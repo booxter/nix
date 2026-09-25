@@ -29,11 +29,13 @@
           with lib.types;
           listOf (enum [
             "tar_audio_v1"
+            "rar_audio_v1"
             "directory_audio_v1"
           ]);
         default = [ ];
         description = "Evidence sources the automatic controller may apply repairs from.";
       };
+      finalizeStaleQueue = lib.mkEnableOption "safe removal of stale completed queue warnings";
     };
   };
 }

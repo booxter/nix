@@ -50,7 +50,7 @@ func TestStorePutAndGet(t *testing.T) {
 	assertMode(t, filepath.Join(root, casesDirectoryName, digest+".json"), 0o600)
 }
 
-func TestStorePutIsIdempotentAcrossObservationTimes(t *testing.T) {
+func TestStorePutRefreshesObservationTime(t *testing.T) {
 	t.Parallel()
 
 	store, err := New(filepath.Join(t.TempDir(), "state"))
@@ -83,12 +83,12 @@ func TestStorePutIsIdempotentAcrossObservationTimes(t *testing.T) {
 	if err != nil || !found {
 		t.Fatalf("get: found = %t, error = %v", found, err)
 	}
-	if !reflect.DeepEqual(stored, first) {
-		t.Fatal("idempotent put replaced the original record")
+	if !reflect.DeepEqual(stored, second) {
+		t.Fatal("second put did not refresh the observation")
 	}
 }
 
-func TestStorePutRejectsDifferentLocalState(t *testing.T) {
+func TestStorePutRefreshesDifferentLocalState(t *testing.T) {
 	t.Parallel()
 
 	store, err := New(filepath.Join(t.TempDir(), "state"))
@@ -113,9 +113,12 @@ func TestStorePutRejectsDifferentLocalState(t *testing.T) {
 	if changed.CaseID != first.CaseID {
 		t.Fatalf("test change unexpectedly changed case ID to %q", changed.CaseID)
 	}
-	if created, err := store.Put(changed); err == nil || created ||
-		!strings.Contains(err.Error(), "different local state") {
+	if created, err := store.Put(changed); err != nil || created {
 		t.Fatalf("put: created = %t, error = %v", created, err)
+	}
+	stored, found, err := store.Get(changed.CaseID)
+	if err != nil || !found || !reflect.DeepEqual(stored, changed) {
+		t.Fatalf("stored = %#v, found = %t, error = %v", stored, found, err)
 	}
 }
 
@@ -143,8 +146,8 @@ func TestStoreMatchesV1RecordWithoutMovieFileObservation(t *testing.T) {
 	if err != nil || !found {
 		t.Fatalf("get: found = %t, error = %v", found, err)
 	}
-	if !reflect.DeepEqual(stored, legacy) {
-		t.Fatal("compatible put replaced the legacy record")
+	if !reflect.DeepEqual(stored, current) {
+		t.Fatal("compatible put did not refresh the legacy record")
 	}
 }
 
@@ -178,6 +181,10 @@ func TestStoreMatchesV2RecordWithoutRejectionCodes(t *testing.T) {
 	if created, err := store.Put(current); err != nil || created {
 		t.Fatalf("current put: created = %t, error = %v", created, err)
 	}
+	stored, found, err := store.Get(current.CaseID)
+	if err != nil || !found || !reflect.DeepEqual(stored, current) {
+		t.Fatalf("stored = %#v, found = %t, error = %v", stored, found, err)
+	}
 }
 
 func withoutRejectionCodes(snapshot casebuilder.LocalSnapshot) casebuilder.LocalSnapshot {
@@ -189,7 +196,7 @@ func withoutRejectionCodes(snapshot casebuilder.LocalSnapshot) casebuilder.Local
 	return snapshot
 }
 
-func TestStoreRejectsChangedMovieFileObservation(t *testing.T) {
+func TestStoreRefreshesChangedMovieFileObservation(t *testing.T) {
 	t.Parallel()
 
 	store, err := New(filepath.Join(t.TempDir(), "state"))
@@ -202,9 +209,12 @@ func TestStoreRejectsChangedMovieFileObservation(t *testing.T) {
 	}
 
 	second := newRecordWithMovieForTest(t, true)
-	if created, err := store.Put(second); err == nil || created ||
-		!strings.Contains(err.Error(), "different local state") {
+	if created, err := store.Put(second); err != nil || created {
 		t.Fatalf("second put: created = %t, error = %v", created, err)
+	}
+	stored, found, err := store.Get(second.CaseID)
+	if err != nil || !found || !reflect.DeepEqual(stored, second) {
+		t.Fatalf("stored = %#v, found = %t, error = %v", stored, found, err)
 	}
 }
 

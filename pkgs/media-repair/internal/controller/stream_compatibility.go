@@ -183,7 +183,7 @@ func (layout StreamLayout) Clone() StreamLayout {
 	return cloned
 }
 
-func (layout StreamLayout) Matches(streams []ProbeStream) bool {
+func (layout StreamLayout) MatchesMuxedOutput(streams []ProbeStream) bool {
 	if len(streams) != len(layout.Streams) {
 		return false
 	}
@@ -196,7 +196,7 @@ func (layout StreamLayout) Matches(streams []ProbeStream) bool {
 		if !valid {
 			return false
 		}
-		comparison := compareStreams(reference, ordered[position])
+		comparison := compareMuxedStream(reference, ordered[position])
 		if comparison.missing != "" || comparison.mismatch != "" {
 			return false
 		}
@@ -336,6 +336,13 @@ func compareStreams(reference ProbeStream, candidate ProbeStream) streamComparis
 		)
 	}
 	return comparison
+}
+
+func compareMuxedStream(reference ProbeStream, candidate ProbeStream) streamComparison {
+	if reference.TimeBase != nil && candidate.TimeBase != nil {
+		reference.TimeBase = candidate.TimeBase
+	}
+	return compareStreams(reference, candidate)
 }
 
 func compareRequiredField[T comparable](

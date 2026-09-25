@@ -67,6 +67,7 @@ func TestAutomaticMetricsReportBoundedApplyOutcomes(t *testing.T) {
 	prefix := shadowrunner.MetricsNamespace
 	assertAutomaticMetric(t, families, prefix+"_apply_run_success", nil, 0)
 	assertAutomaticMetric(t, families, prefix+"_apply_disabled", nil, 0)
+	assertAutomaticMetric(t, families, prefix+"_queue_finalized", nil, 0)
 	assertAutomaticMetric(
 		t, families, prefix+"_apply_cases", map[string]string{"outcome": "permitted"}, 5,
 	)

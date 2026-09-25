@@ -32,7 +32,7 @@ func bindBluRayCapabilities(
 		identity := []string{
 			string(contracts.CapabilityActionRemuxBluray),
 			string(playlist.PlaylistFileID),
-			file.Fingerprint.Fingerprint(),
+			file.Fingerprint.StableFingerprint(),
 			strconv.FormatInt(playlist.Details.DurationMS, 10),
 			strconv.Itoa(playlist.Details.Chapters),
 		}
@@ -42,7 +42,7 @@ func bindBluRayCapabilities(
 				return nil, fmt.Errorf("Blu-ray clip %q is missing from inventory", clipID)
 			}
 			clipIDs = append(clipIDs, string(clipID))
-			identity = append(identity, string(clipID), clip.Fingerprint.Fingerprint())
+			identity = append(identity, string(clipID), clip.Fingerprint.StableFingerprint())
 		}
 		tracks, err := mapBluRayTracks(playlist.Details.Tracks)
 		if err != nil {

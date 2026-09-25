@@ -230,7 +230,7 @@ func (rootSet *RootSet) Verify(media *os.File, expectedFingerprint string) error
 	if err != nil {
 		return err
 	}
-	if snapshot.Fingerprint() != expectedFingerprint {
+	if snapshot.StrictFingerprint() != expectedFingerprint {
 		return &Failure{Kind: FailureFingerprintMismatch}
 	}
 	return nil

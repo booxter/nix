@@ -11,7 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints,
 from .case_models import RepairCaseV3
 from .contracts import decode_case, encode_decision
 from .decision_models import Reason, RepairDecisionV3
-from .decision_validation import describe_violation, validate_decision_for_case
+from .decision_validation import validate_decision_for_case
+from .decision_validation_core import describe_violation
 from .evaluation_runtime import (
     EvaluationSettings as EvaluationSettings,
 )

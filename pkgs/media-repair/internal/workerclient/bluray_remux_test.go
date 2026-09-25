@@ -97,7 +97,7 @@ func TestClientStagesAuthorizedBluRayThroughUnixSocket(t *testing.T) {
 		}) || len(request.Clips) != 1 ||
 		!reflect.DeepEqual(request.Clips[0].PathComponents, []string{
 			"Movie", "BDMV", "STREAM", "00000.m2ts",
-		}) || request.Clips[0].ExpectedFingerprint != clip.Fingerprint.Fingerprint() ||
+		}) || request.Clips[0].ExpectedFingerprint != clip.Fingerprint.StrictFingerprint() ||
 		request.ExpectedDurationMS != authorized.ExpectedDurationMS ||
 		request.ExpectedTracks[0].Kind != "video" {
 		t.Fatalf("worker remux request = %#v", request)

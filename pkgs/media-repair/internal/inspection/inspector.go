@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/booxter/nix-config/media-repair/internal/archivematerialize"
 	"github.com/booxter/nix-config/media-repair/internal/casebuilder"
 	"github.com/booxter/nix-config/media-repair/internal/controller"
 	"github.com/booxter/nix-config/media-repair/internal/dvdvideo"
 	"github.com/booxter/nix-config/media-repair/internal/mkvmerge"
+	"github.com/booxter/nix-config/media-repair/worker/materialize"
 )
 
 type RadarrReader interface {
@@ -17,6 +19,14 @@ type RadarrReader interface {
 	controller.RadarrMovieReader
 	controller.RadarrHistoryReader
 	controller.RadarrManualImportReader
+}
+
+type VideoArchiveMaterializer interface {
+	MaterializeVideo(
+		context.Context,
+		int64,
+		controller.FileInventory,
+	) (archivematerialize.Source, bool, error)
 }
 
 type Dependencies struct {
@@ -27,6 +37,7 @@ type Dependencies struct {
 	Probes            controller.MediaProbeReader
 	Playlists         mkvmerge.Identifier
 	DVDs              dvdvideo.Identifier
+	Archives          VideoArchiveMaterializer
 	CollectionTimeout time.Duration
 }
 
@@ -38,7 +49,10 @@ type Selection struct {
 
 type RejectionReason string
 
-const RejectionInvalidEvidence RejectionReason = "invalid_case_evidence"
+const (
+	RejectionInvalidEvidence   RejectionReason = "invalid_case_evidence"
+	RejectionUnsupportedSource RejectionReason = "unsupported_source"
+)
 
 type Rejection struct {
 	QueueID int64
@@ -48,6 +62,7 @@ type Rejection struct {
 type Result struct {
 	Assemblies []casebuilder.Assembly
 	Rejections []Rejection
+	Queue      []controller.RadarrQueueRecord
 }
 
 type CandidateUnavailableReason string
@@ -151,7 +166,10 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		inspector.dependencies.Downloads,
 	))
 	if len(eligible) == 0 {
-		return Result{Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{}}, nil
+		return Result{
+			Assemblies: []casebuilder.Assembly{}, Rejections: []Rejection{},
+			Queue: append([]controller.RadarrQueueRecord(nil), records...),
+		}, nil
 	}
 
 	assemblies := make([]casebuilder.Assembly, 0, len(eligible))
@@ -169,6 +187,13 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		assembly, inspectErr := inspector.inspectRecord(ctx, collectionContext, record)
 		collectionCancel()
 		if inspectErr != nil {
+			if materialize.IsUnsupportedSource(inspectErr) {
+				rejections = append(rejections, Rejection{
+					QueueID: record.ID,
+					Reason:  RejectionUnsupportedSource,
+				})
+				continue
+			}
 			var invalidEvidence *casebuilder.InvalidEvidenceError
 			if errors.As(inspectErr, &invalidEvidence) {
 				rejections = append(rejections, Rejection{
@@ -185,7 +210,10 @@ func (inspector *Inspector) InspectAll(ctx context.Context) (Result, error) {
 		}
 		assemblies = append(assemblies, assembly)
 	}
-	return Result{Assemblies: assemblies, Rejections: rejections}, errors.Join(inspectionErrors...)
+	return Result{
+		Assemblies: assemblies, Rejections: rejections,
+		Queue: append([]controller.RadarrQueueRecord(nil), records...),
+	}, errors.Join(inspectionErrors...)
 }
 
 func (inspector *Inspector) inspectRecord(
@@ -193,6 +221,18 @@ func (inspector *Inspector) inspectRecord(
 	collectionContext context.Context,
 	record controller.RadarrQueueRecord,
 ) (casebuilder.Assembly, error) {
+	if record.MovieID == nil {
+		movieID, found, err := inspector.dependencies.Radarr.RecoverMovieID(
+			collectionContext,
+			record.DownloadID,
+		)
+		if err != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("recover Radarr movie identity: %w", err)
+		}
+		if found {
+			record.MovieID = &movieID
+		}
+	}
 
 	download, found, err := inspector.dependencies.Downloads.Resolve(collectionContext, record)
 	if err != nil {
@@ -231,23 +271,42 @@ func (inspector *Inspector) inspectRecord(
 		if readErr != nil {
 			return casebuilder.Assembly{}, fmt.Errorf("read Radarr history: %w", readErr)
 		}
-		manualImports, readErr = inspector.dependencies.Radarr.ReadManualImports(
-			collectionContext,
-			controller.RadarrManualImportQuery{
-				MovieID: movieID, DownloadID: record.DownloadID, Folder: correlation.DownloadRoot,
-			},
-		)
-		if readErr != nil {
-			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", readErr)
-		}
 	}
 	inventory, err := inspector.dependencies.Files.Inventory(collectionContext, correlation)
 	if err != nil {
 		return casebuilder.Assembly{}, fmt.Errorf("inventory download files: %w", err)
 	}
-	probes, err := inspector.collectProbes(callerContext, collectionContext, inventory)
-	if err != nil {
-		return casebuilder.Assembly{}, err
+	inspectionRoot := correlation.DownloadRoot
+	var probes []casebuilder.FileProbe
+	if inspector.dependencies.Archives != nil {
+		materialized, found, materializeErr := inspector.dependencies.Archives.MaterializeVideo(
+			collectionContext, record.ID, inventory,
+		)
+		if materializeErr != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("materialize archive video: %w", materializeErr)
+		}
+		if found {
+			inspectionRoot = materialized.Root
+			inventory = materialized.Inventory
+			probes = materialized.Probes
+		}
+	}
+	if probes == nil {
+		probes, err = inspector.collectProbes(callerContext, collectionContext, inventory)
+		if err != nil {
+			return casebuilder.Assembly{}, err
+		}
+	}
+	if movie != nil {
+		manualImports, err = inspector.dependencies.Radarr.ReadManualImports(
+			collectionContext,
+			controller.RadarrManualImportQuery{
+				MovieID: movie.ID, DownloadID: record.DownloadID, Folder: inspectionRoot,
+			},
+		)
+		if err != nil {
+			return casebuilder.Assembly{}, fmt.Errorf("read Radarr manual imports: %w", err)
+		}
 	}
 	var playlists []mkvmerge.Candidate
 	if inspector.dependencies.Playlists != nil {

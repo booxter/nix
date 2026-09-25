@@ -1,6 +1,7 @@
 package contracts
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -67,6 +68,18 @@ func CalculateCaseID(repairCase RepairCaseV3) (string, error) {
 	}
 	digest := sha256.Sum256(canonical)
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
+}
+
+func SameCaseIdentity(left, right RepairCaseV3) (bool, error) {
+	leftCanonical, err := canonicalCaseIdentity(left)
+	if err != nil {
+		return false, err
+	}
+	rightCanonical, err := canonicalCaseIdentity(right)
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(leftCanonical, rightCanonical), nil
 }
 
 func EncodeCase(repairCase RepairCaseV3) ([]byte, error) {

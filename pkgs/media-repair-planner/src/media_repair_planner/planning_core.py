@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-from .decision_validation import DecisionViolation, describe_violations
+from .decision_validation_core import DecisionViolation, describe_violations
 from .json_contract import ContractError
 
 ATTEMPT_LIMIT = 2

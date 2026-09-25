@@ -22,6 +22,7 @@ pkgs.testers.runNixOSTest {
       ../../nixos/_mixins/media-repair
       ../../nixos/_mixins/radarr/assertions.nix
       ../../nixos/_mixins/radarr/controller.nix
+      ../../nixos/_mixins/web/options.nix
       ./lib/sops.nix
     ];
 

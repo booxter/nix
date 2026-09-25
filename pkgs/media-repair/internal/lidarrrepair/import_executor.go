@@ -18,9 +18,9 @@ type ImportClient interface {
 
 type ImportStore interface {
 	PrepareImport(AuthorizedImport, int64, time.Time) (ImportExecution, bool, error)
-	MarkImportRequested(int64, int64, time.Time) (ImportExecution, bool, error)
-	MarkImported(int64, []lidarr.ImportedTrack, time.Time) (ImportExecution, bool, error)
-	MarkImportFailed(int64, time.Time) (ImportExecution, bool, error)
+	MarkImportRequested(string, int64, time.Time) (ImportExecution, bool, error)
+	MarkImported(string, []lidarr.ImportedTrack, time.Time) (ImportExecution, bool, error)
+	MarkImportFailed(string, time.Time) (ImportExecution, bool, error)
 }
 
 type ImportExecutorDependencies struct {
@@ -122,14 +122,14 @@ func (executor *ImportExecutor) run(
 				at time.Time,
 			) (ImportExecution, error) {
 				updated, _, markErr := executor.dependencies.Store.MarkImportRequested(
-					current.QueueID,
+					current.CaseID,
 					commandID,
 					at,
 				)
 				return updated, markErr
 			},
 			MarkFailed: func(current ImportExecution, at time.Time) (ImportExecution, error) {
-				updated, _, markErr := executor.dependencies.Store.MarkImportFailed(current.QueueID, at)
+				updated, _, markErr := executor.dependencies.Store.MarkImportFailed(current.CaseID, at)
 				return updated, markErr
 			},
 		},
@@ -199,7 +199,7 @@ func (executor *ImportExecutor) confirm(
 		return execution, false, err
 	}
 	confirmed, _, err := executor.dependencies.Store.MarkImported(
-		execution.QueueID,
+		execution.CaseID,
 		confirmations,
 		confirmedAt,
 	)

@@ -15,8 +15,11 @@ import (
 
 	lidarrsource "github.com/booxter/nix-config/media-repair/internal/lidarr"
 	"github.com/booxter/nix-config/media-repair/internal/lidarrrepair"
+	"github.com/booxter/nix-config/media-repair/internal/lidarrreview"
 	"github.com/booxter/nix-config/media-repair/internal/mediaroot"
 	"github.com/booxter/nix-config/media-repair/internal/plannerclient"
+	"github.com/booxter/nix-config/media-repair/internal/queuefinalize"
+	"github.com/booxter/nix-config/media-repair/internal/review"
 	"github.com/booxter/nix-config/media-repair/internal/servarr"
 	"github.com/booxter/nix-config/media-repair/internal/workerclient"
 	"github.com/booxter/nix-config/media-repair/lidarrcontracts"
@@ -43,6 +46,8 @@ type config struct {
 	AllowedSources map[lidarrrepair.SourceKind]bool
 	KillSwitchFile string
 	PollInterval   time.Duration
+	FinalizeStale  bool
+	ReviewDir      string
 }
 
 type report struct {
@@ -55,6 +60,8 @@ type report struct {
 	Actions       int
 	Imported      int
 	Failed        int
+	Finalized     int
+	Reconciled    int
 	ApplyDisabled bool
 }
 
@@ -80,7 +87,8 @@ func (value *allowedSourcesValue) String() string { return "" }
 
 func (value *allowedSourcesValue) Set(raw string) error {
 	source := lidarrrepair.SourceKind(raw)
-	if source != lidarrrepair.SourceTarAudio && source != lidarrrepair.SourceDirectoryAudio {
+	if source != lidarrrepair.SourceTarAudio && source != lidarrrepair.SourceRARAudio &&
+		source != lidarrrepair.SourceDirectoryAudio {
 		return fmt.Errorf("source %q cannot be allowed for automatic Lidarr repair", raw)
 	}
 	value.sources[source] = true
@@ -136,6 +144,13 @@ func (app application) run(
 	pollInterval := flags.Duration(
 		"poll-interval", 2*time.Second, "Lidarr import confirmation poll interval",
 	)
+	finalizeStale := flags.Bool(
+		"finalize-stale-queue", false,
+		"remove tracking for completed warnings whose monitored release is complete",
+	)
+	reviewDirectory := flags.String(
+		"review-directory", "", "optional sanitized review snapshot directory",
+	)
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -151,6 +166,8 @@ func (app application) run(
 		Apply: *apply, AllowedActions: allowed.actions, AllowedSources: allowedSources.sources,
 		KillSwitchFile: *killSwitchFile,
 		PollInterval:   *pollInterval,
+		FinalizeStale:  *finalizeStale,
+		ReviewDir:      *reviewDirectory,
 	}
 	if err := validateConfig(configuration); err != nil {
 		return err
@@ -168,10 +185,11 @@ func (app application) run(
 	_, err = fmt.Fprintf(
 		stdout,
 		"observed=%d candidates=%d planned=%d cached=%d deferred=%d no_repair=%d "+
-			"actions=%d imported=%d failed=%d apply_disabled=%t\n",
+			"actions=%d imported=%d failed=%d finalized=%d reconciled=%d apply_disabled=%t\n",
 		result.Observed, result.Candidates, result.Planned, result.Cached, result.Deferred,
 		result.NoRepair,
-		result.Actions, result.Imported, result.Failed, result.ApplyDisabled,
+		result.Actions, result.Imported, result.Failed, result.Finalized, result.Reconciled,
+		result.ApplyDisabled,
 	)
 	return err
 }
@@ -188,6 +206,11 @@ func validateConfig(configuration config) error {
 		filepath.Clean(configuration.StateDir) != configuration.StateDir ||
 		filepath.Dir(configuration.StateDir) == configuration.StateDir {
 		return fmt.Errorf("state directory must be an absolute clean path")
+	}
+	if configuration.ReviewDir != "" && (!filepath.IsAbs(configuration.ReviewDir) ||
+		filepath.Clean(configuration.ReviewDir) != configuration.ReviewDir ||
+		filepath.Dir(configuration.ReviewDir) == configuration.ReviewDir) {
+		return fmt.Errorf("review directory must be an absolute clean path")
 	}
 	for name, path := range map[string]string{
 		"worker socket":  configuration.WorkerSocket,
@@ -216,7 +239,7 @@ func validateConfig(configuration config) error {
 			return fmt.Errorf("kill-switch file must be an absolute clean path")
 		}
 	} else if len(configuration.AllowedActions) != 0 || len(configuration.AllowedSources) != 0 ||
-		configuration.KillSwitchFile != "" {
+		configuration.KillSwitchFile != "" || configuration.FinalizeStale {
 		return fmt.Errorf("apply guards require --apply")
 	}
 	return nil
@@ -270,8 +293,9 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		Planned: result.Planned, Cached: result.Cached, Deferred: result.Deferred,
 		NoRepair: result.NoRepair,
 	}
-	if err != nil || !configuration.Apply {
-		return controllerReport, err
+	publishErr := publishLidarrReview(configuration.ReviewDir, result, time.Now().UTC())
+	if err != nil || publishErr != nil || !configuration.Apply {
+		return controllerReport, errors.Join(err, publishErr)
 	}
 	disabled, err := applyDisabled(configuration.KillSwitchFile)
 	if err != nil {
@@ -332,7 +356,68 @@ func runController(ctx context.Context, configuration config) (report, error) {
 		}
 		return controllerReport, executeErr
 	}
+	if configuration.FinalizeStale {
+		finalization, finalizeErr := finalizeLidarrQueue(ctx, configuration, client)
+		controllerReport.Finalized = finalization.Finalized
+		controllerReport.Reconciled = finalization.Reconciled
+		if finalizeErr != nil {
+			return controllerReport, finalizeErr
+		}
+	}
 	return controllerReport, nil
+}
+
+func publishLidarrReview(
+	directory string,
+	report lidarrrepair.Report,
+	generatedAt time.Time,
+) error {
+	if directory == "" {
+		return nil
+	}
+	snapshot, err := lidarrreview.Snapshot(report, generatedAt)
+	if err != nil {
+		return fmt.Errorf("build Lidarr review snapshot: %w", err)
+	}
+	store, err := review.NewStore(directory)
+	if err != nil {
+		return fmt.Errorf("configure Lidarr review store: %w", err)
+	}
+	if err := store.Publish(snapshot); err != nil {
+		return fmt.Errorf("publish Lidarr review snapshot: %w", err)
+	}
+	return nil
+}
+
+func finalizeLidarrQueue(
+	ctx context.Context,
+	configuration config,
+	client *lidarrsource.Client,
+) (queuefinalize.Report, error) {
+	candidates, err := lidarrsource.FinalizationCandidates(ctx, client)
+	if err != nil {
+		return queuefinalize.Report{}, err
+	}
+	finalizer, err := queuefinalize.New(queuefinalize.Dependencies{
+		Service: "Lidarr", StateDirectory: configuration.StateDir,
+		ReadQueue: func(ctx context.Context) ([]queuefinalize.Entry, error) {
+			records, err := client.ReadQueue(ctx)
+			if err != nil {
+				return nil, err
+			}
+			entries := make([]queuefinalize.Entry, len(records))
+			for index, record := range records {
+				entries[index] = lidarrsource.FinalizationEntry(record)
+			}
+			return entries, nil
+		},
+		Remove: client.FinalizeQueue,
+		Clock:  wallClock{},
+	})
+	if err != nil {
+		return queuefinalize.Report{}, fmt.Errorf("configure Lidarr queue finalizer: %w", err)
+	}
+	return finalizer.Run(ctx, candidates, 1)
 }
 
 type wallClock struct{}

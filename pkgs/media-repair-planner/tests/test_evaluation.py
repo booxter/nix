@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
-from media_repair_planner.case_models import RepairCaseV3
 from media_repair_planner.contracts import decode_decision
 from media_repair_planner.decision_models import RepairDecisionV3
-from media_repair_planner.decision_validation import DecisionViolation
+from media_repair_planner.decision_validation_core import DecisionViolation
 from media_repair_planner.evaluation import (
     EvaluationCase,
     EvaluationDataError,
@@ -26,7 +26,9 @@ from media_repair_planner.evaluation_cli import main
 from media_repair_planner.ollama_model import MODEL_NAME, OllamaSettings
 from media_repair_planner.openrouter_model import OpenRouterSettings
 from media_repair_planner.planning import Planner, PlanningOutcome
+from media_repair_planner.structured_model import StructuredModelResponse
 from media_repair_planner.tracing import TraceSink
+from pydantic import BaseModel
 
 
 def matching_decision(evaluation_case: EvaluationCase) -> RepairDecisionV3:
@@ -65,14 +67,20 @@ class ExpectedDecisionModel:
             for evaluation_case in load_evaluation_cases()
         }
 
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        del system_instruction, correction
-        return self.decisions[repair_case.case_id.root]
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        del system_instruction, case_content, decision_schema, decision_model, correction
+        return StructuredModelResponse(
+            self.decisions[case_id].model_dump_json(by_alias=True),
+            "Expected",
+        )
 
 
 class CloseableExpectedDecisionModel(ExpectedDecisionModel):
@@ -85,23 +93,26 @@ class CloseableExpectedDecisionModel(ExpectedDecisionModel):
 
 
 class AlwaysNoRepairModel:
-    async def decide(
+    async def decide_json(
         self,
         system_instruction: str,
-        repair_case: RepairCaseV3,
-        correction: tuple[DecisionViolation, ...],
-    ) -> RepairDecisionV3:
-        del system_instruction, correction
+        case_content: str,
+        decision_schema: dict[str, Any],
+        decision_model: type[BaseModel],
+        case_id: str,
+        correction: tuple[DecisionViolation, ...] = (),
+    ) -> StructuredModelResponse:
+        del system_instruction, case_content, decision_schema, decision_model, correction
         value = {
             "schema_version": "radarr-repair/v3",
-            "case_id": repair_case.case_id.root,
+            "case_id": case_id,
             "action": "no_repair",
             "reason": "unsafe_to_repair",
             "missing_evidence": [],
             "evidence_refs": [],
             "explanation": "Synthetic abstention.",
         }
-        return decode_decision(json.dumps(value).encode())
+        return StructuredModelResponse(json.dumps(value), "Expected")
 
 
 def settings(runs: int = 1, case: str | None = None) -> OllamaEvaluationSettings:
@@ -123,12 +134,14 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "ambiguous_part_order",
         "clear_ordered_join",
         "current_double_exposure_bluray",
+        "current_luxure_split_scenes",
         "current_malice_before_daylight_scenes",
         "current_pandoras_mirror_bluray",
         "current_pink_velvet_2_dvd",
         "current_xconfessions_bluray_runtime_mismatch",
         "episodic_release_with_join_pool",
         "incompatible_parts",
+        "luxure_scenes_without_split_marker",
         "missing_movie_identity",
         "poorly_named_manual_import",
         "pink_velvet_2_dvd_runtime_mismatch",
@@ -143,6 +156,7 @@ def test_corpus_contains_review_cases_without_mutating_bases() -> None:
         "real_traci_manual_import",
         "real_xconfessions_raw_bluray",
         "single_file_without_capability",
+        "split_scenes_runtime_mismatch",
         "untrusted_filename_instruction",
     }
     clear_join = next(case for case in cases if case.spec.name == "clear_ordered_join")

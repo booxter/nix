@@ -56,4 +56,17 @@ func TestBluRayCapabilitiesKeepDistinctChapterPlaylists(t *testing.T) {
 	if *capabilities[0].ChapterCount != 1 || *capabilities[1].ChapterCount != 10 {
 		t.Errorf("chapter alternatives = %v", capabilities)
 	}
+	for fileID, file := range files {
+		file.Fingerprint.Device++
+		files[fileID] = file
+	}
+	remounted, err := bindBluRayCapabilities(candidates, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index := range capabilities {
+		if remounted[index].CapabilityID != capabilities[index].CapabilityID {
+			t.Fatalf("remounted playlist %d changed capability identity", index)
+		}
+	}
 }

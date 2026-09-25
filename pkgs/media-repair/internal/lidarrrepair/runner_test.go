@@ -15,12 +15,23 @@ import (
 )
 
 type fakeLidarr struct {
-	queue   []lidarr.QueueRecord
-	imports []lidarr.ManualImport
+	queue             []lidarr.QueueRecord
+	imports           []lidarr.ManualImport
+	recoveredIdentity lidarr.AlbumIdentity
+	recoveredFound    bool
+	identityReads     int
 }
 
 func (fake *fakeLidarr) ReadQueue(context.Context) ([]lidarr.QueueRecord, error) {
 	return fake.queue, nil
+}
+
+func (fake *fakeLidarr) RecoverAlbumIdentity(
+	context.Context,
+	string,
+) (lidarr.AlbumIdentity, bool, error) {
+	fake.identityReads++
+	return fake.recoveredIdentity, fake.recoveredFound, nil
 }
 
 func (fake *fakeLidarr) ReadAlbum(context.Context, int64) (lidarr.Album, error) {
@@ -58,19 +69,39 @@ func (fake *fakeLidarr) ReadManualImports(
 }
 
 type fakeWorker struct {
-	calls          int
-	directoryCalls int
-	directoryAudio bool
+	calls           int
+	rarCalls        int
+	directoryCalls  int
+	directoryAudio  bool
+	archiveError    error
+	tarWorkspaceIDs []string
+}
+
+func (fake *fakeWorker) MaterializeRARAudio(
+	_ context.Context,
+	_ string,
+	snapshot fileidentity.Snapshot,
+	_ string,
+) (materialize.Success, error) {
+	fake.rarCalls++
+	if fake.archiveError != nil {
+		return materialize.Success{}, fake.archiveError
+	}
+	return testMaterialization(materialize.OperationMaterializeRAR, snapshot.StableFingerprint()), nil
 }
 
 func (fake *fakeWorker) MaterializeTarAudio(
 	_ context.Context,
 	_ string,
 	snapshot fileidentity.Snapshot,
-	_ string,
+	workspaceID string,
 ) (materialize.Success, error) {
 	fake.calls++
-	return testMaterialization(materialize.OperationMaterializeTar, snapshot.Fingerprint()), nil
+	fake.tarWorkspaceIDs = append(fake.tarWorkspaceIDs, workspaceID)
+	if fake.archiveError != nil {
+		return materialize.Success{}, fake.archiveError
+	}
+	return testMaterialization(materialize.OperationMaterializeTar, snapshot.StableFingerprint()), nil
 }
 
 func testMaterialization(operation, sourceFingerprint string) materialize.Success {
@@ -168,6 +199,10 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if err := os.WriteFile(archive, []byte("tar"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	_, archiveSnapshot, _, err := findArchive(download)
+	if err != nil {
+		t.Fatal(err)
+	}
 	albumID, artistID := int64(3), int64(2)
 	client := &fakeLidarr{
 		queue: []lidarr.QueueRecord{{
@@ -226,6 +261,12 @@ func TestRunnerPlansOnceAndUsesDurableCache(t *testing.T) {
 	if worker.directoryCalls != 4 {
 		t.Fatalf("directory calls = %d", worker.directoryCalls)
 	}
+	wantWorkspaceID := workspaceID(1, archiveSnapshot.StableFingerprint())
+	for _, got := range worker.tarWorkspaceIDs {
+		if got != wantWorkspaceID {
+			t.Fatalf("tar workspace ID = %q, want %q", got, wantWorkspaceID)
+		}
+	}
 	record, found, err := store.Get(1)
 	if err != nil || !found || len(record.Bindings) != 1 {
 		t.Fatalf("record=%#v found=%v error=%v", record, found, err)
@@ -243,24 +284,81 @@ func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, _, err := findArchive(directory); err == nil {
+	if _, _, _, err := findArchive(directory); err == nil {
 		t.Fatal("ambiguous archive was accepted")
 	}
 }
 
-func TestRunnerPlansDirectoryAudio(t *testing.T) {
+func TestRunnerSkipsUnsupportedArchiveAndPlansOtherQueueItems(t *testing.T) {
+	t.Parallel()
+	archiveDownload := t.TempDir()
+	if err := os.WriteFile(filepath.Join(archiveDownload, "album.rar"), []byte("not rar"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	directoryDownload := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directoryDownload, "01.flac"), []byte("audio"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	albumID, artistID := int64(3), int64(2)
+	client := &fakeLidarr{
+		queue: []lidarr.QueueRecord{
+			{
+				ID: 1, AlbumID: &albumID, ArtistID: &artistID,
+				Title:  "Unsupported archive",
+				Status: "completed", TrackedDownloadStatus: "warning",
+				DownloadID: "archive", OutputPath: archiveDownload,
+			},
+			{
+				ID: 2, AlbumID: &albumID, ArtistID: &artistID,
+				Title:  "Directory audio",
+				Status: "completed", TrackedDownloadStatus: "warning",
+				DownloadID: "directory", OutputPath: directoryDownload,
+			},
+		},
+		imports: []lidarr.ManualImport{{
+			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
+			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
+			AlbumReleaseID: 4, TrackIDs: []int64{5},
+		}},
+	}
+	worker := &fakeWorker{
+		directoryAudio: true,
+		archiveError:   &materialize.Rejection{Reason: materialize.FailureInvalidArchive},
+	}
+	planner := &fakePlanner{}
+	store, err := NewStore(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runner, err := NewRunner(client, worker, planner, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Observed != 2 || report.Candidates != 1 || report.Planned != 1 ||
+		worker.rarCalls != 1 || worker.directoryCalls != 1 || planner.calls != 1 {
+		t.Fatalf("report=%#v worker=%#v planner calls=%d", report, worker, planner.calls)
+	}
+}
+
+func TestRunnerRecoversIdentityAndPlansDirectoryAudio(t *testing.T) {
 	t.Parallel()
 	download := t.TempDir()
 	if err := os.WriteFile(filepath.Join(download, "01.flac"), []byte("audio"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	albumID, artistID := int64(3), int64(2)
 	client := &fakeLidarr{
 		queue: []lidarr.QueueRecord{{
-			ID: 9, AlbumID: &albumID, ArtistID: &artistID, Title: "Artist - Album",
+			ID: 9, Title: "Artist - Album",
 			Status: "completed", TrackedDownloadStatus: "warning",
 			DownloadID: "download", OutputPath: download,
 		}},
+		recoveredIdentity: lidarr.AlbumIdentity{AlbumID: 3, ArtistID: 2},
+		recoveredFound:    true,
 		imports: []lidarr.ManualImport{{
 			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
 			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
@@ -294,7 +392,7 @@ func TestRunnerPlansDirectoryAudio(t *testing.T) {
 		t.Fatalf("record found = %v, error = %v", found, err)
 	}
 	if first.Candidates != 1 || first.Planned != 1 || second.Cached != 1 ||
-		worker.directoryCalls != 2 || planner.calls != 1 ||
+		worker.directoryCalls != 2 || planner.calls != 1 || client.identityReads != 2 ||
 		record.SourceKind != SourceDirectoryAudio || record.SourcePath != download {
 		t.Fatalf(
 			"first=%#v second=%#v worker=%d planner=%d record=%#v",

@@ -312,6 +312,11 @@ func startTestWorker(t *testing.T, rootPath string) testWorker {
 		"--ffmpeg", requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG"),
 		"--mkvmerge", requiredEnvironment(t, "RADARR_REPAIR_TEST_MKVMERGE"),
 		"--lsdvd", requiredEnvironment(t, "RADARR_REPAIR_TEST_LSDVD"),
+		"--lsar", requiredEnvironment(t, "RADARR_REPAIR_TEST_LSAR"),
+		"--unar", requiredEnvironment(t, "RADARR_REPAIR_TEST_UNAR"),
+		"--cueconvert", requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
+		"--cuebreakpoints", requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
+		"--wvunpack", requiredEnvironment(t, "RADARR_REPAIR_TEST_WVUNPACK"),
 		"--root", "root:downloads=" + rootPath,
 		"--timeout", "10s",
 		"--join-timeout", "10s",
@@ -437,7 +442,7 @@ func pathFingerprint(t *testing.T, path string) string {
 		Inode:     stat.Ino,
 		SizeBytes: stat.Size,
 		MTimeNS:   stat.Mtim.Sec*1_000_000_000 + stat.Mtim.Nsec,
-	}.Fingerprint()
+	}.StrictFingerprint()
 }
 
 func requiredEnvironment(t *testing.T, name string) string {
