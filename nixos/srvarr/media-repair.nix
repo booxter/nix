@@ -47,7 +47,10 @@ in
   host.observability.nodeExporter.textfile.directories.radarr-repair =
     config.host.radarr.repair.controller.metricsDirectory;
 
-  host.mediaRepair.planner.enable = true;
+  host.mediaRepair = {
+    planner.enable = true;
+    review.enable = true;
+  };
   host.mediaRepair.worker = {
     enable = true;
     roots = {

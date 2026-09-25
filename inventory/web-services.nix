@@ -365,6 +365,19 @@
         dashboard.section = "media-admin";
       };
     };
+    repairr = {
+      declaration = {
+        displayName = "Repairr";
+        health = {
+          frontend.path = "/oauth2/sign_in";
+          backend.path = "/-/ready";
+        };
+        dashboard = {
+          icon = "sh:maintainerr";
+          section = "media-admin";
+        };
+      };
+    };
     romm = {
       declaration = {
         displayName = "RomM";
