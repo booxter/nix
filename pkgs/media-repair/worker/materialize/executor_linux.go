@@ -35,7 +35,7 @@ const (
 )
 
 var audioExtensions = map[string]struct{}{
-	".flac": {}, ".wav": {}, ".ape": {}, ".wv": {}, ".m4a": {},
+	".flac": {}, ".wav": {}, ".ape": {}, ".wv": {}, ".wvp": {}, ".m4a": {},
 	".mp3": {}, ".ogg": {}, ".opus": {},
 }
 
@@ -74,6 +74,7 @@ type RARExtractor interface {
 
 type CueHandler interface {
 	Inspect(context.Context, *os.File) (cuesheet.Plan, error)
+	InspectEmbedded(context.Context, *os.File) (cuesheet.Plan, bool, error)
 	Split(context.Context, *os.File, cuesheet.Plan, string) ([]string, error)
 }
 
@@ -380,7 +381,6 @@ type directorySource struct {
 type cuePlan struct {
 	plan  cuesheet.Plan
 	image directoryFile
-	cue   directoryFile
 }
 
 type directoryFile struct {
@@ -604,7 +604,7 @@ func (executor *Executor) readCuePlan(
 	cueFiles []directoryFile,
 ) (*cuePlan, error) {
 	if len(cueFiles) == 0 {
-		return nil, nil
+		return executor.readEmbeddedCuePlan(ctx, rootID, audioFiles)
 	}
 	if executor.cue == nil {
 		return nil, fmt.Errorf("%w: cue handling is unavailable", errDirectoryCue)
@@ -640,9 +640,43 @@ func (executor *Executor) readCuePlan(
 		if selected != nil || len(audioFiles) != 1 {
 			return nil, fmt.Errorf("%w: ambiguous cue sources", errDirectoryCue)
 		}
-		selected = &cuePlan{plan: plan, image: audioFiles[0], cue: cueFile}
+		selected = &cuePlan{plan: plan, image: audioFiles[0]}
 	}
 	return selected, nil
+}
+
+func (executor *Executor) readEmbeddedCuePlan(
+	ctx context.Context,
+	rootID string,
+	audioFiles []directoryFile,
+) (*cuePlan, error) {
+	if len(audioFiles) != 1 {
+		return nil, nil
+	}
+	extension := strings.ToLower(filepath.Ext(audioFiles[0].relative))
+	if extension != ".wv" && extension != ".wvp" {
+		return nil, nil
+	}
+	if executor.cue == nil {
+		return nil, fmt.Errorf("%w: cue handling is unavailable", errDirectoryCue)
+	}
+	image := audioFiles[0]
+	input, err := executor.files.Open(rootID, image.components, image.snapshot.StrictFingerprint())
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", errDirectoryCue, err)
+	}
+	plan, found, inspectErr := executor.cue.InspectEmbedded(ctx, input)
+	verifyErr := executor.files.Verify(input, image.snapshot.StrictFingerprint())
+	closeErr := input.Close()
+	if inspectErr != nil || verifyErr != nil || closeErr != nil {
+		return nil, fmt.Errorf(
+			"%w: %v", errDirectoryCue, errors.Join(inspectErr, verifyErr, closeErr),
+		)
+	}
+	if !found {
+		return nil, nil
+	}
+	return &cuePlan{plan: plan, image: image}, nil
 }
 
 func directoryFingerprint(files []directoryFile) string {

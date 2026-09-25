@@ -8,6 +8,7 @@
   makeWrapper,
   mkvtoolnixCli,
   unar,
+  wavpack,
 }:
 let
   version = "0.1.0";
@@ -51,6 +52,8 @@ let
       RADARR_REPAIR_TEST_UNAR = lib.getExe unar;
       RADARR_REPAIR_TEST_CUECONVERT = lib.getExe' cuetools "cueconvert";
       RADARR_REPAIR_TEST_CUEBREAKPOINTS = lib.getExe' cuetools "cuebreakpoints";
+      RADARR_REPAIR_TEST_WAVPACK = lib.getExe' wavpack "wavpack";
+      RADARR_REPAIR_TEST_WVUNPACK = lib.getExe' wavpack "wvunpack";
       RADARR_REPAIR_TEST_WORKER = lib.getExe worker;
 
       preCheck = ''
@@ -138,7 +141,8 @@ let
           --add-flags ${lib.escapeShellArg "--lsar ${lib.getExe' unar "lsar"}"} \
           --add-flags ${lib.escapeShellArg "--unar ${lib.getExe unar}"} \
           --add-flags ${lib.escapeShellArg "--cueconvert ${lib.getExe' cuetools "cueconvert"}"} \
-          --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"}
+          --add-flags ${lib.escapeShellArg "--cuebreakpoints ${lib.getExe' cuetools "cuebreakpoints"}"} \
+          --add-flags ${lib.escapeShellArg "--wvunpack ${lib.getExe' wavpack "wvunpack"}"}
       '';
 
       doCheck = false;

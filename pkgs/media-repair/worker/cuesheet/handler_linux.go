@@ -31,19 +31,61 @@ type Handler struct {
 	cueconvert     string
 	cuebreakpoints string
 	ffmpeg         string
+	wvunpack       string
 }
 
-func NewHandler(cueconvert, cuebreakpoints, ffmpeg string) (*Handler, error) {
+func NewHandler(cueconvert, cuebreakpoints, ffmpeg, wvunpack string) (*Handler, error) {
 	for name, executable := range map[string]string{
-		"cueconvert": cueconvert, "cuebreakpoints": cuebreakpoints, "ffmpeg": ffmpeg,
+		"cueconvert": cueconvert, "cuebreakpoints": cuebreakpoints,
+		"ffmpeg": ffmpeg, "wvunpack": wvunpack,
 	} {
 		if executable == "" || !filepath.IsAbs(executable) || filepath.Clean(executable) != executable {
 			return nil, fmt.Errorf("%s executable must be an absolute clean path", name)
 		}
 	}
 	return &Handler{
-		cueconvert: cueconvert, cuebreakpoints: cuebreakpoints, ffmpeg: ffmpeg,
+		cueconvert: cueconvert, cuebreakpoints: cuebreakpoints,
+		ffmpeg: ffmpeg, wvunpack: wvunpack,
 	}, nil
+}
+
+func (handler *Handler) InspectEmbedded(ctx context.Context, input *os.File) (Plan, bool, error) {
+	if handler == nil || input == nil {
+		return Plan{}, false, ErrInvalid
+	}
+	cue, err := extractWavPackCue(ctx, handler.wvunpack, input)
+	if err != nil {
+		if ctx.Err() != nil {
+			return Plan{}, false, ctx.Err()
+		}
+		if strings.Contains(err.Error(), `tag "cuesheet" not found`) {
+			return Plan{}, false, nil
+		}
+		return Plan{}, false, fmt.Errorf("%w: extract embedded WavPack cue: %v", ErrInvalid, err)
+	}
+	if len(cue) == 0 {
+		return Plan{}, false, fmt.Errorf("%w: embedded WavPack cue is empty", ErrInvalid)
+	}
+	temporary, err := os.CreateTemp("", "media-repair-*.cue")
+	if err != nil {
+		return Plan{}, false, fmt.Errorf("store embedded cue sheet: %w", err)
+	}
+	name := temporary.Name()
+	defer os.Remove(name)
+	if _, err := temporary.Write(cue); err != nil {
+		_ = temporary.Close()
+		return Plan{}, false, fmt.Errorf("store embedded cue sheet: %w", err)
+	}
+	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
+		_ = temporary.Close()
+		return Plan{}, false, fmt.Errorf("rewind embedded cue sheet: %w", err)
+	}
+	plan, inspectErr := handler.Inspect(ctx, temporary)
+	closeErr := temporary.Close()
+	if inspectErr != nil || closeErr != nil {
+		return Plan{}, false, errors.Join(inspectErr, closeErr)
+	}
+	return plan, true, nil
 }
 
 func (handler *Handler) Inspect(ctx context.Context, input *os.File) (Plan, error) {
@@ -180,6 +222,39 @@ func runCueTool(
 	}
 	arguments = append(arguments, "/proc/self/fd/3")
 	command := exec.CommandContext(ctx, executable, arguments...)
+	command.ExtraFiles = []*os.File{input}
+	var stdout bytes.Buffer
+	stdoutLimit := &limitedWriter{target: &stdout, remaining: MaximumBytes}
+	command.Stdout = stdoutLimit
+	var stderr bytes.Buffer
+	command.Stderr = &limitedWriter{target: &stderr, remaining: maximumDiagnostics}
+	if err := command.Run(); err != nil {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	if stdoutLimit.exceeded {
+		return nil, fmt.Errorf("output exceeds limit")
+	}
+	return stdout.Bytes(), nil
+}
+
+func extractWavPackCue(
+	ctx context.Context,
+	executable string,
+	input *os.File,
+) ([]byte, error) {
+	if _, err := input.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+	directory, err := os.MkdirTemp("", "media-repair-wavpack-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(directory)
+	filename := filepath.Join(directory, "image.wv")
+	if err := os.Symlink("/proc/self/fd/3", filename); err != nil {
+		return nil, err
+	}
+	command := exec.CommandContext(ctx, executable, "-q", "-c", filename)
 	command.ExtraFiles = []*os.File{input}
 	var stdout bytes.Buffer
 	stdoutLimit := &limitedWriter{target: &stdout, remaining: MaximumBytes}

@@ -67,6 +67,7 @@ func TestHandlerInspectsAndSplitsWithPackagedTools(t *testing.T) {
 		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
 		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
 		ffmpeg,
+		requiredEnvironment(t, "RADARR_REPAIR_TEST_WVUNPACK"),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -97,6 +98,74 @@ func TestHandlerInspectsAndSplitsWithPackagedTools(t *testing.T) {
 		if info, err := os.Stat(filepath.Join(outputDirectory, name)); err != nil || info.Size() == 0 {
 			t.Fatalf("output %s: info = %v, error = %v", name, info, err)
 		}
+	}
+}
+
+func TestHandlerExtractsEmbeddedWavPackCue(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+	ffmpeg := requiredEnvironment(t, "RADARR_REPAIR_TEST_FFMPEG")
+	wavPath := filepath.Join(directory, "Album.wav")
+	command := exec.Command(
+		ffmpeg, "-nostdin", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440",
+		"-t", "2", wavPath,
+	)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("create audio image: %v: %s", err, output)
+	}
+	cuePath := filepath.Join(directory, "Album.cue")
+	if err := os.WriteFile(cuePath, []byte(`FILE "Album.wav" WAVE
+  TRACK 01 AUDIO
+    INDEX 01 00:00:00
+  TRACK 02 AUDIO
+    INDEX 01 00:01:00
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	wavpackPath := filepath.Join(directory, "Album.wvp")
+	command = exec.Command(
+		requiredEnvironment(t, "RADARR_REPAIR_TEST_WAVPACK"),
+		"-q", "-w", "Cuesheet=@"+cuePath, wavPath, "-o", wavpackPath,
+	)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("create WavPack image: %v: %s", err, output)
+	}
+	handler, err := NewHandler(
+		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUECONVERT"),
+		requiredEnvironment(t, "RADARR_REPAIR_TEST_CUEBREAKPOINTS"),
+		ffmpeg,
+		requiredEnvironment(t, "RADARR_REPAIR_TEST_WVUNPACK"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input, err := os.Open(wavpackPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, found, inspectErr := handler.InspectEmbedded(context.Background(), input)
+	closeErr := input.Close()
+	if inspectErr != nil || closeErr != nil || !found {
+		t.Fatalf("inspect embedded = %#v, %t, %v, close = %v", plan, found, inspectErr, closeErr)
+	}
+	if want := []time.Duration{0, time.Second}; !reflect.DeepEqual(plan.Starts, want) {
+		t.Fatalf("starts = %v, want %v", plan.Starts, want)
+	}
+	image, err := os.Open(wavpackPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	outputDirectory := filepath.Join(directory, "tracks")
+	if err := os.Mkdir(outputDirectory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	outputs, splitErr := handler.Split(context.Background(), image, plan, outputDirectory)
+	closeErr = image.Close()
+	if splitErr != nil || closeErr != nil {
+		t.Fatalf("split = %v, close = %v", splitErr, closeErr)
+	}
+	if want := []string{"01.flac", "02.flac"}; !reflect.DeepEqual(outputs, want) {
+		t.Fatalf("outputs = %v, want %v", outputs, want)
 	}
 }
 

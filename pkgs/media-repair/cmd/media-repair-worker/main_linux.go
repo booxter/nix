@@ -73,6 +73,7 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	cuebreakpointsPath := flags.String(
 		"cuebreakpoints", "", "absolute cuebreakpoints executable path",
 	)
+	wvunpackPath := flags.String("wvunpack", "", "absolute wvunpack executable path")
 	probeTimeout := flags.Duration("timeout", defaultProbeTimeout, "maximum probe duration")
 	joinTimeout := flags.Duration(
 		"join-timeout",
@@ -161,7 +162,9 @@ func run(ctx context.Context, arguments []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	cueHandler, err := cuesheet.NewHandler(*cueconvertPath, *cuebreakpointsPath, *ffmpegPath)
+	cueHandler, err := cuesheet.NewHandler(
+		*cueconvertPath, *cuebreakpointsPath, *ffmpegPath, *wvunpackPath,
+	)
 	if err != nil {
 		return err
 	}
