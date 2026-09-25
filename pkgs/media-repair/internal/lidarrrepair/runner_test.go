@@ -15,12 +15,23 @@ import (
 )
 
 type fakeLidarr struct {
-	queue   []lidarr.QueueRecord
-	imports []lidarr.ManualImport
+	queue             []lidarr.QueueRecord
+	imports           []lidarr.ManualImport
+	recoveredIdentity lidarr.AlbumIdentity
+	recoveredFound    bool
+	identityReads     int
 }
 
 func (fake *fakeLidarr) ReadQueue(context.Context) ([]lidarr.QueueRecord, error) {
 	return fake.queue, nil
+}
+
+func (fake *fakeLidarr) RecoverAlbumIdentity(
+	context.Context,
+	string,
+) (lidarr.AlbumIdentity, bool, error) {
+	fake.identityReads++
+	return fake.recoveredIdentity, fake.recoveredFound, nil
 }
 
 func (fake *fakeLidarr) ReadAlbum(context.Context, int64) (lidarr.Album, error) {
@@ -260,19 +271,20 @@ func TestFindArchiveRejectsAmbiguousDownload(t *testing.T) {
 	}
 }
 
-func TestRunnerPlansDirectoryAudio(t *testing.T) {
+func TestRunnerRecoversIdentityAndPlansDirectoryAudio(t *testing.T) {
 	t.Parallel()
 	download := t.TempDir()
 	if err := os.WriteFile(filepath.Join(download, "01.flac"), []byte("audio"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	albumID, artistID := int64(3), int64(2)
 	client := &fakeLidarr{
 		queue: []lidarr.QueueRecord{{
-			ID: 9, AlbumID: &albumID, ArtistID: &artistID, Title: "Artist - Album",
+			ID: 9, Title: "Artist - Album",
 			Status: "completed", TrackedDownloadStatus: "warning",
 			DownloadID: "download", OutputPath: download,
 		}},
+		recoveredIdentity: lidarr.AlbumIdentity{AlbumID: 3, ArtistID: 2},
+		recoveredFound:    true,
 		imports: []lidarr.ManualImport{{
 			Path: "/downloads/.media-repair/workspaces/workspace:test/01.flac",
 			Name: "01.flac", SizeBytes: 100, ArtistID: 2, AlbumID: 3,
@@ -306,7 +318,7 @@ func TestRunnerPlansDirectoryAudio(t *testing.T) {
 		t.Fatalf("record found = %v, error = %v", found, err)
 	}
 	if first.Candidates != 1 || first.Planned != 1 || second.Cached != 1 ||
-		worker.directoryCalls != 2 || planner.calls != 1 ||
+		worker.directoryCalls != 2 || planner.calls != 1 || client.identityReads != 2 ||
 		record.SourceKind != SourceDirectoryAudio || record.SourcePath != download {
 		t.Fatalf(
 			"first=%#v second=%#v worker=%d planner=%d record=%#v",

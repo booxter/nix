@@ -18,6 +18,7 @@ import (
 
 type Lidarr interface {
 	ReadQueue(context.Context) ([]lidarr.QueueRecord, error)
+	RecoverAlbumIdentity(context.Context, string) (lidarr.AlbumIdentity, bool, error)
 	ReadAlbum(context.Context, int64) (lidarr.Album, error)
 	ReadReleaseTracks(context.Context, int64, int64) ([]lidarr.Track, error)
 	ReadManualImports(context.Context, lidarr.ManualImportQuery) ([]lidarr.ManualImport, error)
@@ -139,6 +140,11 @@ func (runner *Runner) Run(ctx context.Context) (Report, error) {
 	report := Report{Observed: len(records)}
 	var failures []error
 	for _, queue := range records {
+		queue, err = runner.recoverQueueIdentity(ctx, queue)
+		if err != nil {
+			failures = append(failures, fmt.Errorf("queue %d: %w", queue.ID, err))
+			continue
+		}
 		if !eligibleQueue(queue) {
 			continue
 		}
@@ -281,6 +287,11 @@ func (runner *Runner) BuildCurrentEvidence(
 	ctx context.Context,
 	queue lidarr.QueueRecord,
 ) (Evidence, error) {
+	var err error
+	queue, err = runner.recoverQueueIdentity(ctx, queue)
+	if err != nil {
+		return Evidence{}, err
+	}
 	if !eligibleQueue(queue) {
 		return Evidence{}, fmt.Errorf("Lidarr queue item is not eligible for repair")
 	}
@@ -308,6 +319,34 @@ func (runner *Runner) BuildCurrentEvidence(
 		return Evidence{}, fmt.Errorf("discover tar archive: %w", err)
 	}
 	return runner.buildStoredEvidence(ctx, queue, planned)
+}
+
+func (runner *Runner) recoverQueueIdentity(
+	ctx context.Context,
+	queue lidarr.QueueRecord,
+) (lidarr.QueueRecord, error) {
+	if queue.AlbumID != nil && queue.ArtistID != nil {
+		return queue, nil
+	}
+	if !eligibleQueueWithoutIdentity(queue) {
+		return queue, nil
+	}
+	identity, found, err := runner.lidarr.RecoverAlbumIdentity(ctx, queue.DownloadID)
+	if err != nil {
+		return queue, fmt.Errorf("recover Lidarr album identity: %w", err)
+	}
+	if !found {
+		return queue, nil
+	}
+	if queue.AlbumID != nil && *queue.AlbumID != identity.AlbumID {
+		return queue, fmt.Errorf("recovered Lidarr album identity conflicts with queue")
+	}
+	if queue.ArtistID != nil && *queue.ArtistID != identity.ArtistID {
+		return queue, fmt.Errorf("recovered Lidarr artist identity conflicts with queue")
+	}
+	queue.AlbumID = &identity.AlbumID
+	queue.ArtistID = &identity.ArtistID
+	return queue, nil
 }
 
 func (runner *Runner) buildTarEvidence(
@@ -462,12 +501,13 @@ func (runner *Runner) readCatalog(
 }
 
 func eligibleQueue(queue lidarr.QueueRecord) bool {
-	if queue.AlbumID == nil || queue.ArtistID == nil || queue.OutputPath == "" ||
-		queue.DownloadID == "" || queue.Status != "completed" ||
-		queue.TrackedDownloadStatus != "warning" {
-		return false
-	}
-	return true
+	return queue.AlbumID != nil && queue.ArtistID != nil &&
+		eligibleQueueWithoutIdentity(queue)
+}
+
+func eligibleQueueWithoutIdentity(queue lidarr.QueueRecord) bool {
+	return queue.OutputPath != "" && queue.DownloadID != "" &&
+		queue.Status == "completed" && queue.TrackedDownloadStatus == "warning"
 }
 
 func findArchive(outputPath string) (string, fileidentity.Snapshot, error) {

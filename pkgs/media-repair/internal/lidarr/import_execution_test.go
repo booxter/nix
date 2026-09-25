@@ -93,6 +93,60 @@ func TestReadImportedTracksWithoutDownloadFilter(t *testing.T) {
 	}
 }
 
+func TestRecoverAlbumIdentity(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		query := request.URL.Query()
+		if query.Get("downloadId") != "download" || query.Has("albumId") || query.Has("eventType") {
+			t.Errorf("query = %v", query)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"page":1,"pageSize":250,"totalRecords":2,
+			"records":[
+				{"id":91,"albumId":3,"artistId":2,"downloadId":"download","eventType":"grabbed","date":"2026-09-22T12:00:00Z"},
+				{"id":92,"albumId":3,"artistId":2,"trackId":11,"downloadId":"download","eventType":"trackFileImported","date":"2026-09-22T12:05:00Z"}
+			]
+		}`))
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, found, err := client.RecoverAlbumIdentity(context.Background(), "download")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !found || identity != (AlbumIdentity{AlbumID: 3, ArtistID: 2}) {
+		t.Fatalf("RecoverAlbumIdentity() = (%+v, %v)", identity, found)
+	}
+}
+
+func TestRecoverAlbumIdentityRejectsConflict(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"page":1,"pageSize":250,"totalRecords":2,
+			"records":[
+				{"id":91,"albumId":3,"artistId":2,"downloadId":"download","eventType":"grabbed","date":"2026-09-22T12:00:00Z"},
+				{"id":92,"albumId":4,"artistId":2,"downloadId":"download","eventType":"importFailed","date":"2026-09-22T12:05:00Z"}
+			]
+		}`))
+	}))
+	defer server.Close()
+	client, err := New(server.URL, "key", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := client.RecoverAlbumIdentity(context.Background(), "download"); err == nil {
+		t.Fatal("RecoverAlbumIdentity() accepted conflicting history")
+	}
+}
+
 func TestReadImportedTracksFiltersAndMapsHistory(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

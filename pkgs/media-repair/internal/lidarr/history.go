@@ -31,6 +31,88 @@ type ImportedTrack struct {
 	OccurredAt   time.Time `json:"occurred_at"`
 }
 
+type AlbumIdentity struct {
+	AlbumID  int64
+	ArtistID int64
+}
+
+func (client *Client) RecoverAlbumIdentity(
+	ctx context.Context,
+	downloadID string,
+) (AlbumIdentity, bool, error) {
+	if downloadID == "" || downloadID != strings.TrimSpace(downloadID) ||
+		strings.ContainsRune(downloadID, '\x00') {
+		return AlbumIdentity{}, false, fmt.Errorf("Lidarr history download ID is invalid")
+	}
+
+	identities := make([]AlbumIdentity, 0)
+	seen := make(map[int64]struct{})
+	expectedTotal := -1
+	for page := 1; page <= maximumHistoryPages; page++ {
+		request := &starr.PageReq{
+			Page: page, PageSize: historyPageSize, SortKey: "date", SortDir: starr.SortDescend,
+		}
+		request.Set("downloadId", downloadID)
+		response, err := client.api.GetHistoryPageContext(ctx, request)
+		if err != nil {
+			return AlbumIdentity{}, false, servarr.NormalizeRequestError(
+				"Lidarr",
+				fmt.Sprintf("read Lidarr identity history page %d", page),
+				err,
+			)
+		}
+		if response == nil || response.Page != page || response.PageSize <= 0 ||
+			response.PageSize > historyPageSize || len(response.Records) > response.PageSize ||
+			response.TotalRecords < 0 || response.TotalRecords > maximumHistoryRecords {
+			return AlbumIdentity{}, false, fmt.Errorf("Lidarr identity history page %d is invalid", page)
+		}
+		if expectedTotal < 0 {
+			expectedTotal = response.TotalRecords
+		} else if response.TotalRecords != expectedTotal {
+			return AlbumIdentity{}, false, fmt.Errorf(
+				"Lidarr identity history total changed while reading page %d", page,
+			)
+		}
+		for index, record := range response.Records {
+			if record == nil || record.ID <= 0 || record.Date.IsZero() ||
+				record.DownloadID != downloadID || strings.TrimSpace(record.EventType) == "" {
+				return AlbumIdentity{}, false, fmt.Errorf(
+					"Lidarr identity history page %d record %d is invalid", page, index,
+				)
+			}
+			if _, duplicate := seen[record.ID]; duplicate {
+				return AlbumIdentity{}, false, fmt.Errorf(
+					"Lidarr identity history contains duplicate record ID %d", record.ID,
+				)
+			}
+			seen[record.ID] = struct{}{}
+			if record.AlbumID > 0 && record.ArtistID > 0 {
+				identities = append(identities, AlbumIdentity{
+					AlbumID: record.AlbumID, ArtistID: record.ArtistID,
+				})
+			}
+		}
+		collected := page * response.PageSize
+		if collected >= expectedTotal || len(response.Records) == 0 {
+			identity, found, selectErr := servarr.SelectHistoryIdentity(
+				identities,
+				func(identity AlbumIdentity) bool {
+					return identity.AlbumID > 0 && identity.ArtistID > 0
+				},
+			)
+			if selectErr != nil {
+				return AlbumIdentity{}, false, fmt.Errorf(
+					"select Lidarr history album identity: %w", selectErr,
+				)
+			}
+			return identity, found, nil
+		}
+	}
+	return AlbumIdentity{}, false, fmt.Errorf(
+		"Lidarr identity history exceeds %d records", maximumHistoryRecords,
+	)
+}
+
 func (client *Client) ReadImportedTracks(
 	ctx context.Context,
 	albumID int64,
